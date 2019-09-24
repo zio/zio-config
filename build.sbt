@@ -38,7 +38,12 @@ lazy val zioConfig = project
   .in(file("."))
   .enablePlugins(BuildInfoPlugin)
   .settings(stdSettings("zio-config"))
-  .settings(testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")))
+  .settings(
+    testFrameworks := Seq(
+      new TestFramework("org.scalacheck.ScalaCheckFramework"),
+      new TestFramework("zio.test.sbt.ZTestFramework")
+    )
+  )
   .settings(buildInfoSettings)
   .settings(
     libraryDependencies ++= Seq(
