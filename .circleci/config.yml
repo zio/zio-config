@@ -22,23 +22,8 @@ jobs:
       - checkout
       - restore_cache:
           key: sbt-cache-machine
-      - run: ./sbt ++2.11.12! testJVM
+      - run: ./sbt ++2.11.12! test
       - run: ./sbt ++2.11.12! package packageSrc publishLocal
-      - save_cache:
-          key: sbt-cache-machine
-          paths:
-            - "~/.ivy2/cache"
-            - "~/.sbt"
-            - "~/.m2"
-
-  test211_js_jdk8:
-    machine:
-      image: ubuntu-1604:201903-01
-    steps:
-      - checkout
-      - restore_cache:
-          key: sbt-cache-machine
-      - run: ./sbt ++2.11.12! testJS
       - save_cache:
           key: sbt-cache-machine
           paths:
@@ -53,7 +38,7 @@ jobs:
       - checkout
       - restore_cache:
           key: sbt-cache-machine
-      - run: sbt ++2.12.8! testJVM
+      - run: sbt ++2.12.8! test
       - run: sbt ++2.12.8! package packageSrc publishLocal
       - save_cache:
           key: sbt-cache-machine
@@ -61,22 +46,6 @@ jobs:
             - "~/.ivy2/cache"
             - "~/.sbt"
             - "~/.m2"
-
-  test212_js_jdk8:
-    machine:
-      image: ubuntu-1604:201903-01
-    steps:
-      - checkout
-      - restore_cache:
-          key: sbt-cache-machine
-      - run: sbt ++2.12.8! testJS
-      - save_cache:
-          key: sbt-cache-machine
-          paths:
-            - "~/.ivy2/cache"
-            - "~/.sbt"
-            - "~/.m2"
-
   release:
     docker:
       - image: hseeberger/scala-sbt:8u181_2.12.8_1.2.8
@@ -104,19 +73,7 @@ workflows:
           filters:
             tags:
               only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
-      - test211_js_jdk8:
-          requires:
-            - lint212_jdk8
-          filters:
-            tags:
-              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
       - test212_jvm_jdk8:
-          requires:
-            - lint212_jdk8
-          filters:
-            tags:
-              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
-      - test212_js_jdk8:
           requires:
             - lint212_jdk8
           filters:
@@ -126,9 +83,7 @@ workflows:
           context: Sonatype
           requires:
             - test211_jvm_jdk8
-            - test211_js_jdk8
             - test212_jvm_jdk8
-            - test212_js_jdk8
           filters:
             branches:
               ignore: /.*/
