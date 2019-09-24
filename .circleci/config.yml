@@ -1,0 +1,136 @@
+version: 2.1
+jobs:
+  lint212_jdk8:
+    docker:
+      - image: hseeberger/scala-sbt:8u181_2.12.8_1.2.8
+    steps:
+      - checkout
+      - restore_cache:
+          key: sbt-cache
+      - run: sbt ++2.12.8! check
+      - save_cache:
+          key: sbt-cache
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+
+  test211_jvm_jdk8:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - restore_cache:
+          key: sbt-cache-machine
+      - run: ./sbt ++2.11.12! testJVM
+      - run: ./sbt ++2.11.12! package packageSrc publishLocal
+      - save_cache:
+          key: sbt-cache-machine
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+
+  test211_js_jdk8:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - restore_cache:
+          key: sbt-cache-machine
+      - run: ./sbt ++2.11.12! testJS
+      - save_cache:
+          key: sbt-cache-machine
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+
+  test212_jvm_jdk8:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - restore_cache:
+          key: sbt-cache-machine
+      - run: sbt ++2.12.8! testJVM
+      - run: sbt ++2.12.8! package packageSrc publishLocal
+      - save_cache:
+          key: sbt-cache-machine
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+
+  test212_js_jdk8:
+    machine:
+      image: ubuntu-1604:201903-01
+    steps:
+      - checkout
+      - restore_cache:
+          key: sbt-cache-machine
+      - run: sbt ++2.12.8! testJS
+      - save_cache:
+          key: sbt-cache-machine
+          paths:
+            - "~/.ivy2/cache"
+            - "~/.sbt"
+            - "~/.m2"
+
+  release:
+    docker:
+      - image: hseeberger/scala-sbt:8u181_2.12.8_1.2.8
+    steps:
+      - checkout
+      - run: git fetch --tags
+      - restore_cache:
+          key: sbt-cache
+      - run: echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"$SONATYPE_USER\", \"$SONATYPE_PASSWORD\")" > ~/.sbt/1.0/sonatype.sbt
+      - run: echo -n "${PGP_PUBLIC}" | base64 -d > /tmp/public.asc
+      - run: echo -n "${PGP_SECRET}" | base64 -d > /tmp/secret.asc
+      - run: ./sbt ++${SCALA_VERSION}! clean sonatypeBundleClean +publishSigned sonatypeBundleRelease
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - lint212_jdk8:
+          filters:
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+      - test211_jvm_jdk8:
+          requires:
+            - lint212_jdk8
+          filters:
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+      - test211_js_jdk8:
+          requires:
+            - lint212_jdk8
+          filters:
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+      - test212_jvm_jdk8:
+          requires:
+            - lint212_jdk8
+          filters:
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+      - test212_js_jdk8:
+          requires:
+            - lint212_jdk8
+          filters:
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+      - release:
+          context: Sonatype
+          requires:
+            - test211_jvm_jdk8
+            - test211_js_jdk8
+            - test212_jvm_jdk8
+            - test212_js_jdk8
+          filters:
+            branches:
+              ignore: /.*/
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
