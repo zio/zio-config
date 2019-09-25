@@ -12,9 +12,15 @@ final class TestSupportZIOOps[E, A](val io: ZIO[Any, E, A]) {
       io.flatMap { actual =>
         val result = expected == actual
         if (!result) {
-          (env.console.putStrLn(s"       => FAIL: expected[$expected]") *>
-            env.console.putStrLn(s"                  actual[$actual]")).map(_ => result)
-        } else ZIO.succeed(result)
+          env.console
+            .putStrLn(
+              s"""       => FAIL: expected[$expected]
+                 |                  actual[$actual]""".stripMargin
+            )
+            .map(_ => result)
+        } else {
+          ZIO.succeed(result)
+        }
       }
     }
   def shouldSatisfy(f: A => Boolean): ZIO[Console, E, Boolean] =

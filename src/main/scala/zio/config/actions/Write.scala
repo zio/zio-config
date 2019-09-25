@@ -19,11 +19,10 @@ object Write {
           ZIO.access(
             aa => {
               val map =
-                paths.foldLeft(Map.empty[String, String]) {
-                (m, path) =>
+                paths.foldLeft(Map.empty[String, String]) { (m, path) =>
                   val str = propertyType.write(aa)
                   Map(path -> str) ++ m
-              }
+                }
               KeyValue(
                 map
               )
@@ -36,7 +35,7 @@ object Write {
 
       case Config.OnError(c, _, _) => Write(write(c).run)
 
-        // TODO mapping function is not used here
+      // TODO mapping function is not used here
       case Config.Map(c, _) => Write(write(c).run)
 
       case Config.ErrorMap(c, _) => Write(write(c).run)
