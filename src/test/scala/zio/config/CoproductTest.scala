@@ -1,133 +1,192 @@
 package zio.config.examples
 
 import org.scalacheck.Prop.forAll
-import org.scalacheck.{ Gen, Properties }
+import org.scalacheck.{Arbitrary, Gen, Properties}
 import zio.DefaultRuntime
 import zio.config.ConfigError.MissingValue
-import zio.config.{ Config, ConfigError, ConfigSource, _ }
+import zio.config._
+import zio.config.testsupport.TestSupport
 
-object CoproductTest extends Properties("Coproduct") {
+object CoproductTest extends
+  Properties("CoproductTest")
+  with TestSupport {
 
-  def genString(minLength: Int, maxLength: Int): Gen[String] =
+  private def symbol(minLength: Int, maxLength: Int): Gen[String] =
     for {
       n <- Gen.chooseNum(minLength, maxLength)
-      s <- Gen.listOfN(n, Gen.alphaChar).map(_.mkString)
+        s <- Gen.listOfN(n, Gen.alphaChar).map(_.mkString)
+    } yield s
+
+  private def nonEmptyString(maxLength: Int): Gen[String] =
+    for {
+      n <- Gen.chooseNum(1, maxLength)
+        s <- Gen.listOfN(n, Gen.asciiChar).map(_.mkString)
     } yield s
 
   ////
 
-  final case class CoproductParams(x1: String, x2: String, x3: String, x4: String, x5: String)
+  private def genFor[A: Arbitrary]: Gen[A] =
+    implicitly[Arbitrary[A]].arbitrary
 
-  object CoproductParams {
-    def gen =
+  final case class TestParams(
+    kLdap: String,
+    vLdap: String,
+    kDbUrl: String,
+    vDbUrl: String,
+    kUser: String,
+    vUser: String,
+    kCount: String,
+    vCount: Int,
+    kFactor: String,
+    vFactor: Double
+  )
+
+  object TestParams {
+    def gen: Gen[TestParams] =
       for {
-        x1 <- genString(1, 20)
-        x2 <- genString(1, 20).filterNot(s => s == x1)
-        x3 <- genString(1, 20).filterNot(s => s == x1 || s == x2)
-        x4 <- genString(1, 20).filterNot(s => s == x1 || s == x2 || s == x3)
-        x5 <- genString(1, 20).filterNot(s => s == x1 || s == x2 || s == x3 || s == x4)
-      } yield CoproductParams(x1, x2, x3, x4, x5)
+        kLdap <- symbol(1, 20)
+          vLdap <- nonEmptyString(50)
+          kDbUrl <- symbol(1, 20).filterNot(s => s == kLdap)
+          vDbUrl <- nonEmptyString(50)
+          kUser <- symbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl)
+          vUser <- nonEmptyString(50)
+          kCount <- symbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl || s == kUser)
+          vCount <- genFor[Int]
+          kDbUrlLocal <- symbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl || s == kUser || s == kCount)
+          vDbUrlLocal <- genFor[Double]
+      } yield TestParams(kLdap, vLdap, kDbUrl, vDbUrl, kUser, vUser, kCount, vCount, kDbUrlLocal, vDbUrlLocal)
   }
 
-  //propertyWithSeed("Test1", Some("zuURCIhT4Fs1NirKL275VtwGk_Vez9iAo7riHP0fqwG=")) =
-  property("left") = forAll(CoproductParams.gen) {
-    testLeft(_)
-  }
+  property("left element satisfied") =
+    forAll(TestParams.gen) {
+      p =>
+        testLeft(p)
+          .shouldBe(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))
+    }
 
-  property("right") = forAll(CoproductParams.gen) {
-    test2(_)
-  }
+  property("right element satisfied") =
+    forAll(TestParams.gen) {
+      p =>
+        testRight(p)
+          .shouldBe(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor)))
+    }
 
-  property("errors") = forAll(CoproductParams.gen) {
-    test3(_)
-  }
+  property("should accumulate all errors") =
+    forAll(TestParams.gen) {
+      p =>
+        testErrors(p)
+          .shouldBe {
+            Left(
+              List(
+                ConfigError(Seq(p.kLdap), MissingValue),
+                ConfigError(Seq(p.kFactor), ConfigError.ParseError("notadouble", "double"))
+              )
+            )
+          }
+    }
 
-  property("allConfigsExist") = forAll(CoproductParams.gen) {
-    test4(_)
-  }
+  property("left and right both populated should choose left") =
+    forAll(TestParams.gen) {
+      p =>
+        testChooseFromBoth(p)
+          .shouldBe(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))
+    }
 
   ////
 
-  final case class Ldap(value: String)  extends AnyVal
+  final case class Ldap(value: String) extends AnyVal
   final case class DbUrl(value: String) extends AnyVal
-  final case class Prod(ldap: Ldap, dburl: DbUrl)
-  final case class Dev(user: String, password: Int, dburl: Double)
+  final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
+  final case class PasswordAuth(user: String, Count: Int, factor: Double)
 
-  val rt = new DefaultRuntime {}
+  val runtime = new DefaultRuntime {}
 
-  def testLeft(p: CoproductParams): Boolean = {
-    val prod: Config[Prod]                   = (string(p.x1).map(Ldap) <*> string(p.x2).map(DbUrl))(Prod.apply, Prod.unapply)
-    val dev: Config[Dev]                     = (string(p.x3) <*> int(p.x4) <*> double(p.x5))(Dev.apply, Dev.unapply)
-    val prodOrDev: Config[Either[Prod, Dev]] = prod or dev
+  def testLeft(p: TestParams): Either[EnterpriseAuth, PasswordAuth] = {
+    val enterprise: Config[EnterpriseAuth] =
+      (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl)) (
+        EnterpriseAuth.apply,
+        EnterpriseAuth.unapply
+      )
+    val local: Config[PasswordAuth] = (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor)) (
+      PasswordAuth.apply,
+      PasswordAuth.unapply
+    )
+    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] = enterprise or local
 
-    val validConfigForSampleConfig =
+    val validConfigForSampleConfig: Map[String, String] =
       Map(
-        p.x1 -> "v1",
-        p.x2 -> "v2",
-        p.x3 -> "v3"
+        p.kLdap -> p.vLdap,
+        p.kDbUrl -> p.vDbUrl,
+        p.kUser -> p.vUser
       )
 
-    val source: ConfigSource = mapSource(validConfigForSampleConfig)
-
-    rt.unsafeRun(read(prodOrDev).run.provide(source))._2 == Left(Prod(Ldap("v1"), DbUrl("v2")))
+    runtime.unsafeRun(read(authConfig).run.provide(mapSource(validConfigForSampleConfig)))._2
   }
 
-  def test2(p: CoproductParams): Boolean = {
-    val prod: Config[Prod]                   = (string(p.x1).map(Ldap) <*> string(p.x2).map(DbUrl))(Prod.apply, Prod.unapply)
-    val dev: Config[Dev]                     = (string(p.x3) <*> int(p.x4) <*> double(p.x5))(Dev.apply, Dev.unapply)
-    val prodOrDev: Config[Either[Prod, Dev]] = prod or dev
+  def testRight(p: TestParams): Either[EnterpriseAuth, PasswordAuth] = {
+    val enterprise: Config[EnterpriseAuth] = (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl)) (
+      EnterpriseAuth.apply,
+      EnterpriseAuth.unapply
+    )
+    val local: Config[PasswordAuth] = (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor)) (
+      PasswordAuth.apply,
+      PasswordAuth.unapply
+    )
+    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] = enterprise or local
 
-    val validConfigForAnotherConfig =
+    val validConfigForAnotherConfig: Map[String, String] =
       Map(
-        p.x2 -> "v2",
-        p.x3 -> "v3",
-        p.x4 -> "1",
-        p.x5 -> "2.0"
+        p.kDbUrl -> p.vDbUrl,
+        p.kUser -> p.vUser,
+        p.kCount -> p.vCount.toString,
+        p.kFactor -> p.vFactor.toString
       )
 
-    val anotherSource: ConfigSource = mapSource(validConfigForAnotherConfig)
-
-    rt.unsafeRun(read(prodOrDev).run.provide(anotherSource))._2 == Right(Dev("v3", 1, 2.0))
+    runtime.unsafeRun(read(authConfig).run.provide(mapSource(validConfigForAnotherConfig)))._2
   }
 
-  def test3(p: CoproductParams): Boolean = {
-    val prod: Config[Prod]                   = (string(p.x1).map(Ldap) <*> string(p.x2).map(DbUrl))(Prod.apply, Prod.unapply)
-    val dev: Config[Dev]                     = (string(p.x3) <*> int(p.x4) <*> double(p.x5))(Dev.apply, Dev.unapply)
-    val prodOrDev: Config[Either[Prod, Dev]] = prod or dev
+  def testErrors(p: TestParams): Either[List[ConfigError], (ConfigReport, Either[EnterpriseAuth, PasswordAuth])] = {
+    val enterprise: Config[EnterpriseAuth] = (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl)) (
+      EnterpriseAuth.apply,
+      EnterpriseAuth.unapply
+    )
+    val local: Config[PasswordAuth] = (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor)) (
+      PasswordAuth.apply,
+      PasswordAuth.unapply
+    )
+    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] = enterprise or local
 
-    val invalidConfig =
+    val invalidConfig: Map[String, String] =
       Map(
-        p.x2 -> "v2",
-        p.x3 -> "v3",
-        p.x4 -> "1",
-        p.x5 -> "notadouble"
+        p.kDbUrl -> p.vDbUrl,
+        p.kUser -> p.vUser,
+        p.kCount -> p.vCount.toString,
+        p.kFactor -> "notadouble"
       )
 
-    val invalidSource: ConfigSource = mapSource(invalidConfig)
-
-    rt.unsafeRun(read(prodOrDev).run.provide(invalidSource).either) ==
-      Left(
-        List(
-          ConfigError(Seq(p.x1), MissingValue),
-          ConfigError(Seq(p.x5), ConfigError.ParseError("notadouble", "double"))
-        )
-      )
+    runtime.unsafeRun(read(authConfig).run.provide(mapSource(invalidConfig)).either)
   }
 
-  def test4(p: CoproductParams): Boolean = {
-    val prod: Config[Prod]                   = (string(p.x1).map(Ldap) <*> string(p.x2).map(DbUrl))(Prod.apply, Prod.unapply)
-    val dev: Config[Dev]                     = (string(p.x3) <*> int(p.x4) <*> double(p.x5))(Dev.apply, Dev.unapply)
-    val prodOrDev: Config[Either[Prod, Dev]] = prod or dev
+  def testChooseFromBoth(p: TestParams): Either[EnterpriseAuth, PasswordAuth] = {
+    val enterprise: Config[EnterpriseAuth] = (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl)) (
+      EnterpriseAuth.apply,
+      EnterpriseAuth.unapply
+    )
+    val local: Config[PasswordAuth] = (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor)) (
+      PasswordAuth.apply,
+      PasswordAuth.unapply
+    )
+    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] = enterprise or local
 
-    val allConfigsExist =
+    val allConfigsExist: Map[String, String] =
       Map(
-        p.x1 -> "v1",
-        p.x2 -> "v2",
-        p.x3 -> "v3",
-        p.x4 -> "1",
-        p.x5 -> "2.0"
+        p.kLdap -> p.vLdap,
+        p.kDbUrl -> p.vDbUrl,
+        p.kUser -> p.vUser,
+        p.kCount -> p.vCount.toString,
+        p.kFactor -> p.vFactor.toString
       )
 
-    rt.unsafeRun(read(prodOrDev).run.provide(mapSource(allConfigsExist)))._2 == Left(Prod(Ldap("v1"), DbUrl("v2")))
+    runtime.unsafeRun(read(authConfig).run.provide(mapSource(allConfigsExist)))._2
   }
 }

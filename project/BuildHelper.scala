@@ -21,6 +21,7 @@ object BuildHelper {
     "-Xfatal-warnings",
     "-language:higherKinds",
     "-language:existentials",
+    "-language:implicitConversions",
     "-explaintypes",
     "-Yrangepos",
     "-Xfuture",
