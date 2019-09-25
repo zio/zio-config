@@ -76,93 +76,108 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val local: Config[PasswordAuth] = (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
-      PasswordAuth.apply,
-      PasswordAuth.unapply
-    )
-    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] = enterprise or local
-
-    val validConfigForSampleConfig: Map[String, String] =
-      Map(
-        p.kLdap  -> p.vLdap,
-        p.kDbUrl -> p.vDbUrl
+    val local: Config[PasswordAuth] =
+      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+        PasswordAuth.apply,
+        PasswordAuth.unapply
       )
+    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
+      enterprise or local
 
     read(authConfig).run
-      .test(mapSource(validConfigForSampleConfig))
+      .test(
+        mapSource(
+          Map(
+            p.kLdap  -> p.vLdap,
+            p.kDbUrl -> p.vDbUrl
+          )
+        )
+      )
       ._2
   }
 
   def testRight(p: TestParams): Either[EnterpriseAuth, PasswordAuth] = {
-    val enterprise: Config[EnterpriseAuth] = (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
-      EnterpriseAuth.apply,
-      EnterpriseAuth.unapply
-    )
-    val local: Config[PasswordAuth] = (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
-      PasswordAuth.apply,
-      PasswordAuth.unapply
-    )
-    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] = enterprise or local
-
-    val validConfigForAnotherConfig: Map[String, String] =
-      Map(
-        p.kUser   -> p.vUser,
-        p.kCount  -> p.vCount.toString,
-        p.kFactor -> p.vFactor.toString
+    val enterprise: Config[EnterpriseAuth] =
+      (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
+        EnterpriseAuth.apply,
+        EnterpriseAuth.unapply
       )
+    val local: Config[PasswordAuth] =
+      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+        PasswordAuth.apply,
+        PasswordAuth.unapply
+      )
+    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
+      enterprise or local
 
     read(authConfig).run
-      .test(mapSource(validConfigForAnotherConfig))
+      .test(
+        mapSource(
+          Map(
+            p.kUser   -> p.vUser,
+            p.kCount  -> p.vCount.toString,
+            p.kFactor -> p.vFactor.toString
+          )
+        )
+      )
       ._2
   }
 
   def testErrors(p: TestParams): Either[List[ConfigError], (ConfigReport, Either[EnterpriseAuth, PasswordAuth])] = {
-    val enterprise: Config[EnterpriseAuth] = (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
-      EnterpriseAuth.apply,
-      EnterpriseAuth.unapply
-    )
-    val local: Config[PasswordAuth] = (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
-      PasswordAuth.apply,
-      PasswordAuth.unapply
-    )
-    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] = enterprise or local
-
-    val invalidConfig: Map[String, String] =
-      Map(
-        p.kDbUrl  -> p.vDbUrl,
-        p.kUser   -> p.vUser,
-        p.kCount  -> p.vCount.toString,
-        p.kFactor -> "notadouble"
+    val enterprise: Config[EnterpriseAuth] =
+      (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
+        EnterpriseAuth.apply,
+        EnterpriseAuth.unapply
       )
+    val local: Config[PasswordAuth] =
+      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+        PasswordAuth.apply,
+        PasswordAuth.unapply
+      )
+    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
+      enterprise or local
 
     read(authConfig).run
-      .provide(mapSource(invalidConfig))
+      .provide(
+        mapSource(
+          Map(
+            p.kDbUrl  -> p.vDbUrl,
+            p.kUser   -> p.vUser,
+            p.kCount  -> p.vCount.toString,
+            p.kFactor -> "notadouble"
+          )
+        )
+      )
       .either
       .testResolved
   }
 
   def testChooseFromBoth(p: TestParams): Either[EnterpriseAuth, PasswordAuth] = {
-    val enterprise: Config[EnterpriseAuth] = (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
-      EnterpriseAuth.apply,
-      EnterpriseAuth.unapply
-    )
-    val local: Config[PasswordAuth] = (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
-      PasswordAuth.apply,
-      PasswordAuth.unapply
-    )
-    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] = enterprise or local
-
-    val allConfigsExist: Map[String, String] =
-      Map(
-        p.kLdap   -> p.vLdap,
-        p.kDbUrl  -> p.vDbUrl,
-        p.kUser   -> p.vUser,
-        p.kCount  -> p.vCount.toString,
-        p.kFactor -> p.vFactor.toString
+    val enterprise: Config[EnterpriseAuth] =
+      (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
+        EnterpriseAuth.apply,
+        EnterpriseAuth.unapply
       )
+    val local: Config[PasswordAuth] =
+      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+        PasswordAuth.apply,
+        PasswordAuth.unapply
+      )
+    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
+      enterprise or local
 
     read(authConfig).run
-      .test(mapSource(allConfigsExist))
+      .test(
+        mapSource(
+          Map(
+            p.kLdap   -> p.vLdap,
+            p.kDbUrl  -> p.vDbUrl,
+            p.kUser   -> p.vUser,
+            p.kCount  -> p.vCount.toString,
+            p.kFactor -> p.vFactor.toString
+          )
+        )
+      )
       ._2
   }
 }
