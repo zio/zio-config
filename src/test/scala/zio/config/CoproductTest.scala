@@ -116,8 +116,7 @@ object CoproductTest extends
     val validConfigForSampleConfig: Map[String, String] =
       Map(
         p.kLdap -> p.vLdap,
-        p.kDbUrl -> p.vDbUrl,
-        p.kUser -> p.vUser
+        p.kDbUrl -> p.vDbUrl
       )
 
     runtime.unsafeRun(read(authConfig).run.provide(mapSource(validConfigForSampleConfig)))._2
@@ -136,7 +135,6 @@ object CoproductTest extends
 
     val validConfigForAnotherConfig: Map[String, String] =
       Map(
-        p.kDbUrl -> p.vDbUrl,
         p.kUser -> p.vUser,
         p.kCount -> p.vCount.toString,
         p.kFactor -> p.vFactor.toString
