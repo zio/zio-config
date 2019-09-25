@@ -8,7 +8,7 @@ import zio.config._
 import zio.config.testsupport.TestSupport
 
 object CoproductTest extends
-  Properties("CoproductTest")
+  Properties("Coproduct support")
   with TestSupport {
 
   private def symbol(minLength: Int, maxLength: Int): Gen[String] =
