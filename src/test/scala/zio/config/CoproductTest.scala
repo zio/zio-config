@@ -1,7 +1,7 @@
 package zio.config.examples
 
-import org.scalacheck.Prop.forAll
 import org.scalacheck.{ Gen, Properties }
+import zio.ZIO
 import zio.config.ConfigError.MissingValue
 import zio.config._
 import zio.config.testsupport.TestSupport
@@ -37,18 +37,18 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       } yield TestParams(kLdap, vLdap, kDbUrl, vDbUrl, kUser, vUser, kCount, vCount, kDbUrlLocal, vDbUrlLocal)
   }
 
-  property("left element satisfied") = forAll(TestParams.gen) { p =>
-    testLeft(p)
+  property("left element satisfied") = forAllZIO(TestParams.gen) { p =>
+    readLeft(p)
       .shouldBe(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))
   }
 
-  property("right element satisfied") = forAll(TestParams.gen) { p =>
-    testRight(p)
+  property("right element satisfied") = forAllZIO(TestParams.gen) { p =>
+    readRight(p)
       .shouldBe(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor)))
   }
 
-  property("should accumulate all errors") = forAll(TestParams.gen) { p =>
-    testErrors(p).shouldBe {
+  property("should accumulate all errors") = forAllZIO(TestParams.gen) { p =>
+    readWithErrors(p).shouldBe {
       Left(
         List(
           ConfigError(Seq(p.kLdap), MissingValue),
@@ -58,8 +58,8 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
     }
   }
 
-  property("left and right both populated should choose left") = forAll(TestParams.gen) { p =>
-    testChooseFromBoth(p)
+  property("left and right both populated should choose left") = forAllZIO(TestParams.gen) { p =>
+    readChooseLeftFromBoth(p)
       .shouldBe(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))
   }
 
@@ -70,7 +70,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
   final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
   final case class PasswordAuth(user: String, Count: Int, factor: Double)
 
-  def testLeft(p: TestParams): Either[EnterpriseAuth, PasswordAuth] = {
+  private def readLeft(p: TestParams) = {
     val enterprise: Config[EnterpriseAuth] =
       (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
         EnterpriseAuth.apply,
@@ -85,7 +85,8 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       enterprise or local
 
     read(authConfig).run
-      .test(
+      .map(_._2)
+      .provide(
         mapSource(
           Map(
             p.kLdap  -> p.vLdap,
@@ -93,10 +94,9 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
           )
         )
       )
-      ._2
   }
 
-  def testRight(p: TestParams): Either[EnterpriseAuth, PasswordAuth] = {
+  private def readRight(p: TestParams) = {
     val enterprise: Config[EnterpriseAuth] =
       (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
         EnterpriseAuth.apply,
@@ -111,7 +111,8 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       enterprise or local
 
     read(authConfig).run
-      .test(
+      .map(_._2)
+      .provide(
         mapSource(
           Map(
             p.kUser   -> p.vUser,
@@ -120,10 +121,11 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
           )
         )
       )
-      ._2
   }
 
-  def testErrors(p: TestParams): Either[List[ConfigError], (ConfigReport, Either[EnterpriseAuth, PasswordAuth])] = {
+  private def readWithErrors(
+    p: TestParams
+  ): ZIO[Any, List[ConfigError], Either[List[ConfigError], Either[EnterpriseAuth, PasswordAuth]]] = {
     val enterprise: Config[EnterpriseAuth] =
       (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
         EnterpriseAuth.apply,
@@ -138,6 +140,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       enterprise or local
 
     read(authConfig).run
+      .map(_._2)
       .provide(
         mapSource(
           Map(
@@ -149,10 +152,9 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         )
       )
       .either
-      .testResolved
   }
 
-  def testChooseFromBoth(p: TestParams): Either[EnterpriseAuth, PasswordAuth] = {
+  private def readChooseLeftFromBoth(p: TestParams) = {
     val enterprise: Config[EnterpriseAuth] =
       (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
         EnterpriseAuth.apply,
@@ -167,7 +169,8 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       enterprise or local
 
     read(authConfig).run
-      .test(
+      .map(_._2)
+      .provide(
         mapSource(
           Map(
             p.kLdap   -> p.vLdap,
@@ -178,6 +181,5 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
           )
         )
       )
-      ._2
   }
 }

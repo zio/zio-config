@@ -1,30 +1,36 @@
 package zio.config.testsupport
 
-import org.scalacheck.{ Arbitrary, Gen }
+import org.scalacheck.Prop.forAll
+import org.scalacheck.util.Pretty
+import org.scalacheck.{ Arbitrary, Gen, Prop, Shrink }
 import zio.{ DefaultRuntime, ZIO }
 
-final class TestSupportOps[A](val actual: A) {
-  def shouldBe(expected: A): Boolean = {
-    val result = expected == actual
-    if (!result) {
-      println(s"       => FAIL: expected[$expected]")
-      println(s"                  actual[$actual]")
-    }
-    result
-  }
+final class TestSupportZIOOps[E, A](val io: ZIO[Any, E, A]) {
+  val console = zio.console.Console.Live.console
 
-  def shouldSatisfy(f: A => Boolean): Boolean = {
-    val result = f(actual)
-    if (!result) {
-      println(s"       => FAIL:   doesn't satisfy, actual: [$actual]")
+  def shouldBe(expected: A): ZIO[Any, E, Boolean] =
+    io.flatMap { actual =>
+      val result = expected == actual
+      if (!result) {
+        (console.putStrLn(s"       => FAIL: expected[$expected]") *>
+          console.putStrLn(s"                  actual[$actual]")).map(_ => result)
+      } else ZIO.succeed(result)
     }
-    result
-  }
+
+  def shouldSatisfy(f: A => Boolean): ZIO[Any, E, Boolean] =
+    io.flatMap { actual =>
+      val result = f(actual)
+      if (!result) {
+        console
+          .putStrLn(s"       => FAIL:   doesn't satisfy, actual: [$actual]")
+          .map(_ => result)
+      } else ZIO.succeed(result)
+    }
 }
 
-trait ToTestSupportOps {
-  implicit def `instanceTestSupport`[A](actual: A): TestSupportOps[A] =
-    new TestSupportOps[A](actual)
+trait ToTestSupportZIOOps {
+  implicit def `instanceTestSupportZIO`[E, A](io: ZIO[Any, E, A]): TestSupportZIOOps[E, A] =
+    new TestSupportZIOOps[E, A](io)
 }
 
 ////
@@ -58,32 +64,22 @@ trait TestSupportGens {
 
 ////
 
-final class TestSupportZIOOps[R, E, A](val io: ZIO[R, E, A]) extends AnyVal {
-  def test(r: R): A =
-    new DefaultRuntime {}
-      .unsafeRun(io.provide(r))
-}
+trait TestSupportZIO extends DefaultRuntime {
 
-trait ToTestSupportZIOOps {
-  implicit def instanceTestSupportZIO[R, E, A](io: ZIO[R, E, A]): TestSupportZIOOps[R, E, A] =
-    new TestSupportZIOOps(io)
-}
+  // ScalaCheck forAll except for ZIO
+  def forAllZIO[T1, P, E](g1: Gen[T1])(f: T1 => ZIO[Environment, E, P])(
+    implicit p: P => Prop,
+    s1: Shrink[T1],
+    pp1: T1 => Pretty
+  ): Prop =
+    forAll(g1) { t1 =>
+      unsafeRun(f(t1))
+    }
 
-////
-
-final class TestSupportIOOps[E, A](val io: ZIO[Any, E, A]) extends AnyVal {
-  def testResolved: A =
-    new DefaultRuntime {}
-      .unsafeRun(io)
-}
-
-trait ToTestSupportIOOps {
-  implicit def instanceTestSupportIO[E, A](io: ZIO[Any, E, A]): TestSupportIOOps[E, A] =
-    new TestSupportIOOps(io)
 }
 
 ////
 
-trait TestSupport extends ToTestSupportOps with TestSupportGens with ToTestSupportZIOOps with ToTestSupportIOOps
+trait TestSupport extends ToTestSupportZIOOps with TestSupportGens with TestSupportZIO
 
 object testsupportinstances extends TestSupport
