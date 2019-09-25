@@ -68,7 +68,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
   final case class Ldap(value: String)  extends AnyVal
   final case class DbUrl(value: String) extends AnyVal
   final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
-  final case class PasswordAuth(user: String, Count: Int, factor: Double)
+  final case class PasswordAuth(user: String, count: Int, factor: Double)
 
   private def readLeft(p: TestParams) = {
     val enterprise: Config[EnterpriseAuth] =
@@ -76,13 +76,13 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val local: Config[PasswordAuth] =
+    val password: Config[PasswordAuth] =
       (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
     val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or local
+      enterprise or password
 
     read(authConfig).run
       .map(_._2)
@@ -102,13 +102,13 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val local: Config[PasswordAuth] =
+    val password: Config[PasswordAuth] =
       (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
     val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or local
+      enterprise or password
 
     read(authConfig).run
       .map(_._2)
@@ -131,13 +131,13 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val local: Config[PasswordAuth] =
+    val password: Config[PasswordAuth] =
       (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
     val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or local
+      enterprise or password
 
     read(authConfig).run
       .map(_._2)
@@ -160,13 +160,13 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val local: Config[PasswordAuth] =
+    val password: Config[PasswordAuth] =
       (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
     val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or local
+      enterprise or password
 
     read(authConfig).run
       .map(_._2)

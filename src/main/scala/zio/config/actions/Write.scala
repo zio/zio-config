@@ -7,7 +7,6 @@ final case class Write[A](run: ZIO[A, Nothing, KeyValue])
 
 object Write {
 
-  // Write
   final def write[A](config: Config[A]): Write[A] =
     config match {
       case Config.Source(path, propertyType) =>
@@ -16,15 +15,28 @@ object Write {
         }))
 
       case Config.Sources(propertyType, paths) =>
-        Write(ZIO.access(aa => {
-          KeyValue(paths.foldLeft(Map.empty[String, String])((m, path) => Map(path -> propertyType.write(aa)) ++ m))
-        }))
+        Write(
+          ZIO.access(
+            aa => {
+              val map =
+                paths.foldLeft(Map.empty[String, String]) {
+                (m, path) =>
+                  val str = propertyType.write(aa)
+                  Map(path -> str) ++ m
+              }
+              KeyValue(
+                map
+              )
+            }
+          )
+        )
 
       case Config.Xmap(c, _, to) =>
         Write(ZIO.accessM(b => write(c).run.provide(to(b))))
 
       case Config.OnError(c, _, _) => Write(write(c).run)
 
+        // TODO mapping function is not used here
       case Config.Map(c, _) => Write(write(c).run)
 
       case Config.ErrorMap(c, _) => Write(write(c).run)

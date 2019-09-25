@@ -1,8 +1,7 @@
 package zio.config
 
-import zio.config.ConfigError.{ ErrorType, ParseError }
-import zio.config.syntax.{ AttemptSyntax }
-import zio.config.ConfigError.ErrorType
+import zio.config.ConfigError.{ErrorType, ParseError}
+import zio.config.syntax.AttemptSyntax
 
 trait PropertyType[A] {
 
