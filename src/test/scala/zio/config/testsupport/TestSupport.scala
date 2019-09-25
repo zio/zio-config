@@ -3,28 +3,30 @@ package zio.config.testsupport
 import org.scalacheck.Prop.forAll
 import org.scalacheck.util.Pretty
 import org.scalacheck.{ Arbitrary, Gen, Prop, Shrink }
+import zio.console.Console
 import zio.{ DefaultRuntime, ZIO }
 
 final class TestSupportZIOOps[E, A](val io: ZIO[Any, E, A]) {
-  val console = zio.console.Console.Live.console
-
-  def shouldBe(expected: A): ZIO[Any, E, Boolean] =
-    io.flatMap { actual =>
-      val result = expected == actual
-      if (!result) {
-        (console.putStrLn(s"       => FAIL: expected[$expected]") *>
-          console.putStrLn(s"                  actual[$actual]")).map(_ => result)
-      } else ZIO.succeed(result)
+  def shouldBe(expected: A): ZIO[Console, E, Boolean] =
+    ZIO.accessM { env =>
+      io.flatMap { actual =>
+        val result = expected == actual
+        if (!result) {
+          (env.console.putStrLn(s"       => FAIL: expected[$expected]") *>
+            env.console.putStrLn(s"                  actual[$actual]")).map(_ => result)
+        } else ZIO.succeed(result)
+      }
     }
-
-  def shouldSatisfy(f: A => Boolean): ZIO[Any, E, Boolean] =
-    io.flatMap { actual =>
-      val result = f(actual)
-      if (!result) {
-        console
-          .putStrLn(s"       => FAIL:   doesn't satisfy, actual: [$actual]")
-          .map(_ => result)
-      } else ZIO.succeed(result)
+  def shouldSatisfy(f: A => Boolean): ZIO[Console, E, Boolean] =
+    ZIO.accessM { env =>
+      io.flatMap { actual =>
+        val result = f(actual)
+        if (!result) {
+          env.console
+            .putStrLn(s"       => FAIL:   doesn't satisfy, actual: [$actual]")
+            .map(_ => result)
+        } else ZIO.succeed(result)
+      }
     }
 }
 
