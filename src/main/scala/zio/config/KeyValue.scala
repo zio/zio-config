@@ -7,6 +7,8 @@ final case class KeyValue(allConfig: Map[String, String]) {
 
   def get(key: String): LookupResult =
     lookupFromOption(key, allConfig.get(key))
+
+  override def toString: String = allConfig.map(t => s"${t._1}=${t._2}").mkString("\n")
 }
 
 object KeyValue {

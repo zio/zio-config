@@ -20,9 +20,9 @@ object ErrorAccumulation extends App {
     parsed ==
       Left(
         List(
-          ConfigError(Seq("envvar"), ConfigError.MissingValue),
-          ConfigError(Seq("tryanothervariable"), ConfigError.MissingValue),
-          ConfigError(Seq("envvar2"), ConfigError.MissingValue)
+          ReadError(Seq("envvar"), ReadError.MissingValue),
+          ReadError(Seq("tryanothervariable"), ReadError.MissingValue),
+          ReadError(Seq("envvar2"), ReadError.MissingValue)
         )
       )
   )
@@ -39,9 +39,9 @@ object ErrorAccumulation extends App {
     runtime.unsafeRun(read(config).run.provide(invalidSource).either) ==
       Left(
         List(
-          ConfigError(Seq("envvar"), ConfigError.ParseError("wrong", "int")),
-          ConfigError(Seq("tryanothervariable"), ConfigError.MissingValue),
-          ConfigError(Seq("envvar2"), ConfigError.MissingValue)
+          ReadError(Seq("envvar"), ReadError.ParseError("wrong", "int")),
+          ReadError(Seq("tryanothervariable"), ReadError.MissingValue),
+          ReadError(Seq("envvar2"), ReadError.MissingValue)
         )
       )
   )
