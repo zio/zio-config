@@ -1,12 +1,12 @@
 package zio.config.actions
 
 import zio.config.Details
-import zio.config.ConfigError.MissingValue
-import zio.config.{ Config, ConfigError, ConfigReport, ConfigSource }
+import zio.config.ReadError.MissingValue
+import zio.config.{ Config, ConfigReport, ConfigSource, ReadError }
 import zio.{ Ref, ZIO }
 
-case class Read[A] private (value: ZIO[(Ref[ConfigReport], ConfigSource), List[ConfigError], (ConfigReport, A)]) {
-  def run: ZIO[ConfigSource, List[ConfigError], (ConfigReport, A)] =
+case class Read[A] private (value: ZIO[(Ref[ConfigReport], ConfigSource), List[ReadError], (ConfigReport, A)]) {
+  def run: ZIO[ConfigSource, List[ReadError], (ConfigReport, A)] =
     Ref.make(ConfigReport(Nil)).flatMap(ref => contramap(value, source => (ref, source)))
 
   final def contramap[R0, E, X, R](self: ZIO[R, E, X], f: R0 => R): ZIO[R0, E, X] =
@@ -27,10 +27,10 @@ object Read {
               for {
                 values <- configSource
                            .getString(path)
-                           .mapError(e => List(ConfigError(Seq(path), ConfigError.Unknown(e))))
+                           .mapError(e => List(ReadError(Seq(path), ReadError.Unknown(e))))
                 result <- values match {
                            case None =>
-                             ZIO.fail(List(ConfigError(Seq(path), MissingValue)))
+                             ZIO.fail(List(ReadError(Seq(path), MissingValue)))
                            case Some(value) =>
                              report
                                .update(_.addDetails(Details(path, value, propertyType.description)))
@@ -38,7 +38,7 @@ object Read {
                                  ZIO.fromEither(
                                    propertyType
                                      .read(value)
-                                     .fold(r => Left(List(ConfigError(Seq(path), r))), e => Right((r, e)))
+                                     .fold(r => Left(List(ReadError(Seq(path), r))), e => Right((r, e)))
                                  )
                                }
                          }
@@ -53,19 +53,16 @@ object Read {
           case Nil    => Read(ZIO.fail(Nil))
         }
 
-      case Config.Map(c, f) => Read(read(c).value.map(t => (t._1, f(t._2))))
-
-      case Config.ErrorMap(c, f) =>
+      case Config.ErrorXMap(c, f, _) =>
         Read(read(c).value.flatMap(t => ZIO.fromEither(f(t._2)).bimap(tt => List(tt), res => (t._1, res))))
 
-      case Config.OnError(config, f, g) =>
+      case Config.OnError(c, f) =>
         Read(ZIO.accessM[(Ref[ConfigReport], ConfigSource)](modules => {
           val report = modules._1
-          read(config).value.either.flatMap({
-            case Right(value) => ZIO.succeed((value._1, g(value._2)))
-            case Left(value) =>
-              report.get.flatMap[Any, List[ConfigError], (ConfigReport, A)](r => ZIO.succeed((r, f(value))))
-          })
+          read(c).value.foldM(
+            failure => report.get.flatMap[Any, List[ReadError], (ConfigReport, A)](r => ZIO.succeed((r, f(failure)))),
+            s => ZIO.succeed(s)
+          )
         }))
 
       case Config.Zip(left, right) =>
@@ -86,7 +83,7 @@ object Read {
             .absolve
         )
 
-      case Config.OrElseEither(left, right) =>
+      case Config.Or(left, right) =>
         Read(
           read(left).value.either.flatMap(
             {
@@ -102,7 +99,7 @@ object Read {
           )
         )
 
-      case Config.Xmap(config, from, _) =>
-        Read(read(config).value.map(t => (t._1, from(t._2))))
+      case Config.Xmap(c, from, _) =>
+        Read(read(c).value.map(t => (t._1, from(t._2))))
     }
 }

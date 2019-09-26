@@ -1,10 +1,10 @@
 package zio.config.examples
 
-import org.scalacheck.{ Gen, Properties }
-import zio.ZIO
-import zio.config.ConfigError.MissingValue
+import org.scalacheck.{Gen, Properties}
+import zio.config.ReadError.MissingValue
 import zio.config._
 import zio.config.testsupport.TestSupport
+import zio.{IO, ZIO}
 
 object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
@@ -24,16 +24,16 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
   object TestParams extends TestSupport {
     def gen: Gen[TestParams] =
       for {
-        kLdap       <- genSymbol(1, 20)
-        vLdap       <- genNonEmptyString(50)
-        kDbUrl      <- genSymbol(1, 20).filterNot(s => s == kLdap)
-        vDbUrl      <- genNonEmptyString(50)
-        kUser       <- genSymbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl)
-        vUser       <- genNonEmptyString(50)
-        kCount      <- genSymbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl || s == kUser)
-        vCount      <- genFor[Int]
-        kDbUrlLocal <- genSymbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl || s == kUser || s == kCount)
-        vDbUrlLocal <- genFor[Double]
+        kLdap <- genSymbol(1, 20)
+          vLdap <- genNonEmptyString(50)
+          kDbUrl <- genSymbol(1, 20).filterNot(s => s == kLdap)
+          vDbUrl <- genNonEmptyString(50)
+          kUser <- genSymbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl)
+          vUser <- genNonEmptyString(50)
+          kCount <- genSymbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl || s == kUser)
+          vCount <- genFor[Int]
+          kDbUrlLocal <- genSymbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl || s == kUser || s == kCount)
+          vDbUrlLocal <- genFor[Double]
       } yield TestParams(kLdap, vLdap, kDbUrl, vDbUrl, kUser, vUser, kCount, vCount, kDbUrlLocal, vDbUrlLocal)
   }
 
@@ -51,8 +51,8 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
     readWithErrors(p).shouldBe {
       Left(
         List(
-          ConfigError(Seq(p.kLdap), MissingValue),
-          ConfigError(Seq(p.kFactor), ConfigError.ParseError("notadouble", "double"))
+          ReadError(List(p.kLdap), MissingValue),
+          ReadError(List(p.kFactor), ReadError.ParseError("notadouble", "double"))
         )
       )
     }
@@ -65,19 +65,19 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
   ////
 
-  final case class Ldap(value: String)  extends AnyVal
+  final case class Ldap(value: String) extends AnyVal
   final case class DbUrl(value: String) extends AnyVal
   final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
   final case class PasswordAuth(user: String, count: Int, factor: Double)
 
-  private def readLeft(p: TestParams) = {
+  private def readLeft(p: TestParams): IO[List[ReadError], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
+      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value)) (
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor)) (
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
@@ -89,21 +89,21 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       .provide(
         mapSource(
           Map(
-            p.kLdap  -> p.vLdap,
+            p.kLdap -> p.vLdap,
             p.kDbUrl -> p.vDbUrl
           )
         )
       )
   }
 
-  private def readRight(p: TestParams) = {
+  private def readRight(p: TestParams): IO[List[ReadError], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
+      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value)) (
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor)) (
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
@@ -115,24 +115,22 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       .provide(
         mapSource(
           Map(
-            p.kUser   -> p.vUser,
-            p.kCount  -> p.vCount.toString,
+            p.kUser -> p.vUser,
+            p.kCount -> p.vCount.toString,
             p.kFactor -> p.vFactor.toString
           )
         )
       )
   }
 
-  private def readWithErrors(
-    p: TestParams
-  ): ZIO[Any, List[ConfigError], Either[List[ConfigError], Either[EnterpriseAuth, PasswordAuth]]] = {
+  private def readWithErrors(p: TestParams): ZIO[Any, Nothing, Either[List[ReadError], Either[EnterpriseAuth, PasswordAuth]]] = {
     val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
+      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value)) (
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor)) (
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
@@ -144,9 +142,9 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       .provide(
         mapSource(
           Map(
-            p.kDbUrl  -> p.vDbUrl,
-            p.kUser   -> p.vUser,
-            p.kCount  -> p.vCount.toString,
+            p.kDbUrl -> p.vDbUrl,
+            p.kUser -> p.vUser,
+            p.kCount -> p.vCount.toString,
             p.kFactor -> "notadouble"
           )
         )
@@ -154,14 +152,14 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       .either
   }
 
-  private def readChooseLeftFromBoth(p: TestParams) = {
+  private def readChooseLeftFromBoth(p: TestParams): IO[List[ReadError], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).map(Ldap) <*> string(p.kDbUrl).map(DbUrl))(
+      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value)) (
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor)) (
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
@@ -173,10 +171,10 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       .provide(
         mapSource(
           Map(
-            p.kLdap   -> p.vLdap,
-            p.kDbUrl  -> p.vDbUrl,
-            p.kUser   -> p.vUser,
-            p.kCount  -> p.vCount.toString,
+            p.kLdap -> p.vLdap,
+            p.kDbUrl -> p.vDbUrl,
+            p.kUser -> p.vUser,
+            p.kCount -> p.vCount.toString,
             p.kFactor -> p.vFactor.toString
           )
         )

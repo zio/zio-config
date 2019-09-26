@@ -12,7 +12,7 @@ private[config] trait ProductBuilder[A, B] {
   val b: Config[B]
 
   def apply[C](f: (A, B) => C, g: C => Option[(A, B)]): Config[C] =
-    a.zip(b).xmap({ case (aa, bb) => f(aa, bb) }, c => g(c))
+    a.zip(b).xmap({ case (aa, bb) => f(aa, bb) })(c => g(c))
 
   def <*>[C](cc: Config[C]): ProductBuilder[C] = new ProductBuilder[C] {
     val c: Config[C] = cc
@@ -23,7 +23,7 @@ private[config] trait ProductBuilder[A, B] {
 
     def apply[D](f: (A, B, C) => D, g: D => Option[(A, B, C)]): Config[D] =
       (a zip b zip c)
-        .xmap[D]({ case ((aa, bb), cc) => f(aa, bb, cc) }, d => g(d).map({ case (aa, bb, cc) => ((aa, bb), cc) }))
+        .xmap[D]({ case ((aa, bb), cc) => f(aa, bb, cc) })(d => g(d).map({ case (aa, bb, cc) => ((aa, bb), cc) }))
 
     def <*>[D](dd: Config[D]): ProductBuilder[D] = new ProductBuilder[D] {
       val d: Config[D] = dd
@@ -35,7 +35,8 @@ private[config] trait ProductBuilder[A, B] {
       def apply[E](f: (A, B, C, D) => E, g: E => Option[(A, B, C, D)]): Config[E] =
         (a zip b zip c zip d)
           .xmap(
-            { case (((aa, bb), cc), dd) => f(aa, bb, cc, dd) },
+            { case (((aa, bb), cc), dd) => f(aa, bb, cc, dd) }
+          )(
             e => g(e).map { case (aa, bb, cc, dd) => (((aa, bb), cc), dd) }
           )
 
@@ -49,7 +50,8 @@ private[config] trait ProductBuilder[A, B] {
         def apply[FF](f: (A, B, C, D, E) => FF, g: FF => Option[(A, B, C, D, E)]): Config[FF] =
           (a zip b zip c zip d zip e)
             .xmap(
-              { case ((((aa, bb), cc), dd), ee) => f(aa, bb, cc, dd, ee) },
+              { case ((((aa, bb), cc), dd), ee) => f(aa, bb, cc, dd, ee) }
+            )(
               ff => g(ff).map({ case (aa, bb, cc, dd, ee) => ((((aa, bb), cc), dd), ee) })
             )
 
@@ -63,7 +65,8 @@ private[config] trait ProductBuilder[A, B] {
           def apply[G](f: (A, B, C, D, E, FF) => G, g: G => Option[(A, B, C, D, E, FF)]): Config[G] =
             (a zip b zip c zip d zip e zip ff)
               .xmap(
-                { case (((((aa, bb), cc), dd), ee), fff) => f(aa, bb, cc, dd, ee, fff) },
+                { case (((((aa, bb), cc), dd), ee), fff) => f(aa, bb, cc, dd, ee, fff) }
+              )(
                 g(_).map({ case (aa, bb, cc, dd, ee, fff) => (((((aa, bb), cc), dd), ee), fff) })
               )
 
@@ -77,7 +80,8 @@ private[config] trait ProductBuilder[A, B] {
             def apply[H](f: (A, B, C, D, E, FF, G) => H, gg: H => Option[(A, B, C, D, E, FF, G)]): Config[H] =
               (a zip b zip c zip d zip e zip ff zip g)
                 .xmap(
-                  { case ((((((aa, bb), cc), dd), ee), fff), ggg) => f(aa, bb, cc, dd, ee, fff, ggg) },
+                  { case ((((((aa, bb), cc), dd), ee), fff), ggg) => f(aa, bb, cc, dd, ee, fff, ggg) }
+                )(
                   gg(_).map({ case (aa, bb, cc, dd, ee, fff, ggg) => ((((((aa, bb), cc), dd), ee), fff), ggg) })
                 )
 
@@ -94,7 +98,8 @@ private[config] trait ProductBuilder[A, B] {
               ): Config[I] =
                 (a zip b zip c zip d zip e zip ff zip g zip h)
                   .xmap(
-                    { case (((((((aa, bb), cc), dd), ee), fff), ggg), hh) => f(aa, bb, cc, dd, ee, fff, ggg, hh) },
+                    { case (((((((aa, bb), cc), dd), ee), fff), ggg), hh) => f(aa, bb, cc, dd, ee, fff, ggg, hh) }
+                  )(
                     gg(_).map {
                       case (aa, bb, cc, dd, ee, fff, ggg, hh) => (((((((aa, bb), cc), dd), ee), fff), ggg), hh)
                     }
@@ -116,7 +121,8 @@ private[config] trait ProductBuilder[A, B] {
                       {
                         case ((((((((aa, bb), cc), dd), ee), fff), ggg), hh), ii) =>
                           f(aa, bb, cc, dd, ee, fff, ggg, hh, ii)
-                      },
+                      }
+                    )(
                       gg(_).map({
                         case (aa, bb, cc, dd, ee, fff, ggg, hh, ii) =>
                           ((((((((aa, bb), cc), dd), ee), fff), ggg), hh), ii)

@@ -1,7 +1,10 @@
 package zio.config
 
-import zio.config.ConfigError.{ ErrorType, ParseError }
+import java.net.URI
+
+import zio.config.ReadError.{ ErrorType, ParseError }
 import zio.config.syntax.AttemptSyntax
+import zio.config.ReadError.ErrorType
 
 trait PropertyType[A] {
 
@@ -26,11 +29,25 @@ object PropertyType extends AttemptSyntax {
     def write(value: Int): String = value.toString
   }
 
+  case object UriType extends PropertyType[URI] {
+    def description: String = "value of type uri"
+    def read(value: String): Either[ErrorType, URI] =
+      new URI(value).attempt(_ => ParseError(value, "uri"))
+    def write(value: URI): String = value.toString
+  }
+
   case object LongType extends PropertyType[Long] {
     def description: String = "value of type long"
     def read(value: String): Either[ErrorType, Long] =
       value.toLong.attempt(_ => ParseError(value, "long"))
     def write(value: Long): String = value.toString
+  }
+
+  case object ShortType extends PropertyType[Short] {
+    def description: String = "value of type short"
+    def read(value: String): Either[ErrorType, Short] =
+      value.toShort.attempt(_ => ParseError(value, "short"))
+    def write(value: Short): String = value.toString
   }
 
   case object DoubleType extends PropertyType[Double] {
@@ -42,7 +59,7 @@ object PropertyType extends AttemptSyntax {
 
   private[config] def ofOption[A](propertyType: PropertyType[A]): PropertyType[Option[A]] =
     new PropertyType[Option[A]] {
-      override def read(value: String): Either[ConfigError.ErrorType, Option[A]] =
+      override def read(value: String): Either[ReadError.ErrorType, Option[A]] =
         propertyType.read(value) match {
           case Right(v) => Right(Some(v))
           case Left(v)  => Left(v)
