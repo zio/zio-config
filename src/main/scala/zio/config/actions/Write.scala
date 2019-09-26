@@ -1,9 +1,9 @@
 package zio.config.actions
 
-import zio.config.{ Config, KeyValue }
+import zio.config.{ Config, KeyValue, WriteError }
 import zio.ZIO
 
-final case class Write[A](run: ZIO[A, Nothing, KeyValue])
+final case class Write[A](run: ZIO[A, WriteError, KeyValue])
 
 object Write {
 
@@ -23,13 +23,21 @@ object Write {
       case Config.Xmap(c, _, to) =>
         Write(ZIO.accessM(b => write(c).run.provide(to(b))))
 
-      case Config.OnError(c, _, _) => Write(write(c).run)
+      case Config.OnError(c, _) => {
+        Write(ZIO.accessM(b => write(c).run.provide(b)))
+      }
 
-      case Config.Map(c, _) => Write(write(c).run)
+      case Config.ErrorXMap(c, _, to) =>
+        Write(ZIO.accessM(b => {
+          to(b) match {
+            case Right(before) => {
+              write(c).run.provide(before)
+            }
+            case Left(error) => ZIO.fail(error)
+          }
+        }))
 
-      case Config.ErrorMap(c, _) => Write(write(c).run)
-
-      case Config.OrElseEither(left, right) =>
+      case Config.Or(left, right) =>
         Write(ZIO.accessM(env => env.fold(a => write(left).run.provide(a), b => write(right).run.provide(b))))
 
       case Config.Zip(config1, config2) =>

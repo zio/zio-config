@@ -8,3 +8,4 @@ project/secrets.tar.xz
 project/zecret
 target
 test-output/
+.DS_Store

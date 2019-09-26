@@ -2,8 +2,8 @@ package zio.config.examples
 
 import zio.{ DefaultRuntime }
 import zio.config._
-import zio.config.ConfigError.MissingValue
-import zio.config.{ Config, ConfigError, ConfigSource }
+import zio.config.ReadError.MissingValue
+import zio.config.{ Config, ConfigSource, ReadError }
 
 object CoproductExample extends App {
   final case class Ldap(value: String)  extends AnyVal
@@ -13,7 +13,7 @@ object CoproductExample extends App {
   case class Dev(user: String, password: Int, dburl: Double)
 
   val prod =
-    (string("x1").map(Ldap) <*> string("x2").map(DbUrl))(Prod.apply, Prod.unapply)
+    (string("x1").xmap(Ldap)(_.value) <*> string("x2").xmap(DbUrl)(_.value))(Prod.apply, Prod.unapply)
 
   val dev =
     (string("x3") <*> int("x4") <*> double("x5"))(Dev.apply, Dev.unapply)
@@ -63,8 +63,8 @@ object CoproductExample extends App {
     runtime.unsafeRun(read(prodOrDev).run.provide(invalidSource).either) ==
       Left(
         List(
-          ConfigError(Seq("x1"), MissingValue),
-          ConfigError(Seq("x5"), ConfigError.ParseError("notadouble", "double"))
+          ReadError(Seq("x1"), MissingValue),
+          ReadError(Seq("x5"), ReadError.ParseError("notadouble", "double"))
         )
       )
   )
