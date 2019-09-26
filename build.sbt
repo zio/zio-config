@@ -42,6 +42,6 @@ lazy val zioConfig = project
   .settings(buildInfoSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % "1.0.0-RC12-1"
+      "dev.zio" %% "zio" % "1.0.0-RC13"
     )
   )
