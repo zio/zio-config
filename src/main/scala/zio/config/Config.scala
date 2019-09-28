@@ -1,11 +1,11 @@
 package zio.config
 
-abstract class Config[A] {
+sealed trait Config[A] {
   self =>
   def zip[B](that: => Config[B]): Config[(A, B)] = Config.Zip(self, that)
 
-  def mapEither[B](f: A => Either[ReadError, B])(g: B => Either[WriteError, A]): Config.ErrorXMap[A, B] =
-    Config.ErrorXMap(self, f, g)
+  def mapEither[B](f: A => Either[ReadError, B])(g: B => Either[WriteError, A]): Config.MapEither[A, B] =
+    Config.MapEither(self, f, g)
 
   def onError(f: => List[ReadError] => A): Config[A] = Config.OnError(self, f)
 
@@ -20,7 +20,7 @@ object Config {
 
   final case class Source[A](path: String, propertyType: PropertyType[A]) extends Config[A]
 
-  final case class ErrorXMap[A, B](config: Config[A], f: A => Either[ReadError, B], g: B => Either[WriteError, A])
+  final case class MapEither[A, B](config: Config[A], f: A => Either[ReadError, B], g: B => Either[WriteError, A])
       extends Config[B]
 
   final case class OnError[A](config: Config[A], f: List[ReadError] => A) extends Config[A]

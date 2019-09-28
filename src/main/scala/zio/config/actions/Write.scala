@@ -29,7 +29,7 @@ object Write {
           )
         )
 
-      case Config.ErrorXMap(c, _, to) =>
+      case Config.MapEither(c, _, to) =>
         Write(ZIO.accessM(b => {
           to(b) match {
             case Right(before) =>

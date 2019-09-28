@@ -46,7 +46,7 @@ object Read {
           )
         )
 
-      case Config.ErrorXMap(c, f, _) =>
+      case Config.MapEither(c, f, _) =>
         Read(read(c).value.flatMap(t => ZIO.fromEither(f(t._2)).bimap(tt => List(tt), res => (t._1, res))))
 
       case Config.OnError(c, f) =>

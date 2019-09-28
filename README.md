@@ -50,12 +50,9 @@ object ReadConfig extends App {
     } yield ()
 
   override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] = {
-    val appLogic =
-        for {
-          result <- myAppLogic.provide(ProgramEnv(mapSource(validConfig).configService))
-        } yield ()
-
-    appLogic.fold(_ => 1, _ => 0)
+    myAppLogic
+    .provide(ProgramEnv(mapSource(validConfig).configService))
+    .fold(_ => 1, _ => 0)
   }
 }
 
