@@ -6,8 +6,6 @@ import zio.ZIO
 final case class Write[A](run: ZIO[A, WriteError, KeyValue])
 
 object Write {
-
-  // Write
   final def write[A](config: Config[A]): Write[A] =
     config match {
       case Config.Source(path, propertyType) =>

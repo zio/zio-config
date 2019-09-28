@@ -3,15 +3,15 @@ package zio.config
 import org.scalacheck.{ Gen, Properties }
 import zio.config.testsupport.TestSupport
 
-object ListAndOptionalTests extends Properties("Simple operations") with TestSupport {
+object ListAndOptionalTests extends Properties("List and options tests") with TestSupport {
 
-  val genId = genSymbol(1, 5).map(Id)
-  val genOverallConfig =
-    for {
-      ids <- Gen.option(genId)
-    } yield OverallConfig(ids)
+  private val genId = genSymbol(1, 5).map(Id)
+
+  private val genOverallConfig =
+    Gen.option(genId).map(OverallConfig)
 
   val cId: Config[Id] = string("kId").xmap(Id)(_.value)
+
   val cOverallConfig: Config[OverallConfig] =
     opt(cId).xmap(OverallConfig)(_.list)
 
