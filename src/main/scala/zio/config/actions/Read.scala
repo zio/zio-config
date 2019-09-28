@@ -19,10 +19,9 @@ object Read {
     config match {
       case Config.Source(path, propertyType) =>
         Read(
-          ZIO.accessM[(Ref[ConfigReport], ConfigSource)](
-            modules => {
-              val configSource = modules._2.configService
-              val report       = modules._1
+          ZIO.accessM[(Ref[ConfigReport], ConfigSource)] {
+            case (report, source) =>
+              val configSource = source.configService
 
               for {
                 values <- configSource
@@ -43,8 +42,7 @@ object Read {
                                }
                          }
               } yield result
-            }
-          )
+          }
         )
 
       case Config.Sources(propertyType, paths) =>
@@ -54,7 +52,9 @@ object Read {
         }
 
       case Config.ErrorXMap(c, f, _) =>
-        Read(read(c).value.flatMap(t => ZIO.fromEither(f(t._2)).bimap(tt => List(tt), res => (t._1, res))))
+        Read(read(c).value.flatMap {
+          case (report, src) => ZIO.fromEither(f(src)).bimap(tt => List(tt), res => (report, res))
+        })
 
       case Config.OnError(c, f) =>
         Read(ZIO.accessM[(Ref[ConfigReport], ConfigSource)](modules => {
