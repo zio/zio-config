@@ -15,24 +15,28 @@ object Write {
           KeyValue(Map(path -> propertyType.write(aa)))
         }))
 
-      case Config.Sources(propertyType, paths) =>
-        Write(ZIO.access(aa => {
-          KeyValue(paths.foldLeft(Map.empty[String, String])((m, path) => Map(path -> propertyType.write(aa)) ++ m))
-        }))
-
       case Config.Xmap(c, _, to) =>
         Write(ZIO.accessM(b => write(c).run.provide(to(b))))
 
-      case Config.OnError(c, _) => {
-        Write(ZIO.accessM(b => write(c).run.provide(b)))
-      }
+      case Config.OnError(c, _) =>
+        Write(
+          ZIO.accessM(
+            b =>
+              write(c).run
+                .provide(b)
+                .fold(
+                  _ => KeyValue(Map.empty),
+                  success => success
+                )
+          )
+        )
 
       case Config.ErrorXMap(c, _, to) =>
         Write(ZIO.accessM(b => {
           to(b) match {
-            case Right(before) => {
+            case Right(before) =>
               write(c).run.provide(before)
-            }
+
             case Left(error) => ZIO.fail(error)
           }
         }))
