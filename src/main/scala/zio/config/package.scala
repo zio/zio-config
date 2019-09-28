@@ -4,7 +4,7 @@ import java.net.URI
 
 import zio.config.actions.{ Read, Report, Write }
 
-package object config extends ConfigSyntax with Sources with PropertyInstances {
+package object config extends ConfigSyntax with Sources {
   def int(path: String): Config[Int]       = Config.Source(path, PropertyType.IntType)
   def double(path: String): Config[Double] = Config.Source(path, PropertyType.DoubleType)
   def string(path: String): Config[String] = Config.Source(path, PropertyType.StringType)

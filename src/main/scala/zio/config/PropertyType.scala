@@ -2,7 +2,6 @@ package zio.config
 
 import java.net.URI
 
-import zio.config.PropertyType.{ ofList, DoubleType, IntType, LongType, ShortType, StringType, UriType }
 import zio.config.ReadError.{ ErrorType, ParseError }
 import zio.config.syntax.AttemptSyntax
 import zio.config.ReadError.ErrorType
@@ -93,15 +92,4 @@ object PropertyType extends AttemptSyntax {
 
   private def sequence[A, B](fa: List[Either[A, B]]): Either[A, List[B]] =
     fa.foldRight(Right[A, List[B]](Nil: List[B]): Either[A, List[B]])((a, b) => map2(a, b)((c, d) => c :: d))
-}
-
-trait PropertyInstances {
-  implicit val stringIn: PropertyType[String]                     = StringType
-  implicit val intIn: PropertyType[Int]                           = IntType
-  implicit val shortIn: PropertyType[Short]                       = ShortType
-  implicit val uriIn: PropertyType[URI]                           = UriType
-  implicit val longIn: PropertyType[Long]                         = LongType
-  implicit val doubleIn: PropertyType[Double]                     = DoubleType
-  implicit def listIn[A: PropertyType]: PropertyType[List[A]]     = ofList(PropertyType[A])
-  implicit def optionIn[A: PropertyType]: PropertyType[Option[A]] = PropertyType.ofOption(PropertyType[A])
 }
