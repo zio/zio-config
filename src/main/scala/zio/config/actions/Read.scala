@@ -1,8 +1,7 @@
 package zio.config.actions
 
-import zio.config.Details
+import zio.config.{ Config, ConfigReport, ConfigSource, Details, ReadError }
 import zio.config.ReadError.MissingValue
-import zio.config.{ Config, ConfigReport, ConfigSource, ReadError }
 import zio.{ Ref, ZIO }
 
 case class Read[A] private (value: ZIO[(Ref[ConfigReport], ConfigSource), List[ReadError], (ConfigReport, A)]) {
@@ -15,7 +14,7 @@ case class Read[A] private (value: ZIO[(Ref[ConfigReport], ConfigSource), List[R
 
 object Read {
   // Read
-  final def read[A](config: Config[A]): Read[A] =
+  final def read[A](config: => Config[A]): Read[A] =
     config match {
       case Config.Source(path, propertyType) =>
         Read(
@@ -45,13 +44,7 @@ object Read {
           }
         )
 
-      case Config.Sources(propertyType, paths) =>
-        paths.toList match {
-          case h :: t => read(Config.Source(h, propertyType) | Config.Sources(propertyType, t))
-          case Nil    => Read(ZIO.fail(Nil))
-        }
-
-      case Config.ErrorXMap(c, f, _) =>
+      case Config.MapEither(c, f, _) =>
         Read(read(c).value.flatMap {
           case (report, src) => ZIO.fromEither(f(src)).bimap(tt => List(tt), res => (report, res))
         })

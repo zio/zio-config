@@ -15,15 +15,19 @@ import zio.config._
  */
 object ReadWriteReport extends App {
 
-  case class UserPwd(name: String, pwd: String)
+  case class Password(value: String)
+  case class UserPwd(name: String, pwd: Option[Password], anonymouse: Option[String])
   case class Token(value: String, clientid: String)
 
   type ProdConfig = Either[UserPwd, Token]
 
   // An example where user provides a description once and for all, and use it for read, write, report!
   val config: Config[ProdConfig] =
-    (string("user") <*> string("password", "pwd"))(UserPwd.apply, UserPwd.unapply) or
-      (string("auth_token", "token") <*> string("clientid", "CLIENT_ID"))(Token.apply, Token.unapply)
+    (string("user") <*> opt(string("pwd").xmap(Password)(_.value)) <*> opt(string("anonymous")))(
+      UserPwd.apply,
+      UserPwd.unapply
+    ) or
+      (string("auth_token") <*> string("clientid"))(Token.apply, Token.unapply)
 
   val runtime = new DefaultRuntime {}
 
@@ -40,8 +44,10 @@ object ReadWriteReport extends App {
     runtime.unsafeRun(read(config).run.provide(source).map(_._2))
 
   assert(
-    result == Left(UserPwd("v1", "v2"))
+    result == Left(UserPwd("v1", Some(Password("v2")), None))
   )
+
+  println(runtime.unsafeRun(report(config).run.provide(source)))
 
   // Want docs ?
   assert(
@@ -58,9 +64,8 @@ object ReadWriteReport extends App {
   assert(
     runtime.unsafeRun(write(config).run.provide(result).map(_.allConfig)) ==
       Map(
-        "user"     -> "v1",
-        "password" -> "v2",
-        "pwd"      -> "v2"
+        "user" -> "v1",
+        "pwd"  -> "v2"
       )
   )
 }

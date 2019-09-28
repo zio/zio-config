@@ -16,6 +16,8 @@ trait PropertyType[A] {
 }
 
 object PropertyType extends AttemptSyntax {
+  def apply[A](implicit ev: PropertyType[A]): PropertyType[A] = ev
+
   case object StringType extends PropertyType[String] {
     override def description: String                            = "value of type string"
     override def read(value: String): Either[ErrorType, String] = Right(value)

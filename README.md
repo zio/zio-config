@@ -9,9 +9,12 @@ Configuration parsing should be easy as it sounds - Hence;
 
  * It has no other dependencies.
  * No macros / no reflection
+ * No implicit requirements at user site.
+ * Can write the config back to key value pairs, given the same config description. 
+   Allows user to generate and populate configurations in the system-env/property-files in a typesafe way from outside, ensuring successful parsing in the app.
+ * Automatic description and report generation on the config variables.
  * Can accumulate maximum errors.
  * Insanely simple to use
- * The usage pattern is going gel well with the pattern with zio environment, with `ConfigService` being available in your environment. Refer http://degoes.net/articles/zio-environment
 
 
 ## Usage
@@ -20,14 +23,14 @@ Configuration parsing should be easy as it sounds - Hence;
 
 import zio.{App, ZIO}
 import zio.config._
+import zio.console.Console
 
 object ReadConfig extends App {
-  case class Prod(ldap: String, dburl: Option[String], regions: List[Int])
+  case class Prod(ldap: String, dburl: Option[String])
 
   private val config =
     (string("LDAP") <*>
-      opt(string("DB_URL")) <*>
-      list(int("REGIONS")))(Prod.apply, Prod.unapply)
+      opt(string("DB_URL")))(Prod.apply, Prod.unapply)
 
   // In real, this comes from environment
   private val validConfig =
@@ -36,29 +39,40 @@ object ReadConfig extends App {
       "DB_URL"  -> "v2",
       "REGIONS" -> "1,2"
     )
+    
+  val myAppLogic: ZIO[Console with ConfigSource, List[ReadError], Unit] = 
+    for {
+      result <- read(config).run
+      (report, conf) = result
+      _ <- ZIO.accessM[Console](_.console.putStrLn(report.toString))
+      _ <- ZIO.accessM[Console](_.console.putStrLn(conf.toString))
+      map <- write(config).run.provide(conf).either
+      _ <- ZIO.accessM[Console](_.console.putStrLn(map.toString))
+    } yield ()
 
   override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] = {
-    val appLogic =
-        for {
-          result <- read(config).run.provide(mapSource(validConfig))
-          (report, pgmConf) = result
-          _ <- if (report.list == List(
-            Details("REGIONS", "1,2", "list of value of type int"),
-            Details("DB_URL", "v2", "option of value of type string"),
-            Details("LDAP", "v1", "value of type string")
-          )) ZIO.succeed(()) else ZIO.fail(())
-          configEnv <- write(config).run.provide(pgmConf)
-          _ <- if (configEnv.allConfig == Map(
-            "LDAP" -> "v1",
-            "DB_URL"  -> "v2",
-            "REGIONS" -> "1,2",
-          )) ZIO.succeed(()) else ZIO.fail(())
-        } yield ()
-
-    appLogic.fold(_ => 1, _ => 0)
+    myAppLogic
+    .provide(ProgramEnv(mapSource(validConfig).configService))
+    .fold(_ => 1, _ => 0)
   }
 }
 
+case class ProgramEnv(configService: ConfigSource.Service) extends ConfigSource with Console.Live
+
+//  
+// 
+// Report:
+//
+// List(
+//   Details("DB_URL", "v2", "option of value of type string"),
+//   Details("LDAP", "v1", "value of type string")
+// )
+//
+// Config:
+//
+//  Prod(v1, Some(v2)
+//
+//
 
 ```
 
