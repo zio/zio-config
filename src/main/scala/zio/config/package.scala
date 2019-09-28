@@ -14,7 +14,7 @@ package object config extends ConfigSyntax with Sources {
 
   type ConfigOption[A] = Config[Option[A]]
 
-  def opt[A](config: Config[A]): Config[Option[A]] =
+  def opt[A](config: => Config[A]): Config[Option[A]] =
     config
       .mapEither[Option[A]](a => Right(Some(a)))({
         case Some(value) => Right(value)
@@ -22,7 +22,7 @@ package object config extends ConfigSyntax with Sources {
       })
       .onError(_ => None)
 
-  def read[A](config: Config[A]): Read[A]     = Read.read[A](config)
-  def write[A](config: Config[A]): Write[A]   = Write.write[A](config)
-  def report[A](config: Config[A]): Report[A] = Report.report[A](config)
+  def read[A](config: => Config[A]): Read[A]     = Read.read[A](config)
+  def write[A](config: => Config[A]): Write[A]   = Write.write[A](config)
+  def report[A](config: => Config[A]): Report[A] = Report.report[A](config)
 }

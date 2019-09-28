@@ -14,7 +14,7 @@ case class Read[A] private (value: ZIO[(Ref[ConfigReport], ConfigSource), List[R
 
 object Read {
   // Read
-  final def read[A](config: Config[A]): Read[A] =
+  final def read[A](config: => Config[A]): Read[A] =
     config match {
       case Config.Source(path, propertyType) =>
         Read(

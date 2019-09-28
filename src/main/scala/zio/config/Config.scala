@@ -13,12 +13,6 @@ abstract class Config[A] {
 
   def <+>[B](that: => Config[B]): Config[Either[A, B]] = self or that
 
-  def |(that: Config[A]): Config[A] =
-    (self <+> that).xmap({
-      case Right(value) => value
-      case Left(value)  => value
-    })(value => Right(value))
-
   def xmap[B](to: A => B)(from: B => A): Config[B] = Config.Xmap(self, to, from)
 }
 
