@@ -4,7 +4,7 @@ import java.net.URI
 
 import zio.config.actions.{ Read, Report, Write }
 
-package object config extends ConfigSyntax with Sources {
+package object config extends Sources {
   def int(path: String): Config[Int]       = Config.Source(path, PropertyType.IntType)
   def double(path: String): Config[Double] = Config.Source(path, PropertyType.DoubleType)
   def string(path: String): Config[String] = Config.Source(path, PropertyType.StringType)
@@ -25,4 +25,6 @@ package object config extends ConfigSyntax with Sources {
   def read[A](config: => Config[A]): Read[A]     = Read.read[A](config)
   def write[A](config: => Config[A]): Write[A]   = Write.write[A](config)
   def report[A](config: => Config[A]): Report[A] = Report.report[A](config)
+
+  def getConfigValue(path: String): ZIO[ConfigSource, Unit, String] = ZIO.accessM(_.configService.getConfigValue(path))
 }
