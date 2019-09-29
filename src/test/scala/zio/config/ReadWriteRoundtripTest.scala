@@ -18,7 +18,12 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       count  <- genFor[Int]
       factor <- genFor[Double]
     } yield NestedConfig(auth, count, factor)
-  val genCoproductConfig = Gen.either(Gen.option(genId), genNestedConfig).map(CoproductConfig)
+  val genDataItem =
+    for {
+      oid   <- Gen.option(genId)
+      count <- genFor[Int]
+    } yield DataItem(oid, count)
+  val genCoproductConfig = Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
 
   val cId: Config[Id]       = string("kId").xmap(Id)(_.value)
   val cDbUrl: Config[DbUrl] = string("kDbUrl").xmap(DbUrl)(_.value)
@@ -33,8 +38,13 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       NestedConfig.unapply
     )
   val cId2: Config[Id] = string("kId2").xmap(Id)(_.value)
+  val cDataItem: Config[DataItem] =
+    (opt(cId2) <*> int("kDiCount"))(
+      DataItem.apply,
+      DataItem.unapply
+    )
   val cCoproductConfig: Config[CoproductConfig] =
-    (opt(cId2) or cNestedConfig)
+    (cDataItem or cNestedConfig)
       .xmap(CoproductConfig)(_.coproduct)
 
   property("newtype 1 roundtrip") = forAllZIO(genId) { p =>
@@ -77,16 +87,15 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     p2.shouldBe(p)
   }
 
-  // TODO inhibited failing test until fixed
-  //  property("coproduct roundtrip") = forAllZIO(genCoproductConfig) { p =>
-  //    val p2 =
-  //      for {
-  //        written <- write(cCoproductConfig).run.provide(p)
-  //        reread  <- read(cCoproductConfig).run.provide(mapSource(written.allConfig))
-  //      } yield reread._2
-  //
-  //    p2.shouldBe(p)
-  //  }
+  property("coproduct roundtrip") = forAllZIO(genCoproductConfig) { p =>
+    val p2 =
+      for {
+        written <- write(cCoproductConfig).run.provide(p)
+        reread  <- read(cCoproductConfig).run.provide(mapSource(written.allConfig))
+      } yield reread._2
+
+    p2.shouldBe(p)
+  }
 
   ////
 
@@ -94,6 +103,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   final case class DbUrl(value: String) extends AnyVal
   final case class EnterpriseAuth(id: Id, dburl: DbUrl)
   final case class NestedConfig(enterpriseAuth: EnterpriseAuth, count: Int, factor: Double)
-  final case class CoproductConfig(coproduct: Either[Option[Id], NestedConfig])
+  final case class DataItem(oid: Option[Id], count: Int)
+  final case class CoproductConfig(coproduct: Either[DataItem, NestedConfig])
 
 }
