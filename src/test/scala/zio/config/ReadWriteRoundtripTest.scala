@@ -1,7 +1,6 @@
 package zio.config
 
 import org.scalacheck.Properties
-import zio.ZIO
 import zio.config.testsupport.TestSupport
 
 object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestSupport {
@@ -84,15 +83,10 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     p2.shouldBe(p)
   }
 
-  // Note: Config doesn't handle the same type appearing twice in the configuration graph
   property("coproduct roundtrip") = forAllZIO(genCoproductConfig) { p =>
     val p2 =
       for {
-        _       <- ZIO(println("============"))
-        _       <- ZIO(println(p))
         written <- write(cCoproductConfig).run.provide(p)
-        _       = println(written)
-        _       = println("============")
         reread  <- read(cCoproductConfig).run.provide(mapSource(written.allConfig))
       } yield reread._2
 

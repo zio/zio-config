@@ -17,7 +17,6 @@ object OperationsTest extends Properties("Simple operations") with TestSupport {
     (opt(cId))
       .xmap(OverallConfig)(_.opt)
 
-  // Note: Config doesn't handle the same type appearing twice in the configuration graph
   property("opt write") = forAllZIO(genOverallConfig) { p =>
     write(cOverallConfig).run
       .provide(p)
