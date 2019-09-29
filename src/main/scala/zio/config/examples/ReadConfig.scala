@@ -14,9 +14,8 @@ object ReadConfig extends App {
   // In real, this comes from environment
   private val validConfig =
     Map(
-      "LDAP"    -> "v1",
-      "DB_URL"  -> "v2",
-      "REGIONS" -> "1,2"
+      "LDAP"   -> "v1",
+      "DB_URL" -> "v2"
     )
 
   val myAppLogic: ZIO[Console with ConfigSource, List[ReadError], Unit] =
