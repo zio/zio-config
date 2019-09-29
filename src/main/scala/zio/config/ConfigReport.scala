@@ -2,7 +2,7 @@ package zio.config
 
 final case class Details(key: String, value: String, description: String) {
   override def toString: String =
-    s"path:$key, value:$value,  description:$description"
+    s"path:$key, value:$value, description:$description"
 }
 
 final case class ConfigReport(list: List[Details]) {
