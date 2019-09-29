@@ -12,12 +12,12 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
       id    <- genId
       dburl <- genDbUrl
     } yield EnterpriseAuth(id, dburl)
-  val genNestedStuff =
+  val genNestedConfig =
     for {
       auth   <- genEnterpriseAuth
       count  <- genFor[Int]
       factor <- genFor[Double]
-    } yield NestedStuff(auth, count, factor)
+    } yield NestedConfig(auth, count, factor)
 
   val cIdLeft: Config[Id]       = string("klId").xmap(Id)(_.value)
   val cDbUrlLeft: Config[DbUrl] = string("klDbUrl").xmap(DbUrl)(_.value)
@@ -26,10 +26,10 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
       EnterpriseAuth.apply,
       EnterpriseAuth.unapply
     )
-  val cNestedStuffLeft: Config[NestedStuff] =
+  val cNestedConfigLeft: Config[NestedConfig] =
     (cEnterpriseAuthLeft <*> int("klCount") <*> double("klFactor"))(
-      NestedStuff.apply,
-      NestedStuff.unapply
+      NestedConfig.apply,
+      NestedConfig.unapply
     )
 
   val cIdRight: Config[Id]       = string("krId").xmap(Id)(_.value)
@@ -39,17 +39,17 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
       EnterpriseAuth.apply,
       EnterpriseAuth.unapply
     )
-  val cNestedStuffRight: Config[NestedStuff] =
+  val cNestedConfigRight: Config[NestedConfig] =
     (cEnterpriseAuthRight <*> int("krCount") <*> double("krFactor"))(
-      NestedStuff.apply,
-      NestedStuff.unapply
+      NestedConfig.apply,
+      NestedConfig.unapply
     )
 
   val cCoproductConfig: Config[CoproductConfig] =
-    (cNestedStuffLeft or cNestedStuffRight)
+    (cNestedConfigLeft or cNestedConfigRight)
       .xmap(CoproductConfig)(_.coproduct)
 
-  property("coproduct should yield same config representation on both sides of Either") = forAllZIO(genNestedStuff) {
+  property("coproduct should yield same config representation on both sides of Either") = forAllZIO(genNestedConfig) {
     p =>
       val lr =
         for {
@@ -72,7 +72,7 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
   final case class Id(value: String)    extends AnyVal
   final case class DbUrl(value: String) extends AnyVal
   final case class EnterpriseAuth(id: Id, dburl: DbUrl)
-  final case class NestedStuff(enterpriseAuth: EnterpriseAuth, count: Int, factor: Double)
-  final case class CoproductConfig(coproduct: Either[NestedStuff, NestedStuff])
+  final case class NestedConfig(enterpriseAuth: EnterpriseAuth, count: Int, factor: Double)
+  final case class CoproductConfig(coproduct: Either[NestedConfig, NestedConfig])
 
 }
