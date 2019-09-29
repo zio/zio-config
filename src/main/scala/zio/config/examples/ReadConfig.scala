@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.{App, ZIO}
+import zio.{ App, ZIO }
 import zio.config._
 import zio.console.Console
 
@@ -20,22 +20,22 @@ object ReadConfig extends App {
     )
 
   val myAppLogic: ZIO[Console with ConfigSource, List[ReadError], Unit] =
-    ZIO.accessM(env =>
-      for {
-        result <- read(config).run
-        (report, conf) = result
-        _ <- env.console.putStrLn(report.toString)
-        _ <- env.console.putStrLn(conf.toString)
-        map <- write(config).run.provide(conf).either
-        _ <- env.console.putStrLn(map.toString)
-      } yield ()
+    ZIO.accessM(
+      env =>
+        for {
+          result         <- read(config).run
+          (report, conf) = result
+          _              <- env.console.putStrLn(report.toString)
+          _              <- env.console.putStrLn(conf.toString)
+          map            <- write(config).run.provide(conf).either
+          _              <- env.console.putStrLn(map.toString)
+        } yield ()
     )
 
-  override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] = {
+  override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] =
     myAppLogic
-    .provide(ProgramEnv(mapSource(validConfig).configService))
-    .fold(_ => 1, _ => 0)
-  }
+      .provide(ProgramEnv(mapSource(validConfig).configService))
+      .fold(_ => 1, _ => 0)
 }
 
 case class ProgramEnv(configService: ConfigSource.Service) extends ConfigSource with Console.Live
