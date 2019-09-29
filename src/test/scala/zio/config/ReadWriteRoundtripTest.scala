@@ -1,6 +1,6 @@
 package zio.config
 
-import org.scalacheck.Properties
+import org.scalacheck.{ Gen, Properties }
 import zio.config.testsupport.TestSupport
 
 object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestSupport {
@@ -12,19 +12,13 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       id    <- genId
       dburl <- genDbUrl
     } yield EnterpriseAuth(id, dburl)
-  val genNestedStuff =
+  val genNestedConfig =
     for {
       auth   <- genEnterpriseAuth
       count  <- genFor[Int]
       factor <- genFor[Double]
-    } yield NestedStuff(auth, count, factor)
-  val genCoproductConfig =
-    for {
-      id     <- genId
-      nested <- genNestedStuff
-      isLeft <- genBoolean
-      isNone <- genBoolean
-    } yield CoproductConfig(if (isLeft) Left(if (isNone) None else Some(id)) else Right(nested))
+    } yield NestedConfig(auth, count, factor)
+  val genCoproductConfig = Gen.either(Gen.option(genId), genNestedConfig).map(CoproductConfig)
 
   val cId: Config[Id]       = string("kId").xmap(Id)(_.value)
   val cDbUrl: Config[DbUrl] = string("kDbUrl").xmap(DbUrl)(_.value)
@@ -33,14 +27,14 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       EnterpriseAuth.apply,
       EnterpriseAuth.unapply
     )
-  val cNestedStuff: Config[NestedStuff] =
+  val cNestedConfig: Config[NestedConfig] =
     (cEnterpriseAuth <*> int("kCount") <*> double("kFactor"))(
-      NestedStuff.apply,
-      NestedStuff.unapply
+      NestedConfig.apply,
+      NestedConfig.unapply
     )
   val cId2: Config[Id] = string("kId2").xmap(Id)(_.value)
   val cCoproductConfig: Config[CoproductConfig] =
-    (opt(cId2) or cNestedStuff)
+    (opt(cId2) or cNestedConfig)
       .xmap(CoproductConfig)(_.coproduct)
 
   property("newtype 1 roundtrip") = forAllZIO(genId) { p =>
@@ -73,11 +67,11 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     p2.shouldBe(p)
   }
 
-  property("nested case class roundtrip") = forAllZIO(genNestedStuff) { p =>
+  property("nested case class roundtrip") = forAllZIO(genNestedConfig) { p =>
     val p2 =
       for {
-        written <- write(cNestedStuff).run.provide(p)
-        reread  <- read(cNestedStuff).run.provide(mapSource(written.allConfig))
+        written <- write(cNestedConfig).run.provide(p)
+        reread  <- read(cNestedConfig).run.provide(mapSource(written.allConfig))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -99,7 +93,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   final case class Id(value: String)    extends AnyVal
   final case class DbUrl(value: String) extends AnyVal
   final case class EnterpriseAuth(id: Id, dburl: DbUrl)
-  final case class NestedStuff(enterpriseAuth: EnterpriseAuth, count: Int, factor: Double)
-  final case class CoproductConfig(coproduct: Either[Option[Id], NestedStuff])
+  final case class NestedConfig(enterpriseAuth: EnterpriseAuth, count: Int, factor: Double)
+  final case class CoproductConfig(coproduct: Either[Option[Id], NestedConfig])
 
 }
