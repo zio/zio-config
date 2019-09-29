@@ -39,6 +39,16 @@ object ReadConfig extends App {
       "DB_URL"  -> "v2",
       "REGIONS" -> "1,2"
     )
+    
+  val myAppLogic: ZIO[Console with ConfigSource, List[ReadError], Unit] = 
+    for {
+      result <- read(config).run
+      (report, conf) = result
+      _ <- ZIO.accessM[Console](_.console.putStrLn(report.toString))
+      _ <- ZIO.accessM[Console](_.console.putStrLn(conf.toString))
+      map <- write(config).run.provide(conf).either
+      _ <- ZIO.accessM[Console](_.console.putStrLn(map.toString))
+    } yield ()
 
   val myAppLogic: ZIO[Console with ConfigSource, List[ReadError], Unit] =
     ZIO.accessM(env =>
