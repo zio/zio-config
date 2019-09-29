@@ -49,7 +49,7 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
     (cNestedStuffLeft or cNestedStuffRight)
       .xmap(CoproductConfig)(_.coproduct)
 
-  property("coproduct should yield same config reresentation on both sides of Either") = forAllZIO(genNestedStuff) {
+  property("coproduct should yield same config representation on both sides of Either") = forAllZIO(genNestedStuff) {
     p =>
       val lr =
         for {
