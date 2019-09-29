@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.{ Task, UIO }
+import zio.{ IO, Task }
 
 trait Sources {
   def envSource: Task[ConfigSource] =
@@ -11,7 +11,7 @@ trait Sources {
 
   def mapSource(map: Map[String, String]): ConfigSource =
     new ConfigSource {
-      def configService: ConfigSource.Service = (path: String) => UIO(map.get(path))
+      val configService: ConfigSource.Service = (path: String) => IO.fromOption(map.get(path))
     }
 
   // TODO HOCON etc as separate modules
