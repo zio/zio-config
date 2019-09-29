@@ -1,13 +1,13 @@
 package zio.config
 
-import zio.UIO
+import zio.IO
 
 trait ConfigSource {
-  def configService: ConfigSource.Service
+  val configService: ConfigSource.Service
 }
 
 object ConfigSource {
   trait Service {
-    def getString(path: String): UIO[Option[String]]
+    def getConfigValue(path: String): IO[Unit, String]
   }
 }
