@@ -12,8 +12,6 @@ package object config extends Sources {
   def short(path: String): Config[Short]   = Config.Source(path, PropertyType.ShortType)
   def uri(path: String): Config[URI]       = Config.Source(path, PropertyType.UriType)
 
-  type ConfigOption[A] = Config[Option[A]]
-
   def opt[A](config: => Config[A]): Config[Option[A]] =
     config
       .mapEither[Option[A]](a => Right(Some(a)))({
@@ -30,16 +28,13 @@ package object config extends Sources {
 
   ////
 
-  type NonEmptyList[A] = ::[A]
+  type ReadErrors = ::[ReadError]
 
-  object NonEmptyList {
-    def apply[A](a: A, tail: A*): NonEmptyList[A] =
-      ::(a, tail.toList)
+  object ReadErrors {
+    def apply(a: ReadError, as: ReadError*): ReadErrors =
+      ::(a, as.toList)
 
-    def concat[A](lerr: NonEmptyList[A], rerr: NonEmptyList[A]): NonEmptyList[A] =
-      ::(lerr.head, lerr.tail ++ rerr)
+    def concat(l: ReadErrors, r: ReadErrors): ReadErrors =
+      ::(l.head, l.tail ++ r)
   }
-
-  type ReadErrors = NonEmptyList[ReadError]
-  val ReadErrors: NonEmptyList.type = NonEmptyList
 }
