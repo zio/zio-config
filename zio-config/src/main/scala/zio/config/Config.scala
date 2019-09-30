@@ -7,7 +7,7 @@ sealed trait Config[A] {
   def mapEither[B](f: A => Either[ReadError, B])(g: B => Either[WriteError, A]): Config.MapEither[A, B] =
     Config.MapEither(self, f, g)
 
-  def onError(f: => List[ReadError] => A): Config[A] = Config.OnError(self, f)
+  def onError(f: => ReadErrors => A): Config[A] = Config.OnError(self, f)
 
   def or[B](that: => Config[B]): Config[Either[A, B]] = Config.Or(self, that)
 
@@ -35,7 +35,7 @@ object Config {
   final case class MapEither[A, B](config: Config[A], f: A => Either[ReadError, B], g: B => Either[WriteError, A])
       extends Config[B]
 
-  final case class OnError[A](config: Config[A], f: List[ReadError] => A) extends Config[A]
+  final case class OnError[A](config: Config[A], f: ReadErrors => A) extends Config[A]
 
   final case class Zip[A, B](left: Config[A], right: Config[B]) extends Config[(A, B)]
 

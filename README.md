@@ -30,16 +30,16 @@ object ReadConfig extends App {
 
   private val config =
     (string("LDAP") <*>
-      opt(string("DB_URL")))(Prod.apply, Prod.unapply)
+      string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
   // In real, this comes from environment
   private val validConfig =
     Map(
       "LDAP"    -> "v1",
-      "DB_URL"  -> "v2",
+      "DB_URL"  -> "v2"
     )
     
-  val myAppLogic: ZIO[Console with ConfigSource, List[ReadError], Unit] =
+  val myAppLogic: ZIO[Console with ConfigSource, ReadErrors, Unit] =
     ZIO.accessM(env =>
       for {
         result <- read(config).run
