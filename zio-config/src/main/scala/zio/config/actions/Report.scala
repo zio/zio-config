@@ -1,9 +1,9 @@
 package zio.config.actions
 
-import zio.config.{ Config, ConfigReport, ConfigSource, ReadError }
 import zio.ZIO
+import zio.config.{ Config, ConfigReport, ConfigSource, _ }
 
-case class Report[A](run: ZIO[ConfigSource, List[ReadError], ConfigReport])
+case class Report[A](run: ZIO[ConfigSource, ReadErrors, ConfigReport])
 
 // Report
 object Report {

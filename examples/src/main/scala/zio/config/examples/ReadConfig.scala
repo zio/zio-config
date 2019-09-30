@@ -1,8 +1,8 @@
 package zio.config.examples
 
-import zio.{ App, ZIO }
 import zio.config._
 import zio.console.Console
+import zio.{ App, ZIO }
 
 object ReadConfig extends App {
   case class Prod(ldap: String, dburl: Option[String])
@@ -18,7 +18,7 @@ object ReadConfig extends App {
       "DB_URL" -> "v2"
     )
 
-  val myAppLogic: ZIO[Console with ConfigSource, List[ReadError], Unit] =
+  val myAppLogic: ZIO[Console with ConfigSource, ReadErrors, Unit] =
     ZIO.accessM(
       env =>
         for {
