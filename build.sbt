@@ -33,8 +33,8 @@ ThisBuild / publishTo := sonatypePublishToBundle.value
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-lazy val core =
-  module("core")
+lazy val zioConfig =
+  module("zio-config")
     .enablePlugins(BuildInfoPlugin)
     .settings(
       testFrameworks := Seq(
@@ -46,9 +46,9 @@ lazy val core =
 
 lazy val examples =
   module("examples")
-    .dependsOn(core)
+    .dependsOn(zioConfig)
 
-lazy val allModules = List(core, examples)
+lazy val allModules = List(zioConfig, examples)
 lazy val zioConfigDependencies =
   Seq(
     "dev.zio" %% "zio" % "1.0.0-RC13"
