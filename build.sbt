@@ -64,6 +64,6 @@ lazy val root =
 lazy val zioConfigSettings = stdSettings("zio-config")
 
 def module(moduleName: String): Project =
-  Project(moduleName, file(s"modules/$moduleName"))
+  Project(moduleName, file(moduleName))
     .settings(zioConfigSettings)
     .settings(libraryDependencies ++= zioConfigDependencies)
