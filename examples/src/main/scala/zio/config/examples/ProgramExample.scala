@@ -29,7 +29,7 @@ import bootstrap._
 final case class ProgramConfig(inputPath: String, outputPath: String)
 
 object ProgramExample extends App {
-  val config =
+  private val config =
     (string("INPUT_PATH") <*> string("OUTPUT_PATH"))(ProgramConfig.apply, ProgramConfig.unapply)
 
   // The use of explicit bootstrap instead of (naive approach of forming a ZIO[Any, Throwable, Unit]) is that
