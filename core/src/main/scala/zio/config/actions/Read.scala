@@ -8,10 +8,10 @@ case class Read[A](run: ZIO[ConfigSource, List[ReadError], (ConfigReport, A)]) {
 object Read {
   // Read
   final def read[A](configuration: Config[A]): Read[A] = {
-    def loop[A](
-      configuration: Config[A],
+    def loop[B](
+      configuration: Config[B],
       report: Ref[ConfigReport]
-    ): ZIO[ConfigSource, List[ReadError], (ConfigReport, A)] =
+    ): ZIO[ConfigSource, List[ReadError], (ConfigReport, B)] =
       configuration match {
         case Config.Source(path, propertyType) =>
           for {
@@ -38,7 +38,7 @@ object Read {
             _ =>
               loop(c, report).foldM(
                 failure =>
-                  report.get.flatMap[Any, List[ReadError], (ConfigReport, A)](r => ZIO.succeed((r, f(failure)))),
+                  report.get.flatMap[Any, List[ReadError], (ConfigReport, B)](r => ZIO.succeed((r, f(failure)))),
                 UIO(_)
               )
           )

@@ -18,7 +18,7 @@ object ListAndOptionalTests extends Properties("List and options tests") with Te
   property("optional write") = forAllZIO(genOverallConfig) { p =>
     write(cOverallConfig).run
       .provide(p)
-      .shouldBe(KeyValue(p.list.map(t => Map("kId" -> t.value)).getOrElse(Map.empty[String, String])))
+      .shouldBe(p.list.map(t => Map("kId" -> t.value)).getOrElse(Map.empty[String, String]))
   }
 
   final case class Id(value: String) extends AnyVal

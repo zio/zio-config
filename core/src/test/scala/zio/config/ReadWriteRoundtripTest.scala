@@ -5,45 +5,45 @@ import zio.config.testsupport.TestSupport
 
 object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestSupport {
 
-  val genId    = genSymbol(1, 5).map(Id)
-  val genDbUrl = genNonEmptyString(20).map(DbUrl)
-  val genEnterpriseAuth =
+  private val genId    = genSymbol(1, 5).map(Id)
+  private val genDbUrl = genNonEmptyString(20).map(DbUrl)
+  private val genEnterpriseAuth =
     for {
       id    <- genId
       dburl <- genDbUrl
     } yield EnterpriseAuth(id, dburl)
-  val genNestedConfig =
+  private val genNestedConfig =
     for {
       auth   <- genEnterpriseAuth
       count  <- genFor[Int]
       factor <- genFor[Double]
     } yield NestedConfig(auth, count, factor)
-  val genDataItem =
+  private val genDataItem =
     for {
       oid   <- Gen.option(genId)
       count <- genFor[Int]
     } yield DataItem(oid, count)
-  val genCoproductConfig = Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
+  private val genCoproductConfig = Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
 
-  val cId: Config[Id]       = string("kId").xmap(Id)(_.value)
-  val cDbUrl: Config[DbUrl] = string("kDbUrl").xmap(DbUrl)(_.value)
-  val cEnterpriseAuth: Config[EnterpriseAuth] =
+  private val cId: Config[Id]       = string("kId").xmap(Id)(_.value)
+  private val cDbUrl: Config[DbUrl] = string("kDbUrl").xmap(DbUrl)(_.value)
+  private val cEnterpriseAuth: Config[EnterpriseAuth] =
     (cId <*> cDbUrl)(
       EnterpriseAuth.apply,
       EnterpriseAuth.unapply
     )
-  val cNestedConfig: Config[NestedConfig] =
+  private val cNestedConfig: Config[NestedConfig] =
     (cEnterpriseAuth <*> int("kCount") <*> double("kFactor"))(
       NestedConfig.apply,
       NestedConfig.unapply
     )
-  val cId2: Config[Id] = string("kId2").xmap(Id)(_.value)
-  val cDataItem: Config[DataItem] =
+  private val cId2: Config[Id] = string("kId2").xmap(Id)(_.value)
+  private val cDataItem: Config[DataItem] =
     (opt(cId2) <*> int("kDiCount"))(
       DataItem.apply,
       DataItem.unapply
     )
-  val cCoproductConfig: Config[CoproductConfig] =
+  private val cCoproductConfig: Config[CoproductConfig] =
     (cDataItem or cNestedConfig)
       .xmap(CoproductConfig)(_.coproduct)
 
@@ -51,7 +51,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cId).run.provide(p)
-        reread  <- read(cId).run.provide(mapSource(written.allConfig))
+        reread  <- read(cId).run.provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -61,7 +61,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cDbUrl).run.provide(p)
-        reread  <- read(cDbUrl).run.provide(mapSource(written.allConfig))
+        reread  <- read(cDbUrl).run.provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -71,7 +71,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cEnterpriseAuth).run.provide(p)
-        reread  <- read(cEnterpriseAuth).run.provide(mapSource(written.allConfig))
+        reread  <- read(cEnterpriseAuth).run.provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -81,7 +81,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cNestedConfig).run.provide(p)
-        reread  <- read(cNestedConfig).run.provide(mapSource(written.allConfig))
+        reread  <- read(cNestedConfig).run.provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -91,7 +91,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cCoproductConfig).run.provide(p)
-        reread  <- read(cCoproductConfig).run.provide(mapSource(written.allConfig))
+        reread  <- read(cCoproductConfig).run.provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)

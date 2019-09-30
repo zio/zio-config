@@ -62,7 +62,7 @@ object ReadWriteReport extends App {
 
   // want to write back the config ?
   assert(
-    runtime.unsafeRun(write(config).run.provide(result).map(_.allConfig)) ==
+    runtime.unsafeRun(write(config).run.provide(result)) ==
       Map(
         "user" -> "v1",
         "pwd"  -> "v2"
