@@ -1,8 +1,8 @@
 package zio.config.actions
 
 import zio.config.ReadErrors
-import zio.config.{Config, ConfigReport, ConfigSource, Details, ReadError}
-import zio.{Ref, UIO, ZIO, config}
+import zio.config.{ Config, ConfigReport, ConfigSource, Details, ReadError }
+import zio.{ config, Ref, UIO, ZIO }
 
 case class Read[A](run: ZIO[ConfigSource, ReadErrors, (ConfigReport, A)]) {}
 
@@ -35,10 +35,13 @@ object Read {
           }
 
         case Config.Optional(c) =>
-          report.get.flatMap(t => loop(c, report).fold(
-            _ => (t, None),
-            success => (success._1, Some(success._2))
-          ))
+          report.get.flatMap(
+            t =>
+              loop(c, report).fold(
+                _ => (t, None),
+                success => (success._1, Some(success._2))
+              )
+          )
 
         case Config.OnError(c, f) =>
           ZIO.accessM[ConfigSource](
