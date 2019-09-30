@@ -4,7 +4,6 @@ import java.net.URI
 
 import zio.config.ReadError.{ ErrorType, ParseError }
 import zio.config.syntax.AttemptSyntax
-import zio.config.ReadError.ErrorType
 
 trait PropertyType[A] {
 

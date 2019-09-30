@@ -14,6 +14,12 @@ sealed trait Config[A] {
   def <+>[B](that: => Config[B]): Config[Either[A, B]] = self or that
 
   def xmap[B](to: A => B)(from: B => A): Config[B] = Config.Xmap(self, to, from)
+
+  final def <*>[B](f: => Config[B]): ProductBuilder[A, B] =
+    new ProductBuilder[A, B] {
+      override val a: Config[A] = self
+      override val b: Config[B] = f
+    }
 }
 
 object Config {
