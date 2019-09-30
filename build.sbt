@@ -33,19 +33,37 @@ ThisBuild / publishTo := sonatypePublishToBundle.value
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-lazy val zioConfig = project
-  .in(file("."))
-  .enablePlugins(BuildInfoPlugin)
-  .settings(stdSettings("zio-config"))
-  .settings(
-    testFrameworks := Seq(
-      new TestFramework("org.scalacheck.ScalaCheckFramework"),
-      new TestFramework("zio.test.sbt.ZTestFramework")
+lazy val core =
+  module("core")
+    .enablePlugins(BuildInfoPlugin)
+    .settings(
+      testFrameworks := Seq(
+        new TestFramework("org.scalacheck.ScalaCheckFramework"),
+        new TestFramework("zio.test.sbt.ZTestFramework")
+      )
     )
+    .settings(buildInfoSettings)
+
+lazy val examples =
+  module("examples")
+    .dependsOn(core)
+
+lazy val allModules = List(core, examples)
+lazy val zioConfigDependencies =
+  Seq(
+    "dev.zio" %% "zio" % "1.0.0-RC13"
   )
-  .settings(buildInfoSettings)
-  .settings(
-    libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % "1.0.0-RC13"
-    )
-  )
+
+lazy val root =
+  project
+    .in(file("."))
+    .settings(zioConfigSettings)
+    .settings(skip in publish := true, crossScalaVersions := List())
+    .aggregate(allModules.map(x => x: ProjectReference): _*)
+
+lazy val zioConfigSettings = stdSettings("zio-config")
+
+def module(moduleName: String): Project =
+  Project(moduleName, file(s"modules/$moduleName"))
+    .settings(zioConfigSettings)
+    .settings(libraryDependencies ++= zioConfigDependencies)
