@@ -1,17 +1,17 @@
 package zio.config.actions
 
-import zio.config.{ Config, KeyValue, WriteError }
 import zio.ZIO
+import zio.config.{ Config, WriteError }
 
-final case class Write[A](run: ZIO[A, WriteError, KeyValue])
+final case class Write[A](run: ZIO[A, WriteError, Map[String, String]])
 
 object Write {
   final def write[A](config: Config[A]): Write[A] =
     config match {
       case Config.Source(path, propertyType) =>
-        Write(ZIO.access(aa => {
-          KeyValue(Map(path -> propertyType.write(aa)))
-        }))
+        Write(ZIO.access { aa =>
+          Map(path -> propertyType.write(aa))
+        })
 
       case Config.Xmap(c, _, to) =>
         Write(ZIO.accessM(b => write(c).run.provide(to(b))))
@@ -23,21 +23,21 @@ object Write {
               write(c).run
                 .provide(b)
                 .fold(
-                  _ => KeyValue(Map.empty),
+                  _ => Map.empty,
                   success => success
                 )
           )
         )
 
       case Config.MapEither(c, _, to) =>
-        Write(ZIO.accessM(b => {
+        Write(ZIO.accessM { b =>
           to(b) match {
             case Right(before) =>
               write(c).run.provide(before)
 
             case Left(error) => ZIO.fail(error)
           }
-        }))
+        })
 
       case Config.Or(left, right) =>
         Write(ZIO.accessM(env => env.fold(a => write(left).run.provide(a), b => write(right).run.provide(b))))

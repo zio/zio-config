@@ -1,8 +1,7 @@
-package zio.config.examples
+package zio.config
 
 import org.scalacheck.{ Gen, Properties }
 import zio.config.ReadError.MissingValue
-import zio.config._
 import zio.config.testsupport.TestSupport
 import zio.{ IO, ZIO }
 
