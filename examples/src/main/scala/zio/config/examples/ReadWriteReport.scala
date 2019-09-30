@@ -23,11 +23,11 @@ object ReadWriteReport extends App {
 
   // An example where user provides a description once and for all, and use it for read, write, report!
   val config: Config[ProdConfig] =
-    (string("user") <*> opt(string("pwd").xmap(Password)(_.value)) <*> opt(string("anonymous")))(
+    (string("user") |@| string("pwd").xmap(Password)(_.value).optional |@| string("anonymous").optional)(
       UserPwd.apply,
       UserPwd.unapply
     ) or
-      (string("auth_token") <*> string("clientid"))(Token.apply, Token.unapply)
+      (string("auth_token") |@| string("clientid"))(Token.apply, Token.unapply)
 
   val runtime = new DefaultRuntime {}
 
@@ -47,7 +47,7 @@ object ReadWriteReport extends App {
     result == Left(UserPwd("v1", Some(Password("v2")), None))
   )
 
-  println(runtime.unsafeRun(report(config).run.provide(source)))
+  val value = runtime.unsafeRun(report(config).run.provide(source))
 
   // Want docs ?
   assert(

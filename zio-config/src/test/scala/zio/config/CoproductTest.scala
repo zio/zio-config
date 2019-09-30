@@ -71,12 +71,12 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
   private def readLeft(p: TestParams): IO[List[ReadError], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
+      (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
@@ -97,12 +97,12 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
   private def readRight(p: TestParams): IO[List[ReadError], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
+      (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
@@ -126,12 +126,12 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
     p: TestParams
   ): ZIO[Any, Nothing, Either[List[ReadError], Either[EnterpriseAuth, PasswordAuth]]] = {
     val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
+      (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
@@ -155,12 +155,12 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
   private def readChooseLeftFromBoth(p: TestParams): IO[List[ReadError], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
+      (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )

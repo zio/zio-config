@@ -1,7 +1,7 @@
 package zio.config.actions
 
-import zio.ZIO
-import zio.config.{ Config, WriteError }
+import zio.{ZIO}
+import zio.config.{Config, WriteError}
 
 final case class Write[A](run: ZIO[A, WriteError, Map[String, String]])
 
@@ -13,8 +13,13 @@ object Write {
           Map(path -> propertyType.write(aa))
         })
 
-      case Config.Xmap(c, _, to) =>
-        Write(ZIO.accessM(b => write(c).run.provide(to(b))))
+      case Config.Optional(c) =>
+       Write(ZIO.accessM(a =>
+         a.asInstanceOf[Option[A]].fold[ZIO[A, WriteError, Map[String, String]]](
+           ZIO.succeed(Map.empty[String, String])
+         )(aa =>
+           write(c).run.provide(aa))
+       ))
 
       case Config.OnError(c, _) =>
         Write(

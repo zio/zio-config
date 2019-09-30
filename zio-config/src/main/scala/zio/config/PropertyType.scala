@@ -7,7 +7,7 @@ import zio.config.syntax.AttemptSyntax
 
 trait PropertyType[A] {
 
-  def read(value: String): Either[ErrorType, A]
+  def read(propertyValue: String): Either[ErrorType, A]
 
   def write(a: A): String
 

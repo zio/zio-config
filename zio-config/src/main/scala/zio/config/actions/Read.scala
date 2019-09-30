@@ -1,9 +1,9 @@
 package zio.config.actions
 
-import zio.config.{ Config, ConfigReport, ConfigSource, Details, ReadError }
-import zio.{ config, Ref, UIO, ZIO }
+import zio.config.{Config, ConfigReport, ConfigSource, Details, ReadError}
+import zio.{Ref, UIO, ZIO, config}
 
-case class Read[A](run: ZIO[ConfigSource, List[ReadError], (ConfigReport, A)]) {}
+case class Read[A](run: ZIO[ConfigSource, List[ReadError], (ConfigReport, A)])
 
 object Read {
   // Read
@@ -32,6 +32,12 @@ object Read {
           loop(c, report).flatMap {
             case (r, src) => ZIO.fromEither(f(src)).bimap(tt => List(tt), res => (r, res))
           }
+
+        case Config.Optional(c) =>
+          report.get.flatMap(t => loop(c, report).fold(
+            _ => (t, None),
+            success => (success._1, Some(success._2))
+          ))
 
         case Config.OnError(c, f) =>
           ZIO.accessM[ConfigSource](
@@ -72,9 +78,6 @@ object Read {
                 )
             }
           )
-
-        case Config.Xmap(c, from, _) =>
-          loop(c, report).map(t => (t._1, from(t._2)))
       }
 
     Read(Ref.make(ConfigReport(Nil)).flatMap(report => loop(configuration, report)))
