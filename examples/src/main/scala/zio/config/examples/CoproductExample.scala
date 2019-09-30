@@ -13,6 +13,11 @@ object CoproductExample extends App {
 
   val prod =
     (string("x1").xmap(Ldap)(_.value) |@| string("x2").xmap(DbUrl)(_.value))(Prod.apply, Prod.unapply)
+  
+  final case class EndPoint1(endpont1: String, endpoint2: String)
+  
+  val result: Seq[Config[EndPoint1]] =
+    (0 to 10).map(t => (string(s"${t}ENDPOINT1") |@| string(s"${t}ENDPOINT2"))(EndPoint1.apply, EndPoint1.unapply))
 
   val dev =
     (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)

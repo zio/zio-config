@@ -89,6 +89,6 @@ object PropertyType extends AttemptSyntax {
       case Left(fail) => Left(fail)
     }
 
-  private def sequence[A, B](fa: List[Either[A, B]]): Either[A, List[B]] =
+  private[config] def sequence[A, B](fa: List[Either[A, B]]): Either[A, List[B]] =
     fa.foldRight(Right[A, List[B]](Nil: List[B]): Either[A, List[B]])((a, b) => map2(a, b)((c, d) => c :: d))
 }
