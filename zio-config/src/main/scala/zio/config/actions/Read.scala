@@ -1,9 +1,9 @@
 package zio.config.actions
 
-import zio.config.{ Config, ConfigReport, ConfigSource, Details, ReadError }
+import zio.config.{ Config, ConfigReport, ConfigSource, Details, ReadError, ReadErrors }
 import zio.{ config, Ref, UIO, ZIO }
 
-case class Read[A](run: ZIO[ConfigSource, List[ReadError], (ConfigReport, A)]) {}
+case class Read[A](run: ZIO[ConfigSource, ReadErrors, (ConfigReport, A)]) {}
 
 object Read {
   // Read
@@ -11,36 +11,36 @@ object Read {
     def loop[B](
       configuration: Config[B],
       report: Ref[ConfigReport]
-    ): ZIO[ConfigSource, List[ReadError], (ConfigReport, B)] =
+    ): ZIO[ConfigSource, ReadErrors, (ConfigReport, B)] =
       configuration match {
         case Config.Source(path, propertyType) =>
           for {
             value <- config
                       .getConfigValue(path)
-                      .mapError(_ => List(ReadError(Seq(path), ReadError.MissingValue)))
+                      .mapError(_ => ReadErrors(ReadError(Seq(path), ReadError.MissingValue)))
             r <- report
                   .update(_.addDetails(Details(path, value, propertyType.description)))
             result <- ZIO.fromEither(
                        propertyType
                          .read(value)
-                         .fold(r => Left(List(ReadError(Seq(path), r))), e => Right((r, e)))
+                         .fold(r => Left(ReadErrors(ReadError(Seq(path), r))), e => Right((r, e)))
                      )
 
           } yield result
 
         case Config.MapEither(c, f, _) =>
           loop(c, report).flatMap {
-            case (r, src) => ZIO.fromEither(f(src)).bimap(tt => List(tt), res => (r, res))
+            case (r, src) => ZIO.fromEither(f(src)).bimap(err => ReadErrors(err), res => (r, res))
           }
 
         case Config.OnError(c, f) =>
           ZIO.accessM[ConfigSource](
             _ =>
-              loop(c, report).foldM(
-                failure =>
-                  report.get.flatMap[Any, List[ReadError], (ConfigReport, B)](r => ZIO.succeed((r, f(failure)))),
-                UIO(_)
-              )
+              loop(c, report)
+                .foldM(
+                  errors => report.get.map(r => (r, f(errors))),
+                  UIO(_)
+                )
           )
 
         case Config.Zip(left, right) =>
@@ -53,7 +53,7 @@ object Read {
                       case (Right((_, a)), Right((report2, b))) => Right((report2, (a, b)))
                       case (Left(a), Right(_))                  => Left(a)
                       case (Right(_), Left(error))              => Left(error)
-                      case (Left(err1), Left(err2))             => Left(err1 ++ err2)
+                      case (Left(err1), Left(err2))             => Left(ReadErrors.concat(err1, err2))
                     }
                 )
             )
@@ -67,7 +67,7 @@ object Read {
                 loop(right, report).either.flatMap(
                   {
                     case Right((r, b)) => ZIO.access(_ => (r, Right(b)))
-                    case Left(rerr)    => ZIO.fail(lerr ++ rerr)
+                    case Left(rerr)    => ZIO.fail(ReadErrors.concat(lerr, rerr))
                   }
                 )
             }
