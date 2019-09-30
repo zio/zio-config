@@ -49,7 +49,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
   property("should accumulate all errors") = forAllZIO(TestParams.gen) { p =>
     readWithErrors(p).shouldBe {
       Left(
-        List(
+        ReadErrors(
           ReadError(List(p.kLdap), MissingValue),
           ReadError(List(p.kFactor), ReadError.ParseError("notadouble", "double"))
         )
@@ -69,7 +69,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
   final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
   final case class PasswordAuth(user: String, count: Int, factor: Double)
 
-  private def readLeft(p: TestParams): IO[List[ReadError], Either[EnterpriseAuth, PasswordAuth]] = {
+  private def readLeft(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: Config[EnterpriseAuth] =
       (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -95,7 +95,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       )
   }
 
-  private def readRight(p: TestParams): IO[List[ReadError], Either[EnterpriseAuth, PasswordAuth]] = {
+  private def readRight(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: Config[EnterpriseAuth] =
       (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -124,7 +124,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
   private def readWithErrors(
     p: TestParams
-  ): ZIO[Any, Nothing, Either[List[ReadError], Either[EnterpriseAuth, PasswordAuth]]] = {
+  ): ZIO[Any, Nothing, Either[ReadErrors, Either[EnterpriseAuth, PasswordAuth]]] = {
     val enterprise: Config[EnterpriseAuth] =
       (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -153,7 +153,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       .either
   }
 
-  private def readChooseLeftFromBoth(p: TestParams): IO[List[ReadError], Either[EnterpriseAuth, PasswordAuth]] = {
+  private def readChooseLeftFromBoth(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: Config[EnterpriseAuth] =
       (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,

@@ -27,4 +27,19 @@ package object config extends Sources {
   def report[A](config: => Config[A]): Report[A] = Report.report[A](config)
 
   def getConfigValue(path: String): ZIO[ConfigSource, Unit, String] = ZIO.accessM(_.configService.getConfigValue(path))
+
+  ////
+
+  type NonEmptyList[A] = ::[A]
+
+  object NonEmptyList {
+    def apply[A](a: A, tail: A*): NonEmptyList[A] =
+      ::(a, tail.toList)
+
+    def concat[A](lerr: NonEmptyList[A], rerr: NonEmptyList[A]): NonEmptyList[A] =
+      ::(lerr.head, lerr.tail ++ rerr)
+  }
+
+  type ReadErrors = NonEmptyList[ReadError]
+  val ReadErrors: NonEmptyList.type = NonEmptyList
 }

@@ -36,10 +36,10 @@ object ReadConfig extends App {
   private val validConfig =
     Map(
       "LDAP"    -> "v1",
-      "DB_URL"  -> "v2",
+      "DB_URL"  -> "v2"
     )
     
-  val myAppLogic: ZIO[Console with ConfigSource, List[ReadError], Unit] =
+  val myAppLogic: ZIO[Console with ConfigSource, ReadErrors, Unit] =
     ZIO.accessM(env =>
       for {
         result <- read(config).run
