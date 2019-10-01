@@ -9,4 +9,6 @@ object ReadError {
   case class ParseError(provided: String, `type`: String) extends ErrorType
 }
 
-final case class WriteError(msg: String, cause: Option[Throwable]) extends Exception
+final case class WriteError(msg: String, cause: Option[Throwable]) extends Exception {
+  override def toString = msg
+}

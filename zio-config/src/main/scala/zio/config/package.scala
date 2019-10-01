@@ -14,11 +14,11 @@ package object config extends Sources {
 
   def opt[A](config: => Config[A]): Config[Option[A]] =
     config
-      .mapEither[Option[A]](a => Right(Some(a)))({
+    .xmapEither[Option[A]](a => Right(Some(a)))({
         case Some(value) => Right(value)
         case None        => Left(WriteError("Error: Cannot write a none value", None))
       })
-      .onError(_ => None)
+    .onError(_ => None)
 
   def read[A](config: => Config[A]): Read[A]     = Read.read[A](config)
   def write[A](config: => Config[A]): Write[A]   = Write.write[A](config)
