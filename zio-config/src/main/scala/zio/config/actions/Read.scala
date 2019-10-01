@@ -14,8 +14,6 @@ object Read {
       report: Ref[ConfigReport]
     ): ZIO[ConfigSource, ReadErrors, (ConfigReport, B)] =
       configuration match {
-        case Config.Pure(value) => report.get.map(t => (t, value))
-
         case Config.Source(path, propertyType) =>
           for {
             value <- config

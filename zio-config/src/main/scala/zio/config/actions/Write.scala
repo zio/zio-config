@@ -13,9 +13,6 @@ object Write {
           Map(path -> propertyType.write(aa))
         })
 
-      case Config.Pure(_) =>
-        Write(ZIO.access(_ => Map.empty))
-
       case Config.Optional(c) =>
         Write(
           ZIO.accessM(

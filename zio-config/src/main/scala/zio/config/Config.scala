@@ -28,8 +28,6 @@ sealed trait Config[A] {
 
 object Config {
 
-  final case class Pure[A](a: A) extends Config[A]
-
   final case class Source[A](path: String, propertyType: PropertyType[A]) extends Config[A]
 
   final case class Optional[A](config: Config[A]) extends Config[Option[A]]
