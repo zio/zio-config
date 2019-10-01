@@ -8,7 +8,7 @@ object ReadConfig extends App {
   case class Prod(ldap: String, dburl: Option[String])
 
   private val config =
-    (string("LDAP") |@|
+    (string("LDAP") <*>
       string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
   // In real, this comes from environment

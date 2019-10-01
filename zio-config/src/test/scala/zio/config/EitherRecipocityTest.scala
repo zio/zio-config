@@ -22,12 +22,12 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
   private val cIdLeft: Config[Id]       = string("klId").xmap(Id)(_.value)
   private val cDbUrlLeft: Config[DbUrl] = string("klDbUrl").xmap(DbUrl)(_.value)
   private val cEnterpriseAuthLeft: Config[EnterpriseAuth] =
-    (cIdLeft |@| cDbUrlLeft)(
+    (cIdLeft <*> cDbUrlLeft)(
       EnterpriseAuth.apply,
       EnterpriseAuth.unapply
     )
   private val cNestedConfigLeft: Config[NestedConfig] =
-    (cEnterpriseAuthLeft |@| int("klCount") |@| double("klFactor"))(
+    (cEnterpriseAuthLeft <*> int("klCount") <*> double("klFactor"))(
       NestedConfig.apply,
       NestedConfig.unapply
     )
@@ -35,12 +35,12 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
   private val cIdRight: Config[Id]       = string("krId").xmap(Id)(_.value)
   private val cDbUrlRight: Config[DbUrl] = string("krDbUrl").xmap(DbUrl)(_.value)
   private val cEnterpriseAuthRight: Config[EnterpriseAuth] =
-    (cIdRight |@| cDbUrlRight)(
+    (cIdRight <*> cDbUrlRight)(
       EnterpriseAuth.apply,
       EnterpriseAuth.unapply
     )
   private val cNestedConfigRight: Config[NestedConfig] =
-    (cEnterpriseAuthRight |@| int("krCount") |@| double("krFactor"))(
+    (cEnterpriseAuthRight <*> int("krCount") <*> double("krFactor"))(
       NestedConfig.apply,
       NestedConfig.unapply
     )

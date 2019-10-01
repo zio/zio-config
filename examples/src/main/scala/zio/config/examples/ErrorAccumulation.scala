@@ -7,7 +7,7 @@ object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)
 
   val config =
-    (int("envvar") |@| string("envvar2"))(SampleConfig.apply, SampleConfig.unapply)
+    (int("envvar") <*> string("envvar2"))(SampleConfig.apply, SampleConfig.unapply)
 
   val runtime = new DefaultRuntime {}
 
