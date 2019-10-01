@@ -11,6 +11,8 @@ object CoproductExample extends App {
   case class Prod(ldap: Ldap, dburl: DbUrl)
   case class Dev(user: String, password: Int, dburl: Double)
 
+  import Config._
+
   val prod =
     (string("x1").xmap(Ldap)(_.value) <*> string("x2").xmap(DbUrl)(_.value))(Prod.apply, Prod.unapply)
 

@@ -6,6 +6,8 @@ import zio.config._
 object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)
 
+  import Config._
+
   val config =
     (int("envvar") <*> string("envvar2"))(SampleConfig.apply, SampleConfig.unapply)
 

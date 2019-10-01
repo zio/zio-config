@@ -13,6 +13,9 @@ import zio.config._
 final case class Variables(variable1: Int, variable2: Option[Int])
 
 object SequenceExample extends App {
+
+  import Config._
+
   val listOfConfig: List[Config[Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
       .map(

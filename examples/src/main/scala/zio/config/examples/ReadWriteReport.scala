@@ -21,6 +21,8 @@ object ReadWriteReport extends App {
 
   type ProdConfig = Either[UserPwd, Token]
 
+  import Config._
+
   // An example where user provides a description once and for all, and use it for read, write, report!
   val config: Config[ProdConfig] =
     (string("user") <*> string("pwd").xmap(Password)(_.value).optional <*> string("anonymous").optional)(
