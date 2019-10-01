@@ -7,21 +7,25 @@ object ListAndOptionalTests extends Properties("List and options tests") with Te
 
   private val genId = genSymbol(1, 5).map(Id)
 
-  private val genOverallConfig =
-    Gen.option(genId).map(OverallConfig)
+  private val genOverallConfig: Gen[OverallConfig] =
+    Gen.option(genId).map(t => OverallConfig(t.map(t => Option(Option(t)))))
 
   val cId: Config[Id] = string("kId").xmap(Id)(_.value)
 
   val cOverallConfig: Config[OverallConfig] =
-    cId.optional.xmap(OverallConfig)(_.list)
+    cId.optional.optional.optional.xmap(OverallConfig)(_.option)
 
   property("optional write") = forAllZIO(genOverallConfig) { p =>
     write(cOverallConfig).run
       .provide(p)
-      .shouldBe(p.list.map(t => Map("kId" -> t.value)).getOrElse(Map.empty[String, String]))
+      .shouldBe(
+        p.option
+          .flatMap(t => t.flatMap(tt => tt.map(ttt => Map("kId" -> ttt.value))))
+          .getOrElse(Map.empty[String, String])
+      )
   }
 
   final case class Id(value: String) extends AnyVal
-  final case class OverallConfig(list: Option[Id])
+  final case class OverallConfig(option: Option[Option[Option[Id]]])
 
 }
