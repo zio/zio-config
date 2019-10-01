@@ -15,9 +15,8 @@ sealed trait Config[A] {
 
   final def xmap[B](to: A => B)(from: B => A): Config[B] = Config.Xmap(self, to, from)
 
-  def xmap2[B, C](that: Config[B])(f: (A, B) => Either[ReadError, C])(g: C => Either[WriteError, (A, B)]): Config[C] = {
+  def xmap2[B, C](that: Config[B])(f: (A, B) => Either[ReadError, C])(g: C => Either[WriteError, (A, B)]): Config[C] =
     (self <*> that).apply[(A, B)]((a, b) => (a, b), t => Some((t._1, t._2))).xmapEither(b => f(b._1, b._2))(g)
-  }
 
   final def <*>[B](f: => Config[B]): ProductBuilder[A, B] =
     new ProductBuilder[A, B] {
@@ -33,7 +32,7 @@ object Config {
   final case class Source[A](path: String, propertyType: PropertyType[A]) extends Config[A]
 
   final case class MapEither[A, B](config: Config[A], f: A => Either[ReadError, B], g: B => Either[WriteError, A])
-    extends Config[B]
+      extends Config[B]
 
   final case class OnError[A](config: Config[A], f: ReadErrors => A) extends Config[A]
 
@@ -44,11 +43,17 @@ object Config {
   final case class Or[A, B](left: Config[A], right: Config[B]) extends Config[Either[A, B]]
 
   def sequence[A](configList: List[Config[A]]): Config[List[A]] =
-    configList.foldLeft(Pure(Nil): Config[List[A]])((a, b) =>
-      b.xmap2(a)((aa, bb) =>
-        Right(aa :: bb))(t => {
-        t.headOption.fold[Either[WriteError, (A, List[A])]](
-          Left(WriteError("The input is not corresponding to the config description. It may have less number of entries than required by the config.", None)))(ll => Right((ll, t.tail)))
-      })
+    configList.foldLeft(Pure(Nil): Config[List[A]])(
+      (a, b) =>
+        b.xmap2(a)((aa, bb) => Right(aa :: bb))(t => {
+          t.headOption.fold[Either[WriteError, (A, List[A])]](
+            Left(
+              WriteError(
+                "The input is not corresponding to the config description. It may have less number of entries than required by the config.",
+                None
+              )
+            )
+          )(ll => Right((ll, t.tail)))
+        })
     )
 }

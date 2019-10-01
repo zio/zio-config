@@ -18,7 +18,9 @@ private[config] trait ProductBuilder[A, B] {
 
     def apply[D](f: (A, B, C) => D, g: D => Option[(A, B, C)]): Config[D] =
       (a zip b zip c)
-        .xmapEither[D]({ case ((aa, bb), cc) => Right(f(aa, bb, cc)) })(liftWrite(d => g(d).map({ case (aa, bb, cc) => ((aa, bb), cc) })))
+        .xmapEither[D]({ case ((aa, bb), cc) => Right(f(aa, bb, cc)) })(
+          liftWrite(d => g(d).map({ case (aa, bb, cc) => ((aa, bb), cc) }))
+        )
 
     def <*>[D](dd: Config[D]): ProductBuilder[D] = new ProductBuilder[D] {
       val d: Config[D] = dd
@@ -32,7 +34,7 @@ private[config] trait ProductBuilder[A, B] {
           .xmapEither(
             { case (((aa, bb), cc), dd) => Right(f(aa, bb, cc, dd)) }
           )(
-           liftWrite(e => g(e).map { case (aa, bb, cc, dd) => (((aa, bb), cc), dd) })
+            liftWrite(e => g(e).map { case (aa, bb, cc, dd) => (((aa, bb), cc), dd) })
           )
 
       def <*>[E](ee: Config[E]): ProductBuilder[E] = new ProductBuilder[E] {
@@ -77,7 +79,9 @@ private[config] trait ProductBuilder[A, B] {
                 .xmapEither(
                   { case ((((((aa, bb), cc), dd), ee), fff), ggg) => Right(f(aa, bb, cc, dd, ee, fff, ggg)) }
                 )(
-                  liftWrite(gg(_).map({ case (aa, bb, cc, dd, ee, fff, ggg) => ((((((aa, bb), cc), dd), ee), fff), ggg) }))
+                  liftWrite(gg(_).map({
+                    case (aa, bb, cc, dd, ee, fff, ggg) => ((((((aa, bb), cc), dd), ee), fff), ggg)
+                  }))
                 )
 
             def <*>[H](dd: Config[H]): ProductBuilder[H] = new ProductBuilder[H] {
@@ -93,7 +97,9 @@ private[config] trait ProductBuilder[A, B] {
               ): Config[I] =
                 (a zip b zip c zip d zip e zip ff zip g zip h)
                   .xmapEither(
-                    { case (((((((aa, bb), cc), dd), ee), fff), ggg), hh) => Right(f(aa, bb, cc, dd, ee, fff, ggg, hh)) }
+                    {
+                      case (((((((aa, bb), cc), dd), ee), fff), ggg), hh) => Right(f(aa, bb, cc, dd, ee, fff, ggg, hh))
+                    }
                   )(
                     liftWrite(gg(_).map {
                       case (aa, bb, cc, dd, ee, fff, ggg, hh) => (((((((aa, bb), cc), dd), ee), fff), ggg), hh)
@@ -117,12 +123,10 @@ private[config] trait ProductBuilder[A, B] {
                         case ((((((((aa, bb), cc), dd), ee), fff), ggg), hh), ii) =>
                           Right(f(aa, bb, cc, dd, ee, fff, ggg, hh, ii))
                       }
-                    )(
-                      liftWrite(gg(_).map({
-                        case (aa, bb, cc, dd, ee, fff, ggg, hh, ii) =>
-                          ((((((((aa, bb), cc), dd), ee), fff), ggg), hh), ii)
-                      })
-                    ))
+                    )(liftWrite(gg(_).map({
+                      case (aa, bb, cc, dd, ee, fff, ggg, hh, ii) =>
+                        ((((((((aa, bb), cc), dd), ee), fff), ggg), hh), ii)
+                    })))
               }
 
             }
