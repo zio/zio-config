@@ -28,14 +28,14 @@ object ErrorAccumulation extends App {
 
   val validSource = mapSource(Map("envvar" -> "1", "envvar2" -> "value"))
 
-  val validRes = runtime.unsafeRun(read(config).run.provide(validSource))
+  val validRes = runtime.unsafeRun(read(config).provide(validSource))
 
   assert(validRes._2 == SampleConfig(1, "value"))
 
   val invalidSource = mapSource(Map("envvar" -> "wrong"))
 
   assert(
-    runtime.unsafeRun(read(config).run.provide(invalidSource).either) ==
+    runtime.unsafeRun(read(config).provide(invalidSource).either) ==
       Left(
         List(
           ReadError(Seq("envvar"), ReadError.ParseError("wrong", "int")),

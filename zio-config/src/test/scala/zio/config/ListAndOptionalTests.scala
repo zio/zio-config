@@ -16,7 +16,7 @@ object ListAndOptionalTests extends Properties("List and options tests") with Te
     opt(cId).xmap(OverallConfig)(_.list)
 
   property("optional write") = forAllZIO(genOverallConfig) { p =>
-    write(cOverallConfig).run
+    write(cOverallConfig)
       .provide(p)
       .shouldBe(p.list.map(t => Map("kId" -> t.value)).getOrElse(Map.empty[String, String]))
   }

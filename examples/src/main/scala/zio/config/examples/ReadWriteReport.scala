@@ -41,7 +41,7 @@ object ReadWriteReport extends App {
     mapSource(userNamePassword)
 
   val result =
-    runtime.unsafeRun(read(config).run.provide(source).map(_._2))
+    runtime.unsafeRun(read(config).provide(source).map(_._2))
 
   assert(
     result == Left(UserPwd("v1", Some(Password("v2")), None))
@@ -51,7 +51,7 @@ object ReadWriteReport extends App {
 
   // Want docs ?
   assert(
-    runtime.unsafeRun(report(config).run.provide(source)) ==
+    runtime.unsafeRun(report(config).provide(source)) ==
       ConfigReport(
         List(
           Details("pwd", "v2", "value of type string"),
@@ -62,7 +62,7 @@ object ReadWriteReport extends App {
 
   // want to write back the config ?
   assert(
-    runtime.unsafeRun(write(config).run.provide(result)) ==
+    runtime.unsafeRun(write(config).provide(result)) ==
       Map(
         "user" -> "v1",
         "pwd"  -> "v2"

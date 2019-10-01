@@ -39,7 +39,7 @@ object ProgramExample extends App {
   val mainAppLogic: ZIO[Bootstrap, Throwable, Unit] =
     ZIO.accessM { env =>
       for {
-        result                  <- read(config).run.mapError(t => new RuntimeException(s"Failed to parse config: $t"))
+        result                  <- read(config).mapError(t => new RuntimeException(s"Failed to parse config: $t"))
         (report, programConfig) = result
         _                       <- ZIO.effect(println(report))
         _                       <- env.spark.getSpark.flatMap(s => Application.execute.provide(Client(s, programConfig)))

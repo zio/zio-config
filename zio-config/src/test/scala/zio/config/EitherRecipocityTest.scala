@@ -53,10 +53,10 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
     p =>
       val lr =
         for {
-          writtenLeft  <- write(cCoproductConfig).run.provide(CoproductConfig(Left(p)))
-          rereadLeft   <- read(cCoproductConfig).run.provide(mapSource(writtenLeft))
-          writtenRight <- write(cCoproductConfig).run.provide(CoproductConfig(Right(p)))
-          rereadRight  <- read(cCoproductConfig).run.provide(mapSource(writtenRight))
+          writtenLeft  <- write(cCoproductConfig).provide(CoproductConfig(Left(p)))
+          rereadLeft   <- read(cCoproductConfig).provide(mapSource(writtenLeft))
+          writtenRight <- write(cCoproductConfig).provide(CoproductConfig(Right(p)))
+          rereadRight  <- read(cCoproductConfig).provide(mapSource(writtenRight))
         } yield {
           (rereadLeft._2.coproduct, rereadRight._2.coproduct) match {
             case (Left(pl), Right(pr)) => (Some(pl), Some(pr))

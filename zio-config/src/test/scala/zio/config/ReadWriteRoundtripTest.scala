@@ -50,8 +50,8 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("newtype 1 roundtrip") = forAllZIO(genId) { p =>
     val p2 =
       for {
-        written <- write(cId).run.provide(p)
-        reread  <- read(cId).run.provide(mapSource(written))
+        written <- write(cId).provide(p)
+        reread  <- read(cId).provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -60,8 +60,8 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("newtype 2 roundtrip") = forAllZIO(genDbUrl) { p =>
     val p2 =
       for {
-        written <- write(cDbUrl).run.provide(p)
-        reread  <- read(cDbUrl).run.provide(mapSource(written))
+        written <- write(cDbUrl).provide(p)
+        reread  <- read(cDbUrl).provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -70,8 +70,8 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("case class 1 roundtrip") = forAllZIO(genEnterpriseAuth) { p =>
     val p2 =
       for {
-        written <- write(cEnterpriseAuth).run.provide(p)
-        reread  <- read(cEnterpriseAuth).run.provide(mapSource(written))
+        written <- write(cEnterpriseAuth).provide(p)
+        reread  <- read(cEnterpriseAuth).provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -80,8 +80,8 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("nested case class roundtrip") = forAllZIO(genNestedConfig) { p =>
     val p2 =
       for {
-        written <- write(cNestedConfig).run.provide(p)
-        reread  <- read(cNestedConfig).run.provide(mapSource(written))
+        written <- write(cNestedConfig).provide(p)
+        reread  <- read(cNestedConfig).provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -90,8 +90,8 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("coproduct roundtrip") = forAllZIO(genCoproductConfig) { p =>
     val p2 =
       for {
-        written <- write(cCoproductConfig).run.provide(p)
-        reread  <- read(cCoproductConfig).run.provide(mapSource(written))
+        written <- write(cCoproductConfig).provide(p)
+        reread  <- read(cCoproductConfig).provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)

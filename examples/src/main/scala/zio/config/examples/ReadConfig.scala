@@ -18,11 +18,11 @@ object ReadConfig extends App {
       "DB_URL" -> "v2"
     )
 
-  val myAppLogic: ZIO[Console with ConfigSource, ReadErrors, Unit] =
+  val myAppLogic: ZIO[Console with ConfigSource, List[ReadError], Unit] =
     ZIO.accessM(
       env =>
         for {
-          result         <- read(config).run
+          result         <- read(config)
           (report, conf) = result
           _              <- env.console.putStrLn(report.toString)
           _              <- env.console.putStrLn(conf.toString)
