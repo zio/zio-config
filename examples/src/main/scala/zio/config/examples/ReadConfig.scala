@@ -22,7 +22,7 @@ object ReadConfig extends App {
     ZIO.accessM(
       env =>
         for {
-          result         <- read(config).run
+          result         <- read(config)
           (report, conf) = result
           _              <- env.console.putStrLn(report.toString)
           _              <- env.console.putStrLn(conf.toString)

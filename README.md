@@ -12,7 +12,8 @@ Configuration parsing should be easy as it sounds - Hence;
  * No implicit requirements at user site.
  * Can write the config back to key value pairs, given the same config description. 
    Allows user to generate and populate configurations in the system-env/property-files in a typesafe way from outside, ensuring successful parsing in the app.
- * Automatic description and report generation on the config variables.
+ * Automatic report generation on the config variables.
+ * Automatic man pages based on the config description,  Higher level documentation for sections of config - all with a single composable syntax.
  * Can accumulate maximum errors.
  * Insanely simple to use
 
@@ -30,7 +31,7 @@ object ReadConfig extends App {
 
   private val config =
     (string("LDAP") <*>
-      string("DB_URL").optional)(Prod.apply, Prod.unapply)
+      string("DB_URL").optional ~ "Db Related config")(Prod.apply, Prod.unapply)
 
   // In real, this comes from environment
   private val validConfig =
@@ -42,11 +43,12 @@ object ReadConfig extends App {
   val myAppLogic: ZIO[Console with ConfigSource, ReadErrors, Unit] =
     ZIO.accessM(env =>
       for {
-        result <- read(config).run
+        result <- read(config)
         (report, conf) = result
         _ <- env.console.putStrLn(report.toString)
         _ <- env.console.putStrLn(conf.toString)
         map <- write(config).run.provide(conf).either
+        _  <- ZIO.effect(println(manPage(confg)))
         _ <- env.console.putStrLn(map.toString)
       } yield ()
     )
@@ -72,6 +74,10 @@ case class ProgramEnv(configService: ConfigSource.Service) extends ConfigSource 
 // Config:
 //
 //  Prod(v1, Some(v2)
+// 
+// ManPage:
+// KeyDescription(DB_URL,List(value of type string, Db Related config))
+// KeyDescription(LDAP,List(value of type string, Optional value))
 //
 //
 

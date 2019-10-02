@@ -28,7 +28,7 @@ object ErrorAccumulation extends App {
 
   val validSource = mapSource(Map("envvar" -> "1", "envvar2" -> "value"))
 
-  val validRes = runtime.unsafeRun(read(config).run.provide(validSource))
+  val validRes = runtime.unsafeRun(read(config).provide(validSource))
 
   assert(validRes._2 == SampleConfig(1, "value"))
 

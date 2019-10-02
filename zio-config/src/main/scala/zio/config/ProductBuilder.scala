@@ -3,33 +3,33 @@ package zio.config
 import ProductBuilder._
 
 private[config] trait ProductBuilder[A, B] {
-  val a: Config[A]
-  val b: Config[B]
+  val a: ConfigDescriptor[A]
+  val b: ConfigDescriptor[B]
 
-  def apply[C](f: (A, B) => C, g: C => Option[(A, B)]): Config[C] =
+  def apply[C](f: (A, B) => C, g: C => Option[(A, B)]): ConfigDescriptor[C] =
     a.zip(b).xmapEither({ case (aa, bb) => Right(f(aa, bb)) })(liftWrite(g))
 
-  def <*>[C](cc: Config[C]): ProductBuilder[C] = new ProductBuilder[C] {
-    val c: Config[C] = cc
+  def <*>[C](cc: ConfigDescriptor[C]): ProductBuilder[C] = new ProductBuilder[C] {
+    val c: ConfigDescriptor[C] = cc
   }
 
   sealed abstract class ProductBuilder[C] {
-    val c: Config[C]
+    val c: ConfigDescriptor[C]
 
-    def apply[D](f: (A, B, C) => D, g: D => Option[(A, B, C)]): Config[D] =
+    def apply[D](f: (A, B, C) => D, g: D => Option[(A, B, C)]): ConfigDescriptor[D] =
       (a zip b zip c)
         .xmapEither[D]({ case ((aa, bb), cc) => Right(f(aa, bb, cc)) })(
           liftWrite(d => g(d).map({ case (aa, bb, cc) => ((aa, bb), cc) }))
         )
 
-    def <*>[D](dd: Config[D]): ProductBuilder[D] = new ProductBuilder[D] {
-      val d: Config[D] = dd
+    def <*>[D](dd: ConfigDescriptor[D]): ProductBuilder[D] = new ProductBuilder[D] {
+      val d: ConfigDescriptor[D] = dd
     }
 
     sealed abstract class ProductBuilder[D] {
-      val d: Config[D]
+      val d: ConfigDescriptor[D]
 
-      def apply[E](f: (A, B, C, D) => E, g: E => Option[(A, B, C, D)]): Config[E] =
+      def apply[E](f: (A, B, C, D) => E, g: E => Option[(A, B, C, D)]): ConfigDescriptor[E] =
         (a zip b zip c zip d)
           .xmapEither(
             { case (((aa, bb), cc), dd) => Right(f(aa, bb, cc, dd)) }
@@ -37,14 +37,14 @@ private[config] trait ProductBuilder[A, B] {
             liftWrite(e => g(e).map { case (aa, bb, cc, dd) => (((aa, bb), cc), dd) })
           )
 
-      def <*>[E](ee: Config[E]): ProductBuilder[E] = new ProductBuilder[E] {
-        val e: Config[E] = ee
+      def <*>[E](ee: ConfigDescriptor[E]): ProductBuilder[E] = new ProductBuilder[E] {
+        val e: ConfigDescriptor[E] = ee
       }
 
       sealed abstract class ProductBuilder[E] {
-        val e: Config[E]
+        val e: ConfigDescriptor[E]
 
-        def apply[FF](f: (A, B, C, D, E) => FF, g: FF => Option[(A, B, C, D, E)]): Config[FF] =
+        def apply[FF](f: (A, B, C, D, E) => FF, g: FF => Option[(A, B, C, D, E)]): ConfigDescriptor[FF] =
           (a zip b zip c zip d zip e)
             .xmapEither(
               { case ((((aa, bb), cc), dd), ee) => Right(f(aa, bb, cc, dd, ee)) }
@@ -52,14 +52,14 @@ private[config] trait ProductBuilder[A, B] {
               liftWrite(ff => g(ff).map({ case (aa, bb, cc, dd, ee) => ((((aa, bb), cc), dd), ee) }))
             )
 
-        def <*>[FF](dd: Config[FF]): ProductBuilder[FF] = new ProductBuilder[FF] {
-          val ff: Config[FF] = dd
+        def <*>[FF](dd: ConfigDescriptor[FF]): ProductBuilder[FF] = new ProductBuilder[FF] {
+          val ff: ConfigDescriptor[FF] = dd
         }
 
         sealed abstract class ProductBuilder[FF] {
-          val ff: Config[FF]
+          val ff: ConfigDescriptor[FF]
 
-          def apply[G](f: (A, B, C, D, E, FF) => G, g: G => Option[(A, B, C, D, E, FF)]): Config[G] =
+          def apply[G](f: (A, B, C, D, E, FF) => G, g: G => Option[(A, B, C, D, E, FF)]): ConfigDescriptor[G] =
             (a zip b zip c zip d zip e zip ff)
               .xmapEither(
                 { case (((((aa, bb), cc), dd), ee), fff) => Right(f(aa, bb, cc, dd, ee, fff)) }
@@ -67,14 +67,14 @@ private[config] trait ProductBuilder[A, B] {
                 liftWrite(g(_).map({ case (aa, bb, cc, dd, ee, fff) => (((((aa, bb), cc), dd), ee), fff) }))
               )
 
-          def <*>[G](dd: Config[G]): ProductBuilder[G] = new ProductBuilder[G] {
-            val g: Config[G] = dd
+          def <*>[G](dd: ConfigDescriptor[G]): ProductBuilder[G] = new ProductBuilder[G] {
+            val g: ConfigDescriptor[G] = dd
           }
 
           sealed abstract class ProductBuilder[G] {
-            val g: Config[G]
+            val g: ConfigDescriptor[G]
 
-            def apply[H](f: (A, B, C, D, E, FF, G) => H, gg: H => Option[(A, B, C, D, E, FF, G)]): Config[H] =
+            def apply[H](f: (A, B, C, D, E, FF, G) => H, gg: H => Option[(A, B, C, D, E, FF, G)]): ConfigDescriptor[H] =
               (a zip b zip c zip d zip e zip ff zip g)
                 .xmapEither(
                   { case ((((((aa, bb), cc), dd), ee), fff), ggg) => Right(f(aa, bb, cc, dd, ee, fff, ggg)) }
@@ -84,17 +84,17 @@ private[config] trait ProductBuilder[A, B] {
                   }))
                 )
 
-            def <*>[H](dd: Config[H]): ProductBuilder[H] = new ProductBuilder[H] {
-              val h: Config[H] = dd
+            def <*>[H](dd: ConfigDescriptor[H]): ProductBuilder[H] = new ProductBuilder[H] {
+              val h: ConfigDescriptor[H] = dd
             }
 
             sealed abstract class ProductBuilder[H] {
-              val h: Config[H]
+              val h: ConfigDescriptor[H]
 
               def apply[I](
                 f: (A, B, C, D, E, FF, G, H) => I,
                 gg: I => Option[(A, B, C, D, E, FF, G, H)]
-              ): Config[I] =
+              ): ConfigDescriptor[I] =
                 (a zip b zip c zip d zip e zip ff zip g zip h)
                   .xmapEither(
                     {
@@ -106,17 +106,17 @@ private[config] trait ProductBuilder[A, B] {
                     })
                   )
 
-              def <*>[I](dd: Config[I]): ProductBuilder[I] = new ProductBuilder[I] {
-                val i: Config[I] = dd
+              def <*>[I](dd: ConfigDescriptor[I]): ProductBuilder[I] = new ProductBuilder[I] {
+                val i: ConfigDescriptor[I] = dd
               }
 
               sealed abstract class ProductBuilder[I] {
-                val i: Config[I]
+                val i: ConfigDescriptor[I]
 
                 def apply[J](
                   f: (A, B, C, D, E, FF, G, H, I) => J,
                   gg: J => Option[(A, B, C, D, E, FF, G, H, I)]
-                ): Config[J] =
+                ): ConfigDescriptor[J] =
                   (a zip b zip c zip d zip e zip ff zip g zip h zip i)
                     .xmapEither(
                       {

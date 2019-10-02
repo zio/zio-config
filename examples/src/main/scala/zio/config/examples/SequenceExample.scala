@@ -13,15 +13,15 @@ import zio.config._
 final case class Variables(variable1: Int, variable2: Option[Int])
 
 object SequenceExample extends App {
-  val listOfConfig: List[Config[Variables]] =
+  val listOfConfig: List[ConfigDescriptor[Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
       .map(
         group =>
           (int(s"${group}_VARIABLE1") <*> int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
       )
 
-  val configOfList: Config[List[Variables]] =
-    Config.sequence(listOfConfig)
+  val configOfList: ConfigDescriptor[List[Variables]] =
+    ConfigDescriptor.sequence(listOfConfig)
 
   val map =
     Map(
@@ -36,7 +36,7 @@ object SequenceExample extends App {
 
   val runtime = new DefaultRuntime {}
 
-  val result  = runtime.unsafeRun(read(configOfList).run.provide(mapSource(map)))
+  val result  = runtime.unsafeRun(read(configOfList).provide(mapSource(map)))
   val written = runtime.unsafeRun(write(configOfList).run.provide(result._2).either)
 
   assert(result._2 == List(Variables(7, None), Variables(5, Some(6)), Variables(3, Some(4)), Variables(1, Some(2))))
