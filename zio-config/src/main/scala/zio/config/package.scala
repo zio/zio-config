@@ -19,9 +19,9 @@ package object config extends Sources {
 
   def opt[A](config: => Config[A]): Config[Option[A]] =
     config
-      .mapEither[Option[A]](a => Right(Some(a)))({
+      .xmapEither[Option[A]](a => Right(Some(a)))({
         case Some(value) => Right(value)
-        case None        => Left(WriteError("Error: Cannot write a none value", None))
+        case None        => Left("Error: Cannot write a none value")
       })
       .onError(_ => None)
 

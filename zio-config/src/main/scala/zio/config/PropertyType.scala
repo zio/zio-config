@@ -103,27 +103,4 @@ object PropertyType extends AttemptSyntax {
       override def write(a: Option[A]): String = a.map(aa => propertyType.write(aa)).getOrElse("")
       override def description: String         = s"option of ${propertyType.description}"
     }
-
-  private[config] def ofList[A](propertyType: PropertyType[A]): PropertyType[List[A]] = new PropertyType[List[A]] {
-    override def read(value: String): Either[ErrorType, List[A]] =
-      StringType.read(value) match {
-        case Right(v) => sequence(v.split(",").toList.map(t => propertyType.read(t)))
-        case Left(f)  => Left(f)
-      }
-    override def write(a: List[A]): String = a.map(aa => propertyType.write(aa)).mkString(",")
-    override def description: String       = s"list of ${propertyType.description}"
-  }
-
-  private def map2[E, A, B, C](fa: Either[E, A], b: Either[E, B])(f: (A, B) => C): Either[E, C] =
-    fa match {
-      case Right(v1) =>
-        b match {
-          case Right(v2)  => Right(f(v1, v2))
-          case Left(fail) => Left(fail)
-        }
-      case Left(fail) => Left(fail)
-    }
-
-  private def sequence[A, B](fa: List[Either[A, B]]): Either[A, List[B]] =
-    fa.foldRight(Right[A, List[B]](Nil: List[B]): Either[A, List[B]])((a, b) => map2(a, b)((c, d) => c :: d))
 }

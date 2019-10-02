@@ -1,18 +1,13 @@
 package zio.config
 
-import scala.language.implicitConversions
+import ProductBuilder._
 
 private[config] trait ProductBuilder[A, B] {
-  // TODO; discuss - this exists just to make user's life more easier.
-  // Inspired from argonaut's choice on codecjson in similar situation.
-  // https://github.com/argonaut-io/argonaut/blob/master/project/Boilerplate.scala#L275
-  implicit def unsafeGet1[X, Y](f: Option[Y]): Y = f.get
-
   val a: Config[A]
   val b: Config[B]
 
   def apply[C](f: (A, B) => C, g: C => Option[(A, B)]): Config[C] =
-    a.zip(b).xmap({ case (aa, bb) => f(aa, bb) })(c => g(c))
+    a.zip(b).xmapEither({ case (aa, bb) => Right(f(aa, bb)) })(liftWrite(g))
 
   def <*>[C](cc: Config[C]): ProductBuilder[C] = new ProductBuilder[C] {
     val c: Config[C] = cc
@@ -23,7 +18,9 @@ private[config] trait ProductBuilder[A, B] {
 
     def apply[D](f: (A, B, C) => D, g: D => Option[(A, B, C)]): Config[D] =
       (a zip b zip c)
-        .xmap[D]({ case ((aa, bb), cc) => f(aa, bb, cc) })(d => g(d).map({ case (aa, bb, cc) => ((aa, bb), cc) }))
+        .xmapEither[D]({ case ((aa, bb), cc) => Right(f(aa, bb, cc)) })(
+          liftWrite(d => g(d).map({ case (aa, bb, cc) => ((aa, bb), cc) }))
+        )
 
     def <*>[D](dd: Config[D]): ProductBuilder[D] = new ProductBuilder[D] {
       val d: Config[D] = dd
@@ -34,10 +31,10 @@ private[config] trait ProductBuilder[A, B] {
 
       def apply[E](f: (A, B, C, D) => E, g: E => Option[(A, B, C, D)]): Config[E] =
         (a zip b zip c zip d)
-          .xmap(
-            { case (((aa, bb), cc), dd) => f(aa, bb, cc, dd) }
+          .xmapEither(
+            { case (((aa, bb), cc), dd) => Right(f(aa, bb, cc, dd)) }
           )(
-            e => g(e).map { case (aa, bb, cc, dd) => (((aa, bb), cc), dd) }
+            liftWrite(e => g(e).map { case (aa, bb, cc, dd) => (((aa, bb), cc), dd) })
           )
 
       def <*>[E](ee: Config[E]): ProductBuilder[E] = new ProductBuilder[E] {
@@ -49,10 +46,10 @@ private[config] trait ProductBuilder[A, B] {
 
         def apply[FF](f: (A, B, C, D, E) => FF, g: FF => Option[(A, B, C, D, E)]): Config[FF] =
           (a zip b zip c zip d zip e)
-            .xmap(
-              { case ((((aa, bb), cc), dd), ee) => f(aa, bb, cc, dd, ee) }
+            .xmapEither(
+              { case ((((aa, bb), cc), dd), ee) => Right(f(aa, bb, cc, dd, ee)) }
             )(
-              ff => g(ff).map({ case (aa, bb, cc, dd, ee) => ((((aa, bb), cc), dd), ee) })
+              liftWrite(ff => g(ff).map({ case (aa, bb, cc, dd, ee) => ((((aa, bb), cc), dd), ee) }))
             )
 
         def <*>[FF](dd: Config[FF]): ProductBuilder[FF] = new ProductBuilder[FF] {
@@ -64,10 +61,10 @@ private[config] trait ProductBuilder[A, B] {
 
           def apply[G](f: (A, B, C, D, E, FF) => G, g: G => Option[(A, B, C, D, E, FF)]): Config[G] =
             (a zip b zip c zip d zip e zip ff)
-              .xmap(
-                { case (((((aa, bb), cc), dd), ee), fff) => f(aa, bb, cc, dd, ee, fff) }
+              .xmapEither(
+                { case (((((aa, bb), cc), dd), ee), fff) => Right(f(aa, bb, cc, dd, ee, fff)) }
               )(
-                g(_).map({ case (aa, bb, cc, dd, ee, fff) => (((((aa, bb), cc), dd), ee), fff) })
+                liftWrite(g(_).map({ case (aa, bb, cc, dd, ee, fff) => (((((aa, bb), cc), dd), ee), fff) }))
               )
 
           def <*>[G](dd: Config[G]): ProductBuilder[G] = new ProductBuilder[G] {
@@ -79,10 +76,12 @@ private[config] trait ProductBuilder[A, B] {
 
             def apply[H](f: (A, B, C, D, E, FF, G) => H, gg: H => Option[(A, B, C, D, E, FF, G)]): Config[H] =
               (a zip b zip c zip d zip e zip ff zip g)
-                .xmap(
-                  { case ((((((aa, bb), cc), dd), ee), fff), ggg) => f(aa, bb, cc, dd, ee, fff, ggg) }
+                .xmapEither(
+                  { case ((((((aa, bb), cc), dd), ee), fff), ggg) => Right(f(aa, bb, cc, dd, ee, fff, ggg)) }
                 )(
-                  gg(_).map({ case (aa, bb, cc, dd, ee, fff, ggg) => ((((((aa, bb), cc), dd), ee), fff), ggg) })
+                  liftWrite(gg(_).map({
+                    case (aa, bb, cc, dd, ee, fff, ggg) => ((((((aa, bb), cc), dd), ee), fff), ggg)
+                  }))
                 )
 
             def <*>[H](dd: Config[H]): ProductBuilder[H] = new ProductBuilder[H] {
@@ -97,12 +96,14 @@ private[config] trait ProductBuilder[A, B] {
                 gg: I => Option[(A, B, C, D, E, FF, G, H)]
               ): Config[I] =
                 (a zip b zip c zip d zip e zip ff zip g zip h)
-                  .xmap(
-                    { case (((((((aa, bb), cc), dd), ee), fff), ggg), hh) => f(aa, bb, cc, dd, ee, fff, ggg, hh) }
-                  )(
-                    gg(_).map {
-                      case (aa, bb, cc, dd, ee, fff, ggg, hh) => (((((((aa, bb), cc), dd), ee), fff), ggg), hh)
+                  .xmapEither(
+                    {
+                      case (((((((aa, bb), cc), dd), ee), fff), ggg), hh) => Right(f(aa, bb, cc, dd, ee, fff, ggg, hh))
                     }
+                  )(
+                    liftWrite(gg(_).map {
+                      case (aa, bb, cc, dd, ee, fff, ggg, hh) => (((((((aa, bb), cc), dd), ee), fff), ggg), hh)
+                    })
                   )
 
               def <*>[I](dd: Config[I]): ProductBuilder[I] = new ProductBuilder[I] {
@@ -117,17 +118,15 @@ private[config] trait ProductBuilder[A, B] {
                   gg: J => Option[(A, B, C, D, E, FF, G, H, I)]
                 ): Config[J] =
                   (a zip b zip c zip d zip e zip ff zip g zip h zip i)
-                    .xmap(
+                    .xmapEither(
                       {
                         case ((((((((aa, bb), cc), dd), ee), fff), ggg), hh), ii) =>
-                          f(aa, bb, cc, dd, ee, fff, ggg, hh, ii)
+                          Right(f(aa, bb, cc, dd, ee, fff, ggg, hh, ii))
                       }
-                    )(
-                      gg(_).map({
-                        case (aa, bb, cc, dd, ee, fff, ggg, hh, ii) =>
-                          ((((((((aa, bb), cc), dd), ee), fff), ggg), hh), ii)
-                      })
-                    )
+                    )(liftWrite(gg(_).map({
+                      case (aa, bb, cc, dd, ee, fff, ggg, hh, ii) =>
+                        ((((((((aa, bb), cc), dd), ee), fff), ggg), hh), ii)
+                    })))
               }
 
             }
@@ -141,5 +140,10 @@ private[config] trait ProductBuilder[A, B] {
     }
 
   }
+}
+
+private[config] object ProductBuilder {
+  private def liftWrite[A, B, C](f: C => Option[(A, B)]): C => Either[String, (A, B)] =
+    c => f(c).fold[Either[String, (A, B)]](Left("Failed to write the value back."))(r => Right(r))
 
 }

@@ -1,13 +1,16 @@
 package zio.config.actions
 
 import zio.ZIO
-import zio.config.{ Config, WriteError }
+import zio.config.Config
 
-final case class Write[A](run: ZIO[A, WriteError, Map[String, String]])
+final case class Write[A](run: ZIO[A, String, Map[String, String]])
 
 object Write {
   final def write[A](config: Config[A]): Write[A] =
     config match {
+      case Config.Pure(_) =>
+        Write(ZIO.access(_ => Map.empty))
+
       case Config.Source(path, propertyType) =>
         Write(ZIO.access { aa =>
           Map(path -> propertyType.write(aa))

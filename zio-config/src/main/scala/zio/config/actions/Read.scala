@@ -13,17 +13,19 @@ object Read {
       report: Ref[ConfigReport]
     ): ZIO[ConfigSource, ReadErrors, (ConfigReport, B)] =
       configuration match {
+        case Config.Pure(value) => report.get.map(t => (t, value))
+
         case Config.Source(path, propertyType) =>
           for {
             value <- config
                       .getConfigValue(path)
-                      .mapError(_ => ReadErrors(ReadError(Seq(path), ReadError.MissingValue)))
+                      .mapError(_ => ReadErrors(ReadError(path, ReadError.MissingValue)))
             r <- report
                   .update(_.addDetails(Details(path, value, propertyType.description)))
             result <- ZIO.fromEither(
                        propertyType
                          .read(value)
-                         .fold(r => Left(ReadErrors(ReadError(Seq(path), r))), e => Right((r, e)))
+                         .fold(r => Left(ReadErrors(ReadError(path, r))), e => Right((r, e)))
                      )
 
           } yield result
