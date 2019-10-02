@@ -5,6 +5,8 @@ import zio.config.testsupport.TestSupport
 
 object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
 
+  import Config._
+
   private val genId    = genSymbol(1, 5).map(Id)
   private val genDbUrl = genNonEmptyString(20).map(DbUrl)
   private val genEnterpriseAuth =

@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.{ App, Task, ZIO }
-import zio.config._
+import zio.config._, Config._
 import client._
 import bootstrap._
 
@@ -29,6 +29,7 @@ import bootstrap._
 final case class ProgramConfig(inputPath: String, outputPath: String)
 
 object ProgramExample extends App {
+
   private val config =
     (string("INPUT_PATH") <*> string("OUTPUT_PATH"))(ProgramConfig.apply, ProgramConfig.unapply)
 

@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._
+import zio.config._, Config._
 
 object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)
@@ -12,10 +12,11 @@ object ErrorAccumulation extends App {
   val runtime = new DefaultRuntime {}
 
   val programWithInvalidSource =
-    read(config).run.provide(mapSource(Map.empty)).either
+    read(config).provide(mapSource(Map.empty)).either
 
   val parsed = runtime.unsafeRun(programWithInvalidSource)
 
+  println(parsed)
   assert(
     parsed ==
       Left(
@@ -35,7 +36,7 @@ object ErrorAccumulation extends App {
   val invalidSource = mapSource(Map("envvar" -> "wrong"))
 
   assert(
-    runtime.unsafeRun(read(config).run.provide(invalidSource).either) ==
+    runtime.unsafeRun(read(config).provide(invalidSource).either) ==
       Left(
         List(
           ReadError("envvar", ReadError.ParseError("wrong", "int")),

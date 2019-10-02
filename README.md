@@ -23,7 +23,7 @@ Configuration parsing should be easy as it sounds - Hence;
 ```scala
 
 import zio.{App, ZIO}
-import zio.config._
+import zio.config._, Config._
 import zio.console.Console
 
 object ReadConfig extends App {
@@ -48,7 +48,7 @@ object ReadConfig extends App {
         _ <- env.console.putStrLn(report.toString)
         _ <- env.console.putStrLn(conf.toString)
         map <- write(config).run.provide(conf).either
-        _  <- ZIO.effect(println(manPage(confg)))
+        _  <- env.console.putStrLn(manPage(confg))
         _ <- env.console.putStrLn(map.toString)
       } yield ()
     )
@@ -76,8 +76,8 @@ case class ProgramEnv(configService: ConfigSource.Service) extends ConfigSource 
 //  Prod(v1, Some(v2)
 // 
 // ManPage:
-// KeyDescription(DB_URL,List(value of type string, Db Related config))
-// KeyDescription(LDAP,List(value of type string, Optional value))
+// KeyDescription(DB_URL,List(value of type string, Optional value, Db Related config))
+// KeyDescription(LDAP,List(value of type string)
 //
 //
 

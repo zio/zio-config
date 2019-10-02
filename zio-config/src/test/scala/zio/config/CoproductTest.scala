@@ -69,6 +69,8 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
   final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
   final case class PasswordAuth(user: String, count: Int, factor: Double)
 
+  import Config._
+
   private def readLeft(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: ConfigDescriptor[EnterpriseAuth] =
       (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(

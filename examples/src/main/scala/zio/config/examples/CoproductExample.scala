@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.DefaultRuntime
 import zio.config.ReadError.MissingValue
-import zio.config.{ ConfigDescriptor, ConfigSource, ReadError, _ }
+import zio.config._, Config._
 
 object CoproductExample extends App {
   final case class Ldap(value: String)  extends AnyVal

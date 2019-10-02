@@ -3,6 +3,7 @@ package zio.config
 import org.scalacheck.{ Gen, Properties }
 import zio.ZIO
 import zio.config.testsupport.TestSupport
+import zio.config.Config._
 
 object SequenceRoundTripTest extends Properties("sequence round trip tests") with TestSupport {
 
