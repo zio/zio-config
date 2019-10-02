@@ -17,21 +17,11 @@ package object config extends Sources {
   def bigDecimal(path: String): Config[BigDecimal] = Config.Source(path, PropertyType.BigDecimalType)
   def uri(path: String): Config[URI]               = Config.Source(path, PropertyType.UriType)
 
-  def opt[A](config: => Config[A]): Config[Option[A]] =
-    config
-      .xmapEither[Option[A]](a => Right(Some(a)))({
-        case Some(value) => Right(value)
-        case None        => Left("Error: Cannot write a none value")
-      })
-      .onError(_ => None)
-
   def read[A](config: => Config[A]): Read[A]     = Read.read[A](config)
   def write[A](config: => Config[A]): Write[A]   = Write.write[A](config)
   def report[A](config: => Config[A]): Report[A] = Report.report[A](config)
 
   def getConfigValue(path: String): ZIO[ConfigSource, Unit, String] = ZIO.accessM(_.configService.getConfigValue(path))
-
-  ////
 
   type ReadErrors = ::[ReadError]
 

@@ -7,7 +7,7 @@ import zio.config.syntax.AttemptSyntax
 
 trait PropertyType[A] {
 
-  def read(value: String): Either[ErrorType, A]
+  def read(propertyValue: String): Either[ErrorType, A]
 
   def write(a: A): String
 
@@ -92,15 +92,4 @@ object PropertyType extends AttemptSyntax {
       new URI(value).attempt(_ => ParseError(value, "uri"))
     def write(value: URI): String = value.toString
   }
-
-  private[config] def ofOption[A](propertyType: PropertyType[A]): PropertyType[Option[A]] =
-    new PropertyType[Option[A]] {
-      override def read(value: String): Either[ReadError.ErrorType, Option[A]] =
-        propertyType.read(value) match {
-          case Right(v) => Right(Some(v))
-          case Left(v)  => Left(v)
-        }
-      override def write(a: Option[A]): String = a.map(aa => propertyType.write(aa)).getOrElse("")
-      override def description: String         = s"option of ${propertyType.description}"
-    }
 }

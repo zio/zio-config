@@ -9,7 +9,7 @@ object ReadConfig extends App {
 
   private val config =
     (string("LDAP") <*>
-      opt(string("DB_URL")))(Prod.apply, Prod.unapply)
+      string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
   // In real, this comes from environment
   private val validConfig =

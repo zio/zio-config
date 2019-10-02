@@ -13,7 +13,8 @@ sealed trait Config[A] {
 
   final def <+>[B](that: => Config[B]): Config[Either[A, B]] = self or that
 
-  final def xmap[B](to: A => B)(from: B => A): Config[B] = Config.Xmap(self, to, from)
+  final def xmap[B](to: A => B)(from: B => A): Config[B] =
+    self.xmapEither(a => Right(to(a)))(b => Right(from(b)))
 
   def xmapEither2[B, C](that: Config[B])(f: (A, B) => Either[ReadError, C])(g: C => Either[String, (A, B)]): Config[C] =
     (self <*> that).apply[(A, B)]((a, b) => (a, b), t => Some((t._1, t._2))).xmapEither(b => f(b._1, b._2))(g)
@@ -23,6 +24,9 @@ sealed trait Config[A] {
       override val a: Config[A] = self
       override val b: Config[B] = f
     }
+
+  def optional: Config[Option[A]] =
+    Config.Optional(self)
 }
 
 object Config {
@@ -31,14 +35,14 @@ object Config {
 
   final case class Source[A](path: String, propertyType: PropertyType[A]) extends Config[A]
 
+  final case class Optional[A](config: Config[A]) extends Config[Option[A]]
+
   final case class MapEither[A, B](config: Config[A], f: A => Either[ReadError, B], g: B => Either[String, A])
       extends Config[B]
 
   final case class OnError[A](config: Config[A], f: ReadErrors => A) extends Config[A]
 
   final case class Zip[A, B](left: Config[A], right: Config[B]) extends Config[(A, B)]
-
-  final case class Xmap[A, B](config: Config[A], to: A => B, from: B => A) extends Config[B]
 
   final case class Or[A, B](left: Config[A], right: Config[B]) extends Config[Either[A, B]]
 

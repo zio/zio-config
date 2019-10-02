@@ -16,8 +16,16 @@ object Write {
           Map(path -> propertyType.write(aa))
         })
 
-      case Config.Xmap(c, _, to) =>
-        Write(ZIO.accessM(b => write(c).run.provide(to(b))))
+      case Config.Optional(c) =>
+        Write(
+          ZIO.accessM(
+            a =>
+              a.asInstanceOf[Option[A]]
+                .fold[ZIO[A, String, Map[String, String]]](
+                  ZIO.succeed(Map.empty[String, String])
+                )(aa => write(c).run.provide(aa))
+          )
+        )
 
       case Config.OnError(c, _) =>
         Write(

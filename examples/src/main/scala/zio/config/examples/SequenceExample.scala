@@ -16,7 +16,8 @@ object SequenceExample extends App {
   val listOfConfig: List[Config[Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
       .map(
-        group => (int(s"${group}_VARIABLE1") <*> opt(int(s"${group}_VARIABLE2")))(Variables.apply, Variables.unapply)
+        group =>
+          (int(s"${group}_VARIABLE1") <*> int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
       )
 
   val configOfList: Config[List[Variables]] =
