@@ -29,6 +29,9 @@ import bootstrap._
 final case class ProgramConfig(inputPath: String, outputPath: String)
 
 object ProgramExample extends App {
+
+  import Config._
+
   private val config =
     (string("INPUT_PATH") <*> string("OUTPUT_PATH"))(ProgramConfig.apply, ProgramConfig.unapply)
 

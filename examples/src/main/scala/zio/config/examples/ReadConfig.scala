@@ -7,6 +7,8 @@ import zio.{ App, ZIO }
 object ReadConfig extends App {
   case class Prod(ldap: String, dburl: Option[String])
 
+  import Config._
+
   private val config =
     (string("LDAP") <*>
       string("DB_URL").optional)(Prod.apply, Prod.unapply)

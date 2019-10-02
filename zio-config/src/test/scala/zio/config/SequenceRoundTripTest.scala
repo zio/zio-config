@@ -6,6 +6,8 @@ import zio.config.testsupport.TestSupport
 
 object SequenceRoundTripTest extends Properties("sequence round trip tests") with TestSupport {
 
+  import Config._
+
   private val genId = genSymbol(1, 5).map(Id)
 
   val key: (Int, Int) => String =
