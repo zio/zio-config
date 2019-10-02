@@ -9,7 +9,7 @@ object ErrorAccumulation extends App {
   import Config._
 
   val config =
-    (int("envvar") <*> string("envvar2"))(SampleConfig.apply, SampleConfig.unapply)
+    (int("envvar") |@| string("envvar2"))(SampleConfig.apply, SampleConfig.unapply)
 
   val runtime = new DefaultRuntime {}
 
