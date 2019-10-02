@@ -1,8 +1,8 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config.ReadError.MissingValue
-import zio.config.{ Config, ConfigSource, ReadError, _ }
+import zio.config.ReadError.{ MissingValue, ParseError }
+import zio.config.{ Config, ConfigSource, _ }
 
 object CoproductExample extends App {
   final case class Ldap(value: String)  extends AnyVal
@@ -64,8 +64,8 @@ object CoproductExample extends App {
     runtime.unsafeRun(read(prodOrDev).run.provide(invalidSource).either) ==
       Left(
         List(
-          ReadError("x1", MissingValue),
-          ReadError("x5", ReadError.ParseError("notadouble", "double"))
+          MissingValue("x1"),
+          ParseError("x5", "notadouble", "double")
         )
       )
   )
