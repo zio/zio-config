@@ -23,25 +23,18 @@ object PropertyType extends AttemptSyntax {
     override def write(a: String): String                       = a
   }
 
-  case object IntType extends PropertyType[Int] {
-    def description: String = "value of type int"
-    def read(value: String): Either[ErrorType, Int] =
-      value.toInt.attempt(_ => ParseError(value, "int"))
-    def write(value: Int): String = value.toString
+  case object BooleanType extends PropertyType[Boolean] {
+    def description: String = "value of type boolean"
+    def read(value: String): Either[ErrorType, Boolean] =
+      value.toBoolean.attempt(_ => ParseError(value, "boolean"))
+    def write(value: Boolean): String = value.toString
   }
 
-  case object UriType extends PropertyType[URI] {
-    def description: String = "value of type uri"
-    def read(value: String): Either[ErrorType, URI] =
-      new URI(value).attempt(_ => ParseError(value, "uri"))
-    def write(value: URI): String = value.toString
-  }
-
-  case object LongType extends PropertyType[Long] {
-    def description: String = "value of type long"
-    def read(value: String): Either[ErrorType, Long] =
-      value.toLong.attempt(_ => ParseError(value, "long"))
-    def write(value: Long): String = value.toString
+  case object ByteType extends PropertyType[Byte] {
+    def description: String = "value of type byte"
+    def read(value: String): Either[ErrorType, Byte] =
+      value.toByte.attempt(_ => ParseError(value, "byte"))
+    def write(value: Byte): String = value.toString
   }
 
   case object ShortType extends PropertyType[Short] {
@@ -51,6 +44,34 @@ object PropertyType extends AttemptSyntax {
     def write(value: Short): String = value.toString
   }
 
+  case object IntType extends PropertyType[Int] {
+    def description: String = "value of type int"
+    def read(value: String): Either[ErrorType, Int] =
+      value.toInt.attempt(_ => ParseError(value, "int"))
+    def write(value: Int): String = value.toString
+  }
+
+  case object LongType extends PropertyType[Long] {
+    def description: String = "value of type long"
+    def read(value: String): Either[ErrorType, Long] =
+      value.toLong.attempt(_ => ParseError(value, "long"))
+    def write(value: Long): String = value.toString
+  }
+
+  case object BigIntType extends PropertyType[BigInt] {
+    def description: String = "value of type bigint"
+    def read(value: String): Either[ErrorType, BigInt] =
+      BigInt(value).attempt(_ => ParseError(value, "bigint"))
+    def write(value: BigInt): String = value.toString
+  }
+
+  case object FloatType extends PropertyType[Float] {
+    def description: String = "value of type float"
+    def read(value: String): Either[ErrorType, Float] =
+      value.toFloat.attempt(_ => ParseError(value, "float"))
+    def write(value: Float): String = value.toString
+  }
+
   case object DoubleType extends PropertyType[Double] {
     def description: String = "value of type double"
     def read(value: String): Either[ErrorType, Double] =
@@ -58,37 +79,17 @@ object PropertyType extends AttemptSyntax {
     def write(value: Double): String = value.toString
   }
 
-  private[config] def ofOption[A](propertyType: PropertyType[A]): PropertyType[Option[A]] =
-    new PropertyType[Option[A]] {
-      override def read(value: String): Either[ReadError.ErrorType, Option[A]] =
-        propertyType.read(value) match {
-          case Right(v) => Right(Some(v))
-          case Left(v)  => Left(v)
-        }
-      override def write(a: Option[A]): String = a.map(aa => propertyType.write(aa)).getOrElse("")
-      override def description: String         = s"option of ${propertyType.description}"
-    }
-
-  private[config] def ofList[A](propertyType: PropertyType[A]): PropertyType[List[A]] = new PropertyType[List[A]] {
-    override def read(value: String): Either[ErrorType, List[A]] =
-      StringType.read(value) match {
-        case Right(v) => sequence(v.split(",").toList.map(t => propertyType.read(t)))
-        case Left(f)  => Left(f)
-      }
-    override def write(a: List[A]): String = a.map(aa => propertyType.write(aa)).mkString(",")
-    override def description: String       = s"list of ${propertyType.description}"
+  case object BigDecimalType extends PropertyType[BigDecimal] {
+    def description: String = "value of type bigdecimal"
+    def read(value: String): Either[ErrorType, BigDecimal] =
+      BigDecimal(value).attempt(_ => ParseError(value, "bigdecimal"))
+    def write(value: BigDecimal): String = value.toString
   }
 
-  private def map2[E, A, B, C](fa: Either[E, A], b: Either[E, B])(f: (A, B) => C): Either[E, C] =
-    fa match {
-      case Right(v1) =>
-        b match {
-          case Right(v2)  => Right(f(v1, v2))
-          case Left(fail) => Left(fail)
-        }
-      case Left(fail) => Left(fail)
-    }
-
-  private[config] def sequence[A, B](fa: List[Either[A, B]]): Either[A, List[B]] =
-    fa.foldRight(Right[A, List[B]](Nil: List[B]): Either[A, List[B]])((a, b) => map2(a, b)((c, d) => c :: d))
+  case object UriType extends PropertyType[URI] {
+    def description: String = "value of type uri"
+    def read(value: String): Either[ErrorType, URI] =
+      new URI(value).attempt(_ => ParseError(value, "uri"))
+    def write(value: URI): String = value.toString
+  }
 }

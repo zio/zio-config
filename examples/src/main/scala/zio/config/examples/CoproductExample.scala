@@ -62,8 +62,8 @@ object CoproductExample extends App {
     runtime.unsafeRun(read(prodOrDev).run.provide(invalidSource).either) ==
       Left(
         List(
-          ReadError(Seq("x1"), MissingValue),
-          ReadError(Seq("x5"), ReadError.ParseError("notadouble", "double"))
+          ReadError("x1", MissingValue),
+          ReadError("x5", ReadError.ParseError("notadouble", "double"))
         )
       )
   )

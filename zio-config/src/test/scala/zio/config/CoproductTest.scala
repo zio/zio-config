@@ -50,8 +50,8 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
     readWithErrors(p).shouldBe {
       Left(
         ReadErrors(
-          ReadError(List(p.kLdap), MissingValue),
-          ReadError(List(p.kFactor), ReadError.ParseError("notadouble", "double"))
+          ReadError(p.kLdap, MissingValue),
+          ReadError(p.kFactor, ReadError.ParseError("notadouble", "double"))
         )
       )
     }
