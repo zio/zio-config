@@ -5,7 +5,7 @@ import zio.config._
 
 /**
  * An example that shows the usage of pretty much all existing combinators.
- * <+> , |@|, | etc*
+ * |@|, or, xmap etc*
  *
  * It also shows:
  *  1) How documentation is done.
