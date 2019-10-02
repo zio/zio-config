@@ -143,7 +143,7 @@ private[config] trait ProductBuilder[A, B] {
 }
 
 object ProductBuilder {
-  private def liftWrite[A, B, C](f: C => Option[(A, B)]): C => Either[WriteError, (A, B)] =
-    c => f(c).fold[Either[WriteError, (A, B)]](Left(WriteError("Failed to write.", None)))(r => Right(r))
+  private def liftWrite[A, B, C](f: C => Option[(A, B)]): C => Either[String, (A, B)] =
+    c => f(c).fold[Either[String, (A, B)]](Left("Failed to write the value back."))(r => Right(r))
 
 }

@@ -16,7 +16,7 @@ object ReadErrorsTest extends Properties("ReadErrors/NEL") with TestSupport {
   private val genReadError: Gen[ReadError] =
     Gen
       .oneOf(Gen.const(MissingValue), genParseError)
-      .map(ReadError(List("somekey"), _))
+      .map(ReadError("somekey", _))
 
   private val genReadErrors: Gen[List[ReadError]] =
     for {

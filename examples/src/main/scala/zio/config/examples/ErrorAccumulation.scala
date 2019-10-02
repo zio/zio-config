@@ -20,8 +20,8 @@ object ErrorAccumulation extends App {
     parsed ==
       Left(
         List(
-          ReadError(Seq("envvar"), ReadError.MissingValue),
-          ReadError(Seq("envvar2"), ReadError.MissingValue)
+          ReadError("envvar", ReadError.MissingValue),
+          ReadError("envvar2", ReadError.MissingValue)
         )
       )
   )
@@ -38,8 +38,8 @@ object ErrorAccumulation extends App {
     runtime.unsafeRun(read(config).run.provide(invalidSource).either) ==
       Left(
         List(
-          ReadError(Seq("envvar"), ReadError.ParseError("wrong", "int")),
-          ReadError(Seq("envvar2"), ReadError.MissingValue)
+          ReadError("envvar", ReadError.ParseError("wrong", "int")),
+          ReadError("envvar2", ReadError.MissingValue)
         )
       )
   )

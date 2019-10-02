@@ -16,7 +16,7 @@ package object config extends Sources {
     config
       .xmapEither[Option[A]](a => Right(Some(a)))({
         case Some(value) => Right(value)
-        case None        => Left(WriteError("Error: Cannot write a none value", None))
+        case None        => Left("Error: Cannot write a none value")
       })
       .onError(_ => None)
 

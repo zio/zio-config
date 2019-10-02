@@ -3,8 +3,6 @@ package zio.config.examples
 import zio.DefaultRuntime
 import zio.config._
 
-final case class Variables(variable1: Int, variable2: Option[Int])
-
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,
  * to show how the combinator `Config.sequence` can be helpful.
@@ -12,6 +10,8 @@ final case class Variables(variable1: Int, variable2: Option[Int])
  * This is not showing a standard pattern that user has to follow. It is up to the user to design the pattern
  * of key value pairs, and use the right combinators in the library to retrieve it purely and safely integrated with ZIO.
  */
+final case class Variables(variable1: Int, variable2: Option[Int])
+
 object SequenceExample extends App {
   val listOfConfig: List[Config[Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
@@ -39,5 +39,5 @@ object SequenceExample extends App {
   val written = runtime.unsafeRun(write(configOfList).run.provide(result._2).either)
 
   assert(result._2 == List(Variables(7, None), Variables(5, Some(6)), Variables(3, Some(4)), Variables(1, Some(2))))
-  assert(written.map(_.toList.sortBy(_._1)) == Right(map.toList.sortBy(_._1)))
+  assert(written.fold(_ => Nil, _.toList.sortBy(_._1)) == map.toList.sortBy(_._1))
 }

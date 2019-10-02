@@ -33,7 +33,7 @@ object SequenceRoundTripTest extends Properties("sequence round trip tests") wit
         p.toList.map(prefix => (opt(cId(prefix._1)) <*> cId(prefix._1))(OverallConfig.apply, OverallConfig.unapply))
       )
 
-    val readAndWrite: ZIO[ConfigSource, ReadErrors, Either[WriteError, Map[String, String]]] =
+    val readAndWrite: ZIO[ConfigSource, ReadErrors, Either[String, Map[String, String]]] =
       for {
         result    <- read(config).run
         (_, conf) = result
@@ -42,8 +42,8 @@ object SequenceRoundTripTest extends Properties("sequence round trip tests") wit
 
     readAndWrite
       .provide(mapSource(p))
-      .map(_.map(t => t.toList.sortBy(_._1)))
-      .shouldBe(Right(p.toList.sortBy(_._1)))
+      .map(_.fold(_ => Nil, t => t.toList.sortBy(_._1)))
+      .shouldBe(p.toList.sortBy(_._1))
   }
 
   final case class Id(value: String) extends AnyVal
