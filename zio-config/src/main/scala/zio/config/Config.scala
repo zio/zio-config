@@ -3,7 +3,7 @@ package zio.config
 import java.net.URI
 
 import zio.config.actions.Read
-import zio.{IO, Task, UIO, ZIO, system}
+import zio.{ system, IO, Task, UIO, ZIO }
 
 trait Config[A] {
   def config: Config.Service[A]
@@ -13,19 +13,24 @@ object Config {
     def config: UIO[A]
   }
 
-  def make[A](source: ConfigSource, configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] = {
-    Read.read(configDescriptor).provide(source).map(e => new Config[A] {
-      override def config: Service[A] = new Service[A] {
-        override def config: UIO[A] = ZIO.succeed(e._2)
-      }
-    })
-  }
+  def make[A](source: ConfigSource, configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] =
+    Read
+      .read(configDescriptor)
+      .provide(source)
+      .map(
+        e =>
+          new Config[A] {
+            override def config: Service[A] = new Service[A] {
+              override def config: UIO[A] = ZIO.succeed(e._2)
+            }
+          }
+      )
 
   def fromEnv[A](configDescriptor: ConfigDescriptor[A]): ZIO[system.System, Throwable, Config[A]] =
     for {
       lineSep <- ZIO.accessM[zio.system.System](sys => sys.system.lineSeparator)
-      source <- Task(sys.env).map(mapSource)
-      res <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
+      source  <- Task(sys.env).map(mapSource)
+      res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
     } yield res
 
   def fromMap[A](map: Map[String, String], configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] =
@@ -34,10 +39,9 @@ object Config {
   def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): ZIO[system.System, Throwable, Config[A]] =
     for {
       lineSep <- ZIO.accessM[zio.system.System](sys => sys.system.lineSeparator)
-      source <- Task(sys.props.toMap).map(mapSource)
-      res <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
+      source  <- Task(sys.props.toMap).map(mapSource)
+      res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
     } yield res
-
 
   def string(path: String): ConfigDescriptor[String] =
     ConfigDescriptor.Source(path, PropertyType.StringType) ~ "value of type string"

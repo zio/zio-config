@@ -1,12 +1,12 @@
 package zio
 
-import zio.config.actions.{ UserManual, Read, Write }
+import zio.config.actions.{ Read, UserManual, Write }
 
 package object config extends Sources {
   def read[A](config: => ConfigDescriptor[A]): ZIO[ConfigSource, ReadErrors, (ConfigReport, A)] = Read.read[A](config)
   def reportFetchedConfig[A](config: => ConfigDescriptor[A]): ZIO[ConfigSource, ReadErrors, ConfigReport] =
     read(config).map(_._1)
-  def write[A](config: => ConfigDescriptor[A]): Write[A]            = Write.write[A](config)
+  def write[A](config: => ConfigDescriptor[A]): Write[A]     = Write.write[A](config)
   def manPage[A](config: => ConfigDescriptor[A]): UserManual = UserManual.man[A](config)
 
   def config[A]: ZIO[Config[A], Nothing, A] = ZIO.accessM(_.config.config)
