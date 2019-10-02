@@ -1,6 +1,7 @@
 package zio.config.actions
 
-import zio.config.{ Config, ConfigReport, ConfigSource, Details, ReadError, ReadErrors }
+import zio.config.ReadErrors
+import zio.config.{ Config, ConfigReport, ConfigSource, Details, ReadError }
 import zio.{ config, Ref, UIO, ZIO }
 
 case class Read[A](run: ZIO[ConfigSource, ReadErrors, (ConfigReport, A)]) {}
@@ -13,17 +14,19 @@ object Read {
       report: Ref[ConfigReport]
     ): ZIO[ConfigSource, ReadErrors, (ConfigReport, B)] =
       configuration match {
+        case Config.Pure(value) => report.get.map(t => (t, value))
+
         case Config.Source(path, propertyType) =>
           for {
             value <- config
                       .getConfigValue(path)
-                      .mapError(_ => ReadErrors(ReadError(Seq(path), ReadError.MissingValue)))
+                      .mapError(_ => ReadErrors(ReadError(path, ReadError.MissingValue)))
             r <- report
                   .update(_.addDetails(Details(path, value, propertyType.description)))
             result <- ZIO.fromEither(
                        propertyType
                          .read(value)
-                         .fold(r => Left(ReadErrors(ReadError(Seq(path), r))), e => Right((r, e)))
+                         .fold(r => Left(ReadErrors(ReadError(path, r))), e => Right((r, e)))
                      )
 
           } yield result
@@ -32,6 +35,15 @@ object Read {
           loop(c, report).flatMap {
             case (r, src) => ZIO.fromEither(f(src)).bimap(err => ReadErrors(err), res => (r, res))
           }
+
+        case Config.Optional(c) =>
+          report.get.flatMap(
+            t =>
+              loop(c, report).fold(
+                _ => (t, None),
+                success => (success._1, Some(success._2))
+              )
+          )
 
         case Config.OnError(c, f) =>
           ZIO.accessM[ConfigSource](
@@ -72,9 +84,6 @@ object Read {
                 )
             }
           )
-
-        case Config.Xmap(c, from, _) =>
-          loop(c, report).map(t => (t._1, from(t._2)))
       }
 
     Read(Ref.make(ConfigReport(Nil)).flatMap(report => loop(configuration, report)))

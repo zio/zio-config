@@ -39,7 +39,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     )
   private val cId2: Config[Id] = string("kId2").xmap(Id)(_.value)
   private val cDataItem: Config[DataItem] =
-    (opt(cId2) <*> int("kDiCount"))(
+    (cId2.optional <*> int("kDiCount"))(
       DataItem.apply,
       DataItem.unapply
     )
