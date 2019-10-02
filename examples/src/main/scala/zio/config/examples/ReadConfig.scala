@@ -1,7 +1,6 @@
 package zio.config.examples
 
 import zio.config._, Config._
-import zio.console.Console
 import zio.{ App, ZIO }
 
 case class Prod(ldap: String, port: Int, dburl: Option[String])
@@ -25,5 +24,3 @@ object ReadConfig extends App {
       .flatMap(config => Prod.myAppLogic.provide(config))
       .foldM(failure => ZIO.effectTotal(println(failure)) *> ZIO.succeed(1), _ => ZIO.succeed(0))
 }
-
-case class ProgramEnv(config: Config.Service[Prod]) extends Config[Prod] with Console.Live

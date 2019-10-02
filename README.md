@@ -21,70 +21,52 @@ Configuration parsing should be easy as it sounds - Hence;
 ## Usage
 
 ```scala
+package zio.config.examples
 
-import zio.{App, ZIO}
 import zio.config._, Config._
 import zio.console.Console
+import zio.{ App, ZIO }
 
-object ReadConfig extends App {
-  case class Prod(ldap: String, dburl: Option[String])
+case class Prod(ldap: String, port: Int, dburl: Option[String])
 
-  private val config =
-    (string("LDAP") <*>
-      string("DB_URL").optional ~ "Db Related config")(Prod.apply, Prod.unapply)
+object Prod {
+  val prodConfig: ConfigDescriptor[Prod] =
+    (string("LDAP") <*> int("PORT") <*>
+      string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
-  // In real, this comes from environment
-  private val validConfig =
-    Map(
-      "LDAP"    -> "v1",
-      "DB_URL"  -> "v2"
-    )
-    
-  val myAppLogic: ZIO[Console with ConfigSource, ReadErrors, Unit] =
-    ZIO.accessM(env =>
-      for {
-        result <- read(config)
-        (report, conf) = result
-        _ <- env.console.putStrLn(report.toString)
-        _ <- env.console.putStrLn(conf.toString)
-        map <- write(config).run.provide(conf).either
-        _  <- env.console.putStrLn(manPage(confg))
-        _ <- env.console.putStrLn(map.toString)
-      } yield ()
-    )
-
-  override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] = {
-    myAppLogic
-    .provide(ProgramEnv(mapSource(validConfig).configService))
-    .fold(_ => 1, _ => 0)
-  }
+  val myAppLogic: ZIO[Config[Prod], Throwable, (String, Option[String])] =
+    for {
+      prod    <- config[Prod]
+      written <- write(Prod.prodConfig).run.provide(prod)
+      _       <- ZIO.effect(println(written))
+      _       <- ZIO.effect(println(userManual(Prod.prodConfig)))
+    } yield (prod.ldap, prod.dburl)
 }
 
-case class ProgramEnv(configService: ConfigSource.Service) extends ConfigSource with Console.Live
+object ReadConfig extends App {
 
-//  
-// 
-// Report:
-//
-// List(
-//   Details("DB_URL", "v2", "option of value of type string"),
-//   Details("LDAP", "v1", "value of type string")
-// )
+  override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] =
+    Config
+      .fromEnv(Prod.prodConfig)
+      .flatMap(config => Prod.myAppLogic.provide(config))
+      .foldM(failure => ZIO.effectTotal(println(failure)) *> ZIO.succeed(1), _ => ZIO.succeed(0))
+}
+
 //
 // Config:
-//
 //  Prod(v1, Some(v2)
-// 
-// ManPage:
-// KeyDescription(DB_URL,List(value of type string, Optional value, Db Related config))
-// KeyDescription(LDAP,List(value of type string)
 //
+// Report:
+//   List(
+//     Details("DB_URL", "v2", "option of value of type string"),
+//     Details("LDAP", "v1", "value of type string")
+//   )
+// 
+// User Manual:
+//   KeyDescription(DB_URL,List(value of type string, Optional value, Db Related config))
+//   KeyDescription(LDAP,List(value of type string)
 //
 
 ```
 
-### Examples
-
-Find the examples in src/main/scala/zio/config/examples.
-
-A typical pattern of our application that use zio and config library is `zio.config.examples.ProgramExample`.
+Please find more examples in examples modules.
