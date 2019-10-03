@@ -5,7 +5,7 @@ import zio.config._
 
 /**
  * An example that shows the usage of pretty much all existing combinators.
- * <+> , |@|, | etc*
+ * |@|, or, xmap etc*
  *
  * It also shows:
  *  1) How documentation is done.
@@ -25,11 +25,11 @@ object ReadWriteReport extends App {
 
   // An example where user provides a description once and for all, and use it for read, write, report!
   val config: Config[ProdConfig] =
-    (string("user") <*> string("pwd").xmap(Password)(_.value).optional <*> string("anonymous").optional)(
+    (string("user") |@| string("pwd").xmap(Password)(_.value).optional |@| string("anonymous").optional)(
       UserPwd.apply,
       UserPwd.unapply
     ) or
-      (string("auth_token") <*> string("clientid"))(Token.apply, Token.unapply)
+      (string("auth_token") |@| string("clientid"))(Token.apply, Token.unapply)
 
   val runtime = new DefaultRuntime {}
 

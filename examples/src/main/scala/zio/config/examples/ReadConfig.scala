@@ -10,7 +10,7 @@ object ReadConfig extends App {
   import Config._
 
   private val config =
-    (string("LDAP") <*>
+    (string("LDAP") |@|
       string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
   // In real, this comes from environment

@@ -33,7 +33,7 @@ object ProgramExample extends App {
   import Config._
 
   private val config =
-    (string("INPUT_PATH") <*> string("OUTPUT_PATH"))(ProgramConfig.apply, ProgramConfig.unapply)
+    (string("INPUT_PATH") |@| string("OUTPUT_PATH"))(ProgramConfig.apply, ProgramConfig.unapply)
 
   // The use of explicit bootstrap instead of (naive approach of forming a ZIO[Any, Throwable, Unit]) is that
   // it allows you to give a test Bootstrap Service. Otherwise you will end up mocking/passing a much more lower level
