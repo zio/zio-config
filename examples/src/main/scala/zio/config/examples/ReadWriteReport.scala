@@ -2,8 +2,8 @@ package zio.config.examples
 
 import zio.DefaultRuntime
 import zio.config._, Config._
-import zio.config.actions.UserManual
-import zio.config.actions.UserManual.KeyDescription
+import zio.config.actions.ConfigManPage
+import zio.config.actions.ConfigManPage.KeyDescription
 
 object ReadWriteReport extends App {
 
@@ -68,7 +68,7 @@ object ReadWriteReport extends App {
   // Want to get a man page for config
   assert(
     manPage(config) ==
-      UserManual(
+      ConfigManPage(
         List(
           KeyDescription("usr", List("value of type string", "Example: some-user", "Prod Config")),
           KeyDescription(
@@ -80,7 +80,7 @@ object ReadWriteReport extends App {
           KeyDescription("abc", List("value of type int", "Optional value", "Example: xyz", "Prod Config"))
         ),
         Some(
-          UserManual(
+          ConfigManPage(
             List(
               KeyDescription("auth_token", List("value of type string", "Prod Config")),
               KeyDescription("clientid", List("value of type string", "Prod Config"))

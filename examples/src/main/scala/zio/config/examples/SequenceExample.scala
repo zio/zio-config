@@ -5,7 +5,7 @@ import zio.config._, Config._
 
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,
- * to show how the combinator `Config.sequence` can be helpful.
+ * to show how the combinator `Config.collectAll` (Sequence)  can be helpful.
  *
  * This is not showing a standard pattern that user has to follow. It is up to the user to design the pattern
  * of key value pairs, and use the right combinators in the library to retrieve it purely and safely integrated with ZIO.
@@ -21,7 +21,7 @@ object SequenceExample extends App {
       )
 
   val configOfList: ConfigDescriptor[List[Variables]] =
-    ConfigDescriptor.sequence(listOfConfig)
+    ConfigDescriptor.collectAll(listOfConfig)
 
   val map =
     Map(

@@ -1,14 +1,14 @@
 package zio.config.examples
 
-import zio.{App, IO, UIO, ZIO}
-import zio.config.{Config, _}
+import zio.{ App, IO, UIO, ZIO }
+import zio.config.{ Config, _ }
 import Config._
 
 /**
-  * The pattern is an inspiration from http://degoes.net/articles/zio-environment.
-  * We will see how using zio-config library gels well with this pattern.
-  * The  functions of the `Application` are simply zio values with this pattern.
-  */
+ * The pattern is an inspiration from http://degoes.net/articles/zio-environment.
+ * We will see how using zio-config library gels well with this pattern.
+ * The  functions of the `Application` are simply zio values with this pattern.
+ */
 final case class ProgramConfig(inputPath: String, outputPath: String)
 
 object ProgramExample extends App {
@@ -16,13 +16,15 @@ object ProgramExample extends App {
   private val programConfig =
     (string("INPUT_PATH") <*> string("OUTPUT_PATH"))(ProgramConfig.apply, ProgramConfig.unapply)
 
-  case class Live(config: Config.Service[ProgramConfig], spark: SparkEnv.Service) extends SparkEnv with Config[ProgramConfig]
+  case class Live(config: Config.Service[ProgramConfig], spark: SparkEnv.Service)
+      extends SparkEnv
+      with Config[ProgramConfig]
 
   override def run(args: List[String]): ZIO[Environment, Nothing, Int] = {
     val pgm = for {
-      confService <- Config.fromEnv(programConfig)
+      confService  <- Config.fromEnv(programConfig)
       sparkService <- SparkEnv.make
-      _ <- Application.execute.provide(Live(confService.config, sparkService.spark))
+      _            <- Application.execute.provide(Live(confService.config, sparkService.spark))
     } yield ()
 
     pgm.foldM(
@@ -46,11 +48,16 @@ object SparkEnv {
   }
 
   def make: IO[Throwable, SparkEnv] =
-    ZIO.effect("sparkEnv").map(r => new SparkEnv {
-      override def spark: Service = new Service {
-        override def getSpark: UIO[SparkSession] = ZIO.succeed(r)
-      }
-    })
+    ZIO
+      .effect("sparkEnv")
+      .map(
+        r =>
+          new SparkEnv {
+            override def spark: Service = new Service {
+              override def getSpark: UIO[SparkSession] = ZIO.succeed(r)
+            }
+          }
+      )
 }
 
 // The core application
@@ -58,21 +65,21 @@ object Application {
   val processData: ZIO[SparkEnv with Config[ProgramConfig], Throwable, Unit] =
     ZIO.accessM(env => {
       for {
-        conf <- config[ProgramConfig]
+        conf  <- config[ProgramConfig]
         spark <- env.spark.getSpark
-        _ <- ZIO.effect(println(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark}"))
+        _     <- ZIO.effect(println(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark}"))
       } yield ()
     })
-
 
   val logSparkSession: ZIO[SparkEnv, Throwable, Unit] =
     ZIO.accessM(
       r =>
         for {
           session <- r.spark.getSpark
-          _ <- ZIO.effect(println(s"Executing something with spark $session without the need of anything else from config"))
+          _ <- ZIO.effect(
+                println(s"Executing something with spark $session without the need of anything else from config")
+              )
         } yield ()
-
     )
 
   val logProgramConfig: ZIO[Config[ProgramConfig], Throwable, Unit] =
