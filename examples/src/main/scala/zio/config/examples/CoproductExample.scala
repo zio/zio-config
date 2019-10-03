@@ -14,10 +14,10 @@ object CoproductExample extends App {
   import Config._
 
   val prod =
-    (string("x1").xmap(Ldap)(_.value) <*> string("x2").xmap(DbUrl)(_.value))(Prod.apply, Prod.unapply)
+    (string("x1").xmap(Ldap)(_.value) |@| string("x2").xmap(DbUrl)(_.value))(Prod.apply, Prod.unapply)
 
   val dev =
-    (string("x3") <*> int("x4") <*> double("x5"))(Dev.apply, Dev.unapply)
+    (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
 
   val prodOrDev: Config[Either[Prod, Dev]] =
     prod or dev

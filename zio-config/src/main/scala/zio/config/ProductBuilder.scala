@@ -9,7 +9,7 @@ private[config] trait ProductBuilder[A, B] {
   def apply[C](f: (A, B) => C, g: C => Option[(A, B)]): Config[C] =
     a.zip(b).xmapEither({ case (aa, bb) => Right(f(aa, bb)) })(liftWrite(g))
 
-  def <*>[C](cc: Config[C]): ProductBuilder[C] = new ProductBuilder[C] {
+  def |@|[C](cc: Config[C]): ProductBuilder[C] = new ProductBuilder[C] {
     val c: Config[C] = cc
   }
 
@@ -22,7 +22,7 @@ private[config] trait ProductBuilder[A, B] {
           liftWrite(d => g(d).map({ case (aa, bb, cc) => ((aa, bb), cc) }))
         )
 
-    def <*>[D](dd: Config[D]): ProductBuilder[D] = new ProductBuilder[D] {
+    def |@|[D](dd: Config[D]): ProductBuilder[D] = new ProductBuilder[D] {
       val d: Config[D] = dd
     }
 
@@ -37,7 +37,7 @@ private[config] trait ProductBuilder[A, B] {
             liftWrite(e => g(e).map { case (aa, bb, cc, dd) => (((aa, bb), cc), dd) })
           )
 
-      def <*>[E](ee: Config[E]): ProductBuilder[E] = new ProductBuilder[E] {
+      def |@|[E](ee: Config[E]): ProductBuilder[E] = new ProductBuilder[E] {
         val e: Config[E] = ee
       }
 
@@ -52,7 +52,7 @@ private[config] trait ProductBuilder[A, B] {
               liftWrite(ff => g(ff).map({ case (aa, bb, cc, dd, ee) => ((((aa, bb), cc), dd), ee) }))
             )
 
-        def <*>[FF](dd: Config[FF]): ProductBuilder[FF] = new ProductBuilder[FF] {
+        def |@|[FF](dd: Config[FF]): ProductBuilder[FF] = new ProductBuilder[FF] {
           val ff: Config[FF] = dd
         }
 
@@ -67,7 +67,7 @@ private[config] trait ProductBuilder[A, B] {
                 liftWrite(g(_).map({ case (aa, bb, cc, dd, ee, fff) => (((((aa, bb), cc), dd), ee), fff) }))
               )
 
-          def <*>[G](dd: Config[G]): ProductBuilder[G] = new ProductBuilder[G] {
+          def |@|[G](dd: Config[G]): ProductBuilder[G] = new ProductBuilder[G] {
             val g: Config[G] = dd
           }
 
@@ -84,7 +84,7 @@ private[config] trait ProductBuilder[A, B] {
                   }))
                 )
 
-            def <*>[H](dd: Config[H]): ProductBuilder[H] = new ProductBuilder[H] {
+            def |@|[H](dd: Config[H]): ProductBuilder[H] = new ProductBuilder[H] {
               val h: Config[H] = dd
             }
 
@@ -106,7 +106,7 @@ private[config] trait ProductBuilder[A, B] {
                     })
                   )
 
-              def <*>[I](dd: Config[I]): ProductBuilder[I] = new ProductBuilder[I] {
+              def |@|[I](dd: Config[I]): ProductBuilder[I] = new ProductBuilder[I] {
                 val i: Config[I] = dd
               }
 
