@@ -24,7 +24,6 @@ object BuildHelper {
     "-language:implicitConversions",
     "-explaintypes",
     "-Yrangepos",
-    "-Xfuture",
     "-Xsource:2.13",
     "-Xlint:_,-type-parameter-shadow",
     "-Ywarn-numeric-widen",
@@ -37,10 +36,12 @@ object BuildHelper {
     buildInfoObject := "BuildInfo"
   )
 
+  private val optimizerOptions = Seq("-opt:l:inline", "-opt-inline-from:zio.internal.**")
+
   def extraOptions(scalaVersion: String) =
     CrossVersion.partialVersion(scalaVersion) match {
       case Some((2, 13)) =>
-        std2xOptions
+        std2xOptions ++ optimizerOptions
       case Some((2, 12)) =>
         Seq(
           "-opt-warnings",
@@ -55,7 +56,7 @@ object BuildHelper {
           "-Ywarn-infer-any",
           "-Ywarn-nullary-override",
           "-Ywarn-nullary-unit"
-        ) ++ std2xOptions
+        ) ++ std2xOptions ++ optimizerOptions
       case Some((2, 11)) =>
         Seq(
           "-Ypartial-unification",
@@ -73,7 +74,7 @@ object BuildHelper {
   def stdSettings(prjName: String) = Seq(
     name := s"$prjName",
     scalacOptions := stdOptions,
-    crossScalaVersions := Seq("2.12.8", "2.11.12"),
+    crossScalaVersions := Seq("2.13.0", "2.12.8", "2.11.12"),
     scalaVersion in ThisBuild := crossScalaVersions.value.head,
     scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
     libraryDependencies ++= compileOnlyDeps ++ testDeps ++ Seq(

@@ -1,7 +1,8 @@
 package zio.config.actions
 
+import zio.config.ReadError.MissingValue
 import zio.config.ReadErrors
-import zio.config.{ Config, ConfigReport, ConfigSource, Details, ReadError }
+import zio.config.{ Config, ConfigReport, ConfigSource, Details }
 import zio.{ config, Ref, UIO, ZIO }
 
 case class Read[A](run: ZIO[ConfigSource, ReadErrors, (ConfigReport, A)]) {}
@@ -20,13 +21,13 @@ object Read {
           for {
             value <- config
                       .getConfigValue(path)
-                      .mapError(_ => ReadErrors(ReadError(path, ReadError.MissingValue)))
+                      .mapError(_ => ReadErrors(MissingValue(path)))
             r <- report
                   .update(_.addDetails(Details(path, value, propertyType.description)))
             result <- ZIO.fromEither(
                        propertyType
-                         .read(value)
-                         .fold(r => Left(ReadErrors(ReadError(path, r))), e => Right((r, e)))
+                         .read(path, value)
+                         .fold(r => Left(ReadErrors(r)), e => Right((r, e)))
                      )
 
           } yield result

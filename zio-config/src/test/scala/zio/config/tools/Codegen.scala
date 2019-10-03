@@ -54,7 +54,7 @@ object Codegen {
          |      )""".stripMargin
     val part2 =
       s"""
-         |    def <*>[$L1]($ll1: Config[$L1]): ProductBuilder[$L1] =
+         |    def |@|[$L1]($ll1: Config[$L1]): ProductBuilder[$L1] =
          |      new ProductBuilder[$L1] {
          |        val $l1: Config[$L1] = $ll1
          |      }""".stripMargin

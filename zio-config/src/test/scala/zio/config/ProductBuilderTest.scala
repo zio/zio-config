@@ -51,121 +51,121 @@ object ProductBuilderTest extends Properties("ProductBuilder") with TestSupport 
   final case class S21(s0: Int, s1: Int, s2: Int, s3: Int, s4: Int, s5: Int, s6: Int, s7: Int, s8: Int, s9: Int, s10: Int, s11: Int, s12: Int, s13: Int, s14: Int, s15: Int, s16: Int, s17: Int, s18: Int, s19: Int, s20: Int)
 
   val cS2: Config[S2] =
-    (cId0 <*> cId1)(
+    (cId0 |@| cId1)(
       S2.apply,
       S2.unapply
     )
 
   val cS3: Config[S3] =
-    (cId0 <*> cId1 <*> cId2)(
+    (cId0 |@| cId1 |@| cId2)(
       S3.apply,
       S3.unapply
     )
 
   val cS4: Config[S4] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3)(
       S4.apply,
       S4.unapply
     )
 
   val cS5: Config[S5] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4)(
       S5.apply,
       S5.unapply
     )
 
   val cS6: Config[S6] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5)(
       S6.apply,
       S6.unapply
     )
 
   val cS7: Config[S7] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6)(
       S7.apply,
       S7.unapply
     )
 
   val cS8: Config[S8] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7)(
       S8.apply,
       S8.unapply
     )
 
   val cS9: Config[S9] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8)(
       S9.apply,
       S9.unapply
     )
 
   val cS10: Config[S10] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9)(
       S10.apply,
       S10.unapply
     )
 
   val cS11: Config[S11] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10)(
       S11.apply,
       S11.unapply
     )
 
   val cS12: Config[S12] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10 <*> cId11)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11)(
       S12.apply,
       S12.unapply
     )
 
   val cS13: Config[S13] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10 <*> cId11 <*> cId12)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12)(
       S13.apply,
       S13.unapply
     )
 
   val cS14: Config[S14] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10 <*> cId11 <*> cId12 <*> cId13)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13)(
       S14.apply,
       S14.unapply
     )
 
   val cS15: Config[S15] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10 <*> cId11 <*> cId12 <*> cId13 <*> cId14)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14)(
       S15.apply,
       S15.unapply
     )
 
   val cS16: Config[S16] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10 <*> cId11 <*> cId12 <*> cId13 <*> cId14 <*> cId15)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15)(
       S16.apply,
       S16.unapply
     )
 
   val cS17: Config[S17] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10 <*> cId11 <*> cId12 <*> cId13 <*> cId14 <*> cId15 <*> cId16)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16)(
       S17.apply,
       S17.unapply
     )
 
   val cS18: Config[S18] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10 <*> cId11 <*> cId12 <*> cId13 <*> cId14 <*> cId15 <*> cId16 <*> cId17)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17)(
       S18.apply,
       S18.unapply
     )
 
   val cS19: Config[S19] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10 <*> cId11 <*> cId12 <*> cId13 <*> cId14 <*> cId15 <*> cId16 <*> cId17 <*> cId18)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18)(
       S19.apply,
       S19.unapply
     )
 
   val cS20: Config[S20] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10 <*> cId11 <*> cId12 <*> cId13 <*> cId14 <*> cId15 <*> cId16 <*> cId17 <*> cId18 <*> cId19)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19)(
       S20.apply,
       S20.unapply
     )
 
   val cS21: Config[S21] =
-    (cId0 <*> cId1 <*> cId2 <*> cId3 <*> cId4 <*> cId5 <*> cId6 <*> cId7 <*> cId8 <*> cId9 <*> cId10 <*> cId11 <*> cId12 <*> cId13 <*> cId14 <*> cId15 <*> cId16 <*> cId17 <*> cId18 <*> cId19 <*> cId20)(
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20)(
       S21.apply,
       S21.unapply
     )
