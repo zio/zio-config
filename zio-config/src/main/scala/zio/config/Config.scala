@@ -33,7 +33,7 @@ sealed trait Config[A] {
 
 object Config {
 
-  final case class Pure[A](a: A) extends Config[A]
+  final case class Empty[A]() extends Config[A]
 
   final case class Source[A](path: String, propertyType: PropertyType[A]) extends Config[A]
 
@@ -48,11 +48,8 @@ object Config {
 
   final case class Or[A, B](left: Config[A], right: Config[B]) extends Config[Either[A, B]]
 
-  def succeed[A](a: A): Config[A] =
-    Config.Pure(a)
-
   def sequence[A](configList: List[Config[A]]): Config[List[A]] =
-    configList.foldLeft(Pure(Nil): Config[List[A]])(
+    configList.foldLeft[Config[List[A]]](Empty())(
       (a, b) =>
         b.xmapEither2(a)((aa, bb) => Right(aa :: bb))(t => {
           t.headOption.fold[Either[String, (A, List[A])]](
