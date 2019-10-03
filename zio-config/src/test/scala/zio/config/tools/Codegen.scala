@@ -30,7 +30,7 @@ object Codegen {
     def letter(i: Int) =
       allLettersExceptF(i).toString
 
-    val l0  = (letter(n + 0)) // eg "d"
+    val l0  = letter(n + 0) // eg "d"
     val L0  = l0.toUpperCase
     val l1  = letter(n + 1) // eg "e"
     val L1  = l1.toUpperCase
