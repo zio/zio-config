@@ -1,6 +1,7 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
+import zio.config.ReadError.{ MissingValue, ParseError }
 import zio.config._
 
 object ErrorAccumulation extends App {
@@ -22,8 +23,8 @@ object ErrorAccumulation extends App {
     parsed ==
       Left(
         List(
-          ReadError("envvar", ReadError.MissingValue),
-          ReadError("envvar2", ReadError.MissingValue)
+          MissingValue("envvar"),
+          MissingValue("envvar2")
         )
       )
   )
@@ -40,8 +41,8 @@ object ErrorAccumulation extends App {
     runtime.unsafeRun(read(config).run.provide(invalidSource).either) ==
       Left(
         List(
-          ReadError("envvar", ReadError.ParseError("wrong", "int")),
-          ReadError("envvar2", ReadError.MissingValue)
+          ParseError("envvar", "wrong", "int"),
+          MissingValue("envvar2")
         )
       )
   )
