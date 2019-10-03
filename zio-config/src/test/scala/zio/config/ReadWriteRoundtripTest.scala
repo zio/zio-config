@@ -35,7 +35,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       EnterpriseAuth.unapply
     )
   private val cNestedConfig: Config[NestedConfig] =
-    (cEnterpriseAuth |@| int("kCount") <*> double("kFactor"))(
+    (cEnterpriseAuth |@| int("kCount") |@| double("kFactor"))(
       NestedConfig.apply,
       NestedConfig.unapply
     )

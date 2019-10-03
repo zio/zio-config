@@ -78,7 +78,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) |@| int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
@@ -104,7 +104,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) |@| int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
@@ -133,7 +133,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) |@| int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
@@ -162,7 +162,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         EnterpriseAuth.unapply
       )
     val password: Config[PasswordAuth] =
-      (string(p.kUser) |@| int(p.kCount) <*> double(p.kFactor))(
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )

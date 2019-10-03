@@ -29,7 +29,7 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
       EnterpriseAuth.unapply
     )
   private val cNestedConfigLeft: Config[NestedConfig] =
-    (cEnterpriseAuthLeft |@| int("klCount") <*> double("klFactor"))(
+    (cEnterpriseAuthLeft |@| int("klCount") |@| double("klFactor"))(
       NestedConfig.apply,
       NestedConfig.unapply
     )
@@ -42,7 +42,7 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
       EnterpriseAuth.unapply
     )
   private val cNestedConfigRight: Config[NestedConfig] =
-    (cEnterpriseAuthRight |@| int("krCount") <*> double("krFactor"))(
+    (cEnterpriseAuthRight |@| int("krCount") |@| double("krFactor"))(
       NestedConfig.apply,
       NestedConfig.unapply
     )
