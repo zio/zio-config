@@ -24,6 +24,7 @@ object ConfigDocs {
             List(KeyDescription(path, if (previousDescription.isEmpty) acc else previousDescription :: acc)),
             None
           )
+        case ConfigDescriptor.Default(c, _)        => loop(acc, previousDescription, c, desc)
         case ConfigDescriptor.Describe(c, message) => loop(message :: acc, previousDescription, c, desc)
         case ConfigDescriptor.Optional(c)          => loop(acc, previousDescription, c, desc)
         case ConfigDescriptor.MapEither(c, _, _)   => loop(acc, previousDescription, c, desc)

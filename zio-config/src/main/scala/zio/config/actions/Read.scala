@@ -2,7 +2,7 @@ package zio.config.actions
 
 import zio.config.ReadError.MissingValue
 import zio.config.ReadErrors
-import zio.config.{ ConfigDescriptor }
+import zio.config.ConfigDescriptor
 import zio.config.{ ConfigReport, ConfigSource, Details }
 import zio.{ config, Ref, UIO, ZIO }
 
@@ -36,6 +36,16 @@ object Read {
           loop(c, report, previousDescription).flatMap {
             case (r, src) => ZIO.fromEither(f(src)).bimap(err => ReadErrors(err), res => (r, res))
           }
+
+        // No need to add report on the default value.
+        case ConfigDescriptor.Default(c, value) =>
+          report.get.flatMap(
+            t =>
+              loop(c, report, previousDescription).fold(
+                _ => (t, value),
+                success => (success._1, success._2)
+              )
+          )
 
         case ConfigDescriptor.Describe(c, message) =>
           loop(c, report, message)

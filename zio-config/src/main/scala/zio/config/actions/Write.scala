@@ -30,6 +30,10 @@ object Write {
           )
         )
 
+      // No need to write the default values back into the env
+      case ConfigDescriptor.Default(c, _) =>
+        write(c)
+
       case ConfigDescriptor.OnError(c, _) =>
         Write(
           ZIO.accessM(

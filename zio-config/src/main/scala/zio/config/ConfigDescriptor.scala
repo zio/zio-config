@@ -3,15 +3,20 @@ package zio.config
 sealed trait ConfigDescriptor[A] {
   self =>
   final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] = ConfigDescriptor.Zip(self, that)
+  final def <*>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] = zip(that)
 
   final def xmapEither[B](f: A => Either[ReadError, B])(g: B => Either[String, A]): ConfigDescriptor.MapEither[A, B] =
     ConfigDescriptor.MapEither(self, f, g)
 
-  final def onError(f: => ReadErrors => A): ConfigDescriptor[A] = ConfigDescriptor.OnError(self, f)
-
   final def or[B](that: => ConfigDescriptor[B]): ConfigDescriptor[Either[A, B]] = ConfigDescriptor.Or(self, that)
 
   final def <+>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[Either[A, B]] = self or that
+
+  def |(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
+    (self or that).xmap {
+      case Right(value) => value
+      case Left(value)  => value
+    }(b => Right(b))
 
   final def xmap[B](to: A => B)(from: B => A): ConfigDescriptor[B] =
     self.xmapEither(a => Right(to(a)))(b => Right(from(b)))
@@ -30,11 +35,14 @@ sealed trait ConfigDescriptor[A] {
   def optional: ConfigDescriptor[Option[A]] =
     ConfigDescriptor.Optional(self) ~ "Optional value"
 
-  def describe(message: String): ConfigDescriptor[A] =
-    ConfigDescriptor.Describe(self, message)
+  def describe(description: String): ConfigDescriptor[A] =
+    ConfigDescriptor.Describe(self, description)
 
-  def ~(message: String): ConfigDescriptor[A] =
-    describe(message)
+  def default(value: A): ConfigDescriptor[A] =
+    ConfigDescriptor.Default(self, value) ~ s"Default value: $value"
+
+  def ~(description: String): ConfigDescriptor[A] =
+    describe(description)
 }
 
 object ConfigDescriptor {
@@ -44,6 +52,8 @@ object ConfigDescriptor {
   final case class Source[A](path: String, propertyType: PropertyType[A]) extends ConfigDescriptor[A]
 
   final case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
+
+  final case class Default[A](configDescriptor: ConfigDescriptor[A], value: A) extends ConfigDescriptor[A]
 
   final case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
@@ -56,9 +66,6 @@ object ConfigDescriptor {
 
   final case class Or[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
       extends ConfigDescriptor[Either[A, B]]
-
-  def succeed[A](a: A): ConfigDescriptor[A] =
-    ConfigDescriptor.Succeed(a)
 
   def sequence[A](configList: List[ConfigDescriptor[A]]): ConfigDescriptor[List[A]] =
     configList.foldLeft(Succeed(Nil): ConfigDescriptor[List[A]])(

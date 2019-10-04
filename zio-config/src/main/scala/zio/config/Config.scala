@@ -1,7 +1,6 @@
 package zio.config
 
 import java.net.URI
-
 import zio.config.actions.Read
 import zio.{ system, IO, Task, UIO, ZIO }
 
@@ -70,5 +69,4 @@ object Config {
     ConfigDescriptor.Source(path, PropertyType.BigDecimalType) ~ "value of type bigdecimal"
   def uri(path: String): ConfigDescriptor[URI] =
     ConfigDescriptor.Source(path, PropertyType.UriType) ~ "value of type uri"
-
 }
