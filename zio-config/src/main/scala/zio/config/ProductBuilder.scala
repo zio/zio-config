@@ -13,6 +13,8 @@ private[config] trait ProductBuilder[A, B] {
     val c: ConfigDescriptor[C] = cc
   }
 
+  // /start/productbuilder/ (used by codegen - DO NOT REMOVE)
+
   sealed abstract class ProductBuilder[C] {
     val c: ConfigDescriptor[C]
 
@@ -140,6 +142,9 @@ private[config] trait ProductBuilder[A, B] {
     }
 
   }
+
+  // /end/productbuilder/ (used by codegen - DO NOT REMOVE)
+
 }
 
 private[config] object ProductBuilder {

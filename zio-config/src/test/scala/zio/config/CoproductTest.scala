@@ -1,7 +1,7 @@
 package zio.config
 
 import org.scalacheck.{ Gen, Properties }
-import zio.config.ReadError.MissingValue
+import zio.config.ReadError.{ MissingValue, ParseError }
 import zio.config.testsupport.TestSupport
 import zio.{ IO, ZIO }
 
@@ -50,8 +50,8 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
     readWithErrors(p).shouldBe {
       Left(
         ReadErrors(
-          ReadError(p.kLdap, MissingValue),
-          ReadError(p.kFactor, ReadError.ParseError("notadouble", "double"))
+          MissingValue(p.kLdap),
+          ParseError(p.kFactor, "notadouble", "double")
         )
       )
     }
