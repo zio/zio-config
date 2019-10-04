@@ -59,7 +59,7 @@ object ConfigDescriptor {
 
   final case class MapEither[A, B](config: ConfigDescriptor[A], f: A => Either[ReadError, B], g: B => Either[String, A])
       extends ConfigDescriptor[B]
-  
+
   final case class Zip[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B]) extends ConfigDescriptor[(A, B)]
 
   final case class Or[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
