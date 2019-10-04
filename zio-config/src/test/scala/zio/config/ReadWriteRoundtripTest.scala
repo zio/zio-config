@@ -29,18 +29,18 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   private val cId: ConfigDescriptor[Id]       = string("kId").xmap(Id)(_.value)
   private val cDbUrl: ConfigDescriptor[DbUrl] = string("kDbUrl").xmap(DbUrl)(_.value)
   private val cEnterpriseAuth: ConfigDescriptor[EnterpriseAuth] =
-    (cId <*> cDbUrl)(
+    (cId |@| cDbUrl)(
       EnterpriseAuth.apply,
       EnterpriseAuth.unapply
     )
   private val cNestedConfig: ConfigDescriptor[NestedConfig] =
-    (cEnterpriseAuth <*> int("kCount") <*> double("kFactor"))(
+    (cEnterpriseAuth |@| int("kCount") |@| double("kFactor"))(
       NestedConfig.apply,
       NestedConfig.unapply
     )
   private val cId2: ConfigDescriptor[Id] = string("kId2").xmap(Id)(_.value)
   private val cDataItem: ConfigDescriptor[DataItem] =
-    (cId2.optional <*> int("kDiCount"))(
+    (cId2.optional |@| int("kDiCount"))(
       DataItem.apply,
       DataItem.unapply
     )

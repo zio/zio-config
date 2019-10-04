@@ -4,14 +4,12 @@ import zio.config.ConfigDescriptor.Succeed
 import zio.config.ConfigDescriptor
 import zio.config.actions.ConfigDocs.KeyDescription
 
-/**
- * A config description is a description of all keys, and the description of another config and the description of...
- * where only one of them need to exist for successful parsing (Config.Or).
- */
 final case class ConfigDocs(configKeysAndDescription: List[KeyDescription], or: Option[ConfigDocs])
 
 // Man page
 object ConfigDocs {
+  final case class KeyDescription(path: String, list: List[String])
+
   final def docs[A](config: ConfigDescriptor[A]): ConfigDocs = {
     def loop[B](
       acc: List[String],
@@ -49,6 +47,4 @@ object ConfigDocs {
 
     loop(Nil, "", config, ConfigDocs(Nil, None))
   }
-
-  final case class KeyDescription(path: String, list: List[String])
 }

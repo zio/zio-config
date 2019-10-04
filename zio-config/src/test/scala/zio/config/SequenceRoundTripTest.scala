@@ -31,7 +31,7 @@ object SequenceRoundTripTest extends Properties("sequence round trip tests") wit
   property("optional write") = forAllZIO(genOverallConfig) { p =>
     val config: ConfigDescriptor[List[OverallConfig]] =
       ConfigDescriptor.sequence(
-        p.toList.map(prefix => (cId(prefix._1).optional <*> cId(prefix._1))(OverallConfig.apply, OverallConfig.unapply))
+        p.toList.map(prefix => (cId(prefix._1).optional |@| cId(prefix._1))(OverallConfig.apply, OverallConfig.unapply))
       )
 
     val readAndWrite: ZIO[ConfigSource, ReadErrors, Either[String, Map[String, String]]] =

@@ -14,7 +14,7 @@ object PropertyType extends AttemptSyntax {
 
   case object StringType extends PropertyType[String] {
     override def read(path: String, value: String): Either[ReadError, String] = Right(value)
-    override def write(a: String): String                       = a
+    override def write(a: String): String                                     = a
   }
 
   case object BooleanType extends PropertyType[Boolean] {

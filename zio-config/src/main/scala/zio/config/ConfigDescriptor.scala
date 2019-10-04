@@ -19,9 +19,9 @@ sealed trait ConfigDescriptor[A] {
   def xmapEither2[B, C](
     that: ConfigDescriptor[B]
   )(f: (A, B) => Either[ReadError, C])(g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
-    (self <*> that).apply[(A, B)]((a, b) => (a, b), t => Some((t._1, t._2))).xmapEither(b => f(b._1, b._2))(g)
+    (self |@| that).apply[(A, B)]((a, b) => (a, b), t => Some((t._1, t._2))).xmapEither(b => f(b._1, b._2))(g)
 
-  final def <*>[B](f: => ConfigDescriptor[B]): ProductBuilder[A, B] =
+  final def |@|[B](f: => ConfigDescriptor[B]): ProductBuilder[A, B] =
     new ProductBuilder[A, B] {
       override val a: ConfigDescriptor[A] = self
       override val b: ConfigDescriptor[B] = f

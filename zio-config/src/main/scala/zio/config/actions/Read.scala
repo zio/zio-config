@@ -2,8 +2,8 @@ package zio.config.actions
 
 import zio.config.ReadError.MissingValue
 import zio.config.ReadErrors
-import zio.config.{ ConfigDescriptor, ConfigReport, ConfigSource, Details, ReadError }
-import zio.config.{ Config, ConfigReport, ConfigSource, Details }
+import zio.config.{ ConfigDescriptor }
+import zio.config.{ ConfigReport, ConfigSource, Details }
 import zio.{ config, Ref, UIO, ZIO }
 
 object Read {

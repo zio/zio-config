@@ -14,7 +14,7 @@ final case class ProgramConfig(inputPath: String, outputPath: String)
 object ProgramExample extends App {
 
   private val programConfig =
-    (string("INPUT_PATH") <*> string("OUTPUT_PATH"))(ProgramConfig.apply, ProgramConfig.unapply)
+    (string("INPUT_PATH") |@| string("OUTPUT_PATH"))(ProgramConfig.apply, ProgramConfig.unapply)
 
   case class Live(config: Config.Service[ProgramConfig], spark: SparkEnv.Service)
       extends SparkEnv
@@ -27,11 +27,12 @@ object ProgramExample extends App {
       _           <- Application.execute.provide(Live(confService.config, new SparkEnv.Live(session)))
     } yield ()
 
-    pgm.foldM(
-      fail => ZIO.effectTotal(println(s"failed $fail")) *> ZIO.succeed(1),
-      _ => ZIO.effectTotal(println(s"succeeded")) *> ZIO.succeed(0)
-    )
-
+    ZIO.accessM[Environment](env => {
+      pgm.foldM(
+        fail => env.console.putStrLn(s"failed $fail") *> ZIO.succeed(1),
+        _ => env.console.putStrLn(s"succeeded") *> ZIO.succeed(0)
+      )
+    })
   }
 }
 
