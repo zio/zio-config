@@ -19,8 +19,10 @@ object Prod {
 object ReadConfig extends App {
 
   override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] =
-    Config
-      .fromEnv(Prod.prodConfig)
-      .flatMap(config => Prod.myAppLogic.provide(config))
-      .foldM(failure => ZIO.effectTotal(println(failure)) *> ZIO.succeed(1), _ => ZIO.succeed(0))
+    ZIO.accessM(env => {
+      Config
+        .fromEnv(Prod.prodConfig)
+        .flatMap(config => Prod.myAppLogic.provide(config))
+        .foldM(failure => env.console.putStrLn(failure.toString) *> ZIO.succeed(1), _ => ZIO.succeed(0))
+    })
 }
