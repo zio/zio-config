@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.{ App, IO, UIO, ZIO }
+import zio.{ App, UIO, ZIO }
 import zio.config.{ Config, _ }
 import Config._
 
@@ -22,9 +22,9 @@ object ProgramExample extends App {
 
   override def run(args: List[String]): ZIO[Environment, Nothing, Int] = {
     val pgm = for {
-      confService  <- Config.fromEnv(programConfig)
-      sparkService <- SparkEnv.make
-      _            <- Application.execute.provide(Live(confService.config, sparkService.spark))
+      confService <- Config.fromEnv(programConfig)
+      session     <- ZIO.effect("sparkSession")
+      _           <- Application.execute.provide(Live(confService.config, new SparkEnv.Live(session)))
     } yield ()
 
     pgm.foldM(
@@ -47,17 +47,9 @@ object SparkEnv {
     def getSpark: UIO[SparkSession]
   }
 
-  def make: IO[Throwable, SparkEnv] =
-    ZIO
-      .effect("sparkEnv")
-      .map(
-        r =>
-          new SparkEnv {
-            override def spark: Service = new Service {
-              override def getSpark: UIO[SparkSession] = ZIO.succeed(r)
-            }
-          }
-      )
+  class Live(r: SparkSession) extends Service {
+    def getSpark: UIO[SparkSession] = ZIO.succeed(r)
+  }
 }
 
 // The core application

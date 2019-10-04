@@ -2,27 +2,27 @@ package zio.config.actions
 
 import zio.config.ConfigDescriptor.Succeed
 import zio.config.ConfigDescriptor
-import zio.config.actions.ConfigManPage.KeyDescription
+import zio.config.actions.ConfigDocs.KeyDescription
 
 /**
  * A config description is a description of all keys, and the description of another config and the description of...
  * where only one of them need to exist for successful parsing (Config.Or).
  */
-final case class ConfigManPage(configKeysAndDescription: List[KeyDescription], or: Option[ConfigManPage])
+final case class ConfigDocs(configKeysAndDescription: List[KeyDescription], or: Option[ConfigDocs])
 
 // Man page
-object ConfigManPage {
-  final def man[A](config: ConfigDescriptor[A]): ConfigManPage = {
+object ConfigDocs {
+  final def docs[A](config: ConfigDescriptor[A]): ConfigDocs = {
     def loop[B](
       acc: List[String],
       previousDescription: String,
       config: ConfigDescriptor[B],
-      desc: ConfigManPage
-    ): ConfigManPage =
+      desc: ConfigDocs
+    ): ConfigDocs =
       config match {
         case Succeed(_) => desc
         case ConfigDescriptor.Source(path, _) =>
-          ConfigManPage(
+          ConfigDocs(
             List(KeyDescription(path, if (previousDescription.isEmpty) acc else previousDescription :: acc)),
             None
           )
@@ -31,7 +31,7 @@ object ConfigManPage {
         case ConfigDescriptor.MapEither(c, _, _)   => loop(acc, previousDescription, c, desc)
         case ConfigDescriptor.OnError(c, _)        => loop(acc, previousDescription, c, desc)
         case ConfigDescriptor.Zip(left, right) =>
-          ConfigManPage(
+          ConfigDocs(
             loop(acc, previousDescription, left, desc).configKeysAndDescription ++ loop(
               acc,
               previousDescription,
@@ -41,14 +41,14 @@ object ConfigManPage {
             None
           )
         case ConfigDescriptor.Or(left, right) =>
-          ConfigManPage(
+          ConfigDocs(
             loop(acc, previousDescription, left, desc).configKeysAndDescription,
             Some(loop(acc, previousDescription, right, desc))
           )
       }
 
-    loop(Nil, "", config, ConfigManPage(Nil, None))
+    loop(Nil, "", config, ConfigDocs(Nil, None))
   }
 
-  case class KeyDescription(path: String, list: List[String])
+  final case class KeyDescription(path: String, list: List[String])
 }
