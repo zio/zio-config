@@ -4,7 +4,7 @@ import zio.config.ReadError.MissingValue
 import zio.config.ReadErrors
 import zio.config.ConfigDescriptor
 import zio.config.{ ConfigReport, ConfigSource, Details }
-import zio.{ config, Ref, UIO, ZIO }
+import zio.{ config, Ref, ZIO }
 
 object Read {
   // Read
@@ -57,16 +57,6 @@ object Read {
                 _ => (t, None),
                 success => (success._1, Some(success._2))
               )
-          )
-
-        case ConfigDescriptor.OnError(c, f) =>
-          ZIO.accessM[ConfigSource](
-            _ =>
-              loop(c, report, previousDescription)
-                .foldM(
-                  errors => report.get.map(r => (r, f(errors))),
-                  UIO(_)
-                )
           )
 
         case ConfigDescriptor.Zip(left, right) =>

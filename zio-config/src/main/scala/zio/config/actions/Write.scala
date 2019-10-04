@@ -34,19 +34,6 @@ object Write {
       case ConfigDescriptor.Default(c, _) =>
         write(c)
 
-      case ConfigDescriptor.OnError(c, _) =>
-        Write(
-          ZIO.accessM(
-            b =>
-              write(c).run
-                .provide(b)
-                .fold(
-                  _ => Map.empty,
-                  success => success
-                )
-          )
-        )
-
       case ConfigDescriptor.MapEither(c, _, to) =>
         Write(ZIO.accessM { b =>
           to(b) match {

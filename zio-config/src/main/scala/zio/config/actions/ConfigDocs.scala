@@ -28,7 +28,6 @@ object ConfigDocs {
         case ConfigDescriptor.Describe(c, message) => loop(message :: acc, previousDescription, c, desc)
         case ConfigDescriptor.Optional(c)          => loop(acc, previousDescription, c, desc)
         case ConfigDescriptor.MapEither(c, _, _)   => loop(acc, previousDescription, c, desc)
-        case ConfigDescriptor.OnError(c, _)        => loop(acc, previousDescription, c, desc)
         case ConfigDescriptor.Zip(left, right) =>
           ConfigDocs(
             loop(acc, previousDescription, left, desc).configKeysAndDescription ++ loop(
