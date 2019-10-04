@@ -1,24 +1,17 @@
-package zio.config.tools
+import sbt._
+import java.nio.file._
+import org.scalafmt.interfaces.Scalafmt
 
-import java.io.{ BufferedWriter, File, FileWriter }
+object ProductBuilderCodeGen {
+  import scala.io.Source
 
-import scala.io.Source
-
-// shabby-code: ON
-
-object Codegen {
-  def main(args: Array[String]): Unit =
-    replaceFileSection(
-      "zio-config/src/main/scala/zio/config/ProductBuilder.scala",
-      "productbuilder",
-      productBuilderCodes :+ ""
-    )
+  // shabby-code: ON
 
   ////
 
   private val count = 22
 
-  private def productBuilderCodes: List[String] =
+  def productBuilderCodes: List[String] =
     (2 until count)
       .flatMap(productBuilderCode)
       .toList ++
@@ -47,23 +40,26 @@ object Codegen {
     val part1 =
       s"""
          |  sealed abstract class ProductBuilder[$L0] {
-         |    val $l0: Config[$L0]
-         |    def apply[$L1](ff: ($cL0) => $L1, gg: $L1 => Option[($cL0)]): Config[$L1] =
-         |      ($zipped).xmapEither[$L1] { case $cll0Tupled => Right(ff($cll0)) }(
-         |        liftWrite($l1 => gg($l1).map { case ($cll0) => $cll0Tupled })
+         |    val $l0: ConfigDescriptor[$L0]
+         |    def apply[$L1](ff: ($cL0) => $L1, gg: $L1 => Option[($cL0)]): ConfigDescriptor[$L1] =
+         |      ($zipped)
+         |        .xmapEither[$L1] {
+         |          case $cll0Tupled => Right(ff($cll0))
+         |        }(
+         |          liftWrite($l1 => gg($l1).map { case ($cll0) => $cll0Tupled })
          |      )""".stripMargin
     val part2 =
       s"""
-         |    def |@|[$L1]($ll1: Config[$L1]): ProductBuilder[$L1] =
+         |    def |@|[$L1]($ll1: ConfigDescriptor[$L1]): ProductBuilder[$L1] =
          |      new ProductBuilder[$L1] {
-         |        val $l1: Config[$L1] = $ll1
+         |        val $l1: ConfigDescriptor[$L1] = $ll1
          |      }""".stripMargin
 
     if (n == count - 1) List(part1) else List(part1, part2)
   }
 
-  def readFile(filepath: String): List[String] = {
-    val source = Source.fromFile(filepath)
+  def readFile(filepath: File): List[String] = {
+    val source = Source.fromFile(filepath.toString)
     try {
       source.getLines.toList
     } finally {
@@ -71,7 +67,15 @@ object Codegen {
     }
   }
 
-  def replaceFileSection(filepath: String, marker: String, newContents: List[String]): Unit = {
+  def replaceFileSection(
+    filepath: File,
+    marker: String,
+    newContents: List[String],
+    tempScalaFmtFile: File,
+    scalaFmtPath: File
+  ): Unit = {
+    val scalafmt = Scalafmt.create(this.getClass.getClassLoader)
+
     val markerStart = s"/start/$marker/"
     val markerEnd   = s"/end/$marker/"
     val lines       = readFile(filepath)
@@ -84,19 +88,20 @@ object Codegen {
 
     val toWrite: List[String] = (beforeMarker :+ markerStartLine) ++ (newContents :+ markerEndLine) ++ afterMarker
 
-    val bw = new BufferedWriter(new FileWriter(new File(filepath)))
-    toWrite.foreach { l =>
-      bw.write(l)
-      bw.newLine()
-    }
-    bw.close()
+    val result = IO.read(scalaFmtPath).replace("maxColumn = 120", "maxColumn = 12000")
+
+    IO.write(tempScalaFmtFile, result)
+
+    val formatted =
+      scalafmt.format(tempScalaFmtFile.toPath, Paths.get("Main.scala"), toWrite.mkString("\n"))
+
+    IO.write(filepath, formatted)
   }
 
-  private def findLine(lines: List[String], marker: String, filepath: String): String =
+  private def findLine(lines: List[String], marker: String, filepath: File): String =
     lines
       .find(_.contains(marker))
       .getOrElse(throw new RuntimeException(s"Cannot find marker $marker in file $filepath"))
 
+  // shabby-code: OFF
 }
-
-// shabby-code: OFF

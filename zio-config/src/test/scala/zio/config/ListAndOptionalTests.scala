@@ -2,6 +2,7 @@ package zio.config
 
 import org.scalacheck.{ Gen, Properties }
 import zio.config.testsupport.TestSupport
+import zio.config.Config._
 
 object ListAndOptionalTests extends Properties("List and options tests") with TestSupport {
 
@@ -10,9 +11,9 @@ object ListAndOptionalTests extends Properties("List and options tests") with Te
   private val genOverallConfig: Gen[OverallConfig] =
     Gen.option(genId).map(t => OverallConfig(t.map(t => Option(Option(t)))))
 
-  val cId: Config[Id] = Config.string("kId").xmap(Id)(_.value)
+  val cId: ConfigDescriptor[Id] = string("kId").xmap(Id)(_.value)
 
-  val cOverallConfig: Config[OverallConfig] =
+  val cOverallConfig: ConfigDescriptor[OverallConfig] =
     cId.optional.optional.optional.xmap(OverallConfig)(_.option)
 
   property("optional write") = forAllZIO(genOverallConfig) { p =>

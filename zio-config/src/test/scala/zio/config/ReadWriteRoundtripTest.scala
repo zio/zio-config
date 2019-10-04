@@ -2,10 +2,9 @@ package zio.config
 
 import org.scalacheck.{ Gen, Properties }
 import zio.config.testsupport.TestSupport
+import zio.config.Config._
 
 object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestSupport {
-
-  import Config._
 
   private val genId    = genSymbol(1, 5).map(Id)
   private val genDbUrl = genNonEmptyString(20).map(DbUrl)
@@ -27,25 +26,25 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     } yield DataItem(oid, count)
   private val genCoproductConfig = Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
 
-  private val cId: Config[Id]       = string("kId").xmap(Id)(_.value)
-  private val cDbUrl: Config[DbUrl] = string("kDbUrl").xmap(DbUrl)(_.value)
-  private val cEnterpriseAuth: Config[EnterpriseAuth] =
+  private val cId: ConfigDescriptor[Id]       = string("kId").xmap(Id)(_.value)
+  private val cDbUrl: ConfigDescriptor[DbUrl] = string("kDbUrl").xmap(DbUrl)(_.value)
+  private val cEnterpriseAuth: ConfigDescriptor[EnterpriseAuth] =
     (cId |@| cDbUrl)(
       EnterpriseAuth.apply,
       EnterpriseAuth.unapply
     )
-  private val cNestedConfig: Config[NestedConfig] =
+  private val cNestedConfig: ConfigDescriptor[NestedConfig] =
     (cEnterpriseAuth |@| int("kCount") |@| double("kFactor"))(
       NestedConfig.apply,
       NestedConfig.unapply
     )
-  private val cId2: Config[Id] = string("kId2").xmap(Id)(_.value)
-  private val cDataItem: Config[DataItem] =
+  private val cId2: ConfigDescriptor[Id] = string("kId2").xmap(Id)(_.value)
+  private val cDataItem: ConfigDescriptor[DataItem] =
     (cId2.optional |@| int("kDiCount"))(
       DataItem.apply,
       DataItem.unapply
     )
-  private val cCoproductConfig: Config[CoproductConfig] =
+  private val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
     (cDataItem or cNestedConfig)
       .xmap(CoproductConfig)(_.coproduct)
 
@@ -53,7 +52,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cId).run.provide(p)
-        reread  <- read(cId).run.provide(mapSource(written))
+        reread  <- read(cId).provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -63,7 +62,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cDbUrl).run.provide(p)
-        reread  <- read(cDbUrl).run.provide(mapSource(written))
+        reread  <- read(cDbUrl).provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -73,7 +72,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cEnterpriseAuth).run.provide(p)
-        reread  <- read(cEnterpriseAuth).run.provide(mapSource(written))
+        reread  <- read(cEnterpriseAuth).provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -83,7 +82,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cNestedConfig).run.provide(p)
-        reread  <- read(cNestedConfig).run.provide(mapSource(written))
+        reread  <- read(cNestedConfig).provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)
@@ -93,7 +92,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cCoproductConfig).run.provide(p)
-        reread  <- read(cCoproductConfig).run.provide(mapSource(written))
+        reread  <- read(cCoproductConfig).provide(mapSource(written))
       } yield reread._2
 
     p2.shouldBe(p)

@@ -1,8 +1,9 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
+import zio.config._, Config._
 import zio.config.ReadError.{ MissingValue, ParseError }
-import zio.config.{ Config, ConfigSource, _ }
+import zio.config.{ ConfigSource, _ }
 
 object CoproductExample extends App {
   final case class Ldap(value: String)  extends AnyVal
@@ -11,15 +12,13 @@ object CoproductExample extends App {
   case class Prod(ldap: Ldap, dburl: DbUrl)
   case class Dev(user: String, password: Int, dburl: Double)
 
-  import Config._
-
   val prod =
     (string("x1").xmap(Ldap)(_.value) |@| string("x2").xmap(DbUrl)(_.value))(Prod.apply, Prod.unapply)
 
   val dev =
     (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
 
-  val prodOrDev: Config[Either[Prod, Dev]] =
+  val prodOrDev: ConfigDescriptor[Either[Prod, Dev]] =
     prod or dev
 
   val runtime = new DefaultRuntime {}
@@ -34,7 +33,7 @@ object CoproductExample extends App {
   val source: ConfigSource =
     mapSource(validConfigForSampleConfig)
 
-  assert(runtime.unsafeRun(read(prodOrDev).run.provide(source))._2 == Left(Prod(Ldap("v1"), DbUrl("v2"))))
+  assert(runtime.unsafeRun(read(prodOrDev).provide(source))._2 == Left(Prod(Ldap("v1"), DbUrl("v2"))))
 
   val validConfigForAnotherConfig =
     Map(
@@ -47,7 +46,7 @@ object CoproductExample extends App {
   val anotherSource: ConfigSource =
     mapSource(validConfigForAnotherConfig)
 
-  assert(runtime.unsafeRun(read(prodOrDev).run.provide(anotherSource))._2 == Right(Dev("v3", 1, 2.0)))
+  assert(runtime.unsafeRun(read(prodOrDev).provide(anotherSource))._2 == Right(Dev("v3", 1, 2.0)))
 
   val invalidConfig =
     Map(
@@ -61,7 +60,7 @@ object CoproductExample extends App {
     mapSource(invalidConfig)
 
   assert(
-    runtime.unsafeRun(read(prodOrDev).run.provide(invalidSource).either) ==
+    runtime.unsafeRun(read(prodOrDev).provide(invalidSource).either) ==
       Left(
         List(
           MissingValue("x1"),
@@ -80,7 +79,7 @@ object CoproductExample extends App {
     )
 
   assert(
-    runtime.unsafeRun(read(prodOrDev).run.provide(mapSource(allConfigsExist)))._2 ==
+    runtime.unsafeRun(read(prodOrDev).provide(mapSource(allConfigsExist)))._2 ==
       Left(Prod(Ldap("v1"), DbUrl("v2")))
   )
 }
