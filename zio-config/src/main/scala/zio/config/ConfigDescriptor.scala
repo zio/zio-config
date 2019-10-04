@@ -33,15 +33,15 @@ sealed trait ConfigDescriptor[A] {
     }
 
   def optional: ConfigDescriptor[Option[A]] =
-    ConfigDescriptor.Optional(self) @@ "Optional value"
+    ConfigDescriptor.Optional(self) ? "Optional value"
 
   def default(value: A): ConfigDescriptor[A] =
-    ConfigDescriptor.Default(self, value) @@ s"Default value: $value"
+    ConfigDescriptor.Default(self, value) ? s"Default value: $value"
 
   def describe(description: String): ConfigDescriptor[A] =
     ConfigDescriptor.Describe(self, description)
 
-  def @@(description: String): ConfigDescriptor[A] =
+  def ?(description: String): ConfigDescriptor[A] =
     describe(description)
 }
 
