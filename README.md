@@ -31,8 +31,10 @@ case class Prod(ldap: String, port: Int, dburl: Option[String])
 
 object Prod {
   val prodConfig: ConfigDescriptor[Prod] =
-    (string("LDAP") <*> int("PORT") ~ "Example: 8888"<*>
-      string("DB_URL").optional ~ "Db related config")(Prod.apply, Prod.unapply) ~ "Prod Config"
+    (string("LDAP") |@| 
+      int("PORT") ~ "Example: 8888" |@|
+        string("DB_URL").optional ~ "Example: abc"
+        )(Prod.apply, Prod.unapply) ~ "Prod Config"
 
   val myAppLogic: ZIO[Config[Prod], Throwable, (String, Option[String])] =
     for {
@@ -57,7 +59,7 @@ object ReadConfig extends App {
 //  Prod(v1, Some(v2)
 // 
 // User Manual:
-//   KeyDescription(DB_URL,List(value of type string, Optional value, Db Related config, Prod Config))
+//   KeyDescription(DB_URL,List(value of type string, Optional value, Example: abc, Prod Config))
 //   KeyDescription(LDAP,List(value of type string, Prod Config)
 //   KeyDescription(PORT,List(value of type int, Example: 8888, Prod Config)
 //
