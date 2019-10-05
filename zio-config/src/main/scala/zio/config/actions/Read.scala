@@ -14,7 +14,7 @@ object Read {
       previousDescription: String
     ): ZIO[ConfigSource, ReadErrors, (ConfigReport, B)] =
       configuration match {
-        case ConfigDescriptor.Succeed(value) => report.get.map(t => (t, value))
+        case ConfigDescriptor.Empty() => report.get.map(t => (t, None))
 
         case ConfigDescriptor.Source(path, propertyType) =>
           for {

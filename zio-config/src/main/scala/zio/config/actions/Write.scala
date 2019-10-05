@@ -8,7 +8,7 @@ final case class Write[A](run: ZIO[A, String, Map[String, String]])
 object Write {
   final def write[A](config: ConfigDescriptor[A]): Write[A] =
     config match {
-      case ConfigDescriptor.Succeed(_) =>
+      case ConfigDescriptor.Empty() =>
         Write(ZIO.access(_ => Map.empty))
 
       case ConfigDescriptor.Source(path, propertyType) =>

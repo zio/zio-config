@@ -1,6 +1,5 @@
 package zio.config.actions
 
-import zio.config.ConfigDescriptor.Succeed
 import zio.config.ConfigDescriptor
 import zio.config.actions.ConfigDocs.KeyDescription
 
@@ -18,7 +17,7 @@ object ConfigDocs {
       desc: ConfigDocs
     ): ConfigDocs =
       config match {
-        case Succeed(_) => desc
+        case ConfigDescriptor.Empty() => desc
         case ConfigDescriptor.Source(path, _) =>
           ConfigDocs(
             List(KeyDescription(path, if (previousDescription.isEmpty) acc else previousDescription :: acc)),
