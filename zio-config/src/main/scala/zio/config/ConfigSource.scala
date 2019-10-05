@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.IO
+import zio.Task
 
 trait ConfigSource {
   val configService: ConfigSource.Service
@@ -8,6 +8,6 @@ trait ConfigSource {
 
 object ConfigSource {
   trait Service {
-    def getConfigValue(path: String): IO[Unit, String]
+    def getConfigValue(path: String): Task[String]
   }
 }
