@@ -1,6 +1,5 @@
 package zio.config.actions
 
-import zio.config.ReadError.MissingValue
 import zio.config.ReadErrors
 import zio.config.{ ConfigDescriptor }
 import zio.config.{ ConfigReport, ConfigSource, Details }
@@ -21,7 +20,7 @@ object Read {
           for {
             value <- config
                       .getConfigValue(path)
-                      .mapError(_ => ReadErrors(MissingValue(path)))
+                      .mapError(err => ReadErrors(err))
             r <- report
                   .update(_.addDetails(Details(path, value, previousDescription)))
             result <- ZIO.fromEither(

@@ -1,39 +1,52 @@
 package zio.config
 
 import zio.system.System
-import zio.{ Task, ZIO }
+import zio.{ IO, ZIO }
 
 trait Sources {
-  def envSource: ZIO[System, Throwable, ConfigSource] =
+  val envSource: ZIO[System, Nothing, ConfigSource] =
     ZIO.access { env =>
       new ConfigSource {
         val configService: ConfigSource.Service =
           (path: String) =>
-            env.system.env(path).flatMap { (oStr: Option[String]) =>
-              oStr.fold[Task[String]](
-                ZIO.fail(new IllegalArgumentException(s"Not defined in system environment: $path"))
-              )(ZIO.succeed)
-            }
+            env.system
+              .env(path)
+              .mapError { err =>
+                ReadError.FatalError(path, err)
+              }
+              .flatMap { (oStr: Option[String]) =>
+                oStr.fold[IO[ReadError, String]](
+                  ZIO.fail(ReadError.MissingValue(path, "Not defined in system environment"))
+                )(ZIO.succeed)
+              }
       }
     }
 
-  def propSource: ZIO[System, Throwable, ConfigSource] =
+  val propSource: ZIO[System, Nothing, ConfigSource] =
     ZIO.access { env =>
       new ConfigSource {
         val configService: ConfigSource.Service =
           (path: String) =>
-            env.system.property(path).flatMap { (oStr: Option[String]) =>
-              oStr.fold[Task[String]](
-                ZIO.fail(new IllegalArgumentException(s"System property not found for key: $path"))
-              )(ZIO.succeed)
-            }
+            env.system
+              .property(path)
+              .mapError { err =>
+                ReadError.FatalError(path, err)
+              }
+              .flatMap { (oStr: Option[String]) =>
+                oStr.fold[IO[ReadError, String]](
+                  ZIO.fail(ReadError.MissingValue(path, "System property not found for key"))
+                )(ZIO.succeed)
+              }
       }
     }
 
   def mapSource(map: Map[String, String]): ConfigSource =
     new ConfigSource {
       val configService: ConfigSource.Service =
-        (path: String) => ZIO.effect(map(path))
+        (path: String) =>
+          ZIO.fromOption(map.get(path)).mapError { _ =>
+            ReadError.MissingValue(path, "Key not in map")
+          }
     }
 
   // TODO HOCON etc as separate modules
