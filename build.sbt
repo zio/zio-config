@@ -69,7 +69,7 @@ lazy val examples =
 lazy val allModules = List(zioConfig, examples)
 lazy val zioConfigDependencies =
   Seq(
-    "dev.zio" %% "zio" % "1.0.0-RC13"
+    "dev.zio" %% "zio" % "1.0.0-RC14"
   )
 
 lazy val root =
