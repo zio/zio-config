@@ -8,6 +8,6 @@ trait ConfigSource {
 
 object ConfigSource {
   trait Service {
-    def getConfigValue(path: String): IO[Unit, String]
+    def getConfigValue(path: String): IO[ReadError, String]
   }
 }

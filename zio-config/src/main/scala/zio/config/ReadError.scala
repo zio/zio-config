@@ -5,6 +5,7 @@ sealed trait ReadError {
 }
 
 object ReadError {
-  case class MissingValue(key: String)                                 extends ReadError
-  case class ParseError(key: String, provided: String, `type`: String) extends ReadError
+  final case class MissingValue(key: String, cause: String)                  extends ReadError
+  final case class ParseError(key: String, provided: String, `type`: String) extends ReadError
+  final case class FatalError(key: String, cause: Throwable)                 extends ReadError
 }
