@@ -1,15 +1,18 @@
 package zio
 
-import zio.config.actions.{ Read, Report, Write }
+import zio.config.actions.{ ConfigDocs, Read, Write }
 
 package object config extends Sources {
-  type ConfigOption[A] = Config[Option[A]]
+  def read[A](config: => ConfigDescriptor[A]): ZIO[ConfigSource, ReadErrors, (ConfigReport, A)] = Read.read[A](config)
+  def reportFetchedConfig[A](config: => ConfigDescriptor[A]): ZIO[ConfigSource, ReadErrors, ConfigReport] =
+    read(config).map(_._1)
+  def write[A](config: => ConfigDescriptor[A]): Write[A]  = Write.write[A](config)
+  def docs[A](config: => ConfigDescriptor[A]): ConfigDocs = ConfigDocs.docs[A](config)
 
-  def read[A](config: => Config[A]): Read[A]     = Read.read[A](config)
-  def write[A](config: => Config[A]): Write[A]   = Write.write[A](config)
-  def report[A](config: => Config[A]): Report[A] = Report.report[A](config)
+  def config[A]: ZIO[Config[A], Nothing, A] = ZIO.accessM(_.config.config)
 
-  def getConfigValue(path: String): ZIO[ConfigSource, Unit, String] = ZIO.accessM(_.configService.getConfigValue(path))
+  def getConfigValue(path: String): ZIO[ConfigSource, ReadError, String] =
+    ZIO.accessM(_.configService.getConfigValue(path))
 
   type ReadErrors = ::[ReadError]
 

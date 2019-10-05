@@ -1,3 +1,5 @@
+import java.nio.file.Paths
+
 import BuildHelper._
 
 inThisBuild(
@@ -30,6 +32,22 @@ inThisBuild(
 
 ThisBuild / publishTo := sonatypePublishToBundle.value
 
+lazy val createProductBuilder = taskKey[Unit]("Run the product builder.")
+
+createProductBuilder := {
+  val productBuilderFile = (sourceDirectory in zioConfig).value / "main" / "scala" / "zio" / "config" / "ProductBuilder.scala"
+  val resource           = (resourceManaged in Compile).value / "scalaFmt" / "temporary"
+  val scalaFmt           = baseDirectory.value / ".scalafmt.conf"
+
+  ProductBuilderCodeGen.replaceFileSection(
+    productBuilderFile,
+    "productbuilder",
+    ProductBuilderCodeGen.productBuilderCodes :+ "",
+    resource,
+    scalaFmt
+  )
+}
+
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
@@ -51,7 +69,7 @@ lazy val examples =
 lazy val allModules = List(zioConfig, examples)
 lazy val zioConfigDependencies =
   Seq(
-    "dev.zio" %% "zio" % "1.0.0-RC13"
+    "dev.zio" %% "zio" % "1.0.0-RC14"
   )
 
 lazy val root =
