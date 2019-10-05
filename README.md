@@ -32,9 +32,9 @@ case class Prod(ldap: String, port: Int, dburl: Option[String])
 object Prod {
   val prodConfig: ConfigDescriptor[Prod] =
     (string("LDAP") |@| 
-      int("PORT") ~ "Example: 8888" |@|
-        string("DB_URL").optional ~ "Example: abc"
-        )(Prod.apply, Prod.unapply) ~ "Prod Config"
+      int("PORT") ? "Example: 8888" |@|
+        string("DB_URL").optional ? "Example: abc"
+        )(Prod.apply, Prod.unapply) ? "Prod Config"
 
   val myAppLogic: ZIO[Config[Prod], Throwable, (String, Option[String])] =
     for {
