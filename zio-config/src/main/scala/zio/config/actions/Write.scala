@@ -22,11 +22,9 @@ object Write {
       case ConfigDescriptor.Optional(c) =>
         Write(
           ZIO.accessM(
-            a =>
-              a.asInstanceOf[Option[A]]
-                .fold[ZIO[A, String, Map[String, String]]](
-                  ZIO.succeed(Map.empty[String, String])
-                )(aa => write(c).run.provide(aa))
+            _.fold[ZIO[A, String, Map[String, String]]](
+              ZIO.succeed(Map.empty[String, String])
+            )(aa => write(c).run.provide(aa))
           )
         )
 
