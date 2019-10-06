@@ -32,26 +32,21 @@ object ProgramExample extends App {
 
     ZIO.accessM[Environment] { env =>
       pgm.foldM(
-        fail => env.console.putStrLn(s"failed $fail") *> ZIO.succeed(1),
-        _ => env.console.putStrLn(s"succeeded") *> ZIO.succeed(0)
+        fail => env.console.putStrLn(s"Failed $fail") *> ZIO.succeed(1),
+        _ => env.console.putStrLn(s"Succeeded") *> ZIO.succeed(0)
       )
     }
   }
 }
 
-//// stubs for the real Spark
-
 trait SparkSession {
-  def sql(value: String): DataFrame =
-    new DataFrame {}
+  // stubs for the real Spark
+  def slowOp(value: String): Unit =
+    Thread.sleep(2000)
 
   def version: String =
     "someVersion"
 }
-
-trait DataFrame
-
-////
 
 trait SparkEnv {
   def spark: SparkEnv.Service
@@ -78,13 +73,15 @@ object SparkEnv {
 
   def local(name: String): ZIO[Blocking, Throwable, SparkEnv] =
     make {
-      // SparkSession.builder().appName(name).enableHiveSupport().getOrCreate()
+      // As a real-world example:
+      //    SparkSession.builder().appName(name).enableHiveSupport().getOrCreate()
       new SparkSession {}
     }
 
   def cluster(name: String): ZIO[Blocking, Throwable, SparkEnv] =
     make {
-      // SparkSession.builder().appName(name).master("local").getOrCreate()
+      // As a real-world example:
+      //    SparkSession.builder().appName(name).master("local").getOrCreate()
       new SparkSession {}
     }
 
@@ -107,21 +104,21 @@ object Application {
   val runSparkJob: ZIO[SparkEnv with Blocking, Throwable, Unit] =
     for {
       session <- ZIO.accessM[SparkEnv](_.spark.sparkEnv)
-      result  <- zio.blocking.effectBlocking(session.sql("SELECT something"))
+      result  <- zio.blocking.effectBlocking(session.slowOp("SELECT something"))
       _       <- ZIO.effect(println(s"Executing something with spark ${session.version}: ${result}"))
     } yield ()
 
   val processData: ZIO[SparkEnv with Config[ProgramConfig], Throwable, Unit] =
     for {
       conf  <- config[ProgramConfig]
-      spark <- ZIO.access[SparkEnv](_.spark)
-      _     <- ZIO.effect(println(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark}"))
+      spark <- ZIO.accessM[SparkEnv](_.spark.sparkEnv)
+      _     <- ZIO.effect(println(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark.version}"))
     } yield ()
 
   val execute: ZIO[SparkEnv with Config[ProgramConfig] with Blocking, Throwable, Unit] =
     for {
       _ <- logProgramConfig
-        _ <- runSparkJob
-        _ <- processData
+      _ <- runSparkJob
+      _ <- processData
     } yield ()
 }
