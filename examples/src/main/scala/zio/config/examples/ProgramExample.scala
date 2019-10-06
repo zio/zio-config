@@ -42,7 +42,7 @@ object ProgramExample extends App {
 trait SparkSession {
   // stubs for the real Spark
   def slowOp(value: String): Unit =
-    Thread.sleep(2000)
+    Thread.sleep(value.length * 10L)
 
   def version: String =
     "someVersion"
