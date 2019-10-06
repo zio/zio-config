@@ -50,7 +50,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
     readWithErrors(p).shouldBe {
       Left(
         ReadErrors(
-          MissingValue(p.kLdap),
+          MissingValue(p.kLdap, "Key not in map"),
           ParseError(p.kFactor, "notadouble", "double")
         )
       )

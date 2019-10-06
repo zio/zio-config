@@ -63,7 +63,7 @@ object CoproductExample extends App {
     runtime.unsafeRun(read(prodOrDev).provide(invalidSource).either) ==
       Left(
         List(
-          MissingValue("x1"),
+          MissingValue("x1", "Key not in map"),
           ParseError("x5", "notadouble", "double")
         )
       )

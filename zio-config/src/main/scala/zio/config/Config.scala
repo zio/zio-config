@@ -2,7 +2,8 @@ package zio.config
 
 import java.net.URI
 import zio.config.actions.Read
-import zio.{ system, IO, Task, UIO, ZIO }
+import zio.system.System
+import zio.{ IO, RIO, UIO, ZIO }
 
 trait Config[A] {
   def config: Config.Service[A]
@@ -30,20 +31,20 @@ object Config {
     override def config: UIO[A] = ZIO.succeed(a)
   }
 
-  def fromEnv[A](configDescriptor: ConfigDescriptor[A]): ZIO[system.System, Throwable, Config[A]] =
+  def fromEnv[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
     for {
-      lineSep <- ZIO.accessM[zio.system.System](sys => sys.system.lineSeparator)
-      source  <- Task(sys.env).map(mapSource)
+      lineSep <- ZIO.accessM[System](_.system.lineSeparator)
+      source  <- envSource
       res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
     } yield res
 
   def fromMap[A](map: Map[String, String], configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] =
     make(mapSource(map), configDescriptor)
 
-  def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): ZIO[system.System, Throwable, Config[A]] =
+  def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
     for {
-      lineSep <- ZIO.accessM[zio.system.System](sys => sys.system.lineSeparator)
-      source  <- Task(sys.props.toMap).map(mapSource)
+      lineSep <- ZIO.accessM[System](_.system.lineSeparator)
+      source  <- propSource
       res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
     } yield res
 
