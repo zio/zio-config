@@ -39,7 +39,7 @@ object ProgramExample extends App {
   }
 }
 
-trait SparkSession {
+final case class SparkSession(name: String) {
   // stubs for the real Spark
   def slowOp(value: String): Unit =
     Thread.sleep(value.length * 10L)
@@ -75,14 +75,14 @@ object SparkEnv {
     make {
       // As a real-world example:
       //    SparkSession.builder().appName(name).enableHiveSupport().getOrCreate()
-      new SparkSession {}
+      SparkSession(name)
     }
 
   def cluster(name: String): ZIO[Blocking, Throwable, SparkEnv] =
     make {
       // As a real-world example:
       //    SparkSession.builder().appName(name).master("local").getOrCreate()
-      new SparkSession {}
+      SparkSession(name)
     }
 
 }
