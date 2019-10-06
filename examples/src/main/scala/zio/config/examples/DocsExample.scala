@@ -14,10 +14,14 @@ object DocsExample extends App {
       string("URL").optional ? "Example: abc.com")(Database.apply, Database.unapply) ? "Database related"
 
   assert(
-    docs(config) == ConfigDocs(
+    docs(config, Some(Database(1, Some("value")))) == ConfigDocs(
       List(
-        KeyDescription("PORT", List("value of type int", "Example: 8088", "Database related")),
-        KeyDescription("URL", List("value of type string", "optional value", "Example: abc.com", "Database related"))
+        KeyDescription("PORT", Some("1"), List("value of type int", "Example: 8088", "Database related")),
+        KeyDescription(
+          "URL",
+          Some("value"),
+          List("value of type string", "optional value", "Example: abc.com", "Database related")
+        )
       ),
       None
     )

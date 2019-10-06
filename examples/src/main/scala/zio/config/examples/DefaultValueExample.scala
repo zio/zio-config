@@ -19,11 +19,11 @@ object DefaultValueExample extends App {
   assert(result == PgmConfig("xyz", 1))
 
   assert(
-    docs(pgmConf) ==
+    docs(pgmConf, Some(result)) ==
       ConfigDocs(
         List(
-          KeyDescription("HELLO", List("value of type string", "default value: xyz")),
-          KeyDescription("PORT", List("value of type int", "default value: 1"))
+          KeyDescription("HELLO", Some("xyz"), List("value of type string", "default value: xyz")),
+          KeyDescription("PORT", Some("1"), List("value of type int", "default value: 1"))
         ),
         None
       )

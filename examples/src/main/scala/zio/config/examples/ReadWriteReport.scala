@@ -30,60 +30,69 @@ object ReadWriteReport extends App {
   val userNamePassword =
     Map(
       "usr" -> "v1",
-      "pwd" -> "v2"
+      "pwd" -> "v2",
+      "abc" -> "1",
+      "xyz" -> "v3"
     )
 
   val source =
     mapSource(userNamePassword)
 
-  val result =
+  val result: ProdConfig =
     runtime.unsafeRun(read(config).provide(source).map(_._2))
 
   assert(
-    result == Left(UserPwd("v1", Some(Password("v2")), None, None))
+    result == Left(UserPwd("v1", Some(Password("v2")), None, Some(XYZ("v3", 1))))
   )
 
   val value = runtime.unsafeRun(read(config).provide(source).map(_._1))
-
   // Want report ?
   assert(
     value ==
       ConfigReport(
         List(
+          Details("abc", "1", "value of type int"),
+          Details("xyz", "v3", "value of type string"),
           Details("pwd", "v2", "value of type string"),
           Details("usr", "v1", "value of type string")
         )
       )
   )
-
   // want to write back the config ?
   assert(
     runtime.unsafeRun(write(config).run.provide(result)) ==
       Map(
         "usr" -> "v1",
-        "pwd" -> "v2"
+        "pwd" -> "v2",
+        "xyz" -> "v3",
+        "abc" -> "1"
       )
   )
 
   // Want to get a man page for config
   assert(
-    docs(config) ==
+    docs(config, Some(result)) ==
       ConfigDocs(
         List(
-          KeyDescription("usr", List("value of type string", "Example: some-user", "Prod Config")),
+          KeyDescription("usr", Some("v1"), List("value of type string", "Example: some-user", "Prod Config")),
           KeyDescription(
             "pwd",
+            Some("v2"),
             List("value of type string", "optional value", "We don't care", "yea !", "Prod Config")
           ),
-          KeyDescription("jhi", List("value of type string", "optional value", "Example: ghi", "Prod Config")),
-          KeyDescription("xyz", List("value of type string", "optional value", "Example: xyz", "Prod Config")),
-          KeyDescription("abc", List("value of type int", "optional value", "Example: xyz", "Prod Config"))
+          KeyDescription("jhi", None, List("value of type string", "optional value", "Example: ghi", "Prod Config")),
+          KeyDescription(
+            "xyz",
+            Some("v3"),
+            List("value of type string", "optional value", "Example: xyz", "Prod Config")
+          ),
+          KeyDescription("abc", Some("1"), List("value of type int", "optional value", "Example: xyz", "Prod Config"))
         ),
         Some(
           ConfigDocs(
             List(
-              KeyDescription("auth_token", List("value of type string", "Prod Config")),
-              KeyDescription("clientid", List("value of type string", "Prod Config"))
+              KeyDescription("auth_token", None, List("value of type string", "Prod Config")),
+              KeyDescription("clientid", None, List("value of type string", "Prod Config"))
             ),
             None
           )
