@@ -52,7 +52,7 @@ object ReadConfig extends App {
     Config
       .fromEnv(Prod.prodConfig)
       .flatMap(config => Prod.myAppLogic.provide(config))
-      .foldM(failure => ZIO.effectTotal(println(failure)) *> ZIO.succeed(1), _ => ZIO.succeed(0))
+      .foldM(failure => zio.console.putStrLn(failure) *> ZIO.succeed(1), _ => ZIO.succeed(0))
 }
 ```
 
