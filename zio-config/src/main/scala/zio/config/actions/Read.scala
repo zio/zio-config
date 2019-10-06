@@ -29,7 +29,7 @@ object Read {
 
           } yield result
 
-        case ConfigDescriptor.MapEither(c, f, _) =>
+        case ConfigDescriptor.XmapEither(c, f, _) =>
           loop(c, previousDescription).flatMap { a =>
             ZIO.fromEither(f(a)).bimap(err => ReadErrors(err), res => res)
           }
@@ -66,7 +66,7 @@ object Read {
             )
             .absolve
 
-        case ConfigDescriptor.Or(left, right) =>
+        case ConfigDescriptor.OrElseEither(left, right) =>
           loop(left, previousDescription).either.flatMap(
             {
               case Right(a) => ZIO.access(_ => Left(a))

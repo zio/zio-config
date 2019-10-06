@@ -7,8 +7,8 @@ sealed trait ConfigDescriptor[A] { self =>
   final def <*>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
     self.zip(that)
 
-  final def xmapEither[B](f: A => Either[ReadError, B])(g: B => Either[String, A]): ConfigDescriptor.MapEither[A, B] =
-    ConfigDescriptor.MapEither(self, f, g)
+  final def xmapEither[B](f: A => Either[ReadError, B])(g: B => Either[String, A]): ConfigDescriptor.XmapEither[A, B] =
+    ConfigDescriptor.XmapEither(self, f, g)
 
   def xmapEither2[B, C](
     that: ConfigDescriptor[B]
@@ -19,7 +19,7 @@ sealed trait ConfigDescriptor[A] { self =>
     self.xmapEither(a => Right(to(a)))(b => Right(from(b)))
 
   final def orElseEither[B](that: => ConfigDescriptor[B]): ConfigDescriptor[Either[A, B]] =
-    ConfigDescriptor.Or(self, that)
+    ConfigDescriptor.OrElseEither(self, that)
 
   final def <+>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[Either[A, B]] =
     self orElseEither that
@@ -31,10 +31,7 @@ sealed trait ConfigDescriptor[A] { self =>
     }(b => Right(b))
 
   def |(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-    (self orElseEither that).xmap {
-      case Right(value) => value
-      case Left(value)  => value
-    }(b => Right(b))
+    self orElse that
 
   def optional: ConfigDescriptor[Option[A]] =
     ConfigDescriptor.Optional(self) ? "optional value"
@@ -67,12 +64,15 @@ object ConfigDescriptor {
 
   final case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
-  final case class MapEither[A, B](config: ConfigDescriptor[A], f: A => Either[ReadError, B], g: B => Either[String, A])
-      extends ConfigDescriptor[B]
+  final case class XmapEither[A, B](
+    config: ConfigDescriptor[A],
+    f: A => Either[ReadError, B],
+    g: B => Either[String, A]
+  ) extends ConfigDescriptor[B]
 
   final case class Zip[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B]) extends ConfigDescriptor[(A, B)]
 
-  final case class Or[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
+  final case class OrElseEither[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
       extends ConfigDescriptor[Either[A, B]]
 
   def sequence[A](configList: List[ConfigDescriptor[A]]): ConfigDescriptor[List[A]] =

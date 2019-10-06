@@ -46,7 +46,7 @@ object ConfigDocs {
               }
             case None => loop(accumulatedDoc, previousDescription, c, desc, None)
           }
-        case ConfigDescriptor.MapEither(c, _, to) =>
+        case ConfigDescriptor.XmapEither(c, _, to) =>
           value match {
             case Some(v) =>
               to(v) match {
@@ -71,7 +71,7 @@ object ConfigDocs {
               )
           }
 
-        case ConfigDescriptor.Or(left, right) =>
+        case ConfigDescriptor.OrElseEither(left, right) =>
           value match {
             case Some(res) =>
               res match {

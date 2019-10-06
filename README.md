@@ -38,10 +38,11 @@ object Prod {
 
   val myAppLogic: ZIO[Config[Prod], Throwable, (String, Option[String])] =
     for {
-      prod    <- config[Prod]
-      written <- write(Prod.prodConfig).run.provide(prod)
-      _       <- ZIO.effect(println(written))
-      _       <- ZIO.effect(println(userManual(Prod.prodConfig)))
+      prodConf <- config[Prod]
+      written  <- write(Prod.prodConfig).run.provide(prodConf)
+      report    = docs(Prod.prodConfig, Some(prod))
+      _        <- ZIO.effect(println(written))
+      _        <- ZIO.effect(println(report))
     } yield (prod.ldap, prod.dburl)
 }
 
@@ -53,24 +54,6 @@ object ReadConfig extends App {
       .flatMap(config => Prod.myAppLogic.provide(config))
       .foldM(failure => ZIO.effectTotal(println(failure)) *> ZIO.succeed(1), _ => ZIO.succeed(0))
 }
-
-//
-// Config:
-//  Prod(v1, Some(v2)
-// 
-// User Manual:
-//   KeyDescription(DB_URL,List(value of type string, optional value, Example: abc, Prod Config))
-//   KeyDescription(LDAP,List(value of type string, Prod Config)
-//   KeyDescription(PORT,List(value of type int, Example: 8888, Prod Config)
-//
-// Report:
-//   List(
-//     Details("DB_URL", "v2", "value of type string"),
-//     Details("LDAP", "v1", "value of type string")
-//     Details("PORT", 8888, "value of type int")
-//   )
-//
-
 ```
 
-Please find more examples in examples modules.
+Please find more examples in examples module.

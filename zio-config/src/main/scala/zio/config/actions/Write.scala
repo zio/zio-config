@@ -34,7 +34,7 @@ object Write {
       case ConfigDescriptor.Default(c, _) =>
         write(c)
 
-      case ConfigDescriptor.MapEither(c, _, to) =>
+      case ConfigDescriptor.XmapEither(c, _, to) =>
         Write(ZIO.accessM { b =>
           to(b) match {
             case Right(before) =>
@@ -44,7 +44,7 @@ object Write {
           }
         })
 
-      case ConfigDescriptor.Or(left, right) =>
+      case ConfigDescriptor.OrElseEither(left, right) =>
         Write(ZIO.accessM(env => env.fold(a => write(left).run.provide(a), b => write(right).run.provide(b))))
 
       case ConfigDescriptor.Zip(config1, config2) =>
