@@ -1,8 +1,9 @@
 package zio.config.examples
 
-import zio.{ App, UIO, ZIO }
+import zio.blocking.Blocking
+import zio.config.Config._
 import zio.config.{ Config, _ }
-import Config._
+import zio.{ App, UIO, ZIO }
 
 /**
  * The pattern is an inspiration from http://degoes.net/articles/zio-environment.
@@ -19,77 +20,105 @@ object ProgramExample extends App {
   case class Live(config: Config.Service[ProgramConfig], spark: SparkEnv.Service)
       extends SparkEnv
       with Config[ProgramConfig]
+      with Blocking.Live
 
   override def run(args: List[String]): ZIO[Environment, Nothing, Int] = {
-    val pgm = for {
-      confService <- Config.fromEnv(programConfig)
-      session     <- ZIO.effect("sparkSession")
-      _           <- Application.execute.provide(Live(confService.config, new SparkEnv.Live(session)))
-    } yield ()
+    val pgm =
+      for {
+        configEnv <- Config.fromEnv(programConfig)
+        sparkEnv  <- SparkEnv.local("some-app")
+        _         <- Application.execute.provide(Live(configEnv.config, sparkEnv.spark))
+      } yield ()
 
-    ZIO.accessM[Environment](env => {
+    ZIO.accessM[Environment] { env =>
       pgm.foldM(
-        fail => env.console.putStrLn(s"failed $fail") *> ZIO.succeed(1),
-        _ => env.console.putStrLn(s"succeeded") *> ZIO.succeed(0)
+        fail => env.console.putStrLn(s"Failed $fail") *> ZIO.succeed(1),
+        _ => env.console.putStrLn(s"Succeeded") *> ZIO.succeed(0)
       )
-    })
+    }
   }
 }
 
-// spark service
+final case class SparkSession(name: String) {
+  // stubs for the real Spark
+  def slowOp(value: String): Unit =
+    Thread.sleep(value.length * 10L)
+
+  def version: String =
+    "someVersion"
+}
+
 trait SparkEnv {
   def spark: SparkEnv.Service
 }
 
 object SparkEnv {
-  type SparkSession = String
-
   trait Service {
-    def getSpark: UIO[SparkSession]
+    def sparkEnv: UIO[SparkSession]
   }
 
-  class Live(r: SparkSession) extends Service {
-    def getSpark: UIO[SparkSession] = ZIO.succeed(r)
-  }
+  def make(session: => SparkSession): ZIO[Blocking, Throwable, SparkEnv] =
+    zio.blocking
+      .effectBlocking(session)
+      .map(
+        sparkSession =>
+          new SparkEnv {
+            override def spark: Service =
+              new Service {
+                override def sparkEnv: UIO[SparkSession] =
+                  ZIO.succeed(sparkSession)
+              }
+          }
+      )
+
+  def local(name: String): ZIO[Blocking, Throwable, SparkEnv] =
+    make {
+      // As a real-world example:
+      //    SparkSession.builder().appName(name).enableHiveSupport().getOrCreate()
+      SparkSession(name)
+    }
+
+  def cluster(name: String): ZIO[Blocking, Throwable, SparkEnv] =
+    make {
+      // As a real-world example:
+      //    SparkSession.builder().appName(name).master("local").getOrCreate()
+      SparkSession(name)
+    }
+
 }
+
+////
 
 // The core application
 object Application {
-  val processData: ZIO[SparkEnv with Config[ProgramConfig], Throwable, Unit] =
-    ZIO.accessM(env => {
-      for {
-        conf  <- config[ProgramConfig]
-        spark <- env.spark.getSpark
-        _     <- ZIO.effect(println(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark}"))
-      } yield ()
-    })
-
-  val logSparkSession: ZIO[SparkEnv, Throwable, Unit] =
-    ZIO.accessM(
-      r =>
-        for {
-          session <- r.spark.getSpark
-          _ <- ZIO.effect(
-                println(s"Executing something with spark $session without the need of anything else from config")
-              )
-        } yield ()
-    )
-
   val logProgramConfig: ZIO[Config[ProgramConfig], Throwable, Unit] =
     for {
       r <- config[ProgramConfig]
-      _ <- ZIO
-            .effect(
-              println(
-                s"Executing something with programConfig's parameters ${r.inputPath} and ${r.outputPath} without the need of sparkSession"
-              )
+      _ <- ZIO.effect(
+            println(
+              s"Executing something with programConfig's parameters ${r.inputPath} and ${r.outputPath} without the need of sparkSession"
             )
+          )
     } yield ()
 
-  val execute: ZIO[SparkEnv with Config[ProgramConfig], Throwable, Unit] =
+  val runSparkJob: ZIO[SparkEnv with Blocking, Throwable, Unit] =
     for {
-      _ <- logSparkSession
+      session <- ZIO.accessM[SparkEnv](_.spark.sparkEnv)
+      result  <- zio.blocking.effectBlocking(session.slowOp("SELECT something"))
+      _       <- ZIO.effect(println(s"Executing something with spark ${session.version}: ${result}"))
+    } yield ()
+
+  val processData: ZIO[SparkEnv with Config[ProgramConfig], Throwable, Unit] =
+    for {
+      conf  <- config[ProgramConfig]
+      spark <- ZIO.accessM[SparkEnv](_.spark.sparkEnv)
+      _     <- ZIO.effect(println(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark.version}"))
+    } yield ()
+
+  val execute: ZIO[SparkEnv with Config[ProgramConfig] with Blocking, Throwable, Unit] =
+    for {
       _ <- logProgramConfig
+      _ <- runSparkJob
       _ <- processData
     } yield ()
 }
