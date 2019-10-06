@@ -60,7 +60,7 @@ object ConfigDescriptor {
   def empty[A]: ConfigDescriptor[Option[A]] = ConfigDescriptor.Empty()
 
   def sequence[A](configList: List[ConfigDescriptor[A]]): ConfigDescriptor[List[A]] =
-    configList.foldLeft(Empty[List[A]]().xmap(_.toList.flatten)(_.headOption.map(List(_))))(
+    configList.foldLeft(Empty[List[A]]().xmap(_.fold(List.empty[A])(_.toList))(_.headOption.map(List(_))))(
       (a, b) =>
         b.xmapEither2(a)((aa, bb) => Right(aa :: bb))(t => {
           t.headOption.fold[Either[String, (A, List[A])]](
