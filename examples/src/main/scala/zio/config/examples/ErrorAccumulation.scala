@@ -22,8 +22,8 @@ object ErrorAccumulation extends App {
     parsed ==
       Left(
         List(
-          MissingValue("envvar", "Key not in map"),
-          MissingValue("envvar2", "Key not in map")
+          MissingValue("envvar"),
+          MissingValue("envvar2")
         )
       )
   )
@@ -41,7 +41,7 @@ object ErrorAccumulation extends App {
       Left(
         List(
           ParseError("envvar", "wrong", "int"),
-          MissingValue("envvar2", "Key not in map")
+          MissingValue("envvar2")
         )
       )
   )
