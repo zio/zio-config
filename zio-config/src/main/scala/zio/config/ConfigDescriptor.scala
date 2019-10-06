@@ -54,7 +54,7 @@ sealed trait ConfigDescriptor[A] { self =>
 
 object ConfigDescriptor {
 
-  final case class Succeed[A](a: A) extends ConfigDescriptor[A]
+  final case class Empty[A]() extends ConfigDescriptor[Option[A]]
 
   final case class Source[A](path: String, propertyType: PropertyType[A]) extends ConfigDescriptor[A]
 
@@ -75,8 +75,10 @@ object ConfigDescriptor {
   final case class OrElseEither[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
       extends ConfigDescriptor[Either[A, B]]
 
+  def empty[A]: ConfigDescriptor[Option[A]] = ConfigDescriptor.Empty()
+
   def sequence[A](configList: List[ConfigDescriptor[A]]): ConfigDescriptor[List[A]] =
-    configList.foldLeft(Succeed(Nil): ConfigDescriptor[List[A]])(
+    configList.foldLeft(Empty[List[A]]().xmap(_.fold(List.empty[A])(_.toList))(_.headOption.map(List(_))))(
       (a, b) =>
         b.xmapEither2(a)((aa, bb) => Right(aa :: bb))(t => {
           t.headOption.fold[Either[String, (A, List[A])]](

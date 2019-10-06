@@ -1,6 +1,5 @@
 package zio.config.actions
 
-import zio.config.ConfigDescriptor.Succeed
 import zio.config.ConfigDescriptor
 
 sealed trait ConfigDocs
@@ -24,7 +23,7 @@ object ConfigDocs {
       value: Option[B]
     ): ConfigDocs =
       config match {
-        case Succeed(_) => desc
+        case ConfigDescriptor.Empty() => desc
         case ConfigDescriptor.Source(path, p) =>
           ConfigDocs.Leaf(
             KeyDescription(

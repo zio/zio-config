@@ -13,7 +13,7 @@ object Read {
       previousDescription: String
     ): ZIO[ConfigSource, ReadErrors, B] =
       configuration match {
-        case ConfigDescriptor.Succeed(v) => ZIO.access(_ => v)
+        case ConfigDescriptor.Empty() => ZIO.access(_ => None)
 
         case ConfigDescriptor.Source(path, propertyType) =>
           for {
