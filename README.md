@@ -36,13 +36,13 @@ object Prod {
         string("DB_URL").optional ? "Example: abc"
         )(Prod.apply, Prod.unapply) ? "Prod Config"
 
-  val myAppLogic: ZIO[Config[Prod], Throwable, (String, Option[String])] =
+  val myAppLogic: ZIO[Config[Prod] with Console, Throwable, (String, Option[String])] =
     for {
       prodConf <- config[Prod]
       written  <- write(Prod.prodConfig).run.provide(prodConf)
       report    = docs(Prod.prodConfig, Some(prod))
-      _        <- ZIO.effect(println(written))
-      _        <- ZIO.effect(println(report))
+      _        <- zio.console.putStrLn(written)
+      _        <- zio.console.putStrLn(report)
     } yield (prod.ldap, prod.dburl)
 }
 
