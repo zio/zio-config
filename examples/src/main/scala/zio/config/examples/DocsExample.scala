@@ -17,7 +17,7 @@ object DocsExample extends App {
     docs(config) == ConfigDocs(
       List(
         KeyDescription("PORT", List("value of type int", "Example: 8088", "Database related")),
-        KeyDescription("URL", List("value of type string", "Optional value", "Example: abc.com", "Database related"))
+        KeyDescription("URL", List("value of type string", "optional value", "Example: abc.com", "Database related"))
       ),
       None
     )

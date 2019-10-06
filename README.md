@@ -59,7 +59,7 @@ object ReadConfig extends App {
 //  Prod(v1, Some(v2)
 // 
 // User Manual:
-//   KeyDescription(DB_URL,List(value of type string, Optional value, Example: abc, Prod Config))
+//   KeyDescription(DB_URL,List(value of type string, optional value, Example: abc, Prod Config))
 //   KeyDescription(LDAP,List(value of type string, Prod Config)
 //   KeyDescription(PORT,List(value of type int, Example: 8888, Prod Config)
 //

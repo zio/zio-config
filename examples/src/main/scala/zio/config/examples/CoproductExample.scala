@@ -19,7 +19,7 @@ object CoproductExample extends App {
     (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
 
   val prodOrDev: ConfigDescriptor[Either[Prod, Dev]] =
-    prod or dev
+    prod orElseEither dev
 
   val runtime = new DefaultRuntime {}
 

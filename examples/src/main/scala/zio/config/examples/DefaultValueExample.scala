@@ -10,7 +10,7 @@ object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Int)
 
   val pgmConf: ConfigDescriptor[PgmConfig] =
-    (string("HELLO").default("xyz") |@| int("port").default(1))(PgmConfig.apply, PgmConfig.unapply)
+    (string("HELLO").default("xyz") |@| int("PORT").default(1))(PgmConfig.apply, PgmConfig.unapply)
 
   val runtime = new DefaultRuntime {}
 
@@ -22,8 +22,8 @@ object DefaultValueExample extends App {
     docs(pgmConf) ==
       ConfigDocs(
         List(
-          KeyDescription("HELLO", List("value of type string", "Default value: xyz")),
-          KeyDescription("port", List("value of type int", "Default value: 1"))
+          KeyDescription("HELLO", List("value of type string", "default value: xyz")),
+          KeyDescription("PORT", List("value of type int", "default value: 1"))
         ),
         None
       )

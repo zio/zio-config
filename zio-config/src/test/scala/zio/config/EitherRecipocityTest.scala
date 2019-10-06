@@ -48,7 +48,7 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
     )
 
   private val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
-    (cNestedConfigLeft or cNestedConfigRight)
+    (cNestedConfigLeft orElseEither cNestedConfigRight)
       .xmap(CoproductConfig)(_.coproduct)
 
   property("coproduct should yield same config representation on both sides of Either") = forAllZIO(genNestedConfig) {

@@ -45,7 +45,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       DataItem.unapply
     )
   private val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
-    (cDataItem or cNestedConfig)
+    (cDataItem orElseEither cNestedConfig)
       .xmap(CoproductConfig)(_.coproduct)
 
   property("newtype 1 roundtrip") = forAllZIO(genId) { p =>

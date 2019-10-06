@@ -1,48 +1,58 @@
 package zio.config
 
-sealed trait ConfigDescriptor[A] {
-  self =>
-  final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] = ConfigDescriptor.Zip(self, that)
-  final def <*>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] = zip(that)
+sealed trait ConfigDescriptor[A] { self =>
+  final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
+    ConfigDescriptor.Zip(self, that)
+
+  final def <*>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
+    self.zip(that)
 
   final def xmapEither[B](f: A => Either[ReadError, B])(g: B => Either[String, A]): ConfigDescriptor.MapEither[A, B] =
     ConfigDescriptor.MapEither(self, f, g)
 
-  final def or[B](that: => ConfigDescriptor[B]): ConfigDescriptor[Either[A, B]] = ConfigDescriptor.Or(self, that)
-
-  final def <+>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[Either[A, B]] = self or that
-
-  def |(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-    (self or that).xmap {
-      case Right(value) => value
-      case Left(value)  => value
-    }(b => Right(b))
+  def xmapEither2[B, C](
+    that: ConfigDescriptor[B]
+  )(f: (A, B) => Either[ReadError, C])(g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
+    (self |@| that).apply[(A, B)](Tuple2.apply, Tuple2.unapply).xmapEither({ case (a, b) => f(a, b) })(g)
 
   final def xmap[B](to: A => B)(from: B => A): ConfigDescriptor[B] =
     self.xmapEither(a => Right(to(a)))(b => Right(from(b)))
 
-  def xmapEither2[B, C](
-    that: ConfigDescriptor[B]
-  )(f: (A, B) => Either[ReadError, C])(g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
-    (self |@| that).apply[(A, B)]((a, b) => (a, b), t => Some((t._1, t._2))).xmapEither(b => f(b._1, b._2))(g)
+  final def orElseEither[B](that: => ConfigDescriptor[B]): ConfigDescriptor[Either[A, B]] =
+    ConfigDescriptor.Or(self, that)
 
-  final def |@|[B](f: => ConfigDescriptor[B]): ProductBuilder[A, B] =
-    new ProductBuilder[A, B] {
-      override val a: ConfigDescriptor[A] = self
-      override val b: ConfigDescriptor[B] = f
-    }
+  final def <+>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[Either[A, B]] =
+    self orElseEither that
+
+  def orElse(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
+    (self orElseEither that).xmap {
+      case Right(value) => value
+      case Left(value)  => value
+    }(b => Right(b))
+
+  def |(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
+    (self orElseEither that).xmap {
+      case Right(value) => value
+      case Left(value)  => value
+    }(b => Right(b))
 
   def optional: ConfigDescriptor[Option[A]] =
-    ConfigDescriptor.Optional(self) ? "Optional value"
+    ConfigDescriptor.Optional(self) ? "optional value"
 
   def default(value: A): ConfigDescriptor[A] =
-    ConfigDescriptor.Default(self, value) ? s"Default value: $value"
+    ConfigDescriptor.Default(self, value) ? s"default value: $value"
 
   def describe(description: String): ConfigDescriptor[A] =
     ConfigDescriptor.Describe(self, description)
 
   def ?(description: String): ConfigDescriptor[A] =
     describe(description)
+
+  final def |@|[B](f: => ConfigDescriptor[B]): ProductBuilder[A, B] =
+    new ProductBuilder[A, B] {
+      override val a: ConfigDescriptor[A] = self
+      override val b: ConfigDescriptor[B] = f
+    }
 }
 
 object ConfigDescriptor {

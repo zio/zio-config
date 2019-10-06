@@ -22,7 +22,7 @@ object ReadWriteReport extends App {
       (string("xyz") |@| int("abc"))(XYZ.apply, XYZ.unapply).optional ? "Example: xyz")(
       UserPwd.apply,
       UserPwd.unapply
-    ) or
+    ) orElseEither
       (string("auth_token") |@| string("clientid"))(Token.apply, Token.unapply)) ? "Prod Config"
 
   val runtime = new DefaultRuntime {}
@@ -73,11 +73,11 @@ object ReadWriteReport extends App {
           KeyDescription("usr", List("value of type string", "Example: some-user", "Prod Config")),
           KeyDescription(
             "pwd",
-            List("value of type string", "Optional value", "We don't care", "yea !", "Prod Config")
+            List("value of type string", "optional value", "We don't care", "yea !", "Prod Config")
           ),
-          KeyDescription("jhi", List("value of type string", "Optional value", "Example: ghi", "Prod Config")),
-          KeyDescription("xyz", List("value of type string", "Optional value", "Example: xyz", "Prod Config")),
-          KeyDescription("abc", List("value of type int", "Optional value", "Example: xyz", "Prod Config"))
+          KeyDescription("jhi", List("value of type string", "optional value", "Example: ghi", "Prod Config")),
+          KeyDescription("xyz", List("value of type string", "optional value", "Example: xyz", "Prod Config")),
+          KeyDescription("abc", List("value of type int", "optional value", "Example: xyz", "Prod Config"))
         ),
         Some(
           ConfigDocs(

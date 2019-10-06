@@ -83,7 +83,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         PasswordAuth.unapply
       )
     val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+      enterprise orElseEither password
 
     read(authConfig)
       .map(_._2)
@@ -109,7 +109,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         PasswordAuth.unapply
       )
     val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+      enterprise orElseEither password
 
     read(authConfig)
       .map(_._2)
@@ -138,7 +138,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         PasswordAuth.unapply
       )
     val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+      enterprise orElseEither password
 
     read(authConfig)
       .map(_._2)
@@ -167,7 +167,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         PasswordAuth.unapply
       )
     val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+      enterprise orElseEither password
 
     read(authConfig)
       .map(_._2)
