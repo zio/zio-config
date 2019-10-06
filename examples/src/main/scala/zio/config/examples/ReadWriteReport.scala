@@ -9,7 +9,7 @@ object ReadWriteReport extends App {
   case class Password(value: String)
   case class UserPwd(name: String, pwd: Option[Password], abc: Option[String], value: Option[XYZ])
   case class Token(value: String, clientid: String)
-  case class XYZ(xyz: String, someInteger: Int)
+  case class XYZ(xyz: String, someInteger: Either[Int, String])
 
   type ProdConfig = Either[UserPwd, Token]
 
@@ -18,7 +18,7 @@ object ReadWriteReport extends App {
     ((string("usr") ? "Example: some-user" |@|
       string("pwd").xmap(Password)(_.value).optional ? "sec" |@|
       string("jhi").optional ? "Ex: ghi" |@|
-      (string("xyz") |@| int("abc"))(XYZ.apply, XYZ.unapply).optional ? "Ex: ha")(
+      (string("xyz") |@| int("abc").orElseEither(string("def")))(XYZ.apply, XYZ.unapply).optional ? "Ex: ha")(
       UserPwd.apply,
       UserPwd.unapply
     ) orElseEither
@@ -41,7 +41,7 @@ object ReadWriteReport extends App {
     runtime.unsafeRun(read(config).provide(source))
 
   assert(
-    result == Left(UserPwd("v1", Some(Password("v2")), None, Some(XYZ("v3", 1))))
+    result == Left(UserPwd("v1", Some(Password("v2")), None, Some(XYZ("v3", Left(1)))))
   )
 
   // want to write back the config ?
@@ -74,7 +74,12 @@ object ReadWriteReport extends App {
             Leaf(
               KeyDescription("xyz", Some("v3"), List("value of type string", "optional value", "Ex: ha", "Prod Config"))
             ),
-            Leaf(KeyDescription("abc", Some("1"), List("value of type int", "optional value", "Ex: ha", "Prod Config")))
+            Or(
+              Leaf(
+                KeyDescription("abc", Some("1"), List("value of type int", "optional value", "Ex: ha", "Prod Config"))
+              ),
+              Leaf(KeyDescription("def", None, List("value of type string", "optional value", "Ex: ha", "Prod Config")))
+            )
           )
         ),
         And(
