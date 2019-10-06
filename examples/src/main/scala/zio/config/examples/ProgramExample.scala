@@ -2,8 +2,9 @@ package zio.config.examples
 
 import zio.blocking.Blocking
 import zio.config.Config._
-import zio.config.{ Config, _ }
-import zio.{ App, UIO, ZIO }
+import zio.config.{Config, _}
+import zio.console.Console
+import zio.{App, UIO, ZIO}
 
 /**
  * The pattern is an inspiration from http://degoes.net/articles/zio-environment.
@@ -20,6 +21,7 @@ object ProgramExample extends App {
   case class Live(config: Config.Service[ProgramConfig], spark: SparkEnv.Service)
       extends SparkEnv
       with Config[ProgramConfig]
+      with Console.Live
       with Blocking.Live
 
   override def run(args: List[String]): ZIO[Environment, Nothing, Int] = {
@@ -30,19 +32,17 @@ object ProgramExample extends App {
         _         <- Application.execute.provide(Live(configEnv.config, sparkEnv.spark))
       } yield ()
 
-    ZIO.accessM[Environment] { env =>
-      pgm.foldM(
-        fail => env.console.putStrLn(s"Failed $fail") *> ZIO.succeed(1),
-        _ => env.console.putStrLn(s"Succeeded") *> ZIO.succeed(0)
-      )
-    }
+    pgm.foldM(
+      fail => zio.console.putStrLn(s"Failed $fail") *> ZIO.succeed(1),
+      _ => zio.console.putStrLn(s"Succeeded") *> ZIO.succeed(0)
+    )
   }
 }
 
 final case class SparkSession(name: String) {
   // stubs for the real Spark
   def slowOp(value: String): Unit =
-    Thread.sleep(value.length * 10L)
+    Thread.sleep(value.length * 100L)
 
   def version: String =
     "someVersion"
@@ -74,14 +74,14 @@ object SparkEnv {
   def local(name: String): ZIO[Blocking, Throwable, SparkEnv] =
     make {
       // As a real-world example:
-      //    SparkSession.builder().appName(name).enableHiveSupport().getOrCreate()
+      //    SparkSession.builder().appName(name).master("local").getOrCreate()
       SparkSession(name)
     }
 
   def cluster(name: String): ZIO[Blocking, Throwable, SparkEnv] =
     make {
       // As a real-world example:
-      //    SparkSession.builder().appName(name).master("local").getOrCreate()
+      //    SparkSession.builder().appName(name).enableHiveSupport().getOrCreate()
       SparkSession(name)
     }
 
@@ -91,31 +91,27 @@ object SparkEnv {
 
 // The core application
 object Application {
-  val logProgramConfig: ZIO[Config[ProgramConfig], Throwable, Unit] =
+  val logProgramConfig: ZIO[Console with Config[ProgramConfig], Nothing, Unit] =
     for {
       r <- config[ProgramConfig]
-      _ <- ZIO.effect(
-            println(
-              s"Executing something with programConfig's parameters ${r.inputPath} and ${r.outputPath} without the need of sparkSession"
-            )
-          )
+      _ <- zio.console.putStrLn(s"Executing with parameters ${r.inputPath} and ${r.outputPath} without sparkSession")
     } yield ()
 
-  val runSparkJob: ZIO[SparkEnv with Blocking, Throwable, Unit] =
+  val runSparkJob: ZIO[SparkEnv with Console with Blocking, Throwable, Unit] =
     for {
       session <- ZIO.accessM[SparkEnv](_.spark.sparkEnv)
       result  <- zio.blocking.effectBlocking(session.slowOp("SELECT something"))
-      _       <- ZIO.effect(println(s"Executing something with spark ${session.version}: ${result}"))
+      _       <- zio.console.putStrLn(s"Executed something with spark ${session.version}: $result")
     } yield ()
 
-  val processData: ZIO[SparkEnv with Config[ProgramConfig], Throwable, Unit] =
+  val processData: ZIO[SparkEnv with Config[ProgramConfig] with Console, Throwable, Unit] =
     for {
       conf  <- config[ProgramConfig]
       spark <- ZIO.accessM[SparkEnv](_.spark.sparkEnv)
-      _     <- ZIO.effect(println(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark.version}"))
+      _     <- zio.console.putStrLn(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark.version}")
     } yield ()
 
-  val execute: ZIO[SparkEnv with Config[ProgramConfig] with Blocking, Throwable, Unit] =
+  val execute: ZIO[SparkEnv with Config[ProgramConfig] with Console with Blocking, Throwable, Unit] =
     for {
       _ <- logProgramConfig
       _ <- runSparkJob
