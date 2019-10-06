@@ -2,17 +2,22 @@ package zio.config.actions
 
 import zio.config.ConfigDescriptor.Succeed
 import zio.config.ConfigDescriptor
-import zio.config.actions.ConfigDocs.KeyDescription
 
-final case class ConfigDocs(configKeysAndDescription: List[KeyDescription], or: Option[ConfigDocs])
+sealed trait ConfigDocs
 
 // Man page
 object ConfigDocs {
+
+  final case class Empty()                                  extends ConfigDocs
+  final case class Leaf(value: KeyDescription)              extends ConfigDocs
+  final case class And(left: ConfigDocs, right: ConfigDocs) extends ConfigDocs
+  final case class Or(left: ConfigDocs, right: ConfigDocs)  extends ConfigDocs
+
   final case class KeyDescription(path: String, value: Option[String], docs: List[String])
 
-  final def docs[A](config: ConfigDescriptor[A], value: Option[A]): ConfigDocs = {
+  final def createDoc[A](config: ConfigDescriptor[A], value: Option[A]): ConfigDocs = {
     def loop[B](
-      acc: List[String],
+      accumulatedDoc: List[String],
       previousDescription: String,
       config: ConfigDescriptor[B],
       desc: ConfigDocs,
@@ -21,62 +26,48 @@ object ConfigDocs {
       config match {
         case Succeed(_) => desc
         case ConfigDescriptor.Source(path, p) =>
-          ConfigDocs(
-            List(
-              KeyDescription(
-                path,
-                value.map(t => p.write(t)),
-                if (previousDescription.isEmpty) acc
-                else previousDescription :: acc
-              )
-            ),
-            None
+          ConfigDocs.Leaf(
+            KeyDescription(
+              path,
+              value.map(t => p.write(t)),
+              if (previousDescription.isEmpty) accumulatedDoc
+              else previousDescription :: accumulatedDoc
+            )
           )
-        case ConfigDescriptor.Default(c, _)        => loop(acc, previousDescription, c, desc, value)
-        case ConfigDescriptor.Describe(c, message) => loop(message :: acc, previousDescription, c, desc, value)
+        case ConfigDescriptor.Default(c, _) => loop(accumulatedDoc, previousDescription, c, desc, value)
+        case ConfigDescriptor.Describe(c, message) =>
+          loop(message :: accumulatedDoc, previousDescription, c, desc, value)
         case ConfigDescriptor.Optional(c) =>
           value match {
             case Some(result) =>
               result match {
-                case Some(v) => loop(acc, previousDescription, c, desc, Some(v))
-                case None    => loop(acc, previousDescription, c, desc, None)
+                case Some(v) => loop(accumulatedDoc, previousDescription, c, desc, Some(v))
+                case None    => loop(accumulatedDoc, previousDescription, c, desc, None)
               }
-            case None => loop(acc, previousDescription, c, desc, None)
+            case None => loop(accumulatedDoc, previousDescription, c, desc, None)
           }
         case ConfigDescriptor.MapEither(c, _, to) =>
           value match {
             case Some(v) =>
               to(v) match {
-                case Right(vv) => loop(acc, previousDescription, c, desc, Some(vv))
-                case Left(_)   => loop(acc, previousDescription, c, desc, None)
+                case Right(vv) => loop(accumulatedDoc, previousDescription, c, desc, Some(vv))
+                case Left(_)   => loop(accumulatedDoc, previousDescription, c, desc, None)
               }
-            case None => loop(acc, previousDescription, c, desc, None)
+            case None => loop(accumulatedDoc, previousDescription, c, desc, None)
           }
 
         case ConfigDescriptor.Zip(left, right) =>
           value match {
             case Some(tuple) =>
-              ConfigDocs(
-                loop(acc, previousDescription, left, desc, Some(tuple._1)).configKeysAndDescription ++ loop(
-                  acc,
-                  previousDescription,
-                  right,
-                  desc,
-                  Some(tuple._2)
-                ).configKeysAndDescription,
-                None
+              ConfigDocs.And(
+                loop(accumulatedDoc, previousDescription, left, desc, Some(tuple._1)),
+                loop(accumulatedDoc, previousDescription, right, desc, Some(tuple._2))
               )
 
             case None =>
-              ConfigDocs(
-                loop(acc, previousDescription, left, desc, None).configKeysAndDescription ++ loop(
-                  acc,
-                  previousDescription,
-                  right,
-                  desc,
-                  None
-                ).configKeysAndDescription,
-                None
+              ConfigDocs.And(
+                loop(accumulatedDoc, previousDescription, left, desc, None),
+                loop(accumulatedDoc, previousDescription, right, desc, None)
               )
           }
 
@@ -85,26 +76,26 @@ object ConfigDocs {
             case Some(res) =>
               res match {
                 case Left(vv) =>
-                  ConfigDocs(
-                    loop(acc, previousDescription, left, desc, Some(vv)).configKeysAndDescription,
-                    Some(loop(acc, previousDescription, right, desc, None))
+                  ConfigDocs.Or(
+                    loop(accumulatedDoc, previousDescription, left, desc, Some(vv)),
+                    loop(accumulatedDoc, previousDescription, right, desc, None)
                   )
 
                 case Right(vv) =>
-                  ConfigDocs(
-                    loop(acc, previousDescription, left, desc, None).configKeysAndDescription,
-                    Some(loop(acc, previousDescription, right, desc, Some(vv)))
+                  ConfigDocs.Or(
+                    loop(accumulatedDoc, previousDescription, left, desc, None),
+                    loop(accumulatedDoc, previousDescription, right, desc, Some(vv))
                   )
               }
 
             case None =>
-              ConfigDocs(
-                loop(acc, previousDescription, left, desc, None).configKeysAndDescription,
-                Some(loop(acc, previousDescription, right, desc, None))
+              ConfigDocs.Or(
+                loop(accumulatedDoc, previousDescription, left, desc, None),
+                loop(accumulatedDoc, previousDescription, right, desc, None)
               )
           }
       }
 
-    loop(Nil, "", config, ConfigDocs(Nil, None), value)
+    loop(Nil, "", config, Empty(), value)
   }
 }

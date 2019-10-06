@@ -53,7 +53,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       for {
         written <- write(cId).run.provide(p)
         reread  <- read(cId).provide(mapSource(written))
-      } yield reread._2
+      } yield reread
 
     p2.shouldBe(p)
   }
@@ -63,7 +63,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       for {
         written <- write(cDbUrl).run.provide(p)
         reread  <- read(cDbUrl).provide(mapSource(written))
-      } yield reread._2
+      } yield reread
 
     p2.shouldBe(p)
   }
@@ -73,7 +73,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       for {
         written <- write(cEnterpriseAuth).run.provide(p)
         reread  <- read(cEnterpriseAuth).provide(mapSource(written))
-      } yield reread._2
+      } yield reread
 
     p2.shouldBe(p)
   }
@@ -83,7 +83,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       for {
         written <- write(cNestedConfig).run.provide(p)
         reread  <- read(cNestedConfig).provide(mapSource(written))
-      } yield reread._2
+      } yield reread
 
     p2.shouldBe(p)
   }
@@ -93,7 +93,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
       for {
         written <- write(cCoproductConfig).run.provide(p)
         reread  <- read(cCoproductConfig).provide(mapSource(written))
-      } yield reread._2
+      } yield reread
 
     p2.shouldBe(p)
   }

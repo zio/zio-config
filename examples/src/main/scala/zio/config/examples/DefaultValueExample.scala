@@ -3,7 +3,7 @@ package zio.config.examples
 import zio.config._
 import Config._
 import zio.DefaultRuntime
-import zio.config.actions.ConfigDocs
+import zio.config.actions.ConfigDocs, ConfigDocs._
 import zio.config.actions.ConfigDocs.KeyDescription
 
 object DefaultValueExample extends App {
@@ -20,12 +20,9 @@ object DefaultValueExample extends App {
 
   assert(
     docs(pgmConf, Some(result)) ==
-      ConfigDocs(
-        List(
-          KeyDescription("HELLO", Some("xyz"), List("value of type string", "default value: xyz")),
-          KeyDescription("PORT", Some("1"), List("value of type int", "default value: 1"))
-        ),
-        None
+      ConfigDocs.And(
+        Leaf(KeyDescription("HELLO", Some("xyz"), List("value of type string", "default value: xyz"))),
+        Leaf(KeyDescription("PORT", Some("1"), List("value of type int", "default value: 1")))
       )
   )
 }

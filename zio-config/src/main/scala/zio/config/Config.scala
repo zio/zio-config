@@ -21,7 +21,7 @@ object Config {
         e =>
           new Config[A] {
             override def config: Service[A] = new Service[A] {
-              override def config: UIO[A] = ZIO.succeed(e._2)
+              override def config: UIO[A] = ZIO.succeed(e)
             }
           }
       )

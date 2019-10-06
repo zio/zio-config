@@ -69,7 +69,7 @@ object ProductBuilderTest extends Properties("ProductBuilder") with TestSupport 
       for {
         written <- write(cS22).run.provide(p)
         reread  <- read(cS22).provide(mapSource(written))
-      } yield reread._2
+      } yield reread
 
     p2.shouldBe(p)
   }

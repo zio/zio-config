@@ -1,8 +1,7 @@
 package zio.config.examples
 
 import zio.config._
-import Config._
-import zio.config.actions.ConfigDocs
+import Config._, zio.config.actions.ConfigDocs._
 import zio.config.actions.ConfigDocs.KeyDescription
 
 object DocsExample extends App {
@@ -14,17 +13,16 @@ object DocsExample extends App {
       string("URL").optional ? "Example: abc.com")(Database.apply, Database.unapply) ? "Database related"
 
   assert(
-    docs(config, Some(Database(1, Some("value")))) == ConfigDocs(
-      List(
-        KeyDescription("PORT", Some("1"), List("value of type int", "Example: 8088", "Database related")),
-        KeyDescription(
-          "URL",
-          Some("value"),
-          List("value of type string", "optional value", "Example: abc.com", "Database related")
+    docs(config, Some(Database(1, Some("value")))) ==
+      And(
+        Leaf(KeyDescription("PORT", Some("1"), List("value of type int", "Example: 8088", "Database related"))),
+        Leaf(
+          KeyDescription(
+            "URL",
+            Some("value"),
+            List("value of type string", "optional value", "Example: abc.com", "Database related")
+          )
         )
-      ),
-      None
-    )
+      )
   )
-
 }

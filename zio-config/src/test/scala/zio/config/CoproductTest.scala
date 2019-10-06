@@ -86,7 +86,6 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       enterprise orElseEither password
 
     read(authConfig)
-      .map(_._2)
       .provide(
         mapSource(
           Map(
@@ -112,7 +111,6 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       enterprise orElseEither password
 
     read(authConfig)
-      .map(_._2)
       .provide(
         mapSource(
           Map(
@@ -141,7 +139,6 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       enterprise orElseEither password
 
     read(authConfig)
-      .map(_._2)
       .provide(
         mapSource(
           Map(
@@ -170,7 +167,6 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       enterprise orElseEither password
 
     read(authConfig)
-      .map(_._2)
       .provide(
         mapSource(
           Map(

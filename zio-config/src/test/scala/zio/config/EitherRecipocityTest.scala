@@ -60,7 +60,7 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
           writtenRight <- write(cCoproductConfig).run.provide(CoproductConfig(Right(p)))
           rereadRight  <- read(cCoproductConfig).provide(mapSource(writtenRight))
         } yield {
-          (rereadLeft._2.coproduct, rereadRight._2.coproduct) match {
+          (rereadLeft.coproduct, rereadRight.coproduct) match {
             case (Left(pl), Right(pr)) => (Some(pl), Some(pr))
             case _                     => (None, None)
           }
