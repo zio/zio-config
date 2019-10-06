@@ -14,11 +14,7 @@ trait Sources {
               .mapError { err =>
                 ReadError.FatalError(path, err)
               }
-              .flatMap {
-                _.fold[IO[ReadError, String]](
-                  ZIO.fail(ReadError.MissingValue(path))
-                )(ZIO.succeed)
-              }
+              .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
       }
     }
 
@@ -32,11 +28,7 @@ trait Sources {
               .mapError { err =>
                 ReadError.FatalError(path, err)
               }
-              .flatMap {
-                _.fold[IO[ReadError, String]](
-                  ZIO.fail(ReadError.MissingValue(path))
-                )(ZIO.succeed)
-              }
+              .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
       }
     }
 
