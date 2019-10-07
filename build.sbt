@@ -32,7 +32,7 @@ inThisBuild(
 
 ThisBuild / publishTo := sonatypePublishToBundle.value
 
-lazy val createProductBuilder = taskKey[Unit]("Run the product builder.")
+lazy val createProductBuilder = taskKey[Unit]("Generate code for ProductBuilder.scala")
 
 createProductBuilder := {
   val productBuilderFile = (sourceDirectory in zioConfig).value / "main" / "scala" / "zio" / "config" / "ProductBuilder.scala"

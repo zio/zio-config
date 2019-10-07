@@ -19,7 +19,7 @@ object CoproductExample extends App {
     (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
 
   val prodOrDev: ConfigDescriptor[Either[Prod, Dev]] =
-    prod or dev
+    prod orElseEither dev
 
   val runtime = new DefaultRuntime {}
 
@@ -33,7 +33,7 @@ object CoproductExample extends App {
   val source: ConfigSource =
     mapSource(validConfigForSampleConfig)
 
-  assert(runtime.unsafeRun(read(prodOrDev).provide(source))._2 == Left(Prod(Ldap("v1"), DbUrl("v2"))))
+  assert(runtime.unsafeRun(read(prodOrDev).provide(source)) == Left(Prod(Ldap("v1"), DbUrl("v2"))))
 
   val validConfigForAnotherConfig =
     Map(
@@ -46,7 +46,7 @@ object CoproductExample extends App {
   val anotherSource: ConfigSource =
     mapSource(validConfigForAnotherConfig)
 
-  assert(runtime.unsafeRun(read(prodOrDev).provide(anotherSource))._2 == Right(Dev("v3", 1, 2.0)))
+  assert(runtime.unsafeRun(read(prodOrDev).provide(anotherSource)) == Right(Dev("v3", 1, 2.0)))
 
   val invalidConfig =
     Map(
@@ -63,7 +63,7 @@ object CoproductExample extends App {
     runtime.unsafeRun(read(prodOrDev).provide(invalidSource).either) ==
       Left(
         List(
-          MissingValue("x1", "Key not in map"),
+          MissingValue("x1"),
           ParseError("x5", "notadouble", "double")
         )
       )
@@ -79,7 +79,7 @@ object CoproductExample extends App {
     )
 
   assert(
-    runtime.unsafeRun(read(prodOrDev).provide(mapSource(allConfigsExist)))._2 ==
+    runtime.unsafeRun(read(prodOrDev).provide(mapSource(allConfigsExist))) ==
       Left(Prod(Ldap("v1"), DbUrl("v2")))
   )
 }

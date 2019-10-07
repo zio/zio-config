@@ -50,7 +50,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
     readWithErrors(p).shouldBe {
       Left(
         ReadErrors(
-          MissingValue(p.kLdap, "Key not in map"),
+          MissingValue(p.kLdap),
           ParseError(p.kFactor, "notadouble", "double")
         )
       )
@@ -83,10 +83,9 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         PasswordAuth.unapply
       )
     val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+      enterprise orElseEither password
 
     read(authConfig)
-      .map(_._2)
       .provide(
         mapSource(
           Map(
@@ -109,10 +108,9 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         PasswordAuth.unapply
       )
     val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+      enterprise orElseEither password
 
     read(authConfig)
-      .map(_._2)
       .provide(
         mapSource(
           Map(
@@ -138,10 +136,9 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         PasswordAuth.unapply
       )
     val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+      enterprise orElseEither password
 
     read(authConfig)
-      .map(_._2)
       .provide(
         mapSource(
           Map(
@@ -167,10 +164,9 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
         PasswordAuth.unapply
       )
     val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+      enterprise orElseEither password
 
     read(authConfig)
-      .map(_._2)
       .provide(
         mapSource(
           Map(

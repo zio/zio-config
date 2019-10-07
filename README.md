@@ -9,7 +9,7 @@ Configuration parsing should be easy as it sounds - Hence;
 
  * It has no other dependencies.
  * No macros / no reflection
- * No implicit requirements at user site.
+ * No implicits anywhere.
  * Can write the config back to key value pairs, given the same config description. 
    Allows user to generate and populate configurations in the system-env/property-files in a typesafe way from outside, ensuring successful parsing in the app.
  * Automatic report generation on the config variables.
@@ -32,16 +32,17 @@ case class Prod(ldap: String, port: Int, dburl: Option[String])
 object Prod {
   val prodConfig: ConfigDescriptor[Prod] =
     (string("LDAP") |@| 
-      int("PORT") ~ "Example: 8888" |@|
-        string("DB_URL").optional ~ "Example: abc"
-        )(Prod.apply, Prod.unapply) ~ "Prod Config"
+      int("PORT") ? "Example: 8888" |@|
+        string("DB_URL").optional ? "Example: abc"
+        )(Prod.apply, Prod.unapply) ? "Prod Config"
 
-  val myAppLogic: ZIO[Config[Prod], Throwable, (String, Option[String])] =
+  val myAppLogic: ZIO[Config[Prod] with Console, Throwable, (String, Option[String])] =
     for {
-      prod    <- config[Prod]
-      written <- write(Prod.prodConfig).run.provide(prod)
-      _       <- ZIO.effect(println(written))
-      _       <- ZIO.effect(println(userManual(Prod.prodConfig)))
+      prodConf <- config[Prod]
+      written  <- write(Prod.prodConfig).run.provide(prodConf)
+      report    = docs(Prod.prodConfig, Some(prod))
+      _        <- zio.console.putStrLn(written)
+      _        <- zio.console.putStrLn(report)
     } yield (prod.ldap, prod.dburl)
 }
 
@@ -51,26 +52,8 @@ object ReadConfig extends App {
     Config
       .fromEnv(Prod.prodConfig)
       .flatMap(config => Prod.myAppLogic.provide(config))
-      .foldM(failure => ZIO.effectTotal(println(failure)) *> ZIO.succeed(1), _ => ZIO.succeed(0))
+      .foldM(failure => zio.console.putStrLn(failure) *> ZIO.succeed(1), _ => ZIO.succeed(0))
 }
-
-//
-// Config:
-//  Prod(v1, Some(v2)
-// 
-// User Manual:
-//   KeyDescription(DB_URL,List(value of type string, Optional value, Example: abc, Prod Config))
-//   KeyDescription(LDAP,List(value of type string, Prod Config)
-//   KeyDescription(PORT,List(value of type int, Example: 8888, Prod Config)
-//
-// Report:
-//   List(
-//     Details("DB_URL", "v2", "value of type string"),
-//     Details("LDAP", "v1", "value of type string")
-//     Details("PORT", 8888, "value of type int")
-//   )
-//
-
 ```
 
-Please find more examples in examples modules.
+Please find more examples in examples module.

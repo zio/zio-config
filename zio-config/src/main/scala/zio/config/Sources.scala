@@ -14,11 +14,7 @@ trait Sources {
               .mapError { err =>
                 ReadError.FatalError(path, err)
               }
-              .flatMap { (oStr: Option[String]) =>
-                oStr.fold[IO[ReadError, String]](
-                  ZIO.fail(ReadError.MissingValue(path, "Not defined in system environment"))
-                )(ZIO.succeed)
-              }
+              .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
       }
     }
 
@@ -32,11 +28,7 @@ trait Sources {
               .mapError { err =>
                 ReadError.FatalError(path, err)
               }
-              .flatMap { (oStr: Option[String]) =>
-                oStr.fold[IO[ReadError, String]](
-                  ZIO.fail(ReadError.MissingValue(path, "System property not found for key"))
-                )(ZIO.succeed)
-              }
+              .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
       }
     }
 
@@ -45,7 +37,7 @@ trait Sources {
       val configService: ConfigSource.Service =
         (path: String) =>
           ZIO.fromOption(map.get(path)).mapError { _ =>
-            ReadError.MissingValue(path, "Key not in map")
+            ReadError.MissingValue(path)
           }
     }
 

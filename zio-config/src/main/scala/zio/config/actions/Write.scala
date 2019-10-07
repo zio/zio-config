@@ -22,28 +22,17 @@ object Write {
       case ConfigDescriptor.Optional(c) =>
         Write(
           ZIO.accessM(
-            a =>
-              a.asInstanceOf[Option[A]]
-                .fold[ZIO[A, String, Map[String, String]]](
-                  ZIO.succeed(Map.empty[String, String])
-                )(aa => write(c).run.provide(aa))
+            _.fold[ZIO[A, String, Map[String, String]]](
+              ZIO.succeed(Map.empty[String, String])
+            )(aa => write(c).run.provide(aa))
           )
         )
 
-      case ConfigDescriptor.OnError(c, _) =>
-        Write(
-          ZIO.accessM(
-            b =>
-              write(c).run
-                .provide(b)
-                .fold(
-                  _ => Map.empty,
-                  success => success
-                )
-          )
-        )
+      // No need to write the default values back into the env
+      case ConfigDescriptor.Default(c, _) =>
+        write(c)
 
-      case ConfigDescriptor.MapEither(c, _, to) =>
+      case ConfigDescriptor.XmapEither(c, _, to) =>
         Write(ZIO.accessM { b =>
           to(b) match {
             case Right(before) =>
@@ -53,7 +42,7 @@ object Write {
           }
         })
 
-      case ConfigDescriptor.Or(left, right) =>
+      case ConfigDescriptor.OrElseEither(left, right) =>
         Write(ZIO.accessM(env => env.fold(a => write(left).run.provide(a), b => write(right).run.provide(b))))
 
       case ConfigDescriptor.Zip(config1, config2) =>

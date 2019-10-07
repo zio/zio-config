@@ -36,9 +36,8 @@ object SequenceRoundTripTest extends Properties("sequence round trip tests") wit
 
     val readAndWrite: ZIO[ConfigSource, ReadErrors, Either[String, Map[String, String]]] =
       for {
-        result    <- read(config)
-        (_, conf) = result
-        written   <- write(config).run.provide(conf).either
+        result  <- read(config)
+        written <- write(config).run.provide(result).either
       } yield written
 
     readAndWrite

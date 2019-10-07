@@ -22,8 +22,8 @@ object ErrorAccumulation extends App {
     parsed ==
       Left(
         List(
-          MissingValue("envvar", "Key not in map"),
-          MissingValue("envvar2", "Key not in map")
+          MissingValue("envvar"),
+          MissingValue("envvar2")
         )
       )
   )
@@ -32,7 +32,7 @@ object ErrorAccumulation extends App {
 
   val validRes = runtime.unsafeRun(read(config).provide(validSource))
 
-  assert(validRes._2 == SampleConfig(1, "value"))
+  assert(validRes == SampleConfig(1, "value"))
 
   val invalidSource = mapSource(Map("envvar" -> "wrong"))
 
@@ -41,7 +41,7 @@ object ErrorAccumulation extends App {
       Left(
         List(
           ParseError("envvar", "wrong", "int"),
-          MissingValue("envvar2", "Key not in map")
+          MissingValue("envvar2")
         )
       )
   )
