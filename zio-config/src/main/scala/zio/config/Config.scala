@@ -1,66 +1,73 @@
 package zio.config
 
-sealed trait Config[A] {
-  self =>
-  final def zip[B](that: => Config[B]): Config[(A, B)] = Config.Zip(self, that)
+import java.net.URI
+import zio.config.actions.Read
+import zio.system.System
+import zio.{ IO, RIO, UIO, ZIO }
 
-  final def xmapEither[B](f: A => Either[ReadError, B])(g: B => Either[String, A]): Config.MapEither[A, B] =
-    Config.MapEither(self, f, g)
-
-  final def onError(f: => ReadErrors => A): Config[A] = Config.OnError(self, f)
-
-  final def or[B](that: => Config[B]): Config[Either[A, B]] = Config.Or(self, that)
-
-  final def <+>[B](that: => Config[B]): Config[Either[A, B]] = self or that
-
-  final def xmap[B](to: A => B)(from: B => A): Config[B] =
-    self.xmapEither(a => Right(to(a)))(b => Right(from(b)))
-
-  def xmapEither2[B, C](that: Config[B])(f: (A, B) => Either[ReadError, C])(g: C => Either[String, (A, B)]): Config[C] =
-    (self <*> that).apply[(A, B)]((a, b) => (a, b), t => Some((t._1, t._2))).xmapEither(b => f(b._1, b._2))(g)
-
-  final def <*>[B](f: => Config[B]): ProductBuilder[A, B] =
-    new ProductBuilder[A, B] {
-      override val a: Config[A] = self
-      override val b: Config[B] = f
-    }
-
-  def optional: Config[Option[A]] =
-    Config.Optional(self)
+trait Config[A] {
+  def config: Config.Service[A]
 }
-
 object Config {
+  trait Service[A] {
+    def config: UIO[A]
+  }
 
-  final case class Pure[A](a: A) extends Config[A]
+  def make[A](source: ConfigSource, configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] =
+    Read
+      .read(configDescriptor)
+      .provide(source)
+      .map(
+        e =>
+          new Config[A] {
+            override def config: Service[A] = new Service[A] {
+              override def config: UIO[A] = ZIO.succeed(e)
+            }
+          }
+      )
 
-  final case class Source[A](path: String, propertyType: PropertyType[A]) extends Config[A]
+  trait Live[A] extends Service[A] {
+    def a: A
+    override def config: UIO[A] = ZIO.succeed(a)
+  }
 
-  final case class Optional[A](config: Config[A]) extends Config[Option[A]]
+  def fromEnv[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
+    for {
+      lineSep <- ZIO.accessM[System](_.system.lineSeparator)
+      source  <- envSource
+      res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
+    } yield res
 
-  final case class MapEither[A, B](config: Config[A], f: A => Either[ReadError, B], g: B => Either[String, A])
-      extends Config[B]
+  def fromMap[A](map: Map[String, String], configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] =
+    make(mapSource(map), configDescriptor)
 
-  final case class OnError[A](config: Config[A], f: ReadErrors => A) extends Config[A]
+  def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
+    for {
+      lineSep <- ZIO.accessM[System](_.system.lineSeparator)
+      source  <- propSource
+      res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
+    } yield res
 
-  final case class Zip[A, B](left: Config[A], right: Config[B]) extends Config[(A, B)]
-
-  final case class Or[A, B](left: Config[A], right: Config[B]) extends Config[Either[A, B]]
-
-  def succeed[A](a: A): Config[A] =
-    Config.Pure(a)
-
-  def sequence[A](configList: List[Config[A]]): Config[List[A]] =
-    configList.foldLeft(Pure(Nil): Config[List[A]])(
-      (a, b) =>
-        b.xmapEither2(a)((aa, bb) => Right(aa :: bb))(t => {
-          t.headOption.fold[Either[String, (A, List[A])]](
-            Left(
-              "The input is not corresponding to the config description. It may have less number of entries than required by the config."
-            )
-          )(ll => Right((ll, t.tail)))
-        })
-    )
-
-  def collectAll[A](configList: List[Config[A]]): Config[List[A]] =
-    sequence(configList)
+  def string(path: String): ConfigDescriptor[String] =
+    ConfigDescriptor.Source(path, PropertyType.StringType) ? "value of type string"
+  def boolean(path: String): ConfigDescriptor[Boolean] =
+    ConfigDescriptor.Source(path, PropertyType.BooleanType) ? "value of type boolean"
+  def byte(path: String): ConfigDescriptor[Byte] =
+    ConfigDescriptor.Source(path, PropertyType.ByteType) ? "value of type byte"
+  def short(path: String): ConfigDescriptor[Short] =
+    ConfigDescriptor.Source(path, PropertyType.ShortType) ? "value of type short"
+  def int(path: String): ConfigDescriptor[Int] =
+    ConfigDescriptor.Source(path, PropertyType.IntType) ? "value of type int"
+  def long(path: String): ConfigDescriptor[Long] =
+    ConfigDescriptor.Source(path, PropertyType.LongType) ? "value of type long"
+  def bigInt(path: String): ConfigDescriptor[BigInt] =
+    ConfigDescriptor.Source(path, PropertyType.BigIntType) ? "value of type bigint"
+  def float(path: String): ConfigDescriptor[Float] =
+    ConfigDescriptor.Source(path, PropertyType.FloatType) ? "value of type float"
+  def double(path: String): ConfigDescriptor[Double] =
+    ConfigDescriptor.Source(path, PropertyType.DoubleType) ? "value of type double"
+  def bigDecimal(path: String): ConfigDescriptor[BigDecimal] =
+    ConfigDescriptor.Source(path, PropertyType.BigDecimalType) ? "value of type bigdecimal"
+  def uri(path: String): ConfigDescriptor[URI] =
+    ConfigDescriptor.Source(path, PropertyType.UriType) ? "value of type uri"
 }

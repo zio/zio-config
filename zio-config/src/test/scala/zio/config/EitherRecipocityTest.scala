@@ -5,6 +5,8 @@ import zio.config.testsupport.TestSupport
 
 object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
 
+  import Config._
+
   private val genId    = genSymbol(1, 5).map(Id)
   private val genDbUrl = genNonEmptyString(20).map(DbUrl)
   private val genEnterpriseAuth =
@@ -19,34 +21,34 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
       factor <- genFor[Double]
     } yield NestedConfig(auth, count, factor)
 
-  private val cIdLeft: Config[Id]       = string("klId").xmap(Id)(_.value)
-  private val cDbUrlLeft: Config[DbUrl] = string("klDbUrl").xmap(DbUrl)(_.value)
-  private val cEnterpriseAuthLeft: Config[EnterpriseAuth] =
-    (cIdLeft <*> cDbUrlLeft)(
+  private val cIdLeft: ConfigDescriptor[Id]       = string("klId").xmap(Id)(_.value)
+  private val cDbUrlLeft: ConfigDescriptor[DbUrl] = string("klDbUrl").xmap(DbUrl)(_.value)
+  private val cEnterpriseAuthLeft: ConfigDescriptor[EnterpriseAuth] =
+    (cIdLeft |@| cDbUrlLeft)(
       EnterpriseAuth.apply,
       EnterpriseAuth.unapply
     )
-  private val cNestedConfigLeft: Config[NestedConfig] =
-    (cEnterpriseAuthLeft <*> int("klCount") <*> double("klFactor"))(
+  private val cNestedConfigLeft: ConfigDescriptor[NestedConfig] =
+    (cEnterpriseAuthLeft |@| int("klCount") |@| double("klFactor"))(
       NestedConfig.apply,
       NestedConfig.unapply
     )
 
-  private val cIdRight: Config[Id]       = string("krId").xmap(Id)(_.value)
-  private val cDbUrlRight: Config[DbUrl] = string("krDbUrl").xmap(DbUrl)(_.value)
-  private val cEnterpriseAuthRight: Config[EnterpriseAuth] =
-    (cIdRight <*> cDbUrlRight)(
+  private val cIdRight: ConfigDescriptor[Id]       = string("krId").xmap(Id)(_.value)
+  private val cDbUrlRight: ConfigDescriptor[DbUrl] = string("krDbUrl").xmap(DbUrl)(_.value)
+  private val cEnterpriseAuthRight: ConfigDescriptor[EnterpriseAuth] =
+    (cIdRight |@| cDbUrlRight)(
       EnterpriseAuth.apply,
       EnterpriseAuth.unapply
     )
-  private val cNestedConfigRight: Config[NestedConfig] =
-    (cEnterpriseAuthRight <*> int("krCount") <*> double("krFactor"))(
+  private val cNestedConfigRight: ConfigDescriptor[NestedConfig] =
+    (cEnterpriseAuthRight |@| int("krCount") |@| double("krFactor"))(
       NestedConfig.apply,
       NestedConfig.unapply
     )
 
-  private val cCoproductConfig: Config[CoproductConfig] =
-    (cNestedConfigLeft or cNestedConfigRight)
+  private val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
+    (cNestedConfigLeft orElseEither cNestedConfigRight)
       .xmap(CoproductConfig)(_.coproduct)
 
   property("coproduct should yield same config representation on both sides of Either") = forAllZIO(genNestedConfig) {
@@ -54,11 +56,11 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
       val lr =
         for {
           writtenLeft  <- write(cCoproductConfig).run.provide(CoproductConfig(Left(p)))
-          rereadLeft   <- read(cCoproductConfig).run.provide(mapSource(writtenLeft))
+          rereadLeft   <- read(cCoproductConfig).provide(mapSource(writtenLeft))
           writtenRight <- write(cCoproductConfig).run.provide(CoproductConfig(Right(p)))
-          rereadRight  <- read(cCoproductConfig).run.provide(mapSource(writtenRight))
+          rereadRight  <- read(cCoproductConfig).provide(mapSource(writtenRight))
         } yield {
-          (rereadLeft._2.coproduct, rereadRight._2.coproduct) match {
+          (rereadLeft.coproduct, rereadRight.coproduct) match {
             case (Left(pl), Right(pr)) => (Some(pl), Some(pr))
             case _                     => (None, None)
           }

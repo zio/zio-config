@@ -9,10 +9,11 @@ Configuration parsing should be easy as it sounds - Hence;
 
  * It has no other dependencies.
  * No macros / no reflection
- * No implicit requirements at user site.
+ * No implicits anywhere.
  * Can write the config back to key value pairs, given the same config description. 
    Allows user to generate and populate configurations in the system-env/property-files in a typesafe way from outside, ensuring successful parsing in the app.
- * Automatic description and report generation on the config variables.
+ * Automatic report generation on the config variables.
+ * Automatic man pages based on the config description,  Higher level documentation for sections of config - all with a single composable syntax.
  * Can accumulate maximum errors.
  * Insanely simple to use
 
@@ -20,65 +21,39 @@ Configuration parsing should be easy as it sounds - Hence;
 ## Usage
 
 ```scala
+package zio.config.examples
 
-import zio.{App, ZIO}
-import zio.config._
+import zio.config._, Config._
 import zio.console.Console
+import zio.{ App, ZIO }
 
-object ReadConfig extends App {
-  case class Prod(ldap: String, dburl: Option[String])
+case class Prod(ldap: String, port: Int, dburl: Option[String])
 
-  private val config =
-    (string("LDAP") <*>
-      string("DB_URL").optional)(Prod.apply, Prod.unapply)
+object Prod {
+  val prodConfig: ConfigDescriptor[Prod] =
+    (string("LDAP") |@| 
+      int("PORT") ? "Example: 8888" |@|
+        string("DB_URL").optional ? "Example: abc"
+        )(Prod.apply, Prod.unapply) ? "Prod Config"
 
-  // In real, this comes from environment
-  private val validConfig =
-    Map(
-      "LDAP"    -> "v1",
-      "DB_URL"  -> "v2"
-    )
-    
-  val myAppLogic: ZIO[Console with ConfigSource, ReadErrors, Unit] =
-    ZIO.accessM(env =>
-      for {
-        result <- read(config).run
-        (report, conf) = result
-        _ <- env.console.putStrLn(report.toString)
-        _ <- env.console.putStrLn(conf.toString)
-        map <- write(config).run.provide(conf).either
-        _ <- env.console.putStrLn(map.toString)
-      } yield ()
-    )
-
-  override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] = {
-    myAppLogic
-    .provide(ProgramEnv(mapSource(validConfig).configService))
-    .fold(_ => 1, _ => 0)
-  }
+  val myAppLogic: ZIO[Config[Prod] with Console, Throwable, (String, Option[String])] =
+    for {
+      prodConf <- config[Prod]
+      written  <- write(Prod.prodConfig).run.provide(prodConf)
+      report    = docs(Prod.prodConfig, Some(prod))
+      _        <- zio.console.putStrLn(written)
+      _        <- zio.console.putStrLn(report)
+    } yield (prod.ldap, prod.dburl)
 }
 
-case class ProgramEnv(configService: ConfigSource.Service) extends ConfigSource with Console.Live
+object ReadConfig extends App {
 
-//  
-// 
-// Report:
-//
-// List(
-//   Details("DB_URL", "v2", "option of value of type string"),
-//   Details("LDAP", "v1", "value of type string")
-// )
-//
-// Config:
-//
-//  Prod(v1, Some(v2)
-//
-//
-
+  override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] =
+    Config
+      .fromEnv(Prod.prodConfig)
+      .flatMap(config => Prod.myAppLogic.provide(config))
+      .foldM(failure => zio.console.putStrLn(failure) *> ZIO.succeed(1), _ => ZIO.succeed(0))
+}
 ```
 
-### Examples
-
-Find the examples in src/main/scala/zio/config/examples.
-
-A typical pattern of our application that use zio and config library is `zio.config.examples.ProgramExample`.
+Please find more examples in examples module.

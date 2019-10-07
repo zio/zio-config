@@ -3,6 +3,7 @@ package zio.config
 import org.scalacheck.{ Gen, Properties }
 import zio.ZIO
 import zio.config.testsupport.TestSupport
+import zio.config.Config._
 
 object SequenceRoundTripTest extends Properties("sequence round trip tests") with TestSupport {
 
@@ -11,7 +12,7 @@ object SequenceRoundTripTest extends Properties("sequence round trip tests") wit
   val key: (Int, Int) => String =
     (n1, n2) => s"GROUP${n1}_id_${n2}"
 
-  val cId: String => Config[Id] =
+  val cId: String => ConfigDescriptor[Id] =
     string(_).xmap(Id)(_.value)
 
   private val genOverallConfig: Gen[Map[String, String]] =
@@ -28,16 +29,15 @@ object SequenceRoundTripTest extends Properties("sequence round trip tests") wit
       .toMap
 
   property("optional write") = forAllZIO(genOverallConfig) { p =>
-    val config: Config[List[OverallConfig]] =
-      Config.sequence(
-        p.toList.map(prefix => (cId(prefix._1).optional <*> cId(prefix._1))(OverallConfig.apply, OverallConfig.unapply))
+    val config: ConfigDescriptor[List[OverallConfig]] =
+      ConfigDescriptor.sequence(
+        p.toList.map(prefix => (cId(prefix._1).optional |@| cId(prefix._1))(OverallConfig.apply, OverallConfig.unapply))
       )
 
     val readAndWrite: ZIO[ConfigSource, ReadErrors, Either[String, Map[String, String]]] =
       for {
-        result    <- read(config).run
-        (_, conf) = result
-        written   <- write(config).run.provide(conf).either
+        result  <- read(config)
+        written <- write(config).run.provide(result).either
       } yield written
 
     readAndWrite

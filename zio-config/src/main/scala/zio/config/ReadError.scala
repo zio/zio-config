@@ -1,10 +1,11 @@
 package zio.config
 
-final case class ReadError(key: String, error: ReadError.ErrorType)
+sealed trait ReadError {
+  val key: String
+}
 
 object ReadError {
-  sealed trait ErrorType
-
-  case object MissingValue                                extends ErrorType
-  case class ParseError(provided: String, `type`: String) extends ErrorType
+  final case class MissingValue(key: String)                                 extends ReadError
+  final case class ParseError(key: String, provided: String, `type`: String) extends ReadError
+  final case class FatalError(key: String, cause: Throwable)                 extends ReadError
 }

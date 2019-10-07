@@ -1,91 +1,86 @@
 package zio.config.actions
 
 import zio.config.ReadErrors
-import zio.config.{ Config, ConfigReport, ConfigSource, Details, ReadError }
-import zio.{ config, Ref, UIO, ZIO }
-
-case class Read[A](run: ZIO[ConfigSource, ReadErrors, (ConfigReport, A)]) {}
+import zio.config.ConfigDescriptor
+import zio.config.{ ConfigSource }
+import zio.{ config, ZIO }
 
 object Read {
   // Read
-  final def read[A](configuration: Config[A]): Read[A] = {
+  final def read[A](configuration: ConfigDescriptor[A]): ZIO[ConfigSource, ReadErrors, A] = {
     def loop[B](
-      configuration: Config[B],
-      report: Ref[ConfigReport]
-    ): ZIO[ConfigSource, ReadErrors, (ConfigReport, B)] =
+      configuration: ConfigDescriptor[B],
+      previousDescription: String
+    ): ZIO[ConfigSource, ReadErrors, B] =
       configuration match {
-        case Config.Pure(value) => report.get.map(t => (t, value))
+        case ConfigDescriptor.Empty() => ZIO.access(_ => None)
 
-        case Config.Source(path, propertyType) =>
+        case ConfigDescriptor.Source(path, propertyType) =>
           for {
             value <- config
                       .getConfigValue(path)
-                      .mapError(_ => ReadErrors(ReadError(path, ReadError.MissingValue)))
-            r <- report
-                  .update(_.addDetails(Details(path, value, propertyType.description)))
+                      .mapError(err => ReadErrors(err))
+
             result <- ZIO.fromEither(
                        propertyType
-                         .read(value)
-                         .fold(r => Left(ReadErrors(ReadError(path, r))), e => Right((r, e)))
+                         .read(path, value)
+                         .fold(r => Left(ReadErrors(r)), e => Right(e))
                      )
 
           } yield result
 
-        case Config.MapEither(c, f, _) =>
-          loop(c, report).flatMap {
-            case (r, src) => ZIO.fromEither(f(src)).bimap(err => ReadErrors(err), res => (r, res))
+        case ConfigDescriptor.XmapEither(c, f, _) =>
+          loop(c, previousDescription).flatMap { a =>
+            ZIO.fromEither(f(a)).bimap(err => ReadErrors(err), res => res)
           }
 
-        case Config.Optional(c) =>
-          report.get.flatMap(
-            t =>
-              loop(c, report).fold(
-                _ => (t, None),
-                success => (success._1, Some(success._2))
-              )
+        // No need to add report on the default value.
+        case ConfigDescriptor.Default(c, value) =>
+          loop(c, previousDescription).fold(
+            _ => value,
+            identity
           )
 
-        case Config.OnError(c, f) =>
-          ZIO.accessM[ConfigSource](
-            _ =>
-              loop(c, report)
-                .foldM(
-                  errors => report.get.map(r => (r, f(errors))),
-                  UIO(_)
-                )
+        case ConfigDescriptor.Describe(c, message) =>
+          loop(c, message)
+
+        case ConfigDescriptor.Optional(c) =>
+          loop(c, previousDescription).fold(
+            _ => None,
+            success => Some(success)
           )
 
-        case Config.Zip(left, right) =>
-          loop(left, report).either
+        case ConfigDescriptor.Zip(left, right) =>
+          loop(left, previousDescription).either
             .flatMap(
               res1 =>
-                loop(right, report).either.map(
+                loop(right, previousDescription).either.map(
                   res2 =>
                     (res1, res2) match {
-                      case (Right((_, a)), Right((report2, b))) => Right((report2, (a, b)))
-                      case (Left(a), Right(_))                  => Left(a)
-                      case (Right(_), Left(error))              => Left(error)
-                      case (Left(err1), Left(err2))             => Left(ReadErrors.concat(err1, err2))
+                      case (Right(a), Right(b))     => Right((a, b))
+                      case (Left(a), Right(_))      => Left(a)
+                      case (Right(_), Left(error))  => Left(error)
+                      case (Left(err1), Left(err2)) => Left(ReadErrors.concat(err1, err2))
                     }
                 )
             )
             .absolve
 
-        case Config.Or(left, right) =>
-          loop(left, report).either.flatMap(
+        case ConfigDescriptor.OrElseEither(left, right) =>
+          loop(left, previousDescription).either.flatMap(
             {
-              case Right((r, a)) => ZIO.access(_ => (r, Left(a)))
+              case Right(a) => ZIO.access(_ => Left(a))
               case Left(lerr) =>
-                loop(right, report).either.flatMap(
+                loop(right, previousDescription).either.flatMap(
                   {
-                    case Right((r, b)) => ZIO.access(_ => (r, Right(b)))
-                    case Left(rerr)    => ZIO.fail(ReadErrors.concat(lerr, rerr))
+                    case Right(b)   => ZIO.access(_ => Right(b))
+                    case Left(rerr) => ZIO.fail(ReadErrors.concat(lerr, rerr))
                   }
                 )
             }
           )
       }
 
-    Read(Ref.make(ConfigReport(Nil)).flatMap(report => loop(configuration, report)))
+    loop(configuration, "")
   }
 }

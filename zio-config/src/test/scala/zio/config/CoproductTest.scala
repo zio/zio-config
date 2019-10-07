@@ -1,7 +1,7 @@
 package zio.config
 
 import org.scalacheck.{ Gen, Properties }
-import zio.config.ReadError.MissingValue
+import zio.config.ReadError.{ MissingValue, ParseError }
 import zio.config.testsupport.TestSupport
 import zio.{ IO, ZIO }
 
@@ -50,8 +50,8 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
     readWithErrors(p).shouldBe {
       Left(
         ReadErrors(
-          ReadError(p.kLdap, MissingValue),
-          ReadError(p.kFactor, ReadError.ParseError("notadouble", "double"))
+          MissingValue(p.kLdap),
+          ParseError(p.kFactor, "notadouble", "double")
         )
       )
     }
@@ -69,22 +69,23 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
   final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
   final case class PasswordAuth(user: String, count: Int, factor: Double)
 
+  import Config._
+
   private def readLeft(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
-    val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
+    val enterprise: ConfigDescriptor[EnterpriseAuth] =
+      (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+    val password: ConfigDescriptor[PasswordAuth] =
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
-    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+    val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
+      enterprise orElseEither password
 
-    read(authConfig).run
-      .map(_._2)
+    read(authConfig)
       .provide(
         mapSource(
           Map(
@@ -96,21 +97,20 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
   }
 
   private def readRight(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
-    val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
+    val enterprise: ConfigDescriptor[EnterpriseAuth] =
+      (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+    val password: ConfigDescriptor[PasswordAuth] =
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
-    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+    val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
+      enterprise orElseEither password
 
-    read(authConfig).run
-      .map(_._2)
+    read(authConfig)
       .provide(
         mapSource(
           Map(
@@ -125,21 +125,20 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
   private def readWithErrors(
     p: TestParams
   ): ZIO[Any, Nothing, Either[ReadErrors, Either[EnterpriseAuth, PasswordAuth]]] = {
-    val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
+    val enterprise: ConfigDescriptor[EnterpriseAuth] =
+      (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+    val password: ConfigDescriptor[PasswordAuth] =
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
-    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+    val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
+      enterprise orElseEither password
 
-    read(authConfig).run
-      .map(_._2)
+    read(authConfig)
       .provide(
         mapSource(
           Map(
@@ -154,21 +153,20 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
   }
 
   private def readChooseLeftFromBoth(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
-    val enterprise: Config[EnterpriseAuth] =
-      (string(p.kLdap).xmap(Ldap)(_.value) <*> string(p.kDbUrl).xmap(DbUrl)(_.value))(
+    val enterprise: ConfigDescriptor[EnterpriseAuth] =
+      (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val password: Config[PasswordAuth] =
-      (string(p.kUser) <*> int(p.kCount) <*> double(p.kFactor))(
+    val password: ConfigDescriptor[PasswordAuth] =
+      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
         PasswordAuth.apply,
         PasswordAuth.unapply
       )
-    val authConfig: Config[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise or password
+    val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
+      enterprise orElseEither password
 
-    read(authConfig).run
-      .map(_._2)
+    read(authConfig)
       .provide(
         mapSource(
           Map(

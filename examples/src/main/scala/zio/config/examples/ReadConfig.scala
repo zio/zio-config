@@ -1,40 +1,28 @@
 package zio.config.examples
 
-import zio.config._
-import zio.console.Console
+import zio.config._, Config._
 import zio.{ App, ZIO }
 
-object ReadConfig extends App {
-  case class Prod(ldap: String, dburl: Option[String])
+case class Prod(ldap: String, port: Int, dburl: Option[String])
 
-  private val config =
-    (string("LDAP") <*>
+object Prod {
+  val prodConfig: ConfigDescriptor[Prod] =
+    (string("LDAP") |@| int("PORT") |@|
       string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
-  // In real, this comes from environment
-  private val validConfig =
-    Map(
-      "LDAP"   -> "v1",
-      "DB_URL" -> "v2"
-    )
-
-  val myAppLogic: ZIO[Console with ConfigSource, ReadErrors, Unit] =
-    ZIO.accessM(
-      env =>
-        for {
-          result         <- read(config).run
-          (report, conf) = result
-          _              <- env.console.putStrLn(report.toString)
-          _              <- env.console.putStrLn(conf.toString)
-          map            <- write(config).run.provide(conf).either
-          _              <- env.console.putStrLn(map.toString)
-        } yield ()
-    )
-
-  override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] =
-    myAppLogic
-      .provide(ProgramEnv(mapSource(validConfig).configService))
-      .fold(_ => 1, _ => 0)
+  val myAppLogic: ZIO[Config[Prod], Throwable, (String, Option[String])] =
+    for {
+      prod <- config[Prod]
+    } yield (prod.ldap, prod.dburl)
 }
 
-case class ProgramEnv(configService: ConfigSource.Service) extends ConfigSource with Console.Live
+object ReadConfig extends App {
+
+  override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] =
+    ZIO.accessM(env => {
+      Config
+        .fromEnv(Prod.prodConfig)
+        .flatMap(config => Prod.myAppLogic.provide(config))
+        .foldM(failure => env.console.putStrLn(failure.toString) *> ZIO.succeed(1), _ => ZIO.succeed(0))
+    })
+}

@@ -1,71 +1,91 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._
+import zio.config._, Config._
+import zio.config.actions.ConfigDocs._
 
-/**
- * An example that shows the usage of pretty much all existing combinators.
- * <+> , |@|, | etc*
- *
- * It also shows:
- *  1) How documentation is done.
- *  2) How config is Read
- *  3) How config is Written back
- *  4) How to only Report config
- */
 object ReadWriteReport extends App {
 
   case class Password(value: String)
-  case class UserPwd(name: String, pwd: Option[Password], anonymouse: Option[String])
+  case class UserPwd(name: String, pwd: Option[Password], abc: Option[String], value: Option[XYZ])
   case class Token(value: String, clientid: String)
+  case class XYZ(xyz: String, someInteger: Either[Int, String])
 
   type ProdConfig = Either[UserPwd, Token]
 
   // An example where user provides a description once and for all, and use it for read, write, report!
-  val config: Config[ProdConfig] =
-    (string("user") <*> string("pwd").xmap(Password)(_.value).optional <*> string("anonymous").optional)(
+  val config: ConfigDescriptor[ProdConfig] =
+    ((string("usr") ? "Example: some-user" |@|
+      string("pwd").xmap(Password)(_.value).optional ? "sec" |@|
+      string("jhi").optional ? "Ex: ghi" |@|
+      (string("xyz") |@| int("abc").orElseEither(string("def")))(XYZ.apply, XYZ.unapply).optional ? "Ex: ha")(
       UserPwd.apply,
       UserPwd.unapply
-    ) or
-      (string("auth_token") <*> string("clientid"))(Token.apply, Token.unapply)
+    ) orElseEither
+      (string("auth_token") |@| string("clientid"))(Token.apply, Token.unapply)) ? "Prod Config"
 
   val runtime = new DefaultRuntime {}
 
   val userNamePassword =
     Map(
-      "user" -> "v1",
-      "pwd"  -> "v2"
+      "usr" -> "v1",
+      "pwd" -> "v2",
+      "abc" -> "1",
+      "xyz" -> "v3"
     )
 
   val source =
     mapSource(userNamePassword)
 
-  val result =
-    runtime.unsafeRun(read(config).run.provide(source).map(_._2))
+  val result: ProdConfig =
+    runtime.unsafeRun(read(config).provide(source))
 
   assert(
-    result == Left(UserPwd("v1", Some(Password("v2")), None))
-  )
-
-  val value = runtime.unsafeRun(report(config).run.provide(source))
-
-  // Want docs ?
-  assert(
-    runtime.unsafeRun(report(config).run.provide(source)) ==
-      ConfigReport(
-        List(
-          Details("pwd", "v2", "value of type string"),
-          Details("user", "v1", "value of type string")
-        )
-      )
+    result == Left(UserPwd("v1", Some(Password("v2")), None, Some(XYZ("v3", Left(1)))))
   )
 
   // want to write back the config ?
   assert(
     runtime.unsafeRun(write(config).run.provide(result)) ==
       Map(
-        "user" -> "v1",
-        "pwd"  -> "v2"
+        "usr" -> "v1",
+        "pwd" -> "v2",
+        "xyz" -> "v3",
+        "abc" -> "1"
+      )
+  )
+
+  assert(
+    docs(config, Some(result)) ==
+      Or(
+        And(
+          And(
+            And(
+              Leaf(
+                KeyDescription("usr", Some("v1"), List("value of type string", "Example: some-user", "Prod Config"))
+              ),
+              Leaf(
+                KeyDescription("pwd", Some("v2"), List("value of type string", "optional value", "sec", "Prod Config"))
+              )
+            ),
+            Leaf(KeyDescription("jhi", None, List("value of type string", "optional value", "Ex: ghi", "Prod Config")))
+          ),
+          And(
+            Leaf(
+              KeyDescription("xyz", Some("v3"), List("value of type string", "optional value", "Ex: ha", "Prod Config"))
+            ),
+            Or(
+              Leaf(
+                KeyDescription("abc", Some("1"), List("value of type int", "optional value", "Ex: ha", "Prod Config"))
+              ),
+              Leaf(KeyDescription("def", None, List("value of type string", "optional value", "Ex: ha", "Prod Config")))
+            )
+          )
+        ),
+        And(
+          Leaf(KeyDescription("auth_token", None, List("value of type string", "Prod Config"))),
+          Leaf(KeyDescription("clientid", None, List("value of type string", "Prod Config")))
+        )
       )
   )
 }

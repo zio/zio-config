@@ -1,46 +1,38 @@
 package zio.config.actions
 
 import zio.ZIO
-import zio.config.Config
+import zio.config.ConfigDescriptor
 
 final case class Write[A](run: ZIO[A, String, Map[String, String]])
 
 object Write {
-  final def write[A](config: Config[A]): Write[A] =
+  final def write[A](config: ConfigDescriptor[A]): Write[A] =
     config match {
-      case Config.Pure(_) =>
+      case ConfigDescriptor.Empty() =>
         Write(ZIO.access(_ => Map.empty))
 
-      case Config.Source(path, propertyType) =>
+      case ConfigDescriptor.Source(path, propertyType) =>
         Write(ZIO.access { aa =>
           Map(path -> propertyType.write(aa))
         })
 
-      case Config.Optional(c) =>
+      case ConfigDescriptor.Describe(c, _) =>
+        write(c)
+
+      case ConfigDescriptor.Optional(c) =>
         Write(
           ZIO.accessM(
-            a =>
-              a.asInstanceOf[Option[A]]
-                .fold[ZIO[A, String, Map[String, String]]](
-                  ZIO.succeed(Map.empty[String, String])
-                )(aa => write(c).run.provide(aa))
+            _.fold[ZIO[A, String, Map[String, String]]](
+              ZIO.succeed(Map.empty[String, String])
+            )(aa => write(c).run.provide(aa))
           )
         )
 
-      case Config.OnError(c, _) =>
-        Write(
-          ZIO.accessM(
-            b =>
-              write(c).run
-                .provide(b)
-                .fold(
-                  _ => Map.empty,
-                  success => success
-                )
-          )
-        )
+      // No need to write the default values back into the env
+      case ConfigDescriptor.Default(c, _) =>
+        write(c)
 
-      case Config.MapEither(c, _, to) =>
+      case ConfigDescriptor.XmapEither(c, _, to) =>
         Write(ZIO.accessM { b =>
           to(b) match {
             case Right(before) =>
@@ -50,10 +42,10 @@ object Write {
           }
         })
 
-      case Config.Or(left, right) =>
+      case ConfigDescriptor.OrElseEither(left, right) =>
         Write(ZIO.accessM(env => env.fold(a => write(left).run.provide(a), b => write(right).run.provide(b))))
 
-      case Config.Zip(config1, config2) =>
+      case ConfigDescriptor.Zip(config1, config2) =>
         Write(
           ZIO.accessM(
             env =>
