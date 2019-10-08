@@ -39,7 +39,7 @@ object Prod {
   val myAppLogic: ZIO[Config[Prod] with Console, Throwable, (String, Option[String])] =
     for {
       prodConf <- config[Prod]
-      written  <- write(Prod.prodConfig).run.provide(prodConf)
+      written  <- write(Prod.prodConfig).provide(prodConf)
       report    = docs(Prod.prodConfig, Some(prod))
       _        <- zio.console.putStrLn(written)
       _        <- zio.console.putStrLn(report)
