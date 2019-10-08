@@ -26,11 +26,6 @@ object Config {
           }
       )
 
-  trait Live[A] extends Service[A] {
-    def a: A
-    override def config: UIO[A] = ZIO.succeed(a)
-  }
-
   def fromEnv[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
     for {
       lineSep <- ZIO.accessM[System](_.system.lineSeparator)
