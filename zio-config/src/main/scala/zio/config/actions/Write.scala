@@ -40,6 +40,7 @@ object Write {
 
       case ConfigDescriptor.OrElseEither(left, right) =>
         ZIO.accessM(env => env.fold(a => write(left).provide(a), b => write(right).provide(b)))
+
       case ConfigDescriptor.Zip(config1, config2) =>
         ZIO.accessM(
           env =>
