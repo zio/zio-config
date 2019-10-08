@@ -38,7 +38,8 @@ object Write {
             case Right(before) =>
               write(c).run.provide(before)
 
-            case Left(error) => ZIO.fail(error)
+            case Left(error) =>
+              ZIO.fail(error)
           }
         })
 
