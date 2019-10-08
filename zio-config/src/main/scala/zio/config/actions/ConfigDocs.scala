@@ -4,7 +4,6 @@ import zio.config.ConfigDescriptor
 
 sealed trait ConfigDocs
 
-// Man page
 object ConfigDocs {
 
   final case class Empty()                                  extends ConfigDocs
@@ -16,58 +15,52 @@ object ConfigDocs {
 
   final def createDoc[A](config: ConfigDescriptor[A], value: Option[A]): ConfigDocs = {
     def loop[B](
-      accumulatedDoc: List[String],
-      previousDescription: String,
+      acc: List[String],
+      desc: String,
       config: ConfigDescriptor[B],
-      desc: ConfigDocs,
+      docs: ConfigDocs,
       value: Option[B]
     ): ConfigDocs =
       config match {
-        case ConfigDescriptor.Empty() => desc
+        case ConfigDescriptor.Empty() => docs
         case ConfigDescriptor.Source(path, p) =>
           ConfigDocs.Leaf(
             KeyDescription(
               path,
               value.map(t => p.write(t)),
-              if (previousDescription.isEmpty) accumulatedDoc
-              else previousDescription :: accumulatedDoc
+              if (desc.isEmpty) acc
+              else desc :: acc
             )
           )
-        case ConfigDescriptor.Default(c, _) => loop(accumulatedDoc, previousDescription, c, desc, value)
+        case ConfigDescriptor.Default(c, _) =>
+          loop(acc, desc, c, docs, value)
+
         case ConfigDescriptor.Describe(c, message) =>
-          loop(message :: accumulatedDoc, previousDescription, c, desc, value)
+          loop(message :: acc, desc, c, docs, value)
+
         case ConfigDescriptor.Optional(c) =>
           value match {
             case Some(result) =>
-              result match {
-                case Some(v) => loop(accumulatedDoc, previousDescription, c, desc, Some(v))
-                case None    => loop(accumulatedDoc, previousDescription, c, desc, None)
-              }
-            case None => loop(accumulatedDoc, previousDescription, c, desc, None)
+              result.fold(loop(acc, desc, c, docs, None))(v => loop(acc, desc, c, docs, Some(v)))
+            case None =>
+              loop(acc, desc, c, docs, None)
           }
+
         case ConfigDescriptor.XmapEither(c, _, to) =>
           value match {
             case Some(v) =>
-              to(v) match {
-                case Right(vv) => loop(accumulatedDoc, previousDescription, c, desc, Some(vv))
-                case Left(_)   => loop(accumulatedDoc, previousDescription, c, desc, None)
-              }
-            case None => loop(accumulatedDoc, previousDescription, c, desc, None)
+              to(v).fold(_ => loop(acc, desc, c, docs, None), vv => loop(acc, desc, c, docs, Some(vv)))
+            case None =>
+              loop(acc, desc, c, docs, None)
           }
 
         case ConfigDescriptor.Zip(left, right) =>
           value match {
             case Some(tuple) =>
-              ConfigDocs.And(
-                loop(accumulatedDoc, previousDescription, left, desc, Some(tuple._1)),
-                loop(accumulatedDoc, previousDescription, right, desc, Some(tuple._2))
-              )
+              ConfigDocs.And(loop(acc, desc, left, docs, Some(tuple._1)), loop(acc, desc, right, docs, Some(tuple._2)))
 
             case None =>
-              ConfigDocs.And(
-                loop(accumulatedDoc, previousDescription, left, desc, None),
-                loop(accumulatedDoc, previousDescription, right, desc, None)
-              )
+              ConfigDocs.And(loop(acc, desc, left, docs, None), loop(acc, desc, right, docs, None))
           }
 
         case ConfigDescriptor.OrElseEither(left, right) =>
@@ -75,23 +68,14 @@ object ConfigDocs {
             case Some(res) =>
               res match {
                 case Left(vv) =>
-                  ConfigDocs.Or(
-                    loop(accumulatedDoc, previousDescription, left, desc, Some(vv)),
-                    loop(accumulatedDoc, previousDescription, right, desc, None)
-                  )
+                  ConfigDocs.Or(loop(acc, desc, left, docs, Some(vv)), loop(acc, desc, right, docs, None))
 
                 case Right(vv) =>
-                  ConfigDocs.Or(
-                    loop(accumulatedDoc, previousDescription, left, desc, None),
-                    loop(accumulatedDoc, previousDescription, right, desc, Some(vv))
-                  )
+                  ConfigDocs.Or(loop(acc, desc, left, docs, None), loop(acc, desc, right, docs, Some(vv)))
               }
 
             case None =>
-              ConfigDocs.Or(
-                loop(accumulatedDoc, previousDescription, left, desc, None),
-                loop(accumulatedDoc, previousDescription, right, desc, None)
-              )
+              ConfigDocs.Or(loop(acc, desc, left, docs, None), loop(acc, desc, right, docs, None))
           }
       }
 

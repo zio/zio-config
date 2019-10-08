@@ -7,7 +7,7 @@ package object config extends Sources {
   def read[A](config: => ConfigDescriptor[A]): ZIO[ConfigSource, ReadErrors, A] =
     Read.read[A](config)
 
-  def write[A](config: => ConfigDescriptor[A]): Write[A] =
+  def write[A](config: => ConfigDescriptor[A]): ZIO[A, String, Map[String, String]] =
     Write.write[A](config)
 
   def docs[A](config: => ConfigDescriptor[A], value: Option[A]): ConfigDocs =

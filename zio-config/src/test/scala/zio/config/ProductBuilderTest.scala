@@ -67,7 +67,7 @@ object ProductBuilderTest extends Properties("ProductBuilder") with TestSupport 
   property("combine 22") = forAllZIO(genS22) { p =>
     val p2 =
       for {
-        written <- write(cS22).run.provide(p)
+        written <- write(cS22).provide(p)
         reread  <- read(cS22).provide(mapSource(written))
       } yield reread
 

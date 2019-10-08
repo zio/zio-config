@@ -45,10 +45,7 @@ object Read {
           loop(c, message)
 
         case ConfigDescriptor.Optional(c) =>
-          loop(c, previousDescription).fold(
-            _ => None,
-            success => Some(success)
-          )
+          loop(c, previousDescription).option
 
         case ConfigDescriptor.Zip(left, right) =>
           loop(left, previousDescription).either
