@@ -3,7 +3,7 @@ package zio.config
 import java.net.URI
 import zio.config.actions.Read
 import zio.system.System
-import zio.{ IO, RIO, UIO, ZIO }
+import zio.{ IO, UIO, ZIO }
 
 trait Config[A] {
   def config: Config.Service[A]
@@ -13,7 +13,10 @@ object Config {
     def config: UIO[A]
   }
 
-  def make[A](source: ConfigSource, configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] =
+  def make[A](
+    source: ConfigSource[String, String],
+    configDescriptor: ConfigDescriptor[A]
+  ): IO[ReadErrors[String, String], Config[A]] =
     Read
       .read(configDescriptor)
       .provide(source)
@@ -26,21 +29,22 @@ object Config {
           }
       )
 
-  def fromEnv[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
+  def fromEnv[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors[String, String], Config[A]] =
     for {
-      lineSep <- ZIO.accessM[System](_.system.lineSeparator)
-      source  <- envSource
-      res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
+      source <- ConfigSource.envSource
+      res    <- make(source, configDescriptor)
     } yield res
 
-  def fromMap[A](map: Map[String, String], configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] =
-    make(mapSource(map), configDescriptor)
+  def fromMap[A](
+    map: Map[String, String],
+    configDescriptor: ConfigDescriptor[A]
+  ): IO[ReadErrors[String, String], Config[A]] =
+    make(ConfigSource.mapSource(map), configDescriptor)
 
-  def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
+  def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors[String, String], Config[A]] =
     for {
-      lineSep <- ZIO.accessM[System](_.system.lineSeparator)
-      source  <- propSource
-      res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
+      source <- ConfigSource.propSource
+      res    <- make(source, configDescriptor)
     } yield res
 
   def string(path: String): ConfigDescriptor[String] =

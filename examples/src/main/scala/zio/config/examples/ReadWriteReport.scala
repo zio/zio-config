@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, Config._
+import zio.config._, Config._, ConfigSource._
 import zio.config.actions.ConfigDocs._
 
 object ReadWriteReport extends App {

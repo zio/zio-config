@@ -68,7 +68,7 @@ object ProductBuilderTest extends Properties("ProductBuilder") with TestSupport 
     val p2 =
       for {
         written <- write(cS22).provide(p)
-        reread  <- read(cS22).provide(mapSource(written))
+        reread  <- read(cS22).provide(ConfigSource.mapSource(written))
       } yield reread
 
     p2.shouldBe(p)

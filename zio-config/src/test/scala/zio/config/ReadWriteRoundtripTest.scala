@@ -52,7 +52,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cId).provide(p)
-        reread  <- read(cId).provide(mapSource(written))
+        reread  <- read(cId).provide(ConfigSource.mapSource(written))
       } yield reread
 
     p2.shouldBe(p)
@@ -62,7 +62,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cDbUrl).provide(p)
-        reread  <- read(cDbUrl).provide(mapSource(written))
+        reread  <- read(cDbUrl).provide(ConfigSource.mapSource(written))
       } yield reread
 
     p2.shouldBe(p)
@@ -72,7 +72,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cEnterpriseAuth).provide(p)
-        reread  <- read(cEnterpriseAuth).provide(mapSource(written))
+        reread  <- read(cEnterpriseAuth).provide(ConfigSource.mapSource(written))
       } yield reread
 
     p2.shouldBe(p)
@@ -82,7 +82,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cNestedConfig).provide(p)
-        reread  <- read(cNestedConfig).provide(mapSource(written))
+        reread  <- read(cNestedConfig).provide(ConfigSource.mapSource(written))
       } yield reread
 
     p2.shouldBe(p)
@@ -92,7 +92,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- write(cCoproductConfig).provide(p)
-        reread  <- read(cCoproductConfig).provide(mapSource(written))
+        reread  <- read(cCoproductConfig).provide(ConfigSource.mapSource(written))
       } yield reread
 
     p2.shouldBe(p)

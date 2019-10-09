@@ -1,17 +1,17 @@
 package zio.config.actions
 
-import zio.config.ReadErrors
-import zio.config.ConfigDescriptor
-import zio.config.{ ConfigSource }
+import zio.config.{ ConfigDescriptor, ConfigSource, PropertyTree, ReadError, ReadErrors }
 import zio.{ config, ZIO }
 
 object Read {
   // Read
-  final def read[A](configuration: ConfigDescriptor[A]): ZIO[ConfigSource, ReadErrors, A] = {
+  final def read[A](
+    configuration: ConfigDescriptor[A]
+  ): ZIO[ConfigSource[String, String], ReadErrors[String, String], A] = {
     def loop[B](
       configuration: ConfigDescriptor[B],
       previousDescription: String
-    ): ZIO[ConfigSource, ReadErrors, B] =
+    ): ZIO[ConfigSource[String, String], ReadErrors[String, String], B] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.access(_ => None)
 
@@ -19,7 +19,12 @@ object Read {
           for {
             value <- config
                       .getConfigValue(path)
-                      .mapError(err => ReadErrors(err))
+                      .flatMap({
+                        case PropertyTree.Leaf(value) => ZIO.succeed(value)
+                        case PropertyTree.Record(_) =>
+                          ZIO.fail(ReadError.FoundNestedObject(path): ReadError[String, String])
+                      })
+                      .mapError(t => ReadErrors(t))
 
             result <- ZIO.fromEither(
                        propertyType

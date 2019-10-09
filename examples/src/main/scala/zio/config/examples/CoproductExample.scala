@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, Config._
+import zio.config._, Config._, ConfigSource._
 import zio.config.ReadError.{ MissingValue, ParseError }
 import zio.config.{ ConfigSource, _ }
 
@@ -30,7 +30,7 @@ object CoproductExample extends App {
       "x3" -> "v3"
     )
 
-  val source: ConfigSource =
+  val source: ConfigSource[String, String] =
     mapSource(validConfigForSampleConfig)
 
   assert(runtime.unsafeRun(read(prodOrDev).provide(source)) == Left(Prod(Ldap("v1"), DbUrl("v2"))))
@@ -43,7 +43,7 @@ object CoproductExample extends App {
       "x5" -> "2.0"
     )
 
-  val anotherSource: ConfigSource =
+  val anotherSource: ConfigSource[String, String] =
     mapSource(validConfigForAnotherConfig)
 
   assert(runtime.unsafeRun(read(prodOrDev).provide(anotherSource)) == Right(Dev("v3", 1, 2.0)))
@@ -56,7 +56,7 @@ object CoproductExample extends App {
       "x5" -> "notadouble"
     )
 
-  val invalidSource: ConfigSource =
+  val invalidSource: ConfigSource[String, String] =
     mapSource(invalidConfig)
 
   assert(

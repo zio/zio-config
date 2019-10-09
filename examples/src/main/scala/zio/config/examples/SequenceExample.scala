@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, Config._
+import zio.config._, Config._, ConfigSource._
 
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,

@@ -7,12 +7,14 @@ sealed trait ConfigDescriptor[A] { self =>
   final def <*>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
     self.zip(that)
 
-  final def xmapEither[B](f: A => Either[ReadError, B])(g: B => Either[String, A]): ConfigDescriptor.XmapEither[A, B] =
+  final def xmapEither[B](
+    f: A => Either[ReadError[String, String], B]
+  )(g: B => Either[String, A]): ConfigDescriptor.XmapEither[A, B] =
     ConfigDescriptor.XmapEither(self, f, g)
 
   def xmapEither2[B, C](
     that: ConfigDescriptor[B]
-  )(f: (A, B) => Either[ReadError, C])(g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
+  )(f: (A, B) => Either[ReadError[String, String], C])(g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
     (self |@| that).apply[(A, B)](Tuple2.apply, Tuple2.unapply).xmapEither({ case (a, b) => f(a, b) })(g)
 
   final def xmap[B](to: A => B)(from: B => A): ConfigDescriptor[B] =
@@ -66,7 +68,7 @@ object ConfigDescriptor {
 
   final case class XmapEither[A, B](
     config: ConfigDescriptor[A],
-    f: A => Either[ReadError, B],
+    f: A => Either[ReadError[String, String], B],
     g: B => Either[String, A]
   ) extends ConfigDescriptor[B]
 
