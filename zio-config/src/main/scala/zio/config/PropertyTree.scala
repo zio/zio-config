@@ -3,6 +3,7 @@ package zio.config
 sealed trait PropertyTree[+K, +V]
 
 object PropertyTree {
+  final case object Empty                                          extends PropertyTree[Nothing, Nothing]
   final case class Leaf[V](value: V)                               extends PropertyTree[Nothing, V]
   final case class Record[K, V](value: Map[K, PropertyTree[K, V]]) extends PropertyTree[K, V]
 

@@ -1,6 +1,6 @@
 package zio.config.actions
 
-import zio.config.{ ConfigDescriptor, ConfigSource, PropertyTree, ReadError, ReadErrors }
+import zio.config.{ ConfigDescriptor, ConfigSource, ReadErrors }
 import zio.{ config, ZIO }
 
 object Read {
@@ -10,7 +10,8 @@ object Read {
   ): ZIO[ConfigSource[String, String], ReadErrors[String, String], A] = {
     def loop[B](
       configuration: ConfigDescriptor[B],
-      previousDescription: String
+      previousDescription: String,
+      paths: List[String]
     ): ZIO[ConfigSource[String, String], ReadErrors[String, String], B] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.access(_ => None)
@@ -18,12 +19,7 @@ object Read {
         case ConfigDescriptor.Source(path, propertyType) =>
           for {
             value <- config
-                      .getConfigValue(path)
-                      .flatMap({
-                        case PropertyTree.Leaf(value) => ZIO.succeed(value)
-                        case PropertyTree.Record(_) =>
-                          ZIO.fail(ReadError.FoundNestedObject(path): ReadError[String, String])
-                      })
+                      .getConfigValue(paths :+ path)
                       .mapError(t => ReadErrors(t))
 
             result <- ZIO.fromEither(
@@ -34,29 +30,32 @@ object Read {
 
           } yield result
 
+        case ConfigDescriptor.Nested(c, path) =>
+          loop(c, previousDescription, paths :+ path)
+
         case ConfigDescriptor.XmapEither(c, f, _) =>
-          loop(c, previousDescription).flatMap { a =>
+          loop(c, previousDescription, paths).flatMap { a =>
             ZIO.fromEither(f(a)).bimap(err => ReadErrors(err), res => res)
           }
 
         // No need to add report on the default value.
         case ConfigDescriptor.Default(c, value) =>
-          loop(c, previousDescription).fold(
+          loop(c, previousDescription, paths).fold(
             _ => value,
             identity
           )
 
         case ConfigDescriptor.Describe(c, message) =>
-          loop(c, message)
+          loop(c, message, paths)
 
         case ConfigDescriptor.Optional(c) =>
-          loop(c, previousDescription).option
+          loop(c, previousDescription, paths).option
 
         case ConfigDescriptor.Zip(left, right) =>
-          loop(left, previousDescription).either
+          loop(left, previousDescription, paths).either
             .flatMap(
               res1 =>
-                loop(right, previousDescription).either.map(
+                loop(right, previousDescription, paths).either.map(
                   res2 =>
                     (res1, res2) match {
                       case (Right(a), Right(b))     => Right((a, b))
@@ -69,11 +68,11 @@ object Read {
             .absolve
 
         case ConfigDescriptor.OrElseEither(left, right) =>
-          loop(left, previousDescription).either.flatMap(
+          loop(left, previousDescription, paths).either.flatMap(
             {
               case Right(a) => ZIO.access(_ => Left(a))
               case Left(lerr) =>
-                loop(right, previousDescription).either.flatMap(
+                loop(right, previousDescription, paths).either.flatMap(
                   {
                     case Right(b)   => ZIO.access(_ => Right(b))
                     case Left(rerr) => ZIO.fail(ReadErrors.concat(lerr, rerr))
@@ -83,6 +82,6 @@ object Read {
           )
       }
 
-    loop(configuration, "")
+    loop(configuration, "", Nil)
   }
 }

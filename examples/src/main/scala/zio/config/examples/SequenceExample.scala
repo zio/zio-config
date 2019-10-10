@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, Config._, ConfigSource._
+import zio.config._, Config._
 
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,
@@ -36,7 +36,7 @@ object SequenceExample extends App {
 
   val runtime = new DefaultRuntime {}
 
-  val result  = runtime.unsafeRun(read(configOfList).provide(mapSource(map)))
+  val result  = runtime.unsafeRun(read(configOfList).provide(ConfigSource.fromMap(map)))
   val written = runtime.unsafeRun(write(configOfList).provide(result).either)
 
   assert(result == List(Variables(7, None), Variables(5, Some(6)), Variables(3, Some(4)), Variables(1, Some(2))))

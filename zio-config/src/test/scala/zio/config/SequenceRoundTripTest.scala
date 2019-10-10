@@ -40,7 +40,7 @@ object SequenceRoundTripTest extends Properties("sequence round trip tests") wit
       } yield written
 
     readAndWrite
-      .provide(ConfigSource.mapSource(p))
+      .provide(ConfigSource.fromMap(p))
       .map(_.fold(_ => Nil, t => t.toList.sortBy(_._1)))
       .shouldBe(p.toList.sortBy(_._1))
   }

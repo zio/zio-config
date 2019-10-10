@@ -17,6 +17,9 @@ object Write {
       case ConfigDescriptor.Describe(c, _) =>
         write(c)
 
+      case ConfigDescriptor.Nested(c, _) =>
+        write(c)
+
       case ConfigDescriptor.Optional(c) =>
         ZIO.accessM(
           _.fold[ZIO[A, String, Map[String, String]]](

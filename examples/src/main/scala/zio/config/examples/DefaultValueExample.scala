@@ -4,7 +4,7 @@ import zio.config._
 import Config._
 import zio.DefaultRuntime
 import zio.config.actions.ConfigDocs, ConfigDocs._
-import zio.config.actions.ConfigDocs.KeyDescription
+import zio.config.actions.ConfigDocs.PathDetails
 
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
@@ -22,10 +22,10 @@ object DefaultValueExample extends App {
   assert(
     docs(pgmConf, Some(result)) ==
       And(
-        Leaf(KeyDescription("HELLO", Some("xyz"), List("value of type string", "default value: xyz"))),
+        PathDetails(List("HELLO"), Some("xyz"), List("value of type string", "default value: xyz")),
         Or(
-          Leaf(KeyDescription("SOMETHING", None, List("value of type string"))),
-          Leaf(KeyDescription("PORT", Some("1"), List("value of type int", "default value: 1")))
+          PathDetails(List("SOMETHING"), None, List("value of type string")),
+          PathDetails(List("PORT"), Some("1"), List("value of type int", "default value: 1"))
         )
       )
   )

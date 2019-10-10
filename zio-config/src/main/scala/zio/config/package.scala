@@ -17,8 +17,8 @@ package object config {
     ZIO.accessM(_.config.config)
 
   def getConfigValue(
-    path: String
-  ): ZIO[ConfigSource[String, String], ReadError[String, String], PropertyTree[String, String]] =
+    path: List[String]
+  ): ZIO[ConfigSource[String, String], ReadError[String, String], String] =
     ZIO.accessM(_.configSourceService.getConfigValue(path))
 
   type ReadErrors[K, V] = ::[ReadError[K, V]]

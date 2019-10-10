@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, Config._, ConfigSource._
+import zio.config._, Config._
 import zio.config.actions.ConfigDocs._
 
 object ReadWriteReport extends App {
@@ -35,7 +35,7 @@ object ReadWriteReport extends App {
     )
 
   val source =
-    mapSource(userNamePassword)
+    ConfigSource.fromMap(userNamePassword)
 
   val result: ProdConfig =
     runtime.unsafeRun(read(config).provide(source))
@@ -61,30 +61,46 @@ object ReadWriteReport extends App {
         And(
           And(
             And(
-              Leaf(
-                KeyDescription("usr", Some("v1"), List("value of type string", "Example: some-user", "Prod Config"))
+              PathDetails(
+                List("usr"),
+                Some("v1"),
+                List("value of type string", "Example: some-user", "Prod Config")
               ),
-              Leaf(
-                KeyDescription("pwd", Some("v2"), List("value of type string", "optional value", "sec", "Prod Config"))
+              PathDetails(
+                List("pwd"),
+                Some("v2"),
+                List("value of type string", "optional value", "sec", "Prod Config")
               )
             ),
-            Leaf(KeyDescription("jhi", None, List("value of type string", "optional value", "Ex: ghi", "Prod Config")))
+            PathDetails(
+              List("jhi"),
+              None,
+              List("value of type string", "optional value", "Ex: ghi", "Prod Config")
+            )
           ),
           And(
-            Leaf(
-              KeyDescription("xyz", Some("v3"), List("value of type string", "optional value", "Ex: ha", "Prod Config"))
+            PathDetails(
+              List("xyz"),
+              Some("v3"),
+              List("value of type string", "optional value", "Ex: ha", "Prod Config")
             ),
             Or(
-              Leaf(
-                KeyDescription("abc", Some("1"), List("value of type int", "optional value", "Ex: ha", "Prod Config"))
+              PathDetails(
+                List("abc"),
+                Some("1"),
+                List("value of type int", "optional value", "Ex: ha", "Prod Config")
               ),
-              Leaf(KeyDescription("def", None, List("value of type string", "optional value", "Ex: ha", "Prod Config")))
+              PathDetails(
+                List("def"),
+                None,
+                List("value of type string", "optional value", "Ex: ha", "Prod Config")
+              )
             )
           )
         ),
         And(
-          Leaf(KeyDescription("auth_token", None, List("value of type string", "Prod Config"))),
-          Leaf(KeyDescription("clientid", None, List("value of type string", "Prod Config")))
+          PathDetails(List("auth_token"), None, List("value of type string", "Prod Config")),
+          PathDetails(List("clientid"), None, List("value of type string", "Prod Config"))
         )
       )
   )

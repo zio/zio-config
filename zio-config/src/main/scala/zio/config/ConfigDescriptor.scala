@@ -60,6 +60,8 @@ object ConfigDescriptor {
 
   final case class Source[A](path: String, propertyType: PropertyType[A]) extends ConfigDescriptor[A]
 
+  final case class Nested[A](configDescriptor: ConfigDescriptor[A], path: String) extends ConfigDescriptor[A]
+
   final case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
   final case class Default[A](configDescriptor: ConfigDescriptor[A], value: A) extends ConfigDescriptor[A]
@@ -80,7 +82,7 @@ object ConfigDescriptor {
   def empty[A]: ConfigDescriptor[Option[A]] = ConfigDescriptor.Empty()
 
   def sequence[A](configList: List[ConfigDescriptor[A]]): ConfigDescriptor[List[A]] =
-    configList.foldLeft(Empty[List[A]]().xmap(_.fold(List.empty[A])(_.toList))(_.headOption.map(List(_))))(
+    configList.foldLeft(Empty[A]().xmap(_.toList)(_.headOption))(
       (a, b) =>
         b.xmapEither2(a)((aa, bb) => Right(aa :: bb))(t => {
           t.headOption.fold[Either[String, (A, List[A])]](

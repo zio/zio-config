@@ -31,7 +31,7 @@ object Config {
 
   def fromEnv[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors[String, String], Config[A]] =
     for {
-      source <- ConfigSource.envSource
+      source <- ConfigSource.fromEnv
       res    <- make(source, configDescriptor)
     } yield res
 
@@ -39,11 +39,11 @@ object Config {
     map: Map[String, String],
     configDescriptor: ConfigDescriptor[A]
   ): IO[ReadErrors[String, String], Config[A]] =
-    make(ConfigSource.mapSource(map), configDescriptor)
+    make(ConfigSource.fromMap(map), configDescriptor)
 
   def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors[String, String], Config[A]] =
     for {
-      source <- ConfigSource.propSource
+      source <- ConfigSource.fromProperty
       res    <- make(source, configDescriptor)
     } yield res
 
@@ -69,4 +69,6 @@ object Config {
     ConfigDescriptor.Source(path, PropertyType.BigDecimalType) ? "value of type bigdecimal"
   def uri(path: String): ConfigDescriptor[URI] =
     ConfigDescriptor.Source(path, PropertyType.UriType) ? "value of type uri"
+  def nested[A](path: String)(desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
+    ConfigDescriptor.Nested(desc, path)
 }

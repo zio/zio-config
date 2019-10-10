@@ -14,7 +14,7 @@ object ErrorAccumulation extends App {
   val runtime = new DefaultRuntime {}
 
   val programWithInvalidSource =
-    read(config).provide(ConfigSource.mapSource(Map.empty)).either
+    read(config).provide(ConfigSource.fromMap(Map.empty)).either
 
   val parsed = runtime.unsafeRun(programWithInvalidSource)
 
@@ -28,13 +28,13 @@ object ErrorAccumulation extends App {
       )
   )
 
-  val validSource = ConfigSource.mapSource(Map("envvar" -> "1", "envvar2" -> "value"))
+  val validSource = ConfigSource.fromMap(Map("envvar" -> "1", "envvar2" -> "value"))
 
   val validRes = runtime.unsafeRun(read(config).provide(validSource))
 
   assert(validRes == SampleConfig(1, "value"))
 
-  val invalidSource = ConfigSource.mapSource(Map("envvar" -> "wrong"))
+  val invalidSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
 
   assert(
     runtime.unsafeRun(read(config).provide(invalidSource).either) ==

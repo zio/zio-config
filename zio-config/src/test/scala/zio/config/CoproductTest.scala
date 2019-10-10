@@ -87,7 +87,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
     read(authConfig)
       .provide(
-        ConfigSource.mapSource(
+        ConfigSource.fromMap(
           Map(
             p.kLdap  -> p.vLdap,
             p.kDbUrl -> p.vDbUrl
@@ -112,7 +112,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
     read(authConfig)
       .provide(
-        ConfigSource.mapSource(
+        ConfigSource.fromMap(
           Map(
             p.kUser   -> p.vUser,
             p.kCount  -> p.vCount.toString,
@@ -140,7 +140,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
     read(authConfig)
       .provide(
-        ConfigSource.mapSource(
+        ConfigSource.fromMap(
           Map(
             p.kDbUrl  -> p.vDbUrl,
             p.kUser   -> p.vUser,
@@ -170,7 +170,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
     read(authConfig)
       .provide(
-        ConfigSource.mapSource(
+        ConfigSource.fromMap(
           Map(
             p.kLdap   -> p.vLdap,
             p.kDbUrl  -> p.vDbUrl,
