@@ -7,8 +7,8 @@ package object config {
   def read[A](config: => ConfigDescriptor[A]): ZIO[ConfigSource[String, String], ReadErrors[String, String], A] =
     Read.read[A](config)
 
-  def write[A](config: => ConfigDescriptor[A]): ZIO[A, String, Map[String, String]] =
-    Write.write[A](config)
+  def write[A](config: => ConfigDescriptor[A], a: A): Either[String, Map[String, String]] =
+    Write.write[A](config, a)
 
   def docs[A](config: => ConfigDescriptor[A], value: Option[A]): ConfigDocs =
     ConfigDocs.createDoc[A](config, value)

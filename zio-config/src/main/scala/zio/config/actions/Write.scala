@@ -1,55 +1,47 @@
 package zio.config.actions
 
-import zio.ZIO
 import zio.config.ConfigDescriptor
 
 object Write {
-  final def write[A](config: ConfigDescriptor[A]): ZIO[A, String, Map[String, String]] =
+  final def write[A](config: ConfigDescriptor[A], a: A): Either[String, Map[String, String]] =
     config match {
       case ConfigDescriptor.Empty() =>
-        ZIO.access(_ => Map.empty)
+        Right(Map.empty)
 
       case ConfigDescriptor.Source(path, propertyType) =>
-        ZIO.access { aa =>
-          Map(path -> propertyType.write(aa))
-        }
+        Right(Map(path -> propertyType.write(a)))
 
       case ConfigDescriptor.Describe(c, _) =>
-        write(c)
+        write(c, a)
 
       case ConfigDescriptor.Nested(c, _) =>
-        write(c)
+        write(c, a)
 
       case ConfigDescriptor.Optional(c) =>
-        ZIO.accessM(
-          _.fold[ZIO[A, String, Map[String, String]]](
-            ZIO.succeed(Map.empty[String, String])
-          )(aa => write(c).provide(aa))
-        )
+        a.fold(Right(Map.empty[String, String]): Either[String, Map[String, String]])(aa => write(c, aa))
 
       case ConfigDescriptor.Default(c, _) =>
-        write(c)
+        write(c, a)
 
       case ConfigDescriptor.XmapEither(c, _, to) =>
-        ZIO.accessM { b =>
-          to(b) match {
-            case Right(before) =>
-              write(c).provide(before)
-
-            case Left(error) =>
-              ZIO.fail(error)
-          }
+        to(a) match {
+          case Right(before) =>
+            write(c, before)
+          case Left(e) =>
+            Left(e)
         }
 
       case ConfigDescriptor.OrElseEither(left, right) =>
-        ZIO.accessM(env => env.fold(a => write(left).provide(a), b => write(right).provide(b)))
+        a.fold(aa => write(left, aa), b => write(right, b))
 
       case ConfigDescriptor.Zip(config1, config2) =>
-        ZIO.accessM(
-          env =>
-            write(config1)
-              .provide(env._1)
-              .flatMap(value => write(config2).provide(env._2).map(kv => value ++ kv))
-        )
+        write(config1, a._1) match {
+          case Right(m1) =>
+            write(config2, a._2) match {
+              case Right(m2) => Right(m1 ++ m2)
+              case Left(m1)  => Left(m1)
+            }
+          case Left(e) => Left(e)
+        }
     }
 }

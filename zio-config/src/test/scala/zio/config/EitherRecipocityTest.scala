@@ -1,6 +1,7 @@
 package zio.config
 
 import org.scalacheck.Properties
+import zio.ZIO
 import zio.config.testsupport.TestSupport
 
 object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
@@ -55,9 +56,9 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
     p =>
       val lr =
         for {
-          writtenLeft  <- write(cCoproductConfig).provide(CoproductConfig(Left(p)))
+          writtenLeft  <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
           rereadLeft   <- read(cCoproductConfig).provide(ConfigSource.fromMap(writtenLeft))
-          writtenRight <- write(cCoproductConfig).provide(CoproductConfig(Right(p)))
+          writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
           rereadRight  <- read(cCoproductConfig).provide(ConfigSource.fromMap(writtenRight))
         } yield {
           (rereadLeft.coproduct, rereadRight.coproduct) match {

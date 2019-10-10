@@ -1,6 +1,7 @@
 package zio.config
 
 import org.scalacheck.Properties
+import zio.ZIO
 import zio.config.Config.int
 import zio.config.testsupport.TestSupport
 
@@ -67,7 +68,7 @@ object ProductBuilderTest extends Properties("ProductBuilder") with TestSupport 
   property("combine 22") = forAllZIO(genS22) { p =>
     val p2 =
       for {
-        written <- write(cS22).provide(p)
+        written <- ZIO.fromEither(write(cS22, p))
         reread  <- read(cS22).provide(ConfigSource.fromMap(written))
       } yield reread
 

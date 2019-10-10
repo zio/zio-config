@@ -39,8 +39,8 @@ object Prod {
   val myAppLogic: ZIO[Config[Prod] with Console, Throwable, (String, Option[String])] =
     for {
       prodConf <- config[Prod]
-      written  <- write(Prod.prodConfig).provide(prodConf)
-      report    = docs(Prod.prodConfig, Some(prod))
+      written   = write(Prod.prodConfig)
+      report    = docs(Prod.prodConfig, Some(prodConf))
       _        <- zio.console.putStrLn(written)
       _        <- zio.console.putStrLn(report)
     } yield (prod.ldap, prod.dburl)

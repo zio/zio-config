@@ -1,6 +1,7 @@
 package zio.config
 
 import org.scalacheck.{ Gen, Properties }
+import zio.ZIO
 import zio.config.testsupport.TestSupport
 import zio.config.Config._
 
@@ -36,7 +37,7 @@ object SequenceRoundTripTest extends Properties("sequence round trip tests") wit
     val readAndWrite =
       for {
         result  <- read(config)
-        written <- write(config).provide(result).either
+        written <- ZIO.effectTotal(write(config, result))
       } yield written
 
     readAndWrite

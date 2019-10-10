@@ -1,6 +1,7 @@
 package zio.config
 
 import org.scalacheck.{ Gen, Properties }
+import zio.ZIO
 import zio.config.testsupport.TestSupport
 import zio.config.Config._
 
@@ -17,8 +18,8 @@ object ListAndOptionalTests extends Properties("List and options tests") with Te
     cId.optional.optional.optional.xmap(OverallConfig)(_.option)
 
   property("optional write") = forAllZIO(genOverallConfig) { p =>
-    write(cOverallConfig)
-      .provide(p)
+    ZIO
+      .fromEither(write(cOverallConfig, p))
       .shouldBe(
         p.option
           .flatMap(t => t.flatMap(tt => tt.map(ttt => Map("kId" -> ttt.value))))

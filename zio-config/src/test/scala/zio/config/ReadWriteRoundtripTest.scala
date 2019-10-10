@@ -1,6 +1,7 @@
 package zio.config
 
 import org.scalacheck.{ Gen, Properties }
+import zio.ZIO
 import zio.config.testsupport.TestSupport
 import zio.config.Config._
 
@@ -51,7 +52,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("newtype 1 roundtrip") = forAllZIO(genId) { p =>
     val p2 =
       for {
-        written <- write(cId).provide(p)
+        written <- ZIO.fromEither(write(cId).provide(p))
         reread  <- read(cId).provide(ConfigSource.fromMap(written))
       } yield reread
 
@@ -61,7 +62,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("newtype 2 roundtrip") = forAllZIO(genDbUrl) { p =>
     val p2 =
       for {
-        written <- write(cDbUrl).provide(p)
+        written <- ZIO.fromEither(write(cDbUrl, p))
         reread  <- read(cDbUrl).provide(ConfigSource.fromMap(written))
       } yield reread
 
@@ -71,7 +72,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("case class 1 roundtrip") = forAllZIO(genEnterpriseAuth) { p =>
     val p2 =
       for {
-        written <- write(cEnterpriseAuth).provide(p)
+        written <- ZIO.fromEither(write(cEnterpriseAuth, p))
         reread  <- read(cEnterpriseAuth).provide(ConfigSource.fromMap(written))
       } yield reread
 
@@ -81,7 +82,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("nested case class roundtrip") = forAllZIO(genNestedConfig) { p =>
     val p2 =
       for {
-        written <- write(cNestedConfig).provide(p)
+        written <- ZIO.fromEither(write(cNestedConfig, p))
         reread  <- read(cNestedConfig).provide(ConfigSource.fromMap(written))
       } yield reread
 
@@ -91,7 +92,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("coproduct roundtrip") = forAllZIO(genCoproductConfig) { p =>
     val p2 =
       for {
-        written <- write(cCoproductConfig).provide(p)
+        written <- ZIO.fromEither(write(cCoproductConfig, p))
         reread  <- read(cCoproductConfig).provide(ConfigSource.fromMap(written))
       } yield reread
 

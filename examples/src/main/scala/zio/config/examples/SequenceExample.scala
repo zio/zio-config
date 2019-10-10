@@ -37,7 +37,7 @@ object SequenceExample extends App {
   val runtime = new DefaultRuntime {}
 
   val result  = runtime.unsafeRun(read(configOfList).provide(ConfigSource.fromMap(map)))
-  val written = runtime.unsafeRun(write(configOfList).provide(result).either)
+  val written = write(configOfList, result)
 
   assert(result == List(Variables(7, None), Variables(5, Some(6)), Variables(3, Some(4)), Variables(1, Some(2))))
   assert(written.fold(_ => Nil, _.toList.sortBy(_._1)) == map.toList.sortBy(_._1))
