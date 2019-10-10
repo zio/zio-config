@@ -2,7 +2,7 @@ package zio.config
 
 import java.net.URI
 import zio.config.actions.Read
-import zio.system.System
+import zio.system._
 import zio.{ IO, RIO, UIO, ZIO }
 
 trait Config[A] {
@@ -28,7 +28,7 @@ object Config {
 
   def fromEnv[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
     for {
-      lineSep <- ZIO.accessM[System](_.system.lineSeparator)
+      lineSep <- lineSeparator
       source  <- envSource
       res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
     } yield res
@@ -38,7 +38,7 @@ object Config {
 
   def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
     for {
-      lineSep <- ZIO.accessM[System](_.system.lineSeparator)
+      lineSep <- lineSeparator
       source  <- propSource
       res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
     } yield res
