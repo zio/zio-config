@@ -24,7 +24,7 @@ object ReadErrorsTest extends Properties("ReadErrors/NEL") with TestSupport {
     } yield list
 
   property("concat") = forAll(genReadErrors, genReadErrors) { (l1, l2) =>
-    ReadErrors.concat(ReadErrors(l1.head, l1.tail: _*), ReadErrors(l2.head, l2.tail: _*)) ==
+    ReadErrors.concat(ReadErrors(l1.head, l1.tail: _*), ReadErrors(l2.head, l2.tail: _*)).errors ==
       l1 ++ l2
   }
 

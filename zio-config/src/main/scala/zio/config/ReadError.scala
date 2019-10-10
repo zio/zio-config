@@ -1,7 +1,19 @@
 package zio.config
 
-sealed trait ReadError {
+sealed trait ReadError extends Exception {
   val key: String
+}
+
+final case class ReadErrors(errors: ::[ReadError]) extends Exception {
+  override def getMessage(): String = ???
+}
+
+object ReadErrors {
+  def apply(a: ReadError, as: ReadError*): ReadErrors =
+    ReadErrors(::(a, as.toList))
+
+  def concat(l: ReadErrors, r: ReadErrors): ReadErrors =
+    ReadErrors(::(l.errors.head, l.errors.tail ++ r.errors))
 }
 
 object ReadError {
