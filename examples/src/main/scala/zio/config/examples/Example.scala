@@ -2,6 +2,7 @@ package zio.config.examples
 
 import zio.{ App, ZIO }
 import zio.config.{ Config, _ }
+import zio.system.System
 import zio.console._
 import Config._
 
@@ -17,7 +18,7 @@ object Example extends App {
   private val programConfig =
     (string("INPUT_PATH") |@| string("OUTPUT_PATH"))(ProgramConfig2.apply, ProgramConfig2.unapply)
 
-  val program: zio.ZIO[zio.system.System with zio.console.Console, Throwable, Unit] =
+  val program: ZIO[System with Console, Throwable, Unit] =
     for {
       _           <- putStrLn("What is you name?")
       name        <- getStrLn
