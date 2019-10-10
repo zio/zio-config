@@ -30,7 +30,7 @@ import zio.{ App, ZIO }
 case class Prod(ldap: String, port: Int, dburl: Option[String])
 
 object Prod {
-  val prodConfig: ConfigDescriptor[Prod] =
+  val description: ConfigDescriptor[Prod] =
     (string("LDAP") |@| 
       int("PORT") ? "Example: 8888" |@|
         string("DB_URL").optional ? "Example: abc"
@@ -39,8 +39,8 @@ object Prod {
   val myAppLogic: ZIO[Config[Prod] with Console, Throwable, (String, Option[String])] =
     for {
       prodConf <- config[Prod]
-      written   = write(Prod.prodConfig)
-      report    = docs(Prod.prodConfig, Some(prodConf))
+      written  <- ZIO.fromEither(write(description))
+      report    = docs(description, Some(prodConf))
       _        <- zio.console.putStrLn(written)
       _        <- zio.console.putStrLn(report)
     } yield (prod.ldap, prod.dburl)
@@ -50,7 +50,7 @@ object ReadConfig extends App {
 
   override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] =
     Config
-      .fromEnv(Prod.prodConfig)
+      .fromEnv(Prod.description)
       .flatMap(config => Prod.myAppLogic.provide(config))
       .foldM(failure => zio.console.putStrLn(failure) *> ZIO.succeed(1), _ => ZIO.succeed(0))
 }
