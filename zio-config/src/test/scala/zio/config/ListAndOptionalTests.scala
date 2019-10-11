@@ -16,7 +16,7 @@ object ListAndOptionalTests extends Properties("List and options tests") with Te
 
   val cOverallConfig: ConfigDescriptor[OverallConfig] =
     cId.optional.optional.optional.xmap(OverallConfig)(_.option)
-  
+
   property("optional write") = forAllZIO(genOverallConfig) { p =>
     ZIO
       .fromEither(write(cOverallConfig, p))

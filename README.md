@@ -13,6 +13,7 @@ Configuration parsing should be easy as it sounds - Hence;
  * Can write the config back to key value pairs, given the same config description. 
    Allows user to generate and populate configurations in the system-env/property-files in a typesafe way from outside, ensuring successful parsing in the app.
  * Automatic report generation on the config variables.
+ * Addresses nested configuration parameters
  * Automatic man pages based on the config description,  Higher level documentation for sections of config - all with a single composable syntax.
  * Can accumulate maximum errors.
  * Insanely simple to use

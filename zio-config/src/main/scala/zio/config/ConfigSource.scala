@@ -17,7 +17,7 @@ object ConfigSource {
       new ConfigSource[String, String] {
         val configSourceService: ConfigSource.Service[String, String] =
           (path: List[String]) => {
-            val key = path.mkString(".")
+            val key = path.mkString("_")
             env.system
               .env(key)
               .mapError { err =>
@@ -46,11 +46,11 @@ object ConfigSource {
       }
     }
 
-  def fromMap(map: Map[String, String]): ConfigSource[String, String] =
+  def fromMap(map: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
     new ConfigSource[String, String] {
       val configSourceService: ConfigSource.Service[String, String] =
         (path: List[String]) => {
-          val key = path.mkString(".")
+          val key = path.mkString(delimiter)
           ZIO.fromOption(map.get(key)).mapError { _ =>
             ReadError.MissingValue(key): ReadError[String, String]
           }
