@@ -3,6 +3,7 @@ package zio.config.examples
 import zio.config._
 import Config._
 import zio.DefaultRuntime
+import zio.config.PropertyTree.{ Leaf, Record }
 import zio.config.actions.ConfigDocs._
 
 object NestedConfigExample extends App {
@@ -53,4 +54,25 @@ object NestedConfigExample extends App {
       PathDetails(List("appName"), Some("myApp"), List("value of type string"))
     )
   })
+
+  // A write that keeps the nesting. Regardless of the source  where it came from,
+  // user can choose to write by flatten it or keep it as it is, as a json, hoccon etc.
+  assert(
+    write(appConfig, result) ==
+      Right(
+        Record(
+          Map(
+            "south" ->
+              Record(
+                Map("connection" -> Leaf("south.com"), "port" -> Leaf("8111"))
+              ),
+            "east" ->
+              Record(
+                Map("connection" -> Leaf("east.com"), "port" -> Leaf("8888"))
+              ),
+            "appName" -> Leaf("myApp")
+          )
+        )
+      )
+  )
 }

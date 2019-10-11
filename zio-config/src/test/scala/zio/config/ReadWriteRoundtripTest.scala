@@ -52,8 +52,8 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
   property("newtype 1 roundtrip") = forAllZIO(genId) { p =>
     val p2 =
       for {
-        written <- ZIO.fromEither(write(cId).provide(p))
-        reread  <- read(cId).provide(ConfigSource.fromMap(written))
+        written <- ZIO.fromEither(write(cId, p))
+        reread  <- read(cId).provide(ConfigSource.fromPropertyTree(written))
       } yield reread
 
     p2.shouldBe(p)
@@ -63,7 +63,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- ZIO.fromEither(write(cDbUrl, p))
-        reread  <- read(cDbUrl).provide(ConfigSource.fromMap(written))
+        reread  <- read(cDbUrl).provide(ConfigSource.fromPropertyTree(written))
       } yield reread
 
     p2.shouldBe(p)
@@ -73,7 +73,7 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- ZIO.fromEither(write(cEnterpriseAuth, p))
-        reread  <- read(cEnterpriseAuth).provide(ConfigSource.fromMap(written))
+        reread  <- read(cEnterpriseAuth).provide(ConfigSource.fromPropertyTree(written))
       } yield reread
 
     p2.shouldBe(p)
@@ -83,18 +83,19 @@ object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestS
     val p2 =
       for {
         written <- ZIO.fromEither(write(cNestedConfig, p))
-        reread  <- read(cNestedConfig).provide(ConfigSource.fromMap(written))
+        reread  <- read(cNestedConfig).provide(ConfigSource.fromPropertyTree(written))
       } yield reread
 
     p2.shouldBe(p)
   }
 
   property("coproduct roundtrip") = forAllZIO(genCoproductConfig) { p =>
-    val p2 =
+    val p2 = {
       for {
         written <- ZIO.fromEither(write(cCoproductConfig, p))
-        reread  <- read(cCoproductConfig).provide(ConfigSource.fromMap(written))
+        reread  <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(written))
       } yield reread
+    }
 
     p2.shouldBe(p)
   }

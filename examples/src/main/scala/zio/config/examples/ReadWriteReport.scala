@@ -48,11 +48,13 @@ object ReadWriteReport extends App {
   assert(
     write(config, result) ==
       Right(
-        Map(
-          "usr" -> "v1",
-          "pwd" -> "v2",
-          "xyz" -> "v3",
-          "abc" -> "1"
+        PropertyTree.Record(
+          Map(
+            "usr" -> PropertyTree.Leaf("v1"),
+            "pwd" -> PropertyTree.Leaf("v2"),
+            "xyz" -> PropertyTree.Leaf("v3"),
+            "abc" -> PropertyTree.Leaf("1")
+          )
         )
       )
   )

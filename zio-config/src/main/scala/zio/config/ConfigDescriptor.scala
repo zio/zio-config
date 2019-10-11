@@ -60,11 +60,11 @@ object ConfigDescriptor {
 
   final case class Source[A](path: String, propertyType: PropertyType[A]) extends ConfigDescriptor[A]
 
-  final case class Nested[A](configDescriptor: ConfigDescriptor[A], path: String) extends ConfigDescriptor[A]
+  final case class Nested[A](config: ConfigDescriptor[A], path: String) extends ConfigDescriptor[A]
 
   final case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-  final case class Default[A](configDescriptor: ConfigDescriptor[A], value: A) extends ConfigDescriptor[A]
+  final case class Default[A](config: ConfigDescriptor[A], value: A) extends ConfigDescriptor[A]
 
   final case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 

@@ -69,7 +69,7 @@ object ProductBuilderTest extends Properties("ProductBuilder") with TestSupport 
     val p2 =
       for {
         written <- ZIO.fromEither(write(cS22, p))
-        reread  <- read(cS22).provide(ConfigSource.fromMap(written))
+        reread  <- read(cS22).provide(ConfigSource.fromMap(PropertyTree.flatten(written)))
       } yield reread
 
     p2.shouldBe(p)

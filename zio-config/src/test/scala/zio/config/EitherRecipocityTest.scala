@@ -57,9 +57,9 @@ object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
       val lr =
         for {
           writtenLeft  <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
-          rereadLeft   <- read(cCoproductConfig).provide(ConfigSource.fromMap(writtenLeft))
+          rereadLeft   <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(writtenLeft))
           writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
-          rereadRight  <- read(cCoproductConfig).provide(ConfigSource.fromMap(writtenRight))
+          rereadRight  <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(writtenRight))
         } yield {
           (rereadLeft.coproduct, rereadRight.coproduct) match {
             case (Left(pl), Right(pr)) => (Some(pl), Some(pr))

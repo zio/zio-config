@@ -56,4 +56,7 @@ object ConfigSource {
           }
         }
     }
+
+  def fromPropertyTree(propertyTree: PropertyTree[String, String]): ConfigSource[String, String] =
+    fromMap(PropertyTree.flatten(propertyTree))
 }
