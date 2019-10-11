@@ -8,13 +8,17 @@ trait Sources {
     ZIO.access { env =>
       new ConfigSource {
         val configService: ConfigSource.Service =
-          (path: String) =>
-            env.system
-              .env(path)
-              .mapError { err =>
-                ReadError.FatalError(path, err)
-              }
-              .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
+          new ConfigSource.Service {
+            val sourceDescription: String = "Environment"
+
+            def getConfigValue(path: String): IO[ReadError, String] =
+              env.system
+                .env(path)
+                .mapError { err =>
+                  ReadError.FatalError(path, err)
+                }
+                .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
+          }
       }
     }
 
@@ -22,23 +26,31 @@ trait Sources {
     ZIO.access { env =>
       new ConfigSource {
         val configService: ConfigSource.Service =
-          (path: String) =>
-            env.system
-              .property(path)
-              .mapError { err =>
-                ReadError.FatalError(path, err)
-              }
-              .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
+          new ConfigSource.Service {
+            val sourceDescription: String = "System properties"
+
+            def getConfigValue(path: String): IO[ReadError, String] =
+              env.system
+                .property(path)
+                .mapError { err =>
+                  ReadError.FatalError(path, err)
+                }
+                .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
+          }
       }
     }
 
   def mapSource(map: Map[String, String]): ConfigSource =
     new ConfigSource {
       val configService: ConfigSource.Service =
-        (path: String) =>
-          ZIO.fromOption(map.get(path)).mapError { _ =>
-            ReadError.MissingValue(path)
-          }
+        new ConfigSource.Service {
+          val sourceDescription: String = "Scala Map"
+
+          def getConfigValue(path: String): IO[ReadError, String] =
+            ZIO.fromOption(map.get(path)).mapError { _ =>
+              ReadError.MissingValue(path)
+            }
+        }
     }
 
   // TODO HOCON etc as separate modules
