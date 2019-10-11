@@ -64,11 +64,17 @@ object NestedConfigExample extends App {
           Map(
             "south" ->
               Record(
-                Map("connection" -> Leaf("abc.com"), "port" -> Leaf("8111"))
+                Map(
+                  "connection" -> Leaf("abc.com"),
+                  "port"       -> Leaf("8111")
+                )
               ),
             "east" ->
               Record(
-                Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))
+                Map(
+                  "connection" -> Leaf("xyz.com"),
+                  "port"       -> Leaf("8888")
+                )
               ),
             "appName" -> Leaf("myApp")
           )
