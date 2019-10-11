@@ -19,6 +19,7 @@ object NestedConfigExample extends App {
       nested("east") { database } ? "East details" |@|
       string("appName"))(AwsConfig, AwsConfig.unapply)
 
+  // For simplicity in example, we use map source. Works with hoccon.
   val source: ConfigSource[String, String] =
     ConfigSource.fromMap(
       Map(
@@ -36,10 +37,8 @@ object NestedConfigExample extends App {
   val result = runtime.unsafeRun(read(appConfig).provide(source))
   assert(result == AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
 
-  // Docs
-  val docss = docs(appConfig, Some(result))
-
-  assert(docss == {
+  // Docs and Report of the nested configurations.
+  assert(docs(appConfig, Some(result)) == {
     And(
       And(
         And(
@@ -55,8 +54,7 @@ object NestedConfigExample extends App {
     )
   })
 
-  // A write that keeps the nesting. Regardless of the source  where it came from,
-  // user can choose to write by flatten it or keep it as it is, as a json, hoccon etc.
+  // Write your nested config back.
   assert(
     write(appConfig, result) ==
       Right(
