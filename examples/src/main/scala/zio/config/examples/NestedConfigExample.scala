@@ -22,8 +22,8 @@ object NestedConfigExample extends App {
   val source: ConfigSource[String, String] =
     ConfigSource.fromMap(
       Map(
-        "south.connection" -> "south.com",
-        "east.connection"  -> "east.com",
+        "south.connection" -> "abc.com",
+        "east.connection"  -> "xyz.com",
         "east.port"        -> "8888",
         "south.port"       -> "8111",
         "appName"          -> "myApp"
@@ -34,7 +34,7 @@ object NestedConfigExample extends App {
 
   // Read
   val result = runtime.unsafeRun(read(appConfig).provide(source))
-  assert(result == AwsConfig(Database("south.com", 8111), Database("east.com", 8888), "myApp"))
+  assert(result == AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
 
   // Docs
   val docss = docs(appConfig, Some(result))
@@ -43,11 +43,11 @@ object NestedConfigExample extends App {
     And(
       And(
         And(
-          PathDetails(List("south", "connection"), Some("south.com"), List("value of type string", "South details")),
+          PathDetails(List("south", "connection"), Some("abc.com"), List("value of type string", "South details")),
           PathDetails(List("south", "port"), Some("8111"), List("value of type int", "South details"))
         ),
         And(
-          PathDetails(List("east", "connection"), Some("east.com"), List("value of type string", "East details")),
+          PathDetails(List("east", "connection"), Some("xyz.com"), List("value of type string", "East details")),
           PathDetails(List("east", "port"), Some("8888"), List("value of type int", "East details"))
         )
       ),
@@ -64,11 +64,11 @@ object NestedConfigExample extends App {
           Map(
             "south" ->
               Record(
-                Map("connection" -> Leaf("south.com"), "port" -> Leaf("8111"))
+                Map("connection" -> Leaf("abc.com"), "port" -> Leaf("8111"))
               ),
             "east" ->
               Record(
-                Map("connection" -> Leaf("east.com"), "port" -> Leaf("8888"))
+                Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))
               ),
             "appName" -> Leaf("myApp")
           )
