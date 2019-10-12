@@ -17,13 +17,13 @@ object Read {
 
         case ConfigDescriptor.Source(path, propertyType) =>
           for {
-            value <- config
-                      .getConfigValue(path)
-                      .mapError(err => ReadErrors(err))
+            configValue <- config
+                            .getConfigValue(path)
+                            .mapError(err => ReadErrors(err))
 
             result <- ZIO.fromEither(
                        propertyType
-                         .read(path, value.value)
+                         .read(path, configValue.value)
                          .fold(r => Left(ReadErrors(r)), e => Right(e))
                      )
 

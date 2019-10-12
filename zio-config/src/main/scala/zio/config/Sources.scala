@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.system.System
-import zio.{ IO, ZIO }
+import zio.{ IO, UIO, ZIO }
 
 trait Sources {
   val envSource: ZIO[System, Nothing, ConfigSource] =
@@ -17,8 +17,13 @@ trait Sources {
                 .mapError { err =>
                   ReadError.FatalError(path, err)
                 }
-                .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
-                .map(value => ConfigSource.Value(value, sourceDescription))
+                .flatMap {
+                  IO.fromOption(_)
+                    .foldM(
+                      _ => IO.fail(ReadError.MissingValue(path)),
+                      value => UIO(ConfigSource.Value(value, sourceDescription))
+                    )
+                }
           }
       }
     }
@@ -36,8 +41,13 @@ trait Sources {
                 .mapError { err =>
                   ReadError.FatalError(path, err)
                 }
-                .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
-                .map(value => ConfigSource.Value(value, sourceDescription))
+                .flatMap {
+                  IO.fromOption(_)
+                    .foldM(
+                      _ => IO.fail(ReadError.MissingValue(path)),
+                      value => UIO(ConfigSource.Value(value, sourceDescription))
+                    )
+                }
           }
       }
     }
@@ -51,10 +61,10 @@ trait Sources {
           def getConfigValue(path: String): IO[ReadError, ConfigSource.Value] =
             ZIO
               .fromOption(map.get(path))
-              .mapError { _ =>
-                ReadError.MissingValue(path)
-              }
-              .map(value => ConfigSource.Value(value, sourceDescription))
+              .foldM(
+                _ => IO.fail(ReadError.MissingValue(path)),
+                value => UIO(ConfigSource.Value(value, sourceDescription))
+              )
         }
     }
 
