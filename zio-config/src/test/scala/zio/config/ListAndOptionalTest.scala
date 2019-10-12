@@ -2,12 +2,12 @@ package zio.config
 
 import zio.config.Config._
 import zio.config.helpers._
-import zio.config.ListAndOptionalTestsUtils._
+import zio.config.ListAndOptionalTestUtils._
 import zio.test._
 import zio.test.Assertion._
 
-object ListAndOptionalTests
-    extends BaseSpec(suite("List and options tests")(testM("optional write") {
+object ListAndOptionalTest
+    extends BaseSpec(suite("List and options")(testM("optional write") {
       checkM(genOverallConfig) { p =>
         val actual = write(cOverallConfig).provide(p)
 
@@ -19,7 +19,7 @@ object ListAndOptionalTests
       }
     }))
 
-object ListAndOptionalTestsUtils {
+object ListAndOptionalTestUtils {
   final case class OverallConfig(option: Option[Option[Option[Id]]])
 
   val genOverallConfig =
