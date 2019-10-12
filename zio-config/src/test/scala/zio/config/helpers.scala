@@ -2,6 +2,8 @@ package zio.config
 
 import zio.random.Random
 import zio.test.Gen
+import zio.config.ReadError.ParseError
+import zio.test.Sized
 
 object helpers {
   final case class CoproductConfig(coproduct: Either[DataItem, NestedConfig])
@@ -59,4 +61,22 @@ object helpers {
       optId1.fold(List(pair))(id => List(pair, makePair(nn, 1, id.value)))
     }.toMap
   }
+
+  val genReadErrors: Gen[Random with Sized, List[ReadError]] = {
+    val genParseError =
+      for {
+        s1 <- Gen.anyString
+        s2 <- Gen.anyString
+        s3 <- Gen.anyString
+      } yield ParseError(s1, s2, s3)
+
+    val genReadError =
+      Gen.oneOf(Gen.const(ReadError.MissingValue("somekey")), genParseError)
+
+    for {
+      n    <- Gen.int(1, 20)
+      list <- Gen.listOfN(n)(genReadError)
+    } yield list
+  }
+
 }
