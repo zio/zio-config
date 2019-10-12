@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.config.Config._
 import zio.config.helpers._
 import zio.test._
 import zio.test.Assertion._
@@ -10,6 +11,8 @@ object SequenceRoundtripTest
         testM("optional write") {
           checkM(genOverallConfig) {
             p =>
+              val cId: String => ConfigDescriptor[Id] = string(_).xmap(Id)(_.value)
+
               val config =
                 ConfigDescriptor.sequence(
                   p.toList.map(
