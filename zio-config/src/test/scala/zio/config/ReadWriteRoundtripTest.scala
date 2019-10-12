@@ -2,6 +2,8 @@ package zio.config
 
 import zio.config.Config._
 import zio.config.helpers._
+import zio.config.ReadWriteRoundtripTestUtils._
+import zio.random.Random
 import zio.test._
 import zio.test.Assertion._
 
@@ -10,8 +12,6 @@ object ReadWriteRoundtripTest
       suite("Coproduct support")(
         testM("newtype 1 roundtrip") {
           checkM(genId) { p =>
-            val cId = string("kId").xmap(Id)(_.value)
-
             val p2 =
               for {
                 written <- write(cId).provide(p)
@@ -23,8 +23,6 @@ object ReadWriteRoundtripTest
         },
         testM("newtype 2 roundtrip") {
           checkM(genDbUrl) { p =>
-            val cDbUrl = string("kDbUrl").xmap(DbUrl)(_.value)
-
             val p2 =
               for {
                 written <- write(cDbUrl).provide(p)
@@ -36,10 +34,6 @@ object ReadWriteRoundtripTest
         },
         testM("case class 1 roundtrip") {
           checkM(genEnterpriseAuth) { p =>
-            val cId             = string("kId").xmap(Id)(_.value)
-            val cDbUrl          = string("kDbUrl").xmap(DbUrl)(_.value)
-            val cEnterpriseAuth = (cId |@| cDbUrl)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
-
             val p2 =
               for {
                 written <- write(cEnterpriseAuth).provide(p)
@@ -50,50 +44,68 @@ object ReadWriteRoundtripTest
           }
         },
         testM("nested case class roundtrip") {
-          checkM(genNestedConfig) {
-            p =>
-              val cId             = string("kId").xmap(Id)(_.value)
-              val cDbUrl          = string("kDbUrl").xmap(DbUrl)(_.value)
-              val cEnterpriseAuth = (cId |@| cDbUrl)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
+          checkM(genNestedConfig) { p =>
+            val p2 =
+              for {
+                written <- write(cNestedConfig).provide(p)
+                reread  <- read(cNestedConfig).provide(mapSource(written))
+              } yield reread
 
-              val cNestedConfig =
-                (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(
-                  NestedConfig.apply,
-                  NestedConfig.unapply
-                )
-
-              val p2 =
-                for {
-                  written <- write(cNestedConfig).provide(p)
-                  reread  <- read(cNestedConfig).provide(mapSource(written))
-                } yield reread
-
-              assertM(p2, equalTo(p))
+            assertM(p2, equalTo(p))
           }
         },
         testM("coproduct roundtrip") {
-          checkM(genCoproductConfig) {
-            p =>
-              val cId2            = string("kId2").xmap(Id)(_.value)
-              val cDataItem       = (cId2.optional |@| int("kDiCount"))(DataItem.apply, DataItem.unapply)
-              val cId             = string("kId").xmap(Id)(_.value)
-              val cDbUrl          = string("kDbUrl").xmap(DbUrl)(_.value)
-              val cEnterpriseAuth = (cId |@| cDbUrl)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
+          checkM(genCoproductConfig) { p =>
+            val p2 =
+              for {
+                written <- write(cCoproductConfig).provide(p)
+                reread  <- read(cCoproductConfig).provide(mapSource(written))
+              } yield reread
 
-              val cNestedConfig =
-                (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedConfig.apply, NestedConfig.unapply)
-
-              val cCoproductConfig =
-                (cDataItem.orElseEither(cNestedConfig)).xmap(CoproductConfig)(_.coproduct)
-
-              val p2 =
-                for {
-                  written <- write(cCoproductConfig).provide(p)
-                  reread  <- read(cCoproductConfig).provide(mapSource(written))
-                } yield reread
-
-              assertM(p2, equalTo(p))
+            assertM(p2, equalTo(p))
           }
         }
       )
     )
+
+object ReadWriteRoundtripTestUtils {
+  final case class CoproductConfig(coproduct: Either[DataItem, NestedConfig])
+  final case class DataItem(oid: Option[Id], count: Int)
+  final case class EnterpriseAuth(id: Id, dburl: DbUrl)
+  final case class NestedConfig(enterpriseAuth: EnterpriseAuth, count: Int, factor: Float)
+
+  val genDataItem: Gen[Random, DataItem] =
+    for {
+      oid   <- Gen.option(genId)
+      count <- Gen.anyInt
+    } yield DataItem(oid, count)
+
+  val genEnterpriseAuth: Gen[Random, EnterpriseAuth] =
+    for {
+      id    <- genId
+      dburl <- genDbUrl
+    } yield EnterpriseAuth(id, dburl)
+
+  val genNestedConfig: Gen[Random, NestedConfig] =
+    for {
+      auth   <- genEnterpriseAuth
+      count  <- Gen.anyInt
+      factor <- Gen.anyFloat
+    } yield NestedConfig(auth, count, factor)
+
+  val genCoproductConfig: Gen[Random, CoproductConfig] =
+    Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
+
+  val cId             = string("kId").xmap(Id)(_.value)
+  val cId2            = string("kId2").xmap(Id)(_.value)
+  val cDataItem       = (cId2.optional |@| int("kDiCount"))(DataItem.apply, DataItem.unapply)
+  val cDbUrl          = string("kDbUrl").xmap(DbUrl)(_.value)
+  val cEnterpriseAuth = (cId |@| cDbUrl)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
+
+  val cNestedConfig =
+    (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedConfig.apply, NestedConfig.unapply)
+
+  val cCoproductConfig =
+    (cDataItem.orElseEither(cNestedConfig)).xmap(CoproductConfig)(_.coproduct)
+
+}

@@ -2,6 +2,8 @@ package zio.config
 
 import zio.config.Config._
 import zio.config.helpers._
+import zio.config.SequenceRoundtripTestUtils._
+import zio.random.Random
 import zio.test._
 import zio.test.Assertion._
 
@@ -33,3 +35,24 @@ object SequenceRoundtripTest
         }
       )
     )
+
+object SequenceRoundtripTestUtils {
+  final case class OverallConfig(id1: Option[Id], id2: Id)
+
+  val genOverallConfig: Gen[Random, Map[String, String]] =
+    for {
+      optId1 <- Gen.option(genId)
+      id2    <- genId
+      n      <- Gen.oneOf(Gen.const(1), Gen.const(10), Gen.const(100))
+    } yield rangeMap(optId1, id2, n)
+
+  private def rangeMap(optId1: Option[Id], id2: Id, n: Int): Map[String, String] =
+    (0 to n).flatMap { nn =>
+      val pair = makePair(nn, 2, id2.value)
+      optId1.fold(List(pair))(id => List(pair, makePair(nn, 1, id.value)))
+    }.toMap
+
+  private def makePair(id: Int, idx: Int, value: String): (String, String) =
+    s"GROUP${id}_id_${idx}" -> value
+
+}
