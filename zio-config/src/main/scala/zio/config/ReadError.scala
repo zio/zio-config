@@ -1,12 +1,12 @@
 package zio.config
 
-sealed trait ReadError extends Exception {
+import scala.util.control.NoStackTrace
+
+sealed trait ReadError extends NoStackTrace {
   val key: String
 }
 
-final case class ReadErrors(errors: ::[ReadError]) extends Exception {
-  override def getMessage(): String = ???
-}
+final case class ReadErrors(errors: ::[ReadError]) extends NoStackTrace
 
 object ReadErrors {
   def apply(a: ReadError, as: ReadError*): ReadErrors =
