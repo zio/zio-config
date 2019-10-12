@@ -1,12 +1,12 @@
 package zio.config
 
 import zio.config.Config._
-import zio.config.SequenceRoundTripTestUtils._
+import zio.config.SequenceRoundtripTestUtils._
 import zio.random.Random
 import zio.test._
 import zio.test.Assertion._
 
-object SequenceRoundTripTest
+object SequenceRoundtripTest
     extends BaseSpec(
       suite("sequence round trip")(
         testM("optional write") {
@@ -33,7 +33,7 @@ object SequenceRoundTripTest
       )
     )
 
-object SequenceRoundTripTestUtils {
+object SequenceRoundtripTestUtils {
   final case class Id(value: String) extends AnyVal
 
   final case class OverallConfig(id1: Option[Id], id2: Id)
