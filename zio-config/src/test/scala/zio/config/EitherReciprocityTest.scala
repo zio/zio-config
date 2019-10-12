@@ -1,80 +1,67 @@
 package zio.config
 
-import org.scalacheck.Properties
-import zio.config.testsupport.TestSupport
+import zio.config.Config._
+import zio.config.helpers._
+import zio.config.EitherReciprocityTestUtils._
+import zio.test._
+import zio.test.Assertion._
 
-object EitherReciprocityTest extends Properties("Reciprocity") with TestSupport {
+object EitherReciprocityTest
+    extends BaseSpec(
+      suite("Either reciprocity")(
+        testM("coproduct should yield the same config representation on both sides of Either") {
+          checkM(genNestedConfig) {
+            p =>
+              val lr =
+                for {
+                  writtenLeft  <- write(cCoproductConfig).provide(CoproductConfig(Left(p)))
+                  rereadLeft   <- read(cCoproductConfig).provide(mapSource(writtenLeft))
+                  writtenRight <- write(cCoproductConfig).provide(CoproductConfig(Right(p)))
+                  rereadRight  <- read(cCoproductConfig).provide(mapSource(writtenRight))
+                } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
+                  case (Left(pl), Right(pr)) => Some(pl -> pr)
+                  case _                     => None
+                }
 
-  import Config._
+              assertM(lr, isSome(equalTo(p -> p)))
+          }
+        }
+      )
+    )
 
-  private val genId    = genSymbol(1, 5).map(Id)
-  private val genDbUrl = genNonEmptyString(20).map(DbUrl)
+object EitherReciprocityTestUtils {
+  final case class EnterpriseAuth(id: Id, dburl: DbUrl)
+  final case class NestedConfig(enterpriseAuth: EnterpriseAuth, count: Int, factor: Float)
+  final case class CoproductConfig(coproduct: Either[NestedConfig, NestedConfig])
+
   private val genEnterpriseAuth =
     for {
       id    <- genId
       dburl <- genDbUrl
     } yield EnterpriseAuth(id, dburl)
-  private val genNestedConfig =
+
+  val genNestedConfig =
     for {
       auth   <- genEnterpriseAuth
-      count  <- genFor[Int]
-      factor <- genFor[Double]
+      count  <- Gen.anyInt
+      factor <- Gen.anyFloat
     } yield NestedConfig(auth, count, factor)
 
-  private val cIdLeft: ConfigDescriptor[Id]       = string("klId").xmap(Id)(_.value)
-  private val cDbUrlLeft: ConfigDescriptor[DbUrl] = string("klDbUrl").xmap(DbUrl)(_.value)
-  private val cEnterpriseAuthLeft: ConfigDescriptor[EnterpriseAuth] =
-    (cIdLeft |@| cDbUrlLeft)(
-      EnterpriseAuth.apply,
-      EnterpriseAuth.unapply
-    )
-  private val cNestedConfigLeft: ConfigDescriptor[NestedConfig] =
-    (cEnterpriseAuthLeft |@| int("klCount") |@| double("klFactor"))(
-      NestedConfig.apply,
-      NestedConfig.unapply
-    )
+  private val cIdLeft             = string("klId").xmap(Id)(_.value)
+  private val cDbUrlLeft          = string("klDbUrl").xmap(DbUrl)(_.value)
+  private val cEnterpriseAuthLeft = (cIdLeft |@| cDbUrlLeft)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
 
-  private val cIdRight: ConfigDescriptor[Id]       = string("krId").xmap(Id)(_.value)
-  private val cDbUrlRight: ConfigDescriptor[DbUrl] = string("krDbUrl").xmap(DbUrl)(_.value)
-  private val cEnterpriseAuthRight: ConfigDescriptor[EnterpriseAuth] =
-    (cIdRight |@| cDbUrlRight)(
-      EnterpriseAuth.apply,
-      EnterpriseAuth.unapply
-    )
-  private val cNestedConfigRight: ConfigDescriptor[NestedConfig] =
-    (cEnterpriseAuthRight |@| int("krCount") |@| double("krFactor"))(
-      NestedConfig.apply,
-      NestedConfig.unapply
-    )
+  private val cNestedConfigLeft =
+    (cEnterpriseAuthLeft |@| int("klCount") |@| float("klFactor"))(NestedConfig.apply, NestedConfig.unapply)
 
-  private val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
-    (cNestedConfigLeft orElseEither cNestedConfigRight)
-      .xmap(CoproductConfig)(_.coproduct)
+  private val cIdRight             = string("krId").xmap(Id)(_.value)
+  private val cDbUrlRight          = string("krDbUrl").xmap(DbUrl)(_.value)
+  private val cEnterpriseAuthRight = (cIdRight |@| cDbUrlRight)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
 
-  property("coproduct should yield same config representation on both sides of Either") = forAllZIO(genNestedConfig) {
-    p =>
-      val lr =
-        for {
-          writtenLeft  <- write(cCoproductConfig).provide(CoproductConfig(Left(p)))
-          rereadLeft   <- read(cCoproductConfig).provide(mapSource(writtenLeft))
-          writtenRight <- write(cCoproductConfig).provide(CoproductConfig(Right(p)))
-          rereadRight  <- read(cCoproductConfig).provide(mapSource(writtenRight))
-        } yield {
-          (rereadLeft.coproduct, rereadRight.coproduct) match {
-            case (Left(pl), Right(pr)) => (Some(pl), Some(pr))
-            case _                     => (None, None)
-          }
-        }
+  private val cNestedConfigRight =
+    (cEnterpriseAuthRight |@| int("krCount") |@| float("krFactor"))(NestedConfig.apply, NestedConfig.unapply)
 
-      lr.shouldBe((Some(p), Some(p)))
-  }
-
-  ////
-
-  final case class Id(value: String)    extends AnyVal
-  final case class DbUrl(value: String) extends AnyVal
-  final case class EnterpriseAuth(id: Id, dburl: DbUrl)
-  final case class NestedConfig(enterpriseAuth: EnterpriseAuth, count: Int, factor: Double)
-  final case class CoproductConfig(coproduct: Either[NestedConfig, NestedConfig])
+  val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
+    (cNestedConfigLeft.orElseEither(cNestedConfigRight)).xmap(CoproductConfig)(_.coproduct)
 
 }
