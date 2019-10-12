@@ -11,13 +11,14 @@ trait Sources {
           new ConfigSource.Service {
             val sourceDescription: String = "Environment"
 
-            def getConfigValue(path: String): IO[ReadError, String] =
+            def getConfigValue(path: String): IO[ReadError, ConfigSource.Value] =
               env.system
                 .env(path)
                 .mapError { err =>
                   ReadError.FatalError(path, err)
                 }
                 .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
+                .map(value => ConfigSource.Value(value, sourceDescription))
           }
       }
     }
@@ -29,13 +30,14 @@ trait Sources {
           new ConfigSource.Service {
             val sourceDescription: String = "System properties"
 
-            def getConfigValue(path: String): IO[ReadError, String] =
+            def getConfigValue(path: String): IO[ReadError, ConfigSource.Value] =
               env.system
                 .property(path)
                 .mapError { err =>
                   ReadError.FatalError(path, err)
                 }
                 .flatMap(IO.fromOption(_).mapError(_ => ReadError.MissingValue(path)))
+                .map(value => ConfigSource.Value(value, sourceDescription))
           }
       }
     }
@@ -46,10 +48,13 @@ trait Sources {
         new ConfigSource.Service {
           val sourceDescription: String = "Scala Map"
 
-          def getConfigValue(path: String): IO[ReadError, String] =
-            ZIO.fromOption(map.get(path)).mapError { _ =>
-              ReadError.MissingValue(path)
-            }
+          def getConfigValue(path: String): IO[ReadError, ConfigSource.Value] =
+            ZIO
+              .fromOption(map.get(path))
+              .mapError { _ =>
+                ReadError.MissingValue(path)
+              }
+              .map(value => ConfigSource.Value(value, sourceDescription))
         }
     }
 

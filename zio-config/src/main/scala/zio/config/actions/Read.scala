@@ -23,7 +23,7 @@ object Read {
 
             result <- ZIO.fromEither(
                        propertyType
-                         .read(path, value)
+                         .read(path, value.value)
                          .fold(r => Left(ReadErrors(r)), e => Right(e))
                      )
 

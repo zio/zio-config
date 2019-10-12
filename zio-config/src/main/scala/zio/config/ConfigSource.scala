@@ -16,7 +16,7 @@ trait ConfigSource { self =>
             s"${selfDesc}: with fallback source: ${thatDesc} (on all errors)"
           }
 
-          def getConfigValue(path: String): IO[ReadError, String] =
+          def getConfigValue(path: String): IO[ReadError, ConfigSource.Value] =
             self.configService
               .getConfigValue(path)
               .orElse(
@@ -43,7 +43,7 @@ trait ConfigSource { self =>
             s"${selfDesc}: with fallback source: ${fallbackSource} (${fallbackDescription})"
           }
 
-          def getConfigValue(path: String): IO[ReadError, String] =
+          def getConfigValue(path: String): IO[ReadError, ConfigSource.Value] =
             self.configService
               .getConfigValue(path)
               .catchSome {
@@ -67,9 +67,11 @@ trait ConfigSource { self =>
 }
 
 object ConfigSource {
+  final case class Value(value: String, valueSource: String)
+
   trait Service {
     val sourceDescription: String
 
-    def getConfigValue(path: String): IO[ReadError, String]
+    def getConfigValue(path: String): IO[ReadError, Value]
   }
 }

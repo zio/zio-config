@@ -16,7 +16,7 @@ package object config extends Sources {
   def config[A]: ZIO[Config[A], Nothing, A] =
     ZIO.accessM(_.config.config)
 
-  def getConfigValue(path: String): ZIO[ConfigSource, ReadError, String] =
+  def getConfigValue(path: String): ZIO[ConfigSource, ReadError, ConfigSource.Value] =
     ZIO.accessM(_.configService.getConfigValue(path))
 
   type ReadErrors = ::[ReadError]
