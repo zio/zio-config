@@ -26,6 +26,9 @@ trait ConfigSource { self =>
         }
     }
 
+  final def <>(that: ConfigSource): ConfigSource =
+    orElse(that)
+
   final def catchSome(
     pf: PartialFunction[ReadError, ConfigSource],
     fallbackSource: String,
@@ -58,6 +61,9 @@ trait ConfigSource { self =>
       that.configService.sourceDescription,
       "on missing value"
     )
+
+  final def <>?(that: ConfigSource): ConfigSource =
+    ifMissingValue(that)
 }
 
 object ConfigSource {
