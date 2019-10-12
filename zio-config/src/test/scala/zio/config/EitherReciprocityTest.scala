@@ -3,7 +3,7 @@ package zio.config
 import org.scalacheck.Properties
 import zio.config.testsupport.TestSupport
 
-object EitherRecipocityTest extends Properties("Reciprocity") with TestSupport {
+object EitherReciprocityTest extends Properties("Reciprocity") with TestSupport {
 
   import Config._
 
