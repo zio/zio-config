@@ -5,7 +5,7 @@ import zio.IO
 trait ConfigSource { self =>
   val configService: ConfigSource.Service
 
-  def orElse(that: ConfigSource): ConfigSource =
+  final def orElse(that: ConfigSource): ConfigSource =
     new ConfigSource {
       val configService: ConfigSource.Service =
         new ConfigSource.Service {
@@ -26,7 +26,7 @@ trait ConfigSource { self =>
         }
     }
 
-  def catchSome(
+  final def catchSome(
     pf: PartialFunction[ReadError, ConfigSource],
     fallbackSource: String,
     fallbackDescription: String
@@ -52,7 +52,7 @@ trait ConfigSource { self =>
         }
     }
 
-  def ifMissingValue(that: => ConfigSource): ConfigSource =
+  final def ifMissingValue(that: => ConfigSource): ConfigSource =
     catchSome(
       { case ReadError.MissingValue(_) => that },
       that.configService.sourceDescription,
