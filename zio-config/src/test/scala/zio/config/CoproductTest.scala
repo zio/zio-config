@@ -1,11 +1,49 @@
 package zio.config
 
-import org.scalacheck.{ Gen, Properties }
-import zio.config.ReadError.{ MissingValue, ParseError }
-import zio.config.testsupport.TestSupport
+import zio.config.Config._
+import zio.config.CoproductTestUtils._
+import zio.config.helpers._
+import zio.config.ReadError._
+import zio.random.Random
+import zio.test._
+import zio.test.Assertion._
 import zio.{ IO, ZIO }
 
-object CoproductTest extends Properties("Coproduct support") with TestSupport {
+object CoproductTest
+    extends BaseSpec(
+      suite("Coproduct support")(
+        testM("left element satisfied") {
+          checkM(genTestParams) { p =>
+            assertM(readLeft(p), isLeft(equalTo(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
+          }
+        },
+        testM("right element satisfied") {
+          checkM(genTestParams) { p =>
+            assertM(readRight(p), isRight(equalTo(PasswordAuth(p.vUser, p.vCount, p.vFactor))))
+          }
+        },
+        testM("should accumulate all errors") {
+          checkM(genTestParams) { p =>
+            val expected = ReadErrors(
+              MissingValue(p.kLdap),
+              ParseError(p.kFactor, "notafloat", "float")
+            )
+
+            assertM(readWithErrors(p), isLeft(equalTo(expected)))
+          }
+        },
+        testM("left and right both populated should choose left") {
+          checkM(genTestParams) { p =>
+            assertM(readChooseLeftFromBoth(p), isLeft(equalTo(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
+          }
+        }
+      )
+    )
+
+object CoproductTestUtils {
+  final case class Ldap(value: String) extends AnyVal
+  final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
+  final case class PasswordAuth(user: String, count: Int, factor: Float)
 
   final case class TestParams(
     kLdap: String,
@@ -17,126 +55,66 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
     kCount: String,
     vCount: Int,
     kFactor: String,
-    vFactor: Double
+    vFactor: Float
   )
 
-  object TestParams extends TestSupport {
-    def gen: Gen[TestParams] =
-      for {
-        kLdap       <- genSymbol(1, 20)
-        vLdap       <- genNonEmptyString(50)
-        kDbUrl      <- genSymbol(1, 20).filterNot(s => s == kLdap)
-        vDbUrl      <- genNonEmptyString(50)
-        kUser       <- genSymbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl)
-        vUser       <- genNonEmptyString(50)
-        kCount      <- genSymbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl || s == kUser)
-        vCount      <- genFor[Int]
-        kDbUrlLocal <- genSymbol(1, 20).filterNot(s => s == kLdap || s == kDbUrl || s == kUser || s == kCount)
-        vDbUrlLocal <- genFor[Double]
-      } yield TestParams(kLdap, vLdap, kDbUrl, vDbUrl, kUser, vUser, kCount, vCount, kDbUrlLocal, vDbUrlLocal)
-  }
+  val genTestParams: Gen[Random, TestParams] =
+    for {
+      kLdap       <- genSymbol(1, 20)
+      vLdap       <- genNonEmptyString(50)
+      kDbUrl      <- genSymbol(1, 20).filter(s => s != kLdap)
+      vDbUrl      <- genNonEmptyString(50)
+      kUser       <- genSymbol(1, 20).filter(s => s != kLdap && s != kDbUrl)
+      vUser       <- genNonEmptyString(50)
+      kCount      <- genSymbol(1, 20).filter(s => s != kLdap && s != kDbUrl && s != kUser)
+      vCount      <- Gen.anyInt
+      kDbUrlLocal <- genSymbol(1, 20).filter(s => s != kLdap && s != kDbUrl && s != kUser && s != kCount)
+      vDbUrlLocal <- Gen.anyFloat
+    } yield TestParams(kLdap, vLdap, kDbUrl, vDbUrl, kUser, vUser, kCount, vCount, kDbUrlLocal, vDbUrlLocal)
 
-  property("left element satisfied") = forAllZIO(TestParams.gen) { p =>
-    readLeft(p)
-      .shouldBe(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))
-  }
-
-  property("right element satisfied") = forAllZIO(TestParams.gen) { p =>
-    readRight(p)
-      .shouldBe(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor)))
-  }
-
-  property("should accumulate all errors") = forAllZIO(TestParams.gen) { p =>
-    readWithErrors(p).shouldBe {
-      Left(
-        ReadErrors(
-          MissingValue(p.kLdap),
-          ParseError(p.kFactor, "notadouble", "double")
-        )
-      )
-    }
-  }
-
-  property("left and right both populated should choose left") = forAllZIO(TestParams.gen) { p =>
-    readChooseLeftFromBoth(p)
-      .shouldBe(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))
-  }
-
-  ////
-
-  final case class Ldap(value: String)  extends AnyVal
-  final case class DbUrl(value: String) extends AnyVal
-  final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
-  final case class PasswordAuth(user: String, count: Int, factor: Double)
-
-  import Config._
-
-  private def readLeft(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
-    val enterprise: ConfigDescriptor[EnterpriseAuth] =
+  def readLeft(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
+    val enterprise =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val password: ConfigDescriptor[PasswordAuth] =
-      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
-        PasswordAuth.apply,
-        PasswordAuth.unapply
-      )
-    val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise orElseEither password
 
-    read(authConfig)
-      .provide(
-        mapSource(
-          Map(
-            p.kLdap  -> p.vLdap,
-            p.kDbUrl -> p.vDbUrl
-          )
-        )
-      )
+    val password =
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor))(PasswordAuth.apply, PasswordAuth.unapply)
+
+    val authConfig = enterprise.orElseEither(password)
+
+    read(authConfig).provide(mapSource(Map(p.kLdap -> p.vLdap, p.kDbUrl -> p.vDbUrl)))
   }
 
-  private def readRight(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
-    val enterprise: ConfigDescriptor[EnterpriseAuth] =
+  def readRight(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
+    val enterprise =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val password: ConfigDescriptor[PasswordAuth] =
-      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
-        PasswordAuth.apply,
-        PasswordAuth.unapply
-      )
-    val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise orElseEither password
 
-    read(authConfig)
-      .provide(
-        mapSource(
-          Map(
-            p.kUser   -> p.vUser,
-            p.kCount  -> p.vCount.toString,
-            p.kFactor -> p.vFactor.toString
-          )
-        )
-      )
+    val password =
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor))(PasswordAuth.apply, PasswordAuth.unapply)
+
+    val authConfig = enterprise.orElseEither(password)
+
+    read(authConfig).provide(
+      mapSource(Map(p.kUser -> p.vUser, p.kCount -> p.vCount.toString, p.kFactor -> p.vFactor.toString))
+    )
   }
 
-  private def readWithErrors(
-    p: TestParams
-  ): ZIO[Any, Nothing, Either[ReadErrors, Either[EnterpriseAuth, PasswordAuth]]] = {
-    val enterprise: ConfigDescriptor[EnterpriseAuth] =
+  def readWithErrors(p: TestParams): ZIO[Any, Nothing, Either[ReadErrors, Either[EnterpriseAuth, PasswordAuth]]] = {
+    val enterprise =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val password: ConfigDescriptor[PasswordAuth] =
-      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
-        PasswordAuth.apply,
-        PasswordAuth.unapply
-      )
-    val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise orElseEither password
+
+    val password =
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor))(PasswordAuth.apply, PasswordAuth.unapply)
+
+    val authConfig = enterprise.orElseEither(password)
 
     read(authConfig)
       .provide(
@@ -145,26 +123,24 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
             p.kDbUrl  -> p.vDbUrl,
             p.kUser   -> p.vUser,
             p.kCount  -> p.vCount.toString,
-            p.kFactor -> "notadouble"
+            p.kFactor -> "notafloat"
           )
         )
       )
       .either
   }
 
-  private def readChooseLeftFromBoth(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
-    val enterprise: ConfigDescriptor[EnterpriseAuth] =
+  def readChooseLeftFromBoth(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
+    val enterprise =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
-    val password: ConfigDescriptor[PasswordAuth] =
-      (string(p.kUser) |@| int(p.kCount) |@| double(p.kFactor))(
-        PasswordAuth.apply,
-        PasswordAuth.unapply
-      )
-    val authConfig: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-      enterprise orElseEither password
+
+    val password =
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor))(PasswordAuth.apply, PasswordAuth.unapply)
+
+    val authConfig = enterprise.orElseEither(password)
 
     read(authConfig)
       .provide(
