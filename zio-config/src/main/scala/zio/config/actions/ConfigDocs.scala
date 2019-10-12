@@ -6,10 +6,10 @@ sealed trait ConfigDocs
 
 object ConfigDocs {
 
-  final case class Empty()                                                                    extends ConfigDocs
+  final case class Empty()                                                                      extends ConfigDocs
   final case class PathDetails(path: Vector[String], value: Option[String], docs: List[String]) extends ConfigDocs
-  final case class And(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
-  final case class Or(left: ConfigDocs, right: ConfigDocs)                                    extends ConfigDocs
+  final case class And(left: ConfigDocs, right: ConfigDocs)                                     extends ConfigDocs
+  final case class Or(left: ConfigDocs, right: ConfigDocs)                                      extends ConfigDocs
 
   final def createDoc[A](config: ConfigDescriptor[A], value: Option[A]): ConfigDocs = {
     def loop[B](
