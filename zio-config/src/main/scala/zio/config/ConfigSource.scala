@@ -57,6 +57,9 @@ object ConfigSource {
         }
     }
 
-  def fromPropertyTree(propertyTree: PropertyTree[String, String]): ConfigSource[String, String] =
-    fromMap(PropertyTree.flatten(propertyTree))
+  def fromPropertyTree(
+    propertyTree: PropertyTree[String, String],
+    delimiter: String = "."
+  ): ConfigSource[String, String] =
+    fromMap(propertyTree.flatten(delimiter))
 }

@@ -42,15 +42,15 @@ object NestedConfigExample extends App {
     And(
       And(
         And(
-          PathDetails(List("south", "connection"), Some("abc.com"), List("value of type string", "South details")),
-          PathDetails(List("south", "port"), Some("8111"), List("value of type int", "South details"))
+          PathDetails(Vector("south", "connection"), Some("abc.com"), List("value of type string", "South details")),
+          PathDetails(Vector("south", "port"), Some("8111"), List("value of type int", "South details"))
         ),
         And(
-          PathDetails(List("east", "connection"), Some("xyz.com"), List("value of type string", "East details")),
-          PathDetails(List("east", "port"), Some("8888"), List("value of type int", "East details"))
+          PathDetails(Vector("east", "connection"), Some("xyz.com"), List("value of type string", "East details")),
+          PathDetails(Vector("east", "port"), Some("8888"), List("value of type int", "East details"))
         )
       ),
-      PathDetails(List("appName"), Some("myApp"), List("value of type string"))
+      PathDetails(Vector("appName"), Some("myApp"), List("value of type string"))
     )
   })
 

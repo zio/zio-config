@@ -1,6 +1,27 @@
 package zio.config
 
-sealed trait PropertyTree[+K, +V]
+import zio.config.PropertyTree.{ Empty, Leaf, Record }
+
+sealed trait PropertyTree[+K, +V] { self =>
+  def flattenKV[K1 >: K, V1 >: V](zero: K1, append: (K1, K1) => K1): Map[K1, V1] = {
+    def go(key: K1, propertyTree: PropertyTree[K1, V1], acc: Map[K1, V1]): Map[K1, V1] =
+      propertyTree match {
+        case Empty         => acc
+        case Leaf(v)       => acc ++ Map(key -> v)
+        case Record(value) => value.flatMap(t => go(append(key, t._1), t._2, acc))
+      }
+
+    go(zero, self, Map.empty[K1, V1])
+  }
+
+  def flatten[K1 >: K, V1 >: V](
+    appendString: String = "."
+  )(implicit S1: K1 =:= String, S2: V1 =:= String): Map[K1, V1] =
+    self.flattenKV[K1, V1](
+      "".asInstanceOf[K1],
+      (a: K1, b: K1) => if (a.asInstanceOf[String].nonEmpty) List(a, b).mkString(appendString).asInstanceOf[K1] else b
+    )
+}
 
 object PropertyTree {
 
@@ -12,22 +33,4 @@ object PropertyTree {
 
   def fromMap[K, V](map: Map[K, V]): PropertyTree[K, V] =
     Record(map.map(t => t._1 -> Leaf(t._2)))
-
-  def flattenKV[K, V](propertyTree: PropertyTree[K, V], zero: K, append: (K, K) => K): Map[K, V] = {
-    def go(key: K, propertyTree: PropertyTree[K, V], acc: Map[K, V]): Map[K, V] =
-      propertyTree match {
-        case Empty         => acc
-        case Leaf(v)       => acc ++ Map(key -> v)
-        case Record(value) => value.flatMap(t => go(append(key, t._1), t._2, acc))
-      }
-
-    go(zero, propertyTree, Map.empty)
-  }
-
-  def flatten(propertyTree: PropertyTree[String, String], appendString: String = "."): Map[String, String] =
-    PropertyTree.flattenKV(
-      propertyTree,
-      "",
-      (a: String, b: String) => if (a.nonEmpty) List(a, b).mkString(appendString) else b
-    )
 }

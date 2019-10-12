@@ -20,7 +20,7 @@ object ListAndOptionalTests extends Properties("List and options tests") with Te
   property("optional write") = forAllZIO(genOverallConfig) { p =>
     ZIO
       .fromEither(write(cOverallConfig, p))
-      .map(PropertyTree.flatten(_))
+      .map(t => t.flatten())
       .shouldBe(
         p.option
           .flatMap(t => t.flatMap(tt => tt.map(ttt => Map("kId" -> ttt.value))))

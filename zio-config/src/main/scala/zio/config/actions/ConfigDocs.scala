@@ -7,7 +7,7 @@ sealed trait ConfigDocs
 object ConfigDocs {
 
   final case class Empty()                                                                    extends ConfigDocs
-  final case class PathDetails(path: List[String], value: Option[String], docs: List[String]) extends ConfigDocs
+  final case class PathDetails(path: Vector[String], value: Option[String], docs: List[String]) extends ConfigDocs
   final case class And(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
   final case class Or(left: ConfigDocs, right: ConfigDocs)                                    extends ConfigDocs
 
@@ -18,7 +18,7 @@ object ConfigDocs {
       config: ConfigDescriptor[B],
       docs: ConfigDocs,
       value: Option[B],
-      paths: List[String]
+      paths: Vector[String]
     ): ConfigDocs =
       config match {
         case ConfigDescriptor.Empty() => docs
@@ -82,6 +82,6 @@ object ConfigDocs {
           }
       }
 
-    loop(Nil, "", config, Empty(), value, Nil)
+    loop(Nil, "", config, Empty(), value, Vector.empty)
   }
 }
