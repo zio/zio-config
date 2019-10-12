@@ -68,10 +68,7 @@ lazy val zioConfig =
         "dev.zio" %% "zio-test"     % zioVersion % Test,
         "dev.zio" %% "zio-test-sbt" % zioVersion % Test
       ),
-      testFrameworks := Seq(
-        new TestFramework("org.scalacheck.ScalaCheckFramework"),
-        new TestFramework("zio.test.sbt.ZTestFramework")
-      )
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
 
 lazy val examples = module("examples").dependsOn(zioConfig)
