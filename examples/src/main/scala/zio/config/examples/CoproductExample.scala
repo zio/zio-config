@@ -1,8 +1,9 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, Config._
-import zio.config.ReadError.{ MissingValue, ParseError }
+import zio.config._
+import Config._
+import zio.config.ReadErrors.ReadError.{ MissingValue, ParseError }
 import zio.config.{ ConfigSource, _ }
 
 object CoproductExample extends App {
@@ -30,8 +31,8 @@ object CoproductExample extends App {
       "x3" -> "v3"
     )
 
-  val source: ConfigSource =
-    mapSource(validConfigForSampleConfig)
+  val source: ConfigSource[String, String] =
+    ConfigSource.fromMap(validConfigForSampleConfig)
 
   assert(runtime.unsafeRun(read(prodOrDev).provide(source)) == Left(Prod(Ldap("v1"), DbUrl("v2"))))
 
@@ -43,8 +44,8 @@ object CoproductExample extends App {
       "x5" -> "2.0"
     )
 
-  val anotherSource: ConfigSource =
-    mapSource(validConfigForAnotherConfig)
+  val anotherSource: ConfigSource[String, String] =
+    ConfigSource.fromMap(validConfigForAnotherConfig)
 
   assert(runtime.unsafeRun(read(prodOrDev).provide(anotherSource)) == Right(Dev("v3", 1, 2.0)))
 
@@ -56,8 +57,8 @@ object CoproductExample extends App {
       "x5" -> "notadouble"
     )
 
-  val invalidSource: ConfigSource =
-    mapSource(invalidConfig)
+  val invalidSource: ConfigSource[String, String] =
+    ConfigSource.fromMap(invalidConfig)
 
   assert(
     runtime.unsafeRun(read(prodOrDev).provide(invalidSource).either) ==
@@ -79,7 +80,7 @@ object CoproductExample extends App {
     )
 
   assert(
-    runtime.unsafeRun(read(prodOrDev).provide(mapSource(allConfigsExist))) ==
+    runtime.unsafeRun(read(prodOrDev).provide(ConfigSource.fromMap(allConfigsExist))) ==
       Left(Prod(Ldap("v1"), DbUrl("v2")))
   )
 }

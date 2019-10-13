@@ -1,7 +1,7 @@
 package zio.config
 
 import org.scalacheck.{ Gen, Properties }
-import zio.config.ReadError.{ MissingValue, ParseError }
+import zio.config.ReadErrors.ReadError.{ MissingValue, ParseError }
 import zio.config.testsupport.TestSupport
 import zio.{ IO, ZIO }
 
@@ -71,7 +71,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
   import Config._
 
-  private def readLeft(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
+  private def readLeft(p: TestParams): IO[ReadErrors[String, String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: ConfigDescriptor[EnterpriseAuth] =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -87,7 +87,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
     read(authConfig)
       .provide(
-        mapSource(
+        ConfigSource.fromMap(
           Map(
             p.kLdap  -> p.vLdap,
             p.kDbUrl -> p.vDbUrl
@@ -96,7 +96,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       )
   }
 
-  private def readRight(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
+  private def readRight(p: TestParams): IO[ReadErrors[String, String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: ConfigDescriptor[EnterpriseAuth] =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -112,7 +112,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
     read(authConfig)
       .provide(
-        mapSource(
+        ConfigSource.fromMap(
           Map(
             p.kUser   -> p.vUser,
             p.kCount  -> p.vCount.toString,
@@ -124,7 +124,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
   private def readWithErrors(
     p: TestParams
-  ): ZIO[Any, Nothing, Either[ReadErrors, Either[EnterpriseAuth, PasswordAuth]]] = {
+  ): ZIO[Any, Nothing, Either[ReadErrors[String, String], Either[EnterpriseAuth, PasswordAuth]]] = {
     val enterprise: ConfigDescriptor[EnterpriseAuth] =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -140,7 +140,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
     read(authConfig)
       .provide(
-        mapSource(
+        ConfigSource.fromMap(
           Map(
             p.kDbUrl  -> p.vDbUrl,
             p.kUser   -> p.vUser,
@@ -152,7 +152,9 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
       .either
   }
 
-  private def readChooseLeftFromBoth(p: TestParams): IO[ReadErrors, Either[EnterpriseAuth, PasswordAuth]] = {
+  private def readChooseLeftFromBoth(
+    p: TestParams
+  ): IO[ReadErrors[String, String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise: ConfigDescriptor[EnterpriseAuth] =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -168,7 +170,7 @@ object CoproductTest extends Properties("Coproduct support") with TestSupport {
 
     read(authConfig)
       .provide(
-        mapSource(
+        ConfigSource.fromMap(
           Map(
             p.kLdap   -> p.vLdap,
             p.kDbUrl  -> p.vDbUrl,

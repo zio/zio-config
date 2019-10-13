@@ -13,7 +13,10 @@ object Config {
     def config: UIO[A]
   }
 
-  def make[A](source: ConfigSource, configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] =
+  def make[A](
+    source: ConfigSource[String, String],
+    configDescriptor: ConfigDescriptor[A]
+  ): IO[ReadErrors[String, String], Config[A]] =
     Read
       .read(configDescriptor)
       .provide(source)
@@ -26,14 +29,23 @@ object Config {
           }
       )
 
-  def fromEnv[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors, Config[A]] =
-    envSource.flatMap(make(_, configDescriptor))
+  def fromEnv[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors[String, String], Config[A]] =
+    for {
+      source <- ConfigSource.fromEnv
+      res    <- make(source, configDescriptor)
+    } yield res
 
-  def fromMap[A](map: Map[String, String], configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] =
-    make(mapSource(map), configDescriptor)
+  def fromMap[A](
+    map: Map[String, String],
+    configDescriptor: ConfigDescriptor[A]
+  ): IO[ReadErrors[String, String], Config[A]] =
+    make(ConfigSource.fromMap(map), configDescriptor)
 
-  def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors, Config[A]] =
-    propSource.flatMap(make(_, configDescriptor))
+  def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors[String, String], Config[A]] =
+    for {
+      source <- ConfigSource.fromProperty
+      res    <- make(source, configDescriptor)
+    } yield res
 
   def string(path: String): ConfigDescriptor[String] =
     ConfigDescriptor.Source(path, PropertyType.StringType) ? "value of type string"
@@ -57,4 +69,6 @@ object Config {
     ConfigDescriptor.Source(path, PropertyType.BigDecimalType) ? "value of type bigdecimal"
   def uri(path: String): ConfigDescriptor[URI] =
     ConfigDescriptor.Source(path, PropertyType.UriType) ? "value of type uri"
+  def nested[A](path: String)(desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
+    ConfigDescriptor.Nested(desc, path)
 }

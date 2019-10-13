@@ -34,14 +34,15 @@ object SequenceRoundTripTest extends Properties("sequence round trip tests") wit
         p.toList.map(prefix => (cId(prefix._1).optional |@| cId(prefix._1))(OverallConfig.apply, OverallConfig.unapply))
       )
 
-    val readAndWrite: ZIO[ConfigSource, ReadErrors, Either[String, Map[String, String]]] =
+    val readAndWrite =
       for {
         result  <- read(config)
-        written <- write(config).provide(result).either
+        written <- ZIO.effectTotal(write(config, result))
       } yield written
 
     readAndWrite
-      .provide(mapSource(p))
+      .map(_.map(_.flatten()))
+      .provide(ConfigSource.fromMap(p))
       .map(_.fold(_ => Nil, t => t.toList.sortBy(_._1)))
       .shouldBe(p.toList.sortBy(_._1))
   }
