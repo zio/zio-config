@@ -16,10 +16,10 @@ sealed trait PropertyTree[+K, +V] { self =>
 
   def flatten[K1 >: K, V1 >: V](
     appendString: String = "."
-  )(implicit S1: K1 =:= String, S2: V1 =:= String): Map[K1, V1] =
+  )(implicit S1: String =:= K1, S11: K1 =:= String): Map[K1, V1] =
     self.flattenKV[K1, V1](
-      S1.flip.apply(""),
-      (a: K1, b: K1) => if (S1(a).nonEmpty) S1.flip.apply(List(S1(a), S1(b)).mkString(appendString)) else b
+      S1.apply(""),
+      (a: K1, b: K1) => if (S11(a).nonEmpty) S1.apply(List(S1(a), S1(b)).mkString(appendString)) else b
     )
 }
 
