@@ -1,112 +1,111 @@
 package zio.config
 
-import org.scalacheck.{ Gen, Properties }
 import zio.ZIO
-import zio.config.testsupport.TestSupport
 import zio.config.Config._
+import zio.config.helpers._
+import zio.config.ReadWriteRoundtripTestUtils._
+import zio.random.Random
+import zio.test._
+import zio.test.Assertion._
 
-object ReadWriteRoundtripTest extends Properties("Coproduct support") with TestSupport {
+object ReadWriteRoundtripTest
+    extends BaseSpec(
+      suite("Coproduct support")(
+        testM("newtype 1 roundtrip") {
+          checkM(genId) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cId, p))
+                reread  <- read(cId).provide(ConfigSource.fromPropertyTree(written))
+              } yield reread
 
-  private val genId    = genSymbol(1, 5).map(Id)
-  private val genDbUrl = genNonEmptyString(20).map(DbUrl)
-  private val genEnterpriseAuth =
+            assertM(p2, equalTo(p))
+          }
+        },
+        testM("newtype 2 roundtrip") {
+          checkM(genDbUrl) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cDbUrl, p))
+                reread  <- read(cDbUrl).provide(ConfigSource.fromPropertyTree(written))
+              } yield reread
+
+            assertM(p2, equalTo(p))
+          }
+        },
+        testM("case class 1 roundtrip") {
+          checkM(genEnterpriseAuth) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cEnterpriseAuth, p))
+                reread  <- read(cEnterpriseAuth).provide(ConfigSource.fromPropertyTree(written))
+              } yield reread
+
+            assertM(p2, equalTo(p))
+          }
+        },
+        testM("nested case class roundtrip") {
+          checkM(genNestedConfig) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cNestedConfig, p))
+                reread  <- read(cNestedConfig).provide(ConfigSource.fromPropertyTree(written))
+              } yield reread
+
+            assertM(p2, equalTo(p))
+          }
+        },
+        testM("coproduct roundtrip") {
+          checkM(genCoproductConfig) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cCoproductConfig, p))
+                reread  <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(written))
+              } yield reread
+
+            assertM(p2, equalTo(p))
+          }
+        }
+      )
+    )
+
+object ReadWriteRoundtripTestUtils {
+  final case class CoproductConfig(coproduct: Either[DataItem, NestedConfig])
+  final case class DataItem(oid: Option[Id], count: Int)
+  final case class EnterpriseAuth(id: Id, dburl: DbUrl)
+  final case class NestedConfig(enterpriseAuth: EnterpriseAuth, count: Int, factor: Float)
+
+  val genDataItem: Gen[Random, DataItem] =
+    for {
+      oid   <- Gen.option(genId)
+      count <- Gen.anyInt
+    } yield DataItem(oid, count)
+
+  val genEnterpriseAuth: Gen[Random, EnterpriseAuth] =
     for {
       id    <- genId
       dburl <- genDbUrl
     } yield EnterpriseAuth(id, dburl)
-  private val genNestedConfig =
+
+  val genNestedConfig: Gen[Random, NestedConfig] =
     for {
       auth   <- genEnterpriseAuth
-      count  <- genFor[Int]
-      factor <- genFor[Double]
+      count  <- Gen.anyInt
+      factor <- Gen.anyFloat
     } yield NestedConfig(auth, count, factor)
-  private val genDataItem =
-    for {
-      oid   <- Gen.option(genId)
-      count <- genFor[Int]
-    } yield DataItem(oid, count)
-  private val genCoproductConfig = Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
 
-  private val cId: ConfigDescriptor[Id]       = string("kId").xmap(Id)(_.value)
-  private val cDbUrl: ConfigDescriptor[DbUrl] = string("kDbUrl").xmap(DbUrl)(_.value)
-  private val cEnterpriseAuth: ConfigDescriptor[EnterpriseAuth] =
-    (cId |@| cDbUrl)(
-      EnterpriseAuth.apply,
-      EnterpriseAuth.unapply
-    )
-  private val cNestedConfig: ConfigDescriptor[NestedConfig] =
-    (cEnterpriseAuth |@| int("kCount") |@| double("kFactor"))(
-      NestedConfig.apply,
-      NestedConfig.unapply
-    )
-  private val cId2: ConfigDescriptor[Id] = string("kId2").xmap(Id)(_.value)
-  private val cDataItem: ConfigDescriptor[DataItem] =
-    (cId2.optional |@| int("kDiCount"))(
-      DataItem.apply,
-      DataItem.unapply
-    )
-  private val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
-    (cDataItem orElseEither cNestedConfig)
-      .xmap(CoproductConfig)(_.coproduct)
+  val genCoproductConfig: Gen[Random, CoproductConfig] =
+    Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
 
-  property("newtype 1 roundtrip") = forAllZIO(genId) { p =>
-    val p2 =
-      for {
-        written <- ZIO.fromEither(write(cId, p))
-        reread  <- read(cId).provide(ConfigSource.fromPropertyTree(written))
-      } yield reread
+  val cId             = string("kId").xmap(Id)(_.value)
+  val cId2            = string("kId2").xmap(Id)(_.value)
+  val cDataItem       = (cId2.optional |@| int("kDiCount"))(DataItem.apply, DataItem.unapply)
+  val cDbUrl          = string("kDbUrl").xmap(DbUrl)(_.value)
+  val cEnterpriseAuth = (cId |@| cDbUrl)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
 
-    p2.shouldBe(p)
-  }
+  val cNestedConfig =
+    (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedConfig.apply, NestedConfig.unapply)
 
-  property("newtype 2 roundtrip") = forAllZIO(genDbUrl) { p =>
-    val p2 =
-      for {
-        written <- ZIO.fromEither(write(cDbUrl, p))
-        reread  <- read(cDbUrl).provide(ConfigSource.fromPropertyTree(written))
-      } yield reread
-
-    p2.shouldBe(p)
-  }
-
-  property("case class 1 roundtrip") = forAllZIO(genEnterpriseAuth) { p =>
-    val p2 =
-      for {
-        written <- ZIO.fromEither(write(cEnterpriseAuth, p))
-        reread  <- read(cEnterpriseAuth).provide(ConfigSource.fromPropertyTree(written))
-      } yield reread
-
-    p2.shouldBe(p)
-  }
-
-  property("nested case class roundtrip") = forAllZIO(genNestedConfig) { p =>
-    val p2 =
-      for {
-        written <- ZIO.fromEither(write(cNestedConfig, p))
-        reread  <- read(cNestedConfig).provide(ConfigSource.fromPropertyTree(written))
-      } yield reread
-
-    p2.shouldBe(p)
-  }
-
-  property("coproduct roundtrip") = forAllZIO(genCoproductConfig) { p =>
-    val p2 = {
-      for {
-        written <- ZIO.fromEither(write(cCoproductConfig, p))
-        reread  <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(written))
-      } yield reread
-    }
-
-    p2.shouldBe(p)
-  }
-
-  ////
-
-  final case class Id(value: String)    extends AnyVal
-  final case class DbUrl(value: String) extends AnyVal
-  final case class EnterpriseAuth(id: Id, dburl: DbUrl)
-  final case class NestedConfig(enterpriseAuth: EnterpriseAuth, count: Int, factor: Double)
-  final case class DataItem(oid: Option[Id], count: Int)
-  final case class CoproductConfig(coproduct: Either[DataItem, NestedConfig])
-
+  val cCoproductConfig =
+    (cDataItem.orElseEither(cNestedConfig)).xmap(CoproductConfig)(_.coproduct)
 }
