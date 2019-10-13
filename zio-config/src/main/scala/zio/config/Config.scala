@@ -3,7 +3,7 @@ package zio.config
 import java.net.URI
 import zio.config.actions.Read
 import zio.system.System
-import zio.{ IO, RIO, UIO, ZIO }
+import zio.{ IO, UIO, ZIO }
 
 trait Config[A] {
   def config: Config.Service[A]
@@ -26,22 +26,14 @@ object Config {
           }
       )
 
-  def fromEnv[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
-    for {
-      lineSep <- ZIO.accessM[System](_.system.lineSeparator)
-      source  <- envSource
-      res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
-    } yield res
+  def fromEnv[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors, Config[A]] =
+    envSource.flatMap(make(_, configDescriptor))
 
   def fromMap[A](map: Map[String, String], configDescriptor: ConfigDescriptor[A]): IO[ReadErrors, Config[A]] =
     make(mapSource(map), configDescriptor)
 
-  def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): RIO[System, Config[A]] =
-    for {
-      lineSep <- ZIO.accessM[System](_.system.lineSeparator)
-      source  <- propSource
-      res     <- make(source, configDescriptor).mapError(t => new RuntimeException(t.mkString(lineSep)))
-    } yield res
+  def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors, Config[A]] =
+    propSource.flatMap(make(_, configDescriptor))
 
   def string(path: String): ConfigDescriptor[String] =
     ConfigDescriptor.Source(path, PropertyType.StringType) ? "value of type string"

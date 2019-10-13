@@ -18,14 +18,4 @@ package object config extends Sources {
 
   def getConfigValue(path: String): ZIO[ConfigSource, ReadError, ConfigSource.Value] =
     ZIO.accessM(_.configService.getConfigValue(path))
-
-  type ReadErrors = ::[ReadError]
-
-  object ReadErrors {
-    def apply(a: ReadError, as: ReadError*): ReadErrors =
-      ::(a, as.toList)
-
-    def concat(l: ReadErrors, r: ReadErrors): ReadErrors =
-      ::(l.head, l.tail ++ r)
-  }
 }
