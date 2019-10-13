@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.Config._
 import zio.config.ProductBuilderTestUtils._
 import zio.test._
@@ -12,8 +13,8 @@ object ProductBuilderTest
           checkM(genS22) { p =>
             val p2 =
               for {
-                written <- write(cS22).provide(p)
-                reread  <- read(cS22).provide(mapSource(written))
+                written <- ZIO.fromEither(write(cS22, p))
+                reread  <- read(cS22).provide(ConfigSource.fromMap(written.flatten(".")))
               } yield reread
 
             assertM(p2, equalTo(p))

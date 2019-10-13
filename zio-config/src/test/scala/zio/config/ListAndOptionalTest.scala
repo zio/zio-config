@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.Config._
 import zio.config.helpers._
 import zio.config.ListAndOptionalTestUtils._
@@ -9,7 +10,7 @@ import zio.test.Assertion._
 object ListAndOptionalTest
     extends BaseSpec(suite("List and options")(testM("optional write") {
       checkM(genOverallConfig) { p =>
-        val actual = write(cOverallConfig).provide(p)
+        val actual = ZIO.fromEither(write(cOverallConfig, p)).map(_.flatten())
 
         val expected = p.option
           .flatMap(t => t.flatMap(tt => tt.map(ttt => Map("kId" -> ttt.value))))

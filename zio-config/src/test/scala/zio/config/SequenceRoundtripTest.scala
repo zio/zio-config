@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.Config._
 import zio.config.helpers._
 import zio.config.SequenceRoundtripTestUtils._
@@ -25,10 +26,13 @@ object SequenceRoundtripTest
               val readAndWrite =
                 for {
                   result  <- read(config)
-                  written <- write(config).provide(result).either
+                  written <- ZIO.effectTotal(write(config, result))
                 } yield written
 
-              val actual = readAndWrite.provide(mapSource(p)).map(_.fold(_ => Nil, _.toList.sortBy(_._1)))
+              val actual = readAndWrite
+                .map(_.map(_.flatten()))
+                .provide(ConfigSource.fromMap(p))
+                .map(_.fold(_ => Nil, _.toList.sortBy(_._1)))
 
               assertM(actual, equalTo(p.toList.sortBy(_._1)))
           }

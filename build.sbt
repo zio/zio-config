@@ -1,5 +1,3 @@
-import java.nio.file.Paths
-
 import BuildHelper._
 
 inThisBuild(

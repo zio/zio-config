@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.Config._
 import zio.config.helpers._
 import zio.config.EitherReciprocityTestUtils._
@@ -14,10 +15,10 @@ object EitherReciprocityTest
             p =>
               val lr =
                 for {
-                  writtenLeft  <- write(cCoproductConfig).provide(CoproductConfig(Left(p)))
-                  rereadLeft   <- read(cCoproductConfig).provide(mapSource(writtenLeft))
-                  writtenRight <- write(cCoproductConfig).provide(CoproductConfig(Right(p)))
-                  rereadRight  <- read(cCoproductConfig).provide(mapSource(writtenRight))
+                  writtenLeft  <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
+                  rereadLeft   <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(writtenLeft))
+                  writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
+                  rereadRight  <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(writtenRight))
                 } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
                   case (Left(pl), Right(pr)) => Some(pl -> pr)
                   case _                     => None
