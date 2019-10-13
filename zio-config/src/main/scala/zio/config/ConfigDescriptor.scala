@@ -1,5 +1,7 @@
 package zio.config
 
+import zio.config.ReadErrors.ReadError
+
 sealed trait ConfigDescriptor[A] { self =>
   final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
     ConfigDescriptor.Zip(self, that)

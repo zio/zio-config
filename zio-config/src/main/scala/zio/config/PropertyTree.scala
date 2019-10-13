@@ -18,8 +18,8 @@ sealed trait PropertyTree[+K, +V] { self =>
     appendString: String = "."
   )(implicit S1: K1 =:= String, S2: V1 =:= String): Map[K1, V1] =
     self.flattenKV[K1, V1](
-      "".asInstanceOf[K1],
-      (a: K1, b: K1) => if (a.asInstanceOf[String].nonEmpty) List(a, b).mkString(appendString).asInstanceOf[K1] else b
+      S1.flip.apply(""),
+      (a: K1, b: K1) => if (S1(a).nonEmpty) S1.flip.apply(List(S1(a), S1(b)).mkString(appendString)) else b
     )
 }
 

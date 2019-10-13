@@ -2,7 +2,7 @@ package zio.config
 
 import org.scalacheck.Prop.forAll
 import org.scalacheck.{ Gen, Properties }
-import zio.config.ReadError.{ MissingValue, ParseError }
+import zio.config.ReadErrors.ReadError, ReadError._
 import zio.config.testsupport.TestSupport
 
 object ReadErrorsTest extends Properties("ReadErrors/NEL") with TestSupport {

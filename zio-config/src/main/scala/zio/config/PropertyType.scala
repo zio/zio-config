@@ -2,7 +2,8 @@ package zio.config
 
 import java.net.URI
 
-import zio.config.ReadError.ParseError
+import zio.config.ReadErrors.ReadError
+import zio.config.ReadErrors.ReadError.ParseError
 
 import scala.util.{ Failure, Success, Try }
 

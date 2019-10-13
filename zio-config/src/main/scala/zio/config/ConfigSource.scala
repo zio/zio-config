@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.config.ReadErrors.ReadError
 import zio.system.System
 import zio.{ IO, ZIO }
 

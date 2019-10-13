@@ -1,8 +1,9 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, Config._
-import zio.config.ReadError.{ MissingValue, ParseError }
+import zio.config._
+import Config._
+import zio.config.ReadErrors.ReadError.{ MissingValue, ParseError }
 import zio.config.{ ConfigSource, _ }
 
 object CoproductExample extends App {

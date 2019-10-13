@@ -1,5 +1,6 @@
 package zio
 
+import zio.config.ReadErrors.ReadError
 import zio.config.actions.{ ConfigDocs, Read, Write }
 
 package object config {

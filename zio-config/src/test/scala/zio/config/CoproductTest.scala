@@ -1,7 +1,7 @@
 package zio.config
 
 import org.scalacheck.{ Gen, Properties }
-import zio.config.ReadError.{ MissingValue, ParseError }
+import zio.config.ReadErrors.ReadError.{ MissingValue, ParseError }
 import zio.config.testsupport.TestSupport
 import zio.{ IO, ZIO }
 
