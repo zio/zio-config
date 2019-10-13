@@ -16,21 +16,6 @@ package object config {
   def config[A]: ZIO[Config[A], Nothing, A] =
     ZIO.accessM(_.config.config)
 
-  def getConfigValue(
-    path: List[String]
-  ): ZIO[ConfigSource[String, String], ReadError[String, String], String] =
+  def getConfigValue[K, V](path: List[K]): ZIO[ConfigSource[K, V], ReadError[K, V], V] =
     ZIO.accessM(_.configSourceService.getConfigValue(path))
-
-  type ReadErrors[K, V] = ::[ReadError[K, V]]
-
-  object ReadErrors {
-    def apply[K, V](a: ReadError[K, V], as: ReadError[K, V]*): ReadErrors[K, V] =
-      ::(a, as.toList)
-
-    def concat[K, V](l: ReadErrors[K, V], r: ReadErrors[K, V]): ReadErrors[K, V] =
-      ::(l.head, l.tail ++ r)
-
-    def asThrowable[K, V, A](readErrors: ReadErrors[K, V]): RIO[system.System, A] =
-      zio.system.lineSeparator.flatMap(t => ZIO.fail(new RuntimeException(readErrors.mkString(t))))
-  }
 }

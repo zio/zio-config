@@ -19,8 +19,8 @@ object Read {
         case ConfigDescriptor.Source(path, propertyType) =>
           for {
             value <- config
-                      .getConfigValue(paths :+ path)
-                      .mapError(t => ReadErrors(t))
+                      .getConfigValue[String, String](paths :+ path)
+                      .mapError(ReadErrors(_))
 
             result <- ZIO.fromEither(
                        propertyType
