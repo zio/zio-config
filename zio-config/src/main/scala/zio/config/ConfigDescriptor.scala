@@ -1,5 +1,7 @@
 package zio.config
 
+import zio.config.ReadErrors.ReadError
+
 sealed trait ConfigDescriptor[A] { self =>
   final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
     ConfigDescriptor.Zip(self, that)
@@ -7,12 +9,14 @@ sealed trait ConfigDescriptor[A] { self =>
   final def <*>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
     self.zip(that)
 
-  final def xmapEither[B](f: A => Either[ReadError, B])(g: B => Either[String, A]): ConfigDescriptor.XmapEither[A, B] =
+  final def xmapEither[B](
+    f: A => Either[ReadError[String, String], B]
+  )(g: B => Either[String, A]): ConfigDescriptor.XmapEither[A, B] =
     ConfigDescriptor.XmapEither(self, f, g)
 
   def xmapEither2[B, C](
     that: ConfigDescriptor[B]
-  )(f: (A, B) => Either[ReadError, C])(g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
+  )(f: (A, B) => Either[ReadError[String, String], C])(g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
     (self |@| that).apply[(A, B)](Tuple2.apply, Tuple2.unapply).xmapEither({ case (a, b) => f(a, b) })(g)
 
   final def xmap[B](to: A => B)(from: B => A): ConfigDescriptor[B] =
@@ -58,15 +62,17 @@ object ConfigDescriptor {
 
   final case class Source[A](path: String, propertyType: PropertyType[A]) extends ConfigDescriptor[A]
 
+  final case class Nested[A](config: ConfigDescriptor[A], path: String) extends ConfigDescriptor[A]
+
   final case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-  final case class Default[A](configDescriptor: ConfigDescriptor[A], value: A) extends ConfigDescriptor[A]
+  final case class Default[A](config: ConfigDescriptor[A], value: A) extends ConfigDescriptor[A]
 
   final case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
   final case class XmapEither[A, B](
     config: ConfigDescriptor[A],
-    f: A => Either[ReadError, B],
+    f: A => Either[ReadError[String, String], B],
     g: B => Either[String, A]
   ) extends ConfigDescriptor[B]
 
@@ -78,7 +84,7 @@ object ConfigDescriptor {
   def empty[A]: ConfigDescriptor[Option[A]] = ConfigDescriptor.Empty()
 
   def sequence[A](configList: List[ConfigDescriptor[A]]): ConfigDescriptor[List[A]] =
-    configList.foldLeft(Empty[List[A]]().xmap(_.fold(List.empty[A])(_.toList))(_.headOption.map(List(_))))(
+    configList.foldLeft(Empty[A]().xmap(_.toList)(_.headOption))(
       (a, b) =>
         b.xmapEither2(a)((aa, bb) => Right(aa :: bb))(t => {
           t.headOption.fold[Either[String, (A, List[A])]](

@@ -1,7 +1,9 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, Config._
+import zio.config._
+import Config._
+import zio.config.PropertyTree.{ Leaf, Record }
 
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,
@@ -36,9 +38,24 @@ object SequenceExample extends App {
 
   val runtime = new DefaultRuntime {}
 
-  val result  = runtime.unsafeRun(read(configOfList).provide(mapSource(map)))
-  val written = runtime.unsafeRun(write(configOfList).provide(result).either)
+  val result  = runtime.unsafeRun(read(configOfList).provide(ConfigSource.fromMap(map)))
+  val written = write(configOfList, result)
 
   assert(result == List(Variables(7, None), Variables(5, Some(6)), Variables(3, Some(4)), Variables(1, Some(2))))
-  assert(written.fold(_ => Nil, _.toList.sortBy(_._1)) == map.toList.sortBy(_._1))
+  assert(
+    written ==
+      Right(
+        Record(
+          Map(
+            "GROUP3_VARIABLE1" -> Leaf("5"),
+            "GROUP3_VARIABLE2" -> Leaf("6"),
+            "GROUP1_VARIABLE2" -> Leaf("2"),
+            "GROUP1_VARIABLE1" -> Leaf("1"),
+            "GROUP2_VARIABLE2" -> Leaf("4"),
+            "GROUP2_VARIABLE1" -> Leaf("3"),
+            "GROUP4_VARIABLE1" -> Leaf("7")
+          )
+        )
+      )
+  )
 }

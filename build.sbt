@@ -1,5 +1,3 @@
-import java.nio.file.Paths
-
 import BuildHelper._
 
 inThisBuild(
@@ -51,37 +49,33 @@ createProductBuilder := {
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-lazy val zioConfig =
-  module("zio-config")
-    .enablePlugins(BuildInfoPlugin)
-    .settings(
-      testFrameworks := Seq(
-        new TestFramework("org.scalacheck.ScalaCheckFramework"),
-        new TestFramework("zio.test.sbt.ZTestFramework")
-      )
-    )
-    .settings(buildInfoSettings)
-
-lazy val examples =
-  module("examples")
-    .dependsOn(zioConfig)
-
-lazy val allModules = List(zioConfig, examples)
-lazy val zioConfigDependencies =
-  Seq(
-    "dev.zio" %% "zio" % "1.0.0-RC14"
-  )
+lazy val zioVersion = "1.0.0-RC14"
 
 lazy val root =
   project
     .in(file("."))
-    .settings(zioConfigSettings)
-    .settings(skip in publish := true, crossScalaVersions := List())
-    .aggregate(allModules.map(x => x: ProjectReference): _*)
+    .settings(skip in publish := true)
+    .aggregate(zioConfig, examples)
 
-lazy val zioConfigSettings = stdSettings("zio-config")
+lazy val zioConfig =
+  module("zio-config")
+    .enablePlugins(BuildInfoPlugin)
+    .settings(buildInfoSettings)
+    .settings(
+      libraryDependencies ++= Seq(
+        "dev.zio" %% "zio-test"     % zioVersion % Test,
+        "dev.zio" %% "zio-test-sbt" % zioVersion % Test
+      ),
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
+
+lazy val examples = module("examples").dependsOn(zioConfig)
 
 def module(moduleName: String): Project =
   Project(moduleName, file(moduleName))
-    .settings(zioConfigSettings)
-    .settings(libraryDependencies ++= zioConfigDependencies)
+    .settings(stdSettings("zio-config"))
+    .settings(
+      libraryDependencies ++= Seq(
+        "dev.zio" %% "zio" % zioVersion
+      )
+    )
