@@ -31,41 +31,30 @@ trait ConfigSource[K, V] { self =>
   final def <>(that: ConfigSource[K, V]): ConfigSource[K, V] =
     orElse(that)
 
-  final def catchSome(
-    pf: PartialFunction[ReadError[K, V], ConfigSource[K, V]],
-    fallbackSource: String,
-    fallbackDescription: String
-  ): ConfigSource[K, V] =
+  final def catchMissingValue(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     new ConfigSource[K, V] {
       val configSourceService: ConfigSource.Service[K, V] =
         new ConfigSource.Service[K, V] {
           val sourceDescription: String = {
             val selfDesc = self.configSourceService.sourceDescription
+            val thatDesc = that.configSourceService.sourceDescription
 
-            s"${selfDesc}: with fallback source: ${fallbackSource} (${fallbackDescription})"
+            s"${selfDesc}: with fallback source: ${thatDesc} (on missing value)"
           }
 
           def getConfigValue(path: List[K]): IO[ReadError[K, V], ConfigSource.Value[V]] =
             self.configSourceService
               .getConfigValue(path)
               .catchSome {
-                pf.andThen(
-                  _.configSourceService
+                case ReadError.MissingValue(_) =>
+                  that.configSourceService
                     .getConfigValue(path)
-                )
               }
         }
     }
 
-  final def ifMissingValue(that: => ConfigSource[K, V]): ConfigSource[K, V] =
-    catchSome(
-      { case ReadError.MissingValue(_) => that },
-      that.configSourceService.sourceDescription,
-      "on missing value"
-    )
-
   final def <>?(that: ConfigSource[K, V]): ConfigSource[K, V] =
-    ifMissingValue(that)
+    catchMissingValue(that)
 }
 
 object ConfigSource {
