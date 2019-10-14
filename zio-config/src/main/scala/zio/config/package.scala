@@ -17,6 +17,6 @@ package object config {
   def config[A]: ZIO[Config[A], Nothing, A] =
     ZIO.accessM(_.config.config)
 
-  def getConfigValue[K, V](path: List[K]): ZIO[ConfigSource[K, V], ReadError[K, V], ConfigSource.Value] =
+  def getConfigValue[K, V](path: List[K]): ZIO[ConfigSource[K, V], ReadError[K, V], ConfigSource.Value[V]] =
     ZIO.accessM(_.configSourceService.getConfigValue(path))
 }
