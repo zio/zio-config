@@ -79,3 +79,17 @@ def module(moduleName: String): Project =
         "dev.zio" %% "zio" % zioVersion
       )
     )
+
+lazy val docs = project
+  .in(file("zio-nio-docs"))
+  .settings(
+    skip.in(publish) := true,
+    moduleName := "zio-config-docs",
+    scalacOptions -= "-Yno-imports",
+    scalacOptions -= "-Xfatal-warnings",
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio" % zioVersion
+    )
+  )
+  .dependsOn(zioConfig)
+  .enablePlugins(MdocPlugin, DocusaurusPlugin)
