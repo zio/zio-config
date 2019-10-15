@@ -55,6 +55,28 @@ trait ConfigSource[K, V] { self =>
 
   final def <>?(that: ConfigSource[K, V]): ConfigSource[K, V] =
     catchMissingValue(that)
+
+  final def map[V2](f: V => V2): ConfigSource[K, V2] =
+    new ConfigSource[K, V2] {
+      val configSourceService: ConfigSource.Service[K, V2] =
+        new ConfigSource.Service[K, V2] {
+          val sourceDescription: String =
+            self.configSourceService.sourceDescription
+
+          def getConfigValue(path: List[K]): IO[ReadError[K, V2], ConfigSource.Value[V2]] =
+            self.configSourceService
+              .getConfigValue(path)
+              .foldM(
+                {
+                  case ReadError.ParseError(key, provided, message) =>
+                    ZIO.fail(ReadError.ParseError(key, f(provided), message))
+                  case missing @ ReadError.MissingValue(_) => ZIO.fail(missing)
+                  case fatal @ ReadError.FatalError(_, _)  => ZIO.fail(fatal)
+                },
+                v => ZIO.succeed(ConfigSource.Value(f(v.value), v.source))
+              )
+        }
+    }
 }
 
 object ConfigSource {
@@ -120,7 +142,7 @@ object ConfigSource {
       }
     }
 
-  def fromMap(map: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
+  def fromMap(m: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
     new ConfigSource[String, String] {
       val configSourceService: ConfigSource.Service[String, String] =
         new ConfigSource.Service[String, String] {
@@ -130,7 +152,7 @@ object ConfigSource {
             val key = path.mkString(delimiter)
 
             ZIO
-              .fromOption(map.get(key))
+              .fromOption(m.get(key))
               .foldM(
                 _ => IO.fail(ReadError.MissingValue(key)),
                 value => UIO(ConfigSource.Value(value, sourceDescription))
