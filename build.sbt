@@ -81,7 +81,7 @@ def module(moduleName: String): Project =
     )
 
 lazy val docs = project
-  .in(file("zio-nio-docs"))
+  .in(file("zio-config-docs"))
   .settings(
     skip.in(publish) := true,
     moduleName := "zio-config-docs",
