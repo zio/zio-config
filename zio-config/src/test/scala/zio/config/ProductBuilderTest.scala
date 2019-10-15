@@ -14,7 +14,7 @@ object ProductBuilderTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cS22, p))
-                reread  <- read(cS22).provide(ConfigSource.fromMap(written.flatten(".")))
+                reread  <- read(cS22).provide(ConfigSource.fromMap(written.flattenString(".")))
               } yield reread
 
             assertM(p2, equalTo(p))

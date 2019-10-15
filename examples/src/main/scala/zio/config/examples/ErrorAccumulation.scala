@@ -21,7 +21,7 @@ object ErrorAccumulation extends App {
   assert(
     parsed ==
       Left(
-        List(
+        ReadErrors(
           MissingValue("envvar"),
           MissingValue("envvar2")
         )

@@ -3,7 +3,7 @@ package zio.config
 import zio.config.PropertyTree.{ Empty, Leaf, Record }
 
 sealed trait PropertyTree[+K, +V] { self =>
-  def flattenKV[K1 >: K, V1 >: V](zero: K1, append: (K1, K1) => K1): Map[K1, V1] = {
+  def flatten[K1 >: K, V1 >: V](zero: K1, append: (K1, K1) => K1): Map[K1, V1] = {
     def go(key: K1, propertyTree: PropertyTree[K1, V1], acc: Map[K1, V1]): Map[K1, V1] =
       propertyTree match {
         case Empty         => acc
@@ -14,12 +14,12 @@ sealed trait PropertyTree[+K, +V] { self =>
     go(zero, self, Map.empty[K1, V1])
   }
 
-  def flatten[K1 >: K, V1 >: V](
+  def flattenString[K1 >: K, V1 >: V](
     appendString: String = "."
-  )(implicit S1: String =:= K1, S11: K1 =:= String): Map[K1, V1] =
-    self.flattenKV[K1, V1](
-      S1.apply(""),
-      (a: K1, b: K1) => if (S11(a).nonEmpty) S1.apply(List(S1(a), S1(b)).mkString(appendString)) else b
+  )(implicit SK: String =:= K1, KS: K1 =:= String): Map[K1, V1] =
+    self.flatten[K1, V1](
+      SK(""),
+      (a: K1, b: K1) => if (KS(a).nonEmpty) SK(List(SK(a), SK(b)).mkString(appendString)) else b
     )
 }
 

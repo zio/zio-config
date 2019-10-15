@@ -10,14 +10,14 @@ trait ConfigSource[K, V] {
 
 object ConfigSource {
   trait Service[K, V] {
-    def getConfigValue(path: List[K]): IO[ReadError[K, V], V]
+    def getConfigValue(path: Vector[K]): IO[ReadError[K, V], V]
   }
 
   val fromEnv: ZIO[System, Nothing, ConfigSource[String, String]] =
     ZIO.access { env =>
       new ConfigSource[String, String] {
         val configSourceService: ConfigSource.Service[String, String] =
-          (path: List[String]) => {
+          (path: Vector[String]) => {
             val key = path.mkString("_")
             env.system
               .env(key)
@@ -34,7 +34,7 @@ object ConfigSource {
     ZIO.access { env =>
       new ConfigSource[String, String] {
         val configSourceService: ConfigSource.Service[String, String] =
-          (path: List[String]) => {
+          (path: Vector[String]) => {
             val key = path.mkString(".")
             env.system
               .property(key)
@@ -50,7 +50,7 @@ object ConfigSource {
   def fromMap(map: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
     new ConfigSource[String, String] {
       val configSourceService: ConfigSource.Service[String, String] =
-        (path: List[String]) => {
+        (path: Vector[String]) => {
           val key = path.mkString(delimiter)
           ZIO.fromOption(map.get(key)).mapError { _ =>
             ReadError.MissingValue(key): ReadError[String, String]
@@ -62,5 +62,5 @@ object ConfigSource {
     propertyTree: PropertyTree[String, String],
     delimiter: String = "."
   ): ConfigSource[String, String] =
-    fromMap(propertyTree.flatten(delimiter))
+    fromMap(propertyTree.flattenString(delimiter))
 }
