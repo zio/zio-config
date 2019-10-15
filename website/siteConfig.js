@@ -21,8 +21,8 @@ const users = [
 ];
 
 const siteConfig = {
-  title: 'ZIO NIO',
-  tagline: 'A small, unopinionated ZIO interface to NIO',
+  title: 'ZIO CONFIG',
+  tagline: 'The configuration library that works with ZIO - to read, write and document the application configurations!',
   url: 'https://zio.github.io',
   baseUrl: '/zio-config/', // Base URL for your project */
 
