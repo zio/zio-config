@@ -62,5 +62,5 @@ object ConfigSource {
     propertyTree: PropertyTree[String, String],
     delimiter: String = "."
   ): ConfigSource[String, String] =
-    fromMap(propertyTree.flatten(delimiter))
+    fromMap(propertyTree.flattenString(delimiter))
 }

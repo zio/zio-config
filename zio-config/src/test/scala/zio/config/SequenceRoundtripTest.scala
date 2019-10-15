@@ -30,7 +30,7 @@ object SequenceRoundtripTest
                 } yield written
 
               val actual = readAndWrite
-                .map(_.map(_.flatten()))
+                .map(_.map(_.flattenString()))
                 .provide(ConfigSource.fromMap(p))
                 .map(_.fold(_ => Nil, _.toList.sortBy(_._1)))
 
