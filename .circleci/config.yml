@@ -175,7 +175,7 @@ microsite: &microsite
           nvm install
           nvm use
           node -v
-          ./sbt zioNio/doc
+          ./sbt zioConfig/doc
           ./sbt docs/docusaurusCreateSite
           ./sbt docs/docusaurusPublishGhpages
     - <<: *save_cache
