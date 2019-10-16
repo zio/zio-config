@@ -39,7 +39,7 @@ object ErrorAccumulation extends App {
   assert(
     runtime.unsafeRun(read(config).provide(invalidSource).either) ==
       Left(
-        List(
+        ReadErrors(
           ParseError("envvar", "wrong", "int"),
           MissingValue("envvar2")
         )
