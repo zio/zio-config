@@ -15,10 +15,11 @@ object DocsExample extends App {
   assert(
     docs(config, Some(Database(1, Some("value")))) ==
       And(
-        PathDetails(Vector("PORT"), Some("1"), List("value of type int", "Example: 8088", "Database related")),
+        PathDetails(Vector("PORT"), Some("1"), None, List("value of type int", "Example: 8088", "Database related")),
         PathDetails(
           Vector("URL"),
           Some("value"),
+          None,
           List("value of type string", "optional value", "Example: abc.com", "Database related")
         )
       )

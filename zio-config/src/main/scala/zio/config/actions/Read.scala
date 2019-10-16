@@ -112,6 +112,7 @@ object Read {
             pathDetails = ConfigDocs.PathDetails(
               paths.toVector :+ path,
               Some(configValue.value),
+              Some(configValue.source),
               if (previousDescription.isEmpty) acc
               else previousDescription :: acc
             )
@@ -167,6 +168,10 @@ object Read {
           )
       }
 
-    loop(configuration, "", Nil, Nil, ConfigDocs.Empty())
+    config
+      .getSourceDescription[String, String]
+      .flatMap(
+        description => loop(configuration, "", Nil, Nil, ConfigDocs.SourceDescription(description, ConfigDocs.Empty()))
+      )
   }
 }

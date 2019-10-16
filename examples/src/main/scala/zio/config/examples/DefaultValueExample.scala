@@ -22,10 +22,10 @@ object DefaultValueExample extends App {
   assert(
     docs(pgmConf, Some(result)) ==
       And(
-        PathDetails(Vector("HELLO"), Some("xyz"), List("value of type string", "default value: xyz")),
+        PathDetails(Vector("HELLO"), Some("xyz"), None, List("value of type string", "default value: xyz")),
         Or(
-          PathDetails(Vector("SOMETHING"), None, List("value of type string")),
-          PathDetails(Vector("PORT"), Some("1"), List("value of type int", "default value: 1"))
+          PathDetails(Vector("SOMETHING"), None, None, List("value of type string")),
+          PathDetails(Vector("PORT"), Some("1"), None, List("value of type int", "default value: 1"))
         )
       )
   )

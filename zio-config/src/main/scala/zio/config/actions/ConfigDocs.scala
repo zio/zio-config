@@ -6,11 +6,16 @@ sealed trait ConfigDocs
 
 object ConfigDocs {
 
-  final case class Empty()                                                                      extends ConfigDocs
-  final case class PathDetails(path: Vector[String], value: Option[String], docs: List[String]) extends ConfigDocs
-  final case class SourceDescription(sourceDescription: String, configDocs: ConfigDocs)
-  final case class And(left: ConfigDocs, right: ConfigDocs) extends ConfigDocs
-  final case class Or(left: ConfigDocs, right: ConfigDocs)  extends ConfigDocs
+  final case class Empty() extends ConfigDocs
+  final case class PathDetails(
+    path: Vector[String],
+    value: Option[String],
+    source: Option[String],
+    docs: List[String]
+  ) extends ConfigDocs
+  final case class SourceDescription(sourceDescription: String, configDocs: ConfigDocs) extends ConfigDocs
+  final case class And(left: ConfigDocs, right: ConfigDocs)                             extends ConfigDocs
+  final case class Or(left: ConfigDocs, right: ConfigDocs)                              extends ConfigDocs
 
   final def createDoc[A](config: ConfigDescriptor[A], value: Option[A]): ConfigDocs = {
     def loop[B](
@@ -27,6 +32,7 @@ object ConfigDocs {
           PathDetails(
             paths :+ path,
             value.map(t => p.write(t)),
+            None,
             if (desc.isEmpty) acc
             else desc :: acc
           )
