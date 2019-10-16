@@ -9,3 +9,7 @@ project/zecret
 target
 test-output/
 .DS_Store
+website/node_modules
+website/i18n/en.json
+website/yarn.lock
+website/build

@@ -32,9 +32,9 @@ const siteConfig = {
 
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
-    {doc: 'essentials/write_index', label: 'Read Config'},
-    {doc: 'usecases/read_index', label: 'Write Config Back'},
-    {doc: 'usecases/doc_index', label: 'Doc the Config'},
+    {doc: 'write/write_index', label: 'Read Config'},
+    {doc: 'read/read_index', label: 'Write Config Back'},
+    {doc: 'doc/doc_index', label: 'Doc the Config'},
   ],
 
   // If you have users set above, you add it here:
