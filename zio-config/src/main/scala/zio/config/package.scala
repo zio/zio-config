@@ -8,6 +8,11 @@ package object config {
   def read[A](config: => ConfigDescriptor[A]): ZIO[ConfigSource[String, String], ReadErrors[String, String], A] =
     Read.read[A](config)
 
+  def readWithConfigDocs[A](
+    config: => ConfigDescriptor[A]
+  ): ZIO[ConfigSource[String, String], ReadErrors[String, String], (A, ConfigDocs)] =
+    Read.readWithConfigDocs[A](config)
+
   def write[A](config: => ConfigDescriptor[A], a: A): Either[String, PropertyTree[String, String]] =
     Write.write[A](config, a)
 

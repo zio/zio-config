@@ -64,6 +64,40 @@ object NestedConfigExample extends App {
     )
   })
 
+  // readWithConfigDocs
+  val (result2, configDocs) = runtime.unsafeRun(readWithConfigDocs(appConfig).provide(source))
+  assert(result2 == AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
+
+  assert(
+    configDocs ==
+      SourceDescription(
+        "Scala Map",
+        And(
+          And(
+            And(
+              PathDetails(
+                Vector("south", "connection"),
+                Some("abc.com"),
+                Some("Scala Map"),
+                List("value of type string", "South details")
+              ),
+              PathDetails(Vector("south", "port"), Some("8111"), None, List("value of type int", "South details"))
+            ),
+            And(
+              PathDetails(
+                Vector("east", "connection"),
+                Some("xyz.com"),
+                Some("Scala Map"),
+                List("value of type string", "East details")
+              ),
+              PathDetails(Vector("east", "port"), Some("8888"), None, List("value of type int", "East details"))
+            )
+          ),
+          PathDetails(Vector("appName"), Some("myApp"), None, List("value of type string"))
+        )
+      )
+  )
+
   // Write your nested config back.
   assert(
     write(appConfig, result) ==
