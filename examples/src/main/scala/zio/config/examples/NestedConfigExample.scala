@@ -81,7 +81,12 @@ object NestedConfigExample extends App {
                 Some("Scala Map"),
                 List("value of type string", "South details")
               ),
-              PathDetails(Vector("south", "port"), Some("8111"), None, List("value of type int", "South details"))
+              PathDetails(
+                Vector("south", "port"),
+                Some("8111"),
+                Some("Scala Map"),
+                List("value of type int", "South details")
+              )
             ),
             And(
               PathDetails(
@@ -90,10 +95,15 @@ object NestedConfigExample extends App {
                 Some("Scala Map"),
                 List("value of type string", "East details")
               ),
-              PathDetails(Vector("east", "port"), Some("8888"), None, List("value of type int", "East details"))
+              PathDetails(
+                Vector("east", "port"),
+                Some("8888"),
+                Some("Scala Map"),
+                List("value of type int", "East details")
+              )
             )
           ),
-          PathDetails(Vector("appName"), Some("myApp"), None, List("value of type string"))
+          PathDetails(Vector("appName"), Some("myApp"), Some("Scala Map"), List("value of type string"))
         )
       )
   )

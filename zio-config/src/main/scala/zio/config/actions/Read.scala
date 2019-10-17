@@ -89,7 +89,6 @@ object Read {
   ): ZIO[ConfigSource[String, String], ReadErrors[String, String], (A, ConfigDocs)] = {
     def loop[B](
       configuration: ConfigDescriptor[B],
-      previousDescription: String,
       paths: Vector[String],
       acc: List[String],
       docs: ConfigDocs
@@ -112,35 +111,34 @@ object Read {
               paths.toVector :+ path,
               Some(configValue.value),
               Some(configValue.source),
-              if (previousDescription.isEmpty) acc
-              else previousDescription :: acc
+              acc
             )
 
           } yield (result, pathDetails)
 
         case ConfigDescriptor.Nested(c, path) =>
-          loop(c, previousDescription, paths :+ path, acc, docs)
+          loop(c, paths :+ path, acc, docs)
 
         case ConfigDescriptor.XmapEither(c, f, _) =>
-          loop(c, previousDescription, paths, acc, docs).flatMap {
+          loop(c, paths, acc, docs).flatMap {
             case (a, configDocs) =>
               ZIO.fromEither(f(a)).bimap(err => ReadErrors(err), res => (res, configDocs))
           }
 
         // No need to add report on the default value.
         case ConfigDescriptor.Default(c, value) =>
-          loop(c, previousDescription, paths, acc, docs).map(_ => (value, docs))
+          loop(c, paths, acc, docs).map(_ => (value, docs))
 
         case ConfigDescriptor.Describe(c, message) =>
-          loop(c, message, paths, acc, docs)
+          loop(c, paths, message :: acc, docs)
 
         case ConfigDescriptor.Optional(c) =>
-          loop(c, previousDescription, paths, acc, docs).option.map((_, docs))
+          loop(c, paths, acc, docs).option.map((_, docs))
 
         case ConfigDescriptor.Zip(left, right) => {
           val zip = for {
-            res1 <- loop(left, previousDescription, paths, acc, docs).either
-            res2 <- loop(right, previousDescription, paths, acc, docs).either
+            res1 <- loop(left, paths, acc, docs).either
+            res2 <- loop(right, paths, acc, docs).either
 
             zipResult = (res1, res2) match {
               case (Right((a, doc1)), Right((b, doc2))) => Right(((a, b), ConfigDocs.And(doc1, doc2)))
@@ -154,11 +152,11 @@ object Read {
         }
 
         case ConfigDescriptor.OrElseEither(left, right) =>
-          loop(left, previousDescription, paths, acc, docs).either.flatMap(
+          loop(left, paths, acc, docs).either.flatMap(
             {
               case Right(a) => ZIO.succeed((Left(a), docs))
               case Left(lerr) =>
-                loop(right, previousDescription, paths, acc, docs).either.flatMap(
+                loop(right, paths, acc, docs).either.flatMap(
                   {
                     case Right(b)   => ZIO.succeed((Right(b), docs))
                     case Left(rerr) => ZIO.fail(ReadErrors.concat(lerr, rerr))
@@ -168,11 +166,9 @@ object Read {
           )
       }
 
-    config
-      .getSourceDescription[String, String]
-      .flatMap(
-        description =>
-          loop(configuration, "", Vector.empty, Nil, ConfigDocs.SourceDescription(description, ConfigDocs.Empty()))
-      )
+    for {
+      description <- config.getSourceDescription[String, String]
+      result      <- loop(configuration, Vector.empty, Nil, ConfigDocs.Empty())
+    } yield (result._1, ConfigDocs.SourceDescription(description, result._2))
   }
 }
