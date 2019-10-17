@@ -63,7 +63,7 @@ object CoproductExample extends App {
   assert(
     runtime.unsafeRun(read(prodOrDev).provide(invalidSource).either) ==
       Left(
-        List(
+        ReadErrors(
           MissingValue("x1"),
           ParseError("x5", "notadouble", "double")
         )

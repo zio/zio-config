@@ -1,0 +1,25 @@
+{
+  "read-sidebar": {
+    "Read the config": [
+      "read/read_index",
+      "read/read_optional",
+      "read/read_default",
+      "read/read_nested"
+    ]
+  },
+  "write-sidebar": {
+    "Write the config back": [
+      "write/write_index",
+      "write/write_optional",
+      "write/write_default",
+      "write/write_nested"
+    ]
+  },
+  "doc-sidebar": {
+    "Doc your config": [
+      "doc/doc_index",
+      "doc/doc_manpage",
+      "doc/doc_with_report"
+    ]
+  }
+}

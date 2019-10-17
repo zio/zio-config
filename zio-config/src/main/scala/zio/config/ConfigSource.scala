@@ -18,7 +18,7 @@ trait ConfigSource[K, V] { self =>
             s"${selfDesc}: with fallback source: ${thatDesc} (on all errors)"
           }
 
-          def getConfigValue(path: List[K]): IO[ReadError[K, V], ConfigSource.Value[V]] =
+          def getConfigValue(path: Vector[K]): IO[ReadError[K, V], ConfigSource.Value[V]] =
             self.configSourceService
               .getConfigValue(path)
               .orElse(
@@ -42,7 +42,7 @@ trait ConfigSource[K, V] { self =>
             s"${selfDesc}: with fallback source: ${thatDesc} (on missing value)"
           }
 
-          def getConfigValue(path: List[K]): IO[ReadError[K, V], ConfigSource.Value[V]] =
+          def getConfigValue(path: Vector[K]): IO[ReadError[K, V], ConfigSource.Value[V]] =
             self.configSourceService
               .getConfigValue(path)
               .catchSome {
@@ -63,7 +63,7 @@ trait ConfigSource[K, V] { self =>
           val sourceDescription: String =
             self.configSourceService.sourceDescription
 
-          def getConfigValue(path: List[K]): IO[ReadError[K, V2], ConfigSource.Value[V2]] =
+          def getConfigValue(path: Vector[K]): IO[ReadError[K, V2], ConfigSource.Value[V2]] =
             self.configSourceService
               .getConfigValue(path)
               .foldM(
@@ -85,7 +85,7 @@ object ConfigSource {
   trait Service[K, V] {
     val sourceDescription: String
 
-    def getConfigValue(path: List[K]): IO[ReadError[K, V], Value[V]]
+    def getConfigValue(path: Vector[K]): IO[ReadError[K, V], Value[V]]
   }
 
   val fromEnv: ZIO[System, Nothing, ConfigSource[String, String]] =
@@ -95,7 +95,7 @@ object ConfigSource {
           new ConfigSource.Service[String, String] {
             val sourceDescription: String = "Environment"
 
-            def getConfigValue(path: List[String]): IO[ReadError[String, String], ConfigSource.Value[String]] = {
+            def getConfigValue(path: Vector[String]): IO[ReadError[String, String], ConfigSource.Value[String]] = {
               val key = path.mkString("_")
 
               env.system
@@ -122,7 +122,7 @@ object ConfigSource {
           new ConfigSource.Service[String, String] {
             val sourceDescription: String = "System properties"
 
-            def getConfigValue(path: List[String]): IO[ReadError[String, String], ConfigSource.Value[String]] = {
+            def getConfigValue(path: Vector[String]): IO[ReadError[String, String], ConfigSource.Value[String]] = {
               val key = path.mkString(".")
 
               env.system
@@ -148,7 +148,7 @@ object ConfigSource {
         new ConfigSource.Service[String, String] {
           val sourceDescription: String = "Scala Map"
 
-          def getConfigValue(path: List[String]): IO[ReadError[String, String], ConfigSource.Value[String]] = {
+          def getConfigValue(path: Vector[String]): IO[ReadError[String, String], ConfigSource.Value[String]] = {
             val key = path.mkString(delimiter)
 
             ZIO
@@ -165,5 +165,5 @@ object ConfigSource {
     propertyTree: PropertyTree[String, String],
     delimiter: String = "."
   ): ConfigSource[String, String] =
-    fromMap(propertyTree.flatten(delimiter))
+    fromMap(propertyTree.flattenString(delimiter))
 }

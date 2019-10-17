@@ -19,11 +19,10 @@ object ConfigDocs {
 
   final def createDoc[A](config: ConfigDescriptor[A], value: Option[A]): ConfigDocs = {
     def loop[B](
-      acc: List[String],
-      desc: String,
+      descAcc: List[String],
       config: ConfigDescriptor[B],
       docs: ConfigDocs,
-      value: Option[B],
+      configValue: Option[B],
       paths: Vector[String]
     ): ConfigDocs =
       config match {
@@ -31,64 +30,63 @@ object ConfigDocs {
         case ConfigDescriptor.Source(path, p) =>
           PathDetails(
             paths :+ path,
-            value.map(t => p.write(t)),
+            configValue.map(t => p.write(t)),
             None,
-            if (desc.isEmpty) acc
-            else desc :: acc
+            descAcc
           )
         case ConfigDescriptor.Default(c, _) =>
-          loop(acc, desc, c, docs, value, paths)
+          loop(descAcc, c, docs, configValue, paths)
 
-        case ConfigDescriptor.Describe(c, message) =>
-          loop(message :: acc, desc, c, docs, value, paths)
+        case ConfigDescriptor.Describe(c, description) =>
+          loop(description :: descAcc, c, docs, configValue, paths)
 
         case ConfigDescriptor.Optional(c) =>
-          value match {
+          configValue match {
             case Some(result) =>
-              result.fold(loop(acc, desc, c, docs, None, paths))(v => loop(acc, desc, c, docs, Some(v), paths))
+              result.fold(loop(descAcc, c, docs, None, paths))(v => loop(descAcc, c, docs, Some(v), paths))
             case None =>
-              loop(acc, desc, c, docs, None, paths)
+              loop(descAcc, c, docs, None, paths)
           }
 
         case ConfigDescriptor.Nested(c, path) =>
-          loop(acc, desc, c, docs, value, paths :+ path)
+          loop(descAcc, c, docs, configValue, paths :+ path)
 
         case ConfigDescriptor.XmapEither(c, _, to) =>
-          value match {
+          configValue match {
             case Some(v) =>
-              to(v).fold(_ => loop(acc, desc, c, docs, None, paths), vv => loop(acc, desc, c, docs, Some(vv), paths))
+              to(v).fold(_ => loop(descAcc, c, docs, None, paths), vv => loop(descAcc, c, docs, Some(vv), paths))
             case None =>
-              loop(acc, desc, c, docs, None, paths)
+              loop(descAcc, c, docs, None, paths)
           }
 
         case ConfigDescriptor.Zip(left, right) =>
-          value match {
+          configValue match {
             case Some(tuple) =>
               ConfigDocs.And(
-                loop(acc, desc, left, docs, Some(tuple._1), paths),
-                loop(acc, desc, right, docs, Some(tuple._2), paths)
+                loop(descAcc, left, docs, Some(tuple._1), paths),
+                loop(descAcc, right, docs, Some(tuple._2), paths)
               )
 
             case None =>
-              ConfigDocs.And(loop(acc, desc, left, docs, None, paths), loop(acc, desc, right, docs, None, paths))
+              ConfigDocs.And(loop(descAcc, left, docs, None, paths), loop(descAcc, right, docs, None, paths))
           }
 
         case ConfigDescriptor.OrElseEither(left, right) =>
-          value match {
+          configValue match {
             case Some(res) =>
               res match {
                 case Left(vv) =>
-                  ConfigDocs.Or(loop(acc, desc, left, docs, Some(vv), paths), loop(acc, desc, right, docs, None, paths))
+                  ConfigDocs.Or(loop(descAcc, left, docs, Some(vv), paths), loop(descAcc, right, docs, None, paths))
 
                 case Right(vv) =>
-                  ConfigDocs.Or(loop(acc, desc, left, docs, None, paths), loop(acc, desc, right, docs, Some(vv), paths))
+                  ConfigDocs.Or(loop(descAcc, left, docs, None, paths), loop(descAcc, right, docs, Some(vv), paths))
               }
 
             case None =>
-              ConfigDocs.Or(loop(acc, desc, left, docs, None, paths), loop(acc, desc, right, docs, None, paths))
+              ConfigDocs.Or(loop(descAcc, left, docs, None, paths), loop(descAcc, right, docs, None, paths))
           }
       }
 
-    loop(Nil, "", config, Empty(), value, Vector.empty)
+    loop(Nil, config, Empty(), value, Vector.empty)
   }
 }

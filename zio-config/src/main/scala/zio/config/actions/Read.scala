@@ -10,8 +10,7 @@ object Read {
   ): ZIO[ConfigSource[String, String], ReadErrors[String, String], A] = {
     def loop[B](
       configuration: ConfigDescriptor[B],
-      previousDescription: String,
-      paths: List[String]
+      paths: Vector[String]
     ): ZIO[ConfigSource[String, String], ReadErrors[String, String], B] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.succeed(None)
@@ -31,31 +30,31 @@ object Read {
           } yield result
 
         case ConfigDescriptor.Nested(c, path) =>
-          loop(c, previousDescription, paths :+ path)
+          loop(c, paths :+ path)
 
         case ConfigDescriptor.XmapEither(c, f, _) =>
-          loop(c, previousDescription, paths).flatMap { a =>
+          loop(c, paths).flatMap { a =>
             ZIO.fromEither(f(a)).mapError(err => ReadErrors(err))
           }
 
         // No need to add report on the default value.
         case ConfigDescriptor.Default(c, value) =>
-          loop(c, previousDescription, paths).fold(
+          loop(c, paths).fold(
             _ => value,
             identity
           )
 
-        case ConfigDescriptor.Describe(c, message) =>
-          loop(c, message, paths)
+        case ConfigDescriptor.Describe(c, _) =>
+          loop(c, paths)
 
         case ConfigDescriptor.Optional(c) =>
-          loop(c, previousDescription, paths).option
+          loop(c, paths).option
 
         case ConfigDescriptor.Zip(left, right) =>
-          loop(left, previousDescription, paths).either
+          loop(left, paths).either
             .flatMap(
               res1 =>
-                loop(right, previousDescription, paths).either.map(
+                loop(right, paths).either.map(
                   res2 =>
                     (res1, res2) match {
                       case (Right(a), Right(b))     => Right((a, b))
@@ -68,11 +67,11 @@ object Read {
             .absolve
 
         case ConfigDescriptor.OrElseEither(left, right) =>
-          loop(left, previousDescription, paths).either.flatMap(
+          loop(left, paths).either.flatMap(
             {
               case Right(a) => ZIO.succeed(Left(a))
               case Left(lerr) =>
-                loop(right, previousDescription, paths).either.flatMap(
+                loop(right, paths).either.flatMap(
                   {
                     case Right(b)   => ZIO.succeed(Right(b))
                     case Left(rerr) => ZIO.fail(ReadErrors.concat(lerr, rerr))
@@ -82,7 +81,7 @@ object Read {
           )
       }
 
-    loop(configuration, "", Nil)
+    loop(configuration, Vector.empty)
   }
 
   final def readWithConfigDocs[A](
@@ -91,7 +90,7 @@ object Read {
     def loop[B](
       configuration: ConfigDescriptor[B],
       previousDescription: String,
-      paths: List[String],
+      paths: Vector[String],
       acc: List[String],
       docs: ConfigDocs
     ): ZIO[ConfigSource[String, String], ReadErrors[String, String], (B, ConfigDocs)] =
@@ -123,8 +122,9 @@ object Read {
           loop(c, previousDescription, paths :+ path, acc, docs)
 
         case ConfigDescriptor.XmapEither(c, f, _) =>
-          loop(c, previousDescription, paths, acc, docs).flatMap { a =>
-            ZIO.fromEither(f(a)).bimap(err => ReadErrors(err), res => (res, docs))
+          loop(c, previousDescription, paths, acc, docs).flatMap {
+            case (a, configDocs) =>
+              ZIO.fromEither(f(a)).bimap(err => ReadErrors(err), res => (res, configDocs))
           }
 
         // No need to add report on the default value.
@@ -171,7 +171,8 @@ object Read {
     config
       .getSourceDescription[String, String]
       .flatMap(
-        description => loop(configuration, "", Nil, Nil, ConfigDocs.SourceDescription(description, ConfigDocs.Empty()))
+        description =>
+          loop(configuration, "", Vector.empty, Nil, ConfigDocs.SourceDescription(description, ConfigDocs.Empty()))
       )
   }
 }
