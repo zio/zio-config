@@ -142,11 +142,16 @@ object ConfigSource {
       }
     }
 
-  def fromMap(m: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
+  def fromMap(
+    m: Map[String, String],
+    description: Option[String] = None,
+    delimiter: String = "."
+  ): ConfigSource[String, String] =
     new ConfigSource[String, String] {
       val configSourceService: ConfigSource.Service[String, String] =
         new ConfigSource.Service[String, String] {
-          val sourceDescription: String = "Scala Map"
+          val sourceDescription: String =
+            "Scala Map" + description.fold("")(desc => s" - $desc")
 
           def getConfigValue(path: Vector[String]): IO[ReadError[String, String], ConfigSource.Value[String]] = {
             val key = path.mkString(delimiter)

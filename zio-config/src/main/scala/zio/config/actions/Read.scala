@@ -108,7 +108,7 @@ object Read {
                          .fold(r => Left(ReadErrors(r)), e => Right(e))
                      )
             pathDetails = ConfigDocs.PathDetails(
-              paths.toVector :+ path,
+              paths :+ path,
               Some(configValue.value),
               Some(configValue.source),
               acc
@@ -127,7 +127,19 @@ object Read {
 
         // No need to add report on the default value.
         case ConfigDescriptor.Default(c, value) =>
-          loop(c, paths, acc, docs).map(_ => (value, docs))
+          loop(c, paths, acc, docs).orElse(
+            ZIO.succeed(
+              (
+                value,
+                ConfigDocs.PathDetails(
+                  paths, // empty vector?
+                  None,  // change to Some(value.toString)?
+                  Some("Default"),
+                  acc
+                )
+              )
+            )
+          )
 
         case ConfigDescriptor.Describe(c, message) =>
           loop(c, paths, message :: acc, docs)
