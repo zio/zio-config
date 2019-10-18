@@ -91,13 +91,14 @@ object Read {
       configuration: ConfigDescriptor[B],
       paths: Vector[String],
       acc: List[String],
-      docs: ConfigDocs
+      docs: ConfigDocs,
+      default: Option[B]
     ): ZIO[ConfigSource[String, String], ReadErrors[String, String], (B, ConfigDocs)] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.succeed((None, ConfigDocs.Empty()))
 
-        case ConfigDescriptor.Source(path, propertyType) =>
-          for {
+        case ConfigDescriptor.Source(path, propertyType) => {
+          val configValueDetails = for {
             configValue <- config
                             .getConfigValue[String, String](paths :+ path)
                             .mapError(ReadErrors(_))
@@ -116,41 +117,59 @@ object Read {
 
           } yield (result, pathDetails)
 
+          default match {
+            case None => configValueDetails
+            case Some(defaultValue) =>
+              configValueDetails orElse ZIO.succeed(
+                (
+                  defaultValue,
+                  ConfigDocs.PathDetails(
+                    paths :+ path,
+                    Some(propertyType.write(defaultValue)),
+                    Some("Config descriptor"),
+                    acc
+                  )
+                )
+              )
+          }
+        }
+
         case ConfigDescriptor.Nested(c, path) =>
-          loop(c, paths :+ path, acc, docs)
+          loop(c, paths :+ path, acc, docs, default)
 
         case ConfigDescriptor.XmapEither(c, f, _) =>
-          loop(c, paths, acc, docs).flatMap {
+          loop(c, paths, acc, docs, default).flatMap {
             case (a, configDocs) =>
               ZIO.fromEither(f(a)).bimap(err => ReadErrors(err), res => (res, configDocs))
           }
 
         // No need to add report on the default value.
         case ConfigDescriptor.Default(c, value) =>
-          loop(c, paths, acc, docs).orElse(
-            ZIO.succeed(
-              (
-                value,
-                ConfigDocs.PathDetails(
-                  paths, // empty vector?
-                  None,  // change to Some(value.toString)?
-                  Some("Default"),
-                  acc
-                )
-              )
-            )
-          )
+          loop(c, paths, acc, docs, Some(value))
+        // .orElse(
+        //   ZIO.succeed(
+        //     (
+        //       value,
+        //       ConfigDocs.PathDetails(
+        //         paths, // empty vector?
+        //         None,  // change to Some(value.toString)?
+        //         Some("Default"),
+        //         acc
+        //       )
+        //     )
+        //   )
+        // )
 
         case ConfigDescriptor.Describe(c, message) =>
-          loop(c, paths, message :: acc, docs)
+          loop(c, paths, message :: acc, docs, default)
 
         case ConfigDescriptor.Optional(c) =>
-          loop(c, paths, acc, docs).option.map((_, docs))
+          loop(c, paths, acc, docs, default).option.map((_, docs))
 
         case ConfigDescriptor.Zip(left, right) => {
           val zip = for {
-            res1 <- loop(left, paths, acc, docs).either
-            res2 <- loop(right, paths, acc, docs).either
+            res1 <- loop(left, paths, acc, docs, default).either
+            res2 <- loop(right, paths, acc, docs, default).either
 
             zipResult = (res1, res2) match {
               case (Right((a, doc1)), Right((b, doc2))) => Right(((a, b), ConfigDocs.And(doc1, doc2)))
@@ -164,11 +183,11 @@ object Read {
         }
 
         case ConfigDescriptor.OrElseEither(left, right) =>
-          loop(left, paths, acc, docs).either.flatMap(
+          loop(left, paths, acc, docs, default).either.flatMap(
             {
               case Right(a) => ZIO.succeed((Left(a), docs))
               case Left(lerr) =>
-                loop(right, paths, acc, docs).either.flatMap(
+                loop(right, paths, acc, docs, default).either.flatMap(
                   {
                     case Right(b)   => ZIO.succeed((Right(b), docs))
                     case Left(rerr) => ZIO.fail(ReadErrors.concat(lerr, rerr))
@@ -180,7 +199,7 @@ object Read {
 
     for {
       description <- config.getSourceDescription[String, String]
-      result      <- loop(configuration, Vector.empty, Nil, ConfigDocs.Empty())
+      result      <- loop(configuration, Vector.empty, Nil, ConfigDocs.Empty(), None)
     } yield (result._1, ConfigDocs.SourceDescription(description, result._2))
   }
 }

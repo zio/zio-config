@@ -114,7 +114,12 @@ object NestedConfigExample extends App {
               )
             )
           ),
-          PathDetails(Vector.empty, None, Some("Default"), List("default value: myApp"))
+          PathDetails(
+            Vector("appName"),
+            Some("myApp"),
+            Some("Config descriptor"),
+            List("value of type string", "default value: myApp")
+          )
         )
       )
   )
