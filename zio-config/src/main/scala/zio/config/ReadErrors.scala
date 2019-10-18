@@ -15,19 +15,20 @@ object ReadErrors {
   def concat[K, V](l: ReadErrors[K, V], r: ReadErrors[K, V]): ReadErrors[K, V] =
     ReadErrors(::(l.errors.head, l.errors.tail ++ r.errors))
 
-  sealed trait ReadError[+K, +V] extends NoStackTrace {
+  sealed trait ReadError[+K, +V] extends NoStackTrace { self =>
     val key: K
+
+    override def toString(): String = self match {
+      case ReadError.MissingValue(key)                  => s"MissingValue($key)"
+      case ReadError.ParseError(key, provided, message) => s"ParseError($key, $provided, $message)"
+      case ReadError.FatalError(key, cause)             => s"FatalError($key, $cause)"
+    }
   }
 
   object ReadError {
-    final case class MissingValue[K](key: K) extends ReadError[K, Nothing] {
-      override def toString(): String = s"MissingValue($key)"
-    }
-    final case class ParseError[K, V](key: K, provided: V, message: String) extends ReadError[K, V] {
-      override def toString(): String = s"ParseError($key, $provided, $message)"
-    }
-    final case class FatalError[K](key: K, cause: Throwable) extends ReadError[K, Nothing] {
-      override def toString(): String = s"FatalError($key, $cause)"
-    }
+    final case class MissingValue[K](key: K)                                extends ReadError[K, Nothing]
+    final case class ParseError[K, V](key: K, provided: V, message: String) extends ReadError[K, V]
+    final case class FatalError[K](key: K, cause: Throwable)                extends ReadError[K, Nothing]
   }
+
 }
