@@ -1,25 +1,27 @@
 {
-  "read-sidebar": {
-    "Read the config": [
-      "read/read_index",
-      "read/read_optional",
-      "read/read_default",
-      "read/read_nested"
+  "intro-sidebar": {
+    "Introduction": [
+      "intro/intro_index"
     ]
   },
-  "write-sidebar": {
-    "Write the config back": [
-      "write/write_index",
-      "write/write_optional",
-      "write/write_default",
-      "write/write_nested"
+  "read-sidebar": {
+    "Create Docs": [
+      "read/read_index"
     ]
   },
   "doc-sidebar": {
-    "Doc your config": [
-      "doc/doc_index",
-      "doc/doc_manpage",
-      "doc/doc_with_report"
+    "Generate Docs": [
+      "doc/doc_index"
+    ]
+  },
+  "report-sidebar": {
+    "Report": [
+      "report/report_index"
+    ]
+  },
+  "write-sidebar": {
+    "Write Config": [
+      "write/write_index"
     ]
   }
 }
