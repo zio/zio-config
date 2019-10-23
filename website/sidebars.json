@@ -1,25 +1,15 @@
 {
   "read-sidebar": {
-    "Read the config": [
+    "Read": [
       "read/read_index",
-      "read/read_optional",
-      "read/read_default",
-      "read/read_nested"
-    ]
-  },
-  "write-sidebar": {
-    "Write the config back": [
-      "write/write_index",
-      "write/write_optional",
-      "write/write_default",
-      "write/write_nested"
+      "read/read_files",
+      "read/read_sockets"
     ]
   },
   "doc-sidebar": {
-    "Doc your config": [
+    "Documentation": [
       "doc/doc_index",
-      "doc/doc_manpage",
-      "doc/doc_with_report"
+      "doc/doc_client_server"
     ]
   }
 }

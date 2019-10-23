@@ -63,10 +63,9 @@ class HomeSplash extends React.Component {
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-            <Button href={docUrl('read/read_index')}>Read Config</Button>
-            <Button href={docUrl('write/write_index')}>Write Config</Button>
-            <Button href={docUrl('doc/doc_index')}>Report Config</Button>
-            <Button href="https://github.com/zio/zio-config" target="_blank" >GitHub</Button>
+            <Button href={docUrl('read/read_index')}>Read</Button>
+            <Button href={docUrl('doc/doc_index')}>Use Cases</Button>
+            <Button href="https://github.com/zio/zio-nio" target="_blank" >GitHub</Button>
           </PromoSection>
         </div>
       </SplashContainer>
@@ -96,8 +95,8 @@ class Index extends React.Component {
       <div
         className="productShowcaseSection paddingBottom"
         style={{textAlign: 'center'}}>
-        <h2>Report your config</h2>
-        <MarkdownBlock>Creates a man page, and even reports on your config - given the same config description</MarkdownBlock>
+        <h2>Type-safe</h2>
+        <MarkdownBlock>Type-safe and effectful API that uses `ZIO` library</MarkdownBlock>
       </div>
     );
 
@@ -105,13 +104,13 @@ class Index extends React.Component {
       <Block layout="fourColumn">
         {[
           {
-            content: 'Read your config - given a config description',
+            content: 'Moving away from blocking streams waiting on input',
             image: `${baseUrl}img/undraw_tweetstorm.svg`,
             imageAlign: 'top',
-            title: 'Read config',
+            title: 'Non-blocking',
           },
           {
-            content: 'Write the config back - and it ensures the app will read it back - given the same config description',
+            content: 'Contrary to stream-like processing - buffers make it possible to move on received content without external capture',
             image: `${baseUrl}img/undraw_operating_system.svg`,
             imageAlign: 'top',
             title: 'Buffer oriented',
