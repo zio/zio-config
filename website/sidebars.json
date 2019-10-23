@@ -1,11 +1,16 @@
 {
+  "intro-sidebar": {
+    "Introduction": [
+      "intro/intro_index"
+    ]
+  },
   "read-sidebar": {
-    "Read Config": [
+    "Create Docs": [
       "read/read_index"
     ]
   },
   "doc-sidebar": {
-    "Documentation": [
+    "Generate Docs": [
       "doc/doc_index"
     ]
   },

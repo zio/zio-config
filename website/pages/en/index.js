@@ -63,11 +63,12 @@ class HomeSplash extends React.Component {
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
+            <Button href={docUrl('intro/intro_index')}>Introduction</Button>
             <Button href={docUrl('read/read_index')}>Read Config</Button>
-            <Button href={docUrl('doc/doc_index')}>Documentation</Button>
+            <Button href={docUrl('doc/doc_index')}>Create Docs</Button>
             <Button href={docUrl('report/report_index')}>Report</Button>
             <Button href={docUrl('write/write_index')}>Write</Button>
-            <Button href="https://github.com/zio/zio-nio" target="_blank" >GitHub</Button>
+            <Button href="https://github.com/zio/zio-config" target="_blank" >GitHub</Button>
           </PromoSection>
         </div>
       </SplashContainer>
@@ -97,8 +98,8 @@ class Index extends React.Component {
       <div
         className="productShowcaseSection paddingBottom"
         style={{textAlign: 'center'}}>
-        <h2>Type-safe</h2>
-        <MarkdownBlock>Type-safe and effectful API that uses `ZIO` library</MarkdownBlock>
+        <h2>Auto-generate docs</h2>
+        <MarkdownBlock>Create a man-page for your configuration model based on the same description that lets you read the configuration</MarkdownBlock>
       </div>
     );
 
@@ -106,16 +107,16 @@ class Index extends React.Component {
       <Block layout="fourColumn">
         {[
           {
-            content: 'Moving away from blocking streams waiting on input',
+            content: 'Describe your configuration model using a familiar, composable syntax',
             image: `${baseUrl}img/undraw_tweetstorm.svg`,
             imageAlign: 'top',
-            title: 'Non-blocking',
+            title: 'Composable syntax',
           },
           {
-            content: 'Contrary to stream-like processing - buffers make it possible to move on received content without external capture',
+            content: "That's better than 'easy to go insane'",
             image: `${baseUrl}img/undraw_operating_system.svg`,
             imageAlign: 'top',
-            title: 'Buffer oriented',
+            title: 'Insanely easy to use',
           },
         ]}
       </Block>

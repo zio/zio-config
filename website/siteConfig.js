@@ -22,7 +22,7 @@ const users = [
 
 const siteConfig = {
   title: 'ZIO Config',
-  tagline: 'A small, unopinionated ZIO interface to Config',
+  tagline: 'A functional, composable ZIO interface to configuration',
   url: 'https://zio.github.io',
   baseUrl: '/Users/s117476/dev/lp/zio-config/website/build/zio-config/', // Base URL for your project */
 
@@ -32,8 +32,9 @@ const siteConfig = {
 
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
+    {doc: 'intro/intro_index', label: 'Introduction'},
     {doc: 'read/read_index', label: 'Read Config'},
-    {doc: 'doc/doc_index', label: 'Documentation'},
+    {doc: 'doc/doc_index', label: 'Create Docs'},
     {doc: 'report/report_index', label: 'Report'},
     {doc: 'write/write_index', label: 'Write Config'},
   ],
