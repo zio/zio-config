@@ -63,9 +63,11 @@ class HomeSplash extends React.Component {
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
+            <Button href={docUrl('intro/intro_index')}>Introduction</Button>
             <Button href={docUrl('read/read_index')}>Read Config</Button>
-            <Button href={docUrl('write/write_index')}>Write Config</Button>
-            <Button href={docUrl('doc/doc_index')}>Report Config</Button>
+            <Button href={docUrl('doc/doc_index')}>Create Docs</Button>
+            <Button href={docUrl('report/report_index')}>Report</Button>
+            <Button href={docUrl('write/write_index')}>Write</Button>
             <Button href="https://github.com/zio/zio-config" target="_blank" >GitHub</Button>
           </PromoSection>
         </div>
@@ -96,8 +98,8 @@ class Index extends React.Component {
       <div
         className="productShowcaseSection paddingBottom"
         style={{textAlign: 'center'}}>
-        <h2>Report your config</h2>
-        <MarkdownBlock>Creates a man page, and even reports on your config - given the same config description</MarkdownBlock>
+        <h2>Auto-generate docs</h2>
+        <MarkdownBlock>Create a man-page for your configuration model based on the same description that lets you read the configuration</MarkdownBlock>
       </div>
     );
 
@@ -105,16 +107,16 @@ class Index extends React.Component {
       <Block layout="fourColumn">
         {[
           {
-            content: 'Read your config - given a config description',
+            content: 'Describe your configuration model using a familiar, composable syntax',
             image: `${baseUrl}img/undraw_tweetstorm.svg`,
             imageAlign: 'top',
-            title: 'Read config',
+            title: 'Composable syntax',
           },
           {
-            content: 'Write the config back - and it ensures the app will read it back - given the same config description',
+            content: "That's better than 'easy to go insane'",
             image: `${baseUrl}img/undraw_operating_system.svg`,
             imageAlign: 'top',
-            title: 'Buffer oriented',
+            title: 'Insanely easy to use',
           },
         ]}
       </Block>
