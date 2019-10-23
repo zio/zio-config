@@ -63,8 +63,10 @@ class HomeSplash extends React.Component {
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-            <Button href={docUrl('read/read_index')}>Read</Button>
-            <Button href={docUrl('doc/doc_index')}>Use Cases</Button>
+            <Button href={docUrl('read/read_index')}>Read Config</Button>
+            <Button href={docUrl('doc/doc_index')}>Documentation</Button>
+            <Button href={docUrl('report/report_index')}>Report</Button>
+            <Button href={docUrl('write/write_index')}>Write</Button>
             <Button href="https://github.com/zio/zio-nio" target="_blank" >GitHub</Button>
           </PromoSection>
         </div>
