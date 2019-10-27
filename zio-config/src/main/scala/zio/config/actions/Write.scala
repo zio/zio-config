@@ -9,7 +9,7 @@ object Write {
         case ConfigDescriptor.Empty() =>
           Right(PropertyTree.Empty)
 
-        case ConfigDescriptor.Source(path, propertyType) =>
+        case ConfigDescriptor.Source(path, propertyType, _) =>
           Right(PropertyTree.Record(Map(path -> PropertyTree.Leaf(propertyType.write(b)))))
 
         case ConfigDescriptor.Describe(c, _) =>

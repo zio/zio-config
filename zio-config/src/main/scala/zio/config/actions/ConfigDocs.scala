@@ -2,12 +2,13 @@ package zio.config.actions
 
 import zio.config.ConfigDescriptor
 
-sealed trait ConfigDocs
+sealed trait ConfigDocs[K, V]
 
 object ConfigDocs {
 
-  final case class Empty()                                                                      extends ConfigDocs
-  final case class PathDetails(path: Vector[String], value: Option[String], docs: List[String]) extends ConfigDocs
+  final case object Empty                                                                       extends ConfigDocs
+  final case class PathDetails[K, V](path: K, value: Option[V], docs: List[String])             extends ConfigDocs
+  final case class Nested[K, V](path: K, docs: ConfigDocs[K, V])                                extends ConfigDocs[K, V]
   final case class And(left: ConfigDocs, right: ConfigDocs)                                     extends ConfigDocs
   final case class Or(left: ConfigDocs, right: ConfigDocs)                                      extends ConfigDocs
 

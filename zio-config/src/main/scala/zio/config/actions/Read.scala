@@ -1,23 +1,23 @@
 package zio.config.actions
 
-import zio.config.{ ConfigDescriptor, ConfigSource, ReadErrors }
-import zio.{ config, ZIO }
+import zio.config.{ConfigDescriptor, ConfigSource, ReadErrors}
+import zio.{IO, ZIO, config}
 
 object Read {
   // Read
   final def read[A](
     configuration: ConfigDescriptor[A]
-  ): ZIO[ConfigSource[String, String], ReadErrors[String, String], A] = {
+  ): IO[ReadErrors[String, String], A] = {
     def loop[B](
       configuration: ConfigDescriptor[B],
       paths: Vector[String]
-    ): ZIO[ConfigSource[String, String], ReadErrors[String, String], B] =
+    ): IO[ReadErrors[String, String], B] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.access(_ => None)
 
-        case ConfigDescriptor.Source(path, propertyType) =>
+        case ConfigDescriptor.Source(path, propertyType, source) =>
           for {
-            value <- config
+            value <- source
                       .getConfigValue[String, String](paths :+ path)
                       .mapError(ReadErrors(_))
 

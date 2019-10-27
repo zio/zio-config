@@ -4,48 +4,40 @@ import zio.config.ReadErrors.ReadError
 import zio.system.System
 import zio.{ IO, ZIO }
 
-trait ConfigSource[K, V] {
-  val configSourceService: ConfigSource.Service[K, V]
+final case class ConfigSource[K, +V](getConfigValue: K => IO[ReadError[K, V], V], sourceDescription: List[String]) {
+  def orElse[V1 >: V](that: => ConfigSource[K, V1]): ConfigSource[K, V1] =
+    ConfigSource(k => getConfigValue(k).orElse(that.getConfigValue(k)), sourceDescription ++ that.sourceDescription)
 }
 
 object ConfigSource {
-  trait Service[K, V] {
-    def getConfigValue(path: Vector[K]): IO[ReadError[K, V], V]
-  }
+  def empty[K] =
+    ConfigSource(k => IO.fail(ReadError.MissingValue(k)), List.empty)
 
-  val fromEnv: ZIO[System, Nothing, ConfigSource[String, String]] =
-    ZIO.access { env =>
-      new ConfigSource[String, String] {
-        val configSourceService: ConfigSource.Service[String, String] =
+  val fromEnv: ConfigSource[Vector[String], String] =
+    ConfigSource(
           (path: Vector[String]) => {
             val key = path.mkString("_")
-            env.system
-              .env(key)
+            ZIO.accessM[System](_.system.env(key)
               .mapError { err =>
                 ReadError.FatalError(key, err): ReadError[String, String]
               }
               .flatMap(IO.fromOption(_))
-              .mapError(_ => ReadError.MissingValue(key))
-          }
-      }
-    }
+              .mapError(_ => ReadError.MissingValue(path))
+          })
+      )
 
-  val fromProperty: ZIO[System, Nothing, ConfigSource[String, String]] =
-    ZIO.access { env =>
-      new ConfigSource[String, String] {
-        val configSourceService: ConfigSource.Service[String, String] =
+  val fromProperty: ConfigSource[Vector[String], String] =
+    ConfigSource(
           (path: Vector[String]) => {
             val key = path.mkString(".")
-            env.system
+            System.Live.system.property(
               .property(key)
               .mapError { err =>
                 ReadError.FatalError(key, err): ReadError[String, String]
               }
               .flatMap(IO.fromOption(_))
               .mapError(_ => ReadError.MissingValue(key))
-          }
-      }
-    }
+          }))
 
   def fromMap(map: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
     new ConfigSource[String, String] {

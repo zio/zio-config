@@ -7,19 +7,19 @@ import zio.config.ReadErrors.ReadError.ParseError
 
 import scala.util.{ Failure, Success, Try }
 
-trait PropertyType[A] {
-  def read(path: String, propertyValue: String): Either[ReadError[String, String], A]
-  def write(a: A): String
+trait PropertyType[K, V, A] {
+  def read(path: K, propertyValue: V): Either[ReadError[K, V], A]
+  def write(a: A): V
 }
 
 object PropertyType {
 
-  case object StringType extends PropertyType[String] {
+  case object StringType extends PropertyType[String, String, String] {
     override def read(path: String, value: String): Either[ReadError[String, String], String] = Right(value)
     override def write(a: String): String                                                     = a
   }
 
-  case object BooleanType extends PropertyType[Boolean] {
+  case object BooleanType extends PropertyType[String, String, Boolean] {
     def read(path: String, value: String): Either[ReadError[String, String], Boolean] =
       attempt(value.toBoolean, _ => ParseError(path, value, "boolean"))
     def write(value: Boolean): String = value.toString
