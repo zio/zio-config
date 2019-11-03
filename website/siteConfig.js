@@ -24,7 +24,7 @@ const siteConfig = {
   title: 'ZIO Config',
   tagline: 'A functional, composable ZIO interface to configuration',
   url: 'https://zio.github.io',
-  baseUrl: '/Users/s117476/dev/lp/zio-config/website/build/zio-config/', // Base URL for your project */
+  baseUrl: '/zio-config/', // Base URL for your project */
 
   // Used for publishing and more
   projectName: 'zio-config',
