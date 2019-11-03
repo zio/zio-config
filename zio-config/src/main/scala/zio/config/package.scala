@@ -5,13 +5,13 @@ import zio.config.actions.{ ConfigDocs, Read, Write }
 
 package object config {
 
-  def read[A](config: => ConfigDescriptor[A]): ZIO[ConfigSource[String, String], ReadErrors[String, String], A] =
-    Read.read[A](config)
+  def read[K, V, A](config: => ConfigDescriptor[Vector[K], V, A]): ZIO[ConfigSource[Vector[K], V], ReadErrors[Vector[K], V], A] =
+    Read.read[K, V, A](config)
 
-  def write[A](config: => ConfigDescriptor[A], a: A): Either[String, PropertyTree[String, String]] =
+  def write[K, V, A](config: => ConfigDescriptor[Vector[K], V, A], a: A): Either[String, PropertyTree[String, String]] =
     Write.write[A](config, a)
 
-  def docs[A](config: => ConfigDescriptor[A], value: Option[A]): ConfigDocs =
+  def docs[A](config: => ConfigDescriptor[K, V, A], value: Option[A]): ConfigDocs =
     ConfigDocs.createDoc[A](config, value)
 
   def config[A]: ZIO[Config[A], Nothing, A] =

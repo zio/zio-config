@@ -5,26 +5,26 @@ import zio.{IO, ZIO, config}
 
 object Read {
   // Read
-  final def read[A](
-    configuration: ConfigDescriptor[A]
-  ): IO[ReadErrors[String, String], A] = {
+  final def read[K, V, A](
+    configuration: ConfigDescriptor[Vector[K], V, A]
+  ): IO[ReadErrors[Vector[K], V], A] = {
     def loop[B](
-      configuration: ConfigDescriptor[B],
-      paths: Vector[String]
-    ): IO[ReadErrors[String, String], B] =
+      configuration: ConfigDescriptor[Vector[K], V, B],
+      paths: Vector[K]
+    ): IO[ReadErrors[Vector[K], V], B] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.access(_ => None)
 
         case ConfigDescriptor.Source(path, propertyType, source) =>
           for {
             value <- source
-                      .getConfigValue[String, String](paths :+ path)
+                      .getConfigValue[Vector[K], V](paths :+ path)
                       .mapError(ReadErrors(_))
 
             result <- ZIO.fromEither(
                        propertyType
                          .read(path, value)
-                         .fold(r => Left(ReadErrors(r)), e => Right(e))
+                         .fold(r => Left(ReadErrors(::(r, Nil))), e => Right(e))
                      )
 
           } yield result

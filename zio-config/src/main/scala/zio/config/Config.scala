@@ -13,10 +13,10 @@ object Config {
     def config: UIO[A]
   }
 
-  def make[A](
-    source: ConfigSource[String, String],
-    configDescriptor: ConfigDescriptor[A]
-  ): IO[ReadErrors[String, String], Config[A]] =
+  def make[K, V, A](
+    source: ConfigSource[Vector[K], V],
+    configDescriptor: ConfigDescriptor[Vector[K], V, A]
+  ): IO[ReadErrors[Vector[K], V], Config[A]] =
     Read
       .read(configDescriptor)
       .provide(source)
@@ -29,7 +29,7 @@ object Config {
           }
       )
 
-  def fromEnv[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors[String, String], Config[A]] =
+  def fromEnv[K, V, A](configDescriptor: ConfigDescriptor[Vector[K], V,  A]): ZIO[System, ReadErrors[Vector[K], V], Config[A]] =
     for {
       source <- ConfigSource.fromEnv
       res    <- make(source, configDescriptor)

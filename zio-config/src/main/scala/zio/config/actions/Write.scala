@@ -3,8 +3,8 @@ package zio.config.actions
 import zio.config.{ ConfigDescriptor, PropertyTree }
 
 object Write {
-  final def write[A](config: ConfigDescriptor[A], a: A): Either[String, PropertyTree[String, String]] = {
-    def go[B](prevPath: String, config: ConfigDescriptor[B], b: B): Either[String, PropertyTree[String, String]] =
+  final def write[K, V, A](config: ConfigDescriptor[K, V, A], a: A): Either[String, PropertyTree[K, V]] = {
+    def go[B](config: ConfigDescriptor[K, V, B], b: B): Either[String, PropertyTree[K, V]] =
       config match {
         case ConfigDescriptor.Empty() =>
           Right(PropertyTree.Empty)
@@ -13,56 +13,51 @@ object Write {
           Right(PropertyTree.Record(Map(path -> PropertyTree.Leaf(propertyType.write(b)))))
 
         case ConfigDescriptor.Describe(c, _) =>
-          go(prevPath, c, b)
+          go(c, b)
 
         case ConfigDescriptor.Nested(c, parent) =>
-          go(prevPath, c, b) match {
-            case Right(prop) =>
-              prop match {
-                case PropertyTree.Record(tree) => Right(PropertyTree.Record(Map(parent -> PropertyTree.Record(tree))))
-                case PropertyTree.Empty        => Right(PropertyTree.Record(Map(parent -> PropertyTree.Empty)))
-                case PropertyTree.Leaf(value)  => Right(PropertyTree.Record(Map(parent -> PropertyTree.Leaf(value))))
-              }
+          go(c, b) match {
+            case Right(prop) =>  Right(PropertyTree.Record(Map(parent -> prop)))
             case Left(v) => Left(v)
           }
 
         case ConfigDescriptor.Optional(c) =>
           b.fold({
-            Right(PropertyTree.Empty): Either[String, PropertyTree[String, String]]
-          })(bb => go(prevPath, c, bb))
+            Right(PropertyTree.Empty): Either[String, PropertyTree[K, V]]
+          })(bb => go(c, bb))
 
         case ConfigDescriptor.Default(c, _) =>
-          go(prevPath, c, b)
+          go(c, b)
 
         case ConfigDescriptor.XmapEither(c, _, to) =>
           to(b) match {
             case Right(before) =>
-              go(prevPath, c, before)
+              go(c, before)
             case Left(e) =>
               Left(e)
           }
 
         case ConfigDescriptor.OrElseEither(left, right) =>
-          b.fold(aa => go(prevPath, left, aa), b => go(prevPath, right, b))
+          b.fold(aa => go(left, aa), b => go(right, b))
 
         case ConfigDescriptor.Zip(config1, config2) =>
-          go(prevPath, config1, b._1) match {
+          go(config1, b._1) match {
             case Right(m1) =>
-              go(prevPath, config2, b._2) match {
+              go(config2, b._2) match {
                 case Right(m2) =>
                   m1 match {
                     case PropertyTree.Record(mm) =>
                       m2 match {
                         case PropertyTree.Record(m2) => Right(PropertyTree.Record(mm ++ m2))
                         case PropertyTree.Empty      => Right(m1)
-                        case PropertyTree.Leaf(v)    => Right(PropertyTree.Record(Map(prevPath -> PropertyTree.Leaf(v))))
+                        case PropertyTree.Leaf(v)    => Left("impossible")
                       }
                     case PropertyTree.Leaf(v) =>
                       m2 match {
                         case PropertyTree.Record(mm) =>
-                          Right(PropertyTree.Record(mm ++ Map(prevPath -> PropertyTree.Leaf(v))))
+                         Right(PropertyTree.Record(mm))
                         case PropertyTree.Empty   => Right(m1)
-                        case PropertyTree.Leaf(v) => Right(PropertyTree.Record(Map(prevPath -> PropertyTree.Leaf(v))))
+                        case PropertyTree.Leaf(_) => Left("impossible")
                       }
                     case PropertyTree.Empty =>
                       Right(m2)
@@ -72,6 +67,6 @@ object Write {
             case Left(e) => Left(e)
           }
       }
-    go("", config, a)
+    go(config, a)
   }
 }
