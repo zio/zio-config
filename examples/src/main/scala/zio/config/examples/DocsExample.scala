@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config._
-import Config._, zio.config.actions.ConfigDocs._
+import ConfigDescriptor._, zio.config.actions.ConfigDocs._
 import zio.config.actions.ConfigDocs.PathDetails
 
 object DocsExample extends App {

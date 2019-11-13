@@ -41,7 +41,7 @@ sealed trait ConfigDescriptor[+K, +V, A] { self =>
   def |[K1 >: K, V1 >: V](that: => ConfigDescriptor[K1, V1, A]): ConfigDescriptor[K1, V1, A] =
     self orElse that
 
-  def optional[K1 >: K, V1 >: V]: ConfigDescriptor[K, V, Option[A]] =
+  def optional[K1 >: K, V1 >: V]: ConfigDescriptor[K1, V1, Option[A]] =
     ConfigDescriptor.Optional(self) ? "optional value"
 
   def default[K1 >: K, V1 >: V](value: A): ConfigDescriptor[K1, V1, A] =
@@ -59,7 +59,7 @@ sealed trait ConfigDescriptor[+K, +V, A] { self =>
       override val b: ConfigDescriptor[K1, V1, B] = f
     }
 
-  def from[K1 >: K, V1 >: V](configSource: ConfigSource[K1, V1]): ConfigDescriptor[K1, V1, A] =
+  def from[K1 >: K, V1 >: V](configSource: ConfigSource[Vector[K1], V1]): ConfigDescriptor[K1, V1, A] =
     ??? // traverse and merge the source. `orElse`
   def fromNothing: ConfigDescriptor[K, V, A] = ??? // traverse through the struvture and replace source with empty
 
@@ -69,7 +69,7 @@ object ConfigDescriptor {
 
   final case class Empty[K, V, A]() extends ConfigDescriptor[K, V, Option[A]]
 
-  final case class Source[K, V, A](path: K, propertyType: PropertyType[K, V, A], source: ConfigSource[K, V])
+  final case class Source[K, V, A](path: K, propertyType: PropertyType[K, V, A], source: ConfigSource[Vector[K], V])
       extends ConfigDescriptor[K, V, A]
 
   final case class Nested[K, V, A](config: ConfigDescriptor[K, V, A], path: K) extends ConfigDescriptor[K, V, A]
@@ -84,7 +84,7 @@ object ConfigDescriptor {
   final case class XmapEither[K, V, A, B](
     config: ConfigDescriptor[K, V, A],
     f: A => Either[ReadError[K, V], B],
-    g: B => Either[K, A]
+    g: B => Either[String, A]
   ) extends ConfigDescriptor[K, V, B]
 
   final case class Zip[K, V, A, B](left: ConfigDescriptor[K, V, A], right: ConfigDescriptor[K, V, B])

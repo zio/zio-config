@@ -6,12 +6,12 @@ import zio.{IO, ZIO, config}
 object Read {
   // Read
   final def read[K, V, A](
-    configuration: ConfigDescriptor[Vector[K], V, A]
-  ): IO[ReadErrors[Vector[K], V], A] = {
+    configuration: ConfigDescriptor[K, V, A]
+  ): IO[ReadErrors[K, V], A] = {
     def loop[B](
-      configuration: ConfigDescriptor[Vector[K], V, B],
+      configuration: ConfigDescriptor[K, V, B],
       paths: Vector[K]
-    ): IO[ReadErrors[Vector[K], V], B] =
+    ): IO[ReadErrors[K, V], B] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.access(_ => None)
 

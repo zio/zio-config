@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, Config._
+import zio.config._, ConfigDescriptor._
 import zio.config.actions.ConfigDocs._
 
 object ReadWriteReport extends App {
@@ -14,7 +14,7 @@ object ReadWriteReport extends App {
   type ProdConfig = Either[UserPwd, Token]
 
   // An example where user provides a description once and for all, and use it for read, write, report!
-  val config: ConfigDescriptor[ProdConfig] =
+  val config =
     ((string("usr") ? "Example: some-user" |@|
       string("pwd").xmap(Password)(_.value).optional ? "sec" |@|
       string("jhi").optional ? "Ex: ghi" |@|
@@ -38,7 +38,7 @@ object ReadWriteReport extends App {
     ConfigSource.fromMap(userNamePassword)
 
   val result: ProdConfig =
-    runtime.unsafeRun(read(config).provide(source))
+    runtime.unsafeRun(read(config from source)) // Equivalent to Config.fromMap(userNamePassword, config)
 
   assert(
     result == Left(UserPwd("v1", Some(Password("v2")), None, Some(XYZ("v3", Left(1)))))

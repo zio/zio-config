@@ -15,11 +15,10 @@ object Config {
 
   def make[K, V, A](
     source: ConfigSource[Vector[K], V],
-    configDescriptor: ConfigDescriptor[Vector[K], V, A]
-  ): IO[ReadErrors[Vector[K], V], Config[A]] =
+    configDescriptor: ConfigDescriptor[K, V, A]
+  ): IO[ReadErrors[K, V], Config[A]] =
     Read
-      .read(configDescriptor)
-      .provide(source)
+      .read(configDescriptor from source)
       .map(
         e =>
           new Config[A] {
@@ -29,21 +28,15 @@ object Config {
           }
       )
 
-  def fromEnv[K, V, A](configDescriptor: ConfigDescriptor[Vector[K], V,  A]): ZIO[System, ReadErrors[Vector[K], V], Config[A]] =
-    for {
-      source <- ConfigSource.fromEnv
-      res    <- make(source, configDescriptor)
-    } yield res
+  def fromEnv[K, V, A](configDescriptor: ConfigDescriptor[String, String, A]): IO[ReadErrors[String, String], Config[A]] =
+    make(ConfigSource.fromEnv, configDescriptor)
 
   def fromMap[A](
     map: Map[String, String],
-    configDescriptor: ConfigDescriptor[A]
+    configDescriptor: ConfigDescriptor[String, String, A]
   ): IO[ReadErrors[String, String], Config[A]] =
-    make(ConfigSource.fromMap(map), configDescriptor)
+    make[String, String, A](ConfigSource.fromMap(map), configDescriptor)
 
-  def fromPropertyFile[A](configDescriptor: ConfigDescriptor[A]): ZIO[System, ReadErrors[String, String], Config[A]] =
-    for {
-      source <- ConfigSource.fromProperty
-      res    <- make(source, configDescriptor)
-    } yield res
+  def fromPropertyFile[K, V, A](configDescriptor: ConfigDescriptor[String, String, A]): ZIO[System, ReadErrors[String, String], Config[A]] =
+    make(ConfigSource.fromProperty, configDescriptor)
 }

@@ -48,16 +48,16 @@ object Write {
                   m1 match {
                     case PropertyTree.Record(mm) =>
                       m2 match {
-                        case PropertyTree.Record(m2) => Right(PropertyTree.Record(mm ++ m2))
+                        case PropertyTree.Record(mapp) => Right(PropertyTree.Record(mm ++ mapp))
                         case PropertyTree.Empty      => Right(m1)
-                        case PropertyTree.Leaf(v)    => Left("impossible")
+                        case PropertyTree.Leaf(v)    => Right(PropertyTree.Leaf(v))
                       }
                     case PropertyTree.Leaf(v) =>
                       m2 match {
                         case PropertyTree.Record(mm) =>
                          Right(PropertyTree.Record(mm))
                         case PropertyTree.Empty   => Right(m1)
-                        case PropertyTree.Leaf(_) => Left("impossible")
+                        case PropertyTree.Leaf(a) => Right(PropertyTree.Leaf(a))
                       }
                     case PropertyTree.Empty =>
                       Right(m2)

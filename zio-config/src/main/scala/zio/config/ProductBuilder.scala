@@ -9,7 +9,7 @@ private[config] trait ProductBuilder[KK, VV, A, B] {
   def apply[C](f: (A, B) => C, g: C => Option[(A, B)]): ConfigDescriptor[KK, VV, C] =
     a.zip(b).xmapEither({ case (aa, bb) => Right(f(aa, bb)) })(liftWrite(g))
 
-  def |@|[C](cc: ConfigDescriptor[KK, VV, C]): ProductBuilder[KK, VV, C] = new ProductBuilder[KK, VV, C] {
+  def |@|[C](cc: ConfigDescriptor[KK, VV, C]): ProductBuilder[C] = new ProductBuilder[C] {
     val c: ConfigDescriptor[KK, VV, C] = cc
   }
 
@@ -337,5 +337,4 @@ private[config] trait ProductBuilder[KK, VV, A, B] {
 private[config] object ProductBuilder {
   private def liftWrite[A, B, C](f: C => Option[(A, B)]): C => Either[String, (A, B)] =
     c => f(c).fold[Either[String, (A, B)]](Left("Failed to write the value back."))(r => Right(r))
-
 }
