@@ -42,22 +42,22 @@ object NestedConfigExample extends App {
     docs(appConfig, Some(result)) ==
       And(
         And(
-          And(
-            NestedConfig(
-              "south",
-              PathDetails("connection", Some("abc.com"), List("value of type string", "South details"))
-            ),
-            NestedConfig("south", PathDetails("port", Some("8111"), List("value of type int", "South details")))
+          NestedConfig(
+            "south",
+            And(
+              PathDetails("connection", Some("abc.com"), List("value of type string", "South details")),
+              PathDetails("port", Some("8111"), List("value of type int", "South details"))
+            )
           ),
-          And(
-            NestedConfig(
-              "east",
-              PathDetails("connection", Some("xyz.com"), List("value of type string", "East details"))
-            ),
-            NestedConfig("east", PathDetails("port", Some("8888"), List("value of type int", "East details")))
+          NestedConfig(
+            "east",
+            And(
+              PathDetails("connection", Some("xyz.com"), List("value of type string", "East details")),
+              PathDetails("port", Some("8888"), List("value of type int", "East details"))
+            )
           )
         ),
-        PathDetails(Vector("appName"), Some("myApp"), List("value of type string"))
+        PathDetails("appName", Some("myApp"), List("value of type string"))
       )
   )
 

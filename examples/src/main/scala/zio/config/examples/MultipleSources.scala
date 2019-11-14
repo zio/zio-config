@@ -2,16 +2,16 @@ package zio.config.examples
 
 import zio.config._
 import ConfigDescriptor._
-import zio.{DefaultRuntime}
+import zio.{ DefaultRuntime }
 
 object MultipleSources extends App {
 
   final case class MyConfig(ldap: String, port: Int, dburl: Option[String])
 
   // Assume they are different sources (env, property file, hoccon / database (in future))
-  private val source1 = ConfigSource.fromMap(Map("LDAP"   -> "jolap"))
+  private val source1 = ConfigSource.fromMap(Map("LDAP" -> "jolap"))
   private val source3 = ConfigSource.fromEnv
-  private val source4 = ConfigSource.fromMap(Map("PORT"   -> "1999"))
+  private val source4 = ConfigSource.fromMap(Map("PORT" -> "1999"))
   private val source5 = ConfigSource.fromMap(Map("DB_URL" -> "newyork.com"))
 
   private val oneValidSource =
