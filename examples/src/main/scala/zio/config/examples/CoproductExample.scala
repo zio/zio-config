@@ -31,9 +31,12 @@ object CoproductExample extends App {
       "x3" -> "v3"
     )
 
-  val source: ConfigSource[Vector[String], String] =
+  val source: ConfigSource[String, String] =
     ConfigSource.fromMap(validConfigForSampleConfig)
 
+  // read(prodOrDev from source) is equivalent to Config.fromMap(prodOrDev). This is only to demonstrate that you can
+  // use `from` at any point in your description, making it really flexible for the user to fetch different configs from different
+  // sources.
   assert(runtime.unsafeRun(read(prodOrDev from source)) == Left(Prod(Ldap("v1"), DbUrl("v2"))))
 
   val validConfigForAnotherConfig =
@@ -44,7 +47,7 @@ object CoproductExample extends App {
       "x5" -> "2.0"
     )
 
-  val anotherSource: ConfigSource[Vector[String], String] =
+  val anotherSource: ConfigSource[String, String] =
     ConfigSource.fromMap(validConfigForAnotherConfig)
 
   assert(runtime.unsafeRun(read(prodOrDev from anotherSource)) == Right(Dev("v3", 1, 2.0)))
@@ -57,7 +60,7 @@ object CoproductExample extends App {
       "x5" -> "notadouble"
     )
 
-  val invalidSource: ConfigSource[Vector[String], String] =
+  val invalidSource =
     ConfigSource.fromMap(invalidConfig)
 
   assert(

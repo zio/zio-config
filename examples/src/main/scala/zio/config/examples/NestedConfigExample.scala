@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config._
-import ConfigDescriptor._
+import ConfigDescriptor.{ _ }
 import zio.DefaultRuntime
 import zio.config.PropertyTree.{ Leaf, Record }
 import zio.config.actions.ConfigDocs._
@@ -38,21 +38,28 @@ object NestedConfigExample extends App {
   assert(result == AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
 
   // Docs and Report of the nested configurations.
-  assert(docs(appConfig, Some(result)) == {
-    And(
+  assert(
+    docs(appConfig, Some(result)) ==
       And(
         And(
-          PathDetails(Vector("south", "connection"), Some("abc.com"), List("value of type string", "South details")),
-          PathDetails(Vector("south", "port"), Some("8111"), List("value of type int", "South details"))
+          And(
+            NestedConfig(
+              "south",
+              PathDetails("connection", Some("abc.com"), List("value of type string", "South details"))
+            ),
+            NestedConfig("south", PathDetails("port", Some("8111"), List("value of type int", "South details")))
+          ),
+          And(
+            NestedConfig(
+              "east",
+              PathDetails("connection", Some("xyz.com"), List("value of type string", "East details"))
+            ),
+            NestedConfig("east", PathDetails("port", Some("8888"), List("value of type int", "East details")))
+          )
         ),
-        And(
-          PathDetails(Vector("east", "connection"), Some("xyz.com"), List("value of type string", "East details")),
-          PathDetails(Vector("east", "port"), Some("8888"), List("value of type int", "East details"))
-        )
-      ),
-      PathDetails(Vector("appName"), Some("myApp"), List("value of type string"))
-    )
-  })
+        PathDetails(Vector("appName"), Some("myApp"), List("value of type string"))
+      )
+  )
 
   // Write your nested config back.
   assert(
@@ -63,18 +70,18 @@ object NestedConfigExample extends App {
             "south" ->
               Record(
                 Map(
-                  "connection" -> Leaf("abc.com"),
-                  "port"       -> Leaf("8111")
+                  "connection" -> Leaf[String, String]("abc.com"),
+                  "port"       -> Leaf[String, String]("8111")
                 )
               ),
             "east" ->
               Record(
                 Map(
-                  "connection" -> Leaf("xyz.com"),
-                  "port"       -> Leaf("8888")
+                  "connection" -> Leaf[String, String]("xyz.com"),
+                  "port"       -> Leaf[String, String]("8888")
                 )
               ),
-            "appName" -> Leaf("myApp")
+            "appName" -> Leaf[String, String]("myApp")
           )
         )
       )

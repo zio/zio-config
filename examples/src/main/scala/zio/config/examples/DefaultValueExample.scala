@@ -15,17 +15,19 @@ object DefaultValueExample extends App {
 
   val runtime = new DefaultRuntime {}
 
-  val result = runtime.unsafeRun(Config.fromEnv(pgmConf).flatMap(t => config[PgmConfig].provide(t)))
+  // read(pgmConf from ConfigSource.fromEnv) is equivalent to Config.fromEnv(pgmConf) except that it returns `Config[A]` in return
+  // which you can pass down to the rest of the program
+  val result = runtime.unsafeRun(read(pgmConf from ConfigSource.fromEnv))
 
   assert(result == PgmConfig("xyz", Right(1)))
 
   assert(
     docs(pgmConf, Some(result)) ==
       And(
-        PathDetails(Vector("HELLO"), Some("xyz"), List("value of type string", "default value: xyz")),
+        PathDetails("HELLO", Some("xyz"), List("value of type string", "default value: xyz")),
         Or(
-          PathDetails(Vector("SOMETHING"), None, List("value of type string")),
-          PathDetails(Vector("PORT"), Some("1"), List("value of type int", "default value: 1"))
+          PathDetails("SOMETHING", None, List("value of type string")),
+          PathDetails("PORT", Some("1"), List("value of type int", "default value: 1"))
         )
       )
   )

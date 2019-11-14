@@ -1,32 +1,37 @@
 package zio.config.actions
 
-import zio.config.{ConfigDescriptor, ConfigSource, ReadErrors}
-import zio.{IO, ZIO, config}
+import zio.config.ReadErrors.ReadError
+import zio.config.{ ConfigDescriptor, ConfigSource, MultiKeyReadErrors, PropertyType, ReadErrors }
+import zio.{ IO, ZIO }
 
 object Read {
   // Read
   final def read[K, V, A](
     configuration: ConfigDescriptor[K, V, A]
-  ): IO[ReadErrors[K, V], A] = {
-    def loop[B](
-      configuration: ConfigDescriptor[K, V, B],
+  ): IO[MultiKeyReadErrors[K, V], A] = {
+    def loop[V1, B](
+      configuration: ConfigDescriptor[K, V1, B],
       paths: Vector[K]
-    ): IO[ReadErrors[K, V], B] =
+    ): IO[MultiKeyReadErrors[K, V1], B] =
       configuration match {
-        case ConfigDescriptor.Empty() => ZIO.access(_ => None)
+        case ConfigDescriptor.Empty() => ZIO.access(_ => Option.empty[B])
 
-        case ConfigDescriptor.Source(path, propertyType, source) =>
+        case ConfigDescriptor.Source(path, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
           for {
-            value <- source
-                      .getConfigValue[Vector[K], V](paths :+ path)
-                      .mapError(ReadErrors(_))
-
+            value <- source.getConfigValue(paths :+ path)
             result <- ZIO.fromEither(
                        propertyType
-                         .read(path, value)
-                         .fold(r => Left(ReadErrors(::(r, Nil))), e => Right(e))
+                         .read(value)
+                         .fold(
+                           r =>
+                             Left(
+                               ReadErrors(
+                                 ReadError.ParseError(paths :+ path, r.value, r.typeInfo)
+                               )
+                             ),
+                           e => Right(e)
+                         )
                      )
-
           } yield result
 
         case ConfigDescriptor.Nested(c, path) =>
@@ -34,7 +39,15 @@ object Read {
 
         case ConfigDescriptor.XmapEither(c, f, _) =>
           loop(c, paths).flatMap { a =>
-            ZIO.fromEither(f(a)).bimap(err => ReadErrors(err), res => res)
+            ZIO
+              .fromEither(f(a))
+              .bimap(
+                err =>
+                  ReadErrors(
+                    ReadError.FatalError(paths, new RuntimeException(err))
+                  ),
+                res => res
+              )
           }
 
         // No need to add report on the default value.
@@ -81,6 +94,6 @@ object Read {
           )
       }
 
-    loop(configuration, Vector.empty)
+    loop(configuration, Vector.empty[K])
   }
 }

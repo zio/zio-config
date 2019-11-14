@@ -2,26 +2,26 @@ package zio.config.actions
 
 import zio.config.ConfigDescriptor
 
-sealed trait ConfigDocs[K, V]
+sealed trait ConfigDocs[+K, +V]
 
 object ConfigDocs {
 
-  final case class Empty[K, V]()                                                                extends ConfigDocs[K, V]
-  final case class PathDetails[K, V](path: K, value: Option[V], docs: List[String])             extends ConfigDocs[K, V]
-  final case class Nested[K, V](path: K, docs: ConfigDocs[K, V])                                extends ConfigDocs[K, V]
-  final case class And[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])                   extends ConfigDocs[K, V]
-  final case class Or[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])                    extends ConfigDocs[K, V]
+  final case class Empty[K, V]()                                                    extends ConfigDocs[K, V]
+  final case class PathDetails[K, V](path: K, value: Option[V], docs: List[String]) extends ConfigDocs[K, V]
+  final case class NestedConfig[K, V](path: K, docs: ConfigDocs[K, V])              extends ConfigDocs[K, V]
+  final case class And[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])       extends ConfigDocs[K, V]
+  final case class Or[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])        extends ConfigDocs[K, V]
 
   final def createDoc[K, V, A](config: ConfigDescriptor[K, V, A], value: Option[A]): ConfigDocs[K, V] = {
     def loop[B](
       descAcc: List[String],
       config: ConfigDescriptor[K, V, B],
       docs: ConfigDocs[K, V],
-      configValue: Option[B],
+      configValue: Option[B]
     ): ConfigDocs[K, V] =
       config match {
         case ConfigDescriptor.Empty() => docs
-        case ConfigDescriptor.Source(path, p, source) =>
+        case ConfigDescriptor.Source(path, source, p) =>
           PathDetails(
             path,
             configValue.map(t => p.write(t)),
@@ -41,8 +41,12 @@ object ConfigDocs {
               loop(descAcc, c, docs, None)
           }
 
+        // intentional duplication of pattern matching to get over the type issues.
         case ConfigDescriptor.Nested(c, path) =>
-          ConfigDocs.Nested(path, loop(descAcc, c, docs, value))
+          configValue match {
+            case Some(v) => ConfigDocs.NestedConfig(path, loop(descAcc, c, docs, Some(v)))
+            case None    => ConfigDocs.NestedConfig(path, loop(descAcc, c, docs, None))
+          }
 
         case ConfigDescriptor.XmapEither(c, _, to) =>
           configValue match {

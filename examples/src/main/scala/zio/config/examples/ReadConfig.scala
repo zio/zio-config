@@ -8,7 +8,7 @@ case class Prod(ldap: String, port: Int, dburl: Option[String])
 object Prod {
   val prodConfig: ConfigDescriptor[String, String, Prod] =
     (string("LDAP") |@| int("PORT") |@|
-      string("DB_URL").optional[String, String])(Prod.apply, Prod.unapply)
+      string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
   val myAppLogic: ZIO[Config[Prod], Throwable, (String, Option[String])] =
     for {

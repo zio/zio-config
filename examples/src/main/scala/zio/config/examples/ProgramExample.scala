@@ -84,7 +84,6 @@ object SparkEnv {
       //    SparkSession.builder().appName(name).enableHiveSupport().getOrCreate()
       SparkSession(name)
     }
-
 }
 
 ////

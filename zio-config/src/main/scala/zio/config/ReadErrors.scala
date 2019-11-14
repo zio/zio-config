@@ -20,7 +20,7 @@ object ReadErrors {
   object ReadError {
     final case class MissingValue[K, V](key: K)                             extends ReadError[K, V]
     final case class ParseError[K, V](key: K, provided: V, message: String) extends ReadError[K, V]
-    final case class FatalError[K](key: K, cause: Throwable)                extends ReadError[K, Nothing]
+    final case class FatalError[K, V](key: K, cause: Throwable)             extends ReadError[K, V]
   }
 
 }

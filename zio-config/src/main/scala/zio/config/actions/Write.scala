@@ -7,9 +7,9 @@ object Write {
     def go[B](config: ConfigDescriptor[K, V, B], b: B): Either[String, PropertyTree[K, V]] =
       config match {
         case ConfigDescriptor.Empty() =>
-          Right(PropertyTree.Empty)
+          Right(PropertyTree.Empty())
 
-        case ConfigDescriptor.Source(path, propertyType, _) =>
+        case ConfigDescriptor.Source(path, _, propertyType) =>
           Right(PropertyTree.Record(Map(path -> PropertyTree.Leaf(propertyType.write(b)))))
 
         case ConfigDescriptor.Describe(c, _) =>
@@ -17,13 +17,13 @@ object Write {
 
         case ConfigDescriptor.Nested(c, parent) =>
           go(c, b) match {
-            case Right(prop) =>  Right(PropertyTree.Record(Map(parent -> prop)))
-            case Left(v) => Left(v)
+            case Right(prop) => Right(PropertyTree.Record(Map(parent -> prop)))
+            case Left(v)     => Left(v)
           }
 
         case ConfigDescriptor.Optional(c) =>
           b.fold({
-            Right(PropertyTree.Empty): Either[String, PropertyTree[K, V]]
+            Right(PropertyTree.Empty()): Either[String, PropertyTree[K, V]]
           })(bb => go(c, bb))
 
         case ConfigDescriptor.Default(c, _) =>
@@ -49,17 +49,17 @@ object Write {
                     case PropertyTree.Record(mm) =>
                       m2 match {
                         case PropertyTree.Record(mapp) => Right(PropertyTree.Record(mm ++ mapp))
-                        case PropertyTree.Empty      => Right(m1)
-                        case PropertyTree.Leaf(v)    => Right(PropertyTree.Leaf(v))
+                        case PropertyTree.Empty()        => Right(m1)
+                        case PropertyTree.Leaf(v)      => Right(PropertyTree.Leaf(v))
                       }
                     case PropertyTree.Leaf(v) =>
                       m2 match {
                         case PropertyTree.Record(mm) =>
-                         Right(PropertyTree.Record(mm))
-                        case PropertyTree.Empty   => Right(m1)
+                          Right(PropertyTree.Record(mm))
+                        case PropertyTree.Empty()   => Right(m1)
                         case PropertyTree.Leaf(a) => Right(PropertyTree.Leaf(a))
                       }
-                    case PropertyTree.Empty =>
+                    case PropertyTree.Empty() =>
                       Right(m2)
                   }
                 case Left(m1) => Left(m1)

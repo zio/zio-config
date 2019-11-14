@@ -1,6 +1,5 @@
 package zio.config
 
-import java.net.URI
 import zio.config.actions.Read
 import zio.system.System
 import zio.{ IO, UIO, ZIO }
@@ -14,9 +13,9 @@ object Config {
   }
 
   def make[K, V, A](
-    source: ConfigSource[Vector[K], V],
+    source: ConfigSource[K, V],
     configDescriptor: ConfigDescriptor[K, V, A]
-  ): IO[ReadErrors[K, V], Config[A]] =
+  ): IO[ReadErrors[Vector[K], V], Config[A]] =
     Read
       .read(configDescriptor from source)
       .map(
@@ -28,15 +27,19 @@ object Config {
           }
       )
 
-  def fromEnv[K, V, A](configDescriptor: ConfigDescriptor[String, String, A]): IO[ReadErrors[String, String], Config[A]] =
+  def fromEnv[K, V, A](
+    configDescriptor: ConfigDescriptor[String, String, A]
+  ): IO[ReadErrors[Vector[String], String], Config[A]] =
     make(ConfigSource.fromEnv, configDescriptor)
 
   def fromMap[A](
     map: Map[String, String],
     configDescriptor: ConfigDescriptor[String, String, A]
-  ): IO[ReadErrors[String, String], Config[A]] =
+  ): IO[ReadErrors[Vector[String], String], Config[A]] =
     make[String, String, A](ConfigSource.fromMap(map), configDescriptor)
 
-  def fromPropertyFile[K, V, A](configDescriptor: ConfigDescriptor[String, String, A]): ZIO[System, ReadErrors[String, String], Config[A]] =
+  def fromPropertyFile[K, V, A](
+    configDescriptor: ConfigDescriptor[String, String, A]
+  ): ZIO[System, ReadErrors[Vector[String], String], Config[A]] =
     make(ConfigSource.fromProperty, configDescriptor)
 }
