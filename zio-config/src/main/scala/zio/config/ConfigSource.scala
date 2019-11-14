@@ -9,7 +9,7 @@ final case class ConfigSource[K, V](
   sourceDescription: List[String]
 ) {
   def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
-    ConfigSource(k =>  getConfigValue(k).orElse( that.getConfigValue(k)), sourceDescription ++ that.sourceDescription)
+    ConfigSource(k => getConfigValue(k).orElse(that.getConfigValue(k)), sourceDescription ++ that.sourceDescription)
 }
 
 object ConfigSource {
