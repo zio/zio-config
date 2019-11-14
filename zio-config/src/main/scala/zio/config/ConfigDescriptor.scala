@@ -72,6 +72,9 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
   def fromNothing: ConfigDescriptor[K, V, A] =
     self.changeSource(_ => ConfigSource.empty)
 
+  def resetSource: ConfigDescriptor[K, V, A] =
+    self.fromNothing
+
   def changeSource(f: ConfigSource[K, V] => ConfigSource[K, V]): ConfigDescriptor[K, V, A] = {
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
       case a @ Empty()                        => a
