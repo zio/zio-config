@@ -66,36 +66,36 @@ object ReadWriteReport extends App {
           And(
             And(
               PathDetails(
-                Vector("usr"),
+                "usr",
                 Some("v1"),
                 List("value of type string", "Example: some-user", "Prod Config")
               ),
               PathDetails(
-                Vector("pwd"),
+                "pwd",
                 Some("v2"),
                 List("value of type string", "optional value", "sec", "Prod Config")
               )
             ),
             PathDetails(
-              Vector("jhi"),
+              "jhi",
               None,
               List("value of type string", "optional value", "Ex: ghi", "Prod Config")
             )
           ),
           And(
             PathDetails(
-              Vector("xyz"),
+              "xyz",
               Some("v3"),
               List("value of type string", "optional value", "Ex: ha", "Prod Config")
             ),
             Or(
               PathDetails(
-                Vector("abc"),
+                "abc",
                 Some("1"),
                 List("value of type int", "optional value", "Ex: ha", "Prod Config")
               ),
               PathDetails(
-                Vector("def"),
+                "def",
                 None,
                 List("value of type string", "optional value", "Ex: ha", "Prod Config")
               )
@@ -103,8 +103,8 @@ object ReadWriteReport extends App {
           )
         ),
         And(
-          PathDetails(Vector("auth_token"), None, List("value of type string", "Prod Config")),
-          PathDetails(Vector("clientid"), None, List("value of type string", "Prod Config"))
+          PathDetails("auth_token", None, List("value of type string", "Prod Config")),
+          PathDetails("clientid", None, List("value of type string", "Prod Config"))
         )
       )
   )

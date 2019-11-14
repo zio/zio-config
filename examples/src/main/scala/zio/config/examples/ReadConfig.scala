@@ -21,7 +21,7 @@ object ReadConfig extends App {
   override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] =
     ZIO.accessM(env => {
       Config
-        .fromEnv(Prod.prodConfig)
+        .fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"), Prod.prodConfig)
         .flatMap(config => Prod.myAppLogic.provide(config))
         .foldM(failure => env.console.putStrLn(failure.toString) *> ZIO.succeed(1), _ => ZIO.succeed(0))
     })
