@@ -23,7 +23,7 @@ object MultipleSources extends App {
       )
     )
 
-  val myConfig: ConfigDescriptor[String, String, MyConfig] =
+  val myConfig =
     ((string("LDAP").from(source1.orElse(source3)) |@| int("PORT").from(source4)) |@|
       string("DB_URL").optional.from(source5))(MyConfig.apply, MyConfig.unapply)
 
