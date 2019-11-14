@@ -49,14 +49,14 @@ object Write {
                     case PropertyTree.Record(mm) =>
                       m2 match {
                         case PropertyTree.Record(mapp) => Right(PropertyTree.Record(mm ++ mapp))
-                        case PropertyTree.Empty()        => Right(m1)
+                        case PropertyTree.Empty()      => Right(m1)
                         case PropertyTree.Leaf(v)      => Right(PropertyTree.Leaf(v))
                       }
                     case PropertyTree.Leaf(v) =>
                       m2 match {
                         case PropertyTree.Record(mm) =>
                           Right(PropertyTree.Record(mm))
-                        case PropertyTree.Empty()   => Right(m1)
+                        case PropertyTree.Empty() => Right(m1)
                         case PropertyTree.Leaf(a) => Right(PropertyTree.Leaf(a))
                       }
                     case PropertyTree.Empty() =>

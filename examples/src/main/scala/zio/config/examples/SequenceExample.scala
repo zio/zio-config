@@ -38,7 +38,7 @@ object SequenceExample extends App {
 
   val runtime = new DefaultRuntime {}
 
-  val result = runtime.unsafeRun(read(configOfList from ConfigSource.fromMap(map)))
+  val result  = runtime.unsafeRun(read(configOfList from ConfigSource.fromMap(map)))
   val written = write(configOfList, result)
 
   assert(result == List(Variables(7, None), Variables(5, Some(6)), Variables(3, Some(4)), Variables(1, Some(2))))

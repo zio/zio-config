@@ -6,7 +6,7 @@ sealed trait PropertyTree[K, V] { self =>
   def flatten(zero: K, append: (K, K) => K): Map[K, V] = {
     def go(key: K, propertyTree: PropertyTree[K, V], acc: Map[K, V]): Map[K, V] =
       propertyTree match {
-        case Empty()         => acc
+        case Empty()       => acc
         case Leaf(v)       => acc.updated(key, v)
         case Record(value) => value.flatMap(t => go(append(key, t._1), t._2, acc))
       }
