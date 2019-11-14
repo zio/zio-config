@@ -86,8 +86,6 @@ object SparkEnv {
     }
 }
 
-////
-
 // The core application
 object Application {
   val logProgramConfig: ZIO[Console with Config[ProgramConfig], Nothing, Unit] =

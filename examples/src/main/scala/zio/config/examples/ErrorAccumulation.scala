@@ -22,8 +22,8 @@ object ErrorAccumulation extends App {
     parsed ==
       Left(
         ReadErrors(
-          MissingValue("envvar"),
-          MissingValue("envvar2")
+          MissingValue(Vector("envvar")),
+          MissingValue(Vector("envvar2"))
         )
       )
   )
@@ -37,11 +37,11 @@ object ErrorAccumulation extends App {
   val invalidSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
 
   assert(
-    runtime.unsafeRun(read(config from invalidSource).either) ==
+    runtime.unsafeRun(read(config from invalidSource).mapError(_.errors).either) ==
       Left(
         List(
-          ParseError("envvar", "wrong", "int"),
-          MissingValue("envvar2")
+          ParseError(Vector("envvar"), "wrong", "int"),
+          MissingValue(Vector("envvar2"))
         )
       )
   )
