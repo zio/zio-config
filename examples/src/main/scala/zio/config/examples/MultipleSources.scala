@@ -25,7 +25,7 @@ object MultipleSources extends App {
 
   val myConfig =
     ((string("LDAP").from(source1.orElse(source3)) |@| int("PORT").from(source4)) |@|
-      string("DB_URL").optional.from(source5))(MyConfig.apply, MyConfig.unapply)
+      string("DB_URL").optional.from(source1.orElse(source5)))(MyConfig.apply, MyConfig.unapply)
 
   // Let's reset the whole source details in the original description
   val myConfigWithReset = myConfig.resetSource.from(anotherValidSource) // Equivalent to prodConfig.fromNothing
