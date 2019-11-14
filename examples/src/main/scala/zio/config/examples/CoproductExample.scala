@@ -19,7 +19,7 @@ object CoproductExample extends App {
   val dev =
     (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
 
-  val prodOrDev: ConfigDescriptor[String, String, Either[Prod, Dev]] =
+  val prodOrDev =
     prod orElseEither dev
 
   val runtime = new DefaultRuntime {}
@@ -64,13 +64,8 @@ object CoproductExample extends App {
     ConfigSource.fromMap(invalidConfig)
 
   assert(
-    runtime.unsafeRun(read(prodOrDev from invalidSource).either) ==
-      Left(
-        ReadErrors(
-          MissingValue("x1"),
-          ParseError("x5", "notadouble", "double")
-        )
-      )
+    runtime.unsafeRun(read(prodOrDev from invalidSource).mapError(_.errors).either) ==
+      Left(List(MissingValue(Vector("x1")), ParseError(Vector("x5"), "notadouble", "double")))
   )
 
   val allConfigsExist =

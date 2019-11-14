@@ -1,6 +1,15 @@
 package zio.config
 
 import java.net.URI
+import zio.config.ConfigDescriptor.Default
+import zio.config.ConfigDescriptor.OrElseEither
+import zio.config.ConfigDescriptor.Source
+import zio.config.ConfigDescriptor.Describe
+import zio.config.ConfigDescriptor.Optional
+import zio.config.ConfigDescriptor.Zip
+import zio.config.ConfigDescriptor.Empty
+import zio.config.ConfigDescriptor.Nested
+import zio.config.ConfigDescriptor.XmapEither
 
 sealed trait ConfigDescriptor[K, V, A] { self =>
   final def zip[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, (A, B)] =
@@ -57,10 +66,26 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
       override val b: ConfigDescriptor[K, V, B] = f
     }
 
-  def from(configSource: ConfigSource[K, V]): ConfigDescriptor[K, V, A] =
-    ??? // traverse and merge the source. `orElse`
-  def fromNothing: ConfigDescriptor[K, V, A] = ??? // traverse through the struvture and replace source with empty
+  def from(that: ConfigSource[K, V]): ConfigDescriptor[K, V, A] =
+    self.changeSource(_.orElse(that))
 
+  def fromNothing: ConfigDescriptor[K, V, A] =
+    self.changeSource(_ => ConfigSource.empty)
+
+  def changeSource(f: ConfigSource[K, V] => ConfigSource[K, V]): ConfigDescriptor[K, V, A] = {
+    def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
+      case a @ Empty()                        => a
+      case Source(path, source, propertyType) => Source(path, f(source), propertyType)
+      case Nested(conf, path)                 => Nested(loop(conf), path)
+      case Describe(config, message)          => Describe(loop(config), message)
+      case Default(value, value2)             => Default(loop(value), value2)
+      case Optional(config)                   => Optional(loop(config))
+      case XmapEither(config, f, g)           => XmapEither(loop(config), f, g)
+      case Zip(conf1, conf2)                  => Zip(loop(conf1), loop(conf2))
+      case OrElseEither(value1, value2)       => OrElseEither(loop(value1), loop(value2))
+    }
+    loop(self)
+  }
 }
 
 object ConfigDescriptor {
@@ -68,19 +93,16 @@ object ConfigDescriptor {
   final case class Empty[K, V, A]() extends ConfigDescriptor[K, V, Option[A]]
 
   final case class Source[K, V, A](path: K, source: ConfigSource[K, V], propertyType: PropertyType[V, A])
-    extends ConfigDescriptor[K, V, A]
+      extends ConfigDescriptor[K, V, A]
 
-  final case class Nested[K, V, A](config: ConfigDescriptor[K, V, A], path: K)
-    extends ConfigDescriptor[K, V, A]
+  final case class Nested[K, V, A](config: ConfigDescriptor[K, V, A], path: K) extends ConfigDescriptor[K, V, A]
 
   final case class Describe[K, V, A](config: ConfigDescriptor[K, V, A], message: String)
-    extends ConfigDescriptor[K, V, A]
+      extends ConfigDescriptor[K, V, A]
 
-  final case class Default[K, V, A](config: ConfigDescriptor[K, V, A], value: A)
-    extends ConfigDescriptor[K, V, A]
+  final case class Default[K, V, A](config: ConfigDescriptor[K, V, A], value: A) extends ConfigDescriptor[K, V, A]
 
-  final case class Optional[K, V, A](config: ConfigDescriptor[K, V, A])
-    extends ConfigDescriptor[K, V, Option[A]]
+  final case class Optional[K, V, A](config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, Option[A]]
 
   final case class XmapEither[K, V, A, B](
     config: ConfigDescriptor[K, V, A],
