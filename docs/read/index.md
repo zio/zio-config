@@ -43,21 +43,6 @@ val result: IO[ConfigErrors[String, String], MyConfig] =
 
 You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application. 
 
-## Alternative way of running it to ZIO
-
-```
-val result = Config.fromEnv(myConfig)
-
-```
-This is the most preferred way. However, you could explicitly call `from` which is another combinator in `ConfigDescriptor`
-and pass a specific config source.
-
-```scala
-val source = ConfigSource.fromEnv
-val result = read(myConfig from source)
-
-```
-
 We will not be discussing about running with ZIO again, as it is just the same regardless of what the description is.
 We will discuss only about how to describe your configuration for the rest of this page.
 
@@ -377,4 +362,19 @@ yields the result:
 
 ```scala
   AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")
+```
+
+## Alternative way of running it to ZIO
+
+```
+val result = Config.fromEnv(myConfig)
+
+```
+This is the most preferred way. However, you could explicitly call `from` which is another combinator in `ConfigDescriptor`
+and pass a specific config source.
+
+```scala
+val source = ConfigSource.fromEnv
+val result = read(myConfig from source)
+
 ```
