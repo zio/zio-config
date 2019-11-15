@@ -10,6 +10,10 @@ final case class ConfigSource[K, V](
 ) {
   def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     ConfigSource(k => getConfigValue(k).orElse(that.getConfigValue(k)), sourceDescription ++ that.sourceDescription)
+
+  def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+    orElse(that)
+
 }
 
 object ConfigSource {
