@@ -46,7 +46,7 @@ You can run this to [completion](https://zio.dev/docs/getting_started.html#main)
 We will not be discussing about running with ZIO again, as it is just the same regardless of what the description is.
 We will discuss only about how to describe your configuration for the rest of this page.
 
-## Built-in Primitive Types
+## Built-in types
 
 We have already seen `string("TOKEN")` and `int("PORT")` to fetch string and int types respectively.
 We support the following:
@@ -69,8 +69,9 @@ uri
 
 ## Multiple sources
 
-While it isn't quite natural an application fetching configuration from multiple sources,
-it is possible to have multi source configuration parsing.
+While it may not be always a good idea having to rely on multiple sources to form the application config,
+zio-config do support this scenario. This can happen in complex applications.
+
 
 ```scala
 final case class MyConfig(ldap: String, port: Int, dburl: Option[String])
@@ -111,6 +112,9 @@ val testConfig =
     .from(ConfigSource.fromMap("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235"))
 
 ```
+
+_NOTE_: As of now we support system env, system property and a constant map in `ConfigSource`.
+We will be adding more, however, it will be easy to have any custom source. It is kept as simple as possible.
 
 ## Custom types
 We love `Port` instead of `Int` that represents a db port.
@@ -186,7 +190,7 @@ myConfig.default(MyConfig("test", 80))
 
 ## Either Types (orElseEither)
 
-For instance, if We are ok accepting either a token or username, then our target type should be `Either[String, String]`.
+For instance, if we are ok accepting either a token or username, then our target type should be `Either[String, String]`.
 In this case, We can use `orElseEither` or `<+>`.
 
 ```scala
@@ -310,103 +314,47 @@ any other configuration parsing libraries that deals with files, hoccons that su
 
 Note that, you can write this back as well. This is discussed in write section
 
-## Documentation
-
-As part of the `ConfigDescriptor` DSL, the user can specify documentation strings. These are ultimately used
-to generate manual page and configuration report output.
-
-To add documentation to a `ConfigDescriptor`, use the `?` syntax:
-
-```scala
-  nested("south") { database } ? "South details" |@| ...
-```
-
-The top level `ConfigDescriptor` can also be annotated with a documentation string.
-
-```scala
-  ( ... |@| ... )(AwsConfig, AwsConfig.unapply)) ? "The AWS details to be used"
-```
-
-## Optional
-
-For optional configured values, use the `optional` combinator, of the form:
-
-```scala
-  final case class DataItem(oid: Option[Id], ...)
-
-  val cId: ConfigDescriptor[Id] = string("kId").xmap(Id)(_.value)
-  val cDataItem: ConfigDescriptor[DataItem] = (cId.optional |@| ...)(DataItem.apply, DataItem.unapply)
-```
-
-## Default
-
-zio-config supports default values that are used in the event of a missing configuration value:
-
-```scala
-  (string("key").default("default-key")
-```
-
-## Coproduct
-
-A coproduct is represented by Scala `Either`.
-
-For example, for a `ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]]`:
-
-```scala
-  val cfg: ConfigDescriptor[Either[EnterpriseAuth, PasswordAuth]] =
-    enterprise.orElseEither(password)
-```
-
-## Sequence
+## CollectAll (Sequence)
 
 It is common to handle lists of configured values – ie a configured `List`. 
-For this case, `ConfigDescriptor` provides the `sequence` method, which
+For this case, we have `collectAll` method (also called `sequence`).
+
+There are many ways you could get a list of config. 
+Here we show a very naive version of it.
 
 ```scala
-def sequence[A](configList: List[ConfigDescriptor[A]]): ConfigDescriptor[List[A]]
-``` 
+ final case class Database(port: Int, url: String)
 
-First, dynamically form a `List` of `ConfigDescriptor`s for the target data type, and then invoke `sequence`
-to group the list as a single `ConfigDescriptor`.
+ def database(int: Int) = 
+   (int(s"${int}_PORT") |@| string(s"${int}_URL"))(Database, Database.unapply)
+
+ val list: ConfigDescriptor[String, String, List[Database]] =
+   collectAll((0 to 10).map(database)) // Same as sequence(...)
+
+```
+Running this to ZIO will, obviously comes up with a List[Database]
 
 NOTE: `collectAll` is a synonym for `sequence`.
 
-# Example: Reading Configuration
+## Documenting
+
+To add documentation to the config description, use `?`
 
 ```scala
-  final case class Database(url: String, port: Int)
-  final case class AwsConfig(c1: Database, c2: Database, c3: String)
-
-  val database: ConfigDescriptor[Database] =
-    (string("connection") |@| int("port"))(Database.apply, Database.unapply)
-
-  val appConfig: ConfigDescriptor[AwsConfig] =
-    ((nested("south") { database } ? "South details" |@|
-      nested("east") { database } ? "East details" |@|
-      string("appName"))(AwsConfig, AwsConfig.unapply)) ? "asdf"
-
-  // For simplicity in example, we use map source. Works with hoccon.
-  val source: ConfigSource[String, String] =
-    ConfigSource.fromMap(
-      Map(
-        "south.connection" -> "abc.com",
-        "east.connection"  -> "xyz.com",
-        "east.port"        -> "8888",
-        "south.port"       -> "8111",
-        "appName"          -> "myApp"
-      )
-    )
-
-  val runtime = new DefaultRuntime {}
-
-  private val cfg: IO[ReadErrors[String, String], AwsConfig] = read(appConfig).provide(source)
+ val config = 
+   (database ? "Database relaed config" |@| 
+     string("REGION") ? "AWS region: Example: us-east")(AwsConfig.apply, AwsConfig.unapply)
 ```
 
-yields the result:
+We can document for a whole config description as well.
 
 ```scala
-  AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")
+  val config = 
+    ( ... |@| ... )(AwsConfig, AwsConfig.unapply)) ? "The AWS details to be used"
 ```
+
+This will get reflected when we call `docs(config)` which will produce sort of a manpage of your description.
+We will discuss more on this later.
 
 ## Alternative way of running it to ZIO
 
@@ -414,9 +362,11 @@ As you have seen before, the most preferred way is,
 
 ```
 val result = Config.fromEnv(myConfig)
+// val result = Config.fromProperty(myConfig)
+// val result = Config.fromMap(map, myConfig)
 
 ```
-However, you could explicitly  `from` which is another combinator in `ConfigDescriptor`
+However, you could explicitly  use `from` which is another combinator in `ConfigDescriptor`
 and pass a specific config source. We have seen this before for handling multiple sources.
 
 ```scala
