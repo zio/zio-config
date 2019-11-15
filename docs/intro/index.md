@@ -118,12 +118,11 @@ Principal abstractions that inform the zio-config implementation are:
 
 #### Free Applicative, in simple scala with zero sophistications
 
-  Everything this library does inside, is by making use of program introspection - a feature that goes well with a Free Applicative encoding. This is made possible by sticking
-  on to simple scala, making it minimal in nature - for contributors and users of the library.
+  Everything library does inside, is by making use of program introspection - a feature that goes well with a Free Applicative style encoding. However, this doesn't make it any inacessible to those who are unfamiliar with the principle, and that's because we made it possible with simple scala with zero sophistications. We made it as minimal as possible - for contributors and users of the library.
 
 #### And Invariant applicative in nature
 
-There are multiple places of bidirectionality in this application. Hence, there is a behavior of invariant applicative functor lying in the Free Applicative encoding. 
-However we are not coupled to any specific typeclass instances, enabling us to scalably encode more functionalities, and features while strongly adhering to laws and FP fundamentals. 
+There are multiple places of bidirectionality in this library. Hence, there is a behavior of invariant applicative functor lying with the Free Applicative style encoding. 
+We are not coupled to any specific typeclass instances, enabling us to scalably encode more functionalities, and features while strongly adhering to laws and FP fundamentals. 
 
-This also allowed us to adhere to orthogonality principle in a natural way, without having to fiddle with sophistications and implicit instances. For example, towards the first release we added the fact that writing the config can fail as well, and this change in behavior was done in a few minutes - scalably, in an aesthetically pleasing manner! We are neither going into over generalisations nor into over restrictions.
+For the same reason, orthogonality across the functionalities came long in a natural way, without having to fiddle with sophistications and implicit instances. For instance, we added the fact that writing the config can fail as well, in a few minutes - scalably, in an aesthetically pleasing manner! This was possible as we are neither going into over generalisations nor into over restrictions.
