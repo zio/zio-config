@@ -75,13 +75,22 @@ That said, we believe in minimum dependencies - in fact, zero dependencies.
     // You can also do read(prodConfig from ConfigSource.fromEnv)
 ```
 
-To write the config back into the way it should exist in the environment is,
+To write the config back. 
+
+You can use the configuration description to write back the config, may be to a different source. Writing resulting in a PropertyTree that holds the structural
+essence of the configuration description which you easily emit to the source (environment) that you would like to have.
+
+By that way, you just migrated your application config from being in sys.env / property-file (where nestedness is (horribly) represented by underscores and dots) to a much more
+application specific hoccon file in the most type safe way, for instance. 
+
+You will also use write in your test cases which allows you to test your application from ground up, instead of bypassing the configuration parsing.
+You can also use the same to dynamically update the environment that holds the configuration, while making sure that application will definitely read it! 
 
 ```scala
   val propertyTree = write(prodConfig, result)
 ```
 
-To document teh config
+To document the config
 
 ```scala
   val result: ConfigDocs = docs(prodConfig) 
@@ -107,9 +116,13 @@ It is a fundamental part of the ZIO ecosystem, and a building block for the crea
 zio-config is built on sound foundations, leveraging the well-known, lawful abstractions of functional programming.
 Principal abstractions that inform the zio-config implementation are:
 
-* Free Applicative, but just with simple scala and nothing more
-  * Configuration elements are composed together in an applicative style
-  * Everything this library does inside, is by making use of program introspection - a feature that we get if we stick on to the fundamentals of Free Applicative
-  * All the errors are gathered and reported together
-* Invariant 
-  zio-config implements a more-specialised form of an invariant applicative, which is an abstraction that describes a *codec* – something that provides a two-way encoding / 
+* Free Applicative, in simple scala with zero sophistications
+  Everything this library does inside, is by making use of program introspection - a feature that goes well with a Free Applicative encoding. This is made possible by sticking
+  on to simple scala, making it minimal in nature - for contributors and users of the library.
+
+* And Invariant applicative in nature
+
+There are multiple places of bidirectionality in this application. Hence, there is a behavior of invariant applicative functor lying in the Free Applicative encoding. 
+However we are not coupled to any specific typeclass instances, enabling us to scalably encode more functionalities, and features while strongly adhering to laws and FP fundamentals. 
+
+This also allowed us to adhere to orthogonality principle in a natural way, without having to fiddle with sophistications and implicit instances. For example, towards the first release we added the fact that writing the config can fail as well, and this change in behavior was done in a few minutes - scalably, in an aesthetically pleasing manner! We are neither going into over generalisations nor into over restrictions.
