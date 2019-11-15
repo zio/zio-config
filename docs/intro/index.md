@@ -3,19 +3,49 @@ id: intro_index
 title:  "Introduction"
 ---
 
-**zio-config** provides one-stop capabilities for application configuration. Notable features:
+**zio-config** 
 
-* Composable syntax
-* Zero dependency
-* Simple API with no implicits or macro magic
-* Auto-generates documentation
-* Can write the config back, allowing generation of valid configuration sets from in-memory configuration objects
-* Automatic report generation for configuration value lineage
+ZIO Config aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
+
+Anything such as configuration management should be the most easiest thing to do, hence we aim
+at zero boilerplates and complexities and make it insanely simple to use.
+
+### Notable features    
+
+zio-config exposes an intuitive language, that allows you to describe your configuration.
+We will be using the term "configuration description" quite often acrosss the documentation
+
+The notable features of zio-config include
+
+* Composable and easy-to-write configuration description - that can read configuration from various sources
+* Support for writing the configuration back (to the application environments) from a typesafe representation, given the same configuration description.
+* Support for giving more details (as documentation) for each configuration parameter as part of configuration description
+* Auto generation of documentation for the entire config (sort of a manpage) based on the description
+* It can also emit a report on the configuration values, as part of the same documentation
 * Handles nested configuration structures
-* Accumulates all errors rather than bailing at the first
-* Insanely simple to use
+* Handles multiple (composable) sources (setting the priority of sources using simple combinators, resetting the sources etc)
+* Accumulates all errors rather than bailing at the first while reading the config from these sources
+* Zero implicits
+* Zero macros
+* Zero higher kinded types.
+* The one and only dependency is zio
+* Simple altogether!
 
-# Motivating Example
+While this is too much as a list, this is backed by significant number of examples, which enables you to make the full use of zio-config.
+
+In short, this is your go-to library for all your configuration management requirements, especially if you are in the zio world!
+We are keen to get new feature requests, issues, suggestions and contributions into this library
+
+# For impatients
+
+If you are impatient, trying to understand everything zio-config can do as actual code, please head to examples project.
+One of the example is an entire zio application that makes use of zio-config to read the config,
+and make it available across the application as just another zio [Environment](https://zio.dev/docs/overview/overview_index#zio).
+
+# The simplest example
+
+Otherwise, we will go a bit slowly, especially the principles behind this library
+can be quite interesting to you, which you can adopt to your other usecases.
 
 ```scala
   final case class Database(url: String, port: Int)
