@@ -116,11 +116,12 @@ It is a fundamental part of the ZIO ecosystem, and a building block for the crea
 zio-config is built on sound foundations, leveraging the well-known, lawful abstractions of functional programming.
 Principal abstractions that inform the zio-config implementation are:
 
-* Free Applicative, in simple scala with zero sophistications
+#### Free Applicative, in simple scala with zero sophistications
+
   Everything this library does inside, is by making use of program introspection - a feature that goes well with a Free Applicative encoding. This is made possible by sticking
   on to simple scala, making it minimal in nature - for contributors and users of the library.
 
-* And Invariant applicative in nature
+#### And Invariant applicative in nature
 
 There are multiple places of bidirectionality in this application. Hence, there is a behavior of invariant applicative functor lying in the Free Applicative encoding. 
 However we are not coupled to any specific typeclass instances, enabling us to scalably encode more functionalities, and features while strongly adhering to laws and FP fundamentals. 
