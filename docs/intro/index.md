@@ -42,53 +42,58 @@ If you ar trying to understand everything zio-config can do as actual code, plea
 One of the example is an entire zio application demonstrates the use of zio-config to read the config,
 and make it available across the application as just another zio [Environment](https://zio.dev/docs/overview/overview_index#zio).
 
+The principles of functional programming behind this library
+can be quite interesting to you, which you can adopt to your other usecases. 
+That said, we believe in minimum dependencies - in fact, zero dependencies.
+
 # The simplest example
 
-Otherwise, we will go a bit slowly, especially the principles behind this library
-can be quite interesting to you, which you can adopt to your other usecases.
+ To just read the config, all you need is;
 
 ```scala
-  final case class Database(url: String, port: Int)
-  final case class AwsConfig(db1: Database, db2: Database, appName: String)
 
-  val database: ConfigDescriptor[Database] =
-    (string("connection") |@| int("port"))(Database.apply, Database.unapply)
+  import zio.config._, ConfigDescriptor._
 
-  val appConfig: ConfigDescriptor[AwsConfig] =
-    (nested("south") { database } ? "South region details" |@|
-      nested("east") { database } ? "East region details" |@|
-      string("appName"))(AwsConfig, AwsConfig.unapply)
+  case class Prod(ldap: String, port: Int, dburl: Option[String])
 
-  val source: ConfigSource[String, String] =
+  val prodConfig =
+    (string("LDAP") |@| int("PORT") |@|
+      string("DB_URL").optional)(Prod.apply, Prod.unapply)
+
+  // Supports sys env, sys properties (with the support of nested ones - hoccon support is on its way)
+  val source =
     ConfigSource.fromMap(
       Map(
-        "south.connection" -> "abc.com",
-        "east.connection"  -> "xyz.com",
-        "east.port"        -> "8888",
-        "south.port"       -> "8111",
-        "appName"          -> "myApp"
+        "LDAP"             -> "abc",
+        "DB_URL"           -> "some.url",
+        "PORT"             -> "8888",
       )
     )
 
-  val cfg: IO[ReadErrors[String, String], AwsConfig] = 
-    read(appConfig).provide(source)
+  val cfg: IO[ConfigErrors[String, String], AwsConfig] = 
+    Config.fromEnv(prodConfig)
+    // You can also do read(prodConfig from ConfigSource.fromEnv)
 ```
 
-This sample will yield the configured value `AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))`.
+To write the config back into the way it should exist in the environment is,
 
-There is a lot going on here.
+```scala
+  val propertyTree = write(prodConfig, result)
+```
 
-* The configuration data structures are declared in an applicative combination style,
-using the familiar `|@|` operator.
-* Configuration is a two-way process, covering:
-  * Reading from some configuration source such as a `Map` or, more likely, system environment variables.
-  * Writing back to a configuration target.
-* The two-way configuration process is described by the invariant functor-style functions `(Database.apply, Database.unapply)`.
-* Nested configuration classes are supported via the `nested` keyword, for example `nested("south") { database }`
-* The definition includes documentation via the `?` operator, for example `? "South region details"`
-* This documentation can be used at runtime to auto-generate a configuration manual 
-* `ConfigSource` describes where the configuration values come from. In this simple example, they come from a in-memory `Map[String, String]` 
-* zio-config is able to reuse the `Database` definition nested within `AwsConfig`.
+To document teh config
+
+```scala
+  val result: ConfigDocs = docs(prodConfig) 
+  // docs(prodConfig from ConfigSource.fromEnv)) to doc about the source as well
+
+  // Produce docs, spewing out the values help by each parameter;
+  val awsConfig: AwsConfig = ??? // which you can get by read(prodConfig from ConfigSource.fromEnv)
+  val result: ConfigDocs = docs(prodConfig, awsConfig)
+
+```
+
+Head to examples project to get more insights. The docs will cover an explanation of each example
 
 # Principles
 
@@ -97,20 +102,14 @@ using the familiar `|@|` operator.
 zio-config is a zero-dependency, ZIO-native library.
 It is a fundamental part of the ZIO ecosystem, and a building block for the creation of ZIO-based applications.
 
-## Purely Functional
+## Purely Functional and Composable
 
 zio-config is built on sound foundations, leveraging the well-known, lawful abstractions of functional programming.
 Principal abstractions that inform the zio-config implementation are:
 
-* Applicative
+* Free Applicative, but just with simple scala and nothing more
   * Configuration elements are composed together in an applicative style
-  * Configuration errors are accumulated using applicative combination – this means all errors are gathered and reported together
-* Invariant Functor
-  * zio-config implements a more-specialised form of an invariant functor, which is an abstraction that describes a *codec* – something that provides a two-way encoding / decoding. 
-    In this case, *encoding* is configuration *writing* while *decoding* is the more common configuration *reading*. 
-
-## Composable
-
-Using the applicative `|@|` syntax, zio-config allows users to build up descriptions of configuration structures
-of arbitrary depth and complexity.
-This divide-and-conquer approach keeps things simple and extensible.
+  * Everything this library does inside, is by making use of program introspection - a feature that we get if we stick on to the fundamentals of Free Applicative
+  * All the errors are gathered and reported together
+* Invariant 
+  zio-config implements a more-specialised form of an invariant applicative, which is an abstraction that describes a *codec* – something that provides a two-way encoding / 
