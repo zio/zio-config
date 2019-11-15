@@ -186,7 +186,7 @@ myConfig.default(MyConfig("test", 80))
 
 ## Either Types (orElseEither)
 
-For instance, if We are ok accepting a token or username, then Wer target type is typically an Either.
+For instance, if We are ok accepting either a token or username, then our target type should be `Either[String, String]`.
 In this case, We can use `orElseEither` or `<+>`.
 
 ```scala
@@ -242,13 +242,13 @@ Example:
 final case class Prod(token: String, code: Int)
 
 val config = 
-  (string("TOKEN") orElse string("token") |@| int("CODE")) (Prod.apply, Prod.unapply)
+  (string("TOKEN") orElse string("token_x") |@| int("CODE")) (Prod.apply, Prod.unapply)
 
 ```
 
-It tries to fetch the value corresponding to "TOKEN", and if it fails, it tries "TOKEN_INFO" and returns the corresponding value.
+It tries to fetch the value corresponding to "TOKEN", and if it fails, it tries "token_x" and returns the corresponding value.
 
-You can also use `<>` combinator.
+We can also use `<>` combinator.
 
 ```scala
 string("TOKEN") <> string("token") <> string("TOKEN_INFO") 
@@ -256,8 +256,7 @@ string("TOKEN") <> string("token") <> string("TOKEN_INFO")
 
 ## Composing multiple configurations
 
-To combine `ConfigDescriptor`s into a `ConfigDescriptor` for a higher-level type, use the `|@|` combinator.
-For example:
+This is more of a real life scenario, where you can different micro configurations for readability and maintainability.
  
 ```scala
   final case class Database(url: String, port: Int)
@@ -290,8 +289,8 @@ any other configuration parsing libraries that deals with files, hoccons that su
     (string("connection") |@| int("port"))(Database.apply, Database.unapply)
 
   val appConfig =
-    (nested("south") { database } ? "South details" |@|
-      nested("east") { database } ? "East details" |@|
+    (nested("south") { database } |@|
+      nested("east") { database } |@|
       string("appName"))(AwsConfig, AwsConfig.unapply)
 
   // Let's say, a nested configuration as a flattened map is just "." delimited keys in a flat map.
