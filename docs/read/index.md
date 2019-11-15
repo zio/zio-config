@@ -19,10 +19,8 @@ final case class MyConfig(ldap: String, port: Int, dburl: String)
 
 ```
 To perform any action using zio-config, we need a configuration description.
-So let' define that as the first step.
+Let's define a simple one.
 
-The most minimalistic configuration description will 
-have the required parameters in the environment and specifying its type.
 
 ```scala
 val myConfig =
@@ -30,16 +28,17 @@ val myConfig =
 
 ```
 
-## Reading the config by converting description to ZIO
+Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`. 
+Type says, running it by passing a source will return `MyConfig`
+
+## Running the description to ZIO
 
 To read a config, means it has to perform some effects, and for that reason, it returns with a ZIO.
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala
-
 val result: IO[ConfigErrors[String, String], MyConfig] = 
   Config.fromEnv(myConfig) // That's system environment
-
 ```
 
 You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application. 
