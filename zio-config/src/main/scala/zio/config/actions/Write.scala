@@ -52,7 +52,7 @@ object Write {
                         case PropertyTree.Empty()      => Right(m1)
                         case PropertyTree.Leaf(v)      => Right(PropertyTree.Leaf(v))
                       }
-                    case PropertyTree.Leaf(v) =>
+                    case PropertyTree.Leaf(_) =>
                       m2 match {
                         case PropertyTree.Record(mm) =>
                           Right(PropertyTree.Record(mm))
