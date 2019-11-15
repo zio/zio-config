@@ -46,7 +46,73 @@ You can run this to [completion](https://zio.dev/docs/getting_started.html#main)
 We will not be discussing about running with ZIO again, as it is just the same regardless of what the description is.
 We will discuss only about how to describe your configuration for the rest of this page.
 
-# Custom types
+## Built-in Primitive Types
+
+We have already seen `string("TOKEN")` and `int("PORT")` to fetch string and int types respectively.
+We support the following:
+
+```scala
+
+string
+boolean
+byte
+short
+int
+long
+bigInt
+float
+double
+bigDecimal
+uri
+
+```
+
+## Multiple sources
+
+While it isn't quite natural an application fetching configuration from multiple sources,
+it is possible to have multi source configuration parsing.
+
+```scala
+final case class MyConfig(ldap: String, port: Int, dburl: Option[String])
+
+val source1 = ConfigSource.fromProperty
+val source2 = ConfigSource.fromEnv
+
+val myConfig =
+  ((string("LDAP").from(source1.orElse(source2)) |@| int("PORT").from(source1)) |@|
+    string("DB_URL").optional.from(source2)))(MyConfig.apply, MyConfig.unapply)
+
+val run = read(myConfig)
+
+// we can also separately add new config
+
+val run = read(myConfig from ConfigSource.fromMap(...))
+
+// In this case, `ConfigSource.fromMap` will also be tried along with the sources that are already given.
+
+```
+
+We can reset the sources for the config using
+
+```scala
+
+myConfig.resetSource // equivalent to myConfig.fromNothing
+
+```
+
+By that way, in tests we could remove the sources from each parameter and ask it to get it
+from a constant map for all of it.
+
+```scala
+
+val testConfig =
+  myConfig
+    .resetSource
+    .from(ConfigSource.fromMap("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235"))
+
+```
+
+## Custom types
 We love `Port` instead of `Int` that represents a db port.
 
 In this scenario, you could do 
@@ -77,7 +143,7 @@ That is,
 
 ```
 
-# Optional Types
+## Optional Types
 
 Say, dburl is an optional type, then it is as simple as 
 
@@ -95,7 +161,7 @@ val myConfig =
     string("DB_URL").optional))(MyConfig.apply, MyConfig.unapply)
 ```
 
-# Default
+## Default
 Sometimes, we don't need an optional value and instead happy providing a default value.
 
 ```scala
@@ -112,16 +178,16 @@ val myConfig =
 
 ```
 
-You can also do things like fully overriding the entire configuration; might be helpful for tests.
+We can also do things like fully overriding the entire configuration; might be helpful for tests.
 
 ```scala
 myConfig.default(MyConfig("test", 80))
 ```
 
-# Either Types (orElseEither)
+## Either Types (orElseEither)
 
-For instance, if you are ok accepting a token or username, then your target type is typically an Either.
-In this case, you can use `orElseEither` or `<+>`.
+For instance, if We are ok accepting a token or username, then Wer target type is typically an Either.
+In this case, We can use `orElseEither` or `<+>`.
 
 ```scala
 string("USERNAME").orElseEither(string("TOKEN")
@@ -137,13 +203,13 @@ val myConfig =
 
 ```
 
-You can also use `<+>` combinator.
+We can also use `<+>` combinator.
 
 ```scala
  string("USERNAME") <+> (string("TOKEN"))
 ```
 
-You can apply the `Either` logic at a much more global level, as in, give me either a `Prod` or `Test` config.
+We can apply the `Either` logic at a much more global level, as in, give me either a `Prod` or `Test` config.
 
 ```scala
 final case class Dev(userName: String, password: String)
@@ -159,10 +225,10 @@ val config = prod <+> dev // that represents a description returning Config
 
 ```
 
-# OrElse
+## OrElse
 
 Sometimes, we can try two different values and pick one. That means, the target is "NOT" `Either` but any raw type.
-In this scenario, you can use `orElse` or `<>`
+In this scenario, We can use `orElse` or `<>`
 
 ```scala
 
@@ -186,27 +252,6 @@ You can also use `<>` combinator.
 
 ```scala
 string("TOKEN") <> string("token") <> string("TOKEN_INFO") 
-```
-
-## Built-in Primitive Types
-
-We have already seen `string("TOKEN")` and `int("PORT")` to fetch string and int types respectively.
-We support the following:
-
-```scala
-
-string
-boolean
-byte
-short
-int
-long
-bigInt
-float
-double
-bigDecimal
-uri
-
 ```
 
 ## Composing multiple configurations
@@ -366,12 +411,14 @@ yields the result:
 
 ## Alternative way of running it to ZIO
 
+As you have seen before, the most preferred way is,
+
 ```
 val result = Config.fromEnv(myConfig)
 
 ```
-This is the most preferred way. However, you could explicitly call `from` which is another combinator in `ConfigDescriptor`
-and pass a specific config source.
+However, you could explicitly  `from` which is another combinator in `ConfigDescriptor`
+and pass a specific config source. We have seen this before for handling multiple sources.
 
 ```scala
 val source = ConfigSource.fromEnv
