@@ -5,7 +5,7 @@ title:  "Documentation"
 
 # Example: Generating a Configuration Manual
 
-To generate the documentation for a `ConfigDescriptor`, call `generateDocs`. 
+To generate the documentation of the config, call `generateDocs`. 
 
 ```scala
   generateDocs(config)
