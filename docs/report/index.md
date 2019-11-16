@@ -40,6 +40,8 @@ This is like a configuration manual, except it also shows the values for each do
     )
 
  
+  val result: AwsConfig = ???
+
   generateDocsWithValue(appConfig, result)
 ```
 
