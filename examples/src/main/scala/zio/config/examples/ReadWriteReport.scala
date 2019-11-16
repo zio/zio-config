@@ -67,36 +67,30 @@ object ReadWriteReport extends App {
             And(
               PathDetails(
                 "usr",
-                //Some("v1"),
                 Descriptions(List("value of type string", "Example: some-user", "Prod Config"))
               ),
               PathDetails(
                 "pwd",
-                //Some("v2"),
                 Descriptions(List("value of type string", "optional value", "sec", "Prod Config"))
               )
             ),
             PathDetails(
               "jhi",
-              // None,
               Descriptions(List("value of type string", "optional value", "Ex: ghi", "Prod Config"))
             )
           ),
           And(
             PathDetails(
               "xyz",
-              // Some("v3"),
               Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
             ),
             Or(
               PathDetails(
                 "abc",
-                // Some("1"),
                 Descriptions(List("value of type int", "optional value", "Ex: ha", "Prod Config"))
               ),
               PathDetails(
                 "def",
-                // None,
                 Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
               )
             )
@@ -105,6 +99,76 @@ object ReadWriteReport extends App {
         And(
           PathDetails("auth_token", Descriptions(List("value of type string", "Prod Config"))),
           PathDetails("clientid", Descriptions(List("value of type string", "Prod Config")))
+        )
+      )
+  )
+
+  assert(
+    generateDocsWithValue(config, result) ==
+      Right(
+        Or(
+          And(
+            And(
+              And(
+                PathDetails(
+                  "usr",
+                  DescriptionsWithValue(
+                    Some("v1"),
+                    Descriptions(List("value of type string", "Example: some-user", "Prod Config"))
+                  )
+                ),
+                PathDetails(
+                  "pwd",
+                  DescriptionsWithValue(
+                    Some("v2"),
+                    Descriptions(List("value of type string", "optional value", "sec", "Prod Config"))
+                  )
+                )
+              ),
+              PathDetails(
+                "jhi",
+                DescriptionsWithValue(
+                  None,
+                  Descriptions(List("value of type string", "optional value", "Ex: ghi", "Prod Config"))
+                )
+              )
+            ),
+            And(
+              PathDetails(
+                "xyz",
+                DescriptionsWithValue(
+                  Some("v3"),
+                  Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
+                )
+              ),
+              Or(
+                PathDetails(
+                  "abc",
+                  DescriptionsWithValue(
+                    Some("1"),
+                    Descriptions(List("value of type int", "optional value", "Ex: ha", "Prod Config"))
+                  )
+                ),
+                PathDetails(
+                  "def",
+                  DescriptionsWithValue(
+                    None,
+                    Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
+                  )
+                )
+              )
+            )
+          ),
+          And(
+            PathDetails(
+              "auth_token",
+              DescriptionsWithValue(None, Descriptions(List("value of type string", "Prod Config")))
+            ),
+            PathDetails(
+              "clientid",
+              DescriptionsWithValue(None, Descriptions(List("value of type string", "Prod Config")))
+            )
+          )
         )
       )
   )
