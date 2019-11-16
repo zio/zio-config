@@ -13,13 +13,34 @@ object DocsExample extends App {
       string("URL").optional ? "Example: abc.com")(Database.apply, Database.unapply) ? "Database related"
 
   assert(
-    docs(config, Some(Database(1, Some("value")))) ==
+    generateDocs(config) ==
       And(
-        PathDetails("PORT", Some("1"), List("value of type int", "Example: 8088", "Database related")),
+        PathDetails("PORT", Descriptions(List("value of type int", "Example: 8088", "Database related"))),
         PathDetails(
           "URL",
-          Some("value"),
-          List("value of type string", "optional value", "Example: abc.com", "Database related")
+          Descriptions(List("value of type string", "optional value", "Example: abc.com", "Database related"))
+        )
+      )
+  )
+
+  assert(
+    generateDocsWithValue(config, Database(1, Some("value"))) ==
+      Right(
+        And(
+          PathDetails(
+            "PORT",
+            DescriptionsWithValue(
+              Some("1"),
+              Descriptions(List("value of type int", "Example: 8088", "Database related"))
+            )
+          ),
+          PathDetails(
+            "URL",
+            DescriptionsWithValue(
+              Some("value"),
+              Descriptions(List("value of type string", "optional value", "Example: abc.com", "Database related"))
+            )
+          )
         )
       )
   )

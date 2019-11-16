@@ -3,24 +3,31 @@ package zio.config
 import zio.config.PropertyTree.{ Empty, Leaf, Record }
 
 sealed trait PropertyTree[K, V] { self =>
-  def flatten(zero: K, append: (K, K) => K): Map[K, V] = {
-    def go(key: K, propertyTree: PropertyTree[K, V], acc: Map[K, V]): Map[K, V] =
+  def flatten: Map[Vector[K], V] = {
+    def go(key: Vector[K], propertyTree: PropertyTree[K, V], acc: Map[Vector[K], V]): Map[Vector[K], V] =
       propertyTree match {
         case Empty()       => acc
         case Leaf(v)       => acc.updated(key, v)
-        case Record(value) => value.flatMap(t => go(append(key, t._1), t._2, acc))
+        case Record(value) => value.flatMap(t => go(key :+ t._1, t._2, acc))
       }
 
-    go(zero, self, Map.empty[K, V])
+    go(Vector.empty, self, Map.empty[Vector[K], V])
+  }
+
+  def get(key: K): Option[V] = {
+    def loop(proper: PropertyTree[K, V]): Option[V] =
+      proper match {
+        case Empty()       => None
+        case Leaf(v)       => Some(v)
+        case Record(value) => value.get(key).flatMap(loop)
+      }
+    loop(self)
   }
 
   def flattenString(
     appendString: String = "."
   )(implicit SK: String =:= K, KS: K =:= String): Map[K, V] =
-    self.flatten(
-      SK(""),
-      (a: K, b: K) => if (KS(a).nonEmpty) SK(List(SK(a), SK(b)).mkString(appendString)) else b
-    )
+    self.flatten.map({ case (key, value) => (key.map(KS).mkString(appendString), value) })
 }
 
 object PropertyTree {

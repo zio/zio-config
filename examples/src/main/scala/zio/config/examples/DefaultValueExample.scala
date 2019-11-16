@@ -22,12 +22,31 @@ object DefaultValueExample extends App {
   assert(result == PgmConfig("xyz", Right(1)))
 
   assert(
-    docs(pgmConf, Some(result)) ==
+    generateDocs(pgmConf) ==
       And(
-        PathDetails("HELLO", Some("xyz"), List("value of type string", "default value: xyz")),
+        PathDetails("HELLO", Descriptions(List("value of type string", "default value: xyz"))),
         Or(
-          PathDetails("SOMETHING", None, List("value of type string")),
-          PathDetails("PORT", Some("1"), List("value of type int", "default value: 1"))
+          PathDetails("SOMETHING", Descriptions(List("value of type string"))),
+          PathDetails("PORT", Descriptions(List("value of type int", "default value: 1")))
+        )
+      )
+  )
+
+  assert(
+    generateDocsWithValue(pgmConf, result) ==
+      Right(
+        And(
+          PathDetails(
+            "HELLO",
+            DescriptionsWithValue(Some("xyz"), Descriptions(List("value of type string", "default value: xyz")))
+          ),
+          Or(
+            PathDetails("SOMETHING", DescriptionsWithValue(None, Descriptions(List("value of type string")))),
+            PathDetails(
+              "PORT",
+              DescriptionsWithValue(Some("1"), Descriptions(List("value of type int", "default value: 1")))
+            )
+          )
         )
       )
   )

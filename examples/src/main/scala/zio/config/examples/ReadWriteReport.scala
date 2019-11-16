@@ -60,51 +60,51 @@ object ReadWriteReport extends App {
   )
 
   assert(
-    docs(config, Some(result)) ==
+    generateDocs(config) ==
       Or(
         And(
           And(
             And(
               PathDetails(
                 "usr",
-                Some("v1"),
-                List("value of type string", "Example: some-user", "Prod Config")
+                //Some("v1"),
+                Descriptions(List("value of type string", "Example: some-user", "Prod Config"))
               ),
               PathDetails(
                 "pwd",
-                Some("v2"),
-                List("value of type string", "optional value", "sec", "Prod Config")
+                //Some("v2"),
+                Descriptions(List("value of type string", "optional value", "sec", "Prod Config"))
               )
             ),
             PathDetails(
               "jhi",
-              None,
-              List("value of type string", "optional value", "Ex: ghi", "Prod Config")
+              // None,
+              Descriptions(List("value of type string", "optional value", "Ex: ghi", "Prod Config"))
             )
           ),
           And(
             PathDetails(
               "xyz",
-              Some("v3"),
-              List("value of type string", "optional value", "Ex: ha", "Prod Config")
+              // Some("v3"),
+              Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
             ),
             Or(
               PathDetails(
                 "abc",
-                Some("1"),
-                List("value of type int", "optional value", "Ex: ha", "Prod Config")
+                // Some("1"),
+                Descriptions(List("value of type int", "optional value", "Ex: ha", "Prod Config"))
               ),
               PathDetails(
                 "def",
-                None,
-                List("value of type string", "optional value", "Ex: ha", "Prod Config")
+                // None,
+                Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
               )
             )
           )
         ),
         And(
-          PathDetails("auth_token", None, List("value of type string", "Prod Config")),
-          PathDetails("clientid", None, List("value of type string", "Prod Config"))
+          PathDetails("auth_token", Descriptions(List("value of type string", "Prod Config"))),
+          PathDetails("clientid", Descriptions(List("value of type string", "Prod Config")))
         )
       )
   )

@@ -1,89 +1,93 @@
 package zio.config.actions
 
-import zio.config.ConfigDescriptor
+import zio.config.{ ConfigDescriptor }
 
 sealed trait ConfigDocs[+K, +V]
 
 object ConfigDocs {
+  sealed trait ConfigValueDetail[+V]
 
-  final case class Empty[K, V]()                                                    extends ConfigDocs[K, V]
-  final case class PathDetails[K, V](path: K, value: Option[V], docs: List[String]) extends ConfigDocs[K, V]
-  final case class NestedConfig[K, V](path: K, docs: ConfigDocs[K, V])              extends ConfigDocs[K, V]
-  final case class And[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])       extends ConfigDocs[K, V]
-  final case class Or[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])        extends ConfigDocs[K, V]
+  case class Descriptions[V](descriptions: List[String])                       extends ConfigValueDetail[V]
+  case class DescriptionsWithValue[V](value: Option[V], docs: Descriptions[V]) extends ConfigValueDetail[V]
 
-  final def createDoc[K, V, A](config: ConfigDescriptor[K, V, A], value: Option[A]): ConfigDocs[K, V] = {
+  final case class Empty[K, V]()                                              extends ConfigDocs[K, V]
+  final case class PathDetails[K, V](path: K, docs: ConfigValueDetail[V])     extends ConfigDocs[K, V]
+  final case class NestedConfig[K, V](path: K, docs: ConfigDocs[K, V])        extends ConfigDocs[K, V]
+  final case class And[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V]) extends ConfigDocs[K, V]
+  final case class Or[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])  extends ConfigDocs[K, V]
+
+  final def createDoc[K, V, A](config: ConfigDescriptor[K, V, A]): ConfigDocs[K, V] = {
     def loop[B](
-      descAcc: List[String],
+      descAcc: Descriptions[V],
       config: ConfigDescriptor[K, V, B],
-      docs: ConfigDocs[K, V],
-      configValue: Option[B]
+      docs: ConfigDocs[K, V]
     ): ConfigDocs[K, V] =
       config match {
         case ConfigDescriptor.Empty() => docs
         case ConfigDescriptor.Source(path, source, p) =>
           PathDetails(
             path,
-            configValue.map(t => p.write(t)),
-            source.sourceDescription ++ descAcc
+            Descriptions(source.sourceDescription ++ descAcc.descriptions)
           )
         case ConfigDescriptor.Default(c, _) =>
-          loop(descAcc, c, docs, configValue)
+          loop(descAcc, c, docs)
 
         case ConfigDescriptor.Describe(c, description) =>
-          loop(description :: descAcc, c, docs, configValue)
+          loop(Descriptions(description :: descAcc.descriptions), c, docs)
 
         case ConfigDescriptor.Optional(c) =>
-          configValue match {
-            case Some(result) =>
-              result.fold(loop(descAcc, c, docs, None))(v => loop(descAcc, c, docs, Some(v)))
-            case None =>
-              loop(descAcc, c, docs, None)
-          }
+          loop(descAcc, c, docs)
 
         // intentional duplication of pattern matching to get over the type issues.
-        case ConfigDescriptor.Nested(c, path) =>
-          configValue match {
-            case Some(v) => ConfigDocs.NestedConfig(path, loop(descAcc, c, docs, Some(v)))
-            case None    => ConfigDocs.NestedConfig(path, loop(descAcc, c, docs, None))
+        case a @ ConfigDescriptor.Nested(c, path) =>
+          a match {
+            case ConfigDescriptor.Nested(c, path) => ConfigDocs.NestedConfig(path, loop(descAcc, c, docs))
           }
 
         case ConfigDescriptor.XmapEither(c, _, to) =>
-          configValue match {
-            case Some(v) =>
-              to(v).fold(_ => loop(descAcc, c, docs, None), vv => loop(descAcc, c, docs, Some(vv)))
-            case None =>
-              loop(descAcc, c, docs, None)
-          }
+          loop(descAcc, c, docs)
 
         case ConfigDescriptor.Zip(left, right) =>
-          configValue match {
-            case Some(tuple) =>
-              ConfigDocs.And(
-                loop(descAcc, left, docs, Some(tuple._1)),
-                loop(descAcc, right, docs, Some(tuple._2))
-              )
-
-            case None =>
-              ConfigDocs.And(loop(descAcc, left, docs, None), loop(descAcc, right, docs, None))
-          }
+          ConfigDocs.And(
+            loop(descAcc, left, docs),
+            loop(descAcc, right, docs)
+          )
 
         case ConfigDescriptor.OrElseEither(left, right) =>
-          configValue match {
-            case Some(res) =>
-              res match {
-                case Left(vv) =>
-                  ConfigDocs.Or(loop(descAcc, left, docs, Some(vv)), loop(descAcc, right, docs, None))
-
-                case Right(vv) =>
-                  ConfigDocs.Or(loop(descAcc, left, docs, None), loop(descAcc, right, docs, Some(vv)))
-              }
-
-            case None =>
-              ConfigDocs.Or(loop(descAcc, left, docs, None), loop(descAcc, right, docs, None))
-          }
+          ConfigDocs.Or(
+            loop(descAcc, left, docs),
+            loop(descAcc, right, docs)
+          )
       }
 
-    loop(Nil, config, Empty(), value)
+    loop(Descriptions(Nil), config, Empty())
+  }
+
+  def createDocWithValues[K, V, A](config: ConfigDescriptor[K, V, A], value: A): Either[String, ConfigDocs[K, V]] = {
+    val propertyTree = Write.write(config, value)
+
+    propertyTree.map(tree => {
+      val flattened = tree.flatten
+
+      def loop(c: ConfigDocs[K, V], initialValue: Vector[K]): ConfigDocs[K, V] =
+        c match {
+          case Empty() => Empty()
+          case PathDetails(path, docs) =>
+            val updated: ConfigValueDetail[V] =
+              docs match {
+                case Descriptions(descriptions) =>
+                  DescriptionsWithValue(flattened.get(initialValue :+ path), Descriptions(descriptions))
+                case a => a
+              }
+            PathDetails(path, updated)
+
+          case NestedConfig(path, docs) =>
+            NestedConfig(path, loop(docs, initialValue :+ path))
+          case And(left, right) => And(loop(left, initialValue), loop(right, initialValue))
+          case Or(left, right)  => Or(loop(left, initialValue), loop(right, initialValue))
+        }
+
+      loop(createDoc(config), Vector.empty)
+    })
   }
 }

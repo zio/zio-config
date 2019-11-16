@@ -39,25 +39,63 @@ object NestedConfigExample extends App {
 
   // Docs and Report of the nested configurations.
   assert(
-    docs(appConfig, Some(result)) ==
+    generateDocs(appConfig) ==
       And(
         And(
           NestedConfig(
             "south",
             And(
-              PathDetails("connection", Some("abc.com"), List("value of type string", "South details")),
-              PathDetails("port", Some("8111"), List("value of type int", "South details"))
+              PathDetails("connection", Descriptions(List("value of type string", "South details"))),
+              PathDetails("port", Descriptions(List("value of type int", "South details")))
             )
           ),
           NestedConfig(
             "east",
             And(
-              PathDetails("connection", Some("xyz.com"), List("value of type string", "East details")),
-              PathDetails("port", Some("8888"), List("value of type int", "East details"))
+              PathDetails("connection", Descriptions(List("value of type string", "East details"))),
+              PathDetails("port", Descriptions(List("value of type int", "East details")))
             )
           )
         ),
-        PathDetails("appName", Some("myApp"), List("value of type string"))
+        PathDetails("appName", Descriptions(List("value of type string")))
+      )
+  )
+
+  // Docs with a peek at each value as well
+  assert(
+    generateDocsWithValue(appConfig, result) ==
+      Right(
+        And(
+          And(
+            NestedConfig(
+              "south",
+              And(
+                PathDetails(
+                  "connection",
+                  DescriptionsWithValue(Some("abc.com"), Descriptions(List("value of type string", "South details")))
+                ),
+                PathDetails(
+                  "port",
+                  DescriptionsWithValue(Some("8111"), Descriptions(List("value of type int", "South details")))
+                )
+              )
+            ),
+            NestedConfig(
+              "east",
+              And(
+                PathDetails(
+                  "connection",
+                  DescriptionsWithValue(Some("xyz.com"), Descriptions(List("value of type string", "East details")))
+                ),
+                PathDetails(
+                  "port",
+                  DescriptionsWithValue(Some("8888"), Descriptions(List("value of type int", "East details")))
+                )
+              )
+            )
+          ),
+          PathDetails("appName", DescriptionsWithValue(Some("myApp"), Descriptions(List("value of type string"))))
+        )
       )
   )
 

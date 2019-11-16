@@ -23,3 +23,29 @@ To write a configured value back:
 
   write(appConfig, awsConfig)
 ```
+
+yields
+
+```scala
+Right(
+    Record(
+      Map(
+        "south" ->
+          Record(
+            Map(
+              "connection" -> Leaf[String, String]("abc.com"),
+              "port"       -> Leaf[String, String]("8111")
+            )
+          ),
+        "east" ->
+          Record(
+            Map(
+              "connection" -> Leaf[String, String]("xyz.com"),
+              "port"       -> Leaf[String, String]("8888")
+            )
+          ),
+        "appName" -> Leaf[String, String]("myApp")
+      )
+    )
+  )
+```
