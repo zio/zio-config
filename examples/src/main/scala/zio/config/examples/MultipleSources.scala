@@ -31,7 +31,7 @@ object MultipleSources extends App {
   val myConfigWithReset = myConfig.resetSource.from(oneValidSource) // Equivalent to myConfig.fromNothing
 
   // Have got a few more sources to be tried, on top of what's there already ?
-  val myConfigChangedSource = myConfig.changeSource(_.orElse(ConfigSource.fromProperty))
+  val myConfigChangedSource = myConfig.updateSource(_.orElse(ConfigSource.fromProperty))
 
   //
   val runtime = new DefaultRuntime {}

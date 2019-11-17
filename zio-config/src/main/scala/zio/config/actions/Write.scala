@@ -53,8 +53,8 @@ object Write {
                           val r = mm.toList ++ mapp.toList
 
                           Right(PropertyTree.Record(r.toMap))
-                        case PropertyTree.Empty()      => Right(m1)
-                        case PropertyTree.Leaf(v)      => Right(PropertyTree.Leaf(v))
+                        case PropertyTree.Empty() => Right(m1)
+                        case PropertyTree.Leaf(v) => Right(PropertyTree.Leaf(v))
                       }
                     case PropertyTree.Leaf(_) =>
                       m2 match {
