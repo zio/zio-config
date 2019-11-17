@@ -2,32 +2,34 @@ package zio.config
 
 import zio.config.PropertyTree.{ Empty, Leaf, Record }
 
-sealed trait PropertyTree[K, V] { self =>
-  def flatten: Map[Vector[K], V] = {
-    def go(key: Vector[K], propertyTree: PropertyTree[K, V], acc: Map[Vector[K], V]): Map[Vector[K], V] =
+sealed trait PropertyTree[+K, +V] { self =>
+  def flatten[K1 >: K]: Map[Vector[K1], V] = {
+    def go(key: Vector[K1], propertyTree: PropertyTree[K1, V], acc: Map[Vector[K1], V]): Map[Vector[K1], V] =
       propertyTree match {
         case Empty()       => acc
         case Leaf(v)       => acc.updated(key, v)
         case Record(value) => value.flatMap(t => go(key :+ t._1, t._2, acc))
       }
 
-    go(Vector.empty, self, Map.empty[Vector[K], V])
+    go(Vector.empty, self, Map.empty[Vector[K1], V])
   }
 
-  def get(key: K): Option[V] = {
-    def loop(proper: PropertyTree[K, V]): Option[V] =
+  def get[K1 >: K](key: K1): Option[V] = {
+    def loop(proper: PropertyTree[K1, V]): Option[V] =
       proper match {
-        case Empty()       => None
-        case Leaf(v)       => Some(v)
-        case Record(value) => value.get(key).flatMap(loop)
+        case a @ Empty()       => None
+        case a @ Leaf(v)       => Some(v)
+        case Record(value) =>
+          // To get over the GADT skolem with .get
+          value.find(_._1 == key).map(_._2).flatMap(loop)
       }
     loop(self)
   }
 
-  def flattenString(
+  def flattenString[K1 >: K](
     appendString: String = "."
-  )(implicit SK: String =:= K, KS: K =:= String): Map[K, V] =
-    self.flatten.map({ case (key, value) => (key.map(KS).mkString(appendString), value) })
+  )(implicit SK: String =:= K1, KS: K1 =:= String): Map[K1, V] =
+    self.flatten[K1].map({ case (key, value) => (key.map(KS).mkString(appendString), value) })
 }
 
 object PropertyTree {

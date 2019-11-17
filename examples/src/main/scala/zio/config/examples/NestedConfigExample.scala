@@ -108,18 +108,18 @@ object NestedConfigExample extends App {
             "south" ->
               Record(
                 Map(
-                  "connection" -> Leaf[String, String]("abc.com"),
-                  "port"       -> Leaf[String, String]("8111")
+                  "connection" -> Leaf("abc.com"),
+                  "port"       -> Leaf("8111")
                 )
               ),
             "east" ->
               Record(
                 Map(
-                  "connection" -> Leaf[String, String]("xyz.com"),
-                  "port"       -> Leaf[String, String]("8888")
+                  "connection" -> Leaf("xyz.com"),
+                  "port"       -> Leaf("8888")
                 )
               ),
-            "appName" -> Leaf[String, String]("myApp")
+            "appName" -> Leaf("myApp")
           )
         )
       )

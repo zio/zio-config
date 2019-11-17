@@ -50,10 +50,10 @@ object ReadWriteReport extends App {
       Right(
         PropertyTree.Record(
           Map(
-            "usr" -> PropertyTree.Leaf[String, String]("v1"),
-            "pwd" -> PropertyTree.Leaf[String, String]("v2"),
-            "xyz" -> PropertyTree.Leaf[String, String]("v3"),
-            "abc" -> PropertyTree.Leaf[String, String]("1")
+            "usr" -> PropertyTree.Leaf("v1"),
+            "pwd" -> PropertyTree.Leaf("v2"),
+            "xyz" -> PropertyTree.Leaf("v3"),
+            "abc" -> PropertyTree.Leaf("1")
           )
         )
       )

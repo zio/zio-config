@@ -47,13 +47,13 @@ object SequenceExample extends App {
       Right(
         Record(
           Map(
-            "GROUP3_VARIABLE1" -> Leaf[String, String]("5"),
-            "GROUP3_VARIABLE2" -> Leaf[String, String]("6"),
-            "GROUP1_VARIABLE2" -> Leaf[String, String]("2"),
-            "GROUP1_VARIABLE1" -> Leaf[String, String]("1"),
-            "GROUP2_VARIABLE2" -> Leaf[String, String]("4"),
-            "GROUP2_VARIABLE1" -> Leaf[String, String]("3"),
-            "GROUP4_VARIABLE1" -> Leaf[String, String]("7")
+            "GROUP3_VARIABLE1" -> Leaf("5"),
+            "GROUP3_VARIABLE2" -> Leaf("6"),
+            "GROUP1_VARIABLE2" -> Leaf("2"),
+            "GROUP1_VARIABLE1" -> Leaf("1"),
+            "GROUP2_VARIABLE2" -> Leaf("4"),
+            "GROUP2_VARIABLE1" -> Leaf("3"),
+            "GROUP4_VARIABLE1" -> Leaf("7")
           )
         )
       )

@@ -48,7 +48,11 @@ object Write {
                   m1 match {
                     case PropertyTree.Record(mm) =>
                       m2 match {
-                        case PropertyTree.Record(mapp) => Right(PropertyTree.Record(mm ++ mapp))
+                        case PropertyTree.Record(mapp) =>
+                          // To get over the GADT Skolem with Map
+                          val r = mm.toList ++ mapp.toList
+
+                          Right(PropertyTree.Record(r.toMap))
                         case PropertyTree.Empty()      => Right(m1)
                         case PropertyTree.Leaf(v)      => Right(PropertyTree.Leaf(v))
                       }
