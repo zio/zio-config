@@ -28,7 +28,7 @@ sealed trait PropertyTree[+K, +V] { self =>
 
   def flattenString[K1 >: K](
     appendString: String = "."
-  )(implicit SK: String =:= K1, KS: K1 =:= String): Map[K1, V] =
+  )(implicit SK: String =:= K1, KS: K1 =:= String): Map[String, V] =
     self.flatten[K1].map({ case (key, value) => (key.map(KS).mkString(appendString), value) })
 }
 
