@@ -17,8 +17,8 @@ sealed trait PropertyTree[+K, +V] { self =>
   def get[K1 >: K](key: K1): Option[V] = {
     def loop(proper: PropertyTree[K1, V]): Option[V] =
       proper match {
-        case Empty()   => None
-        case Leaf(v)   => Some(v)
+        case Empty()       => None
+        case Leaf(v)       => Some(v)
         case Record(value) =>
           // To get over the GADT skolem with .get
           value.find(_._1 == key).map(_._2).flatMap(loop)
