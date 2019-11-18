@@ -17,8 +17,8 @@ sealed trait PropertyTree[+K, +V] { self =>
   def get[K1 >: K](key: K1): Option[V] = {
     def loop(proper: PropertyTree[K1, V]): Option[V] =
       proper match {
-        case a @ Empty()   => None
-        case a @ Leaf(v)   => Some(v)
+        case Empty()   => None
+        case Leaf(v)   => Some(v)
         case Record(value) =>
           // To get over the GADT skolem with .get
           value.find(_._1 == key).map(_._2).flatMap(loop)
@@ -28,7 +28,7 @@ sealed trait PropertyTree[+K, +V] { self =>
 
   def flattenString[K1 >: K](
     appendString: String = "."
-  )(implicit SK: String =:= K1, KS: K1 =:= String): Map[String, V] =
+  )(implicit KS: K1 =:= String): Map[String, V] =
     self.flatten[K1].map({ case (key, value) => (key.map(KS).mkString(appendString), value) })
 }
 

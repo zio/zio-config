@@ -24,7 +24,7 @@ object ConfigDocs {
     ): ConfigDocs[K, V] =
       config match {
         case ConfigDescriptor.Empty() => docs
-        case ConfigDescriptor.Source(path, source, p) =>
+        case ConfigDescriptor.Source(path, source, _) =>
           PathDetails(
             path,
             Descriptions(source.sourceDescription ++ descAcc.descriptions)
@@ -39,12 +39,12 @@ object ConfigDocs {
           loop(descAcc, c, docs)
 
         // intentional duplication of pattern matching to get over the type issues.
-        case a @ ConfigDescriptor.Nested(c, path) =>
+        case a @ ConfigDescriptor.Nested(_, _) =>
           a match {
             case ConfigDescriptor.Nested(c, path) => ConfigDocs.NestedConfig(path, loop(descAcc, c, docs))
           }
 
-        case ConfigDescriptor.XmapEither(c, _, to) =>
+        case ConfigDescriptor.XmapEither(c, _, _) =>
           loop(descAcc, c, docs)
 
         case ConfigDescriptor.Zip(left, right) =>
