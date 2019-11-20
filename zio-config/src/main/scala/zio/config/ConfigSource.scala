@@ -5,7 +5,7 @@ import zio.{ IO, ZIO }
 import zio.system.System.Live.system
 
 final case class ConfigSource[K, V](
-  getConfigValue: Vector[K] => IO[MultiKeyReadErrors[K, V], V],
+  getConfigValue: Vector[K] => IO[ConfigErrors[K, V], V],
   sourceDescription: List[String]
 ) {
   def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =

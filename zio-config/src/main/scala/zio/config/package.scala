@@ -4,8 +4,7 @@ import zio.config.actions.{ ConfigDocs, Read, Write }
 
 package object config {
 
-  type MultiKeyReadErrors[K, V] = ReadErrors[Vector[K], V]
-  type ConfigErrors[K, V]       = ReadErrors[Vector[K], V]
+  type ConfigErrors[K, V] = ReadErrors[Vector[K], V]
 
   def read[K, V, A](config: => ConfigDescriptor[K, V, A]): IO[ReadErrors[Vector[K], V], A] =
     Read.read(config)

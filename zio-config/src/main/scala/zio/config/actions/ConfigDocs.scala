@@ -63,31 +63,36 @@ object ConfigDocs {
     loop(Descriptions(Nil), config, Empty())
   }
 
-  def createDocWithValues[K, V, A](config: ConfigDescriptor[K, V, A], value: A): Either[String, ConfigDocs[K, V]] = {
-    val propertyTree = Write.write(config, value)
+  def createDocWithValues[K, V, A](config: ConfigDescriptor[K, V, A], value: A): Either[String, ConfigDocs[K, V]] =
+    Write
+      .write(config, value)
+      .map(tree => {
+        val flattened = tree.flatten
 
-    propertyTree.map(tree => {
-      val flattened = tree.flatten
+        def loop(c: ConfigDocs[K, V], initialValue: Vector[K]): ConfigDocs[K, V] =
+          c match {
+            case Empty() =>
+              Empty()
 
-      def loop(c: ConfigDocs[K, V], initialValue: Vector[K]): ConfigDocs[K, V] =
-        c match {
-          case Empty() => Empty()
-          case PathDetails(path, docs) =>
-            val updated: ConfigValueDetail[V] =
-              docs match {
-                case Descriptions(descriptions) =>
-                  DescriptionsWithValue(flattened.get(initialValue :+ path), Descriptions(descriptions))
-                case a => a
-              }
-            PathDetails(path, updated)
+            case PathDetails(path, docs) =>
+              val updated: ConfigValueDetail[V] =
+                docs match {
+                  case Descriptions(descriptions) =>
+                    DescriptionsWithValue(flattened.get(initialValue :+ path), Descriptions(descriptions))
+                  case a => a
+                }
+              PathDetails(path, updated)
 
-          case NestedConfig(path, docs) =>
-            NestedConfig(path, loop(docs, initialValue :+ path))
-          case And(left, right) => And(loop(left, initialValue), loop(right, initialValue))
-          case Or(left, right)  => Or(loop(left, initialValue), loop(right, initialValue))
-        }
+            case NestedConfig(path, docs) =>
+              NestedConfig(path, loop(docs, initialValue :+ path))
 
-      loop(createDoc(config), Vector.empty)
-    })
-  }
+            case And(left, right) =>
+              And(loop(left, initialValue), loop(right, initialValue))
+
+            case Or(left, right) =>
+              Or(loop(left, initialValue), loop(right, initialValue))
+          }
+
+        loop(createDoc(config), Vector.empty)
+      })
 }

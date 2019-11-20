@@ -1,20 +1,20 @@
 package zio.config.actions
 
 import zio.config.ReadErrors.ReadError
-import zio.config.{ ConfigDescriptor, ConfigSource, MultiKeyReadErrors, PropertyType, ReadErrors }
+import zio.config.{ ConfigDescriptor, ConfigErrors, ConfigSource, PropertyType, ReadErrors }
 import zio.{ IO, ZIO }
 
 object Read {
   // Read
   final def read[K, V, A](
     configuration: ConfigDescriptor[K, V, A]
-  ): IO[MultiKeyReadErrors[K, V], A] = {
+  ): IO[ConfigErrors[K, V], A] = {
     def loop[V1, B](
       configuration: ConfigDescriptor[K, V1, B],
       paths: Vector[K]
-    ): IO[MultiKeyReadErrors[K, V1], B] =
+    ): IO[ConfigErrors[K, V1], B] =
       configuration match {
-        case ConfigDescriptor.Empty() => ZIO.access(_ => Option.empty[B])
+        case ConfigDescriptor.Empty() => ZIO.succeed(None)
 
         case ConfigDescriptor.Source(path, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
           for {
