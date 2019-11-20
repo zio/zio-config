@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.Config._
+import zio.config.ConfigDescriptor._
 import zio.config.helpers._
 import zio.config.SequenceRoundtripTestUtils._
 import zio.random.Random
@@ -14,7 +14,7 @@ object SequenceRoundtripTest
         testM("optional write") {
           checkM(genOverallConfig) {
             p =>
-              val cId: String => ConfigDescriptor[Id] = string(_).xmap(Id)(_.value)
+              val cId: String => ConfigDescriptor[String, String, Id] = string(_).xmap(Id)(_.value)
 
               val config =
                 ConfigDescriptor.sequence(
@@ -23,15 +23,15 @@ object SequenceRoundtripTest
                   )
                 )
 
-              val readAndWrite =
+              val readAndWrite
+                : ZIO[Any, ReadErrors[Vector[String], String], Either[String, PropertyTree[String, String]]] =
                 for {
-                  result  <- read(config)
+                  result  <- read(config from ConfigSource.fromMap(p))
                   written <- ZIO.effectTotal(write(config, result))
                 } yield written
 
               val actual = readAndWrite
                 .map(_.map(_.flattenString()))
-                .provide(ConfigSource.fromMap(p))
                 .map(_.fold(_ => Nil, _.toList.sortBy(_._1)))
 
               assertM(actual, equalTo(p.toList.sortBy(_._1)))

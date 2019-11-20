@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.DefaultRuntime
 import zio.config._
-import Config._
+import ConfigDescriptor._
 import zio.config.ReadErrors.ReadError.{ MissingValue, ParseError }
 import zio.config.{ ConfigSource, _ }
 
@@ -19,7 +19,7 @@ object CoproductExample extends App {
   val dev =
     (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
 
-  val prodOrDev: ConfigDescriptor[Either[Prod, Dev]] =
+  val prodOrDev =
     prod orElseEither dev
 
   val runtime = new DefaultRuntime {}
@@ -34,7 +34,10 @@ object CoproductExample extends App {
   val source: ConfigSource[String, String] =
     ConfigSource.fromMap(validConfigForSampleConfig)
 
-  assert(runtime.unsafeRun(read(prodOrDev).provide(source)) == Left(Prod(Ldap("v1"), DbUrl("v2"))))
+  // read(prodOrDev from source) is equivalent to Config.fromMap(prodOrDev). This is only to demonstrate that you can
+  // use `from` at any point in your description, making it really flexible for the user to fetch different configs from different
+  // sources.
+  assert(runtime.unsafeRun(read(prodOrDev from source)) == Left(Prod(Ldap("v1"), DbUrl("v2"))))
 
   val validConfigForAnotherConfig =
     Map(
@@ -47,7 +50,7 @@ object CoproductExample extends App {
   val anotherSource: ConfigSource[String, String] =
     ConfigSource.fromMap(validConfigForAnotherConfig)
 
-  assert(runtime.unsafeRun(read(prodOrDev).provide(anotherSource)) == Right(Dev("v3", 1, 2.0)))
+  assert(runtime.unsafeRun(read(prodOrDev from anotherSource)) == Right(Dev("v3", 1, 2.0)))
 
   val invalidConfig =
     Map(
@@ -57,17 +60,12 @@ object CoproductExample extends App {
       "x5" -> "notadouble"
     )
 
-  val invalidSource: ConfigSource[String, String] =
+  val invalidSource =
     ConfigSource.fromMap(invalidConfig)
 
   assert(
-    runtime.unsafeRun(read(prodOrDev).provide(invalidSource).either) ==
-      Left(
-        ReadErrors(
-          MissingValue("x1"),
-          ParseError("x5", "notadouble", "double")
-        )
-      )
+    runtime.unsafeRun(read(prodOrDev from invalidSource).mapError(_.errors).either) ==
+      Left(List(MissingValue(Vector("x1")), ParseError(Vector("x5"), "notadouble", "double")))
   )
 
   val allConfigsExist =
@@ -80,7 +78,7 @@ object CoproductExample extends App {
     )
 
   assert(
-    runtime.unsafeRun(read(prodOrDev).provide(ConfigSource.fromMap(allConfigsExist))) ==
+    runtime.unsafeRun(read(prodOrDev from ConfigSource.fromMap(allConfigsExist))) ==
       Left(Prod(Ldap("v1"), DbUrl("v2")))
   )
 }

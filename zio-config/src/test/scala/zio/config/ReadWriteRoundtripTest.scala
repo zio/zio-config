@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.Config._
+import zio.config.ConfigDescriptor._
 import zio.config.helpers._
 import zio.config.ReadWriteRoundtripTestUtils._
 import zio.random.Random
@@ -16,7 +16,7 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cId, p))
-                reread  <- read(cId).provide(ConfigSource.fromPropertyTree(written))
+                reread  <- read(cId from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
@@ -27,7 +27,7 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cDbUrl, p))
-                reread  <- read(cDbUrl).provide(ConfigSource.fromPropertyTree(written))
+                reread  <- read(cDbUrl from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
@@ -38,7 +38,7 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cEnterpriseAuth, p))
-                reread  <- read(cEnterpriseAuth).provide(ConfigSource.fromPropertyTree(written))
+                reread  <- read(cEnterpriseAuth from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
@@ -49,7 +49,7 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cNestedConfig, p))
-                reread  <- read(cNestedConfig).provide(ConfigSource.fromPropertyTree(written))
+                reread  <- read(cNestedConfig from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
@@ -60,7 +60,7 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cCoproductConfig, p))
-                reread  <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(written))
+                reread  <- read(cCoproductConfig from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))

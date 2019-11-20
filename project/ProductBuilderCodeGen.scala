@@ -40,8 +40,8 @@ object ProductBuilderCodeGen {
     val part1 =
       s"""
          |  sealed abstract class ProductBuilder[$L0] {
-         |    val $l0: ConfigDescriptor[$L0]
-         |    def apply[$L1](ff: ($cL0) => $L1, gg: $L1 => Option[($cL0)]): ConfigDescriptor[$L1] =
+         |    val $l0: ConfigDescriptor[KK, VV, $L0]
+         |    def apply[$L1](ff: ($cL0) => $L1, gg: $L1 => Option[($cL0)]): ConfigDescriptor[KK, VV, $L1] =
          |      ($zipped)
          |        .xmapEither[$L1] {
          |          case $cll0Tupled => Right(ff($cll0))
@@ -50,9 +50,9 @@ object ProductBuilderCodeGen {
          |      )""".stripMargin
     val part2 =
       s"""
-         |    def |@|[$L1]($ll1: ConfigDescriptor[$L1]): ProductBuilder[$L1] =
+         |    def |@|[$L1]($ll1: ConfigDescriptor[KK, VV, $L1]): ProductBuilder[$L1] =
          |      new ProductBuilder[$L1] {
-         |        val $l1: ConfigDescriptor[$L1] = $ll1
+         |        val $l1: ConfigDescriptor[KK, VV, $L1] = $ll1
          |      }""".stripMargin
 
     if (n == count - 1) List(part1) else List(part1, part2)
