@@ -1,62 +1,67 @@
 package zio.config
 
 import zio.config.ReadErrors.ReadError
-import zio.system.System
 import zio.{ IO, ZIO }
+import zio.system.System.Live.system
 
-trait ConfigSource[K, V] {
-  val configSourceService: ConfigSource.Service[K, V]
+final case class ConfigSource[K, V](
+  getConfigValue: Vector[K] => IO[ConfigErrors[K, V], V],
+  sourceDescription: List[String]
+) {
+  def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+    ConfigSource(k => getConfigValue(k).orElse(that.getConfigValue(k)), sourceDescription ++ that.sourceDescription)
+
+  def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+    orElse(that)
+
 }
 
 object ConfigSource {
-  trait Service[K, V] {
-    def getConfigValue(path: Vector[K]): IO[ReadError[K, V], V]
-  }
+  def empty[K, V]: ConfigSource[K, V] =
+    ConfigSource((k: Vector[K]) => IO.fail(ReadErrors(ReadError.MissingValue(k))), List.empty)
 
-  val fromEnv: ZIO[System, Nothing, ConfigSource[String, String]] =
-    ZIO.access { env =>
-      new ConfigSource[String, String] {
-        val configSourceService: ConfigSource.Service[String, String] =
-          (path: Vector[String]) => {
-            val key = path.mkString("_")
-            env.system
-              .env(key)
-              .mapError { err =>
-                ReadError.FatalError(key, err): ReadError[String, String]
-              }
-              .flatMap(IO.fromOption(_))
-              .mapError(_ => ReadError.MissingValue(key))
+  val fromEnv: ConfigSource[String, String] =
+    ConfigSource(
+      (path: Vector[String]) => {
+        val key = path.mkString("_")
+        system
+          .env(key)
+          .mapError { err =>
+            ReadError.FatalError[Vector[String], String](path, err)
           }
-      }
-    }
+          .flatMap(IO.fromOption(_))
+          .mapError(_ => ReadErrors(ReadError.MissingValue[Vector[String], String](path)))
 
-  val fromProperty: ZIO[System, Nothing, ConfigSource[String, String]] =
-    ZIO.access { env =>
-      new ConfigSource[String, String] {
-        val configSourceService: ConfigSource.Service[String, String] =
-          (path: Vector[String]) => {
-            val key = path.mkString(".")
-            env.system
-              .property(key)
-              .mapError { err =>
-                ReadError.FatalError(key, err): ReadError[String, String]
-              }
-              .flatMap(IO.fromOption(_))
-              .mapError(_ => ReadError.MissingValue(key))
+      },
+      List("system environment")
+    )
+
+  val fromProperty: ConfigSource[String, String] =
+    ConfigSource(
+      (path: Vector[String]) => {
+        val key = path.mkString(".")
+        system
+          .env(key)
+          .mapError { err =>
+            ReadError.FatalError(path, err)
           }
-      }
-    }
+          .flatMap(IO.fromOption(_))
+          .mapError(_ => ReadErrors(ReadError.MissingValue[Vector[String], String](path)))
+
+      },
+      List("system properties")
+    )
 
   def fromMap(map: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
-    new ConfigSource[String, String] {
-      val configSourceService: ConfigSource.Service[String, String] =
-        (path: Vector[String]) => {
-          val key = path.mkString(delimiter)
-          ZIO.fromOption(map.get(key)).mapError { _ =>
-            ReadError.MissingValue(key): ReadError[String, String]
-          }
+    ConfigSource(
+      (path: Vector[String]) => {
+        val key = path.mkString(delimiter)
+        ZIO.fromOption(map.get(key)).mapError { _ =>
+          ReadErrors(ReadError.MissingValue[Vector[String], String](Vector(key)))
         }
-    }
+      },
+      List("constant <map>")
+    )
 
   def fromPropertyTree(
     propertyTree: PropertyTree[String, String],

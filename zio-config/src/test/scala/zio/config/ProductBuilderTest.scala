@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.Config._
+import zio.config.ConfigDescriptor._
 import zio.config.ProductBuilderTestUtils._
 import zio.test._
 import zio.test.Assertion._
@@ -14,7 +14,7 @@ object ProductBuilderTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cS22, p))
-                reread  <- read(cS22).provide(ConfigSource.fromMap(written.flattenString(".")))
+                reread  <- read(cS22 from ConfigSource.fromMap(written.flattenString(".")))
               } yield reread
 
             assertM(p2, equalTo(p))

@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config._
-import Config._, zio.config.actions.ConfigDocs._
+import ConfigDescriptor._, zio.config.actions.ConfigDocs._
 import zio.config.actions.ConfigDocs.PathDetails
 
 object DocsExample extends App {
@@ -13,13 +13,34 @@ object DocsExample extends App {
       string("URL").optional ? "Example: abc.com")(Database.apply, Database.unapply) ? "Database related"
 
   assert(
-    docs(config, Some(Database(1, Some("value")))) ==
+    generateDocs(config) ==
       And(
-        PathDetails(Vector("PORT"), Some("1"), List("value of type int", "Example: 8088", "Database related")),
+        PathDetails("PORT", Descriptions(List("value of type int", "Example: 8088", "Database related"))),
         PathDetails(
-          Vector("URL"),
-          Some("value"),
-          List("value of type string", "optional value", "Example: abc.com", "Database related")
+          "URL",
+          Descriptions(List("value of type string", "optional value", "Example: abc.com", "Database related"))
+        )
+      )
+  )
+
+  assert(
+    generateDocsWithValue(config, Database(1, Some("value"))) ==
+      Right(
+        And(
+          PathDetails(
+            "PORT",
+            DescriptionsWithValue(
+              Some("1"),
+              Descriptions(List("value of type int", "Example: 8088", "Database related"))
+            )
+          ),
+          PathDetails(
+            "URL",
+            DescriptionsWithValue(
+              Some("value"),
+              Descriptions(List("value of type string", "optional value", "Example: abc.com", "Database related"))
+            )
+          )
         )
       )
   )

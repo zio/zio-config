@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.Config._
+import zio.config.ConfigDescriptor._
 import zio.config.helpers._
 import zio.config.ListAndOptionalTestUtils._
 import zio.test._

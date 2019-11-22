@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config._
-import Config._
+import ConfigDescriptor.{ _ }
 import zio.DefaultRuntime
 import zio.config.PropertyTree.{ Leaf, Record }
 import zio.config.actions.ConfigDocs._
@@ -20,7 +20,7 @@ object NestedConfigExample extends App {
       string("appName"))(AwsConfig, AwsConfig.unapply)
 
   // For simplicity in example, we use map source. Works with hoccon.
-  val source: ConfigSource[String, String] =
+  val source =
     ConfigSource.fromMap(
       Map(
         "south.connection" -> "abc.com",
@@ -34,25 +34,70 @@ object NestedConfigExample extends App {
   val runtime = new DefaultRuntime {}
 
   // Read
-  val result = runtime.unsafeRun(read(appConfig).provide(source))
+  val result = runtime.unsafeRun(read(appConfig from source))
   assert(result == AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
 
   // Docs and Report of the nested configurations.
-  assert(docs(appConfig, Some(result)) == {
-    And(
+  assert(
+    generateDocs(appConfig) ==
       And(
         And(
-          PathDetails(Vector("south", "connection"), Some("abc.com"), List("value of type string", "South details")),
-          PathDetails(Vector("south", "port"), Some("8111"), List("value of type int", "South details"))
+          NestedConfig(
+            "south",
+            And(
+              PathDetails("connection", Descriptions(List("value of type string", "South details"))),
+              PathDetails("port", Descriptions(List("value of type int", "South details")))
+            )
+          ),
+          NestedConfig(
+            "east",
+            And(
+              PathDetails("connection", Descriptions(List("value of type string", "East details"))),
+              PathDetails("port", Descriptions(List("value of type int", "East details")))
+            )
+          )
         ),
+        PathDetails("appName", Descriptions(List("value of type string")))
+      )
+  )
+
+  // Docs with a peek at each value as well
+  assert(
+    generateDocsWithValue(appConfig, result) ==
+      Right(
         And(
-          PathDetails(Vector("east", "connection"), Some("xyz.com"), List("value of type string", "East details")),
-          PathDetails(Vector("east", "port"), Some("8888"), List("value of type int", "East details"))
+          And(
+            NestedConfig(
+              "south",
+              And(
+                PathDetails(
+                  "connection",
+                  DescriptionsWithValue(Some("abc.com"), Descriptions(List("value of type string", "South details")))
+                ),
+                PathDetails(
+                  "port",
+                  DescriptionsWithValue(Some("8111"), Descriptions(List("value of type int", "South details")))
+                )
+              )
+            ),
+            NestedConfig(
+              "east",
+              And(
+                PathDetails(
+                  "connection",
+                  DescriptionsWithValue(Some("xyz.com"), Descriptions(List("value of type string", "East details")))
+                ),
+                PathDetails(
+                  "port",
+                  DescriptionsWithValue(Some("8888"), Descriptions(List("value of type int", "East details")))
+                )
+              )
+            )
+          ),
+          PathDetails("appName", DescriptionsWithValue(Some("myApp"), Descriptions(List("value of type string"))))
         )
-      ),
-      PathDetails(Vector("appName"), Some("myApp"), List("value of type string"))
-    )
-  })
+      )
+  )
 
   // Write your nested config back.
   assert(

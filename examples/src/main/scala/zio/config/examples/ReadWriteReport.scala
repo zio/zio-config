@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, Config._
+import zio.config._, ConfigDescriptor._
 import zio.config.actions.ConfigDocs._
 
 object ReadWriteReport extends App {
@@ -14,7 +14,7 @@ object ReadWriteReport extends App {
   type ProdConfig = Either[UserPwd, Token]
 
   // An example where user provides a description once and for all, and use it for read, write, report!
-  val config: ConfigDescriptor[ProdConfig] =
+  val config =
     ((string("usr") ? "Example: some-user" |@|
       string("pwd").xmap(Password)(_.value).optional ? "sec" |@|
       string("jhi").optional ? "Ex: ghi" |@|
@@ -38,7 +38,7 @@ object ReadWriteReport extends App {
     ConfigSource.fromMap(userNamePassword)
 
   val result: ProdConfig =
-    runtime.unsafeRun(read(config).provide(source))
+    runtime.unsafeRun(read(config from source)) // Equivalent to Config.fromMap(userNamePassword, config)
 
   assert(
     result == Left(UserPwd("v1", Some(Password("v2")), None, Some(XYZ("v3", Left(1)))))
@@ -60,51 +60,115 @@ object ReadWriteReport extends App {
   )
 
   assert(
-    docs(config, Some(result)) ==
+    generateDocs(config) ==
       Or(
         And(
           And(
             And(
               PathDetails(
-                Vector("usr"),
-                Some("v1"),
-                List("value of type string", "Example: some-user", "Prod Config")
+                "usr",
+                Descriptions(List("value of type string", "Example: some-user", "Prod Config"))
               ),
               PathDetails(
-                Vector("pwd"),
-                Some("v2"),
-                List("value of type string", "optional value", "sec", "Prod Config")
+                "pwd",
+                Descriptions(List("value of type string", "optional value", "sec", "Prod Config"))
               )
             ),
             PathDetails(
-              Vector("jhi"),
-              None,
-              List("value of type string", "optional value", "Ex: ghi", "Prod Config")
+              "jhi",
+              Descriptions(List("value of type string", "optional value", "Ex: ghi", "Prod Config"))
             )
           ),
           And(
             PathDetails(
-              Vector("xyz"),
-              Some("v3"),
-              List("value of type string", "optional value", "Ex: ha", "Prod Config")
+              "xyz",
+              Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
             ),
             Or(
               PathDetails(
-                Vector("abc"),
-                Some("1"),
-                List("value of type int", "optional value", "Ex: ha", "Prod Config")
+                "abc",
+                Descriptions(List("value of type int", "optional value", "Ex: ha", "Prod Config"))
               ),
               PathDetails(
-                Vector("def"),
-                None,
-                List("value of type string", "optional value", "Ex: ha", "Prod Config")
+                "def",
+                Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
               )
             )
           )
         ),
         And(
-          PathDetails(Vector("auth_token"), None, List("value of type string", "Prod Config")),
-          PathDetails(Vector("clientid"), None, List("value of type string", "Prod Config"))
+          PathDetails("auth_token", Descriptions(List("value of type string", "Prod Config"))),
+          PathDetails("clientid", Descriptions(List("value of type string", "Prod Config")))
+        )
+      )
+  )
+
+  assert(
+    generateDocsWithValue(config, result) ==
+      Right(
+        Or(
+          And(
+            And(
+              And(
+                PathDetails(
+                  "usr",
+                  DescriptionsWithValue(
+                    Some("v1"),
+                    Descriptions(List("value of type string", "Example: some-user", "Prod Config"))
+                  )
+                ),
+                PathDetails(
+                  "pwd",
+                  DescriptionsWithValue(
+                    Some("v2"),
+                    Descriptions(List("value of type string", "optional value", "sec", "Prod Config"))
+                  )
+                )
+              ),
+              PathDetails(
+                "jhi",
+                DescriptionsWithValue(
+                  None,
+                  Descriptions(List("value of type string", "optional value", "Ex: ghi", "Prod Config"))
+                )
+              )
+            ),
+            And(
+              PathDetails(
+                "xyz",
+                DescriptionsWithValue(
+                  Some("v3"),
+                  Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
+                )
+              ),
+              Or(
+                PathDetails(
+                  "abc",
+                  DescriptionsWithValue(
+                    Some("1"),
+                    Descriptions(List("value of type int", "optional value", "Ex: ha", "Prod Config"))
+                  )
+                ),
+                PathDetails(
+                  "def",
+                  DescriptionsWithValue(
+                    None,
+                    Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
+                  )
+                )
+              )
+            )
+          ),
+          And(
+            PathDetails(
+              "auth_token",
+              DescriptionsWithValue(None, Descriptions(List("value of type string", "Prod Config")))
+            ),
+            PathDetails(
+              "clientid",
+              DescriptionsWithValue(None, Descriptions(List("value of type string", "Prod Config")))
+            )
+          )
         )
       )
   )

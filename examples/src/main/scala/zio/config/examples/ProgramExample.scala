@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.blocking.Blocking
-import zio.config.Config._
+import zio.config.ConfigDescriptor._
 import zio.config.{ Config, _ }
 import zio.console.Console
 import zio.{ App, UIO, ZIO }
@@ -27,7 +27,7 @@ object ProgramExample extends App {
   override def run(args: List[String]): ZIO[Environment, Nothing, Int] = {
     val pgm =
       for {
-        configEnv <- Config.fromEnv(programConfig)
+        configEnv <- Config.fromMap(Map("INPUT_PATH" -> "input", "OUTPUT_PATH" -> "output"), programConfig)
         sparkEnv  <- SparkEnv.local("some-app")
         _         <- Application.execute.provide(Live(configEnv.config, sparkEnv.spark))
       } yield ()
@@ -84,10 +84,7 @@ object SparkEnv {
       //    SparkSession.builder().appName(name).enableHiveSupport().getOrCreate()
       SparkSession(name)
     }
-
 }
-
-////
 
 // The core application
 object Application {

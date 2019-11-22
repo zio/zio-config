@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.Config._
+import zio.config.ConfigDescriptor._
 import zio.config.helpers._
 import zio.config.EitherReciprocityTestUtils._
 import zio.test._
@@ -16,9 +16,9 @@ object EitherReciprocityTest
               val lr =
                 for {
                   writtenLeft  <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
-                  rereadLeft   <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(writtenLeft))
+                  rereadLeft   <- read(cCoproductConfig from ConfigSource.fromPropertyTree(writtenLeft))
                   writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
-                  rereadRight  <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(writtenRight))
+                  rereadRight  <- read(cCoproductConfig from ConfigSource.fromPropertyTree(writtenRight))
                 } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
                   case (Left(pl), Right(pr)) => Some(pl -> pr)
                   case _                     => None
@@ -62,7 +62,7 @@ object EitherReciprocityTestUtils {
   private val cNestedConfigRight =
     (cEnterpriseAuthRight |@| int("krCount") |@| float("krFactor"))(NestedConfig.apply, NestedConfig.unapply)
 
-  val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
+  val cCoproductConfig =
     (cNestedConfigLeft.orElseEither(cNestedConfigRight)).xmap(CoproductConfig)(_.coproduct)
 
 }
