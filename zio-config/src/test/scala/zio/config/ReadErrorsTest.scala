@@ -1,6 +1,5 @@
 package zio.config
 
-import zio.config._
 import ReadErrorsTestUtils._
 import zio.random.Random
 import zio.test._
