@@ -45,7 +45,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
       case Left(value)  => value
     }(b => Right(b))
 
-  final def |(that: => ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+  final def <>(that: => ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     self orElse that
 
   final def optional: ConfigDescriptor[K, V, Option[A]] =

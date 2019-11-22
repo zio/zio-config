@@ -16,7 +16,7 @@ We must be fetching the configuration from the environment to a case class (prod
 
 ```scala mdoc:silent
 
-final case class MyConfig(ldap: String, port: Int, dburl: String)
+case class MyConfig(ldap: String, port: Int, dburl: String)
 
 ```
 To perform any action using zio-config, we need a configuration description.
@@ -79,7 +79,7 @@ string("DB_URL").optional
 That is, 
 
 ```scala mdoc:silent
-final case class MyConfigWithOptionalUrl(ldap: String, port: Port, dburl: Option[String])
+case class MyConfigWithOptionalUrl(ldap: String, port: Port, dburl: Option[String])
 
 val myConfigOptional =
   ((string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@| 
@@ -101,7 +101,7 @@ Sometimes, we don't need an optional value and instead happy providing a default
 
 ```scala mdoc:silent
 
-final case class MyConfigWithDefaultUserName(username: String, port: Int)
+case class MyConfigWithDefaultUserName(username: String, port: Int)
 
 val myConfigDefault =
   ((string("USERNAME").default("root-oh") |@| int("PORT")))(MyConfigWithDefaultUserName.apply, MyConfigWithDefaultUserName.unapply)
@@ -128,7 +128,7 @@ int("PORT").xmap(Port)(_.value)
 where port is;
 
 ```scala mdoc:silent
- final case class Port(value: Int)
+ case class Port(value: Int)
 
 ```
 
@@ -136,7 +136,7 @@ That is,
 
 ```scala mdoc:silent
 
- final case class MyCustomConfig(ldap: String, port: Port, dburl: String)
+ case class MyCustomConfig(ldap: String, port: Port, dburl: String)
 
  // Before
   val myConfigWithCustomType =
@@ -204,7 +204,7 @@ string("USERNAME").orElseEither(string("TOKEN"))
 That is,
 
 ```scala mdoc:silent
-final case class MyConfigWithEither(usernameOrToken: Either[String, String], port: Int)
+case class MyConfigWithEither(usernameOrToken: Either[String, String], port: Int)
 
 val myConfigEither =
   ((string("USERNAME").orElseEither(string("TOKEN")) |@| int("PORT")))(MyConfigWithEither.apply, MyConfigWithEither.unapply)
@@ -220,8 +220,8 @@ We can also use `<+>` combinator.
 We can apply the `Either` logic at a much more global level, as in, give me either a `Prod` or `Test` config.
 
 ```scala mdoc:silent
-final case class Dev(userName: String, password: String)
-final case class Prod(token: String, code: Int)
+case class Dev(userName: String, password: String)
+case class Prod(token: String, code: Int)
 
 type Config = Either[Prod, Dev]
 
@@ -265,11 +265,11 @@ string("TOKEN") <> string("token") <> string("TOKEN_INFO")
 This is more of a real life scenario, where you can different micro configurations for readability and maintainability.
  
 ```scala mdoc:silent
-  final case class Database(url: String, port: Int)
-  final case class AwsConfig(c1: Database, c3: String)
+  case class Database(url: String, port: Int)
+  case class AwsConfig(c1: Database, c3: String)
 
 
-  val databaseConfig: ConfigDescriptor[Database] =
+  val databaseConfig =
     (string("connection") |@| int("port"))(Database.apply, Database.unapply)
 
   (databaseConfig |@| string("c3"))(AwsConfig.apply, AwsConfig.unapply)
@@ -284,7 +284,7 @@ This might not feel intuitive at first, however, zio-config is desgined and pati
 any other configuration parsing libraries that deals with files, hoccons that supports nested configurations.
 
 ```scala mdoc:silent
-  final case class AwsConfigExtended(c1: Database, c2: Database, c3: String)
+  case class AwsConfigExtended(c1: Database, c2: Database, c3: String)
 
   val appConfig =
     (nested("south") { databaseConfig } |@|
@@ -293,14 +293,12 @@ any other configuration parsing libraries that deals with files, hoccons that su
 
   // Let's say, a nested configuration as a flattened map is just "." delimited keys in a flat map.
   val constantMap =
-    ConfigSource.fromMap(
-      Map(
-        "south.connection" -> "abc.com",
-        "east.connection"  -> "xyz.com",
-        "east.port"        -> "8888",
-        "south.port"       -> "8111",
-        "appName"          -> "myApp"
-      )
+    Map(
+      "south.connection" -> "abc.com",
+      "east.connection"  -> "xyz.com",
+      "east.port"        -> "8888",
+      "south.port"       -> "8111",
+      "appName"          -> "myApp"
     )
     
   Config.fromMap(constantMap, appConfig)
@@ -317,11 +315,11 @@ There are many ways you could get a list of config.
 Here we show a very naive version of it.
 
 ```scala mdoc:silent
- def database(int: Int) = 
-   (int(s"${int}_PORT") |@| string(s"${int}_URL"))(Database, Database.unapply)
+ def database(i: Int) = 
+   (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
 
  val list: ConfigDescriptor[String, String, List[Database]] =
-   collectAll((0 to 10).map(database)) // Same as sequence(...)
+   collectAll((0 to 10).map(database).toList) // Same as sequence(...)
 
 ```
 Running this to ZIO will, obviously comes up with a List[Database]
@@ -334,7 +332,7 @@ To add documentation to the config description, use `?`
 
 ```scala mdoc:silent
  val databaseConfigWithDocs = 
-   (database ? "Database relaed config" |@| 
+   (databaseConfig ? "Database relaed config" |@| 
      string("REGION") ? "AWS region: Example: us-east")(AwsConfig.apply, AwsConfig.unapply)
 ```
 
@@ -342,7 +340,7 @@ We can document for a whole config description as well.
 
 ```scala mdoc:silent
 
-(databaseConfigWithDocs |@| databaseConfigWithDocs )(AwsConfig, AwsConfig.unapply) ? "The AWS details to be used"
+(databaseConfig |@| string("appName"))(AwsConfig, AwsConfig.unapply) ? "The AWS details to be used"
 
 ```
 
