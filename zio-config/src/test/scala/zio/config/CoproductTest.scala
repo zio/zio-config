@@ -1,7 +1,6 @@
 package zio.config
 
 import zio.ZIO
-import zio.config._
 import zio.config.ConfigDescriptor._
 import ReadError._
 import zio.config.helpers._
