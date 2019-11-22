@@ -37,7 +37,7 @@ To read a config, means it has to perform some effects, and for that reason, it 
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala
-val result: IO[ConfigErrors[String, String], MyConfig] = 
+val result: IO[ReadErrorsVector[String, String], MyConfig] = 
   Config.fromEnv(myConfig) // That's system environment
 ```
 

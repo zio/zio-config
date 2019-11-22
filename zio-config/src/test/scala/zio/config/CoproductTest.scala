@@ -1,10 +1,11 @@
 package zio.config
 
 import zio.ZIO
+import zio.config._
 import zio.config.ConfigDescriptor._
-import zio.config.CoproductTestUtils._
-import zio.config.ReadErrors.ReadError._
+import ReadError._
 import zio.config.helpers._
+import CoproductTestUtils._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
@@ -24,9 +25,9 @@ object CoproductTest
         },
         testM("should accumulate all errors") {
           checkM(genTestParams) { p =>
-            val expected: ReadErrors[Vector[String], String] = ReadErrors(
+            val expected: ReadErrorsVector[String, String] = ::(
               MissingValue(Vector(p.kLdap)),
-              ParseError(Vector(p.kFactor), "notafloat", "float")
+              ParseError(Vector(p.kFactor), "notafloat", "float") :: Nil
             )
 
             assertM(readWithErrors(p), isLeft(equalTo(expected)))

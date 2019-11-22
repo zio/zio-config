@@ -3,8 +3,8 @@ package zio.config.examples
 import zio.config._
 import ConfigDescriptor._
 import zio.DefaultRuntime
-import zio.config.actions.ConfigDocs, ConfigDocs._
-import zio.config.actions.ConfigDocs.PathDetails
+import zio.config.ConfigDocs, ConfigDocs._, Details._
+import zio.config.ConfigDocs.Path
 
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
@@ -23,11 +23,11 @@ object DefaultValueExample extends App {
 
   assert(
     generateDocs(pgmConf) ==
-      And(
-        PathDetails("HELLO", Descriptions(List("value of type string", "default value: xyz"))),
-        Or(
-          PathDetails("SOMETHING", Descriptions(List("value of type string"))),
-          PathDetails("PORT", Descriptions(List("value of type int", "default value: 1")))
+      Both(
+        Path("HELLO", Descriptions(List("value of type string", "default value: xyz"))),
+        OneOf(
+          Path("SOMETHING", Descriptions(List("value of type string"))),
+          Path("PORT", Descriptions(List("value of type int", "default value: 1")))
         )
       )
   )
@@ -35,16 +35,16 @@ object DefaultValueExample extends App {
   assert(
     generateDocsWithValue(pgmConf, result) ==
       Right(
-        And(
-          PathDetails(
+        Both(
+          Path(
             "HELLO",
-            DescriptionsWithValue(Some("xyz"), Descriptions(List("value of type string", "default value: xyz")))
+            DescriptionsWithValue(Some("xyz"), List("value of type string", "default value: xyz"))
           ),
-          Or(
-            PathDetails("SOMETHING", DescriptionsWithValue(None, Descriptions(List("value of type string")))),
-            PathDetails(
+          OneOf(
+            Path("SOMETHING", DescriptionsWithValue(None, List("value of type string"))),
+            Path(
               "PORT",
-              DescriptionsWithValue(Some("1"), Descriptions(List("value of type int", "default value: 1")))
+              DescriptionsWithValue(Some("1"), List("value of type int", "default value: 1"))
             )
           )
         )

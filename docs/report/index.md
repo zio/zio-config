@@ -51,39 +51,39 @@ yields the result:
 Right(
   And(
     And(
-      NestedConfig(
+      NestedPath(
         "south",
         And(
-          PathDetails(
+          Path(
             "connection",
             DescriptionsWithValue(Some("abc.com"), Descriptions(List("value of type string", "South details")))
           ),
-          PathDetails(
+          Path(
             "port",
             DescriptionsWithValue(Some("8111"), Descriptions(List("value of type int", "South details")))
           )
         )
       ),
-      NestedConfig(
+      NestedPath(
         "east",
         And(
-          PathDetails(
+          Path(
             "connection",
             DescriptionsWithValue(Some("xyz.com"), Descriptions(List("value of type string", "East details")))
           ),
-          PathDetails(
+          Path(
             "port",
             DescriptionsWithValue(Some("8888"), Descriptions(List("value of type int", "East details")))
           )
         )
       )
     ),
-    PathDetails("appName", DescriptionsWithValue(Some("myApp"), Descriptions(List("value of type string"))))
+    Path("appName", DescriptionsWithValue(Some("myApp"), Descriptions(List("value of type string"))))
   )
 )
 ```
 
 ### More detail
 `And(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
-`NestedConfig`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
+`NestedPath`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
 the type of the value before it gets parsed.

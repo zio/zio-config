@@ -1,18 +1,16 @@
-package zio.config.actions
+package zio.config
 
-import zio.config.ReadErrors.ReadError
-import zio.config.{ ConfigDescriptor, ConfigErrors, ConfigSource, PropertyType, ReadErrors }
 import zio.{ IO, ZIO }
 
-object Read {
+private[config] trait ReadFunctions {
   // Read
   final def read[K, V, A](
     configuration: ConfigDescriptor[K, V, A]
-  ): IO[ConfigErrors[K, V], A] = {
+  ): IO[ReadErrorsVector[K, V], A] = {
     def loop[V1, B](
       configuration: ConfigDescriptor[K, V1, B],
       paths: Vector[K]
-    ): IO[ConfigErrors[K, V1], B] =
+    ): IO[ReadErrorsVector[K, V1], B] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.succeed(None)
 
@@ -21,12 +19,12 @@ object Read {
             value <- source.getConfigValue(paths :+ path)
             result <- ZIO.fromEither(
                        propertyType
-                         .read(value)
+                         .read(value.value)
                          .fold(
                            r =>
                              Left(
-                               ReadErrors(
-                                 ReadError.ParseError(paths :+ path, r.value, r.typeInfo)
+                               singleton(
+                                 ReadError.ParseError(paths :+ path, r.value, r.typeInfo): ReadError[Vector[K], V1]
                                )
                              ),
                            e => Right(e)
@@ -43,7 +41,7 @@ object Read {
               .fromEither(f(a))
               .bimap(
                 err =>
-                  ReadErrors(
+                  singleton(
                     ReadError.FatalError(paths, new RuntimeException(err))
                   ),
                 res => res
@@ -73,7 +71,7 @@ object Read {
                       case (Right(a), Right(b))     => Right((a, b))
                       case (Left(a), Right(_))      => Left(a)
                       case (Right(_), Left(error))  => Left(error)
-                      case (Left(err1), Left(err2)) => Left(ReadErrors.concat(err1, err2))
+                      case (Left(err1), Left(err2)) => Left(concat(err1, err2))
                     }
                 )
             )
@@ -87,7 +85,7 @@ object Read {
                 loop(right, paths).either.flatMap(
                   {
                     case Right(b)   => ZIO.access(_ => Right(b))
-                    case Left(rerr) => ZIO.fail(ReadErrors.concat(lerr, rerr))
+                    case Left(rerr) => ZIO.fail(concat(lerr, rerr))
                   }
                 )
             }

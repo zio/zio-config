@@ -31,26 +31,26 @@ yields the result `ConfigDocs[String, String]`:
 ```scala
       And(
         And(
-          NestedConfig(
+          NestedPath(
             "south",
             And(
-              PathDetails("connection", Descriptions(List("value of type string", "South details"))),
-              PathDetails("port", Descriptions(List("value of type int", "South details")))
+              Path("connection", Descriptions(List("value of type string", "South details"))),
+              Path("port", Descriptions(List("value of type int", "South details")))
             )
           ),
-          NestedConfig(
+          NestedPath(
             "east",
             And(
-              PathDetails("connection", Descriptions(List("value of type string", "East details"))),
-              PathDetails("port", Descriptions(List("value of type int", "East details")))
+              Path("connection", Descriptions(List("value of type string", "East details"))),
+              Path("port", Descriptions(List("value of type int", "East details")))
             )
           )
         ),
-        PathDetails("appName", Descriptions(List("value of type string")))
+        Path("appName", Descriptions(List("value of type string")))
       )
 ```
 
 ### More detail
 `And(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
-`NestedConfig`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
+`NestedPath`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
 the type of the value before it gets parsed.

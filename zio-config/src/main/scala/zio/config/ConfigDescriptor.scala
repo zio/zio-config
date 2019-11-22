@@ -16,7 +16,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     ConfigDescriptor.Zip(self, that)
 
   final def <*>[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, (A, B)] =
-    self.zip(that)
+    self zip that
 
   final def xmapEither[B](
     f: A => Either[String, B]
@@ -39,25 +39,25 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
   final def <+>[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, Either[A, B]] =
     self orElseEither that
 
-  def orElse(that: => ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+  final def orElse(that: => ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     (self orElseEither that).xmap {
       case Right(value) => value
       case Left(value)  => value
     }(b => Right(b))
 
-  def |(that: => ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+  final def |(that: => ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     self orElse that
 
-  def optional: ConfigDescriptor[K, V, Option[A]] =
+  final def optional: ConfigDescriptor[K, V, Option[A]] =
     ConfigDescriptor.Optional(self) ? "optional value"
 
-  def default(value: A): ConfigDescriptor[K, V, A] =
+  final def default(value: A): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Default(self, value) ? s"default value: $value"
 
-  def describe(description: String): ConfigDescriptor[K, V, A] =
+  final def describe(description: String): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Describe(self, description)
 
-  def ?(description: String): ConfigDescriptor[K, V, A] =
+  final def ?(description: String): ConfigDescriptor[K, V, A] =
     describe(description)
 
   final def |@|[B](f: => ConfigDescriptor[K, V, B]): ProductBuilder[K, V, A, B] =
@@ -66,16 +66,13 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
       override val b: ConfigDescriptor[K, V, B] = f
     }
 
-  def from(that: ConfigSource[K, V]): ConfigDescriptor[K, V, A] =
+  final def from(that: ConfigSource[K, V]): ConfigDescriptor[K, V, A] =
     self.updateSource(_.orElse(that))
 
-  def fromNothing: ConfigDescriptor[K, V, A] =
+  final def unsourced: ConfigDescriptor[K, V, A] =
     self.updateSource(_ => ConfigSource.empty)
 
-  def resetSource: ConfigDescriptor[K, V, A] =
-    self.fromNothing
-
-  def updateSource(f: ConfigSource[K, V] => ConfigSource[K, V]): ConfigDescriptor[K, V, A] = {
+  final def updateSource(f: ConfigSource[K, V] => ConfigSource[K, V]): ConfigDescriptor[K, V, A] = {
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
       case a @ Empty()                        => a
       case Source(path, source, propertyType) => Source(path, f(source), propertyType)

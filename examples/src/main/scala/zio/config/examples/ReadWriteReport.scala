@@ -1,8 +1,10 @@
 package zio.config.examples
 
 import zio.DefaultRuntime
-import zio.config._, ConfigDescriptor._
-import zio.config.actions.ConfigDocs._
+import zio.config._
+import ConfigDescriptor._
+import zio.config.ConfigDocs.Details._
+import zio.config.ConfigDocs._
 
 object ReadWriteReport extends App {
 
@@ -61,44 +63,44 @@ object ReadWriteReport extends App {
 
   assert(
     generateDocs(config) ==
-      Or(
-        And(
-          And(
-            And(
-              PathDetails(
+      OneOf(
+        Both(
+          Both(
+            Both(
+              Path(
                 "usr",
                 Descriptions(List("value of type string", "Example: some-user", "Prod Config"))
               ),
-              PathDetails(
+              Path(
                 "pwd",
                 Descriptions(List("value of type string", "optional value", "sec", "Prod Config"))
               )
             ),
-            PathDetails(
+            Path(
               "jhi",
               Descriptions(List("value of type string", "optional value", "Ex: ghi", "Prod Config"))
             )
           ),
-          And(
-            PathDetails(
+          Both(
+            Path(
               "xyz",
               Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
             ),
-            Or(
-              PathDetails(
+            OneOf(
+              Path(
                 "abc",
                 Descriptions(List("value of type int", "optional value", "Ex: ha", "Prod Config"))
               ),
-              PathDetails(
+              Path(
                 "def",
                 Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
               )
             )
           )
         ),
-        And(
-          PathDetails("auth_token", Descriptions(List("value of type string", "Prod Config"))),
-          PathDetails("clientid", Descriptions(List("value of type string", "Prod Config")))
+        Both(
+          Path("auth_token", Descriptions(List("value of type string", "Prod Config"))),
+          Path("clientid", Descriptions(List("value of type string", "Prod Config")))
         )
       )
   )
@@ -106,67 +108,67 @@ object ReadWriteReport extends App {
   assert(
     generateDocsWithValue(config, result) ==
       Right(
-        Or(
-          And(
-            And(
-              And(
-                PathDetails(
+        OneOf(
+          Both(
+            Both(
+              Both(
+                Path(
                   "usr",
                   DescriptionsWithValue(
                     Some("v1"),
-                    Descriptions(List("value of type string", "Example: some-user", "Prod Config"))
+                    (List("value of type string", "Example: some-user", "Prod Config"))
                   )
                 ),
-                PathDetails(
+                Path(
                   "pwd",
                   DescriptionsWithValue(
                     Some("v2"),
-                    Descriptions(List("value of type string", "optional value", "sec", "Prod Config"))
+                    (List("value of type string", "optional value", "sec", "Prod Config"))
                   )
                 )
               ),
-              PathDetails(
+              Path(
                 "jhi",
                 DescriptionsWithValue(
                   None,
-                  Descriptions(List("value of type string", "optional value", "Ex: ghi", "Prod Config"))
+                  (List("value of type string", "optional value", "Ex: ghi", "Prod Config"))
                 )
               )
             ),
-            And(
-              PathDetails(
+            Both(
+              Path(
                 "xyz",
                 DescriptionsWithValue(
                   Some("v3"),
-                  Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
+                  (List("value of type string", "optional value", "Ex: ha", "Prod Config"))
                 )
               ),
-              Or(
-                PathDetails(
+              OneOf(
+                Path(
                   "abc",
                   DescriptionsWithValue(
                     Some("1"),
-                    Descriptions(List("value of type int", "optional value", "Ex: ha", "Prod Config"))
+                    (List("value of type int", "optional value", "Ex: ha", "Prod Config"))
                   )
                 ),
-                PathDetails(
+                Path(
                   "def",
                   DescriptionsWithValue(
                     None,
-                    Descriptions(List("value of type string", "optional value", "Ex: ha", "Prod Config"))
+                    (List("value of type string", "optional value", "Ex: ha", "Prod Config"))
                   )
                 )
               )
             )
           ),
-          And(
-            PathDetails(
+          Both(
+            Path(
               "auth_token",
-              DescriptionsWithValue(None, Descriptions(List("value of type string", "Prod Config")))
+              Descriptions(List("value of type string", "Prod Config"))
             ),
-            PathDetails(
+            Path(
               "clientid",
-              DescriptionsWithValue(None, Descriptions(List("value of type string", "Prod Config")))
+              Descriptions(List("value of type string", "Prod Config"))
             )
           )
         )
