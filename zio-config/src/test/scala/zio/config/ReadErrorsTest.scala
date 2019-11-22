@@ -1,7 +1,6 @@
 package zio.config
 
-import zio.config.ReadErrors.ReadError
-import zio.config.ReadErrorsTestUtils._
+import ReadErrorsTestUtils._
 import zio.random.Random
 import zio.test._
 import zio.test.Assertion._
@@ -11,7 +10,8 @@ object ReadErrorsTest
       suite("ReadErrors/NEL")(
         testM("concat") {
           check(genReadErrors, genReadErrors) { (l1, l2) =>
-            val actual = ReadErrors.concat(ReadErrors(l1.head, l1.tail: _*), ReadErrors(l2.head, l2.tail: _*)).errors
+            val actual =
+              concat(::(l1.head, l1.tail), ::(l2.head, l2.tail))
             assert(actual, equalTo(l1 ++ l2))
           }
         }

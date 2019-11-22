@@ -4,7 +4,8 @@ title:  "Read"
 ---
 You need this import everywhere
 
-```
+```scala mdoc:silent
+import zio.IO
 import zio.config._, ConfigDescriptor._
 
 ```
@@ -13,16 +14,16 @@ import zio.config._, ConfigDescriptor._
 
 We must be fetching the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
 
-```scala
+```scala mdoc:silent
 
-final case class MyConfig(ldap: String, port: Int, dburl: String)
+case class MyConfig(ldap: String, port: Int, dburl: String)
 
 ```
 To perform any action using zio-config, we need a configuration description.
 Let's define a simple one.
 
 
-```scala
+```scala mdoc:silent
 val myConfig =
   ((string("LDAP") |@| int("PORT")|@| string("DB_URL")))(MyConfig.apply, MyConfig.unapply)
 
@@ -36,8 +37,8 @@ Type says, running it by passing a source will return `MyConfig`
 To read a config, means it has to perform some effects, and for that reason, it returns with a ZIO.
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
-```scala
-val result: IO[ConfigErrors[String, String], MyConfig] = 
+```scala mdoc:silent
+val result: IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]] = 
   Config.fromEnv(myConfig) // That's system environment
 ```
 
@@ -67,61 +68,58 @@ uri
 
 ```
 
-## Multiple sources
+## Optional Types
 
-While it may not be always a good idea having to rely on multiple sources to form the application config,
-zio-config do support this scenario. This can happen in complex applications.
+Say, dburl is an optional type, then it is as simple as 
 
+```scala mdoc:silent
+string("DB_URL").optional
+```
 
-```scala
-final case class MyConfig(ldap: String, port: Int, dburl: Option[String])
+That is, 
 
-val source1 = ConfigSource.fromProperty
-val source2 = ConfigSource.fromEnv
+```scala mdoc:silent
+case class MyConfigWithOptionalUrl(ldap: String, port: Port, dburl: Option[String])
 
-val myConfig =
-  ((string("LDAP").from(source1.orElse(source2)) |@| int("PORT").from(source1)) |@|
-    string("DB_URL").optional.from(source2)))(MyConfig.apply, MyConfig.unapply)
-
-val run = read(myConfig)
-
-// we can also separately add new config
-
-val run = read(myConfig from ConfigSource.fromMap(...))
-
-// In this case, `ConfigSource.fromMap` will also be tried along with the sources that are already given.
+val myConfigOptional =
+  ((string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@| 
+    string("DB_URL").optional))(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
 
 ```
 
-We can reset the sources for the config using
+## Default
+Sometimes, we don't need an optional value and instead happy providing a default value.
 
-```scala
+```scala mdoc:silent
+ 
+ val defaultConfig = 
+  string("USERNAME").default("ROOT")
+ 
+```
 
-myConfig.resetSource // equivalent to myConfig.fromNothing
+ That is,
+
+```scala mdoc:silent
+
+case class MyConfigWithDefaultUserName(username: String, port: Int)
+
+val myConfigDefault =
+  ((string("USERNAME").default("root-oh") |@| int("PORT")))(MyConfigWithDefaultUserName.apply, MyConfigWithDefaultUserName.unapply)
 
 ```
 
-By that way, in tests we could remove the sources from each parameter and ask it to get it
-from a constant map for all of it.
+We can also do things like fully overriding the entire configuration; might be helpful for tests.
 
-```scala
-
-val testConfig =
-  myConfig
-    .resetSource
-    .from(ConfigSource.fromMap("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235"))
-
+```scala mdoc:silent
+myConfigDefault.default(MyConfigWithDefaultUserName("test", 80))
 ```
-
-_NOTE_: As of now we support system env, system property and a constant map in `ConfigSource`.
-We will be adding more, however, it will be easy to have any custom source. It is kept as simple as possible.
 
 ## Custom types
 We love `Port` instead of `Int` that represents a db port.
 
 In this scenario, you could do 
 
-```scala
+```scala mdoc:silent
 
 int("PORT").xmap(Port)(_.value)
 
@@ -129,102 +127,108 @@ int("PORT").xmap(Port)(_.value)
 
 where port is;
 
-```scala
- final case class Port(value: Int) extends AnyVal
+```scala mdoc:silent
+ case class Port(value: Int)
 
 ```
 
 That is, 
 
-```scala
+```scala mdoc:silent
 
- final case class MyConfig(ldap: String, port: Port, dburl: String)
+ case class MyCustomConfig(ldap: String, port: Port, dburl: String)
 
  // Before
-  val myConfig =
+  val myConfigWithCustomType =
     ((string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@|
-      string("DB_URL")))(MyConfig.apply, MyConfig.unapply)
+      string("DB_URL")))(MyCustomConfig.apply, MyCustomConfig.unapply)
 
 ```
 
-## Optional Types
+## Multiple sources
 
-Say, dburl is an optional type, then it is as simple as 
+While it may not be always a good idea having to rely on multiple sources to form the application config,
+zio-config do support this scenario. This can happen in complex applications.
 
-```scala
-string("DB_URL").optional
-```
 
-That is, 
+```scala mdoc:silent
+val source1 = ConfigSource.fromProperty
+val source2 = ConfigSource.fromEnv
 
-```scala
-final case class MyConfig(ldap: String, port: Port, dburl: Option[String])
+val myMultipleSourceConfig =
+  ((string("LDAP").from(source1.orElse(source2)) |@| int("PORT").xmap(Port)(_.value).from(source1)) |@|
+    string("DB_URL").optional.from(source2))(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
 
-val myConfig =
-  ((string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@| 
-    string("DB_URL").optional))(MyConfig.apply, MyConfig.unapply)
-```
+read(myMultipleSourceConfig)
 
-## Default
-Sometimes, we don't need an optional value and instead happy providing a default value.
+// we can also separately add new config
 
-```scala
- string("USERNAME").default
- ```
+read(myMultipleSourceConfig from ConfigSource.fromMap(Map.empty))
 
- That is,
-
-```scala
-final case class MyConfig(username: String, port: Int)
-
-val myConfig =
-  ((string("USERNAME").default("root-oh") |@| int("PORT")))(MyConfig.apply, MyConfig.unapply)
+// In this case, `ConfigSource.fromMap` will also be tried along with the sources that are already given.
 
 ```
 
-We can also do things like fully overriding the entire configuration; might be helpful for tests.
+We can reset the sources for the config using  
 
-```scala
-myConfig.default(MyConfig("test", 80))
+```scala mdoc:silent
+
+myMultipleSourceConfig.unsourced
+
 ```
+
+By that way, in tests we could remove the sources from each parameter and ask it to get it
+from a constant map for all of it.
+
+```scala mdoc:silent
+
+val testConfig =
+  myMultipleSourceConfig
+    .unsourced
+    .from(ConfigSource.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235")))
+
+```
+
+_NOTE_: As of now we support system env, system property and a constant map in `ConfigSource`.
+We will be adding more, however, it will be easy to have any custom source. It is kept as simple as possible.
 
 ## Either Types (orElseEither)
 
 For instance, if we are ok accepting either a token or username, then our target type should be `Either[String, String]`.
 In this case, We can use `orElseEither` or `<+>`.
 
-```scala
-string("USERNAME").orElseEither(string("TOKEN")
+```scala mdoc:silent
+string("USERNAME").orElseEither(string("TOKEN"))
 ```
 
 That is,
 
-```scala
-final case class MyConfig(usernameOrToken: Either[String, String], port: Int)
+```scala mdoc:silent
+case class MyConfigWithEither(usernameOrToken: Either[String, String], port: Int)
 
-val myConfig =
-  ((string("USERNAME").orElseEither(string("TOKEN")) |@| int("PORT")))(MyConfig.apply, MyConfig.unapply)
+val myConfigEither =
+  ((string("USERNAME").orElseEither(string("TOKEN")) |@| int("PORT")))(MyConfigWithEither.apply, MyConfigWithEither.unapply)
 
 ```
 
 We can also use `<+>` combinator.
 
-```scala
+```scala mdoc:silent
  string("USERNAME") <+> (string("TOKEN"))
 ```
 
 We can apply the `Either` logic at a much more global level, as in, give me either a `Prod` or `Test` config.
 
-```scala
-final case class Dev(userName: String, password: String)
-final case class Prod(token: String, code: Int)
+```scala mdoc:silent
+case class Dev(userName: String, password: String)
+case class Prod(token: String, code: Int)
 
 type Config = Either[Prod, Dev]
 
 val dev = (string("USERNAME") |@| string("PASSWORD"))(Dev.apply, Dev.unapply)
 val prod = (string("TOKEN") |@| int("CODE"))(Prod.apply, Prod.unapply)
 
-val config = prod <+> dev // that represents a description returning Config
+prod <+> dev // that represents a description returning Config
 // ConfigDescriptor[String, String, Config]
 
 ```
@@ -234,7 +238,7 @@ val config = prod <+> dev // that represents a description returning Config
 Sometimes, we can try two different values and pick one. That means, the target is "NOT" `Either` but any raw type.
 In this scenario, We can use `orElse` or `<>`
 
-```scala
+```scala mdoc:silent
 
 string("TOKEN") orElse string("token")
 
@@ -242,11 +246,9 @@ string("TOKEN") orElse string("token")
 
 Example:
 
-```scala
-final case class Prod(token: String, code: Int)
-
-val config = 
-  (string("TOKEN") orElse string("token_x") |@| int("CODE")) (Prod.apply, Prod.unapply)
+```scala mdoc:silent
+val configOrElse = 
+  (string("TOKEN").orElse(string("token_x")) |@| int("CODE")) (Prod.apply, Prod.unapply)
 
 ```
 
@@ -254,7 +256,7 @@ It tries to fetch the value corresponding to "TOKEN", and if it fails, it tries 
 
 We can also use `<>` combinator.
 
-```scala
+```scala mdoc:silent
 string("TOKEN") <> string("token") <> string("TOKEN_INFO") 
 ```
 
@@ -262,15 +264,15 @@ string("TOKEN") <> string("token") <> string("TOKEN_INFO")
 
 This is more of a real life scenario, where you can different micro configurations for readability and maintainability.
  
-```scala
-  final case class Database(url: String, port: Int)
-  final case class AwsConfig(c1: Database, c3: String)
+```scala mdoc:silent
+  case class Database(url: String, port: Int)
+  case class AwsConfig(c1: Database, c3: String)
 
 
-  val database: ConfigDescriptor[Database] =
+  val databaseConfig =
     (string("connection") |@| int("port"))(Database.apply, Database.unapply)
 
-  val config = (database |@| string("c3"))(AwsConfig.apply, AwsConfig.unapply)
+  (databaseConfig |@| string("c3"))(AwsConfig.apply, AwsConfig.unapply)
 
 ```
 
@@ -278,38 +280,28 @@ This is more of a real life scenario, where you can different micro configuratio
 
 In addition to the primitive types, zio-config provides a combinator for nesting a configuration within another.
 
-```scala
-  def nested[A](path: String)(desc: ConfigDescriptor[A]): ConfigDescriptor[A]
-```
-
 This might not feel intuitive at first, however, zio-config is desgined and patiently added this feature to easily adapt to
 any other configuration parsing libraries that deals with files, hoccons that supports nested configurations.
 
-```scala
-  final case class Database(url: String, port: Int)
-  final case class AwsConfig(c1: Database, c2: Database, c3: String)
-
-  val database =
-    (string("connection") |@| int("port"))(Database.apply, Database.unapply)
+```scala mdoc:silent
+  case class AwsConfigExtended(c1: Database, c2: Database, c3: String)
 
   val appConfig =
-    (nested("south") { database } |@|
-      nested("east") { database } |@|
-      string("appName"))(AwsConfig, AwsConfig.unapply)
+    (nested("south") { databaseConfig } |@|
+      nested("east") { databaseConfig } |@|
+      string("appName"))(AwsConfigExtended, AwsConfigExtended.unapply)
 
   // Let's say, a nested configuration as a flattened map is just "." delimited keys in a flat map.
-  val source =
-    ConfigSource.fromMap(
-      Map(
-        "south.connection" -> "abc.com",
-        "east.connection"  -> "xyz.com",
-        "east.port"        -> "8888",
-        "south.port"       -> "8111",
-        "appName"          -> "myApp"
-      )
+  val constantMap =
+    Map(
+      "south.connection" -> "abc.com",
+      "east.connection"  -> "xyz.com",
+      "east.port"        -> "8888",
+      "south.port"       -> "8111",
+      "appName"          -> "myApp"
     )
     
-  Config.fromMap(appConfig)
+  Config.fromMap(constantMap, appConfig)
 ```
 
 Note that, you can write this back as well. This is discussed in write section
@@ -322,14 +314,12 @@ For this case, we have `collectAll` method (also called `sequence`).
 There are many ways you could get a list of config. 
 Here we show a very naive version of it.
 
-```scala
- final case class Database(port: Int, url: String)
-
- def database(int: Int) = 
-   (int(s"${int}_PORT") |@| string(s"${int}_URL"))(Database, Database.unapply)
+```scala mdoc:silent
+ def database(i: Int) = 
+   (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
 
  val list: ConfigDescriptor[String, String, List[Database]] =
-   collectAll((0 to 10).map(database)) // Same as sequence(...)
+   collectAll((0 to 10).map(database).toList) // Same as sequence(...)
 
 ```
 Running this to ZIO will, obviously comes up with a List[Database]
@@ -340,17 +330,18 @@ NOTE: `collectAll` is a synonym for `sequence`.
 
 To add documentation to the config description, use `?`
 
-```scala
- val config = 
-   (database ? "Database relaed config" |@| 
+```scala mdoc:silent
+ val databaseConfigWithDocs = 
+   (databaseConfig ? "Database relaed config" |@| 
      string("REGION") ? "AWS region: Example: us-east")(AwsConfig.apply, AwsConfig.unapply)
 ```
 
 We can document for a whole config description as well.
 
-```scala
-  val config = 
-    ( ... |@| ... )(AwsConfig, AwsConfig.unapply)) ? "The AWS details to be used"
+```scala mdoc:silent
+
+(databaseConfig |@| string("appName"))(AwsConfig, AwsConfig.unapply) ? "The AWS details to be used"
+
 ```
 
 This will get reflected when we call `docs(config)` which will produce sort of a manpage of your description.
@@ -361,16 +352,16 @@ We will discuss more on this later.
 As you have seen before, the most preferred way is,
 
 ```
-val result = Config.fromEnv(myConfig)
-// val result = Config.fromProperty(myConfig)
-// val result = Config.fromMap(map, myConfig)
+Config.fromEnv(myConfig)
+// similarly, Config.fromProperty(myConfig)
+// similarly, Config.fromMap(map, myConfig)
 
 ```
 However, you could explicitly  use `from` which is another combinator in `ConfigDescriptor`
 and pass a specific config source. We have seen this before for handling multiple sources.
 
-```scala
-val source = ConfigSource.fromEnv
-val result = read(myConfig from source)
+```scala mdoc:silent
+val envSource = ConfigSource.fromEnv
+read(myConfig from envSource)
 
 ```

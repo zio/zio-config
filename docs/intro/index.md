@@ -55,12 +55,11 @@ This is backed by significant number of examples/
 
 # For impatients
 
-To try out straight away, please head on to examples project.
+To try out zio-conifg straight away, please head on to [examples](https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples) project.
 One of the example is an entire zio application demonstrates the use of zio-config to read the config,
 and make it available across the application as just another zio [Environment](https://zio.dev/docs/overview/overview_index#zio).
 
 Otherwise, `Read`, `Write`, `Documentation` and `Reporting` are separately documented.
-
 
 # Principles
 

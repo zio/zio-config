@@ -1,6 +1,5 @@
 package zio.config
 
-import zio.config.actions.Read
 import zio.system.System
 import zio.{ IO, UIO, ZIO }
 
@@ -16,8 +15,7 @@ object Config {
     source: ConfigSource[K, V],
     configDescriptor: ConfigDescriptor[K, V, A]
   ): IO[ReadErrors[Vector[K], V], Config[A]] =
-    Read
-      .read(configDescriptor from source)
+    read(configDescriptor from source)
       .map(
         e =>
           new Config[A] {

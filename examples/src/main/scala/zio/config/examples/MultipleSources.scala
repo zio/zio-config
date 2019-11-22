@@ -28,7 +28,7 @@ object MultipleSources extends App {
       string("DB_URL").optional.from(source1.orElse(source5)))(MyConfig.apply, MyConfig.unapply)
 
   // Let's reset the whole source details in the original description
-  val myConfigWithReset = myConfig.resetSource.from(oneValidSource) // Equivalent to myConfig.fromNothing
+  val myConfigWithReset = myConfig.unsourced.from(oneValidSource) // Equivalent to myConfig.fromNothing
 
   // Have got a few more sources to be tried, on top of what's there already ?
   val myConfigChangedSource = myConfig.updateSource(_.orElse(ConfigSource.fromProperty))

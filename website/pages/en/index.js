@@ -65,7 +65,7 @@ class HomeSplash extends React.Component {
           <PromoSection>
             <Button href={docUrl('intro/intro_index')}>Introduction</Button>
             <Button href={docUrl('read/read_index')}>Read Config</Button>
-            <Button href={docUrl('doc/doc_index')}>Create Docs</Button>
+            <Button href={docUrl('doc/doc_index')}>Create Details</Button>
             <Button href={docUrl('report/report_index')}>Report</Button>
             <Button href={docUrl('write/write_index')}>Write</Button>
             <Button href="https://github.com/zio/zio-config" target="_blank" >GitHub</Button>
@@ -125,7 +125,7 @@ class Index extends React.Component {
             title: 'Auto-generate docs',
           },
            {
-              content: "Docs can carry the value of each configuration parameter - a detailed report",
+              content: "Details can carry the value of each configuration parameter - a detailed report",
               title: 'Auto generate report',
             }
         ]}

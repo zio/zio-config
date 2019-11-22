@@ -1,24 +1,31 @@
 package zio.config
 
-import zio.config.ReadErrors.ReadError
 import zio.{ IO, ZIO }
 import zio.system.System.Live.system
 
+final case class ConfigValue[+A](value: A, sourceDescription: String)
+
 final case class ConfigSource[K, V](
-  getConfigValue: Vector[K] => IO[ConfigErrors[K, V], V],
+  getConfigValue: Vector[K] => IO[ReadErrorsVector[K, V], ConfigValue[V]],
   sourceDescription: List[String]
-) {
-  def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
-    ConfigSource(k => getConfigValue(k).orElse(that.getConfigValue(k)), sourceDescription ++ that.sourceDescription)
+) { self =>
+  final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+    ConfigSource(
+      k => getConfigValue(k).orElse(that.getConfigValue(k)),
+      self.sourceDescription ++ that.sourceDescription
+    )
 
-  def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
-    orElse(that)
-
+  final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] = self orElse that
 }
 
 object ConfigSource {
+  val SystemEnvironment = "system environment"
+  val SystemProperties  = "system properties"
+  val ConstantMap       = "constant <map>"
+  val EmptySource       = "<empty>"
+
   def empty[K, V]: ConfigSource[K, V] =
-    ConfigSource((k: Vector[K]) => IO.fail(ReadErrors(ReadError.MissingValue(k))), List.empty)
+    ConfigSource((k: Vector[K]) => IO.fail(singleton(ReadError.MissingValue(k))), EmptySource :: Nil)
 
   val fromEnv: ConfigSource[String, String] =
     ConfigSource(
@@ -26,14 +33,15 @@ object ConfigSource {
         val key = path.mkString("_")
         system
           .env(key)
-          .mapError { err =>
-            ReadError.FatalError[Vector[String], String](path, err)
-          }
+          .bimap(
+            ReadError.FatalError(path, _),
+            opt => opt.map(ConfigValue(_, SystemEnvironment))
+          )
           .flatMap(IO.fromOption(_))
-          .mapError(_ => ReadErrors(ReadError.MissingValue[Vector[String], String](path)))
+          .mapError(_ => singleton(ReadError.MissingValue(path)))
 
       },
-      List("system environment")
+      SystemEnvironment :: Nil
     )
 
   val fromProperty: ConfigSource[String, String] =
@@ -42,25 +50,23 @@ object ConfigSource {
         val key = path.mkString(".")
         system
           .env(key)
-          .mapError { err =>
-            ReadError.FatalError(path, err)
-          }
+          .bimap(ReadError.FatalError(path, _), opt => opt.map(ConfigValue(_, SystemProperties)))
           .flatMap(IO.fromOption(_))
-          .mapError(_ => ReadErrors(ReadError.MissingValue[Vector[String], String](path)))
+          .mapError(_ => singleton(ReadError.MissingValue(path)))
 
       },
-      List("system properties")
+      SystemProperties :: Nil
     )
 
   def fromMap(map: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
         val key = path.mkString(delimiter)
-        ZIO.fromOption(map.get(key)).mapError { _ =>
-          ReadErrors(ReadError.MissingValue[Vector[String], String](Vector(key)))
+        ZIO.fromOption(map.get(key).map(ConfigValue(_, ConstantMap))).mapError { _ =>
+          singleton(ReadError.MissingValue(Vector(key)))
         }
       },
-      List("constant <map>")
+      ConstantMap :: Nil
     )
 
   def fromPropertyTree(
