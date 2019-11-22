@@ -5,15 +5,28 @@ title:  "Documentation"
 
 # Example: Generating a Configuration Manual
 
-To generate the documentation of the config, call `generateDocs`. 
+You need this import everywhere
 
-```scala
-  generateDocs(config)
+```scala mdoc:silent
+import zio.config._, ConfigDescriptor._
+
 ```
 
-```scala
-  final case class Database(url: String, port: Int)
-  final case class AwsConfig(c1: Database, c2: Database, c3: String)
+To generate the documentation of the config, call `generateDocs`. 
+
+```scala mdoc:silent
+case class MyConfig(username: String, password: String)
+
+val config = 
+  (string("USERNAME") |@| string("PASSWORD"))(MyConfig.apply, MyConfig.unapply)
+
+generateDocs(config)
+
+```
+
+```scala mdoc:silent
+  case class Database(url: String, port: Int)
+  case class AwsConfig(c1: Database, c2: Database, c3: String)
 
   val database =
     (string("connection") |@| int("port"))(Database.apply, Database.unapply)
@@ -28,19 +41,20 @@ To generate the documentation of the config, call `generateDocs`.
 
 yields the result `ConfigDocs[String, String]`:
 
-```scala
-      And(
-        And(
+```scala mdoc:silent
+     import zio.config.ConfigDocs._, ConfigDocs.Details._
+      Both(
+        Both(
           NestedPath(
             "south",
-            And(
+            Both(
               Path("connection", Descriptions(List("value of type string", "South details"))),
               Path("port", Descriptions(List("value of type int", "South details")))
             )
           ),
           NestedPath(
             "east",
-            And(
+            Both(
               Path("connection", Descriptions(List("value of type string", "East details"))),
               Path("port", Descriptions(List("value of type int", "East details")))
             )
@@ -51,6 +65,6 @@ yields the result `ConfigDocs[String, String]`:
 ```
 
 ### More detail
-`And(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
+`Both(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
 `NestedPath`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
 the type of the value before it gets parsed.
