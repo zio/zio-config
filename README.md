@@ -6,7 +6,7 @@
 A [zio](https://github.com/scalaz/scalaz-zio) based  configuration parsing library.
 
 The library aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
-Please find more examples in the website.
+Please find more examples in the [website](https://zio.github.io/zio-config/).
 
 Notable features:
 1. Read config
