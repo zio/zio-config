@@ -22,9 +22,10 @@ object ConfigSource {
   val SystemEnvironment = "system environment"
   val SystemProperties  = "system properties"
   val ConstantMap       = "constant <map>"
+  val EmptySource       = "<empty>"
 
   def empty[K, V]: ConfigSource[K, V] =
-    ConfigSource((k: Vector[K]) => IO.fail(singleton(ReadError.MissingValue(k))), "<empty>" :: Nil)
+    ConfigSource((k: Vector[K]) => IO.fail(singleton(ReadError.MissingValue(k))), EmptySource :: Nil)
 
   val fromEnv: ConfigSource[String, String] =
     ConfigSource(
