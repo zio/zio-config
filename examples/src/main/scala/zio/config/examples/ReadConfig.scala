@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config._, ConfigDescriptor._
-import zio.{ App, ZIO }
+import zio.{ App, ZEnv, ZIO }
 
 case class Prod(ldap: String, port: Int, dburl: Option[String])
 
@@ -18,11 +18,11 @@ object Prod {
 
 object ReadConfig extends App {
 
-  override def run(args: List[String]): ZIO[ReadConfig.Environment, Nothing, Int] =
-    ZIO.accessM(env => {
+  override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+    ZIO.accessM { env =>
       Config
         .fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"), Prod.prodConfig)
         .flatMap(config => Prod.myAppLogic.provide(config))
         .foldM(failure => env.console.putStrLn(failure.toString) *> ZIO.succeed(1), _ => ZIO.succeed(0))
-    })
+    }
 }

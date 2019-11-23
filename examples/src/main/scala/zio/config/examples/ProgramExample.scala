@@ -4,7 +4,7 @@ import zio.blocking.Blocking
 import zio.config.ConfigDescriptor._
 import zio.config.{ Config, _ }
 import zio.console.Console
-import zio.{ App, UIO, ZIO }
+import zio.{ App, UIO, ZEnv, ZIO }
 
 /**
  * The pattern is an inspiration from http://degoes.net/articles/zio-environment.
@@ -24,7 +24,7 @@ object ProgramExample extends App {
       with Console.Live
       with Blocking.Live
 
-  override def run(args: List[String]): ZIO[Environment, Nothing, Int] = {
+  override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
     val pgm =
       for {
         configEnv <- Config.fromMap(Map("INPUT_PATH" -> "input", "OUTPUT_PATH" -> "output"), programConfig)
