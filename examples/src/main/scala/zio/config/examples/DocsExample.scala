@@ -1,8 +1,8 @@
 package zio.config.examples
 
 import zio.config._
-import Config._, zio.config.actions.ConfigDocs._
-import zio.config.actions.ConfigDocs.PathDetails
+import ConfigDescriptor._, zio.config.ConfigDocs._, Details._
+import zio.config.ConfigDocs.Path
 
 object DocsExample extends App {
 
@@ -13,13 +13,36 @@ object DocsExample extends App {
       string("URL").optional ? "Example: abc.com")(Database.apply, Database.unapply) ? "Database related"
 
   assert(
-    docs(config, Some(Database(1, Some("value")))) ==
-      And(
-        PathDetails(Vector("PORT"), Some("1"), List("value of type int", "Example: 8088", "Database related")),
-        PathDetails(
-          Vector("URL"),
-          Some("value"),
-          List("value of type string", "optional value", "Example: abc.com", "Database related")
+    generateDocs(config) ==
+      Both(
+        Path("PORT", Descriptions(List("<empty>", "value of type int", "Example: 8088", "Database related"))),
+        Path(
+          "URL",
+          Descriptions(
+            List("<empty>", "value of type string", "optional value", "Example: abc.com", "Database related")
+          )
+        )
+      )
+  )
+
+  assert(
+    generateDocsWithValue(config, Database(1, Some("value"))) ==
+      Right(
+        Both(
+          Path(
+            "PORT",
+            DescriptionsWithValue(
+              Some("1"),
+              List("<empty>", "value of type int", "Example: 8088", "Database related")
+            )
+          ),
+          Path(
+            "URL",
+            DescriptionsWithValue(
+              Some("value"),
+              List("<empty>", "value of type string", "optional value", "Example: abc.com", "Database related")
+            )
+          )
         )
       )
   )

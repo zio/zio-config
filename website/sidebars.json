@@ -5,12 +5,12 @@
     ]
   },
   "read-sidebar": {
-    "Create Docs": [
+    "Create Details": [
       "read/read_index"
     ]
   },
   "doc-sidebar": {
-    "Generate Docs": [
+    "Generate Details": [
       "doc/doc_index"
     ]
   },

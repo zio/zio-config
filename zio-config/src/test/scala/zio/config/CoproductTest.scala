@@ -1,13 +1,13 @@
 package zio.config
 
-import zio.{ IO, ZIO }
-import zio.config.Config._
-import zio.config.CoproductTestUtils._
+import zio.ZIO
+import zio.config.ConfigDescriptor._
+import ReadError._
 import zio.config.helpers._
-import zio.config.ReadErrors.ReadError._
+import CoproductTestUtils._
 import zio.random.Random
-import zio.test._
 import zio.test.Assertion._
+import zio.test._
 
 object CoproductTest
     extends BaseSpec(
@@ -24,9 +24,9 @@ object CoproductTest
         },
         testM("should accumulate all errors") {
           checkM(genTestParams) { p =>
-            val expected = ReadErrors(
-              MissingValue(p.kLdap),
-              ParseError(p.kFactor, "notafloat", "float")
+            val expected: ReadErrorsVector[String, String] = ::(
+              MissingValue(Vector(p.kLdap)),
+              ParseError(Vector(p.kFactor), "notafloat", "float") :: Nil
             )
 
             assertM(readWithErrors(p), isLeft(equalTo(expected)))
@@ -72,7 +72,7 @@ object CoproductTestUtils {
       vDbUrlLocal <- Gen.anyFloat
     } yield TestParams(kLdap, vLdap, kDbUrl, vDbUrl, kUser, vUser, kCount, vCount, kDbUrlLocal, vDbUrlLocal)
 
-  def readLeft(p: TestParams): IO[ReadErrors[String, String], Either[EnterpriseAuth, PasswordAuth]] = {
+  def readLeft(p: TestParams) = {
     val enterprise =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -84,10 +84,10 @@ object CoproductTestUtils {
 
     val authConfig = enterprise.orElseEither(password)
 
-    read(authConfig).provide(ConfigSource.fromMap(Map(p.kLdap -> p.vLdap, p.kDbUrl -> p.vDbUrl)))
+    read(authConfig from ConfigSource.fromMap(Map(p.kLdap -> p.vLdap, p.kDbUrl -> p.vDbUrl)))
   }
 
-  def readRight(p: TestParams): IO[ReadErrors[String, String], Either[EnterpriseAuth, PasswordAuth]] = {
+  def readRight(p: TestParams) = {
     val enterprise =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -99,14 +99,15 @@ object CoproductTestUtils {
 
     val authConfig = enterprise.orElseEither(password)
 
-    read(authConfig).provide(
-      ConfigSource.fromMap(Map(p.kUser -> p.vUser, p.kCount -> p.vCount.toString, p.kFactor -> p.vFactor.toString))
+    read(
+      authConfig from
+        ConfigSource.fromMap(Map(p.kUser -> p.vUser, p.kCount -> p.vCount.toString, p.kFactor -> p.vFactor.toString))
     )
   }
 
   def readWithErrors(
     p: TestParams
-  ): ZIO[Any, Nothing, Either[ReadErrors[String, String], Either[EnterpriseAuth, PasswordAuth]]] = {
+  ): ZIO[Any, Nothing, Either[ReadErrors[Vector[String], String], Either[EnterpriseAuth, PasswordAuth]]] = {
     val enterprise =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -118,8 +119,8 @@ object CoproductTestUtils {
 
     val authConfig = enterprise.orElseEither(password)
 
-    read(authConfig)
-      .provide(
+    read(
+      authConfig from
         ConfigSource.fromMap(
           Map(
             p.kDbUrl  -> p.vDbUrl,
@@ -128,11 +129,10 @@ object CoproductTestUtils {
             p.kFactor -> "notafloat"
           )
         )
-      )
-      .either
+    ).either
   }
 
-  def readChooseLeftFromBoth(p: TestParams): IO[ReadErrors[String, String], Either[EnterpriseAuth, PasswordAuth]] = {
+  def readChooseLeftFromBoth(p: TestParams) = {
     val enterprise =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,
@@ -144,8 +144,8 @@ object CoproductTestUtils {
 
     val authConfig = enterprise.orElseEither(password)
 
-    read(authConfig)
-      .provide(
+    read(
+      authConfig from
         ConfigSource.fromMap(
           Map(
             p.kLdap   -> p.vLdap,
@@ -155,6 +155,6 @@ object CoproductTestUtils {
             p.kFactor -> p.vFactor.toString
           )
         )
-      )
+    )
   }
 }
