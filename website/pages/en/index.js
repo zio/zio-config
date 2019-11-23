@@ -65,7 +65,7 @@ class HomeSplash extends React.Component {
           <PromoSection>
             <Button href={docUrl('intro/intro_index')}>Introduction</Button>
             <Button href={docUrl('read/read_index')}>Read Config</Button>
-            <Button href={docUrl('doc/doc_index')}>Create Docs</Button>
+            <Button href={docUrl('doc/doc_index')}>Create Details</Button>
             <Button href={docUrl('report/report_index')}>Report</Button>
             <Button href={docUrl('write/write_index')}>Write</Button>
             <Button href="https://github.com/zio/zio-config" target="_blank" >GitHub</Button>
@@ -94,41 +94,55 @@ class Index extends React.Component {
       </Container>
     );
 
-    const FeatureCallout = () => (
-      <div
-        className="productShowcaseSection paddingBottom"
-        style={{textAlign: 'center'}}>
-        <h2>Auto-generate docs</h2>
-        <MarkdownBlock>Create a man-page for your configuration model based on the same description that lets you read the configuration</MarkdownBlock>
-      </div>
-    );
-
     const Features = () => (
       <Block layout="fourColumn">
         {[
           {
-            content: 'Describe your configuration model using a familiar, composable syntax',
-            image: `${baseUrl}img/undraw_tweetstorm.svg`,
-            imageAlign: 'top',
-            title: 'Composable syntax',
+            content: 'A single composable description of the configuration \n \t It can read, write, report and document',
+            title: 'Composable description',
           },
-          {
-            content: "That's better than 'easy to go insane'",
-            image: `${baseUrl}img/undraw_operating_system.svg`,
-            imageAlign: 'top',
-            title: 'Insanely easy to use',
-          },
+           {
+              content: "Given a config description, read the config from various sources",
+              title: 'Read the configuration',
+            },
+           {
+             content: 'Given the same description,safely write the config back - resulting in unfailed reads',
+             title: 'Write the configuration back',
+           },
+           {
+             content: "Handles multiple, composable, prioritised sources, to read the configuration from.",
+             title: 'Multiple composable sources',
+           }
         ]}
       </Block>
     );
+
+    const Features2 = () => (
+      <Block layout="fourColumn">
+        {[
+          {
+            content: 'Given the same description, auto-create a man-page - for your ops team',
+            title: 'Auto-generate docs',
+          },
+           {
+              content: "Details can carry the value of each configuration parameter - a detailed report",
+              title: 'Auto generate report',
+            }
+        ]}
+      </Block>
+    );
+
+
 
     return (
       <div>
         <HomeSplash siteConfig={siteConfig} language={language} />
         <div className="mainContainer">
           <Features />
-          <FeatureCallout />
         </div>
+         <div className="mainContainer">
+                  <Features2 />
+                </div>
       </div>
     );
   }

@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.DefaultRuntime
 import zio.config._
-import Config._
+import ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record }
 
 /**
@@ -15,14 +15,14 @@ import zio.config.PropertyTree.{ Leaf, Record }
 final case class Variables(variable1: Int, variable2: Option[Int])
 
 object SequenceExample extends App {
-  val listOfConfig: List[ConfigDescriptor[Variables]] =
+  val listOfConfig: List[ConfigDescriptor[String, String, Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
       .map(
         group =>
           (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
       )
 
-  val configOfList: ConfigDescriptor[List[Variables]] =
+  val configOfList: ConfigDescriptor[String, String, List[Variables]] =
     ConfigDescriptor.collectAll(listOfConfig)
 
   val map =
@@ -38,7 +38,7 @@ object SequenceExample extends App {
 
   val runtime = new DefaultRuntime {}
 
-  val result  = runtime.unsafeRun(read(configOfList).provide(ConfigSource.fromMap(map)))
+  val result  = runtime.unsafeRun(read(configOfList from ConfigSource.fromMap(map)))
   val written = write(configOfList, result)
 
   assert(result == List(Variables(7, None), Variables(5, Some(6)), Variables(3, Some(4)), Variables(1, Some(2))))

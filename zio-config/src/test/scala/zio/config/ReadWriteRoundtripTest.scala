@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.Config._
+import zio.config.ConfigDescriptor._
 import zio.config.helpers._
 import zio.config.ReadWriteRoundtripTestUtils._
 import zio.random.Random
@@ -16,7 +16,7 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cId, p))
-                reread  <- read(cId).provide(ConfigSource.fromPropertyTree(written))
+                reread  <- read(cId from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
@@ -27,7 +27,7 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cDbUrl, p))
-                reread  <- read(cDbUrl).provide(ConfigSource.fromPropertyTree(written))
+                reread  <- read(cDbUrl from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
@@ -38,7 +38,7 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cEnterpriseAuth, p))
-                reread  <- read(cEnterpriseAuth).provide(ConfigSource.fromPropertyTree(written))
+                reread  <- read(cEnterpriseAuth from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
@@ -49,7 +49,7 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cNestedConfig, p))
-                reread  <- read(cNestedConfig).provide(ConfigSource.fromPropertyTree(written))
+                reread  <- read(cNestedConfig from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
@@ -60,7 +60,7 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cCoproductConfig, p))
-                reread  <- read(cCoproductConfig).provide(ConfigSource.fromPropertyTree(written))
+                reread  <- read(cCoproductConfig from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
@@ -70,10 +70,10 @@ object ReadWriteRoundtripTest
     )
 
 object ReadWriteRoundtripTestUtils {
-  final case class CoproductConfig(coproduct: Either[DataItem, NestedConfig])
+  final case class CoproductConfig(coproduct: Either[DataItem, NestedPath])
   final case class DataItem(oid: Option[Id], count: Int)
   final case class EnterpriseAuth(id: Id, dburl: DbUrl)
-  final case class NestedConfig(enterpriseAuth: EnterpriseAuth, count: Int, factor: Float)
+  final case class NestedPath(enterpriseAuth: EnterpriseAuth, count: Int, factor: Float)
 
   val genDataItem: Gen[Random, DataItem] =
     for {
@@ -87,12 +87,12 @@ object ReadWriteRoundtripTestUtils {
       dburl <- genDbUrl
     } yield EnterpriseAuth(id, dburl)
 
-  val genNestedConfig: Gen[Random, NestedConfig] =
+  val genNestedConfig: Gen[Random, NestedPath] =
     for {
       auth   <- genEnterpriseAuth
       count  <- Gen.anyInt
       factor <- Gen.anyFloat
-    } yield NestedConfig(auth, count, factor)
+    } yield NestedPath(auth, count, factor)
 
   val genCoproductConfig: Gen[Random, CoproductConfig] =
     Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
@@ -104,7 +104,7 @@ object ReadWriteRoundtripTestUtils {
   val cEnterpriseAuth = (cId |@| cDbUrl)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
 
   val cNestedConfig =
-    (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedConfig.apply, NestedConfig.unapply)
+    (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedPath.apply, NestedPath.unapply)
 
   val cCoproductConfig =
     (cDataItem.orElseEither(cNestedConfig)).xmap(CoproductConfig)(_.coproduct)
