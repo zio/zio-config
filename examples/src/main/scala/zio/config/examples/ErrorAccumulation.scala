@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.DefaultRuntime
 import zio.config._, ConfigDescriptor._
-import zio.config.ReadErrors.ReadError.{ MissingValue, ParseError }
+import zio.config.ReadError._
 import zio.config._
 
 object ErrorAccumulation extends App {
@@ -21,9 +21,9 @@ object ErrorAccumulation extends App {
   assert(
     parsed ==
       Left(
-        ReadErrors(
+        ::(
           MissingValue(Vector("envvar")),
-          MissingValue(Vector("envvar2"))
+          MissingValue(Vector("envvar2")) :: Nil
         )
       )
   )
@@ -37,7 +37,7 @@ object ErrorAccumulation extends App {
   val invalidSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
 
   assert(
-    runtime.unsafeRun(read(config from invalidSource).mapError(_.errors).either) ==
+    runtime.unsafeRun(read(config from invalidSource).either) ==
       Left(
         List(
           ParseError(Vector("envvar"), "wrong", "int"),

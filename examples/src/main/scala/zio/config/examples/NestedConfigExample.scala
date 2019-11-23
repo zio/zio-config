@@ -1,10 +1,11 @@
 package zio.config.examples
 
 import zio.config._
-import ConfigDescriptor.{ _ }
+import ConfigDescriptor._, zio.config.ConfigDocs.Details._
 import zio.DefaultRuntime
 import zio.config.PropertyTree.{ Leaf, Record }
-import zio.config.actions.ConfigDocs._
+import zio.config.ConfigDocs._
+import ConfigSource._
 
 object NestedConfigExample extends App {
 
@@ -37,64 +38,64 @@ object NestedConfigExample extends App {
   val result = runtime.unsafeRun(read(appConfig from source))
   assert(result == AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
 
-  // Docs and Report of the nested configurations.
+  // Details Both Report of the nested configurations.
   assert(
     generateDocs(appConfig) ==
-      And(
-        And(
-          NestedConfig(
+      Both(
+        Both(
+          NestedPath(
             "south",
-            And(
-              PathDetails("connection", Descriptions(List("value of type string", "South details"))),
-              PathDetails("port", Descriptions(List("value of type int", "South details")))
+            Both(
+              Path("connection", Descriptions(List(EmptySource, "value of type string", "South details"))),
+              Path("port", Descriptions(List(EmptySource, "value of type int", "South details")))
             )
           ),
-          NestedConfig(
+          NestedPath(
             "east",
-            And(
-              PathDetails("connection", Descriptions(List("value of type string", "East details"))),
-              PathDetails("port", Descriptions(List("value of type int", "East details")))
+            Both(
+              Path("connection", Descriptions(List(EmptySource, "value of type string", "East details"))),
+              Path("port", Descriptions(List(EmptySource, "value of type int", "East details")))
             )
           )
         ),
-        PathDetails("appName", Descriptions(List("value of type string")))
+        Path("appName", Descriptions(List(EmptySource, "value of type string")))
       )
   )
 
-  // Docs with a peek at each value as well
+  // Details with a peek at each value as well
   assert(
     generateDocsWithValue(appConfig, result) ==
       Right(
-        And(
-          And(
-            NestedConfig(
+        Both(
+          Both(
+            NestedPath(
               "south",
-              And(
-                PathDetails(
+              Both(
+                Path(
                   "connection",
-                  DescriptionsWithValue(Some("abc.com"), Descriptions(List("value of type string", "South details")))
+                  DescriptionsWithValue(Some("abc.com"), (List(EmptySource, "value of type string", "South details")))
                 ),
-                PathDetails(
+                Path(
                   "port",
-                  DescriptionsWithValue(Some("8111"), Descriptions(List("value of type int", "South details")))
+                  DescriptionsWithValue(Some("8111"), (List(EmptySource, "value of type int", "South details")))
                 )
               )
             ),
-            NestedConfig(
+            NestedPath(
               "east",
-              And(
-                PathDetails(
+              Both(
+                Path(
                   "connection",
-                  DescriptionsWithValue(Some("xyz.com"), Descriptions(List("value of type string", "East details")))
+                  DescriptionsWithValue(Some("xyz.com"), (List(EmptySource, "value of type string", "East details")))
                 ),
-                PathDetails(
+                Path(
                   "port",
-                  DescriptionsWithValue(Some("8888"), Descriptions(List("value of type int", "East details")))
+                  DescriptionsWithValue(Some("8888"), (List(EmptySource, "value of type int", "East details")))
                 )
               )
             )
           ),
-          PathDetails("appName", DescriptionsWithValue(Some("myApp"), Descriptions(List("value of type string"))))
+          Path("appName", DescriptionsWithValue(Some("myApp"), (List(EmptySource, "value of type string"))))
         )
       )
   )

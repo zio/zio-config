@@ -1,13 +1,11 @@
-package zio.config.actions
+package zio.config
 
-import zio.config.{ ConfigDescriptor, PropertyTree }
-
-object Write {
+private[config] trait WriteFunctions {
   final def write[K, V, A](config: ConfigDescriptor[K, V, A], a: A): Either[String, PropertyTree[K, V]] = {
     def go[B](config: ConfigDescriptor[K, V, B], b: B): Either[String, PropertyTree[K, V]] =
       config match {
         case ConfigDescriptor.Empty() =>
-          Right(PropertyTree.Empty())
+          Right(PropertyTree.Empty)
 
         case ConfigDescriptor.Source(path, _, propertyType) =>
           Right(PropertyTree.Record(Map(path -> PropertyTree.Leaf(propertyType.write(b)))))
@@ -23,7 +21,7 @@ object Write {
 
         case ConfigDescriptor.Optional(c) =>
           b.fold({
-            Right(PropertyTree.Empty()): Either[String, PropertyTree[K, V]]
+            Right(PropertyTree.Empty): Either[String, PropertyTree[K, V]]
           })(bb => go(c, bb))
 
         case ConfigDescriptor.Default(c, _) =>
@@ -53,17 +51,17 @@ object Write {
                           val r = mm.toList ++ mapp.toList
 
                           Right(PropertyTree.Record(r.toMap))
-                        case PropertyTree.Empty() => Right(m1)
+                        case PropertyTree.Empty   => Right(m1)
                         case PropertyTree.Leaf(v) => Right(PropertyTree.Leaf(v))
                       }
                     case PropertyTree.Leaf(_) =>
                       m2 match {
                         case PropertyTree.Record(mm) =>
                           Right(PropertyTree.Record(mm))
-                        case PropertyTree.Empty() => Right(m1)
+                        case PropertyTree.Empty   => Right(m1)
                         case PropertyTree.Leaf(a) => Right(PropertyTree.Leaf(a))
                       }
-                    case PropertyTree.Empty() =>
+                    case PropertyTree.Empty =>
                       Right(m2)
                   }
                 case Left(m1) => Left(m1)

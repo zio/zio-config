@@ -3,7 +3,7 @@ package zio.config.examples
 import zio.DefaultRuntime
 import zio.config._
 import ConfigDescriptor._
-import zio.config.ReadErrors.ReadError.{ MissingValue, ParseError }
+import zio.config.ReadError._
 import zio.config.{ ConfigSource, _ }
 
 object CoproductExample extends App {
@@ -64,7 +64,7 @@ object CoproductExample extends App {
     ConfigSource.fromMap(invalidConfig)
 
   assert(
-    runtime.unsafeRun(read(prodOrDev from invalidSource).mapError(_.errors).either) ==
+    runtime.unsafeRun(read(prodOrDev from invalidSource).either) ==
       Left(List(MissingValue(Vector("x1")), ParseError(Vector("x5"), "notadouble", "double")))
   )
 

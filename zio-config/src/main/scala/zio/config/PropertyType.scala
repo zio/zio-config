@@ -15,8 +15,8 @@ object PropertyType {
   final case class PropertyReadError[V](value: V, typeInfo: String)
 
   case object StringType extends PropertyType[String, String] {
-    override def read(value: String): Either[PropertyReadError[String], String] = Right(value)
-    override def write(a: String): String                                       = a
+    def read(value: String): Either[PropertyReadError[String], String] = Right(value)
+    def write(a: String): String                                       = a
   }
 
   case object BooleanType extends PropertyType[String, Boolean] {
@@ -79,7 +79,7 @@ object PropertyType {
     def write(value: URI): String = value.toString
   }
 
-  def attempt[A, E](a: => A, f: Throwable => E): Either[E, A] =
+  private def attempt[A, E](a: => A, f: Throwable => E): Either[E, A] =
     Try(a) match {
       case Success(value)     => Right(value)
       case Failure(throwable) => Left(f(throwable))
