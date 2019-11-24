@@ -1,0 +1,127 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Introduction · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="**zio-config** "/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Introduction · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="**zio-config** "/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive siteNavItemActive"><a href="/zio-config/docs/intro/intro_index" target="_self">Introduction</a></li><li class=""><a href="/zio-config/docs/read/read_index" target="_self">Read Config</a></li><li class=""><a href="/zio-config/docs/doc/doc_index" target="_self">Create Docs</a></li><li class=""><a href="/zio-config/docs/report/report_index" target="_self">Report</a></li><li class=""><a href="/zio-config/docs/write/write_index" target="_self">Write Config</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Introduction</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Introduction</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/intro/intro_index">Introduction</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Introduction</h1></header><article><div><span><p><strong>zio-config</strong></p>
+<p>ZIO Config aims to have a powerful &amp; purely functional, yet a thin interface to access configuration information inside an application.</p>
+<p>We aim at zero boilerplates and complexities and make it insanely simple to use to manage configurations.</p>
+<p>In nutshell, zio-config can</p>
+<ol>
+<li>Read the configuration</li>
+<li>Writ back the configuration</li>
+<li>Document the configuration</li>
+<li>Report on the configuration</li>
+</ol>
+<p>The application config is made accessible anywhere in your app, through ZIO environment.
+And for more reasons, this will be your go-to library for all your configuration management requirements, if you are in the zio world</p>
+<h3><a class="anchor" aria-hidden="true" id="notable-features"></a><a href="#notable-features" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Notable features</h3>
+<p>zio-config exposes an intuitive language, that allows you to describe your configuration.</p>
+<p><em>Note</em> : We will be using the term &quot;configuration description&quot; quite often acrosss the documentation</p>
+<pre><code class="hljs css language-scala">  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Prod</span>(<span class="hljs-params">ldap: <span class="hljs-type">String</span>, port: <span class="hljs-type">Int</span>, dburl: <span class="hljs-type">Option</span>[<span class="hljs-type">String</span>]</span>)</span>
+
+  <span class="hljs-keyword">val</span> prodConfig =
+    (string(<span class="hljs-string">"LDAP"</span>) |@| int(<span class="hljs-string">"PORT"</span>) |@|
+      string(<span class="hljs-string">"DB_URL"</span>).optional)(<span class="hljs-type">Prod</span>.apply, <span class="hljs-type">Prod</span>.unapply)
+
+</code></pre>
+<p>The notable features of zio-config include</p>
+<ul>
+<li>Simple and composable configuration description - that can read configuration from various sources.</li>
+<li>Write the configuration back to the application environment, given the same configuration description.</li>
+<li>Composable syntax for describing (documenting) each configuration parameter in the description.</li>
+<li>Auto generation of documentation (or support page) of application configuration, mainly useful for ops team.</li>
+<li>Emit a report on the configuration values, providing the value of each configuration when producing the documentation.</li>
+<li>Handles nested configuration.</li>
+<li>Handles multiple (composable) sources.</li>
+<li>We can set priority for the sources / Reset all the sources etc.</li>
+<li>Configuration will be part of your environment with the use of the library.</li>
+<li>Accumulates all errors rather than bailing at the first while reading the config from these sources</li>
+<li>Zero implicits</li>
+<li>Zero macros</li>
+<li>The one and only dependency is zio</li>
+<li>Simple altogether!</li>
+</ul>
+<p>This is backed by significant number of examples/</p>
+<h1><a class="anchor" aria-hidden="true" id="for-impatients"></a><a href="#for-impatients" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>For impatients</h1>
+<p>To try out zio-conifg straight away, please head on to <a href="https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples">examples</a> project.
+One of the example is an entire zio application demonstrates the use of zio-config to read the config,
+and make it available across the application as just another zio <a href="https://zio.dev/docs/overview/overview_index#zio">Environment</a>.</p>
+<p>Otherwise, <code>Read</code>, <code>Write</code>, <code>Documentation</code> and <code>Reporting</code> are separately documented.</p>
+<h1><a class="anchor" aria-hidden="true" id="principles"></a><a href="#principles" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Principles</h1>
+<h2><a class="anchor" aria-hidden="true" id="zio-native"></a><a href="#zio-native" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>ZIO-Native</h2>
+<p>zio-config is a zero-dependency, ZIO-native library.
+It is a fundamental part of the ZIO ecosystem, and a building block for the creation of ZIO-based applications.</p>
+<h2><a class="anchor" aria-hidden="true" id="purely-functional-and-composable"></a><a href="#purely-functional-and-composable" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Purely Functional and Composable</h2>
+<p>zio-config is built on sound foundations, leveraging the well-known, lawful abstractions of functional programming.
+Principal abstractions that inform the zio-config implementation are:</p>
+<h4><a class="anchor" aria-hidden="true" id="free-applicative-in-simple-scala-with-zero-sophistications"></a><a href="#free-applicative-in-simple-scala-with-zero-sophistications" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Free Applicative, in simple scala with zero sophistications</h4>
+<p>Everything library does inside, is by making use of program introspection - a feature that goes well with a Free Applicative style encoding. However, this doesn't make it any inacessible to those who are unfamiliar with the principle, and that's because we made it possible with simple scala with zero sophistications. We made it as minimal as possible - for contributors and users of the library.</p>
+<h4><a class="anchor" aria-hidden="true" id="and-invariant-applicative-in-nature"></a><a href="#and-invariant-applicative-in-nature" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>And Invariant applicative in nature</h4>
+<p>There are multiple places of bidirectionality in this library. Hence, there is a behavior of invariant applicative functor lying with the Free Applicative style encoding.
+We are not coupled to any specific typeclass instances, enabling us to scalably encode more functionalities, and features while strongly adhering to laws and FP fundamentals.</p>
+<p>For the same reason, orthogonality across the functionalities came long in a natural way, without having to fiddle with sophistications and implicit instances. For instance, we added the fact that writing the config can fail as well, in a few minutes - scalably, in an aesthetically pleasing manner! This was possible as we are neither going into over generalisations nor into over restrictions.</p>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 11/22/2019 by Afsal Thaj</em></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#zio-native">ZIO-Native</a></li><li><a href="#purely-functional-and-composable">Purely Functional and Composable</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
+        ((window.gitter = {}).chat = {}).options = {
+          showChatByDefault: false,
+          activationElement: '.gitter-open-chat-button',
+          room: 'zio/zio-config'
+        };
+      </script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="" defer=""></script></div></section><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Additional resources</h5><a href="https://javadoc.io/doc/dev.zio/zio_2.12/">Scaladoc of ZIO</a></div></section><section class="copyright">Copyright © 2019 ZIO Maintainers</section></footer></div></body></html>

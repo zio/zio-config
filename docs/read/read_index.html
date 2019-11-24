@@ -1,0 +1,320 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Read · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="You need this import everywhere"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Read · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="You need this import everywhere"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class=""><a href="/zio-config/docs/intro/intro_index" target="_self">Introduction</a></li><li class="siteNavGroupActive siteNavItemActive"><a href="/zio-config/docs/read/read_index" target="_self">Read Config</a></li><li class=""><a href="/zio-config/docs/doc/doc_index" target="_self">Create Docs</a></li><li class=""><a href="/zio-config/docs/report/report_index" target="_self">Report</a></li><li class=""><a href="/zio-config/docs/write/write_index" target="_self">Write Config</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>Create Details</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">Create Details</h3><ul class=""><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/read/read_index">Read</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Read</h1></header><article><div><span><p>You need this import everywhere</p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">import</span> zio.<span class="hljs-type">IO</span>
+<span class="hljs-keyword">import</span> zio.config._, <span class="hljs-type">ConfigDescriptor</span>._
+
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="a-simple-example"></a><a href="#a-simple-example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>A Simple example</h2>
+<p>We must be fetching the configuration from the environment to a case class (product) in scala. Let it be <code>MyConfig</code></p>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyConfig</span>(<span class="hljs-params">ldap: <span class="hljs-type">String</span>, port: <span class="hljs-type">Int</span>, dburl: <span class="hljs-type">String</span></span>)</span>
+
+</code></pre>
+<p>To perform any action using zio-config, we need a configuration description.
+Let's define a simple one.</p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> myConfig =
+  ((string(<span class="hljs-string">"LDAP"</span>) |@| int(<span class="hljs-string">"PORT"</span>)|@| string(<span class="hljs-string">"DB_URL"</span>)))(<span class="hljs-type">MyConfig</span>.apply, <span class="hljs-type">MyConfig</span>.unapply)
+
+</code></pre>
+<p>Type of <code>myConfig</code> is <code>ConfigDescriptor[String, String, MyConfig]</code>.
+Type says, running it by passing a source will return <code>MyConfig</code></p>
+<h2><a class="anchor" aria-hidden="true" id="running-the-description-to-zio"></a><a href="#running-the-description-to-zio" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Running the description to ZIO</h2>
+<p>To read a config, means it has to perform some effects, and for that reason, it returns with a ZIO.
+To be specific it returns an <code>IO</code> where <code>type IO[E, A] = ZIO[Any, E, A]</code></p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> result: <span class="hljs-type">IO</span>[<span class="hljs-type">ReadErrorsVector</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>], zio.config.<span class="hljs-type">Config</span>[<span class="hljs-type">MyConfig</span>]] = 
+  <span class="hljs-type">Config</span>.fromEnv(myConfig) <span class="hljs-comment">// That's system environment</span>
+</code></pre>
+<p>You can run this to <a href="https://zio.dev/docs/getting_started.html#main">completion</a> as in any zio application.</p>
+<p>We will not be discussing about running with ZIO again, as it is just the same regardless of what the description is.
+We will discuss only about how to describe your configuration for the rest of this page.</p>
+<h2><a class="anchor" aria-hidden="true" id="built-in-types"></a><a href="#built-in-types" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Built-in types</h2>
+<p>We have already seen <code>string(&quot;TOKEN&quot;)</code> and <code>int(&quot;PORT&quot;)</code> to fetch string and int types respectively.
+We support the following:</p>
+<pre><code class="hljs css language-scala">
+string
+boolean
+byte
+short
+int
+long
+bigInt
+float
+double
+bigDecimal
+uri
+
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="optional-types"></a><a href="#optional-types" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Optional Types</h2>
+<p>Say, dburl is an optional type, then it is as simple as</p>
+<pre><code class="hljs css language-scala mdoc:silent">string(<span class="hljs-string">"DB_URL"</span>).optional
+</code></pre>
+<p>That is,</p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyConfigWithOptionalUrl</span>(<span class="hljs-params">ldap: <span class="hljs-type">String</span>, port: <span class="hljs-type">Port</span>, dburl: <span class="hljs-type">Option</span>[<span class="hljs-type">String</span>]</span>)</span>
+
+<span class="hljs-keyword">val</span> myConfigOptional =
+  ((string(<span class="hljs-string">"LDAP"</span>) |@| int(<span class="hljs-string">"PORT"</span>).xmap(<span class="hljs-type">Port</span>)(_.value) |@| 
+    string(<span class="hljs-string">"DB_URL"</span>).optional))(<span class="hljs-type">MyConfigWithOptionalUrl</span>.apply, <span class="hljs-type">MyConfigWithOptionalUrl</span>.unapply)
+
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="default"></a><a href="#default" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Default</h2>
+<p>Sometimes, we don't need an optional value and instead happy providing a default value.</p>
+<pre><code class="hljs css language-scala mdoc:silent"> 
+ <span class="hljs-keyword">val</span> defaultConfig = 
+  string(<span class="hljs-string">"USERNAME"</span>).<span class="hljs-keyword">default</span>(<span class="hljs-string">"ROOT"</span>)
+ 
+</code></pre>
+<p>That is,</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyConfigWithDefaultUserName</span>(<span class="hljs-params">username: <span class="hljs-type">String</span>, port: <span class="hljs-type">Int</span></span>)</span>
+
+<span class="hljs-keyword">val</span> myConfigDefault =
+  ((string(<span class="hljs-string">"USERNAME"</span>).<span class="hljs-keyword">default</span>(<span class="hljs-string">"root-oh"</span>) |@| int(<span class="hljs-string">"PORT"</span>)))(<span class="hljs-type">MyConfigWithDefaultUserName</span>.apply, <span class="hljs-type">MyConfigWithDefaultUserName</span>.unapply)
+
+</code></pre>
+<p>We can also do things like fully overriding the entire configuration; might be helpful for tests.</p>
+<pre><code class="hljs css language-scala mdoc:silent">myConfigDefault.<span class="hljs-keyword">default</span>(<span class="hljs-type">MyConfigWithDefaultUserName</span>(<span class="hljs-string">"test"</span>, <span class="hljs-number">80</span>))
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="custom-types"></a><a href="#custom-types" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Custom types</h2>
+<p>We love <code>Port</code> instead of <code>Int</code> that represents a db port.</p>
+<p>In this scenario, you could do</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+int(<span class="hljs-string">"PORT"</span>).xmap(<span class="hljs-type">Port</span>)(_.value)
+
+</code></pre>
+<p>where port is;</p>
+<pre><code class="hljs css language-scala mdoc:silent"> <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Port</span>(<span class="hljs-params">value: <span class="hljs-type">Int</span></span>)</span>
+
+</code></pre>
+<p>That is,</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+ <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyCustomConfig</span>(<span class="hljs-params">ldap: <span class="hljs-type">String</span>, port: <span class="hljs-type">Port</span>, dburl: <span class="hljs-type">String</span></span>)</span>
+
+ <span class="hljs-comment">// Before</span>
+  <span class="hljs-keyword">val</span> myConfigWithCustomType =
+    ((string(<span class="hljs-string">"LDAP"</span>) |@| int(<span class="hljs-string">"PORT"</span>).xmap(<span class="hljs-type">Port</span>)(_.value) |@|
+      string(<span class="hljs-string">"DB_URL"</span>)))(<span class="hljs-type">MyCustomConfig</span>.apply, <span class="hljs-type">MyCustomConfig</span>.unapply)
+
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="multiple-sources"></a><a href="#multiple-sources" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Multiple sources</h2>
+<p>While it may not be always a good idea having to rely on multiple sources to form the application config,
+zio-config do support this scenario. This can happen in complex applications.</p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> source1 = <span class="hljs-type">ConfigSource</span>.fromProperty
+<span class="hljs-keyword">val</span> source2 = <span class="hljs-type">ConfigSource</span>.fromEnv
+
+<span class="hljs-keyword">val</span> myMultipleSourceConfig =
+  ((string(<span class="hljs-string">"LDAP"</span>).from(source1.orElse(source2)) |@| int(<span class="hljs-string">"PORT"</span>).xmap(<span class="hljs-type">Port</span>)(_.value).from(source1)) |@|
+    string(<span class="hljs-string">"DB_URL"</span>).optional.from(source2))(<span class="hljs-type">MyConfigWithOptionalUrl</span>.apply, <span class="hljs-type">MyConfigWithOptionalUrl</span>.unapply)
+
+read(myMultipleSourceConfig)
+
+<span class="hljs-comment">// we can also separately add new config</span>
+
+read(myMultipleSourceConfig from <span class="hljs-type">ConfigSource</span>.fromMap(<span class="hljs-type">Map</span>.empty))
+
+<span class="hljs-comment">// In this case, `ConfigSource.fromMap` will also be tried along with the sources that are already given.</span>
+
+</code></pre>
+<p>We can reset the sources for the config using</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+myMultipleSourceConfig.unsourced
+
+</code></pre>
+<p>By that way, in tests we could remove the sources from each parameter and ask it to get it
+from a constant map for all of it.</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">val</span> testConfig =
+  myMultipleSourceConfig
+    .unsourced
+    .from(<span class="hljs-type">ConfigSource</span>.fromMap(<span class="hljs-type">Map</span>(<span class="hljs-string">"LDAP"</span> -&gt; <span class="hljs-string">"x"</span>, <span class="hljs-string">"DB_URL"</span> -&gt; <span class="hljs-string">"y"</span>,  <span class="hljs-string">"PORT"</span> -&gt; <span class="hljs-string">"1235"</span>)))
+
+</code></pre>
+<p><em>NOTE</em>: As of now we support system env, system property and a constant map in <code>ConfigSource</code>.
+We will be adding more, however, it will be easy to have any custom source. It is kept as simple as possible.</p>
+<h2><a class="anchor" aria-hidden="true" id="either-types-orelseeither"></a><a href="#either-types-orelseeither" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Either Types (orElseEither)</h2>
+<p>For instance, if we are ok accepting either a token or username, then our target type should be <code>Either[String, String]</code>.
+In this case, We can use <code>orElseEither</code> or <code>&lt;+&gt;</code>.</p>
+<pre><code class="hljs css language-scala mdoc:silent">string(<span class="hljs-string">"USERNAME"</span>).orElseEither(string(<span class="hljs-string">"TOKEN"</span>))
+</code></pre>
+<p>That is,</p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyConfigWithEither</span>(<span class="hljs-params">usernameOrToken: <span class="hljs-type">Either</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>], port: <span class="hljs-type">Int</span></span>)</span>
+
+<span class="hljs-keyword">val</span> myConfigEither =
+  ((string(<span class="hljs-string">"USERNAME"</span>).orElseEither(string(<span class="hljs-string">"TOKEN"</span>)) |@| int(<span class="hljs-string">"PORT"</span>)))(<span class="hljs-type">MyConfigWithEither</span>.apply, <span class="hljs-type">MyConfigWithEither</span>.unapply)
+
+</code></pre>
+<p>We can also use <code>&lt;+&gt;</code> combinator.</p>
+<pre><code class="hljs css language-scala mdoc:silent"> string(<span class="hljs-string">"USERNAME"</span>) &lt;+&gt; (string(<span class="hljs-string">"TOKEN"</span>))
+</code></pre>
+<p>We can apply the <code>Either</code> logic at a much more global level, as in, give me either a <code>Prod</code> or <code>Test</code> config.</p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Dev</span>(<span class="hljs-params">userName: <span class="hljs-type">String</span>, password: <span class="hljs-type">String</span></span>)</span>
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Prod</span>(<span class="hljs-params">token: <span class="hljs-type">String</span>, code: <span class="hljs-type">Int</span></span>)</span>
+
+<span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">Config</span> </span>= <span class="hljs-type">Either</span>[<span class="hljs-type">Prod</span>, <span class="hljs-type">Dev</span>]
+
+<span class="hljs-keyword">val</span> dev = (string(<span class="hljs-string">"USERNAME"</span>) |@| string(<span class="hljs-string">"PASSWORD"</span>))(<span class="hljs-type">Dev</span>.apply, <span class="hljs-type">Dev</span>.unapply)
+<span class="hljs-keyword">val</span> prod = (string(<span class="hljs-string">"TOKEN"</span>) |@| int(<span class="hljs-string">"CODE"</span>))(<span class="hljs-type">Prod</span>.apply, <span class="hljs-type">Prod</span>.unapply)
+
+prod &lt;+&gt; dev <span class="hljs-comment">// that represents a description returning Config</span>
+<span class="hljs-comment">// ConfigDescriptor[String, String, Config]</span>
+
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="orelse"></a><a href="#orelse" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>OrElse</h2>
+<p>Sometimes, we can try two different values and pick one. That means, the target is &quot;NOT&quot; <code>Either</code> but any raw type.
+In this scenario, We can use <code>orElse</code> or <code>&lt;&gt;</code></p>
+<pre><code class="hljs css language-scala mdoc:silent">
+string(<span class="hljs-string">"TOKEN"</span>) orElse string(<span class="hljs-string">"token"</span>)
+
+</code></pre>
+<p>Example:</p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> configOrElse = 
+  (string(<span class="hljs-string">"TOKEN"</span>).orElse(string(<span class="hljs-string">"token_x"</span>)) |@| int(<span class="hljs-string">"CODE"</span>)) (<span class="hljs-type">Prod</span>.apply, <span class="hljs-type">Prod</span>.unapply)
+
+</code></pre>
+<p>It tries to fetch the value corresponding to &quot;TOKEN&quot;, and if it fails, it tries &quot;token_x&quot; and returns the corresponding value.</p>
+<p>We can also use <code>&lt;&gt;</code> combinator.</p>
+<pre><code class="hljs css language-scala mdoc:silent">string(<span class="hljs-string">"TOKEN"</span>) &lt;&gt; string(<span class="hljs-string">"token"</span>) &lt;&gt; string(<span class="hljs-string">"TOKEN_INFO"</span>) 
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="composing-multiple-configurations"></a><a href="#composing-multiple-configurations" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Composing multiple configurations</h2>
+<p>This is more of a real life scenario, where you can different micro configurations for readability and maintainability.</p>
+<pre><code class="hljs css language-scala mdoc:silent">  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Database</span>(<span class="hljs-params">url: <span class="hljs-type">String</span>, port: <span class="hljs-type">Int</span></span>)</span>
+  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AwsConfig</span>(<span class="hljs-params">c1: <span class="hljs-type">Database</span>, c3: <span class="hljs-type">String</span></span>)</span>
+
+
+  <span class="hljs-keyword">val</span> databaseConfig =
+    (string(<span class="hljs-string">"connection"</span>) |@| int(<span class="hljs-string">"port"</span>))(<span class="hljs-type">Database</span>.apply, <span class="hljs-type">Database</span>.unapply)
+
+  (databaseConfig |@| string(<span class="hljs-string">"c3"</span>))(<span class="hljs-type">AwsConfig</span>.apply, <span class="hljs-type">AwsConfig</span>.unapply)
+
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="nesting"></a><a href="#nesting" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Nesting</h2>
+<p>In addition to the primitive types, zio-config provides a combinator for nesting a configuration within another.</p>
+<p>This might not feel intuitive at first, however, zio-config is desgined and patiently added this feature to easily adapt to
+any other configuration parsing libraries that deals with files, hoccons that supports nested configurations.</p>
+<pre><code class="hljs css language-scala mdoc:silent">  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AwsConfigExtended</span>(<span class="hljs-params">c1: <span class="hljs-type">Database</span>, c2: <span class="hljs-type">Database</span>, c3: <span class="hljs-type">String</span></span>)</span>
+
+  <span class="hljs-keyword">val</span> appConfig =
+    (nested(<span class="hljs-string">"south"</span>) { databaseConfig } |@|
+      nested(<span class="hljs-string">"east"</span>) { databaseConfig } |@|
+      string(<span class="hljs-string">"appName"</span>))(<span class="hljs-type">AwsConfigExtended</span>, <span class="hljs-type">AwsConfigExtended</span>.unapply)
+
+  <span class="hljs-comment">// Let's say, a nested configuration as a flattened map is just "." delimited keys in a flat map.</span>
+  <span class="hljs-keyword">val</span> constantMap =
+    <span class="hljs-type">Map</span>(
+      <span class="hljs-string">"south.connection"</span> -&gt; <span class="hljs-string">"abc.com"</span>,
+      <span class="hljs-string">"east.connection"</span>  -&gt; <span class="hljs-string">"xyz.com"</span>,
+      <span class="hljs-string">"east.port"</span>        -&gt; <span class="hljs-string">"8888"</span>,
+      <span class="hljs-string">"south.port"</span>       -&gt; <span class="hljs-string">"8111"</span>,
+      <span class="hljs-string">"appName"</span>          -&gt; <span class="hljs-string">"myApp"</span>
+    )
+    
+  <span class="hljs-type">Config</span>.fromMap(constantMap, appConfig)
+</code></pre>
+<p>Note that, you can write this back as well. This is discussed in write section</p>
+<h2><a class="anchor" aria-hidden="true" id="collectall-sequence"></a><a href="#collectall-sequence" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>CollectAll (Sequence)</h2>
+<p>It is common to handle lists of configured values – ie a configured <code>List</code>.
+For this case, we have <code>collectAll</code> method (also called <code>sequence</code>).</p>
+<p>There are many ways you could get a list of config.
+Here we show a very naive version of it.</p>
+<pre><code class="hljs css language-scala mdoc:silent"> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">database</span></span>(i: <span class="hljs-type">Int</span>) = 
+   (string(<span class="hljs-string">s"<span class="hljs-subst">${i}</span>_URL"</span>) |@| int(<span class="hljs-string">s"<span class="hljs-subst">${i}</span>_PORT"</span>))(<span class="hljs-type">Database</span>, <span class="hljs-type">Database</span>.unapply)
+
+ <span class="hljs-keyword">val</span> list: <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, <span class="hljs-type">List</span>[<span class="hljs-type">Database</span>]] =
+   collectAll((<span class="hljs-number">0</span> to <span class="hljs-number">10</span>).map(database).toList) <span class="hljs-comment">// Same as sequence(...)</span>
+
+</code></pre>
+<p>Running this to ZIO will, obviously comes up with a List[Database]</p>
+<p>NOTE: <code>collectAll</code> is a synonym for <code>sequence</code>.</p>
+<h2><a class="anchor" aria-hidden="true" id="documenting"></a><a href="#documenting" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Documenting</h2>
+<p>To add documentation to the config description, use <code>?</code></p>
+<pre><code class="hljs css language-scala mdoc:silent"> <span class="hljs-keyword">val</span> databaseConfigWithDocs = 
+   (databaseConfig ? <span class="hljs-string">"Database relaed config"</span> |@| 
+     string(<span class="hljs-string">"REGION"</span>) ? <span class="hljs-string">"AWS region: Example: us-east"</span>)(<span class="hljs-type">AwsConfig</span>.apply, <span class="hljs-type">AwsConfig</span>.unapply)
+</code></pre>
+<p>We can document for a whole config description as well.</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+(databaseConfig |@| string(<span class="hljs-string">"appName"</span>))(<span class="hljs-type">AwsConfig</span>, <span class="hljs-type">AwsConfig</span>.unapply) ? <span class="hljs-string">"The AWS details to be used"</span>
+
+</code></pre>
+<p>This will get reflected when we call <code>docs(config)</code> which will produce sort of a manpage of your description.
+We will discuss more on this later.</p>
+<h2><a class="anchor" aria-hidden="true" id="alternative-way-of-running-it-to-zio"></a><a href="#alternative-way-of-running-it-to-zio" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Alternative way of running it to ZIO</h2>
+<p>As you have seen before, the most preferred way is,</p>
+<pre><code class="hljs"><span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">Config</span>.</span></span>from<span class="hljs-constructor">Env(<span class="hljs-params">myConfig</span>)</span>
+<span class="hljs-comment">// similarly, Config.fromProperty(myConfig)</span>
+<span class="hljs-comment">// similarly, Config.fromMap(map, myConfig)</span>
+
+</code></pre>
+<p>However, you could explicitly  use <code>from</code> which is another combinator in <code>ConfigDescriptor</code>
+and pass a specific config source. We have seen this before for handling multiple sources.</p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> envSource = <span class="hljs-type">ConfigSource</span>.fromEnv
+read(myConfig from envSource)
+
+</code></pre>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 11/22/2019 by Afsal Thaj</em></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#a-simple-example">A Simple example</a></li><li><a href="#running-the-description-to-zio">Running the description to ZIO</a></li><li><a href="#built-in-types">Built-in types</a></li><li><a href="#optional-types">Optional Types</a></li><li><a href="#default">Default</a></li><li><a href="#custom-types">Custom types</a></li><li><a href="#multiple-sources">Multiple sources</a></li><li><a href="#either-types-orelseeither">Either Types (orElseEither)</a></li><li><a href="#orelse">OrElse</a></li><li><a href="#composing-multiple-configurations">Composing multiple configurations</a></li><li><a href="#nesting">Nesting</a></li><li><a href="#collectall-sequence">CollectAll (Sequence)</a></li><li><a href="#documenting">Documenting</a></li><li><a href="#alternative-way-of-running-it-to-zio">Alternative way of running it to ZIO</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
+        ((window.gitter = {}).chat = {}).options = {
+          showChatByDefault: false,
+          activationElement: '.gitter-open-chat-button',
+          room: 'zio/zio-config'
+        };
+      </script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="" defer=""></script></div></section><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Additional resources</h5><a href="https://javadoc.io/doc/dev.zio/zio_2.12/">Scaladoc of ZIO</a></div></section><section class="copyright">Copyright © 2019 ZIO Maintainers</section></footer></div></body></html>
