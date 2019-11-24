@@ -4,7 +4,7 @@ scala_211: &scala_211
   SCALA_VERSION: 2.11.12
 
 scala_212: &scala_212
-  SCALA_VERSION: 2.12.9
+  SCALA_VERSION: 2.12.10
 
 scala_213: &scala_213
   SCALA_VERSION: 2.13.0
@@ -117,6 +117,7 @@ mdoc: &mdoc
         command: |
           ./sbt doc
           ./sbt ++${SCALA_VERSION}! docs/mdoc
+    - <<: *clean_cache
     - <<: *save_cache
 
 testJVM: &testJVM
@@ -175,8 +176,9 @@ microsite: &microsite
           nvm install
           nvm use
           node -v
-          ./sbt docs/docusaurusCreateSite
-          ./sbt docs/docusaurusPublishGhpages
+          ./sbt ++${SCALA_VERSION}! docs/docusaurusCreateSite
+          ./sbt ++${SCALA_VERSION}! docs/docusaurusPublishGhpages
+    - <<: *clean_cache
     - <<: *save_cache
 
 jobs:
@@ -236,6 +238,7 @@ jobs:
     <<: *microsite
     <<: *machine_ubuntu
     environment:
+      - <<: *scala_212
       - <<: *jdk_8
 
 workflows:
