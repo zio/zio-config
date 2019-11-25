@@ -78,6 +78,7 @@ install_yarn: &install_yarn
         sudo apt update && sudo apt install yarn -y
         yarn policies set-version
         yarn -v
+
 install_nodejs: &install_nodejs
   - run:
       name: Install node.js
