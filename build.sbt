@@ -3,7 +3,7 @@ import BuildHelper._
 inThisBuild(
   List(
     organization := "dev.zio",
-    homepage := Some(url("https://zio.dev")),
+    homepage := Some(url("https://zio.github.io/zio-config/")),
     licenses := List("Apache-2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
     developers := List(
       Developer(
@@ -69,7 +69,9 @@ lazy val zioConfig =
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
 
-lazy val examples = module("examples").dependsOn(zioConfig)
+lazy val examples = module("examples")
+  .settings(skip in publish := true)
+  .dependsOn(zioConfig)
 
 def module(moduleName: String): Project =
   Project(moduleName, file(moduleName))
@@ -83,7 +85,7 @@ def module(moduleName: String): Project =
 lazy val docs = project
   .in(file("zio-config-docs"))
   .settings(
-    skip.in(publish) := true,
+    skip in publish := true,
     moduleName := "zio-config-docs",
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
