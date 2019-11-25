@@ -69,7 +69,9 @@ lazy val zioConfig =
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
 
-lazy val examples = module("examples").dependsOn(zioConfig)
+lazy val examples = module("examples")
+  .settings(skip in publish := true)
+  .dependsOn(zioConfig)
 
 def module(moduleName: String): Project =
   Project(moduleName, file(moduleName))
@@ -83,7 +85,7 @@ def module(moduleName: String): Project =
 lazy val docs = project
   .in(file("zio-config-docs"))
   .settings(
-    skip.in(publish) := true,
+    skip in publish := true,
     moduleName := "zio-config-docs",
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
