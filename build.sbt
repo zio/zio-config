@@ -70,8 +70,14 @@ lazy val zioConfig =
     )
 
 lazy val examples = module("examples")
-  .settings(skip in publish := true)
-  .dependsOn(zioConfig)
+  .settings(
+    skip in publish := true,
+    moduleName := "zio-config-examples",
+    libraryDependencies ++= Seq(
+      "com.propensive" %% "magnolia" % "0.12.0"
+    )
+  )
+  .dependsOn(zioConfig, zioConfigMagnolia)
 
 lazy val zioConfigMagnolia = module("zio-config-magnolia")
   .settings(skip in publish := true)
