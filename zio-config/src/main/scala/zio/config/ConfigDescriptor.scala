@@ -20,7 +20,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
 
   final def xmapEither[B](
     f: A => Either[String, B]
-  )(g: B => Either[String, A]): ConfigDescriptor.XmapEither[K, V, A, B] =
+  )(g: B => Either[String, A]): ConfigDescriptor[K, V, B] =
     ConfigDescriptor.XmapEither(self, f, g)
 
   def xmapEither2[B, C](
