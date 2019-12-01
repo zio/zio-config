@@ -51,6 +51,6 @@ object ConfigDescriptorProvider {
 
   implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
 
-  def desc[T : ConfigDescriptorProvider]: ConfigDescriptor[String, String, T] =
+  def description[T : ConfigDescriptorProvider]: ConfigDescriptor[String, String, T] =
     ConfigDescriptorProvider[T].getDescription("")
 }
