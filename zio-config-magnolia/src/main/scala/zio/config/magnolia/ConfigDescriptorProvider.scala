@@ -48,8 +48,14 @@ object ConfigDescriptorProvider {
           seq.toList match {
             case Nil => Nil
             case h :: t =>
-              loop(t) :+
-                h.typeclass.getDescription(h.label).xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
+              loop(t) :+ {
+                val desc =
+                  h.default
+                    .map(r => h.typeclass.getDescription(h.label).default(r))
+                    .getOrElse(h.typeclass.getDescription(h.label))
+
+                desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
+              }
           }
 
         collectAll(loop(caseClass.parameters)).xmap[T](
