@@ -31,6 +31,7 @@ object ConfigDescriptorProvider {
     instance(path => ConfigDescriptorProvider[A].getDescription(path).optional)
 
   // For automatic derivation, `Either` type in a case class implies, for the same label, it tries two descriptions and return the successful one as an Either.
+  // This is equivalent to saying string("PATH").orElseEither(int("PATH")). During automatic derivations, we are unaware of alternate paths.
   implicit def eith[A: ConfigDescriptorProvider, B: ConfigDescriptorProvider]: ConfigDescriptorProvider[Either[A, B]] =
     instance(
       path =>
