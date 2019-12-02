@@ -1,6 +1,6 @@
 package zio.config.magnolia
 
-import zio.config.{ConfigDescriptor}
+import zio.config.{ ConfigDescriptor }
 import ConfigDescriptor._
 import magnolia._
 
@@ -27,12 +27,15 @@ object ConfigDescriptorProvider {
   implicit val intDescriptor: ConfigDescriptorProvider[Int] =
     instance(int)
 
+  implicit def optionDescriptor[A: ConfigDescriptorProvider]: ConfigDescriptorProvider[Option[A]] =
+    instance(path => ConfigDescriptorProvider[A].getDescription(path).optional)
 
   type Typeclass[T] = ConfigDescriptorProvider[T]
 
   def combine[T](caseClass: CaseClass[ConfigDescriptorProvider, T]): ConfigDescriptorProvider[T] =
     new ConfigDescriptorProvider[T] {
       def getDescription(path: String): ConfigDescriptor[String, String, T] = {
+        // Loop instead of map to do more things.
         def loop(seq: Seq[Param[ConfigDescriptorProvider, T]]): List[ConfigDescriptor[String, String, Any]] =
           seq.toList match {
             case Nil => Nil
@@ -51,6 +54,6 @@ object ConfigDescriptorProvider {
 
   implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
 
-  def description[T : ConfigDescriptorProvider]: ConfigDescriptor[String, String, T] =
+  def description[T: ConfigDescriptorProvider]: ConfigDescriptor[String, String, T] =
     ConfigDescriptorProvider[T].getDescription("")
 }

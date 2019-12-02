@@ -5,7 +5,7 @@ import zio.config.ConfigSource
 import zio.config.magnolia.ConfigDescriptorProvider._
 import zio.console.Console.Live.console._
 
-final case class MyConfig(port: Int, dburl: String, port2: Double)
+final case class MyConfig(port: Int, dburl: String, port2: Option[Double])
 
 object AutomaticConfigDescriptor extends zio.App {
   // Typeclass derivation through Magnolia
