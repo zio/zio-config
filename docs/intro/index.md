@@ -7,17 +7,20 @@ title:  "Introduction"
 
 ZIO Config aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
 
-We aim at zero boilerplates and complexities and make it insanely simple to use to manage configurations.
+We aim at zero boiler-plate and complexities and make it insanely simple to use to manage configurations.
 
 In nutshell, zio-config can
 
 1. Read the configuration
-2. Writ back the configuration
-3. Document the configuration
-4. Report on the configuration
+2. Write the configuration back
+3. Document the configuration (man page)
+4. Report on configuration (man page, including the value obtained for each parameter)
 
 The application config is made accessible anywhere in your app, through ZIO environment.
 And for more reasons, this will be your go-to library for all your configuration management requirements, if you are in the zio world
+
+With zero boiler-plate, we mean, no implicits and no typeclass syntax imports as we see in almost all all configuration libraries. 
+However, if you need fully zero boiler-plate, that is to even skip how to parse the configuration from env, zio-config-magnolia is for you!
 
 ### Notable features    
 

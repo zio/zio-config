@@ -32,7 +32,7 @@ val myConfig =
 Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`. 
 Type says, running it by passing a source will return `MyConfig`
 
-## Fully Automated Config Description
+## Fully Automated Config Description - ZIO-CONFIG-MAGNOLIA
 
 If you don't like describing your configuration manually, and rely on the names of the parameter in the case class (or sealed trait),
 there is a separate module called `zio-config-magnolia` which uses `Magnolia` library to automatically derive the descriptions for you.
