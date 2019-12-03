@@ -57,7 +57,6 @@ object ConfigDescriptorProvider {
   implicit def opt[A: ConfigDescriptorProvider]: ConfigDescriptorProvider[Option[A]] =
     ConfigDescriptorProvider[A].getDescription(_).optional
 
-  // For automatic derivation, `Either` type in a case class implies, for the same label, it tries two descriptions and return the successful one as an Either.
   // This is equivalent to saying string("PATH").orElseEither(int("PATH")). During automatic derivations, we are unaware of alternate paths.
   implicit def eith[A: ConfigDescriptorProvider, B: ConfigDescriptorProvider]: ConfigDescriptorProvider[Either[A, B]] =
     new ConfigDescriptorProvider[Either[A, B]] {
@@ -91,7 +90,26 @@ object ConfigDescriptorProvider {
       }
     }
 
-  def dispatch[T](sealedTrait: SealedTrait[ConfigDescriptorProvider, T]): ConfigDescriptorProvider[T] = ???
+  def dispatch[T](sealedTrait: SealedTrait[ConfigDescriptorProvider, T]): ConfigDescriptorProvider[T] =
+    new ConfigDescriptorProvider[T] {
+      def getDescription(paths: Vector[String]): ConfigDescriptor[String, String, T] = {
+        def loop(tail: List[Subtype[ConfigDescriptorProvider, T]]): ConfigDescriptor[String, String, T] =
+          tail match {
+            case Nil =>
+              empty[String, String, T].xmapEither[T]({
+                case Some(v) => Right(v): Either[String, T]
+                case None =>
+                  Left(s"Couldn't form any subtypes ${sealedTrait.subtypes.map(_.typeName.full)}"): Either[String, T]
+              })(v => Right(Some(v)))
+            case h :: tail => {
+              val desc = h.typeclass.getDescription(paths).xmap(r => r: T)(t => (t.asInstanceOf[h.SType]))
+              if (tail.isEmpty) desc else desc.orElse(loop(tail))
+            }
+          }
+
+        loop(sealedTrait.subtypes.toList)
+      }
+    }
 
   implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
 
