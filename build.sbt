@@ -74,8 +74,9 @@ lazy val examples = module("examples")
     skip in publish := true,
     moduleName := "zio-config-examples",
     fork := true,
+    crossScalaVersions := Seq("2.13.0", "2.12.10"),
     libraryDependencies ++= Seq(
-      "com.propensive" %% "magnolia" % "0.12.0"
+      "com.propensive" %% "magnolia" % "0.12.2"
     )
   )
   .dependsOn(zioConfig, zioConfigMagnolia)
@@ -83,8 +84,9 @@ lazy val examples = module("examples")
 lazy val zioConfigMagnolia = module("zio-config-magnolia")
   .settings(skip in publish := true)
   .settings(
+    crossScalaVersions := Seq("2.13.0", "2.12.10"),
     libraryDependencies ++= Seq(
-      "com.propensive" %% "magnolia" % "0.12.0"
+      "com.propensive" %% "magnolia" % "0.12.2"
     )
   )
   .dependsOn(zioConfig)

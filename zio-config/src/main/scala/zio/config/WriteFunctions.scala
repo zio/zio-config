@@ -15,10 +15,8 @@ private[config] trait WriteFunctions {
 
         case ConfigDescriptor.Nested(c, parent) =>
           go(c, b) match {
-            case Right(prop) => {
-              Right(PropertyTree.Record(Map(parent -> prop)))
-            }
-            case Left(v) => Left(v)
+            case Right(prop) => Right(PropertyTree.Record(Map(parent -> prop)))
+            case Left(v)     => Left(v)
           }
 
         case ConfigDescriptor.Optional(c) =>
