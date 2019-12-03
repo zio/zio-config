@@ -1,5 +1,6 @@
 package zio.config.magnolia
 
+import java.net.URI
 import zio.config.{ ConfigDescriptor }
 import ConfigDescriptor._
 import magnolia._
@@ -41,14 +42,17 @@ object ConfigDescriptorProvider {
       }
     }
 
-  implicit val stringDescriptor: ConfigDescriptorProvider[String] =
-    instance(string)
-
-  implicit val doubleDescriptor: ConfigDescriptorProvider[Double] =
-    instance(double)
-
-  implicit val intDescriptor: ConfigDescriptorProvider[Int] =
-    instance(int)
+  implicit val stringDesc: ConfigDescriptorProvider[String]         = instance(string)
+  implicit val booleanDesc: ConfigDescriptorProvider[Boolean]       = instance(boolean)
+  implicit val byteDesc: ConfigDescriptorProvider[Byte]             = instance(byte)
+  implicit val shortDesc: ConfigDescriptorProvider[Short]           = instance(short)
+  implicit val intDesc: ConfigDescriptorProvider[Int]               = instance(int)
+  implicit val longDesc: ConfigDescriptorProvider[Long]             = instance(long)
+  implicit val bigIntDesc: ConfigDescriptorProvider[BigInt]         = instance(bigInt)
+  implicit val floatDesc: ConfigDescriptorProvider[Float]           = instance(float)
+  implicit val doubleDesc: ConfigDescriptorProvider[Double]         = instance(double)
+  implicit val bigDecimalDesc: ConfigDescriptorProvider[BigDecimal] = instance(bigDecimal)
+  implicit val uriDesc: ConfigDescriptorProvider[URI]               = instance(uri)
 
   implicit def opt[A: ConfigDescriptorProvider]: ConfigDescriptorProvider[Option[A]] =
     ConfigDescriptorProvider[A].getDescription(_).optional
@@ -66,26 +70,21 @@ object ConfigDescriptorProvider {
   def combine[T](caseClass: CaseClass[ConfigDescriptorProvider, T]): ConfigDescriptorProvider[T] =
     new ConfigDescriptorProvider[T] {
       def getDescription(path: Vector[String]): ConfigDescriptor[String, String, T] = {
-        // Loop instead of map to do more things.
-        def loop(
-          seq: Seq[Param[ConfigDescriptorProvider, T]]
-        ): List[ConfigDescriptor[String, String, Any]] =
-          seq.toList match {
-            case Nil => Nil
-            case h :: t =>
-              loop(t) :+ {
-                val derivedPath = if (caseClass.isValueClass) path else path :+ h.label
-                val rawDesc     = h.typeclass.getDescription(derivedPath)
-                val desc =
-                  h.default
-                    .map(r => rawDesc.default(r))
-                    .getOrElse(rawDesc)
+        val result: List[ConfigDescriptor[String, String, Any]] =
+          caseClass.parameters.reverse.toList.map { h =>
+            {
+              val derivedPath = if (caseClass.isValueClass) path else path :+ h.label
+              val rawDesc     = h.typeclass.getDescription(derivedPath)
+              val desc =
+                h.default
+                  .map(r => rawDesc.default(r))
+                  .getOrElse(rawDesc)
 
-                desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
-              }
+              desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
+            }
           }
 
-        collectAll(loop(caseClass.parameters)).xmap[T](
+        collectAll(result).xmap[T](
           caseClass.rawConstruct
         )(v => caseClass.parameters.map(_.dereference(v): Any).toList)
 
