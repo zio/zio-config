@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ConfigDescriptor.{ int, nested, string }
+import zio.config.ConfigDescriptor.{ double, int, nested, string }
 import zio.config.NestedConfigTestUtils._
 import zio.config.PropertyTree.{ Leaf, Record }
 import zio.config.helpers._
@@ -26,67 +26,120 @@ object NestedConfigTest
 
 object NestedConfigTestUtils {
   final case class Credentials(user: String, password: String)
-  final case class Database(url: DbUrl, credentials: Credentials)
-  final case class AppConfig(db: Database, port: Int)
+  final case class DbConnection(host: String, port: Int)
+  final case class Database(connection: Either[DbUrl, DbConnection], credentials: Option[Credentials])
+  final case class AppConfig(db: Database, pricing: Double)
 
-  final case class TestParams(
-    kPort: String,
-    vPort: Int,
-    kDatabase: String,
-    kDbUrl: String,
-    vDbUrl: DbUrl,
-    kCredentials: String,
-    kUser: String,
-    vUser: String,
-    kPassword: String,
-    vPassword: String
-  ) {
-    def value = AppConfig(Database(vDbUrl, Credentials(vUser, vPassword)), vPort)
+  final case class KeyParams(
+    host: String,
+    port: String,
+    user: String,
+    password: String,
+    connection: String,
+    credentials: String,
+    database: String,
+    pricing: String
+  )
+
+  val genCredentials: Gen[Random, Credentials] =
+    for {
+      user     <- genNonEmptyString(20)
+      password <- genNonEmptyString(20)
+    } yield Credentials(user, password)
+
+  val genDbConnection: Gen[Random, DbConnection] =
+    for {
+      host <- genNonEmptyString(20)
+      port <- Gen.anyInt
+    } yield DbConnection(host, port)
+
+  val genDb: Gen[Random, Database] =
+    for {
+      connection  <- Gen.either(genNonEmptyString(20).map(DbUrl), genDbConnection)
+      credentials <- Gen.option(genCredentials)
+    } yield Database(connection, credentials)
+
+  val genAppConfig: Gen[Random, AppConfig] =
+    for {
+      db      <- genDb
+      pricing <- Gen.anyFloat.map(_.toDouble)
+    } yield AppConfig(db, pricing)
+
+  final case class TestParams(keys: KeyParams, value: AppConfig) {
 
     def config: ConfigDescriptor[String, String, AppConfig] = {
-      val credentials = (string(kUser) |@| string(kPassword))(Credentials.apply, Credentials.unapply)
+      val credentials  = (string(keys.user) |@| string(keys.password))(Credentials.apply, Credentials.unapply)
+      val dbConnection = (string(keys.host) |@| int(keys.port))(DbConnection.apply, DbConnection.unapply)
 
       val database =
-        (string(kDbUrl).xmap(DbUrl)(_.value) |@| nested(kCredentials)(credentials))(Database.apply, Database.unapply)
+        (string(keys.connection).xmap(DbUrl)(_.value).orElseEither(nested(keys.connection)(dbConnection)) |@|
+          nested(keys.credentials)(credentials).optional)(Database.apply, Database.unapply)
 
-      (nested(kDatabase)(database) |@| int(kPort))(AppConfig, AppConfig.unapply)
+      (nested(keys.database)(database) |@| double(keys.pricing))(AppConfig, AppConfig.unapply)
     }
 
-    def record = Record(
-      Map(
-        kDatabase -> Record(
-          Map(
-            kDbUrl       -> Leaf(vDbUrl.value),
-            kCredentials -> Record(Map(kUser -> Leaf(vUser), kPassword -> Leaf(vPassword)))
-          )
-        ),
-        kPort -> Leaf(vPort.toString)
-      )
-    )
+    def record: Record[String, String] = {
+      val connection =
+        keys.connection -> value.db.connection.fold(
+          url => Leaf(url.value),
+          dbConnection =>
+            Record(Map(keys.host -> Leaf(dbConnection.host), keys.port -> Leaf(dbConnection.port.toString)))
+        )
 
-    def source: ConfigSource[String, String] = ConfigSource.fromMap(
-      Map(
-        s"$kDatabase.$kDbUrl"                  -> vDbUrl.value,
-        s"$kDatabase.$kCredentials.$kPassword" -> vPassword,
-        s"$kDatabase.$kCredentials.$kUser"     -> vUser,
-        kPort                                  -> vPort.toString
+      val credentials = value.db.credentials.map { v =>
+        keys.credentials -> Record(Map(keys.user -> Leaf(v.user), keys.password -> Leaf(v.password)))
+      }
+
+      Record(
+        Map(
+          keys.database -> Record(Seq(Option(connection), credentials).flatten.toMap),
+          keys.pricing  -> Leaf(value.pricing.toString)
+        )
       )
-    )
+    }
+
+    def source: ConfigSource[String, String] =
+      ConfigSource.fromMap(
+        Seq(
+          value.db.connection.fold(
+            url => Seq(s"${keys.database}.${keys.connection}" -> url.value),
+            connection => {
+              val connectionKey = s"${keys.database}.${keys.connection}"
+              Seq(
+                s"$connectionKey.${keys.host}" -> connection.host,
+                s"$connectionKey.${keys.port}" -> connection.port.toString
+              )
+            }
+          ),
+          value.db.credentials.fold(Seq.empty[(String, String)]) { c =>
+            val credentialsKey = s"${keys.database}.${keys.credentials}"
+            Seq(
+              s"$credentialsKey.${keys.user}"     -> c.user,
+              s"$credentialsKey.${keys.password}" -> c.password
+            )
+          },
+          Seq(keys.pricing -> value.pricing.toString)
+        ).flatten.toMap
+      )
   }
 
   private val genKey = genSymbol(1, 20)
 
+  val genConfigKeys: Gen[Random, KeyParams] =
+    for {
+      kHost        <- genKey
+      kPort        <- genKey.filter(_ != kHost)
+      kUser        <- genKey
+      kPassword    <- genKey.filter(_ != kUser)
+      kCredentials <- genKey
+      kConnection  <- genKey.filter(_ != kCredentials)
+      kDb          <- genKey
+      kPricing     <- genKey.filter(_ != kDb)
+    } yield KeyParams(kHost, kPort, kUser, kPassword, kConnection, kCredentials, kDb, kPricing)
+
   val genNestedConfigParams: Gen[Random, TestParams] =
     for {
-      kPort        <- genKey
-      vPort        <- Gen.anyInt
-      kDb          <- genKey.filter(_ != kPort)
-      kDbUrl       <- genKey
-      vDbUrl       <- genNonEmptyString(50).map(DbUrl)
-      kCredentials <- genKey.filter(_ != kDbUrl)
-      kUser        <- genKey
-      vUser        <- genNonEmptyString(50)
-      kPassword    <- genKey.filter(_ != kUser)
-      vPassword    <- genNonEmptyString(50)
-    } yield TestParams(kPort, vPort, kDb, kDbUrl, vDbUrl, kCredentials, kUser, vUser, kPassword, vPassword)
+      keys  <- genConfigKeys
+      value <- genAppConfig
+    } yield TestParams(keys, value)
 }
