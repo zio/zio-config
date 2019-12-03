@@ -32,6 +32,23 @@ val myConfig =
 Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`. 
 Type says, running it by passing a source will return `MyConfig`
 
+## Fully Automated Config Description
+
+If you don't like describing your configuration manually, and rely on the names of the parameter in the case class (or sealed trait),
+there is a separate module called `zio-config-magnolia` which uses `Magnolia` library to automatically derive the descriptions for you.
+
+```scala mdoc:silent
+
+import zio.config.magnolia.ConfigDescriptorProvider._
+
+val myConfigAutomatic = description[MyConfig]
+
+```
+
+This is an added feature based on the requests from users. 
+Feel free to not use it, if you think it's better to have explicit control over the descriptions of the config.
+More examples on automatic derivation is in [here](https://github.com/zio/zio-config/src/main/scala/zio/config/examples/AutomaticConfigDescExample.scala)
+
 ## Running the description to ZIO
 
 To read a config, means it has to perform some effects, and for that reason, it returns with a ZIO.
@@ -39,7 +56,7 @@ To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
 val result: IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]] = 
-  Config.fromEnv(myConfig) // That's system environment
+  Config.fromEnv(myConfig) // That's system environment, (Config.fromEnv(myConfigAutomatic)))
 ```
 
 You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application. 

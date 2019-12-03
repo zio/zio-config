@@ -57,6 +57,7 @@ object AutomaticConfigDescriptor extends zio.App {
     )
   //
   // Read output:
+  //=============
   //  MyConfig(
   //    Aws(us-east, Token(some token)),
   //    Currency(50.0),
@@ -69,6 +70,7 @@ object AutomaticConfigDescriptor extends zio.App {
   //  )
   //
   // Write output:
+  // =============
   // Right(
   //  Record(
   //    HashMap(
