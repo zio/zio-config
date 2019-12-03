@@ -15,8 +15,10 @@ private[config] trait WriteFunctions {
 
         case ConfigDescriptor.Nested(c, parent) =>
           go(c, b) match {
-            case Right(prop) => Right(PropertyTree.Record(Map(parent -> prop)))
-            case Left(v)     => Left(v)
+            case Right(prop) => {
+              Right(PropertyTree.Record(Map(parent -> prop)))
+            }
+            case Left(v) => Left(v)
           }
 
         case ConfigDescriptor.Optional(c) =>
@@ -43,28 +45,9 @@ private[config] trait WriteFunctions {
             case Right(m1) =>
               go(config2, b._2) match {
                 case Right(m2) =>
-                  m1 match {
-                    case PropertyTree.Record(mm) =>
-                      m2 match {
-                        case PropertyTree.Record(mapp) =>
-                          // To get over the GADT Skolem with Map
-                          val r = mm.toList ++ mapp.toList
-
-                          Right(PropertyTree.Record(r.toMap))
-                        case PropertyTree.Empty   => Right(m1)
-                        case PropertyTree.Leaf(v) => Right(PropertyTree.Leaf(v))
-                      }
-                    case PropertyTree.Leaf(_) =>
-                      m2 match {
-                        case PropertyTree.Record(mm) =>
-                          Right(PropertyTree.Record(mm))
-                        case PropertyTree.Empty   => Right(m1)
-                        case PropertyTree.Leaf(a) => Right(PropertyTree.Leaf(a))
-                      }
-                    case PropertyTree.Empty =>
-                      Right(m2)
-                  }
-                case Left(m1) => Left(m1)
+                  Right(m1.add(m2))
+                case Left(m1) =>
+                  Left(m1)
               }
             case Left(e) => Left(e)
           }

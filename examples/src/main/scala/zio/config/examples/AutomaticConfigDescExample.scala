@@ -46,7 +46,11 @@ object AutomaticConfigDescriptor extends zio.App {
       result => putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *> ZIO.succeed(0)
     )
   //
+  // Read output:
   // MyConfig(Aws(us-east,Token(some token)),1,some url,Some(3.14),Right(30 euros),Left(50.0),1,3)
+  //
+  // Write output:
+  // Right(Record(HashMap(anotherDefault -> Leaf(3), aws -> Record(HashMap(token -> Leaf(some token), region -> Leaf(us-east))), port2 -> Leaf(3.14), price -> Leaf(30 euros), default -> Leaf(1), dburl -> Leaf(some url), price2 -> Leaf(50.0), port -> Leaf(1))))
   //
   // Process finished with exit code 0
   //

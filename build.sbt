@@ -73,6 +73,7 @@ lazy val examples = module("examples")
   .settings(
     skip in publish := true,
     moduleName := "zio-config-examples",
+    fork := true,
     libraryDependencies ++= Seq(
       "com.propensive" %% "magnolia" % "0.12.0"
     )
