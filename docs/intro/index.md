@@ -10,8 +10,8 @@ With this library, we also put forward the notion that we can do FP in scala, wi
 
 In nutshell, zio-config can
 
-1. **Read** the configuration
-2. **Write** the configuration back
+1. **Read** the configuration from multiple sources
+2. **Write** the configuration back to various formats
 3. **Document** the configuration (man page)
 4. **Report** on configuration (man page, including the value obtained for each parameter)
 
