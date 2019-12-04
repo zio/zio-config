@@ -1,6 +1,9 @@
 package zio.config
 
+import zio.config.ReadError.MissingValue
 import zio.{ IO, ZIO }
+
+import scala.annotation.tailrec
 
 private[config] trait ReadFunctions {
   // Read
@@ -59,7 +62,22 @@ private[config] trait ReadFunctions {
           loop(c, paths)
 
         case ConfigDescriptor.Optional(c) =>
-          loop(c, paths).option
+          @tailrec
+          def containsMissingValue(errors: List[ReadError[Any, Any]]): Boolean =
+            errors match {
+              case Nil => false
+              case h :: tail =>
+                h match {
+                  case _: MissingValue[_] => true
+                  case _                  => containsMissingValue(tail)
+                }
+            }
+
+          loop(c, paths).either.flatMap {
+            case Right(v)                                 => IO.succeed(Some(v))
+            case Left(errs) if containsMissingValue(errs) => IO.succeed(None)
+            case Left(errs)                               => IO.fail(errs)
+          }
 
         case ConfigDescriptor.Zip(left, right) =>
           loop(left, paths).either
