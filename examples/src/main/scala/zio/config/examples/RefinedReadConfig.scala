@@ -84,7 +84,7 @@ object Codegen {
   def partialWrapper: Wrapper => List[String] =
     w => {
       List(
-        s"""final class ${w.pred}Helper[N] {
+        s"""final class ${w.pred}PartiallyApplied[N] {
            |  def apply[K, V, A](
            |    desc: ConfigDescriptor[K, V, A]
            |  )(
@@ -99,8 +99,8 @@ object Codegen {
     w =>
       List(
         s"  ${w.desc}",
-        s"""  def ${w.method}[N]: ${w.pred}Helper[N] =
-           |    new ${w.pred}Helper[N]
+        s"""  def ${w.method}[N]: ${w.pred}PartiallyApplied[N] =
+           |    new ${w.pred}PartiallyApplied[N]
            """.stripMargin
       )
 

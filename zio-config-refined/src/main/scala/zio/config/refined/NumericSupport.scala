@@ -8,12 +8,12 @@ import zio.config.refined.internal._
 private[refined] trait NumericSupport {
 
   /** Predicate that checks if a numeric value is less than `N` */
-  def less[N]: LessHelper[N] =
-    new LessHelper[N]
+  def less[N]: LessPartiallyApplied[N] =
+    new LessPartiallyApplied[N]
 
   /** Predicate that checks if a numeric value is greater than `N` */
-  def greater[N]: GreaterHelper[N] =
-    new GreaterHelper[N]
+  def greater[N]: GreaterPartiallyApplied[N] =
+    new GreaterPartiallyApplied[N]
 
   /** Predicate that checks if a floating-point number value is not NaN */
   def nonNaN[K, V, A](
@@ -24,12 +24,12 @@ private[refined] trait NumericSupport {
     asRefined[K, V, A, NonNaN](desc)
 
   /** Predicate that checks if a numeric value is less than or equal to `N` */
-  def lessEqual[N]: LessEqualHelper[N] =
-    new LessEqualHelper[N]
+  def lessEqual[N]: LessEqualPartiallyApplied[N] =
+    new LessEqualPartiallyApplied[N]
 
   /** Predicate that checks if a numeric value is greater than or equal to `N` */
-  def greaterEqual[N]: GreaterEqualHelper[N] =
-    new GreaterEqualHelper[N]
+  def greaterEqual[N]: GreaterEqualPartiallyApplied[N] =
+    new GreaterEqualPartiallyApplied[N]
 
   /** Predicate that checks if a numeric value is positive (> 0) */
   def positive[K, V, A](
@@ -64,12 +64,12 @@ private[refined] trait NumericSupport {
     asRefined[K, V, A, NonNegative](desc)
 
   /** Predicate that checks if an integral value is evenly divisible by `N` */
-  def divisible[N]: DivisibleHelper[N] =
-    new DivisibleHelper[N]
+  def divisible[N]: DivisiblePartiallyApplied[N] =
+    new DivisiblePartiallyApplied[N]
 
   /** Predicate that checks if an integral value is not evenly divisible by `N` */
-  def nonDivisible[N]: NonDivisibleHelper[N] =
-    new NonDivisibleHelper[N]
+  def nonDivisible[N]: NonDivisiblePartiallyApplied[N] =
+    new NonDivisiblePartiallyApplied[N]
 
   /** Predicate that checks if an integral value is evenly divisible by 2 */
   def even[K, V, A](

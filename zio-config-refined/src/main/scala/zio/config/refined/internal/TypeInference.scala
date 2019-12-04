@@ -5,7 +5,7 @@ import eu.timepit.refined.api.{ Refined, Validate }
 import eu.timepit.refined.numeric.{ Divisible, Greater, GreaterEqual, Less, LessEqual, NonDivisible }
 import zio.config.ConfigDescriptor
 
-final class LessHelper[N] {
+final class LessPartiallyApplied[N] {
   def apply[K, V, A](
     desc: ConfigDescriptor[K, V, A]
   )(
@@ -14,7 +14,7 @@ final class LessHelper[N] {
     asRefined[K, V, A, Less[N]](desc)
 }
 
-final class GreaterHelper[N] {
+final class GreaterPartiallyApplied[N] {
   def apply[K, V, A](
     desc: ConfigDescriptor[K, V, A]
   )(
@@ -23,7 +23,7 @@ final class GreaterHelper[N] {
     asRefined[K, V, A, Greater[N]](desc)
 }
 
-final class LessEqualHelper[N] {
+final class LessEqualPartiallyApplied[N] {
   def apply[K, V, A](
     desc: ConfigDescriptor[K, V, A]
   )(
@@ -32,7 +32,7 @@ final class LessEqualHelper[N] {
     asRefined[K, V, A, LessEqual[N]](desc)
 }
 
-final class GreaterEqualHelper[N] {
+final class GreaterEqualPartiallyApplied[N] {
   def apply[K, V, A](
     desc: ConfigDescriptor[K, V, A]
   )(
@@ -41,7 +41,7 @@ final class GreaterEqualHelper[N] {
     asRefined[K, V, A, GreaterEqual[N]](desc)
 }
 
-final class DivisibleHelper[N] {
+final class DivisiblePartiallyApplied[N] {
   def apply[K, V, A](
     desc: ConfigDescriptor[K, V, A]
   )(
@@ -50,7 +50,7 @@ final class DivisibleHelper[N] {
     asRefined[K, V, A, Divisible[N]](desc)
 }
 
-final class NonDivisibleHelper[N] {
+final class NonDivisiblePartiallyApplied[N] {
   def apply[K, V, A](
     desc: ConfigDescriptor[K, V, A]
   )(
