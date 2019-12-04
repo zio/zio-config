@@ -5,7 +5,8 @@ title:  "Introduction"
 
 ZIO Config aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
 
-We aim at zero boiler-plate and complexities and make it insanely simple to use to manage configurations.
+We aim at zero complexity and make it insanely simple to use to manage configurations.
+With this library, we also put forward the notion that we can do FP in scala, without too much relatively horrifying complexities.
 
 In nutshell, zio-config can
 
@@ -17,15 +18,10 @@ In nutshell, zio-config can
 The application config is made accessible anywhere in your app, through ZIO environment.
 And for more reasons, this will be your go-to library for all your configuration management requirements, if you are in the zio world
 
-With zero boiler-plate, we mean, no implicits and no typeclass syntax imports as we see in almost all all configuration libraries. 
-However, if you need fully zero boiler-plate, that is to even skip how to parse the configuration from env, zio-config-magnolia is for you!
+## Design 
 
-### Notable features    
-
-The main design choice that we made is, describe once and for all, and use the description for various actions.
+The main design choice that we made is, describe the configuration (manually, or automated) once and for all, and use the description for various actions.
 Hence, zio-config exposes an intuitive language, that allows you to describe your configuration.
-
-_Note_ : We will be using the term "configuration description" quite often acrosss the documentation
 
 ```scala
   case class Prod(ldap: String, port: Int, dburl: Option[String])
@@ -36,9 +32,23 @@ _Note_ : We will be using the term "configuration description" quite often acros
 
 ```
 
-Please note, we do have support for **_automatic configuration description through zio-config-magnolia_**, if you consider this description as a boiler-plate.
+We do have support for **_automatic configuration description through zio-config-magnolia_**, if you consider this description as a boiler-plate.
+In that case all you need is just the case class `Prod` and call `description[Prod]`. 
+More on this later.
 
-The notable features of zio-config:
+_Note_ : We will be using the term "configuration description" quite often across the documentation
+
+### Zero boiler plate
+With zero boiler-plate, we mean, no implicits and no typeclass syntax imports as we see in almost all purely functional configuration libraries.
+All you need is a description and zio-config can do various actions with this description.
+
+### We still support Magic
+As mentioned before, in situations where you need a fully automated description, then we have zio-config-magnolia for you.
+
+### Zero dependency
+zio-config stays zero dependent from core functional libraries in scala, and hence don't intercept your choice.
+
+## Notable features
 
 * **Describe once and use it for different actions:**
   - Read configuration from various sources.
@@ -51,6 +61,8 @@ The notable features of zio-config:
 * Composable multiple sources.
 * Set priority for sources.
 * Reset sources.
+* Support for `Refined` types.
+* Support for automatic configuration description
 * Integration with zio environment.
 * Zero implicits
 * Zero macros
@@ -59,7 +71,7 @@ The notable features of zio-config:
 
 This is backed by significant number of examples/
 
-# For impatients
+## For impatients
 
 To try out zio-conifg straight away, please head on to [examples](https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples) project.
 One of the example is an entire zio application demonstrates the use of zio-config to read the config,
@@ -67,12 +79,13 @@ and make it available across the application as just another zio [Environment](h
 
 Otherwise, `Read`, `Write`, `Documentation` and `Reporting` are separately documented.
 
-# Principles
+## Principles
 
-## ZIO-Native
+### ZIO-Native
 
-zio-config is a zero-dependency, ZIO-native library.
-It is a fundamental part of the ZIO ecosystem, and a building block for the creation of ZIO-based applications.
+ZIO-config is zio-native library - simply means, we use zio for any effects inside, and provides integration with ZIO Environment to access your application config.
+
+ZIO-Config will be the fundamental part of the ZIO ecosystem, and will hopefully be the first step of any ZIO-based applications.
 
 ## Purely Functional and Composable
 
