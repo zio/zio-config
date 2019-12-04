@@ -90,7 +90,7 @@ lazy val examples = module("examples")
       "com.propensive" %% "magnolia" % magnoliaVersion
     )
   )
-  .dependsOn(zioConfig, zioConfigMagnolia)
+  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined)
 
 lazy val zioConfigMagnolia = module("zio-config-magnolia")
   .settings(skip in publish := true)
