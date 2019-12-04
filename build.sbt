@@ -55,7 +55,7 @@ lazy val root =
   project
     .in(file("."))
     .settings(skip in publish := true)
-    .aggregate(zioConfig, examples)
+    .aggregate(zioConfig, examples, zioConfigRefined)
 
 lazy val zioConfig =
   module("zio-config")
@@ -68,6 +68,16 @@ lazy val zioConfig =
       ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
+
+lazy val zioConfigRefined =
+  module("zio-config-refined")
+    .settings(
+      libraryDependencies ++=
+        Seq(
+          "eu.timepit" %% "refined" % "0.9.10"
+        )
+    )
+    .dependsOn(zioConfig)
 
 lazy val examples = module("examples")
   .settings(
