@@ -26,32 +26,35 @@ object GenerateDocsTest
     )
 
 object GenerateDocsTestUtils {
-
   final case class Credentials(user: String, password: String)
-
   final case class Database(port: Int, url: String)
-
   final case class AppConfig(secret: Option[String], credentials: Credentials, database: Database)
-
   final case class GenerateDocsParams(appConfig: AppConfig) {
 
     def config: ConfigDescriptor[String, String, AppConfig] = {
-      val credentials =
-        (string("USER") ? "Example: ZioUser" |@|
-          string("PASSWORD") ? "Example: ZioPass")(Credentials.apply, Credentials.unapply) ? "Credentials"
+      val credentials = (string("USER") ? "Example: ZioUser" |@| string("PASSWORD") ? "Example: ZioPass")(
+        Credentials.apply,
+        Credentials.unapply
+      ) ? "Credentials"
 
-      val database = (int("PORT") ? "Example: 8088" |@|
-        string("URL") ? "Example: abc.com")(Database.apply, Database.unapply) ? "Database"
+      val database = (int("PORT") ? "Example: 8088" |@| string("URL") ? "Example: abc.com")(
+        Database.apply,
+        Database.unapply
+      ) ? "Database"
 
-      (string("APP_SECRET").optional ? "Application secret" |@|
-        credentials |@| database)(AppConfig.apply, AppConfig.unapply)
+      (string("APP_SECRET").optional ? "Application secret" |@| credentials |@| database)(
+        AppConfig.apply,
+        AppConfig.unapply
+      )
     }
 
     def docs: ConfigDocs[String, String] =
       Both(
         Both(
-          Path("APP_SECRET",
-               Descriptions(List("<empty>", "value of type string", "optional value", "Application secret"))),
+          Path(
+            "APP_SECRET",
+            Descriptions(List("<empty>", "value of type string", "optional value", "Application secret"))
+          ),
           Both(
             Path("USER", Descriptions(List("<empty>", "value of type string", "Example: ZioUser", "Credentials"))),
             Path("PASSWORD", Descriptions(List("<empty>", "value of type string", "Example: ZioPass", "Credentials")))
@@ -112,19 +115,19 @@ object GenerateDocsTestUtils {
 
   }
 
-  private val genCredentials: Gen[Random, Credentials] =
+  private val genCredentials =
     for {
       user     <- genNonEmptyString(20)
       password <- genNonEmptyString(20)
     } yield Credentials(user, password)
 
-  private val genDatabase: Gen[Random, Database] =
+  private val genDatabase =
     for {
       port <- Gen.anyInt
       url  <- genDbUrl
     } yield Database(port, url.value)
 
-  private val genAppConfig: Gen[Random, AppConfig] =
+  private val genAppConfig =
     for {
       secret      <- Gen.option(genNonEmptyString(20))
       credentials <- genCredentials
@@ -135,5 +138,4 @@ object GenerateDocsTestUtils {
     for {
       config <- genAppConfig
     } yield GenerateDocsParams(config)
-
 }
