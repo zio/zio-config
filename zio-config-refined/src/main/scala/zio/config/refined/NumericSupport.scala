@@ -3,24 +3,17 @@ package zio.config.refined
 import eu.timepit.refined.api.{ Refined, Validate }
 import eu.timepit.refined.numeric._
 import zio.config.ConfigDescriptor
+import zio.config.refined.internal._
 
 private[refined] trait NumericSupport {
 
   /** Predicate that checks if a numeric value is less than `N` */
-  def less[K, V, A, N](
-    desc: ConfigDescriptor[K, V, A]
-  )(
-    implicit ev: Validate[A, Less[N]]
-  ): ConfigDescriptor[K, V, Refined[A, Less[N]]] =
-    asRefined[K, V, A, Less[N]](desc)
+  def less[N]: LessHelper[N] =
+    new LessHelper[N]
 
   /** Predicate that checks if a numeric value is greater than `N` */
-  def greater[K, V, A, N](
-    desc: ConfigDescriptor[K, V, A]
-  )(
-    implicit ev: Validate[A, Greater[N]]
-  ): ConfigDescriptor[K, V, Refined[A, Greater[N]]] =
-    asRefined[K, V, A, Greater[N]](desc)
+  def greater[N]: GreaterHelper[N] =
+    new GreaterHelper[N]
 
   /** Predicate that checks if a floating-point number value is not NaN */
   def nonNaN[K, V, A](
@@ -31,20 +24,12 @@ private[refined] trait NumericSupport {
     asRefined[K, V, A, NonNaN](desc)
 
   /** Predicate that checks if a numeric value is less than or equal to `N` */
-  def lessEqual[K, V, A, N](
-    desc: ConfigDescriptor[K, V, A]
-  )(
-    implicit ev: Validate[A, LessEqual[N]]
-  ): ConfigDescriptor[K, V, Refined[A, LessEqual[N]]] =
-    asRefined[K, V, A, LessEqual[N]](desc)
+  def lessEqual[N]: LessEqualHelper[N] =
+    new LessEqualHelper[N]
 
   /** Predicate that checks if a numeric value is greater than or equal to `N` */
-  def greaterEqual[K, V, A, N](
-    desc: ConfigDescriptor[K, V, A]
-  )(
-    implicit ev: Validate[A, GreaterEqual[N]]
-  ): ConfigDescriptor[K, V, Refined[A, GreaterEqual[N]]] =
-    asRefined[K, V, A, GreaterEqual[N]](desc)
+  def greaterEqual[N]: GreaterEqualHelper[N] =
+    new GreaterEqualHelper[N]
 
   /** Predicate that checks if a numeric value is positive (> 0) */
   def positive[K, V, A](
@@ -79,20 +64,12 @@ private[refined] trait NumericSupport {
     asRefined[K, V, A, NonNegative](desc)
 
   /** Predicate that checks if an integral value is evenly divisible by `N` */
-  def divisible[K, V, A, N](
-    desc: ConfigDescriptor[K, V, A]
-  )(
-    implicit ev: Validate[A, Divisible[N]]
-  ): ConfigDescriptor[K, V, Refined[A, Divisible[N]]] =
-    asRefined[K, V, A, Divisible[N]](desc)
+  def divisible[N]: DivisibleHelper[N] =
+    new DivisibleHelper[N]
 
   /** Predicate that checks if an integral value is not evenly divisible by `N` */
-  def nonDivisible[K, V, A, N](
-    desc: ConfigDescriptor[K, V, A]
-  )(
-    implicit ev: Validate[A, NonDivisible[N]]
-  ): ConfigDescriptor[K, V, Refined[A, NonDivisible[N]]] =
-    asRefined[K, V, A, NonDivisible[N]](desc)
+  def nonDivisible[N]: NonDivisibleHelper[N] =
+    new NonDivisibleHelper[N]
 
   /** Predicate that checks if an integral value is evenly divisible by 2 */
   def even[K, V, A](
