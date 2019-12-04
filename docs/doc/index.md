@@ -2,9 +2,6 @@
 id: doc_index
 title:  "Documentation"
 ---
-
-# Example: Generating a Configuration Manual
-
 You need this import everywhere
 
 ```scala mdoc:silent

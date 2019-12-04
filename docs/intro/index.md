@@ -3,18 +3,16 @@ id: intro_index
 title:  "Introduction"
 ---
 
-**zio-config** 
-
 ZIO Config aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
 
 We aim at zero boiler-plate and complexities and make it insanely simple to use to manage configurations.
 
 In nutshell, zio-config can
 
-1. Read the configuration
-2. Write the configuration back
-3. Document the configuration (man page)
-4. Report on configuration (man page, including the value obtained for each parameter)
+1. **Read** the configuration
+2. **Write** the configuration back
+3. **Document** the configuration (man page)
+4. **Report** on configuration (man page, including the value obtained for each parameter)
 
 The application config is made accessible anywhere in your app, through ZIO environment.
 And for more reasons, this will be your go-to library for all your configuration management requirements, if you are in the zio world
@@ -24,7 +22,8 @@ However, if you need fully zero boiler-plate, that is to even skip how to parse 
 
 ### Notable features    
 
-zio-config exposes an intuitive language, that allows you to describe your configuration.
+The main design choice that we made is, describe once and for all, and use the description for various actions.
+Hence, zio-config exposes an intuitive language, that allows you to describe your configuration.
 
 _Note_ : We will be using the term "configuration description" quite often acrosss the documentation
 
@@ -37,21 +36,25 @@ _Note_ : We will be using the term "configuration description" quite often acros
 
 ```
 
-The notable features of zio-config include
+Please note, we do have support for **_automatic configuration description through zio-config-magnolia_**, if you consider this description as a boiler-plate.
 
-* Simple and composable configuration description - that can read configuration from various sources.
-* Write the configuration back to the application environment, given the same configuration description.
-* Composable syntax for describing (documenting) each configuration parameter in the description.
-* Auto generation of documentation (or support page) of application configuration, mainly useful for ops team.
-* Emit a report on the configuration values, providing the value of each configuration when producing the documentation.
+The notable features of zio-config:
+
+* **Describe once and use it for different actions:**
+  - Read configuration from various sources.
+  - Write the configuration back, given the same description and a value of the config.
+  - Document the configuration (or support page / help-page), mainly useful for ops team.
+  - Report the application configuration, providing the value of each parameter alongside documentation.
+* Composable interface to give extra documentation for each config parameter, and in fact for a whole configuration.
+* Accumulates all errors rather than bailing at the first.
 * Handles nested configuration.
-* Handles multiple (composable) sources.
-* We can set priority for the sources / Reset all the sources etc.
-* Configuration will be part of your environment with the use of the library.
-* Accumulates all errors rather than bailing at the first while reading the config from these sources
+* Composable multiple sources.
+* Set priority for sources.
+* Reset sources.
+* Integration with zio environment.
 * Zero implicits
 * Zero macros
-* The one and only dependency is zio
+* The one and only dependency is zio, because we stick on to ZIO as the functional effect.
 * Simple altogether!
 
 This is backed by significant number of examples/

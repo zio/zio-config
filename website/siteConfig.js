@@ -36,7 +36,7 @@ const siteConfig = {
     {doc: 'read/read_index', label: 'Read Config'},
     {doc: 'doc/doc_index', label: 'Create Docs'},
     {doc: 'report/report_index', label: 'Report'},
-    {doc: 'write/write_index', label: 'Write Config'},
+    {doc: 'write/write_index', label: 'Write'},
   ],
 
   // If you have users set above, you add it here:

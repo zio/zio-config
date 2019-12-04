@@ -49,7 +49,8 @@ createProductBuilder := {
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-lazy val zioVersion = "1.0.0-RC17"
+lazy val zioVersion      = "1.0.0-RC17"
+lazy val magnoliaVersion = "0.12.2"
 
 lazy val root =
   project
@@ -86,7 +87,7 @@ lazy val examples = module("examples")
     fork := true,
     crossScalaVersions := Seq("2.13.0", "2.12.10"),
     libraryDependencies ++= Seq(
-      "com.propensive" %% "magnolia" % "0.12.2"
+      "com.propensive" %% "magnolia" % magnoliaVersion
     )
   )
   .dependsOn(zioConfig, zioConfigMagnolia)
@@ -96,7 +97,7 @@ lazy val zioConfigMagnolia = module("zio-config-magnolia")
   .settings(
     crossScalaVersions := Seq("2.13.0", "2.12.10"),
     libraryDependencies ++= Seq(
-      "com.propensive" %% "magnolia" % "0.12.2"
+      "com.propensive" %% "magnolia" % magnoliaVersion
     )
   )
   .dependsOn(zioConfig)
@@ -118,7 +119,8 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % zioVersion
+      "dev.zio"        %% "zio"      % zioVersion,
+      "com.propensive" %% "magnolia" % magnoliaVersion
     )
   )
   .dependsOn(zioConfig, zioConfigMagnolia)
