@@ -6,10 +6,8 @@ import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 import zio.config.ConfigDescriptor
 
-/**
- * This collection of classes is to ease type inference, as ordained by
- * Rob Norris http://tpolecat.github.io/2015/07/30/infer.html
- */
+// This collection of classes is to ease type inference, as ordained by
+// high priest Rob Norris http://tpolecat.github.io/2015/07/30/infer.html
 
 //// Numeric
 
