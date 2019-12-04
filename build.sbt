@@ -56,7 +56,7 @@ lazy val root =
   project
     .in(file("."))
     .settings(skip in publish := true)
-    .aggregate(zioConfig, examples, zioConfigRefined)
+    .aggregate(zioConfig, zioConfigMagnolia, examples, zioConfigRefined)
 
 lazy val zioConfig =
   module("zio-config")
@@ -85,7 +85,6 @@ lazy val examples = module("examples")
     skip in publish := true,
     moduleName := "zio-config-examples",
     fork := true,
-    crossScalaVersions := Seq("2.13.0", "2.12.10"),
     libraryDependencies ++= Seq(
       "com.propensive" %% "magnolia" % magnoliaVersion
     )
@@ -95,7 +94,6 @@ lazy val examples = module("examples")
 lazy val zioConfigMagnolia = module("zio-config-magnolia")
   .settings(skip in publish := true)
   .settings(
-    crossScalaVersions := Seq("2.13.0", "2.12.10"),
     libraryDependencies ++= Seq(
       "com.propensive" %% "magnolia" % magnoliaVersion
     )
