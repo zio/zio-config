@@ -45,8 +45,7 @@ val myConfigAutomatic = description[MyConfig]
 
 ```
 
-This is an added feature based on the requests from users. 
-Feel free to not use it, if you think it's better to have explicit control over the descriptions of the config.
+You can skip it and use only `zio-config` if you are ok writing manual descriptions as it provide more flexibility especially in adding extra documentations.
 More examples on automatic derivation is in [here](https://github.com/zio/zio-config/src/main/scala/zio/config/examples/AutomaticConfigDescExample.scala)
 
 ## Running the description to ZIO

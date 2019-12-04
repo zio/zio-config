@@ -5,8 +5,7 @@ title:  "Introduction"
 
 ZIO Config aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
 
-We aim at zero complexity and make it insanely simple to use to manage configurations.
-With this library, we also put forward the notion that we can do FP in scala, without too much relatively horrifying complexities.
+We tried our best to make it insanely simple to use to manage configurations, while sticking on to purely functional way of doing things.
 
 In nutshell, zio-config can
 
@@ -16,7 +15,6 @@ In nutshell, zio-config can
 4. **Report** on configuration (man page, including the value obtained for each parameter)
 
 The application config is made accessible anywhere in your app, through ZIO environment.
-And for more reasons, this will be your go-to library for all your configuration management requirements, if you are in the zio world
 
 ## Design 
 
@@ -74,10 +72,10 @@ This is backed by significant number of examples/
 ## For impatients
 
 To try out zio-conifg straight away, please head on to [examples](https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples) project.
-One of the example is an entire zio application demonstrates the use of zio-config to read the config,
+One of the example is an entire zio application demonstrating the use of zio-config to read the config,
 and make it available across the application as just another zio [Environment](https://zio.dev/docs/overview/overview_index#zio).
 
-Otherwise, `Read`, `Write`, `Documentation` and `Reporting` are separately documented.
+For detailed knowledge on zio-config, please refer to separate docs on `Read`, `Write`, `Documentation` and `Reporting`.
 
 ## Principles
 
@@ -94,11 +92,11 @@ Principal abstractions that inform the zio-config implementation are:
 
 #### Free Applicative, in simple scala with zero sophistications
 
-  Everything library does inside, is by making use of program introspection - a feature that goes well with a Free Applicative style encoding. However, this doesn't make it any inacessible to those who are unfamiliar with the principle, and that's because we made it possible with simple scala with zero sophistications. We made it as minimal as possible - for contributors and users of the library.
+ Everything library does inside, is by making use of program introspection - a feature that goes well with a Free Applicative style encoding. However, this doesn't make it any inaccessible to those who are unfamiliar with the principle, and that's because we made it possible with simple scala with zero sophistications. We made it as minimal as possible - for contributors and users of the library.
 
 #### And Invariant applicative in nature
 
 There are multiple places of bidirectionality in this library. Hence, there is a behavior of invariant applicative functor lying with the Free Applicative style encoding. 
 We are not coupled to any specific typeclass instances, enabling us to scalably encode more functionalities, and features while strongly adhering to laws and FP fundamentals. 
 
-For the same reason, orthogonality across the functionalities came long in a natural way, without having to fiddle with sophistications and implicit instances. For instance, we added the fact that writing the config can fail as well, in a few minutes - scalably, in an aesthetically pleasing manner! This was possible as we are neither going into over generalisations nor into over restrictions.
+For the same reason, orthogonality across the functionalities came long in a natural way, without having to fiddle with sophistications and implicit instances. 
