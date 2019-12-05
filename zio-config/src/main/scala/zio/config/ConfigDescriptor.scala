@@ -119,15 +119,17 @@ object ConfigDescriptor {
   def empty[K, V, A]: ConfigDescriptor[K, V, Option[A]] = ConfigDescriptor.Empty()
 
   def sequence[K, V, A](configList: List[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, List[A]] =
-    configList.foldLeft(Empty[K, V, A]().xmap(_.toList)(_.headOption))(
-      (a, b) =>
-        b.xmapEither2(a)((aa, bb) => Right(aa :: bb))(t => {
-          t.headOption.fold[Either[String, (A, List[A])]](
-            Left(
-              "The input is not corresponding to the config description. It may have less number of entries than required by the config."
-            )
-          )(ll => Right((ll, t.tail)))
-        })
+    configList.foldRight(
+      Empty[K, V, A]().xmap(_.toList)(_.headOption)
+    )(
+      (b, a) =>
+        b.xmapEither2(a)((aa, bb) => Right(aa :: bb))(
+          t => {
+            t.headOption.fold[Either[String, (A, List[A])]](
+              Left("Input does not match config description. It may have fewer entries than config requires")
+            )(ll => Right((ll, t.tail)))
+          }
+        )
     )
 
   def collectAll[K, V, A](configList: List[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, List[A]] =
