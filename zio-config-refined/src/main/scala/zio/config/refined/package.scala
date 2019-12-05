@@ -2,7 +2,12 @@ package zio.config
 
 import eu.timepit.refined.api.{ RefType, Refined, Validate }
 
-package object refined extends NumericSupport with CollectionSupport {
+package object refined
+    extends NumericSupport
+    with StringSupport
+    with CharSupport
+    with BooleanSupport
+    with CollectionSupport {
 
   /** Add support for custom predicates */
   def asRefined[K, V, A, P](
