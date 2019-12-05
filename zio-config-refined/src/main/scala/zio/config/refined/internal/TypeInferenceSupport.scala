@@ -4,6 +4,7 @@ package internal
 import eu.timepit.refined.api.{ Refined, Validate }
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
+import eu.timepit.refined.string._
 import zio.config.ConfigDescriptor
 
 // This collection of classes is to ease type inference, as ordained by
@@ -182,4 +183,33 @@ final class MaxSizePartiallyApplied[N] {
     implicit ev: Validate[A, MaxSize[N]]
   ): ConfigDescriptor[K, V, Refined[A, MaxSize[N]]] =
     asRefined[K, V, A, MaxSize[N]](desc)
+}
+
+//// String
+
+final class EndsWithPartiallyApplied[S] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, EndsWith[S]]
+  ): ConfigDescriptor[K, V, Refined[A, EndsWith[S]]] =
+    asRefined[K, V, A, EndsWith[S]](desc)
+}
+
+final class MatchesRegexPartiallyApplied[S] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, MatchesRegex[S]]
+  ): ConfigDescriptor[K, V, Refined[A, MatchesRegex[S]]] =
+    asRefined[K, V, A, MatchesRegex[S]](desc)
+}
+
+final class StartsWithPartiallyApplied[S] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, StartsWith[S]]
+  ): ConfigDescriptor[K, V, Refined[A, StartsWith[S]]] =
+    asRefined[K, V, A, StartsWith[S]](desc)
 }
