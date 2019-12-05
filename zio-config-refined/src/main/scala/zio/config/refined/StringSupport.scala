@@ -156,4 +156,3 @@ private[refined] trait StringSupport {
     asRefined[K, V, A, Trimmed](desc)
 
 }
-
