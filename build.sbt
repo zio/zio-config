@@ -51,6 +51,7 @@ addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck"
 
 lazy val zioVersion      = "1.0.0-RC17"
 lazy val magnoliaVersion = "0.12.2"
+lazy val refinedVersion = "0.9.10"
 
 lazy val root =
   project
@@ -75,10 +76,13 @@ lazy val zioConfigRefined =
     .settings(
       libraryDependencies ++=
         Seq(
-          "eu.timepit" %% "refined" % "0.9.10"
-        )
+          "eu.timepit" %% "refined"      % refinedVersion,
+          "dev.zio"    %% "zio-test"     % zioVersion % Test,
+          "dev.zio"    %% "zio-test-sbt" % zioVersion % Test
+        ),
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
-    .dependsOn(zioConfig)
+    .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val examples = module("examples")
   .settings(
@@ -86,6 +90,7 @@ lazy val examples = module("examples")
     moduleName := "zio-config-examples",
     fork := true,
     libraryDependencies ++= Seq(
+      "eu.timepit" %% "refined"      % refinedVersion,
       "com.propensive" %% "magnolia" % magnoliaVersion
     )
   )

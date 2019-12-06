@@ -2,8 +2,10 @@ package zio.config.refined
 package internal
 
 import eu.timepit.refined.api.{ Refined, Validate }
+import eu.timepit.refined.boolean._
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
+import eu.timepit.refined.string._
 import zio.config.ConfigDescriptor
 
 // This collection of classes is to ease type inference, as ordained by
@@ -182,4 +184,116 @@ final class MaxSizePartiallyApplied[N] {
     implicit ev: Validate[A, MaxSize[N]]
   ): ConfigDescriptor[K, V, Refined[A, MaxSize[N]]] =
     asRefined[K, V, A, MaxSize[N]](desc)
+}
+
+//// String
+
+final class EndsWithPartiallyApplied[S] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, EndsWith[S]]
+  ): ConfigDescriptor[K, V, Refined[A, EndsWith[S]]] =
+    asRefined[K, V, A, EndsWith[S]](desc)
+}
+
+final class MatchesRegexPartiallyApplied[S] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, MatchesRegex[S]]
+  ): ConfigDescriptor[K, V, Refined[A, MatchesRegex[S]]] =
+    asRefined[K, V, A, MatchesRegex[S]](desc)
+}
+
+final class StartsWithPartiallyApplied[S] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, StartsWith[S]]
+  ): ConfigDescriptor[K, V, Refined[A, StartsWith[S]]] =
+    asRefined[K, V, A, StartsWith[S]](desc)
+}
+
+//// Boolean
+
+final class NotPartiallyApplied[P] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, Not[P]]
+  ): ConfigDescriptor[K, V, Refined[A, Not[P]]] =
+    asRefined[K, V, A, Not[P]](desc)
+}
+
+final class AndPartiallyApplied[A, B] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, And[A, B]]
+  ): ConfigDescriptor[K, V, Refined[A, And[A, B]]] =
+    asRefined[K, V, A, And[A, B]](desc)
+}
+
+final class OrPartiallyApplied[A, B] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, Or[A, B]]
+  ): ConfigDescriptor[K, V, Refined[A, Or[A, B]]] =
+    asRefined[K, V, A, Or[A, B]](desc)
+}
+
+final class XorPartiallyApplied[A, B] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, Xor[A, B]]
+  ): ConfigDescriptor[K, V, Refined[A, Xor[A, B]]] =
+    asRefined[K, V, A, Xor[A, B]](desc)
+}
+
+final class AllOfPartiallyApplied[S] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, AllOf[S]]
+  ): ConfigDescriptor[K, V, Refined[A, AllOf[S]]] =
+    asRefined[K, V, A, AllOf[S]](desc)
+}
+
+final class AnyOfPartiallyApplied[S] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, AnyOf[S]]
+  ): ConfigDescriptor[K, V, Refined[A, AnyOf[S]]] =
+    asRefined[K, V, A, AnyOf[S]](desc)
+}
+
+final class OneOfPartiallyApplied[S] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, OneOf[S]]
+  ): ConfigDescriptor[K, V, Refined[A, OneOf[S]]] =
+    asRefined[K, V, A, OneOf[S]](desc)
+}
+
+final class NandPartiallyApplied[A, B] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, Nand[A, B]]
+  ): ConfigDescriptor[K, V, Refined[A, Nand[A, B]]] =
+    asRefined[K, V, A, Nand[A, B]](desc)
+}
+
+final class NorPartiallyApplied[A, B] {
+  def apply[K, V, A](
+    desc: ConfigDescriptor[K, V, A]
+  )(
+    implicit ev: Validate[A, Nor[A, B]]
+  ): ConfigDescriptor[K, V, Refined[A, Nor[A, B]]] =
+    asRefined[K, V, A, Nor[A, B]](desc)
 }
