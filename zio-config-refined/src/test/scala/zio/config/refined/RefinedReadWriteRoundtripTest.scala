@@ -18,10 +18,11 @@ object RefinedReadWriteRoundtripTest
       suite("Refined support")(
         testM("Refined config roundtrip") {
           checkM(genRefinedProd) { p =>
+            val cfg = prodConfig(p.longs.value.size)
             val p2 =
               for {
-                written <- ZIO.fromEither(write(prodConfig(p.longs.value.size), p))
-                reread  <- read(prodConfig(p.longs.value.size) from ConfigSource.fromPropertyTree(written))
+                written <- ZIO.fromEither(write(cfg, p))
+                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
