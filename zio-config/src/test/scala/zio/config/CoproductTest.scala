@@ -14,7 +14,7 @@ object CoproductTest
       suite("Coproduct support")(
         testM("left element satisfied") {
           checkM(genTestParams) { p =>
-            assertM(readLeft(p), isLeft(equalTo(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
+            assertM(readLeft(p), isLeft(equalTo((EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
           }
         },
         testM("right element satisfied") {
@@ -34,7 +34,7 @@ object CoproductTest
         },
         testM("left and right both populated should choose left") {
           checkM(genTestParams) { p =>
-            assertM(readChooseLeftFromBoth(p), isLeft(equalTo(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
+            assertM(readChooseLeftFromBoth(p), isLeft(equalTo((EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
           }
         }
       )

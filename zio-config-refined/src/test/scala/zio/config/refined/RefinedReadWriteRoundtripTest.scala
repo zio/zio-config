@@ -8,7 +8,7 @@ import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
-import zio.config.{ read, write, BaseSpec, ConfigDescriptor, ConfigSource }
+import zio.config.{ helpers, read, write, BaseSpec, ConfigDescriptor, ConfigSource, ReadErrorsVector }
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
@@ -18,19 +18,28 @@ object RefinedReadWriteRoundtripTest
       suite("Refined support")(
         testM("Refined config roundtrip") {
           checkM(genRefinedProd) { p =>
+            val cfg = prodConfig(p.longs.value.size)
             val p2 =
               for {
-                written <- ZIO.fromEither(write(prodConfig(p.longs.value.size), p))
-                reread  <- read(prodConfig(p.longs.value.size) from ConfigSource.fromPropertyTree(written))
+                written <- ZIO.fromEither(write(cfg, p))
+                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
               } yield reread
 
             assertM(p2, equalTo(p))
           }
+        },
+        testM("Refined config invalid") {
+          checkM(genRefinedProdInvalid) {
+            case (n, envMap) =>
+              val p2: ZIO[Any, ReadErrorsVector[String, String], RefinedProd] =
+                read(prodConfig(n) from ConfigSource.fromMap(envMap))
+
+              // 3 errors here because empty string reads as option: None, so refinement doesn't apply
+              assertM(p2.either, helpers.assertErrors(_.size == 3))
+          }
         }
       )
     )
-
-// TODO check unhappy paths
 
 object RefinedReadWriteRoundtripTestUtils {
 
@@ -73,6 +82,24 @@ object RefinedReadWriteRoundtripTestUtils {
       Refined.unsafeApply(port),
       dburl.map(Refined.unsafeApply),
       Refined.unsafeApply(longs)
+    )
+
+  def genRefinedProdInvalid: Gen[Random, (Int, Map[String, String])] =
+    for {
+      port  <- Gen.int(0, 1023)
+      n     <- Gen.int(0, 2)
+      longs <- Gen.listOfN(n)(Gen.anyLong)
+    } yield (
+      n,
+      Map(
+        "LDAP"   -> "",
+        "PORT"   -> port.toString,
+        "DB_URL" -> "",
+        "COUNT"  -> n.toString
+      ) ++ longs
+        .foldRight[List[(String, String)]](Nil)(
+          (v, list) => s"GROUP${list.size + 1}_LONGVAL" -> v.toString :: list
+        )
     )
 
 }
