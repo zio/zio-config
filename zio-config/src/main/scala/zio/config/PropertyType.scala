@@ -4,6 +4,7 @@ import java.net.URI
 
 import zio.config.PropertyType.PropertyReadError
 
+import scala.concurrent.duration.Duration
 import scala.util.{ Failure, Success, Try }
 
 trait PropertyType[V, A] {
@@ -77,6 +78,12 @@ object PropertyType {
     def read(value: String): Either[PropertyReadError[String], URI] =
       attempt(new URI(value), _ => PropertyReadError(value, "uri"))
     def write(value: URI): String = value.toString
+  }
+
+  case object DurationType extends PropertyType[String, Duration] {
+    def read(value: String): Either[PropertyReadError[String], Duration] =
+      attempt(Duration.apply(value), _ => PropertyReadError(value, "duration"))
+    def write(value: Duration): String = value.toString
   }
 
   private def attempt[A, E](a: => A, f: Throwable => E): Either[E, A] =

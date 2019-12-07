@@ -14,7 +14,14 @@ object helpers {
       s <- Gen.listOfN(n)(Gen.alphaNumericChar)
     } yield s.mkString
 
+  def genNumber(min: Int, max: Int): Gen[Random, Int] =
+    for {
+      n <- Gen.int(min, max)
+    } yield n
+
   def genNonEmptyString(length: Int): Gen[Random, String] = genSymbol(1, length)
+
+  def genDuration(length: Int): Gen[Random, String] = genNumber(1, length).map(days => s"$days day")
 
   val genId: Gen[Random, Id] = genSymbol(1, 5).map(Id)
 

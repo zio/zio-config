@@ -1,5 +1,7 @@
 package zio.config
 
+import scala.concurrent.duration.Duration
+
 import java.net.URI
 import zio.config.ConfigDescriptor.Default
 import zio.config.ConfigDescriptor.OrElseEither
@@ -157,6 +159,8 @@ object ConfigDescriptor {
     ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.BigDecimalType) ? "value of type bigdecimal"
   def uri(path: String): ConfigDescriptor[String, String, URI] =
     ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.UriType) ? "value of type uri"
+  def duration(path: String): ConfigDescriptor[String, String, Duration] =
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.DurationType) ? "value of type duration"
   def nested[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Nested(desc, path)
 }
