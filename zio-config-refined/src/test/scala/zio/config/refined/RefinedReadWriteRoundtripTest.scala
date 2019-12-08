@@ -34,7 +34,7 @@ object RefinedReadWriteRoundtripTest
               val p2: ZIO[Any, ReadErrorsVector[String, String], RefinedProd] =
                 read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
-              // 3 errors here because empty string reads as option: None, so refinement doesn't apply
+              // 3 errors here because 'DB_URL' is missing
               assertM(p2.either, helpers.assertErrors(_.size == 3))
           }
         }
@@ -94,7 +94,6 @@ object RefinedReadWriteRoundtripTestUtils {
       Map(
         "LDAP"   -> "",
         "PORT"   -> port.toString,
-        "DB_URL" -> "",
         "COUNT"  -> n.toString
       ) ++ longs
         .foldRight[List[(String, String)]](Nil)(
