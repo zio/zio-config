@@ -61,20 +61,15 @@ object GenerateDocsTestUtils {
       )
     }
 
-    def source: ConfigSource[String, String] =
-      ConfigSource.fromMap(
-        Seq(
-          value.secret.map(keys.secret -> _),
-          Seq(
-            s"${keys.credentials}.${keys.user}"     -> value.credentials.user,
-            s"${keys.credentials}.${keys.password}" -> value.credentials.password
-          ),
-          Seq(
-            s"${keys.database}.${keys.url}"  -> value.database.url,
-            s"${keys.database}.${keys.port}" -> value.database.port.toString
-          )
-        ).flatten.toMap
+    def source: ConfigSource[String, String] = {
+      val source = Seq(
+        s"${keys.credentials}.${keys.user}"     -> value.credentials.user,
+        s"${keys.credentials}.${keys.password}" -> value.credentials.password,
+        s"${keys.database}.${keys.url}"         -> value.database.url,
+        s"${keys.database}.${keys.port}"        -> value.database.port.toString
       )
+      ConfigSource.fromMap(value.secret.fold(source)(v => (keys.secret -> v) +: source).toMap)
+    }
 
     def docs: ConfigDocs[String, String] =
       Both(
