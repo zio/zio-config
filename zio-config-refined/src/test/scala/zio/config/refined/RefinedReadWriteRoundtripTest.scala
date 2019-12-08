@@ -92,9 +92,9 @@ object RefinedReadWriteRoundtripTestUtils {
     } yield (
       n,
       Map(
-        "LDAP"   -> "",
-        "PORT"   -> port.toString,
-        "COUNT"  -> n.toString
+        "LDAP"  -> "",
+        "PORT"  -> port.toString,
+        "COUNT" -> n.toString
       ) ++ longs
         .foldRight[List[(String, String)]](Nil)(
           (v, list) => s"GROUP${list.size + 1}_LONGVAL" -> v.toString :: list
