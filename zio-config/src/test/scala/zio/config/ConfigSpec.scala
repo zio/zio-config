@@ -1,11 +1,11 @@
 package zio.config
 
+import zio.IO
 import zio.config.ConfigDescriptor._
 import zio.config.ConfigSpecUtils._
 import zio.config.ReadError.ParseError
 import zio.test.Assertion._
 import zio.test._
-import zio.{ config, IO }
 
 object ConfigSpec
     extends DefaultRunnableSpec(
@@ -36,6 +36,6 @@ object ConfigSpecUtils {
   private val configDescriptor: ConfigDescriptor[String, String, ConfigInternal] =
     (string("DOMAIN") |@| int("PORT").optional)(ConfigInternal.apply, ConfigInternal.unapply)
 
-  def readConfigM(envVars: Map[String, String]): IO[ReadErrors[Vector[String], String], config.Config[ConfigInternal]] =
+  def readConfigM(envVars: Map[String, String]): IO[ReadErrors[Vector[String], String], Config[ConfigInternal]] =
     zio.config.Config.fromMap(envVars, configDescriptor)
 }
