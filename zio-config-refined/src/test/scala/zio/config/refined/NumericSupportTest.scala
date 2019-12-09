@@ -11,7 +11,7 @@ import zio.test._
 
 object NumericSupportTest
     extends BaseSpec(
-      suite("Refined support")(
+      suite("Refined Numeric support")(
         testM("Refined config Less roundtrip") {
           checkM(Gen.int(1, 9).map(s => Refined.unsafeApply[Int, Less[W.`10`.T]](s))) { p =>
             val cfg = less[W.`10`.T](int("TEST"))
