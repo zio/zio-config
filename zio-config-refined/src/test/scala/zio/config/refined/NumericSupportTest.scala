@@ -2,10 +2,10 @@ package zio.config.refined
 
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
-import eu.timepit.refined.numeric.{Divisible, Greater, GreaterEqual, Less, LessEqual, NonDivisible}
+import eu.timepit.refined.numeric.{ Divisible, Greater, GreaterEqual, Less, LessEqual, NonDivisible }
 import zio.ZIO
 import zio.config.ConfigDescriptor._
-import zio.config.{BaseSpec, ConfigSource, ReadErrorsVector, helpers, read, write}
+import zio.config.{ helpers, read, write, BaseSpec, ConfigSource, ReadErrorsVector }
 import zio.test.Assertion._
 import zio.test._
 
@@ -140,4 +140,3 @@ object NumericSupportTest
         }
       )
     )
-
