@@ -81,8 +81,8 @@ generateDocs(config)
     (string(<span class="hljs-string">"connection"</span>) |@| int(<span class="hljs-string">"port"</span>))(<span class="hljs-type">Database</span>.apply, <span class="hljs-type">Database</span>.unapply)
 
   <span class="hljs-keyword">val</span> appConfig =
-    (nested(<span class="hljs-string">"south"</span>) { database } ? <span class="hljs-string">"South details"</span> |@|
-      nested(<span class="hljs-string">"east"</span>) { database } ? <span class="hljs-string">"East details"</span> |@|
+    (nested(<span class="hljs-string">"south"</span>) { database } ?? <span class="hljs-string">"South details"</span> |@|
+      nested(<span class="hljs-string">"east"</span>) { database } ?? <span class="hljs-string">"East details"</span> |@|
       string(<span class="hljs-string">"appName"</span>))(<span class="hljs-type">AwsConfig</span>, <span class="hljs-type">AwsConfig</span>.unapply)
 
    generateDocs(config)
@@ -113,7 +113,7 @@ generateDocs(config)
 <p><code>Both(left, right)</code> means the <code>left</code> and <code>right</code> should exist in the config. For the same reason we have
 <code>NestedPath</code>, <code>Or</code> etc, that are nodes of <code>ConfigDocs[K,V]</code>. <code>K</code> means, the value of <code>key</code> and <code>V</code> is
 the type of the value before it gets parsed.</p>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 11/22/2019 by Afsal Thaj</em></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 12/10/2019 by Leigh Perry</em></div><div class="docs-prevnext"></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
         ((window.gitter = {}).chat = {}).options = {
           showChatByDefault: false,
           activationElement: '.gitter-open-chat-button',
