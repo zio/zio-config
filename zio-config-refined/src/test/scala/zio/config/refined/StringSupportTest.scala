@@ -31,7 +31,7 @@ import zio.test._
 
 object StringSupportTest
     extends BaseSpec(
-      suite("Refined support")(
+      suite("Refined String support")(
         testM("Refined config EndsWith roundtrip") {
           checkM(genSymbol(0, 10).map(s => Refined.unsafeApply[String, EndsWith[W.`"abc"`.T]](s + "abc"))) { p =>
             val cfg = endsWith[W.`"abc"`.T](string("TEST"))

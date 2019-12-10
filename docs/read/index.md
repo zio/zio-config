@@ -348,15 +348,15 @@ To add documentation to the config description, use `?`
 
 ```scala mdoc:silent
  val databaseConfigWithDocs = 
-   (databaseConfig ? "Database relaed config" |@| 
-     string("REGION") ? "AWS region: Example: us-east")(AwsConfig.apply, AwsConfig.unapply)
+   (databaseConfig ?? "Database relaed config" |@| 
+     string("REGION") ?? "AWS region: Example: us-east")(AwsConfig.apply, AwsConfig.unapply)
 ```
 
 We can document for a whole config description as well.
 
 ```scala mdoc:silent
 
-(databaseConfig |@| string("appName"))(AwsConfig, AwsConfig.unapply) ? "The AWS details to be used"
+(databaseConfig |@| string("appName"))(AwsConfig, AwsConfig.unapply) ?? "The AWS details to be used"
 
 ```
 

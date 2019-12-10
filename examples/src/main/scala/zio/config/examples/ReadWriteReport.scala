@@ -18,14 +18,14 @@ object ReadWriteReport extends App {
 
   // An example where user provides a description once and for all, and use it for read, write, report!
   val configWithoutSource =
-    ((string("usr") ? "Example: some-user" |@|
-      string("pwd").xmap(Password)(_.value).optional ? "sec" |@|
-      string("jhi").optional ? "Ex: ghi" |@|
-      (string("xyz") |@| int("abc").orElseEither(string("def")))(XYZ.apply, XYZ.unapply).optional ? "Ex: ha")(
+    ((string("usr") ?? "Example: some-user" |@|
+      string("pwd").xmap(Password)(_.value).optional ?? "sec" |@|
+      string("jhi").optional ?? "Ex: ghi" |@|
+      (string("xyz") |@| int("abc").orElseEither(string("def")))(XYZ.apply, XYZ.unapply).optional ?? "Ex: ha")(
       UserPwd.apply,
       UserPwd.unapply
     ) orElseEither
-      (string("auth_token") |@| string("clientid"))(Token.apply, Token.unapply)) ? "Prod Config"
+      (string("auth_token") |@| string("clientid"))(Token.apply, Token.unapply)) ?? "Prod Config"
 
   val runtime = new DefaultRuntime {}
 

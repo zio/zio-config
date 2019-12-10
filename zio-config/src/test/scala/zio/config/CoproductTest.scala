@@ -8,18 +8,19 @@ import CoproductTestUtils._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
+import scala.concurrent.duration.Duration
 
 object CoproductTest
     extends BaseSpec(
       suite("Coproduct support")(
         testM("left element satisfied") {
           checkM(genTestParams) { p =>
-            assertM(readLeft(p), isLeft(equalTo((EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
+            assertM(readLeft(p), isLeft(equalTo(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
           }
         },
         testM("right element satisfied") {
           checkM(genTestParams) { p =>
-            assertM(readRight(p), isRight(equalTo(PasswordAuth(p.vUser, p.vCount, p.vFactor))))
+            assertM(readRight(p), isRight(equalTo(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid)))))
           }
         },
         testM("should accumulate all errors") {
@@ -34,7 +35,7 @@ object CoproductTest
         },
         testM("left and right both populated should choose left") {
           checkM(genTestParams) { p =>
-            assertM(readChooseLeftFromBoth(p), isLeft(equalTo((EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
+            assertM(readChooseLeftFromBoth(p), isLeft(equalTo(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
           }
         }
       )
@@ -43,7 +44,7 @@ object CoproductTest
 object CoproductTestUtils {
   final case class Ldap(value: String) extends AnyVal
   final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
-  final case class PasswordAuth(user: String, count: Int, factor: Float)
+  final case class PasswordAuth(user: String, count: Int, factor: Float, codeValid: Duration)
 
   final case class TestParams(
     kLdap: String,
@@ -55,7 +56,9 @@ object CoproductTestUtils {
     kCount: String,
     vCount: Int,
     kFactor: String,
-    vFactor: Float
+    vFactor: Float,
+    kCodeValid: String,
+    vCodeValid: String
   )
 
   val genTestParams: Gen[Random, TestParams] =
@@ -70,7 +73,22 @@ object CoproductTestUtils {
       vCount      <- Gen.anyInt
       kDbUrlLocal <- genSymbol(1, 20).filter(s => s != kLdap && s != kDbUrl && s != kUser && s != kCount)
       vDbUrlLocal <- Gen.anyFloat
-    } yield TestParams(kLdap, vLdap, kDbUrl, vDbUrl, kUser, vUser, kCount, vCount, kDbUrlLocal, vDbUrlLocal)
+      kCValid     <- genNonEmptyString(15)
+      vCValid     <- genDuration(5)
+    } yield TestParams(
+      kLdap,
+      vLdap,
+      kDbUrl,
+      vDbUrl,
+      kUser,
+      vUser,
+      kCount,
+      vCount,
+      kDbUrlLocal,
+      vDbUrlLocal,
+      kCValid,
+      vCValid
+    )
 
   def readLeft(p: TestParams) = {
     val enterprise =
@@ -80,11 +98,16 @@ object CoproductTestUtils {
       )
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor))(PasswordAuth.apply, PasswordAuth.unapply)
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid))(
+        PasswordAuth.apply,
+        PasswordAuth.unapply
+      )
 
     val authConfig = enterprise.orElseEither(password)
 
-    read(authConfig from ConfigSource.fromMap(Map(p.kLdap -> p.vLdap, p.kDbUrl -> p.vDbUrl)))
+    read(
+      authConfig from ConfigSource.fromMap(Map(p.kLdap -> p.vLdap, p.kDbUrl -> p.vDbUrl))
+    )
   }
 
   def readRight(p: TestParams) = {
@@ -95,13 +118,23 @@ object CoproductTestUtils {
       )
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor))(PasswordAuth.apply, PasswordAuth.unapply)
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid))(
+        PasswordAuth.apply,
+        PasswordAuth.unapply
+      )
 
     val authConfig = enterprise.orElseEither(password)
 
     read(
       authConfig from
-        ConfigSource.fromMap(Map(p.kUser -> p.vUser, p.kCount -> p.vCount.toString, p.kFactor -> p.vFactor.toString))
+        ConfigSource.fromMap(
+          Map(
+            p.kUser      -> p.vUser,
+            p.kCount     -> p.vCount.toString,
+            p.kFactor    -> p.vFactor.toString,
+            p.kCodeValid -> p.vCodeValid
+          )
+        )
     )
   }
 
@@ -115,7 +148,10 @@ object CoproductTestUtils {
       )
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor))(PasswordAuth.apply, PasswordAuth.unapply)
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid))(
+        PasswordAuth.apply,
+        PasswordAuth.unapply
+      )
 
     val authConfig = enterprise.orElseEither(password)
 
@@ -123,10 +159,11 @@ object CoproductTestUtils {
       authConfig from
         ConfigSource.fromMap(
           Map(
-            p.kDbUrl  -> p.vDbUrl,
-            p.kUser   -> p.vUser,
-            p.kCount  -> p.vCount.toString,
-            p.kFactor -> "notafloat"
+            p.kDbUrl     -> p.vDbUrl,
+            p.kUser      -> p.vUser,
+            p.kCount     -> p.vCount.toString,
+            p.kFactor    -> "notafloat",
+            p.kCodeValid -> p.vCodeValid
           )
         )
     ).either
@@ -140,7 +177,10 @@ object CoproductTestUtils {
       )
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor))(PasswordAuth.apply, PasswordAuth.unapply)
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid))(
+        PasswordAuth.apply,
+        PasswordAuth.unapply
+      )
 
     val authConfig = enterprise.orElseEither(password)
 
@@ -148,11 +188,12 @@ object CoproductTestUtils {
       authConfig from
         ConfigSource.fromMap(
           Map(
-            p.kLdap   -> p.vLdap,
-            p.kDbUrl  -> p.vDbUrl,
-            p.kUser   -> p.vUser,
-            p.kCount  -> p.vCount.toString,
-            p.kFactor -> p.vFactor.toString
+            p.kLdap      -> p.vLdap,
+            p.kDbUrl     -> p.vDbUrl,
+            p.kUser      -> p.vUser,
+            p.kCount     -> p.vCount.toString,
+            p.kFactor    -> p.vFactor.toString,
+            p.kCodeValid -> p.vCodeValid
           )
         )
     )

@@ -1,5 +1,7 @@
 package zio.config
 
+import scala.concurrent.duration.Duration
+
 import java.net.URI
 import zio.config.ConfigDescriptor.Default
 import zio.config.ConfigDescriptor.OrElseEither
@@ -49,15 +51,15 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     self orElse that
 
   final def optional: ConfigDescriptor[K, V, Option[A]] =
-    ConfigDescriptor.Optional(self) ? "optional value"
+    ConfigDescriptor.Optional(self) ?? "optional value"
 
   final def default(value: A): ConfigDescriptor[K, V, A] =
-    ConfigDescriptor.Default(self, value) ? s"default value: $value"
+    ConfigDescriptor.Default(self, value) ?? s"default value: $value"
 
   final def describe(description: String): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Describe(self, description)
 
-  final def ?(description: String): ConfigDescriptor[K, V, A] =
+  final def ??(description: String): ConfigDescriptor[K, V, A] =
     describe(description)
 
   final def |@|[B](f: => ConfigDescriptor[K, V, B]): ProductBuilder[K, V, A, B] =
@@ -136,27 +138,29 @@ object ConfigDescriptor {
     sequence(configList)
 
   def string(path: String): ConfigDescriptor[String, String, String] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.StringType) ? "value of type string"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
   def boolean(path: String): ConfigDescriptor[String, String, Boolean] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.BooleanType) ? "value of type boolean"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.BooleanType) ?? "value of type boolean"
   def byte(path: String): ConfigDescriptor[String, String, Byte] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.ByteType) ? "value of type byte"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.ByteType) ?? "value of type byte"
   def short(path: String): ConfigDescriptor[String, String, Short] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.ShortType) ? "value of type short"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.ShortType) ?? "value of type short"
   def int(path: String): ConfigDescriptor[String, String, Int] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.IntType) ? "value of type int"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.IntType) ?? "value of type int"
   def long(path: String): ConfigDescriptor[String, String, Long] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.LongType) ? "value of type long"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.LongType) ?? "value of type long"
   def bigInt(path: String): ConfigDescriptor[String, String, BigInt] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.BigIntType) ? "value of type bigint"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint"
   def float(path: String): ConfigDescriptor[String, String, Float] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.FloatType) ? "value of type float"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
   def double(path: String): ConfigDescriptor[String, String, Double] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.DoubleType) ? "value of type double"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double"
   def bigDecimal(path: String): ConfigDescriptor[String, String, BigDecimal] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.BigDecimalType) ? "value of type bigdecimal"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal"
   def uri(path: String): ConfigDescriptor[String, String, URI] =
-    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.UriType) ? "value of type uri"
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
+  def duration(path: String): ConfigDescriptor[String, String, Duration] =
+    ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.DurationType) ?? "value of type duration"
   def nested[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Nested(desc, path)
 }

@@ -16,8 +16,8 @@ object NestedConfigExample extends App {
     (string("connection") |@| int("port"))(Database.apply, Database.unapply)
 
   val appConfig =
-    (nested("south") { database } ? "South details" |@|
-      nested("east") { database } ? "East details" |@|
+    (nested("south") { database } ?? "South details" |@|
+      nested("east") { database } ?? "East details" |@|
       string("appName"))(AwsConfig, AwsConfig.unapply)
 
   // For simplicity in example, we use map source. Works with hoccon.
