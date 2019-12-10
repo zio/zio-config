@@ -28,7 +28,7 @@ object NumericSupportTest
           checkM(Gen.int(10, 100)) { p =>
             val cfg = less[W.`10`.T](int("TEST"))
             val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[Int, Less[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> "p")))
+              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
           }
@@ -49,7 +49,7 @@ object NumericSupportTest
           checkM(Gen.int(1, 10)) { p =>
             val cfg = greater[W.`10`.T](int("TEST"))
             val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[Int, Greater[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> "p")))
+              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
           }
@@ -70,7 +70,7 @@ object NumericSupportTest
           checkM(Gen.int(11, 100)) { p =>
             val cfg = lessEqual[W.`10`.T](int("TEST"))
             val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[Int, LessEqual[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> "p")))
+              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
           }
@@ -91,7 +91,7 @@ object NumericSupportTest
           checkM(Gen.int(1, 9)) { p =>
             val cfg = greaterEqual[W.`10`.T](int("TEST"))
             val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[Int, GreaterEqual[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> "p")))
+              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
           }
@@ -112,7 +112,7 @@ object NumericSupportTest
           checkM(Gen.int(1, 10).map(_ * 10 + 1)) { p =>
             val cfg = divisible[W.`10`.T](int("TEST"))
             val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[Int, Divisible[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> "p")))
+              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
           }
@@ -133,7 +133,7 @@ object NumericSupportTest
           checkM(Gen.int(1, 10).map(_ * 10)) { p =>
             val cfg = nonDivisible[W.`10`.T](int("TEST"))
             val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[Int, NonDivisible[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> "p")))
+              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
           }
