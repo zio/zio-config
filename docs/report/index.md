@@ -38,8 +38,8 @@ This is like a configuration manual, except it also shows the values for each do
     (string("connection") |@| int("port"))(Database.apply, Database.unapply)
 
   val appConfig =
-    (nested("south") { database } ? "South details" |@|
-      nested("east") { database } ? "East details" |@|
+    (nested("south") { database } ?? "South details" |@|
+      nested("east") { database } ?? "East details" |@|
       string("appName"))(AwsConfig, AwsConfig.unapply)
 
   // For simplicity in example, we use map source. Works with hoccon.

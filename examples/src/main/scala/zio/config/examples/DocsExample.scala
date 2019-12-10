@@ -9,8 +9,8 @@ object DocsExample extends App {
   final case class Database(port: Int, url: Option[String])
 
   val config =
-    (int("PORT") ? "Example: 8088" |@|
-      string("URL").optional ? "Example: abc.com")(Database.apply, Database.unapply) ? "Database related"
+    (int("PORT") ?? "Example: 8088" |@|
+      string("URL").optional ?? "Example: abc.com")(Database.apply, Database.unapply) ?? "Database related"
 
   assert(
     generateDocs(config) ==

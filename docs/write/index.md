@@ -22,9 +22,9 @@ To write a configured value back:
     (string("connection") |@| int("port"))(Database.apply, Database.unapply)
 
   val appConfig =
-    ((nested("south") { database } ? "South details" |@|
-      nested("east") { database } ? "East details" |@|
-      string("appName"))(AwsConfig, AwsConfig.unapply)) ? "asdf"
+    ((nested("south") { database } ?? "South details" |@|
+      nested("east") { database } ?? "East details" |@|
+      string("appName"))(AwsConfig, AwsConfig.unapply)) ?? "asdf"
 
    // Note that we got AwsConfig from reading the config
   val awsConfig: AwsConfig = AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "MyApp")
