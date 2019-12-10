@@ -1,9 +1,7 @@
 ---
 id: write_index
-title:  "Write Config"
+title:  "Write"
 ---
-
-# Example: Writing Configuration
 
 You need this import everywhere
 

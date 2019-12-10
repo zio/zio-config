@@ -24,6 +24,23 @@ sealed trait PropertyTree[+K, +V] { self =>
     loop(self)
   }
 
+  def add[K1 >: K, V1 >: V](v2: PropertyTree[K1, V1]): PropertyTree[K1, V1] =
+    self match {
+      case Empty => v2
+      case Leaf(value) =>
+        v2 match {
+          case Empty         => Leaf(value.asInstanceOf[V1])
+          case Leaf(value)   => Leaf(value)
+          case Record(value) => Record(value)
+        }
+      case record: Record[K, V] =>
+        v2 match {
+          case Empty            => record
+          case Leaf(_)          => record
+          case rc: Record[K, V] => Record(PropertyTree.addPropertyMaps(rc.value, record.value))
+        }
+    }
+
   final def flattenString[K1 >: K](
     appendString: String = "."
   )(implicit KS: K1 =:= String): Map[String, V] = flattenWith(KS)(appendString)
@@ -44,4 +61,15 @@ object PropertyTree {
 
   def fromMap[K, V](map: Map[K, V]): PropertyTree[K, V] =
     Record(map.map(t => t._1 -> Leaf[K, V](t._2)))
+
+  private def addPropertyMaps[K, V](
+    x: Map[K, PropertyTree[K, V]],
+    y: Map[K, PropertyTree[K, V]]
+  ): Map[K, PropertyTree[K, V]] =
+    (x.toList ::: y.toList)
+      .groupBy(_._1)
+      .map {
+        case (k, v) => (k, v.map(_._2).reduceOption((a, b) => a.add(b)).getOrElse(Empty))
+      }
+      .toMap
 }

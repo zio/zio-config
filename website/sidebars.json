@@ -1,27 +1,47 @@
 {
   "intro-sidebar": {
-    "Introduction": [
-      "intro/intro_index"
+    "ZIO-CONFIG": [
+      "intro/intro_index",
+      "read/read_index",
+      "write/write_index",
+      "doc/doc_index",
+      "report/report_index"
     ]
   },
   "read-sidebar": {
-    "Create Details": [
-      "read/read_index"
+    "ZIO-CONFIG": [
+      "intro/intro_index",
+      "read/read_index",
+      "write/write_index",
+      "doc/doc_index",
+      "report/report_index"
     ]
   },
   "doc-sidebar": {
-    "Generate Details": [
-      "doc/doc_index"
+    "ZIO-CONFIG": [
+      "intro/intro_index",
+      "read/read_index",
+      "write/write_index",
+      "doc/doc_index",
+      "report/report_index"
     ]
   },
   "report-sidebar": {
-    "Report": [
+    "ZIO-CONFIG": [
+      "intro/intro_index",
+      "read/read_index",
+      "write/write_index",
+      "doc/doc_index",
       "report/report_index"
     ]
   },
   "write-sidebar": {
-    "Write Config": [
-      "write/write_index"
+    "ZIO-CONFIG": [
+      "intro/intro_index",
+      "read/read_index",
+      "write/write_index",
+      "doc/doc_index",
+      "report/report_index"
     ]
   }
 }

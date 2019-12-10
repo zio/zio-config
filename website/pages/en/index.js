@@ -15,8 +15,8 @@ const GridBlock = CompLibrary.GridBlock;
 
 class HomeSplash extends React.Component {
   render() {
-    const {siteConfig, language = ''} = this.props;
-    const {baseUrl, docsUrl} = siteConfig;
+    const { siteConfig, language = '' } = this.props;
+    const { baseUrl, docsUrl } = siteConfig;
     const docsPart = `${docsUrl ? `${docsUrl}/` : ''}`;
     const langPart = `${language ? `${language}/` : ''}`;
     const docUrl = doc => `${baseUrl}${docsPart}${langPart}${doc}`;
@@ -64,10 +64,10 @@ class HomeSplash extends React.Component {
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
             <Button href={docUrl('intro/intro_index')}>Introduction</Button>
-            <Button href={docUrl('read/read_index')}>Read Config</Button>
-            <Button href={docUrl('doc/doc_index')}>Create Details</Button>
-            <Button href={docUrl('report/report_index')}>Report</Button>
+            <Button href={docUrl('read/read_index')}>Read</Button>
             <Button href={docUrl('write/write_index')}>Write</Button>
+            <Button href={docUrl('report/report_index')}>Report</Button>
+            <Button href={docUrl('doc/doc_index')}>Docs</Button>
             <Button href="https://github.com/zio/zio-config" target="_blank" >GitHub</Button>
           </PromoSection>
         </div>
@@ -78,8 +78,8 @@ class HomeSplash extends React.Component {
 
 class Index extends React.Component {
   render() {
-    const {config: siteConfig, language = ''} = this.props;
-    const {baseUrl} = siteConfig;
+    const { config: siteConfig, language = '' } = this.props;
+    const { baseUrl } = siteConfig;
 
     const Block = props => (
       <Container
@@ -101,18 +101,18 @@ class Index extends React.Component {
             content: 'A single composable description of the configuration \n \t It can read, write, report and document',
             title: 'Composable description',
           },
-           {
-              content: "Given a config description, read the config from various sources",
-              title: 'Read the configuration',
-            },
-           {
-             content: 'Given the same description,safely write the config back - resulting in unfailed reads',
-             title: 'Write the configuration back',
-           },
-           {
-             content: "Handles multiple, composable, prioritised sources, to read the configuration from.",
-             title: 'Multiple composable sources',
-           }
+          {
+            content: "Given a config description, read the config from various sources",
+            title: 'Read the configuration',
+          },
+          {
+            content: 'Given the same description,safely write the config back - resulting in unfailed reads',
+            title: 'Write the configuration back',
+          },
+          {
+            content: "Handles multiple, composable, prioritised sources, to read the configuration from.",
+            title: 'Multiple composable sources',
+          }
         ]}
       </Block>
     );
@@ -124,10 +124,10 @@ class Index extends React.Component {
             content: 'Given the same description, auto-create a man-page - for your ops team',
             title: 'Auto-generate docs',
           },
-           {
-              content: "Details can carry the value of each configuration parameter - a detailed report",
-              title: 'Auto generate report',
-            }
+          {
+            content: "Details can carry the value of each configuration parameter - a detailed report",
+            title: 'Auto generate report',
+          }
         ]}
       </Block>
     );
@@ -140,9 +140,9 @@ class Index extends React.Component {
         <div className="mainContainer">
           <Features />
         </div>
-         <div className="mainContainer">
-                  <Features2 />
-                </div>
+        <div className="mainContainer">
+          <Features2 />
+        </div>
       </div>
     );
   }

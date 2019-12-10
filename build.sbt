@@ -49,14 +49,15 @@ createProductBuilder := {
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-lazy val zioVersion     = "1.0.0-RC17"
-lazy val refinedVersion = "0.9.10"
+lazy val zioVersion      = "1.0.0-RC17"
+lazy val magnoliaVersion = "0.12.2"
+lazy val refinedVersion  = "0.9.10"
 
 lazy val root =
   project
     .in(file("."))
     .settings(skip in publish := true)
-    .aggregate(zioConfig, examples, zioConfigRefined)
+    .aggregate(zioConfig, zioConfigMagnolia, examples, zioConfigRefined)
 
 lazy val zioConfig =
   module("zio-config")
@@ -84,14 +85,25 @@ lazy val zioConfigRefined =
     .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val examples = module("examples")
+  .settings(
+    skip in publish := true,
+    moduleName := "zio-config-examples",
+    fork := true,
+    libraryDependencies ++= Seq(
+      "eu.timepit"     %% "refined"  % refinedVersion,
+      "com.propensive" %% "magnolia" % magnoliaVersion
+    )
+  )
+  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined)
+
+lazy val zioConfigMagnolia = module("zio-config-magnolia")
   .settings(skip in publish := true)
   .settings(
-    libraryDependencies ++=
-      Seq(
-        "eu.timepit" %% "refined" % refinedVersion
-      )
+    libraryDependencies ++= Seq(
+      "com.propensive" %% "magnolia" % magnoliaVersion
+    )
   )
-  .dependsOn(zioConfig, zioConfigRefined)
+  .dependsOn(zioConfig)
 
 def module(moduleName: String): Project =
   Project(moduleName, file(moduleName))
@@ -110,8 +122,9 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio" % zioVersion
+      "dev.zio"        %% "zio"      % zioVersion,
+      "com.propensive" %% "magnolia" % magnoliaVersion
     )
   )
-  .dependsOn(zioConfig)
+  .dependsOn(zioConfig, zioConfigMagnolia)
   .enablePlugins(MdocPlugin, DocusaurusPlugin)

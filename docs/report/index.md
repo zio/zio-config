@@ -1,6 +1,6 @@
 ---
 id: report_index
-title:  " Docs / Report config"
+title:  " Report"
 ---
 
 You need this import everywhere
