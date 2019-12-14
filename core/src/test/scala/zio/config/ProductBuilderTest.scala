@@ -24,12 +24,30 @@ object ProductBuilderTest
     )
 
 object ProductBuilderTestUtils {
-  final case class S22(s0: Int, s1: Int, s2: Int, s3: Int,
-                       s4: Int, s5: Int, s6: Int, s7: Int,
-                       s8: Int, s9: Int, s10: Int, s11: Int,
-                       s12: Int, s13: Int, s14: Int, s15: Int,
-                       s16: Int, s17: Int, s18: Int, s19: Int,
-                       s20: Int, s21: Int)
+  final case class S22(
+    s0: Int,
+    s1: Int,
+    s2: Int,
+    s3: Int,
+    s4: Int,
+    s5: Int,
+    s6: Int,
+    s7: Int,
+    s8: Int,
+    s9: Int,
+    s10: Int,
+    s11: Int,
+    s12: Int,
+    s13: Int,
+    s14: Int,
+    s15: Int,
+    s16: Int,
+    s17: Int,
+    s18: Int,
+    s19: Int,
+    s20: Int,
+    s21: Int
+  )
 
   private val cId0  = int(s"kId0")
   private val cId1  = int(s"kId1")
