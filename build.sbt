@@ -60,7 +60,7 @@ lazy val root =
     .aggregate(zioConfig, zioConfigMagnolia, examples, zioConfigRefined)
 
 lazy val zioConfig =
-  module("zio-config")
+  module("core")
     .enablePlugins(BuildInfoPlugin)
     .settings(buildInfoSettings)
     .settings(
@@ -72,7 +72,7 @@ lazy val zioConfig =
     )
 
 lazy val zioConfigRefined =
-  module("zio-config-refined")
+  module("refined")
     .settings(
       libraryDependencies ++=
         Seq(
@@ -87,7 +87,6 @@ lazy val zioConfigRefined =
 lazy val examples = module("examples")
   .settings(
     skip in publish := true,
-    moduleName := "zio-config-examples",
     fork := true,
     libraryDependencies ++= Seq(
       "eu.timepit"     %% "refined"  % refinedVersion,
@@ -96,7 +95,7 @@ lazy val examples = module("examples")
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined)
 
-lazy val zioConfigMagnolia = module("zio-config-magnolia")
+lazy val zioConfigMagnolia = module("magnolia")
   .settings(skip in publish := true)
   .settings(
     libraryDependencies ++= Seq(
