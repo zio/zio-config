@@ -97,7 +97,9 @@ object ConfigDescriptor {
   final case class Source[K, V, A](path: K, source: ConfigSource[K, V], propertyType: PropertyType[V, A])
       extends ConfigDescriptor[K, V, A]
 
-  final case class Nested[K, V, A](config: ConfigDescriptor[K, V, A], path: K) extends ConfigDescriptor[K, V, A]
+  final case class Sequence[K, V, A](path: K, config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, List[A]]
+
+  final case class Nested[K, V, A](path: K, config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, A]
 
   final case class Describe[K, V, A](config: ConfigDescriptor[K, V, A], message: String)
       extends ConfigDescriptor[K, V, A]
@@ -137,6 +139,9 @@ object ConfigDescriptor {
   def collectAll[K, V, A](configList: List[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, List[A]] =
     sequence(configList)
 
+  def list[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+    ConfigDescriptor.Sequence(path, desc)
+    
   def string(path: String): ConfigDescriptor[String, String, String] =
     ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
   def boolean(path: String): ConfigDescriptor[String, String, Boolean] =
@@ -162,5 +167,5 @@ object ConfigDescriptor {
   def duration(path: String): ConfigDescriptor[String, String, Duration] =
     ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.DurationType) ?? "value of type duration"
   def nested[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
-    ConfigDescriptor.Nested(desc, path)
+    ConfigDescriptor.Nested(path, desc)
 }

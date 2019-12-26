@@ -3,7 +3,7 @@ package zio.config
 import zio.{ IO, ZIO }
 import zio.system.System.Live.system
 
-final case class ConfigValue[+A](value: A, sourceDescription: String)
+final case class ConfigValue[+A](value: ::[A], sourceDescription: String)
 
 final case class ConfigSource[K, V](
   getConfigValue: Vector[K] => IO[ReadErrorsVector[K, V], ConfigValue[V]],
@@ -27,7 +27,7 @@ object ConfigSource {
   def empty[K, V]: ConfigSource[K, V] =
     ConfigSource((k: Vector[K]) => IO.fail(singleton(ReadError.MissingValue(k))), EmptySource :: Nil)
 
-  val fromEnv: ConfigSource[String, String] =
+  def fromEnv(separator: Option[String] = None): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
         val key = path.mkString("_")
@@ -35,7 +35,7 @@ object ConfigSource {
           .env(key)
           .bimap(
             ReadError.FatalError(path, _),
-            opt => opt.map(ConfigValue(_, SystemEnvironment))
+            opt => opt.map(r => ConfigValue(::(r, Nil), SystemEnvironment))
           )
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
@@ -69,9 +69,11 @@ object ConfigSource {
       ConstantMap :: Nil
     )
 
+  def fromMultiMap(map: Map[String, ::[String]]) = ???
+
   def fromPropertyTree(
     propertyTree: PropertyTree[String, String],
     delimiter: String = "."
   ): ConfigSource[String, String] =
-    fromMap(propertyTree.flattenString(delimiter))
+    fromMultiMap(propertyTree.flattenString(delimiter))
 }
