@@ -60,7 +60,7 @@ lazy val root =
     .aggregate(zioConfig, zioConfigMagnolia, examples, zioConfigRefined)
 
 lazy val zioConfig =
-  module("core")
+  module("zio-config", "core")
     .enablePlugins(BuildInfoPlugin)
     .settings(buildInfoSettings)
     .settings(
@@ -72,7 +72,7 @@ lazy val zioConfig =
     )
 
 lazy val zioConfigRefined =
-  module("refined")
+  module("zio-config-refined", "refined")
     .settings(
       libraryDependencies ++=
         Seq(
@@ -84,7 +84,7 @@ lazy val zioConfigRefined =
     )
     .dependsOn(zioConfig % "compile->compile;test->test")
 
-lazy val examples = module("examples")
+lazy val examples = module("zio-config-examples", "examples")
   .settings(
     skip in publish := true,
     fork := true,
@@ -95,8 +95,7 @@ lazy val examples = module("examples")
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined)
 
-lazy val zioConfigMagnolia = module("magnolia")
-  .settings(skip in publish := true)
+lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
     libraryDependencies ++= Seq(
       "com.propensive" %% "magnolia" % magnoliaVersion
@@ -104,9 +103,9 @@ lazy val zioConfigMagnolia = module("magnolia")
   )
   .dependsOn(zioConfig)
 
-def module(moduleName: String): Project =
-  Project(moduleName, file(moduleName))
-    .settings(stdSettings("zio-config"))
+def module(moduleName: String, fileName: String): Project =
+  Project(moduleName, file(fileName))
+    .settings(stdSettings(moduleName))
     .settings(
       libraryDependencies ++= Seq(
         "dev.zio" %% "zio" % zioVersion
