@@ -46,18 +46,19 @@ object ListExample extends App {
       )
   )
 
-  // Note that, this may also give you some result, but this isn't actually valid
-  // because, in this case, we expect a key value pair (a conf) in outer base path, which cannot be represented using a simple map(string, ::(string))
-  // val anotherComplexConf =
-  // val conf = list("outer")(conf)
+  // Note that, the below code snippet may also give you some result, but the result will not be valid.
+  // Reason is, in this case, we expect a key value pair (a conf) in outer base path, which cannot be represented using a simple map(string, ::(string))
+  // {{{
+  //   val complexConf = list("outer")(conf)
+  //   val multiMapComplex =
+  //     Map(
+  //      "outer.xyz"         -> singleton("something"),
+  //      "outer.aws.regions" -> ::("australia", List("canada", "usa"))
+  //     )
+  //   val result =
+  //     runtime.unsafeRun(Config.fromMultiMap(multiMapComplex, complexConf).flatMap(_.config.config))
+  // }}}
   //
-  // val multiMapComplex =
-  // Map(
-  //  "outer.xyz"         -> singleton("something"),
-  //  "outer.aws.regions" -> ::("australia", List("canada", "usa"))
-  // )
-  //  val result =
-  // runtime.unsafeRun(Config.fromMultiMap(multiMapComplex, anotherComplexConf).flatMap(_.config.config))
   // In short, in use cases of list("outer")(conf), a valid source can be only a json/hoccon
   // Using type safe config
 }

@@ -18,7 +18,7 @@ object BuildHelper {
   )
 
   private val std2xOptions = Seq(
-   // "-Xfatal-warnings",
+    // "-Xfatal-warnings",
     "-language:higherKinds",
     "-language:existentials",
     "-language:implicitConversions",
