@@ -1,6 +1,8 @@
 package zio.config
 
 import zio.{ IO, ZIO }
+import zio.config.ConfigDescriptor.Sequence
+import zio.Ref
 
 private[config] trait ReadFunctions {
   // Read
@@ -10,27 +12,48 @@ private[config] trait ReadFunctions {
     def loop[V1, B](
       configuration: ConfigDescriptor[K, V1, B],
       paths: Vector[K]
-    ): IO[ReadErrorsVector[K, V1], B] =
+    ): ZIO[Ref[List[Any]], ReadErrorsVector[K, V1], B] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.succeed(None)
 
         case ConfigDescriptor.Source(path, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
-          for {
-            value <- source.getConfigValue(paths :+ path)
-            result <- ZIO.fromEither(
-                       propertyType
-                         .read(value.value.head)
-                         .fold(
-                           r =>
-                             Left(
-                               singleton(
-                                 ReadError.ParseError(paths :+ path, r.value, r.typeInfo): ReadError[Vector[K], V1]
+          ZIO.accessM(
+            tail =>
+              for {
+                value <- source.getConfigValue(paths :+ path)
+                result <- ZIO.foreach(value.value.toList) { eachValue =>
+                           ZIO.fromEither(
+                             propertyType
+                               .read(eachValue)
+                               .fold(
+                                 r =>
+                                   Left(
+                                     singleton(
+                                       ReadError
+                                         .ParseError(paths :+ path, r.value, r.typeInfo): ReadError[Vector[K], V1]
+                                     )
+                                   ),
+                                 e => Right(e)
                                )
-                             ),
-                           e => Right(e)
-                         )
-                     )
-          } yield result
+                           )
+                         }
+                _ <- tail.update(_ ++ result.tail)
+
+              } yield result.head
+          )
+
+        case Sequence(path, config) =>
+          loop(config, paths :+ path).flatMap(
+            v =>
+              ZIO
+                .environment[Ref[List[Any]]]
+                .flatMap(
+                  ref =>
+                    ref.get.map(ll => {
+                      v :: ll
+                    })
+                )
+          )
 
         case ConfigDescriptor.Nested(path, c) =>
           loop(c, paths :+ path)
@@ -78,20 +101,21 @@ private[config] trait ReadFunctions {
             .absolve
 
         case ConfigDescriptor.OrElseEither(left, right) =>
-          loop(left, paths).either.flatMap(
-            {
-              case Right(a) => ZIO.access(_ => Left(a))
-              case Left(lerr) =>
-                loop(right, paths).either.flatMap(
-                  {
-                    case Right(b)   => ZIO.access(_ => Right(b))
-                    case Left(rerr) => ZIO.fail(concat(lerr, rerr))
-                  }
-                )
-            }
-          )
+          loop(left, paths).either
+            .flatMap(
+              {
+                case Right(a) => ZIO.succeed(Left(a))
+                case Left(lerr) =>
+                  loop(right, paths).either.flatMap(
+                    {
+                      case Right(b)   => ZIO.succeed(Right(b))
+                      case Left(rerr) => ZIO.fail(concat(lerr, rerr))
+                    }
+                  )
+              }
+            )
       }
 
-    loop(configuration, Vector.empty[K])
+    Ref.make(Nil: List[Any]).flatMap(l => loop(configuration, Vector.empty[K]).provide(l))
   }
 }

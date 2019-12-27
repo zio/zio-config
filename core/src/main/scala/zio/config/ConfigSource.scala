@@ -2,6 +2,10 @@ package zio.config
 
 import zio.{ IO, ZIO }
 import zio.system.System.Live.system
+import java.io.File
+import java.{ util => ju }
+import java.io.FileInputStream
+import java.io.InputStream
 
 final case class ConfigValue[A](value: ::[A], sourceDescription: String)
 
@@ -21,6 +25,7 @@ final case class ConfigSource[K, V](
 object ConfigSource {
   val SystemEnvironment = "system environment"
   val SystemProperties  = "system properties"
+  val JavaProperties    = "java properties"
   val ConstantMap       = "constant <map>"
   val EmptySource       = "<empty>"
 
@@ -35,15 +40,21 @@ object ConfigSource {
           .env(key)
           .bimap(
             ReadError.FatalError(path, _),
-            opt => opt.map(r => {
-              val consOfValues: ::[String] =
-                separator.flatMap(sep => r.split(sep).toList match {
-                  case h :: tail => Some(::(h, tail))
-                  case Nil => None
-                }).getOrElse(::(r, Nil))
+            opt =>
+              opt.map(r => {
+                val consOfValues: ::[String] =
+                  separator
+                    .flatMap(
+                      sep =>
+                        r.split(sep).toList.map(_.trim) match {
+                          case h :: tail => Some(::(h, tail))
+                          case Nil       => None
+                        }
+                    )
+                    .getOrElse(::(r, Nil))
 
-              ConfigValue(consOfValues, SystemEnvironment)
-            })
+                ConfigValue(consOfValues, SystemEnvironment)
+              })
           )
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
@@ -58,15 +69,23 @@ object ConfigSource {
         val key = path.mkString(".")
         system
           .property(key)
-          .bimap(ReadError.FatalError(path, _), opt => opt.map(r => {
-            val consOfValues: ::[String] =
-              separator.flatMap(sep => r.split(sep).toList match {
-                case h :: tail => Some(::(h, tail))
-                case Nil => None
-              }).getOrElse(::(r, Nil))
-            ConfigValue(consOfValues, SystemProperties)
-          }
-          ))
+          .bimap(
+            ReadError.FatalError(path, _),
+            opt =>
+              opt.map(r => {
+                val consOfValues: ::[String] =
+                  separator
+                    .flatMap(
+                      sep =>
+                        r.split(sep).toList.map(_.trim) match {
+                          case h :: tail => Some(::(h, tail))
+                          case Nil       => None
+                        }
+                    )
+                    .getOrElse(::(r, Nil))
+                ConfigValue(consOfValues, SystemProperties)
+              })
+          )
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
 
@@ -74,16 +93,67 @@ object ConfigSource {
       SystemProperties :: Nil
     )
 
-  def fromMap(map: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
-    fromMapA(map)(singleton, delimiter)
-
-  def fromMultiMap(map: Map[String, ::[String]], delimiter: String = "."): ConfigSource[String, String] =
-    fromMapA(map)(identity, delimiter)
-
-  private def fromMapA[A, B](map: Map[String, A])(f: A => ::[B],  delimiter: String): ConfigSource[String, B] =
+  /**
+   * Pass any Java Properties that you have and you get a ConfigSource.
+   * zio-config tries to not make assumptions on the placement of property file. It may exist
+   * in classpath, or it could be in cloud (AWS S3). Loading to properties file is user's
+   * responsiblity to make things flexible. A typical usage will be
+   *  {{{
+   *      ZIO
+   *        .bracket(ZIO.effect(new FileInputStream("file location")))(file => ZIO.effectTotal(file.close()))(
+   *         file =>
+   *            ZIO.effect {
+   *              val properties = new java.util.Properties()
+   *              properties.load(file)
+   *              properties
+   *            }).map(r => fromJavaProperties(r))
+   *  }}}
+   */
+  def fromJavaProperties(
+    property: ju.Properties,
+    separator: Option[String] = None
+  ): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
-        val key = path.mkString(delimiter)
+        val key = path.mkString(".")
+        ZIO
+          .effect(
+            Option(property.getProperty(key))
+          )
+          .bimap(
+            ReadError.FatalError(path, _),
+            opt =>
+              opt.map(r => {
+                val consOfValues: ::[String] =
+                  separator
+                    .flatMap(
+                      sep =>
+                        r.split(sep).toList.map(_.trim) match {
+                          case h :: tail => Some(::(h, tail))
+                          case Nil       => None
+                        }
+                    )
+                    .getOrElse(::(r, Nil))
+                ConfigValue(consOfValues, SystemProperties)
+              })
+          )
+          .flatMap(IO.fromOption(_))
+          .mapError(_ => singleton(ReadError.MissingValue(path)))
+
+      },
+      JavaProperties :: Nil
+    )
+
+  def fromMap(map: Map[String, String], pathDelimiter: String = "."): ConfigSource[String, String] =
+    fromMapA(map)(singleton, pathDelimiter)
+
+  def fromMultiMap(map: Map[String, ::[String]], pathDelimiter: String = "."): ConfigSource[String, String] =
+    fromMapA(map)(identity, pathDelimiter)
+
+  private def fromMapA[A, B](map: Map[String, A])(f: A => ::[B], pathDelimiter: String): ConfigSource[String, B] =
+    ConfigSource(
+      (path: Vector[String]) => {
+        val key = path.mkString(pathDelimiter)
         ZIO.fromOption(map.get(key).map(r => ConfigValue(f(r), ConstantMap))).mapError { _ =>
           singleton(ReadError.MissingValue(Vector(key)))
         }

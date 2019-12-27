@@ -26,19 +26,22 @@ object Config {
       )
 
   def fromEnv[K, V, A](
-    configDescriptor: ConfigDescriptor[String, String, A]
+    configDescriptor: ConfigDescriptor[String, String, A],
+    valueDelimiter: Option[String] = None
   ): IO[ReadErrors[Vector[String], String], Config[A]] =
     make(ConfigSource.fromEnv(), configDescriptor)
 
   def fromMap[A](
     map: Map[String, String],
-    configDescriptor: ConfigDescriptor[String, String, A]
+    configDescriptor: ConfigDescriptor[String, String, A],
+    pathDelimiter: String = "."
   ): IO[ReadErrors[Vector[String], String], Config[A]] =
     make[String, String, A](ConfigSource.fromMap(map), configDescriptor)
 
   def fromMultiMap[A](
     map: Map[String, ::[String]],
-    configDescriptor: ConfigDescriptor[String, String, A]
+    configDescriptor: ConfigDescriptor[String, String, A],
+    pathDelimiter: String = "."
   ): IO[ReadErrors[Vector[String], String], Config[A]] =
     make[String, String, A](ConfigSource.fromMultiMap(map), configDescriptor)
 

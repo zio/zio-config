@@ -12,6 +12,7 @@ import zio.config.ConfigDescriptor.Zip
 import zio.config.ConfigDescriptor.Empty
 import zio.config.ConfigDescriptor.Nested
 import zio.config.ConfigDescriptor.XmapEither
+import zio.config.ConfigDescriptor.Sequence
 
 sealed trait ConfigDescriptor[K, V, A] { self =>
   final def zip[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, (A, B)] =
@@ -79,6 +80,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
       case a @ Empty()                        => a
       case Source(path, source, propertyType) => Source(path, f(source), propertyType)
       case Nested(path, conf)                 => Nested(path, loop(conf))
+      case Sequence(path, conf)               => Sequence(path, loop(conf))
       case Describe(config, message)          => Describe(loop(config), message)
       case Default(value, value2)             => Default(loop(value), value2)
       case Optional(config)                   => Optional(loop(config))
@@ -139,9 +141,19 @@ object ConfigDescriptor {
   def collectAll[K, V, A](configList: List[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, List[A]] =
     sequence(configList)
 
+  // List always expect a base path. In this base path, we assume multiple key value pairs to exist.
+  // This becomes a bit tricky, if your source is a simple system env (or property file, or a constant map), which can only be a flattened Map structure.
+  // We recommend you switching to JSON like structures in the case of complex configuration parameters, however
+  // ensuring a base path exists is enough to make things work regardless of the source.
+  // Example: In system env,
+  // export AWS_REGIONS="australia,singapore,canada"
+  // list("AWS")(string("REGIONS"))
+  // When defining source, you will have to provide Config.fromEnv(config, valueDelimiter=",")
+  // Obviously, its hard to represent a json like nested config with lists in a flattened structure, hence
+  // list is mostly used with json-like inputs (ex: HOCON)
   def list[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
     ConfigDescriptor.Sequence(path, desc)
-    
+
   def string(path: String): ConfigDescriptor[String, String, String] =
     ConfigDescriptor.Source(path, ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
   def boolean(path: String): ConfigDescriptor[String, String, Boolean] =
