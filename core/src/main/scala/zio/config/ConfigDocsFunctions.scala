@@ -26,7 +26,7 @@ private[config] trait ConfigDocsFunctions {
         case ConfigDescriptor.Optional(c) =>
           loop(descAcc, c, docs)
 
-        case ConfigDescriptor.Nested(c, path) =>
+        case ConfigDescriptor.Nested(path, c) =>
           ConfigDocs.NestedPath(path, loop(descAcc, c, docs))
 
         case ConfigDescriptor.XmapEither(c, _, _) =>
@@ -64,7 +64,7 @@ private[config] trait ConfigDocsFunctions {
               val updated: Details[V] =
                 docs match {
                   case Descriptions(descriptions) =>
-                    DescriptionsWithValue(flattened.get(initialValue :+ path), descriptions)
+                    DescriptionsWithValue(flattened.get(initialValue :+ path).map(_.head), descriptions)
                   case a => a
                 }
               Path(path, updated)

@@ -28,7 +28,7 @@ object Config {
   def fromEnv[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A]
   ): IO[ReadErrors[Vector[String], String], Config[A]] =
-    make(ConfigSource.fromEnv, configDescriptor)
+    make(ConfigSource.fromEnv(), configDescriptor)
 
   def fromMap[A](
     map: Map[String, String],
@@ -36,8 +36,15 @@ object Config {
   ): IO[ReadErrors[Vector[String], String], Config[A]] =
     make[String, String, A](ConfigSource.fromMap(map), configDescriptor)
 
-  def fromPropertyFile[K, V, A](
+  def fromMultiMap[A](
+    map: Map[String, ::[String]],
     configDescriptor: ConfigDescriptor[String, String, A]
+  ): IO[ReadErrors[Vector[String], String], Config[A]] =
+    make[String, String, A](ConfigSource.fromMultiMap(map), configDescriptor)
+
+  def fromPropertyFile[K, V, A](
+    configDescriptor: ConfigDescriptor[String, String, A],
+    valueDelimiter: Option[String] = None
   ): ZIO[System, ReadErrors[Vector[String], String], Config[A]] =
-    make(ConfigSource.fromProperty, configDescriptor)
+    make(ConfigSource.fromProperty(valueDelimiter), configDescriptor)
 }

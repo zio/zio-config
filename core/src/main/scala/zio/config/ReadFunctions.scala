@@ -19,7 +19,7 @@ private[config] trait ReadFunctions {
             value <- source.getConfigValue(paths :+ path)
             result <- ZIO.fromEither(
                        propertyType
-                         .read(value.value)
+                         .read(value.value.head)
                          .fold(
                            r =>
                              Left(
@@ -32,7 +32,7 @@ private[config] trait ReadFunctions {
                      )
           } yield result
 
-        case ConfigDescriptor.Nested(c, path) =>
+        case ConfigDescriptor.Nested(path, c) =>
           loop(c, paths :+ path)
 
         case ConfigDescriptor.XmapEither(c, f, _) =>

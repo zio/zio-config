@@ -18,7 +18,7 @@ object BuildHelper {
   )
 
   private val std2xOptions = Seq(
-    "-Xfatal-warnings",
+   // "-Xfatal-warnings",
     "-language:higherKinds",
     "-language:existentials",
     "-language:implicitConversions",
@@ -31,7 +31,7 @@ object BuildHelper {
   )
 
   val buildInfoSettings = Seq(
-    buildInfoKeys := Seq[BuildInfoKey](nme, version, scalaVersion, sbtVersion, isSnapshot),
+    buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion, isSnapshot),
     buildInfoPackage := "zio",
     buildInfoObject := "BuildInfo"
   )

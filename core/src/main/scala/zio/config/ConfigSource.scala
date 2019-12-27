@@ -3,7 +3,7 @@ package zio.config
 import zio.{ IO, ZIO }
 import zio.system.System.Live.system
 
-final case class ConfigValue[+A](value: ::[A], sourceDescription: String)
+final case class ConfigValue[A](value: ::[A], sourceDescription: String)
 
 final case class ConfigSource[K, V](
   getConfigValue: Vector[K] => IO[ReadErrorsVector[K, V], ConfigValue[V]],
@@ -35,7 +35,15 @@ object ConfigSource {
           .env(key)
           .bimap(
             ReadError.FatalError(path, _),
-            opt => opt.map(r => ConfigValue(::(r, Nil), SystemEnvironment))
+            opt => opt.map(r => {
+              val consOfValues: ::[String] =
+                separator.flatMap(sep => r.split(sep).toList match {
+                  case h :: tail => Some(::(h, tail))
+                  case Nil => None
+                }).getOrElse(::(r, Nil))
+
+              ConfigValue(consOfValues, SystemEnvironment)
+            })
           )
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
@@ -44,13 +52,21 @@ object ConfigSource {
       SystemEnvironment :: Nil
     )
 
-  val fromProperty: ConfigSource[String, String] =
+  def fromProperty(separator: Option[String] = None): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
         val key = path.mkString(".")
         system
-          .env(key)
-          .bimap(ReadError.FatalError(path, _), opt => opt.map(ConfigValue(_, SystemProperties)))
+          .property(key)
+          .bimap(ReadError.FatalError(path, _), opt => opt.map(r => {
+            val consOfValues: ::[String] =
+              separator.flatMap(sep => r.split(sep).toList match {
+                case h :: tail => Some(::(h, tail))
+                case Nil => None
+              }).getOrElse(::(r, Nil))
+            ConfigValue(consOfValues, SystemProperties)
+          }
+          ))
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
 
@@ -59,17 +75,21 @@ object ConfigSource {
     )
 
   def fromMap(map: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
+    fromMapA(map)(singleton, delimiter)
+
+  def fromMultiMap(map: Map[String, ::[String]], delimiter: String = "."): ConfigSource[String, String] =
+    fromMapA(map)(identity, delimiter)
+
+  private def fromMapA[A, B](map: Map[String, A])(f: A => ::[B],  delimiter: String): ConfigSource[String, B] =
     ConfigSource(
       (path: Vector[String]) => {
         val key = path.mkString(delimiter)
-        ZIO.fromOption(map.get(key).map(ConfigValue(_, ConstantMap))).mapError { _ =>
+        ZIO.fromOption(map.get(key).map(r => ConfigValue(f(r), ConstantMap))).mapError { _ =>
           singleton(ReadError.MissingValue(Vector(key)))
         }
       },
       ConstantMap :: Nil
     )
-
-  def fromMultiMap(map: Map[String, ::[String]]) = ???
 
   def fromPropertyTree(
     propertyTree: PropertyTree[String, String],
