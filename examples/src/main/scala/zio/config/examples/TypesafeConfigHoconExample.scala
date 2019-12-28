@@ -6,41 +6,44 @@ import zio.DefaultRuntime
 import zio.config.magnolia.ConfigDescriptorProvider._
 
 object TypesafeConfigHoconExample extends App {
-  val configSource =
-    fromHoccon(Right("{ region : us-east, accountId: jon }"))
-
-  final case class Aws(region: String, accountId: String)
-
-  val configManual =
-    ((string("region")) |@| string("accountId"))(Aws.apply, Aws.unapply)
-
   val runtime = new DefaultRuntime {}
-
-  val result = runtime.unsafeRun(read(configManual from configSource))
-  assert(result == Aws("us-east", "jon"))
 
   // A nested example with type safe config, and usage of magnolia
   final case class Account(region: String, accountId: String)
-  final case class AwsConfig(account: Account)
+  final case class Database(port: Int, url: String)
+  final case class AwsConfig(account: Account, database: Database)
 
   private val configNestedAutomatic = description[AwsConfig]
 
+  val hocconString =
+    s"""
+    account {
+        region : us-east
+        accountId: jon
+    }
+
+    database { 
+        port : 100
+        url  : postgres
+    }
+   """
   val configSourceNested =
-    fromHoccon(Right("account { region : us-east, accountId: jon }"))
+    fromHoccon(Right(hocconString))
 
   val nestedConfigAutomaticResult =
     runtime.unsafeRun(read(configNestedAutomatic from configSourceNested))
 
-  assert(nestedConfigAutomaticResult == AwsConfig(Account("us-east", "jon")))
+  assert(nestedConfigAutomaticResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
   val configNestedManual = {
-    val accountConfig = (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
-    nested("account")(accountConfig).xmap(AwsConfig)(_.account)
+    val accountConfig  = (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
+    val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
+    (nested("account")(accountConfig) |@| nested("database")(databaseConfig))(AwsConfig.apply, AwsConfig.unapply)
   }
 
   val nestedConfigManualResult =
     runtime.unsafeRun(read(configNestedManual from configSourceNested))
 
-  assert(nestedConfigManualResult == AwsConfig(Account("us-east", "jon")))
+  assert(nestedConfigManualResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
 }
