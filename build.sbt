@@ -57,7 +57,7 @@ lazy val root =
   project
     .in(file("."))
     .settings(skip in publish := true)
-    .aggregate(zioConfig, zioConfigMagnolia, examples, zioConfigRefined)
+    .aggregate(zioConfig, zioConfigMagnolia, examples, zioConfigRefined, zioConfigTypesafe)
 
 lazy val zioConfig =
   module("core", "zio-config")
@@ -93,7 +93,7 @@ lazy val examples = module("examples", "zio-config-examples")
       "com.propensive" %% "magnolia" % magnoliaVersion
     )
   )
-  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined)
+  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe)
 
 lazy val zioConfigMagnolia = module("magnolia", "zio-config-magnolia")
   .settings(
@@ -102,6 +102,15 @@ lazy val zioConfigMagnolia = module("magnolia", "zio-config-magnolia")
     )
   )
   .dependsOn(zioConfig)
+
+lazy val zioConfigTypesafe =
+  module("typesafe", "zio-config-typesafe")
+    .settings(
+      libraryDependencies ++= Seq(
+        "com.typesafe" % "config" % "1.4.0"
+      )
+    )
+    .dependsOn(zioConfig)
 
 def module(directory: String, projectName: String): Project =
   Project(projectName, file(directory))
