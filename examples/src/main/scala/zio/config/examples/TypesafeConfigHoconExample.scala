@@ -46,6 +46,7 @@ object TypesafeConfigHoconExample extends App {
 
   assert(nestedConfigManualResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
+  // Example taken from typesafe/config documentation
   val hocconStringWithSubstition =
     """
     datacentergeneric = { clustersize = 6 }
