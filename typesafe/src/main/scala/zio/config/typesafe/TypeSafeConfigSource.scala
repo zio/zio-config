@@ -24,7 +24,7 @@ object TypeSafeConfigSource {
         // At each entry level in the path, we see if it's a list or not.
 
         val config =
-          hoccon.fold(file => ConfigFactory.parseFile(file), str => ConfigFactory.parseString(str))
+          hoccon.fold(file => ConfigFactory.parseFile(file).resolve, str => ConfigFactory.parseString(str).resolve)
 
         val key =
           path.mkString(".")

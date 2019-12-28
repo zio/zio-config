@@ -46,4 +46,23 @@ object TypesafeConfigHoconExample extends App {
 
   assert(nestedConfigManualResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
+  val hocconStringWithSubstition =
+    """
+    datacentergeneric = { clustersize = 6 }
+    datacentereast = ${datacentergeneric} { name = "east" }
+    datacenterwest = ${datacentergeneric} { name = "west", clustersize = 8 }
+    """
+
+  final case class Details(clustersize: Int, name: String)
+  final case class DatabaseDetails(datacenterwest: Details, datacentereast: Details)
+
+  val configWithHoconSubstituion = description[DatabaseDetails]
+
+  val finalResult =
+    read(configWithHoconSubstituion from fromHoccon(Right(hocconStringWithSubstition)))
+
+  println(runtime.unsafeRun(finalResult))
+
+  assert(runtime.unsafeRun(finalResult) == DatabaseDetails(Details(8, "west"), Details(6, "east")))
+
 }
