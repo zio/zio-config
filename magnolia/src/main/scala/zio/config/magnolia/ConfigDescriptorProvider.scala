@@ -70,7 +70,7 @@ object ConfigDescriptorProvider {
     new ConfigDescriptorProvider[T] {
       def getDescription(path: Vector[String]): ConfigDescriptor[String, String, T] = {
         val result: List[ConfigDescriptor[String, String, Any]] =
-          caseClass.parameters.reverse.toList.map { h =>
+          caseClass.parameters.toList.map { h =>
             {
               val derivedPath = if (caseClass.isValueClass) path else path :+ h.label
               val rawDesc     = h.typeclass.getDescription(derivedPath)

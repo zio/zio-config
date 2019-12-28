@@ -61,16 +61,4 @@ object ListExample extends App {
   // }}}
   //
   // In short, in use cases of list("outer")(conf), a valid source can be only a json/hoccon
-  // Using type safe config
-
-  val configSource =
-    fromHoccon(Right("aws { region : us-east, accountId: jon }"))
-
-  final case class Aws(region: String, accountId: String)
-
-  val confForHoccon =
-    (nested("aws")(string("region")) |@| nested("aws")(string("accountId")))(Aws.apply, Aws.unapply)
-
-  val result = runtime.unsafeRun(read(confForHoccon from configSource))
-  assert(result == Aws("us-east", "jon"))
 }
