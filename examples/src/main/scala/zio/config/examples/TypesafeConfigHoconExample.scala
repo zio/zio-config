@@ -23,16 +23,24 @@ object TypesafeConfigHoconExample extends App {
   final case class Account(region: String, accountId: String)
   final case class AwsConfig(account: Account)
 
-  private val configAutomatic = description[AwsConfig]
+  private val configNestedAutomatic = description[AwsConfig]
 
   val configSourceNested =
     fromHoccon(Right("account { region : us-east, accountId: jon }"))
 
-  val nestedConfigResult =
-    runtime.unsafeRun(read(configAutomatic from configSourceNested))
+  val nestedConfigAutomaticResult =
+    runtime.unsafeRun(read(configNestedAutomatic from configSourceNested))
 
-  println(nestedConfigResult)
+  assert(nestedConfigAutomaticResult == AwsConfig(Account("us-east", "jon")))
 
-  assert(nestedConfigResult == AwsConfig(Account("us-east", "jon")))
+  val configNestedManual = {
+    val accountConfig = (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
+    nested("account")(accountConfig).xmap(AwsConfig)(_.account)
+  }
+
+  val nestedConfigManualResult =
+    runtime.unsafeRun(read(configNestedManual from configSourceNested))
+
+  assert(nestedConfigManualResult == AwsConfig(Account("us-east", "jon")))
 
 }
