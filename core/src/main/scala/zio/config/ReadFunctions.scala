@@ -50,7 +50,9 @@ private[config] trait ReadFunctions {
                 .flatMap(
                   ref =>
                     ref.get.map(ll => {
-                      v :: ll
+                      val r = v :: ll
+                      println(s"the result is ${r}")
+                      r
                     })
                 )
           )

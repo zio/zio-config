@@ -11,4 +11,7 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
     ::(l.head, l.tail ++ r)
 
   private[config] def singleton[A](a: A): ::[A] = ::(a, Nil)
+
+  def seqEither[A, B](either: List[Either[A, B]]): Either[A, List[B]] =
+    either.foldRight(Right(List.empty[B]): Either[A, List[B]])((a, b) => a.flatMap(aa => b.map(bb => aa :: bb)))
 }

@@ -13,6 +13,7 @@ import scala.util.Failure
 import scala.util.Success
 import scala.jdk.CollectionConverters._
 
+// Experimental: Yet to refactor
 object TypeSafeConfigSource {
   // It is user's responsiblility to load the file
   def fromHoccon(
@@ -25,13 +26,20 @@ object TypeSafeConfigSource {
         val config =
           hoccon.fold(file => ConfigFactory.parseFile(file).resolve, str => ConfigFactory.parseString(str).resolve)
 
-        val key =
+        val parentKey =
+          (if (path.size > 1) path.dropRight(1) else path).mkString(".")
+
+        val originalKey =
           path.mkString(".")
 
-        val value = config.getValue(key)
+        val parentValue = config.getValue(parentKey)
 
-        val result: ConfigValueType => Either[ReadErrorsVector[String, String], ::[String]] =
-          valueType =>
+        val getValue: (
+          com.typesafe.config.Config,
+          ConfigValueType,
+          String
+        ) => Either[ReadErrorsVector[String, String], ::[String]] =
+          (config, valueType, key) =>
             if (valueType == ConfigValueType.BOOLEAN) {
               Right(singleton(config.getBoolean(key).toString()))
             } else if (valueType == ConfigValueType.NULL) {
@@ -45,7 +53,7 @@ object TypeSafeConfigSource {
                 singleton(
                   ReadError.FatalError(
                     path,
-                    new RuntimeException(s"The value for the key ${key} is an object and not a primitive.")
+                    new RuntimeException(s"The value for the key ${originalKey} is an object and not a primitive.")
                   )
                 )
               )
@@ -83,7 +91,23 @@ object TypeSafeConfigSource {
               Left(singleton(ReadError.FatalError(path, new RuntimeException("Unknown type"))))
             }
 
-        ZIO.fromEither(result(value.valueType()).map(t => ConfigValue(t, "typesafe-config-hoccon")))
+        // This is simple testing
+        val result =
+          if (parentValue.valueType() == ConfigValueType.LIST) {
+            val lastKey = path.last
+            val list    = config.getConfigList(parentKey).asScala.toList
+            seqEither(list.map(eachConfig => {
+              getValue(eachConfig, eachConfig.getValue(lastKey).valueType(), lastKey)
+            })).flatMap {
+              case Nil =>
+                Left(singleton(ReadError.MissingValue(path))): Either[ReadErrorsVector[String, String], ::[String]]
+              case h :: t => Right(::(h.head, h.tail ++ t.flatten))
+            }
+          } else {
+            getValue(config, config.getValue(originalKey).valueType(), originalKey)
+          }
+
+        ZIO.fromEither(result).map(t => ConfigValue(t, "typesafe-config-hoccon"))
       },
       List("typesafe-config-hoccon")
     )

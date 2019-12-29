@@ -35,7 +35,7 @@ object TypesafeConfigHoconExample extends App {
 
   val configNestedManual = {
     val accountConfig =
-      (string("region") ?? "This is an AWS region" |@| string("accountId"))(Account.apply, Account.unapply)
+      (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
     val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
     (nested("account")(accountConfig) |@| nested("database")(databaseConfig))(AwsConfig.apply, AwsConfig.unapply)
   }
@@ -45,7 +45,7 @@ object TypesafeConfigHoconExample extends App {
 
   assert(nestedConfigManualResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
-  // Example from typesafe/config documentation
+  // Substitution Example, Example from typesafe/config documentation
   val hocconStringWithSubstition =
     """
     datacentergeneric = { clustersize = 6 }
@@ -65,4 +65,43 @@ object TypesafeConfigHoconExample extends App {
 
   assert(runtime.unsafeRun(finalResult) == DatabaseDetails(Details(8, "west"), Details(6, "east")))
 
+  // List Example
+
+  val listHoccon =
+    """
+    accounts = [
+                {
+                    region : us-east
+                    accountId: jon
+                }
+                {
+                    region : us-west
+                    accountId: chris
+                }
+            ]
+
+    database { 
+        port : 100
+        url  : postgres
+    }
+    
+    """
+
+  final case class AwsDetails(accounts: List[Account], database: Database)
+
+  val accountConfig =
+    (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
+
+  val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
+
+  val awsDetailsConfig =
+    (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig))(
+      AwsDetails.apply,
+      AwsDetails.unapply
+    )
+
+  val listResult =
+    read(awsDetailsConfig from fromHoccon(Right(listHoccon)))
+
+  println(runtime.unsafeRun(listResult))
 }
