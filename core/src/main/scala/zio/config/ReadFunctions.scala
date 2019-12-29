@@ -42,8 +42,8 @@ private[config] trait ReadFunctions {
               } yield result.head
           )
 
-        case Sequence(path, config) =>
-          loop(config, paths :+ path).flatMap(
+        case Sequence(config) =>
+          loop(config, paths).flatMap(
             v =>
               ZIO
                 .environment[Ref[List[Any]]]

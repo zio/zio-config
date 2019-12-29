@@ -1,5 +1,4 @@
 package zio.config
-import zio.config.ConfigDescriptor.Sequence
 
 private[config] trait WriteFunctions {
   final def write[K, V, A](config: ConfigDescriptor[K, V, A], a: A): Either[String, PropertyTree[K, V]] = {
@@ -20,10 +19,10 @@ private[config] trait WriteFunctions {
             case Left(v)     => Left(v)
           }
 
-        case ConfigDescriptor.Sequence(parent, c) =>
+        case ConfigDescriptor.Sequence(c) =>
           seqEither(b.map(eachB => {
             go(c, eachB)
-          })).map(list => PropertyTree.Record(Map(parent -> PropertyTree.Sequence(list))))
+          })).map(PropertyTree.Sequence(_))
 
         case ConfigDescriptor.Optional(c) =>
           b.fold({

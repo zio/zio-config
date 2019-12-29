@@ -27,26 +27,25 @@ object TypesafeConfigHoconExample extends App {
         url  : postgres
     }
    """
-  val configSourceNested =
-    fromHoccon(Right(hocconString))
 
   val nestedConfigAutomaticResult =
-    runtime.unsafeRun(read(configNestedAutomatic from configSourceNested))
+    runtime.unsafeRun(read(configNestedAutomatic from fromHoccon(Right(hocconString))))
 
   assert(nestedConfigAutomaticResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
   val configNestedManual = {
-    val accountConfig  = (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
+    val accountConfig =
+      (string("region") ?? "This is an AWS region" |@| string("accountId"))(Account.apply, Account.unapply)
     val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
     (nested("account")(accountConfig) |@| nested("database")(databaseConfig))(AwsConfig.apply, AwsConfig.unapply)
   }
 
   val nestedConfigManualResult =
-    runtime.unsafeRun(read(configNestedManual from configSourceNested))
+    runtime.unsafeRun(read(configNestedManual from fromHoccon(Right(hocconString))))
 
   assert(nestedConfigManualResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
-  // Example taken from typesafe/config documentation
+  // Example from typesafe/config documentation
   val hocconStringWithSubstition =
     """
     datacentergeneric = { clustersize = 6 }

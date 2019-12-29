@@ -10,18 +10,18 @@ object ListExample extends App {
 
   val multiMap =
     Map(
-      "xyz"         -> singleton("something"),
-      "aws.regions" -> ::("australia", List("canada", "usa"))
+      "xyz"     -> singleton("something"),
+      "regions" -> ::("australia", List("canada", "usa"))
     )
 
-  val conf: ConfigDescriptor[String, String, PgmConfig] =
-    (string("xyz") |@| list("aws")(string("regions")))(PgmConfig.apply, PgmConfig.unapply)
+  val config: ConfigDescriptor[String, String, PgmConfig] =
+    (string("xyz") |@| list(string("regions")))(PgmConfig.apply, PgmConfig.unapply)
 
   val runtime = new DefaultRuntime {}
 
   val resultFromMultiMap =
     runtime.unsafeRun(
-      Config.fromMultiMap(multiMap, conf).flatMap(_.config.config)
+      read(config from ConfigSource.fromMultiMap(multiMap))
     )
 
   assert(
@@ -30,35 +30,20 @@ object ListExample extends App {
   )
 
   assert(
-    write(conf, resultFromMultiMap) ==
+    write(config, resultFromMultiMap) ==
       Right(
-        PropertyTree.Record(
-          Map(
-            "aws" -> PropertyTree.Sequence(
-              List(
-                Record(Map("regions" -> Leaf("australia"))),
-                Record(Map("regions" -> Leaf("canada"))),
-                Record(Map("regions" -> Leaf("usa")))
-              )
+        PropertyTree.Sequence(
+          List(
+            Record(
+              Map("xyz" -> Leaf("something"))
             ),
-            "xyz" -> Leaf("something")
+            Record(Map("regions" -> Leaf("australia"))),
+            Record(Map("regions" -> Leaf("canada"))),
+            Record(Map("regions" -> Leaf("usa")))
           )
         )
       )
   )
 
-  // Note that, the below code snippet may also give you some result, but the result will not be valid.
-  // Reason is, in this case, we expect a key value pair (a conf) in outer base path, which cannot be represented using a simple map(string, ::(string))
-  // {{{
-  //   val complexConf = list("outer")(conf)
-  //   val multiMapComplex =
-  //     Map(
-  //      "outer.xyz"         -> singleton("something"),
-  //      "outer.aws.regions" -> ::("australia", List("canada", "usa"))
-  //     )
-  //   val result =
-  //     runtime.unsafeRun(Config.fromMultiMap(multiMapComplex, complexConf).flatMap(_.config.config))
-  // }}}
-  //
-  // In short, in use cases of list("outer")(conf), a valid source can be only a json/hoccon
+  // Keep a note that, handling list in a flattened map like structure may not be what you need to do, have a look at TypesafeConfigHoconExample.
 }
