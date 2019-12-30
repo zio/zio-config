@@ -49,7 +49,7 @@ object ConfigSource {
       (path: Vector[String]) => {
         val key = path.mkString(".")
         system
-          .env(key)
+          .property(key)
           .bimap(ReadError.FatalError(path, _), opt => opt.map(ConfigValue(_, SystemProperties)))
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
