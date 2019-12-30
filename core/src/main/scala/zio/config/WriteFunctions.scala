@@ -27,13 +27,14 @@ private[config] trait WriteFunctions {
         case ConfigDescriptor.Default(c, _) =>
           go(c, b)
 
-        case ConfigDescriptor.XmapEither(c, _, to) =>
+        case ConfigDescriptor.XmapEither(c, _, to) => {
           to(b) match {
             case Right(before) =>
               go(c, before)
             case Left(e) =>
               Left(e)
           }
+        }
 
         case ConfigDescriptor.OrElseEither(left, right) =>
           b.fold(aa => go(left, aa), b => go(right, b))

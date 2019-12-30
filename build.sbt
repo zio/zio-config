@@ -98,10 +98,13 @@ lazy val examples = module("zio-config-examples", "examples")
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
     libraryDependencies ++= Seq(
-      "com.propensive" %% "magnolia" % magnoliaVersion
-    )
+      "com.propensive" %% "magnolia"     % magnoliaVersion,
+      "dev.zio"        %% "zio-test"     % zioVersion % Test,
+      "dev.zio"        %% "zio-test-sbt" % zioVersion % Test
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-  .dependsOn(zioConfig)
+  .dependsOn(zioConfig % "compile->compile;test->test")
 
 def module(moduleName: String, fileName: String): Project =
   Project(moduleName, file(fileName))

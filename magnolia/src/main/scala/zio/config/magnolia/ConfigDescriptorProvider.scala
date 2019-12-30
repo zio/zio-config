@@ -86,7 +86,6 @@ object ConfigDescriptorProvider {
         collectAll(result).xmap[T](
           caseClass.rawConstruct
         )(v => caseClass.parameters.map(_.dereference(v): Any).toList)
-
       }
     }
 
@@ -102,8 +101,15 @@ object ConfigDescriptorProvider {
                   Left(s"Couldn't form any subtypes ${sealedTrait.subtypes.map(_.typeName.full)}"): Either[String, T]
               })(v => Right(Some(v)))
             case h :: tail => {
-              val desc = h.typeclass.getDescription(paths).xmap(r => r: T)(t => (t.asInstanceOf[h.SType]))
-              if (tail.isEmpty) desc else desc.orElse(loop(tail))
+              val desc = h.typeclass
+                .getDescription(paths)
+                .xmap(r => {
+                  r: T
+                })(t => {
+                  (t.asInstanceOf[h.SType])
+                })
+              if (tail.isEmpty) desc
+              else desc.orElse(loop(tail))
             }
           }
 
