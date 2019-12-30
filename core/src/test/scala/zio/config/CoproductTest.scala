@@ -73,8 +73,10 @@ object CoproductTestUtils {
       vCount      <- Gen.anyInt
       kDbUrlLocal <- genSymbol(1, 20).filter(s => s != kLdap && s != kDbUrl && s != kUser && s != kCount)
       vDbUrlLocal <- Gen.anyFloat
-      kCValid     <- genNonEmptyString(15)
-      vCValid     <- genDuration(5)
+      kCValid <- genNonEmptyString(15).filter(
+                  s => s != kLdap && s != kDbUrl && s != kUser && s != kCount && s != kDbUrlLocal
+                )
+      vCValid <- genDuration(5)
     } yield TestParams(
       kLdap,
       vLdap,
