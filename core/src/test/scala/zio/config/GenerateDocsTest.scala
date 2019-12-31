@@ -1,9 +1,9 @@
 package zio.config
 
-import zio.config.ConfigDescriptor.{int, nested, string}
-import zio.config.ConfigDocs.Details.{Descriptions, DescriptionsWithValue}
-import zio.config.ConfigDocs.{Both, NestedPath, Path}
-import zio.config.ConfigSource.{ConstantMap, EmptySource}
+import zio.config.ConfigDescriptor.{ int, nested, string }
+import zio.config.ConfigDocs.Details.{ Descriptions, DescriptionsWithValue }
+import zio.config.ConfigDocs.{ Both, NestedPath, Path }
+import zio.config.ConfigSource.{ ConstantMap, EmptySource }
 import zio.config.GenerateDocsTestUtils._
 import zio.config.helpers._
 import zio.random.Random
