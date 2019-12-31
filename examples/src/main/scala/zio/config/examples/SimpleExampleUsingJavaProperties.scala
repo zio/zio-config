@@ -12,8 +12,7 @@ import zio.console.Console.Live.console._
 final case class ApplicationConfig(bridgeIp: String, userName: String)
 
 object ApplicationConfig {
-  // Personally prefer, configuration description to be in the companion object of the application config case class
-  private[config] val configuration =
+  val configuration =
     ((string("bridgeIp")) |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
 }
 
@@ -25,7 +24,7 @@ object SimpleExampleMain extends App {
         fileLocation <- ZIO.effect(System.getProperty("user.home") + "/somefile.properties")
         // there are many ways of doing this: example: {{{ read(configuration from ConfigSource.fromJavaProperties(propertyFile))) }}}, you may try that as well.
         config <- Config.fromPropertyFile(fileLocation, ApplicationConfig.configuration)
-        _      <- SimpleExample.someFn.provide(config)
+        _      <- SimpleExample.finalExecution.provide(config)
       } yield ()
 
     pgm.foldM(
@@ -37,12 +36,18 @@ object SimpleExampleMain extends App {
 
 // The core application functions
 object SimpleExample {
-  val someFn: ZIO[Config[ApplicationConfig], Nothing, String] =
+  val printConfigs: ZIO[Config[ApplicationConfig], Nothing, Unit] =
     for {
       appConfig <- config[ApplicationConfig]
       s1        <- putStrLn(appConfig.bridgeIp)
       s2        <- putStrLn(appConfig.userName)
-    } yield s"${s1} - ${s2}"
+    } yield ()
+
+  val finalExecution: ZIO[Config[ApplicationConfig], Nothing, Unit] =
+    for {
+      _ <- printConfigs
+      _ <- putStrLn(s"processing data......")
+    } yield ()
 }
 // A note that, with magnolia module (which is still experimental), you can skip writing the {{ configuration }} in ApplicationConfig object
 // import zio.config.magnolia.ConfigDescriptorProvider_,

@@ -77,7 +77,7 @@ object ConfigSource {
    *  }}}
    */
   def fromJavaProperties(
-    property: ju.Properties,
+    property: ju.Properties
   ): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
