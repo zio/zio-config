@@ -17,6 +17,7 @@ private[config] trait ConfigDocsFunctions {
             path,
             Descriptions(source.sourceDescription ++ descAcc.descriptions)
           )
+
         case ConfigDescriptor.Default(c, _) =>
           loop(descAcc, c, docs)
 

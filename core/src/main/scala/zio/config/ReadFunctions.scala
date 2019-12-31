@@ -3,6 +3,7 @@ package zio.config
 import zio.{ IO, ZIO }
 import zio.config.ConfigDescriptor.Sequence
 import zio.Ref
+import zio.Queue
 
 private[config] trait ReadFunctions {
   // Read
@@ -12,7 +13,7 @@ private[config] trait ReadFunctions {
     def loop[V1, B](
       configuration: ConfigDescriptor[K, V1, B],
       paths: Vector[K]
-    ): ZIO[Ref[List[Any]], ReadErrorsVector[K, V1], B] =
+    ): ZIO[Cache[K], ReadErrorsVector[K, V1], B] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.succeed(None)
 
@@ -37,7 +38,7 @@ private[config] trait ReadFunctions {
                                )
                            )
                          }
-                _ <- tail.update(_ ++ result.tail)
+                _ <- tail.add(paths, result.tail)
 
               } yield result.head
           )
@@ -46,14 +47,15 @@ private[config] trait ReadFunctions {
           loop(config, paths).flatMap(
             v =>
               ZIO
-                .environment[Ref[List[Any]]]
+                .environment[Cache[K]]
                 .flatMap(
                   ref =>
-                    ref.get.map(ll => {
-                      val r = v :: ll
-                      println(s"the result is ${r}")
-                      r
-                    })
+                    ref
+                      .get(paths)
+                      .map(ll => {
+                        val r = v :: ll
+                        r
+                      })
                 )
           )
 
@@ -63,14 +65,36 @@ private[config] trait ReadFunctions {
         case ConfigDescriptor.XmapEither(c, f, _) =>
           loop(c, paths).flatMap { a =>
             ZIO
-              .fromEither(f(a))
-              .bimap(
-                err =>
-                  singleton(
-                    ReadError.FatalError(paths, new RuntimeException(err))
-                  ),
-                res => res
+              .environment[Cache[K]]
+              .flatMap(
+                ref =>
+                  ref
+                    .get(paths)
+                    .flatMap(
+                      list => {
+                        println(s"the list is ${list}")
+                        ZIO
+                          .foreach(a :: list)(a => {
+                            ZIO
+                              .fromEither(f(a))
+                              .bimap(
+                                err =>
+                                  singleton(
+                                    ReadError.FatalError(paths, new RuntimeException(err))
+                                  ),
+                                res => res
+                              )
+                          })
+                      }
+                    )
+                    .flatMap(
+                      list =>
+                        ZIO.accessM[Cache[K]](
+                          e => (if (list.isEmpty) e.r.get else e.add(paths, list.tail)).map(_ => list.head)
+                        )
+                    )
               )
+
           }
 
         // No need to add report on the default value.
@@ -118,6 +142,15 @@ private[config] trait ReadFunctions {
             )
       }
 
-    Ref.make(Nil: List[Any]).flatMap(l => loop(configuration, Vector.empty[K]).provide(l))
+    Cache.make[K].flatMap(queue => loop(configuration, Vector.empty[K]).provide(queue))
   }
+}
+
+final case class Cache[K](r: Ref[Map[Vector[K], List[Any]]]) {
+  def get(k: Vector[K])               = r.get.map(_.get(k).toList.flatten)
+  def add(k: Vector[K], v: List[Any]) = r.update(r => r.updated(k, v))
+}
+
+object Cache {
+  def make[K] = Ref.make(Map.empty[Vector[K], List[Any]]).map(Cache(_))
 }
