@@ -1,9 +1,9 @@
 package zio.config
 
-import zio.config.ConfigDescriptor.{ int, nested, string }
-import zio.config.ConfigDocs.Details.{ Descriptions, DescriptionsWithValue }
-import zio.config.ConfigDocs.{ Both, NestedPath, Path }
-import zio.config.ConfigSource.{ ConstantMap, EmptySource }
+import zio.config.ConfigDescriptor.{int, nested, string}
+import zio.config.ConfigDocs.Details.{Descriptions, DescriptionsWithValue}
+import zio.config.ConfigDocs.{Both, NestedPath, Path}
+import zio.config.ConfigSource.{ConstantMap, EmptySource}
 import zio.config.GenerateDocsTestUtils._
 import zio.config.helpers._
 import zio.random.Random
@@ -43,17 +43,17 @@ object GenerateDocsTestUtils {
   final case class GenerateDocsParams(keys: KeyParams, value: AppConfig) {
 
     def descriptor: ConfigDescriptor[String, String, AppConfig] = {
-      val credentials = (string(keys.user) ? "Example: ZioUser" |@| string(keys.password) ? "Example: ZioPass")(
+      val credentials = (string(keys.user) ?? "Example: ZioUser" |@| string(keys.password) ?? "Example: ZioPass")(
         Credentials.apply,
         Credentials.unapply
-      ) ? "Credentials"
+      ) ?? "Credentials"
 
-      val database = (int(keys.port) ? "Example: 8088" |@| string(keys.url) ? "Example: abc.com")(
+      val database = (int(keys.port) ?? "Example: 8088" |@| string(keys.url) ?? "Example: abc.com")(
         Database.apply,
         Database.unapply
-      ) ? "Database"
+      ) ?? "Database"
 
-      (string(keys.secret).optional ? "Application secret" |@| nested(keys.credentials)(credentials) |@| nested(
+      (string(keys.secret).optional ?? "Application secret" |@| nested(keys.credentials)(credentials) |@| nested(
         keys.database
       )(database))(
         AppConfig.apply,
