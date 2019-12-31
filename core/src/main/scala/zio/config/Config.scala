@@ -1,7 +1,11 @@
 package zio.config
 
+import java.io.{ File, FileInputStream }
+import java.util.Properties
+
 import zio.system.System
 import zio.{ IO, UIO, ZIO }
+import zio.system.System.Live.system.lineSeparator
 
 trait Config[A] {
   def config: Config.Service[A]
@@ -35,6 +39,28 @@ object Config {
     configDescriptor: ConfigDescriptor[String, String, A]
   ): IO[ReadErrors[Vector[String], String], Config[A]] =
     make[String, String, A](ConfigSource.fromMap(map), configDescriptor)
+
+  // If reading a file, this can have read errors as well as throwable when trying to read the file
+  def fromPropertyFile[A](
+    filePath: String,
+    configDescriptor: ConfigDescriptor[String, String, A]
+  ): ZIO[Any, Throwable, Config[A]] =
+    ZIO
+      .bracket(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))(inputStream => {
+        ZIO.effect {
+          val properties = new Properties()
+          properties.load(inputStream)
+          properties
+        }
+      })
+      .flatMap(
+        properties =>
+          lineSeparator.flatMap(
+            ln =>
+              make(ConfigSource.fromJavaProperties(properties), configDescriptor)
+                .mapError(r => new RuntimeException(s"${ln}${r.mkString(ln)}"))
+          )
+      )
 
   def fromPropertyFile[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A]
