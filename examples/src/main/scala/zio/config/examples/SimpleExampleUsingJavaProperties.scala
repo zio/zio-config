@@ -39,8 +39,8 @@ object SimpleExample {
   val printConfigs: ZIO[Config[ApplicationConfig], Nothing, Unit] =
     for {
       appConfig <- config[ApplicationConfig]
-      s1        <- putStrLn(appConfig.bridgeIp)
-      s2        <- putStrLn(appConfig.userName)
+      _         <- putStrLn(appConfig.bridgeIp)
+      _         <- putStrLn(appConfig.userName)
     } yield ()
 
   val finalExecution: ZIO[Config[ApplicationConfig], Nothing, Unit] =
