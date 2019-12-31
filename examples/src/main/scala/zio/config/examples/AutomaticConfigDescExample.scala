@@ -91,7 +91,7 @@ object AutomaticConfigDescriptor extends zio.App {
     )
 
   sealed trait Price1
-  case class Currency1(dollars: Double)        extends Price1
+  case class Currency(dollars: Double)         extends Price1
   case class Description1(description: String) extends Price1
 
   final case class Narrowed(price: Price1)
@@ -146,49 +146,56 @@ object AutomaticConfigDescriptor extends zio.App {
   //
 }
 
-sealed trait Price1
-case class Description1(description: String) extends Price1
-case class Currency1(dollars: Double)        extends Price1
-
 object Something extends scala.App {
 
-  final case class Narrowed(price: Price1)
+  final case class MyConfig(price: Price)
 
-  val automatic: ConfigDescriptor[String, String, Narrowed] =
-    description[Narrowed]
+  val automatic: ConfigDescriptor[String, String, MyConfig] =
+    description[MyConfig]
 
   val priceConfig = nested("price")(double("dollars"))
     .orElseEither(nested("price")(string("description")))
     .xmap({
-      case Left(value) => Currency1(value): Price1
-      case Right(desc) => Description1(desc): Price1
+      case Left(value) => Currency(value): Price
+      case Right(desc) => Description(desc): Price
     })(
       b =>
         b match {
-          case Description1(description) => Right(description)
-          case Currency1(dollars)        => Left(dollars)
+          case Description(description) => Right(description)
+          case Currency(dollars)        => Left(dollars)
         }
     )
 
   val goodManual =
-    priceConfig.xmap(Narrowed)(_.price)
+    priceConfig.xmap(MyConfig)(_.price)
 
   val badManual = {
-    val description1Description = string("description")
-      .xmap(Description1)(_.description)
-      .xmap(r => r: Price1)(price => price.asInstanceOf[Description1])
+    val descriptionDescription = string("description")
+      .xmap(Description)(_.description)
 
-    val currency1Description =
-      double("dollars").xmap(Currency1)(_.dollars).xmap(r => r: Price1)(price => price.asInstanceOf[Currency1])
+    val currencyDescription =
+      double("dollars")
+        .xmap(Currency)(_.dollars)
 
-    description1Description.orElse(currency1Description).xmap(Narrowed)(_.price)
+    val desc =
+      currencyDescription
+        .orElseEither(descriptionDescription)
+        .xmap(r => r.fold(r => r: Price, v => v: Price))(
+          price =>
+            price match {
+              case Currency(value)          => Left(Currency(value))
+              case Description(description) => Right(Description(description))
+            }
+        )
+
+    desc.xmap(MyConfig)(_.price)
 
   }
 
   //println(automatic)
 
   val thisisObtained =
-    Narrowed(Description1("sdsds"))
+    MyConfig(Description("sdsds"))
 
   val result = write(badManual, thisisObtained).map(_.flattenString())
 

@@ -21,7 +21,6 @@ object AutomaticConfigTest
         testM("automatic derivation spec") {
           checkM(genEnvironment) {
             p =>
-              println(p)
               val configDesc = description[MyConfig]
 
               val source =
