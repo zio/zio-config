@@ -61,8 +61,6 @@ object TypesafeConfigHoconExample extends App {
   val finalResult =
     read(configWithHoconSubstituion from fromHoccon(Right(hocconStringWithSubstition)))
 
-  println(runtime.unsafeRun(finalResult))
-
   assert(runtime.unsafeRun(finalResult) == DatabaseDetails(Details(8, "west"), Details(6, "east")))
 
   // List Example
@@ -77,6 +75,10 @@ object TypesafeConfigHoconExample extends App {
                 {
                     region : us-west
                     accountId: chris
+                }
+                {
+                    region : us-some
+                    accountId: hello
                 }
             ]
 
@@ -103,5 +105,11 @@ object TypesafeConfigHoconExample extends App {
   val listResult =
     read(awsDetailsConfig from fromHoccon(Right(listHoccon)))
 
-  // println(runtime.unsafeRun(listResult))
+  assert(
+    runtime.unsafeRun(listResult) ==
+      AwsDetails(
+        List(Account("us-east", "jon"), Account("us-west", "chris"), Account("us-some", "hello")),
+        Database(100, "postgres")
+      )
+  )
 }

@@ -13,7 +13,7 @@ private[config] trait ReadFunctions {
     def loop[V1, B](
       configuration: ConfigDescriptor[K, V1, B],
       paths: Vector[K]
-    ): ZIO[Cache[K], ReadErrorsVector[K, V1], B] =
+    ): ZIO[TailResults[K], ReadErrorsVector[K, V1], B] =
       configuration match {
         case ConfigDescriptor.Empty() => ZIO.succeed(None)
 
@@ -47,7 +47,7 @@ private[config] trait ReadFunctions {
           loop(config, paths).flatMap(
             v =>
               ZIO
-                .environment[Cache[K]]
+                .environment[TailResults[K]]
                 .flatMap(
                   ref =>
                     ref
@@ -65,14 +65,13 @@ private[config] trait ReadFunctions {
         case ConfigDescriptor.XmapEither(c, f, _) =>
           loop(c, paths).flatMap { a =>
             ZIO
-              .environment[Cache[K]]
+              .environment[TailResults[K]]
               .flatMap(
                 ref =>
                   ref
                     .get(paths)
                     .flatMap(
                       list => {
-                        println(s"the list is ${list}")
                         ZIO
                           .foreach(a :: list)(a => {
                             ZIO
@@ -89,7 +88,7 @@ private[config] trait ReadFunctions {
                     )
                     .flatMap(
                       list =>
-                        ZIO.accessM[Cache[K]](
+                        ZIO.accessM[TailResults[K]](
                           e => (if (list.isEmpty) e.r.get else e.add(paths, list.tail)).map(_ => list.head)
                         )
                     )
@@ -110,21 +109,28 @@ private[config] trait ReadFunctions {
         case ConfigDescriptor.Optional(c) =>
           loop(c, paths).option
 
-        case ConfigDescriptor.Zip(left, right) =>
-          loop(left, paths).either
-            .flatMap(
-              res1 =>
-                loop(right, paths).either.map(
-                  res2 =>
-                    (res1, res2) match {
-                      case (Right(a), Right(b))     => Right((a, b))
-                      case (Left(a), Right(_))      => Left(a)
-                      case (Right(_), Left(error))  => Left(error)
-                      case (Left(err1), Left(err2)) => Left(concat(err1, err2))
-                    }
-                )
-            )
-            .absolve
+        case ConfigDescriptor.Zip(left, right) => {
+          for {
+            res1  <- loop(left, paths).either
+            list1 <- ZIO.environment[TailResults[K]].flatMap(ref => ref.get(paths))
+            res2  <- loop(right, paths).either
+            list2 <- ZIO.environment[TailResults[K]].flatMap(ref => ref.get(paths))
+            r <- ((res1, res2) match {
+                  case (Right(a), Right(b)) =>
+                    ZIO
+                      .accessM[TailResults[K]](
+                        cache =>
+                          cache
+                            .add(paths, list1.zip(list2))
+                      )
+                      .map(_ => Right((a, b)))
+                  case (Left(a), Right(_))      => ZIO.access[TailResults[K]](_ => Left(a))
+                  case (Right(_), Left(error))  => ZIO.access[TailResults[K]](_ => Left(error))
+                  case (Left(err1), Left(err2)) => ZIO.access[TailResults[K]](_ => Left(concat(err1, err2)))
+                }).absolve
+
+          } yield r
+        }
 
         case ConfigDescriptor.OrElseEither(left, right) =>
           loop(left, paths).either
@@ -146,11 +152,11 @@ private[config] trait ReadFunctions {
   }
 }
 
-final case class Cache[K](r: Ref[Map[Vector[K], List[Any]]]) {
+final case class TailResults[K](r: Ref[Map[Vector[K], List[Any]]]) {
   def get(k: Vector[K])               = r.get.map(_.get(k).toList.flatten)
   def add(k: Vector[K], v: List[Any]) = r.update(r => r.updated(k, v))
 }
 
 object Cache {
-  def make[K] = Ref.make(Map.empty[Vector[K], List[Any]]).map(Cache(_))
+  def make[K] = Ref.make(Map.empty[Vector[K], List[Any]]).map(TailResults(_))
 }
