@@ -68,19 +68,19 @@ object TypesafeConfigHoconExample extends App {
   val listHoccon =
     """
     accounts = [
-                {
-                    region : us-east
-                    accountId: jon
-                }
-                {
-                    region : us-west
-                    accountId: chris
-                }
-                {
-                    region : us-some
-                    accountId: hello
-                }
-            ]
+      {
+          region : us-east
+          accountId: jon
+      }
+      {
+          region : us-west
+          accountId: chris
+      }
+      {
+          region : us-some
+          accountId: hello
+      }
+    ]
 
     database { 
         port : 100
