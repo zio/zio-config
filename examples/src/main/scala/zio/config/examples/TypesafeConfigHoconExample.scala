@@ -29,7 +29,7 @@ object TypesafeConfigHoconExample extends App {
    """
 
   val nestedConfigAutomaticResult =
-    runtime.unsafeRun(read(configNestedAutomatic from fromHoccon(Right(hocconString))))
+    runtime.unsafeRun(read(configNestedAutomatic from hoccon(Right(hocconString))))
 
   assert(nestedConfigAutomaticResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
@@ -41,7 +41,7 @@ object TypesafeConfigHoconExample extends App {
   }
 
   val nestedConfigManualResult =
-    runtime.unsafeRun(read(configNestedManual from fromHoccon(Right(hocconString))))
+    runtime.unsafeRun(read(configNestedManual from hoccon(Right(hocconString))))
 
   assert(nestedConfigManualResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
@@ -59,7 +59,7 @@ object TypesafeConfigHoconExample extends App {
   val configWithHoconSubstituion = description[DatabaseDetails]
 
   val finalResult =
-    read(configWithHoconSubstituion from fromHoccon(Right(hocconStringWithSubstition)))
+    read(configWithHoconSubstituion from hoccon(Right(hocconStringWithSubstition)))
 
   assert(runtime.unsafeRun(finalResult) == DatabaseDetails(Details(8, "west"), Details(6, "east")))
 
@@ -103,7 +103,7 @@ object TypesafeConfigHoconExample extends App {
     )
 
   val listResult =
-    read(awsDetailsConfig from fromHoccon(Right(listHoccon)))
+    read(awsDetailsConfig from hoccon(Right(listHoccon)))
 
   assert(
     runtime.unsafeRun(listResult) ==

@@ -16,7 +16,7 @@ import scala.jdk.CollectionConverters._
 // Experimental: Yet to refactor
 object TypeSafeConfigSource {
   // It is user's responsiblility to load the file
-  def fromHoccon(
+  def hoccon(
     hoccon: Either[File, String],
     configParseOptions: Option[ConfigParseOptions] = None
   ): ConfigSource[String, String] =
