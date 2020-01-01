@@ -107,6 +107,8 @@ object TypeSafeConfigSource {
             getValue(config, config.getValue(originalKey).valueType(), originalKey)
           }
 
+        println(result)
+
         ZIO.fromEither(result).map(t => ConfigValue(t, "typesafe-config-hoccon"))
       },
       List("typesafe-config-hoccon")

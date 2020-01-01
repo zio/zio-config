@@ -22,8 +22,8 @@ object SequenceExample extends App {
           (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
       )
 
-  val configOfList: ConfigDescriptor[String, String, List[Variables]] =
-    ConfigDescriptor.collectAll(listOfConfig)
+  val configOfList: ConfigDescriptor[String, String, ::[Variables]] =
+    ConfigDescriptor.collectAll(::(listOfConfig.head, listOfConfig.tail))
 
   val map =
     Map(
@@ -41,7 +41,7 @@ object SequenceExample extends App {
   val result  = runtime.unsafeRun(read(configOfList from ConfigSource.fromMap(map)))
   val written = write(configOfList, result)
 
-  assert(result == List(Variables(1, Some(2)), Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
+  assert(result == ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))))
   assert(
     written ==
       Right(

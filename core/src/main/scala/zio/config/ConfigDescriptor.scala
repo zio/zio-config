@@ -43,10 +43,9 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     self orElseEither that
 
   final def orElse(that: => ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
-    (self orElseEither that).xmap {
-      case Right(value) => value
-      case Left(value)  => value
-    }(b => Right(b))
+    ((self orElseEither that).xmap { _.merge }(b => Right(b)) orElseEither (that
+      .orElseEither(self)
+      .xmap(_.merge)(b => Left(b)))).xmap(_.merge)(v => Right(v))
 
   final def <>(that: => ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     self orElse that
@@ -124,21 +123,19 @@ object ConfigDescriptor {
 
   def empty[K, V, A]: ConfigDescriptor[K, V, Option[A]] = ConfigDescriptor.Empty()
 
-  def sequence[K, V, A](configList: List[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, List[A]] =
-    configList.foldRight(
-      Empty[K, V, A]().xmap(_.toList)(_.headOption)
+  def sequence[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] =
+    configList.tail.foldRight(
+      configList.head.xmap(a => ::(a, Nil))(b => b.head)
     )(
       (b, a) =>
-        b.xmapEither2(a)((aa, bb) => Right(aa :: bb))(
+        b.xmapEither2(a)((aa, bb) => Right(::(aa, bb)))(
           t => {
-            t.headOption.fold[Either[String, (A, List[A])]](
-              Left("Input does not match config description. It may have fewer entries than config requires")
-            )(ll => Right((ll, t.tail)))
+            Right((t.head, ::(t.head, t.tail)))
           }
         )
     )
 
-  def collectAll[K, V, A](configList: List[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, List[A]] =
+  def collectAll[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] =
     sequence(configList)
 
   def list[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
