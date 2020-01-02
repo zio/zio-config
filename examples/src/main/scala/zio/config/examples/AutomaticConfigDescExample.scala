@@ -20,14 +20,14 @@ final case class Aws(credentials: Credentials)
 final case class DbUrl(value: String) extends AnyVal
 
 final case class MyConfig(
-  aws: Aws,
-  price: Price,
-  dburl: DbUrl,
+  //aws: Aws,
+  //price: Price,
+  // dburl: DbUrl,
   port: Int,
   amount: Option[Double],
   quanity: Either[Double, String],
-  default: Int = 1,
-  anotherDefault: Int = 2
+  default: Int,
+  anotherDefault: Int
 )
 
 object AutomaticConfigDescriptor extends zio.App {
@@ -74,17 +74,17 @@ object AutomaticConfigDescriptor extends zio.App {
 
   // val aws = (string("region") |@| nested("credentials")(credentials))(Aws.apply, Aws.unapply)
   val aws = nested("credentials")(credentials).xmap(Aws)(_.credentials)
-  val nonAutomaticConfig =
-    (nested("aws")(aws) |@| nested("price")(price) |@| string("dburl")
-      .xmap(DbUrl)(_.value)
-      |@| int("port") |@| double(
-      "amount"
-    ).optional |@| double(
-      "quanity"
-    ).orElseEither(string("quanity")) |@| int("default").default(1) |@| int("anotherDefault").default(12))(
-      MyConfig,
-      MyConfig.unapply
-    )
+//  val nonAutomaticConfig =
+//    (/*nested("aws")(aws) |@| string("dburl")
+//      .xmap(DbUrl)(_.value)
+//      |@|*/ int("port") |@| /*double(
+//      "amount"
+//    ).optional |@| double(
+//      "quanity"
+//    ).orElseEither(string("quanity")) |@|*/ int("default").default(10) |@| int("anotherDefault").default(12))(
+//      MyConfig,
+//      MyConfig.unapply
+//    )
 
   // Typeclass derivation through Magnolia
   private val automaticConfig = description[MyConfig]
@@ -94,16 +94,18 @@ object AutomaticConfigDescriptor extends zio.App {
       Map(
         "aws.region"            -> "us-east",
         "aws.credentials.token" -> "password",
-        "port"                  -> "1",
+        "port"                  -> "10",
+        "default"               -> "12",
+        "dburl.value"           -> "some url",
         "dburl"                 -> "some url",
         "amount"                -> "3.14",
-        "quanity"               -> "30 kilos",
-        "price.description"     -> "1000.0",
-        "anotherDefault"        -> "3"
+        "quanity"               -> "30.0",
+        "price.dollars"         -> "1000.0",
+        "anotherDefault"        -> "14"
       )
     )
 
-  private val config = nonAutomaticConfig from source
+  private val config = automaticConfig from source
 
   import zio.config._
 
@@ -111,7 +113,7 @@ object AutomaticConfigDescriptor extends zio.App {
     read(config).foldM(
       r => putStrLn(r.mkString(",")) *> ZIO.succeed(1),
       result =>
-        putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *>
+        putStrLn(result.toString()) *> //putStrLn(write(config, result).toString()) *>
           ZIO.succeed(0)
     )
   //

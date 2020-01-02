@@ -3,16 +3,7 @@ package zio.config
 import scala.concurrent.duration.Duration
 
 import java.net.URI
-import zio.config.ConfigDescriptor.Default
-import zio.config.ConfigDescriptor.OrElseEither
-import zio.config.ConfigDescriptor.Source
-import zio.config.ConfigDescriptor.Describe
-import zio.config.ConfigDescriptor.Optional
-import zio.config.ConfigDescriptor.Zip
-import zio.config.ConfigDescriptor.Empty
-import zio.config.ConfigDescriptor.Nested
-import zio.config.ConfigDescriptor.XmapEither
-import zio.config.ConfigDescriptor.Sequence
+import zio.config.ConfigDescriptor._
 
 sealed trait ConfigDescriptor[K, V, A] { self =>
   final def zip[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, (A, B)] =
@@ -76,7 +67,6 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
 
   final def updateSource(f: ConfigSource[K, V] => ConfigSource[K, V]): ConfigDescriptor[K, V, A] = {
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
-      case a @ Empty()                        => a
       case Source(path, source, propertyType) => Source(path, f(source), propertyType)
       case Nested(path, conf)                 => Nested(path, loop(conf))
       case Sequence(conf)                     => Sequence(loop(conf))
@@ -92,9 +82,6 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
 }
 
 object ConfigDescriptor {
-
-  final case class Empty[K, V, A]() extends ConfigDescriptor[K, V, Option[A]]
-
   final case class Source[K, V, A](path: K, source: ConfigSource[K, V], propertyType: PropertyType[V, A])
       extends ConfigDescriptor[K, V, A]
 
@@ -121,16 +108,14 @@ object ConfigDescriptor {
   final case class OrElseEither[K, V, A, B](left: ConfigDescriptor[K, V, A], right: ConfigDescriptor[K, V, B])
       extends ConfigDescriptor[K, V, Either[A, B]]
 
-  def empty[K, V, A]: ConfigDescriptor[K, V, Option[A]] = ConfigDescriptor.Empty()
-
   def sequence[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] =
-    configList.tail.foldRight(
+    configList.tail.foldLeft(
       configList.head.xmap(a => ::(a, Nil))(b => b.head)
     )(
       (b, a) =>
-        b.xmapEither2(a)((aa, bb) => Right(::(aa, bb)))(
+        b.xmapEither2(a)((aa, bb) => Right(::(bb, aa)))(
           t => {
-            Right((t.head, ::(t.head, t.tail)))
+            Right((::(t.head, t.tail), t.head))
           }
         )
     )

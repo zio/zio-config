@@ -6,6 +6,8 @@ import ConfigDescriptor._
 import magnolia._
 
 import scala.language.experimental.macros
+import scala.reflect.macros.TypecheckException
+import scala.tools.nsc.doc.model.TypeClassConstraint
 
 trait ConfigDescriptorProvider[T] {
   def getDescription(path: String): ConfigDescriptor[String, String, T]
@@ -49,78 +51,59 @@ object ConfigDescriptorProvider {
 
   def combine[T](caseClass: CaseClass[ConfigDescriptorProvider, T]): ConfigDescriptorProvider[T] =
     new ConfigDescriptorProvider[T] {
-      def getDescription(path: String): ConfigDescriptor[String, String, T] =
-        if (caseClass.isValueClass) {
-          val h = caseClass.parameters.head
+      def getDescription(path: String): ConfigDescriptor[String, String, T] = {
+        val result: List[ConfigDescriptor[String, String, Any]] =
+          caseClass.parameters.toList.map { h =>
+            {
+              val rawDesc =
+                h.typeclass.getDescription(h.label)
 
-          val rawDesc =
-            h.typeclass.getDescription(path)
+              val desc =
+                h.default
+                  .map(r => rawDesc.default(r))
+                  .getOrElse(rawDesc)
 
-          val desc =
-            h.default
-              .map(r => rawDesc.default(r))
-              .getOrElse(rawDesc)
-
-          desc.xmap(r => caseClass.rawConstruct(List(r: Any)))(
-            r => caseClass.parameters.map(_.dereference(r): Any).toList.head.asInstanceOf[h.PType]
-          )
-
-        } else {
-          val result: List[ConfigDescriptor[String, String, Any]] =
-            caseClass.parameters.toList.map { h =>
-              {
-                val rawDesc =
-                  h.typeclass.getDescription(h.label)
-
-                val desc =
-                  h.default
-                    .map(r => rawDesc.default(r))
-                    .getOrElse(rawDesc)
-
-                desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
-              }
+              desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
             }
+          }
 
-          val resultx =
-            collectAll(::(result.head, result.tail)).xmap[T](cons => {
-              caseClass.rawConstruct(cons.toList.reverse)
-            })(v => {
-              val r = caseClass.parameters.map(_.dereference(v): Any).toList; ::(r.head, r.tail)
-            })
+        val resultx =
+          collectAll(::(result.head, result.tail)).xmap[T](cons => {
+            caseClass.rawConstruct(cons.reverse)
+          })(v => {
+            val r = caseClass.parameters.map(_.dereference(v): Any).toList; ::(r.head, r.tail)
+          })
 
-          if (path.isEmpty()) resultx else nested(path)(resultx)
-        }
+        if (path.isEmpty) resultx else nested(path)(resultx)
+      }
     }
 
   def dispatch[T](sealedTrait: SealedTrait[ConfigDescriptorProvider, T]): ConfigDescriptorProvider[T] =
     new ConfigDescriptorProvider[T] {
       def getDescription(paths: String): ConfigDescriptor[String, String, T] = {
-        def loop(tail: List[Subtype[ConfigDescriptorProvider, T]]): ConfigDescriptor[String, String, T] =
-          tail match {
-            case Nil =>
-              empty[String, String, T].xmapEither[T]({
-                case Some(v) => Right(v): Either[String, T]
-                case None =>
-                  Left(s"Couldn't form any subtypes ${sealedTrait.subtypes.map(_.typeName.full)}"): Either[String, T]
-              })(v => Right(Some(v)))
-            case h :: tail => {
-              val desc = h.typeclass
-                .getDescription(paths)
-                .xmapEither(r => Right(r: T))(
-                  t =>
-                    if (t.isInstanceOf[h.SType]) {
-                      println("is it really happening?")
-                      Right(t.asInstanceOf[h.SType])
-                    } else {
-                      println("is it really happening?")
-                      Left("Couldn't find the subtype.")
-                    }
-                )
-              if (tail.isEmpty) desc else desc.orElse(loop(tail))
-            }
-          }
+        val list         = sealedTrait.subtypes.toList
+        val head :: tail = ::(list.head, list.tail)
 
-        loop(sealedTrait.subtypes.toList)
+        tail.foldLeft(
+          head.typeclass
+            .getDescription(paths)
+            .xmapEither(t => Right(t: T))({
+              case sType: head.SType => Right(sType)
+              case _                 => Left("failed")
+            })
+        )(
+          (a, b) =>
+            a.orElse(
+              b.typeclass
+                .getDescription(paths)
+                .xmapEither(
+                  t => Right(t: T)
+                )({
+                  case sType: b.SType => Right(sType)
+                  case _              => Left("failed")
+                })
+            )
+        )
       }
     }
 

@@ -11,7 +11,6 @@ private[config] trait ConfigDocsFunctions {
       docs: ConfigDocs[K, V]
     ): ConfigDocs[K, V] =
       config match {
-        case ConfigDescriptor.Empty() => docs
         case ConfigDescriptor.Source(path, source, _) =>
           Path(
             path,

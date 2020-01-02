@@ -13,8 +13,6 @@ private[config] trait ReadFunctions {
       paths: Vector[K]
     ): ZIO[Any, ReadErrorsVector[K, V1], ::[B]] =
       configuration match {
-        case ConfigDescriptor.Empty() => ZIO.succeed(singleton(None))
-
         case ConfigDescriptor.Source(path, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
           for {
             value <- source.getConfigValue(paths :+ path)

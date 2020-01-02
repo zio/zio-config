@@ -4,9 +4,6 @@ private[config] trait WriteFunctions {
   final def write[K, V, A](config: ConfigDescriptor[K, V, A], a: A): Either[String, PropertyTree[K, V]] = {
     def go[B](config: ConfigDescriptor[K, V, B], b: B): Either[String, PropertyTree[K, V]] =
       config match {
-        case ConfigDescriptor.Empty() =>
-          Right(PropertyTree.Empty)
-
         case ConfigDescriptor.Source(path, _, propertyType) =>
           println(b)
           Right(PropertyTree.Record(Map(path -> PropertyTree.Leaf(propertyType.write(b)))))
