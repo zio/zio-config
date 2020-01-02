@@ -32,6 +32,8 @@ object TypeSafeConfigSource {
         val originalKey =
           path.mkString(".")
 
+        println(s"$parentKey and $originalKey")
+
         val parentValue = config.getValue(parentKey)
 
         val getValue: (

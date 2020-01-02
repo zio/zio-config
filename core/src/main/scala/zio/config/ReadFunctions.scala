@@ -48,6 +48,7 @@ private[config] trait ReadFunctions {
           loop(c, paths).flatMap { as =>
             ZIO
               .foreach(as)(a => {
+                println(a)
                 ZIO
                   .fromEither(f(a))
                   .bimap(
@@ -106,6 +107,7 @@ private[config] trait ReadFunctions {
               }
             )
             .map(singleton)
+
       }
 
     loop(configuration, Vector.empty[K]).map(_.head)

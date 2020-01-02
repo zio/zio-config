@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.ZIO
 import zio.config.ConfigSource
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.ConfigDescriptor._
 import zio.console.Console.Live.console._
 
 sealed trait Credentials
@@ -13,47 +13,100 @@ sealed trait Price
 case class Description(description: String) extends Price
 case class Currency(dollars: Double)        extends Price
 
-final case class Aws(region: String, credentials: Credentials)
+//final case class Aws(region: String, credentials: Credentials)
+final case class Aws(credentials: Credentials)
 
 final case class DbUrl(dburl: String) extends AnyVal
 
 final case class MyConfig(
-  aws: Aws,
-  price: Price,
-  dburl: DbUrl,
-  port: Int,
-  amount: Option[Double],
-  quanity: Either[Double, String],
-  default: Int = 1,
-  anotherDefault: Int = 2
+  aws: Aws
+  //price: Price,
+  //dburl: DbUrl,
+  //port: Int,
+  //amount: Option[Double],
+  //quanity: Either[Double, String],
+  //default: Int = 1,
+  //anotherDefault: Int = 2
 )
 
 object AutomaticConfigDescriptor extends zio.App {
+
+  val password =
+    string("password").xmap(Password)(_.password)
+
+  val token =
+    string("token").xmap(Token)(_.token)
+
+  val credentials =
+    password
+      .orElseEither(token)
+      .xmap({
+        case Left(pass) => pass: Credentials
+        case Right(tok) => tok: Credentials
+      })(
+        credential =>
+          credential match {
+            case a @ Password(password) => Left(a)
+            case b @ Token(password)    => Right(b)
+          }
+      )
+
+  val priceDescription =
+    string("description").xmap(Description)(_.description)
+
+  val currency =
+    double("dollars").xmap(Currency)(_.dollars)
+
+  val price =
+    priceDescription
+      .orElseEither(currency)
+      .xmap({
+        case Left(pass) => pass: Price
+        case Right(tok) => tok: Price
+      })(
+        credential =>
+          credential match {
+            case a @ Description(_) => Left(a)
+            case b @ Currency(_)    => Right(b)
+          }
+      )
+
+  // val aws = (string("region") |@| nested("credentials")(credentials))(Aws.apply, Aws.unapply)
+  val aws      = nested("credentials")(credentials).xmap(Aws)(_.credentials)
+  val myConfig = nested("aws")(aws).xmap(MyConfig)(_.aws)
+
+  // val myConfig =
+  //   (nested("aws")(aws) |@| nested("price")(price) |@| string("dburl").xmap(DbUrl)(_.dburl) |@| int("port") |@| double(
+  //     "amount"
+  //   ).optional |@| double("quanity").orElseEither(string("quanity")) |@| int("default").default(1) |@| int(
+  //     "anotherDefault"
+  //   ).default(12))(MyConfig.apply, MyConfig.unapply)
+
   // Typeclass derivation through Magnolia
-  private val configDesc = description[MyConfig]
+  //private val configDesc = description[MyConfig]
 
   private val source =
     ConfigSource.fromMap(
       Map(
         "aws.region"            -> "us-east",
-        "aws.credentials.token" -> "some token",
-        "port"                  -> "1",
-        "dburl"                 -> "some url",
-        "amount"                -> "3.14",
-        "quanity"               -> "30 kilos",
-        "price.dollars"         -> "50",
-        "anotherDefault"        -> "3"
+        "aws.credentials.token" -> "some token"
+        // "port"                  -> "1",
+        // "dburl"                 -> "some url",
+        // "amount"                -> "3.14",
+        // "quanity"               -> "30 kilos",
+        // "price.description"     -> "1000 dollars",
+        // "anotherDefault"        -> "3"
       )
     )
 
-  private val config = configDesc from source
+  private val config = myConfig from source
 
   import zio.config._
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     read(config).foldM(
       r => putStrLn(r.mkString(",")) *> ZIO.succeed(1),
-      result => putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *> ZIO.succeed(0)
+      result => putStrLn(result.toString()) *> ZIO.succeed(0)
     )
   //
   // Read output:
