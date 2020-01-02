@@ -32,8 +32,6 @@ object TypeSafeConfigSource {
         val originalKey =
           path.mkString(".")
 
-        println(s"$parentKey and $originalKey")
-
         val parentValue = config.getValue(parentKey)
 
         val getValue: (
@@ -108,8 +106,6 @@ object TypeSafeConfigSource {
           } else {
             getValue(config, config.getValue(originalKey).valueType(), originalKey)
           }
-
-        println(result)
 
         ZIO.fromEither(result).map(t => ConfigValue(t, "typesafe-config-hoccon"))
       },

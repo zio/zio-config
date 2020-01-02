@@ -103,15 +103,13 @@ private[config] trait ReadFunctions {
                   ZIO.succeed(::(a.map(r => Left(r): Either[a, b]).head, a.map(r => Left(r): Either[a, b])))
 
                 case Left(lerr) =>
-                  val result = loop(right, paths).either.flatMap(
+                  loop(right, paths).either.flatMap(
                     {
                       case Right(b) =>
                         ZIO.succeed(::(b.map(r => Right(r): Either[a, b]).head, b.map(r => Right(r): Either[a, b])))
                       case Left(rerr) => ZIO.fail(concat(lerr, rerr))
                     }
                   )
-
-                  result
               }
             )
       }

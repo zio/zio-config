@@ -11,18 +11,17 @@ case class Password(password: String) extends Credentials
 case class Token(token: String)       extends Credentials
 
 sealed trait Price
-case class Description(description: String) extends Price
-case class Currency(dollars: Double)        extends Price
+case class INR(inr: Int)        extends Price
+case class AUD(dollars: Double) extends Price
 
-//final case class Aws(region: String, credentials: Credentials)
-final case class Aws(credentials: Credentials)
+final case class Aws(region: String, credentials: Credentials)
 
 final case class DbUrl(value: String) extends AnyVal
 
 final case class MyConfig(
-  //aws: Aws,
-  //price: Price,
-  // dburl: DbUrl,
+  aws: Aws,
+  price: Price,
+  dburl: DbUrl,
   port: Int,
   amount: Option[Double],
   quanity: Either[Double, String],
@@ -53,10 +52,10 @@ object AutomaticConfigDescriptor extends zio.App {
       )
 
   val priceDescription =
-    string("description").xmap(Description)(_.description)
+    int("inr").xmap(INR)(_.inr)
 
   val currency =
-    double("dollars").xmap(Currency)(_.dollars)
+    double("dollars").xmap(AUD)(_.dollars)
 
   val price =
     priceDescription
@@ -67,24 +66,23 @@ object AutomaticConfigDescriptor extends zio.App {
       })(
         credential =>
           credential match {
-            case a @ Description(_) => Left(a)
-            case b @ Currency(_)    => Right(b)
+            case a @ INR(_) => Left(a)
+            case b @ AUD(_) => Right(b)
           }
       )
 
-  // val aws = (string("region") |@| nested("credentials")(credentials))(Aws.apply, Aws.unapply)
-  val aws = nested("credentials")(credentials).xmap(Aws)(_.credentials)
-//  val nonAutomaticConfig =
-//    (/*nested("aws")(aws) |@| string("dburl")
-//      .xmap(DbUrl)(_.value)
-//      |@|*/ int("port") |@| /*double(
-//      "amount"
-//    ).optional |@| double(
-//      "quanity"
-//    ).orElseEither(string("quanity")) |@|*/ int("default").default(10) |@| int("anotherDefault").default(12))(
-//      MyConfig,
-//      MyConfig.unapply
-//    )
+  val aws = (string("region") |@| nested("credentials")(credentials))(Aws.apply, Aws.unapply)
+  val nonAutomaticConfig =
+    (nested("aws")(aws) |@| nested("price")(price) |@| string("dburl")
+      .xmap(DbUrl)(_.value)
+      |@| int("port") |@| double(
+      "amount"
+    ).optional |@| double(
+      "quanity"
+    ).orElseEither(string("quanity")) |@| int("default").default(10) |@| int("anotherDefault").default(12))(
+      MyConfig,
+      MyConfig.unapply
+    )
 
   // Typeclass derivation through Magnolia
   private val automaticConfig = description[MyConfig]
@@ -100,12 +98,12 @@ object AutomaticConfigDescriptor extends zio.App {
         "dburl"                 -> "some url",
         "amount"                -> "3.14",
         "quanity"               -> "30.0",
-        "price.dollars"         -> "1000.0",
+        "price.inr"             -> "1000",
         "anotherDefault"        -> "14"
       )
     )
 
-  private val config = automaticConfig from source
+  private val config = nonAutomaticConfig from source
 
   import zio.config._
 
@@ -113,7 +111,7 @@ object AutomaticConfigDescriptor extends zio.App {
     read(config).foldM(
       r => putStrLn(r.mkString(",")) *> ZIO.succeed(1),
       result =>
-        putStrLn(result.toString()) *> //putStrLn(write(config, result).toString()) *>
+        putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *>
           ZIO.succeed(0)
     )
   //
