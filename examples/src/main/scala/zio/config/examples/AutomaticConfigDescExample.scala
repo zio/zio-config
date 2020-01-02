@@ -88,8 +88,8 @@ object AutomaticConfigDescriptor extends zio.App {
   private val source =
     ConfigSource.fromMap(
       Map(
-        "aws.region"            -> "us-east",
-        "aws.credentials.token" -> "some token"
+        "aws.region"               -> "us-east",
+        "aws.credentials.password" -> "password"
         // "port"                  -> "1",
         // "dburl"                 -> "some url",
         // "amount"                -> "3.14",

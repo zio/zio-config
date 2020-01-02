@@ -49,6 +49,10 @@ private[config] trait ReadFunctions {
             ZIO
               .foreach(as)(a => {
                 println(a)
+                println(scala.util.Try {
+                  f(a)
+                })
+
                 ZIO
                   .fromEither(f(a))
                   .bimap(
@@ -92,22 +96,26 @@ private[config] trait ReadFunctions {
           } yield r
         }
 
-        case ConfigDescriptor.OrElseEither(left, right) =>
+        case cd: ConfigDescriptor.OrElseEither[K, V, a, b] =>
+          val ConfigDescriptor.OrElseEither(left, right) = cd
           loop(left, paths).either
             .flatMap(
               {
-                case Right(a) => ZIO.succeed(Left(a))
+                case Right(a) =>
+                  ZIO.succeed(::(a.map(r => Left(r): Either[a, b]).head, a.map(r => Left(r): Either[a, b])))
+
                 case Left(lerr) =>
-                  loop(right, paths).either.flatMap(
+                  val result = loop(right, paths).either.flatMap(
                     {
-                      case Right(b)   => ZIO.succeed(Right(b))
+                      case Right(b) =>
+                        ZIO.succeed(::(b.map(r => Right(r): Either[a, b]).head, b.map(r => Right(r): Either[a, b])))
                       case Left(rerr) => ZIO.fail(concat(lerr, rerr))
                     }
                   )
+
+                  result
               }
             )
-            .map(singleton)
-
       }
 
     loop(configuration, Vector.empty[K]).map(_.head)
