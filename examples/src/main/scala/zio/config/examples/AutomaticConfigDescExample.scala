@@ -2,6 +2,7 @@ package zio.config.examples
 
 import zio.ZIO
 import zio.config.ConfigSource
+import zio.config.magnolia.ConfigDescriptorProvider._
 import zio.config.ConfigDescriptor._
 import zio.console.Console.Live.console._
 
@@ -16,17 +17,17 @@ case class Currency(dollars: Double)        extends Price
 //final case class Aws(region: String, credentials: Credentials)
 final case class Aws(credentials: Credentials)
 
-final case class DbUrl(dburl: String) extends AnyVal
+final case class DbUrl(value: String) extends AnyVal
 
 final case class MyConfig(
-  aws: Aws
-  //price: Price,
-  //dburl: DbUrl,
-  //port: Int,
-  //amount: Option[Double],
-  //quanity: Either[Double, String],
-  //default: Int = 1,
-  //anotherDefault: Int = 2
+  aws: Aws,
+  price: Price,
+  dburl: DbUrl,
+  port: Int,
+  amount: Option[Double],
+  quanity: Either[Double, String],
+  default: Int = 1,
+  anotherDefault: Int = 2
 )
 
 object AutomaticConfigDescriptor extends zio.App {
@@ -72,41 +73,46 @@ object AutomaticConfigDescriptor extends zio.App {
       )
 
   // val aws = (string("region") |@| nested("credentials")(credentials))(Aws.apply, Aws.unapply)
-  val aws      = nested("credentials")(credentials).xmap(Aws)(_.credentials)
-  val myConfig = nested("aws")(aws).xmap(MyConfig)(_.aws)
-
-  // val myConfig =
-  //   (nested("aws")(aws) |@| nested("price")(price) |@| string("dburl").xmap(DbUrl)(_.dburl) |@| int("port") |@| double(
-  //     "amount"
-  //   ).optional |@| double("quanity").orElseEither(string("quanity")) |@| int("default").default(1) |@| int(
-  //     "anotherDefault"
-  //   ).default(12))(MyConfig.apply, MyConfig.unapply)
+  val aws = nested("credentials")(credentials).xmap(Aws)(_.credentials)
+  val nonAutomaticConfig =
+    (nested("aws")(aws) |@| nested("price")(price) |@| string("dburl")
+      .xmap(DbUrl)(_.value)
+      |@| int("port") |@| double(
+      "amount"
+    ).optional |@| double(
+      "quanity"
+    ).orElseEither(string("quanity")) |@| int("default").default(1) |@| int("anotherDefault").default(12))(
+      MyConfig,
+      MyConfig.unapply
+    )
 
   // Typeclass derivation through Magnolia
-  //private val configDesc = description[MyConfig]
+  private val automaticConfig = description[MyConfig]
 
   private val source =
     ConfigSource.fromMap(
       Map(
-        "aws.region"               -> "us-east",
-        "aws.credentials.password" -> "password"
-        // "port"                  -> "1",
-        // "dburl"                 -> "some url",
-        // "amount"                -> "3.14",
-        // "quanity"               -> "30 kilos",
-        // "price.description"     -> "1000 dollars",
-        // "anotherDefault"        -> "3"
+        "aws.region"            -> "us-east",
+        "aws.credentials.token" -> "password",
+        "port"                  -> "1",
+        "dburl"                 -> "some url",
+        "amount"                -> "3.14",
+        "quanity"               -> "30 kilos",
+        "price.description"     -> "1000.0",
+        "anotherDefault"        -> "3"
       )
     )
 
-  private val config = myConfig from source
+  private val config = nonAutomaticConfig from source
 
   import zio.config._
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     read(config).foldM(
       r => putStrLn(r.mkString(",")) *> ZIO.succeed(1),
-      result => putStrLn(result.toString()) *> ZIO.succeed(0)
+      result =>
+        putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *>
+          ZIO.succeed(0)
     )
   //
   // Read output:

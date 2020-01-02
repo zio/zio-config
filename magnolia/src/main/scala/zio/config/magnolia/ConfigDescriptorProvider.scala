@@ -49,30 +49,47 @@ object ConfigDescriptorProvider {
 
   def combine[T](caseClass: CaseClass[ConfigDescriptorProvider, T]): ConfigDescriptorProvider[T] =
     new ConfigDescriptorProvider[T] {
-      def getDescription(path: String): ConfigDescriptor[String, String, T] = {
-        val result: List[ConfigDescriptor[String, String, Any]] =
-          caseClass.parameters.toList.map { h =>
-            {
-              val rawDesc =
-                h.typeclass.getDescription(h.label)
+      def getDescription(path: String): ConfigDescriptor[String, String, T] =
+        if (caseClass.isValueClass) {
+          val h = caseClass.parameters.head
 
-              val desc =
-                h.default
-                  .map(r => rawDesc.default(r))
-                  .getOrElse(rawDesc)
+          val rawDesc =
+            h.typeclass.getDescription(path)
 
-              desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
+          val desc =
+            h.default
+              .map(r => rawDesc.default(r))
+              .getOrElse(rawDesc)
+
+          desc.xmap(r => caseClass.rawConstruct(List(r: Any)))(
+            r => caseClass.parameters.map(_.dereference(r): Any).toList.head.asInstanceOf[h.PType]
+          )
+
+        } else {
+          val result: List[ConfigDescriptor[String, String, Any]] =
+            caseClass.parameters.toList.map { h =>
+              {
+                val rawDesc =
+                  h.typeclass.getDescription(h.label)
+
+                val desc =
+                  h.default
+                    .map(r => rawDesc.default(r))
+                    .getOrElse(rawDesc)
+
+                desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
+              }
             }
-          }
 
-        val resultx =
-          collectAll(::(result.head, result.tail)).xmap[T](cons => {
-            caseClass.rawConstruct(cons.toList.reverse)
-          })(v => {
-            val r = caseClass.parameters.map(_.dereference(v): Any).toList; ::(r.head, r.tail)
-          })
-        if (path.isEmpty()) resultx else nested(path)(resultx)
-      }
+          val resultx =
+            collectAll(::(result.head, result.tail)).xmap[T](cons => {
+              caseClass.rawConstruct(cons.toList.reverse)
+            })(v => {
+              val r = caseClass.parameters.map(_.dereference(v): Any).toList; ::(r.head, r.tail)
+            })
+
+          if (path.isEmpty()) resultx else nested(path)(resultx)
+        }
     }
 
   def dispatch[T](sealedTrait: SealedTrait[ConfigDescriptorProvider, T]): ConfigDescriptorProvider[T] =
@@ -90,7 +107,14 @@ object ConfigDescriptorProvider {
               val desc = h.typeclass
                 .getDescription(paths)
                 .xmapEither(r => Right(r: T))(
-                  t => if (t.isInstanceOf[h.SType]) Right(t.asInstanceOf[h.SType]) else Left("Not a su...")
+                  t =>
+                    if (t.isInstanceOf[h.SType]) {
+                      println("is it really happening?")
+                      Right(t.asInstanceOf[h.SType])
+                    } else {
+                      println("is it really happening?")
+                      Left("Couldn't find the subtype.")
+                    }
                 )
               if (tail.isEmpty) desc else desc.orElse(loop(tail))
             }

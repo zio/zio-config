@@ -48,11 +48,6 @@ private[config] trait ReadFunctions {
           loop(c, paths).flatMap { as =>
             ZIO
               .foreach(as)(a => {
-                println(a)
-                println(scala.util.Try {
-                  f(a)
-                })
-
                 ZIO
                   .fromEither(f(a))
                   .bimap(
@@ -76,8 +71,13 @@ private[config] trait ReadFunctions {
         case ConfigDescriptor.Describe(c, _) =>
           loop(c, paths)
 
-        case ConfigDescriptor.Optional(c) =>
-          loop(c, paths).option.map(singleton)
+        case cd: ConfigDescriptor.Optional[K, V, B] =>
+          val ConfigDescriptor.Optional(c) = cd
+          loop(c, paths).either.flatMap({
+            case Right(value) =>
+              ZIO.succeed(::(value.map(t => Some(t): Option[B]).head, value.map(t => Some(t): Option[B]).tail))
+            case Left(value) => ZIO.succeed(singleton(None))
+          })
 
         case r: ConfigDescriptor.Zip[K, V, a, B] => {
           val ConfigDescriptor.Zip(left, right) = r
