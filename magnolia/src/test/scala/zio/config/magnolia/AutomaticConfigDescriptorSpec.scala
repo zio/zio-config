@@ -1,6 +1,5 @@
 package zio.config.magnolia
 
-import zio.ZIO
 import zio.config.ConfigSource
 import zio.config.magnolia.ConfigDescriptorProvider._
 import AutomaticConfigTestUtils._
@@ -20,11 +19,11 @@ object AutomaticConfigTest
       suite("magnolia spec")(
         testM("automatic derivation spec") {
           checkM(genEnvironment) {
-            p =>
+            environment =>
               val configDesc = description[MyConfig]
 
               val source =
-                ConfigSource.fromMap(p)
+                ConfigSource.fromMap(environment)
 
               val readAndWrite
                 : ZIO[Any, ReadErrors[Vector[String], String], Either[String, PropertyTree[String, String]]] =
@@ -33,11 +32,19 @@ object AutomaticConfigTest
                   written <- ZIO.effectTotal(write(configDesc, result))
                 } yield written
 
+              val defaultValue   = environment.getOrElse("default", "1")
+              val anotherDefault = environment.getOrElse("anotherDefault", "true")
+
+              val updatedEnv =
+                environment
+                  .updated("default", defaultValue)
+                  .updated("anotherDefault", anotherDefault)
+
               val actual = readAndWrite
                 .map(_.map(_.flattenString()))
-                .map(_.fold(_ => Nil, _.toList.sortBy(_._1)))
+                .map(_.fold(_ => Nil, _.view.mapValues(_.head).toList.sortBy(_._1)))
 
-              assertM(actual, equalTo(p.toList.sortBy(_._1)))
+              assertM(actual, equalTo(updatedEnv.toList.sortBy(_._1)))
           }
         }
       )
@@ -61,38 +68,38 @@ object AutomaticConfigTestUtils {
     price: Price,
     dburl: DbUrl,
     port: Int,
-    amount: Option[Double],
-    quantity: Either[Double, String],
+    amount: Option[Long],
+    quantity: Either[Long, String],
     default: Int = 1,
-    anotherDefault: Int = 2
+    anotherDefault: Boolean = true
   )
 
-  val genPriceDescription                = genNonEmptyString(5).map(Description)
-  val genCurrency: Gen[Random, Currency] = Gen.double(10.0, 20.0).map(Currency)
-  val genPrice: Gen[Random, Price]       = Gen.oneOf(genPriceDescription, genCurrency)
+  private val genPriceDescription                = genNonEmptyString(5).map(Description)
+  private val genCurrency: Gen[Random, Currency] = Gen.double(10.0, 20.0).map(Currency)
+  private val genPrice: Gen[Random, Price]       = Gen.oneOf(genPriceDescription, genCurrency)
 
-  val genToken       = genNonEmptyString(5).map(Token)
-  val genPassword    = genNonEmptyString(5).map(Password)
-  val genCredentials = Gen.oneOf(genToken, genPassword)
+  private val genToken       = genNonEmptyString(5).map(Token)
+  private val genPassword    = genNonEmptyString(5).map(Password)
+  private val genCredentials = Gen.oneOf(genToken, genPassword)
 
-  val genDbUrl = genNonEmptyString(5).map(DbUrl)
+  private val genDbUrl = genNonEmptyString(5).map(DbUrl)
 
-  val genAws =
+  private val genAws =
     for {
       region      <- genNonEmptyString(5)
       credentials <- genCredentials
     } yield Aws(region, credentials)
 
-  val genEnvironment =
+  private[magnolia] val genEnvironment =
     for {
       aws            <- genAws
       price          <- genPrice
       dbUrl          <- genDbUrl
       port           <- Gen.anyInt
-      amount         <- Gen.option(Gen.double(1, 100))
-      quantity       <- Gen.either(Gen.double(5, 10), genNonEmptyString(5))
+      amount         <- Gen.option(Gen.long(1, 100))
+      quantity       <- Gen.either(Gen.long(5, 10), genNonEmptyString(5))
       default        <- Gen.option(Gen.anyInt)
-      anotherDefault <- Gen.option(Gen.anyInt)
+      anotherDefault <- Gen.option(Gen.boolean)
       partialMyConfig = Map(
         "aws.region" -> aws.region,
         aws.credentials match {
@@ -104,9 +111,9 @@ object AutomaticConfigTestUtils {
           case Currency(dollars)        => "price.dollars"     -> dollars.toString
         },
         "dburl.dburl" -> dbUrl.dburl,
-        "port"        -> port.toString(),
+        "port"        -> port.toString,
         "quantity"    -> quantity.fold(d => d.toString, s => s)
-      ) ++ amount.map(double => ("amount", double.toString())).toList
+      ) ++ amount.map(double => ("amount", double.toString)).toList
     } yield (default, anotherDefault) match {
       case (Some(v1), Some(v2)) => partialMyConfig ++ List(("default", v1.toString), ("anotherDefault", v2.toString))
       case (Some(v1), None)     => partialMyConfig + (("default", v1.toString))

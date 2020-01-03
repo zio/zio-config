@@ -62,23 +62,19 @@ object ConfigDescriptorProvider {
                   .map(r => rawDesc.default(r))
                   .getOrElse(rawDesc)
 
-              desc.xmapEither(r => Right(r: Any))(
-                r => if (r.isInstanceOf[h.PType]) Right(r.asInstanceOf[h.PType]) else Left("failed")
-              )
+              desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
             }
           }
 
-        val resultx =
+        val finalDesc =
           collectAll(::(result.head, result.tail)).xmap[T](cons => {
             caseClass.rawConstruct(cons)
           })(v => {
-            println(s"the v is ${v}")
             val r = caseClass.parameters.map(_.dereference(v): Any).toList
-            println(r)
             ::(r.head, r.tail)
           })
 
-        if (path.isEmpty) resultx else nested(path)(resultx)
+        if (path.isEmpty) finalDesc else nested(path)(finalDesc)
       }
     }
 
@@ -94,7 +90,7 @@ object ConfigDescriptorProvider {
             .xmapEither(t => Right(t: T))({ a =>
               scala.util.Try(head.cast(a)) match {
                 case Success(value) => Right(value)
-                case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage()}")
+                case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage}")
               }
             })
         )(
@@ -107,7 +103,7 @@ object ConfigDescriptorProvider {
                 )({ a =>
                   scala.util.Try(e.cast(a)) match {
                     case Success(value) => Right(value)
-                    case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage()}")
+                    case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage}")
                   }
                 })
             )
