@@ -45,8 +45,11 @@ val myConfigAutomatic = description[MyConfig]
 
 ```
 
-You can skip it and use only `zio-config` if you are ok writing manual descriptions as it provide more flexibility especially in adding extra documentations.
-More examples on automatic derivation is in [here](https://github.com/zio/zio-config/src/main/scala/zio/config/examples/AutomaticConfigDescExample.scala)
+`myConfig` and `myConfigAutomatic` are same description, and is of the same type. 
+
+If you need more control over the description,
+probably you may choose to write it manually (such as, for adding extra documentations). 
+More examples on automatic derivation is in examples module of [zio-config](https://github.com/zio/zio-config)
 
 ## Running the description to ZIO
 
@@ -55,7 +58,16 @@ To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
 val result: IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]] = 
-  Config.fromEnv(myConfig) // That's system environment, (Config.fromEnv(myConfigAutomatic)))
+  Config.fromEnv(myConfig) // That's system environment
+```
+
+Another way of doing this is:
+
+```scala mdoc:silent
+val source = ConfigSource.fromEnv
+
+read(myConfig from source)
+// IO[ReadErrorsVector[String, String], MyConfig]
 ```
 
 You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application. 
