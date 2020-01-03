@@ -2,6 +2,7 @@ package zio.config
 
 import PropertyTypeTestUtils._
 import zio.config.PropertyType._
+import zio.random.Random
 import zio.test._
 import zio.test.Assertion._
 
@@ -29,6 +30,22 @@ object PropertyTypeTest
               )
             }
           }
+        ),
+        suite("Byte")(
+          test("valid byte string roundtrip") {
+            (Byte.MinValue to Byte.MaxValue).map { n =>
+              val s = n.toString
+              assert(ByteType.read(s).map(ByteType.write), isRight(equalTo(s)))
+            }.reduce(_ && _)
+          },
+          testM("invalid byte string roundtrip") {
+            check(genInvalidByteString) { s =>
+              assert(
+                ByteType.read(s).map(ByteType.write),
+                isLeft(equalTo(PropertyReadError(s, "byte")))
+              )
+            }
+          }
         )
       )
     )
@@ -39,8 +56,13 @@ object PropertyTypeTestUtils {
   val validFalseBooleans: List[String]  = stringCasePermutations("false")
   val validBooleanStrings: List[String] = validTrueBooleans ++ validFalseBooleans
 
-  val genInvalidBooleanString =
-    Gen.anyString.filter(!validBooleanStrings.contains(_))
+  val genInvalidBooleanString: Gen[Random with Sized, String] =
+    genInvalidStrings(!validBooleanStrings.contains(_))
+  val genInvalidByteString: Gen[Random with Sized, String] =
+    genInvalidStrings(_.toByteOption.isEmpty)
+
+  def genInvalidStrings(predicate: String => Boolean): Gen[Random with Sized, String] =
+    Gen.anyString.filter(predicate)
 
   /** Generates all case permutations of a string */
   private def stringCasePermutations(s: String): List[String] = {
