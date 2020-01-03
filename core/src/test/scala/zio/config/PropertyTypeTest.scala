@@ -5,6 +5,7 @@ import zio.config.PropertyType._
 import zio.random.Random
 import zio.test._
 import zio.test.Assertion._
+import zio.test.environment.TestEnvironment
 
 object PropertyTypeTest
     extends BaseSpec(
@@ -13,7 +14,7 @@ object PropertyTypeTest
           check(Gen.anyString)(assertValidRoundtrip(StringType))
         },
         suite("BooleanType")(
-          test("valid boolean string roundtrip") {
+          test("valid Boolean string roundtrip") {
             validTrueBooleans.map { s =>
               assert(
                 BooleanType.read(s).map(BooleanType.write),
@@ -26,30 +27,66 @@ object PropertyTypeTest
               )
             }.reduce(_ && _)
           },
-          testM("invalid boolean string roundtrip") {
+          testM("invalid Boolean string roundtrip") {
             check(genInvalidBooleanString)(assertInvalidRoundtrip(BooleanType, typeInfo = "boolean"))
           }
         ),
-        suite("ByteType")(
-          test("valid byte string roundtrip") {
-            (Byte.MinValue to Byte.MaxValue)
-              .map(_.toString)
-              .map(assertValidRoundtrip(ByteType))
-              .reduce(_ && _)
-          },
-          testM("invalid byte string roundtrip") {
-            check(genInvalidByteString)(assertInvalidRoundtrip(ByteType, typeInfo = "byte"))
-          }
+        propertyTypeSpec(
+          typeInfo = "Byte",
+          ByteType,
+          Gen.anyByte,
+          _.toByteOption.isEmpty
         ),
-        suite("Short")(
-          testM("valid short string roundtrip") {
-            check(genValidShortStrings)(assertValidRoundtrip(ShortType))
-          }
+        propertyTypeSpec(
+          typeInfo = "Short",
+          ShortType,
+          Gen.anyShort,
+          _.toShortOption.isEmpty
+        ),
+        propertyTypeSpec(
+          typeInfo = "Int",
+          IntType,
+          Gen.anyInt,
+          _.toIntOption.isEmpty
+        ),
+        propertyTypeSpec(
+          typeInfo = "Long",
+          LongType,
+          Gen.anyLong,
+          _.toLongOption.isEmpty
+        ),
+        // TODO: Add BigInt
+        propertyTypeSpec(
+          typeInfo = "Float",
+          FloatType,
+          Gen.anyFloat,
+          _.toFloatOption.isEmpty
+        ),
+        propertyTypeSpec(
+          typeInfo = "Double",
+          DoubleType,
+          Gen.double(Double.MinValue, Double.MaxValue),
+          _.toDoubleOption.isEmpty
         )
+        // TODO: Add BigDecimal, Uri, Duration
       )
     )
 
 object PropertyTypeTestUtils {
+  def propertyTypeSpec[A](
+    typeInfo: String,
+    propType: PropertyType[String, A],
+    genValid: Gen[Random, Any],
+    invalidStringPredicate: String => Boolean,
+  ): Spec[TestEnvironment, TestFailure[Nothing], String, TestSuccess[Unit]] =
+    suite(s"${typeInfo}Type")(
+      testM(s"valid ${typeInfo} string roundtrip") {
+        check(genValid.map(_.toString))(assertValidRoundtrip(propType))
+      },
+      testM(s"invalid ${typeInfo} string roundtrip") {
+        check(genInvalidString(invalidStringPredicate))(assertInvalidRoundtrip(propType, typeInfo.toLowerCase))
+      }
+    )
 
   def assertValidRoundtrip[A](propType: PropertyType[String, A])(s: String): TestResult =
     assert(roundTrip(propType, s), isRight(equalTo(s)))
@@ -82,15 +119,11 @@ object PropertyTypeTestUtils {
   val validBooleanStrings: List[String] =
     validTrueBooleans ++ validFalseBooleans
   val genInvalidBooleanString: Gen[Random with Sized, String] =
-    genInvalidStrings(!validBooleanStrings.contains(_))
+    genInvalidString(!validBooleanStrings.contains(_))
 
   val genInvalidByteString: Gen[Random with Sized, String] =
-    genInvalidStrings(_.toByteOption.isEmpty)
+    genInvalidString(_.toByteOption.isEmpty)
 
-  val genValidShortStrings: Gen[Random, String] =
-    Gen.short(Short.MinValue, Short.MaxValue).map(_.toString)
-
-  def genInvalidStrings(predicate: String => Boolean): Gen[Random with Sized, String] =
+  def genInvalidString(predicate: String => Boolean): Gen[Random with Sized, String] =
     Gen.anyString.filter(predicate)
-
 }
