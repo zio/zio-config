@@ -10,57 +10,55 @@ object PropertyTypeTest
     extends BaseSpec(
       suite("Property type")(
         testM("StringType roundtrip") {
-          check(Gen.anyString) { s =>
-            assert(StringType.read(s).map(StringType.write), isRight(equalTo(s)))
-          }
+          check(Gen.anyString)(assertValidRoundtrip(StringType))
         },
         suite("BooleanType")(
           test("valid boolean string roundtrip") {
             validTrueBooleans.map { s =>
-              assert(BooleanType.read(s).map(BooleanType.write), isRight(equalTo("true")))
+              assert(
+                BooleanType.read(s).map(BooleanType.write),
+                isRight(equalTo("true"))
+              )
             }.reduce(_ && _) && validFalseBooleans.map { s =>
-              assert(BooleanType.read(s).map(BooleanType.write), isRight(equalTo("false")))
+              assert(
+                BooleanType.read(s).map(BooleanType.write),
+                isRight(equalTo("false"))
+              )
             }.reduce(_ && _)
           },
           testM("invalid boolean string roundtrip") {
-            check(genInvalidBooleanString) { s =>
-              assert(
-                BooleanType.read(s).map(BooleanType.write),
-                isLeft(equalTo(PropertyReadError(s, "boolean")))
-              )
-            }
+            check(genInvalidBooleanString)(assertInvalidRoundtrip(BooleanType, typeInfo = "boolean"))
           }
         ),
         suite("ByteType")(
           test("valid byte string roundtrip") {
-            (Byte.MinValue to Byte.MaxValue).map { n =>
-              val s = n.toString
-              assert(ByteType.read(s).map(ByteType.write), isRight(equalTo(s)))
-            }.reduce(_ && _)
+            (Byte.MinValue to Byte.MaxValue)
+              .map(_.toString)
+              .map(assertValidRoundtrip(ByteType))
+              .reduce(_ && _)
           },
           testM("invalid byte string roundtrip") {
-            check(genInvalidByteString) { s =>
-              assert(
-                ByteType.read(s).map(ByteType.write),
-                isLeft(equalTo(PropertyReadError(s, "byte")))
-              )
-            }
+            check(genInvalidByteString)(assertInvalidRoundtrip(ByteType, typeInfo = "byte"))
           }
         ),
         suite("Short")(
           testM("valid short string roundtrip") {
-            check(genValidShortStrings) { s =>
-              assert(
-                ShortType.read(s).map(ShortType.write),
-                isRight(equalTo(s))
-              )
-            }
+            check(genValidShortStrings)(assertValidRoundtrip(ShortType))
           }
         )
       )
     )
 
 object PropertyTypeTestUtils {
+
+  def assertValidRoundtrip[A](propType: PropertyType[String, A])(s: String): TestResult =
+    assert(roundTrip(propType, s), isRight(equalTo(s)))
+
+  def assertInvalidRoundtrip[A](propType: PropertyType[String, A], typeInfo: String)(s: String): TestResult =
+    assert(roundTrip(propType, s), isLeft(equalTo(PropertyReadError(s, typeInfo))))
+
+  private def roundTrip[A](propType: PropertyType[String, A], s: String) =
+    propType.read(s).map(propType.write)
 
   val validTrueBooleans: List[String]  = stringCasePermutations("true")
   val validFalseBooleans: List[String] = stringCasePermutations("false")
