@@ -108,6 +108,7 @@ object ConfigSource {
    *              properties
    *            }).map(r => fromJavaProperties(r))
    *  }}}
+   * We have the above functionality as  {{{ Config.fromJavaProperties() }}}
    */
   def fromJavaProperties(
     property: ju.Properties,

@@ -98,10 +98,13 @@ lazy val examples = module("examples", "zio-config-examples")
 lazy val zioConfigMagnolia = module("magnolia", "zio-config-magnolia")
   .settings(
     libraryDependencies ++= Seq(
-      "com.propensive" %% "magnolia" % magnoliaVersion
-    )
+      "com.propensive" %% "magnolia"     % magnoliaVersion,
+      "dev.zio"        %% "zio-test"     % zioVersion % Test,
+      "dev.zio"        %% "zio-test-sbt" % zioVersion % Test
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-  .dependsOn(zioConfig)
+  .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigTypesafe =
   module("typesafe", "zio-config-typesafe")

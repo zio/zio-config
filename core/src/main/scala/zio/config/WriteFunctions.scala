@@ -39,8 +39,22 @@ private[config] trait WriteFunctions {
               Left(e)
           }
 
-        case ConfigDescriptor.OrElseEither(left, right) =>
-          b.fold(aa => { go(left, aa) }, b => { go(right, b) })
+        case ConfigDescriptor.OrElseEither(left, right) => {
+          b.fold(
+            aa => go(left, aa),
+            b => go(right, b)
+          )
+        }
+
+        case ConfigDescriptor.OrElse(left, right) =>
+          go(left, b) match {
+            case Right(a) =>
+              Right(a)
+
+            case Left(lerr) =>
+              go(right, b)
+
+          }
 
         case ConfigDescriptor.Zip(config1, config2) =>
           go(config1, b._1) match {

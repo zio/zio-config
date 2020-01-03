@@ -4,10 +4,9 @@ import java.net.URI
 import zio.config.{ ConfigDescriptor }
 import ConfigDescriptor._
 import magnolia._
-
+import scala.util.Success
+import scala.util.Failure
 import scala.language.experimental.macros
-import scala.reflect.macros.TypecheckException
-import scala.tools.nsc.doc.model.TypeClassConstraint
 
 trait ConfigDescriptorProvider[T] {
   def getDescription(path: String): ConfigDescriptor[String, String, T]
@@ -35,7 +34,7 @@ object ConfigDescriptorProvider {
   implicit val uriDesc: ConfigDescriptorProvider[URI]               = instance(uri)
 
   implicit def opt[A: ConfigDescriptorProvider]: ConfigDescriptorProvider[Option[A]] =
-    ConfigDescriptorProvider[A].getDescription(_).optional
+    a => ConfigDescriptorProvider[A].getDescription(a).optional
 
   implicit def listt[A: ConfigDescriptorProvider]: ConfigDescriptorProvider[List[A]] =
     a => list(ConfigDescriptorProvider[A].getDescription(a))
@@ -63,15 +62,20 @@ object ConfigDescriptorProvider {
                   .map(r => rawDesc.default(r))
                   .getOrElse(rawDesc)
 
-              desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
+              desc.xmapEither(r => Right(r: Any))(
+                r => if (r.isInstanceOf[h.PType]) Right(r.asInstanceOf[h.PType]) else Left("failed")
+              )
             }
           }
 
         val resultx =
           collectAll(::(result.head, result.tail)).xmap[T](cons => {
-            caseClass.rawConstruct(cons.reverse)
+            caseClass.rawConstruct(cons)
           })(v => {
-            val r = caseClass.parameters.map(_.dereference(v): Any).toList; ::(r.head, r.tail)
+            println(s"the v is ${v}")
+            val r = caseClass.parameters.map(_.dereference(v): Any).toList
+            println(r)
+            ::(r.head, r.tail)
           })
 
         if (path.isEmpty) resultx else nested(path)(resultx)
@@ -84,28 +88,35 @@ object ConfigDescriptorProvider {
         val list         = sealedTrait.subtypes.toList
         val head :: tail = ::(list.head, list.tail)
 
-        tail.foldLeft(
+        tail.foldRight(
           head.typeclass
             .getDescription(paths)
-            .xmapEither(t => Right(t: T))({
-              case sType: head.SType => Right(sType)
-              case _                 => Left("failed")
+            .xmapEither(t => Right(t: T))({ a =>
+              scala.util.Try(head.cast(a)) match {
+                case Success(value) => Right(value)
+                case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage()}")
+              }
             })
         )(
-          (a, b) =>
-            a.orElse(
-              b.typeclass
+          (e, b) =>
+            b.orElse(
+              e.typeclass
                 .getDescription(paths)
                 .xmapEither(
                   t => Right(t: T)
-                )({
-                  case sType: b.SType => Right(sType)
-                  case _              => Left("failed")
+                )({ a =>
+                  scala.util.Try(e.cast(a)) match {
+                    case Success(value) => Right(value)
+                    case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage()}")
+                  }
                 })
             )
         )
+
       }
     }
+
+  def manOf[T: Manifest](t: T): Manifest[T] = manifest[T]
 
   implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
 

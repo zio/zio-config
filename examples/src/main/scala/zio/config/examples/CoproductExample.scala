@@ -1,84 +1,91 @@
 package zio.config.examples
 
+import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config._, ConfigDescriptor._
 import zio.DefaultRuntime
-import zio.config._
-import ConfigDescriptor._
-import zio.config.ReadError._
-import zio.config.{ ConfigSource, _ }
 
 object CoproductExample extends App {
-  final case class Ldap(value: String)  extends AnyVal
-  final case class DbUrl(value: String) extends AnyVal
 
-  case class Prod(ldap: Ldap, dburl: DbUrl)
-  case class Dev(user: String, password: Int, dburl: Double)
+  sealed trait Dance
+  case class A(any: Person)   extends Dance
+  case class B(body: Height)  extends Dance
+  case class C(can: Boolean)  extends Dance
+  case class D(dance: String) extends Dance
 
-  val prod =
-    (string("x1").xmap(Ldap)(_.value) |@| string("x2").xmap(DbUrl)(_.value))(Prod.apply, Prod.unapply)
+  final case class Person(name: String, age: Option[Int])
+  final case class Height(height: Long)
 
-  val dev =
-    (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
+  val descrip = description[Dance]
 
-  val prodOrDev =
-    prod orElseEither dev
+  val aSource = ConfigSource.fromMap(
+    Map(
+      "any.name" -> "chris"
+    )
+  )
+
+  val bSource = ConfigSource.fromMap(
+    Map(
+      "body.height" -> "179"
+    )
+  )
+
+  val cSource = ConfigSource.fromMap(
+    Map(
+      "can" -> "false"
+    )
+  )
+
+  val dSource = ConfigSource.fromMap(
+    Map(
+      "dance" -> "I am Dancing !!"
+    )
+  )
 
   val runtime = new DefaultRuntime {}
 
-  val validConfigForSampleConfig =
-    Map(
-      "x1" -> "v1",
-      "x2" -> "v2",
-      "x3" -> "v3"
+  def readA =
+    runtime.unsafeRun(
+      read(descrip from aSource)
     )
 
-  val source: ConfigSource[String, String] =
-    ConfigSource.fromMap(validConfigForSampleConfig)
-
-  // read(prodOrDev from source) is equivalent to Config.fromMap(prodOrDev). This is only to demonstrate that you can
-  // use `from` at any point in your description, making it really flexible for the user to fetch different configs from different
-  // sources.
-  assert(runtime.unsafeRun(read(prodOrDev from source)) == Left(Prod(Ldap("v1"), DbUrl("v2"))))
-
-  val validConfigForAnotherConfig =
-    Map(
-      "x2" -> "v2",
-      "x3" -> "v3",
-      "x4" -> "1",
-      "x5" -> "2.0"
+  def readB =
+    runtime.unsafeRun(
+      read(descrip from bSource)
     )
 
-  val anotherSource: ConfigSource[String, String] =
-    ConfigSource.fromMap(validConfigForAnotherConfig)
-
-  assert(runtime.unsafeRun(read(prodOrDev from anotherSource)) == Right(Dev("v3", 1, 2.0)))
-
-  val invalidConfig =
-    Map(
-      "x2" -> "v2",
-      "x3" -> "v3",
-      "x4" -> "1",
-      "x5" -> "notadouble"
+  def readC =
+    runtime.unsafeRun(
+      read(descrip from cSource)
     )
 
-  val invalidSource =
-    ConfigSource.fromMap(invalidConfig)
+  def readD =
+    runtime.unsafeRun(
+      read(descrip from dSource)
+    )
 
   assert(
-    runtime.unsafeRun(read(prodOrDev from invalidSource).either) ==
-      Left(List(MissingValue(Vector("x1")), ParseError(Vector("x5"), "notadouble", "double")))
+    readA == A(Person("chris", None)) &&
+      readB == B(Height(179)) &&
+      readC == C(false) &&
+      readD == D("I am Dancing !!")
   )
 
-  val allConfigsExist =
-    Map(
-      "x1" -> "v1",
-      "x2" -> "v2",
-      "x3" -> "v3",
-      "x4" -> "1",
-      "x5" -> "2.0"
-    )
+  val writeA =
+    write(descrip, readA).map(_.flattenString())
+
+  val writeB =
+    write(descrip, readB).map(_.flattenString())
+
+  val writeC =
+    write(descrip, readC).map(_.flattenString())
+
+  val writeD =
+    write(descrip, readD).map(_.flattenString())
 
   assert(
-    runtime.unsafeRun(read(prodOrDev from ConfigSource.fromMap(allConfigsExist))) ==
-      Left(Prod(Ldap("v1"), DbUrl("v2")))
+    writeA == Right(Map("any.name"      -> singleton("chris"))) &&
+      writeB == Right(Map("body.height" -> singleton("179"))) &&
+      writeC == Right(Map("can"         -> singleton("false"))) &&
+      writeD == Right(Map("dance"       -> singleton("I am Dancing !!")))
   )
 }

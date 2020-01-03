@@ -103,7 +103,7 @@ object AutomaticConfigDescriptor extends zio.App {
       )
     )
 
-  private val config = nonAutomaticConfig from source
+  private val config = automaticConfig from source
 
   import zio.config._
 

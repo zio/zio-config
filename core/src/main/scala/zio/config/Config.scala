@@ -3,7 +3,7 @@ package zio.config
 import zio.system.System
 import zio.{ IO, UIO, ZIO }
 
-trait Config[A] {
+trait Config[A] { self =>
   def config: Config.Service[A]
 }
 object Config {

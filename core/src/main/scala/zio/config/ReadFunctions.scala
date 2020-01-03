@@ -112,6 +112,18 @@ private[config] trait ReadFunctions {
                   )
               }
             )
+
+        case ConfigDescriptor.OrElse(left, right) =>
+          loop(left, paths).either
+            .flatMap(
+              {
+                case Right(a) =>
+                  ZIO.succeed(a)
+
+                case Left(lerr) =>
+                  loop(right, paths)
+              }
+            )
       }
 
     loop(configuration, Vector.empty[K]).map(_.head)

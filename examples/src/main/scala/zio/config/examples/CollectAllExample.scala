@@ -3,7 +3,6 @@ package zio.config.examples
 import zio.DefaultRuntime
 import zio.config._
 import ConfigDescriptor._
-import zio.config.PropertyTree.{ Leaf, Record }
 
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,
@@ -14,7 +13,7 @@ import zio.config.PropertyTree.{ Leaf, Record }
  */
 final case class Variables(variable1: Int, variable2: Option[Int])
 
-object SequenceExample extends App {
+object CollectAllExample extends App {
   val listOfConfig: List[ConfigDescriptor[String, String, Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
       .map(
@@ -42,19 +41,21 @@ object SequenceExample extends App {
   val written = write(configOfList, result)
 
   assert(result == ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))))
+
+  println(
+    written.map(_.flattenString())
+  )
   assert(
-    written ==
+    written.map(_.flattenString()) ==
       Right(
-        Record(
-          Map(
-            "GROUP3_VARIABLE1" -> Leaf("5"),
-            "GROUP3_VARIABLE2" -> Leaf("6"),
-            "GROUP1_VARIABLE2" -> Leaf("2"),
-            "GROUP1_VARIABLE1" -> Leaf("1"),
-            "GROUP2_VARIABLE2" -> Leaf("4"),
-            "GROUP2_VARIABLE1" -> Leaf("3"),
-            "GROUP4_VARIABLE1" -> Leaf("7")
-          )
+        Map(
+          "GROUP3_VARIABLE1" -> List("5"),
+          "GROUP3_VARIABLE2" -> List("6"),
+          "GROUP1_VARIABLE2" -> List("2"),
+          "GROUP1_VARIABLE1" -> List("1"),
+          "GROUP2_VARIABLE2" -> List("4"),
+          "GROUP2_VARIABLE1" -> List("3"),
+          "GROUP4_VARIABLE1" -> List("7")
         )
       )
   )
