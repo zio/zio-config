@@ -5,18 +5,7 @@ import zio.config.ConfigSource
 import zio.config.magnolia.ConfigDescriptorProvider._
 import zio.config.ConfigDescriptor._
 import zio.console.Console.Live.console._
-
-sealed trait Credentials
-case class Password(password: String) extends Credentials
-case class Token(token: String)       extends Credentials
-
-sealed trait Price
-case class INR(inr: Int)        extends Price
-case class AUD(dollars: Double) extends Price
-
-final case class Aws(region: String, credentials: Credentials)
-
-final case class DbUrl(value: String) extends AnyVal
+import MyConfig._
 
 final case class MyConfig(
   aws: Aws,
@@ -29,61 +18,21 @@ final case class MyConfig(
   anotherDefault: Int
 )
 
+object MyConfig {
+
+  sealed trait Credentials
+  case class Password(password: String) extends Credentials
+  case class Token(token: String)       extends Credentials
+
+  sealed trait Price
+  case class INR(inr: Int)        extends Price
+  case class AUD(dollars: Double) extends Price
+
+  final case class Aws(region: String, credentials: Credentials)
+  final case class DbUrl(value: String) extends AnyVal
+}
+
 object AutomaticConfigDescriptor extends zio.App {
-
-  val password =
-    string("password").xmap(Password)(_.password)
-
-  val token =
-    string("token").xmap(Token)(_.token)
-
-  val credentials =
-    password
-      .orElseEither(token)
-      .xmap({
-        case Left(pass) => pass: Credentials
-        case Right(tok) => tok: Credentials
-      })(
-        credential =>
-          credential match {
-            case a @ Password(password) => Left(a)
-            case b @ Token(password)    => Right(b)
-          }
-      )
-
-  val priceDescription =
-    int("inr").xmap(INR)(_.inr)
-
-  val currency =
-    double("dollars").xmap(AUD)(_.dollars)
-
-  val price =
-    priceDescription
-      .orElseEither(currency)
-      .xmap({
-        case Left(pass) => pass: Price
-        case Right(tok) => tok: Price
-      })(
-        credential =>
-          credential match {
-            case a @ INR(_) => Left(a)
-            case b @ AUD(_) => Right(b)
-          }
-      )
-
-  val aws = (string("region") |@| nested("credentials")(credentials))(Aws.apply, Aws.unapply)
-  val nonAutomaticConfig =
-    (nested("aws")(aws) |@| nested("price")(price) |@| string("dburl")
-      .xmap(DbUrl)(_.value)
-      |@| int("port") |@| double(
-      "amount"
-    ).optional |@| double(
-      "quanity"
-    ).orElseEither(string("quanity")) |@| int("default").default(10) |@| int("anotherDefault").default(12))(
-      MyConfig,
-      MyConfig.unapply
-    )
-
   // Typeclass derivation through Magnolia
   private val automaticConfig = description[MyConfig]
 
