@@ -9,12 +9,12 @@ import zio.test.Assertion._
 object PropertyTypeTest
     extends BaseSpec(
       suite("Property type")(
-        testM("String roundtrip") {
+        testM("StringType roundtrip") {
           check(Gen.anyString) { s =>
             assert(StringType.read(s).map(StringType.write), isRight(equalTo(s)))
           }
         },
-        suite("Boolean")(
+        suite("BooleanType")(
           test("valid boolean string roundtrip") {
             validTrueBooleans.map { s =>
               assert(BooleanType.read(s).map(BooleanType.write), isRight(equalTo("true")))
@@ -31,7 +31,7 @@ object PropertyTypeTest
             }
           }
         ),
-        suite("Byte")(
+        suite("ByteType")(
           test("valid byte string roundtrip") {
             (Byte.MinValue to Byte.MaxValue).map { n =>
               val s = n.toString
@@ -46,23 +46,24 @@ object PropertyTypeTest
               )
             }
           }
+        ),
+        suite("Short")(
+          testM("valid short string roundtrip") {
+            check(genValidShortStrings) { s =>
+              assert(
+                ShortType.read(s).map(ShortType.write),
+                isRight(equalTo(s))
+              )
+            }
+          }
         )
       )
     )
 
 object PropertyTypeTestUtils {
 
-  val validTrueBooleans: List[String]   = stringCasePermutations("true")
-  val validFalseBooleans: List[String]  = stringCasePermutations("false")
-  val validBooleanStrings: List[String] = validTrueBooleans ++ validFalseBooleans
-
-  val genInvalidBooleanString: Gen[Random with Sized, String] =
-    genInvalidStrings(!validBooleanStrings.contains(_))
-  val genInvalidByteString: Gen[Random with Sized, String] =
-    genInvalidStrings(_.toByteOption.isEmpty)
-
-  def genInvalidStrings(predicate: String => Boolean): Gen[Random with Sized, String] =
-    Gen.anyString.filter(predicate)
+  val validTrueBooleans: List[String]  = stringCasePermutations("true")
+  val validFalseBooleans: List[String] = stringCasePermutations("false")
 
   /** Generates all case permutations of a string */
   private def stringCasePermutations(s: String): List[String] = {
@@ -79,5 +80,19 @@ object PropertyTypeTestUtils {
     }
     combinations.toList
   }
+
+  val validBooleanStrings: List[String] =
+    validTrueBooleans ++ validFalseBooleans
+  val genInvalidBooleanString: Gen[Random with Sized, String] =
+    genInvalidStrings(!validBooleanStrings.contains(_))
+
+  val genInvalidByteString: Gen[Random with Sized, String] =
+    genInvalidStrings(_.toByteOption.isEmpty)
+
+  val genValidShortStrings: Gen[Random, String] =
+    Gen.short(Short.MinValue, Short.MaxValue).map(_.toString)
+
+  def genInvalidStrings(predicate: String => Boolean): Gen[Random with Sized, String] =
+    Gen.anyString.filter(predicate)
 
 }
