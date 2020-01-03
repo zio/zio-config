@@ -60,7 +60,7 @@ lazy val root =
     .aggregate(zioConfig, zioConfigMagnolia, examples, zioConfigRefined, zioConfigTypesafe)
 
 lazy val zioConfig =
-  module("core", "zio-config")
+  module("zio-config", "core")
     .enablePlugins(BuildInfoPlugin)
     .settings(buildInfoSettings)
     .settings(
@@ -72,7 +72,7 @@ lazy val zioConfig =
     )
 
 lazy val zioConfigRefined =
-  module("refined", "zio-config-refined")
+  module("zio-config-refined", "refined")
     .settings(
       libraryDependencies ++=
         Seq(
@@ -84,7 +84,7 @@ lazy val zioConfigRefined =
     )
     .dependsOn(zioConfig % "compile->compile;test->test")
 
-lazy val examples = module("examples", "zio-config-examples")
+lazy val examples = module("zio-config-examples", "examples")
   .settings(
     skip in publish := true,
     fork := true,
@@ -95,7 +95,7 @@ lazy val examples = module("examples", "zio-config-examples")
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe)
 
-lazy val zioConfigMagnolia = module("magnolia", "zio-config-magnolia")
+lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
     libraryDependencies ++= Seq(
       "com.propensive" %% "magnolia"     % magnoliaVersion,
@@ -107,7 +107,7 @@ lazy val zioConfigMagnolia = module("magnolia", "zio-config-magnolia")
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigTypesafe =
-  module("typesafe", "zio-config-typesafe")
+  module("zio-config-typesafe", "typesafe")
     .settings(
       libraryDependencies ++= Seq(
         "com.typesafe" % "config" % "1.4.0"
@@ -115,9 +115,9 @@ lazy val zioConfigTypesafe =
     )
     .dependsOn(zioConfig)
 
-def module(directory: String, projectName: String): Project =
-  Project(projectName, file(directory))
-    .settings(stdSettings(projectName))
+def module(moduleName: String, fileName: String): Project =
+  Project(moduleName, file(fileName))
+    .settings(stdSettings(moduleName))
     .settings(
       libraryDependencies ++= Seq(
         "dev.zio" %% "zio" % zioVersion

@@ -111,9 +111,7 @@ object ConfigDescriptorProvider {
 
       }
     }
-
-  def manOf[T: Manifest](t: T): Manifest[T] = manifest[T]
-
+  
   implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
 
   def description[T: ConfigDescriptorProvider]: ConfigDescriptor[String, String, T] =

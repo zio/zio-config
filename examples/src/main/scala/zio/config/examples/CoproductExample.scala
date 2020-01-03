@@ -15,7 +15,22 @@ object CoproductExample extends App {
   final case class Person(name: String, age: Option[Int])
   final case class Height(height: Long)
 
-  val descrip = description[Dance]
+  val x =
+    boolean("can").xmap(C)(_.can).xmapEither(c => Right(c : Dance))({dance => dance match {
+      case c @ C(_) => Right(dance.asInstanceOf[C])
+      case _ => Left("bhjooom")
+    }})
+
+
+  val y =
+    string("dance").xmap(D)(_.dance).xmapEither(c => Right(c : Dance))({dance => dance match {
+      case c @ D(_) => Right(dance.asInstanceOf[D])
+      case _ => Left("bhjooom")
+    }})
+
+  val configxxx = x.orElse(y)
+
+  val danceConfig = description[Dance]
 
   val aSource = ConfigSource.fromMap(
     Map(
@@ -45,22 +60,22 @@ object CoproductExample extends App {
 
   def readA =
     runtime.unsafeRun(
-      read(descrip from aSource)
+      read(danceConfig from aSource)
     )
 
   def readB =
     runtime.unsafeRun(
-      read(descrip from bSource)
+      read(danceConfig from bSource)
     )
 
   def readC =
     runtime.unsafeRun(
-      read(descrip from cSource)
+      read(danceConfig from cSource)
     )
 
   def readD =
     runtime.unsafeRun(
-      read(descrip from dSource)
+      read(danceConfig from dSource)
     )
 
   assert(
@@ -71,16 +86,16 @@ object CoproductExample extends App {
   )
 
   val writeA =
-    write(descrip, readA).map(_.flattenString())
+    write(danceConfig, readA).map(_.flattenString())
 
   val writeB =
-    write(descrip, readB).map(_.flattenString())
+    write(danceConfig, readB).map(_.flattenString())
 
   val writeC =
-    write(descrip, readC).map(_.flattenString())
+    write(danceConfig, readC).map(_.flattenString())
 
   val writeD =
-    write(descrip, readD).map(_.flattenString())
+    write(danceConfig, readD).map(_.flattenString())
 
   assert(
     writeA == Right(Map("any.name"      -> singleton("chris"))) &&
