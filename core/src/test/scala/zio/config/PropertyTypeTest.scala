@@ -11,8 +11,9 @@ import scala.util.Try
 
 object PropertyTypeTest
     extends BaseSpec(
-      suite("Property type")(
-        testM("StringType roundtrip") { // any string is a valid string?
+      suite("PropertyType")(
+        testM("StringType roundtrip") {
+          // any string is a valid string i guess
           check(Gen.anyString)(assertValidRoundtrip(StringType, equalTo))
         },
         suite("BooleanType")(
@@ -34,42 +35,38 @@ object PropertyTypeTest
             )
           }
         ),
-        propertyTypeSuite(
+        propertyTypeRoundtripSuite(
           typeInfo = "Byte",
-          ByteType,
-          Gen.anyByte,
-          _.toByteOption.isEmpty
+          propType = ByteType,
+          genValid = Gen.anyByte,
+          invalidStringPredicate = _.toByteOption.isEmpty
         ),
-        propertyTypeSuite(
+        propertyTypeRoundtripSuite(
           typeInfo = "Short",
-          ShortType,
-          Gen.anyShort,
-          _.toShortOption.isEmpty
+          propType = ShortType,
+          genValid = Gen.anyShort,
+          invalidStringPredicate = _.toShortOption.isEmpty
         ),
-        propertyTypeSuite(
+        propertyTypeRoundtripSuite(
           typeInfo = "Int",
-          IntType,
-          Gen.anyInt,
-          _.toIntOption.isEmpty
+          propType = IntType,
+          genValid = Gen.anyInt,
+          invalidStringPredicate = _.toIntOption.isEmpty
         ),
-        propertyTypeSuite(
+        propertyTypeRoundtripSuite(
           typeInfo = "Long",
-          LongType,
-          Gen.anyLong,
-          _.toLongOption.isEmpty
+          propType = LongType,
+          genValid = Gen.anyLong,
+          invalidStringPredicate = _.toLongOption.isEmpty
         ),
         suite("BigIntType")(
-          testM("valid BigInt string roundtrip") {
-            val leadingZeroes = "^0+(?!$)"
-            check(genValidBigIntString)(
-              assertValidRoundtrip(
-                BigIntType,
-                s => equalTo(s.replaceFirst(leadingZeroes, ""))
-              )
-            )
+          testM("valid BigIntType string roundtrip") {
+            check(genValidBigIntString.map(_.toString)) { s =>
+              assert(BigIntType.read(s).map(BigIntType.write).map(BigInt(_)), isRight(equalTo(BigInt(s))))
+            }
           },
-          testM("invalid Bigint string roundtrip") {
-            check(genInvalidBigIntString)(
+          testM("invalid BigIntType string roundtrip") {
+            check(genInvalidString(s => Try(BigInt(s)).isFailure))(
               assertInvalidRoundtrip(
                 BigIntType,
                 typeInfo = "BigInt",
@@ -78,32 +75,33 @@ object PropertyTypeTest
             )
           }
         ),
-        propertyTypeSuite(
+        propertyTypeRoundtripSuite(
           typeInfo = "Float",
-          FloatType,
-          Gen.anyFloat,
-          _.toFloatOption.isEmpty
+          propType = FloatType,
+          genValid = Gen.anyFloat,
+          invalidStringPredicate = _.toFloatOption.isEmpty
         ),
-        propertyTypeSuite(
+        propertyTypeRoundtripSuite(
           typeInfo = "Double",
-          DoubleType,
-          Gen.double(Double.MinValue, Double.MaxValue),
-          _.toDoubleOption.isEmpty
-        )
-        // TODO: Add BigDecimal, Uri, Duration
+          propType = DoubleType,
+          genValid = Gen.double(Double.MinValue, Double.MaxValue),
+          invalidStringPredicate = _.toDoubleOption.isEmpty
+        ),
+        // TODO: Uri, Duration
       )
     )
 
 object PropertyTypeTestUtils {
-  def propertyTypeSuite[A](
+  def propertyTypeRoundtripSuite[A](
     typeInfo: String,
     propType: PropertyType[String, A],
-    genValid: Gen[Random, Any],
+    genValid: Gen[Random with Sized, Any],
     invalidStringPredicate: String => Boolean,
+    validStringPredicate: String => Assertion[String] = equalTo(_)
   ): Spec[TestEnvironment, TestFailure[Nothing], String, TestSuccess[Unit]] =
     suite(s"${typeInfo}Type")(
       testM(s"valid ${typeInfo} string roundtrip") {
-        check(genValid.map(_.toString))(assertValidRoundtrip(propType, equalTo))
+        check(genValid.map(_.toString))(assertValidRoundtrip(propType, validStringPredicate))
       },
       testM(s"invalid ${typeInfo} string roundtrip") {
         check(genInvalidString(invalidStringPredicate))(
@@ -159,14 +157,16 @@ object PropertyTypeTestUtils {
   val genInvalidBooleanString: Gen[Random with Sized, String] =
     genInvalidString(!validBooleanStrings.contains(_))
 
-  val genInvalidByteString: Gen[Random with Sized, String] =
-    genInvalidString(_.toByteOption.isEmpty)
+  val genValidBigIntString: Gen[Random with Sized, String] = for {
+    sign <- Gen.oneOf(Gen.const(""), Gen.const("-"))
+    num  <- Gen.listOf1(Gen.char('0', '9')).map(_.mkString)
+  } yield sign + num
 
-  val genValidBigIntString: Gen[Random with Sized, String] =
-    Gen.listOf1(Gen.char('0', '9')).map(_.mkString)
-  val genInvalidBigIntString =
+  val genInvalidBigIntString: Gen[Random with Sized, String] =
     Gen.anyString.filter(s => Try(BigInt(s)).isFailure)
 
   def genInvalidString(predicate: String => Boolean): Gen[Random with Sized, String] =
     Gen.anyString.filter(predicate)
+
+  val leadingZeroes = "^0+(?!$)"
 }
