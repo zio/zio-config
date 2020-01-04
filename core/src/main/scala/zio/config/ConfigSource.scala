@@ -4,7 +4,7 @@ import zio.{ IO, ZIO }
 import zio.system.System.Live.system
 import java.{ util => ju }
 
-final case class ConfigValue[A](value: ::[A], sourceDescription: String)
+final case class ConfigValue[A](value: ::[A])
 
 final case class ConfigSource[K, V](
   getConfigValue: Vector[K] => IO[ReadErrorsVector[K, V], ConfigValue[V]],
@@ -50,7 +50,7 @@ object ConfigSource {
                     )
                     .getOrElse(::(r, Nil))
 
-                ConfigValue(consOfValues, SystemEnvironment)
+                ConfigValue(consOfValues)
               })
           )
           .flatMap(IO.fromOption(_))
@@ -80,7 +80,7 @@ object ConfigSource {
                         }
                     )
                     .getOrElse(::(r, Nil))
-                ConfigValue(consOfValues, SystemProperties)
+                ConfigValue(consOfValues)
               })
           )
           .flatMap(IO.fromOption(_))
@@ -132,7 +132,7 @@ object ConfigSource {
                         }
                     )
                     .getOrElse(::(r, Nil))
-                ConfigValue(consOfValues, SystemProperties)
+                ConfigValue(consOfValues)
               })
           )
           .flatMap(IO.fromOption(_))
@@ -152,7 +152,7 @@ object ConfigSource {
     ConfigSource(
       (path: Vector[String]) => {
         val key = path.mkString(pathDelimiter)
-        ZIO.fromOption(map.get(key).map(r => ConfigValue(f(r), ConstantMap))).mapError { _ =>
+        ZIO.fromOption(map.get(key).map(r => ConfigValue(f(r)))).mapError { _ =>
           singleton(ReadError.MissingValue(Vector(key)))
         }
       },

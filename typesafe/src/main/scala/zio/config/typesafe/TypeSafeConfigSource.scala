@@ -70,19 +70,25 @@ object TypeSafeConfigSource {
                 .orElse(
                   asListOfString(config.getMemorySizeList(key))
                 ) match {
-                case Failure(exception) => Left(singleton(ReadError.FatalError(path, exception)))
+                case Failure(exception) =>
+                  Left(
+                    singleton(
+                      ReadError.FatalError(
+                        path,
+                        new RuntimeException(
+                          "Trying to parse a list of config. However, the type is unidentified. Supports only [list] of [int, boolean, duration, bytes, double, long, memory size]",
+                          exception
+                        )
+                      )
+                    )
+                  )
                 case Success(value) =>
                   value match {
                     case h :: t => Right(::(h, t))
                     case Nil =>
                       Left(
                         singleton(
-                          ReadError.FatalError(
-                            path,
-                            new RuntimeException(
-                              "Trying to parse a list of config. However, the type is unidentified. Supports only [list] of [int, boolean, duration, bytes, double, long, memory size]"
-                            )
-                          )
+                          ReadError.MissingValue(path)
                         )
                       )
                   }
@@ -141,7 +147,7 @@ object TypeSafeConfigSource {
                      )
                      .mapError(throwable => singleton(ReadError.fatalError(path, throwable)))
 
-          res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t, "typesafe-config-hoccon"))
+          res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t))
         } yield res
       },
       List("typesafe-config-hoccon")
