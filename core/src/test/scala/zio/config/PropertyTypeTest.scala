@@ -14,15 +14,12 @@ object PropertyTypeTest
       suite("PropertyType")(
         testM("StringType roundtrip") {
           // any string is a valid string i guess
-          check(Gen.anyString)(assertValidRoundtrip(StringType, equalTo))
+          check(Gen.anyString)(assertValidRoundtrip(StringType, identity))
         },
         suite("BooleanType")(
           test("valid Boolean string roundtrip") {
-            validTrueBooleans
-              .map(assertValidRoundtrip(BooleanType, _ => equalTo("true")))
-              .reduce(_ && _) &&
-            validFalseBooleans
-              .map(assertValidRoundtrip(BooleanType, _ => equalTo("false")))
+            validBooleanStrings // proof
+              .map(assertValidRoundtrip(BooleanType, _.toBoolean))
               .reduce(_ && _)
           },
           testM("invalid Boolean string roundtrip") {
@@ -38,54 +35,51 @@ object PropertyTypeTest
         propertyTypeRoundtripSuite(
           typeInfo = "Byte",
           propType = ByteType,
-          genValid = Gen.anyByte,
-          invalidStringPredicate = _.toByteOption.isEmpty
+          genValid = genPadLeadingZeros(Gen.anyByte),
+          invalidStringPredicate = _.toByteOption.isEmpty,
+          parse = _.toByte
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Short",
           propType = ShortType,
-          genValid = Gen.anyShort,
-          invalidStringPredicate = _.toShortOption.isEmpty
+          genValid = genPadLeadingZeros(Gen.anyShort),
+          invalidStringPredicate = _.toShortOption.isEmpty,
+          parse = _.toShort
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Int",
           propType = IntType,
-          genValid = Gen.anyInt,
-          invalidStringPredicate = _.toIntOption.isEmpty
+          genValid = genPadLeadingZeros(Gen.anyInt),
+          invalidStringPredicate = _.toIntOption.isEmpty,
+          parse = _.toInt
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Long",
           propType = LongType,
-          genValid = Gen.anyLong,
-          invalidStringPredicate = _.toLongOption.isEmpty
+          genValid = genPadLeadingZeros(Gen.anyLong),
+          invalidStringPredicate = _.toLongOption.isEmpty,
+          parse = _.toLong
         ),
-        suite("BigIntType")(
-          testM("valid BigIntType string roundtrip") {
-            check(genValidBigIntString.map(_.toString)) { s =>
-              assert(BigIntType.read(s).map(BigIntType.write).map(BigInt(_)), isRight(equalTo(BigInt(s))))
-            }
-          },
-          testM("invalid BigIntType string roundtrip") {
-            check(genInvalidString(s => Try(BigInt(s)).isFailure))(
-              assertInvalidRoundtrip(
-                BigIntType,
-                typeInfo = "BigInt",
-                s => PropertyReadError(s, "bigint")
-              )
-            )
-          }
+        propertyTypeRoundtripSuite(
+          typeInfo = "BigInt",
+          propType = BigIntType,
+          genValid = genValidBigIntString,
+          invalidStringPredicate = s => Try(BigInt(s)).isFailure,
+          parse = BigInt(_)
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Float",
           propType = FloatType,
-          genValid = Gen.anyFloat,
-          invalidStringPredicate = _.toFloatOption.isEmpty
+          genValid = genPadLeadingZeros(Gen.anyFloat),
+          invalidStringPredicate = _.toFloatOption.isEmpty,
+          parse = _.toFloat
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Double",
           propType = DoubleType,
-          genValid = Gen.double(Double.MinValue, Double.MaxValue),
-          invalidStringPredicate = _.toDoubleOption.isEmpty
+          genValid = genPadLeadingZeros(Gen.double(Double.MinValue, Double.MaxValue)),
+          invalidStringPredicate = _.toDoubleOption.isEmpty,
+          parse = _.toDouble
         ),
         // TODO: Uri, Duration
       )
@@ -95,13 +89,13 @@ object PropertyTypeTestUtils {
   def propertyTypeRoundtripSuite[A](
     typeInfo: String,
     propType: PropertyType[String, A],
-    genValid: Gen[Random with Sized, Any],
-    invalidStringPredicate: String => Boolean,
-    validStringPredicate: String => Assertion[String] = equalTo(_)
+    genValid: Gen[Random with Sized, String],
+    parse: String => A,
+    invalidStringPredicate: String => Boolean
   ): Spec[TestEnvironment, TestFailure[Nothing], String, TestSuccess[Unit]] =
     suite(s"${typeInfo}Type")(
       testM(s"valid ${typeInfo} string roundtrip") {
-        check(genValid.map(_.toString))(assertValidRoundtrip(propType, validStringPredicate))
+        check(genValid.map(_.toString))(assertValidRoundtrip(propType, parse))
       },
       testM(s"invalid ${typeInfo} string roundtrip") {
         check(genInvalidString(invalidStringPredicate))(
@@ -116,9 +110,9 @@ object PropertyTypeTestUtils {
 
   def assertValidRoundtrip[A](
     propType: PropertyType[String, A],
-    stringAssertion: String => Assertion[String]
+    parse: String => A
   )(s: String): TestResult =
-    assert(roundTrip(propType, s), isRight(stringAssertion(s)))
+    assert(roundTrip(propType, s).map(parse), isRight(equalTo(parse(s))))
 
   def assertInvalidRoundtrip[A](
     propType: PropertyType[String, A],
@@ -132,9 +126,6 @@ object PropertyTypeTestUtils {
 
   private def roundTrip[A](propType: PropertyType[String, A], s: String) =
     propType.read(s).map(propType.write)
-
-  val validTrueBooleans: List[String]  = casePermutations("true")
-  val validFalseBooleans: List[String] = casePermutations("false")
 
   /** Generates all case permutations of a string */
   private def casePermutations(s: String): List[String] = {
@@ -153,7 +144,7 @@ object PropertyTypeTestUtils {
   }
 
   val validBooleanStrings: List[String] =
-    validTrueBooleans ++ validFalseBooleans
+    casePermutations("true") ++ casePermutations("false")
   val genInvalidBooleanString: Gen[Random with Sized, String] =
     genInvalidString(!validBooleanStrings.contains(_))
 
@@ -162,8 +153,11 @@ object PropertyTypeTestUtils {
     num  <- Gen.listOf1(Gen.char('0', '9')).map(_.mkString)
   } yield sign + num
 
-  val genInvalidBigIntString: Gen[Random with Sized, String] =
-    Gen.anyString.filter(s => Try(BigInt(s)).isFailure)
+  def genPadLeadingZeros[A: Numeric](gen: Gen[Random, A]): Gen[Random with Sized, String] =
+    (Gen.listOf(Gen.const('0')).map(_.mkString) <*> gen.map(_.toString)).map {
+      case (zeros, num) if num.startsWith("-") => "-" + zeros + num.drop(1)
+      case (zeros, num)                        => zeros + num
+    }
 
   def genInvalidString(predicate: String => Boolean): Gen[Random with Sized, String] =
     Gen.anyString.filter(predicate)
