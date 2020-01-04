@@ -108,7 +108,6 @@ object PropertyTypeTestUtils {
         check(invalidString)(
           assertInvalidRoundtrip(
             propType,
-            typeInfo,
             s => PropertyReadError(s, typeInfo.toLowerCase)
           )
         )
@@ -123,7 +122,6 @@ object PropertyTypeTestUtils {
 
   def assertInvalidRoundtrip[A](
     propType: PropertyType[String, A],
-    typeInfo: String,
     propReadError: String => PropertyReadError[String]
   )(s: String): TestResult =
     assert(
