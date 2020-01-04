@@ -5,6 +5,7 @@ import zio.config.PropertyType._
 import zio.random.Random
 import zio.test._
 import zio.test.Assertion._
+import zio.test.TestAspect.flaky
 import zio.test.environment.TestEnvironment
 
 import scala.util.Try
@@ -14,7 +15,9 @@ object PropertyTypeTest
       suite("PropertyType")(
         testM("StringType roundtrip") {
           // any string is a valid string i guess
-          check(Gen.anyString)(assertValidRoundtrip(StringType, identity))
+          check(Gen.anyString)(
+            assertValidRoundtrip(StringType, parse = identity)
+          )
         },
         suite("BooleanType")(
           test("valid Boolean string roundtrip") {
@@ -66,7 +69,7 @@ object PropertyTypeTest
           genValid = genValidBigIntString,
           invalidStringPredicate = s => Try(BigInt(s)).isFailure,
           parse = BigInt(_)
-        ),
+        ) @@ flaky , // because nums generated could be too large
         propertyTypeRoundtripSuite(
           typeInfo = "Float",
           propType = FloatType,
@@ -81,6 +84,13 @@ object PropertyTypeTest
           invalidStringPredicate = _.toDoubleOption.isEmpty,
           parse = _.toDouble
         ),
+        propertyTypeRoundtripSuite(
+          typeInfo = "BigDecimal",
+          propType = BigDecimalType,
+          genValid = genValidBigDecimalString,
+          invalidStringPredicate = s => Try(BigDecimal(s)).isFailure,
+          parse = BigDecimal(_)
+        ) @@ flaky // because nums generated could be too large
         // TODO: Uri, Duration
       )
     )
@@ -148,16 +158,55 @@ object PropertyTypeTestUtils {
   val genInvalidBooleanString: Gen[Random with Sized, String] =
     genInvalidString(!validBooleanStrings.contains(_))
 
+  private def genOptionalStr(gen: Gen[Random with Sized, String]) =
+    Gen.oneOf(Gen.const(""), gen)
+
+  private val genDigit0To9: Gen[Random, String] = Gen.char('0', '9').map(_.toString)
+  private val genDigit1To9: Gen[Random, String] = Gen.char('1', '9').map(_.toString)
+  private val genDigits =
+    Gen.listOf1(genDigit0To9).map(_.mkString)
+
   val genValidBigIntString: Gen[Random with Sized, String] = for {
-    sign <- Gen.oneOf(Gen.const(""), Gen.const("-"))
-    num  <- Gen.listOf1(Gen.char('0', '9')).map(_.mkString)
-  } yield sign + num
+    sign   <- genOptionalStr(Gen.const("-"))
+    digits <- genDigits
+  } yield sign + digits
+
+  private def genAppend(
+    a: Gen[Random with Sized, String],
+    b: Gen[Random with Sized, String]
+  ) =
+    (a <*> b).map(((_: String) + (_: String)).tupled)
 
   def genPadLeadingZeros[A: Numeric](gen: Gen[Random, A]): Gen[Random with Sized, String] =
     (Gen.listOf(Gen.const('0')).map(_.mkString) <*> gen.map(_.toString)).map {
-      case (zeros, num) if num.startsWith("-") => "-" + zeros + num.drop(1)
-      case (zeros, num)                        => zeros + num
+      case (zeros, num) =>
+        if (num.startsWith("-")) "-" + zeros + num.drop(1)
+        else zeros + num
     }
+
+  private val genWhole: Gen[Random with Sized, String] = Gen.oneOf(
+    Gen.const("0"),
+    genAppend(genDigit1To9, genDigits)
+  )
+
+  private val genDecimal: Gen[Random with Sized, String] = Gen.oneOf(
+    genOptionalStr(Gen.const(".")),
+    genAppend(Gen.const("."), genDigits)
+  )
+
+  private val genExponent: Gen[Random with Sized, String] = for {
+    e      <- Gen.oneOf(Gen.const("e"), Gen.const("E"))
+    sign   <- genOptionalStr(Gen.oneOf(Gen.const("+"), Gen.const("-")))
+    digits <- genAppend(genDigit0To9, genDigit0To9) // let's keep it reasonable...
+  } yield e + sign + digits
+
+  // loose reference https://i.stack.imgur.com/wmFqa.gif
+  val genValidBigDecimalString: Gen[Random with Sized, String] = for {
+    sign     <- genOptionalStr(Gen.const("-"))
+    whole    <- genAppend(Gen.listOf(Gen.const('0')).map(_.mkString), genWhole)
+    decimal  <- genOptionalStr(genDecimal)
+    exponent <- genOptionalStr(genExponent)
+  } yield sign + whole + decimal + exponent
 
   def genInvalidString(predicate: String => Boolean): Gen[Random with Sized, String] =
     Gen.anyString.filter(predicate)
