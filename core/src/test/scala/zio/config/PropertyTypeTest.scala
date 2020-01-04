@@ -1,5 +1,7 @@
 package zio.config
 
+import java.net.URI
+
 import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
 import zio.random.Random
@@ -20,21 +22,12 @@ object PropertyTypeTest
             assertValidRoundtrip(StringType, parse = identity)
           )
         },
-        suite("BooleanType")(
-          test("valid Boolean string roundtrip") {
-            validBooleanStrings // proof
-              .map(assertValidRoundtrip(BooleanType, _.toBoolean))
-              .reduce(_ && _)
-          },
-          testM("invalid Boolean string roundtrip") {
-            check(genInvalidBooleanString)(
-              assertInvalidRoundtrip(
-                BooleanType,
-                typeInfo = "Boolean",
-                s => PropertyReadError(s, "boolean")
-              )
-            )
-          }
+        propertyTypeRoundtripSuite(
+          typeInfo = "Boolean",
+          propType = BooleanType,
+          genValid = genValidBooleanStrings,
+          invalidStringPredicate = _.toBooleanOption.isEmpty,
+          parse = _.toBoolean
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Byte",
@@ -92,7 +85,13 @@ object PropertyTypeTest
           invalidStringPredicate = s => Try(BigDecimal(s)).isFailure,
           parse = BigDecimal(_)
         ) @@ flaky, // because nums generated could be too large
-        // TODO: Uri
+        propertyTypeRoundtripSuite(
+          typeInfo = "Uri",
+          propType = UriType,
+          genValid = genValidUriString,
+          invalidStringPredicate = s => Try(URI.create(s)).isFailure,
+          parse = URI.create
+        ),
         propertyTypeRoundtripSuite(
           typeInfo = "Duration",
           propType = DurationType,
@@ -161,63 +160,125 @@ object PropertyTypeTestUtils {
     combinations.toList
   }
 
+  import Gen._
+
   val validBooleanStrings: List[String] =
     casePermutations("true") ++ casePermutations("false")
-  val genInvalidBooleanString: Gen[Random with Sized, String] =
-    genInvalidString(!validBooleanStrings.contains(_))
+
+  val genValidBooleanStrings: Gen[Any, String] = Gen.fromIterable(validBooleanStrings)
 
   private def genOptionalStr(gen: Gen[Random with Sized, String]) =
-    Gen.oneOf(Gen.const(""), gen)
+    oneOf(const(""), gen)
 
-  private val genDigit0To9: Gen[Random, String] = Gen.char('0', '9').map(_.toString)
-  private val genDigit1To9: Gen[Random, String] = Gen.char('1', '9').map(_.toString)
+  private val genDigit0To9: Gen[Random, String] = char('0', '9').map(_.toString)
+  private val genDigit1To9: Gen[Random, String] = char('1', '9').map(_.toString)
   private val genDigits =
-    Gen.listOf1(genDigit0To9).map(_.mkString)
+    listOf1(genDigit0To9).map(_.mkString)
 
   val genValidBigIntString: Gen[Random with Sized, String] = for {
-    sign   <- genOptionalStr(Gen.const("-"))
+    sign   <- genOptionalStr(const("-"))
     digits <- genDigits
   } yield sign + digits
 
+  // Should be generalized and written in terms of `sequence`, or `traverse`
   private def genAppend(
-    a: Gen[Random with Sized, String],
-    b: Gen[Random with Sized, String]
-  ) =
-    (a <*> b).map(((_: String) + (_: String)).tupled)
+    as: Gen[Random with Sized, String]*
+  ): Gen[Random with Sized, String] =
+    for {
+      str  <- as.headOption.fold[Gen[Random with Sized, String]](const(""))(identity)
+      rest <- if (as.isEmpty) const("") else genAppend(as.tail: _*)
+    } yield str + rest
+
+  private val leadingZeros: Gen[Random with Sized, String] =
+    listOf(const('0')).map(_.mkString)
 
   def genPadLeadingZeros[A: Numeric](gen: Gen[Random, A]): Gen[Random with Sized, String] =
-    (Gen.listOf(Gen.const('0')).map(_.mkString) <*> gen.map(_.toString)).map {
+    (leadingZeros <*> gen.map(_.toString)).map {
       case (zeros, num) =>
         if (num.startsWith("-")) "-" + zeros + num.drop(1)
         else zeros + num
     }
 
-  private val genWhole: Gen[Random with Sized, String] = Gen.oneOf(
-    Gen.const("0"),
+  private val genWhole: Gen[Random with Sized, String] = oneOf(
+    const("0"),
     genAppend(genDigit1To9, genDigits)
   )
 
-  private val genDecimal: Gen[Random with Sized, String] = Gen.oneOf(
-    genOptionalStr(Gen.const(".")),
-    genAppend(Gen.const("."), genDigits)
+  private val genDecimal: Gen[Random with Sized, String] = oneOf(
+    genOptionalStr(const(".")),
+    genAppend(const("."), genDigits)
   )
 
-  private val genExponent: Gen[Random with Sized, String] = for {
-    e      <- Gen.oneOf(Gen.const("e"), Gen.const("E"))
-    sign   <- genOptionalStr(Gen.oneOf(Gen.const("+"), Gen.const("-")))
-    digits <- genAppend(genDigit0To9, genDigit0To9) // let's keep it reasonable...
-  } yield e + sign + digits
+  private val genExponent: Gen[Random with Sized, String] = genAppend(
+    oneOf(const("e"), const("E")),
+    genOptionalStr(oneOf(const("+"), const("-"))),
+    genAppend(genDigit0To9, genDigit0To9) // let's keep it reasonable...
+  )
 
   // loose reference https://i.stack.imgur.com/wmFqa.gif
-  val genValidBigDecimalString: Gen[Random with Sized, String] = for {
-    sign     <- genOptionalStr(Gen.const("-"))
-    whole    <- genAppend(Gen.listOf(Gen.const('0')).map(_.mkString), genWhole)
-    decimal  <- genOptionalStr(genDecimal)
-    exponent <- genOptionalStr(genExponent)
-  } yield sign + whole + decimal + exponent
+  val genValidBigDecimalString: Gen[Random with Sized, String] = genAppend(
+    genOptionalStr(const("-")),
+    genAppend(leadingZeros, genWhole),
+    genOptionalStr(genDecimal),
+    genOptionalStr(genExponent)
+  )
+
+  val genAlphaChar: Gen[Random, Char] =
+    oneOf(char(65, 90), char(97, 122))
+
+  private val genScheme: Gen[Random with Sized, String] = for {
+    letter <- genAlphaChar.map(_.toString)
+    rest <- listOf(
+             weighted(
+               alphaNumericString      -> 36,
+               elements("+", ".", "-") -> 3
+             )
+           ).map(_.mkString)
+  } yield letter + rest
+
+  private val genAuth: Gen[Random with Sized, String] = genAppend(
+    const("//"),
+    genAppend(genOptionalStr(alphaNumericString), const("@")), // userinfo
+    const("@"),
+    Gen.weighted(alphaNumericString -> 26), // host
+    genOptionalStr(genAppend(const(":"), int(0, 65535).map(_.toString))) // port
+  )
+
+  private val genPath: Gen[Random with Sized, String] =
+    listOf1(alphaNumericString).map(_.mkString("/"))
+
+  private val genAuthorityAndPath: Gen[Random with Sized, String] = {
+    for {
+      hasAuthority <- boolean
+      authAndPath <- if (hasAuthority) {
+                      genAppend(genAuth, const("/"), genPath)
+                    } else genPath
+    } yield authAndPath
+  }
+  private val genQuery: Gen[Random with Sized, String] = genAppend(
+    const("?"),
+    oneOf(alphaNumericString, listOfN(2)(alphaNumericString).map(_.mkString("=")))
+  )
+
+  private val genFragment: Gen[Random with Sized, String] =
+    alphaNumericString
+
+  /**
+   * Generates a valid URI string, i.e. one `java.net.Uri` will accept.
+   *
+   * Not complete, mind you.
+   *
+   * <br/><br/>
+   * reference: https://en.wikipedia.org/wiki/Uniform_Resource_Identifier#Generic_syntax
+   */
+  val genValidUriString: Gen[Random with Sized, String] = genAppend(
+    genScheme,
+    const(":"),
+    genAuthorityAndPath,
+    genOptionalStr(genQuery),
+    genOptionalStr(genFragment)
+  )
 
   def genInvalidString(predicate: String => Boolean): Gen[Random with Sized, String] =
-    Gen.anyString.filter(predicate)
-
-  val leadingZeroes = "^0+(?!$)"
+    anyString.filter(predicate)
 }
