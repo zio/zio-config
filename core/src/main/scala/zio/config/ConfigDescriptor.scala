@@ -23,17 +23,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     (self |@| that).apply[(A, B)](Tuple2.apply, Tuple2.unapply).xmapEither({ case (a, b) => f(a, b) })(g)
 
   final def xmap[B](to: A => B)(from: B => A): ConfigDescriptor[K, V, B] =
-    self.xmapEither(a => {
-      s"this ddd happens for ${a}"
-      s"with in ddd xmap ${a} is converted to ${Right(to(a))}"
-      Right(to(a))
-    })(
-      b => {
-        s"this happens for ${b}"
-        s"with in xmap ${b} is converted to ${Right(from(b))}"
-        Right(from(b))
-      }
-    )
+    self.xmapEither(a => Right(to(a)))(b => Right(from(b)))
 
   final def orElseEither[B](
     that: => ConfigDescriptor[K, V, B]
