@@ -92,58 +92,33 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
 
 object ConfigDescriptor {
   final case class Source[K, V, A](path: K, source: ConfigSource[K, V], propertyType: PropertyType[V, A])
-      extends ConfigDescriptor[K, V, A] {
-    override def toString = s"( source : ${path}, ${propertyType}"
-  }
+      extends ConfigDescriptor[K, V, A]
 
-  final case class Sequence[K, V, A](config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, List[A]] {
-    override def toString = s"( sequence ${config.toString}"
+  final case class Sequence[K, V, A](config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, List[A]]
 
-  }
-
-  final case class Nested[K, V, A](path: K, config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, A] {
-    override def toString = s"( nested: path ${path} ${config.toString}"
-  }
+  final case class Nested[K, V, A](path: K, config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, A]
 
   final case class Describe[K, V, A](config: ConfigDescriptor[K, V, A], message: String)
-      extends ConfigDescriptor[K, V, A] {
-    override def toString = s"( describe: ${config.toString}"
+      extends ConfigDescriptor[K, V, A]
 
-  }
+  final case class Default[K, V, A](config: ConfigDescriptor[K, V, A], value: A) extends ConfigDescriptor[K, V, A]
 
-  final case class Default[K, V, A](config: ConfigDescriptor[K, V, A], value: A) extends ConfigDescriptor[K, V, A] {
-    override def toString = s"( default: ${config.toString}"
-
-  }
-
-  final case class Optional[K, V, A](config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, Option[A]] {
-    override def toString = s"( optional: ${config.toString}"
-  }
+  final case class Optional[K, V, A](config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, Option[A]]
 
   final case class XmapEither[K, V, A, B](
     config: ConfigDescriptor[K, V, A],
     f: A => Either[String, B],
     g: B => Either[String, A]
-  ) extends ConfigDescriptor[K, V, B] {
-    override def toString = s"( xmapeither: ${config.toString()}"
-
-  }
+  ) extends ConfigDescriptor[K, V, B]
 
   final case class Zip[K, V, A, B](left: ConfigDescriptor[K, V, A], right: ConfigDescriptor[K, V, B])
-      extends ConfigDescriptor[K, V, (A, B)] {
-    override def toString = s"zip: ${left.toString()}, ${right.toString()}"
-
-  }
+      extends ConfigDescriptor[K, V, (A, B)]
 
   final case class OrElseEither[K, V, A, B](left: ConfigDescriptor[K, V, A], right: ConfigDescriptor[K, V, B])
-      extends ConfigDescriptor[K, V, Either[A, B]] {
-    override def toString = s"orelseeither: ${left.toString()}, ${right.toString()}"
-  }
+      extends ConfigDescriptor[K, V, Either[A, B]]
 
   final case class OrElse[K, V, A](left: ConfigDescriptor[K, V, A], right: ConfigDescriptor[K, V, A])
-      extends ConfigDescriptor[K, V, A] {
-    override def toString = s"orelse: ${left.toString()}, ${right.toString()}"
-  }
+      extends ConfigDescriptor[K, V, A]
 
   def sequence[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] = {
     val reversed = configList.reverse
