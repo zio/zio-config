@@ -91,7 +91,7 @@ object RefinedReadWriteRoundtripTestUtils {
   def genRefinedProdInvalid: Gen[Random, (Int, Map[String, String])] =
     for {
       port  <- Gen.int(0, 1023)
-      n     <- Gen.int(0, 2)
+      n     <- Gen.int(1, 2)
       longs <- Gen.listOfN(n)(Gen.anyLong)
     } yield (
       n,
