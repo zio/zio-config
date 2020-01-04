@@ -2,10 +2,7 @@ package zio.config
 
 import zio.{ IO, ZIO }
 import zio.system.System.Live.system
-import java.io.File
 import java.{ util => ju }
-import java.io.FileInputStream
-import java.io.InputStream
 
 final case class ConfigValue[A](value: ::[A], sourceDescription: String)
 
@@ -32,7 +29,7 @@ object ConfigSource {
   def empty[K, V]: ConfigSource[K, V] =
     ConfigSource((k: Vector[K]) => IO.fail(singleton(ReadError.MissingValue(k))), EmptySource :: Nil)
 
-  def fromEnv(separator: Option[String] = None): ConfigSource[String, String] =
+  def fromEnv(valueSeparator: Option[String] = None): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
         val key = path.mkString("_")
@@ -43,7 +40,7 @@ object ConfigSource {
             opt =>
               opt.map(r => {
                 val consOfValues: ::[String] =
-                  separator
+                  valueSeparator
                     .flatMap(
                       sep =>
                         r.split(sep).toList.map(_.trim) match {
@@ -63,7 +60,7 @@ object ConfigSource {
       SystemEnvironment :: Nil
     )
 
-  def fromProperty(separator: Option[String] = None): ConfigSource[String, String] =
+  def fromProperty(valueSeparator: Option[String] = None): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
         val key = path.mkString(".")
@@ -74,7 +71,7 @@ object ConfigSource {
             opt =>
               opt.map(r => {
                 val consOfValues: ::[String] =
-                  separator
+                  valueSeparator
                     .flatMap(
                       sep =>
                         r.split(sep).toList.map(_.trim) match {
@@ -112,7 +109,7 @@ object ConfigSource {
    */
   def fromJavaProperties(
     property: ju.Properties,
-    separator: Option[String] = None
+    valueSeparator: Option[String] = None
   ): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
@@ -126,7 +123,7 @@ object ConfigSource {
             opt =>
               opt.map(r => {
                 val consOfValues: ::[String] =
-                  separator
+                  valueSeparator
                     .flatMap(
                       sep =>
                         r.split(sep).toList.map(_.trim) match {

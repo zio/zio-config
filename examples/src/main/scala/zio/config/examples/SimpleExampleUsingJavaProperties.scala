@@ -12,7 +12,6 @@ import zio.console.Console.Live.console._
 final case class ApplicationConfig(bridgeIp: String, userName: String)
 
 object ApplicationConfig {
-  ZIO.foreach()
   val configuration =
     ((string("bridgeIp")) |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
 }

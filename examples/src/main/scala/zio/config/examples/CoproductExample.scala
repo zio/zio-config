@@ -16,17 +16,24 @@ object CoproductExample extends App {
   final case class Height(height: Long)
 
   val x =
-    boolean("can").xmap(C)(_.can).xmapEither(c => Right(c : Dance))({dance => dance match {
-      case c @ C(_) => Right(dance.asInstanceOf[C])
-      case _ => Left("bhjooom")
-    }})
-
+    boolean("can")
+      .xmap(C)(_.can)
+      .xmapEither(c => Right(c: Dance))({ dance =>
+        dance match {
+          case c @ C(_) => Right(dance.asInstanceOf[C])
+          case _        => Left("bhjooom")
+        }
+      })
 
   val y =
-    string("dance").xmap(D)(_.dance).xmapEither(c => Right(c : Dance))({dance => dance match {
-      case c @ D(_) => Right(dance.asInstanceOf[D])
-      case _ => Left("bhjooom")
-    }})
+    string("dance")
+      .xmap(D)(_.dance)
+      .xmapEither(c => Right(c: Dance))({ dance =>
+        dance match {
+          case c @ D(_) => Right(dance.asInstanceOf[D])
+          case _        => Left("bhjooom")
+        }
+      })
 
   val configxxx = x.orElse(y)
 
