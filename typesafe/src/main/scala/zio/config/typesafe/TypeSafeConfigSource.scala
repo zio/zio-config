@@ -12,17 +12,17 @@ import scala.util.Failure
 import scala.util.Success
 import scala.collection.JavaConverters._
 
-// TODO; Experimental: Yet to refactor
 object TypeSafeConfigSource {
-  // It is user's responsiblility to load the file
   def hoccon(
     hoccon: Either[File, String]
   ): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
-        // At each entry level in the path, we see if it's a list or not.
-        val config =
-          hoccon.fold(file => ConfigFactory.parseFile(file).resolve, str => ConfigFactory.parseString(str).resolve)
+        def effect[A](f: => A): Either[ReadErrorsVector[String, String], A] =
+          Try(f) match {
+            case Success(value)     => Right(value)
+            case Failure(exception) => Left(singleton(ReadError.fatalError(path, exception)))
+          }
 
         val getValue: (
           com.typesafe.config.Config,
@@ -31,13 +31,13 @@ object TypeSafeConfigSource {
         ) => Either[ReadErrorsVector[String, String], ::[String]] =
           (config, valueType, key) =>
             if (valueType == ConfigValueType.BOOLEAN) {
-              Right(singleton(config.getBoolean(key).toString()))
+              effect(config.getBoolean(key).toString()).map(singleton)
             } else if (valueType == ConfigValueType.NULL) {
               Left(singleton(ReadError.MissingValue(path)))
             } else if (valueType == ConfigValueType.NUMBER) {
-              Right(singleton(config.getNumber(key).toString()))
+              effect(config.getNumber(key).toString()).map(singleton)
             } else if (valueType == ConfigValueType.STRING) {
-              Right(singleton(config.getString(key)))
+              effect(config.getString(key)).map(singleton)
             } else if (valueType == ConfigValueType.OBJECT) {
               Left(
                 singleton(
@@ -74,7 +74,17 @@ object TypeSafeConfigSource {
                 case Success(value) =>
                   value match {
                     case h :: t => Right(::(h, t))
-                    case Nil    => Left(singleton(ReadError.MissingValue(path)))
+                    case Nil =>
+                      Left(
+                        singleton(
+                          ReadError.FatalError(
+                            path,
+                            new RuntimeException(
+                              "Trying to parse a list of config. However, the type is unidentified. Supports only [list] of [int, boolean, duration, bytes, double, long, memory size]"
+                            )
+                          )
+                        )
+                      )
                   }
               }
             } else {
@@ -94,30 +104,45 @@ object TypeSafeConfigSource {
               }
 
             case head :: next => {
-              if (parentConfig.getValue(head).valueType() == ConfigValueType.LIST) {
-                val list = parentConfig.getConfigList(head).asScala.toList
-                val r    = list.map(eachConfig => loop(eachConfig, next, nextPath :+ head))
+              for {
+                valueType <- effect(parentConfig.getValue(head).valueType())
+                res <- if (valueType == ConfigValueType.LIST) {
+                        for {
+                          listOfConfig <- effect(parentConfig.getConfigList(head).asScala.toList)
+                          res <- seqEither(listOfConfig.map(eachConfig => loop(eachConfig, next, nextPath :+ head)))
+                                  .map(t => t.flatMap(_.toList))
+                                  .flatMap({
+                                    case Nil =>
+                                      Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+                                    case h :: t => Right(::(h, t))
+                                  })
 
-                seqEither(r)
-                  .map(t => t.flatMap(_.toList))
-                  .flatMap({
-                    case Nil =>
-                      Left(singleton(ReadError.missingValue[Vector[String], String](path)))
-                    case h :: t => Right(::(h, t))
-                  })
-              } else {
-                if (parentConfig.getValue(head).valueType() == ConfigValueType.OBJECT) {
-                  loop(parentConfig.getConfig(head), next, nextPath :+ head)
-                } else if (next.isEmpty) {
-                  loop(parentConfig, next, nextPath :+ head)
-                } else {
-                  Left(singleton(ReadError.missingValue[Vector[String], String](path)))
-                }
-              }
+                        } yield res
+                      } else {
+                        if (parentConfig.getValue(head).valueType() == ConfigValueType.OBJECT) {
+                          loop(parentConfig.getConfig(head), next, nextPath :+ head)
+                        } else if (next.isEmpty) {
+                          loop(parentConfig, next, nextPath :+ head)
+                        } else {
+                          Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+                        }
+                      }
+              } yield res
             }
           }
 
-        ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t, "typesafe-config-hoccon"))
+        for {
+          config <- ZIO
+                     .effect(
+                       hoccon.fold(
+                         file => ConfigFactory.parseFile(file).resolve,
+                         str => ConfigFactory.parseString(str).resolve
+                       )
+                     )
+                     .mapError(throwable => singleton(ReadError.fatalError(path, throwable)))
+
+          res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t, "typesafe-config-hoccon"))
+        } yield res
       },
       List("typesafe-config-hoccon")
     )
