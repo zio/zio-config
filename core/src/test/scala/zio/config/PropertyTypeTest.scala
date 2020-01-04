@@ -7,6 +7,8 @@ import zio.test._
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
 
+import scala.util.Try
+
 object PropertyTypeTest
     extends BaseSpec(
       suite("Property type")(
@@ -27,30 +29,30 @@ object PropertyTypeTest
               assertInvalidRoundtrip(
                 BooleanType,
                 typeInfo = "Boolean",
-                (info, s) => PropertyReadError(s, info.toLowerCase)
+                s => PropertyReadError(s, "boolean")
               )
             )
           }
         ),
-        propertyTypeSpec(
+        propertyTypeSuite(
           typeInfo = "Byte",
           ByteType,
           Gen.anyByte,
           _.toByteOption.isEmpty
         ),
-        propertyTypeSpec(
+        propertyTypeSuite(
           typeInfo = "Short",
           ShortType,
           Gen.anyShort,
           _.toShortOption.isEmpty
         ),
-        propertyTypeSpec(
+        propertyTypeSuite(
           typeInfo = "Int",
           IntType,
           Gen.anyInt,
           _.toIntOption.isEmpty
         ),
-        propertyTypeSpec(
+        propertyTypeSuite(
           typeInfo = "Long",
           LongType,
           Gen.anyLong,
@@ -58,21 +60,31 @@ object PropertyTypeTest
         ),
         suite("BigIntType")(
           testM("valid BigInt string roundtrip") {
-            def removeLeadingZeros(s: String) =
-              s.replaceFirst("^0+(?!$)", "")
-
+            val leadingZeroes = "^0+(?!$)"
             check(genValidBigIntString)(
-              assertValidRoundtrip(BigIntType, s => equalTo(removeLeadingZeros(s)))
+              assertValidRoundtrip(
+                BigIntType,
+                s => equalTo(s.replaceFirst(leadingZeroes, ""))
+              )
+            )
+          },
+          testM("invalid Bigint string roundtrip") {
+            check(genInvalidBigIntString)(
+              assertInvalidRoundtrip(
+                BigIntType,
+                typeInfo = "BigInt",
+                s => PropertyReadError(s, "bigint")
+              )
             )
           }
         ),
-        propertyTypeSpec(
+        propertyTypeSuite(
           typeInfo = "Float",
           FloatType,
           Gen.anyFloat,
           _.toFloatOption.isEmpty
         ),
-        propertyTypeSpec(
+        propertyTypeSuite(
           typeInfo = "Double",
           DoubleType,
           Gen.double(Double.MinValue, Double.MaxValue),
@@ -83,7 +95,7 @@ object PropertyTypeTest
     )
 
 object PropertyTypeTestUtils {
-  def propertyTypeSpec[A](
+  def propertyTypeSuite[A](
     typeInfo: String,
     propType: PropertyType[String, A],
     genValid: Gen[Random, Any],
@@ -97,8 +109,8 @@ object PropertyTypeTestUtils {
         check(genInvalidString(invalidStringPredicate))(
           assertInvalidRoundtrip(
             propType,
-            typeInfo.toLowerCase,
-            (info, s) => PropertyReadError(s, info)
+            typeInfo,
+            s => PropertyReadError(s, typeInfo.toLowerCase)
           )
         )
       }
@@ -113,11 +125,11 @@ object PropertyTypeTestUtils {
   def assertInvalidRoundtrip[A](
     propType: PropertyType[String, A],
     typeInfo: String,
-    propReadError: (String, String) => PropertyReadError[String]
+    propReadError: String => PropertyReadError[String]
   )(s: String): TestResult =
     assert(
       roundTrip(propType, s),
-      isLeft(equalTo(propReadError(typeInfo, s)))
+      isLeft(equalTo(propReadError(s)))
     )
 
   private def roundTrip[A](propType: PropertyType[String, A], s: String) =
@@ -152,6 +164,8 @@ object PropertyTypeTestUtils {
 
   val genValidBigIntString: Gen[Random with Sized, String] =
     Gen.listOf1(Gen.char('0', '9')).map(_.mkString)
+  val genInvalidBigIntString =
+    Gen.anyString.filter(s => Try(BigInt(s)).isFailure)
 
   def genInvalidString(predicate: String => Boolean): Gen[Random with Sized, String] =
     Gen.anyString.filter(predicate)
