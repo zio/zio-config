@@ -11,4 +11,20 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
     ::(l.head, l.tail ++ r)
 
   private[config] def singleton[A](a: A): ::[A] = ::(a, Nil)
+
+  private[config] def seqEither[A, B](either: List[Either[A, B]]): Either[A, List[B]] =
+    either.foldRight(Right(List.empty[B]): Either[A, List[B]])((a, b) => a.flatMap(aa => b.map(bb => aa :: bb)))
+
+  private[config] def seqEitherCons[A, B](either: ::[Either[A, B]]): Either[A, ::[B]] = {
+    val reversed = either.reverse
+    reversed.tail.foldLeft(reversed.head.map(singleton))((b, a) => a.flatMap(aa => b.map(bb => ::(aa, bb))))
+  }
+
+  private[config] final def foreach[R, E, A, B](in: ::[A])(f: A => ZIO[R, E, B]): ZIO[R, E, ::[B]] = {
+    val reversesd = in.reverse
+
+    reversesd.tail.foldLeft[ZIO[R, E, ::[B]]](f(reversesd.head).map(singleton)) { (io, a) =>
+      f(a).zipWith(io)((b, bs) => ::(b, bs))
+    }
+  }
 }

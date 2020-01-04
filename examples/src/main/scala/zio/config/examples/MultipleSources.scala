@@ -10,7 +10,7 @@ object MultipleSources extends App {
 
   // Assume they are different sources (env, property file, hoccon / database (in future))
   private val source1 = ConfigSource.fromMap(Map("LDAP" -> "jolap"))
-  private val source3 = ConfigSource.fromEnv
+  private val source3 = ConfigSource.fromEnv(None)
   private val source4 = ConfigSource.fromMap(Map("PORT" -> "1999"))
   private val source5 = ConfigSource.fromMap(Map("DB_URL" -> "newyork.com"))
 
@@ -31,7 +31,7 @@ object MultipleSources extends App {
   val myConfigWithReset = myConfig.unsourced.from(oneValidSource) // Equivalent to myConfig.fromNothing
 
   // Have got a few more sources to be tried, on top of what's there already ?
-  val myConfigChangedSource = myConfig.updateSource(_.orElse(ConfigSource.fromProperty))
+  val myConfigChangedSource = myConfig.updateSource(_.orElse(ConfigSource.fromProperty(None)))
 
   //
   val runtime = new DefaultRuntime {}

@@ -2,7 +2,6 @@ package zio.config
 
 import zio.config.ConfigDescriptor.{ double, int, nested, string }
 import zio.config.NestedConfigTestUtils._
-import zio.config.PropertyTree.{ Leaf, Record }
 import zio.config.helpers._
 import zio.random.Random
 import zio.test.Assertion._
@@ -18,7 +17,10 @@ object NestedConfigTest
         },
         testM("write") {
           check(genNestedConfigParams) { p =>
-            assert(write(p.config, p.value), isRight(equalTo(p.record)))
+            assert(
+              write(p.config, p.value).map(_.flattenString()),
+              isRight(equalTo(toMultiMap(p.map)))
+            )
           }
         }
       )
@@ -67,7 +69,7 @@ object NestedConfigTestUtils {
 
   final case class TestParams(keys: KeyParams, value: AppConfig) {
 
-    def config: ConfigDescriptor[String, String, AppConfig] = {
+    val config: ConfigDescriptor[String, String, AppConfig] = {
       val credentials  = (string(keys.user) |@| string(keys.password))(Credentials.apply, Credentials.unapply)
       val dbConnection = (string(keys.host) |@| int(keys.port))(DbConnection.apply, DbConnection.unapply)
 
@@ -78,49 +80,30 @@ object NestedConfigTestUtils {
       (nested(keys.database)(database) |@| double(keys.pricing))(AppConfig, AppConfig.unapply)
     }
 
-    def record: Record[String, String] = {
-      val connection =
-        keys.connection -> value.db.connection.fold(
-          url => Leaf(url.value),
-          dbConnection =>
-            Record(Map(keys.host -> Leaf(dbConnection.host), keys.port -> Leaf(dbConnection.port.toString)))
-        )
-
-      val credentials = value.db.credentials.map { v =>
-        keys.credentials -> Record(Map(keys.user -> Leaf(v.user), keys.password -> Leaf(v.password)))
-      }
-
-      Record(
-        Map(
-          keys.database -> Record(Seq(Option(connection), credentials).flatten.toMap),
-          keys.pricing  -> Leaf(value.pricing.toString)
-        )
-      )
-    }
+    val map =
+      Seq(
+        value.db.connection.fold(
+          url => Seq(s"${keys.database}.${keys.connection}" -> url.value),
+          connection => {
+            val connectionKey = s"${keys.database}.${keys.connection}"
+            Seq(
+              s"$connectionKey.${keys.host}" -> connection.host,
+              s"$connectionKey.${keys.port}" -> connection.port.toString
+            )
+          }
+        ),
+        value.db.credentials.fold(Seq.empty[(String, String)]) { c =>
+          val credentialsKey = s"${keys.database}.${keys.credentials}"
+          Seq(
+            s"$credentialsKey.${keys.user}"     -> c.user,
+            s"$credentialsKey.${keys.password}" -> c.password
+          )
+        },
+        Seq(keys.pricing -> value.pricing.toString)
+      ).flatten.toMap
 
     def source: ConfigSource[String, String] =
-      ConfigSource.fromMap(
-        Seq(
-          value.db.connection.fold(
-            url => Seq(s"${keys.database}.${keys.connection}" -> url.value),
-            connection => {
-              val connectionKey = s"${keys.database}.${keys.connection}"
-              Seq(
-                s"$connectionKey.${keys.host}" -> connection.host,
-                s"$connectionKey.${keys.port}" -> connection.port.toString
-              )
-            }
-          ),
-          value.db.credentials.fold(Seq.empty[(String, String)]) { c =>
-            val credentialsKey = s"${keys.database}.${keys.credentials}"
-            Seq(
-              s"$credentialsKey.${keys.user}"     -> c.user,
-              s"$credentialsKey.${keys.password}" -> c.password
-            )
-          },
-          Seq(keys.pricing -> value.pricing.toString)
-        ).flatten.toMap
-      )
+      ConfigSource.fromMap(map)
   }
 
   private val genKey = genSymbol(1, 20)
