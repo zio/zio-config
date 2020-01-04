@@ -145,7 +145,7 @@ object TypeSafeConfigSource {
                          str => ConfigFactory.parseString(str).resolve
                        )
                      )
-                     .mapError(throwable => singleton(ReadError.fatalError(path, throwable)))
+                     .mapError(throwable => singleton(ReadError.fatalError[Vector[String], String](path, throwable)))
 
           res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t))
         } yield res
