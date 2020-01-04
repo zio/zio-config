@@ -64,7 +64,7 @@ val result: IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]] =
 Another way of doing this is:
 
 ```scala mdoc:silent
-val source = ConfigSource.fromEnv
+val source = ConfigSource.fromEnv(None)
 
 read(myConfig from source)
 // IO[ReadErrorsVector[String, String], MyConfig]
@@ -180,8 +180,8 @@ zio-config do support this scenario. This can happen in complex applications.
 
 
 ```scala mdoc:silent
-val source1 = ConfigSource.fromProperty
-val source2 = ConfigSource.fromEnv
+val source1 = ConfigSource.fromProperty(None)
+val source2 = ConfigSource.fromEnv(None)
 
 val myMultipleSourceConfig =
   ((string("LDAP").from(source1.orElse(source2)) |@| int("PORT").xmap(Port)(_.value).from(source1)) |@|
@@ -346,8 +346,8 @@ Here we show a very naive version of it.
  def database(i: Int) = 
    (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
 
- val list: ConfigDescriptor[String, String, List[Database]] =
-   collectAll((0 to 10).map(database).toList) // Same as sequence(...)
+ val list: ConfigDescriptor[String, String, ::[Database]] =
+   collectAll(::(database(0), (1 to 10).map(database).toList)) // collectAll takes `::` (cons, representing non-empty list) instead of a `List`.
 
 ```
 Running this to ZIO will, obviously comes up with a List[Database]
@@ -389,7 +389,7 @@ However, you could explicitly  use `from` which is another combinator in `Config
 and pass a specific config source. We have seen this before for handling multiple sources.
 
 ```scala mdoc:silent
-val envSource = ConfigSource.fromEnv
+val envSource = ConfigSource.fromEnv(None)
 read(myConfig from envSource)
 
 ```
