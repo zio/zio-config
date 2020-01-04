@@ -6,6 +6,7 @@ import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
 import zio.random.Random
 import zio.test.Assertion._
+import zio.test.Gen.anyString
 import zio.test.TestAspect.flaky
 import zio.test._
 import zio.test.environment.TestEnvironment
@@ -26,77 +27,66 @@ object PropertyTypeTest
           typeInfo = "Boolean",
           propType = BooleanType,
           genValid = genValidBooleanStrings,
-          invalidStringPredicate = _.toBooleanOption.isEmpty,
           parse = _.toBoolean
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Byte",
           propType = ByteType,
           genValid = genPadLeadingZeros(Gen.anyByte),
-          invalidStringPredicate = _.toByteOption.isEmpty,
           parse = _.toByte
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Short",
           propType = ShortType,
           genValid = genPadLeadingZeros(Gen.anyShort),
-          invalidStringPredicate = _.toShortOption.isEmpty,
           parse = _.toShort
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Int",
           propType = IntType,
           genValid = genPadLeadingZeros(Gen.anyInt),
-          invalidStringPredicate = _.toIntOption.isEmpty,
           parse = _.toInt
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Long",
           propType = LongType,
           genValid = genPadLeadingZeros(Gen.anyLong),
-          invalidStringPredicate = _.toLongOption.isEmpty,
           parse = _.toLong
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "BigInt",
           propType = BigIntType,
           genValid = genValidBigIntString,
-          invalidStringPredicate = s => Try(BigInt(s)).isFailure,
           parse = BigInt(_)
         ) @@ flaky, // because nums generated could be too large
         propertyTypeRoundtripSuite(
           typeInfo = "Float",
           propType = FloatType,
           genValid = genPadLeadingZeros(Gen.anyFloat),
-          invalidStringPredicate = _.toFloatOption.isEmpty,
           parse = _.toFloat
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Double",
           propType = DoubleType,
           genValid = genPadLeadingZeros(Gen.double(Double.MinValue, Double.MaxValue)),
-          invalidStringPredicate = _.toDoubleOption.isEmpty,
           parse = _.toDouble
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "BigDecimal",
           propType = BigDecimalType,
           genValid = genValidBigDecimalString,
-          invalidStringPredicate = s => Try(BigDecimal(s)).isFailure,
           parse = BigDecimal(_)
         ) @@ flaky, // because nums generated could be too large
         propertyTypeRoundtripSuite(
           typeInfo = "Uri",
           propType = UriType,
           genValid = genValidUriString,
-          invalidStringPredicate = s => Try(URI.create(s)).isFailure,
           parse = URI.create
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Duration",
           propType = DurationType,
           genValid = Gen.sized(helpers.genDuration),
-          invalidStringPredicate = s => Try(Duration(s)).isFailure,
           parse = Duration(_)
         )
       )
@@ -107,15 +97,15 @@ object PropertyTypeTestUtils {
     typeInfo: String,
     propType: PropertyType[String, A],
     genValid: Gen[Random with Sized, String],
-    parse: String => A,
-    invalidStringPredicate: String => Boolean
+    parse: String => A
   ): Spec[TestEnvironment, TestFailure[Nothing], String, TestSuccess[Unit]] =
     suite(s"${typeInfo}Type")(
       testM(s"valid ${typeInfo} string roundtrip") {
         check(genValid.map(_.toString))(assertValidRoundtrip(propType, parse))
       },
       testM(s"invalid ${typeInfo} string roundtrip") {
-        check(genInvalidString(invalidStringPredicate))(
+        val invalidString = anyString.filter(s => Try(parse(s)).isFailure)
+        check(invalidString)(
           assertInvalidRoundtrip(
             propType,
             typeInfo,
@@ -245,7 +235,7 @@ object PropertyTypeTestUtils {
   )
 
   private val genPath: Gen[Random with Sized, String] =
-    listOf1(alphaNumericString).map(_.mkString("/"))
+    listOf1(listOf1(alphaNumericChar).map(_.mkString)).map(_.mkString("/"))
 
   private val genAuthorityAndPath: Gen[Random with Sized, String] = {
     for {
@@ -278,7 +268,4 @@ object PropertyTypeTestUtils {
     genOptionalStr(genQuery),
     genOptionalStr(genFragment)
   )
-
-  def genInvalidString(predicate: String => Boolean): Gen[Random with Sized, String] =
-    anyString.filter(predicate)
 }
