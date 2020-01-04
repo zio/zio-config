@@ -17,7 +17,7 @@ private[config] trait WriteFunctions {
           }
 
         case ConfigDescriptor.Sequence(c) =>
-          seqEither(b.map(eachB => {
+          seqEither(b.map((eachB: Any) => {
             go(c, eachB)
           })).map(PropertyTree.Sequence(_))
 

@@ -6,19 +6,17 @@ import zio.config.ConfigSource
 import zio.{ ZIO }
 import java.io.File
 import zio.config._
-import com.typesafe.config.ConfigParseOptions
 import com.typesafe.config.ConfigValueType
 import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
-// Experimental: Yet to refactor
+// TODO; Experimental: Yet to refactor
 object TypeSafeConfigSource {
   // It is user's responsiblility to load the file
   def hoccon(
-    hoccon: Either[File, String],
-    configParseOptions: Option[ConfigParseOptions] = None
+    hoccon: Either[File, String]
   ): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {

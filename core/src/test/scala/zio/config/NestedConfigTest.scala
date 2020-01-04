@@ -19,7 +19,7 @@ object NestedConfigTest
           check(genNestedConfigParams) { p =>
             assert(
               write(p.config, p.value).map(_.flattenString()),
-              isRight(equalTo(p.map.view.mapValues(singleton).toMap))
+              isRight(equalTo(toMultiMap(p.map)))
             )
           }
         }

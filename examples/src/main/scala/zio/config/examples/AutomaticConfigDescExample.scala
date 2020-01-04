@@ -3,7 +3,6 @@ package zio.config.examples
 import zio.ZIO
 import zio.config.ConfigSource
 import zio.config.magnolia.ConfigDescriptorProvider._
-import zio.config.ConfigDescriptor._
 import zio.console.Console.Live.console._
 import MyConfig._
 

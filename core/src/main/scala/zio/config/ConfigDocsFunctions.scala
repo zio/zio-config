@@ -20,6 +20,9 @@ private[config] trait ConfigDocsFunctions {
         case ConfigDescriptor.Default(c, _) =>
           loop(descAcc, c, docs)
 
+        case ConfigDescriptor.Sequence(c) =>
+          loop(Descriptions("value of type list" :: descAcc.descriptions), c, docs)
+
         case ConfigDescriptor.Describe(c, description) =>
           loop(Descriptions(description :: descAcc.descriptions), c, docs)
 
@@ -39,6 +42,12 @@ private[config] trait ConfigDocsFunctions {
           )
 
         case ConfigDescriptor.OrElseEither(left, right) =>
+          ConfigDocs.OneOf(
+            loop(descAcc, left, docs),
+            loop(descAcc, right, docs)
+          )
+
+        case ConfigDescriptor.OrElse(left, right) =>
           ConfigDocs.OneOf(
             loop(descAcc, left, docs),
             loop(descAcc, right, docs)

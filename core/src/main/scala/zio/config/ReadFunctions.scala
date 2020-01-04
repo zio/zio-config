@@ -16,7 +16,7 @@ private[config] trait ReadFunctions {
         case ConfigDescriptor.Source(path, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
           for {
             value <- source.getConfigValue(paths :+ path)
-            result <- ZIO.foreach(value.value) { eachValue =>
+            result <- foreach(value.value) { eachValue =>
                        ZIO.fromEither(
                          propertyType
                            .read(eachValue)
@@ -25,16 +25,16 @@ private[config] trait ReadFunctions {
                                Left(
                                  singleton(
                                    ReadError
-                                     .ParseError(paths :+ path, r.value, r.typeInfo): ReadError[Vector[K], V1]
+                                     .parseError(paths :+ path, r.value, r.typeInfo): ReadError[Vector[K], V1]
                                  )
                                ),
                              e => Right(e)
                            )
                        )
                      }
-          } yield ::(result.head, result.tail)
+          } yield result
 
-        case s: Sequence[K, V1, B] =>
+        case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
           loop(config, paths).map(list => singleton(list))
 
@@ -44,19 +44,17 @@ private[config] trait ReadFunctions {
         case cd: ConfigDescriptor.XmapEither[K, V1, a, B] =>
           val ConfigDescriptor.XmapEither(c, f, _) = cd
           loop(c, paths).flatMap { as =>
-            ZIO
-              .foreach(as)(a => {
-                ZIO
-                  .fromEither(f(a))
-                  .bimap(
-                    err =>
-                      singleton(
-                        ReadError.FatalError(paths, new RuntimeException(err))
-                      ),
-                    res => res
-                  )
-              })
-              .map(list => ::(list.head, list.tail))
+            foreach(as)(a => {
+              ZIO
+                .fromEither(f(a))
+                .bimap(
+                  err =>
+                    singleton(
+                      ReadError.fatalError[Vector[K], V1](paths, new RuntimeException(err))
+                    ),
+                  res => res
+                )
+            })
           }
 
         // No need to add report on the default value.
@@ -69,15 +67,16 @@ private[config] trait ReadFunctions {
         case ConfigDescriptor.Describe(c, _) =>
           loop(c, paths)
 
-        case cd: ConfigDescriptor.Optional[K, V, B] =>
+        case cd: ConfigDescriptor.Optional[K, V, B] @unchecked =>
           val ConfigDescriptor.Optional(c) = cd
           loop(c, paths).either.flatMap({
             case Right(value) =>
-              ZIO.succeed(::(value.map(t => Some(t): Option[B]).head, value.map(t => Some(t): Option[B]).tail))
-            case Left(value) => ZIO.succeed(singleton(None))
+              val res: List[Option[B]] = value.map(t => Some(t): Option[B])
+              ZIO.succeed(::(res.head, res.tail))
+            case Left(_) => ZIO.succeed(singleton(None))
           })
 
-        case r: ConfigDescriptor.Zip[K, V, a, B] => {
+        case r: ConfigDescriptor.Zip[K, V, a, B] @unchecked => {
           val ConfigDescriptor.Zip(left, right) = r
           for {
             res1 <- loop(left, paths).either
@@ -94,7 +93,7 @@ private[config] trait ReadFunctions {
           } yield r
         }
 
-        case cd: ConfigDescriptor.OrElseEither[K, V, a, b] =>
+        case cd: ConfigDescriptor.OrElseEither[K, V, a, b] @unchecked =>
           val ConfigDescriptor.OrElseEither(left, right) = cd
           loop(left, paths).either
             .flatMap(
@@ -120,7 +119,7 @@ private[config] trait ReadFunctions {
                 case Right(a) =>
                   ZIO.succeed(a)
 
-                case Left(lerr) =>
+                case Left(_) =>
                   loop(right, paths)
               }
             )

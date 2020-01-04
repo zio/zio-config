@@ -18,7 +18,7 @@ object BuildHelper {
   )
 
   private val std2xOptions = Seq(
-    // "-Xfatal-warnings",
+    "-Xfatal-warnings",
     "-language:higherKinds",
     "-language:existentials",
     "-language:implicitConversions",
@@ -27,7 +27,8 @@ object BuildHelper {
     "-Xsource:2.13",
     "-Xlint:_,-type-parameter-shadow",
     "-Ywarn-numeric-widen",
-    "-Ywarn-value-discard"
+    "-Ywarn-value-discard",
+    "-deprecation:false"
   )
 
   val buildInfoSettings = Seq(

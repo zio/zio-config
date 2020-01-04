@@ -42,7 +42,7 @@ object AutomaticConfigTest
 
               val actual = readAndWrite
                 .map(_.map(_.flattenString()))
-                .map(_.fold(_ => Nil, _.view.mapValues(_.head).toList.sortBy(_._1)))
+                .map(_.fold(_ => Nil, fromMultiMap(_).toList.sortBy(_._1)))
 
               assertM(actual, equalTo(updatedEnv.toList.sortBy(_._1)))
           }

@@ -12,7 +12,7 @@ sealed trait PropertyTree[+K, +V] { self =>
         case Record(value)   => value.flatMap(t => go(key :+ t._1, t._2, acc))
       }
 
-    go(Vector.empty, self, Map.empty[Vector[K1], ::[V]])
+    go(Vector.empty, self, Map.empty[Vector[K1], ::[V1]])
   }
 
   final def get[K1 >: K](key: K1): List[V] = {
@@ -47,7 +47,7 @@ sealed trait PropertyTree[+K, +V] { self =>
 
   final def flattenString[K1 >: K, V1 >: V](
     appendString: String = "."
-  )(implicit KS: K1 =:= String): Map[String, ::[V1]] = flattenWith(KS)(appendString)
+  )(implicit KS: K1 =:= String): Map[String, ::[V1]] = flattenWith[K1, V1](KS)(appendString)
 
   final def flattenWith[K1 >: K, V1 >: V](f: K1 => String)(
     appendString: String = "."

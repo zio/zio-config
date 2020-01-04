@@ -3,7 +3,6 @@ package zio.config.examples
 import zio.config._, ConfigDescriptor._
 import zio.DefaultRuntime
 import zio.config.PropertyTree, PropertyTree.{ Leaf, Record }
-import zio.config.typesafe.TypeSafeConfigSource._
 
 // List works quite nicely if the source is typesafe hoccon. Refer TypesafeConfigHoconExample.scala to get an idea.
 object ListExample extends App {
