@@ -9,7 +9,7 @@ object ReadError {
   final case class ParseError[K, V](key: K, provided: V, message: String) extends ReadError[K, V]
   final case class FatalError[K](key: K, cause: Throwable)                extends ReadError[K, Nothing]
 
-  def missingValue[K](key: K): ReadError[K, Nothing] =
+  def missingValue[K, V](key: K): ReadError[K, V] =
     MissingValue(key)
 
   def parseError[K, V](key: K, provided: V, message: String): ReadError[K, V] =

@@ -24,14 +24,6 @@ object TypeSafeConfigSource {
         val config =
           hoccon.fold(file => ConfigFactory.parseFile(file).resolve, str => ConfigFactory.parseString(str).resolve)
 
-        val parentKey =
-          (if (path.size > 1) path.dropRight(1) else path).mkString(".")
-
-        val originalKey =
-          path.mkString(".")
-
-        val parentValue = config.getValue(parentKey)
-
         val getValue: (
           com.typesafe.config.Config,
           ConfigValueType,
@@ -51,7 +43,7 @@ object TypeSafeConfigSource {
                 singleton(
                   ReadError.FatalError(
                     path,
-                    new RuntimeException(s"The value for the key ${originalKey} is an object and not a primitive.")
+                    new RuntimeException(s"The value for the key ${path} is an object and not a primitive.")
                   )
                 )
               )
@@ -89,23 +81,43 @@ object TypeSafeConfigSource {
               Left(singleton(ReadError.FatalError(path, new RuntimeException("Unknown type"))))
             }
 
-        // This is simple testing
-        val result =
-          if (parentValue.valueType() == ConfigValueType.LIST) {
-            val lastKey = path.last
-            val list    = config.getConfigList(parentKey).asScala.toList
-            seqEither(list.map(eachConfig => {
-              getValue(eachConfig, eachConfig.getValue(lastKey).valueType(), lastKey)
-            })).flatMap {
-              case Nil =>
-                Left(singleton(ReadError.MissingValue(path))): Either[ReadErrorsVector[String, String], ::[String]]
-              case h :: t => Right(::(h.head, h.tail ++ t.flatten))
+        def loop(
+          parentConfig: com.typesafe.config.Config,
+          list: List[String],
+          nextPath: List[String]
+        ): Either[ReadErrorsVector[String, String], ::[String]] =
+          list match {
+            case Nil =>
+              nextPath.lastOption match {
+                case Some(lastKey) => getValue(parentConfig, parentConfig.getValue(lastKey).valueType(), lastKey)
+                case None          => Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+              }
+
+            case head :: next => {
+              if (parentConfig.getValue(head).valueType() == ConfigValueType.LIST) {
+                val list = parentConfig.getConfigList(head).asScala.toList
+                val r    = list.map(eachConfig => loop(eachConfig, next, nextPath :+ head))
+
+                seqEither(r)
+                  .map(t => t.flatMap(_.toList))
+                  .flatMap({
+                    case Nil =>
+                      Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+                    case h :: t => Right(::(h, t))
+                  })
+              } else {
+                if (parentConfig.getValue(head).valueType() == ConfigValueType.OBJECT) {
+                  loop(parentConfig.getConfig(head), next, nextPath :+ head)
+                } else if (next.isEmpty) {
+                  loop(parentConfig, next, nextPath :+ head)
+                } else {
+                  Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+                }
+              }
             }
-          } else {
-            getValue(config, config.getValue(originalKey).valueType(), originalKey)
           }
 
-        ZIO.fromEither(result).map(t => ConfigValue(t, "typesafe-config-hoccon"))
+        ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t, "typesafe-config-hoccon"))
       },
       List("typesafe-config-hoccon")
     )
