@@ -1,13 +1,14 @@
 package zio.config
 
-import PropertyTypeTestUtils._
 import zio.config.PropertyType._
+import zio.config.PropertyTypeTestUtils._
 import zio.random.Random
-import zio.test._
 import zio.test.Assertion._
 import zio.test.TestAspect.flaky
+import zio.test._
 import zio.test.environment.TestEnvironment
 
+import scala.concurrent.duration.Duration
 import scala.util.Try
 
 object PropertyTypeTest
@@ -69,7 +70,7 @@ object PropertyTypeTest
           genValid = genValidBigIntString,
           invalidStringPredicate = s => Try(BigInt(s)).isFailure,
           parse = BigInt(_)
-        ) @@ flaky , // because nums generated could be too large
+        ) @@ flaky, // because nums generated could be too large
         propertyTypeRoundtripSuite(
           typeInfo = "Float",
           propType = FloatType,
@@ -90,8 +91,15 @@ object PropertyTypeTest
           genValid = genValidBigDecimalString,
           invalidStringPredicate = s => Try(BigDecimal(s)).isFailure,
           parse = BigDecimal(_)
-        ) @@ flaky // because nums generated could be too large
-        // TODO: Uri, Duration
+        ) @@ flaky, // because nums generated could be too large
+        // TODO: Uri
+        propertyTypeRoundtripSuite(
+          typeInfo = "Duration",
+          propType = DurationType,
+          genValid = Gen.sized(helpers.genDuration),
+          invalidStringPredicate = s => Try(Duration(s)).isFailure,
+          parse = Duration(_)
+        )
       )
     )
 
