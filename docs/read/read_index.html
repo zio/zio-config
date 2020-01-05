@@ -88,13 +88,21 @@ there is a separate module called <code>zio-config-magnolia</code> which uses <c
 <span class="hljs-keyword">val</span> myConfigAutomatic = description[<span class="hljs-type">MyConfig</span>]
 
 </code></pre>
-<p>You can skip it and use only <code>zio-config</code> if you are ok writing manual descriptions as it provide more flexibility especially in adding extra documentations.
-More examples on automatic derivation is in <a href="https://github.com/zio/zio-config/src/main/scala/zio/config/examples/AutomaticConfigDescExample.scala">here</a></p>
+<p><code>myConfig</code> and <code>myConfigAutomatic</code> are same description, and is of the same type.</p>
+<p>If you need more control over the description,
+probably you may choose to write it manually (such as, for adding extra documentations).
+More examples on automatic derivation is in examples module of <a href="https://github.com/zio/zio-config">zio-config</a></p>
 <h2><a class="anchor" aria-hidden="true" id="running-the-description-to-zio"></a><a href="#running-the-description-to-zio" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Running the description to ZIO</h2>
 <p>To read a config, means it has to perform some effects, and for that reason, it returns with a ZIO.
 To be specific it returns an <code>IO</code> where <code>type IO[E, A] = ZIO[Any, E, A]</code></p>
 <pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> result: <span class="hljs-type">IO</span>[<span class="hljs-type">ReadErrorsVector</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>], zio.config.<span class="hljs-type">Config</span>[<span class="hljs-type">MyConfig</span>]] = 
-  <span class="hljs-type">Config</span>.fromEnv(myConfig) <span class="hljs-comment">// That's system environment, (Config.fromEnv(myConfigAutomatic)))</span>
+  <span class="hljs-type">Config</span>.fromEnv(myConfig) <span class="hljs-comment">// That's system environment</span>
+</code></pre>
+<p>Another way of doing this is:</p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> source = <span class="hljs-type">ConfigSource</span>.fromEnv(<span class="hljs-type">None</span>)
+
+read(myConfig from source)
+<span class="hljs-comment">// IO[ReadErrorsVector[String, String], MyConfig]</span>
 </code></pre>
 <p>You can run this to <a href="https://zio.dev/docs/getting_started.html#main">completion</a> as in any zio application.</p>
 <p>We will not be discussing about running with ZIO again, as it is just the same regardless of what the description is.
@@ -170,8 +178,8 @@ int(<span class="hljs-string">"PORT"</span>).xmap(<span class="hljs-type">Port</
 <h2><a class="anchor" aria-hidden="true" id="multiple-sources"></a><a href="#multiple-sources" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Multiple sources</h2>
 <p>While it may not be always a good idea having to rely on multiple sources to form the application config,
 zio-config do support this scenario. This can happen in complex applications.</p>
-<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> source1 = <span class="hljs-type">ConfigSource</span>.fromProperty
-<span class="hljs-keyword">val</span> source2 = <span class="hljs-type">ConfigSource</span>.fromEnv
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> source1 = <span class="hljs-type">ConfigSource</span>.fromProperty(<span class="hljs-type">None</span>)
+<span class="hljs-keyword">val</span> source2 = <span class="hljs-type">ConfigSource</span>.fromEnv(<span class="hljs-type">None</span>)
 
 <span class="hljs-keyword">val</span> myMultipleSourceConfig =
   ((string(<span class="hljs-string">"LDAP"</span>).from(source1.orElse(source2)) |@| int(<span class="hljs-string">"PORT"</span>).xmap(<span class="hljs-type">Port</span>)(_.value).from(source1)) |@|
@@ -290,8 +298,8 @@ Here we show a very naive version of it.</p>
 <pre><code class="hljs css language-scala mdoc:silent"> <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">database</span></span>(i: <span class="hljs-type">Int</span>) = 
    (string(<span class="hljs-string">s"<span class="hljs-subst">${i}</span>_URL"</span>) |@| int(<span class="hljs-string">s"<span class="hljs-subst">${i}</span>_PORT"</span>))(<span class="hljs-type">Database</span>, <span class="hljs-type">Database</span>.unapply)
 
- <span class="hljs-keyword">val</span> list: <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, <span class="hljs-type">List</span>[<span class="hljs-type">Database</span>]] =
-   collectAll((<span class="hljs-number">0</span> to <span class="hljs-number">10</span>).map(database).toList) <span class="hljs-comment">// Same as sequence(...)</span>
+ <span class="hljs-keyword">val</span> list: <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, ::[<span class="hljs-type">Database</span>]] =
+   collectAll(::(database(<span class="hljs-number">0</span>), (<span class="hljs-number">1</span> to <span class="hljs-number">10</span>).map(database).toList)) <span class="hljs-comment">// collectAll takes `::` (cons, representing non-empty list) instead of a `List`.</span>
 
 </code></pre>
 <p>Running this to ZIO will, obviously comes up with a List[Database]</p>
@@ -318,14 +326,14 @@ We will discuss more on this later.</p>
 </code></pre>
 <p>However, you could explicitly  use <code>from</code> which is another combinator in <code>ConfigDescriptor</code>
 and pass a specific config source. We have seen this before for handling multiple sources.</p>
-<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> envSource = <span class="hljs-type">ConfigSource</span>.fromEnv
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> envSource = <span class="hljs-type">ConfigSource</span>.fromEnv(<span class="hljs-type">None</span>)
 read(myConfig from envSource)
 
 </code></pre>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 12/10/2019 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/intro/intro_index"><span class="arrow-prev">← </span><span>Introduction</span></a><a class="docs-next button" href="/zio-config/docs/write/write_index"><span>Write</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#a-simple-example">A Simple example</a></li><li><a href="#fully-automated-config-description-zio-config-magnolia">Fully Automated Config Description: zio-config-magnolia</a></li><li><a href="#running-the-description-to-zio">Running the description to ZIO</a></li><li><a href="#built-in-types">Built-in types</a></li><li><a href="#optional-types">Optional Types</a></li><li><a href="#default">Default</a></li><li><a href="#custom-types">Custom types</a></li><li><a href="#multiple-sources">Multiple sources</a></li><li><a href="#either-types-orelseeither">Either Types (orElseEither)</a></li><li><a href="#orelse">OrElse</a></li><li><a href="#composing-multiple-configurations">Composing multiple configurations</a></li><li><a href="#nesting">Nesting</a></li><li><a href="#collectall-sequence">CollectAll (Sequence)</a></li><li><a href="#documenting">Documenting</a></li><li><a href="#alternative-way-of-running-it-to-zio">Alternative way of running it to ZIO</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/4/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/intro/intro_index"><span class="arrow-prev">← </span><span>Introduction</span></a><a class="docs-next button" href="/zio-config/docs/write/write_index"><span>Write</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#a-simple-example">A Simple example</a></li><li><a href="#fully-automated-config-description-zio-config-magnolia">Fully Automated Config Description: zio-config-magnolia</a></li><li><a href="#running-the-description-to-zio">Running the description to ZIO</a></li><li><a href="#built-in-types">Built-in types</a></li><li><a href="#optional-types">Optional Types</a></li><li><a href="#default">Default</a></li><li><a href="#custom-types">Custom types</a></li><li><a href="#multiple-sources">Multiple sources</a></li><li><a href="#either-types-orelseeither">Either Types (orElseEither)</a></li><li><a href="#orelse">OrElse</a></li><li><a href="#composing-multiple-configurations">Composing multiple configurations</a></li><li><a href="#nesting">Nesting</a></li><li><a href="#collectall-sequence">CollectAll (Sequence)</a></li><li><a href="#documenting">Documenting</a></li><li><a href="#alternative-way-of-running-it-to-zio">Alternative way of running it to ZIO</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
         ((window.gitter = {}).chat = {}).options = {
           showChatByDefault: false,
           activationElement: '.gitter-open-chat-button',
           room: 'zio/zio-config'
         };
-      </script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="" defer=""></script></div></section><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Additional resources</h5><a href="https://javadoc.io/doc/dev.zio/zio_2.12/">Scaladoc of ZIO</a></div></section><section class="copyright">Copyright © 2019 ZIO Maintainers</section></footer></div></body></html>
+      </script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="" defer=""></script></div></section><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Additional resources</h5><a href="https://javadoc.io/doc/dev.zio/zio_2.12/">Scaladoc of ZIO</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
