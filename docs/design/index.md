@@ -1,6 +1,6 @@
 ---
-id: intro_index
-title:  "Introduction"
+id: design_index
+title:  "Design Principles"
 ---
 
 ZIO Config aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.

@@ -1,7 +1,8 @@
 {
   "intro-sidebar": {
     "ZIO-CONFIG": [
-      "intro/intro_index",
+      "quickstart/quickstart_index",
+      "design/design_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
@@ -10,7 +11,8 @@
   },
   "read-sidebar": {
     "ZIO-CONFIG": [
-      "intro/intro_index",
+      "quickstart/quickstart_index",
+      "design/design_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
@@ -19,7 +21,8 @@
   },
   "doc-sidebar": {
     "ZIO-CONFIG": [
-      "intro/intro_index",
+      "quickstart/quickstart_index",
+      "design/design_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
@@ -28,7 +31,8 @@
   },
   "report-sidebar": {
     "ZIO-CONFIG": [
-      "intro/intro_index",
+      "quickstart/quickstart_index",
+      "design/design_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
@@ -37,7 +41,18 @@
   },
   "write-sidebar": {
     "ZIO-CONFIG": [
-      "intro/intro_index",
+      "quickstart/quickstart_index",
+      "design/design_index",
+      "read/read_index",
+      "write/write_index",
+      "doc/doc_index",
+      "report/report_index"
+    ]
+  },
+  "quickstart-sidebar": {
+    "ZIO-CONFIG": [
+      "quickstart/quickstart_index",
+      "design/design_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
