@@ -4,18 +4,7 @@ import zio.ZIO
 import zio.config.ConfigSource
 import zio.config.magnolia.ConfigDescriptorProvider._
 import zio.console.Console.Live.console._
-
-sealed trait Credentials
-case class Password(password: String) extends Credentials
-case class Token(token: String)       extends Credentials
-
-sealed trait Price
-case class Description(description: String) extends Price
-case class Currency(dollars: Double)        extends Price
-
-final case class Aws(region: String, credentials: Credentials)
-
-final case class DbUrl(dburl: String) extends AnyVal
+import MyConfig._
 
 final case class MyConfig(
   aws: Aws,
@@ -24,36 +13,54 @@ final case class MyConfig(
   port: Int,
   amount: Option[Double],
   quanity: Either[Double, String],
-  default: Int = 1,
-  anotherDefault: Int = 2
+  default: Int,
+  anotherDefault: Int
 )
+
+object MyConfig {
+
+  sealed trait Credentials
+  case class Password(password: String) extends Credentials
+  case class Token(token: String)       extends Credentials
+
+  sealed trait Price
+  case class INR(inr: Int)        extends Price
+  case class AUD(dollars: Double) extends Price
+
+  final case class Aws(region: String, credentials: Credentials)
+  final case class DbUrl(value: String) extends AnyVal
+}
 
 object AutomaticConfigDescriptor extends zio.App {
   // Typeclass derivation through Magnolia
-  private val configDesc = description[MyConfig]
+  private val automaticConfig = description[MyConfig]
 
   private val source =
     ConfigSource.fromMap(
       Map(
         "aws.region"            -> "us-east",
-        "aws.credentials.token" -> "some token",
-        "port"                  -> "1",
+        "aws.credentials.token" -> "password",
+        "port"                  -> "10",
+        "default"               -> "12",
+        "dburl.value"           -> "some url",
         "dburl"                 -> "some url",
         "amount"                -> "3.14",
-        "quanity"               -> "30 kilos",
-        "price.dollars"         -> "50",
-        "anotherDefault"        -> "3"
+        "quanity"               -> "30.0",
+        "price.inr"             -> "1000",
+        "anotherDefault"        -> "14"
       )
     )
 
-  private val config = configDesc from source
+  private val config = automaticConfig from source
 
   import zio.config._
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
     read(config).foldM(
       r => putStrLn(r.mkString(",")) *> ZIO.succeed(1),
-      result => putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *> ZIO.succeed(0)
+      result =>
+        putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *>
+          ZIO.succeed(0)
     )
   //
   // Read output:

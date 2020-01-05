@@ -4,11 +4,12 @@ import java.net.URI
 import zio.config.{ ConfigDescriptor }
 import ConfigDescriptor._
 import magnolia._
-
+import scala.util.Success
+import scala.util.Failure
 import scala.language.experimental.macros
 
 trait ConfigDescriptorProvider[T] {
-  def getDescription(path: Vector[String]): ConfigDescriptor[String, String, T]
+  def getDescription(path: String): ConfigDescriptor[String, String, T]
 }
 
 object ConfigDescriptorProvider {
@@ -16,30 +17,8 @@ object ConfigDescriptorProvider {
 
   def instance[T](f: String => ConfigDescriptor[String, String, T]): ConfigDescriptorProvider[T] =
     new ConfigDescriptorProvider[T] {
-      override def getDescription(path: Vector[String]): ConfigDescriptor[String, String, T] = {
-        def loop(
-          tail: List[String],
-          acc: ConfigDescriptor[String, String, T]
-        ): ConfigDescriptor[String, String, T] =
-          tail match {
-            case Nil =>
-              acc
-
-            case h :: Nil =>
-              loop(Nil, f(h))
-
-            case h :: tail =>
-              nested(h)(loop(tail, acc))
-          }
-
-        loop(
-          path.toList,
-          empty[String, String, T].xmapEither[T]({
-            case Some(v) => Right(v)
-            case None    => Left("failed - undefined state")
-          })(v => Right(Some(v)))
-        )
-      }
+      override def getDescription(path: String): ConfigDescriptor[String, String, T] =
+        f(path)
     }
 
   implicit val stringDesc: ConfigDescriptorProvider[String]         = instance(string)
@@ -55,12 +34,15 @@ object ConfigDescriptorProvider {
   implicit val uriDesc: ConfigDescriptorProvider[URI]               = instance(uri)
 
   implicit def opt[A: ConfigDescriptorProvider]: ConfigDescriptorProvider[Option[A]] =
-    ConfigDescriptorProvider[A].getDescription(_).optional
+    a => ConfigDescriptorProvider[A].getDescription(a).optional
+
+  implicit def listt[A: ConfigDescriptorProvider]: ConfigDescriptorProvider[List[A]] =
+    a => list(ConfigDescriptorProvider[A].getDescription(a))
 
   // This is equivalent to saying string("PATH").orElseEither(int("PATH")). During automatic derivations, we are unaware of alternate paths.
   implicit def eith[A: ConfigDescriptorProvider, B: ConfigDescriptorProvider]: ConfigDescriptorProvider[Either[A, B]] =
     new ConfigDescriptorProvider[Either[A, B]] {
-      override def getDescription(path: Vector[String]): ConfigDescriptor[String, String, Either[A, B]] =
+      override def getDescription(path: String): ConfigDescriptor[String, String, Either[A, B]] =
         ConfigDescriptorProvider[A].getDescription(path).orElseEither(ConfigDescriptorProvider[B].getDescription(path))
     }
 
@@ -68,12 +50,13 @@ object ConfigDescriptorProvider {
 
   def combine[T](caseClass: CaseClass[ConfigDescriptorProvider, T]): ConfigDescriptorProvider[T] =
     new ConfigDescriptorProvider[T] {
-      def getDescription(path: Vector[String]): ConfigDescriptor[String, String, T] = {
+      def getDescription(path: String): ConfigDescriptor[String, String, T] = {
         val result: List[ConfigDescriptor[String, String, Any]] =
           caseClass.parameters.toList.map { h =>
             {
-              val derivedPath = if (caseClass.isValueClass) path else path :+ h.label
-              val rawDesc     = h.typeclass.getDescription(derivedPath)
+              val rawDesc =
+                h.typeclass.getDescription(h.label)
+
               val desc =
                 h.default
                   .map(r => rawDesc.default(r))
@@ -83,36 +66,54 @@ object ConfigDescriptorProvider {
             }
           }
 
-        collectAll(result).xmap[T](
-          caseClass.rawConstruct
-        )(v => caseClass.parameters.map(_.dereference(v): Any).toList)
+        val finalDesc =
+          collectAll(::(result.head, result.tail)).xmap[T](cons => {
+            caseClass.rawConstruct(cons)
+          })(v => {
+            val r = caseClass.parameters.map(_.dereference(v): Any).toList
+            ::(r.head, r.tail)
+          })
 
+        if (path.isEmpty) finalDesc else nested(path)(finalDesc)
       }
     }
 
   def dispatch[T](sealedTrait: SealedTrait[ConfigDescriptorProvider, T]): ConfigDescriptorProvider[T] =
     new ConfigDescriptorProvider[T] {
-      def getDescription(paths: Vector[String]): ConfigDescriptor[String, String, T] = {
-        def loop(tail: List[Subtype[ConfigDescriptorProvider, T]]): ConfigDescriptor[String, String, T] =
-          tail match {
-            case Nil =>
-              empty[String, String, T].xmapEither[T]({
-                case Some(v) => Right(v): Either[String, T]
-                case None =>
-                  Left(s"Couldn't form any subtypes ${sealedTrait.subtypes.map(_.typeName.full)}"): Either[String, T]
-              })(v => Right(Some(v)))
-            case h :: tail => {
-              val desc = h.typeclass.getDescription(paths).xmap(r => r: T)(t => (t.asInstanceOf[h.SType]))
-              if (tail.isEmpty) desc else desc.orElse(loop(tail))
-            }
-          }
+      def getDescription(paths: String): ConfigDescriptor[String, String, T] = {
+        val list         = sealedTrait.subtypes.toList
+        val head :: tail = ::(list.head, list.tail)
 
-        loop(sealedTrait.subtypes.toList)
+        tail.foldRight(
+          head.typeclass
+            .getDescription(paths)
+            .xmapEither(t => Right(t: T))({ a =>
+              scala.util.Try(head.cast(a)) match {
+                case Success(value) => Right(value)
+                case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage}")
+              }
+            })
+        )(
+          (e, b) =>
+            b.orElse(
+              e.typeclass
+                .getDescription(paths)
+                .xmapEither(
+                  t => Right(t: T)
+                )({ a =>
+                  scala.util.Try(e.cast(a)) match {
+                    case Success(value) => Right(value)
+                    case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage}")
+                  }
+                })
+            )
+        )
+
       }
     }
 
   implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
 
   def description[T: ConfigDescriptorProvider]: ConfigDescriptor[String, String, T] =
-    ConfigDescriptorProvider[T].getDescription(Vector.empty)
+    ConfigDescriptorProvider[T].getDescription("")
 }

@@ -47,14 +47,18 @@ object RefinedReadWriteRoundtripTestUtils {
     ldap: Refined[String, NonEmpty],
     port: Refined[Int, GreaterEqual[W.`1024`.T]],
     dburl: Option[Refined[String, NonEmpty]],
-    longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
+    longs: Refined[::[Long], Size[Greater[W.`2`.T]]]
   )
 
-  def longList(n: Int): List[ConfigDescriptor[String, String, Long]] =
-    (1 to n).toList
-      .map(group => long(s"GROUP${group}_LONGVAL"))
+  def longList(n: Int): ::[ConfigDescriptor[String, String, Long]] = {
+    val list =
+      (1 to n).toList
+        .map(group => long(s"GROUP${group}_LONGVAL"))
 
-  def longs(n: Int): ConfigDescriptor[String, String, List[Long]] =
+    ::(list.head, list.tail)
+  }
+
+  def longs(n: Int): ConfigDescriptor[String, String, ::[Long]] =
     ConfigDescriptor.collectAll[String, String, Long](longList(n))
 
   def prodConfig(n: Int): ConfigDescriptor[String, String, RefinedProd] =
@@ -81,13 +85,13 @@ object RefinedReadWriteRoundtripTestUtils {
       Refined.unsafeApply(ldap),
       Refined.unsafeApply(port),
       dburl.map(Refined.unsafeApply),
-      Refined.unsafeApply(longs)
+      Refined.unsafeApply(::(longs.head, longs.tail))
     )
 
   def genRefinedProdInvalid: Gen[Random, (Int, Map[String, String])] =
     for {
       port  <- Gen.int(0, 1023)
-      n     <- Gen.int(0, 2)
+      n     <- Gen.int(1, 2)
       longs <- Gen.listOfN(n)(Gen.anyLong)
     } yield (
       n,

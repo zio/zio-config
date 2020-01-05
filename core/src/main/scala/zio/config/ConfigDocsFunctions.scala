@@ -11,14 +11,17 @@ private[config] trait ConfigDocsFunctions {
       docs: ConfigDocs[K, V]
     ): ConfigDocs[K, V] =
       config match {
-        case ConfigDescriptor.Empty() => docs
         case ConfigDescriptor.Source(path, source, _) =>
           Path(
             path,
             Descriptions(source.sourceDescription ++ descAcc.descriptions)
           )
+
         case ConfigDescriptor.Default(c, _) =>
           loop(descAcc, c, docs)
+
+        case ConfigDescriptor.Sequence(c) =>
+          loop(Descriptions("value of type list" :: descAcc.descriptions), c, docs)
 
         case ConfigDescriptor.Describe(c, description) =>
           loop(Descriptions(description :: descAcc.descriptions), c, docs)
@@ -26,7 +29,7 @@ private[config] trait ConfigDocsFunctions {
         case ConfigDescriptor.Optional(c) =>
           loop(descAcc, c, docs)
 
-        case ConfigDescriptor.Nested(c, path) =>
+        case ConfigDescriptor.Nested(path, c) =>
           ConfigDocs.NestedPath(path, loop(descAcc, c, docs))
 
         case ConfigDescriptor.XmapEither(c, _, _) =>
@@ -39,6 +42,12 @@ private[config] trait ConfigDocsFunctions {
           )
 
         case ConfigDescriptor.OrElseEither(left, right) =>
+          ConfigDocs.OneOf(
+            loop(descAcc, left, docs),
+            loop(descAcc, right, docs)
+          )
+
+        case ConfigDescriptor.OrElse(left, right) =>
           ConfigDocs.OneOf(
             loop(descAcc, left, docs),
             loop(descAcc, right, docs)
@@ -64,7 +73,7 @@ private[config] trait ConfigDocsFunctions {
               val updated: Details[V] =
                 docs match {
                   case Descriptions(descriptions) =>
-                    DescriptionsWithValue(flattened.get(initialValue :+ path), descriptions)
+                    DescriptionsWithValue(flattened.get(initialValue :+ path).map(_.head), descriptions)
                   case a => a
                 }
               Path(path, updated)

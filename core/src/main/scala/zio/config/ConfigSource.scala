@@ -4,7 +4,7 @@ import zio.{ IO, ZIO }
 import zio.system.System.Live.system
 import java.{ util => ju }
 
-final case class ConfigValue[+A](value: A, sourceDescription: String)
+final case class ConfigValue[A](value: ::[A])
 
 final case class ConfigSource[K, V](
   getConfigValue: Vector[K] => IO[ReadErrorsVector[K, V], ConfigValue[V]],
@@ -22,14 +22,14 @@ final case class ConfigSource[K, V](
 object ConfigSource {
   val SystemEnvironment = "system environment"
   val SystemProperties  = "system properties"
+  val JavaProperties    = "java properties"
   val ConstantMap       = "constant <map>"
   val EmptySource       = "<empty>"
-  val JavaProperties    = "java properties"
 
   def empty[K, V]: ConfigSource[K, V] =
     ConfigSource((k: Vector[K]) => IO.fail(singleton(ReadError.MissingValue(k))), EmptySource :: Nil)
 
-  val fromEnv: ConfigSource[String, String] =
+  def fromEnv(valueSeparator: Option[String] = None): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
         val key = path.mkString("_")
@@ -37,7 +37,21 @@ object ConfigSource {
           .env(key)
           .bimap(
             ReadError.FatalError(path, _),
-            opt => opt.map(ConfigValue(_, SystemEnvironment))
+            opt =>
+              opt.map(r => {
+                val consOfValues: ::[String] =
+                  valueSeparator
+                    .flatMap(
+                      sep =>
+                        r.split(sep).toList.map(_.trim) match {
+                          case h :: tail => Some(::(h, tail))
+                          case Nil       => None
+                        }
+                    )
+                    .getOrElse(::(r, Nil))
+
+                ConfigValue(consOfValues)
+              })
           )
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
@@ -46,13 +60,29 @@ object ConfigSource {
       SystemEnvironment :: Nil
     )
 
-  val fromProperty: ConfigSource[String, String] =
+  def fromProperty(valueSeparator: Option[String] = None): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
         val key = path.mkString(".")
         system
           .property(key)
-          .bimap(ReadError.FatalError(path, _), opt => opt.map(ConfigValue(_, SystemProperties)))
+          .bimap(
+            ReadError.FatalError(path, _),
+            opt =>
+              opt.map(r => {
+                val consOfValues: ::[String] =
+                  valueSeparator
+                    .flatMap(
+                      sep =>
+                        r.split(sep).toList.map(_.trim) match {
+                          case h :: tail => Some(::(h, tail))
+                          case Nil       => None
+                        }
+                    )
+                    .getOrElse(::(r, Nil))
+                ConfigValue(consOfValues)
+              })
+          )
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
 
@@ -75,9 +105,11 @@ object ConfigSource {
    *              properties
    *            }).map(r => fromJavaProperties(r))
    *  }}}
+   * We have the above functionality as  {{{ Config.fromJavaProperties() }}}
    */
   def fromJavaProperties(
-    property: ju.Properties
+    property: ju.Properties,
+    valueSeparator: Option[String] = None
   ): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
@@ -86,7 +118,23 @@ object ConfigSource {
           .effect(
             Option(property.getProperty(key))
           )
-          .bimap(ReadError.FatalError(path, _), opt => opt.map(ConfigValue(_, JavaProperties)))
+          .bimap(
+            ReadError.FatalError(path, _),
+            opt =>
+              opt.map(r => {
+                val consOfValues: ::[String] =
+                  valueSeparator
+                    .flatMap(
+                      sep =>
+                        r.split(sep).toList.map(_.trim) match {
+                          case h :: tail => Some(::(h, tail))
+                          case Nil       => None
+                        }
+                    )
+                    .getOrElse(::(r, Nil))
+                ConfigValue(consOfValues)
+              })
+          )
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
 
@@ -94,11 +142,17 @@ object ConfigSource {
       JavaProperties :: Nil
     )
 
-  def fromMap(map: Map[String, String], delimiter: String = "."): ConfigSource[String, String] =
+  def fromMap(map: Map[String, String], pathDelimiter: String = "."): ConfigSource[String, String] =
+    fromMapA(map)(singleton, pathDelimiter)
+
+  def fromMultiMap(map: Map[String, ::[String]], pathDelimiter: String = "."): ConfigSource[String, String] =
+    fromMapA(map)(identity, pathDelimiter)
+
+  private def fromMapA[A, B](map: Map[String, A])(f: A => ::[B], pathDelimiter: String): ConfigSource[String, B] =
     ConfigSource(
       (path: Vector[String]) => {
-        val key = path.mkString(delimiter)
-        ZIO.fromOption(map.get(key).map(ConfigValue(_, ConstantMap))).mapError { _ =>
+        val key = path.mkString(pathDelimiter)
+        ZIO.fromOption(map.get(key).map(r => ConfigValue(f(r)))).mapError { _ =>
           singleton(ReadError.MissingValue(Vector(key)))
         }
       },
@@ -109,5 +163,5 @@ object ConfigSource {
     propertyTree: PropertyTree[String, String],
     delimiter: String = "."
   ): ConfigSource[String, String] =
-    fromMap(propertyTree.flattenString(delimiter))
+    fromMultiMap(propertyTree.flattenString(delimiter))
 }

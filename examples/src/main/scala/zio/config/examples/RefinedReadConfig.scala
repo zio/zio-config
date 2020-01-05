@@ -21,15 +21,15 @@ object RefinedReadConfig extends App {
     (1 to n).toList
       .map(group => long(s"GROUP${group}_LONGVAL"))
 
-  def longs(n: Int): ConfigDescriptor[String, String, List[Long]] =
-    ConfigDescriptor.collectAll[String, String, Long](longList(n))
+  def longs(n: Int): ConfigDescriptor[String, String, ::[Long]] =
+    ConfigDescriptor.collectAll[String, String, Long](::(longList(n).head, longList(n).tail))
 
   def prodConfig(n: Int): ConfigDescriptor[String, String, RefinedProd] =
     (
       nonEmpty(string("LDAP")) |@|
         greaterEqual[W.`1024`.T](int("PORT")) |@|
         nonEmpty(string("DB_URL")).optional |@|
-        size[Greater[W.`2`.T]](longs(n))
+        size[Greater[W.`2`.T]](longs(n).xmap(_.toList)(list => ::(list.head, list.tail)))
     )(
       RefinedProd.apply,
       RefinedProd.unapply
