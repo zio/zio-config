@@ -6,8 +6,6 @@ import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
 import zio.random.Random
 import zio.test.Assertion._
-import zio.test.Gen.anyString
-import zio.test.TestAspect.flaky
 import zio.test._
 import zio.test.environment.TestEnvironment
 
@@ -58,7 +56,7 @@ object PropertyTypeTest
           propType = BigIntType,
           genValid = genValidBigIntString,
           parse = BigInt(_)
-        ) @@ flaky, // because nums generated could be too large
+        ),
         propertyTypeRoundtripSuite(
           typeInfo = "Float",
           propType = FloatType,
@@ -76,12 +74,12 @@ object PropertyTypeTest
           propType = BigDecimalType,
           genValid = genValidBigDecimalString,
           parse = BigDecimal(_)
-        ) @@ flaky, // because nums generated could be too large
+        ),
         propertyTypeRoundtripSuite(
           typeInfo = "Uri",
           propType = UriType,
           genValid = genValidUriString,
-          parse = URI.create
+          parse = new URI(_)
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Duration",
@@ -104,7 +102,7 @@ object PropertyTypeTestUtils {
         check(genValid.map(_.toString))(assertValidRoundtrip(propType, parse))
       },
       testM(s"invalid ${typeInfo} string roundtrip") {
-        val invalidString = anyString.filter(s => Try(parse(s)).isFailure)
+        val invalidString = Gen.anyString.filter(s => Try(parse(s)).isFailure)
         check(invalidString)(
           assertInvalidRoundtrip(
             propType,
@@ -160,12 +158,16 @@ object PropertyTypeTestUtils {
 
   private val genDigit0To9: Gen[Random, String] = char('0', '9').map(_.toString)
   private val genDigit1To9: Gen[Random, String] = char('1', '9').map(_.toString)
-  private val genDigits =
-    listOf1(genDigit0To9).map(_.mkString)
+
+  /**
+   * Generates a string of up to n digits. Default maxLength digits is 100.
+   */
+  private def genDigits(maxLength: Int = 100): Gen[Random with Sized, String] =
+    sized(n => listOfN(math.min(n, maxLength))(genDigit0To9).map(_.mkString))
 
   val genValidBigIntString: Gen[Random with Sized, String] = for {
     sign   <- genOptionalStr(const("-"))
-    digits <- genDigits
+    digits <- genDigits()
   } yield sign + digits
 
   // Should be generalized and written in terms of `sequence`, or `traverse`
@@ -189,12 +191,12 @@ object PropertyTypeTestUtils {
 
   private val genWhole: Gen[Random with Sized, String] = oneOf(
     const("0"),
-    genAppend(genDigit1To9, genDigits)
+    genAppend(genDigit1To9, genDigits())
   )
 
   private val genDecimal: Gen[Random with Sized, String] = oneOf(
     genOptionalStr(const(".")),
-    genAppend(const("."), genDigits)
+    genAppend(const("."), genDigits())
   )
 
   private val genExponent: Gen[Random with Sized, String] = genAppend(
