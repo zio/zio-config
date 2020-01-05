@@ -35,4 +35,10 @@ object helpers {
       case Right(_)                                     => false
     }
 
+  def toMultiMap[K, V](map: Map[K, V]): Map[K, ::[V]] =
+    map.toList.map { case (k, v) => (k, singleton(v)) }.toMap
+
+  def fromMultiMap[K, V](map: Map[K, ::[V]]): Map[K, V] =
+    map.toList.map { case (k, v) => (k, v.head) }.toMap
+
 }

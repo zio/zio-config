@@ -7,7 +7,7 @@ import zio.system.System
 import zio.{ IO, UIO, ZIO }
 import zio.system.System.Live.system.lineSeparator
 
-trait Config[A] {
+trait Config[A] { self =>
   def config: Config.Service[A]
 }
 object Config {
@@ -30,15 +30,24 @@ object Config {
       )
 
   def fromEnv[K, V, A](
-    configDescriptor: ConfigDescriptor[String, String, A]
+    configDescriptor: ConfigDescriptor[String, String, A],
+    valueDelimiter: Option[String] = None
   ): IO[ReadErrors[Vector[String], String], Config[A]] =
-    make(ConfigSource.fromEnv, configDescriptor)
+    make(ConfigSource.fromEnv(valueDelimiter), configDescriptor)
 
   def fromMap[A](
     map: Map[String, String],
-    configDescriptor: ConfigDescriptor[String, String, A]
+    configDescriptor: ConfigDescriptor[String, String, A],
+    pathDelimiter: String = "."
   ): IO[ReadErrors[Vector[String], String], Config[A]] =
-    make[String, String, A](ConfigSource.fromMap(map), configDescriptor)
+    make[String, String, A](ConfigSource.fromMap(map, pathDelimiter), configDescriptor)
+
+  def fromMultiMap[A](
+    map: Map[String, ::[String]],
+    configDescriptor: ConfigDescriptor[String, String, A],
+    pathDelimiter: String = "."
+  ): IO[ReadErrors[Vector[String], String], Config[A]] =
+    make[String, String, A](ConfigSource.fromMultiMap(map, pathDelimiter), configDescriptor)
 
   // If reading a file, this can have read errors as well as throwable when trying to read the file
   def fromPropertyFile[A](
@@ -63,7 +72,8 @@ object Config {
       )
 
   def fromPropertyFile[K, V, A](
-    configDescriptor: ConfigDescriptor[String, String, A]
+    configDescriptor: ConfigDescriptor[String, String, A],
+    valueDelimiter: Option[String] = None
   ): ZIO[System, ReadErrors[Vector[String], String], Config[A]] =
-    make(ConfigSource.fromProperty, configDescriptor)
+    make(ConfigSource.fromProperty(valueDelimiter), configDescriptor)
 }

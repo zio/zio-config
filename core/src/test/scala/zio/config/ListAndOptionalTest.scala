@@ -13,8 +13,8 @@ object ListAndOptionalTest
         val actual = ZIO.fromEither(write(cOverallConfig, p)).map(_.flattenString())
 
         val expected = p.option
-          .flatMap(t => t.flatMap(tt => tt.map(ttt => Map("kId" -> ttt.value))))
-          .getOrElse(Map.empty[String, String])
+          .flatMap(t => t.flatMap(tt => tt.map(ttt => Map("kId" -> singleton(ttt.value)))))
+          .getOrElse(Map.empty[String, ::[String]])
 
         assertM(actual, equalTo(expected))
       }

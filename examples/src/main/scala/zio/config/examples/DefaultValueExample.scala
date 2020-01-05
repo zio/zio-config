@@ -14,7 +14,7 @@ object DefaultValueExample extends App {
     (string("HELLO").default("xyz") |@|
       string("SOMETHING").orElseEither(int("PORT").default(1)))(PgmConfig.apply, PgmConfig.unapply)
 
-  val pgmConfig = conf from ConfigSource.fromEnv
+  val pgmConfig = conf from ConfigSource.fromEnv(None)
 
   val runtime = new DefaultRuntime {}
 
