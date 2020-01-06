@@ -1,6 +1,6 @@
 ---
 id: configdescriptor_index
-title:  "ConfigDescriptor"
+title:  "Creation of ConfigDescriptor"
 ---
 
 Config Descriptor is the core of your configuration management. You can write a description by hand, 
