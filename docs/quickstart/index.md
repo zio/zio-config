@@ -91,7 +91,7 @@ val myConfigAutomatic = description[MyConfig]
 
 More examples on automatic derivation is in examples module of [zio-config](https://github.com/zio/zio-config)
 
-## Read from config from various sources
+## Read config from various sources
 
 There are more information on various sources in [here](../sources/index.md).
 
@@ -116,7 +116,7 @@ You can run this to [completion](https://zio.dev/docs/getting_started.html#main)
 
 ## How to use config descriptor
 
-#### Readers from configdescriptor
+### Readers from configdescriptor
 
 As mentioned before, you can use config descriptor to read from various sources.
 
@@ -132,15 +132,46 @@ Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the prev
 
 More details in [here](../configdescriptor/index.md).
 
-#### Documentations from configdescriptor
+### Documentations using configdescriptor
+
+```scala mdoc:silent
+generateDocs(myConfig)
+//Creates documentation (automatic)
+
+
+val betterConfig = 
+  ((string("LDAP") ?? "Related to auth" |@|  int("PORT") ?? "Database port" |@| 
+    string("DB_URL") ?? "url of database")
+   )(MyConfig.apply, MyConfig.unapply)
+
+generateDocs(betterConfig)
+// Custom documentation along with auto generated docs
+```
 
 More details in [here](../configdescriptor/index.md).
 
-#### Report Generation from configdescriptor
+
+### Writers from configdescriptor
+
+```scala mdoc:silent
+
+write(myConfig, MyConfig("xyz", 8888, "postgres")).map(_.flattenString())
+//  Map("LDAP" -> "xyz", "PORT" -> "8888", "DB_URL" -> "postgres")
+
+```
 
 More details in [here](../configdescriptor/index.md).
 
-#### Writers from configdescriptor
+### Report generation from configdescriptor
+
+
+```scala mdoc:silent
+generateDocsWithValue(myConfig, MyConfig("xyz", 8888, "postgres"))
+// Generates documentation showing value of each parameter
+
+```
+
+
 More details in [here](../configdescriptor/index.md).
 
 ## Config is your ZIO environment
@@ -155,39 +186,21 @@ import zio.console.Console.Live.console._
 
 case class ApplicationConfig(bridgeIp: String, userName: String)
 
-object ApplicationConfig {
-  val configuration =
-    ((string("bridgeIp")) |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
-}
+val configuration =
+  ((string("bridgeIp")) |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
 
-object SimpleExampleMain extends zio.App {
-  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] = {
-    val pgm =
-      for {
-        config <- Config.fromPropertyFile("file-location", ApplicationConfig.configuration)
-        _      <- SimpleExample.finalExecution.provide(config)
-      } yield ()
+val finalExecution: ZIO[Config[ApplicationConfig], Nothing, Unit] =
+  for {
+    appConfig <- config[ApplicationConfig]
+    _         <- putStrLn(appConfig.bridgeIp)
+    _         <- putStrLn(appConfig.userName)
+  } yield ()
 
-    pgm.foldM(
-      throwable => putStr(throwable.getMessage()) *> ZIO.succeed(1),
-      _ => putStrLn("hurray !! Application ran successfully..") *> ZIO.succeed(0)
-    )
-  }
-}
-
-object SimpleExample {
-  val printConfigs: ZIO[Config[ApplicationConfig], Nothing, Unit] =
-    for {
-      appConfig <- config[ApplicationConfig]
-      _         <- putStrLn(appConfig.bridgeIp)
-      _         <- putStrLn(appConfig.userName)
-    } yield ()
-
-  val finalExecution: ZIO[Config[ApplicationConfig], Nothing, Unit] =
-    for {
-      _ <- printConfigs
-      _ <- putStrLn(s"processing data......")
-    } yield ()
-}
+// Main App  
+val pgm = 
+  for {
+    config <- Config.fromPropertyFile("file-location", configuration)
+    _      <- finalExecution.provide(config)
+  } yield ()  
 
 ```

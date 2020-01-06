@@ -2,61 +2,67 @@
   "intro-sidebar": {
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
-      "design/design_index",
+      "configdescriptor/configdescriptor_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
-      "report/report_index"
+      "report/report_index",
+      "design/design_index"
     ]
   },
   "read-sidebar": {
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
-      "design/design_index",
+      "configdescriptor/configdescriptor_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
-      "report/report_index"
+      "report/report_index",
+      "design/design_index"
     ]
   },
   "doc-sidebar": {
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
-      "design/design_index",
+      "configdescriptor/configdescriptor_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
-      "report/report_index"
+      "report/report_index",
+      "design/design_index"
     ]
   },
   "report-sidebar": {
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
-      "design/design_index",
+      "configdescriptor/configdescriptor_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
-      "report/report_index"
+      "report/report_index",
+      "design/design_index"
     ]
   },
   "write-sidebar": {
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
-      "design/design_index",
+      "configdescriptor/configdescriptor_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
-      "report/report_index"
+      "report/report_index",
+      "design/design_index"
     ]
   },
   "quickstart-sidebar": {
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
-      "design/design_index",
+      "configdescriptor/configdescriptor_index",
       "read/read_index",
       "write/write_index",
       "doc/doc_index",
-      "report/report_index"
+      "report/report_index",
+      "design/design_index"
     ]
   }
 }

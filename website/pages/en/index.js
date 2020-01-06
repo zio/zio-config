@@ -94,31 +94,31 @@ class Index extends React.Component {
         {[
           {
             content: 'A single composable description of the configuration.',
-            title: 'Composable Description'
+            title: 'Composable description'
           },
           {
-            content: "Given a configuration description, read the config from various sources",
+            content: "Get readers from configuration description to read config from sources",
             title: 'Readers'
           },
           {
-            content: 'Given the same description, write the configuration back - resulting in unfailed reads',
+            content: 'Given writers from same description to write the configuration back',
             title: 'Writers',
           },
           {
-            content: "Handles multiple, composable, prioritised sources, to read the configuration from.",
+            content: "Handles multiple, composable and prioritised config sources",
             title: 'Composable sources',
           },
           {
-            content: 'Given the same description, auto-create a man-page - for your ops team',
-            title: 'Composable Documentation',
+            content: 'Document the config parameters in a composable way',
+            title: 'Documentation',
           },
           {
-            content: "Documentations can be attached with value of each configuration parameter",
+            content: "Documentations can be attached with value of configuration parameter",
             title: 'Report',
           },
           {
-            content: "Make your app fully testable by redirecting sources to a constant map",
-            title: 'Fully Testable Applications',
+            content: "Reset sources in the configuration description, to a constant hashmap and gain testability",
+            title: 'Testability',
           },
         ]}
       </Block>

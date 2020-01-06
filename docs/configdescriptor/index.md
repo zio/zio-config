@@ -32,7 +32,6 @@ val myConfig =
 ```
 
 Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`. 
-Type says, running it by passing a source will return `MyConfig`
 
 ## Fully Automated Config Description: zio-config-magnolia
 
@@ -338,20 +337,96 @@ Note that, you can write this back as well. This is discussed in write section
 
 ## CollectAll (Sequence)
 
-It is common to handle lists of configured values – ie a configured `List`. 
-For this case, we have `collectAll` method (also called `sequence`).
-
-There are many ways you could get a list of config. 
-Here we show a very naive version of it.
 
 ```scala mdoc:silent
  def database(i: Int) = 
    (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
 
  val list: ConfigDescriptor[String, String, ::[Database]] =
-   collectAll(::(database(0), (1 to 10).map(database).toList)) // collectAll takes `::` (cons, representing non-empty list) instead of a `List`.
+   collectAll(::(database(0), (1 to 10).map(database).toList)) 
+   // collectAll takes `::` (cons, representing non-empty list) instead of a `List`.
 
 ```
-Running this to ZIO will, obviously comes up with a List[Database]
+Running this to ZIO will result in non empty list of database
 
 NOTE: `collectAll` is a synonym for `sequence`.
+
+## Handling list is just easy!
+
+```scala
+
+  final case class PgmConfig(a: String, b: List[String])
+  
+  val configWithList = 
+    (string("xyz") |@| list(string("regions")))(PgmConfig.apply, PgmConfig.unapply)
+
+  
+  Config.fromEnv(configWithList, valueDelimiter = Some(","))
+  // or read(configWithList from ConfigSource.fromEnv(valueDelimiter = Some(",")))  
+
+```
+
+List is probably better represented in hoccon files. 
+zio-config-typesafe enables you to depend on hoccon files to manage your config
+
+Given;
+
+```scala
+
+val listHoccon = """
+    accounts = [
+      {
+         region : us-east
+         accountId: jon
+      }
+      {
+         region : us-west
+         accountId: chris
+      }
+    ]
+    database { 
+        port : 100
+        url  : postgres
+    }
+  """
+
+```
+
+```scala
+
+import zio.config.typesafe.TypeSafeConfigSource._
+import zio.config.magnolia.ConfigDescriptorProvider._
+
+  // A nested example with type safe config, and usage of magnolia
+final case class Accnt(region: String, accountId: String)
+final case class Db(port: Int, url: String)
+final case class AwsDetails(accounts: List[Accnt], database: Db)
+
+val autoListConfig = description[AwsDetails]
+
+read(autoListConfig from hoccon(listHoccon))
+
+  // yields
+  //  AwsDetails(
+  //    List(Accnt("us-east", "jon"), Accnt("us-west", "chris")),
+  //    Db(100, "postgres")
+  //  )
+
+```
+
+Note that `autoListConfig` (automatically generated) config, is exactly similar to:
+
+```scala
+
+  val accnt =
+    (string("region") |@| string("accountId"))(Accnt.apply, Accnt.unapply)
+
+  val db = (int("port") |@| string("url"))(Db.apply, Db.unapply)
+
+  val nonAutomatic =
+    (nested("accounts")(list(accnt)) |@| nested("database")(db))(
+      AwsDetails.apply,
+      AwsDetails.unapply
+    )
+
+```
