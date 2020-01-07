@@ -139,7 +139,17 @@ object TypeSafeConfigSource {
                                             )) =>
                                           Right(::(h.unwrapped().toString, t.map(_.unwrapped().toString)))
 
-                                        case _ => Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+                                        case _ =>
+                                          Left(
+                                            singleton(
+                                              ReadError.fatalError[Vector[String], String](
+                                                path,
+                                                new RuntimeException(
+                                                  s"Wrong types in the list. Identified the value of ${head} in hoccon as a list, however, it should be a list of primitive values. Ex: [1, 2, 3]"
+                                                )
+                                              )
+                                            )
+                                          )
 
                                       }
                                     }
