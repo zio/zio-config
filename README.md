@@ -7,7 +7,14 @@ A [zio](https://github.com/scalaz/scalaz-zio) based  configuration parsing libra
 
 The library aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
 Please find more details in the [website](https://zio.github.io/zio-config/).
-Feel free to head on to [examples](examples/src/main/scala/zio/config/examples) straight away as well.
+
+Jump to [examples](examples/src/main/scala/zio/config/examples) to see various usecases.
+Ping in [discord](https://discord.gg/2ccFBr4) zio-config channel for any queries.
+
+Also try out zio-config quickly in [scastie](https://scastie.scala-lang.org/afsalthaj/3ALODWLJQbWmFxqBJ2MYWA/90) which is pre-loaded with an example.
 
 [badge-discord]: https://img.shields.io/discord/629491597070827530?logo=discord "chat on discord"
 [link-discord]: https://discord.gg/2ccFBr4 "Discord"
+
+
+
