@@ -123,7 +123,7 @@ object AutomaticConfigTestUtils {
 
   def genAlpha: Gen[Random, String] =
     for {
-      n <- Gen.int(1, 10)
+      n <- Gen.int(1, 10) // zio-config supports only cons hence starting with 1
       s <- Gen.listOfN(n)(Gen.char(65, 122))
     } yield s.mkString
 }
