@@ -9,20 +9,17 @@ import zio.Task
 
 object TypesafeConfig {
   def fromHocconFile[A](configDescriptor: ConfigDescriptor[String, String, A], file: File) =
-    ZIO
-      .effect(ConfigFactory.parseFile(file).resolve)
-      .flatMap(
-        conf =>
-          lineSeparator.flatMap(
-            ln =>
-              make(TypeSafeConfigSource.hoccon(Left(conf)), configDescriptor)
-                .mapError(r => new RuntimeException(s"${ln}${r.mkString(ln)}"))
-          )
-      )
+    fromHoccon(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
   def fromHocconString[A](str: String, configDescriptor: ConfigDescriptor[String, String, A]): Task[Config[A]] =
+    fromHoccon(ConfigFactory.parseString(str).resolve, configDescriptor)
+
+  def fromHoccon[A](
+    f: => com.typesafe.config.Config,
+    configDescriptor: ConfigDescriptor[String, String, A]
+  ): Task[Config[A]] =
     ZIO
-      .effect(ConfigFactory.parseString(str).resolve)
+      .effect(f)
       .flatMap(
         conf =>
           lineSeparator.flatMap(

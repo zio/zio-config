@@ -133,9 +133,9 @@ object TypeSafeConfigSource {
                                         case h :: t
                                             if (::(h, t).forall(
                                               t =>
-                                                t.valueType() != ConfigValueType.NULL || t
-                                                  .valueType() != ConfigValueType.LIST || t
-                                                  .valueType() != ConfigValueType.OBJECT
+                                                t.valueType() != ConfigValueType.NULL ||
+                                                  t.valueType() != ConfigValueType.LIST ||
+                                                  t.valueType() != ConfigValueType.OBJECT
                                             )) =>
                                           Right(::(h.unwrapped().toString, t.map(_.unwrapped().toString)))
 
