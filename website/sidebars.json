@@ -5,9 +5,7 @@
       "configdescriptor/configdescriptor_index",
       "sources/sources_index",
       "usingconfigdescriptor/configdescriptorusage_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index",
+      "refined/refined_index",
       "design/design_index"
     ]
   },
@@ -17,9 +15,7 @@
       "configdescriptor/configdescriptor_index",
       "sources/sources_index",
       "usingconfigdescriptor/configdescriptorusage_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index",
+      "refined/refined_index",
       "design/design_index"
     ]
   },
@@ -29,9 +25,7 @@
       "configdescriptor/configdescriptor_index",
       "sources/sources_index",
       "usingconfigdescriptor/configdescriptorusage_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index",
+      "refined/refined_index",
       "design/design_index"
     ]
   },
@@ -41,9 +35,7 @@
       "configdescriptor/configdescriptor_index",
       "sources/sources_index",
       "usingconfigdescriptor/configdescriptorusage_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index",
+      "refined/refined_index",
       "design/design_index"
     ]
   },
@@ -53,9 +45,7 @@
       "configdescriptor/configdescriptor_index",
       "sources/sources_index",
       "usingconfigdescriptor/configdescriptorusage_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index",
+      "refined/refined_index",
       "design/design_index"
     ]
   },
@@ -65,9 +55,7 @@
       "configdescriptor/configdescriptor_index",
       "sources/sources_index",
       "usingconfigdescriptor/configdescriptorusage_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index",
+      "refined/refined_index",
       "design/design_index"
     ]
   }

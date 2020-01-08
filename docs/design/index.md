@@ -3,10 +3,10 @@ id: design_index
 title:  "Design Principles"
 ---
 
-ZIO Config aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
+ZIO-config is zio-native library - simply means, we use zio for any effects inside, and provides integration with ZIO Environment to access your application config.
+zio-config will only be using `ZIO` to talk to any imperative systems going forward
 
-We tried our best to make it insanely simple to use to manage configurations, while sticking on to purely functional way of doing things.
-
+ZIO-Config will be the fundamental part of the ZIO ecosystem, and will hopefully be the first step of any ZIO-based applications.
 In nutshell, zio-config can
 
 1. **Read** the configuration from multiple sources
@@ -67,36 +67,12 @@ zio-config stays zero dependent from core functional libraries in scala, and hen
 * The one and only dependency is zio, because we stick on to ZIO as the functional effect.
 * Simple altogether!
 
-This is backed by significant number of examples/
+This is backed by significant number of examples.
 
-## For impatients
-
-To try out zio-conifg straight away, please head on to [examples](https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples) project.
-One of the example is an entire zio application demonstrating the use of zio-config to read the config,
-and make it available across the application as just another zio [Environment](https://zio.dev/docs/overview/overview_index#zio).
-
-For detailed knowledge on zio-config, please refer to separate docs on `Read`, `Write`, `Documentation` and `Reporting`.
-
-## Principles
-
-### ZIO-Native
-
-ZIO-config is zio-native library - simply means, we use zio for any effects inside, and provides integration with ZIO Environment to access your application config.
-
-ZIO-Config will be the fundamental part of the ZIO ecosystem, and will hopefully be the first step of any ZIO-based applications.
-
-## Purely Functional and Composable
+## Purely Functional and Composable, yet welcoming!
 
 zio-config is built on sound foundations, leveraging the well-known, lawful abstractions of functional programming.
-Principal abstractions that inform the zio-config implementation are:
+ZIO Config features no implicits, no type classes, no dependencies, and no jargon!
+Yet secretly it's powered by a type of applicative functor that cannot be described using standard type classes (arrows are partial isomorphisms).
 
-#### Free Applicative, in simple scala with zero sophistications
-
- Everything library does inside, is by making use of program introspection - a feature that goes well with a Free Applicative style encoding. However, this doesn't make it any inaccessible to those who are unfamiliar with the principle, and that's because we made it possible with simple scala with zero sophistications. We made it as minimal as possible - for contributors and users of the library.
-
-#### And Invariant applicative in nature
-
-There are multiple places of bidirectionality in this library. Hence, there is a behavior of invariant applicative functor lying with the Free Applicative style encoding. 
-We are not coupled to any specific typeclass instances, enabling us to scalably encode more functionalities, and features while strongly adhering to laws and FP fundamentals. 
-
-For the same reason, orthogonality across the functionalities came long in a natural way, without having to fiddle with sophistications and implicit instances. 
+A good example of accessible "stealth FP"!

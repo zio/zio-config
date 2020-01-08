@@ -132,6 +132,7 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     libraryDependencies ++= Seq(
+      "eu.timepit"     %% "refined"  % refinedVersion,
       "dev.zio"        %% "zio"      % zioVersion,
       "com.propensive" %% "magnolia" % magnoliaVersion
     )
