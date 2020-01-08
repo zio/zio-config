@@ -3,7 +3,7 @@
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
       "configdescriptor/configdescriptor_index",
-      "read/read_index",
+      "sources/sources_index",
       "write/write_index",
       "doc/doc_index",
       "report/report_index",
@@ -14,7 +14,7 @@
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
       "configdescriptor/configdescriptor_index",
-      "read/read_index",
+      "sources/sources_index",
       "write/write_index",
       "doc/doc_index",
       "report/report_index",
@@ -25,7 +25,7 @@
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
       "configdescriptor/configdescriptor_index",
-      "read/read_index",
+      "sources/sources_index",
       "write/write_index",
       "doc/doc_index",
       "report/report_index",
@@ -36,7 +36,7 @@
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
       "configdescriptor/configdescriptor_index",
-      "read/read_index",
+      "sources/sources_index",
       "write/write_index",
       "doc/doc_index",
       "report/report_index",
@@ -47,7 +47,7 @@
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
       "configdescriptor/configdescriptor_index",
-      "read/read_index",
+      "sources/sources_index",
       "write/write_index",
       "doc/doc_index",
       "report/report_index",
@@ -58,7 +58,7 @@
     "ZIO-CONFIG": [
       "quickstart/quickstart_index",
       "configdescriptor/configdescriptor_index",
-      "read/read_index",
+      "sources/sources_index",
       "write/write_index",
       "doc/doc_index",
       "report/report_index",

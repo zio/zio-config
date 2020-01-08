@@ -33,7 +33,7 @@ const siteConfig = {
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
     { doc: 'quickstart/quickstart_index', label: 'Quickstart' },
-    { doc: 'read/read_index', label: 'Read' },
+    { doc: 'sources/sources_index', label: 'Sources' },
     { doc: 'write/write_index', label: 'Write' },
     { doc: 'doc/doc_index', label: 'Docs' },
     { doc: 'report/report_index', label: 'Report' },

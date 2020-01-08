@@ -136,5 +136,5 @@ lazy val docs = project
       "com.propensive" %% "magnolia" % magnoliaVersion
     )
   )
-  .dependsOn(zioConfig, zioConfigMagnolia)
+  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigTypesafe, zioConfigRefined)
   .enablePlugins(MdocPlugin, DocusaurusPlugin)

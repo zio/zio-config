@@ -3,47 +3,8 @@ id: sources_index
 title:  "Sources"
 ---
 
-Once you have the description, you can use it to read from various sources
-
-## Adding dependency
-
-If you are using sbt:
-
-```scala
-
-libraryDependencies += "dev.zio" %% "zio-config" % <version>
-
-```
-
-##### Optional Dependency with magnolia module
-
-```scala
-
-libraryDependencies += "dev.zio" %% "zio-config-magnolia" % <version>
-
-```
-
-##### Optional Dependency with refined module
-
-```scala
-
-libraryDependencies += "dev.zio" %% "zio-config-refined" % <version>
-
-```
-
-
-##### Optional Dependency with typesafe module
-
-```scala
-
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % <version>
-
-```
-
-## Describe the config by hand
-
-We must be fetching the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
-
+zio-config supports various sources, starting from a constant map to a hoccon file.
+Forming a source gets into a standard pattern, and is easy for you to add another one.
 
 ```scala mdoc:silent
 import zio.IO
@@ -56,6 +17,7 @@ import zio.config._, ConfigDescriptor._
 case class MyConfig(ldap: String, port: Int, dburl: String)
 
 ```
+
 To perform any action using zio-config, we need a configuration description.
 Let's define a simple one.
 
@@ -65,55 +27,232 @@ Let's define a simple one.
 val myConfig =
   ((string("LDAP") |@| int("PORT")|@| string("DB_URL")))(MyConfig.apply, MyConfig.unapply)
 
+ // val automatedConfig = description[MyConfig]; using zio-config-magnolia
+
 ```
 
-Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`. 
+More details about defining config descriptor is in [here](../configdescriptor/index.md).
 
-## Fully automated Config Description
 
-If you don't like describing your configuration manually, and rely on the names of the parameter in the case class (or sealed trait),
-there is a separate module called `zio-config-magnolia`.
+## Constant Map Source
 
 ```scala mdoc:silent
 
+val mapSource =
+  ConfigSource.fromMap(
+    Map(
+      "LDAP" -> "xyz",
+      "PORT" -> "1222",
+      "DB_URL" -> "postgres"
+    )
+  )  
+
+val io = read(myConfig from mapSource)
+// Running io (which is a zio) to completion yields  MyConfig(xyz, 1222, postgres)
+
+```
+
+Alternatively you can follow below snippet,  yielding Config[MyConfig], which you can use as ZIO environment.
+
+```scala mdoc:silent
+
+Config.fromMap(Map(), myConfig)
+// yielding Config[MyConfig], which is a service of config that you can use as ZIO environments.
+
+
+```
+
+## Multi Map Source
+
+This support a list of values for a key.
+
+```scala mdoc:silent
+case class ListConfig(ldap: String, port: List[Int], dburl: String)
+
+val listConfig = (string("LDAP") |@| list(int("PORT")) |@| string("DB_URL"))(ListConfig.apply, ListConfig.unapply)
+
+val multiMapSource =
+  ConfigSource.fromMultiMap(
+    Map(
+      "LDAP" -> ::("xyz",  Nil),
+      "PORT" -> ::("1222" , "2221" :: Nil),
+      "DB_URL" -> ::("postgres",  Nil)
+    )
+  )
+  
+read(myConfig from multiMapSource)
+// Running this to completion yields ListConfig(xyz, List(1222, 2221), postgres)
+
+```
+
+Alternatively you can follow below snippet, yielding Config[MyConfig], which you can use as ZIO environment.
+
+```scala mdoc:silent
+
+Config.fromMultiMap(Map(), myConfig)
+// yielding Config[MyConfig], which is a service of config that you can use as ZIO environments.
+
+```
+
+## System Env Source
+
+```scala mdoc:silent
+
+val sysEnvSource =
+  ConfigSource.fromEnv(None)
+
+// If you want to support list of values, then you should be giving a valueSeparator
+val sysEnvSourceSupportingList = 
+  ConfigSource.fromEnv(valueSeparator=Some(",")) 
+
+```
+
+Give valueSeparator =  `,` 
+and environemnt with `PORT=1222,2221`; then reading config yields 
+`ListConfig(xyz, List(1222, 2221), postgres)`
+
+## System Properties
+
+zio-config can source system properties.
+
+```scala mdoc:silent
+
+val sysPropertiesSource =
+  ConfigSource.fromProperty(None)
+
+// If you want to support list of values, then you should be giving a valueSeparator
+val sysPropertiesSourceWithList = 
+  ConfigSource.fromProperty(valueSeparator=Some(",")) 
+
+```
+Give valueSeparator =  `,` 
+and environemnt with `PORT=1222,2221`; then reading config yields 
+`ListConfig(xyz, List(1222, 2221), postgres)`
+
+
+## Java Properties
+
+```scala mdoc:silent
+
+val javaProperties: java.util.Properties = new java.util.Properties() // Ideally loaded with values
+
+val javaPropertiesSource =
+  ConfigSource.fromJavaProperties(javaProperties, None)
+
+read(myConfig from javaPropertiesSource)  
+
+// If you want to support list of values, then you should be giving a valueSeparator
+val javaPropertiesSourceWithList =
+  ConfigSource.fromJavaProperties(javaProperties, valueSeparator = Some(","))
+```
+
+## Properties File Source
+
+```scala mdoc:silent
+
+Config.fromPropertyFile("filepath", myConfig)
+
+// yielding Config[MyConfig] which you provide to 
+// functions with zio environment as Config[MyConfig]
+
+```
+
+_Implementation Detail_: `Config.fromPropertyFile` simply yields `java.util.Properties` in a `ZIO` and delegate the rest to `ConfigSource.fromJavaProperties`
+
+## Hoccon String Source
+
+To enable hoccon source, you have to bring in `zio-config-typesafe` module.
+There are many examples in examples module in zio-config. 
+
+Here is an quick example
+
+```scala mdoc:silent
+
+import zio.config.typesafe._, TypeSafeConfigSource._
 import zio.config.magnolia.ConfigDescriptorProvider._
 
-val myConfigAutomatic = description[MyConfig]
-
 ```
 
-`myConfig` and `myConfigAutomatic` are same description, and is of the same type. 
-
-More examples on automatic derivation is in examples module of [zio-config](https://github.com/zio/zio-config)
-
-## Define the source
-
 ```scala mdoc:silent
-val map = 
-  Map(
-    "LDAP" -> "xyz",
-    "PORT" -> "8888",
-    "DB_URL" -> "postgres"
+
+case class SimpleConfig(port: Int, url: String, region: Option[String])
+
+val automaticDescription = description[SimpleConfig]
+
+val hocconSource =
+  hoccon(
+    Right(
+      """
+      {
+        port : 123
+        url  : bla
+        region: useast
+      }
+      
+      """
+    )
   )
 
-  val result: IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]] = 
-    Config.fromMap(map, myConfig)
+val anotherHocconSource =
+  hoccon(
+    Right(
+      """
+        port=123
+        url=bla
+        region=useast
+      """
+    )
+  )
+
+read(automaticDescription from hocconSource)
+// yielding SimpleConfig(123,bla,Some(useast))
+
+
+read(automaticDescription from anotherHocconSource)
+// yielding SimpleConfig(123,bla,Some(useast))
+
+// You could also do
+TypesafeConfig.fromHocconString(
+     """
+      {
+        port : 123
+        url  : bla
+        region: useast
+      }
+      """, automaticDescription)
+
 
 ```
 
-Another way of doing this is:
+## Hoccon File Source
+
+Similar to `TypesafeConfig.fromHocconString(str, automaticDescription)`
 
 ```scala mdoc:silent
-val source = ConfigSource.fromMap(map)
 
-read(myConfig from source)
-// IO[ReadErrorsVector[String, String], MyConfig]
+TypesafeConfig.fromHocconFile(automaticDescription, new java.io.File("fileapth"))
+
 ```
 
-You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application. 
 
-## And more..
-As of now, we succesffully read the config.
-However zio-config is much more powerful. It can read, write, document and even report your configuration.
-Keep reading .. 
+## Json Source
+You can use `zio-config-typesafe` module to fetch json as well
 
+
+```scala mdoc:silent
+
+val jsonString =
+   """
+   {
+     "port" : "123"
+     "url"  : "bla"
+     "region": "useast"
+   }
+   
+   """
+    
+
+TypesafeConfig.fromHocconString(jsonString, automaticDescription)
+
+
+```

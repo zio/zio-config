@@ -25,42 +25,42 @@ class Footer extends React.Component {
 
   render() {
     return (
-        <footer className="nav-footer" id="footer">
-          <section>
-            <Gitter room="zio/zio-config" title="Open Chat" />
-          </section>
-          <section className="sitemap">
-            <a href={this.props.config.baseUrl} className="nav-home">
-              {this.props.config.footerIcon && (
-                  <img
-                      src={this.props.config.baseUrl + this.props.config.footerIcon}
-                      alt={this.props.config.title}
-                  />
-              )}
-            </a>
-            <div>
-              <h5>GitHub</h5>
-              <a
-                  className="github-button"
-                  href="https://github.com/zio/zio-config"
-                  data-icon="octicon-star"
-                  data-count-href="/zio/zio-config/stargazers"
-                  data-show-count="true"
-                  data-count-aria-label="# stargazers on GitHub"
-                  aria-label="Star this project on GitHub">
-                Star
+      <footer className="nav-footer" id="footer">
+        <section>
+          <Gitter room="zio/zio-config" title="Open Chat" />
+        </section>
+        <section className="sitemap">
+          <a href={this.props.config.baseUrl} className="nav-home">
+            {this.props.config.footerIcon && (
+              <img
+                src={this.props.config.baseUrl + this.props.config.footerIcon}
+                alt={this.props.config.title}
+              />
+            )}
+          </a>
+          <div>
+            <h5>GitHub</h5>
+            <a
+              className="github-button"
+              href="https://github.com/zio/zio-config"
+              data-icon="octicon-star"
+              data-count-href="/zio/zio-config/stargazers"
+              data-show-count="true"
+              data-count-aria-label="# stargazers on GitHub"
+              aria-label="Star this project on GitHub">
+              Star
               </a>
-            </div>
-            <div>
-              <h5>Additional resources</h5>
-              <a
-                  href="https://javadoc.io/doc/dev.zio/zio_2.12/">
-                Scaladoc of ZIO
+          </div>
+          <div>
+            <h5>Additional resources</h5>
+            <a
+              href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">
+              Scaladoc of zio-config
               </a>
-            </div>
-          </section>
-          <section className="copyright">{this.props.config.copyright}</section>
-        </footer>
+          </div>
+        </section>
+        <section className="copyright">{this.props.config.copyright}</section>
+      </footer>
     );
   }
 }
