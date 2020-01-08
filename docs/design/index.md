@@ -3,7 +3,7 @@ id: design_index
 title:  "Design Principles"
 ---
 
-ZIO-config is zio-native library - simply means, we use zio for any effects inside, and provides integration with ZIO Environment to access your application config.
+ZIO-config is zio-native library - simply means: 
 The only dependency of `zio-config` is `ZIO` , and will be using `ZIO` for any effectful computations (when reading config, integrating with other systems etc)
 
 The library will be the fundamental part of the ZIO ecosystem, and will hopefully be the first step of any ZIO-based applications.
