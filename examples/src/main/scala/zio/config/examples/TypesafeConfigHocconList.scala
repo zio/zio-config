@@ -11,7 +11,7 @@ object TypesafeConfigHocconList extends App {
   // A nested example with type safe config, and usage of magnolia
   final case class Account(region: String, accountId: String)
   final case class Database(port: Int, url: String)
-  final case class AwsDetails(accounts: List[Account], database: Database)
+  final case class AwsDetails(accounts: List[Account], database: Database, users: List[String])
 
   val listHoccon =
     """
@@ -30,6 +30,8 @@ object TypesafeConfigHocconList extends App {
       }
     ]
 
+    users = ["vel", "muk", "riz"]
+
     database { 
         port : 100
         url  : postgres
@@ -43,7 +45,7 @@ object TypesafeConfigHocconList extends App {
   val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
 
   val awsDetailsConfig =
-    (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig))(
+    (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig) |@| list(string("users")))(
       AwsDetails.apply,
       AwsDetails.unapply
     )
@@ -55,7 +57,8 @@ object TypesafeConfigHocconList extends App {
     runtime.unsafeRun(listResult) ==
       AwsDetails(
         List(Account("us-east", "jon"), Account("us-west", "chris"), Account("us-some", "hello")),
-        Database(100, "postgres")
+        Database(100, "postgres"),
+        List("vel", "muk", "riz")
       )
   )
 
@@ -66,8 +69,8 @@ object TypesafeConfigHocconList extends App {
     runtime.unsafeRun(read(automaticAwsDetailsConfig from hoccon(Right(listHoccon)))) ==
       AwsDetails(
         List(Account("us-east", "jon"), Account("us-west", "chris"), Account("us-some", "hello")),
-        Database(100, "postgres")
+        Database(100, "postgres"),
+        List("vel", "muk", "riz")
       )
   )
-
 }

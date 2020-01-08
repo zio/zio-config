@@ -97,7 +97,7 @@ object AutomaticConfigTestUtils {
       dbUrl          <- genDbUrl
       port           <- Gen.anyInt
       amount         <- Gen.option(Gen.long(1, 100))
-      quantity       <- Gen.either(Gen.long(5, 10), genNonEmptyString(5))
+      quantity       <- Gen.either(Gen.long(5, 10), genAlpha)
       default        <- Gen.option(Gen.anyInt)
       anotherDefault <- Gen.option(Gen.boolean)
       partialMyConfig = Map(
@@ -120,4 +120,10 @@ object AutomaticConfigTestUtils {
       case (None, Some(v2))     => partialMyConfig + (("anotherDefault", v2.toString))
       case (None, None)         => partialMyConfig
     }
+
+  def genAlpha: Gen[Random, String] =
+    for {
+      n <- Gen.int(1, 10) // zio-config supports only cons hence starting with 1
+      s <- Gen.listOfN(n)(Gen.char(65, 122))
+    } yield s.mkString
 }

@@ -4,7 +4,7 @@ import java.io.{ File, FileInputStream }
 import java.util.Properties
 
 import zio.system.System
-import zio.{ IO, UIO, ZIO }
+import zio.{ IO, Task, UIO, ZIO }
 import zio.system.System.Live.system.lineSeparator
 
 trait Config[A] { self =>
@@ -53,7 +53,7 @@ object Config {
   def fromPropertyFile[A](
     filePath: String,
     configDescriptor: ConfigDescriptor[String, String, A]
-  ): ZIO[Any, Throwable, Config[A]] =
+  ): Task[Config[A]] =
     ZIO
       .bracket(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))(inputStream => {
         ZIO.effect {

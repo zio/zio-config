@@ -4,7 +4,6 @@ import com.typesafe.config.ConfigFactory
 import zio.config.ConfigSource
 
 import zio.{ ZIO }
-import java.io.File
 import zio.config._
 import com.typesafe.config.ConfigValueType
 import scala.util.Try
@@ -14,7 +13,7 @@ import scala.collection.JavaConverters._
 
 object TypeSafeConfigSource {
   def hoccon(
-    hoccon: Either[File, String]
+    hoccon: Either[com.typesafe.config.Config, String]
   ): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
@@ -114,15 +113,47 @@ object TypeSafeConfigSource {
                 valueType <- effect(parentConfig.getValue(head).valueType())
                 res <- if (valueType == ConfigValueType.LIST) {
                         for {
-                          listOfConfig <- effect(parentConfig.getConfigList(head).asScala.toList)
-                          res <- seqEither(listOfConfig.map(eachConfig => loop(eachConfig, next, nextPath :+ head)))
-                                  .map(t => t.flatMap(_.toList))
-                                  .flatMap({
-                                    case Nil =>
-                                      Left(singleton(ReadError.missingValue[Vector[String], String](path)))
-                                    case h :: t => Right(::(h, t))
-                                  })
+                          // A few extra error handling.
+                          res <- effect(parentConfig.getConfigList(head).asScala.toList) match {
+                                  case Right(allConfigs) =>
+                                    seqEither(allConfigs.map(eachConfig => loop(eachConfig, next, nextPath :+ head)))
+                                      .map(t => t.flatMap(_.toList))
+                                      .flatMap({
+                                        case Nil =>
+                                          Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+                                        case h :: t => Right(::(h, t))
+                                      })
 
+                                  case Left(_) =>
+                                    effect(parentConfig.getList(head).asScala.toList).flatMap {
+                                      {
+                                        case Nil =>
+                                          Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+
+                                        case h :: t
+                                            if (::(h, t).forall(
+                                              t =>
+                                                t.valueType() != ConfigValueType.NULL ||
+                                                  t.valueType() != ConfigValueType.LIST ||
+                                                  t.valueType() != ConfigValueType.OBJECT
+                                            )) =>
+                                          Right(::(h.unwrapped().toString, t.map(_.unwrapped().toString)))
+
+                                        case _ =>
+                                          Left(
+                                            singleton(
+                                              ReadError.fatalError[Vector[String], String](
+                                                path,
+                                                new RuntimeException(
+                                                  s"Wrong types in the list. Identified the value of ${head} in hoccon as a list, however, it should be a list of primitive values. Ex: [1, 2, 3]"
+                                                )
+                                              )
+                                            )
+                                          )
+
+                                      }
+                                    }
+                                }
                         } yield res
                       } else {
                         if (parentConfig.getValue(head).valueType() == ConfigValueType.OBJECT) {
@@ -141,7 +172,7 @@ object TypeSafeConfigSource {
           config <- ZIO
                      .effect(
                        hoccon.fold(
-                         file => ConfigFactory.parseFile(file).resolve,
+                         config => config,
                          str => ConfigFactory.parseString(str).resolve
                        )
                      )
