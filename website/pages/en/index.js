@@ -63,11 +63,7 @@ class HomeSplash extends React.Component {
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-            <Button href={docUrl('intro/intro_index')}>Introduction</Button>
-            <Button href={docUrl('read/read_index')}>Read</Button>
-            <Button href={docUrl('write/write_index')}>Write</Button>
-            <Button href={docUrl('report/report_index')}>Report</Button>
-            <Button href={docUrl('doc/doc_index')}>Docs</Button>
+            <Button href={docUrl('quickstart/quickstart_index')}>Quick Start</Button>
             <Button href="https://github.com/zio/zio-config" target="_blank" >GitHub</Button>
           </PromoSection>
         </div>
@@ -83,7 +79,6 @@ class Index extends React.Component {
 
     const Block = props => (
       <Container
-        padding={['bottom', 'top']}
         id={props.id}
         background={props.background}>
         <GridBlock
@@ -98,50 +93,42 @@ class Index extends React.Component {
       <Block layout="fourColumn">
         {[
           {
-            content: 'A single composable description of the configuration \n \t It can read, write, report and document',
-            title: 'Composable description',
+            content: 'A single composable description of the configuration.',
+            title: 'Composable description'
           },
           {
-            content: "Given a config description, read the config from various sources",
-            title: 'Read the configuration',
+            content: "Get readers from configuration description to read config from sources",
+            title: 'Readers'
           },
           {
-            content: 'Given the same description,safely write the config back - resulting in unfailed reads',
-            title: 'Write the configuration back',
+            content: 'Given writers from same description to write the configuration back',
+            title: 'Writers',
           },
           {
-            content: "Handles multiple, composable, prioritised sources, to read the configuration from.",
-            title: 'Multiple composable sources',
-          }
+            content: "Handles multiple, composable and prioritised config sources",
+            title: 'Composable sources',
+          },
+          {
+            content: 'Document the config parameters in a composable way',
+            title: 'Documentation',
+          },
+          {
+            content: "Documentations can be attached with value of configuration parameter",
+            title: 'Report',
+          },
+          {
+            content: "Reset sources in the configuration description, to a constant hashmap and gain testability",
+            title: 'Testability',
+          },
         ]}
       </Block>
     );
-
-    const Features2 = () => (
-      <Block layout="fourColumn">
-        {[
-          {
-            content: 'Given the same description, auto-create a man-page - for your ops team',
-            title: 'Auto-generate docs',
-          },
-          {
-            content: "Details can carry the value of each configuration parameter - a detailed report",
-            title: 'Auto generate report',
-          }
-        ]}
-      </Block>
-    );
-
-
 
     return (
       <div>
         <HomeSplash siteConfig={siteConfig} language={language} />
         <div className="mainContainer">
           <Features />
-        </div>
-        <div className="mainContainer">
-          <Features2 />
         </div>
       </div>
     );
