@@ -4,9 +4,9 @@ title:  "Design Principles"
 ---
 
 ZIO-config is zio-native library - simply means, we use zio for any effects inside, and provides integration with ZIO Environment to access your application config.
-zio-config will only be using `ZIO` to talk to any imperative systems going forward
+The only dependency of `zio-config` is `ZIO` , and will be using `ZIO` for any effectful computations (when reading config, integrating with other systems etc)
 
-ZIO-Config will be the fundamental part of the ZIO ecosystem, and will hopefully be the first step of any ZIO-based applications.
+The library will be the fundamental part of the ZIO ecosystem, and will hopefully be the first step of any ZIO-based applications.
 In nutshell, zio-config can
 
 1. **Read** the configuration from multiple sources
