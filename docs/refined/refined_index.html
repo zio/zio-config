@@ -1,0 +1,133 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Automatic Validations · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="By bringing in `zio-config-refined` module, you get validations for your config parameters almost for free. "/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Automatic Validations · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="By bringing in `zio-config-refined` module, you get validations for your config parameters almost for free. "/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-config/docs/quickstart/quickstart_index" target="_self">Quickstart</a></li><li class="siteNavGroupActive"><a href="/zio-config/docs/configdescriptor/configdescriptor_index" target="_self">ConfigDescriptor</a></li><li class="siteNavGroupActive"><a href="/zio-config/docs/sources/sources_index" target="_self">Sources</a></li><li class="siteNavGroupActive"><a href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index" target="_self">Using ConfigDescriptor</a></li><li class="siteNavGroupActive siteNavItemActive"><a href="/zio-config/docs/refined/refined_index" target="_self">Automatic Validations</a></li><li class="siteNavGroupActive"><a href="/zio-config/docs/design/design_index" target="_self">Design</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>ZIO-CONFIG</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">ZIO-CONFIG</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-config/docs/quickstart/quickstart_index">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/configdescriptor/configdescriptor_index">Creation of ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/sources/sources_index">Sources</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index">Using ConfigDescriptor</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/refined/refined_index">Automatic Validations</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/design/design_index">Design Principles</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Automatic Validations</h1></header><article><div><span><p>By bringing in <code>zio-config-refined</code> module, you get validations for your config parameters almost for free.
+<code>zio-config</code> elegantly integrates with <code>Refined</code> library for you to ahieve this with same ergnomics!</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">import</span> eu.timepit.refined.<span class="hljs-type">W</span>
+<span class="hljs-keyword">import</span> eu.timepit.refined.api.<span class="hljs-type">Refined</span>
+<span class="hljs-keyword">import</span> eu.timepit.refined.collection._
+<span class="hljs-keyword">import</span> eu.timepit.refined.numeric._
+<span class="hljs-keyword">import</span> zio.config.<span class="hljs-type">ConfigDescriptor</span>._
+<span class="hljs-keyword">import</span> zio.config._
+<span class="hljs-keyword">import</span> zio.config.refined._
+<span class="hljs-keyword">import</span> zio.{ <span class="hljs-type">App</span>, <span class="hljs-type">ZEnv</span>, <span class="hljs-type">ZIO</span> }
+
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RefinedProd</span>(<span class="hljs-params">
+  ldap: <span class="hljs-type">Refined</span>[<span class="hljs-type">String</span>, <span class="hljs-type">NonEmpty</span>],
+  port: <span class="hljs-type">Refined</span>[<span class="hljs-type">Int</span>, <span class="hljs-type">GreaterEqual</span>[<span class="hljs-type">W</span>.`1024`.<span class="hljs-type">T</span>]],
+  dburl: <span class="hljs-type">Option</span>[<span class="hljs-type">Refined</span>[<span class="hljs-type">String</span>, <span class="hljs-type">NonEmpty</span>]],
+  longs: <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`2`.<span class="hljs-type">T</span>]]]
+</span>)</span>
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">prodConfig</span></span>(n: <span class="hljs-type">Int</span>): <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, <span class="hljs-type">RefinedProd</span>] =
+  (
+    nonEmpty(string(<span class="hljs-string">"LDAP"</span>)) |@|
+      greaterEqual[<span class="hljs-type">W</span>.`<span class="hljs-number">1024</span>`.<span class="hljs-type">T</span>](int(<span class="hljs-string">"PORT"</span>)) |@|
+      nonEmpty(string(<span class="hljs-string">"DB_URL"</span>)).optional |@|
+      size[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]](longs(n).xmap(_.toList)(list =&gt; ::(list.head, list.tail)))
+  )(
+    <span class="hljs-type">RefinedProd</span>.apply,
+    <span class="hljs-type">RefinedProd</span>.unapply
+  )
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">longList</span></span>(n: <span class="hljs-type">Int</span>): <span class="hljs-type">List</span>[<span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, <span class="hljs-type">Long</span>]] =
+  (<span class="hljs-number">1</span> to n).toList
+    .map(group =&gt; long(<span class="hljs-string">s"GROUP<span class="hljs-subst">${group}</span>_LONGVAL"</span>))
+
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">longs</span></span>(n: <span class="hljs-type">Int</span>): <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, ::[<span class="hljs-type">Long</span>]] =
+  <span class="hljs-type">ConfigDescriptor</span>.collectAll[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, <span class="hljs-type">Long</span>](::(longList(n).head, longList(n).tail))
+
+<span class="hljs-keyword">val</span> myAppLogic: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Config</span>[<span class="hljs-type">RefinedProd</span>], <span class="hljs-type">Nothing</span>, <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]]]] =
+  <span class="hljs-keyword">for</span> {
+    prod &lt;- config[<span class="hljs-type">RefinedProd</span>]
+  } <span class="hljs-keyword">yield</span> prod.longs
+
+<span class="hljs-keyword">val</span> configMap =
+  <span class="hljs-type">Map</span>(
+    <span class="hljs-string">"LDAP"</span>           -&gt; <span class="hljs-string">"ldap"</span>,
+    <span class="hljs-string">"PORT"</span>           -&gt; <span class="hljs-string">"1999"</span>,
+    <span class="hljs-string">"DB_URL"</span>         -&gt; <span class="hljs-string">"ddd"</span>,
+    <span class="hljs-string">"COUNT"</span>          -&gt; <span class="hljs-string">"3"</span>,
+    <span class="hljs-string">"GROUP1_LONGVAL"</span> -&gt; <span class="hljs-string">"1234"</span>,
+    <span class="hljs-string">"GROUP2_LONGVAL"</span> -&gt; <span class="hljs-string">"2345"</span>,
+    <span class="hljs-string">"GROUP3_LONGVAL"</span> -&gt; <span class="hljs-string">"3456"</span>
+  )
+  
+<span class="hljs-keyword">val</span> outcome =
+  <span class="hljs-keyword">for</span> {
+    count  &lt;- <span class="hljs-type">Config</span>.fromMap(configMap, nonNegative(int(<span class="hljs-string">"COUNT"</span>)))
+    n      &lt;- count.config.config
+    config &lt;- <span class="hljs-type">Config</span>.fromMap(configMap, prodConfig(n.value))
+    r      &lt;- myAppLogic.provide(config)
+  } <span class="hljs-keyword">yield</span> r
+  
+
+</code></pre>
+<p>Checkout examples for usage of <code>zio-config-refined</code> in examples module of the project.</p>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/8/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Using ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/design/design_index"><span>Design Principles</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
+        ((window.gitter = {}).chat = {}).options = {
+          showChatByDefault: false,
+          activationElement: '.gitter-open-chat-button',
+          room: 'zio/zio-config'
+        };
+      </script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="" defer=""></script></div></section><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Additional resources</h5><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc of zio-config</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>

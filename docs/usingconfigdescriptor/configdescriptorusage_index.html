@@ -1,0 +1,249 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Using ConfigDescriptor · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Using Config Descriptor"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Using ConfigDescriptor · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="## Using Config Descriptor"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-config/docs/quickstart/quickstart_index" target="_self">Quickstart</a></li><li class="siteNavGroupActive"><a href="/zio-config/docs/configdescriptor/configdescriptor_index" target="_self">ConfigDescriptor</a></li><li class="siteNavGroupActive"><a href="/zio-config/docs/sources/sources_index" target="_self">Sources</a></li><li class="siteNavGroupActive siteNavItemActive"><a href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index" target="_self">Using ConfigDescriptor</a></li><li class="siteNavGroupActive"><a href="/zio-config/docs/refined/refined_index" target="_self">Automatic Validations</a></li><li class="siteNavGroupActive"><a href="/zio-config/docs/design/design_index" target="_self">Design</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>ZIO-CONFIG</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">ZIO-CONFIG</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-config/docs/quickstart/quickstart_index">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/configdescriptor/configdescriptor_index">Creation of ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/sources/sources_index">Sources</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index">Using ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/refined/refined_index">Automatic Validations</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/design/design_index">Design Principles</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Using ConfigDescriptor</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="using-config-descriptor"></a><a href="#using-config-descriptor" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Using Config Descriptor</h2>
+<p>Given a single <a href="/zio-config/docs/configdescriptor/configdescriptor_index">ConfigDescriptor</a> we can use it to:</p>
+<ol>
+<li>Get Readers that can read config from various sources</li>
+<li>Get Writer that can write config back</li>
+<li>Document the config</li>
+<li>Create report on the config</li>
+</ol>
+<h2><a class="anchor" aria-hidden="true" id="reader-from-config-descriptor"></a><a href="#reader-from-config-descriptor" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Reader from Config Descriptor</h2>
+<p>You should be familiar with reading config from various sources, given a  config descriptor.</p>
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">import</span> zio.<span class="hljs-type">IO</span>
+<span class="hljs-keyword">import</span> zio.config._, <span class="hljs-type">ConfigDescriptor</span>._
+<span class="hljs-keyword">import</span> zio.config.<span class="hljs-type">PropertyTree</span>._
+<span class="hljs-keyword">import</span> zio.config.<span class="hljs-type">ConfigDocs</span>._, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Details</span>._
+
+</code></pre>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyConfig</span>(<span class="hljs-params">ldap: <span class="hljs-type">String</span>, port: <span class="hljs-type">Int</span>, dburl: <span class="hljs-type">String</span></span>)</span>
+
+</code></pre>
+<p>To perform any action using zio-config, we need a configuration description.
+Let's define a simple one.</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">val</span> myConfig =
+  ((string(<span class="hljs-string">"LDAP"</span>) |@| int(<span class="hljs-string">"PORT"</span>)|@| string(<span class="hljs-string">"DB_URL"</span>)))(<span class="hljs-type">MyConfig</span>.apply, <span class="hljs-type">MyConfig</span>.unapply)
+
+read(myConfig from <span class="hljs-type">ConfigSource</span>.fromMap(<span class="hljs-type">Map</span>()))  
+
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="writer-from-config-descriptor"></a><a href="#writer-from-config-descriptor" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Writer from config descriptor</h2>
+<p>To write a configured value back:</p>
+<pre><code class="hljs css language-scala mdoc:silent">  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Database</span>(<span class="hljs-params">url: <span class="hljs-type">String</span>, port: <span class="hljs-type">Int</span></span>)</span>
+  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AwsConfig</span>(<span class="hljs-params">c1: <span class="hljs-type">Database</span>, c2: <span class="hljs-type">Database</span>, c3: <span class="hljs-type">String</span></span>)</span>
+
+  <span class="hljs-keyword">val</span> database =
+    (string(<span class="hljs-string">"connection"</span>) |@| int(<span class="hljs-string">"port"</span>))(<span class="hljs-type">Database</span>.apply, <span class="hljs-type">Database</span>.unapply)
+
+  <span class="hljs-keyword">val</span> map = 
+    <span class="hljs-type">Map</span>(
+      <span class="hljs-string">"south.connection"</span> -&gt; <span class="hljs-string">"abc.com"</span>,
+      <span class="hljs-string">"south.port"</span> -&gt; <span class="hljs-string">"8111"</span>,
+      <span class="hljs-string">"east.connection"</span> -&gt; <span class="hljs-string">"xyz.com"</span>,
+      <span class="hljs-string">"east.port"</span> -&gt; <span class="hljs-string">"8888"</span>,
+      <span class="hljs-string">"appName"</span> -&gt; <span class="hljs-string">"myApp"</span>
+    )
+
+  <span class="hljs-keyword">val</span> appConfig =
+    (((nested(<span class="hljs-string">"south"</span>) { database } ?? <span class="hljs-string">"South details"</span> |@|
+      nested(<span class="hljs-string">"east"</span>) { database } ?? <span class="hljs-string">"East details"</span> |@|
+      string(<span class="hljs-string">"appName"</span>))(<span class="hljs-type">AwsConfig</span>, <span class="hljs-type">AwsConfig</span>.unapply)) ?? <span class="hljs-string">"asdf"</span>  
+    ) from <span class="hljs-type">ConfigSource</span>.fromMap(map)
+ 
+  <span class="hljs-keyword">val</span> awsConfig = 
+    read(appConfig)
+
+  <span class="hljs-keyword">val</span> runtime = <span class="hljs-keyword">new</span> zio.<span class="hljs-type">DefaultRuntime</span>{}
+
+  <span class="hljs-keyword">val</span> awsConfigReuslt: <span class="hljs-type">AwsConfig</span> = runtime.unsafeRun(awsConfig)
+   <span class="hljs-comment">// yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)</span>
+     
+write(appConfig, awsConfigReuslt)
+
+<span class="hljs-comment">// yields </span>
+
+ <span class="hljs-type">Right</span>(
+    <span class="hljs-type">Record</span>(
+      <span class="hljs-type">Map</span>(
+        <span class="hljs-string">"south"</span> -&gt;
+          <span class="hljs-type">Record</span>(
+            <span class="hljs-type">Map</span>(
+              <span class="hljs-string">"connection"</span> -&gt; <span class="hljs-type">Leaf</span>(<span class="hljs-string">"abc.com"</span>),
+              <span class="hljs-string">"port"</span>       -&gt; <span class="hljs-type">Leaf</span>(<span class="hljs-string">"8111"</span>)
+            )
+          ),
+        <span class="hljs-string">"east"</span> -&gt;
+          <span class="hljs-type">Record</span>(
+            <span class="hljs-type">Map</span>(
+              <span class="hljs-string">"connection"</span> -&gt; <span class="hljs-type">Leaf</span>(<span class="hljs-string">"xyz.com"</span>),
+              <span class="hljs-string">"port"</span>       -&gt; <span class="hljs-type">Leaf</span>(<span class="hljs-string">"8888"</span>)
+            )
+          ),
+        <span class="hljs-string">"appName"</span> -&gt; <span class="hljs-type">Leaf</span>(<span class="hljs-string">"myApp"</span>)
+      )
+    )
+  )
+
+ <span class="hljs-comment">// To yield the input map that was fed in, call `flattenString` !!</span>
+ write(appConfig, awsConfigReuslt).map(_.flattenString())
+
+ <span class="hljs-comment">// yields</span>
+  <span class="hljs-type">Right</span>(
+     <span class="hljs-type">Map</span>(
+      <span class="hljs-string">"south.connection"</span> -&gt; <span class="hljs-string">"abc.com"</span>,
+      <span class="hljs-string">"south.port"</span> -&gt; <span class="hljs-string">"8111"</span>,
+      <span class="hljs-string">"east.connection"</span> -&gt; <span class="hljs-string">"xyz.com"</span>,
+      <span class="hljs-string">"east.port"</span> -&gt; <span class="hljs-string">"8888"</span>,
+      <span class="hljs-string">"appName"</span> -&gt; <span class="hljs-string">"myApp"</span>
+    )
+  )
+
+</code></pre>
+<h2><a class="anchor" aria-hidden="true" id="document-the-config"></a><a href="#document-the-config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Document the config</h2>
+<p>To generate the documentation of the config, call <code>generateDocs</code>.</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+ generateDocs(appConfig)
+
+  <span class="hljs-comment">// yields the result `ConfigDocs[String, String]`:</span>
+
+ <span class="hljs-type">Both</span>(
+   <span class="hljs-type">Both</span>(
+     <span class="hljs-type">NestedPath</span>(
+       <span class="hljs-string">"south"</span>,
+       <span class="hljs-type">Both</span>(
+         <span class="hljs-type">Path</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>))),
+         <span class="hljs-type">Path</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>)))
+       )
+     ),
+     <span class="hljs-type">NestedPath</span>(
+       <span class="hljs-string">"east"</span>,
+       <span class="hljs-type">Both</span>(
+         <span class="hljs-type">Path</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>))),
+         <span class="hljs-type">Path</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>)))
+       )
+     )
+   ),
+   <span class="hljs-type">Path</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>)))
+ )
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="more-detail"></a><a href="#more-detail" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>More detail</h4>
+<p><code>Both(left, right)</code> means the <code>left</code> and <code>right</code> should exist in the config. For the same reason we have
+<code>NestedPath</code>, <code>Or</code> etc, that are nodes of <code>ConfigDocs[K,V]</code>. <code>K</code> means, the value of <code>key</code> and <code>V</code> is
+the type of the value before it gets parsed.</p>
+<p>We will see more better representation of the documentation in the immediate future versions of zio-config.</p>
+<h2><a class="anchor" aria-hidden="true" id="report-on-the-config"></a><a href="#report-on-the-config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Report on the config</h2>
+<p>Calling <code>generateDocs</code> can give some documentation (man page).
+But most often, we need these docs to act as a report that holds the value of the actual config parameter
+along with the rest of the details.</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+generateDocsWithValue(appConfig, awsConfigReuslt)
+
+<span class="hljs-comment">// yields the result:</span>
+
+<span class="hljs-type">Right</span>(
+  <span class="hljs-type">Both</span>(
+    <span class="hljs-type">Both</span>(
+      <span class="hljs-type">NestedPath</span>(
+        <span class="hljs-string">"south"</span>,
+        <span class="hljs-type">Both</span>(
+          <span class="hljs-type">Path</span>(
+            <span class="hljs-string">"connection"</span>,
+            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"abc.com"</span>), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>))
+          ),
+          <span class="hljs-type">Path</span>(
+            <span class="hljs-string">"port"</span>,
+            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"8111"</span>), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>))
+          )
+        )
+      ),
+      <span class="hljs-type">NestedPath</span>(
+        <span class="hljs-string">"east"</span>,
+        <span class="hljs-type">Both</span>(
+          <span class="hljs-type">Path</span>(
+            <span class="hljs-string">"connection"</span>,
+            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"xyz.com"</span>), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>))
+          ),
+          <span class="hljs-type">Path</span>(
+            <span class="hljs-string">"port"</span>,
+            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"8888"</span>), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>))
+          )
+        )
+      )
+    ),
+    <span class="hljs-type">Path</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"myApp"</span>), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>)))
+  )
+)
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="more-detail-1"></a><a href="#more-detail-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>More detail</h4>
+<p><code>Both(left, right)</code> means the <code>left</code> and <code>right</code> should exist in the config. For the same reason we have
+<code>NestedPath</code>, <code>Or</code> etc, that are nodes of <code>ConfigDocs[K,V]</code>. <code>K</code> means, the value of <code>key</code> and <code>V</code> is
+the type of the value before it gets parsed.</p>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/8/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/sources/sources_index"><span class="arrow-prev">← </span><span>Sources</span></a><a class="docs-next button" href="/zio-config/docs/refined/refined_index"><span>Automatic Validations</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#using-config-descriptor">Using Config Descriptor</a></li><li><a href="#reader-from-config-descriptor">Reader from Config Descriptor</a></li><li><a href="#writer-from-config-descriptor">Writer from config descriptor</a></li><li><a href="#document-the-config">Document the config</a></li><li><a href="#report-on-the-config">Report on the config</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
+        ((window.gitter = {}).chat = {}).options = {
+          showChatByDefault: false,
+          activationElement: '.gitter-open-chat-button',
+          room: 'zio/zio-config'
+        };
+      </script><script src="https://sidecar.gitter.im/dist/sidecar.v1.js" async="" defer=""></script></div></section><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Additional resources</h5><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc of zio-config</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
