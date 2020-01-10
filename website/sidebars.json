@@ -1,47 +1,62 @@
 {
   "intro-sidebar": {
     "ZIO-CONFIG": [
-      "intro/intro_index",
-      "read/read_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index"
+      "quickstart/quickstart_index",
+      "configdescriptor/configdescriptor_index",
+      "sources/sources_index",
+      "usingconfigdescriptor/configdescriptorusage_index",
+      "refined/refined_index",
+      "design/design_index"
     ]
   },
   "read-sidebar": {
     "ZIO-CONFIG": [
-      "intro/intro_index",
-      "read/read_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index"
+      "quickstart/quickstart_index",
+      "configdescriptor/configdescriptor_index",
+      "sources/sources_index",
+      "usingconfigdescriptor/configdescriptorusage_index",
+      "refined/refined_index",
+      "design/design_index"
     ]
   },
   "doc-sidebar": {
     "ZIO-CONFIG": [
-      "intro/intro_index",
-      "read/read_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index"
+      "quickstart/quickstart_index",
+      "configdescriptor/configdescriptor_index",
+      "sources/sources_index",
+      "usingconfigdescriptor/configdescriptorusage_index",
+      "refined/refined_index",
+      "design/design_index"
     ]
   },
   "report-sidebar": {
     "ZIO-CONFIG": [
-      "intro/intro_index",
-      "read/read_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index"
+      "quickstart/quickstart_index",
+      "configdescriptor/configdescriptor_index",
+      "sources/sources_index",
+      "usingconfigdescriptor/configdescriptorusage_index",
+      "refined/refined_index",
+      "design/design_index"
     ]
   },
   "write-sidebar": {
     "ZIO-CONFIG": [
-      "intro/intro_index",
-      "read/read_index",
-      "write/write_index",
-      "doc/doc_index",
-      "report/report_index"
+      "quickstart/quickstart_index",
+      "configdescriptor/configdescriptor_index",
+      "sources/sources_index",
+      "usingconfigdescriptor/configdescriptorusage_index",
+      "refined/refined_index",
+      "design/design_index"
+    ]
+  },
+  "quickstart-sidebar": {
+    "ZIO-CONFIG": [
+      "quickstart/quickstart_index",
+      "configdescriptor/configdescriptor_index",
+      "sources/sources_index",
+      "usingconfigdescriptor/configdescriptorusage_index",
+      "refined/refined_index",
+      "design/design_index"
     ]
   }
 }
