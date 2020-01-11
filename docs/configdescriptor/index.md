@@ -1,13 +1,15 @@
 ---
-id: read_index
-title:  "Read"
+id: configdescriptor_index
+title:  "Creation of ConfigDescriptor"
 ---
-You need this import everywhere
+
+Config Descriptor is the core of your configuration management. You can write a description by hand, 
+or rely on zio-config-magnolia that can automatically generate the description for you, based on the case classes (pr sealed traits)
+that represents your config.
 
 ```scala mdoc:silent
 import zio.IO
 import zio.config._, ConfigDescriptor._
-
 ```
 
 ## A Simple example
@@ -30,7 +32,6 @@ val myConfig =
 ```
 
 Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`. 
-Type says, running it by passing a source will return `MyConfig`
 
 ## Fully Automated Config Description: zio-config-magnolia
 
@@ -336,60 +337,96 @@ Note that, you can write this back as well. This is discussed in write section
 
 ## CollectAll (Sequence)
 
-It is common to handle lists of configured values – ie a configured `List`. 
-For this case, we have `collectAll` method (also called `sequence`).
-
-There are many ways you could get a list of config. 
-Here we show a very naive version of it.
 
 ```scala mdoc:silent
  def database(i: Int) = 
    (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
 
  val list: ConfigDescriptor[String, String, ::[Database]] =
-   collectAll(::(database(0), (1 to 10).map(database).toList)) // collectAll takes `::` (cons, representing non-empty list) instead of a `List`.
+   collectAll(::(database(0), (1 to 10).map(database).toList)) 
+   // collectAll takes `::` (cons, representing non-empty list) instead of a `List`.
 
 ```
-Running this to ZIO will, obviously comes up with a List[Database]
+Running this to ZIO will result in non empty list of database
 
 NOTE: `collectAll` is a synonym for `sequence`.
 
-## Documenting
+## Handling list is just easy!
 
-To add documentation to the config description, use `?`
+```scala
 
-```scala mdoc:silent
- val databaseConfigWithDocs = 
-   (databaseConfig ?? "Database relaed config" |@| 
-     string("REGION") ?? "AWS region: Example: us-east")(AwsConfig.apply, AwsConfig.unapply)
-```
+  final case class PgmConfig(a: String, b: List[String])
+  
+  val configWithList = 
+    (string("xyz") |@| list(string("regions")))(PgmConfig.apply, PgmConfig.unapply)
 
-We can document for a whole config description as well.
-
-```scala mdoc:silent
-
-(databaseConfig |@| string("appName"))(AwsConfig, AwsConfig.unapply) ?? "The AWS details to be used"
+  
+  Config.fromEnv(configWithList, valueDelimiter = Some(","))
+  // or read(configWithList from ConfigSource.fromEnv(valueDelimiter = Some(",")))  
 
 ```
 
-This will get reflected when we call `docs(config)` which will produce sort of a manpage of your description.
-We will discuss more on this later.
+List is probably better represented in hoccon files. 
+zio-config-typesafe enables you to depend on hoccon files to manage your config
 
-## Alternative way of running it to ZIO
+Given;
 
-As you have seen before, the most preferred way is,
+```scala
+
+val listHoccon = """
+    accounts = [
+      {
+         region : us-east
+         accountId: jon
+      }
+      {
+         region : us-west
+         accountId: chris
+      }
+    ]
+    database { 
+        port : 100
+        url  : postgres
+    }
+  """
 
 ```
-Config.fromEnv(myConfig)
-// similarly, Config.fromProperty(myConfig)
-// similarly, Config.fromMap(map, myConfig)
+
+```scala
+
+import zio.config.typesafe.TypeSafeConfigSource._
+import zio.config.magnolia.ConfigDescriptorProvider._
+
+  // A nested example with type safe config, and usage of magnolia
+final case class Accnt(region: String, accountId: String)
+final case class Db(port: Int, url: String)
+final case class AwsDetails(accounts: List[Accnt], database: Db)
+
+val autoListConfig = description[AwsDetails]
+
+read(autoListConfig from hoccon(listHoccon))
+
+  // yields
+  //  AwsDetails(
+  //    List(Accnt("us-east", "jon"), Accnt("us-west", "chris")),
+  //    Db(100, "postgres")
+  //  )
 
 ```
-However, you could explicitly  use `from` which is another combinator in `ConfigDescriptor`
-and pass a specific config source. We have seen this before for handling multiple sources.
 
-```scala mdoc:silent
-val envSource = ConfigSource.fromEnv(None)
-read(myConfig from envSource)
+Note that `autoListConfig` (automatically generated) config, is exactly similar to:
+
+```scala
+
+  val accnt =
+    (string("region") |@| string("accountId"))(Accnt.apply, Accnt.unapply)
+
+  val db = (int("port") |@| string("url"))(Db.apply, Db.unapply)
+
+  val nonAutomatic =
+    (nested("accounts")(list(accnt)) |@| nested("database")(db))(
+      AwsDetails.apply,
+      AwsDetails.unapply
+    )
 
 ```

@@ -132,9 +132,10 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     libraryDependencies ++= Seq(
+      "eu.timepit"     %% "refined"  % refinedVersion,
       "dev.zio"        %% "zio"      % zioVersion,
       "com.propensive" %% "magnolia" % magnoliaVersion
     )
   )
-  .dependsOn(zioConfig, zioConfigMagnolia)
+  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigTypesafe, zioConfigRefined)
   .enablePlugins(MdocPlugin, DocusaurusPlugin)
