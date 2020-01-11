@@ -5,7 +5,7 @@ import zio.config._, ConfigDescriptor._
 import zio.DefaultRuntime
 import zio.config.magnolia.ConfigDescriptorProvider._
 
-object TypesafeConfigHocconList extends App {
+object TypesafeConfigHoconList extends App {
   val runtime = new DefaultRuntime {}
 
   // A nested example with type safe config, and usage of magnolia
@@ -13,7 +13,7 @@ object TypesafeConfigHocconList extends App {
   final case class Database(port: Int, url: String)
   final case class AwsDetails(accounts: List[Account], database: Database, users: List[String])
 
-  val listHoccon =
+  val listHocon =
     """
     accounts = [
       {
@@ -32,11 +32,11 @@ object TypesafeConfigHocconList extends App {
 
     users = ["vel", "muk", "riz"]
 
-    database { 
+    database {
         port : 100
         url  : postgres
     }
-    
+
     """
 
   val accountConfig =
@@ -51,7 +51,7 @@ object TypesafeConfigHocconList extends App {
     )
 
   val listResult =
-    read(awsDetailsConfig from hoccon(Right(listHoccon)))
+    read(awsDetailsConfig from hocon(Right(listHocon)))
 
   assert(
     runtime.unsafeRun(listResult) ==
@@ -66,7 +66,7 @@ object TypesafeConfigHocconList extends App {
   val automaticAwsDetailsConfig = description[AwsDetails]
 
   assert(
-    runtime.unsafeRun(read(automaticAwsDetailsConfig from hoccon(Right(listHoccon)))) ==
+    runtime.unsafeRun(read(automaticAwsDetailsConfig from hocon(Right(listHocon)))) ==
       AwsDetails(
         List(Account("us-east", "jon"), Account("us-west", "chris"), Account("us-some", "hello")),
         Database(100, "postgres"),

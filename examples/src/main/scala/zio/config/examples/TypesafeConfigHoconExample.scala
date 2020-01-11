@@ -15,21 +15,21 @@ object TypesafeConfigHoconExample extends App {
 
   private val configNestedAutomatic = description[AwsConfig]
 
-  val hocconString =
+  val hoconString =
     s"""
     account {
         region : us-east
         accountId: jon
     }
 
-    database { 
+    database {
         port : 100
         url  : postgres
     }
    """
 
   val nestedConfigAutomaticResult =
-    runtime.unsafeRun(read(configNestedAutomatic from hoccon(Right(hocconString))))
+    runtime.unsafeRun(read(configNestedAutomatic from hocon(Right(hoconString))))
 
   assert(nestedConfigAutomaticResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
@@ -41,12 +41,12 @@ object TypesafeConfigHoconExample extends App {
   }
 
   val nestedConfigManualResult =
-    runtime.unsafeRun(read(configNestedManual from hoccon(Right(hocconString))))
+    runtime.unsafeRun(read(configNestedManual from hocon(Right(hoconString))))
 
   assert(nestedConfigManualResult == AwsConfig(Account("us-east", "jon"), Database(100, "postgres")))
 
   // Substitution Example, Example from typesafe/config documentation
-  val hocconStringWithSubstition =
+  val hoconStringWithSubstitution =
     """
     datacentergeneric = { clustersize = 6 }
     datacentereast = ${datacentergeneric} { name = "east" }
@@ -56,16 +56,16 @@ object TypesafeConfigHoconExample extends App {
   final case class Details(clustersize: Int, name: String)
   final case class DatabaseDetails(datacenterwest: Details, datacentereast: Details)
 
-  val configWithHoconSubstituion = description[DatabaseDetails]
+  val configWithHoconSubstitution = description[DatabaseDetails]
 
   val finalResult =
-    read(configWithHoconSubstituion from hoccon(Right(hocconStringWithSubstition)))
+    read(configWithHoconSubstitution from hocon(Right(hoconStringWithSubstitution)))
 
   assert(runtime.unsafeRun(finalResult) == DatabaseDetails(Details(8, "west"), Details(6, "east")))
 
   // List Example
 
-  val listHoccon =
+  val listHocon =
     """
     accounts = [
       {
@@ -82,11 +82,11 @@ object TypesafeConfigHoconExample extends App {
       }
     ]
 
-    database { 
+    database {
         port : 100
         url  : postgres
     }
-    
+
     """
 
   final case class AwsDetails(accounts: List[Account], database: Database)
@@ -103,7 +103,7 @@ object TypesafeConfigHoconExample extends App {
     )
 
   val listResult =
-    read(awsDetailsConfig from hoccon(Right(listHoccon)))
+    read(awsDetailsConfig from hocon(Right(listHocon)))
 
   assert(
     runtime.unsafeRun(listResult) ==
