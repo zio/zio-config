@@ -4,7 +4,7 @@ import zio.blocking.Blocking
 import zio.config.ConfigDescriptor._
 import zio.config.{ Config, _ }
 import zio.console.Console
-import zio.{ App, UIO, ZEnv, ZIO }
+import zio.{ App, ZEnv, ZIO }
 
 /**
  * The pattern is an inspiration from http://degoes.net/articles/zio-environment.
@@ -54,7 +54,7 @@ trait SparkEnv {
 
 object SparkEnv {
   trait Service {
-    def sparkEnv: UIO[SparkSession]
+    def sparkEnv: SparkSession
   }
 
   def make(session: => SparkSession): ZIO[Blocking, Throwable, SparkEnv] =
@@ -65,8 +65,8 @@ object SparkEnv {
           new SparkEnv {
             override def spark: Service =
               new Service {
-                override def sparkEnv: UIO[SparkSession] =
-                  ZIO.succeed(sparkSession)
+                override def sparkEnv: SparkSession =
+                  sparkSession
               }
           }
       )
@@ -96,7 +96,7 @@ object Application {
 
   val runSparkJob: ZIO[SparkEnv with Console with Blocking, Throwable, Unit] =
     for {
-      session <- ZIO.accessM[SparkEnv](_.spark.sparkEnv)
+      session <- ZIO.access[SparkEnv](_.spark.sparkEnv)
       result  <- zio.blocking.effectBlocking(session.slowOp("SELECT something"))
       _       <- zio.console.putStrLn(s"Executed something with spark ${session.version}: $result")
     } yield ()
@@ -104,7 +104,7 @@ object Application {
   val processData: ZIO[SparkEnv with Config[ProgramConfig] with Console, Throwable, Unit] =
     for {
       conf  <- config[ProgramConfig]
-      spark <- ZIO.accessM[SparkEnv](_.spark.sparkEnv)
+      spark <- ZIO.access[SparkEnv](_.spark.sparkEnv)
       _     <- zio.console.putStrLn(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark.version}")
     } yield ()
 
