@@ -14,17 +14,17 @@ private[config] trait ConfigDocsFunctions {
         case ConfigDescriptor.Source(path, source, _) =>
           Path(
             path,
-            Descriptions(source.sourceDescription ++ descAcc.descriptions)
+            Descriptions(Sources(source.sourceDescription ++ descAcc.sources.list), descAcc.descriptions)
           )
 
         case ConfigDescriptor.Default(c, _) =>
           loop(descAcc, c, docs)
 
         case ConfigDescriptor.Sequence(c) =>
-          loop(Descriptions("value of type list" :: descAcc.descriptions), c, docs)
+          loop(descAcc.copy(descriptions = "value of type list" :: descAcc.descriptions), c, docs)
 
         case ConfigDescriptor.Describe(c, description) =>
-          loop(Descriptions(description :: descAcc.descriptions), c, docs)
+          loop(descAcc.copy(descriptions = description :: descAcc.descriptions), c, docs)
 
         case ConfigDescriptor.Optional(c) =>
           loop(descAcc, c, docs)
@@ -54,7 +54,7 @@ private[config] trait ConfigDocsFunctions {
           )
       }
 
-    loop(Descriptions(Nil), config, Empty)
+    loop(Descriptions(Sources(Nil), Nil), config, Empty)
   }
 
   def generateDocsWithValue[K, V, A](
@@ -72,8 +72,8 @@ private[config] trait ConfigDocsFunctions {
             case Path(path, docs) =>
               val updated: Details[V] =
                 docs match {
-                  case Descriptions(descriptions) =>
-                    DescriptionsWithValue(flattened.get(initialValue :+ path).map(_.head), descriptions)
+                  case Descriptions(sources, descriptions) =>
+                    DescriptionsWithValue(flattened.get(initialValue :+ path).map(_.head), sources, descriptions)
                   case a => a
                 }
               Path(path, updated)

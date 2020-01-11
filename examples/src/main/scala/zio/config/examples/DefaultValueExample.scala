@@ -29,13 +29,22 @@ object DefaultValueExample extends App {
       Both(
         Path(
           "HELLO",
-          Descriptions(List(EmptySource, ConfigSource.SystemEnvironment, "value of type string", "default value: xyz"))
+          Descriptions(
+            Sources(List(EmptySource, ConfigSource.SystemEnvironment)),
+            List("value of type string", "default value: xyz")
+          )
         ),
         OneOf(
-          Path("SOMETHING", Descriptions(List(EmptySource, ConfigSource.SystemEnvironment, "value of type string"))),
+          Path(
+            "SOMETHING",
+            Descriptions(Sources(List(EmptySource, ConfigSource.SystemEnvironment)), List("value of type string"))
+          ),
           Path(
             "PORT",
-            Descriptions(List(EmptySource, ConfigSource.SystemEnvironment, "value of type int", "default value: 1"))
+            Descriptions(
+              Sources(List(EmptySource, ConfigSource.SystemEnvironment)),
+              List("value of type int", "default value: 1")
+            )
           )
         )
       )
@@ -49,19 +58,21 @@ object DefaultValueExample extends App {
             "HELLO",
             DescriptionsWithValue(
               Some("xyz"),
-              List(EmptySource, SystemEnvironment, "value of type string", "default value: xyz")
+              Sources(List(EmptySource, SystemEnvironment)),
+              List("value of type string", "default value: xyz")
             )
           ),
           OneOf(
             Path(
               "SOMETHING",
-              DescriptionsWithValue(None, List(EmptySource, SystemEnvironment, "value of type string"))
+              DescriptionsWithValue(None, Sources(List(EmptySource, SystemEnvironment)), List("value of type string"))
             ),
             Path(
               "PORT",
               DescriptionsWithValue(
                 Some("1"),
-                List(EmptySource, SystemEnvironment, "value of type int", "default value: 1")
+                Sources(List(EmptySource, SystemEnvironment)),
+                List("value of type int", "default value: 1")
               )
             )
           )
