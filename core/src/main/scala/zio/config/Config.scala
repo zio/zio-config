@@ -4,15 +4,15 @@ import java.io.{ File, FileInputStream }
 import java.util.Properties
 
 import zio.system.System
-import zio.{ IO, Task, UIO, ZIO }
 import zio.system.System.Live.system.lineSeparator
+import zio.{ IO, Task, ZIO }
 
 trait Config[A] { self =>
   def config: Config.Service[A]
 }
 object Config {
   trait Service[A] {
-    def config: UIO[A]
+    def config: A
   }
 
   def make[K, V, A](
@@ -23,9 +23,10 @@ object Config {
       .map(
         e =>
           new Config[A] {
-            override def config: Service[A] = new Service[A] {
-              override def config: UIO[A] = ZIO.succeed(e)
-            }
+            override def config: Service[A] =
+              new Service[A] {
+                override def config: A = e
+              }
           }
       )
 

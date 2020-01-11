@@ -55,7 +55,7 @@ object RefinedReadConfig extends App {
       val outcome: ZIO[Any, ReadErrors[Vector[String], String], Refined[List[Long], Size[Greater[W.`2`.T]]]] =
         for {
           count  <- Config.fromMap(configMap, nonNegative(int("COUNT")))
-          n      <- count.config.config
+          n      = count.config.config
           config <- Config.fromMap(configMap, prodConfig(n.value))
           r      <- myAppLogic.provide(config)
         } yield r
