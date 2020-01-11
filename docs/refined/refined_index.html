@@ -61,7 +61,7 @@
               }
             });
         </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Automatic Validations</h1></header><article><div><span><p>By bringing in <code>zio-config-refined</code> module, you get validations for your config parameters almost for free.
-<code>zio-config</code> elegantly integrates with <code>Refined</code> library for you to ahieve this with same ergnomics!</p>
+<code>zio-config</code> elegantly integrates with <code>Refined</code> library for you to achieve this with same ergnomics!</p>
 <pre><code class="hljs css language-scala mdoc:silent">
 <span class="hljs-keyword">import</span> eu.timepit.refined.<span class="hljs-type">W</span>
 <span class="hljs-keyword">import</span> eu.timepit.refined.api.<span class="hljs-type">Refined</span>
@@ -79,52 +79,36 @@
   longs: <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`2`.<span class="hljs-type">T</span>]]]
 </span>)</span>
 
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">prodConfig</span></span>(n: <span class="hljs-type">Int</span>): <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, <span class="hljs-type">RefinedProd</span>] =
+<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">prodConfig</span></span>: <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, <span class="hljs-type">RefinedProd</span>] =
   (
     nonEmpty(string(<span class="hljs-string">"LDAP"</span>)) |@|
       greaterEqual[<span class="hljs-type">W</span>.`<span class="hljs-number">1024</span>`.<span class="hljs-type">T</span>](int(<span class="hljs-string">"PORT"</span>)) |@|
       nonEmpty(string(<span class="hljs-string">"DB_URL"</span>)).optional |@|
-      size[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]](longs(n).xmap(_.toList)(list =&gt; ::(list.head, list.tail)))
+      size[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]](list(long(<span class="hljs-string">"LONGVALS"</span>)))
   )(
     <span class="hljs-type">RefinedProd</span>.apply,
     <span class="hljs-type">RefinedProd</span>.unapply
   )
 
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">longList</span></span>(n: <span class="hljs-type">Int</span>): <span class="hljs-type">List</span>[<span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, <span class="hljs-type">Long</span>]] =
-  (<span class="hljs-number">1</span> to n).toList
-    .map(group =&gt; long(<span class="hljs-string">s"GROUP<span class="hljs-subst">${group}</span>_LONGVAL"</span>))
+<span class="hljs-keyword">val</span> myAppLogic: <span class="hljs-type">ZIO</span>[<span class="hljs-type">RefinedProd</span>, <span class="hljs-type">Nothing</span>, <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]]]] =
+  <span class="hljs-type">ZIO</span>.access[<span class="hljs-type">RefinedProd</span>](_.longs)
 
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">longs</span></span>(n: <span class="hljs-type">Int</span>): <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, ::[<span class="hljs-type">Long</span>]] =
-  <span class="hljs-type">ConfigDescriptor</span>.collectAll[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, <span class="hljs-type">Long</span>](::(longList(n).head, longList(n).tail))
-
-<span class="hljs-keyword">val</span> myAppLogic: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Config</span>[<span class="hljs-type">RefinedProd</span>], <span class="hljs-type">Nothing</span>, <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]]]] =
-  <span class="hljs-keyword">for</span> {
-    prod &lt;- config[<span class="hljs-type">RefinedProd</span>]
-  } <span class="hljs-keyword">yield</span> prod.longs
-
-<span class="hljs-keyword">val</span> configMap =
+<span class="hljs-keyword">val</span> configMultiMap =
   <span class="hljs-type">Map</span>(
-    <span class="hljs-string">"LDAP"</span>           -&gt; <span class="hljs-string">"ldap"</span>,
-    <span class="hljs-string">"PORT"</span>           -&gt; <span class="hljs-string">"1999"</span>,
-    <span class="hljs-string">"DB_URL"</span>         -&gt; <span class="hljs-string">"ddd"</span>,
-    <span class="hljs-string">"COUNT"</span>          -&gt; <span class="hljs-string">"3"</span>,
-    <span class="hljs-string">"GROUP1_LONGVAL"</span> -&gt; <span class="hljs-string">"1234"</span>,
-    <span class="hljs-string">"GROUP2_LONGVAL"</span> -&gt; <span class="hljs-string">"2345"</span>,
-    <span class="hljs-string">"GROUP3_LONGVAL"</span> -&gt; <span class="hljs-string">"3456"</span>
+    <span class="hljs-string">"LDAP"</span>     -&gt; ::(<span class="hljs-string">"ldap"</span>, <span class="hljs-type">Nil</span>),
+    <span class="hljs-string">"PORT"</span>     -&gt; ::(<span class="hljs-string">"1999"</span>, <span class="hljs-type">Nil</span>),
+    <span class="hljs-string">"DB_URL"</span>   -&gt; ::(<span class="hljs-string">"ddd"</span>, <span class="hljs-type">Nil</span>),
+    <span class="hljs-string">"LONGVALS"</span> -&gt; ::(<span class="hljs-string">"1234"</span>, <span class="hljs-type">List</span>(<span class="hljs-string">"2345"</span>, <span class="hljs-string">"3456"</span>))
   )
   
-<span class="hljs-keyword">val</span> outcome =
+<span class="hljs-keyword">val</span> outcome: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">ReadErrors</span>[<span class="hljs-type">Vector</span>[<span class="hljs-type">String</span>], <span class="hljs-type">String</span>], <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]]]] =
   <span class="hljs-keyword">for</span> {
-    count  &lt;- <span class="hljs-type">Config</span>.fromMap(configMap, nonNegative(int(<span class="hljs-string">"COUNT"</span>)))
-    n      &lt;- count.config.config
-    config &lt;- <span class="hljs-type">Config</span>.fromMap(configMap, prodConfig(n.value))
+    config &lt;- read(prodConfig.from(<span class="hljs-type">ConfigSource</span>.fromMultiMap(configMultiMap)))
     r      &lt;- myAppLogic.provide(config)
   } <span class="hljs-keyword">yield</span> r
-  
-
 </code></pre>
-<p>Checkout examples for usage of <code>zio-config-refined</code> in examples module of the project.</p>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/8/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Using ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/design/design_index"><span>Design Principles</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
+<p>Check out sample usage of <code>zio-config-refined</code> in <code>examples</code> module of the project.</p>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/11/2020 by Leigh Perry</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Using ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/design/design_index"><span>Design Principles</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
         ((window.gitter = {}).chat = {}).options = {
           showChatByDefault: false,
           activationElement: '.gitter-open-chat-button',
