@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Sources · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="zio-config supports various sources, starting from a constant map to a hoccon file."/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Sources · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="zio-config supports various sources, starting from a constant map to a hoccon file."/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Sources · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="zio-config supports various sources ranging from an in-memory Map, to environment variables, through to a HOCON file."/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Sources · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="zio-config supports various sources ranging from an in-memory Map, to environment variables, through to a HOCON file."/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100,"cornerOffset":100}
@@ -60,7 +60,7 @@
                 };
               }
             });
-        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Sources</h1></header><article><div><span><p>zio-config supports various sources, starting from a constant map to a hoccon file.
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Sources</h1></header><article><div><span><p>zio-config supports various sources ranging from an in-memory Map, to environment variables, through to a HOCON file.
 Forming a source gets into a standard pattern, and is easy for you to add another one.</p>
 <pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">import</span> zio.<span class="hljs-type">IO</span>
 <span class="hljs-keyword">import</span> zio.config._, <span class="hljs-type">ConfigDescriptor</span>._
@@ -176,8 +176,8 @@ read(myConfig from javaPropertiesSource)
 
 </code></pre>
 <p><em>Implementation Detail</em>: <code>Config.fromPropertyFile</code> simply yields <code>java.util.Properties</code> in a <code>ZIO</code> and delegate the rest to <code>ConfigSource.fromJavaProperties</code></p>
-<h2><a class="anchor" aria-hidden="true" id="hoccon-string-source"></a><a href="#hoccon-string-source" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Hoccon String Source</h2>
-<p>To enable hoccon source, you have to bring in <code>zio-config-typesafe</code> module.
+<h2><a class="anchor" aria-hidden="true" id="hocon-string-source"></a><a href="#hocon-string-source" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>HOCON String Source</h2>
+<p>To enable HOCON source, you have to bring in <code>zio-config-typesafe</code> module.
 There are many examples in examples module in zio-config.</p>
 <p>Here is an quick example</p>
 <pre><code class="hljs css language-scala mdoc:silent">
@@ -190,8 +190,8 @@ case class SimpleConfig(port: Int, url: String, region: Option[String])
 
 val automaticDescription = description[SimpleConfig]
 
-val hocconSource =
-  hoccon(
+val hoconSource =
+  hocon(
     Right(
       """
       {
@@ -204,8 +204,8 @@ val hocconSource =
     )
   )
 
-val anotherHocconSource =
-  hoccon(
+val anotherHoconSource =
+  hocon(
     Right(
       """
         port=123
@@ -215,15 +215,15 @@ val anotherHocconSource =
     )
   )
 
-read(automaticDescription from hocconSource)
+read(automaticDescription from hoconSource)
 // yielding SimpleConfig(123,bla,Some(useast))
 
 
-read(automaticDescription from anotherHocconSource)
+read(automaticDescription from anotherHoconSource)
 // yielding SimpleConfig(123,bla,Some(useast))
 
 // You could also do
-TypesafeConfig.fromHocconString(
+TypesafeConfig.fromHoconString(
      """
       {
         port : 123
@@ -234,10 +234,10 @@ TypesafeConfig.fromHocconString(
 
 
 </code></pre>
-<h2><a class="anchor" aria-hidden="true" id="hoccon-file-source"></a><a href="#hoccon-file-source" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Hoccon File Source</h2>
-<p>Similar to <code>TypesafeConfig.fromHocconString(str, automaticDescription)</code></p>
+<h2><a class="anchor" aria-hidden="true" id="hocon-file-source"></a><a href="#hocon-file-source" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>HOCON File Source</h2>
+<p>Similar to <code>TypesafeConfig.fromHoconString(str, automaticDescription)</code></p>
 <pre><code class="hljs css language-scala mdoc:silent">
-<span class="hljs-type">TypesafeConfig</span>.fromHocconFile(automaticDescription, <span class="hljs-keyword">new</span> java.io.<span class="hljs-type">File</span>(<span class="hljs-string">"fileapth"</span>))
+<span class="hljs-type">TypesafeConfig</span>.fromHoconFile(automaticDescription, <span class="hljs-keyword">new</span> java.io.<span class="hljs-type">File</span>(<span class="hljs-string">"fileapth"</span>))
 
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="json-source"></a><a href="#json-source" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Json Source</h2>
@@ -254,11 +254,11 @@ val jsonString =
    """
     
 
-TypesafeConfig.fromHocconString(jsonString, automaticDescription)
+TypesafeConfig.fromHoconString(jsonString, automaticDescription)
 
 
 </code></pre>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/8/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Creation of ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index"><span class="function-name-prevnext">Using ConfigDescriptor</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#constant-map-source">Constant Map Source</a></li><li><a href="#multi-map-source">Multi Map Source</a></li><li><a href="#system-env-source">System Env Source</a></li><li><a href="#system-properties">System Properties</a></li><li><a href="#java-properties">Java Properties</a></li><li><a href="#properties-file-source">Properties File Source</a></li><li><a href="#hoccon-string-source">Hoccon String Source</a></li><li><a href="#hoccon-file-source">Hoccon File Source</a></li><li><a href="#json-source">Json Source</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/11/2020 by Leigh Perry</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Creation of ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index"><span class="function-name-prevnext">Using ConfigDescriptor</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#constant-map-source">Constant Map Source</a></li><li><a href="#multi-map-source">Multi Map Source</a></li><li><a href="#system-env-source">System Env Source</a></li><li><a href="#system-properties">System Properties</a></li><li><a href="#java-properties">Java Properties</a></li><li><a href="#properties-file-source">Properties File Source</a></li><li><a href="#hocon-string-source">HOCON String Source</a></li><li><a href="#hocon-file-source">HOCON File Source</a></li><li><a href="#json-source">Json Source</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
         ((window.gitter = {}).chat = {}).options = {
           showChatByDefault: false,
           activationElement: '.gitter-open-chat-button',

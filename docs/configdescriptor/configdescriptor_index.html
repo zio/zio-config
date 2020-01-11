@@ -268,8 +268,8 @@ string(<span class="hljs-string">"TOKEN"</span>) orElse string(<span class="hljs
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="nesting"></a><a href="#nesting" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Nesting</h2>
 <p>In addition to the primitive types, zio-config provides a combinator for nesting a configuration within another.</p>
-<p>This might not feel intuitive at first, however, zio-config is desgined and patiently added this feature to easily adapt to
-any other configuration parsing libraries that deals with files, hoccons that supports nested configurations.</p>
+<p>This might not feel intuitive at first, however, zio-config is designed to easily adapt to
+any other configuration parsing libraries that deal with file formats such as HOCON that natively support nested configurations.</p>
 <pre><code class="hljs css language-scala mdoc:silent">  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AwsConfigExtended</span>(<span class="hljs-params">c1: <span class="hljs-type">Database</span>, c2: <span class="hljs-type">Database</span>, c3: <span class="hljs-type">String</span></span>)</span>
 
   <span class="hljs-keyword">val</span> appConfig =
@@ -313,11 +313,11 @@ any other configuration parsing libraries that deals with files, hoccons that su
   <span class="hljs-comment">// or read(configWithList from ConfigSource.fromEnv(valueDelimiter = Some(",")))  </span>
 
 </code></pre>
-<p>List is probably better represented in hoccon files.
-zio-config-typesafe enables you to depend on hoccon files to manage your config</p>
+<p>List is probably better represented in HOCON files.
+zio-config-typesafe enables you to depend on HOCON files to manage your configuration.</p>
 <p>Given;</p>
 <pre><code class="hljs css language-scala">
-val listHoccon = """
+val listHocon = """
     accounts = [
       {
          region : us-east
@@ -346,7 +346,7 @@ val listHoccon = """
 
 <span class="hljs-keyword">val</span> autoListConfig = description[<span class="hljs-type">AwsDetails</span>]
 
-read(autoListConfig from hoccon(listHoccon))
+read(autoListConfig from hocon(listHocon))
 
   <span class="hljs-comment">// yields</span>
   <span class="hljs-comment">//  AwsDetails(</span>
@@ -369,7 +369,7 @@ read(autoListConfig from hoccon(listHoccon))
     )
 
 </code></pre>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/4/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/quickstart/quickstart_index"><span class="arrow-prev">← </span><span>Quick Start</span></a><a class="docs-next button" href="/zio-config/docs/sources/sources_index"><span>Sources</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#a-simple-example">A Simple example</a></li><li><a href="#fully-automated-config-description-zio-config-magnolia">Fully Automated Config Description: zio-config-magnolia</a></li><li><a href="#running-the-description-to-zio">Running the description to ZIO</a></li><li><a href="#built-in-types">Built-in types</a></li><li><a href="#optional-types">Optional Types</a></li><li><a href="#default">Default</a></li><li><a href="#custom-types">Custom types</a></li><li><a href="#multiple-sources">Multiple sources</a></li><li><a href="#either-types-orelseeither">Either Types (orElseEither)</a></li><li><a href="#orelse">OrElse</a></li><li><a href="#composing-multiple-configurations">Composing multiple configurations</a></li><li><a href="#nesting">Nesting</a></li><li><a href="#collectall-sequence">CollectAll (Sequence)</a></li><li><a href="#handling-list-is-just-easy">Handling list is just easy!</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/11/2020 by Leigh Perry</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/quickstart/quickstart_index"><span class="arrow-prev">← </span><span>Quick Start</span></a><a class="docs-next button" href="/zio-config/docs/sources/sources_index"><span>Sources</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#a-simple-example">A Simple example</a></li><li><a href="#fully-automated-config-description-zio-config-magnolia">Fully Automated Config Description: zio-config-magnolia</a></li><li><a href="#running-the-description-to-zio">Running the description to ZIO</a></li><li><a href="#built-in-types">Built-in types</a></li><li><a href="#optional-types">Optional Types</a></li><li><a href="#default">Default</a></li><li><a href="#custom-types">Custom types</a></li><li><a href="#multiple-sources">Multiple sources</a></li><li><a href="#either-types-orelseeither">Either Types (orElseEither)</a></li><li><a href="#orelse">OrElse</a></li><li><a href="#composing-multiple-configurations">Composing multiple configurations</a></li><li><a href="#nesting">Nesting</a></li><li><a href="#collectall-sequence">CollectAll (Sequence)</a></li><li><a href="#handling-list-is-just-easy">Handling list is just easy!</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
         ((window.gitter = {}).chat = {}).options = {
           showChatByDefault: false,
           activationElement: '.gitter-open-chat-button',
