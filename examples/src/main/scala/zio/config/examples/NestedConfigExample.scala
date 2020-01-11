@@ -20,7 +20,7 @@ object NestedConfigExample extends App {
       nested("east") { database } ?? "East details" |@|
       string("appName"))(AwsConfig, AwsConfig.unapply)
 
-  // For simplicity in example, we use map source. Works with hoccon.
+  // For simplicity in example, we use map source. Works with HOCON.
   val source =
     ConfigSource.fromMap(
       Map(
