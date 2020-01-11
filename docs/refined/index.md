@@ -40,9 +40,9 @@ val myAppLogic: ZIO[RefinedProd, Nothing, Refined[List[Long], Size[Greater[W.`2`
 
 val configMultiMap =
   Map(
-    "LDAP"     -> singleton("ldap"),
-    "PORT"     -> singleton("1999"),
-    "DB_URL"   -> singleton("ddd"),
+    "LDAP"     -> ::("ldap", Nil),
+    "PORT"     -> ::("1999", Nil),
+    "DB_URL"   -> ::("ddd", Nil),
     "LONGVALS" -> ::("1234", List("2345", "3456"))
   )
   
