@@ -57,12 +57,20 @@ object ConfigDescriptorProvider {
               val rawDesc =
                 h.typeclass.getDescription(h.label)
 
+              val descriptions =
+                h.annotations
+                  .filter(_.isInstanceOf[describe])
+                  .map(_.asInstanceOf[describe].describe)
+
               val desc =
                 h.default
                   .map(r => rawDesc.default(r))
                   .getOrElse(rawDesc)
 
-              desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
+              val withDocs =
+                if (descriptions.isEmpty) desc else descriptions.foldLeft(desc)((a, b) => a ?? b)
+
+              withDocs.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
             }
           }
 
@@ -74,7 +82,14 @@ object ConfigDescriptorProvider {
             ::(r.head, r.tail)
           })
 
-        if (path.isEmpty) finalDesc else nested(path)(finalDesc)
+        val annotations = caseClass.annotations
+          .filter(_.isInstanceOf[zio.config.magnolia.describe])
+          .map(_.asInstanceOf[describe].describe)
+
+        val withDocsCaseClass =
+          if (annotations.isEmpty) finalDesc else annotations.foldLeft(finalDesc)((a, b) => a ?? b)
+
+        if (path.isEmpty) withDocsCaseClass else nested(path)(withDocsCaseClass)
       }
     }
 

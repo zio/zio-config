@@ -2,6 +2,7 @@ package zio.config.examples
 
 import zio.ZIO
 import zio.config.ConfigSource
+import zio.config.magnolia.describe
 import zio.config.magnolia.ConfigDescriptorProvider._
 import zio.console.Console.Live.console._
 import MyConfig._
@@ -27,7 +28,9 @@ object MyConfig {
   case class INR(inr: Int)        extends Price
   case class AUD(dollars: Double) extends Price
 
+  @describe("This config is about aws")
   final case class Aws(region: String, credentials: Credentials)
+
   final case class DbUrl(value: String) extends AnyVal
 }
 
@@ -59,7 +62,9 @@ object AutomaticConfigDescriptor extends zio.App {
     read(config).foldM(
       r => putStrLn(r.mkString(",")) *> ZIO.succeed(1),
       result =>
-        putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *>
+        putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *> putStrLn(
+          generateDocs(config).toString()
+        ) *>
           ZIO.succeed(0)
     )
   //

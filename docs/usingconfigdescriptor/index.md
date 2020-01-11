@@ -213,4 +213,4 @@ Right(
 #### More detail
 `Both(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
 `NestedPath`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
-the type of the value before it gets parsed.
+the type of the value before it gets parsed.g
