@@ -12,9 +12,7 @@ import scala.util.Success
 import scala.collection.JavaConverters._
 
 object TypeSafeConfigSource {
-  def hoccon(
-    hoccon: Either[com.typesafe.config.Config, String]
-  ): ConfigSource[String, String] =
+  def hocon(input: Either[com.typesafe.config.Config, String]): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
         def effect[A](f: => A): Either[ReadErrorsVector[String, String], A] =
@@ -145,7 +143,7 @@ object TypeSafeConfigSource {
                                               ReadError.fatalError[Vector[String], String](
                                                 path,
                                                 new RuntimeException(
-                                                  s"Wrong types in the list. Identified the value of ${head} in hoccon as a list, however, it should be a list of primitive values. Ex: [1, 2, 3]"
+                                                  s"Wrong types in the list. Identified the value of ${head} in HOCON as a list, however, it should be a list of primitive values. Ex: [1, 2, 3]"
                                                 )
                                               )
                                             )
@@ -171,7 +169,7 @@ object TypeSafeConfigSource {
         for {
           config <- ZIO
                      .effect(
-                       hoccon.fold(
+                       input.fold(
                          config => config,
                          str => ConfigFactory.parseString(str).resolve
                        )
@@ -181,7 +179,7 @@ object TypeSafeConfigSource {
           res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t))
         } yield res
       },
-      List("typesafe-config-hoccon")
+      List("typesafe-config-hocon")
     )
 
   private def asListOfString[A](jlist: => java.util.List[A]): Try[List[String]] =

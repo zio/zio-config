@@ -309,8 +309,8 @@ This is more of a real life scenario, where you can different micro configuratio
 
 In addition to the primitive types, zio-config provides a combinator for nesting a configuration within another.
 
-This might not feel intuitive at first, however, zio-config is desgined and patiently added this feature to easily adapt to
-any other configuration parsing libraries that deals with files, hoccons that supports nested configurations.
+This might not feel intuitive at first, however, zio-config is designed to easily adapt to
+any other configuration parsing libraries that deal with file formats such as HOCON that natively support nested configurations.
 
 ```scala mdoc:silent
   case class AwsConfigExtended(c1: Database, c2: Database, c3: String)
@@ -366,14 +366,14 @@ NOTE: `collectAll` is a synonym for `sequence`.
 
 ```
 
-List is probably better represented in hoccon files. 
-zio-config-typesafe enables you to depend on hoccon files to manage your config
+List is probably better represented in HOCON files. 
+zio-config-typesafe enables you to depend on HOCON files to manage your configuration.
 
 Given;
 
 ```scala
 
-val listHoccon = """
+val listHocon = """
     accounts = [
       {
          region : us-east
@@ -404,7 +404,7 @@ final case class AwsDetails(accounts: List[Accnt], database: Db)
 
 val autoListConfig = description[AwsDetails]
 
-read(autoListConfig from hoccon(listHoccon))
+read(autoListConfig from hocon(listHocon))
 
   // yields
   //  AwsDetails(

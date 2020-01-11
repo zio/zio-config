@@ -3,7 +3,7 @@ id: sources_index
 title:  "Sources"
 ---
 
-zio-config supports various sources, starting from a constant map to a hoccon file.
+zio-config supports various sources ranging from an in-memory Map, to environment variables, through to a HOCON file.
 Forming a source gets into a standard pattern, and is easy for you to add another one.
 
 ```scala mdoc:silent
@@ -159,9 +159,9 @@ Config.fromPropertyFile("filepath", myConfig)
 
 _Implementation Detail_: `Config.fromPropertyFile` simply yields `java.util.Properties` in a `ZIO` and delegate the rest to `ConfigSource.fromJavaProperties`
 
-## Hoccon String Source
+## HOCON String Source
 
-To enable hoccon source, you have to bring in `zio-config-typesafe` module.
+To enable HOCON source, you have to bring in `zio-config-typesafe` module.
 There are many examples in examples module in zio-config. 
 
 Here is an quick example
@@ -179,8 +179,8 @@ case class SimpleConfig(port: Int, url: String, region: Option[String])
 
 val automaticDescription = description[SimpleConfig]
 
-val hocconSource =
-  hoccon(
+val hoconSource =
+  hocon(
     Right(
       """
       {
@@ -193,8 +193,8 @@ val hocconSource =
     )
   )
 
-val anotherHocconSource =
-  hoccon(
+val anotherHoconSource =
+  hocon(
     Right(
       """
         port=123
@@ -204,15 +204,15 @@ val anotherHocconSource =
     )
   )
 
-read(automaticDescription from hocconSource)
+read(automaticDescription from hoconSource)
 // yielding SimpleConfig(123,bla,Some(useast))
 
 
-read(automaticDescription from anotherHocconSource)
+read(automaticDescription from anotherHoconSource)
 // yielding SimpleConfig(123,bla,Some(useast))
 
 // You could also do
-TypesafeConfig.fromHocconString(
+TypesafeConfig.fromHoconString(
      """
       {
         port : 123
@@ -224,13 +224,13 @@ TypesafeConfig.fromHocconString(
 
 ```
 
-## Hoccon File Source
+## HOCON File Source
 
-Similar to `TypesafeConfig.fromHocconString(str, automaticDescription)`
+Similar to `TypesafeConfig.fromHoconString(str, automaticDescription)`
 
 ```scala mdoc:silent
 
-TypesafeConfig.fromHocconFile(automaticDescription, new java.io.File("fileapth"))
+TypesafeConfig.fromHoconFile(automaticDescription, new java.io.File("fileapth"))
 
 ```
 
@@ -252,7 +252,7 @@ val jsonString =
    """
     
 
-TypesafeConfig.fromHocconString(jsonString, automaticDescription)
+TypesafeConfig.fromHoconString(jsonString, automaticDescription)
 
 
 ```
