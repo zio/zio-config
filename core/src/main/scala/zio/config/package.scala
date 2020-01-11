@@ -5,7 +5,7 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
   final type ReadErrorsVector[K, V] = ReadErrors[Vector[K], V]
 
   final def config[A]: ZIO[Config[A], Nothing, A] =
-    ZIO.accessM(_.config.config)
+    ZIO.access(_.config.config)
 
   private[config] def concat[A](l: ::[A], r: ::[A]): ::[A] =
     ::(l.head, l.tail ++ r)
