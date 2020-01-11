@@ -11,7 +11,7 @@ object TypesafeConfig {
   def fromHoconFile[A](configDescriptor: ConfigDescriptor[String, String, A], file: File) =
     fromHocon(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
-  def fromHocconString[A](str: String, configDescriptor: ConfigDescriptor[String, String, A]): Task[Config[A]] =
+  def fromHoconString[A](str: String, configDescriptor: ConfigDescriptor[String, String, A]): Task[Config[A]] =
     fromHocon(ConfigFactory.parseString(str).resolve, configDescriptor)
 
   def fromHocon[A](
