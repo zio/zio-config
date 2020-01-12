@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.DefaultRuntime
 import zio.config.ConfigDescriptor._
-import zio.config.{read, _}
+import zio.config.{ read, _ }
 
 // see Stackoverflow: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
 object CoproductExample extends App {

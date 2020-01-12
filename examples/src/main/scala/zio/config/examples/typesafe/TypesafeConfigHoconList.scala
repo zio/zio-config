@@ -1,7 +1,7 @@
 package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
-import zio.config.ConfigDescriptor.{int, list, nested, string}
+import zio.config.ConfigDescriptor.{ int, list, nested, string }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon

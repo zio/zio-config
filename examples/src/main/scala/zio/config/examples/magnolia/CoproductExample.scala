@@ -2,7 +2,7 @@ package zio.config.examples.magnolia
 
 import zio.DefaultRuntime
 import zio.config.magnolia.ConfigDescriptorProvider.description
-import zio.config.{ConfigSource, read, singleton, write}
+import zio.config.{ read, singleton, write, ConfigSource }
 
 object CoproductExample extends App {
 
