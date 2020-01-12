@@ -138,19 +138,19 @@ To generate the documentation of the config, call `generateDocs`.
      NestedPath(
        "south",
        Both(
-         Path("connection", Descriptions(List("value of type string", "South details"))),
-         Path("port", Descriptions(List("value of type int", "South details")))
+         Path("connection", Descriptions(Sources(List("<empty>", "constant map")), List("value of type string", "South details"))),
+         Path("port", Descriptions(Sources(List("<empty>", "constant map")), List("value of type int", "South details")))
        )
      ),
      NestedPath(
        "east",
        Both(
-         Path("connection", Descriptions(List("value of type string", "East details"))),
-         Path("port", Descriptions(List("value of type int", "East details")))
+         Path("connection", Descriptions(Sources(List("<empty>", "constant map")), List("value of type string", "East details"))),
+         Path("port", Descriptions(Sources(List("<empty>", "constant map")), List("value of type int", "East details")))
        )
      )
    ),
-   Path("appName", Descriptions(List("value of type string")))
+   Path("appName", Descriptions(Sources(List("<empty>", "constant map")), List("value of type string")))
  )
 ```
 
@@ -183,11 +183,11 @@ Right(
         Both(
           Path(
             "connection",
-            DescriptionsWithValue(Some("abc.com"), List("value of type string", "South details"))
+            DescriptionsWithValue(Some("abc.com"), Sources(List("<empty>", "constant map")), List("value of type string", "South details"))
           ),
           Path(
             "port",
-            DescriptionsWithValue(Some("8111"), List("value of type int", "South details"))
+            DescriptionsWithValue(Some("8111"), Sources(List("<empty>", "constant map")), List("value of type int", "South details"))
           )
         )
       ),
@@ -196,16 +196,16 @@ Right(
         Both(
           Path(
             "connection",
-            DescriptionsWithValue(Some("xyz.com"), List("value of type string", "East details"))
+            DescriptionsWithValue(Some("xyz.com"), Sources(List("<empty>", "constant map")), List("value of type string", "East details"))
           ),
           Path(
             "port",
-            DescriptionsWithValue(Some("8888"), List("value of type int", "East details"))
+            DescriptionsWithValue(Some("8888"), Sources(List("<empty>", "constant map")), List("value of type int", "East details"))
           )
         )
       )
     ),
-    Path("appName", DescriptionsWithValue(Some("myApp"), List("value of type string")))
+    Path("appName", DescriptionsWithValue(Some("myApp"), Sources(List("<empty>", "constant map")), List("value of type string")))
   )
 )
 ```
