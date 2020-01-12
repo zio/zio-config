@@ -1,13 +1,13 @@
-package zio.config.examples
+package zio.config.examples.refined
 
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
-import eu.timepit.refined.collection._
-import eu.timepit.refined.numeric._
-import zio.config.ConfigDescriptor._
-import zio.config._
-import zio.config.refined._
-import zio.{ App, ZEnv, ZIO }
+import eu.timepit.refined.collection.{NonEmpty, Size}
+import eu.timepit.refined.numeric.{Greater, GreaterEqual}
+import zio.config.ConfigDescriptor.{int, list, long, string}
+import zio.config.refined.{greaterEqual, nonEmpty, size}
+import zio.config.{ConfigDescriptor, ConfigSource, ReadErrors, read}
+import zio.{App, ZIO, ZEnv}
 
 object RefinedReadConfig extends App {
   case class RefinedProd(

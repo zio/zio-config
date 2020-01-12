@@ -1,10 +1,9 @@
-package zio.config.examples
+package zio.config.examples.magnolia
 
 import zio.DefaultRuntime
-import zio.config.ConfigDescriptor._
-import zio.config.{read, _}
+import zio.config.magnolia.ConfigDescriptorProvider.description
+import zio.config.{ConfigSource, read, singleton, write}
 
-// see Stackoverflow: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
 object CoproductExample extends App {
 
   sealed trait Dance
@@ -16,43 +15,7 @@ object CoproductExample extends App {
   final case class Person(name: String, age: Option[Int])
   final case class Height(height: Long)
 
-  val personConfig =
-    (string("name") |@| int("age").optional)(Person.apply, Person.unapply)
-
-  val heightConfig =
-    long("height").xmap(Height)(_.height)
-
-  val aConfig = nested("any")(personConfig).xmap(A)(_.any)
-  val bConfig = nested("body")(heightConfig).xmap(B)(_.body)
-  val cConfig = boolean("can").xmap(C)(_.can)
-  val dConfig = string("dance").xmap(D)(_.dance)
-
-  val aConfigAsDance =
-    aConfig.xmapEither(a => Right(a: Dance))({
-      case a: A => Right(a)
-      case _    => Left("unable to write back")
-    })
-
-  val bConfigAsDance =
-    bConfig.xmapEither(a => Right(a: Dance))({
-      case a: B => Right(a)
-      case _    => Left("unsable to write back")
-    })
-
-  val cConfigAsDance =
-    cConfig.xmapEither(a => Right(a: Dance))({
-      case a: C => Right(a)
-      case _    => Left("unsable to write back")
-    })
-
-  val dConigAsDance =
-    dConfig.xmapEither(a => Right(a: Dance))({
-      case a: D => Right(a)
-      case _    => Left("unsable to write back")
-    })
-
-  val danceConfig =
-    aConfigAsDance.orElse(bConfigAsDance).orElse(cConfigAsDance).orElse(dConigAsDance)
+  val danceConfig = description[Dance]
 
   val aSource = ConfigSource.fromMap(
     Map(
