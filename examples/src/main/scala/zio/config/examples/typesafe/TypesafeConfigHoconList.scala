@@ -1,9 +1,10 @@
-package zio.config.examples
+package zio.config.examples.typesafe
 
-import zio.config.typesafe.TypeSafeConfigSource._
-import zio.config._, ConfigDescriptor._
 import zio.DefaultRuntime
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.ConfigDescriptor.{ int, list, nested, string }
+import zio.config.magnolia.ConfigDescriptorProvider.description
+import zio.config.read
+import zio.config.typesafe.TypeSafeConfigSource.hocon
 
 object TypesafeConfigHoconList extends App {
   val runtime = new DefaultRuntime {}
