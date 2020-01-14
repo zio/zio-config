@@ -1,11 +1,11 @@
-package zio.config.examples
+package zio.config.examples.magnolia
 
 import zio.ZIO
 import zio.config.ConfigSource
 import zio.config.magnolia.describe
+import zio.config.examples.magnolia.MyConfig._
 import zio.config.magnolia.ConfigDescriptorProvider._
 import zio.console.Console.Live.console._
-import MyConfig._
 
 final case class MyConfig(
   aws: Aws,
@@ -30,7 +30,6 @@ object MyConfig {
 
   @describe("This config is about aws")
   final case class Aws(region: String, credentials: Credentials)
-
   final case class DbUrl(value: String) extends AnyVal
 }
 

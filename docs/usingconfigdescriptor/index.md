@@ -38,7 +38,7 @@ Let's define a simple one.
 ```scala mdoc:silent
 
 val myConfig =
-  ((string("LDAP") |@| int("PORT")|@| string("DB_URL")))(MyConfig.apply, MyConfig.unapply)
+  (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
 read(myConfig from ConfigSource.fromMap(Map()))  
 

@@ -1,19 +1,25 @@
-package zio.config.examples
+package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
 import zio.config.ConfigDescriptor._
+import zio.config.typesafe.TypeSafeConfigSource.hocon
 import zio.config.{ read, _ }
 
 // see Stackoverflow: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
 object CoproductExample extends App {
 
   sealed trait Dance
-  case class A(any: Person)   extends Dance
-  case class B(body: Height)  extends Dance
-  case class C(can: Boolean)  extends Dance
+
+  case class A(any: Person) extends Dance
+
+  case class B(body: Height) extends Dance
+
+  case class C(can: Boolean) extends Dance
+
   case class D(dance: String) extends Dance
 
   final case class Person(name: String, age: Option[Int])
+
   final case class Height(height: Long)
 
   val personConfig =
@@ -54,27 +60,27 @@ object CoproductExample extends App {
   val danceConfig =
     aConfigAsDance.orElse(bConfigAsDance).orElse(cConfigAsDance).orElse(dConigAsDance)
 
-  val aSource = ConfigSource.fromMap(
-    Map(
-      "any.name" -> "chris"
+  val aSource = hocon(
+    Right(
+      "any.name = chris"
     )
   )
 
-  val bSource = ConfigSource.fromMap(
-    Map(
-      "body.height" -> "179"
+  val bSource = hocon(
+    Right(
+      "body.height = 179"
     )
   )
 
-  val cSource = ConfigSource.fromMap(
-    Map(
-      "can" -> "false"
+  val cSource = hocon(
+    Right(
+      "can = false"
     )
   )
 
-  val dSource = ConfigSource.fromMap(
-    Map(
-      "dance" -> "I am Dancing !!"
+  val dSource = hocon(
+    Right(
+      """dance = "I am Dancing !!""""
     )
   )
 
