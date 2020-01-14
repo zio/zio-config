@@ -1,10 +1,10 @@
-package zio.config.examples
+package zio.config.examples.magnolia
 
 import zio.ZIO
 import zio.config.ConfigSource
+import zio.config.examples.magnolia.MyConfig._
 import zio.config.magnolia.ConfigDescriptorProvider._
 import zio.console.Console.Live.console._
-import MyConfig._
 
 final case class MyConfig(
   aws: Aws,
