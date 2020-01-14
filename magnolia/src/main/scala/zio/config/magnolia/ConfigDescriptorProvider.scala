@@ -68,7 +68,7 @@ object ConfigDescriptorProvider {
                   .getOrElse(rawDesc)
 
               val withDocs =
-                if (descriptions.isEmpty) desc else descriptions.foldLeft(desc)((a, b) => a ?? b)
+                updateConfigWithDocuments(descriptions, desc)
 
               withDocs.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
             }
@@ -87,7 +87,7 @@ object ConfigDescriptorProvider {
           .map(_.asInstanceOf[describe].describe)
 
         val withDocsCaseClass =
-          if (annotations.isEmpty) finalDesc else annotations.foldLeft(finalDesc)((a, b) => a ?? b)
+          updateConfigWithDocuments(annotations, finalDesc)
 
         if (path.isEmpty) withDocsCaseClass else nested(path)(withDocsCaseClass)
       }
@@ -128,6 +128,12 @@ object ConfigDescriptorProvider {
     }
 
   implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
+
+  private[config] def updateConfigWithDocuments[K, V, A](
+    documents: Seq[String],
+    config: ConfigDescriptor[K, V, A]
+  ) =
+    documents.foldLeft(config)((cf, doc) => cf ?? doc)
 
   def description[T: ConfigDescriptorProvider]: ConfigDescriptor[String, String, T] =
     ConfigDescriptorProvider[T].getDescription("")
