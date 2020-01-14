@@ -27,7 +27,7 @@ Let's define a simple one.
 
 ```scala mdoc:silent
 val myConfig =
-  ((string("LDAP") |@| int("PORT")|@| string("DB_URL")))(MyConfig.apply, MyConfig.unapply)
+  (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
 ```
 
@@ -111,8 +111,8 @@ That is,
 case class MyConfigWithOptionalUrl(ldap: String, port: Port, dburl: Option[String])
 
 val myConfigOptional =
-  ((string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@| 
-    string("DB_URL").optional))(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
+  (string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@| 
+    string("DB_URL").optional)(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
 
 ```
 
@@ -133,7 +133,7 @@ Sometimes, we don't need an optional value and instead happy providing a default
 case class MyConfigWithDefaultUserName(username: String, port: Int)
 
 val myConfigDefault =
-  ((string("USERNAME").default("root-oh") |@| int("PORT")))(MyConfigWithDefaultUserName.apply, MyConfigWithDefaultUserName.unapply)
+  (string("USERNAME").default("root-oh") |@| int("PORT"))(MyConfigWithDefaultUserName.apply, MyConfigWithDefaultUserName.unapply)
 
 ```
 
@@ -169,8 +169,8 @@ That is,
 
  // Before
   val myConfigWithCustomType =
-    ((string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@|
-      string("DB_URL")))(MyCustomConfig.apply, MyCustomConfig.unapply)
+    (string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@|
+      string("DB_URL"))(MyCustomConfig.apply, MyCustomConfig.unapply)
 
 ```
 
@@ -185,7 +185,7 @@ val source1 = ConfigSource.fromProperty(None)
 val source2 = ConfigSource.fromEnv(None)
 
 val myMultipleSourceConfig =
-  ((string("LDAP").from(source1.orElse(source2)) |@| int("PORT").xmap(Port)(_.value).from(source1)) |@|
+  (string("LDAP").from(source1.orElse(source2)) |@| int("PORT").xmap(Port)(_.value).from(source1) |@|
     string("DB_URL").optional.from(source2))(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
 
 read(myMultipleSourceConfig)
@@ -236,7 +236,7 @@ That is,
 case class MyConfigWithEither(usernameOrToken: Either[String, String], port: Int)
 
 val myConfigEither =
-  ((string("USERNAME").orElseEither(string("TOKEN")) |@| int("PORT")))(MyConfigWithEither.apply, MyConfigWithEither.unapply)
+  (string("USERNAME").orElseEither(string("TOKEN")) |@| int("PORT"))(MyConfigWithEither.apply, MyConfigWithEither.unapply)
 
 ```
 
