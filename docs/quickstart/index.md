@@ -65,7 +65,7 @@ Let's define a simple one.
 ```scala mdoc:silent
 
 val myConfig =
-  ((string("LDAP") |@| int("PORT")|@| string("DB_URL")))(MyConfig.apply, MyConfig.unapply)
+  (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
  // ConfigDescriptor[String, String, MyConfig] 
 
@@ -140,8 +140,8 @@ generateDocs(myConfig)
 
 
 val betterConfig = 
-  ((string("LDAP") ?? "Related to auth" |@|  int("PORT") ?? "Database port" |@| 
-    string("DB_URL") ?? "url of database")
+  (string("LDAP") ?? "Related to auth" |@|  int("PORT") ?? "Database port" |@| 
+    string("DB_URL") ?? "url of database"
    )(MyConfig.apply, MyConfig.unapply)
 
 generateDocs(betterConfig)
@@ -187,7 +187,7 @@ import zio.console.Console.Live.console._
 case class ApplicationConfig(bridgeIp: String, userName: String)
 
 val configuration =
-  ((string("bridgeIp")) |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
+  (string("bridgeIp") |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
 
 val finalExecution: ZIO[Config[ApplicationConfig], Nothing, Unit] =
   for {
