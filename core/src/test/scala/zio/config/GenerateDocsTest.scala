@@ -2,7 +2,7 @@ package zio.config
 
 import zio.config.ConfigDescriptor.{ int, nested, string }
 import zio.config.ConfigDocs.Details.{ Descriptions, DescriptionsWithValue }
-import zio.config.ConfigDocs.{ Both, NestedPath, Path }
+import zio.config.ConfigDocs.{ Both, NestedPath, Path, Sources }
 import zio.config.ConfigSource.{ ConstantMap, EmptySource }
 import zio.config.GenerateDocsTestUtils._
 import zio.config.helpers._
@@ -76,18 +76,27 @@ object GenerateDocsTestUtils {
         Both(
           Path(
             keys.secret,
-            Descriptions(List(EmptySource, ConstantMap, "value of type string", "optional value", "Application secret"))
+            Descriptions(
+              Sources(List(EmptySource, ConstantMap)),
+              List("value of type string", "optional value", "Application secret")
+            )
           ),
           NestedPath(
             keys.credentials,
             Both(
               Path(
                 keys.user,
-                Descriptions(List(EmptySource, ConstantMap, "value of type string", "Example: ZioUser", "Credentials"))
+                Descriptions(
+                  Sources(List(EmptySource, ConstantMap)),
+                  List("value of type string", "Example: ZioUser", "Credentials")
+                )
               ),
               Path(
                 keys.password,
-                Descriptions(List(EmptySource, ConstantMap, "value of type string", "Example: ZioPass", "Credentials"))
+                Descriptions(
+                  Sources(List(EmptySource, ConstantMap)),
+                  List("value of type string", "Example: ZioPass", "Credentials")
+                )
               )
             )
           )
@@ -97,11 +106,17 @@ object GenerateDocsTestUtils {
           Both(
             Path(
               keys.port,
-              Descriptions(List(EmptySource, ConstantMap, "value of type int", "Example: 8088", "Database"))
+              Descriptions(
+                Sources(List(EmptySource, ConstantMap)),
+                List("value of type int", "Example: 8088", "Database")
+              )
             ),
             Path(
               keys.url,
-              Descriptions(List(EmptySource, ConstantMap, "value of type string", "Example: abc.com", "Database"))
+              Descriptions(
+                Sources(List(EmptySource, ConstantMap)),
+                List("value of type string", "Example: abc.com", "Database")
+              )
             )
           )
         )
@@ -115,7 +130,8 @@ object GenerateDocsTestUtils {
               keys.secret,
               DescriptionsWithValue(
                 value.secret,
-                List(EmptySource, ConstantMap, "value of type string", "optional value", "Application secret")
+                Sources(List(EmptySource, ConstantMap)),
+                List("value of type string", "optional value", "Application secret")
               )
             ),
             NestedPath(
@@ -125,14 +141,16 @@ object GenerateDocsTestUtils {
                   keys.user,
                   DescriptionsWithValue(
                     Some(value.credentials.user),
-                    List(EmptySource, ConstantMap, "value of type string", "Example: ZioUser", "Credentials")
+                    Sources(List(EmptySource, ConstantMap)),
+                    List("value of type string", "Example: ZioUser", "Credentials")
                   )
                 ),
                 Path(
                   keys.password,
                   DescriptionsWithValue(
                     Some(value.credentials.password),
-                    List(EmptySource, ConstantMap, "value of type string", "Example: ZioPass", "Credentials")
+                    Sources(List(EmptySource, ConstantMap)),
+                    List("value of type string", "Example: ZioPass", "Credentials")
                   )
                 )
               )
@@ -145,14 +163,16 @@ object GenerateDocsTestUtils {
                 keys.port,
                 DescriptionsWithValue(
                   Some(value.database.port).map(_.toString),
-                  List(EmptySource, ConstantMap, "value of type int", "Example: 8088", "Database")
+                  Sources(List(EmptySource, ConstantMap)),
+                  List("value of type int", "Example: 8088", "Database")
                 )
               ),
               Path(
                 keys.url,
                 DescriptionsWithValue(
                   Some(value.database.url),
-                  List(EmptySource, ConstantMap, "value of type string", "Example: abc.com", "Database")
+                  Sources(List(EmptySource, ConstantMap)),
+                  List("value of type string", "Example: abc.com", "Database")
                 )
               )
             )

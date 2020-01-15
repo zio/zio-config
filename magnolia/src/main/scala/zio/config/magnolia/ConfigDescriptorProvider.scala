@@ -57,12 +57,20 @@ object ConfigDescriptorProvider {
               val rawDesc =
                 h.typeclass.getDescription(h.label)
 
+              val descriptions =
+                h.annotations
+                  .filter(_.isInstanceOf[describe])
+                  .map(_.asInstanceOf[describe].describe)
+
               val desc =
                 h.default
                   .map(r => rawDesc.default(r))
                   .getOrElse(rawDesc)
 
-              desc.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
+              val withDocs =
+                updateConfigWithDocuments(descriptions, desc)
+
+              withDocs.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
             }
           }
 
@@ -74,7 +82,14 @@ object ConfigDescriptorProvider {
             ::(r.head, r.tail)
           })
 
-        if (path.isEmpty) finalDesc else nested(path)(finalDesc)
+        val annotations = caseClass.annotations
+          .filter(_.isInstanceOf[zio.config.magnolia.describe])
+          .map(_.asInstanceOf[describe].describe)
+
+        val withDocsCaseClass =
+          updateConfigWithDocuments(annotations, finalDesc)
+
+        if (path.isEmpty) withDocsCaseClass else nested(path)(withDocsCaseClass)
       }
     }
 
@@ -113,6 +128,12 @@ object ConfigDescriptorProvider {
     }
 
   implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
+
+  private[config] def updateConfigWithDocuments[K, V, A](
+    documents: Seq[String],
+    config: ConfigDescriptor[K, V, A]
+  ) =
+    documents.foldLeft(config)((cf, doc) => cf ?? doc)
 
   def description[T: ConfigDescriptorProvider]: ConfigDescriptor[String, String, T] =
     ConfigDescriptorProvider[T].getDescription("")
