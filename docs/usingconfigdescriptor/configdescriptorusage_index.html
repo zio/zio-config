@@ -173,19 +173,19 @@ write(appConfig, awsConfigReuslt)
      <span class="hljs-type">NestedPath</span>(
        <span class="hljs-string">"south"</span>,
        <span class="hljs-type">Both</span>(
-         <span class="hljs-type">Path</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>))),
-         <span class="hljs-type">Path</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>)))
+         <span class="hljs-type">Path</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"&lt;empty&gt;"</span>, <span class="hljs-string">"constant map"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>))),
+         <span class="hljs-type">Path</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"&lt;empty&gt;"</span>, <span class="hljs-string">"constant map"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>)))
        )
      ),
      <span class="hljs-type">NestedPath</span>(
        <span class="hljs-string">"east"</span>,
        <span class="hljs-type">Both</span>(
-         <span class="hljs-type">Path</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>))),
-         <span class="hljs-type">Path</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>)))
+         <span class="hljs-type">Path</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"&lt;empty&gt;"</span>, <span class="hljs-string">"constant map"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>))),
+         <span class="hljs-type">Path</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"&lt;empty&gt;"</span>, <span class="hljs-string">"constant map"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>)))
        )
      )
    ),
-   <span class="hljs-type">Path</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>)))
+   <span class="hljs-type">Path</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">Descriptions</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"&lt;empty&gt;"</span>, <span class="hljs-string">"constant map"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>)))
  )
 </code></pre>
 <h4><a class="anchor" aria-hidden="true" id="more-detail"></a><a href="#more-detail" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>More detail</h4>
@@ -210,11 +210,11 @@ generateDocsWithValue(appConfig, awsConfigReuslt)
         <span class="hljs-type">Both</span>(
           <span class="hljs-type">Path</span>(
             <span class="hljs-string">"connection"</span>,
-            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"abc.com"</span>), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>))
+            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"abc.com"</span>), <span class="hljs-type">Sources</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"&lt;empty&gt;"</span>, <span class="hljs-string">"constant map"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>))
           ),
           <span class="hljs-type">Path</span>(
             <span class="hljs-string">"port"</span>,
-            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"8111"</span>), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>))
+            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"8111"</span>), <span class="hljs-type">Sources</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"&lt;empty&gt;"</span>, <span class="hljs-string">"constant map"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>))
           )
         )
       ),
@@ -223,24 +223,24 @@ generateDocsWithValue(appConfig, awsConfigReuslt)
         <span class="hljs-type">Both</span>(
           <span class="hljs-type">Path</span>(
             <span class="hljs-string">"connection"</span>,
-            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"xyz.com"</span>), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>))
+            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"xyz.com"</span>), <span class="hljs-type">Sources</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"&lt;empty&gt;"</span>, <span class="hljs-string">"constant map"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>))
           ),
           <span class="hljs-type">Path</span>(
             <span class="hljs-string">"port"</span>,
-            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"8888"</span>), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>))
+            <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"8888"</span>), <span class="hljs-type">Sources</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"&lt;empty&gt;"</span>, <span class="hljs-string">"constant map"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>))
           )
         )
       )
     ),
-    <span class="hljs-type">Path</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"myApp"</span>), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>)))
+    <span class="hljs-type">Path</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">DescriptionsWithValue</span>(<span class="hljs-type">Some</span>(<span class="hljs-string">"myApp"</span>), <span class="hljs-type">Sources</span>(<span class="hljs-type">List</span>(<span class="hljs-string">"&lt;empty&gt;"</span>, <span class="hljs-string">"constant map"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>)))
   )
 )
 </code></pre>
 <h4><a class="anchor" aria-hidden="true" id="more-detail-1"></a><a href="#more-detail-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>More detail</h4>
 <p><code>Both(left, right)</code> means the <code>left</code> and <code>right</code> should exist in the config. For the same reason we have
 <code>NestedPath</code>, <code>Or</code> etc, that are nodes of <code>ConfigDocs[K,V]</code>. <code>K</code> means, the value of <code>key</code> and <code>V</code> is
-the type of the value before it gets parsed.</p>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/14/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/sources/sources_index"><span class="arrow-prev">← </span><span>Sources</span></a><a class="docs-next button" href="/zio-config/docs/refined/refined_index"><span>Automatic Validations</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#using-config-descriptor">Using Config Descriptor</a></li><li><a href="#reader-from-config-descriptor">Reader from Config Descriptor</a></li><li><a href="#writer-from-config-descriptor">Writer from config descriptor</a></li><li><a href="#document-the-config">Document the config</a></li><li><a href="#report-on-the-config">Report on the config</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
+the type of the value before it gets parsed.g</p>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/15/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/sources/sources_index"><span class="arrow-prev">← </span><span>Sources</span></a><a class="docs-next button" href="/zio-config/docs/refined/refined_index"><span>Automatic Validations</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#using-config-descriptor">Using Config Descriptor</a></li><li><a href="#reader-from-config-descriptor">Reader from Config Descriptor</a></li><li><a href="#writer-from-config-descriptor">Writer from config descriptor</a></li><li><a href="#document-the-config">Document the config</a></li><li><a href="#report-on-the-config">Report on the config</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section><div><div class="gitter-open-chat-button">Open Chat</div><script type="text/javascript">
         ((window.gitter = {}).chat = {}).options = {
           showChatByDefault: false,
           activationElement: '.gitter-open-chat-button',
