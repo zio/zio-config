@@ -15,11 +15,15 @@ object DocsExample extends App {
   assert(
     generateDocs(config) ==
       Both(
-        Path("PORT", Descriptions(List("<empty>", "value of type int", "Example: 8088", "Database related"))),
+        Path(
+          "PORT",
+          Descriptions(Sources(List("<empty>")), List("value of type int", "Example: 8088", "Database related"))
+        ),
         Path(
           "URL",
           Descriptions(
-            List("<empty>", "value of type string", "optional value", "Example: abc.com", "Database related")
+            Sources(List("<empty>", "value of type string")),
+            List("optional value", "Example: abc.com", "Database related")
           )
         )
       )
@@ -33,14 +37,16 @@ object DocsExample extends App {
             "PORT",
             DescriptionsWithValue(
               Some("1"),
-              List("<empty>", "value of type int", "Example: 8088", "Database related")
+              Sources(List("<empty>")),
+              List("value of type int", "Example: 8088", "Database related")
             )
           ),
           Path(
             "URL",
             DescriptionsWithValue(
               Some("value"),
-              List("<empty>", "value of type string", "optional value", "Example: abc.com", "Database related")
+              Sources(List("<empty>")),
+              List("value of type string", "optional value", "Example: abc.com", "Database related")
             )
           )
         )
