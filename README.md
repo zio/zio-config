@@ -1,20 +1,25 @@
-# zio-config
+# ZIO Config
 
 [![CircleCI](https://circleci.com/gh/zio/zio-config/tree/master.svg?style=svg)](https://circleci.com/gh/zio/zio-config/tree/master)
 [![badge-discord]][link-discord]
 
-A [zio](https://github.com/scalaz/scalaz-zio) based  configuration parsing library.
+A [ZIO](https://github.com/zio/zio)-based library for working with application configuration data.
 
-The library aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
+Unlike other libraries, _ZIO Config_ offloads parsing and formats to other libraries, and just focuses on being the interface to configuration data throughout an application.
+
+Using a single definition of configuration requirements, _ZIO Config_ offers a bundle of features for free:
+
+ * Read flat or nested config data from any format, with descriptive errors
+ * Write flat or nested config data into any format
+ * Compose sources of configuration, so you can have, e.g., environmental or command-line overrides
+ * Automatically generate documentation so devs / devops know how to configure the application
+ * Generate a report that shows where each piece of configuration data came from
+
 Please find more details in the [website](https://zio.github.io/zio-config/).
 
-Jump to [examples](examples/src/main/scala/zio/config/examples) to see various usecases.
-Ping in [discord](https://discord.gg/2ccFBr4) zio-config channel for any queries.
+Jump to [examples](examples/src/main/scala/zio/config/examples) to see various usecases. Hop over to the [Discord](https://discord.gg/2ccFBr4) #zio-config channel to chat with developers and other users.
 
-Also try out zio-config quickly in [scastie](https://scastie.scala-lang.org/afsalthaj/3ALODWLJQbWmFxqBJ2MYWA/90) which is pre-loaded with an example. We will make sure the scastie-buildsettings are updated with latest version of zio-config, however, we still recommend you keep an eye on it, and change them when needed.
+Try out _ZIO Config_ quickly in [Scastie](https://scastie.scala-lang.org/afsalthaj/3ALODWLJQbWmFxqBJ2MYWA/90), which comes pre-loaded with an example. We try to make sure the scastie-buildsettings are updated with latest version of _ZIO Config_.
 
-[badge-discord]: https://img.shields.io/discord/629491597070827530?logo=discord "chat on discord"
+[badge-discord]: https://img.shields.io/discord/629491597070827530?logo=discord "Chat on discord"
 [link-discord]: https://discord.gg/2ccFBr4 "Discord"
-
-
-
