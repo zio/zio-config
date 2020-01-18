@@ -5,9 +5,9 @@
 
 A [ZIO](https://github.com/zio/zio)-based library for working with application configuration data.
 
-Unlike other libraries, _ZIO Config_ offloads parsing and formats to other libraries, and just focuses on being the interface to configuration data throughout an application.
+_ZIO Config_ offloads all parsing and file formats to other libraries, and just focuses on being the _interface_ to configuration data throughout an application.
 
-Using a single definition of configuration requirements, _ZIO Config_ offers a bundle of features for free:
+Using a single definition of configuration requirements, which can be derived automatically from your data types, _ZIO Config_ offers a bundle of features for free:
 
  * Read flat or nested config data from any format, with descriptive errors
  * Write flat or nested config data into any format
