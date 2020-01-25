@@ -24,6 +24,8 @@ object DefaultValueExample extends App {
 
   assert(result == PgmConfig("xyz", Right(1)))
 
+  println(generateDocs(pgmConfig))
+
   assert(
     generateDocs(pgmConfig) ==
       Both(
@@ -31,7 +33,7 @@ object DefaultValueExample extends App {
           "HELLO",
           Descriptions(
             Sources(List(EmptySource, ConfigSource.SystemEnvironment)),
-            List("value of type string", "default value: xyz")
+            List("value of type string", "default value: xyz ()")
           )
         ),
         OneOf(
@@ -43,7 +45,7 @@ object DefaultValueExample extends App {
             "PORT",
             Descriptions(
               Sources(List(EmptySource, ConfigSource.SystemEnvironment)),
-              List("value of type int", "default value: 1")
+              List("value of type int", "default value: 1 ()")
             )
           )
         )
