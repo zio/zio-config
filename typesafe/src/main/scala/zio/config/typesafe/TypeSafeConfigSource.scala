@@ -28,11 +28,11 @@ object TypeSafeConfigSource {
         ) => Either[ReadErrorsVector[String, String], ::[String]] =
           (config, valueType, key) =>
             if (valueType == ConfigValueType.BOOLEAN) {
-              effect(config.getBoolean(key).toString()).map(singleton)
+              effect(config.getBoolean(key).toString).map(singleton)
             } else if (valueType == ConfigValueType.NULL) {
               Left(singleton(ReadError.MissingValue(path)))
             } else if (valueType == ConfigValueType.NUMBER) {
-              effect(config.getNumber(key).toString()).map(singleton)
+              effect(config.getNumber(key).toString).map(singleton)
             } else if (valueType == ConfigValueType.STRING) {
               effect(config.getString(key)).map(singleton)
             } else if (valueType == ConfigValueType.OBJECT) {
@@ -98,69 +98,84 @@ object TypeSafeConfigSource {
           parentConfig: com.typesafe.config.Config,
           list: List[String],
           nextPath: List[String]
-        ): Either[ReadErrorsVector[String, String], ::[String]] =
+        ): Either[ReadErrorsVector[String, String], ::[Option[String]]] =
           list match {
             case Nil =>
               nextPath.lastOption match {
-                case Some(lastKey) => getValue(parentConfig, parentConfig.getValue(lastKey).valueType(), lastKey)
-                case None          => Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+                case Some(lastKey) =>
+                  val r = getValue(parentConfig, parentConfig.getValue(lastKey).valueType(), lastKey)
+
+                  println(r)
+                  r.map(t => {
+                    ::(Some(t.head), t.tail.map(Some(_)))
+                  })
+                case None => Left(singleton(ReadError.missingValue[Vector[String], String](path)))
               }
 
             case head :: next => {
               for {
-                valueType <- effect(parentConfig.getValue(head).valueType())
-                res <- if (valueType == ConfigValueType.LIST) {
-                        for {
-                          // A few extra error handling.
-                          res <- effect(parentConfig.getConfigList(head).asScala.toList) match {
-                                  case Right(allConfigs) =>
-                                    seqEither(allConfigs.map(eachConfig => loop(eachConfig, next, nextPath :+ head)))
-                                      .map(t => t.flatMap(_.toList))
-                                      .flatMap({
-                                        case Nil =>
-                                          Left(singleton(ReadError.missingValue[Vector[String], String](path)))
-                                        case h :: t => Right(::(h, t))
-                                      })
+                res <- effect(parentConfig.getValue(head).valueType()) match {
+                        case Left(_) => Right(::(None, Nil))
+                        case Right(valueType) =>
+                          if (valueType == ConfigValueType.LIST) {
+                            for {
+                              // A few extra error handling.
+                              res <- effect(parentConfig.getConfigList(head).asScala.toList) match {
+                                      case Right(allConfigs) =>
+                                        seqEither(
+                                          allConfigs.map(eachConfig => loop(eachConfig, next, nextPath :+ head))
+                                        ).map(t => t.flatMap(_.toList))
+                                          .flatMap({
+                                            case Nil =>
+                                              Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+                                            case h :: t => Right(::(h, t))
+                                          })
 
-                                  case Left(_) =>
-                                    effect(parentConfig.getList(head).asScala.toList).flatMap {
-                                      {
-                                        case Nil =>
-                                          Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+                                      case Left(_) =>
+                                        effect(parentConfig.getList(head).asScala.toList).flatMap {
+                                          {
+                                            case Nil =>
+                                              Left(singleton(ReadError.missingValue[Vector[String], String](path)))
 
-                                        case h :: t
-                                            if (::(h, t).forall(
-                                              t =>
-                                                t.valueType() != ConfigValueType.NULL ||
-                                                  t.valueType() != ConfigValueType.LIST ||
-                                                  t.valueType() != ConfigValueType.OBJECT
-                                            )) =>
-                                          Right(::(h.unwrapped().toString, t.map(_.unwrapped().toString)))
-
-                                        case _ =>
-                                          Left(
-                                            singleton(
-                                              ReadError.fatalError[Vector[String], String](
-                                                path,
-                                                new RuntimeException(
-                                                  s"Wrong types in the list. Identified the value of ${head} in HOCON as a list, however, it should be a list of primitive values. Ex: [1, 2, 3]"
+                                            case h :: t
+                                                if (::(h, t).forall(
+                                                  t =>
+                                                    t.valueType() != ConfigValueType.NULL ||
+                                                      t.valueType() != ConfigValueType.LIST ||
+                                                      t.valueType() != ConfigValueType.OBJECT
+                                                )) =>
+                                              Right(
+                                                ::(
+                                                  Some(h.unwrapped().toString),
+                                                  t.map(t => Some(t.unwrapped().toString))
                                                 )
                                               )
-                                            )
-                                          )
 
-                                      }
+                                            case _ =>
+                                              Left(
+                                                singleton(
+                                                  ReadError.fatalError[Vector[String], String](
+                                                    path,
+                                                    new RuntimeException(
+                                                      s"Wrong types in the list. Identified the value of ${head} in HOCON as a list, however, it should be a list of primitive values. Ex: [1, 2, 3]"
+                                                    )
+                                                  )
+                                                )
+                                              )
+
+                                          }
+                                        }
                                     }
-                                }
-                        } yield res
-                      } else {
-                        if (parentConfig.getValue(head).valueType() == ConfigValueType.OBJECT) {
-                          loop(parentConfig.getConfig(head), next, nextPath :+ head)
-                        } else if (next.isEmpty) {
-                          loop(parentConfig, next, nextPath :+ head)
-                        } else {
-                          Left(singleton(ReadError.missingValue[Vector[String], String](path)))
-                        }
+                            } yield res
+                          } else {
+                            if (parentConfig.getValue(head).valueType() == ConfigValueType.OBJECT) {
+                              loop(parentConfig.getConfig(head), next, nextPath :+ head)
+                            } else if (next.isEmpty) {
+                              loop(parentConfig, next, nextPath :+ head)
+                            } else {
+                              Left(singleton(ReadError.missingValue[Vector[String], String](path)))
+                            }
+                          }
                       }
               } yield res
             }
@@ -176,7 +191,10 @@ object TypeSafeConfigSource {
                      )
                      .mapError(throwable => singleton(ReadError.fatalError[Vector[String], String](path, throwable)))
 
-          res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t))
+          _ = println(loop(config, path.toList, Nil))
+
+          res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => { println(t); ConfigValue(t) })
+          _   = println(res)
         } yield res
       },
       List("typesafe-config-hocon")

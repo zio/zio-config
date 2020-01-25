@@ -4,7 +4,7 @@ import zio.{ IO, ZIO }
 import zio.system.System.Live.system
 import java.{ util => ju }
 
-final case class ConfigValue[A](value: ::[A])
+final case class ConfigValue[A](value: ::[Option[A]])
 
 final case class ConfigSource[K, V](
   getConfigValue: Vector[K] => IO[ReadErrorsVector[K, V], ConfigValue[V]],
@@ -39,16 +39,16 @@ object ConfigSource {
             ReadError.FatalError(path, _),
             opt =>
               opt.map(r => {
-                val consOfValues: ::[String] =
+                val consOfValues: ::[Option[String]] =
                   valueSeparator
                     .flatMap(
                       sep =>
                         r.split(sep).toList.map(_.trim) match {
-                          case h :: tail => Some(::(h, tail))
+                          case h :: tail => Some(::(Some(h), tail.map(Some(_))))
                           case Nil       => None
                         }
                     )
-                    .getOrElse(::(r, Nil))
+                    .getOrElse(::(Some(r), Nil))
 
                 ConfigValue(consOfValues)
               })
@@ -70,16 +70,16 @@ object ConfigSource {
             ReadError.FatalError(path, _),
             opt =>
               opt.map(r => {
-                val consOfValues: ::[String] =
+                val consOfValues: ::[Option[String]] =
                   valueSeparator
                     .flatMap(
                       sep =>
                         r.split(sep).toList.map(_.trim) match {
-                          case h :: tail => Some(::(h, tail))
+                          case h :: tail => Some(::(Some(h), tail.map(Some(_))))
                           case Nil       => None
                         }
                     )
-                    .getOrElse(::(r, Nil))
+                    .getOrElse(::(Some(r), Nil))
                 ConfigValue(consOfValues)
               })
           )
@@ -122,16 +122,16 @@ object ConfigSource {
             ReadError.FatalError(path, _),
             opt =>
               opt.map(r => {
-                val consOfValues: ::[String] =
+                val consOfValues: ::[Option[String]] =
                   valueSeparator
                     .flatMap(
                       sep =>
                         r.split(sep).toList.map(_.trim) match {
-                          case h :: tail => Some(::(h, tail))
+                          case h :: tail => Some(::(Some(h), tail.map(Some(_))))
                           case Nil       => None
                         }
                     )
-                    .getOrElse(::(r, Nil))
+                    .getOrElse(::(Some(r), Nil))
                 ConfigValue(consOfValues)
               })
           )
@@ -152,9 +152,23 @@ object ConfigSource {
     ConfigSource(
       (path: Vector[String]) => {
         val key = path.mkString(pathDelimiter)
-        ZIO.fromOption(map.get(key).map(r => ConfigValue(f(r)))).mapError { _ =>
-          singleton(ReadError.MissingValue(Vector(key)))
-        }
+        ZIO
+          .fromOption(
+            map
+              .get(key)
+              .map(
+                r =>
+                  ConfigValue(
+                    ::(
+                      f(r).map(Some(_)).head,
+                      f(r).map(Some(_)).tail
+                    )
+                  )
+              )
+          )
+          .mapError { _ =>
+            singleton(ReadError.MissingValue(Vector(key)))
+          }
       },
       ConstantMap :: Nil
     )
