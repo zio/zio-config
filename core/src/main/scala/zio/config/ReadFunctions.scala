@@ -39,10 +39,9 @@ private[config] trait ReadFunctions {
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
           loop(config, paths).map(list => {
-            val r = list.map(t => t.map(singleton))
+            val r = list
             val z = ::(r.head, r.tail)
-            println(z)
-            singleton(z)
+            singleton(Some(z.flatMap(_.toList)))
           })
 
         case ConfigDescriptor.Nested(path, c) =>
@@ -117,7 +116,7 @@ private[config] trait ReadFunctions {
                   ZIO.succeed(
                     ::(
                       a.map(r => r.map(rr => Left(rr): Either[a, b])).head,
-                      a.map(r => r.map(rr => Left(rr): Either[a, b]))
+                      a.map(r => r.map(rr => Left(rr): Either[a, b])).tail
                     )
                   )
 
@@ -128,7 +127,7 @@ private[config] trait ReadFunctions {
                         ZIO.succeed(
                           ::(
                             b.map(r => r.map(rr => Right(rr): Either[a, b])).head,
-                            b.map(r => r.map(rr => Right(rr): Either[a, b]))
+                            b.map(r => r.map(rr => Right(rr): Either[a, b])).tail
                           )
                         )
                       case Left(rerr) => ZIO.fail(concat(lerr, rerr))
@@ -150,13 +149,7 @@ private[config] trait ReadFunctions {
             )
       }
 
-    val r = loop(configuration, Vector.empty[K]).map(_.flatMap(_.toList))
-    println(r)
-
-    r.map(t => {
-      println(t)
-      t.head
-    })
+    loop(configuration, Vector.empty[K]).map(_.flatMap(_.toList)).map(_.head)
 
   }
 }

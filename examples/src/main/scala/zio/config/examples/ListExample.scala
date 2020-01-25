@@ -6,7 +6,7 @@ import zio.config.PropertyTree, PropertyTree.{ Leaf, Record }
 
 // List works quite nicely if the source is typesafe HOCON. Refer TypesafeConfigHoconExample.scala to get an idea.
 object ListExample extends App {
-  final case class PgmConfig(a: String, b: List[String])
+  final case class PgmConfig(b: List[String])
 
   val multiMap =
     Map(
@@ -15,7 +15,7 @@ object ListExample extends App {
     )
 
   val config: ConfigDescriptor[String, String, PgmConfig] =
-    (string("xyz") |@| list(string("regions")))(PgmConfig.apply, PgmConfig.unapply)
+    list(string("regions")).xmap(PgmConfig.apply)(_.b)
 
   val runtime = new DefaultRuntime {}
 
@@ -26,7 +26,7 @@ object ListExample extends App {
 
   assert(
     resultFromMultiMap ==
-      PgmConfig("something", List("australia", "canada", "usa"))
+      PgmConfig(List("australia", "canada", "usa"))
   )
 
   assert(

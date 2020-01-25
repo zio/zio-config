@@ -104,8 +104,6 @@ object TypeSafeConfigSource {
               nextPath.lastOption match {
                 case Some(lastKey) =>
                   val r = getValue(parentConfig, parentConfig.getValue(lastKey).valueType(), lastKey)
-
-                  println(r)
                   r.map(t => {
                     ::(Some(t.head), t.tail.map(Some(_)))
                   })
@@ -191,10 +189,7 @@ object TypeSafeConfigSource {
                      )
                      .mapError(throwable => singleton(ReadError.fatalError[Vector[String], String](path, throwable)))
 
-          _ = println(loop(config, path.toList, Nil))
-
-          res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => { println(t); ConfigValue(t) })
-          _   = println(res)
+          res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t))
         } yield res
       },
       List("typesafe-config-hocon")
