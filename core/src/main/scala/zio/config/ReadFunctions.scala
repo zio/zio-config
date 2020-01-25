@@ -41,7 +41,7 @@ private[config] trait ReadFunctions {
           loop(config, paths).map(list => {
             val r = list
             val z = ::(r.head, r.tail)
-            singleton(Some(z.flatMap(_.toList)))
+            singleton(Some(z.map(_.toList).flatten))
           })
 
         case ConfigDescriptor.Nested(path, c) =>
@@ -84,7 +84,7 @@ private[config] trait ReadFunctions {
             case Left(_) => ZIO.succeed(singleton(None))
           })
 
-        case r: ConfigDescriptor.Zip[K, V, a, B] @unchecked => {
+        case r: ConfigDescriptor.Zip[K, V, a, b] @unchecked => {
           val ConfigDescriptor.Zip(left, right) = r
           for {
             res1 <- loop(left, paths).either
@@ -93,12 +93,9 @@ private[config] trait ReadFunctions {
                    case (Right(as), Right(bs)) =>
                      foreach(::(as.zip(bs).head, as.zip(bs).tail)) {
                        case (Some(a), Some(b)) => ZIO.succeed(Some((a, b)))
-                       case _ =>
-                         ZIO.fail(
-                           singleton(
-                             ReadError.missingValue[Vector[K], V1](paths)
-                           )
-                         )
+                       case (Some(a), None)    => ZIO.succeed(Some((a, None.asInstanceOf[b])))
+                       case (None, Some(b))    => ZIO.succeed(Some((None.asInstanceOf[a], b)))
+                       case (None, None)       => ZIO.succeed(Some((None.asInstanceOf[a], None.asInstanceOf[b])))
                      }
                    case (Left(a), Right(_))      => ZIO.fail(a)
                    case (Right(_), Left(error))  => ZIO.fail(error)
