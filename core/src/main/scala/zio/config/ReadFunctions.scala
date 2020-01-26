@@ -79,9 +79,13 @@ private[config] trait ReadFunctions {
           val ConfigDescriptor.Optional(c) = cd
           loop(c, paths).either.flatMap({
             case Right(value) =>
-              val res: List[Option[B]] = value.map(t => Some(t): Option[B])
+              val res: List[Option[B]] = value.map({
+                case Some(a) => Some(Some(a))
+                case None    => None
+              })
               ZIO.succeed(::(res.head, res.tail))
-            case Left(_) => ZIO.succeed(singleton(None))
+            case Left(_) =>
+              ZIO.succeed(singleton(None))
           })
 
         case r: ConfigDescriptor.Zip[K, V, a, b] @unchecked => {
@@ -92,10 +96,14 @@ private[config] trait ReadFunctions {
             rr <- (res1, res2) match {
                    case (Right(as), Right(bs)) =>
                      foreach(::(as.zip(bs).head, as.zip(bs).tail)) {
-                       case (Some(a), Some(b)) => ZIO.succeed(Some((a, b)))
-                       case (Some(a), None)    => ZIO.succeed(Some((a, None.asInstanceOf[b])))
-                       case (None, Some(b))    => ZIO.succeed(Some((None.asInstanceOf[a], b)))
-                       case (None, None)       => ZIO.succeed(Some((None.asInstanceOf[a], None.asInstanceOf[b])))
+                       case (Some(a), Some(b)) =>
+                         ZIO.succeed(Some((a, b)))
+                       case (Some(a), None) =>
+                         ZIO.succeed(Some((a, None.asInstanceOf[b])))
+                       case (None, Some(b)) =>
+                         ZIO.succeed(Some((b.asInstanceOf[a], None.asInstanceOf[b])))
+                       case (None, None) =>
+                         ZIO.succeed(Some((None.asInstanceOf[a], None.asInstanceOf[b])))
                      }
                    case (Left(a), Right(_))      => ZIO.fail(a)
                    case (Right(_), Left(error))  => ZIO.fail(error)
