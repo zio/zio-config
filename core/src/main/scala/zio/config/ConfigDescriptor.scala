@@ -43,7 +43,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     ConfigDescriptor.Optional(self) ?? "optional value"
 
   final def default(value: A): ConfigDescriptor[K, V, A] =
-    ConfigDescriptor.Default(self, value) ?? s"default value: $value ("
+    ConfigDescriptor.Default(self, value) ?? s"default value: $value"
 
   final def describe(description: String): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Describe(self, description)

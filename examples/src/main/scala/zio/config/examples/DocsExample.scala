@@ -12,6 +12,8 @@ object DocsExample extends App {
     (int("PORT") ?? "Example: 8088" |@|
       string("URL").optional ?? "Example: abc.com")(Database.apply, Database.unapply) ?? "Database related"
 
+  println(generateDocs(config))
+
   assert(
     generateDocs(config) ==
       Both(
@@ -22,8 +24,8 @@ object DocsExample extends App {
         Path(
           "URL",
           Descriptions(
-            Sources(List("<empty>", "value of type string")),
-            List("optional value", "Example: abc.com", "Database related")
+            Sources(List("<empty>")),
+            List("value of type string", "optional value", "Example: abc.com", "Database related")
           )
         )
       )

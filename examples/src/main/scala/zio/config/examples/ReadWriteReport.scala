@@ -50,15 +50,24 @@ object ReadWriteReport extends App {
   )
 
   // want to write back the config ?
+  println(write(config, result))
   assert(
     write(config, result) ==
       Right(
-        PropertyTree.Record(
-          Map(
-            "usr" -> PropertyTree.Leaf("v1"),
-            "pwd" -> PropertyTree.Leaf("v2"),
-            "xyz" -> PropertyTree.Leaf("v3"),
-            "abc" -> PropertyTree.Leaf("1")
+        PropertyTree.Sequence(
+          List(
+            PropertyTree.Record(
+              Map(
+                "pwd" -> PropertyTree.Leaf("v2"),
+                "usr" -> PropertyTree.Leaf("v1")
+              )
+            ),
+            PropertyTree.Record(
+              Map(
+                "abc" -> PropertyTree.Leaf("1"),
+                "xyz" -> PropertyTree.Leaf("v3")
+              )
+            )
           )
         )
       )
