@@ -3,15 +3,19 @@ package zio.config.examples.typesafe
 import zio.DefaultRuntime
 import zio.config.ConfigDescriptor._
 import zio.config.typesafe.TypeSafeConfigSource.hocon
-import zio.config.{ read }
+import zio.config.{ read, _ }
 
 // see Stackoverflow: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
 object CoproductExample extends App {
 
   sealed trait Dance
-  case class A(any: Person)   extends Dance
-  case class B(body: Height)  extends Dance
-  case class C(can: Boolean)  extends Dance
+
+  case class A(any: Person) extends Dance
+
+  case class B(body: Height) extends Dance
+
+  case class C(can: Boolean) extends Dance
+
   case class D(dance: String) extends Dance
 
   final case class Person(name: String, age: Option[Int])
@@ -29,6 +33,8 @@ object CoproductExample extends App {
   val cConfig = boolean("can").xmap(C)(_.can)
   val dConfig = string("dance").xmap(D)(_.dance)
 
+  // Another much more easier logic is in: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
+  // You can also choose to use magnolia module to auto generate if this too much of a boilerplate
   val danceConfig =
     aConfig
       .orElseEither(bConfig)
@@ -51,13 +57,12 @@ object CoproductExample extends App {
         case b @ B(_) => Left(Left(Right(b)))
         case a @ A(_) => Left(Left(Left(a)))
       })
-  // aConfigAsDance.orElse(bConfigAsDance) //.orElse(cConfigAsDance)
 
-  // val aSource = hocon(
-  //   Right(
-  //     "any.name = chris"
-  //   )
-  // )
+  val aSource = hocon(
+    Right(
+      "any.name = chris"
+    )
+  )
 
   val bSource = hocon(
     Right(
@@ -65,63 +70,63 @@ object CoproductExample extends App {
     )
   )
 
-  // val cSource = hocon(
-  //   Right(
-  //     "can = false"
-  //   )
-  // )
+  val cSource = hocon(
+    Right(
+      "can = false"
+    )
+  )
 
-  // val dSource = hocon(
-  //   Right(
-  //     """dance = "I am Dancing !!""""
-  //   )
-  // )
+  val dSource = hocon(
+    Right(
+      """dance = "I am Dancing !!""""
+    )
+  )
 
   val runtime = new DefaultRuntime {}
 
-//  def readA =
-//    runtime.unsafeRun(
-//      read(danceConfig from aSource)
-//    )
+  def readA =
+    runtime.unsafeRun(
+      read(danceConfig from aSource)
+    )
 
   def readB =
     runtime.unsafeRun(
       read(danceConfig from bSource)
     )
 
-//  def readC =
-//    runtime.unsafeRun(
-//      read(danceConfig from cSource)
-//    )
-//
-//  def readD =
-//    runtime.unsafeRun(
-//      read(danceConfig from dSource)
-//    )
+  def readC =
+    runtime.unsafeRun(
+      read(danceConfig from cSource)
+    )
+
+  def readD =
+    runtime.unsafeRun(
+      read(danceConfig from dSource)
+    )
 
   assert(
-    //  readA == A(Person("chris", None)) &&
-    readB == B(Height(179)) && true
-    // readC == C(false) &&
-    //  readD == D("I am Dancing !!")
+    readA == A(Person("chris", None)) &&
+      readB == B(Height(179)) &&
+      readC == C(false) &&
+      readD == D("I am Dancing !!")
   )
 
-  //val writeA =
-  // write(danceConfig, readA).map(_.flattenString())
+  val writeA =
+    write(danceConfig, readA).map(_.flattenString())
 
-  //val writeB =
-  //  write(danceConfig, readB).map(_.flattenString())
+  val writeB =
+    write(danceConfig, readB).map(_.flattenString())
 
-  // val writeC =
-  //write(danceConfig, readC).map(_.flattenString())
+  val writeC =
+    write(danceConfig, readC).map(_.flattenString())
 
-  // val writeD =
-  //write(danceConfig, readD).map(_.flattenString())
+  val writeD =
+    write(danceConfig, readD).map(_.flattenString())
 
-  //assert(
-  // writeA == Right(Map("any.name" -> singleton("chris"))) && true
-  // writeB == Right(Map("body.height" -> singleton("179"))) && true
-  //writeC == Right(Map("can"   -> singleton("false"))) &&
-  // writeD == Right(Map("dance" -> singleton("I am Dancing !!")))
-  // )
+  assert(
+    writeA == Right(Map("any.name"      -> singleton("chris"))) &&
+      writeB == Right(Map("body.height" -> singleton("179"))) &&
+      writeC == Right(Map("can"         -> singleton("false"))) &&
+      writeD == Right(Map("dance"       -> singleton("I am Dancing !!")))
+  )
 }
