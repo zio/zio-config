@@ -17,9 +17,8 @@ private[config] trait ReadFunctions {
           val results = for {
             value <- source
                       .getConfigValue(paths :+ path)
-                      .mapError(
-                        t => Left(t): Either[ReadErrorsVector[K, V1], ReadFunctions.MissingValuesInList[K, V1, B]]
-                      )
+                      .mapError(t => Left(t))
+
             result <- foreach(value.value) {
                        case Some(value) =>
                          ZIO.fromEither(
@@ -33,7 +32,7 @@ private[config] trait ReadFunctions {
                                        ReadError
                                          .parseError(paths :+ path, r.value, r.typeInfo): ReadError[Vector[K], V1]
                                      )
-                                   ): Either[ReadErrorsVector[K, V1], ReadFunctions.MissingValuesInList[K, V1, B]]
+                                   )
                                  ),
                                e => Right(Some(e))
                              )
@@ -44,7 +43,7 @@ private[config] trait ReadFunctions {
 
           results.flatMap(
             list =>
-              if (list.filter(_.isEmpty).size > 0)
+              if (list.exists(_.isEmpty))
                 ZIO.fail(
                   Right(
                     ReadFunctions.MissingValuesInList[K, V1, B](list, paths)
@@ -106,7 +105,7 @@ private[config] trait ReadFunctions {
               ZIO.succeed(::(res.head, res.tail))
             case Left(r) =>
               r match {
-                case Left(value)  => ZIO.succeed(singleton(None))
+                case Left(_)      => ZIO.succeed(singleton(None))
                 case Right(value) => ZIO.succeed(value.list)
               }
 
@@ -122,28 +121,13 @@ private[config] trait ReadFunctions {
                     case (Right(as), Right(bs)) =>
                       Right(as.zip(bs))
                     case (Left(aa), Right(_)) =>
-                      Left(
-                        Left(aa.map(_.toMissingValue).merge): Either[
-                          ReadErrorsVector[K, V1],
-                          ReadFunctions.MissingValuesInList[K, V1, (a, b)]
-                        ]
-                      )
+                      Left(Left(aa.map(_.toMissingValue).merge))
                     case (Right(_), Left(error)) =>
-                      Left(
-                        Left(error.map(_.toMissingValue).merge): Either[
-                          ReadErrorsVector[K, V1],
-                          ReadFunctions.MissingValuesInList[K, V1, (a, b)]
-                        ]
-                      )
+                      Left(Left(error.map(_.toMissingValue).merge))
                     case (Left(err1), Left(err2)) =>
                       (err1, err2) match {
                         case (Left(v1), Left(v2)) =>
-                          Left(
-                            Left(concat(v1, v2)): Either[
-                              ReadErrorsVector[K, V1],
-                              ReadFunctions.MissingValuesInList[K, V1, (a, b)]
-                            ]
-                          )
+                          Left(Left(concat(v1, v2)))
                         case (Right(v1), Right(v2)) =>
                           Left(
                             Right(
@@ -169,19 +153,10 @@ private[config] trait ReadFunctions {
                             ]
                           )
                         case (Left(v1), Right(v2)) =>
-                          Left(
-                            Left(concat(v1, singleton(ReadError.missingValue[Vector[K], V1](paths)))): Either[
-                              ReadErrorsVector[K, V1],
-                              ReadFunctions.MissingValuesInList[K, V1, (a, b)]
-                            ]
-                          )
+                          Left(Left(concat(v1, singleton(ReadError.missingValue[Vector[K], V1](paths)))))
+
                         case (Right(v1), Left(v2)) =>
-                          Left(
-                            Left(concat(v2, singleton(ReadError.missingValue[Vector[K], V1](paths)))): Either[
-                              ReadErrorsVector[K, V1],
-                              ReadFunctions.MissingValuesInList[K, V1, (a, b)]
-                            ]
-                          )
+                          Left(Left(concat(v2, singleton(ReadError.missingValue[Vector[K], V1](paths)))))
                       }
                   })
                   .map(list => ::(list.head, list.tail))
@@ -205,10 +180,7 @@ private[config] trait ReadFunctions {
                         ZIO.fail(
                           Left(
                             concat(lerr.map(_.toMissingValue).merge, rerr.map(_.toMissingValue).merge)
-                          ): Either[
-                            ReadErrorsVector[K, V1],
-                            ReadFunctions.MissingValuesInList[K, V1, B]
-                          ]
+                          )
                         )
                     }
                   )
