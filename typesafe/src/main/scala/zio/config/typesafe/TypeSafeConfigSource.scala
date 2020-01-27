@@ -18,7 +18,7 @@ object TypeSafeConfigSource {
         def effect[A](f: => A): Either[ReadErrorsVector[String, String], A] =
           Try(f) match {
             case Success(value)     => Right(value)
-            case Failure(exception) => Left(singleton(ReadError.fatalError(path, exception)))
+            case Failure(exception) => Left(singleton(ReadError.unknownError(path, exception)))
           }
 
         val getValue: (
@@ -38,7 +38,7 @@ object TypeSafeConfigSource {
             } else if (valueType == ConfigValueType.OBJECT) {
               Left(
                 singleton(
-                  ReadError.FatalError(
+                  ReadError.Unknown(
                     path,
                     new RuntimeException(s"The value for the key ${path} is an object and not a primitive.")
                   )
@@ -70,7 +70,7 @@ object TypeSafeConfigSource {
                 case Failure(exception) =>
                   Left(
                     singleton(
-                      ReadError.FatalError(
+                      ReadError.Unknown(
                         path,
                         new RuntimeException(
                           "Trying to parse a list of config. However, the type is unidentified. Supports only [list] of [int, boolean, duration, bytes, double, long, memory size]",
@@ -91,7 +91,7 @@ object TypeSafeConfigSource {
                   }
               }
             } else {
-              Left(singleton(ReadError.FatalError(path, new RuntimeException("Unknown type"))))
+              Left(singleton(ReadError.Unknown(path, new RuntimeException("Unknown type"))))
             }
 
         def loop(
@@ -152,7 +152,7 @@ object TypeSafeConfigSource {
                                             case _ =>
                                               Left(
                                                 singleton(
-                                                  ReadError.fatalError[Vector[String], String](
+                                                  ReadError.unknownError[Vector[String], String](
                                                     path,
                                                     new RuntimeException(
                                                       s"Wrong types in the list. Identified the value of ${head} in HOCON as a list, however, it should be a list of primitive values. Ex: [1, 2, 3]"
@@ -187,7 +187,7 @@ object TypeSafeConfigSource {
                          str => ConfigFactory.parseString(str).resolve
                        )
                      )
-                     .mapError(throwable => singleton(ReadError.fatalError[Vector[String], String](path, throwable)))
+                     .mapError(throwable => singleton(ReadError.unknownError[Vector[String], String](path, throwable)))
 
           res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t))
         } yield res

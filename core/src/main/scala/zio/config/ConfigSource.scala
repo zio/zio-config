@@ -36,7 +36,7 @@ object ConfigSource {
         system
           .env(key)
           .bimap(
-            ReadError.FatalError(path, _),
+            ReadError.Unknown(path, _),
             opt =>
               opt.map(r => {
                 val consOfValues: ::[Option[String]] =
@@ -67,7 +67,7 @@ object ConfigSource {
         system
           .property(key)
           .bimap(
-            ReadError.FatalError(path, _),
+            ReadError.Unknown(path, _),
             opt =>
               opt.map(r => {
                 val consOfValues: ::[Option[String]] =
@@ -119,7 +119,7 @@ object ConfigSource {
             Option(property.getProperty(key))
           )
           .bimap(
-            ReadError.FatalError(path, _),
+            ReadError.Unknown(path, _),
             opt =>
               opt.map(r => {
                 val consOfValues: ::[Option[String]] =

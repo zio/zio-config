@@ -79,7 +79,7 @@ private[config] trait ReadFunctions {
                   err =>
                     Left(
                       singleton(
-                        ReadError.fatalError[Vector[K], V1](paths, new RuntimeException(err))
+                        ReadError.unknownError[Vector[K], V1](paths, new RuntimeException(err))
                       )
                     ): Either[ReadErrorsVector[K, V1], ReadFunctions.MissingValuesInList[K, V1, B]],
                   res => res
@@ -214,6 +214,9 @@ private[config] trait ReadFunctions {
 object ReadFunctions {
   final case class MissingValuesInList[K, V, A](list: ::[Option[A]], path: Vector[K]) {
     def toMissingValue: ReadErrorsVector[K, V] =
-      singleton(ReadError.missingValue[Vector[K], V](path))
+      singleton(
+        ReadError
+          .missingValue[Vector[K], V](path, list.zipWithIndex.filter({ case (a, b) => a.isEmpty }).map(_._2))
+      )
   }
 }
