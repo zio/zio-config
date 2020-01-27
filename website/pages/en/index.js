@@ -37,7 +37,13 @@ class HomeSplash extends React.Component {
 
     const ProjectTitle = () => (
       <h2 className="projectTitle">
-        {siteConfig.title}
+        <div className="titleLogoWrapper">
+          <img
+            src={siteConfig.headerIcon}
+            alt="ZIO"
+          />
+          {siteConfig.title}
+        </div>
         <small>{siteConfig.tagline}</small>
       </h2>
     );
@@ -63,8 +69,7 @@ class HomeSplash extends React.Component {
         <div className="inner">
           <ProjectTitle siteConfig={siteConfig} />
           <PromoSection>
-            <Button href={docUrl('quickstart/quickstart_index')}>Quick Start</Button>
-            <Button href="https://github.com/zio/zio-config" target="_blank" >GitHub</Button>
+            <Button href={docUrl('quickstart/quickstart_index')}>Get Started</Button>
           </PromoSection>
         </div>
       </SplashContainer>
@@ -90,35 +95,31 @@ class Index extends React.Component {
     );
 
     const Features = () => (
-      <Block layout="fourColumn">
+      <Block layout="threeColumn">
         {[
           {
-            content: 'A single composable description of the configuration.',
-            title: 'Composable description'
-          },
-          {
-            content: "Get readers from configuration description to read config from sources",
+            content: "Read flat or nested config data from any format, with descriptive errors",
             title: 'Readers'
           },
           {
-            content: 'Given writers from same description to write the configuration back',
+            content: 'Write flat or nested config data into any format',
             title: 'Writers',
           },
           {
-            content: "Handles multiple, composable and prioritised config sources",
+            content: "Compose sources of configuration, so you can have, eg. environmental or command-line overrides",
             title: 'Composable sources',
           },
           {
-            content: 'Document the config parameters in a composable way',
+            content: 'Automatically generate documentation so devs / devops know how to configure the application',
             title: 'Documentation',
           },
           {
-            content: "Documentations can be attached with value of configuration parameter",
-            title: 'Report',
+            content: "Generate a report that shows where each piece of configuration data came from",
+            title: 'Report generation',
           },
           {
-            content: "Reset sources in the configuration description, to a constant hashmap and gain testability",
-            title: 'Testability',
+            content: "Reset sources in the configuration description to a constant hashmap and gain testability",
+            title: 'Testable',
           },
         ]}
       </Block>
