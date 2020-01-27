@@ -157,13 +157,15 @@ object ConfigSource {
             map
               .get(key)
               .map(
-                r =>
+                r => {
+                  val result = f(r).map(Some(_))
                   ConfigValue(
                     ::(
-                      f(r).map(Some(_)).head,
-                      f(r).map(Some(_)).tail
+                      result.head,
+                      result.tail
                     )
                   )
+                }
               )
           )
           .mapError { _ =>
