@@ -170,21 +170,55 @@ private[config] trait ReadFunctions {
             .flatMap(
               {
                 case Right(a) =>
-                  ZIO.succeed(::(a.map(r => Left(r): Either[a, b]).head, a.map(r => Left(r): Either[a, b])))
+                  ZIO.succeed(::(a.map(r => Left(r)).head, a.map(r => Left(r))))
 
                 case Left(lerr) =>
-                  loop(right, paths).either.flatMap(
-                    {
-                      case Right(b) =>
-                        ZIO.succeed(::(b.map(r => Right(r): Either[a, b]).head, b.map(r => Right(r): Either[a, b])))
-                      case Left(rerr) =>
-                        ZIO.fail(
-                          Left(
-                            concat(lerr.map(_.toMissingValue).merge, rerr.map(_.toMissingValue).merge)
-                          )
-                        )
-                    }
-                  )
+                  lerr match {
+                    case Left(_) =>
+                      loop(right, paths).either.flatMap(
+                        {
+                          case Right(b) =>
+                            ZIO.succeed(::(b.map(r => Right(r): Either[a, b]).head, b.map(r => Right(r): Either[a, b]).tail))
+                          case Left(rerr) =>
+                            ZIO.fail(
+                              Left(
+                                concat(lerr.map(_.toMissingValue).merge, rerr.map(_.toMissingValue).merge)
+                              )
+                            )
+                        }
+                      )
+                    case Right(missingValuesAndNonMissingValues) =>
+                      loop(right, paths).either.flatMap(
+                        {
+                          case Right(b) =>
+                            ZIO.succeed(
+                              ::(b.map(r => Right(r): Either[a, b]).head, b.map(r => Right(r): Either[a, b]).tail)
+                            )
+                          case Left(rerr) =>
+                            rerr match {
+                              case Left(nonMissingErrors) => ZIO.fail(Left(nonMissingErrors))
+                              case Right(missingErrors) =>
+                                val z = missingValuesAndNonMissingValues.missingAndNonMissingValues.zipWithIndex.map({
+                                  case (Some(v), _) => Some(Left(v): Either[a, b])
+                                  case (None, id) =>
+                                    val result = missingErrors.missingAndNonMissingValues.lift(id)
+
+                                    result.flatten match {
+                                      case Some(value) => Some(Right(value): Either[a, b])
+                                      case None        => None
+                                    }
+                                })
+
+                                if (z.exists(_.isEmpty))
+                                  ZIO.fail(
+                                    Right(MissingValuesInList[K, V1, Either[a, b]](::(z.head, z.tail), paths))
+                                  )
+                                else
+                                  ZIO.succeed(::(z.flatMap(_.toList).head, z.flatMap(_.toList).tail))
+                            }
+                        }
+                      )
+                  }
               }
             )
 

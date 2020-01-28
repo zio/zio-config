@@ -9,13 +9,15 @@ import EmployeeDetails._
 import zio.config.ConfigDescriptor._
 
 final case class EmployeeDetails(employees: List[Employee], r: Int)
-final case class Employee(name: String, state: Option[String], confidence: String)
+final case class Employee(name: String, state: Option[String], confidence: Either[Double, String])
 
 object EmployeeDetails {
   val employee: ConfigDescriptor[String, String, Employee] =
-    (string("name") |@| string("state").optional |@| string("confidence")
-      .orElse(string("confidences"))
-      .orElse(string("confs")))(
+    (string("name") |@| string("state").optional |@| double("confidence").orElseEither(
+      string("confidence")
+        .orElse(string("confidences"))
+        .orElse(string("confs"))
+    ))(
       Employee.apply,
       Employee.unapply
     )
@@ -68,10 +70,10 @@ object NullAndOptionalConfig extends App {
       Right(
         EmployeeDetails(
           List(
-            Employee("jon", Some("CA"), "1.278"),
-            Employee("chris", Some("NSW"), "High"),
-            Employee("martha", None, "Medium"),
-            Employee("susan", None, "Low")
+            Employee("jon", Some("CA"), Right("1.278")),
+            Employee("chris", Some("NSW"), Right("High")),
+            Employee("martha", None, Right("Medium")),
+            Employee("susan", None, Right("Low"))
           ),
           10
         )
