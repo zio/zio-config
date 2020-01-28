@@ -14,7 +14,10 @@ final case class Employee(name: String, state: Option[String], confidence: Strin
 object EmployeeDetails {
 
   val d: ConfigDescriptor[String, String, Employee] =
-    (string("name") |@| string("state").optional |@| string("confidence").orElse(string("confidences")))(Employee.apply, Employee.unapply)
+    (string("name") |@| string("state").optional |@| string("confidence").orElse(string("confidences")))(
+      Employee.apply,
+      Employee.unapply
+    )
 
   val desc: ConfigDescriptor[String, String, EmployeeDetails] =
     (nested("employees")(list(d)) |@| int("r"))(EmployeeDetails.apply, EmployeeDetails.unapply)
@@ -69,7 +72,8 @@ object NullAndOptionalConfig extends App {
             Employee("chris", Some("NSW"), "High"),
             Employee("martha", None, "Medium"),
             Employee("susan", None, "Low")
-          ), 10
+          ),
+          10
         )
       )
   )

@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.{IO, ZIO}
+import zio.{ IO, ZIO }
 import zio.config.ConfigDescriptor.Sequence
 
 private[config] trait ReadFunctions {
@@ -198,40 +198,32 @@ private[config] trait ReadFunctions {
                   r match {
                     case Left(_) => loop(right, paths)
                     case Right(value) =>
-                      loop(right, paths).either.map(
-                         {
-                            case Left(errors) => errors match {
-                              case Left(nonMissingError) => Left(Left(nonMissingError))
-                               // Merging values in indices where the element was absent
-                              case Right(missingErrors) =>
-                                {
+                      loop(right, paths).either
+                        .map(
+                          {
+                            case Left(errors) =>
+                              errors match {
+                                case Left(nonMissingError) => Left(Left(nonMissingError))
+                                // Merging values in indices where the element was absent
+                                case Right(missingErrors) =>
                                   val z = value.missingAndNonMissingValues.zipWithIndex.map({
                                     case (Some(v), _) => Some(v)
                                     case (None, id) =>
                                       val result = missingErrors.missingAndNonMissingValues.lift(id)
                                       result.flatten match {
                                         case Some(value) => Some(value)
-                                        case None => None
+                                        case None        => None
                                       }
                                   })
-                                  if (z.exists(_.isEmpty)) Left(Right(missingErrors)): Either[Either[
-                                  ReadErrorsVector[K, V1],
-                                  ReadFunctions.MissingValuesInList[K, V1, B]
-                                ], ::[B]]
-                                  else Right(::(z.flatMap(_.toList).head, z.flatMap(_.toList).tail)): Either[Either[
-                                    ReadErrorsVector[K, V1],
-                                    ReadFunctions.MissingValuesInList[K, V1, B]
-                                  ], ::[B]]
-                                }
-                            }
+                                  if (z.exists(_.isEmpty)) Left(Right(missingErrors))
+                                  else Right(::(z.flatMap(_.toList).head, z.flatMap(_.toList).tail))
+                              }
 
                             case Right(v2) =>
-                              Right(v2): Either[Either[
-                                ReadErrorsVector[K, V1],
-                                ReadFunctions.MissingValuesInList[K, V1, B]
-                              ], ::[B]]
+                              Right(v2)
                           }
-                      ).absolve
+                        )
+                        .absolve
                   }
               }
             )
@@ -253,7 +245,10 @@ object ReadFunctions {
     def toMissingValue: ReadErrorsVector[K, V] =
       singleton(
         ReadError
-          .missingValue[Vector[K], V](path, missingAndNonMissingValues.zipWithIndex.filter({ case (a, b) => a.isEmpty }).map(_._2))
+          .missingValue[Vector[K], V](
+            path,
+            missingAndNonMissingValues.zipWithIndex.filter({ case (a, b) => a.isEmpty }).map(_._2)
+          )
       )
   }
 }
