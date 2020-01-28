@@ -2,6 +2,7 @@ package zio.config
 
 import zio.{ IO, ZIO }
 import zio.config.ConfigDescriptor.Sequence
+import zio.config.ReadFunctions.MissingValuesInList
 
 private[config] trait ReadFunctions {
   // Read
@@ -215,7 +216,8 @@ private[config] trait ReadFunctions {
                                         case None        => None
                                       }
                                   })
-                                  if (z.exists(_.isEmpty)) Left(Right(missingErrors))
+                                  if (z.exists(_.isEmpty))
+                                    Left(Right(MissingValuesInList[K, V1, B](::(z.head, z.tail), paths)))
                                   else Right(::(z.flatMap(_.toList).head, z.flatMap(_.toList).tail))
                               }
 

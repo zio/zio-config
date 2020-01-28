@@ -13,7 +13,9 @@ final case class Employee(name: String, state: Option[String], confidence: Strin
 
 object EmployeeDetails {
   val employee: ConfigDescriptor[String, String, Employee] =
-    (string("name") |@| string("state").optional |@| string("confidence").orElse(string("confidences")))(
+    (string("name") |@| string("state").optional |@| string("confidence")
+      .orElse(string("confidences"))
+      .orElse(string("confs")))(
       Employee.apply,
       Employee.unapply
     )
@@ -39,13 +41,12 @@ object NullAndOptionalConfig extends App {
         },
         {
           name       : martha
-          state      : CA
+          state      : null
           confidences : Medium
         },
         {
           name       : susan
-          state      : CA
-          confidence : Low
+          confs      : Low
         } 
       ]
 
