@@ -26,9 +26,6 @@ class Footer extends React.Component {
   render() {
     return (
       <footer className="nav-footer" id="footer">
-        <section>
-          <Gitter room="zio/zio-config" title="Open Chat" />
-        </section>
         <section className="sitemap">
           <a href={this.props.config.baseUrl} className="nav-home">
             {this.props.config.footerIcon && (
@@ -49,14 +46,22 @@ class Footer extends React.Component {
               data-count-aria-label="# stargazers on GitHub"
               aria-label="Star this project on GitHub">
               Star
-              </a>
+            </a>
+          </div>
+          <div>
+              <h5>Chat with us on Discord</h5>
+              <a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a>
           </div>
           <div>
             <h5>Additional resources</h5>
             <a
+                href="https://zio.dev">
+              ZIO Homepage
+            </a>
+            <a
               href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">
-              Scaladoc of zio-config
-              </a>
+              Scaladoc
+            </a>
           </div>
         </section>
         <section className="copyright">{this.props.config.copyright}</section>
