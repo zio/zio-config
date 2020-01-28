@@ -5,22 +5,21 @@ import zio.config.ConfigDescriptor
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
-//import EmployeeDetails._
+import EmployeeDetails._
 import zio.config.ConfigDescriptor._
 
 final case class EmployeeDetails(employees: List[Employee], r: Int)
 final case class Employee(name: String, state: Option[String], confidence: String)
 
 object EmployeeDetails {
-
-  val d: ConfigDescriptor[String, String, Employee] =
+  val employee: ConfigDescriptor[String, String, Employee] =
     (string("name") |@| string("state").optional |@| string("confidence").orElse(string("confidences")))(
       Employee.apply,
       Employee.unapply
     )
 
-  val desc: ConfigDescriptor[String, String, EmployeeDetails] =
-    (nested("employees")(list(d)) |@| int("r"))(EmployeeDetails.apply, EmployeeDetails.unapply)
+  val employeeDetails: ConfigDescriptor[String, String, EmployeeDetails] =
+    (nested("employees")(list(employee)) |@| int("r"))(EmployeeDetails.apply, EmployeeDetails.unapply)
 }
 
 object NullAndOptionalConfig extends App {
@@ -59,7 +58,7 @@ object NullAndOptionalConfig extends App {
 
   lazy val u = description[EmployeeDetails]
 
-  val result = runtime.unsafeRun(read(EmployeeDetails.desc from hocconSourceList).either)
+  val result = runtime.unsafeRun(read(employeeDetails from hocconSourceList).either)
 
   println(result)
 
