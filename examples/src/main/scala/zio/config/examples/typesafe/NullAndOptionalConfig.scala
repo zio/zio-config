@@ -20,9 +20,9 @@ object EmployeeDetails {
     (string("name") |@|
       int("state").orElseEither(string("state")).optional |@|
       double("confidence")
-        .orElseEither(int("confidence")) // The value can be Double or Integer for key confidence
-        .orElseEither(
-          string("confidence") // Or it could be string, but this time the key can be confidence, confidences or confs!
+        .orElseEither(int("confidence")) // The value can be Double or Int for key confidence
+        .orElseEither(                   // If not Double or Int, then it could be string, but this time the key can be confidence, confidences or confs!
+          string("confidence")
             .orElse(string("confidences"))
             .orElse(string("confs"))
         ))(
