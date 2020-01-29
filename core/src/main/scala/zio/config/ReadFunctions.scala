@@ -169,23 +169,38 @@ private[config] trait ReadFunctions {
                   case (Left(err1), Left(err2)) =>
                     val res = err1
                       .zip(err2)
-                      .map({
+                      .flatMap({
                         case (value, value1) =>
-                          (value, value1) match {
+                         (value, value1) match {
                             case (ValueType.Exists(v1), ValueType.Exists(v2)) =>
-                              ValueType.existingValue[Vector[K], V1, (a, b)]((v1, v2))
+                              List(ValueType.existingValue[Vector[K], V1, (a, b)]((v1, v2)))
                             case (ValueType.Exists(_), ValueType.NonExisting(k, v)) =>
-                              ValueType.nonExistingValue[Vector[K], V1, (a, b)](k, v)
+                              List(ValueType.nonExistingValue[Vector[K], V1, (a, b)](k, v))
                             case (ValueType.Exists(_), ValueType.NonFatalErrorValue(error)) =>
-                              ValueType.nonFatalErrorValue[Vector[K], V1, (a, b)](error)
+                              List(ValueType.nonFatalErrorValue[Vector[K], V1, (a, b)](error))
                             case (ValueType.Exists(_), ValueType.ParseErrorValue(error)) =>
-                              ValueType.parseErrorValue[Vector[K], V1, (a, b)](error)
-                            case (ValueType.NonExisting(k, v), _) =>
-                              ValueType.nonExistingValue[Vector[K], V1, (a, b)](k, v)
-                            case (ValueType.ParseErrorValue(error), _) =>
-                              ValueType.parseErrorValue[Vector[K], V1, (a, b)](error)
+                              List(ValueType.parseErrorValue[Vector[K], V1, (a, b)](error))
+
+                            case (ValueType.NonExisting(k, v), ValueType.Exists(_)) =>
+                              List(ValueType.nonExistingValue[Vector[K], V1, (a, b)](k, v))
+                            case (ValueType.NonExisting(k, v), ValueType.NonExisting(k2, v2)) =>
+                              List(ValueType.nonExistingValue[Vector[K], V1, (a, b)](k, v), ValueType.nonExistingValue[Vector[K], V1, (a, b)](k2, v2))
+                            case (ValueType.NonExisting(k, v), ValueType.ParseErrorValue(error)) =>
+                              List(ValueType.nonExistingValue[Vector[K], V1, (a, b)](k, v), ValueType.parseErrorValue[Vector[K], V1, (a, b)](error))
+                            case (ValueType.NonExisting(k, v), ValueType.NonFatalErrorValue(error)) =>
+                              List(ValueType.nonExistingValue[Vector[K], V1, (a, b)](k, v), ValueType.nonFatalErrorValue[Vector[K], V1, (a, b)](error))
+
+                            case (ValueType.ParseErrorValue(error), ValueType.Exists(_)) =>
+                              List(ValueType.parseErrorValue[Vector[K], V1, (a, b)](error))
+                            case (ValueType.ParseErrorValue(error), ValueType.NonExisting(k2, v2)) =>
+                              List(ValueType.parseErrorValue[Vector[K], V1, (a, b)](error), ValueType.nonExistingValue[Vector[K], V1, (a, b)](k2, v2))
+                            case (ValueType.ParseErrorValue(error), ValueType.ParseErrorValue(error2)) =>
+                              List(ValueType.parseErrorValue[Vector[K], V1, (a, b)](error), ValueType.parseErrorValue[Vector[K], V1, (a, b)](error2))
+                            case (ValueType.ParseErrorValue(error), ValueType.NonFatalErrorValue(error2)) =>
+                              List(ValueType.parseErrorValue[Vector[K], V1, (a, b)](error), ValueType.nonFatalErrorValue[Vector[K], V1, (a, b)](error2))
+
                             case (ValueType.NonFatalErrorValue(error), _) =>
-                              ValueType.nonFatalErrorValue[Vector[K], V1, (a, b)](error)
+                              List(ValueType.nonFatalErrorValue[Vector[K], V1, (a, b)](error))
                           }
                       })
                     ZIO.fail(::(res.head, res.tail))

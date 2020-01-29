@@ -18,6 +18,9 @@ object ErrorAccumulation extends App {
 
   val parsed = runtime.unsafeRun(programWithInvalidSource)
 
+
+  println(parsed)
+
   assert(
     parsed ==
       Left(
