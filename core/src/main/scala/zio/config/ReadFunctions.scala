@@ -131,25 +131,21 @@ private[config] trait ReadFunctions {
             res2 <- loop(right, paths).either
             r <- (res1, res2) match {
                   case (Right(as), Right(bs)) =>
-                    ZIO.succeed({
-                      val res = as.zip(bs)
-                      ::(res.head, res.tail)
-                    })
+                    ZIO.succeed(zipCons(as, bs))
                   case (Left(aa), Right(b)) =>
-                    val res = aa
-                      .zip(b)
-                      .map({
-                        case (value, value1) =>
-                          value match {
-                            case ValueType.Exists(a)         => ValueType.existingValue[Vector[K], V1, (a, b)]((a, value1))
-                            case ValueType.NonExisting(k, v) => ValueType.nonExistingValue[Vector[K], V1, (a, b)](k, v)
-                            case ValueType.ParseErrorValue(error) =>
-                              ValueType.parseErrorValue[Vector[K], V1, (a, b)](error)
-                            case ValueType.NonFatalErrorValue(error) =>
-                              ValueType.nonFatalErrorValue[Vector[K], V1, (a, b)](error)
-                          }
-                      })
-                    ZIO.fail(::(res.head, res.tail))
+                    ZIO.fail(mapCons(
+                      zipCons(aa, b)
+                    ){
+                      case (value, value1) =>
+                        value match {
+                          case ValueType.Exists(a)         => ValueType.existingValue[Vector[K], V1, (a, b)]((a, value1))
+                          case ValueType.NonExisting(k, v) => ValueType.nonExistingValue[Vector[K], V1, (a, b)](k, v)
+                          case ValueType.ParseErrorValue(error) =>
+                            ValueType.parseErrorValue[Vector[K], V1, (a, b)](error)
+                          case ValueType.NonFatalErrorValue(error) =>
+                            ValueType.nonFatalErrorValue[Vector[K], V1, (a, b)](error)
+                        }
+                    })
 
                   case (Right(aa), Left(bb)) =>
                     val res = aa
