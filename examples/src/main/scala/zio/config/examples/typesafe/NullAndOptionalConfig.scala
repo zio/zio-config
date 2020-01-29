@@ -9,15 +9,15 @@ import EmployeeDetails._
 import zio.config.ConfigDescriptor._
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
-final case class Employee(name: String, state: Option[Either[Int, String]], confidence: Either[Double, String])
+final case class Employee(name: String, state: Option[Either[Int, String]], confidence: Either[Either[Double, Int], String])
 
 object EmployeeDetails {
   val employee: ConfigDescriptor[String, String, Employee] =
     (string("name") |@|
       int("state").orElseEither(string("state")).optional |@|
-      double("confidence")
+      double("confidence").orElseEither(int("confidence")) // The value can be Double or Integer for key confidence
         .orElseEither(
-          string("confidence")
+          string("confidence")                             // Or it could be string, but this time the key can be confidence, confidences or confs!
             .orElse(string("confidences"))
             .orElse(string("confs"))
         ))(
