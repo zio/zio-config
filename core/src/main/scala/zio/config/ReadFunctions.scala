@@ -109,8 +109,8 @@ private[config] trait ReadFunctions {
           val ConfigDescriptor.Optional(c) = cd
           loop(c, paths).either.flatMap({
             case Right(value) =>
-              val res: List[Option[B]] = value.map(t => Some(t): Option[B])
-              ZIO.succeed(::(res.head, res.tail))
+              val res = mapCons(value)(t => Some(t): Option[B])
+              ZIO.succeed(res)
             case Left(r) =>
               if (r.exists(_.isNonFatalError) || r.exists(_.isParseError))
                 ZIO.fail(r)
@@ -120,7 +120,7 @@ private[config] trait ReadFunctions {
                     case ValueType.Exists(a)         => Some(a)
                     case ValueType.NonExisting(_, _) => None
                   })
-                  ::(result.head, result.tail)
+                  if (result.isEmpty) ::(None, Nil) else ::(result.head, result.tail)
                 })
           })
 
@@ -214,9 +214,8 @@ private[config] trait ReadFunctions {
             .flatMap(
               {
                 case Right(a) =>
-                  ZIO.succeed(::(a.map(r => Left(r)).head, a.map(r => Left(r)).tail)): ZIO[Any, ::[
-                    ValueType[Vector[K], V1, Either[a, b]]
-                  ], ::[Either[a, b]]]
+                  val result = mapCons(a)(r => Left(r): Either[a, b])
+                  ZIO.succeed(result)
 
                 case Left(lerr) =>
                   if (lerr.exists(_.isNonFatalError)) {

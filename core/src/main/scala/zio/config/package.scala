@@ -20,6 +20,11 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
     reversed.tail.foldLeft(reversed.head.map(singleton))((b, a) => a.flatMap(aa => b.map(bb => ::(aa, bb))))
   }
 
+  private[config] def mapCons[A, B](a: ::[A])(f: A => B): ::[B] = {
+    val list = a.map(f)
+    ::(list.head, list.tail)
+  }
+
   private[config] final def foreach[R, E, A, B](in: ::[A])(f: A => ZIO[R, E, B]): ZIO[R, E, ::[B]] = {
     val reversesd = in.reverse
 
