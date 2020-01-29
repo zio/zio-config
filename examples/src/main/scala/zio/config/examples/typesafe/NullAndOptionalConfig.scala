@@ -8,22 +8,25 @@ import zio.config.typesafe.TypeSafeConfigSource.hocon
 import EmployeeDetails._
 import zio.config.ConfigDescriptor._
 
-final case class EmployeeDetails(employees: List[Employee], r: Int)
-final case class Employee(name: String, state: Option[String], confidence: Either[Double, String])
+final case class EmployeeDetails(employees: List[Employee], accountId: Int)
+final case class Employee(name: String, state: Option[Either[Int, String]], confidence: Either[Double, String])
 
 object EmployeeDetails {
   val employee: ConfigDescriptor[String, String, Employee] =
-    (string("name") |@| string("state").optional |@| double("confidence").orElseEither(
-      string("confidence")
-        .orElse(string("confidences"))
-        .orElse(string("confs"))
-    ))(
+    (string("name") |@|
+      int("state").orElseEither(string("state")).optional |@|
+      double("confidence")
+        .orElseEither(
+          string("confidence")
+            .orElse(string("confidences"))
+            .orElse(string("confs"))
+        ))(
       Employee.apply,
       Employee.unapply
     )
 
   val employeeDetails: ConfigDescriptor[String, String, EmployeeDetails] =
-    (nested("employees")(list(employee)) |@| int("r"))(EmployeeDetails.apply, EmployeeDetails.unapply)
+    (nested("employees")(list(employee)) |@| int("accountId"))(EmployeeDetails.apply, EmployeeDetails.unapply)
 }
 
 object NullAndOptionalConfig extends App {
@@ -38,7 +41,7 @@ object NullAndOptionalConfig extends App {
         },
         {
           name       : chris
-          state      : NSW
+          state      : 151
           confidence : High
         },
         {
@@ -52,7 +55,7 @@ object NullAndOptionalConfig extends App {
         } 
       ]
 
-      r = 10
+      accountId = 1000
        """
       )
     )
@@ -63,19 +66,17 @@ object NullAndOptionalConfig extends App {
 
   val result = runtime.unsafeRun(read(employeeDetails from hocconSourceList).either)
 
-  println(result)
-
   assert(
     result ==
       Right(
         EmployeeDetails(
           List(
-            Employee("jon", Some("CA"), Right("1.278")),
-            Employee("chris", Some("NSW"), Right("High")),
+            Employee("jon", Some(Right("CA")), Left(1.278)),
+            Employee("chris", Some(Left(151)), Right("High")),
             Employee("martha", None, Right("Medium")),
             Employee("susan", None, Right("Low"))
           ),
-          10
+          1000
         )
       )
   )

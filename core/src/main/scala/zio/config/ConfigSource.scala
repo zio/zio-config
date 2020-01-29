@@ -4,15 +4,40 @@ import zio.{ IO, ZIO }
 import zio.system.System.Live.system
 import java.{ util => ju }
 
+/**
+ * A config value is a list of A, meaning, multiple A's can exist for a key K.
+ * This can happen if the same key occurs in the config source multiple times and there may or may not be
+ * an A associated with it.
+ *
+ * Another possibility is, the value itself is a list for a single key K.
+ * Both these scenarios can be easily represented as ::[Option[A]]. Hence ConfigValue is ::[Option[A]].
+ */
 final case class ConfigValue[A](value: ::[Option[A]])
 
+/**
+ *
+ * ConfigSource represents the source to the config-description, which can be used for reading the values.
+ *
+ * @param getConfigValue : For a key, ConfigValue may or may not exist.
+ *                       Or in the process of fetching it, the computation can fail with some unknown error
+ *
+ * @param sourceDescription: Every ConfigSource is associated with a description
+ */
 final case class ConfigSource[K, V](
-  getConfigValue: Vector[K] => IO[ReadErrorsVector[K, V], ConfigValue[V]],
+  getConfigValue: Vector[K] => IO[ReadError.Unknown[Vector[K]], Option[ConfigValue[V]]],
   sourceDescription: List[String]
 ) { self =>
   final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     ConfigSource(
-      k => getConfigValue(k).orElse(that.getConfigValue(k)),
+      k =>
+        getConfigValue(k).either.flatMap({
+          case Left(_) => that.getConfigValue(k)
+          case Right(v) =>
+            v match {
+              case Some(value) => ZIO.succeed(Some(value))
+              case None        => that.getConfigValue(k)
+            }
+        }),
       self.sourceDescription ++ that.sourceDescription
     )
 
@@ -27,8 +52,15 @@ object ConfigSource {
   val EmptySource       = "<empty>"
 
   def empty[K, V]: ConfigSource[K, V] =
-    ConfigSource((k: Vector[K]) => IO.fail(singleton(ReadError.MissingValue(k))), EmptySource :: Nil)
+    ConfigSource(
+      (k: Vector[K]) => IO.fail(ReadError.Unknown(k, new RuntimeException("Source not provided"))),
+      EmptySource :: Nil
+    )
 
+  /**
+   * ConfigSource representing System environment.
+   * @param valueSeparator: The value corresponding to a key will be split by valueSeparator, and will be used to form the list.
+   */
   def fromEnv(valueSeparator: Option[String] = None): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
@@ -53,13 +85,14 @@ object ConfigSource {
                 ConfigValue(consOfValues)
               })
           )
-          .flatMap(IO.fromOption(_))
-          .mapError(_ => singleton(ReadError.MissingValue(path)))
-
       },
       SystemEnvironment :: Nil
     )
 
+  /**
+   * ConfigSource representing System environment.
+   * @param valueSeparator: The value corresponding to a key will be split by valueSeparator, and will be used to form the list.
+   */
   def fromProperty(valueSeparator: Option[String] = None): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
@@ -83,9 +116,6 @@ object ConfigSource {
                 ConfigValue(consOfValues)
               })
           )
-          .flatMap(IO.fromOption(_))
-          .mapError(_ => singleton(ReadError.MissingValue(path)))
-
       },
       SystemProperties :: Nil
     )
@@ -135,13 +165,23 @@ object ConfigSource {
                 ConfigValue(consOfValues)
               })
           )
-          .flatMap(IO.fromOption(_))
-          .mapError(_ => singleton(ReadError.MissingValue(path)))
-
       },
       JavaProperties :: Nil
     )
 
+  /**
+   * ConfigSource representing a constant Map.
+   * @param pathDelimiter : pathDelimiter forms nested value.
+   * Example:
+   *
+   *       "a" : {
+   *          "key": "value"
+   *         }
+   *
+   *        in a json,
+   *
+   *        is {{{ a.key = value }}} in a Map
+   */
   def fromMap(map: Map[String, String], pathDelimiter: String = "."): ConfigSource[String, String] =
     fromMapA(map)(singleton, pathDelimiter)
 
@@ -153,7 +193,7 @@ object ConfigSource {
       (path: Vector[String]) => {
         val key = path.mkString(pathDelimiter)
         ZIO
-          .fromOption(
+          .succeed(
             map
               .get(key)
               .map(
@@ -168,9 +208,6 @@ object ConfigSource {
                 }
               )
           )
-          .mapError { _ =>
-            singleton(ReadError.MissingValue(Vector(key)))
-          }
       },
       ConstantMap :: Nil
     )
