@@ -63,6 +63,7 @@ object EitherExample extends App {
   val invalidSource =
     ConfigSource.fromMap(invalidConfig)
 
+  println(s"the value is ${read(prodOrDev from invalidSource).either}")
   assert(
     runtime.unsafeRun(read(prodOrDev from invalidSource).either) ==
       Left(List(MissingValue(Vector("x1")), ParseError(Vector("x5"), "notadouble", "double")))

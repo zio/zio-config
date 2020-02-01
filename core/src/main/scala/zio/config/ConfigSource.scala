@@ -6,11 +6,12 @@ import java.{ util => ju }
 
 /**
  * A config value is a list of A, meaning, multiple A's can exist for a key K.
- * This can happen if the same key occurs in the config source multiple times and there may or may not be
- * an A associated with it.
+ * This can happen if the same key occurs in the config-source multiple times and there may or may not be
+ * a value of type A associated with it.
  *
  * Another possibility is, the value itself is a list for a single key K.
- * Both these scenarios can be easily represented as ::[Option[A]]. Hence ConfigValue is ::[Option[A]].
+ *
+ * Both these scenarios can be easily represented as ::[Option[A]].
  */
 final case class ConfigValue[A](value: ::[Option[A]])
 
@@ -30,14 +31,12 @@ final case class ConfigSource[K, V](
   final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     ConfigSource(
       k =>
-        getConfigValue(k).either.flatMap({
-          case Left(_) => that.getConfigValue(k)
-          case Right(v) =>
-            v match {
-              case Some(value) => ZIO.succeed(Some(value))
-              case None        => that.getConfigValue(k)
-            }
-        }),
+        getConfigValue(k).foldM(
+          _ => that.getConfigValue(k), {
+            case None => that.getConfigValue(k)
+            case a @ Some(_) => ZIO.succeed(a)
+          }
+        ),
       self.sourceDescription ++ that.sourceDescription
     )
 

@@ -22,72 +22,80 @@ object TypeSafeConfigSource {
           }
 
         def getLeafValue(
-          config: com.typesafe.config.Config,
-          valueType: ConfigValueType,
+          config: => com.typesafe.config.Config,
           key: String
         ): Either[ReadError.Unknown[Vector[String]], ::[Option[String]]] =
-          if (valueType == ConfigValueType.BOOLEAN) {
-            effect(config.getBoolean(key).toString).map(singleton)
-          } else if (valueType == ConfigValueType.NULL) {
-            Right(::(None, Nil))
-          } else if (valueType == ConfigValueType.NUMBER) {
-            effect(config.getNumber(key).toString).map(singleton)
-          } else if (valueType == ConfigValueType.STRING) {
-            effect(config.getString(key)).map(singleton)
-          } else if (valueType == ConfigValueType.OBJECT) {
-            Left(
-              ReadError.Unknown(
-                path,
-                new RuntimeException(s"The value for the key ${path} is an object and not a primitive.")
-              )
-            )
-          } else if (valueType == ConfigValueType.LIST) {
-            asListOfString(config.getStringList(key))
-              .orElse(
-                asListOfString(config.getIntList(key))
-              )
-              .orElse(
-                asListOfString(config.getBooleanList(key))
-              )
-              .orElse(
-                asListOfString(config.getDurationList(key))
-              )
-              .orElse(
-                asListOfString(config.getBytesList(key))
-              )
-              .orElse(
-                asListOfString(config.getDoubleList(key))
-              )
-              .orElse(
-                asListOfString(config.getLongList(key))
-              )
-              .orElse(
-                asListOfString(config.getMemorySizeList(key))
-              ) match {
-              case Failure(exception) =>
+          Try {
+            config.getValue(key).valueType()
+          } match {
+            case Failure(exception) => exception match {
+              case e: com.typesafe.config.ConfigException.Missing => Right(::(None, Nil))
+              case e => Left(ReadError.Unknown[Vector[String]](path, e))
+            }
+            case Success(valueType)  =>
+              if (valueType == ConfigValueType.BOOLEAN) {
+                effect(config.getBoolean(key).toString).map(singleton)
+              } else if (valueType == ConfigValueType.NULL) {
+                Right(::(None, Nil))
+              } else if (valueType == ConfigValueType.NUMBER) {
+                effect(config.getNumber(key).toString).map(singleton)
+              } else if (valueType == ConfigValueType.STRING) {
+                effect(config.getString(key)).map(singleton)
+              } else if (valueType == ConfigValueType.OBJECT) {
                 Left(
                   ReadError.Unknown(
                     path,
-                    new RuntimeException(
-                      "Trying to parse a list of config. However, the type is unidentified. Supports only [list] of [int, boolean, duration, bytes, double, long, memory size]",
-                      exception
-                    )
+                    new RuntimeException(s"The value for the key ${path} is an object and not a primitive.")
                   )
                 )
-              case Success(value) =>
-                value match {
-                  case h :: t => Right(::(Some(h), t.map(Some(_))))
-                  case Nil =>
+              } else if (valueType == ConfigValueType.LIST) {
+                asListOfString(config.getStringList(key))
+                  .orElse(
+                    asListOfString(config.getIntList(key))
+                  )
+                  .orElse(
+                    asListOfString(config.getBooleanList(key))
+                  )
+                  .orElse(
+                    asListOfString(config.getDurationList(key))
+                  )
+                  .orElse(
+                    asListOfString(config.getBytesList(key))
+                  )
+                  .orElse(
+                    asListOfString(config.getDoubleList(key))
+                  )
+                  .orElse(
+                    asListOfString(config.getLongList(key))
+                  )
+                  .orElse(
+                    asListOfString(config.getMemorySizeList(key))
+                  ) match {
+                  case Failure(exception) =>
                     Left(
                       ReadError.Unknown(
                         path,
-                        new RuntimeException("List is empty. Only non empty list is supported through zio-config")
+                        new RuntimeException(
+                          "Trying to parse a list of config. However, the type is unidentified. Supports only [list] of [int, boolean, duration, bytes, double, long, memory size]",
+                          exception
+                        )
                       )
                     )
+                  case Success(value) =>
+                    value match {
+                      case h :: t => Right(::(Some(h), t.map(Some(_))))
+                      case Nil =>
+                        Left(
+                          ReadError.Unknown(
+                            path,
+                            new RuntimeException("List is empty. Only non empty list is supported through zio-config")
+                          )
+                        )
+                    }
                 }
-            }
-          } else {
-            Left((ReadError.Unknown(path, new RuntimeException("Unknown type"))))
+              } else {
+                Left((ReadError.Unknown(path, new RuntimeException("Unknown type"))))
+              }
           }
 
         def loop(
@@ -99,23 +107,18 @@ object TypeSafeConfigSource {
             case Nil =>
               nextPath.lastOption match {
                 case Some(lastKey) =>
-                  val r = getLeafValue(parentConfig, parentConfig.getValue(lastKey).valueType(), lastKey)
+                  val r = getLeafValue(parentConfig, lastKey)
                   r.map(t => {
                     ::(t.head, t.tail)
                   })
                 case None =>
-                  Left(
-                    ReadError.Unknown[Vector[String]](
-                      path,
-                      new RuntimeException("Unable to fetch values from typesafe hocon.")
-                    )
-                  )
+                  Right(::(None: Option[String], Nil))
               }
 
             case head :: next => {
               for {
                 res <- Try(parentConfig.getValue(head).valueType()) match {
-                        case Failure(_) => Right(::(None, Nil))
+                        case Failure(r) => Right(::(None, Nil))
                         case Success(valueType) =>
                           if (valueType == ConfigValueType.LIST) {
                             for {
@@ -128,12 +131,7 @@ object TypeSafeConfigSource {
                                         }).map(t => t.flatMap(_.toList))
                                           .flatMap({
                                             case Nil =>
-                                              Left(
-                                                ReadError.Unknown[Vector[String]](
-                                                  path,
-                                                  new RuntimeException("Unable to fetch values from typesafe config")
-                                                )
-                                              )
+                                              Right( ::(None, Nil))
                                             case h :: t => Right(::(h, t))
                                           })
 
@@ -143,12 +141,7 @@ object TypeSafeConfigSource {
                                           .flatMap {
                                             {
                                               case Nil =>
-                                                Left(
-                                                  ReadError.Unknown[Vector[String]](
-                                                    path,
-                                                    new RuntimeException("Unable to fetch values from typesafe config")
-                                                  )
-                                                )
+                                                Right( ::(None, Nil))
 
                                               case h :: t
                                                   if (::(h, t).forall(
@@ -184,12 +177,7 @@ object TypeSafeConfigSource {
                             } else if (next.isEmpty) {
                               loop(parentConfig, next, nextPath :+ head)
                             } else {
-                              Left(
-                                ReadError.Unknown[Vector[String]](
-                                  path,
-                                  new RuntimeException("Unable to fetch values from typesafe config")
-                                )
-                              )
+                              Right( ::(None, Nil))
                             }
                           }
                       }

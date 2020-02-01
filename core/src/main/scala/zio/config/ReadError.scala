@@ -7,7 +7,11 @@ sealed trait ReadError[+K, +V] {
 object ReadError {
   final case class MissingValue[K](key: K, positions: Option[Int] = None) extends ReadError[K, Nothing]
   final case class ParseError[K, V](key: K, provided: V, message: String) extends ReadError[K, V]
-  final case class Unknown[K](key: K, cause: Throwable)                   extends ReadError[K, Nothing]
+  final case class Unknown[K](key: K, cause: Throwable)                   extends ReadError[K, Nothing] {
+    override def toString: String = {
+      s"Unknown(${key}, ${cause.getMessage})"
+    }
+  }
 
   /**
    * If the value for a key is missing in ConfigSource, we use MissingValue
@@ -16,7 +20,7 @@ object ReadError {
    * @param position For some key, there will be values supposed to be existing in multiple positions in the config source. The starting pos is 0.
    * @tparam K
    */
-  def missingValue[K, V](key: K, position: Option[Int]): ReadError[K, V] =
+  final def missingValue[K, V](key: K, position: Option[Int]): ReadError[K, V] =
     MissingValue(key, position)
 
   /**
@@ -26,7 +30,7 @@ object ReadError {
    * @param provided: The actual value provided
    * @param message: Any extra custom messages.
    */
-  def parseError[K, V](key: K, provided: V, message: String): ReadError[K, V] =
+  final def parseError[K, V](key: K, provided: V, message: String): ReadError[K, V] =
     ParseError(key, provided, message)
 
   /**
@@ -36,6 +40,6 @@ object ReadError {
    * @param cause: Cause of error that can only be a Throwable
    * @tparam K
    */
-  def unknownError[K, V](key: K, cause: Throwable): ReadError[K, V] =
+  final def unknownError[K, V](key: K, cause: Throwable): ReadError[K, V] =
     Unknown(key, cause)
 }
