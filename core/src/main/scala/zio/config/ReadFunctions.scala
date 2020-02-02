@@ -197,14 +197,11 @@ private[config] trait ReadFunctions {
           loop(left, paths).either
             .flatMap(
               {
-                // if the lef side wins,that's it
                 case Right(a) =>
                   val result = mapCons(a)(r => Left(r): Either[a, b])
                   ZIO.succeed(result)
 
-                // If the left side fails, and if left side failure reasons is fatal, then fail the job, needn't accumulate errors.
                 case Left(lerr) =>
-                  // try out right side, and if a value exists,
                   loop(right, paths).either.flatMap({
                     case Right(b) =>
                       val result = mapCons(withIndex(lerr))({
