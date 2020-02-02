@@ -1,8 +1,8 @@
 package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
-import zio.config.ConfigDescriptor.{int, list, nested, string}
-import zio.config.ReadError.{MissingValue, ParseError}
+import zio.config.ConfigDescriptor.{ int, list, nested, string }
+import zio.config.ReadError.{ MissingValue, ParseError }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
@@ -100,12 +100,19 @@ object TypesafeConfigHoconList extends App {
 
     """
 
-  println( "the bloody things " +
-    runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either)
+  println(
+    "the bloody things " +
+      runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either)
   )
 
   assert(
     runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either) ==
-      Left(List(ParseError(Vector("database", "port"), "1abcd" , "int"), MissingValue(Vector("accounts", "region"), Some(0)), MissingValue(Vector("accounts", "region"), Some(2))))
+      Left(
+        List(
+          ParseError(Vector("database", "port"), "1abcd", "int"),
+          MissingValue(Vector("accounts", "region"), Some(0)),
+          MissingValue(Vector("accounts", "region"), Some(2))
+        )
+      )
   )
 }

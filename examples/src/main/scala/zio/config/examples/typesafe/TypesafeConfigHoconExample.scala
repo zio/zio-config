@@ -1,8 +1,8 @@
 package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
-import zio.config.ConfigDescriptor.{int, list, nested, string}
-import zio.config.ReadError.{MissingValue, ParseError}
+import zio.config.ConfigDescriptor.{ int, list, nested, string }
+import zio.config.ReadError.{ MissingValue, ParseError }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
@@ -41,7 +41,6 @@ object TypesafeConfigHoconExample extends App {
     }
    """
 
-
   val hocconStringWithNoDatabaseAtAll =
     s"""
     account {
@@ -79,13 +78,20 @@ object TypesafeConfigHoconExample extends App {
   assert(nestedConfigAutomaticResult2 == AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
   assert(nestedConfigAutomaticResult3 == AwsConfig(Account("us-east", "jon"), None))
   println(nestedConfigAutomaticResult4)
-  assert(nestedConfigAutomaticResult4 == Left(::(ParseError(Vector("database", "port"), "1ab200", "int"), ::(MissingValue(Vector("database"), Some(0)), Nil))))
+  assert(
+    nestedConfigAutomaticResult4 == Left(
+      ::(ParseError(Vector("database", "port"), "1ab200", "int"), ::(MissingValue(Vector("database"), Some(0)), Nil))
+    )
+  )
 
   val configNestedManual = {
     val accountConfig =
       (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
     val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
-    (nested("account")(accountConfig) |@| nested("database")(databaseConfig).orElseEither(string("database")).optional)(AwsConfig.apply, AwsConfig.unapply)
+    (nested("account")(accountConfig) |@| nested("database")(databaseConfig).orElseEither(string("database")).optional)(
+      AwsConfig.apply,
+      AwsConfig.unapply
+    )
   }
 
   val nestedConfigManualResult1 =

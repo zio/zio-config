@@ -28,11 +28,12 @@ object TypeSafeConfigSource {
           Try {
             config.getValue(key).valueType()
           } match {
-            case Failure(exception) => exception match {
-              case e: com.typesafe.config.ConfigException.Missing => Right(::(None, Nil))
-              case e => Left(ReadError.Unknown[Vector[String]](path, e))
-            }
-            case Success(valueType)  =>
+            case Failure(exception) =>
+              exception match {
+                case e: com.typesafe.config.ConfigException.Missing => Right(::(None, Nil))
+                case e                                              => Left(ReadError.Unknown[Vector[String]](path, e))
+              }
+            case Success(valueType) =>
               if (valueType == ConfigValueType.BOOLEAN) {
                 effect(config.getBoolean(key).toString).map(singleton)
               } else if (valueType == ConfigValueType.NULL) {
@@ -131,7 +132,7 @@ object TypeSafeConfigSource {
                                         }).map(t => t.flatMap(_.toList))
                                           .flatMap({
                                             case Nil =>
-                                              Right( ::(None, Nil))
+                                              Right(::(None, Nil))
                                             case h :: t => Right(::(h, t))
                                           })
 
@@ -141,7 +142,7 @@ object TypeSafeConfigSource {
                                           .flatMap {
                                             {
                                               case Nil =>
-                                                Right( ::(None, Nil))
+                                                Right(::(None, Nil))
 
                                               case h :: t
                                                   if (::(h, t).forall(
@@ -177,7 +178,7 @@ object TypeSafeConfigSource {
                             } else if (next.isEmpty) {
                               loop(parentConfig, next, nextPath :+ head)
                             } else {
-                              Right( ::(None, Nil))
+                              Right(::(None, Nil))
                             }
                           }
                       }

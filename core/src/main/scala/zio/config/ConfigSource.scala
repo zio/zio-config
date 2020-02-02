@@ -33,7 +33,7 @@ final case class ConfigSource[K, V](
       k =>
         getConfigValue(k).foldM(
           _ => that.getConfigValue(k), {
-            case None => that.getConfigValue(k)
+            case None        => that.getConfigValue(k)
             case a @ Some(_) => ZIO.succeed(a)
           }
         ),
