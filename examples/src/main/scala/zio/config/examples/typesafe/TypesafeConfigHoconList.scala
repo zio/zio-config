@@ -99,12 +99,7 @@ object TypesafeConfigHoconList extends App {
     }
 
     """
-
-  println(
-    "the bloody things " +
-      runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either)
-  )
-
+  
   assert(
     runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either) ==
       Left(

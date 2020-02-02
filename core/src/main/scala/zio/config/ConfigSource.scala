@@ -75,11 +75,11 @@ object ConfigSource {
                     .flatMap(
                       sep =>
                         r.split(sep).toList.map(_.trim) match {
-                          case h :: tail => Some(::(Some(h), tail.map(Some(_))))
+                          case h :: tail => Option(::(Option(h), tail.map(Option(_)))) // Option instead of Some for scala 2.12
                           case Nil       => None
                         }
                     )
-                    .getOrElse(::(Some(r), Nil))
+                    .getOrElse(::(Option(r), Nil))
 
                 ConfigValue(consOfValues)
               })
@@ -107,11 +107,11 @@ object ConfigSource {
                     .flatMap(
                       sep =>
                         r.split(sep).toList.map(_.trim) match {
-                          case h :: tail => Some(::(Some(h), tail.map(Some(_))))
+                          case h :: tail => Option(::(Option(h), tail.map(Option(_))))
                           case Nil       => None
                         }
                     )
-                    .getOrElse(::(Some(r), Nil))
+                    .getOrElse(::(Option(r), Nil))
                 ConfigValue(consOfValues)
               })
           )
@@ -156,11 +156,11 @@ object ConfigSource {
                     .flatMap(
                       sep =>
                         r.split(sep).toList.map(_.trim) match {
-                          case h :: tail => Some(::(Some(h), tail.map(Some(_))))
+                          case h :: tail => Option(::(Option(h), tail.map(Option(_))))
                           case Nil       => None
                         }
                     )
-                    .getOrElse(::(Some(r), Nil))
+                    .getOrElse(::(Option(r), Nil))
                 ConfigValue(consOfValues)
               })
           )
