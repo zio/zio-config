@@ -2,13 +2,13 @@ package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
 import zio.config.ConfigDescriptor
-import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
 import EmployeeDetails._
 import zio.config.ConfigDescriptor._
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
+
 final case class Employee(
   name: String,
   state: Option[Either[Int, String]],
@@ -35,6 +35,7 @@ object EmployeeDetails {
 }
 
 object NullAndOptionalConfig extends App {
+  // Take a look at state values, that can either exist, or be given a null
   val hocconSourceList =
     hocon(
       Right(
@@ -52,7 +53,7 @@ object NullAndOptionalConfig extends App {
         {
           name       : martha
           state      : null
-          confidences : Medium
+          confidence : Medium
         },
         {
           name       : susan
@@ -67,23 +68,21 @@ object NullAndOptionalConfig extends App {
 
   val runtime = new DefaultRuntime {}
 
-  lazy val u = description[EmployeeDetails]
+  val result1 = runtime.unsafeRun(read(employeeDetails from hocconSourceList).either)
 
-  val result = runtime.unsafeRun(read(employeeDetails from hocconSourceList).either)
-
-  assert(
-    result ==
-      Right(
-        EmployeeDetails(
-          List(
-            Employee("jon", Some(Right("CA")), Left(Left(1.278))),
-            Employee("chris", Some(Left(151)), Right("High")),
-            Employee("martha", None, Right("Medium")),
-            Employee("susan", None, Right("Low"))
-          ),
-          1000
-        )
+  val expectedResult =
+    Right(
+      EmployeeDetails(
+        List(
+          Employee("jon", Some(Right("CA")), Left(Left(1.278))),
+          Employee("chris", Some(Left(151)), Right("High")),
+          Employee("martha", None, Right("Medium")),
+          Employee("susan", None, Right("Low"))
+        ),
+        1000
       )
-  )
+    )
+
+  assert(result1 == expectedResult)
 
 }

@@ -1,7 +1,8 @@
 package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
-import zio.config.ConfigDescriptor.{ int, list, nested, string }
+import zio.config.ConfigDescriptor.{int, list, nested, string}
+import zio.config.ReadError.{MissingValue, ParseError}
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
@@ -10,11 +11,11 @@ object TypesafeConfigHoconList extends App {
   val runtime = new DefaultRuntime {}
 
   // A nested example with type safe config, and usage of magnolia
-  final case class Account(region: String, accountId: String)
+  final case class Account(region: String, accountId: Option[Either[Int, String]])
   final case class Database(port: Option[Int], url: String)
-  final case class AwsDetails(accounts: List[Account], database: Database, users: List[String])
+  final case class AwsDetails(accounts: List[Account], database: Database, users: List[Int])
 
-  val listHocon =
+  val validHocon =
     """
     accounts = [
       {
@@ -23,15 +24,15 @@ object TypesafeConfigHoconList extends App {
       }
       {
           region : us-west
-          accountId: chris
+          accountId: 123
       }
       {
           region : us-some
-          accountId: hello
+          accountId: null
       }
     ]
 
-    users = ["vel", "muk", "riz"]
+    users = [1, 2, 3]
 
     database {
         port : 100
@@ -41,25 +42,25 @@ object TypesafeConfigHoconList extends App {
     """
 
   val accountConfig =
-    (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
+    (string("region") |@| int("accountId").orElseEither(string("accountId")).optional)(Account.apply, Account.unapply)
 
   val databaseConfig = (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
 
   val awsDetailsConfig =
-    (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig) |@| list(string("users")))(
+    (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig) |@| list(int("users")))(
       AwsDetails.apply,
       AwsDetails.unapply
     )
 
   val listResult =
-    read(awsDetailsConfig from hocon(Right(listHocon)))
+    read(awsDetailsConfig from hocon(Right(validHocon)))
 
   assert(
     runtime.unsafeRun(listResult) ==
       AwsDetails(
-        List(Account("us-east", "jon"), Account("us-west", "chris"), Account("us-some", "hello")),
+        List(Account("us-east", Some(Right("jon"))), Account("us-west", Some(Left(123))), Account("us-some", None)),
         Database(Some(100), "postgres"),
-        List("vel", "muk", "riz")
+        List(1, 2, 3)
       )
   )
 
@@ -67,11 +68,44 @@ object TypesafeConfigHoconList extends App {
   val automaticAwsDetailsConfig = description[AwsDetails]
 
   assert(
-    runtime.unsafeRun(read(automaticAwsDetailsConfig from hocon(Right(listHocon)))) ==
+    runtime.unsafeRun(read(automaticAwsDetailsConfig from hocon(Right(validHocon)))) ==
       AwsDetails(
-        List(Account("us-east", "jon"), Account("us-west", "chris"), Account("us-some", "hello")),
+        List(Account("us-east", Some(Right("jon"))), Account("us-west", Some(Left(123))), Account("us-some", None)),
         Database(Some(100), "postgres"),
-        List("vel", "muk", "riz")
+        List(1, 2, 3)
       )
+  )
+
+  val invalidHocon =
+    """
+    accounts = [
+      {
+          accountId: jon
+      }
+      {
+          region : us-west
+          accountId: chris
+      }
+      {
+          accountId: null
+      }
+    ]
+
+    users = [1, 2, 3]
+
+    database {
+        port : 1abcd
+        url  : postgres
+    }
+
+    """
+
+  println( "the bloody things " +
+    runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either)
+  )
+
+  assert(
+    runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either) ==
+      Left(List(ParseError(Vector("database", "port"), "1abcd" , "int"), MissingValue(Vector("accounts", "region"), Some(0)), MissingValue(Vector("accounts", "region"), Some(2))))
   )
 }

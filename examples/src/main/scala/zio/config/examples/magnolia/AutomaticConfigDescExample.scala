@@ -61,8 +61,8 @@ object AutomaticConfigDescriptor extends zio.App {
     read(config).foldM(
       r => putStrLn(r.mkString(",")) *> ZIO.succeed(1),
       result =>
-        putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *> putStrLn(
-          generateDocs(config).toString()
+        putStrLn(result.toString) *> putStrLn(write(config, result).toString) *> putStrLn(
+          generateDocs(config).toString
         ) *>
           ZIO.succeed(0)
     )
