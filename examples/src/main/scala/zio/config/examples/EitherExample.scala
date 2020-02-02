@@ -24,7 +24,7 @@ object EitherExample extends App {
 
   val runtime = new DefaultRuntime {}
 
-  val validConfigForSampleConfig =
+  val validProd =
     Map(
       "x1" -> "v1",
       "x2" -> "v2",
@@ -32,27 +32,26 @@ object EitherExample extends App {
     )
 
   val source: ConfigSource[String, String] =
-    ConfigSource.fromMap(validConfigForSampleConfig)
+    ConfigSource.fromMap(validProd)
 
   // read(prodOrDev from source) is equivalent to Config.fromMap(prodOrDev). This is only to demonstrate that you can
   // use `from` at any point in your description, making it really flexible for the user to fetch different configs from different
   // sources.
   assert(runtime.unsafeRun(read(prodOrDev from source)) == Left(Prod(Ldap("v1"), DbUrl("v2"))))
 
-  val validConfigForAnotherConfig =
+  val validDev =
     Map(
-      "x2" -> "v2",
       "x3" -> "v3",
       "x4" -> "1",
       "x5" -> "2.0"
     )
 
   val anotherSource: ConfigSource[String, String] =
-    ConfigSource.fromMap(validConfigForAnotherConfig)
+    ConfigSource.fromMap(validDev)
 
   assert(runtime.unsafeRun(read(prodOrDev from anotherSource)) == Right(Dev("v3", 1, 2.0)))
 
-  val invalidConfig =
+  val parseErrorConfig =
     Map(
       "x2" -> "v2",
       "x3" -> "v3",
@@ -61,7 +60,7 @@ object EitherExample extends App {
     )
 
   val invalidSource =
-    ConfigSource.fromMap(invalidConfig)
+    ConfigSource.fromMap(parseErrorConfig)
 
   println(s"the value is ${read(prodOrDev from invalidSource).either}")
   assert(
@@ -69,6 +68,7 @@ object EitherExample extends App {
       Left(List(MissingValue(Vector("x1")), ParseError(Vector("x5"), "notadouble", "double")))
   )
 
+  // It chooses the left, Prod
   val allConfigsExist =
     Map(
       "x1" -> "v1",

@@ -14,7 +14,7 @@ private[config] trait ReadFunctions {
     def loop[V1, B](
       configuration: ConfigDescriptor[K, V1, B],
       paths: Vector[K]
-    ): ZIO[Any, ::[Either[Exists[B], ValueType[Vector[K], V1]]], ::[B]] =
+    ): ZIO[Any, ::[Either[Exists[Vector[K], B], ValueType[Vector[K], V1]]], ::[B]] =
       configuration match {
         case ConfigDescriptor.Source(path, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
           val results = for {
@@ -37,7 +37,7 @@ private[config] trait ReadFunctions {
                                            ReadError.ParseError(paths :+ path, r.value, r.typeInfo)
                                          )
                                        ),
-                                     e => Left(ValueType.existingValue[B](e))
+                                     e => Left(ValueType.existingValue[Vector[K], B](paths :+ path, e))
                                    )
                                case (None, id) =>
                                  Right(ValueType.nonExistingValue[Vector[K], V1](paths :+ path, Some(id)))
@@ -48,13 +48,16 @@ private[config] trait ReadFunctions {
                      })
 
             successOrFailure = if (result.forall(_.isLeft))
-              Right(result.collect({ case Left(ValueType.Exists(a)) => a }))
-            else
+              Right(result.collect({ case Left(ValueType.Exists(k, a)) => a }))
+            else {
+
               Left(result)
+            }
           } yield successOrFailure
 
           results.flatMap({
-            case Left(value)  => ZIO.fail(value)
+            case Left(value) =>
+              ZIO.fail(value)
             case Right(value) => ZIO.succeed(::(value.head, value.tail))
           })
 
@@ -81,17 +84,18 @@ private[config] trait ReadFunctions {
             .mapError({ errors =>
               // always duplicate the error side and non-error side.
               mapCons(errors)({
-                case Left(ValueType.Exists(a)) =>
+                case Left(ValueType.Exists(k, a)) =>
                   f(a) match {
                     case Left(value) =>
                       Right(
                         ValueType.nonFatalErrorValue[Vector[K], V1](
-                          ReadError.Unknown[Vector[K]](paths, new RuntimeException(value))
+                          ReadError.Unknown[Vector[K]](k, new RuntimeException(value))
                         )
                       )
-                    case Right(value) => Left(ValueType.existingValue[B](value))
+                    case Right(value) => Left(ValueType.existingValue[Vector[K], B](k, value))
                   }
-                case Right(value) => Right(value)
+                case Right(value) =>
+                  Right(value)
               })
             })
             .flatMap { as =>
@@ -99,14 +103,15 @@ private[config] trait ReadFunctions {
                 ZIO
                   .fromEither(f(a))
                   .bimap(
-                    err =>
+                    err => {
                       singleton(
                         Right(
                           ValueType.nonFatalErrorValue[Vector[K], V1](
                             ReadError.Unknown[Vector[K]](paths, new RuntimeException(err))
                           )
                         )
-                      ),
+                      )
+                    },
                     res => res
                   )
               })
@@ -122,20 +127,19 @@ private[config] trait ReadFunctions {
         case ConfigDescriptor.Describe(c, _) =>
           loop(c, paths)
 
-        case cd: ConfigDescriptor.Optional[K, V, B] @unchecked =>
+        case cd: ConfigDescriptor.Optional[K, V1, B] @unchecked =>
           val ConfigDescriptor.Optional(c) = cd
           loop(c, paths).either.flatMap({
             case Right(value) =>
               ZIO.succeed(mapCons(value)(t => Some(t): Option[B]))
             case Left(r) =>
-              if (hasNonFatalErrors(r) || hasParseErrors(r))
+              if (hasNonFatalErrors[K, V1, B](r) || hasParseErrors[K, V1, B](r))
                 ZIO.fail(r)
               else
                 ZIO.succeed({
-                  val result = r.collect({
-                    case Left(ValueType.Exists(a))          => Some(a)
-                    case Right(ValueType.NonExisting(_, _)) => None
-                    case Right(ValueType.OrErrors(_, _))    => None
+                  val result = r.map({
+                    case Left(ValueType.Exists(k, a)) => Some(a)
+                    case _                            => None
                   })
 
                   if (result.isEmpty) ::(None, Nil) else ::(result.head, result.tail)
@@ -154,9 +158,9 @@ private[config] trait ReadFunctions {
                   case (Left(aa), Right(b)) =>
                     ZIO.fail(
                       mapCons(withIndex(aa))({
-                        case (Left((ValueType.Exists(a))), id) =>
+                        case (Left((ValueType.Exists(k, a))), id) =>
                           b.lift(id) match {
-                            case Some(v) => Left(Exists[(a, b)]((a, v)))
+                            case Some(v) => Left(Exists[Vector[K], (a, b)](k, (a, v)))
                             case None =>
                               Right(ValueType.nonExistingValue[Vector[K], V1](paths, Some(id)))
                           }
@@ -166,10 +170,10 @@ private[config] trait ReadFunctions {
                     )
                   case (Right(aa), Left(bb)) =>
                     ZIO.fail(mapCons(withIndex(bb))({
-                      case (Left(ValueType.Exists(a)), id) =>
+                      case (Left(ValueType.Exists(k, a)), id) =>
                         aa.lift(id) match {
                           case Some(v) =>
-                            Left(ValueType.existingValue[(a, b)]((v, a)))
+                            Left(ValueType.existingValue[Vector[K], (a, b)](k, (v, a)))
                           case None =>
                             Right(ValueType.nonExistingValue[Vector[K], V1](paths, Some(id)))
                         }
@@ -183,11 +187,12 @@ private[config] trait ReadFunctions {
                         case Right(value1) =>
                           err2.collect({
                             case Right(value2) =>
-                              List(Right(value1), Right(value2)): List[Either[Exists[(a, b)], ValueType[Vector[K], V1]]]
+                              List(value1, value2): List[ValueType[Vector[K], V1]]
                           })
                       })
                       .flatten
-                    ZIO.fail(::(res.flatten.head, res.flatten.tail))
+
+                    ZIO.fail(singleton(Right(zipErrors(::(res.flatten.head, res.flatten.tail)))))
                 }
           } yield r
         }
@@ -205,9 +210,9 @@ private[config] trait ReadFunctions {
                   loop(right, paths).either.flatMap({
                     case Right(b) =>
                       val result = mapCons(withIndex(lerr))({
-                        case (Left((ValueType.Exists(a))), _) =>
+                        case (Left((ValueType.Exists(k, a))), _) =>
                           // If left already exists, use it !
-                          Left(ValueType.existingValue[Either[a, b]](Left(a)))
+                          Left(ValueType.existingValue[Vector[K], Either[a, b]](k, Left(a)))
 
                         case (Right(ValueType.NonFatalErrorValue(error)), id) =>
                           Right(ValueType.nonFatalErrorValue(error))
@@ -216,7 +221,7 @@ private[config] trait ReadFunctions {
                         case (Right(v), id) =>
                           b.lift(id) match {
                             case Some(value) =>
-                              Left(ValueType.existingValue[Either[a, b]](Right(value)))
+                              Left(ValueType.existingValue[Vector[K], Either[a, b]](paths, Right(value)))
                             case None =>
                               Right(v)
                           }
@@ -224,7 +229,7 @@ private[config] trait ReadFunctions {
 
                       if (result.forall(_.isLeft))
                         ZIO.succeed({
-                          val r: List[Either[a, b]] = result.collect({ case Left(ValueType.Exists(a)) => a })
+                          val r: List[Either[a, b]] = result.collect({ case Left(ValueType.Exists(k, a)) => a })
                           ::(r.head, r.tail)
                         })
                       else {
@@ -233,14 +238,14 @@ private[config] trait ReadFunctions {
 
                     case Left(rerr) =>
                       val result = mapCons(withIndex(lerr))({
-                        case (Left(ValueType.Exists(a)), _) =>
-                          Left(ValueType.existingValue(Left(a): Either[a, b]))
+                        case (Left(ValueType.Exists(k, a)), _) =>
+                          Left(ValueType.existingValue(k, Left(a): Either[a, b]))
                         case (Right(someLeftError), id) =>
                           rerr.lift(id) match {
                             case Some(value) =>
                               value match {
-                                case Left(ValueType.Exists(v)) =>
-                                  Left(ValueType.existingValue[Either[a, b]](Right(v): Either[a, b]))
+                                case Left(ValueType.Exists(k, v)) =>
+                                  Left(ValueType.existingValue[Vector[K], Either[a, b]](k, Right(v): Either[a, b]))
                                 case Right(someRightError) =>
                                   Right(ValueType.orErrors[Vector[K], V1](someLeftError, someRightError))
                               }
@@ -251,7 +256,7 @@ private[config] trait ReadFunctions {
 
                       if (result.forall(_.isLeft))
                         ZIO.succeed({
-                          val r: List[Either[a, b]] = result.collect({ case Left(ValueType.Exists(a)) => a })
+                          val r: List[Either[a, b]] = result.collect({ case Left(ValueType.Exists(k, a)) => a })
                           ::(r.head, r.tail)
                         })
                       else {
@@ -282,20 +287,20 @@ private[config] trait ReadFunctions {
                         )
                       else {
                         val result = mapCons(withIndex(lerr))({
-                          case (Left(ValueType.Exists(a)), _) => Left(ValueType.existingValue[B](a))
+                          case (Left(ValueType.Exists(k, a)), _) => Left(ValueType.existingValue[Vector[K], B](k, a))
                           case (Right(leftError), id) =>
                             rerr.lift(id) match {
                               case Some(value) =>
                                 value match {
-                                  case Left(ValueType.Exists(v)) => Left(ValueType.existingValue[B](v))
-                                  case Right(anyRightError)      => Right(ValueType.orErrors(leftError, anyRightError))
+                                  case Left(ValueType.Exists(k, v)) => Left(ValueType.existingValue[Vector[K], B](k, v))
+                                  case Right(anyRightError)         => Right(ValueType.orErrors(leftError, anyRightError))
                                 }
 
                               case None => Right(leftError)
                             }
                         })
                         if (result.forall(_.isLeft)) ZIO.succeed({
-                          val res = result.collect({ case Left(ValueType.Exists(a)) => a })
+                          val res = result.collect({ case Left(ValueType.Exists(k, a)) => a })
                           ::(res.head, res.tail)
                         })
                         else {
@@ -306,13 +311,16 @@ private[config] trait ReadFunctions {
             })
       }
 
-    def partial: PartialFunction[Either[Exists[A], ValueType[Vector[K], V]], ReadErrorsVector[K, V]] = {
+    def partial: PartialFunction[Either[Exists[Vector[K], A], ValueType[Vector[K], V]], ReadErrorsVector[K, V]] = {
       case Right(ValueType.NonExisting(paths, index)) =>
         ::(ReadError.missingValue[Vector[K], V](paths, index), Nil)
       case Right(ValueType.ParseErrorValue(error))    => ::(error: ReadError[Vector[K], V], Nil)
       case Right(ValueType.OrErrors(error1, error2))  => concat(partial(Right(error1)), partial(Right(error2)))
       case Right(ValueType.NonFatalErrorValue(error)) => ::(error, Nil)
       case Right(ValueType.ListErrors(errors)) =>
+        val result = mapCons(errors)(eachError => partial(Right(eachError)))
+        ::(result.flatten.head, result.flatten.tail)
+      case Right(ValueType.ZipErrors(errors)) =>
         val result = mapCons(errors)(eachError => partial(Right(eachError)))
         ::(result.flatten.head, result.flatten.tail)
     }
@@ -337,7 +345,7 @@ object ReadFunctions {
 
   object ValueType {
 
-    case class Exists[A](a: A)
+    case class Exists[K, A](path: K, a: A)
 
     case class NonExisting[K, V](path: K, position: Option[Int]) extends ValueType[K, V]
 
@@ -348,6 +356,7 @@ object ReadFunctions {
     case class OrErrors[K, V](leftErrors: ValueType[K, V], rightErrors: ValueType[K, V]) extends ValueType[K, V]
 
     case class ListErrors[K, V](errors: ::[ValueType[K, V]]) extends ValueType[K, V]
+    case class ZipErrors[K, V](errors: ::[ValueType[K, V]])  extends ValueType[K, V]
 
     def nonFatalErrorValue[K, V](error: ReadError.Unknown[K]): ValueType[K, V] =
       NonFatalErrorValue(error)
@@ -358,8 +367,8 @@ object ReadFunctions {
     def nonExistingValue[K, V](path: K, position: Option[Int]): ValueType[K, V] =
       NonExisting(path, position)
 
-    def existingValue[A](a: A): Exists[A] =
-      Exists(a)
+    def existingValue[K, A](path: K, a: A): Exists[K, A] =
+      Exists(path, a)
 
     def orErrors[K, V](a: ValueType[K, V], b: ValueType[K, V]): ValueType[K, V] =
       OrErrors(a, b)
@@ -367,7 +376,10 @@ object ReadFunctions {
     def listErrors[K, V](errors: ::[ValueType[K, V]]): ValueType[K, V] =
       ListErrors(errors)
 
-    def hasNonFatalErrors[K, V1, B](values: ::[Either[Exists[B], ValueType[Vector[K], V1]]]): Boolean =
+    def zipErrors[K, V](errors: ::[ValueType[K, V]]): ValueType[K, V] =
+      ZipErrors(errors)
+
+    def hasNonFatalErrors[K, V1, B](values: ::[Either[Exists[Vector[K], B], ValueType[Vector[K], V1]]]): Boolean =
       values.exists({
         case Left(_) => false
         case Right(value) =>
@@ -380,10 +392,11 @@ object ReadFunctions {
                 singleton(Right(rightErrors))
               )
             case ListErrors(leftErrors) => hasNonFatalErrors[K, V1, B](mapCons(leftErrors)(Right(_)))
+            case ZipErrors(leftErrors)  => hasNonFatalErrors[K, V1, B](mapCons(leftErrors)(Right(_)))
           }
       })
 
-    def hasParseErrors[K, V1, B](values: ::[Either[Exists[B], ValueType[Vector[K], V1]]]): Boolean =
+    def hasParseErrors[K, V1, B](values: ::[Either[Exists[Vector[K], B], ValueType[Vector[K], V1]]]): Boolean =
       values.exists({
         case Left(_) => false
         case Right(value) =>
@@ -396,6 +409,7 @@ object ReadFunctions {
                 singleton(Right(rightErrors))
               )
             case ListErrors(leftErrors) => hasParseErrors[K, V1, B](mapCons(leftErrors)(Right(_)))
+            case ZipErrors(leftErrors)  => hasParseErrors[K, V1, B](mapCons(leftErrors)(Right(_)))
 
           }
       })
