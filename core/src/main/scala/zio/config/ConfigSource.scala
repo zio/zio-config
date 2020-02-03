@@ -75,8 +75,9 @@ object ConfigSource {
                     .flatMap(
                       sep =>
                         r.split(sep).toList.map(_.trim) match {
-                          case h :: tail => Option(::(Option(h), tail.map(Option(_)))) // Option instead of Some for scala 2.12
-                          case Nil       => None
+                          case h :: tail =>
+                            Option(::(Option(h), tail.map(Option(_)))) // Option instead of Some for scala 2.12
+                          case Nil => None
                         }
                     )
                     .getOrElse(::(Option(r), Nil))

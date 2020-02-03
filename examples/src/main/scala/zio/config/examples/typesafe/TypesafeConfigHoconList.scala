@@ -99,7 +99,10 @@ object TypesafeConfigHoconList extends App {
     }
 
     """
-  
+
+  println(
+    runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either)
+  )
   assert(
     runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either) ==
       Left(
@@ -110,4 +113,54 @@ object TypesafeConfigHoconList extends App {
         )
       )
   )
+
+  // Unflattened list
+  final case class AwsDetailss(accounts: List[List[Account]], database: Database, users: List[Int])
+
+  val validHoccon2 =
+    """
+    accounts = [
+      [
+        {
+          region : us-east
+          accountId: jon
+        }
+        {
+          region : us-west
+          accountId: 123
+        }
+        {
+          region : us-some
+          accountId: null
+        }
+      ]
+
+      [
+        {
+          region : us-east
+          accountId: jon
+        }
+        {
+          region : us-west
+          accountId: 123
+        }
+        {
+          region : us-some
+          accountId: null
+        }
+      ]
+    ]
+
+    users : [1, 2, 3]
+
+    database {
+        port : 100
+        url  : postgres
+    }
+    """
+
+  val c = read(description[AwsDetailss] from hocon(Right(validHoccon2)))
+
+  println("hello " + runtime.unsafeRun(c))
+
 }

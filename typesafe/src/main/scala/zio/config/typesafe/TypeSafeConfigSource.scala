@@ -122,6 +122,7 @@ object TypeSafeConfigSource {
                         case Failure(r) => Right(::(None, Nil))
                         case Success(valueType) =>
                           if (valueType == ConfigValueType.LIST) {
+                            println("is this the thing")
                             for {
                               // A few extra error handling.
                               res <- effect(parentConfig.getConfigList(head).asScala.toList) match {
@@ -136,7 +137,7 @@ object TypeSafeConfigSource {
                                             case h :: t => Right(::(h, t))
                                           })
 
-                                      case Left(_) =>
+                                      case Left(r) =>
                                         effect(parentConfig.getList(head).asScala.toList)
                                           .map(_.toList.flatten)
                                           .flatMap {
@@ -147,8 +148,8 @@ object TypeSafeConfigSource {
                                               case h :: t
                                                   if (::(h, t).forall(
                                                     t =>
-                                                      t.valueType() != ConfigValueType.NULL ||
-                                                        t.valueType() != ConfigValueType.LIST ||
+                                                      t.valueType() != ConfigValueType.NULL && // A list of list of same type isn't supported
+                                                        t.valueType() != ConfigValueType.LIST &&
                                                         t.valueType() != ConfigValueType.OBJECT
                                                   )) =>
                                                 Right(
@@ -163,7 +164,7 @@ object TypeSafeConfigSource {
                                                   ReadError.Unknown[Vector[String]](
                                                     path,
                                                     new RuntimeException(
-                                                      s"Wrong types in the list. Identified the value of ${head} in HOCON as a list, however, it should be a list of primitive values. Ex: [1, 2, 3]"
+                                                      s"The key ${head} is a list, however, it consist of complex types that aren't supported yet in zio-config. Make sure we don't have values such as List(List..) of same types) in hocon"
                                                     )
                                                   )
                                                 )
@@ -197,6 +198,8 @@ object TypeSafeConfigSource {
                      .mapError(throwable => ReadError.Unknown[Vector[String]](path, throwable))
 
           res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t))
+
+          _ = println(res)
         } yield Some(res)
       },
       List("typesafe-config-hocon")
