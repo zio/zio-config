@@ -1,5 +1,4 @@
 /* your custom css */
-
 @media only screen and (min-device-width: 360px) and (max-device-width: 736px) {
 }
 
@@ -19,12 +18,38 @@
     padding-left: 30px
 }
 
-.gitter-chat-embed {
-    z-index: 10000;
-}
-
 a {
     color: #bd271a
+}
+
+.blockContent h2 {
+    color: #bd271a
+}
+
+.homeContainer {
+    background-color: #24292e;
+    padding-top: 75px;
+    padding-bottom: 90px;
+}
+
+.projectTitle {
+    color: #ffffff
+}
+
+.titleLogoWrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.promoSection .button {
+    color: #ffffff;
+    border-color: #ffffff;
+}
+
+.promoSection .button:hover {
+    color: #000000;
+    background-color: #ffffff;
 }
 
 .mainContainer {
@@ -33,12 +58,4 @@ a {
 
 .nav-footer .sitemap .nav-home {
     width: 150px;
-}
-
-.fixedHeaderContainer header .headerTitleWithLogo {
-    font-size: 1.25em;
-    line-height: 18px;
-    margin: 0;
-    position: relative;
-    z-index: 9999;
 }

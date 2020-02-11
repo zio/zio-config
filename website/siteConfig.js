@@ -32,12 +32,8 @@ const siteConfig = {
 
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
-    { doc: 'quickstart/quickstart_index', label: 'Quickstart' },
-    { doc: 'configdescriptor/configdescriptor_index', label: 'ConfigDescriptor' },
-    { doc: 'sources/sources_index', label: 'Sources' },
-    { doc: 'usingconfigdescriptor/configdescriptorusage_index', label: 'Using ConfigDescriptor' },
-    { doc: 'refined/refined_index', label: 'Automatic Validations' },
-    { doc: 'design/design_index', label: 'Design' }
+    { doc: 'quickstart/quickstart_index', label: 'Documentation' },
+    { href: 'https://www.github.com/zio/zio-config', label: 'GitHub' }
   ],
 
   // If you have users set above, you add it here:
