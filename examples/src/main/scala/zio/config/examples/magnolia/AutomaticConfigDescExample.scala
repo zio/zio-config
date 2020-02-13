@@ -1,11 +1,10 @@
 package zio.config.examples.magnolia
 
-import zio.ZIO
+import zio.{ console, App, ZEnv, ZIO }
 import zio.config.ConfigSource
 import zio.config.magnolia.describe
 import zio.config.examples.magnolia.MyConfig._
 import zio.config.magnolia.ConfigDescriptorProvider._
-import zio.console.Console.Live.console._
 
 final case class MyConfig(
   aws: Aws,
@@ -33,7 +32,7 @@ object MyConfig {
   final case class DbUrl(value: String) extends AnyVal
 }
 
-object AutomaticConfigDescriptor extends zio.App {
+object AutomaticConfigDescriptor extends App {
   // Typeclass derivation through Magnolia
   private val automaticConfig = description[MyConfig]
 
@@ -57,13 +56,13 @@ object AutomaticConfigDescriptor extends zio.App {
 
   import zio.config._
 
-  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
+  override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     read(config).foldM(
-      r => putStrLn(r.mkString(",")) *> ZIO.succeed(1),
+      r => console.putStrLn(r.mkString(",")) *> ZIO.succeed(1),
       result =>
-        putStrLn(result.toString()) *> putStrLn(write(config, result).toString()) *> putStrLn(
-          generateDocs(config).toString()
-        ) *>
+        console.putStrLn(result.toString()) *>
+          console.putStrLn(write(config, result).toString()) *>
+          console.putStrLn(generateDocs(config).toString()) *>
           ZIO.succeed(0)
     )
   //

@@ -1,7 +1,6 @@
 package zio.config
 
-import zio.{ IO, ZIO }
-import zio.system.System.Live.system
+import zio.{ system, IO, ZEnv, ZIO }
 import java.{ util => ju }
 
 final case class ConfigValue[A](value: ::[A])
@@ -55,7 +54,7 @@ object ConfigSource {
           )
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
-
+          .provideLayer(ZEnv.live)
       },
       SystemEnvironment :: Nil
     )
@@ -85,6 +84,7 @@ object ConfigSource {
           )
           .flatMap(IO.fromOption(_))
           .mapError(_ => singleton(ReadError.MissingValue(path)))
+          .provideLayer(ZEnv.live)
 
       },
       SystemProperties :: Nil
