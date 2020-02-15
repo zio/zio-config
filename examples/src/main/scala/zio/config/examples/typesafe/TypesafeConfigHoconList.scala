@@ -11,7 +11,7 @@ object TypesafeConfigHoconList extends App {
   val runtime = new DefaultRuntime {}
 
   // A nested example with type safe config, and usage of magnolia
-  final case class Account(region: String, accountId: Option[Either[Int, String]])
+  final case class Account(region: List[String], accountId: Option[Either[Int, String]])
   final case class Database(port: Option[Int], url: String)
   final case class AwsDetails(accounts: List[Account], database: Database, users: List[Int])
 
@@ -19,15 +19,15 @@ object TypesafeConfigHoconList extends App {
     """
     accounts = [
       {
-          region : us-east
+          region : [us-east, dd, ee]
           accountId: jon
       }
       {
-          region : us-west
+          region : [us-west,  ab, cd]
           accountId: 123
       }
       {
-          region : us-some
+          region : [us-some, ff, gg]
           accountId: null
       }
     ]
@@ -42,7 +42,10 @@ object TypesafeConfigHoconList extends App {
     """
 
   val accountConfig =
-    (string("region") |@| int("accountId").orElseEither(string("accountId")).optional)(Account.apply, Account.unapply)
+    (list(string("region")) |@| int("accountId").orElseEither(string("accountId")).optional)(
+      Account.apply,
+      Account.unapply
+    )
 
   val databaseConfig = (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
 
@@ -58,7 +61,11 @@ object TypesafeConfigHoconList extends App {
   assert(
     runtime.unsafeRun(listResult) ==
       AwsDetails(
-        List(Account("us-east", Some(Right("jon"))), Account("us-west", Some(Left(123))), Account("us-some", None)),
+        List(
+          Account(List("us-east", "dd", "ee"), Some(Right("jon"))),
+          Account(List("us-west", "ab", "cd"), Some(Left(123))),
+          Account(List("us-some", "ff", "gg"), None)
+        ),
         Database(Some(100), "postgres"),
         List(1, 2, 3)
       )
@@ -70,7 +77,11 @@ object TypesafeConfigHoconList extends App {
   assert(
     runtime.unsafeRun(read(automaticAwsDetailsConfig from hocon(Right(validHocon)))) ==
       AwsDetails(
-        List(Account("us-east", Some(Right("jon"))), Account("us-west", Some(Left(123))), Account("us-some", None)),
+        List(
+          Account(List("us-east", "dd", "ee"), Some(Right("jon"))),
+          Account(List("us-west", "ab", "cd"), Some(Left(123))),
+          Account(List("us-some", "ff", "gg"), None)
+        ),
         Database(Some(100), "postgres"),
         List(1, 2, 3)
       )
@@ -100,9 +111,6 @@ object TypesafeConfigHoconList extends App {
 
     """
 
-  println(
-    runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either)
-  )
   assert(
     runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either) ==
       Left(
@@ -119,7 +127,7 @@ object TypesafeConfigHoconList extends App {
 
   val validHoccon2 =
     """
-    accounts = [
+    accounts =
       [
         {
           region : us-east
@@ -134,22 +142,6 @@ object TypesafeConfigHoconList extends App {
           accountId: null
         }
       ]
-
-      [
-        {
-          region : us-east
-          accountId: jon
-        }
-        {
-          region : us-west
-          accountId: 123
-        }
-        {
-          region : us-some
-          accountId: null
-        }
-      ]
-    ]
 
     users : [1, 2, 3]
 

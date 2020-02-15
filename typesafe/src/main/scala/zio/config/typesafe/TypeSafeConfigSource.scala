@@ -15,33 +15,33 @@ object TypeSafeConfigSource {
   def hocon(input: Either[com.typesafe.config.Config, String]): ConfigSource[String, String] =
     ConfigSource(
       (path: Vector[String]) => {
-        def effect[A](f: => A): Either[ReadError.Unknown[Vector[String]], Option[A]] =
+        def effect[A](f: => A): Either[ReadError.Unknown[Vector[String]], A] =
           Try(f) match {
-            case Success(value)     => Right(Some(value))
+            case Success(value)     => Right(value)
             case Failure(exception) => Left(ReadError.Unknown(path, exception))
           }
 
         def getLeafValue(
           config: => com.typesafe.config.Config,
           key: String
-        ): Either[ReadError.Unknown[Vector[String]], ::[Option[String]]] =
+        ): Either[ReadError.Unknown[Vector[String]], Option[::[String]]] =
           Try {
             config.getValue(key).valueType()
           } match {
             case Failure(exception) =>
               exception match {
-                case e: com.typesafe.config.ConfigException.Missing => Right(::(None, Nil))
+                case e: com.typesafe.config.ConfigException.Missing => Right(None)
                 case e                                              => Left(ReadError.Unknown[Vector[String]](path, e))
               }
             case Success(valueType) =>
               if (valueType == ConfigValueType.BOOLEAN) {
-                effect(config.getBoolean(key).toString).map(singleton)
+                effect(config.getBoolean(key).toString).map(singleton).map(Some(_))
               } else if (valueType == ConfigValueType.NULL) {
-                Right(::(None, Nil))
+                Right(None)
               } else if (valueType == ConfigValueType.NUMBER) {
-                effect(config.getNumber(key).toString).map(singleton)
+                effect(config.getNumber(key).toString).map(singleton).map(Some(_))
               } else if (valueType == ConfigValueType.STRING) {
-                effect(config.getString(key)).map(singleton)
+                effect(config.getString(key)).map(singleton).map(Some(_))
               } else if (valueType == ConfigValueType.OBJECT) {
                 Left(
                   ReadError.Unknown(
@@ -84,7 +84,7 @@ object TypeSafeConfigSource {
                     )
                   case Success(value) =>
                     value match {
-                      case h :: t => Right(::(Some(h), t.map(Some(_))))
+                      case h :: t => Right(Some(::(h, t)))
                       case Nil =>
                         Left(
                           ReadError.Unknown(
@@ -103,17 +103,15 @@ object TypeSafeConfigSource {
           parentConfig: com.typesafe.config.Config,
           list: List[String],
           nextPath: List[String]
-        ): Either[ReadError.Unknown[Vector[String]], ::[Option[String]]] =
+        ): Either[ReadError.Unknown[Vector[String]], ::[Option[::[String]]]] =
           list match {
             case Nil =>
               nextPath.lastOption match {
                 case Some(lastKey) =>
-                  val r = getLeafValue(parentConfig, lastKey)
-                  r.map(t => {
-                    ::(t.head, t.tail)
-                  })
+                  getLeafValue(parentConfig, lastKey).map(singleton)
+
                 case None =>
-                  Right(::(None: Option[String], Nil))
+                  Right(singleton(None))
               }
 
             case head :: next => {
@@ -122,55 +120,44 @@ object TypeSafeConfigSource {
                         case Failure(r) => Right(::(None, Nil))
                         case Success(valueType) =>
                           if (valueType == ConfigValueType.LIST) {
-                            println("is this the thing")
                             for {
                               // A few extra error handling.
-                              res <- effect(parentConfig.getConfigList(head).asScala.toList) match {
-                                      case Right(allConfigs) =>
-                                        seqEither({
-                                          allConfigs.toList.flatten
-                                            .map(eachConfig => loop(eachConfig, next, nextPath :+ head))
-                                        }).map(t => t.flatMap(_.toList))
-                                          .flatMap({
-                                            case Nil =>
-                                              Right(::(None, Nil))
-                                            case h :: t => Right(::(h, t))
-                                          })
+                              res <- Try(parentConfig.getConfigList(head).asScala.toList) match {
+                                      case Success(allConfigs) =>
+                                        val result = seqEither({
+                                          allConfigs.toList.map(
+                                            eachConfig => loop(eachConfig, next, nextPath :+ head)
+                                          )
+                                        })
 
-                                      case Left(r) =>
-                                        effect(parentConfig.getList(head).asScala.toList)
-                                          .map(_.toList.flatten)
-                                          .flatMap {
-                                            {
-                                              case Nil =>
-                                                Right(::(None, Nil))
+                                        result.map(t => ::(t.flatten.head, t.flatten.tail))
 
-                                              case h :: t
-                                                  if (::(h, t).forall(
-                                                    t =>
-                                                      t.valueType() != ConfigValueType.NULL && // A list of list of same type isn't supported
-                                                        t.valueType() != ConfigValueType.LIST &&
-                                                        t.valueType() != ConfigValueType.OBJECT
-                                                  )) =>
-                                                Right(
-                                                  ::(
-                                                    Some(h.unwrapped().toString),
-                                                    t.map(t => Some(t.unwrapped().toString))
+                                      case Failure(r) =>
+                                        effect(parentConfig.getList(head).asScala.toList).flatMap {
+                                          {
+                                            case h :: t
+                                                if (::(h, t).forall(
+                                                  t =>
+                                                    t.valueType() != ConfigValueType.NULL && // A list of list of same type isn't supported
+                                                      t.valueType() != ConfigValueType.LIST &&
+                                                      t.valueType() != ConfigValueType.OBJECT
+                                                )) =>
+                                              Right(
+                                                singleton(Some(::(h.unwrapped.toString, t.map(_.unwrapped.toString))))
+                                              )
+
+                                            case _ =>
+                                              Left(
+                                                ReadError.Unknown[Vector[String]](
+                                                  path,
+                                                  new RuntimeException(
+                                                    s"The key ${head} is a list, however, it consist of complex types that aren't supported yet in zio-config. Make sure we don't have values such as List(List..) of same types) in hocon"
                                                   )
                                                 )
+                                              )
 
-                                              case _ =>
-                                                Left(
-                                                  ReadError.Unknown[Vector[String]](
-                                                    path,
-                                                    new RuntimeException(
-                                                      s"The key ${head} is a list, however, it consist of complex types that aren't supported yet in zio-config. Make sure we don't have values such as List(List..) of same types) in hocon"
-                                                    )
-                                                  )
-                                                )
-
-                                            }
                                           }
+                                        }
                                     }
                             } yield res
                           } else {
@@ -179,7 +166,7 @@ object TypeSafeConfigSource {
                             } else if (next.isEmpty) {
                               loop(parentConfig, next, nextPath :+ head)
                             } else {
-                              Right(::(None, Nil))
+                              Right(singleton(None))
                             }
                           }
                       }
@@ -199,7 +186,6 @@ object TypeSafeConfigSource {
 
           res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t))
 
-          _ = println(res)
         } yield Some(res)
       },
       List("typesafe-config-hocon")

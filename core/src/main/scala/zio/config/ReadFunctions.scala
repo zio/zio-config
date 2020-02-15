@@ -13,7 +13,7 @@ private[config] trait ReadFunctions {
     def loop[V1, B](
       configuration: ConfigDescriptor[K, V1, B],
       paths: Vector[K]
-    ): ZIO[Any, ::[Either[Exists[Vector[K], B], ValueType[Vector[K], V1]]], ::[B]] =
+    ): ZIO[Any, ::[Either[Exists[Vector[K], ::[B]], ValueType[Vector[K], V1]]], ::[::[B]]] =
       configuration match {
         case ConfigDescriptor.Source(path, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
           val results = for {
@@ -26,18 +26,22 @@ private[config] trait ReadFunctions {
                          opt match {
                            case Some(values) =>
                              mapCons(withIndex(values.value)) {
-                               case (Some(value), _) =>
-                                 propertyType
-                                   .read(value)
-                                   .fold(
-                                     r =>
-                                       Right(
-                                         ValueType.parseErrorValue[Vector[K], V1](
-                                           ReadError.ParseError(paths :+ path, r.value, r.typeInfo)
-                                         )
-                                       ),
-                                     e => Left(ValueType.existingValue[Vector[K], B](paths :+ path, e))
+                               case (Some(values), _) =>
+                                 seqEitherCons(
+                                   mapCons(values)(
+                                     value =>
+                                       propertyType
+                                         .read(value)
                                    )
+                                 ).fold(
+                                   r =>
+                                     Right(
+                                       ValueType.parseErrorValue[Vector[K], V1](
+                                         ReadError.ParseError(paths :+ path, r.value, r.typeInfo)
+                                       )
+                                     ),
+                                   e => Left(ValueType.existingValue[Vector[K], ::[B]](paths :+ path, e))
+                                 )
                                case (None, id) =>
                                  Right(ValueType.nonExistingValue[Vector[K], V1](paths :+ path, Some(id)))
                              }
@@ -81,17 +85,16 @@ private[config] trait ReadFunctions {
           val ConfigDescriptor.XmapEither(c, f, _) = cd
           loop(c, paths)
             .mapError({ errors =>
-              // always duplicate the error side and non-error side.
               mapCons(errors)({
                 case Left(Exists(k, a)) =>
-                  f(a) match {
+                  seqEitherCons(mapCons(a)(f)) match {
                     case Left(value) =>
                       Right(
                         ValueType.nonFatalErrorValue[Vector[K], V1](
                           ReadError.Unknown[Vector[K]](k, new RuntimeException(value))
                         )
                       )
-                    case Right(value) => Left(ValueType.existingValue[Vector[K], B](k, value))
+                    case Right(value) => Left(ValueType.existingValue[Vector[K], ::[B]](k, value))
                   }
                 case Right(value) =>
                   Right(value)
@@ -100,7 +103,7 @@ private[config] trait ReadFunctions {
             .flatMap { as =>
               foreach(as)(a => {
                 ZIO
-                  .fromEither(f(a))
+                  .fromEither(seqEitherCons(mapCons(a)(f)))
                   .bimap(
                     err => {
                       singleton(
@@ -119,7 +122,7 @@ private[config] trait ReadFunctions {
         // No need to add report on the default value.
         case ConfigDescriptor.Default(c, value) =>
           loop(c, paths).fold(
-            _ => singleton(value),
+            _ => singleton(singleton(value)),
             identity
           )
 
@@ -130,18 +133,18 @@ private[config] trait ReadFunctions {
           val ConfigDescriptor.Optional(c) = cd
           loop(c, paths).either.flatMap({
             case Right(value) =>
-              ZIO.succeed(mapCons(value)(t => Some(t): Option[B]))
+              ZIO.succeed(mapCons(value)(t => mapCons(t)(tt => Some(tt))))
             case Left(r) =>
-              if (hasNonFatalErrors[K, V1, B](r) || hasParseErrors[K, V1, B](r))
+              if (hasNonFatalErrors[K, V1, ::[B]](r) || hasParseErrors[K, V1, ::[B]](r))
                 ZIO.fail(r)
               else
                 ZIO.succeed({
                   val result = r.map({
-                    case Left(Exists(k, a)) => Some(a)
-                    case _                  => None
+                    case Left(Exists(k, a)) => mapCons(a)(Some(_))
+                    case _                  => singleton(None)
                   })
 
-                  if (result.isEmpty) ::(None, Nil) else ::(result.head, result.tail)
+                  if (result.isEmpty) ::(singleton(None), Nil) else ::(result.head, result.tail)
                 })
           })
 
@@ -152,14 +155,20 @@ private[config] trait ReadFunctions {
             res2 <- loop(right, paths).either
             r <- (res1, res2) match {
                   case (Right(as), Right(bs)) =>
-                    ZIO.succeed(zipCons(as, bs))
+                    val result1 = as.flatten.zip(bs.flatten)
+                    val result  = singleton(::(result1.head, result1.tail))
+
+                    ZIO.succeed(::(result.head, result.tail))
 
                   case (Left(aa), Right(b)) =>
                     ZIO.fail(
                       mapCons(withIndex(aa))({
                         case (Left((Exists(k, a))), id) =>
                           b.lift(id) match {
-                            case Some(v) => Left(Exists[Vector[K], (a, b)](k, (a, v)))
+                            case Some(v) =>
+                              Left(Exists[Vector[K], ::[(a, b)]](k, {
+                                val r = (a.flatMap(aa => v.map(vv => (aa, vv)))); ::(r.head, r.tail)
+                              }))
                             case None =>
                               Right(ValueType.nonExistingValue[Vector[K], V1](paths, Some(id)))
                           }
@@ -172,7 +181,8 @@ private[config] trait ReadFunctions {
                       case (Left(Exists(k, a)), id) =>
                         aa.lift(id) match {
                           case Some(v) =>
-                            Left(ValueType.existingValue[Vector[K], (a, b)](k, (v, a)))
+                            val result = v.zip(a)
+                            Left(ValueType.existingValue[Vector[K], ::[(a, b)]](k, ::(result.head, result.tail)))
                           case None =>
                             Right(ValueType.nonExistingValue[Vector[K], V1](paths, Some(id)))
                         }
@@ -202,7 +212,7 @@ private[config] trait ReadFunctions {
             .flatMap(
               {
                 case Right(a) =>
-                  val result = mapCons(a)(r => Left(r): Either[a, b])
+                  val result = mapCons(a)(r => mapCons(r)(rr => Left(rr): Either[a, b]))
                   ZIO.succeed(result)
 
                 case Left(lerr) =>
@@ -211,7 +221,7 @@ private[config] trait ReadFunctions {
                       val result = mapCons(withIndex(lerr))({
                         case (Left((Exists(k, a))), _) =>
                           // If left already exists, use it !
-                          Left(ValueType.existingValue[Vector[K], Either[a, b]](k, Left(a)))
+                          Left(ValueType.existingValue[Vector[K], ::[Either[a, b]]](k, mapCons(a)(aa => Left(aa))))
 
                         case (Right(ValueType.NonFatalErrorValue(error)), id) =>
                           Right(ValueType.nonFatalErrorValue(error))
@@ -220,7 +230,10 @@ private[config] trait ReadFunctions {
                         case (Right(v), id) =>
                           b.lift(id) match {
                             case Some(value) =>
-                              Left(ValueType.existingValue[Vector[K], Either[a, b]](paths, Right(value)))
+                              Left(
+                                ValueType
+                                  .existingValue[Vector[K], ::[Either[a, b]]](paths, mapCons(value)(aa => Right(aa)))
+                              )
                             case None =>
                               Right(v)
                           }
@@ -228,7 +241,7 @@ private[config] trait ReadFunctions {
 
                       if (result.forall(_.isLeft))
                         ZIO.succeed({
-                          val r: List[Either[a, b]] = result.collect({ case Left(Exists(k, a)) => a })
+                          val r: List[::[Either[a, b]]] = result.collect({ case Left(Exists(k, a)) => a })
                           ::(r.head, r.tail)
                         })
                       else {
@@ -238,13 +251,18 @@ private[config] trait ReadFunctions {
                     case Left(rerr) =>
                       val result = mapCons(withIndex(lerr))({
                         case (Left(Exists(k, a)), _) =>
-                          Left(ValueType.existingValue(k, Left(a): Either[a, b]))
+                          Left(ValueType.existingValue(k, mapCons(a)(aa => Left(aa): Either[a, b])))
                         case (Right(someLeftError), id) =>
                           rerr.lift(id) match {
                             case Some(value) =>
                               value match {
                                 case Left(Exists(k, v)) =>
-                                  Left(ValueType.existingValue[Vector[K], Either[a, b]](k, Right(v): Either[a, b]))
+                                  Left(
+                                    ValueType.existingValue[Vector[K], ::[Either[a, b]]](
+                                      k,
+                                      mapCons(v)(aa => Right(aa): Either[a, b])
+                                    )
+                                  )
                                 case Right(someRightError) =>
                                   Right(ValueType.orErrors[Vector[K], V1](someLeftError, someRightError))
                               }
@@ -255,7 +273,7 @@ private[config] trait ReadFunctions {
 
                       if (result.forall(_.isLeft))
                         ZIO.succeed({
-                          val r: List[Either[a, b]] = result.collect({ case Left(Exists(k, a)) => a })
+                          val r: List[::[Either[a, b]]] = result.collect({ case Left(Exists(k, a)) => a })
                           ::(r.head, r.tail)
                         })
                       else {
@@ -286,12 +304,12 @@ private[config] trait ReadFunctions {
                         )
                       else {
                         val result = mapCons(withIndex(lerr))({
-                          case (Left(Exists(k, a)), _) => Left(ValueType.existingValue[Vector[K], B](k, a))
+                          case (Left(Exists(k, a)), _) => Left(ValueType.existingValue[Vector[K], ::[B]](k, a))
                           case (Right(leftError), id) =>
                             rerr.lift(id) match {
                               case Some(value) =>
                                 value match {
-                                  case Left(Exists(k, v))   => Left(ValueType.existingValue[Vector[K], B](k, v))
+                                  case Left(Exists(k, v))   => Left(ValueType.existingValue[Vector[K], ::[B]](k, v))
                                   case Right(anyRightError) => Right(ValueType.orErrors(leftError, anyRightError))
                                 }
 
@@ -338,7 +356,7 @@ private[config] trait ReadFunctions {
         case Right(value) => Right(value)
       })
       .absolve
-      .map(_.head)
+      .map(_.head.head)
   }
 }
 

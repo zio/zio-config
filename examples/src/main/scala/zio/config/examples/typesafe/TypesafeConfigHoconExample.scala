@@ -167,6 +167,8 @@ object TypesafeConfigHoconExample extends App {
   val listResult =
     read(awsDetailsConfig from hocon(Right(listHocon)))
 
+  println(runtime.unsafeRun(listResult))
+
   assert(
     runtime.unsafeRun(listResult) ==
       AwsDetails(
