@@ -73,7 +73,7 @@ private[config] trait ReadFunctions {
                   case Right(value) => value
                 })
 
-              if (list.isEmpty) errs else singleton(Right(listErrors(::(list.head, list.tail))))
+              if (list.isEmpty) errs else singleton(Right(andErrors(::(list.head, list.tail))))
             },
             list => singleton(list)
           )
@@ -201,7 +201,7 @@ private[config] trait ReadFunctions {
                       })
                       .flatten
 
-                    ZIO.fail(singleton(Right(zipErrors(::(res.flatten.head, res.flatten.tail)))))
+                    ZIO.fail(singleton(Right(andErrors(::(res.flatten.head, res.flatten.tail)))))
                 }
           } yield r
         }
@@ -334,10 +334,7 @@ private[config] trait ReadFunctions {
       case (ValueType.ParseErrorValue(error))    => ::(error: ReadError[Vector[K], V], Nil)
       case (ValueType.OrErrors(error1, error2))  => concat(toReaders(error1), toReaders(error2))
       case (ValueType.NonFatalErrorValue(error)) => ::(error, Nil)
-      case (ValueType.ListErrors(errors)) =>
-        val result = mapCons(errors)(eachError => toReaders((eachError)))
-        ::(result.flatten.head, result.flatten.tail)
-      case (ValueType.ZipErrors(errors)) =>
+      case (ValueType.AndErrors(errors)) =>
         val result = mapCons(errors)(eachError => toReaders(eachError))
         ::(result.flatten.head, result.flatten.tail)
     }
@@ -376,9 +373,7 @@ object ReadFunctions {
 
     final case class OrErrors[K, V](leftErrors: ValueType[K, V], rightErrors: ValueType[K, V]) extends ValueType[K, V]
 
-    final case class ListErrors[K, V](errors: ::[ValueType[K, V]]) extends ValueType[K, V]
-
-    final case class ZipErrors[K, V](errors: ::[ValueType[K, V]]) extends ValueType[K, V]
+    final case class AndErrors[K, V](errors: ::[ValueType[K, V]]) extends ValueType[K, V]
 
     final def nonFatalErrorValue[K, V](error: ReadError.Unknown[K]): ValueType[K, V] =
       NonFatalErrorValue(error)
@@ -395,11 +390,8 @@ object ReadFunctions {
     final def orErrors[K, V](a: ValueType[K, V], b: ValueType[K, V]): ValueType[K, V] =
       OrErrors(a, b)
 
-    final def listErrors[K, V](errors: ::[ValueType[K, V]]): ValueType[K, V] =
-      ListErrors(errors)
-
-    final def zipErrors[K, V](errors: ::[ValueType[K, V]]): ValueType[K, V] =
-      ZipErrors(errors)
+    final def andErrors[K, V](errors: ::[ValueType[K, V]]): ValueType[K, V] =
+      AndErrors(errors)
 
     final def hasNonFatalErrors[K, V1, B](values: ::[Either[Exists[Vector[K], B], ValueType[Vector[K], V1]]]): Boolean =
       values.exists({
@@ -413,8 +405,7 @@ object ReadFunctions {
               hasNonFatalErrors[K, V1, B](singleton(Right(leftErrors))) || hasNonFatalErrors[K, V1, B](
                 singleton(Right(rightErrors))
               )
-            case ListErrors(leftErrors) => hasNonFatalErrors[K, V1, B](mapCons(leftErrors)(Right(_)))
-            case ZipErrors(leftErrors)  => hasNonFatalErrors[K, V1, B](mapCons(leftErrors)(Right(_)))
+            case AndErrors(leftErrors) => hasNonFatalErrors[K, V1, B](mapCons(leftErrors)(Right(_)))
           }
       })
 
@@ -430,8 +421,7 @@ object ReadFunctions {
               hasParseErrors[K, V1, B](singleton(Right(leftErrors))) || hasParseErrors[K, V1, B](
                 singleton(Right(rightErrors))
               )
-            case ListErrors(leftErrors) => hasParseErrors[K, V1, B](mapCons(leftErrors)(Right(_)))
-            case ZipErrors(leftErrors)  => hasParseErrors[K, V1, B](mapCons(leftErrors)(Right(_)))
+            case AndErrors(leftErrors) => hasParseErrors[K, V1, B](mapCons(leftErrors)(Right(_)))
           }
       })
   }
