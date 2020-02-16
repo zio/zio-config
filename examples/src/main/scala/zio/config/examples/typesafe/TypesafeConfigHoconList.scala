@@ -123,12 +123,11 @@ object TypesafeConfigHoconList extends App {
   )
 
   // Unflattened list
-  final case class AwsDetailss(accounts: List[List[Account]], database: Database, users: List[Int])
+  final case class AwsDetailss(accounts: List[Account], database: Database, users: List[Int])
 
   val validHoccon2 =
     """
-    accounts =
-      [
+    accounts = [
         {
           region : us-east
           accountId: jon
@@ -141,7 +140,7 @@ object TypesafeConfigHoconList extends App {
           region : us-some
           accountId: null
         }
-      ]
+     ]
 
     users : [1, 2, 3]
 
