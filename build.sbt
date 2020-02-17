@@ -34,8 +34,8 @@ lazy val createProductBuilder = taskKey[Unit]("Generate code for ProductBuilder.
 
 createProductBuilder := {
   val productBuilderFile = (sourceDirectory in zioConfig).value / "main" / "scala" / "zio" / "config" / "ProductBuilder.scala"
-  val resource = (resourceManaged in Compile).value / "scalaFmt" / "temporary"
-  val scalaFmt = baseDirectory.value / ".scalafmt.conf"
+  val resource           = (resourceManaged in Compile).value / "scalaFmt" / "temporary"
+  val scalaFmt           = baseDirectory.value / ".scalafmt.conf"
 
   ProductBuilderCodeGen.replaceFileSection(
     productBuilderFile,
@@ -49,9 +49,9 @@ createProductBuilder := {
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-lazy val zioVersion = "1.0.0-RC17"
+lazy val zioVersion      = "1.0.0-RC17"
 lazy val magnoliaVersion = "0.12.2"
-lazy val refinedVersion = "0.9.12"
+lazy val refinedVersion  = "0.9.12"
 
 lazy val root =
   project
@@ -65,7 +65,7 @@ lazy val zioConfig =
     .settings(buildInfoSettings)
     .settings(
       libraryDependencies ++= Seq(
-        "dev.zio" %% "zio-test" % zioVersion % Test,
+        "dev.zio" %% "zio-test"     % zioVersion % Test,
         "dev.zio" %% "zio-test-sbt" % zioVersion % Test
       ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
@@ -76,72 +76,46 @@ lazy val zioConfigRefined =
     .settings(
       libraryDependencies ++=
         Seq(
-          "eu.timepit" %% "refined" % refinedVersion,
-          "dev.zio" %% "zio-test" % zioVersion % Test,
-          "dev.zio" %% "zio-test-sbt" % zioVersion % Test
+          "eu.timepit" %% "refined"      % refinedVersion,
+          "dev.zio"    %% "zio-test"     % zioVersion % Test,
+          "dev.zio"    %% "zio-test-sbt" % zioVersion % Test
         ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
     .dependsOn(zioConfig % "compile->compile;test->test")
 
-lazy val runTypesafeExamples = taskKey[Unit]("Run Main Classes of typesafe examples")
-lazy val runRefinedExamples = taskKey[Unit]("Run Main Classes of refined examples")
-lazy val runMagnoliaExamples = taskKey[Unit]("Run Main Classes of magnolia examples")
-lazy val runOtherExaamples = taskKey[Unit]("Run Main Classes of all other examples")
-lazy val runAllExamples = taskKey[Unit]("Run Main Classes of all examples")
+lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module")
 
 lazy val examples = module("zio-config-examples", "examples")
   .settings(
     skip in publish := true,
     fork := true,
     libraryDependencies ++= Seq(
-      "eu.timepit" %% "refined" % refinedVersion,
+      "eu.timepit"     %% "refined"  % refinedVersion,
       "com.propensive" %% "magnolia" % magnoliaVersion
     ),
-    runTypesafeExamples := {
-      (runMain in Compile).toTask(" zio.config.examples.typesafe.CoproductExample").value
-      (runMain in Compile).toTask(" zio.config.examples.typesafe.CoproductAutomaticExample").value
-      (runMain in Compile).toTask(" zio.config.examples.typesafe.NullAndOptionalConfig").value
-      (runMain in Compile).toTask(" zio.config.examples.typesafe.TypesafeConfigHoconExample").value
-      (runMain in Compile).toTask(" zio.config.examples.typesafe.TypesafeConfigHoconList").value
-    },
-    runRefinedExamples := {
-      (runMain in Compile).toTask(" zio.config.examples.refined.RefinedReadConfig").value
-    },
-    runMagnoliaExamples := {
-      (runMain in Compile).toTask(" zio.config.examples.magnolia.AutomaticConfigDescriptor").value
-      (runMain in Compile).toTask(" zio.config.examples.magnolia.CoproductExample").value
-    },
-    runOtherExaamples := {
-      (runMain in Compile).toTask(" zio.config.examples.CollectAllExample").value
-      (runMain in Compile).toTask(" zio.config.examples.CoproductExample").value
-      (runMain in Compile).toTask(" zio.config.examples.DefaultValueExample").value
-      (runMain in Compile).toTask(" zio.config.examples.DocsExample").value
-      (runMain in Compile).toTask(" zio.config.examples.EitherExample").value
-      (runMain in Compile).toTask(" zio.config.examples.ErrorAccumulation").value
-      (runMain in Compile).toTask(" zio.config.examples.ListExample").value
-      (runMain in Compile).toTask(" zio.config.examples.MultipleSources").value
-      (runMain in Compile).toTask(" zio.config.examples.NestedConfigExample").value
-      (runMain in Compile).toTask(" zio.config.examples.ProgramExample").value
-      (runMain in Compile).toTask(" zio.config.examples.ReadConfig").value
-      (runMain in Compile).toTask(" zio.config.examples.ReadWriteReport").value
-      (runMain in Compile).toTask(" zio.config.examples.SimpleExampleMain").value
-    },
-    runAllExamples := {
-      runTypesafeExamples.value
-      runRefinedExamples.value
-      runMagnoliaExamples.value
-      runOtherExaamples.value
-    }
+    runAllExamples :=
+      Def.taskDyn( {
+        val c = (discoveredMainClasses in Compile).value
+        val runs = (runMain in Compile)
+
+        val x = c.map(cc => {
+          Def.task {
+            runs.toTask(s" ${cc}").value
+          }
+        })
+
+        Def.sequential(x)
+      }).value
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe)
 
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
     libraryDependencies ++= Seq(
-      "com.propensive" %% "magnolia" % magnoliaVersion,
-      "dev.zio" %% "zio-test" % zioVersion % Test,
-      "dev.zio" %% "zio-test-sbt" % zioVersion % Test
+      "com.propensive" %% "magnolia"     % magnoliaVersion,
+      "dev.zio"        %% "zio-test"     % zioVersion % Test,
+      "dev.zio"        %% "zio-test-sbt" % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
@@ -173,8 +147,8 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     libraryDependencies ++= Seq(
-      "eu.timepit" %% "refined" % refinedVersion,
-      "dev.zio" %% "zio" % zioVersion,
+      "eu.timepit"     %% "refined"  % refinedVersion,
+      "dev.zio"        %% "zio"      % zioVersion,
       "com.propensive" %% "magnolia" % magnoliaVersion
     )
   )
