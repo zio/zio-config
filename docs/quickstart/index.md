@@ -108,7 +108,7 @@ val map =
   val result = 
     Config.fromMap(map, myConfig)
 
-  // IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]]   
+  // IO[ReadErrorsVector[String], zio.config.Config[MyConfig]]   
 
 ```
 
@@ -125,7 +125,7 @@ val source = ConfigSource.fromMap(map)
 
 val anotherResult = 
   read(myConfig from source)
-// IO[ReadErrorsVector[String, String], MyConfig]
+// IO[ReadErrorsVector[String], MyConfig]
 ```
 
 Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the previous section.

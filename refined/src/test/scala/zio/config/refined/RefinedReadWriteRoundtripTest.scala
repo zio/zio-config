@@ -31,7 +31,7 @@ object RefinedReadWriteRoundtripTest
         testM("Refined config invalid") {
           checkM(genRefinedProdInvalid) {
             case (n, envMap) =>
-              val p2: ZIO[Any, ReadErrorsVector[String, String], RefinedProd] =
+              val p2: ZIO[Any, ReadErrorsVector[String], RefinedProd] =
                 read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
               // 4 errors. When the value is optional, unless the key itself is missing, the failed predicate will result in failure.

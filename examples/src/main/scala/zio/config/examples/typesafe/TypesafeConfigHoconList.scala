@@ -117,18 +117,18 @@ object TypesafeConfigHoconList extends App {
     runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either) ==
       Left(
         List(
-          AndErrors[Vector[String], String](
+          AndErrors[Vector[String]](
             ::(
-              ParseError(Vector("database", "port"), "1abcd", "int"),
+              ParseError(Vector("database", "port"), ReadFunctions.parseErrorMessage("1abcd", "int")),
               singleton(
                 AndErrors(
                   singleton(
                     AndErrors(
                       ::(
-                        MissingValue(Vector("accounts", "region"), Some(0)): ReadError[Vector[String], String],
-                        (MissingValue(Vector("accounts", "region"), Some(2)): ReadError[Vector[String], String]) :: Nil
+                        MissingValue(Vector("accounts", "region"), Some(0)): ReadError[Vector[String]],
+                        (MissingValue(Vector("accounts", "region"), Some(2)): ReadError[Vector[String]]) :: Nil
                       )
-                    ): ReadError[Vector[String], String]
+                    ): ReadError[Vector[String]]
                   )
                 )
               )

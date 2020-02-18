@@ -29,8 +29,7 @@ object CollectAllRoundtripTest
                   consOfConfig
                 )
 
-              val readAndWrite
-                : ZIO[Any, ReadErrors[Vector[String], String], Either[String, PropertyTree[String, String]]] =
+              val readAndWrite: ZIO[Any, ReadErrors[Vector[String]], Either[String, PropertyTree[String, String]]] =
                 for {
                   result  <- read(config from ConfigSource.fromMap(p))
                   written <- ZIO.effectTotal(write(config, result))

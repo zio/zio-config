@@ -47,7 +47,7 @@ object StringSupportTest
         testM("Refined config EndsWith invalid") {
           checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = endsWith[W.`"abc"`.T](string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, EndsWith[W.`"abc"`.T]]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, EndsWith[W.`"abc"`.T]]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -68,7 +68,7 @@ object StringSupportTest
         testM("Refined config IPv4 invalid") {
           checkM(Gen.listOfN(4)(Gen.int(256, 1000)).map(_.mkString("."))) { p =>
             val cfg = iPv4(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, IPv4]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, IPv4]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -77,7 +77,7 @@ object StringSupportTest
         testM("Refined config IPv6 invalid") {
           checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = iPv6(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, IPv6]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, IPv6]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -98,7 +98,7 @@ object StringSupportTest
         testM("Refined config MatchesRegex invalid") {
           checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = matchesRegex[W.`".*abc"`.T](string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, MatchesRegex[W.`".*abc"`.T]]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, MatchesRegex[W.`".*abc"`.T]]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -119,7 +119,7 @@ object StringSupportTest
         testM("Refined config Regex invalid") {
           checkM(genSymbol(0, 10).map(s => s + "\\q5ab")) { p =>
             val cfg = regex(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, Regex]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, Regex]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -164,7 +164,7 @@ object StringSupportTest
         testM("Refined config Uuid invalid") {
           checkM(Gen.fromEffect(ZIO.succeed(UUID.randomUUID().toString + "ab"))) { p =>
             val cfg = uuid(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, Uuid]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, Uuid]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -185,7 +185,7 @@ object StringSupportTest
         testM("Refined config ValidByte invalid") {
           checkM(genSymbol(0, 10).map(s => s.toString + "ab")) { p =>
             val cfg = validByte(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidByte]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, ValidByte]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -206,7 +206,7 @@ object StringSupportTest
         testM("Refined config ValidShort invalid") {
           checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validShort(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidShort]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, ValidShort]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -227,7 +227,7 @@ object StringSupportTest
         testM("Refined config ValidInt invalid") {
           checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validInt(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidInt]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, ValidInt]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -248,7 +248,7 @@ object StringSupportTest
         testM("Refined config ValidLong invalid") {
           checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validLong(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidLong]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, ValidLong]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -269,7 +269,7 @@ object StringSupportTest
         testM("Refined config ValidFloat invalid") {
           checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validFloat(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidFloat]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, ValidFloat]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -290,7 +290,7 @@ object StringSupportTest
         testM("Refined config ValidDouble invalid") {
           checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validDouble(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidDouble]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, ValidDouble]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -311,7 +311,7 @@ object StringSupportTest
         testM("Refined config ValidBigInt invalid") {
           checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validBigInt(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidBigInt]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, ValidBigInt]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
@@ -332,7 +332,7 @@ object StringSupportTest
         testM("Refined config ValidBigDecimal invalid") {
           checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validBigDecimal(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidBigDecimal]] =
+            val p2: ZIO[Any, ReadErrorsVector[String], Refined[String, ValidBigDecimal]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))

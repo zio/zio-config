@@ -69,7 +69,7 @@ object EitherExample extends App {
           // OrErrors indicate that either fix the error with x1 or the error with x5
           OrErrors(
             MissingValue(Vector("x1")),
-            ParseError(Vector("x5"), "notadouble", "double")
+            ParseError(Vector("x5"), ReadFunctions.parseErrorMessage("notadouble", "double"))
           )
         )
       )

@@ -29,10 +29,7 @@ object ErrorAccumulation extends App {
             ::(
               MissingValue(Vector("envvar")),
               ::(
-                OrErrors(MissingValue(Vector("envvar2")), MissingValue(Vector("envvar3"))): ReadError[
-                  Vector[String],
-                  String
-                ],
+                OrErrors(MissingValue(Vector("envvar2")), MissingValue(Vector("envvar3"))): ReadError[Vector[String]],
                 Nil
               )
             )
@@ -56,12 +53,9 @@ object ErrorAccumulation extends App {
           // Unlike OrErrors, AndErrors indicate fix the errors associated with both envvar1 and envvar2
           AndErrors(
             ::(
-              ParseError(Vector("envvar"), "wrong", "int"): ReadError[Vector[String], String],
+              ParseError(Vector("envvar"), ReadFunctions.parseErrorMessage("wrong", "int")): ReadError[Vector[String]],
               ::(
-                OrErrors(MissingValue(Vector("envvar2")), MissingValue(Vector("envvar3"))): ReadError[
-                  Vector[String],
-                  String
-                ],
+                OrErrors(MissingValue(Vector("envvar2")), MissingValue(Vector("envvar3"))): ReadError[Vector[String]],
                 Nil
               )
             )

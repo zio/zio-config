@@ -40,7 +40,7 @@ object RefinedReadConfig extends App {
           "DB_URL"   -> ::("ddd", Nil),
           "LONGVALS" -> ::("1234", List("2345", "3456"))
         )
-      val outcome: ZIO[Any, ReadErrors[Vector[String], String], Refined[List[Long], Size[Greater[W.`2`.T]]]] =
+      val outcome: ZIO[Any, ReadErrors[Vector[String]], Refined[List[Long], Size[Greater[W.`2`.T]]]] =
         for {
           config <- read(prodConfig.from(ConfigSource.fromMultiMap(configMultiMap)))
           r      <- myAppLogic.provide(config)

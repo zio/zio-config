@@ -18,7 +18,7 @@ object Config {
   def make[K, V, A](
     source: ConfigSource[K, V],
     configDescriptor: ConfigDescriptor[K, V, A]
-  ): IO[ReadErrors[Vector[K], V], Config[A]] =
+  ): IO[ReadErrors[Vector[K]], Config[A]] =
     read(configDescriptor from source)
       .map(
         e =>
@@ -33,21 +33,21 @@ object Config {
   def fromEnv[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
     valueDelimiter: Option[String] = None
-  ): IO[ReadErrors[Vector[String], String], Config[A]] =
+  ): IO[ReadErrors[Vector[String]], Config[A]] =
     make(ConfigSource.fromEnv(valueDelimiter), configDescriptor)
 
   def fromMap[A](
     map: Map[String, String],
     configDescriptor: ConfigDescriptor[String, String, A],
     pathDelimiter: String = "."
-  ): IO[ReadErrors[Vector[String], String], Config[A]] =
+  ): IO[ReadErrors[Vector[String]], Config[A]] =
     make[String, String, A](ConfigSource.fromMap(map, pathDelimiter), configDescriptor)
 
   def fromMultiMap[A](
     map: Map[String, ::[String]],
     configDescriptor: ConfigDescriptor[String, String, A],
     pathDelimiter: String = "."
-  ): IO[ReadErrors[Vector[String], String], Config[A]] =
+  ): IO[ReadErrors[Vector[String]], Config[A]] =
     make[String, String, A](ConfigSource.fromMultiMap(map, pathDelimiter), configDescriptor)
 
   // If reading a file, this can have read errors as well as throwable when trying to read the file
@@ -75,6 +75,6 @@ object Config {
   def fromPropertyFile[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
     valueDelimiter: Option[String] = None
-  ): ZIO[System, ReadErrors[Vector[String], String], Config[A]] =
+  ): ZIO[System, ReadErrors[Vector[String]], Config[A]] =
     make(ConfigSource.fromProperty(valueDelimiter), configDescriptor)
 }

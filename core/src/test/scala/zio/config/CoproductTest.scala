@@ -25,8 +25,11 @@ object CoproductTest
         },
         testM("should accumulate all errors") {
           checkM(genTestParams) { p =>
-            val expected: ReadErrorsVector[String, String] = ::(
-              OrErrors(MissingValue(Vector(p.kLdap)), ParseError(Vector(p.kFactor), "notafloat", "float")),
+            val expected: ReadErrorsVector[String] = ::(
+              OrErrors(
+                MissingValue(Vector(p.kLdap)),
+                ParseError(Vector(p.kFactor), ReadFunctions.parseErrorMessage("notafloat", "float"))
+              ),
               Nil
             )
 
@@ -142,7 +145,7 @@ object CoproductTestUtils {
 
   def readWithErrors(
     p: TestParams
-  ): ZIO[Any, Nothing, Either[ReadErrors[Vector[String], String], Either[EnterpriseAuth, PasswordAuth]]] = {
+  ): ZIO[Any, Nothing, Either[ReadErrors[Vector[String]], Either[EnterpriseAuth, PasswordAuth]]] = {
     val enterprise =
       (string(p.kLdap).xmap(Ldap)(_.value) |@| string(p.kDbUrl).xmap(DbUrl)(_.value))(
         EnterpriseAuth.apply,

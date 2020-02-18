@@ -25,8 +25,7 @@ object AutomaticConfigTest
               val source =
                 ConfigSource.fromMap(environment)
 
-              val readAndWrite
-                : ZIO[Any, ReadErrors[Vector[String], String], Either[String, PropertyTree[String, String]]] =
+              val readAndWrite: ZIO[Any, ReadErrors[Vector[String]], Either[String, PropertyTree[String, String]]] =
                 for {
                   result  <- read(configDesc from source)
                   written <- ZIO.effectTotal(write(configDesc, result))

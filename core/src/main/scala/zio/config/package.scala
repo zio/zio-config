@@ -1,8 +1,8 @@
 package zio
 
 package object config extends ReadFunctions with WriteFunctions with ConfigDocsFunctions {
-  final type ReadErrors[K, V]       = ::[ReadError[K, V]]
-  final type ReadErrorsVector[K, V] = ReadErrors[Vector[K], V]
+  final type ReadErrors[K]       = ::[ReadError[K]]
+  final type ReadErrorsVector[K] = ReadErrors[Vector[K]]
 
   final def config[A]: ZIO[Config[A], Nothing, A] =
     ZIO.access(_.config.config)

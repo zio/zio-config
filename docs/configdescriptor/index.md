@@ -58,7 +58,7 @@ To read a config, means it has to perform some effects, and for that reason, it 
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
-val result: IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]] = 
+val result: IO[ReadErrorsVector[String], zio.config.Config[MyConfig]] = 
   Config.fromEnv(myConfig) // That's system environment
 ```
 
@@ -68,7 +68,7 @@ Another way of doing this is:
 val source = ConfigSource.fromEnv(None)
 
 read(myConfig from source)
-// IO[ReadErrorsVector[String, String], MyConfig]
+// IO[ReadErrorsVector[String], MyConfig]
 ```
 
 You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application. 

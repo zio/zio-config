@@ -6,6 +6,7 @@ import zio.config.ReadError.{ MissingValue, OrErrors, ParseError }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
+import zio.config.ReadFunctions
 
 object TypesafeConfigHoconExample extends App {
   val runtime = new DefaultRuntime {}
@@ -83,7 +84,10 @@ object TypesafeConfigHoconExample extends App {
       // or give the database as database="some string"; because it is Either[Database, String]
       // Although it is Option[Either[Database, String]], since there is a parse error, it emits that out!
       ::(
-        OrErrors(ParseError(Vector("database", "port"), "1ab200", "int"), MissingValue(Vector("database"), Some(0))),
+        OrErrors(
+          ParseError(Vector("database", "port"), ReadFunctions.parseErrorMessage("1ab200", "int")),
+          MissingValue(Vector("database"), Some(0))
+        ),
         Nil
       )
     )
