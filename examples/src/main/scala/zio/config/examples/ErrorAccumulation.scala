@@ -22,17 +22,11 @@ object ErrorAccumulation extends App {
     parsed ==
       Left(
         List(
-          // Unlike OrErrors, AndErrors indicate fix the errors associated with both envvar1 and envvar2
-          // Unlike AndErrors, OrErrors indicate fix either of those errors associated with envvar2 or envvar3
-          // Some of the type inference issues are only applicable in scala 2.12
+          // OrErrors indicate fix either of those errors associated with envvar2 or envvar3
+          // AndErrors indicate fix the errors associated with both envvar1 and OrError(envvar2 or envvar3)
           AndErrors(
-            ::(
-              MissingValue(Vector("envvar")),
-              ::(
-                OrErrors(MissingValue(Vector("envvar2")), MissingValue(Vector("envvar3"))): ReadError[Vector[String]],
-                Nil
-              )
-            )
+            MissingValue(Vector("envvar")),
+            OrErrors(MissingValue(Vector("envvar2")), MissingValue(Vector("envvar3"))): ReadError[Vector[String]]
           )
         )
       )
@@ -50,15 +44,9 @@ object ErrorAccumulation extends App {
     runtime.unsafeRun(read(config from invalidSource).either) ==
       Left(
         List(
-          // Unlike OrErrors, AndErrors indicate fix the errors associated with both envvar1 and envvar2
           AndErrors(
-            ::(
-              ParseError(Vector("envvar"), ReadFunctions.parseErrorMessage("wrong", "int")): ReadError[Vector[String]],
-              ::(
-                OrErrors(MissingValue(Vector("envvar2")), MissingValue(Vector("envvar3"))): ReadError[Vector[String]],
-                Nil
-              )
-            )
+            ParseError(Vector("envvar"), ReadFunctions.parseErrorMessage("wrong", "int")): ReadError[Vector[String]],
+            OrErrors(MissingValue(Vector("envvar2")), MissingValue(Vector("envvar3"))): ReadError[Vector[String]]
           )
         )
       )

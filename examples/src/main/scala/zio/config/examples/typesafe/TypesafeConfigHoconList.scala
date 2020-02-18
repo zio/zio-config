@@ -2,7 +2,7 @@ package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
 import zio.config.ConfigDescriptor.{ int, list, nested, string }
-import zio.config.ReadError.{ AndErrors, MissingValue, ParseError }
+import zio.config.ReadError.{ AndErrors, ListErrors, MissingValue, ParseError }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
@@ -13,7 +13,9 @@ object TypesafeConfigHoconList extends App {
 
   // A nested example with type safe config, and usage of magnolia
   final case class Account(region: List[String], accountId: Option[Either[Int, String]])
+
   final case class Database(port: Option[Int], url: String)
+
   final case class AwsDetails(accounts: List[Account], database: Database, users: List[Int])
 
   val validHocon =
@@ -113,24 +115,21 @@ object TypesafeConfigHoconList extends App {
     """
 
   // AndErrors essentially tells us that, fix all of it ! Needn't be concerned about the nestedness
+  // TODO: Simplify the error structure
   assert(
     runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either) ==
       Left(
         List(
-          AndErrors[Vector[String]](
-            ::(
-              ParseError(Vector("database", "port"), ReadFunctions.parseErrorMessage("1abcd", "int")),
+          AndErrors(
+            ParseError(Vector("database", "port"), "Provided value is 1abcd, expecting the type int"),
+            ListErrors(
               singleton(
-                AndErrors(
-                  singleton(
-                    AndErrors(
-                      ::(
-                        MissingValue(Vector("accounts", "region"), Some(0)): ReadError[Vector[String]],
-                        (MissingValue(Vector("accounts", "region"), Some(2)): ReadError[Vector[String]]) :: Nil
-                      )
-                    ): ReadError[Vector[String]]
+                ListErrors(
+                  ::(
+                    MissingValue(Vector("accounts", "region"), Some(0)),
+                    MissingValue(Vector("accounts", "region"), Some(2)) :: Nil
                   )
-                )
+                ): ReadError[Vector[String]]
               )
             )
           )

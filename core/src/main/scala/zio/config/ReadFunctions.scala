@@ -5,7 +5,7 @@ import zio.config.ConfigDescriptor.Sequence
 import zio.config.ReadFunctions.ConfResult, ConfResult._
 import zio.config.ReadFunctions._
 import ReadFunctions.ConfResult
-import zio.config.ReadError.{ AndErrors, OrErrors }
+import zio.config.ReadError._
 
 private[config] trait ReadFunctions {
   final def read[K, V, A](
@@ -71,7 +71,7 @@ private[config] trait ReadFunctions {
             val errors =
               list.collect({ case Errors(error) => error })
             if (errors.nonEmpty)
-              singleton(Errors(AndErrors(::(errors.head, errors.tail))))
+              singleton(Errors(ListErrors(::(errors.head, errors.tail))))
             else
               singleton(seqConfResult(list))
                 .asInstanceOf[::[ConfResult[Vector[K], ::[B]]]] // Required only for scala 2.12
@@ -145,7 +145,7 @@ private[config] trait ReadFunctions {
                   case Exists(_, _) =>
                     Errors[Vector[K]](error1): ConfResult[Vector[K], ::[(a, b)]]
                   case Errors(error2) =>
-                    Errors[Vector[K]](AndErrors(::(error1, error2 :: Nil))): ConfResult[Vector[K], ::[(a, b)]]
+                    Errors[Vector[K]](AndErrors(error1, error2)): ConfResult[Vector[K], ::[(a, b)]]
                 }
             }
           } yield singleton(result2)
@@ -240,7 +240,9 @@ object ReadFunctions {
       case ReadError.Unknown(_, _)      => true
       case ReadError.OrErrors(leftErrors, rightErrors) =>
         hasNonFatalErrors[K, V1, B](leftErrors) || hasNonFatalErrors[K, V1, B](rightErrors)
-      case ReadError.AndErrors(leftErrors) =>
+      case ReadError.AndErrors(leftErrors, rightErrors) =>
+        hasNonFatalErrors[K, V1, B](leftErrors) || hasNonFatalErrors[K, V1, B](rightErrors)
+      case ReadError.ListErrors(leftErrors) =>
         leftErrors.exists(error => hasNonFatalErrors[K, V1, B](error))
     }
 
@@ -251,7 +253,9 @@ object ReadFunctions {
       case ReadError.Unknown(_, _)      => true
       case ReadError.OrErrors(leftErrors, rightErrors) =>
         hasParseErrors[K, V1, B](leftErrors) || hasParseErrors[K, V1, B](rightErrors)
-      case ReadError.AndErrors(leftErrors) =>
+      case ReadError.AndErrors(leftErrors, rightErrors) =>
+        hasParseErrors[K, V1, B](leftErrors) || hasParseErrors[K, V1, B](rightErrors)
+      case ReadError.ListErrors(leftErrors) =>
         leftErrors.exists(error => hasParseErrors[K, V1, B](error))
     }
 }
