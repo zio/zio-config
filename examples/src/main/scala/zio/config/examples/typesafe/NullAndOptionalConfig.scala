@@ -70,8 +70,6 @@ object NullAndOptionalConfig extends App {
 
   val result1 = runtime.unsafeRun(read(employeeDetails from hocconSourceList).either)
 
-  println(result1)
-
   val expectedResult =
     Right(
       EmployeeDetails(

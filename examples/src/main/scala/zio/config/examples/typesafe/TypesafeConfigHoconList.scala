@@ -2,10 +2,11 @@ package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
 import zio.config.ConfigDescriptor.{ int, list, nested, string }
-import zio.config.ReadError.{ MissingValue, ParseError }
+import zio.config.ReadError.{ AndErrors, MissingValue, ParseError }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
+import zio.config._
 
 object TypesafeConfigHoconList extends App {
   val runtime = new DefaultRuntime {}
@@ -111,47 +112,29 @@ object TypesafeConfigHoconList extends App {
 
     """
 
+  // AndErrors essentially tells us that, fix all of it ! Needn't be concerned about the nestedness
   assert(
     runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either) ==
       Left(
         List(
-          ParseError(Vector("database", "port"), "1abcd", "int"),
-          MissingValue(Vector("accounts", "region"), Some(0)),
-          MissingValue(Vector("accounts", "region"), Some(2))
+          AndErrors[Vector[String], String](
+            ::(
+              ParseError(Vector("database", "port"), "1abcd", "int"),
+              singleton(
+                AndErrors(
+                  singleton(
+                    AndErrors(
+                      ::(
+                        MissingValue(Vector("accounts", "region"), Some(0)): ReadError[Vector[String], String],
+                        (MissingValue(Vector("accounts", "region"), Some(2)): ReadError[Vector[String], String]) :: Nil
+                      )
+                    ): ReadError[Vector[String], String]
+                  )
+                )
+              )
+            )
+          )
         )
       )
   )
-
-  // Unflattened list
-  final case class AwsDetailss(accounts: List[Account], database: Database, users: List[Int])
-
-  val validHoccon2 =
-    """
-    accounts = [
-        {
-          region : us-east
-          accountId: jon
-        }
-        {
-          region : us-west
-          accountId: 123
-        }
-        {
-          region : us-some
-          accountId: null
-        }
-     ]
-
-    users : [1, 2, 3]
-
-    database {
-        port : 100
-        url  : postgres
-    }
-    """
-
-  val c = read(description[AwsDetailss] from hocon(Right(validHoccon2)))
-
-  println("hello " + runtime.unsafeRun(c))
-
 }

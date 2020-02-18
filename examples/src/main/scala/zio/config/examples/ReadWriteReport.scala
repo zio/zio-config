@@ -50,7 +50,6 @@ object ReadWriteReport extends App {
   )
 
   // want to write back the config ?
-  println(write(config, result))
   assert(
     write(config, result) ==
       Right(

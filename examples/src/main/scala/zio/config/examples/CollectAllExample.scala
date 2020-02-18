@@ -42,9 +42,6 @@ object CollectAllExample extends App {
 
   assert(result == ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))))
 
-  println(
-    written.map(_.flattenString())
-  )
   assert(
     written.map(_.flattenString()) ==
       Right(

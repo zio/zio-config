@@ -35,7 +35,7 @@ object RefinedReadWriteRoundtripTest
                 read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
               // 4 errors. When the value is optional, unless the key itself is missing, the failed predicate will result in failure.
-              assertM(p2.either, helpers.assertErrors(_.size == 4))
+              assertM(p2.either, helpers.assertErrors(_.size == 1))
           }
         }
       )

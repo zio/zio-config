@@ -2,7 +2,7 @@ package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
 import zio.config.ConfigDescriptor.{ int, list, nested, string }
-import zio.config.ReadError.{ MissingValue, ParseError }
+import zio.config.ReadError.{ MissingValue, OrErrors, ParseError }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
@@ -77,10 +77,15 @@ object TypesafeConfigHoconExample extends App {
   assert(nestedConfigAutomaticResult1 == AwsConfig(Account("us-east", "jon"), Some(Right("hi"))))
   assert(nestedConfigAutomaticResult2 == AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
   assert(nestedConfigAutomaticResult3 == AwsConfig(Account("us-east", "jon"), None))
-  println(nestedConfigAutomaticResult4)
   assert(
     nestedConfigAutomaticResult4 == Left(
-      ::(ParseError(Vector("database", "port"), "1ab200", "int"), ::(MissingValue(Vector("database"), Some(0)), Nil))
+      // OrErrors indicate, either fix the key "port" corresponding to the case class database
+      // or give the database as database="some string"; because it is Either[Database, String]
+      // Although it is Option[Either[Database, String]], since there is a parse error, it emits that out!
+      ::(
+        OrErrors(ParseError(Vector("database", "port"), "1ab200", "int"), MissingValue(Vector("database"), Some(0))),
+        Nil
+      )
     )
   )
 
@@ -166,8 +171,6 @@ object TypesafeConfigHoconExample extends App {
 
   val listResult =
     read(awsDetailsConfig from hocon(Right(listHocon)))
-
-  println(runtime.unsafeRun(listResult))
 
   assert(
     runtime.unsafeRun(listResult) ==

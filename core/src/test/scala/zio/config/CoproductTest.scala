@@ -26,8 +26,8 @@ object CoproductTest
         testM("should accumulate all errors") {
           checkM(genTestParams) { p =>
             val expected: ReadErrorsVector[String, String] = ::(
-              MissingValue(Vector(p.kLdap)),
-              ParseError(Vector(p.kFactor), "notafloat", "float") :: Nil
+              OrErrors(MissingValue(Vector(p.kLdap)), ParseError(Vector(p.kFactor), "notafloat", "float")),
+              Nil
             )
 
             assertM(readWithErrors(p), isLeft(equalTo(expected)))

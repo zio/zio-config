@@ -95,18 +95,20 @@ lazy val examples = module("zio-config-examples", "examples")
       "com.propensive" %% "magnolia" % magnoliaVersion
     ),
     runAllExamples :=
-      Def.taskDyn( {
-        val c = (discoveredMainClasses in Compile).value
-        val runs = (runMain in Compile)
+      Def
+        .taskDyn({
+          val c    = (discoveredMainClasses in Compile).value
+          val runs = (runMain in Compile)
 
-        val x = c.map(cc => {
-          Def.task {
-            runs.toTask(s" ${cc}").value
-          }
+          val x = c.map(cc => {
+            Def.task {
+              runs.toTask(s" ${cc}").value
+            }
+          })
+
+          Def.sequential(x)
         })
-
-        Def.sequential(x)
-      }).value
+        .value
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe)
 

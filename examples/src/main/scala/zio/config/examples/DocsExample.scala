@@ -12,8 +12,6 @@ object DocsExample extends App {
     (int("PORT") ?? "Example: 8088" |@|
       string("URL").optional ?? "Example: abc.com")(Database.apply, Database.unapply) ?? "Database related"
 
-  println(generateDocs(config))
-
   assert(
     generateDocs(config) ==
       Both(

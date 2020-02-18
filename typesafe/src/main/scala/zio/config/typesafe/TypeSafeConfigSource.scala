@@ -30,7 +30,7 @@ object TypeSafeConfigSource {
           } match {
             case Failure(exception) =>
               exception match {
-                case e: com.typesafe.config.ConfigException.Missing => Right(None)
+                case _: com.typesafe.config.ConfigException.Missing => Right(None)
                 case e                                              => Left(ReadError.Unknown[Vector[String]](path, e))
               }
             case Success(valueType) =>
@@ -117,7 +117,7 @@ object TypeSafeConfigSource {
             case head :: next => {
               for {
                 res <- Try(parentConfig.getValue(head).valueType()) match {
-                        case Failure(r) => Right(::(None, Nil))
+                        case Failure(_) => Right(::(None: Option[::[String]], Nil))
                         case Success(valueType) =>
                           if (valueType == ConfigValueType.LIST) {
                             for {
@@ -132,7 +132,7 @@ object TypeSafeConfigSource {
 
                                         result.map(t => ::(t.flatten.head, t.flatten.tail))
 
-                                      case Failure(r) =>
+                                      case Failure(_) =>
                                         effect(parentConfig.getList(head).asScala.toList).flatMap {
                                           {
                                             case h :: t
@@ -143,7 +143,11 @@ object TypeSafeConfigSource {
                                                       t.valueType() != ConfigValueType.OBJECT
                                                 )) =>
                                               Right(
-                                                singleton(Some(::(h.unwrapped.toString, t.map(_.unwrapped.toString))))
+                                                singleton(
+                                                  Some(::(h.unwrapped.toString, t.map(_.unwrapped.toString))): Option[
+                                                    ::[String]
+                                                  ]
+                                                )
                                               )
 
                                             case _ =>
@@ -166,7 +170,7 @@ object TypeSafeConfigSource {
                             } else if (next.isEmpty) {
                               loop(parentConfig, next, nextPath :+ head)
                             } else {
-                              Right(singleton(None))
+                              Right(singleton(None: Option[::[String]]))
                             }
                           }
                       }
