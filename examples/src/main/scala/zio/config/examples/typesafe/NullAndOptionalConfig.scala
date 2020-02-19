@@ -31,7 +31,12 @@ object EmployeeDetails {
     )
 
   val employeeDetails: ConfigDescriptor[String, String, EmployeeDetails] =
-    (nested("employees")(list(employee)) |@| int("accountId"))(EmployeeDetails.apply, EmployeeDetails.unapply)
+    nested("details") {
+      (nested("employees")(list(employee)) |@| int("accountId"))(
+        EmployeeDetails.apply,
+        EmployeeDetails.unapply
+      )
+    }
 }
 
 object NullAndOptionalConfig extends App {
@@ -40,28 +45,31 @@ object NullAndOptionalConfig extends App {
     hocon(
       Right(
         """
-        employees = [{
-          name       : jon
-          state      : CA
-          confidence : 1.278
-        },
-        {
-          name       : chris
-          state      : 151
-          confidence : High
-        },
-        {
-          name       : martha
-          state      : null
-          confidence : Medium
-        },
-        {
-          name       : susan
-          confs      : Low
-        } 
-      ]
+       details { 
+          employees = [{
+            name       : jon
+            state      : CA
+            confidence : 1.278
+          },
+          {
+            name       : chris
+            state      : 151
+            confidence : High
+          },
+          {
+            name       : martha
+            state      : null
+            confidence : Medium
+          },
+          {
+            name       : susan
+            confs      : Low
+          } 
+         ]
 
-      accountId = 1000
+        accountId = 1000
+
+      }
        """
       )
     )

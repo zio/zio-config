@@ -8,5 +8,4 @@ object ReadError {
   final case class Unknown[K](key: K, cause: Throwable)                              extends ReadError[K]
   final case class OrErrors[K](leftErrors: ReadError[K], rightErrors: ReadError[K])  extends ReadError[K]
   final case class AndErrors[K](leftErrors: ReadError[K], rightErrors: ReadError[K]) extends ReadError[K]
-  final case class ListErrors[K](errors: ::[ReadError[K]])                           extends ReadError[K]
 }

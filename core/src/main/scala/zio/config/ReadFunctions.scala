@@ -23,7 +23,7 @@ private[config] trait ReadFunctions {
                        .either
                        .map({
                          case Left(error) =>
-                           singleton(Errors(error): ConfResult[Vector[K], ::[B]])
+                           singleton(errors(error): ConfResult[Vector[K], ::[B]])
                          case Right(opt) =>
                            opt match {
                              case Some(values) =>
@@ -33,30 +33,21 @@ private[config] trait ReadFunctions {
                                      mapCons(values)(value => propertyType.read(value))
                                    ).fold(
                                      r =>
-                                       Errors(
+                                       errors(
                                          ReadError.ParseError(
                                            paths :+ path,
                                            ReadFunctions.parseErrorMessage(r.value.toString, r.typeInfo)
                                          )
-                                       ): ConfResult[
-                                         Vector[K],
-                                         ::[B]
-                                       ],
-                                     e =>
-                                       Exists[Vector[K], ::[B]](paths :+ path, e): ConfResult[Vector[
-                                         K
-                                       ], ::[B]]
+                                       ),
+                                     e => Exists[Vector[K], ::[B]](paths :+ path, e)
                                    )
                                  case (None, id) =>
-                                   Errors(ReadError.MissingValue[Vector[K]](paths :+ path, Some(id))): ConfResult[
-                                     Vector[K],
-                                     ::[B]
-                                   ]
+                                   Errors(ReadError.MissingValue[Vector[K]](paths :+ path, Some(id)))
                                }
 
                              case None =>
                                singleton(
-                                 Errors(ReadError.MissingValue[Vector[K]](paths :+ path, None)): ConfResult[
+                                 errors(ReadError.MissingValue[Vector[K]](paths :+ path, None)): ConfResult[
                                    Vector[K],
                                    ::[B]
                                  ]
@@ -68,13 +59,8 @@ private[config] trait ReadFunctions {
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
           loop(config, paths).map(list => {
-            val errors =
-              list.collect({ case Errors(error) => error })
-            if (errors.nonEmpty)
-              singleton(Errors(ListErrors(::(errors.head, errors.tail))))
-            else
-              singleton(seqConfResult(list))
-                .asInstanceOf[::[ConfResult[Vector[K], ::[B]]]] // Required only for scala 2.12
+            singleton(seqConfResult(list))
+              .asInstanceOf[::[ConfResult[Vector[K], ::[B]]]] // Required only for scala 2.12
           })
 
         case ConfigDescriptor.Nested(path, c) =>
@@ -227,9 +213,27 @@ object ReadFunctions {
     case class Exists[K, B](path: K, v: B)    extends ConfResult[K, B]
     case class Errors[K](error: ReadError[K]) extends ConfResult[K, Nothing]
 
+    def errors[K](error: ReadError[K]): ConfResult[K, Nothing] =
+      Errors(error)
+
     def seqConfResult[K, B](values: ::[ConfResult[K, B]]): ConfResult[K, ::[B]] = {
       val reversed = values.reverse
-      reversed.tail.foldLeft(reversed.head.map(singleton))((b, a) => a.flatMap(aa => b.map(bb => ::(aa, bb))))
+      reversed.tail.foldLeft(reversed.head.map(singleton))(
+        (b, a) =>
+          a match {
+            case Exists(_, aa) =>
+              b match {
+                case Exists(path, bb) => Exists(path, ::(aa, bb))
+                case Errors(error)    => Errors(error)
+              }
+
+            case Errors(error1) =>
+              b match {
+                case Exists(_, _)   => Errors(error1)
+                case Errors(error2) => Errors(AndErrors(error1, error2))
+              }
+          }
+      )
     }
   }
 
@@ -242,8 +246,6 @@ object ReadFunctions {
         hasNonFatalErrors[K, V1, B](leftErrors) || hasNonFatalErrors[K, V1, B](rightErrors)
       case ReadError.AndErrors(leftErrors, rightErrors) =>
         hasNonFatalErrors[K, V1, B](leftErrors) || hasNonFatalErrors[K, V1, B](rightErrors)
-      case ReadError.ListErrors(leftErrors) =>
-        leftErrors.exists(error => hasNonFatalErrors[K, V1, B](error))
     }
 
   final def hasParseErrors[K, V1, B](value: ReadError[Vector[K]]): Boolean =
@@ -255,7 +257,5 @@ object ReadFunctions {
         hasParseErrors[K, V1, B](leftErrors) || hasParseErrors[K, V1, B](rightErrors)
       case ReadError.AndErrors(leftErrors, rightErrors) =>
         hasParseErrors[K, V1, B](leftErrors) || hasParseErrors[K, V1, B](rightErrors)
-      case ReadError.ListErrors(leftErrors) =>
-        leftErrors.exists(error => hasParseErrors[K, V1, B](error))
     }
 }
