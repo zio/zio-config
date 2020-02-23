@@ -59,6 +59,7 @@ private[config] trait ReadFunctions {
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
           loop(config, paths).map(list => {
+            // println(s"the sequence is tricky: ${seqConfResult(list)}")
             singleton(seqConfResult(list))
               .asInstanceOf[::[ConfResult[Vector[K], ::[B]]]] // Required only for scala 2.12
           })
@@ -69,18 +70,22 @@ private[config] trait ReadFunctions {
         case cd: ConfigDescriptor.XmapEither[K, V1, a, B] =>
           val ConfigDescriptor.XmapEither(c, f, _) = cd
           loop(c, paths).flatMap { results =>
-            foreach(results)(a => {
-              ZIO
-                .succeed(
-                  a.flatMap(
+            {
+              foreach(results)(a => {
+                ZIO.succeed {
+                  val h = a.flatMap(
                     values =>
                       seqEitherCons(mapCons(values)(f)) match {
                         case Left(value)  => Errors(ReadError.Unknown[Vector[K]](paths, new RuntimeException(value)))
                         case Right(value) => Exists(paths, value)
                       }
                   )
-                )
-            })
+
+                  h
+                }
+              })
+
+            }
           }
 
         case ConfigDescriptor.Default(c, value) =>
@@ -98,43 +103,38 @@ private[config] trait ReadFunctions {
 
         case cd: ConfigDescriptor.Optional[K, V1, B] @unchecked =>
           val ConfigDescriptor.Optional(c) = cd
-          loop(c, paths).map(
-            results =>
-              mapCons(results)({
-                case Exists(path, v) => Exists(path, mapCons(v)(vv => Some(vv): Option[B]))
-                case Errors(error) =>
-                  if (hasNonFatalErrors(error) || hasParseErrors(error))
-                    Errors(error)
-                  else
-                    Exists(paths, singleton(None: Option[B]))
-              })
-          )
+          loop(c, paths).map({ results =>
+            mapCons(results)({
+              case Exists(path, v) => Exists(path, mapCons(v)(vv => Some(vv): Option[B]))
+              case Errors(error) =>
+                if (hasNonFatalErrors(error) || hasParseErrors(error))
+                  Errors(error)
+                else {
+                  // println(error)
+
+                  Exists(paths, singleton(None: Option[B]))
+                }
+            })
+          })
 
         case r: ConfigDescriptor.Zip[K, V1, a, b] @unchecked => {
           val ConfigDescriptor.Zip(left, right) = r
           for {
             res1 <- loop(left, paths)
             res2 <- loop(right, paths)
-            result2 = seqConfResult(res1) match {
-              case Exists(_, v1) =>
-                seqConfResult(res2) match {
-                  case Exists(path, v2) =>
-                    Exists[Vector[K], ::[(a, b)]](
-                      path,
-                      ::(v1.flatten.zip(v2.flatten).head, v1.flatten.zip(v2.flatten).tail)
-                    ): ConfResult[Vector[K], ::[(a, b)]]
-                  case Errors(error) =>
-                    Errors[Vector[K]](error): ConfResult[Vector[K], ::[(a, b)]]
+            finalResult = mapCons(zipCons(res1, res2))({
+              case (a, b) =>
+                (a, b) match {
+                  case (Exists(a, b), Exists(c, d)) =>
+                    Exists[Vector[K], ::[(a, b)]](a, zipCons(b, d))
+                  case (Exists(_, _), Errors(r)) => Errors[Vector[K]](r)
+                  case (Errors(r), Exists(_, _)) => Errors[Vector[K]](r)
+                  case (Errors(r), Errors(r2))   => Errors[Vector[K]](AndErrors(r, r2))
                 }
-              case Errors(error1) =>
-                seqConfResult(res2) match {
-                  case Exists(_, _) =>
-                    Errors[Vector[K]](error1): ConfResult[Vector[K], ::[(a, b)]]
-                  case Errors(error2) =>
-                    Errors[Vector[K]](AndErrors(error1, error2)): ConfResult[Vector[K], ::[(a, b)]]
-                }
-            }
-          } yield singleton(result2)
+            })
+
+            _ = println("the stuffs " + finalResult)
+          } yield finalResult
         }
 
         case cd: ConfigDescriptor.OrElseEither[K, V1, a, b] @unchecked =>
@@ -218,24 +218,35 @@ object ReadFunctions {
 
     def seqConfResult[K, B](values: ::[ConfResult[K, B]]): ConfResult[K, ::[B]] = {
       val reversed = values.reverse
-      reversed.tail.foldLeft(reversed.head.map(singleton))(
+      val result = reversed.tail.foldLeft(reversed.head.map(singleton))(
         (b, a) =>
           a match {
             case Exists(_, aa) =>
               b match {
-                case Exists(path, bb) => Exists(path, ::(aa, bb))
-                case Errors(error)    => Errors(error)
+                case Exists(path, bb) =>
+                  Exists(path, ::(aa, bb))
+
+                case Errors(error) =>
+                  Errors(error)
               }
 
             case Errors(error1) =>
               b match {
-                case Exists(_, _)   => Errors(error1)
-                case Errors(error2) => Errors(AndErrors(error1, error2))
+                case Exists(_, _) =>
+                  Errors(error1)
+
+                case Errors(error2) =>
+                  Errors(AndErrors(error1, error2))
               }
           }
       )
+
+      println(s"after the result is ${result}")
+
+      result
     }
   }
+
 
   final def hasNonFatalErrors[K, V1, B](value: ReadError[Vector[K]]): Boolean =
     value match {
