@@ -25,14 +25,17 @@ object PureConfigComparison extends App {
       |          {
       |            ci : ki
       |            vi : bi
+      |            lst: [1, 1, 1]
       |          }
       |          {
       |            ci : ki
       |            vi : 1.0
+      |            lst: [1, 2, 1]
       |          }
       |           {
       |            ci : ki
       |            vi : 3
+      |            lst: [1, 3, 5]
       |          }
       |
       |        ]
@@ -42,7 +45,7 @@ object PureConfigComparison extends App {
       |]
       |""".stripMargin
 
-  final case class MoreDetail(ci: String, vi: Either[Double, String])
+  final case class MoreDetail(ci: String, vi: Either[Double, String], lst: List[Int])
   final case class DbDetails(hi: String, bi: String, r: List[MoreDetail])
   final case class TableColumns(table: String, columns: List[String], extraDetails: List[DbDetails])
   final case class ExportDetails(exportDetails: List[TableColumns])
@@ -55,8 +58,7 @@ object PureConfigComparison extends App {
    */
   val zioConfigResult =
     run(read(description[ExportDetails] from hocon(Right(configString))))
-  println(zioConfigResult)
-  // result: ExportDetails(List(TableColumns(some_name,List(a, b, c, d),List(DbDetails(di,ci,List(MoreDetail(ki,Right(bi)), MoreDetail(ki,Left(1.0)), MoreDetail(ki,Left(3.0))))))))
+  // result: ExportDetails(List(TableColumns(some_name,List(a, b, c, d),List(DbDetails(di,ci,List(MoreDetail(ki,Right(bi),List(1, 1, 1)), MoreDetail(ki,Left(1.0),List(1, 2, 1)), MoreDetail(ki,Left(3.0),List(1, 3, 5))))))))
 
   /*************************************
    *
@@ -91,35 +93,38 @@ object PureConfigComparison extends App {
   // With pure-config : by default that means export-details in hoccon should be exportDetails in case class
 
   val fixedString =
-    """
-      |export-details = [
-      |  {
-      |    table          : some_name
-      |    columns        : [ a, b, c, d ]
-      |    extra-details = [
-      |      {
-      |        hi : di
-      |        bi : ci
-      |        r = [
-      |          {
-      |            ci : ki
-      |            vi : bi
-      |          }
-      |          {
-      |            ci : ki
-      |            vi : 1.0
-      |          }
-      |           {
-      |            ci : ki
-      |            vi : 3
-      |          }
-      |
-      |        ]
-      |      }
-      |    ]
-      |  }
-      |]
-      |""".stripMargin
+  """
+    |export-details = [
+    |  {
+    |    table          : some_name
+    |    columns        : [ a, b, c, d ]
+    |    extra-details = [
+    |      {
+    |        hi : di
+    |        bi : ci
+    |        r = [
+    |          {
+    |            ci : ki
+    |            vi : bi
+    |            lst: [1, 1, 1]
+    |          }
+    |          {
+    |            ci : ki
+    |            vi : 1.0
+    |            lst: [1, 2, 1]
+    |          }
+    |           {
+    |            ci : ki
+    |            vi : 3
+    |            lst: [1, 3, 5]
+    |          }
+    |
+    |        ]
+    |      }
+    |    ]
+    |  }
+    |]
+    |""".stripMargin
 
   /*************************************
    *
