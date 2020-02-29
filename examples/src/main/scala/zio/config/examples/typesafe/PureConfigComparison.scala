@@ -15,7 +15,7 @@ object PureConfigComparison extends App {
     """
       |exportDetails = [
       |  {
-      |    table          : baseLoyalty_customer_debit_flag_v0
+      |    table          : some_name
       |    columns        : [ a, b, c, d ]
       |    extraDetails = [
       |      {
@@ -56,7 +56,7 @@ object PureConfigComparison extends App {
   val zioConfigResult =
     run(read(description[ExportDetails] from hocon(Right(configString))))
   println(zioConfigResult)
-  // result: ExportDetails(List(TableColumns(baseLoyalty_customer_debit_flag_v0,List(a, b, c, d),List(DbDetails(di,ci,List(MoreDetail(ki,Right(bi)), MoreDetail(ki,Left(1.0)), MoreDetail(ki,Left(3.0))))))))
+  // result: ExportDetails(List(TableColumns(some_name,List(a, b, c, d),List(DbDetails(di,ci,List(MoreDetail(ki,Right(bi)), MoreDetail(ki,Left(1.0)), MoreDetail(ki,Left(3.0))))))))
 
   /*************************************
    *
@@ -94,7 +94,7 @@ object PureConfigComparison extends App {
     """
       |export-details = [
       |  {
-      |    table          : baseLoyalty_customer_debit_flag_v0
+      |    table          : some_name
       |    columns        : [ a, b, c, d ]
       |    extra-details = [
       |      {
@@ -144,5 +144,5 @@ object PureConfigComparison extends App {
       read(description[ExportDetails].convertKey(KeyConversion.camelToKebab) from hocon(Right(fixedString)))
     )
 
-  //result: ExportDetails(List(TableColumns(baseLoyalty_customer_debit_flag_v0,List(a, b, c, d),List(DbDetails(di,ci,List(MoreDetail(ki,Right(bi)), MoreDetail(ki,Left(1.0)), MoreDetail(ki,Left(3.0))))))))
+  //result: ExportDetails(List(TableColumns(some_name,List(a, b, c, d),List(DbDetails(di,ci,List(MoreDetail(ki,Right(bi)), MoreDetail(ki,Left(1.0)), MoreDetail(ki,Left(3.0))))))))
 }
