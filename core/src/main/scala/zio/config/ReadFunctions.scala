@@ -122,19 +122,26 @@ private[config] trait ReadFunctions {
           for {
             res1 <- loop(left, paths)
             res2 <- loop(right, paths)
-            finalResult = mapCons(zipCons(res1, res2))({
-              case (a, b) =>
-                (a, b) match {
-                  case (Exists(a, b), Exists(c, d)) =>
-                    Exists[Vector[K], ::[(a, b)]](a, zipCons(b, d))
-                  case (Exists(_, _), Errors(r)) => Errors[Vector[K]](r)
-                  case (Errors(r), Exists(_, _)) => Errors[Vector[K]](r)
-                  case (Errors(r), Errors(r2))   => Errors[Vector[K]](AndErrors(r, r2))
+            result2 = seqConfResult(res1) match {
+              case Exists(_, v1) =>
+                seqConfResult(res2) match {
+                  case Exists(path, v2) =>
+                    Exists[Vector[K], ::[(a, b)]](
+                      path,
+                      ::(v1.flatten.zip(v2.flatten).head, v1.flatten.zip(v2.flatten).tail)
+                    ): ConfResult[Vector[K], ::[(a, b)]]
+                  case Errors(error) =>
+                    Errors[Vector[K]](error): ConfResult[Vector[K], ::[(a, b)]]
                 }
-            })
-
-            _ = println("the stuffs " + finalResult)
-          } yield finalResult
+              case Errors(error1) =>
+                seqConfResult(res2) match {
+                  case Exists(_, _) =>
+                    Errors[Vector[K]](error1): ConfResult[Vector[K], ::[(a, b)]]
+                  case Errors(error2) =>
+                    Errors[Vector[K]](AndErrors(error1, error2)): ConfResult[Vector[K], ::[(a, b)]]
+                }
+            }
+          } yield singleton(result2)
         }
 
         case cd: ConfigDescriptor.OrElseEither[K, V1, a, b] @unchecked =>
@@ -241,12 +248,9 @@ object ReadFunctions {
           }
       )
 
-      println(s"after the result is ${result}")
-
       result
     }
   }
-
 
   final def hasNonFatalErrors[K, V1, B](value: ReadError[Vector[K]]): Boolean =
     value match {

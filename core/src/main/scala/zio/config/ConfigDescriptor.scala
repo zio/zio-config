@@ -1,8 +1,8 @@
 package zio.config
 
 import scala.concurrent.duration.Duration
-
 import java.net.URI
+
 import zio.config.ConfigDescriptor._
 
 sealed trait ConfigDescriptor[K, V, A] { self =>
@@ -67,6 +67,22 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
       case Source(path, source, propertyType) => Source(path, f(source), propertyType)
       case Nested(path, conf)                 => Nested(path, loop(conf))
+      case Sequence(conf)                     => Sequence(loop(conf))
+      case Describe(config, message)          => Describe(loop(config), message)
+      case Default(value, value2)             => Default(loop(value), value2)
+      case Optional(config)                   => Optional(loop(config))
+      case XmapEither(config, f, g)           => XmapEither(loop(config), f, g)
+      case Zip(conf1, conf2)                  => Zip(loop(conf1), loop(conf2))
+      case OrElseEither(value1, value2)       => OrElseEither(loop(value1), loop(value2))
+      case OrElse(value1, value2)             => OrElse(loop(value1), loop(value2))
+    }
+    loop(self)
+  }
+
+  def convertKey(f: K => K): ConfigDescriptor[K, V, A] = {
+    def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
+      case Source(path, source, propertyType) => Source(f(path), source, propertyType)
+      case Nested(path, conf)                 => Nested(f(path), loop(conf))
       case Sequence(conf)                     => Sequence(loop(conf))
       case Describe(config, message)          => Describe(loop(config), message)
       case Default(value, value2)             => Default(loop(value), value2)

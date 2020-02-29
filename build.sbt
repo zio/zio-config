@@ -91,8 +91,9 @@ lazy val examples = module("zio-config-examples", "examples")
     skip in publish := true,
     fork := true,
     libraryDependencies ++= Seq(
-      "eu.timepit"     %% "refined"  % refinedVersion,
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "eu.timepit"            %% "refined"    % refinedVersion,
+      "com.propensive"        %% "magnolia"   % magnoliaVersion,
+      "com.github.pureconfig" %% "pureconfig" % "0.12.3"
     ),
     runAllExamples :=
       Def
