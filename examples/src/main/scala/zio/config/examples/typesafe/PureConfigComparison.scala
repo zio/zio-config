@@ -62,7 +62,10 @@ object PureConfigComparison extends App {
    *
    *  With pure-config (failed, version: 0.12.3)
    *
-   *  Note: Currently commented out because of stack overflow.
+   *  pure-config assumbes kebab case by default, hence case class keys are invalid.
+   *
+   *  Also:
+   *  Please note, currently the below code is commented out because of stack overflow exception.
    *  To try out, please uncomment, increase the memory requirements, else we get:
    *
    * sbt:root> compile
