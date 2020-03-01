@@ -8,7 +8,11 @@ import zio.system.System.Live.system.lineSeparator
 import zio.Task
 
 object TypesafeConfig {
-  def fromHoconFile[A](configDescriptor: ConfigDescriptor[String, String, A], file: File) =
+
+  def fromDefaultLoader[A](configDescriptor: ConfigDescriptor[String, String, A]): Task[Config[A]] =
+    fromHocon(ConfigFactory.load.resolve, configDescriptor)
+
+  def fromHoconFile[A](configDescriptor: ConfigDescriptor[String, String, A], file: File): Task[Config[A]] =
     fromHocon(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
   def fromHoconString[A](str: String, configDescriptor: ConfigDescriptor[String, String, A]): Task[Config[A]] =
