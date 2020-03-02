@@ -37,6 +37,11 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
     ::(list.head, list.tail)
   }
 
+  private[config] def addCons[A, B](a: ::[A], b: ::[A]): ::[A] = {
+    val list = a ++ b
+    ::(list.head, list.tail)
+  }
+
   private[config] final def foreach[R, E, A, B](in: ::[A])(f: A => ZIO[R, E, B]): ZIO[R, E, ::[B]] = {
     val reversesd = in.reverse
 

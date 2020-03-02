@@ -40,6 +40,10 @@ object ErrorAccumulation extends App {
 
   val invalidSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
 
+  println(
+    "hellllooo " + runtime.unsafeRun(read(config from invalidSource).either)
+  )
+
   assert(
     runtime.unsafeRun(read(config from invalidSource).either) ==
       Left(

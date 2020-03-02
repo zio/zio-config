@@ -78,6 +78,9 @@ object TypesafeConfigHoconExample extends App {
   assert(nestedConfigAutomaticResult1 == AwsConfig(Account("us-east", "jon"), Some(Right("hi"))))
   assert(nestedConfigAutomaticResult2 == AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
   assert(nestedConfigAutomaticResult3 == AwsConfig(Account("us-east", "jon"), None))
+
+  println(nestedConfigAutomaticResult4)
+
   assert(
     nestedConfigAutomaticResult4 == Left(
       // OrErrors indicate, either fix the key "port" corresponding to the case class database

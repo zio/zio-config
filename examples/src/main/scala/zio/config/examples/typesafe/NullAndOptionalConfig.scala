@@ -16,6 +16,13 @@ final case class Employee(
 )
 
 object EmployeeDetails {
+
+  /**
+   * An example, where manual configuration program is much more richer, with more details involved in it.
+   * This is one such situation where corresponding automatic description won't work. The automatic description
+   * will be just based on keys, and you can ofcourse manipulate keys later on but there is times when you really
+   * need to describe your little configurations
+   */
   val employee: ConfigDescriptor[String, String, Employee] =
     (string("name") |@|
       int("state").orElseEither(string("state")).optional |@|
@@ -92,5 +99,4 @@ object NullAndOptionalConfig extends App {
     )
 
   assert(result1 == expectedResult)
-
 }
