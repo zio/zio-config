@@ -109,7 +109,7 @@ object JustComplicatedExample extends App {
 
   val zioConfigWithKeysInKebabResult =
     run(
-      read(description[ExportDetails].convertKey(KeyConversion.camelToKebab) from hocon(Right(kebabCaseConfig)))
+      read(description[ExportDetails].mapKey(KeyConversion.camelToKebab) from hocon(Right(kebabCaseConfig)))
     )
 
   assert(

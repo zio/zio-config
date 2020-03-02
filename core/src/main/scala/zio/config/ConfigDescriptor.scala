@@ -79,7 +79,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     loop(self)
   }
 
-  def convertKey(f: K => K): ConfigDescriptor[K, V, A] = {
+  def mapKey(f: K => K): ConfigDescriptor[K, V, A] = {
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
       case Source(path, source, propertyType) => Source(f(path), source, propertyType)
       case Nested(path, conf)                 => Nested(f(path), loop(conf))
