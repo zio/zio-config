@@ -112,22 +112,28 @@ object JustComplicatedExample extends App {
       read(description[ExportDetails].convertKey(KeyConversion.camelToKebab) from hocon(Right(kebabCaseConfig)))
     )
 
-  assert(zioConfigWithKeysInKebabResult ==
-    ExportDetails(
-      List(
-        TableColumns(
-          "some_name",
-          List("a", "b", "c", "d"),
-          List(DbDetails("di","ci",
+  assert(
+    zioConfigWithKeysInKebabResult ==
+      ExportDetails(
+        List(
+          TableColumns(
+            "some_name",
+            List("a", "b", "c", "d"),
             List(
-              MoreDetail("ki",Right(Right(Right(Right("bi")))), List(1, 1, 1),None),
-              MoreDetail("ki",Right(Right(Left(1.0882121))), List(1, 2, 1),None),
-              MoreDetail("ki",Left(3),List(1, 3, 5),Some(List("1", "2", "3"))))
-          ))
-        )
-      ),
-      Database(Port("ba"))
-    )
+              DbDetails(
+                "di",
+                "ci",
+                List(
+                  MoreDetail("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), None),
+                  MoreDetail("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
+                  MoreDetail("ki", Left(3), List(1, 3, 5), Some(List("1", "2", "3")))
+                )
+              )
+            )
+          )
+        ),
+        Database(Port("ba"))
+      )
   )
 
   assert(zioConfigWithKeysInKebabResult == zioConfigResult)
