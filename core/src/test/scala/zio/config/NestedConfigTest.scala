@@ -12,15 +12,12 @@ object NestedConfigTest
       suite("Nested config")(
         testM("read") {
           checkM(genNestedConfigParams) { p =>
-            assertM(read(p.config.from(p.source)).either, isRight(equalTo(p.value)))
+            assertM(read(p.config.from(p.source)).either)(isRight(equalTo(p.value)))
           }
         },
         testM("write") {
           check(genNestedConfigParams) { p =>
-            assert(
-              write(p.config, p.value).map(_.flattenString()),
-              isRight(equalTo(toMultiMap(p.map)))
-            )
+            assert(write(p.config, p.value).map(_.flattenString()))(isRight(equalTo(toMultiMap(p.map))))
           }
         }
       )

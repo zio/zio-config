@@ -16,7 +16,7 @@ object ListAndOptionalTest
           .flatMap(t => t.flatMap(tt => tt.map(ttt => Map("kId" -> singleton(ttt.value)))))
           .getOrElse(Map.empty[String, ::[String]])
 
-        assertM(actual, equalTo(expected))
+        assertM(actual)(equalTo(expected))
       }
     }))
 

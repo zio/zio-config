@@ -12,7 +12,7 @@ object ReadErrorsTest
           check(genReadErrors, genReadErrors) { (l1, l2) =>
             val actual =
               concat(::(l1.head, l1.tail), ::(l2.head, l2.tail))
-            assert(actual, equalTo(l1 ++ l2))
+            assert(actual)(equalTo(l1 ++ l2))
           }
         }
       )

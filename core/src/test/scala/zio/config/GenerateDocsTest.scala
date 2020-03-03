@@ -15,12 +15,12 @@ object GenerateDocsTest
       suite("Generate docs")(
         testM("generate docs") {
           check(generateDocsParams) { p =>
-            assert(generateDocs(p.descriptor from p.source), equalTo(p.docs))
+            assert(generateDocs(p.descriptor from p.source))(equalTo(p.docs))
           }
         },
         testM("generate docs with value") {
           check(generateDocsParams) { p =>
-            assert(generateDocsWithValue(p.descriptor from p.source, p.value), equalTo(p.docsWithValue))
+            assert(generateDocsWithValue(p.descriptor from p.source, p.value))(equalTo(p.docsWithValue))
           }
         }
       )
