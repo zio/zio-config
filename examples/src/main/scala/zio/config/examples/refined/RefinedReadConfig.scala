@@ -33,7 +33,7 @@ object RefinedReadConfig extends App {
     ZIO.access[RefinedProd](_.longs)
 
   override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
-    ZIO.accessM { env =>
+    ZIO.accessM { _ =>
       val configMultiMap =
         Map(
           "LDAP"     -> ::("ldap", Nil),
