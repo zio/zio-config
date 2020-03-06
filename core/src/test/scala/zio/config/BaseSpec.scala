@@ -4,5 +4,6 @@ import zio.duration._
 import zio.test.{ DefaultRunnableSpec, TestAspect, ZSpec }
 import zio.test.environment.TestEnvironment
 
-abstract class BaseSpec(spec: => ZSpec[TestEnvironment, Any, String, Any])
-    extends DefaultRunnableSpec(spec, List(TestAspect.timeout(1.minute)))
+abstract class BaseSpec(override val spec: ZSpec[TestEnvironment, Any]) extends DefaultRunnableSpec {
+  override def aspects = List(TestAspect.timeout(60.seconds))
+}
