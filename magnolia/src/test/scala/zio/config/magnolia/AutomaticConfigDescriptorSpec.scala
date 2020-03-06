@@ -44,7 +44,7 @@ object AutomaticConfigTest
                 .map(_.map(_.flattenString()))
                 .map(_.fold(_ => Nil, fromMultiMap(_).toList.sortBy(_._1)))
 
-              assertM(actual, equalTo(updatedEnv.toList.sortBy(_._1)))
+              assertM(actual)(equalTo(updatedEnv.toList.sortBy(_._1)))
           }
         }
       )
