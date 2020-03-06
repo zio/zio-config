@@ -91,12 +91,13 @@ object PropertyTypeTest
     )
 
 object PropertyTypeTestUtils {
+
   def propertyTypeRoundtripSuite[A](
     typeInfo: String,
     propType: PropertyType[String, A],
     genValid: Gen[Random with Sized, String],
     parse: String => A
-  ): Spec[TestEnvironment, TestFailure[Nothing], String, TestSuccess[Unit]] =
+  ): Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite(s"${typeInfo}Type")(
       testM(s"valid ${typeInfo} string roundtrip") {
         check(genValid.map(_.toString))(assertValidRoundtrip(propType, parse))

@@ -4,7 +4,8 @@ import zio.blocking.Blocking
 import zio.config.ConfigDescriptor._
 import zio.config.{ Config, _ }
 import zio.console.Console
-import zio.{ App, ZEnv, ZIO }
+import zio.{ console, App, Has, ZEnv, ZIO, ZLayer }
+import zio.config.examples.aliases._
 
 /**
  * The pattern is an inspiration from http://degoes.net/articles/zio-environment.
@@ -18,23 +19,18 @@ object ProgramExample extends App {
   private val programConfig =
     (string("INPUT_PATH") |@| string("OUTPUT_PATH"))(ProgramConfig.apply, ProgramConfig.unapply)
 
-  case class Live(config: Config.Service[ProgramConfig], spark: SparkEnv.Service)
-      extends SparkEnv
-      with Config[ProgramConfig]
-      with Console.Live
-      with Blocking.Live
-
   override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
     val pgm =
-      for {
-        configEnv <- Config.fromMap(Map("INPUT_PATH" -> "input", "OUTPUT_PATH" -> "output"), programConfig)
-        sparkEnv  <- SparkEnv.local("some-app")
-        _         <- Application.execute.provide(Live(configEnv.config, sparkEnv.spark))
-      } yield ()
+      Application.execute.provideLayer(
+        ZLayer.requires[Blocking] ++
+          ZLayer.requires[Console] ++
+          Config.fromMap(Map("INPUT_PATH" -> "input", "OUTPUT_PATH" -> "output"), programConfig) ++
+          SparkEnv.local("some-app")
+      )
 
     pgm.foldM(
-      fail => zio.console.putStrLn(s"Failed $fail") *> ZIO.succeed(1),
-      _ => zio.console.putStrLn(s"Succeeded") *> ZIO.succeed(0)
+      fail => console.putStrLn(s"Failed $fail") *> ZIO.succeed(1),
+      _ => console.putStrLn(s"Succeeded") *> ZIO.succeed(0)
     )
   }
 }
@@ -48,37 +44,31 @@ final case class SparkSession(name: String) {
     "someVersion"
 }
 
-trait SparkEnv {
-  def spark: SparkEnv.Service
-}
-
 object SparkEnv {
+
   trait Service {
     def sparkEnv: SparkSession
   }
 
-  def make(session: => SparkSession): ZIO[Blocking, Throwable, SparkEnv] =
-    zio.blocking
-      .effectBlocking(session)
-      .map(
-        sparkSession =>
-          new SparkEnv {
-            override def spark: Service =
-              new Service {
-                override def sparkEnv: SparkSession =
-                  sparkSession
-              }
-          }
-      )
+  def make(session: => SparkSession): ZLayer[Blocking, Throwable, Has[Service]] =
+    ZLayer.fromFunctionManyM { blocking =>
+      blocking.get
+        .effectBlocking(session)
+        .map { sparkSession =>
+          Has(new Service {
+            override def sparkEnv: SparkSession = sparkSession
+          })
+        }
+    }
 
-  def local(name: String): ZIO[Blocking, Throwable, SparkEnv] =
+  def local(name: String): ZLayer[Blocking, Throwable, Has[Service]] =
     make {
       // As a real-world example:
       //    SparkSession.builder().appName(name).master("local").getOrCreate()
       SparkSession(name)
     }
 
-  def cluster(name: String): ZIO[Blocking, Throwable, SparkEnv] =
+  def cluster(name: String): ZLayer[Blocking, Throwable, Has[Service]] =
     make {
       // As a real-world example:
       //    SparkSession.builder().appName(name).enableHiveSupport().getOrCreate()
@@ -88,6 +78,7 @@ object SparkEnv {
 
 // The core application
 object Application {
+
   val logProgramConfig: ZIO[Console with Config[ProgramConfig], Nothing, Unit] =
     for {
       r <- config[ProgramConfig]
@@ -96,7 +87,7 @@ object Application {
 
   val runSparkJob: ZIO[SparkEnv with Console with Blocking, Throwable, Unit] =
     for {
-      session <- ZIO.access[SparkEnv](_.spark.sparkEnv)
+      session <- ZIO.access[SparkEnv](_.get.sparkEnv)
       result  <- zio.blocking.effectBlocking(session.slowOp("SELECT something"))
       _       <- zio.console.putStrLn(s"Executed something with spark ${session.version}: $result")
     } yield ()
@@ -104,7 +95,7 @@ object Application {
   val processData: ZIO[SparkEnv with Config[ProgramConfig] with Console, Throwable, Unit] =
     for {
       conf  <- config[ProgramConfig]
-      spark <- ZIO.access[SparkEnv](_.spark.sparkEnv)
+      spark <- ZIO.access[SparkEnv](_.get.sparkEnv)
       _     <- zio.console.putStrLn(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark.version}")
     } yield ()
 
@@ -114,4 +105,9 @@ object Application {
       _ <- runSparkJob
       _ <- processData
     } yield ()
+}
+
+// Type aliases
+object aliases {
+  type SparkEnv = Has[SparkEnv.Service]
 }

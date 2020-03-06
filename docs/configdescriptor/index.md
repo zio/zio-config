@@ -8,7 +8,7 @@ or rely on zio-config-magnolia that can automatically generate the description f
 that represents your config.
 
 ```scala mdoc:silent
-import zio.IO
+import zio.{ IO, ZLayer }
 import zio.config._, ConfigDescriptor._
 ```
 
@@ -31,7 +31,7 @@ val myConfig =
 
 ```
 
-Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`. 
+Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
 
 ## Fully Automated Config Description: zio-config-magnolia
 
@@ -46,10 +46,10 @@ val myConfigAutomatic = description[MyConfig]
 
 ```
 
-`myConfig` and `myConfigAutomatic` are same description, and is of the same type. 
+`myConfig` and `myConfigAutomatic` are same description, and is of the same type.
 
 If you need more control over the description,
-probably you may choose to write it manually (such as, for adding extra documentations). 
+probably you may choose to write it manually (such as, for adding extra documentations).
 More examples on automatic derivation is in examples module of [zio-config](https://github.com/zio/zio-config)
 
 ## Running the description to ZIO
@@ -58,7 +58,7 @@ To read a config, means it has to perform some effects, and for that reason, it 
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
-val result: IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]] = 
+val result: ZLayer.NoDeps[ReadErrors[Vector[String], String], zio.config.Config[MyConfig]] =
   Config.fromEnv(myConfig) // That's system environment
 ```
 
