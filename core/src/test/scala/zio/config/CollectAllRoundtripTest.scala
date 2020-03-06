@@ -40,7 +40,7 @@ object CollectAllRoundtripTest
                 .map(_.map(_.flattenString()))
                 .map(_.fold(_ => Nil, _.toList.sortBy(_._1)))
 
-              assertM(actual, equalTo(p.toList.sortBy(_._1).map({ case (k, v) => (k, singleton(v)) })))
+              assertM(actual)(equalTo(p.toList.sortBy(_._1).map({ case (k, v) => (k, singleton(v)) })))
           }
         }
       )

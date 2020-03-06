@@ -19,7 +19,7 @@ object ReadWriteRoundtripTest
                 reread  <- read(cId from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("newtype 2 roundtrip") {
@@ -30,7 +30,7 @@ object ReadWriteRoundtripTest
                 reread  <- read(cDbUrl from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("case class 1 roundtrip") {
@@ -41,7 +41,7 @@ object ReadWriteRoundtripTest
                 reread  <- read(cEnterpriseAuth from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("nested case class roundtrip") {
@@ -52,7 +52,7 @@ object ReadWriteRoundtripTest
                 reread  <- read(cNestedConfig from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("coproduct roundtrip") {
@@ -63,7 +63,7 @@ object ReadWriteRoundtripTest
                 reread  <- read(cCoproductConfig from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         }
       )

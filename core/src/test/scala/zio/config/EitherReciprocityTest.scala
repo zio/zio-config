@@ -24,7 +24,7 @@ object EitherReciprocityTest
                   case _                     => None
                 }
 
-              assertM(lr, isSome(equalTo(p -> p)))
+              assertM(lr)(isSome(equalTo(p -> p)))
           }
         }
       )
