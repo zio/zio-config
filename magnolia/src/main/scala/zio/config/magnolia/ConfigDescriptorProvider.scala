@@ -1,8 +1,7 @@
 package zio.config.magnolia
 
 import java.net.URI
-import zio.config.{ ConfigDescriptor }
-import ConfigDescriptor._
+import zio.config.ConfigDescriptor, ConfigDescriptor._
 import magnolia._
 import scala.util.Success
 import scala.util.Failure
@@ -13,6 +12,7 @@ trait ConfigDescriptorProvider[T] {
 }
 
 object ConfigDescriptorProvider {
+
   def apply[T](implicit ev: ConfigDescriptorProvider[T]): ConfigDescriptorProvider[T] = ev
 
   def instance[T](f: String => ConfigDescriptor[String, String, T]): ConfigDescriptorProvider[T] =

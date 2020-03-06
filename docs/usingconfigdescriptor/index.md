@@ -40,7 +40,7 @@ Let's define a simple one.
 val myConfig =
   (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
-read(myConfig from ConfigSource.fromMap(Map()))  
+read(myConfig from ConfigSource.fromMap(Map()))
 
 ```
 
@@ -50,13 +50,15 @@ read(myConfig from ConfigSource.fromMap(Map()))
 To write a configured value back:
 
 ```scala mdoc:silent
+import zio.Runtime
+
   case class Database(url: String, port: Int)
   case class AwsConfig(c1: Database, c2: Database, c3: String)
 
   val database =
     (string("connection") |@| int("port"))(Database.apply, Database.unapply)
 
-  val map = 
+  val map =
     Map(
       "south.connection" -> "abc.com",
       "south.port" -> "8111",
@@ -68,20 +70,18 @@ To write a configured value back:
   val appConfig =
     (((nested("south") { database } ?? "South details" |@|
       nested("east") { database } ?? "East details" |@|
-      string("appName"))(AwsConfig, AwsConfig.unapply)) ?? "asdf"  
+      string("appName"))(AwsConfig, AwsConfig.unapply)) ?? "asdf"
     ) from ConfigSource.fromMap(map)
- 
-  val awsConfig = 
+
+  val awsConfig =
     read(appConfig)
 
-  val runtime = new zio.DefaultRuntime{}
-
-  val awsConfigReuslt: AwsConfig = runtime.unsafeRun(awsConfig)
+  val awsConfigReuslt: AwsConfig = Runtime.default.unsafeRun(awsConfig)
    // yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)
-     
+
 write(appConfig, awsConfigReuslt)
 
-// yields 
+// yields
 
  Right(
     Record(

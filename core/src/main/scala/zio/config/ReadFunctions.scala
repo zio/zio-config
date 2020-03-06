@@ -4,10 +4,12 @@ import zio.{ IO, ZIO }
 import zio.config.ConfigDescriptor.Sequence
 
 private[config] trait ReadFunctions {
+
   // Read
   final def read[K, V, A](
     configuration: ConfigDescriptor[K, V, A]
   ): IO[ReadErrorsVector[K, V], A] = {
+
     def loop[V1, B](
       configuration: ConfigDescriptor[K, V1, B],
       paths: Vector[K]
