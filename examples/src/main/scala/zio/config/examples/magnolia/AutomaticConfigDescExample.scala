@@ -41,7 +41,7 @@ object AutomaticConfigDescriptor extends zio.App {
     ConfigSource.fromMap(
       Map(
         "aws.region"            -> "us-east",
-        "aws.credentials.token" -> "password",
+        "aws.credentials.token" -> "token",
         "port"                  -> "10",
         "default"               -> "12",
         "dburl.value"           -> "some url",
@@ -58,27 +58,20 @@ object AutomaticConfigDescriptor extends zio.App {
   import zio.config._
 
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] =
-    read(config).foldM(
-      r => putStrLn(r.mkString(",")) *> ZIO.succeed(1),
-      result =>
-        putStrLn(result.toString) *> putStrLn(write(config, result).toString) *> putStrLn(
-          generateDocs(config).toString
-        ) *>
-          ZIO.succeed(0)
-    )
+    ZIO
+      .fromEither(read(config))
+      .foldM(
+        r => putStrLn(r.toString) *> ZIO.succeed(1),
+        result =>
+          putStrLn(result.toString) *> putStrLn(write(config, result).toString) *> putStrLn(
+            generateDocs(config).toString
+          ) *>
+            ZIO.succeed(0)
+      )
   //
-  // Read output:
+  // Read output, something like this
   //=============
-  //  MyConfig(
-  //    Aws(us-east, Token(some token)),
-  //    Currency(50.0),
-  //    DbUrl(some url),
-  //    1,
-  //    Some(3.14),
-  //    Right(30 kilos),
-  //    1,
-  //    3
-  //  )
+  // MyConfig(Aws(us-east,Token(token)),INR(1000),DbUrl(some url),10,Some(3.14),Left(30.0),12,14)))))
   //
   // Write output:
   // =============

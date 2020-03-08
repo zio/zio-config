@@ -1,11 +1,11 @@
 package zio.config
 
-sealed trait ReadError[+K]
+sealed trait ReadError
 
 object ReadError {
-  final case class MissingValue[K](key: K, positions: Option[Int] = None)            extends ReadError[K]
-  final case class ParseError[K, V](key: K, message: String)                         extends ReadError[K]
-  final case class Unknown[K](key: K, cause: Throwable)                              extends ReadError[K]
-  final case class OrErrors[K](leftErrors: ReadError[K], rightErrors: ReadError[K])  extends ReadError[K]
-  final case class AndErrors[K](leftErrors: ReadError[K], rightErrors: ReadError[K]) extends ReadError[K]
+  final case class MissingValue(key: String, positions: Option[Int] = None) extends ReadError
+  final case class ParseError(key: String, message: String)                 extends ReadError
+  final case class Unknown(key: String, cause: Throwable)                   extends ReadError
+  final case class OrErrors(leftErrors: ReadError, rightErrors: ReadError)  extends ReadError
+  final case class AndErrors(leftErrors: ReadError, rightErrors: ReadError) extends ReadError
 }

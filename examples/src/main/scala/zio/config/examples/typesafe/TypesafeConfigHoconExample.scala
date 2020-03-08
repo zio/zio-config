@@ -1,3 +1,4 @@
+/*
 package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
@@ -185,3 +186,4 @@ object TypesafeConfigHoconExample extends App {
       )
   )
 }
+ */

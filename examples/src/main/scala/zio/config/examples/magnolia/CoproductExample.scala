@@ -1,8 +1,7 @@
 package zio.config.examples.magnolia
 
-import zio.DefaultRuntime
 import zio.config.magnolia.ConfigDescriptorProvider.description
-import zio.config.{ read, singleton, write, ConfigSource }
+import zio.config.{ read, singleton, write, ConfigSource, ReadError }
 
 object CoproductExample extends App {
 
@@ -41,46 +40,48 @@ object CoproductExample extends App {
     )
   )
 
-  val runtime = new DefaultRuntime {}
+  def readA: Either[ReadError, Dance] =
+    read(danceConfig from aSource)
 
-  def readA =
-    runtime.unsafeRun(
-      read(danceConfig from aSource)
-    )
+  def readB: Either[ReadError, Dance] =
+    read(danceConfig from bSource)
 
-  def readB =
-    runtime.unsafeRun(
-      read(danceConfig from bSource)
-    )
+  def readC: Either[ReadError, Dance] =
+    read(danceConfig from cSource)
 
-  def readC =
-    runtime.unsafeRun(
-      read(danceConfig from cSource)
-    )
+  def readD: Either[ReadError, Dance] =
+    read(danceConfig from dSource)
 
-  def readD =
-    runtime.unsafeRun(
-      read(danceConfig from dSource)
-    )
+  val a =
+    A(Person("chris", None))
+
+  val b =
+    B(Height(179))
+
+  val c =
+    C(false)
+
+  val d =
+    D("I am Dancing !!")
 
   assert(
-    readA == A(Person("chris", None)) &&
-      readB == B(Height(179)) &&
-      readC == C(false) &&
-      readD == D("I am Dancing !!")
+    readA == Right(a) &&
+      readB == Right(b) &&
+      readC == Right(c) &&
+      readD == Right(d)
   )
 
   val writeA =
-    write(danceConfig, readA).map(_.flattenString())
+    write(danceConfig, a).map(_.flattenString())
 
   val writeB =
-    write(danceConfig, readB).map(_.flattenString())
+    write(danceConfig, b).map(_.flattenString())
 
   val writeC =
-    write(danceConfig, readC).map(_.flattenString())
+    write(danceConfig, c).map(_.flattenString())
 
   val writeD =
-    write(danceConfig, readD).map(_.flattenString())
+    write(danceConfig, d).map(_.flattenString())
 
   assert(
     writeA == Right(Map("any.name"      -> singleton("chris"))) &&

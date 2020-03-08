@@ -25,11 +25,13 @@ object ProgramExample extends App {
       with Blocking.Live
 
   override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
-    val pgm =
+    val pgm: ZIO[Blocking, Object, Unit] =
       for {
-        configEnv <- Config.fromMap(Map("INPUT_PATH" -> "input", "OUTPUT_PATH" -> "output"), programConfig)
-        sparkEnv  <- SparkEnv.local("some-app")
-        _         <- Application.execute.provide(Live(configEnv.config, sparkEnv.spark))
+        configEnv <- Config
+                      .fromMap(Map("INPUT_PATH" -> "input", "OUTPUT_PATH" -> "output"), programConfig)
+                      .mapError(t => new RuntimeException(t.toString))
+        sparkEnv <- SparkEnv.local("some-app")
+        _        <- Application.execute.provide(Live(configEnv.config, sparkEnv.spark))
       } yield ()
 
     pgm.foldM(

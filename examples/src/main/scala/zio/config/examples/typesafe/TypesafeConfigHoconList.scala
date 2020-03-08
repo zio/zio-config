@@ -1,3 +1,4 @@
+/*
 package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
@@ -134,3 +135,4 @@ object TypesafeConfigHoconList extends App {
   println(runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either))
 
 }
+ */

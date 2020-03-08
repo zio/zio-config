@@ -42,29 +42,35 @@ object ReadWriteReport extends App {
 
   val config = configWithoutSource from source
 
-  val result: ProdConfig =
-    runtime.unsafeRun(read(config)) // Equivalent to Config.fromMap(userNamePassword, config)
+  val result: Either[ReadError, Either[UserPwd, Token]] =
+    read(config) // Equivalent to Config.fromMap(userNamePassword, config)
+
+  val expected =
+    Left(UserPwd("v1", Some(Password("v2")), None, Some(XYZ("v3", Left(1)))))
 
   assert(
-    result == Left(UserPwd("v1", Some(Password("v2")), None, Some(XYZ("v3", Left(1)))))
+    result == Right(expected)
   )
 
-  // want to write back the config ?
   assert(
-    write(config, result) ==
+    write(config, expected)
+      .map(_.flattenKeyAndValue()) ==
       Right(
-        PropertyTree.Sequence(
+        Map("usr" -> "v1", "pwd" -> "v2", "xyz" -> "v3", "abc" -> "1")
+      )
+  )
+
+  import PropertyTree._
+
+  assert(
+    write(config, expected) ==
+      Right(
+        Sequence(
           List(
-            PropertyTree.Record(
-              Map(
-                "pwd" -> PropertyTree.Leaf("v2"),
-                "usr" -> PropertyTree.Leaf("v1")
-              )
-            ),
-            PropertyTree.Record(
-              Map(
-                "abc" -> PropertyTree.Leaf("1"),
-                "xyz" -> PropertyTree.Leaf("v3")
+            Sequence(
+              List(
+                Sequence(List(Record(Map("usr" -> Leaf("v1"), "pwd" -> Leaf("v2"))))),
+                Record(Map("xyz" -> Leaf("v3"), "abc" -> Leaf("1")))
               )
             )
           )
@@ -141,7 +147,7 @@ object ReadWriteReport extends App {
   )
 
   assert(
-    generateDocsWithValue(config, result) ==
+    generateDocsWithValue(config, expected) ==
       Right(
         OneOf(
           Both(

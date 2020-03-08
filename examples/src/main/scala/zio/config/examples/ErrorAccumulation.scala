@@ -13,45 +13,37 @@ object ErrorAccumulation extends App {
 
   val runtime = new DefaultRuntime {}
 
-  val programWithInvalidSource =
-    read(config from ConfigSource.fromMap(Map.empty)).either
+  val parsed =
+    read(config from ConfigSource.fromMap(Map.empty))
 
-  val parsed = runtime.unsafeRun(programWithInvalidSource)
+  println(parsed)
 
   assert(
     parsed ==
       Left(
-        List(
-          // OrErrors indicate fix either of those errors associated with envvar2 or envvar3
-          // AndErrors indicate fix the errors associated with both envvar1 and OrError(envvar2 or envvar3)
-          AndErrors(
-            MissingValue(Vector("envvar")),
-            OrErrors(MissingValue(Vector("envvar2")), MissingValue(Vector("envvar3"))): ReadError[Vector[String]]
-          )
+        // OrErrors indicate fix either of those errors associated with envvar2 or envvar3
+        // AndErrors indicate fix the errors associated with both envvar1 and OrError(envvar2 or envvar3)
+        AndErrors(
+          MissingValue(Vector("envvar").toString),
+          OrErrors(MissingValue(Vector("envvar2").toString), MissingValue(Vector("envvar3").toString))
         )
       )
   )
 
   val validSource = ConfigSource.fromMap(Map("envvar" -> "1", "envvar2" -> "value"))
 
-  val validRes = runtime.unsafeRun(read(config from validSource))
+  val validRes = read(config from validSource)
 
-  assert(validRes == SampleConfig(1, "value"))
+  assert(validRes == Right(SampleConfig(1, "value")))
 
   val invalidSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
 
-  println(
-    "hellllooo " + runtime.unsafeRun(read(config from invalidSource).either)
-  )
-
   assert(
-    runtime.unsafeRun(read(config from invalidSource).either) ==
+    read(config from invalidSource) ==
       Left(
-        List(
-          AndErrors(
-            ParseError(Vector("envvar"), ReadFunctions.parseErrorMessage("wrong", "int")): ReadError[Vector[String]],
-            OrErrors(MissingValue(Vector("envvar2")), MissingValue(Vector("envvar3"))): ReadError[Vector[String]]
-          )
+        AndErrors(
+          ParseError(Vector("envvar").toString, ReadFunctions.parseErrorMessage("wrong", "int")),
+          OrErrors(MissingValue(Vector("envvar2").toString), MissingValue(Vector("envvar3").toString)): ReadError
         )
       )
   )

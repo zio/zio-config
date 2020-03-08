@@ -1,3 +1,4 @@
+/*
 package zio.config.examples.typesafe
 
 import zio.{ DefaultRuntime, IO }
@@ -138,3 +139,4 @@ object JustComplicatedExample extends App {
 
   assert(zioConfigWithKeysInKebabResult == zioConfigResult)
 }
+ */

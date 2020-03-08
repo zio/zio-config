@@ -19,27 +19,39 @@ object ListExample extends App {
 
   val runtime = new DefaultRuntime {}
 
+  val tree =
+    ConfigSource.fromMultiMap(multiMap)
+
   val resultFromMultiMap =
-    runtime.unsafeRun(
-      read(config from ConfigSource.fromMultiMap(multiMap))
-    )
+    read(config from ConfigSource.fromMultiMap(multiMap))
+
+  println(resultFromMultiMap)
+
+  val expected =
+    PgmConfig("something", List("australia", "canada", "usa"))
 
   assert(
     resultFromMultiMap ==
-      PgmConfig("something", List("australia", "canada", "usa"))
+      Right(
+        PgmConfig("something", List("australia", "canada", "usa"))
+      )
   )
 
   assert(
-    write(config, resultFromMultiMap) ==
+    write(config, expected) ==
       Right(
         PropertyTree.Sequence(
           List(
             Record(
               Map("xyz" -> Leaf("something"))
             ),
-            Record(Map("regions" -> Leaf("australia"))),
-            Record(Map("regions" -> Leaf("canada"))),
-            Record(Map("regions" -> Leaf("usa")))
+            PropertyTree.Sequence(
+              List(
+                Record(Map("regions" -> Leaf("australia"))),
+                Record(Map("regions" -> Leaf("canada"))),
+                Record(Map("regions" -> Leaf("usa")))
+              )
+            )
           )
         )
       )

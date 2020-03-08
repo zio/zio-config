@@ -6,7 +6,7 @@ import eu.timepit.refined.collection.{ NonEmpty, Size }
 import eu.timepit.refined.numeric.{ Greater, GreaterEqual }
 import zio.config.ConfigDescriptor.{ int, list, long, string }
 import zio.config.refined.{ greaterEqual, nonEmpty, size }
-import zio.config.{ read, ConfigDescriptor, ConfigSource, ReadErrors }
+import zio.config.{ read, ConfigDescriptor, ConfigSource, ReadError }
 import zio.{ App, ZEnv, ZIO }
 
 object RefinedReadConfig extends App {
@@ -40,9 +40,9 @@ object RefinedReadConfig extends App {
           "DB_URL"   -> ::("ddd", Nil),
           "LONGVALS" -> ::("1234", List("2345", "3456"))
         )
-      val outcome: ZIO[Any, ReadErrors[Vector[String]], Refined[List[Long], Size[Greater[W.`2`.T]]]] =
+      val outcome: ZIO[Any, ReadError, Refined[List[Long], Size[Greater[W.`2`.T]]]] =
         for {
-          config <- read(prodConfig.from(ConfigSource.fromMultiMap(configMultiMap)))
+          config <- ZIO.fromEither(read(prodConfig.from(ConfigSource.fromMultiMap(configMultiMap))))
           r      <- myAppLogic.provide(config)
         } yield r
 

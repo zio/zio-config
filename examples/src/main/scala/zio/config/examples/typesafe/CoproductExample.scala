@@ -1,3 +1,4 @@
+/*
 package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
@@ -130,3 +131,4 @@ object CoproductExample extends App {
       writeD == Right(Map("dance"       -> singleton("I am Dancing !!")))
   )
 }
+ */

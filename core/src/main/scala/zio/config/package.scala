@@ -3,8 +3,8 @@ package zio
 import scala.annotation.tailrec
 
 package object config extends ReadFunctions with WriteFunctions with ConfigDocsFunctions {
-  final type ReadErrors[K]       = ::[ReadError[K]]
-  final type ReadErrorsVector[K] = ReadErrors[Vector[K]]
+  final type ReadErrors       = ::[ReadError]
+  final type ReadErrorsVector = ReadErrors
 
   final def config[A]: ZIO[Config[A], Nothing, A] =
     ZIO.access(_.config.config)
@@ -21,6 +21,15 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
     val reversed = either.reverse
     reversed.tail.foldLeft(reversed.head.map(singleton))((b, a) => a.flatMap(aa => b.map(bb => ::(aa, bb))))
   }
+
+  // Missing an FP lib here
+  private[config] def seqMap[K, A](either: Map[K, Option[A]]): Option[Map[K, A]] =
+    either.foldRight(Some(Map.empty[K, A]): Option[Map[K, A]])(
+      (a, b) => a._2.flatMap(aa => b.map(bb => bb.updated(a._1, aa)))
+    )
+
+  private[config] def seqOption[A](either: List[Option[A]]): Option[List[A]] =
+    either.foldRight(Some(List.empty[A]): Option[List[A]])((a, b) => a.flatMap(aa => b.map(bb => aa :: bb)))
 
   private[config] def mapCons[A, B](a: ::[A])(f: A => B): ::[B] = {
     val list = a.map(f)

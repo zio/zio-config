@@ -1,6 +1,5 @@
 package zio.config.examples
 
-import zio.DefaultRuntime
 import zio.config._
 import ConfigDescriptor._
 
@@ -35,24 +34,30 @@ object CollectAllExample extends App {
       "GROUP4_VARIABLE1" -> "7"
     )
 
-  val runtime = new DefaultRuntime {}
-
-  val result  = runtime.unsafeRun(read(configOfList from ConfigSource.fromMap(map)))
-  val written = write(configOfList, result)
-
-  assert(result == ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))))
+  val result = read(configOfList from ConfigSource.fromMap(map))
+  val written: Either[ReadError, Either[String, PropertyTree[String, String]]] =
+    result match {
+      case Left(value)  => Left(value)
+      case Right(value) => Right(write(configOfList, value))
+    }
 
   assert(
-    written.map(_.flattenString()) ==
+    result == Right(::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))))
+  )
+
+  assert(
+    written.map(_.map(_.flattenString())) ==
       Right(
-        Map(
-          "GROUP3_VARIABLE1" -> List("5"),
-          "GROUP3_VARIABLE2" -> List("6"),
-          "GROUP1_VARIABLE2" -> List("2"),
-          "GROUP1_VARIABLE1" -> List("1"),
-          "GROUP2_VARIABLE2" -> List("4"),
-          "GROUP2_VARIABLE1" -> List("3"),
-          "GROUP4_VARIABLE1" -> List("7")
+        Right(
+          Map(
+            "GROUP3_VARIABLE1" -> List("5"),
+            "GROUP3_VARIABLE2" -> List("6"),
+            "GROUP1_VARIABLE2" -> List("2"),
+            "GROUP1_VARIABLE1" -> List("1"),
+            "GROUP2_VARIABLE2" -> List("4"),
+            "GROUP2_VARIABLE1" -> List("3"),
+            "GROUP4_VARIABLE1" -> List("7")
+          )
         )
       )
   )

@@ -8,9 +8,13 @@ object MultipleSources extends App {
 
   final case class MyConfig(ldap: String, port: Int, dburl: Option[String])
 
+  // Only used to fetch the source - the pattern is only for explanation purpose
+  val runtime = new DefaultRuntime {}
+
   // Assume they are different sources (env, property file, HOCON / database (in future))
   private val source1 = ConfigSource.fromMap(Map("LDAP" -> "jolap"))
-  private val source3 = ConfigSource.fromEnv(None)
+  private val source2 = runtime.unsafeRun(ConfigSource.fromProperty(None))
+  private val source3 = runtime.unsafeRun(ConfigSource.fromEnv(None))
   private val source4 = ConfigSource.fromMap(Map("PORT" -> "1999"))
   private val source5 = ConfigSource.fromMap(Map("DB_URL" -> "newyork.com"))
 
@@ -31,20 +35,19 @@ object MultipleSources extends App {
   val myConfigWithReset = myConfig.unsourced.from(oneValidSource) // Equivalent to myConfig.fromNothing
 
   // Have got a few more sources to be tried, on top of what's there already ?
-  val myConfigChangedSource = myConfig.updateSource(_.orElse(ConfigSource.fromProperty(None)))
+  val myConfigChangedSource = myConfig.updateSource(_.orElse(source2))
 
   //
-  val runtime = new DefaultRuntime {}
 
   assert(
-    runtime.unsafeRun(read(myConfig)) == MyConfig("jolap", 1999, Some("newyork.com"))
+    read(myConfig) == Right(MyConfig("jolap", 1999, Some("newyork.com")))
   )
 
   assert(
-    runtime.unsafeRun(read(myConfigWithReset)) == MyConfig("jolap", 1999, Some("newyork.com"))
+    read(myConfigWithReset) == Right(MyConfig("jolap", 1999, Some("newyork.com")))
   )
 
   assert(
-    runtime.unsafeRun(read(myConfigChangedSource)) == MyConfig("jolap", 1999, Some("newyork.com"))
+    read(myConfigChangedSource) == Right(MyConfig("jolap", 1999, Some("newyork.com")))
   )
 }
