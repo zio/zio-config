@@ -232,7 +232,8 @@ object PropertyTree {
 
         println(s"the input value is ${value}")
         val output = loop(PropertyTree.Leaf(Nil), value)
-        println(s"the output value is ${value}")
+        println(s"the output value is ${output}")
+        output
     }
 
     //println(result)
