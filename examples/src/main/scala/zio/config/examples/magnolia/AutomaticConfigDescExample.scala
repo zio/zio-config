@@ -1,10 +1,10 @@
 package zio.config.examples.magnolia
 
-import zio.{ console, App, ZEnv, ZIO }
 import zio.config.ConfigSource
-import zio.config.magnolia.describe
 import zio.config.examples.magnolia.MyConfig._
 import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.magnolia.describe
+import zio.{ console, App, ZEnv, ZIO }
 
 final case class MyConfig(
   aws: Aws,

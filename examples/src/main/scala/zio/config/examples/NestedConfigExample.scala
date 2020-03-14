@@ -1,11 +1,11 @@
 package zio.config.examples
 
-import zio.config._
-import ConfigDescriptor._, zio.config.ConfigDocs.Details._
-import zio.DefaultRuntime
-import zio.config.PropertyTree.{ Leaf, Record }
+import zio.config.ConfigDescriptor._
+import zio.config.ConfigDocs.Details._
 import zio.config.ConfigDocs._
-import ConfigSource._
+import zio.config.ConfigSource._
+import zio.config.PropertyTree.{ Leaf, Record }
+import zio.config._
 
 object NestedConfigExample extends App {
 
@@ -32,7 +32,7 @@ object NestedConfigExample extends App {
       )
     )
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   // Read
   val result = runtime.unsafeRun(read(appConfig from source))
