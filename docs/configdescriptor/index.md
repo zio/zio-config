@@ -36,8 +36,10 @@ Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
 Case classes with a single field are simple too.
 
 ```scala mdoc:silent
+case class MySingleConfig(ldap: String)
+
 val mySingleConfig =
-  string("LDAP")(MyConfig.apply, MyConfig.unapply)
+  string("LDAP")(MySingleConfig.apply, MySingleConfig.unapply)
 ```
 
 Think of this as removing fields one-by-one, along with the `|@|` combinator syntax, ending up with a single field being applied.
