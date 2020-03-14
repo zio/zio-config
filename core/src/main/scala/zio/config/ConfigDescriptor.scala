@@ -79,6 +79,30 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
 
   final def xmap[B](to: A => B)(from: B => A): ConfigDescriptor[K, V, B] =
     self.xmapEither(a => Right(to(a)))(b => Right(from(b)))
+
+  /**
+   * This method exists to cover the corner case of a case class with only one field.
+   * For example, a case class with two fields uses the `|@|` syntax to combine them:
+   * {{{
+   *   val cDoubleField: ConfigDescriptor[String, String, DoubleField] =
+   *     (cId |@| cDbUrl)(DoubleField.apply, DoubleField.unapply)
+   * }}}
+   *
+   * However, for a single field it is not clear what to do. For maximum similarity to
+   * the multiple-field version, this method provides a syntax that matches what you
+   * get by taking away the second field and the `|@|`:
+   * {{{
+   *   val cSingleField: ConfigDescriptor[String, String, SingleField] =
+   *     int("cId")(SingleField.apply)(SingleField.unapply)
+   * }}}
+   */
+  def apply[B](app: A => B)(unapp: B => Option[A]): ConfigDescriptor[K, V, B] =
+    XmapEither(
+      this,
+      (a: A) => Right[String, B](app(a)),
+      unapp(_)
+        .fold[Either[String, A]](Left("Unable to create case class instance"))(Right(_))
+    )
 }
 
 object ConfigDescriptor {

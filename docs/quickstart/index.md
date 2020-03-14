@@ -44,7 +44,7 @@ libraryDependencies += "dev.zio" %% "zio-config-typesafe" % <version>
 
 ## Describe the config by hand
 
-We must be fetching the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
+We must fetch the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
 
 
 ```scala mdoc:silent

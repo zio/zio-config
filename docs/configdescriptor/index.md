@@ -14,7 +14,7 @@ import zio.config._, ConfigDescriptor._
 
 ## A Simple example
 
-We must be fetching the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
+We must fetch the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
 
 ```scala mdoc:silent
 
@@ -32,6 +32,15 @@ val myConfig =
 ```
 
 Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
+
+Case classes with a single field are simple too.
+
+```scala mdoc:silent
+val myConfig =
+  string("LDAP")(MyConfig.apply, MyConfig.unapply)
+```
+
+Think of this as removing fields one-by-one, along with the `|@|` combinator syntax, ending up with a single field being applied.
 
 ## Fully Automated Config Description: zio-config-magnolia
 
