@@ -36,7 +36,7 @@ Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
 Case classes with a single field are simple too.
 
 ```scala mdoc:silent
-val myConfig =
+val mySingleConfig =
   string("LDAP")(MyConfig.apply, MyConfig.unapply)
 ```
 
