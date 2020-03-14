@@ -14,35 +14,58 @@ private[config] trait ReadFunctions {
     ): PropertyTree[K, Either[ReadError, B]] =
       configuration match {
         case ConfigDescriptor.Source(path, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
-          source.getConfigValue(paths :+ path) match {
+          source
+            .getConfigValue(paths :+ path) match {
             case Some(tree) =>
-              tree.map(
-                v =>
-                  propertyType.read(v) match {
-                    case Left(value) =>
-                      Left(
-                        ReadError.ParseError(
-                          (paths :+ path).toString,
-                          ReadFunctions.parseErrorMessage(value.value.toString, value.typeInfo)
+              tree
+                .mapEmptyToError(ReadError.MissingValue((paths :+ path).toString))
+                .map({
+                  case Left(value) => Left(value)
+                  case Right(value) =>
+                    propertyType.read(value) match {
+                      case Left(value) =>
+                        Left(
+                          ReadError.ParseError(
+                            (paths :+ path).toString,
+                            ReadFunctions.parseErrorMessage(value.value.toString, value.typeInfo)
+                          )
                         )
-                      )
-                    case Right(value) => Right(value)
-                  }
-              )
-            case None =>
-              PropertyTree.Sequence(
-                List(PropertyTree.Leaf(Left(ReadError.MissingValue((paths :+ path).toString(), None))))
-              )
-
+                      case Right(value) => Right(value)
+                    }
+                })
+            case None => throw new Exception()
           }
 
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
-          PropertyTree.sequence(loop(config, paths)) match {
-            case Some(value) => value.map(seqEither(_))
-            case None =>
-              PropertyTree.Sequence(List(PropertyTree.Leaf(Left(ReadError.MissingValue(paths.toString(), None)))))
-          }
+
+          val previousResult = loop(config, paths)
+          //println(s"the previous result is ${previousResult}")
+          //println(s"the previous result is ${previousResult}")
+          val x = PropertyTree.sequence(previousResult)
+          //println(x)
+
+          val intermidateResult = x.map(seqEither(_))
+          //println(s"the next result is ${intermidateResult}")
+
+          // println(s"the intermediate result is ${intermidateResult}")
+          /* val finalResult = previousResult match {
+            case PropertyTree.Sequence(trees) =>
+              PropertyTree.sequence(trees).map(list => seqEither(list))
+            case PropertyTree.Record(tree) =>
+              PropertyTree
+                .sequence(
+                  tree.toList.map {
+                    case (k, tree) => tree
+                  }
+                )
+                .map(list => seqEither(list))
+            case x @ PropertyTree.Empty   => x.map(either => either.map(singleton))
+            case PropertyTree.Leaf(value) => PropertyTree.Leaf(value.map(singleton))
+          }*/
+
+          //println(s"the final result is ${finalResult}")
+          intermidateResult
 
         case ConfigDescriptor.Nested(path, c) =>
           loop(c, paths :+ path)
@@ -53,8 +76,9 @@ private[config] trait ReadFunctions {
             case Left(value) => Left(value)
             case Right(value) =>
               f(value) match {
-                case Left(value)  => Left(ReadError.Unknown(paths.toString, new RuntimeException(value)))
-                case Right(value) => Right(value)
+                case Left(value) => Left(ReadError.Unknown(paths.toString, new RuntimeException(value)))
+                case Right(value) =>
+                  Right(value)
               }
           }
 
@@ -73,50 +97,80 @@ private[config] trait ReadFunctions {
           val ConfigDescriptor.Optional(c) = cd
           loop(c, paths).map {
             case Left(error) if (hasParseErrors(error) || hasNonFatalErrors(error)) => Left(error)
-            case Left(_)                                                            => Right(None)
-            case Right(value)                                                       => Right(Some(value))
+            case Left(r) =>
+              Right(None)
+            case Right(value) =>
+              Right(Some(value))
           }
 
         case r: ConfigDescriptor.Zip[K, V1, a, b] @unchecked =>
           val ConfigDescriptor.Zip(left, right) = r
 
-          (loop(left, paths), loop(right, paths)) match {
+          val lefts  = loop(left, paths)
+          val rights = loop(right, paths)
+
+          // println(s"the left is ${lefts}")
+          // println(s"the right is ${rights}")
+          val zippedRes = (lefts, rights) match {
             case (l, r) =>
-              println(s"in zip folder. ${l}, ${r}")
-              l.map2(r) { (l, r) =>
+              val res = l.zipWith(r) { (l, r) =>
                 (l, r) match {
                   case (Left(l), Left(r))   => Left(AndErrors(l, r))
                   case (Left(l), Right(r))  => Left(l)
                   case (Right(l), Left(r))  => Left(r)
                   case (Right(l), Right(r)) => Right((l, r))
                 }
-              } match {
-                case Some(value) => value
-                case None =>
-                  PropertyTree.Sequence(List(PropertyTree.Leaf(Left(ReadError.MissingValue(paths.toString(), None)))))
               }
+
+              res
           }
+          // println("zipped is " + zippedRes)
+          zippedRes
 
         case cd: ConfigDescriptor.OrElseEither[K, V1, a, b] @unchecked =>
           val ConfigDescriptor.OrElseEither(left, right) = cd
 
-          (loop(left, paths), loop(right, paths)) match {
-            case (l, r) =>
-              PropertyTree.orElseEither(l, r)((a, b) => OrErrors(a, b)) match {
-                case Some(value) => value
-                case None =>
-                  PropertyTree.Sequence(List(PropertyTree.Leaf(Left(ReadError.MissingValue(paths.toString(), None)))))
+          val left1 =
+            loop(left, paths)
+
+          val errorsInLeft =
+            errors(left1)
+
+          errorsInLeft match {
+            case Some(error) if hasNonFatalErrors(error) =>
+              left1.map({
+                case Left(value)  => Left(value)
+                case Right(value) => Right(Left(value): Either[a, b])
+              })
+            case Some(_) =>
+              (loop(left, paths), loop(right, paths)) match {
+                case (l, r) =>
+                  PropertyTree.orElseEither(l, r)((a, b) => OrErrors(a, b))
               }
+            case None =>
+              left1.map({
+                case Left(value)  => Left(value)
+                case Right(value) => Right(Left(value): Either[a, b])
+              })
           }
 
         case ConfigDescriptor.OrElse(left, right) =>
-          (loop(left, paths), loop(right, paths)) match {
-            case (l, r) =>
-              PropertyTree.orElse(l, r)((a, b) => OrErrors(a, b)) match {
-                case Some(value) => value
-                case None =>
-                  PropertyTree.Sequence(List(PropertyTree.Leaf(Left(ReadError.MissingValue(paths.toString(), None)))))
+          val left1 =
+            loop(left, paths)
+
+          val errorsInLeft =
+            errors(left1)
+
+          errorsInLeft match {
+            case Some(error) if hasNonFatalErrors(error) =>
+              left1
+            case Some(_) =>
+              (loop(left, paths), loop(right, paths)) match {
+                case (l, r) =>
+                  PropertyTree.orElse(l, r)((a, b) => OrErrors(a, b))
               }
+            case None =>
+              left1
           }
       }
 
@@ -127,14 +181,20 @@ private[config] trait ReadFunctions {
       case Some(value) =>
         Left(value)
       case None =>
-        println("the result is tree " + tree)
+        println(s"the final tree is ${tree}")
         tree match {
           case PropertyTree.Leaf(value) => value
-          case PropertyTree.Record(_)   => throw new Exception("ah!")
+          case PropertyTree.Empty       => throw new Exception("ah!")
+          case PropertyTree.Record(v) =>
+            v.toList.map(_._2).head match {
+              case PropertyTree.Leaf(value)     => value
+              case PropertyTree.Record(value)   => throw new Exception()
+              case PropertyTree.Empty           => throw new Exception()
+              case PropertyTree.Sequence(value) => throw new Exception()
+            }
           case PropertyTree.Sequence(value) =>
             value.head match {
               case PropertyTree.Leaf(value) =>
-                println("is it here?")
                 value
               case _ => throw new Exception("ah!")
             }
@@ -197,6 +257,8 @@ object ReadFunctions {
               case (None, None)       => None
             }
           }
+
+        case PropertyTree.Empty => Some(ReadError.MissingValue("bla"))
       }
 
     loop(tree, None)

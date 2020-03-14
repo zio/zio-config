@@ -34,7 +34,12 @@ sealed trait PropertyTree[+K, +V] { self =>
       case (Sequence(l), Leaf(r)) =>
         if (l.size != 1) None else l.head.map2(Leaf(r))(f)
       case (Leaf(l), Sequence(r)) =>
-        if (r.size != 1) None else Leaf(l).map2(r.head)(f)
+        if (r.size != 1) None else r.headOption.flatMap(rr => Leaf(l).map2(rr)(f))
+      case (Leaf(l), Record(value)) =>
+        if (value.size != 1) None else value.headOption.flatMap(r => Leaf(l).map2(r._2)(f))
+      case (Record(l), Leaf(value)) =>
+        if (l.size != 1) None else l.headOption.flatMap(ll => ll._2.map2(Leaf(value))(f))
+      case (_, _) => None // ??? Getting complicated
     }
 
   final def zip[K1 >: K, V2, V3](that: PropertyTree[K1, V2]): Option[PropertyTree[K, (V, V2)]] =
@@ -100,13 +105,22 @@ sealed trait PropertyTree[+K, +V] { self =>
     }
 
   final def flattenString[K1 >: K, V1 >: V](
-    appendString: String = "."
-  )(implicit KS: K1 =:= String): Map[String, ::[V1]] = flattenWith[K1, V1](KS)(appendString)
+    pathDelimiter: String = "."
+  )(implicit KS: K1 =:= String): Map[String, ::[V1]] =
+    flattenKeyWith[K1, V1](KS)(pathDelimiter)
 
-  final def flattenWith[K1 >: K, V1 >: V](f: K1 => String)(
-    appendString: String = "."
+  final def flattenKeyWith[K1 >: K, V1 >: V](f: K1 => String)(
+    appendPath: String
   ): Map[String, ::[V1]] =
-    self.flatten[K1, V1].map({ case (key, value) => (key.map(f).mkString(appendString), value) })
+    self.flatten[K1, V1].map({ case (key, value) => (key.map(f).mkString(appendPath), value) })
+
+  final def flattenKeyAndValue[K1 >: K, V1 >: V](
+    pathDelimiter: String = ".",
+    valueDelimiter: String = ":"
+  )(implicit KS: K1 =:= String): Map[String, String] =
+    self
+      .flatten[K1, V1]
+      .map({ case (key, value) => (key.map(KS).mkString(pathDelimiter), value.mkString(valueDelimiter)) })
 }
 
 object PropertyTree {

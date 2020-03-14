@@ -1,13 +1,12 @@
-/*
 package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
+//import zio.config.ReadFunctions
 import zio.config.ConfigDescriptor.{ int, list, nested, string }
-import zio.config.ReadError.{ MissingValue, OrErrors, ParseError }
+//import zio.config.ReadError.ParseError
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
-import zio.config.ReadFunctions
 
 object TypesafeConfigHoconExample extends App {
   val runtime = new DefaultRuntime {}
@@ -17,7 +16,7 @@ object TypesafeConfigHoconExample extends App {
   final case class Database(port: Int, url: String)
   final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
 
-  private val configNestedAutomatic =
+  val configNestedAutomatic =
     description[AwsConfig]
 
   val hocconStringWithStringDb =
@@ -65,35 +64,31 @@ object TypesafeConfigHoconExample extends App {
    """
 
   val nestedConfigAutomaticResult1 =
-    runtime.unsafeRun(read(configNestedAutomatic from hocon(Right(hocconStringWithStringDb))))
+    read(configNestedAutomatic from hocon(Right(hocconStringWithStringDb)))
 
   val nestedConfigAutomaticResult2 =
-    runtime.unsafeRun(read(configNestedAutomatic from hocon(Right(hocconStringWithDb))))
+    read(configNestedAutomatic from hocon(Right(hocconStringWithDb)))
 
   val nestedConfigAutomaticResult3 =
-    runtime.unsafeRun(read(configNestedAutomatic from hocon(Right(hocconStringWithNoDatabaseAtAll))))
+    read(configNestedAutomatic from hocon(Right(hocconStringWithNoDatabaseAtAll)))
 
+  /*
   val nestedConfigAutomaticResult4 =
-    runtime.unsafeRun(read(configNestedAutomatic from hocon(Right(hocconStringWithDbWithParseError))).either)
+    read(configNestedAutomatic from hocon(Right(hocconStringWithDbWithParseError)))*/
 
-  assert(nestedConfigAutomaticResult1 == AwsConfig(Account("us-east", "jon"), Some(Right("hi"))))
-  assert(nestedConfigAutomaticResult2 == AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
-  assert(nestedConfigAutomaticResult3 == AwsConfig(Account("us-east", "jon"), None))
+  // println(nestedConfigAutomaticResult4)
 
+  assert(nestedConfigAutomaticResult1 == Right(AwsConfig(Account("us-east", "jon"), Some(Right("hi")))))
   assert(
-    nestedConfigAutomaticResult4 == Left(
-      // OrErrors indicate, either fix the key "port" corresponding to the case class database
-      // or give the database as database="some string"; because it is Either[Database, String]
-      // Although it is Option[Either[Database, String]], since there is a parse error, it emits that out!
-      ::(
-        OrErrors(
-          ParseError(Vector("database", "port"), ReadFunctions.parseErrorMessage("1ab200", "int")),
-          MissingValue(Vector("database"), Some(0))
-        ),
-        Nil
-      )
-    )
+    nestedConfigAutomaticResult2 == Right(AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
   )
+  assert(nestedConfigAutomaticResult3 == Right(AwsConfig(Account("us-east", "jon"), None)))
+
+  /*  assert(
+    nestedConfigAutomaticResult4 == Left(
+      ParseError(Vector("database", "port").toString, ReadFunctions.parseErrorMessage("1ab200", "int"))
+    )
+  )*/
 
   val configNestedManual = {
     val accountConfig =
@@ -106,17 +101,19 @@ object TypesafeConfigHoconExample extends App {
   }
 
   val nestedConfigManualResult1 =
-    runtime.unsafeRun(read(configNestedManual from hocon(Right(hocconStringWithDb))))
+    read(configNestedManual from hocon(Right(hocconStringWithDb)))
 
   val nestedConfigManualResult2 =
-    runtime.unsafeRun(read(configNestedManual from hocon(Right(hocconStringWithStringDb))))
+    read(configNestedManual from hocon(Right(hocconStringWithStringDb)))
 
   val nestedConfigManualResult3 =
-    runtime.unsafeRun(read(configNestedManual from hocon(Right(hocconStringWithNoDatabaseAtAll))))
+    read(configNestedManual from hocon(Right(hocconStringWithNoDatabaseAtAll)))
 
-  assert(nestedConfigManualResult1 == AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
-  assert(nestedConfigManualResult2 == AwsConfig(Account("us-east", "jon"), Some(Right("hi"))))
-  assert(nestedConfigManualResult3 == AwsConfig(Account("us-east", "jon"), None))
+  assert(
+    nestedConfigManualResult1 == Right(AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
+  )
+  assert(nestedConfigManualResult2 == Right(AwsConfig(Account("us-east", "jon"), Some(Right("hi")))))
+  assert(nestedConfigManualResult3 == Right(AwsConfig(Account("us-east", "jon"), None)))
 
   // Substitution Example, Example from typesafe/config documentation
   val hoconStringWithSubstitution =
@@ -134,7 +131,7 @@ object TypesafeConfigHoconExample extends App {
   val finalResult =
     read(configWithHoconSubstitution from hocon(Right(hoconStringWithSubstitution)))
 
-  assert(runtime.unsafeRun(finalResult) == DatabaseDetails(Details(8, "west"), Details(6, "east")))
+  assert(finalResult == Right(DatabaseDetails(Details(8, "west"), Details(6, "east"))))
 
   // List Example
 
@@ -179,11 +176,12 @@ object TypesafeConfigHoconExample extends App {
     read(awsDetailsConfig from hocon(Right(listHocon)))
 
   assert(
-    runtime.unsafeRun(listResult) ==
-      AwsDetails(
-        List(Account("us-east", "jon"), Account("us-west", "chris"), Account("us-some", "hello")),
-        Database(100, "postgres")
+    listResult ==
+      Right(
+        AwsDetails(
+          List(Account("us-east", "jon"), Account("us-west", "chris"), Account("us-some", "hello")),
+          Database(100, "postgres")
+        )
       )
   )
 }
- */

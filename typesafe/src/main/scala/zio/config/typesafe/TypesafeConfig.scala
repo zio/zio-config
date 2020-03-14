@@ -8,7 +8,7 @@ import zio.system.System.Live.system.lineSeparator
 import zio.Task
 
 object TypesafeConfig {
-  def fromHoconFile[A](configDescriptor: ConfigDescriptor[String, String, A], file: File) =
+  def fromHoconFile[A](configDescriptor: ConfigDescriptor[String, String, A], file: File): Task[Config[A]] =
     fromHocon(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
   def fromHoconString[A](str: String, configDescriptor: ConfigDescriptor[String, String, A]): Task[Config[A]] =
@@ -25,8 +25,7 @@ object TypesafeConfig {
           lineSeparator.flatMap(
             ln =>
               make(TypeSafeConfigSource.hocon(Left(conf)), configDescriptor)
-                .mapError(r => new RuntimeException(s"${ln}${r.mkString(ln)}"))
+                .mapError(r => new RuntimeException(s"${ln}${r}"))
           )
       )
-
 }

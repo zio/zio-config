@@ -2,6 +2,7 @@ package zio.config.examples
 
 import zio.config._
 import ConfigDescriptor._
+import zio.config.ReadError.{ MissingValue, OrErrors, ParseError }
 //import zio.config.ReadError._
 import zio.config.{ ConfigSource, _ }
 
@@ -65,18 +66,16 @@ object EitherExample extends App {
 
   println("errorneous exampl " + read(prodOrDev from invalidSource))
 
-  /*  assert(
+  assert(
     read(prodOrDev from invalidSource) ==
       Left(
-        List(
-          // OrErrors indicate that either fix the error with x1 or the error with x5
-          OrErrors(
-            MissingValue(Vector("x1").toString),
-            ParseError(Vector("x5").toString, ReadFunctions.parseErrorMessage("notadouble", "double"))
-          )
+        // OrErrors indicate that either fix the error with x1 or the error with x5
+        OrErrors(
+          MissingValue(Vector("x1").toString),
+          ParseError(Vector("x5").toString, ReadFunctions.parseErrorMessage("notadouble", "double"))
         )
       )
-  )*/
+  )
 
   // It chooses the left, Prod
   val allConfigsExist =
@@ -88,10 +87,8 @@ object EitherExample extends App {
       "x5" -> "2.0"
     )
 
-  println("final result is " + read(prodOrDev from ConfigSource.fromMap(allConfigsExist)))
-
-  /*  assert(
+  assert(
     read(prodOrDev from ConfigSource.fromMap(allConfigsExist)) ==
-      Left(Prod(Ldap("v1"), DbUrl("v2")))
-  )*/
+      Right(Left(Prod(Ldap("v1"), DbUrl("v2"))))
+  )
 }

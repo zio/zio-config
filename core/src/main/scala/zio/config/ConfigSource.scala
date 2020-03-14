@@ -35,14 +35,13 @@ object ConfigSource {
     UIO
       .effectTotal(sys.env)
       .map(map => PropertyTree.fromStringMap(map, '_', valueSeparator.getOrElse(':')))
-      .map(list => getConfigSource(list, '_', SystemEnvironment))
+      .map(list => getConfigSource(list, SystemEnvironment))
 
   def fromProperty(valueSeparator: Option[Char] = None): UIO[ConfigSource[String, String]] =
     for {
       systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
     } yield getConfigSource(
       getPropertyTreeFromJavaPropertes(systemProperties, '.', valueSeparator.getOrElse(':')),
-      '.',
       SystemProperties
     )
 
@@ -50,7 +49,7 @@ object ConfigSource {
     property: ju.Properties,
     valueSeparator: Option[Char] = None
   ): ConfigSource[String, String] =
-    getConfigSource(getPropertyTreeFromJavaPropertes(property, '.', valueSeparator.getOrElse(':')), '.', JavaProperties)
+    getConfigSource(getPropertyTreeFromJavaPropertes(property, '.', valueSeparator.getOrElse(':')), JavaProperties)
 
   def getPropertyTreeFromJavaPropertes(
     properties: ju.Properties,
@@ -83,21 +82,22 @@ object ConfigSource {
               f(tuple._2)
         )
       ),
-      pathDelimiter,
       ConstantMap
     )
 
   def getConfigSource[B](
     list: List[PropertyTree[String, B]],
-    keyDelimiter: Char,
     sourceName: String
   ): ConfigSource[String, B] =
     ConfigSource(
       (path: Vector[String]) => {
         list
-          .map(tree => tree.getPath(path.toList))
+          .map(tree => Some(tree.getPath(path.toList)))
           .collectFirst {
-            case Some(tree) => tree
+            case Some(tree) =>
+              //  println(s"for the path ${path}. ${tree}")
+
+              tree
           }
       },
       sourceName :: Nil

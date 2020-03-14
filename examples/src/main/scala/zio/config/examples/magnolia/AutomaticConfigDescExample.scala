@@ -45,11 +45,11 @@ object AutomaticConfigDescriptor extends zio.App {
         "port"                  -> "10",
         "default"               -> "12",
         "dburl.value"           -> "some url",
-        "dburl"                 -> "some url",
-        "amount"                -> "3.14",
-        "quanity"               -> "30.0",
-        "price.inr"             -> "1000",
-        "anotherDefault"        -> "14"
+        //"dburl"                 -> "some url",// It doesn't handle, it gets confused
+        "amount"         -> "3.14",
+        "quanity"        -> "30.0",
+        "price.inr"      -> "1000",
+        "anotherDefault" -> "14"
       )
     )
 
