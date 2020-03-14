@@ -226,7 +226,7 @@ object PropertyTree {
                   //println("what? xx")
                   loop(acc, h3)
 
-                case _ => throw new Exception("fucked up")
+                case _ => throw new Exception(" up")
               }
           }
 
