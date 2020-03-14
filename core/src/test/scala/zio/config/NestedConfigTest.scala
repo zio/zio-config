@@ -71,7 +71,7 @@ object NestedConfigTestUtils {
       val dbConnection = (string(keys.host) |@| int(keys.port))(DbConnection.apply, DbConnection.unapply)
 
       val database =
-        (string(keys.connection).xmap(DbUrl)(_.value).orElseEither(nested(keys.connection)(dbConnection)) |@|
+        (string(keys.connection).xmap(DbUrl, (_: DbUrl).value).orElseEither(nested(keys.connection)(dbConnection)) |@|
           nested(keys.credentials)(credentials).optional)(Database.apply, Database.unapply)
 
       (nested(keys.database)(database) |@| double(keys.pricing))(AppConfig, AppConfig.unapply)

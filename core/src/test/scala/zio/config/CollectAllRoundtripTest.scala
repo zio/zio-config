@@ -14,7 +14,7 @@ object CollectAllRoundtripTest
         testM("optional write") {
           checkM(genOverallConfig) {
             p =>
-              val cId: String => ConfigDescriptor[String, String, Id] = string(_).xmap(Id)(_.value)
+              val cId: String => ConfigDescriptor[String, String, Id] = string(_).xmap(Id, _.value)
 
               // List is nonempty
               val consOfConfig = {

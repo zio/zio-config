@@ -114,18 +114,18 @@ object ReadWriteRoundtripTestUtils {
   val genCoproductConfig: Gen[Random, CoproductConfig] =
     Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
 
-  val cId             = string("kId").xmap(Id)(_.value)
-  val cId2            = string("kId2").xmap(Id)(_.value)
+  val cId             = string("kId").xmap(Id, (_: Id).value)
+  val cId2            = string("kId2").xmap(Id, (_: Id).value)
   val cDataItem       = (cId2.optional |@| int("kDiCount"))(DataItem.apply, DataItem.unapply)
-  val cDbUrl          = string("kDbUrl").xmap(DbUrl)(_.value)
+  val cDbUrl          = string("kDbUrl").xmap(DbUrl, (_: DbUrl).value)
   val cEnterpriseAuth = (cId |@| cDbUrl)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
 
   val cNestedConfig =
     (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedPath.apply, NestedPath.unapply)
 
   val cSingleField: ConfigDescriptor[String, String, SingleField] =
-    int("kCount")(SingleField.apply)(SingleField.unapply)
+    int("kCount")(SingleField.apply, SingleField.unapply)
 
   val cCoproductConfig =
-    (cDataItem.orElseEither(cNestedConfig)).xmap(CoproductConfig)(_.coproduct)
+    (cDataItem.orElseEither(cNestedConfig)).xmap(CoproductConfig, (_: CoproductConfig).coproduct)
 }

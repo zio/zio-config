@@ -19,39 +19,51 @@ object CoproductExample extends App {
     (string("name") |@| int("age").optional)(Person.apply, Person.unapply)
 
   val heightConfig =
-    long("height").xmap(Height)(_.height)
+    long("height").xmap(Height, (_: Height).height)
 
-  val aConfig = nested("any")(personConfig).xmap(A)(_.any)
-  val bConfig = nested("body")(heightConfig).xmap(B)(_.body)
-  val cConfig = boolean("can").xmap(C)(_.can)
-  val dConfig = string("dance").xmap(D)(_.dance)
+  val aConfig = nested("any")(personConfig).xmap(A, (_: A).any)
+  val bConfig = nested("body")(heightConfig).xmap(B, (_: B).body)
+  val cConfig = boolean("can").xmap(C, (_: C).can)
+  val dConfig = string("dance").xmap(D, (_: D).dance)
 
-  val aConfigAsDance =
-    aConfig.xmapEither(a => Right(a: Dance))({
-      case a: A => Right(a)
-      case _    => Left("unable to write back")
-    })
+  val aConfigAsDance: ConfigDescriptor[String, String, Dance] =
+    aConfig.xmapEither(
+      (a: A) => Right(a: Dance),
+      (_: Dance) match {
+        case a: A => Right(a)
+        case _    => Left("unable to write back")
+      }
+    )
 
-  val bConfigAsDance =
-    bConfig.xmapEither(a => Right(a: Dance))({
-      case a: B => Right(a)
-      case _    => Left("unsable to write back")
-    })
+  val bConfigAsDance: ConfigDescriptor[String, String, Dance] =
+    bConfig.xmapEither(
+      (a: B) => Right(a: Dance),
+      (_: Dance) match {
+        case a: B => Right(a)
+        case _    => Left("unsable to write back")
+      }
+    )
 
-  val cConfigAsDance =
-    cConfig.xmapEither(a => Right(a: Dance))({
-      case a: C => Right(a)
-      case _    => Left("unsable to write back")
-    })
+  val cConfigAsDance: ConfigDescriptor[String, String, Dance] =
+    cConfig.xmapEither(
+      (a: C) => Right(a: Dance),
+      (_: Dance) match {
+        case a: C => Right(a)
+        case _    => Left("unsable to write back")
+      }
+    )
 
-  val dConigAsDance =
-    dConfig.xmapEither(a => Right(a: Dance))({
-      case a: D => Right(a)
-      case _    => Left("unsable to write back")
-    })
+  val dConfigAsDance: ConfigDescriptor[String, String, Dance] =
+    dConfig.xmapEither(
+      (a: D) => Right(a: Dance),
+      (_: Dance) match {
+        case a: D => Right(a)
+        case _    => Left("unsable to write back")
+      }
+    )
 
   val danceConfig =
-    aConfigAsDance.orElse(bConfigAsDance).orElse(cConfigAsDance).orElse(dConigAsDance)
+    aConfigAsDance.orElse(bConfigAsDance).orElse(cConfigAsDance).orElse(dConfigAsDance)
 
   val aSource = ConfigSource.fromMap(
     Map(

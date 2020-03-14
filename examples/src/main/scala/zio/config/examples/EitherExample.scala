@@ -12,7 +12,7 @@ object EitherExample extends App {
   case class Dev(user: String, password: Int, dburl: Double)
 
   val prod =
-    (string("x1").xmap(Ldap)(_.value) |@| string("x2").xmap(DbUrl)(_.value))(Prod.apply, Prod.unapply)
+    (string("x1").xmap(Ldap, (_: Ldap).value) |@| string("x2").xmap(DbUrl, (_: DbUrl).value))(Prod.apply, Prod.unapply)
 
   val dev =
     (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
