@@ -72,7 +72,7 @@ object ConfigDescriptorProvider {
               val withDocs =
                 updateConfigWithDocuments(descriptions, desc)
 
-              withDocs.xmap(r => r: Any, r => r.asInstanceOf[h.PType])
+              withDocs.xmap((r: h.PType) => r: Any, (r: Any) => r.asInstanceOf[h.PType])
             }
           }
 
