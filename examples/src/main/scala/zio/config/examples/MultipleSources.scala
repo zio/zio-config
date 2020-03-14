@@ -1,8 +1,7 @@
 package zio.config.examples
 
+import zio.config.ConfigDescriptor._
 import zio.config._
-import ConfigDescriptor._
-import zio.{ DefaultRuntime }
 
 object MultipleSources extends App {
 
@@ -34,7 +33,7 @@ object MultipleSources extends App {
   val myConfigChangedSource = myConfig.updateSource(_.orElse(ConfigSource.fromProperty(None)))
 
   //
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   assert(
     runtime.unsafeRun(read(myConfig)) == MyConfig("jolap", 1999, Some("newyork.com"))

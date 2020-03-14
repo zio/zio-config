@@ -1,8 +1,6 @@
 package zio.config.examples
 
-import zio.DefaultRuntime
-import zio.config._
-import ConfigDescriptor._
+import zio.config.ConfigDescriptor._
 import zio.config.ReadError._
 import zio.config.{ ConfigSource, _ }
 
@@ -22,7 +20,7 @@ object EitherExample extends App {
   val prodOrDev =
     prod orElseEither dev
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   val validConfigForSampleConfig =
     Map(

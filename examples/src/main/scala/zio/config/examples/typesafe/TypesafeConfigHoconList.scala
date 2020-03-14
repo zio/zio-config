@@ -1,13 +1,12 @@
 package zio.config.examples.typesafe
 
-import zio.DefaultRuntime
 import zio.config.ConfigDescriptor.{ int, list, nested, string }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
 
 object TypesafeConfigHoconList extends App {
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   // A nested example with type safe config, and usage of magnolia
   final case class Account(region: String, accountId: String)

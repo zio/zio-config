@@ -1,11 +1,10 @@
 package zio.config.examples
 
+import zio.config.ConfigDescriptor._
+import zio.config.ConfigDocs.Details._
+import zio.config.ConfigDocs.{ Path, _ }
+import zio.config.ConfigSource._
 import zio.config._
-import ConfigDescriptor._
-import zio.DefaultRuntime
-import zio.config.ConfigDocs, ConfigDocs._, Details._
-import zio.config.ConfigDocs.Path
-import ConfigSource._
 
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
@@ -16,7 +15,7 @@ object DefaultValueExample extends App {
 
   val pgmConfig = conf from ConfigSource.fromEnv(None)
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   // read(pgmConf from ConfigSource.fromEnv) is equivalent to Config.fromEnv(pgmConf) except that it returns `Config[A]` in return
   // which you can pass down to the rest of the program
@@ -30,19 +29,19 @@ object DefaultValueExample extends App {
         Path(
           "HELLO",
           Descriptions(
-            Sources(List(EmptySource, ConfigSource.SystemEnvironment)),
+            Sources(List("<empty>", "system environment")),
             List("value of type string", "default value: xyz")
           )
         ),
         OneOf(
           Path(
             "SOMETHING",
-            Descriptions(Sources(List(EmptySource, ConfigSource.SystemEnvironment)), List("value of type string"))
+            Descriptions(Sources(List("<empty>", "system environment")), List("value of type string"))
           ),
           Path(
             "PORT",
             Descriptions(
-              Sources(List(EmptySource, ConfigSource.SystemEnvironment)),
+              Sources(List("<empty>", "system environment")),
               List("value of type int", "default value: 1")
             )
           )

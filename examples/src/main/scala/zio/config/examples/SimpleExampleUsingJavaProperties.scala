@@ -1,10 +1,9 @@
 package zio.config.examples
 
-import zio.App
-import zio.{ config, console, ZEnv, ZIO, ZLayer }
 import zio.config.Config
 import zio.config.ConfigDescriptor._
 import zio.console.Console
+import zio.{ config, console, App, ZEnv, ZIO, ZLayer }
 
 /**
  * An example of an entire application that uses java properties
