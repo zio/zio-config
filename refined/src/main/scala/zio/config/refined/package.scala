@@ -17,8 +17,7 @@ package object refined
   ): ConfigDescriptor[K, V, Refined[A, P]] =
     desc
       .xmapEither[Refined[A, P]](
-        RefType.applyRef[Refined[A, P]](_)
-      )(
+        RefType.applyRef[Refined[A, P]](_),
         rf => Right(rf.value)
       )
 

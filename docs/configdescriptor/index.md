@@ -14,7 +14,7 @@ import zio.config._, ConfigDescriptor._
 
 ## A Simple example
 
-We must be fetching the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
+We must fetch the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
 
 ```scala mdoc:silent
 
@@ -32,6 +32,17 @@ val myConfig =
 ```
 
 Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
+
+Case classes with a single field are simple too.
+
+```scala mdoc:silent
+case class MySingleConfig(ldap: String)
+
+val mySingleConfig =
+  string("LDAP")(MySingleConfig.apply, MySingleConfig.unapply)
+```
+
+Think of this as removing fields one-by-one, along with the `|@|` combinator syntax, ending up with a single field being applied.
 
 ## Fully Automated Config Description: zio-config-magnolia
 
@@ -111,7 +122,7 @@ That is,
 case class MyConfigWithOptionalUrl(ldap: String, port: Port, dburl: Option[String])
 
 val myConfigOptional =
-  (string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@| 
+  (string("LDAP") |@| int("PORT").xmap(Port, (_: Port).value) |@| 
     string("DB_URL").optional)(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
 
 ```
@@ -150,7 +161,7 @@ In this scenario, you could do
 
 ```scala mdoc:silent
 
-int("PORT").xmap(Port)(_.value)
+int("PORT").xmap(Port, (_: Port).value)
 
 ```
 
@@ -169,7 +180,7 @@ That is,
 
  // Before
   val myConfigWithCustomType =
-    (string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@|
+    (string("LDAP") |@| int("PORT").xmap(Port, (_: Port).value) |@|
       string("DB_URL"))(MyCustomConfig.apply, MyCustomConfig.unapply)
 
 ```
@@ -185,7 +196,7 @@ val source1 = ConfigSource.fromProperty(None)
 val source2 = ConfigSource.fromEnv(None)
 
 val myMultipleSourceConfig =
-  (string("LDAP").from(source1.orElse(source2)) |@| int("PORT").xmap(Port)(_.value).from(source1) |@|
+  (string("LDAP").from(source1.orElse(source2)) |@| int("PORT").xmap(Port, (_: Port).value).from(source1) |@|
     string("DB_URL").optional.from(source2))(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
 
 read(myMultipleSourceConfig)

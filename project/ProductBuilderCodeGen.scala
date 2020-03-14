@@ -43,11 +43,10 @@ object ProductBuilderCodeGen {
          |    val $l0: ConfigDescriptor[KK, VV, $L0]
          |    def apply[$L1](ff: ($cL0) => $L1, gg: $L1 => Option[($cL0)]): ConfigDescriptor[KK, VV, $L1] =
          |      ($zipped)
-         |        .xmapEither[$L1] {
-         |          case $cll0Tupled => Right(ff($cll0))
-         |        }(
+         |        .xmapEither[$L1] (
+         |          { case $cll0Tupled => Right(ff($cll0)) },
          |          liftWrite($l1 => gg($l1).map { case ($cll0) => $cll0Tupled })
-         |      )""".stripMargin
+         |        )""".stripMargin
     val part2 =
       s"""
          |    def |@|[$L1]($ll1: ConfigDescriptor[KK, VV, $L1]): ProductBuilder[$L1] =
