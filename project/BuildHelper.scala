@@ -72,10 +72,10 @@ object BuildHelper {
       case _ => Seq.empty
     }
 
-  def stdSettings(prjName: String, versions: Option[Seq[String]]) = Seq(
+  def stdSettings(prjName: String) = Seq(
     name := s"$prjName",
     scalacOptions := stdOptions,
-    crossScalaVersions := versions.getOrElse(Seq("2.13.0", "2.12.10")),
+    crossScalaVersions := Seq("2.13.0", "2.12.10"),
     scalaVersion in ThisBuild := crossScalaVersions.value.head,
     scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
     libraryDependencies ++= compileOnlyDeps ++ testDeps ++ Seq(

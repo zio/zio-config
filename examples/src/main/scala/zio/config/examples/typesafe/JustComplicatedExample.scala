@@ -67,6 +67,7 @@ object JustComplicatedExample extends App {
       |b = [
       |  {
       |   table          : some_name
+      |   columns        : a
       |    c = [
       |      {
       |        d = [
@@ -91,6 +92,7 @@ object JustComplicatedExample extends App {
       |  }
       |  {
       |   table          : some_name
+      |   columns        : a
       |    c = [
       |      {
       |        d = [
@@ -121,6 +123,7 @@ object JustComplicatedExample extends App {
       |  }
       |   {
       |    table          : some_name
+      |    columns        : a
       |    c = [
       |      {
       |        d = [
@@ -173,7 +176,7 @@ object JustComplicatedExample extends App {
   final case class W(x: X)
   final case class D(e: List[Int])
   final case class C(d: List[D])
-  final case class B(c: List[C], table: String)
+  final case class B(c: List[C], table: String, columns: String)
   final case class A(b: List[B], x: X, w: W)
 
   val zioConfigResult =
@@ -199,7 +202,8 @@ object JustComplicatedExample extends App {
                 )
               )
             ),
-            "some_name"
+            "some_name",
+            "a"
           ),
           B(
             List(
@@ -215,7 +219,8 @@ object JustComplicatedExample extends App {
                 )
               )
             ),
-            "some_name"
+            "some_name",
+            "a"
           ),
           B(
             List(
@@ -231,7 +236,8 @@ object JustComplicatedExample extends App {
                 )
               )
             ),
-            "some_name"
+            "some_name",
+            "a"
           )
         ),
         X(

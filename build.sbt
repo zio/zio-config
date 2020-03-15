@@ -113,6 +113,9 @@ lazy val examples = module("zio-config-examples", "examples")
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe)
 
+lazy val propertyTree =
+  module("zio-config-propertyTree", "property-tree")
+
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
     libraryDependencies ++= Seq(
@@ -125,7 +128,7 @@ lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigTypesafe =
-  module("zio-config-typesafe", "typesafe", Seq())
+  module("zio-config-typesafe", "typesafe")
     .settings(
       libraryDependencies ++= Seq(
         "com.typesafe" % "config" % "1.4.0"
@@ -133,9 +136,9 @@ lazy val zioConfigTypesafe =
     )
     .dependsOn(zioConfig)
 
-def module(moduleName: String, fileName: String, scalaVersions: Option[Seq[String]]): Project =
+def module(moduleName: String, fileName: String): Project =
   Project(moduleName, file(fileName))
-    .settings(stdSettings(moduleName, scalaVersions))
+    .settings(stdSettings(moduleName))
     .settings(
       libraryDependencies ++= Seq(
         "dev.zio" %% "zio" % zioVersion
