@@ -66,6 +66,7 @@ object JustComplicatedExample extends App {
     """
       |b = [
       |  {
+      |   table          : some_name
       |    c = [
       |      {
       |        d = [
@@ -89,6 +90,7 @@ object JustComplicatedExample extends App {
       |    ]
       |  }
       |  {
+      |   table          : some_name
       |    c = [
       |      {
       |        d = [
@@ -111,7 +113,37 @@ object JustComplicatedExample extends App {
       |            e: []
       |          }
       |          {
-      |            e: [1]
+      |            e: [27]
+      |          }
+      |        ]
+      |      }
+      |    ]
+      |  }
+      |   {
+      |    table          : some_name
+      |    c = [
+      |      {
+      |        d = [
+      |          {
+      |            e: [31, 31]
+      |          }
+      |          {
+      |            e: [32, 32]
+      |          }
+      |          {
+      |            e: [33, 33, 33]
+      |          }
+      |          {
+      |            e: [34, 34, 34]
+      |          }
+      |          {
+      |            e: []
+      |          }
+      |          {
+      |            e: []
+      |          }
+      |          {
+      |            e: [37]
       |          }
       |        ]
       |      }
@@ -119,18 +151,37 @@ object JustComplicatedExample extends App {
       |  }
       |]
       |
+      |x {
+      |  y {
+      |    z : k
+      |  }
+      |}
+      |
+      |w {
+      | x {
+      |  y {
+      |    z : k
+      |  }
+      | }
+      |}
+      |
       |""".stripMargin
 
   // Just intentionally complicated example
+  final case class Y(z: String)
+  final case class X(y: Y)
+  final case class W(x: X)
   final case class D(e: List[Int])
   final case class C(d: List[D])
-  final case class B(c: List[C])
-  final case class A(b: List[B])
+  final case class B(c: List[C], table: String)
+  final case class A(b: List[B], x: X, w: W)
 
   val zioConfigResult =
     read(description[A] from hocon(Right(configString)))
 
-  println(zioConfigResult)
+  println(
+    zioConfigResult
+  )
 
   assert(
     zioConfigResult == Right(
@@ -139,8 +190,19 @@ object JustComplicatedExample extends App {
           B(
             List(
               C(
-                List(D(List(1, 1, 1)), D(List(12, 12)), D(List(13, 13, 13)), D(List(14, 14)), D(List(15, 15)))
-              ),
+                List(
+                  D(List(1, 1, 1)),
+                  D(List(12, 12)),
+                  D(List(13, 13, 13)),
+                  D(List(14, 14)),
+                  D(List(15, 15))
+                )
+              )
+            ),
+            "some_name"
+          ),
+          B(
+            List(
               C(
                 List(
                   D(List(21, 21)),
@@ -149,10 +211,35 @@ object JustComplicatedExample extends App {
                   D(List(24, 24, 24)),
                   D(List()),
                   D(List()),
-                  D(List(1))
+                  D(List(27))
                 )
               )
-            )
+            ),
+            "some_name"
+          ),
+          B(
+            List(
+              C(
+                List(
+                  D(List(31, 31)),
+                  D(List(32, 32)),
+                  D(List(33, 33, 33)),
+                  D(List(34, 34, 34)),
+                  D(List()),
+                  D(List()),
+                  D(List(37))
+                )
+              )
+            ),
+            "some_name"
+          )
+        ),
+        X(
+          Y("k")
+        ),
+        W(
+          X(
+            Y("k")
           )
         )
       )

@@ -196,7 +196,6 @@ object PropertyTree {
         def loop(acc: PropertyTree[K, List[V]], rest: List[PropertyTree[K, V]]): PropertyTree[K, List[V]] =
           rest match {
             case h1 :: Nil =>
-              println("here?")
               acc.zipWith(sequence(h1))(_ ++ _)
             case Nil =>
               acc
@@ -209,7 +208,7 @@ object PropertyTree {
                   loop(acc.zipWith(zipped)((a, b) => a ++ b), h3)
 
                 case (l: Leaf[V], r: Leaf[V]) =>
-                  loop(acc.zipWith(Leaf(List(l.value, r.value)))((a, b) => a ++ b), h3)
+                  Sequence(List(loop(acc.zipWith(Leaf(List(l.value, r.value)))((a, b) => a ++ b), h3)))
 
                 case (Sequence(v1), Sequence(v2)) =>
                   val res1 = loop(acc, v1)
@@ -220,15 +219,19 @@ object PropertyTree {
                   } else {
                     Sequence(List(res1, res2, loop(acc, h3)))
                   }
+                // This never called
                 case (Empty, Empty) =>
                   loop(acc, h3)
 
+                // This never called
                 case (l, Empty) =>
                   acc.zipWith(sequence(l))(_ ++ _)
 
+                // This never called
                 case (Empty, l) =>
                   acc.zipWith(sequence(l))(_ ++ _)
 
+                // This never called
                 case (Sequence(l), r) =>
                   Sequence(List(loop(acc, l), sequence(r), loop(acc, h3)))
 
