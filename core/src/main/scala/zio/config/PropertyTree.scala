@@ -196,9 +196,10 @@ object PropertyTree {
         def loop(acc: PropertyTree[K, List[V]], rest: List[PropertyTree[K, V]]): PropertyTree[K, List[V]] =
           rest match {
             case h1 :: Nil =>
+              println("here?")
               acc.zipWith(sequence(h1))(_ ++ _)
             case Nil =>
-              Sequence(List(acc))
+              acc
             case h1 :: h2 :: h3 =>
               (h1, h2) match {
                 case (l: Record[K, V], r: Record[K, V]) =>
@@ -209,6 +210,7 @@ object PropertyTree {
 
                 case (l: Leaf[V], r: Leaf[V]) =>
                   loop(acc.zipWith(Leaf(List(l.value, r.value)))((a, b) => a ++ b), h3)
+
                 case (Sequence(v1), Sequence(v2)) =>
                   val res1 = loop(acc, v1)
                   val res2 = loop(acc, v2)
@@ -228,16 +230,10 @@ object PropertyTree {
                   acc.zipWith(sequence(l))(_ ++ _)
 
                 case (Sequence(l), r) =>
-                  val res = loop(acc, l).zipWith(r) { (a, b) =>
-                    a :+ b
-                  }
-                  loop(res, h3)
+                  Sequence(List(loop(acc, l), sequence(r), loop(acc, h3)))
 
                 case (l, Sequence(r)) =>
-                  val res = l.zipWith(loop(acc, r)) { (a, b) =>
-                    a :: b
-                  }
-                  loop(res, h3)
+                  Sequence(List(sequence(l), loop(acc, r), loop(acc, h3)))
 
                 case (l, r: Record[K, V] @unchecked) =>
                   val zipped =
@@ -300,6 +296,7 @@ object PropertyTree {
       case Empty           => throw new Exception("bhoom")
       case Sequence(value) => getValue(value.head)
     }
+
 } /*
 
 object Example extends App {

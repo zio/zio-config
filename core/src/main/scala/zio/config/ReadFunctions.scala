@@ -43,9 +43,7 @@ private[config] trait ReadFunctions {
           val previousResult = loop(config, paths)
           //println(s"the previous result is ${previousResult}")
           //println(s"the previous result is ${previousResult}")
-          val x = PropertyTree.sequence(previousResult)
-          println("without applyin seq either " + x)
-
+          val x                 = PropertyTree.sequence(previousResult)
           val intermidateResult = x.map(seqEither(_))
           //println(s"the next result is ${intermidateResult}")
 
@@ -54,7 +52,6 @@ private[config] trait ReadFunctions {
           println("   ")
           println("   ")
           println("   ")
-          println(intermidateResult)
           //println(s"the final result is ${finalResult}")
           intermidateResult
 
@@ -97,11 +94,11 @@ private[config] trait ReadFunctions {
         case r: ConfigDescriptor.Zip[K, V1, a, b] @unchecked =>
           val ConfigDescriptor.Zip(left, right) = r
 
+          println("will it ever zip")
+
           val lefts  = loop(left, paths)
           val rights = loop(right, paths)
 
-          println(s"the left is ${lefts}")
-          println(s"the right is ${rights}")
           val zippedRes = (lefts, rights) match {
             case (l, r) =>
               val res = l.zipWith(r) { (l, r) =>
