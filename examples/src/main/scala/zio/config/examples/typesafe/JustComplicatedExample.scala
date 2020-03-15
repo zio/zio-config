@@ -76,13 +76,10 @@ object JustComplicatedExample extends App {
       |            lst: [12,12, 12, 1]
       |          }
       |          {
-      |            lst: [13, 13]
+      |            lst: [13, 13, 13]
       |          }
       |          {
-      |            lst: [14]
-      |          }
-      |          {
-      |            lst: []
+      |            lst: [14,14, 14]
       |          }
       |        ]
       |      }
@@ -93,16 +90,16 @@ object JustComplicatedExample extends App {
       |      {
       |        moreDetails = [
       |          {
-      |            lst: [21, 12, 21, 21, 21, 21]
+      |            lst: [21, 12, 21]
       |          }
       |          {
-      |            lst: []
+      |            lst: [22, 22, 22]
       |          }
       |          {
-      |            lst: [23, 23,23, 23, 23, 24]
+      |            lst: [23, 23,23, 23]
       |          }
       |          {
-      |            lst: [24,24,24, 1, 0]
+      |            lst: [24,24,24]
       |          }
       |        ]
       |      }

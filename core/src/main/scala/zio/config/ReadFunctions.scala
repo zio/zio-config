@@ -17,6 +17,7 @@ private[config] trait ReadFunctions {
           source
             .getConfigValue(paths :+ path) match {
             case Some(tree) =>
+              println(s"for the key: ${paths :+ path}, ${tree}")
               tree
                 .mapEmptyToError(ReadError.MissingValue((paths :+ path).toString))
                 .map({
@@ -38,7 +39,24 @@ private[config] trait ReadFunctions {
 
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
-          PropertyTree.sequence(loop(config, paths)).map(seqEither(_))
+
+          val previousResult = loop(config, paths)
+          //println(s"the previous result is ${previousResult}")
+          //println(s"the previous result is ${previousResult}")
+          val x = PropertyTree.sequence(previousResult)
+          println("without applyin seq either " + x)
+
+          val intermidateResult = x.map(seqEither(_))
+          //println(s"the next result is ${intermidateResult}")
+
+          println("   ")
+          println("   ")
+          println("   ")
+          println("   ")
+          println("   ")
+          println(intermidateResult)
+          //println(s"the final result is ${finalResult}")
+          intermidateResult
 
         case ConfigDescriptor.Nested(path, c) =>
           loop(c, paths :+ path)
@@ -82,6 +100,8 @@ private[config] trait ReadFunctions {
           val lefts  = loop(left, paths)
           val rights = loop(right, paths)
 
+          println(s"the left is ${lefts}")
+          println(s"the right is ${rights}")
           val zippedRes = (lefts, rights) match {
             case (l, r) =>
               val res = l.zipWith(r) { (l, r) =>
@@ -95,6 +115,8 @@ private[config] trait ReadFunctions {
 
               res
           }
+          // println("zipped is " + zippedRes)
+          println(zippedRes)
           zippedRes
 
         case cd: ConfigDescriptor.OrElseEither[K, V1, a, b] @unchecked =>
