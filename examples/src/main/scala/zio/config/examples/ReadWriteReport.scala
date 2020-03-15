@@ -20,7 +20,7 @@ object ReadWriteReport extends App {
   // An example where user provides a description once and for all, and use it for read, write, report!
   val configWithoutSource =
     ((string("usr") ?? "Example: some-user" |@|
-      string("pwd").xmap(Password, (_: Password).value).optional ?? "sec" |@|
+      string("pwd")(Password.apply, Password.unapply).optional ?? "sec" |@|
       string("jhi").optional ?? "Ex: ghi" |@|
       (string("xyz") |@| int("abc").orElseEither(string("def")))(XYZ.apply, XYZ.unapply).optional ?? "Ex: ha")(
       UserPwd.apply,
