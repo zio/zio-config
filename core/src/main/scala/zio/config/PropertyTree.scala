@@ -185,58 +185,77 @@ object PropertyTree {
     }
 
   def sequence[K, V](tree: PropertyTree[K, V]): PropertyTree[K, List[V]] = {
-    //println(tree)
     val result = tree match {
       case Leaf(value) =>
         Leaf(singleton(value))
       case Record(value) =>
-        Record(value.foldLeft(Map.empty[K, PropertyTree[K, List[V]]]) { (acc, a) =>
-          acc
-            .get(a._1)
-            .map(_.zipWith(sequence(a._2)) { (v1, v2) =>
-              v1 ++ v2
-            })
-            .map(tree => acc.updated(a._1, tree))
-            .getOrElse(acc.updated(a._1, a._2.map(singleton)))
-        })
-      case Empty => Empty
+        Record(value.mapValues(t => t.map(singleton)).toMap)
+      case Empty =>
+        Empty
       case Sequence(value) =>
         def loop(acc: PropertyTree[K, List[V]], rest: List[PropertyTree[K, V]]): PropertyTree[K, List[V]] =
           rest match {
             case h1 :: Nil =>
-              sequence(h1)
-            case Nil => acc
+              acc.zipWith(sequence(h1))(_ ++ _)
+            case Nil =>
+              Sequence(List(acc))
             case h1 :: h2 :: h3 =>
               (h1, h2) match {
                 case (l: Record[K, V], r: Record[K, V]) =>
-                  val zipped = l.zipWith(r)((a, b) => List(a, b))
-                  // println("sequenced " + zipped)
-                  val finall = loop(acc.zipWith(zipped)((a, b) => a ++ b), h3)
-                  // println(s"the finall is ${acc} and ${zipped} and ${finall}")
-                  finall
+                  val zipped =
+                    l.zipWith(r)((a, b) => List(a, b))
+
+                  loop(acc.zipWith(zipped)((a, b) => a ++ b), h3)
+
                 case (l: Leaf[V], r: Leaf[V]) =>
-                  // println("what?")
                   loop(acc.zipWith(Leaf(List(l.value, r.value)))((a, b) => a ++ b), h3)
                 case (Sequence(v1), Sequence(v2)) =>
-                  // println("first one " + v1 + "   " + loop(acc, v1))
-                  // println("second one " + v2 + "   " + loop(acc, v2))
+                  val res1 = loop(acc, v1)
+                  val res2 = loop(acc, v2)
 
-                  Sequence(List(loop(acc, v1), (loop(acc, v2))))
+                  if (h3.isEmpty) {
+                    Sequence(List(res1, res2))
+                  } else {
+                    Sequence(List(res1, res2, loop(acc, h3)))
+                  }
                 case (Empty, Empty) =>
-                  //println("what? xx")
                   loop(acc, h3)
 
-                case _ => throw new Exception(" up")
+                case (l, Empty) =>
+                  acc.zipWith(sequence(l))(_ ++ _)
+
+                case (Empty, l) =>
+                  acc.zipWith(sequence(l))(_ ++ _)
+
+                case (Sequence(l), r) =>
+                  val res = loop(acc, l).zipWith(r) { (a, b) =>
+                    a :+ b
+                  }
+                  loop(res, h3)
+
+                case (l, Sequence(r)) =>
+                  val res = l.zipWith(loop(acc, r)) { (a, b) =>
+                    a :: b
+                  }
+                  loop(res, h3)
+
+                case (l, r: Record[K, V] @unchecked) =>
+                  val zipped =
+                    l.zipWith(r)((a, b) => List(a, b))
+
+                  loop(acc.zipWith(zipped)((a, b) => a ++ b), h3)
+
+                case (l: Record[K, V] @unchecked, r) =>
+                  val zipped =
+                    l.zipWith(r)((a, b) => List(a, b))
+
+                  loop(acc.zipWith(zipped)((a, b) => a ++ b), h3)
               }
           }
 
-        println(s"the input value is ${value}")
-        val output = loop(PropertyTree.Leaf(Nil), value)
-        println(s"the output value is ${output}")
-        output
+        loop(PropertyTree.Leaf(Nil), value)
     }
 
-    //println(result)
     result
   }
 
@@ -273,46 +292,57 @@ object PropertyTree {
           case Right(value) => Right(value)
         }
     )
-}
 
-object Main extends App {
-  val input =
+  def getValue[K, V](propertyTree: PropertyTree[K, V]): V =
+    propertyTree match {
+      case Leaf(value)     => value
+      case Record(value)   => getValue(value.toList.map(_._2).head)
+      case Empty           => throw new Exception("bhoom")
+      case Sequence(value) => getValue(value.head)
+    }
+} /*
+
+object Example extends App {
+
+  val simpleInput =
     Sequence(
       List(
-        Sequence(
-          List(
-            Sequence(
-              List(
-                Sequence(
-                  List(
-                    Record(Map("vvv" -> Leaf(Right(1)))),
-                    Record(Map("vvv" -> Leaf(Right(2)))),
-                    Record(Map("vvv" -> Leaf(Right(3))))
-                  )
-                ),
-                Sequence(
-                  List(
-                    Record(Map("vvv" -> Leaf(Right(1)))),
-                    Record(Map("vvv" -> Leaf(Right(2)))),
-                    Record(Map("vvv" -> Leaf(Right(3))))
-                  )
-                ),
-                Sequence(
-                  List(
-                    Record(Map("vvv" -> Leaf(Right(1)))),
-                    Record(Map("vvv" -> Leaf(Right(2)))),
-                    Record(Map("vvv" -> Leaf(Right(3))))
-                  )
-                )
-              )
+        Sequence(List(Record(Map("lst" -> Leaf(Right(1)))))),
+        Sequence(List(Record(Map("lst" -> Leaf(Right(12)))))),
+        Sequence(List(Record(Map("lst" -> Leaf(Right(13)))))),
+        Sequence(List(Record(Map("lst" -> Leaf(Right(14))))))
+      )
+    )
+
+  val input = Sequence(
+    List(
+      Sequence(
+        List(
+          Sequence(
+            List(
+              Sequence(List(Record(Map("lst" -> Leaf(Right(1)))))),
+              Sequence(List(Record(Map("lst" -> Leaf(Right(12)))))),
+              Sequence(List(Record(Map("lst" -> Leaf(Right(13)))))),
+              Sequence(List(Record(Map("lst" -> Leaf(Right(14))))))
+            )
+          )
+        )
+      ),
+      Sequence(
+        List(
+          Sequence(
+            List(
+              Sequence(List(Record(Map("lst" -> Leaf(Right(21)))))),
+              Sequence(List(Record(Map("lst" -> Leaf(Right(22)))))),
+              Sequence(List(Record(Map("lst" -> Leaf(Right(23)))))),
+              Sequence(List(Record(Map("lst" -> Leaf(Right(24))))))
             )
           )
         )
       )
     )
+  )
 
-  val s = PropertyTree.sequence(input)
-
-  println(s)
-
+  println(PropertyTree.sequence(input))
 }
+ */

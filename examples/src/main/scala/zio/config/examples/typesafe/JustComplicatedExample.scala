@@ -6,7 +6,7 @@ import zio.config.magnolia.ConfigDescriptorProvider.description
 
 object JustComplicatedExample extends App {
   val configString =
-    """
+    /*    """
       |exportDetails = [
       |  {
       |    table          : some_name
@@ -30,12 +30,6 @@ object JustComplicatedExample extends App {
       |            vvv = [t, h, j]
       |
       |          }
-      |           {
-      |            ci : ki
-      |            vi : 3
-      |            lst: [1, 3, 5]
-      |            vvv = [k, a, d]
-      |          }
       |        ]
       |      }
       |    ]
@@ -45,28 +39,70 @@ object JustComplicatedExample extends App {
       |    columns        : [ x, x, c, d ]
       |    extraDetails = [
       |      {
-      |        hi : di
-      |        bi : ci
+      |        hi : di2
+      |        bi : ci2
       |        r = [
       |          {
-      |            ci : ki
-      |            vi : bi
-      |            lst: [1, 1, 1]
+      |            ci : ki2
+      |            vi : bi2
+      |            lst: [11, 11, 11]
       |            vvv = [af, sa, 1]
       |
       |          }
       |          {
-      |            ci : ki
-      |            vi : 1.0882121
-      |            lst: [1, 2, 1]
+      |            ci : ki22
+      |            vi : 5.0882121
+      |            lst: [11, 21, 11]
       |            vvv = [5, t, j]
       |
       |          }
-      |           {
-      |            ci : ki
-      |            vi : 3
-      |            lst: [1, 3, 5]
-      |            vvv = [k, d, j]
+      |        ]
+      |      }
+      |    ]
+      |  }
+      |]
+      |
+      |""".stripMargin*/
+    """
+      |exportDetails = [
+      |  {
+      |    dbDetails = [
+      |      {
+      |        moreDetails = [
+      |          {
+      |            lst: [1,1,1]
+      |          }
+      |          {
+      |            lst: [12,12, 12, 1]
+      |          }
+      |          {
+      |            lst: [13, 13]
+      |          }
+      |          {
+      |            lst: [14]
+      |          }
+      |          {
+      |            lst: []
+      |          }
+      |        ]
+      |      }
+      |    ]
+      |  }
+      |  {
+      |    dbDetails = [
+      |      {
+      |        moreDetails = [
+      |          {
+      |            lst: [21, 12, 21, 21, 21, 21]
+      |          }
+      |          {
+      |            lst: []
+      |          }
+      |          {
+      |            lst: [23, 23,23, 23, 23, 24]
+      |          }
+      |          {
+      |            lst: [24,24,24, 1, 0]
       |          }
       |        ]
       |      }
@@ -82,13 +118,11 @@ object JustComplicatedExample extends App {
   final case class Port(va: String)
   final case class Database(port: Port)
   final case class MoreDetail(
-    ci: String,
-    vi: String
-    /*    lst: List[Int],
-    vvv: Option[List[String]]*/
+    lst: List[Int]
+    /*vvv: Option[List[String]]*/
   )
-  final case class DbDetails(hi: String, bi: String, r: List[MoreDetail])
-  final case class TableColumns(table: String, columns: List[String], extraDetails: List[DbDetails])
+  final case class DbDetails(moreDetails: List[MoreDetail])
+  final case class TableColumns(dbDetails: List[DbDetails])
   final case class ExportDetails(exportDetails: List[TableColumns])
 
   val zioConfigResult =

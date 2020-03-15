@@ -113,9 +113,6 @@ lazy val examples = module("zio-config-examples", "examples")
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe)
 
-lazy val propertyTree =
-  module("zio-config-propertyTree", "property-tree")
-
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
     libraryDependencies ++= Seq(

@@ -38,34 +38,7 @@ private[config] trait ReadFunctions {
 
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
-
-          val previousResult = loop(config, paths)
-          //println(s"the previous result is ${previousResult}")
-          //println(s"the previous result is ${previousResult}")
-          val x = PropertyTree.sequence(previousResult)
-          //println(x)
-
-          val intermidateResult = x.map(seqEither(_))
-          //println(s"the next result is ${intermidateResult}")
-
-          // println(s"the intermediate result is ${intermidateResult}")
-          /* val finalResult = previousResult match {
-            case PropertyTree.Sequence(trees) =>
-              PropertyTree.sequence(trees).map(list => seqEither(list))
-            case PropertyTree.Record(tree) =>
-              PropertyTree
-                .sequence(
-                  tree.toList.map {
-                    case (k, tree) => tree
-                  }
-                )
-                .map(list => seqEither(list))
-            case x @ PropertyTree.Empty   => x.map(either => either.map(singleton))
-            case PropertyTree.Leaf(value) => PropertyTree.Leaf(value.map(singleton))
-          }*/
-
-          //println(s"the final result is ${finalResult}")
-          intermidateResult
+          PropertyTree.sequence(loop(config, paths)).map(seqEither(_))
 
         case ConfigDescriptor.Nested(path, c) =>
           loop(c, paths :+ path)
@@ -109,8 +82,6 @@ private[config] trait ReadFunctions {
           val lefts  = loop(left, paths)
           val rights = loop(right, paths)
 
-          // println(s"the left is ${lefts}")
-          // println(s"the right is ${rights}")
           val zippedRes = (lefts, rights) match {
             case (l, r) =>
               val res = l.zipWith(r) { (l, r) =>
@@ -124,7 +95,6 @@ private[config] trait ReadFunctions {
 
               res
           }
-          // println("zipped is " + zippedRes)
           zippedRes
 
         case cd: ConfigDescriptor.OrElseEither[K, V1, a, b] @unchecked =>
@@ -181,24 +151,7 @@ private[config] trait ReadFunctions {
       case Some(value) =>
         Left(value)
       case None =>
-        println(s"the final tree is ${tree}")
-        tree match {
-          case PropertyTree.Leaf(value) => value
-          case PropertyTree.Empty       => throw new Exception("ah!")
-          case PropertyTree.Record(v) =>
-            v.toList.map(_._2).head match {
-              case PropertyTree.Leaf(value)     => value
-              case PropertyTree.Record(value)   => throw new Exception()
-              case PropertyTree.Empty           => throw new Exception()
-              case PropertyTree.Sequence(value) => throw new Exception()
-            }
-          case PropertyTree.Sequence(value) =>
-            value.head match {
-              case PropertyTree.Leaf(value) =>
-                value
-              case _ => throw new Exception("ah!")
-            }
-        }
+        PropertyTree.getValue(tree)
 
     }
 
