@@ -25,12 +25,12 @@ object CoproductExample extends App {
     (string("name") |@| int("age").optional)(Person.apply, Person.unapply)
 
   val heightConfig =
-    long("height").xmap(Height, (_: Height).height)
+    long("height")(Height.apply, Height.unapply)
 
-  val aConfig = nested("any")(personConfig).xmap(A, (_: A).any)
-  val bConfig = nested("body")(heightConfig).xmap(B, (_: B).body)
-  val cConfig = boolean("can").xmap(C, (_: C).can)
-  val dConfig = string("dance").xmap(D, (_: D).dance)
+  val aConfig = nested("any")(personConfig)(A.apply, A.unapply)
+  val bConfig = nested("body")(heightConfig)(B.apply, B.unapply)
+  val cConfig = boolean("can")(C.apply, C.unapply)
+  val dConfig = string("dance")(D.apply, D.unapply)
 
   val aConfigAsDance: ConfigDescriptor[String, String, Dance] =
     aConfig.xmapEither(

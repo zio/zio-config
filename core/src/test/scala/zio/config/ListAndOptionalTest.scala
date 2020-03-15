@@ -26,8 +26,8 @@ object ListAndOptionalTestUtils {
   val genOverallConfig =
     Gen.option(genId).map(t => OverallConfig(t.map(t => Option(Option(t)))))
 
-  private val cId = string("kId").xmap(Id, (_: Id).value)
+  private val cId = string("kId")(Id.apply, Id.unapply)
 
   val cOverallConfig =
-    cId.optional.optional.optional.xmap(OverallConfig, (_: OverallConfig).option)
+    cId.optional.optional.optional(OverallConfig.apply, OverallConfig.unapply)
 }

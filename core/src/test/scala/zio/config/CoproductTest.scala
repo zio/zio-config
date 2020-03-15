@@ -94,7 +94,7 @@ object CoproductTestUtils {
 
   def readLeft(p: TestParams) = {
     val enterprise =
-      (string(p.kLdap).xmap(Ldap, (_: Ldap).value) |@| string(p.kDbUrl).xmap(DbUrl, (_: DbUrl).value))(
+      (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
@@ -114,7 +114,7 @@ object CoproductTestUtils {
 
   def readRight(p: TestParams) = {
     val enterprise =
-      (string(p.kLdap).xmap(Ldap, (_: Ldap).value) |@| string(p.kDbUrl).xmap(DbUrl, (_: DbUrl).value))(
+      (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
@@ -144,7 +144,7 @@ object CoproductTestUtils {
     p: TestParams
   ): ZIO[Any, Nothing, Either[ReadErrors[Vector[String], String], Either[EnterpriseAuth, PasswordAuth]]] = {
     val enterprise =
-      (string(p.kLdap).xmap(Ldap, (_: Ldap).value) |@| string(p.kDbUrl).xmap(DbUrl, (_: DbUrl).value))(
+      (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
@@ -173,7 +173,7 @@ object CoproductTestUtils {
 
   def readChooseLeftFromBoth(p: TestParams) = {
     val enterprise =
-      (string(p.kLdap).xmap(Ldap, (_: Ldap).value) |@| string(p.kDbUrl).xmap(DbUrl, (_: DbUrl).value))(
+      (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
         EnterpriseAuth.apply,
         EnterpriseAuth.unapply
       )
