@@ -64,45 +64,54 @@ object JustComplicatedExample extends App {
       |
       |""".stripMargin*/
     """
-      |exportDetails = [
+      |b = [
       |  {
-      |    dbDetails = [
+      |    c = [
       |      {
-      |        moreDetails = [
+      |        d = [
       |          {
-      |            lst: [1, 1, 1]
+      |            e: [1, 1, 1]
       |          }
       |          {
-      |            lst: [12,12]
+      |            e: [12,12]
       |          }
       |          {
-      |            lst: [13, 13, 13]
+      |            e: [13, 13, 13]
       |          }
       |          {
-      |            lst: [14,14]
+      |            e: [14,14]
       |          }
       |          {
-      |            lst: [15,15]
+      |            e: [15,15]
       |          }
       |        ]
       |      }
       |    ]
       |  }
       |  {
-      |    dbDetails = [
+      |    c = [
       |      {
-      |        moreDetails = [
+      |        d = [
       |          {
-      |            lst: [21, 12]
+      |            e: [21, 21]
       |          }
       |          {
-      |            lst: [22, 22]
+      |            e: [22, 22]
       |          }
       |          {
-      |            lst: [23, 23, 23]
+      |            e: [23, 23, 23]
       |          }
       |          {
-      |            lst: [24, 24, 24]
+      |            e: [24, 24, 24]
+      |          }
+      |          {
+      |            e: []
+      |          }
+      |          {
+      |            e: []
+      |          }
+      |          {
+      |            e: [1]
       |          }
       |        ]
       |      }
@@ -112,23 +121,43 @@ object JustComplicatedExample extends App {
       |
       |""".stripMargin
 
-  com.typesafe.config.ConfigFactory.parseString(configString)
-
   // Just intentionally complicated example
-  final case class Port(va: String)
-  final case class Database(port: Port)
-  final case class MoreDetail(
-    lst: List[Int]
-    /*vvv: Option[List[String]]*/
-  )
-  final case class DbDetails(moreDetails: List[MoreDetail])
-  final case class TableColumns(dbDetails: List[DbDetails])
-  final case class ExportDetails(exportDetails: List[TableColumns])
+  final case class D(e: List[Int])
+  final case class C(d: List[D])
+  final case class B(c: List[C])
+  final case class A(b: List[B])
 
   val zioConfigResult =
-    read(description[ExportDetails] from hocon(Right(configString)))
+    read(description[A] from hocon(Right(configString)))
 
   println(zioConfigResult)
+
+  assert(
+    zioConfigResult == Right(
+      A(
+        List(
+          B(
+            List(
+              C(
+                List(D(List(1, 1, 1)), D(List(12, 12)), D(List(13, 13, 13)), D(List(14, 14)), D(List(15, 15)))
+              ),
+              C(
+                List(
+                  D(List(21, 21)),
+                  D(List(22, 22)),
+                  D(List(23, 23, 23)),
+                  D(List(24, 24, 24)),
+                  D(List()),
+                  D(List()),
+                  D(List(1))
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
 
   val kebabCaseConfig =
     """
