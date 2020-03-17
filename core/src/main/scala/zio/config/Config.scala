@@ -12,6 +12,10 @@ object Config {
     def config: A
   }
 
+  def pure[A](a: A): Service[A] = new Service[A] {
+    def config: A = a
+  }
+
   def make[K, V, A](
     source: ConfigSource[K, V],
     configDescriptor: ConfigDescriptor[K, V, A]
@@ -22,11 +26,7 @@ object Config {
     source: ConfigSource[K, V],
     configDescriptor: ConfigDescriptor[K, V, A]
   ): IO[ReadErrors[Vector[K], V], Service[A]] =
-    read(configDescriptor from source).map { e =>
-      new Service[A] {
-        override def config: A = e
-      }
-    }
+    read(configDescriptor from source).map(pure)
 
   def fromEnv[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
