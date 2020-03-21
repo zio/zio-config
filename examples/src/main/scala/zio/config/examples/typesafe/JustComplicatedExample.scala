@@ -6,85 +6,43 @@ import zio.config.magnolia.ConfigDescriptorProvider.description
 
 object JustComplicatedExample extends App {
   val configString =
-    /*    """
-      |exportDetails = [
-      |  {
-      |    table          : some_name
-      |    columns        : [ a, b, c, d ]
-      |    extraDetails = [
-      |      {
-      |        hi : di
-      |        bi : ci
-      |        r = [
-      |          {
-      |            ci : ki
-      |            vi : bi
-      |            lst: [1, 1, 1]
-      |            vvv = [af, sa, l]
-      |
-      |          }
-      |          {
-      |            ci : ki
-      |            vi : 1.0882121
-      |            lst: [1, 2, 1]
-      |            vvv = [t, h, j]
-      |
-      |          }
-      |        ]
-      |      }
-      |    ]
-      |  }
-      |  {
-      |    table          : some_name
-      |    columns        : [ x, x, c, d ]
-      |    extraDetails = [
-      |      {
-      |        hi : di2
-      |        bi : ci2
-      |        r = [
-      |          {
-      |            ci : ki2
-      |            vi : bi2
-      |            lst: [11, 11, 11]
-      |            vvv = [af, sa, 1]
-      |
-      |          }
-      |          {
-      |            ci : ki22
-      |            vi : 5.0882121
-      |            lst: [11, 21, 11]
-      |            vvv = [5, t, j]
-      |
-      |          }
-      |        ]
-      |      }
-      |    ]
-      |  }
-      |]
-      |
-      |""".stripMargin*/
     """
       |b = [
       |  {
       |   table          : some_name
-      |   columns        : a
+      |   columns        : [a, b]
       |    c = [
       |      {
       |        d = [
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [1, 1, 1]
+      |            vvv = [a, b, c]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [12,12]
+      |            vvv = [d]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [13, 13, 13]
+      |            vvv = []
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [14,14]
+      |            vvv = [e]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [15,15]
+      |            vvv = [f, g]
       |          }
       |        ]
       |      }
@@ -92,30 +50,51 @@ object JustComplicatedExample extends App {
       |  }
       |  {
       |   table          : some_name
-      |   columns        : a
+      |   columns        : [a, b, c, d, e]
       |    c = [
       |      {
       |        d = [
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [21, 21]
+      |            vvv = [af]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [22, 22]
+      |            vvv = [sa, l]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [23, 23, 23]
+      |            vvv = [af, l]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [24, 24, 24]
+      |            vvv = [l]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: []
+      |            vvv = []
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: []
+      |            vvv = [af]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [27]
+      |            vvv = [af]
       |          }
       |        ]
       |      }
@@ -123,30 +102,51 @@ object JustComplicatedExample extends App {
       |  }
       |   {
       |    table          : some_name
-      |    columns        : a
+      |    columns        : []
       |    c = [
       |      {
       |        d = [
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [31, 31]
+      |            vvv = []
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [32, 32]
+      |            vvv = []
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [33, 33, 33]
+      |            vvv = []
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [34, 34, 34]
+      |            vvv = [a]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: []
+      |            vvv = [b]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: []
+      |            vvv = [c, d]
       |          }
       |          {
+      |            ci : ki
+      |            vi : bi
       |            e: [37]
+      |            vvv = [e,f,g,h,i]
       |          }
       |        ]
       |      }
@@ -174,9 +174,9 @@ object JustComplicatedExample extends App {
   final case class Y(z: String)
   final case class X(y: Y)
   final case class W(x: X)
-  final case class D(e: List[Int])
+  final case class D(e: List[Int], vvv: List[String])
   final case class C(d: List[D])
-  final case class B(c: List[C], table: String, columns: String)
+  final case class B(c: List[C], table: String, columns: List[String])
   final case class A(b: List[B], x: X, w: W)
 
   val zioConfigResult =
@@ -194,50 +194,50 @@ object JustComplicatedExample extends App {
             List(
               C(
                 List(
-                  D(List(1, 1, 1)),
-                  D(List(12, 12)),
-                  D(List(13, 13, 13)),
-                  D(List(14, 14)),
-                  D(List(15, 15))
+                  D(List(1, 1, 1), List("a", "b", "c")),
+                  D(List(12, 12), List("d")),
+                  D(List(13, 13, 13), List()),
+                  D(List(14, 14), List("e")),
+                  D(List(15, 15), List("f", "g"))
                 )
               )
             ),
             "some_name",
-            "a"
+            List("a", "b")
           ),
           B(
             List(
               C(
                 List(
-                  D(List(21, 21)),
-                  D(List(22, 22)),
-                  D(List(23, 23, 23)),
-                  D(List(24, 24, 24)),
-                  D(List()),
-                  D(List()),
-                  D(List(27))
+                  D(List(21, 21), List("af")),
+                  D(List(22, 22), List("sa", "l")),
+                  D(List(23, 23, 23), List("af", "l")),
+                  D(List(24, 24, 24), List("l")),
+                  D(List(), List()),
+                  D(List(), List("af")),
+                  D(List(27), List("af"))
                 )
               )
             ),
             "some_name",
-            "a"
+            List("a", "b", "c", "d", "e")
           ),
           B(
             List(
               C(
                 List(
-                  D(List(31, 31)),
-                  D(List(32, 32)),
-                  D(List(33, 33, 33)),
-                  D(List(34, 34, 34)),
-                  D(List()),
-                  D(List()),
-                  D(List(37))
+                  D(List(31, 31), List()),
+                  D(List(32, 32), List()),
+                  D(List(33, 33, 33), List()),
+                  D(List(34, 34, 34), List("a")),
+                  D(List(), List("b")),
+                  D(List(), List("c", "d")),
+                  D(List(37), List("e", "f", "g", "h", "i"))
                 )
               )
             ),
             "some_name",
-            "a"
+            Nil
           )
         ),
         X(

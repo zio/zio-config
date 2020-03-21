@@ -3,9 +3,6 @@ package zio
 import scala.annotation.tailrec
 
 package object config extends ReadFunctions with WriteFunctions with ConfigDocsFunctions {
-  final type ReadErrors       = ::[ReadError]
-  final type ReadErrorsVector = ReadErrors
-
   final def config[A]: ZIO[Config[A], Nothing, A] =
     ZIO.access(_.config.config)
 
@@ -16,6 +13,16 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
 
   private[config] def seqEither[A, B](either: List[Either[A, B]]): Either[A, List[B]] =
     either.foldRight(Right(List.empty[B]): Either[A, List[B]])((a, b) => a.flatMap(aa => b.map(bb => aa :: bb)))
+
+  private[config] def seqEither2[A, B, C](genError: (Int, A) => C)(list: List[Either[A, B]]): Either[List[C], List[B]] =
+    list.zipWithIndex
+      .foldLeft(Right(Nil): Either[List[C], List[B]]) {
+        case (Left(cs), (Left(a), index))   => Left(genError(index, a) :: cs)
+        case (Left(cs), (Right(b), index))  => Left(cs)
+        case (Right(bs), (Left(a), index))  => Left(genError(index, a) :: Nil)
+        case (Right(bs), (Right(b), index)) => Right(b :: bs)
+      }
+      .map(_.reverse)
 
   private[config] def seqEitherCons[A, B](either: ::[Either[A, B]]): Either[A, ::[B]] = {
     val reversed = either.reverse

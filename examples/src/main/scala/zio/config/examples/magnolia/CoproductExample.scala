@@ -1,3 +1,4 @@
+/*
 package zio.config.examples.magnolia
 
 import zio.config.magnolia.ConfigDescriptorProvider.description
@@ -90,3 +91,4 @@ object CoproductExample extends App {
       writeD == Right(Map("dance"       -> singleton("I am Dancing !!")))
   )
 }
+ */

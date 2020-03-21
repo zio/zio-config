@@ -16,7 +16,7 @@ object Config {
   def make[K, V, A](
     source: ConfigSource[K, V],
     configDescriptor: ConfigDescriptor[K, V, A]
-  ): IO[ReadError, Config[A]] =
+  ): IO[ReadError[K], Config[A]] =
     IO.fromEither(read(configDescriptor from source))
       .map(
         a =>
@@ -28,24 +28,26 @@ object Config {
           }
       )
 
-  def fromEnv[K, V, A](
+  def fromEnv[A](
     configDescriptor: ConfigDescriptor[String, String, A],
     valueDelimiter: Option[Char] = None
-  ): IO[ReadError, Config[A]] =
-    ConfigSource.fromEnv(valueDelimiter).flatMap(r => make(r, configDescriptor))
+  ): IO[ReadError[String], Config[A]] =
+    ConfigSource
+      .fromEnv(valueDelimiter)
+      .flatMap((r: ConfigSource[String, String]) => make[String, String, A](r, configDescriptor))
 
   def fromMap[A](
     map: Map[String, String],
     configDescriptor: ConfigDescriptor[String, String, A],
     pathDelimiter: Char = '.'
-  ): IO[ReadError, Config[A]] =
+  ): IO[ReadError[String], Config[A]] =
     make[String, String, A](ConfigSource.fromMap(map, pathDelimiter), configDescriptor)
 
   def fromMultiMap[A](
     map: Map[String, ::[String]],
     configDescriptor: ConfigDescriptor[String, String, A],
     pathDelimiter: Char = '.'
-  ): IO[ReadError, Config[A]] =
+  ): IO[ReadError[String], Config[A]] =
     make[String, String, A](ConfigSource.fromMultiMap(map, pathDelimiter), configDescriptor)
 
   // If reading a file, this can have read errors as well as throwable when trying to read the file
@@ -70,9 +72,9 @@ object Config {
           )
       )
 
-  def fromPropertyFile[K, V, A](
+  def fromPropertyFile[A](
     configDescriptor: ConfigDescriptor[String, String, A],
     valueDelimiter: Option[Char] = None
-  ): IO[ReadError, Config[A]] =
+  ): IO[ReadError[String], Config[A]] =
     ConfigSource.fromProperty(valueDelimiter).flatMap(r => make(r, configDescriptor))
 }

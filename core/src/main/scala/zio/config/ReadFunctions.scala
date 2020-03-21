@@ -7,27 +7,27 @@ import zio.config.ReadFunctions._
 private[config] trait ReadFunctions {
   final def read[K, V, A](
     configuration: ConfigDescriptor[K, V, A]
-  ): Either[ReadError, A] = {
+  ): Either[ReadError[K], A] = {
     def loop[V1, B](
       configuration: ConfigDescriptor[K, V1, B],
-      paths: Vector[K]
-    ): PropertyTree[K, Either[ReadError, B]] =
+      keys: Vector[K],
+      paths: Vector[Either[Int, K]]
+    ): PropertyTree[K, Either[ReadError[K], B]] =
       configuration match {
-        case ConfigDescriptor.Source(path, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
+        case ConfigDescriptor.Source(key, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
           source
-            .getConfigValue(paths :+ path) match {
+            .getConfigValue(keys :+ key) match {
             case Some(tree) =>
-              println(s"for the key: ${paths :+ path}, ${tree}")
               tree
-                .mapEmptyToError(ReadError.MissingValue((paths :+ path).toString))
+                .mapEmptyToError(ReadError.MissingValue((paths :+ Right(key))))
                 .map({
                   case Left(value) => Left(value)
                   case Right(value) =>
                     propertyType.read(value) match {
                       case Left(value) =>
                         Left(
-                          ReadError.ParseError(
-                            (paths :+ path).toString,
+                          ReadError.FormatError(
+                            (paths :+ Right(key)),
                             ReadFunctions.parseErrorMessage(value.value.toString, value.typeInfo)
                           )
                         )
@@ -40,31 +40,44 @@ private[config] trait ReadFunctions {
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
 
-          val previousResult = loop(config, paths)
-          //println(s"the previous result is ${previousResult}")
-          //println(s"the previous result is ${previousResult}")
-          val x                 = PropertyTree.sequence(previousResult)
-          val intermidateResult = x.map(seqEither(_))
-          //println(s"the next result is ${intermidateResult}")
+          val list: List[PropertyTree[K, Either[ReadError[K], B]]] =
+            loop(config, keys, paths) match {
+              case PropertyTree.Empty           => Nil
+              case PropertyTree.Sequence(value) => value
+              case x                            => x :: Nil
+            }
 
-          println("   ")
-          println("   ")
-          println("   ")
-          println("   ")
-          println("   ")
-          //println(s"the final result is ${finalResult}")
-          intermidateResult
+          println(s"before sequence is ${list}")
+
+          val result = PropertyTree
+            .sequence(list)
+            .map(
+              list =>
+                seqEither2[ReadError[K], B, ReadError[K]] {
+                  case (index: Int, readError: ReadError[K]) => readError.atIndex(index)
+                }(list) match {
+                  case Left(value)  => Left(ReadError.AndErrors(value))
+                  case Right(value) => Right(value)
+                }
+            )
+
+          println(s"after sequence is ${PropertyTree
+            .sequence(list)}")
+
+          result
+
+        //required
 
         case ConfigDescriptor.Nested(path, c) =>
-          loop(c, paths :+ path)
+          loop(c, keys :+ path, paths :+ Right(path))
 
         case cd: ConfigDescriptor.XmapEither[K, V1, a, B] =>
           val ConfigDescriptor.XmapEither(c, f, _) = cd
-          loop(c, paths).map {
+          loop(c, keys, paths).map {
             case Left(value) => Left(value)
             case Right(value) =>
               f(value) match {
-                case Left(value) => Left(ReadError.Unknown(paths.toString, new RuntimeException(value)))
+                case Left(value) => Left(ReadError.ConversionError(paths, value))
                 case Right(value) =>
                   Right(value)
               }
@@ -72,20 +85,20 @@ private[config] trait ReadFunctions {
 
         case cd: ConfigDescriptor.Default[K, V1, B] =>
           val ConfigDescriptor.Default(config, value) = cd
-          loop(config, paths).map {
+          loop(config, keys, paths).map {
             case Left(error) if (hasParseErrors(error) || hasNonFatalErrors(error)) => Left(error)
             case Left(_)                                                            => Right(value)
             case Right(value)                                                       => Right(value)
           }
 
         case ConfigDescriptor.Describe(c, _) =>
-          loop(c, paths)
+          loop(c, keys, paths)
 
         case cd: ConfigDescriptor.Optional[K, V1, B] @unchecked =>
           val ConfigDescriptor.Optional(c) = cd
-          loop(c, paths).map {
+          loop(c, keys, paths).map {
             case Left(error) if (hasParseErrors(error) || hasNonFatalErrors(error)) => Left(error)
-            case Left(r) =>
+            case Left(_) =>
               Right(None)
             case Right(value) =>
               Right(Some(value))
@@ -94,16 +107,17 @@ private[config] trait ReadFunctions {
         case r: ConfigDescriptor.Zip[K, V1, a, b] @unchecked =>
           val ConfigDescriptor.Zip(left, right) = r
 
-          println("will it ever zip")
+          val lefts  = loop(left, keys, paths)
+          val rights = loop(right, keys, paths)
 
-          val lefts  = loop(left, paths)
-          val rights = loop(right, paths)
+          println(s"left is ${lefts}")
+          println(s"right is ${rights}")
 
           val zippedRes = (lefts, rights) match {
             case (l, r) =>
               val res = l.zipWith(r) { (l, r) =>
                 (l, r) match {
-                  case (Left(l), Left(r))   => Left(AndErrors(l, r))
+                  case (Left(l), Left(r))   => Left(AndErrors(List(l, r)))
                   case (Left(l), Right(r))  => Left(l)
                   case (Right(l), Left(r))  => Left(r)
                   case (Right(l), Right(r)) => Right((l, r))
@@ -113,14 +127,14 @@ private[config] trait ReadFunctions {
               res
           }
           // println("zipped is " + zippedRes)
-          println(zippedRes)
+          println(s"the result of zip is ${zippedRes}")
           zippedRes
 
         case cd: ConfigDescriptor.OrElseEither[K, V1, a, b] @unchecked =>
           val ConfigDescriptor.OrElseEither(left, right) = cd
 
           val left1 =
-            loop(left, paths)
+            loop(left, keys, paths)
 
           val errorsInLeft =
             errors(left1)
@@ -132,9 +146,9 @@ private[config] trait ReadFunctions {
                 case Right(value) => Right(Left(value): Either[a, b])
               })
             case Some(_) =>
-              (loop(left, paths), loop(right, paths)) match {
+              (loop(left, keys, paths), loop(right, keys, paths)) match {
                 case (l, r) =>
-                  PropertyTree.orElseEither(l, r)((a, b) => OrErrors(a, b))
+                  PropertyTree.orElseEither(l, r)((a, b) => OrErrors(List(a, b)))
               }
             case None =>
               left1.map({
@@ -145,7 +159,7 @@ private[config] trait ReadFunctions {
 
         case ConfigDescriptor.OrElse(left, right) =>
           val left1 =
-            loop(left, paths)
+            loop(left, keys, paths)
 
           val errorsInLeft =
             errors(left1)
@@ -154,9 +168,9 @@ private[config] trait ReadFunctions {
             case Some(error) if hasNonFatalErrors(error) =>
               left1
             case Some(_) =>
-              (loop(left, paths), loop(right, paths)) match {
+              (loop(left, keys, paths), loop(right, keys, paths)) match {
                 case (l, r) =>
-                  PropertyTree.orElse(l, r)((a, b) => OrErrors(a, b))
+                  PropertyTree.orElse(l, r)((a, b) => OrErrors(List(a, b)))
               }
             case None =>
               left1
@@ -164,12 +178,13 @@ private[config] trait ReadFunctions {
       }
 
     val tree =
-      loop(configuration, Vector.empty[K])
+      loop(configuration, Vector.empty, Vector.empty)
 
     ReadFunctions.errors(tree) match {
       case Some(value) =>
         Left(value)
       case None =>
+        println(s"the final result is ...................................... ${tree}")
         PropertyTree.getValue(tree)
 
     }
@@ -181,56 +196,52 @@ object ReadFunctions {
   def parseErrorMessage(given: String, expectedType: String) =
     s"Provided value is ${given.toString}, expecting the type ${expectedType}"
 
-  final def hasNonFatalErrors(value: ReadError): Boolean =
-    value match {
-      case ReadError.MissingValue(_, _) => false
-      case ReadError.ParseError(_, _)   => false
-      case ReadError.Unknown(_, _)      => true
-      case ReadError.OrErrors(leftErrors, rightErrors) =>
-        hasNonFatalErrors(leftErrors) || hasNonFatalErrors(rightErrors)
-      case ReadError.AndErrors(leftErrors, rightErrors) =>
-        hasNonFatalErrors(leftErrors) || hasNonFatalErrors(rightErrors)
-    }
+  final def hasErrors[K](value: ReadError[K])(f: PartialFunction[ReadError[K], Boolean]): Boolean =
+    f.orElse[ReadError[K], Boolean]({
+        case OrErrors(errors)  => errors.exists(hasErrors(_)(f))
+        case AndErrors(errors) => errors.exists(hasErrors(_)(f))
+      })
+      .lift(value)
+      .getOrElse(false)
 
-  final def hasParseErrors[K, V1, B](value: ReadError): Boolean =
-    value match {
-      case ReadError.MissingValue(_, _) => false
-      case ReadError.ParseError(_, _)   => true
-      case ReadError.Unknown(_, _)      => true
-      case ReadError.OrErrors(leftErrors, rightErrors) =>
-        hasParseErrors(leftErrors) || hasParseErrors(rightErrors)
-      case ReadError.AndErrors(leftErrors, rightErrors) =>
-        hasParseErrors(leftErrors) || hasParseErrors(rightErrors)
-    }
+  final def hasParseErrors[K](error: ReadError[K]): Boolean =
+    hasErrors(error)({ case ReadError.FormatError(_, _) => true })
 
-  final def errors[K, V1, B](tree: PropertyTree[K, Either[ReadError, B]]): Option[ReadError] = {
-    def loop(tree: PropertyTree[K, Either[ReadError, B]], acc: Option[ReadError]): Option[ReadError] =
+  final def hasNonFatalErrors[K](error: ReadError[K]): Boolean =
+    hasErrors(error)({ case ReadError.ConversionError(_, _) => true })
+
+  final def errors[K, V1, B](tree: PropertyTree[K, Either[ReadError[K], B]]): Option[ReadError[K]] = {
+    def loop(tree: PropertyTree[K, Either[ReadError[K], B]], acc: Option[ReadError[K]]): Option[ReadError[K]] =
       tree match {
         case PropertyTree.Leaf(value) =>
           value match {
-            case Left(value) => Some(acc.fold(value)(res => AndErrors(res, value)))
-            case Right(_)    => acc
+            case Left(value) =>
+              Some(acc.fold(value)({
+                case AndErrors(list) => AndErrors(value :: list)
+                case errors          => AndErrors(List(errors, value))
+              }))
+            case Right(_) => acc
           }
         case PropertyTree.Record(value) =>
-          value.toList.map(_._2).map(tree => loop(tree, acc)).foldLeft(None: Option[ReadError]) { (acc, a) =>
+          value.toList.map(_._2).map(tree => loop(tree, acc)).foldLeft(None: Option[ReadError[K]]) { (acc, a) =>
             (acc, a) match {
-              case (Some(l), Some(r)) => Some(AndErrors(l, r))
+              case (Some(l), Some(r)) => Some(AndErrors(List(l, r)))
               case (_, Some(value))   => Some(value)
               case (Some(value), _)   => Some(value)
               case (None, None)       => None
             }
           }
         case PropertyTree.Sequence(value) =>
-          value.map(tree => loop(tree, acc)).foldLeft(None: Option[ReadError]) { (acc, a) =>
+          value.map(tree => loop(tree, acc)).foldLeft(None: Option[ReadError[K]]) { (acc, a) =>
             (acc, a) match {
-              case (Some(l), Some(r)) => Some(AndErrors(l, r))
+              case (Some(l), Some(r)) => Some(AndErrors(List(l, r)))
               case (_, Some(value))   => Some(value)
               case (Some(value), _)   => Some(value)
               case (None, None)       => None
             }
           }
 
-        case PropertyTree.Empty => Some(ReadError.MissingValue("bla"))
+        case PropertyTree.Empty => None
       }
 
     loop(tree, None)

@@ -35,11 +35,13 @@ object CollectAllExample extends App {
     )
 
   val result = read(configOfList from ConfigSource.fromMap(map))
-  val written: Either[ReadError, Either[String, PropertyTree[String, String]]] =
+  val written: Either[ReadError[String], Either[String, PropertyTree[String, String]]] =
     result match {
       case Left(value)  => Left(value)
       case Right(value) => Right(write(configOfList, value))
     }
+
+  println(written)
 
   assert(
     result == Right(::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))))

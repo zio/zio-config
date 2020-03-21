@@ -42,7 +42,7 @@ object ReadWriteReport extends App {
 
   val config = configWithoutSource from source
 
-  val result: Either[ReadError, Either[UserPwd, Token]] =
+  val result =
     read(config) // Equivalent to Config.fromMap(userNamePassword, config)
 
   val expected =

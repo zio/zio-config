@@ -21,9 +21,8 @@ sealed trait PropertyTree[+K, +V] { self =>
 
   final def zipWith[K1 >: K, V2, V3](that: PropertyTree[K1, V2])(f: (V, V2) => V3): PropertyTree[K, V3] =
     (self, that) match {
-      case (Empty, _) => Empty
-      case (_, Empty) => Empty
       case (Sequence(ls), Sequence(rs)) =>
+        println(s"m i here? ${ls} and ${rs}")
         val max = ls.length.max(rs.length)
         val min = ls.length.min(rs.length)
         val pad = List.fill(max - min)(Empty)
@@ -38,12 +37,13 @@ sealed trait PropertyTree[+K, +V] { self =>
         rsss
 
       case (l: Record[K, V] @unchecked, r: Record[K, V2] @unchecked) =>
+        println(s"in records ${l} and ${r}")
         Record((l.value.keySet ++ r.value.keySet).foldLeft(Map.empty[K, PropertyTree[K, V3]]) {
           case (map, key) =>
-            (for {
-              v  <- l.value.get(key.asInstanceOf[K])
-              v2 <- r.value.get(key.asInstanceOf[K])
-            } yield v.zipWith(v2)(f)).fold(map)(v3 => map.updated(key, v3))
+            val v  = l.value.getOrElse(key.asInstanceOf[K], Empty)
+            val v2 = r.value.getOrElse(key.asInstanceOf[K], Empty)
+
+            map.updated(key, v.zipWith(v2)(f))
         })
 
       case (Leaf(l), Leaf(r)) =>
@@ -59,10 +59,53 @@ sealed trait PropertyTree[+K, +V] { self =>
 
       case (Record(l), r) =>
         Record(l.mapValues(v => v.zipWith(r)(f)).toMap)
+
+      case (Empty, _) => Empty
+
+      case (_, Empty) => Empty
     }
 
   final def zip[K1 >: K, V2, V3](that: PropertyTree[K1, V2]): PropertyTree[K1, (V, V2)] =
     self.zipWith(that)((a, b) => ((a, b)))
+
+  final def transformSome[K1 >: K, V1 >: V](
+    f: PartialFunction[PropertyTree[K1, V1], PropertyTree[K1, V1]]
+  ): PropertyTree[K1, V1] =
+    self match {
+      case x @ Leaf(_) => f.lift(x).getOrElse(x)
+      case x @ Record(value) =>
+        val r = Record(value.mapValues(_.transformSome(f)).toMap[K1, PropertyTree[K1, V1]])
+        f.lift(r).getOrElse(r)
+      case x @ PropertyTree.Empty => f.lift(x).getOrElse(x)
+      case x @ Sequence(value) =>
+        val s = Sequence(value.map(_.transformSome(f)))
+        f.lift(s).getOrElse(s)
+    }
+
+  def mapEmpty[K1 >: K, V1 >: V](f: Vector[Either[Int, K1]] => PropertyTree[K1, V1]): PropertyTree[K1, V1] = {
+    def loop(acc: Vector[Either[Int, K1]], tree: PropertyTree[K, V]): PropertyTree[K1, V1] =
+      tree match {
+        case Leaf(value) => Leaf(value)
+        case Record(value) =>
+          Record(
+            value
+              .map(
+                a =>
+                  a._1.asInstanceOf[K1] -> loop(
+                    acc :+ Right(a._1.asInstanceOf[K1]),
+                    a._2.asInstanceOf[PropertyTree[K, V]]
+                  )
+              )
+          )
+        case PropertyTree.Empty => f(acc)
+        case Sequence(value) =>
+          Sequence(value.zipWithIndex.map {
+            case (v, index) => loop(acc :+ Left(index), v)
+          })
+      }
+
+    loop(Vector.empty, self)
+  }
 
   final def flatten[K1 >: K, V1 >: V]: Map[Vector[K1], ::[V1]] = {
     def go(key: Vector[K1], propertyTree: PropertyTree[K1, V], acc: Map[Vector[K1], ::[V1]]): Map[Vector[K1], ::[V1]] =
@@ -180,83 +223,10 @@ object PropertyTree {
     }
 
   def sequence[K, V](tree: List[PropertyTree[K, V]]): PropertyTree[K, List[V]] =
-    tree.foldRight(Leaf(Nil): PropertyTree[K, List[V]]) { (a, acc) =>
-      a.zipWith[K, List[V], List[V]](acc)(_ :: _)
+    tree match {
+      case ::(head, next) => head.zipWith(sequence(next))(_ :: _)
+      case Nil            => Leaf(Nil)
     }
-
-  def sequence[K, V](tree: PropertyTree[K, V]): PropertyTree[K, List[V]] = {
-    val result = tree match {
-      case Leaf(value) =>
-        Leaf(singleton(value))
-      case Record(value) =>
-        Record(value.mapValues(t => t.map(singleton)).toMap)
-      case Empty =>
-        Empty
-      case Sequence(value) =>
-        def loop(acc: PropertyTree[K, List[V]], rest: List[PropertyTree[K, V]]): PropertyTree[K, List[V]] =
-          rest match {
-            case h1 :: Nil =>
-              acc.zipWith(sequence(h1))(_ ++ _)
-            case Nil =>
-              acc
-            case h1 :: h2 :: h3 =>
-              (h1, h2) match {
-                case (l: Record[K, V], r: Record[K, V]) =>
-                  val zipped =
-                    l.zipWith(r)((a, b) => List(a, b))
-
-                  loop(acc.zipWith(zipped)((a, b) => a ++ b), h3)
-
-                case (l: Leaf[V], r: Leaf[V]) =>
-                  Sequence(List(loop(acc.zipWith(Leaf(List(l.value, r.value)))((a, b) => a ++ b), h3)))
-
-                case (Sequence(v1), Sequence(v2)) =>
-                  val res1 = loop(acc, v1)
-                  val res2 = loop(acc, v2)
-
-                  if (h3.isEmpty) {
-                    Sequence(List(res1, res2))
-                  } else {
-                    Sequence(List(res1, res2, loop(acc, h3)))
-                  }
-                // This never called
-                case (Empty, Empty) =>
-                  loop(acc, h3)
-
-                // This never called
-                case (l, Empty) =>
-                  acc.zipWith(sequence(l))(_ ++ _)
-
-                // This never called
-                case (Empty, l) =>
-                  acc.zipWith(sequence(l))(_ ++ _)
-
-                // This never called
-                case (Sequence(l), r) =>
-                  Sequence(List(loop(acc, l), sequence(r), loop(acc, h3)))
-
-                case (l, Sequence(r)) =>
-                  Sequence(List(sequence(l), loop(acc, r), loop(acc, h3)))
-
-                case (l, r: Record[K, V] @unchecked) =>
-                  val zipped =
-                    l.zipWith(r)((a, b) => List(a, b))
-
-                  loop(acc.zipWith(zipped)((a, b) => a ++ b), h3)
-
-                case (l: Record[K, V] @unchecked, r) =>
-                  val zipped =
-                    l.zipWith(r)((a, b) => List(a, b))
-
-                  loop(acc.zipWith(zipped)((a, b) => a ++ b), h3)
-              }
-          }
-
-        loop(PropertyTree.Leaf(Nil), value)
-    }
-
-    result
-  }
 
   def orElseEither[K, E1, E2, E3, A, B](
     tree1: PropertyTree[K, Either[E1, A]],
@@ -300,49 +270,4 @@ object PropertyTree {
       case Sequence(value) => getValue(value.head)
     }
 
-} /*
-
-object Example extends App {
-
-  val simpleInput =
-    Sequence(
-      List(
-        Sequence(List(Record(Map("lst" -> Leaf(Right(1)))))),
-        Sequence(List(Record(Map("lst" -> Leaf(Right(12)))))),
-        Sequence(List(Record(Map("lst" -> Leaf(Right(13)))))),
-        Sequence(List(Record(Map("lst" -> Leaf(Right(14))))))
-      )
-    )
-
-  val input = Sequence(
-    List(
-      Sequence(
-        List(
-          Sequence(
-            List(
-              Sequence(List(Record(Map("lst" -> Leaf(Right(1)))))),
-              Sequence(List(Record(Map("lst" -> Leaf(Right(12)))))),
-              Sequence(List(Record(Map("lst" -> Leaf(Right(13)))))),
-              Sequence(List(Record(Map("lst" -> Leaf(Right(14))))))
-            )
-          )
-        )
-      ),
-      Sequence(
-        List(
-          Sequence(
-            List(
-              Sequence(List(Record(Map("lst" -> Leaf(Right(21)))))),
-              Sequence(List(Record(Map("lst" -> Leaf(Right(22)))))),
-              Sequence(List(Record(Map("lst" -> Leaf(Right(23)))))),
-              Sequence(List(Record(Map("lst" -> Leaf(Right(24))))))
-            )
-          )
-        )
-      )
-    )
-  )
-
-  println(PropertyTree.sequence(input))
 }
- */

@@ -1,3 +1,4 @@
+/*
 package zio.config.examples.refined
 
 import eu.timepit.refined.W
@@ -52,3 +53,4 @@ object RefinedReadConfig extends App {
       )
     }
 }
+ */

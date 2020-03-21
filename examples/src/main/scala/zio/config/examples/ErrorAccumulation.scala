@@ -24,8 +24,10 @@ object ErrorAccumulation extends App {
         // OrErrors indicate fix either of those errors associated with envvar2 or envvar3
         // AndErrors indicate fix the errors associated with both envvar1 and OrError(envvar2 or envvar3)
         AndErrors(
-          MissingValue(Vector("envvar").toString),
-          OrErrors(MissingValue(Vector("envvar2").toString), MissingValue(Vector("envvar3").toString))
+          List(
+            MissingValue(Vector(Right("envvar"))),
+            OrErrors(List(MissingValue(Vector(Right("envvar2"))), MissingValue(Vector(Right("envvar3")))))
+          )
         )
       )
   )
@@ -42,8 +44,10 @@ object ErrorAccumulation extends App {
     read(config from invalidSource) ==
       Left(
         AndErrors(
-          ParseError(Vector("envvar").toString, ReadFunctions.parseErrorMessage("wrong", "int")),
-          OrErrors(MissingValue(Vector("envvar2").toString), MissingValue(Vector("envvar3").toString)): ReadError
+          List(
+            FormatError(Vector(Right("envvar")), ReadFunctions.parseErrorMessage("wrong", "int")),
+            OrErrors(List(MissingValue(Vector(Right("envvar2"))), MissingValue(Vector(Right("envvar3")))))
+          )
         )
       )
   )

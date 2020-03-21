@@ -17,7 +17,7 @@ object ApplicationConfig {
 }
 
 // The main App
-object SimpleExampleMain extends App {
+object PropertiesFileExample extends App {
   override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] = {
     val pgm =
       for {

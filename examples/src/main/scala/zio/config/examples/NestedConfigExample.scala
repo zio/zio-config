@@ -3,7 +3,6 @@ package zio.config.examples
 import zio.config._
 import ConfigDescriptor._, zio.config.ConfigDocs.Details._
 import zio.DefaultRuntime
-import zio.config.PropertyTree.{ Leaf, Record }
 import zio.config.ConfigDocs._
 import ConfigSource._
 

@@ -4,7 +4,7 @@ import zio.DefaultRuntime
 //import zio.config.ReadFunctions
 import zio.config.ConfigDescriptor.{ int, list, nested, string }
 //import zio.config.ReadError.ParseError
-import zio.config.magnolia.ConfigDescriptorProvider.description
+//import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
 
@@ -16,7 +16,7 @@ object TypesafeConfigHoconExample extends App {
   final case class Database(port: Int, url: String)
   final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
 
-  val configNestedAutomatic =
+  /*val configNestedAutomatic =
     description[AwsConfig]
 
   val hocconStringWithStringDb =
@@ -131,7 +131,7 @@ object TypesafeConfigHoconExample extends App {
   val finalResult =
     read(configWithHoconSubstitution from hocon(Right(hoconStringWithSubstitution)))
 
-  assert(finalResult == Right(DatabaseDetails(Details(8, "west"), Details(6, "east"))))
+  assert(finalResult == Right(DatabaseDetails(Details(8, "west"), Details(6, "east"))))*/
 
   // List Example
 
@@ -139,15 +139,15 @@ object TypesafeConfigHoconExample extends App {
     """
     accounts = [
       {
-          region : us-east
+          region : [x1, x2, x3]
           accountId: jon
       }
       {
-          region : us-west
+          region : [y1, y2, y3]
           accountId: chris
       }
       {
-          region : us-some
+          region :[z1, z2]
           accountId: hello
       }
     ]
@@ -159,10 +159,12 @@ object TypesafeConfigHoconExample extends App {
 
     """
 
-  final case class AwsDetails(accounts: List[Account], database: Database)
+  final case class AccountRegions(region: List[String], accountId: String)
+
+  final case class AwsDetails(accounts: List[AccountRegions], database: Database)
 
   val accountConfig =
-    (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
+    (list(string("region")) |@| string("accountId"))(AccountRegions.apply, AccountRegions.unapply)
 
   val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
 
@@ -175,11 +177,16 @@ object TypesafeConfigHoconExample extends App {
   val listResult =
     read(awsDetailsConfig from hocon(Right(listHocon)))
 
+  println(listResult)
   assert(
     listResult ==
       Right(
         AwsDetails(
-          List(Account("us-east", "jon"), Account("us-west", "chris"), Account("us-some", "hello")),
+          List(
+            AccountRegions(List("x1", "y1", "z1"), "jon"),
+            AccountRegions(List("x2", "y2", "z2"), "chris"),
+            AccountRegions(List("x3", "y3", "z3"), "hello")
+          ),
           Database(100, "postgres")
         )
       )

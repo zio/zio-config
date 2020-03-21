@@ -34,29 +34,39 @@ object TypeSafeConfigSource {
 
             case ConfigValueType.LIST =>
               Try {
-
                 acc.updated(
                   key,
                   Sequence(config.getConfigList(key).asScala.toList.map(eachConfig => Record(loop(eachConfig))))
                 )
-
               }.orElse({
-                Try {
-                  acc.updated(
-                    key,
-                    Sequence(
-                      config
-                        .getList(key)
-                        .unwrapped()
-                        .asScala
-                        .map(t => Record(Map(key -> Leaf(t.toString))))
-                        .toList
+                  Try {
+                    acc.updated(
+                      key,
+                      Sequence(
+                        config
+                          .getStringList(key)
+                          .asScala
+                          .map(t => Record(Map(key -> Leaf(t))))
+                          .toList
+                      )
                     )
+                  }
+                })
+                .orElse({
+                  Try {
+                    acc.updated(
+                      key,
+                      Sequence(
+                        config.getObjectList(key).asScala.toList.map(eachConfig => Record(loop(eachConfig.toConfig)))
+                      )
+                    )
+                  }
+                }) match {
+                case Failure(_) =>
+                  throw new Exception(
+                    "Possibly due to the presence of explicit nulls in hoccon, which may not be what you have intended for."
                   )
-                }
-              }) match {
-                case Failure(exception) => throw new Exception(s"I cant handle this. ${exception}")
-                case Success(value)     => value
+                case Success(value) => value
               }
 
             case ConfigValueType.BOOLEAN =>
@@ -66,7 +76,7 @@ object TypeSafeConfigSource {
             case ConfigValueType.NULL =>
               acc.updated(key, PropertyTree.empty)
             case ConfigValueType.STRING =>
-              acc.updated(key, Leaf(config.getString(key).toString))
+              acc.updated(key, Leaf(config.getString(key)))
           }
         }
       }

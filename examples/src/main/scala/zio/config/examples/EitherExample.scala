@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.config._
 import ConfigDescriptor._
-import zio.config.ReadError.{ MissingValue, OrErrors, ParseError }
+import zio.config.ReadError.{ FormatError, MissingValue, OrErrors }
 //import zio.config.ReadError._
 import zio.config.{ ConfigSource, _ }
 
@@ -71,8 +71,10 @@ object EitherExample extends App {
       Left(
         // OrErrors indicate that either fix the error with x1 or the error with x5
         OrErrors(
-          MissingValue(Vector("x1").toString),
-          ParseError(Vector("x5").toString, ReadFunctions.parseErrorMessage("notadouble", "double"))
+          List(
+            MissingValue(Vector(Right("x1"))),
+            FormatError(Vector(Right("x5")), ReadFunctions.parseErrorMessage("notadouble", "double"))
+          )
         )
       )
   )
