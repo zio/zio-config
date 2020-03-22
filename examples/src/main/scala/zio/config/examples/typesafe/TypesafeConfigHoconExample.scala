@@ -139,16 +139,79 @@ object TypesafeConfigHoconExample extends App {
     """
     accounts = [
       {
-          region : [x1, x2, x3]
-          accountId: jon
+          region : x1
+          accountId = [
+            {
+              bank : cba
+              country = [
+                {
+                  name : aus
+                  code : 10
+                }
+              ]
+            
+            }
+            
+            {
+              bank : abc
+              country = [
+                {
+                  name : sua
+                  code : 20
+                }
+              ]
+            }
+          ]
       }
       {
-          region : [y1, y2, y3]
-          accountId: chris
+          region : x2
+          accountId = [
+            {
+              bank : cba
+              country = [
+                {
+                  name : aus
+                  code : 10
+                }
+              ]
+            
+            }
+            
+            {
+              bank : abc
+              country = [
+                {
+                  name : sua
+                  code : 20
+                }
+              ]
+            }
+          ]
       }
       {
-          region :[z1, z2]
-          accountId: hello
+          region : x3
+               accountId = [
+            {
+              bank : cba
+              country = [
+                {
+                  name : aus
+                  code : 10
+                }
+              ]
+            
+            }
+            
+            {
+              bank : abc
+              country = [
+                {
+                  name : sua
+                  code : 20
+                }
+              ]
+            }
+          ]
       }
     ]
 
@@ -159,12 +222,22 @@ object TypesafeConfigHoconExample extends App {
 
     """
 
-  final case class AccountRegions(region: List[String], accountId: String)
+  final case class Country(name: String, code: Int)
+  final case class AccountIdDetails(bank: String, country: List[Country])
+  final case class AccountRegions(region: String, accountId: List[AccountIdDetails])
 
   final case class AwsDetails(accounts: List[AccountRegions], database: Database)
 
+  val countryConfig = (string("name") |@| int("code"))(Country.apply, Country.unapply)
+
+  val accountDetailsConfig =
+    (string("bank") |@| nested("country")(list(countryConfig)))(AccountIdDetails.apply, AccountIdDetails.unapply)
+
   val accountConfig =
-    (list(string("region")) |@| string("accountId"))(AccountRegions.apply, AccountRegions.unapply)
+    (string("region") |@| nested("accountId")(list(accountDetailsConfig)))(
+      AccountRegions.apply,
+      AccountRegions.unapply
+    )
 
   val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
 
@@ -178,7 +251,7 @@ object TypesafeConfigHoconExample extends App {
     read(awsDetailsConfig from hocon(Right(listHocon)))
 
   println(listResult)
-  assert(
+  /*  assert(
     listResult ==
       Right(
         AwsDetails(
@@ -190,5 +263,5 @@ object TypesafeConfigHoconExample extends App {
           Database(100, "postgres")
         )
       )
-  )
+  )*/
 }

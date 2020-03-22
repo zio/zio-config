@@ -46,7 +46,7 @@ object TypeSafeConfigSource {
                         config
                           .getStringList(key)
                           .asScala
-                          .map(t => Record(Map(key -> Leaf(t))))
+                          .map(t => Leaf(t))
                           .toList
                       )
                     )

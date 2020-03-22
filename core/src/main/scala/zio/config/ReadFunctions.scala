@@ -47,9 +47,7 @@ private[config] trait ReadFunctions {
               case x                            => x :: Nil
             }
 
-          println(s"before sequence is ${list}")
-
-          val result = PropertyTree
+          PropertyTree
             .sequence(list)
             .map(
               list =>
@@ -60,11 +58,6 @@ private[config] trait ReadFunctions {
                   case Right(value) => Right(value)
                 }
             )
-
-          println(s"after sequence is ${PropertyTree
-            .sequence(list)}")
-
-          result
 
         //required
 
