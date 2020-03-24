@@ -40,24 +40,12 @@ private[config] trait ReadFunctions {
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
 
-          val list: List[PropertyTree[K, Either[ReadError[K], B]]] =
-            loop(config, keys, paths) match {
-              case PropertyTree.Empty           => Nil
-              case PropertyTree.Sequence(value) => value
-              case x                            => x :: Nil
-            }
-
-          PropertyTree
-            .sequence(list)
-            .map(
-              list =>
-                seqEither2[ReadError[K], B, ReadError[K]] {
-                  case (index: Int, readError: ReadError[K]) => readError.atIndex(index)
-                }(list) match {
-                  case Left(value)  => Left(ReadError.AndErrors(value))
-                  case Right(value) => Right(value)
-                }
-            )
+          loop(config, keys, paths).map(_.map(_ :: Nil)).reduceInner[Either[ReadError[K], List[B]]] {
+            case (Right(l), Right(r)) => Right(l ++ r)
+            case (Left(l), Right(_))  => Left(l)
+            case (Right(_), Left(r))  => Left(r)
+            case (Left(l), Left(r))   => Left(ReadError.AndErrors(l :: r :: Nil))
+          }
 
         //required
 

@@ -139,13 +139,11 @@ object TypesafeConfigHoconExample extends App {
     """
     accounts = [
       {
-          region : x1
-          accountId = [
+          details = [
             {
-              bank : cba
               country = [
                 {
-                  name : aus
+                  name : a1
                   code : 10
                 }
               ]
@@ -153,10 +151,9 @@ object TypesafeConfigHoconExample extends App {
             }
             
             {
-              bank : abc
               country = [
                 {
-                  name : sua
+                  name : b1  
                   code : 20
                 }
               ]
@@ -164,13 +161,11 @@ object TypesafeConfigHoconExample extends App {
           ]
       }
       {
-          region : x2
-          accountId = [
+          details = [
             {
-              bank : cba
               country = [
                 {
-                  name : aus
+                  name : a2
                   code : 10
                 }
               ]
@@ -178,35 +173,9 @@ object TypesafeConfigHoconExample extends App {
             }
             
             {
-              bank : abc
               country = [
                 {
-                  name : sua
-                  code : 20
-                }
-              ]
-            }
-          ]
-      }
-      {
-          region : x3
-               accountId = [
-            {
-              bank : cba
-              country = [
-                {
-                  name : aus
-                  code : 10
-                }
-              ]
-            
-            }
-            
-            {
-              bank : abc
-              country = [
-                {
-                  name : sua
+                  name : b2
                   code : 20
                 }
               ]
@@ -214,43 +183,70 @@ object TypesafeConfigHoconExample extends App {
           ]
       }
     ]
-
-    database {
-        port : 100
-        url  : postgres
-    }
-
     """
 
-  final case class Country(name: String, code: Int)
-  final case class AccountIdDetails(bank: String, country: List[Country])
-  final case class AccountRegions(region: String, accountId: List[AccountIdDetails])
+  /*  the original tree is Record(
+    Map(
+      accounts -> Sequence(
+        List(
+          Record(
+            Map(
+              accountId -> Sequence(
+                List(
+                  Record(Map(country -> Sequence(List(Record(Map(code -> Leaf(10), name -> Leaf(aus))))))),
+                  Record(Map(country -> Sequence(List(Record(Map(code -> Leaf(20), name -> Leaf(sua)))))))
+                )
+              )
+            )
+          ),
+          Record(
+            Map(
+              accountId -> Sequence(
+                List(
+                  Record(Map(country -> Sequence(List(Record(Map(code -> Leaf(10), name -> Leaf(aus))))))),
+                  Record(Map(country -> Sequence(List(Record(Map(code -> Leaf(20), name -> Leaf(sua)))))))
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )*/
 
-  final case class AwsDetails(accounts: List[AccountRegions], database: Database)
+  final case class Country(name: String, code: Int)
+  final case class Details(country: List[Country])
+  final case class AccountDetails(details: List[Details])
+
+  final case class Accounts(accounts: List[AccountDetails])
 
   val countryConfig = (string("name") |@| int("code"))(Country.apply, Country.unapply)
 
   val accountDetailsConfig =
-    (string("bank") |@| nested("country")(list(countryConfig)))(AccountIdDetails.apply, AccountIdDetails.unapply)
+    nested("country")(list(countryConfig).xmap(Details.apply)(_.country))
 
   val accountConfig =
-    (string("region") |@| nested("accountId")(list(accountDetailsConfig)))(
-      AccountRegions.apply,
-      AccountRegions.unapply
+    nested("details")(list(accountDetailsConfig)).xmap(AccountDetails.apply)(
+      _.details
     )
 
   val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
 
   val awsDetailsConfig =
-    (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig))(
-      AwsDetails.apply,
-      AwsDetails.unapply
+    (nested("accounts")(list(accountConfig))).xmap(
+      Accounts.apply
+    )(
+      _.accounts
     )
 
   val listResult =
     read(awsDetailsConfig from hocon(Right(listHocon)))
 
   println(listResult)
+
+  // Right(AwsDetails(List(AccountRegions(List(AccountIdDetails(List(Country(a1,10), Country(b1,20))))))))
+
+  //Right(AwsDetails(List(AccountRegions(List(AccountIdDetails(List(Country(aus, 10), Country(sua, 20))))))))
   /*  assert(
     listResult ==
       Right(

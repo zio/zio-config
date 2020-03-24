@@ -22,7 +22,6 @@ sealed trait PropertyTree[+K, +V] { self =>
   final def zipWith[K1 >: K, V2, V3](that: PropertyTree[K1, V2])(f: (V, V2) => V3): PropertyTree[K, V3] =
     (self, that) match {
       case (Sequence(ls), Sequence(rs)) =>
-        println(s"m i here? ${ls} and ${rs}")
         val max = ls.length.max(rs.length)
         val min = ls.length.min(rs.length)
         val pad = List.fill(max - min)(Empty)
@@ -37,7 +36,6 @@ sealed trait PropertyTree[+K, +V] { self =>
         rsss
 
       case (l: Record[K, V] @unchecked, r: Record[K, V2] @unchecked) =>
-        println(s"in records ${l} and ${r}")
         Record((l.value.keySet ++ r.value.keySet).foldLeft(Map.empty[K, PropertyTree[K, V3]]) {
           case (map, key) =>
             val v  = l.value.getOrElse(key.asInstanceOf[K], Empty)
@@ -138,6 +136,41 @@ sealed trait PropertyTree[+K, +V] { self =>
         }
     }
 
+  def reduceInner[V1 >: V](f: (V1, V1) => V1): PropertyTree[K, V1] = {
+    def flatten[A, B](tuple: (List[(List[A], List[B])], List[B])): (List[A], List[B]) =
+      (tuple._1.flatMap(_._1), tuple._1.flatMap(_._2) ++ tuple._2)
+
+    def pruneEmpty[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
+      list.collect {
+        case tree if !tree.isEmpty => tree
+      }
+
+    self match {
+      case Empty         => Empty
+      case Leaf(value)   => Leaf(value)
+      case Record(value) => Record(value.mapValues(_.reduceInner(f)).toMap)
+      case Sequence(value) =>
+        val (vs0, rest0) = flatten(PropertyTree.partitionWith(value) {
+          case Sequence(value) =>
+            PropertyTree.partitionWith(value) {
+              case Leaf(value) => value
+            }
+        })
+
+        val (vs, rest) = (vs0, pruneEmpty(rest0))
+
+        println(s"the result of ${self} is ${vs}")
+        println(s"the result of rest${rest}")
+
+        (vs, rest) match {
+          case (Nil, _)  => Sequence(value.map(_.reduceInner(f)))
+          case (vs, Nil) => Leaf(vs.reduce(f))
+          case (vs, _)   => PropertyTree.empty
+
+        }
+    }
+  }
+
   final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): List[PropertyTree[K1, V1]] =
     (self, that) match {
       case (left, right) if left.isEmpty  => singleton(right)
@@ -156,7 +189,7 @@ sealed trait PropertyTree[+K, +V] { self =>
               }
           }
           .map(v => PropertyTree.Record(v))
-      case (l, r) => ::(l, r :: Nil)
+      case (l, r) => l :: r :: Nil
     }
 
   final def flattenString[K1 >: K, V1 >: V](
@@ -222,6 +255,16 @@ object PropertyTree {
       case (acc, tree) => acc.flatMap(tree0 => tree.merge(tree0))
     }
 
+  def partitionWith[K, V, A](
+    trees: List[PropertyTree[K, V]]
+  )(pf: PartialFunction[PropertyTree[K, V], A]): (List[A], List[PropertyTree[K, V]]) =
+    trees.collect {
+      case tree if pf.isDefinedAt(tree) => (pf(tree) :: Nil, Nil)
+      case tree                         => (Nil, tree :: Nil)
+    }.foldLeft((List.empty[A], List.empty[PropertyTree[K, V]])) {
+      case ((accLeft, accRight), (left, right)) => (accLeft ++ left, accRight ++ right)
+    }
+
   def sequence[K, V](tree: List[PropertyTree[K, V]]): PropertyTree[K, List[V]] =
     tree match {
       case ::(head, next) => head.zipWith(sequence(next))(_ :: _)
@@ -269,5 +312,144 @@ object PropertyTree {
       case Empty           => throw new Exception("bhoom")
       case Sequence(value) => getValue(value.head)
     }
+
+}
+
+object Example extends App {
+  final case class Country(name: String, code: Int)
+  final case class AccountIdDetails(country: List[Country])
+  final case class AccountRegions(accountId: List[AccountIdDetails])
+  final case class AwsDetails(accounts: List[AccountRegions])
+
+  val listHocon =
+    """
+    accounts = [
+      {
+          
+          accountId = [
+            {
+              country = [
+                {
+                  name : aus
+                  code : 10
+                }
+              ]
+            
+            }
+            
+            {
+              country = [
+                {
+                  name : sua  
+                  code : 20
+                }
+              ]
+            }
+          ]
+      }
+      {
+          accountId = [
+            {
+              country = [
+                {
+                  name : aus
+                  code : 10
+                }
+              ]
+            
+            }
+            
+            {
+              country = [
+                {
+                  name : sua
+                  code : 20
+                }
+              ]
+            }
+          ]
+      }
+    ]
+    """
+
+  val tree =
+    Record(
+      Map(
+        "accounts" -> Sequence(
+          List(
+            Record(
+              Map(
+                "accountId" -> Sequence(
+                  List(
+                    Record(Map("country" -> Sequence(List(Record(Map("code" -> Leaf("10"), "name" -> Leaf("aus"))))))),
+                    Record(Map("country" -> Sequence(List(Record(Map("code" -> Leaf("20"), "name" -> Leaf("sua")))))))
+                  )
+                )
+              )
+            ),
+            Record(
+              Map(
+                "accountId" -> Sequence(
+                  List(
+                    Record(Map("country" -> Sequence(List(Record(Map("code" -> Leaf("10"), "name" -> Leaf("aus"))))))),
+                    Record(Map("country" -> Sequence(List(Record(Map("code" -> Leaf("20"), "name" -> Leaf("sua")))))))
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+
+  // The result of this output is
+  Right(
+    AwsDetails(
+      List(
+        AccountRegions(
+          List(
+            AccountIdDetails(List(Country("aus", 10), Country("aus", 10))),
+            AccountIdDetails(List(Country("sua", 20), Country("sua", 20)))
+          )
+        )
+      )
+    )
+  )
+
+  // Think this is coz
+
+  // Step 1
+  val countryTree = tree.getPath(List("accounts", "accountId", "country", "name"))
+
+  println("get path " + countryTree)
+
+  // Sequence(
+  //   List(
+  //     Sequence(List(Sequence(List(Leaf(aus))), Sequence(List(Leaf(sua))))),
+  //     Sequence(List(Sequence(List(Leaf(aus))), Sequence(List(Leaf(sua)))))
+  //   )
+  // )
+
+  // Sequence(
+  //   List(
+  //    Leaf(List(aus, sua)),
+  //    Leaf(List(aus, sua))
+  //   )
+  // )
+
+  // Sequence(List(Sequence(List(Sequence(List(Leaf(aus), Leaf(sua)))), Sequence(List(Sequence(List(Leaf(aus), Leaf(sua)))))))
+  println("result is " + countryTree.map(_ :: Nil).reduceInner(_ ++ _))
+
+  // Sequence(
+  //   List(
+  //     Sequence(List(Leaf(List(aus)))),
+  //     Sequence(List(Leaf(List(sua)))),
+  //     Sequence(List(Leaf(List(aus)))),
+  //     Sequence(List(Leaf(List(sua))))
+  //   )
+  // )
+
+  // Step 2: Sequence this PropertyTree, and that's mindbending
+  // To narrow dow the example:
 
 }

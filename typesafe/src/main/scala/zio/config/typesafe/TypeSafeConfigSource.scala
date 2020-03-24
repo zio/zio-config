@@ -14,7 +14,8 @@ import PropertyTree._
 
 object TypeSafeConfigSource {
   def hocon(input: Either[com.typesafe.config.Config, String]): ConfigSource[String, String] = {
-    val tree        = getPropertyTree(input)
+    val tree = getPropertyTree(input)
+    println(s"the original tree is ${tree}")
     val anotherTree = ConfigSource.getConfigSource(List(tree), "hocon")
     anotherTree
   }
