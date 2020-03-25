@@ -26,7 +26,7 @@ object Config {
     source: ConfigSource[K, V],
     configDescriptor: ConfigDescriptor[K, V, A]
   ): IO[ReadErrors[Vector[K], V], Service[A]] =
-    read(configDescriptor from source).map(succeed)
+    read(configDescriptor from source).map(succeed(_))
 
   def fromEnv[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
