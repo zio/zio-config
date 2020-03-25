@@ -90,10 +90,6 @@ private[config] trait ReadFunctions {
 
           val lefts  = loop(left, keys, paths)
           val rights = loop(right, keys, paths)
-
-          println(s"left is ${lefts}")
-          println(s"right is ${rights}")
-
           val zippedRes = (lefts, rights) match {
             case (l, r) =>
               val res = l.zipWith(r) { (l, r) =>
@@ -107,8 +103,6 @@ private[config] trait ReadFunctions {
 
               res
           }
-          // println("zipped is " + zippedRes)
-          println(s"the result of zip is ${zippedRes}")
           zippedRes
 
         case cd: ConfigDescriptor.OrElseEither[K, V1, a, b] @unchecked =>

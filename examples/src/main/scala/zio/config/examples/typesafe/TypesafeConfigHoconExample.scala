@@ -143,18 +143,51 @@ object TypesafeConfigHoconExample extends App {
             {
               country = [
                 {
-                  name : a1
-                  code : 10
+                  name : [a]
+                  code = [
+                     {
+                       x : 1
+                       y : [1]
+                     }
+                  ]
+                }
+
+                {
+                  name : [b]  
+                   code = [
+                     {
+                       x : 1
+                       y : [1]
+                     }
+                  ]
                 }
               ]
-            
             }
-            
+          ]
+      }
+
+      {
+          details = [
             {
               country = [
                 {
-                  name : b1  
-                  code : 20
+                  name : [c]
+                   code = [
+                     {
+                       x : 1
+                       y : [1]
+                     }
+                  ]
+                }
+
+                {
+                  name : [d]  
+                   code = [
+                     {
+                       x : 1
+                       y : [1, 2, 3]
+                     }
+                  ]
                 }
               ]
             }
@@ -165,18 +198,85 @@ object TypesafeConfigHoconExample extends App {
             {
               country = [
                 {
-                  name : a2
-                  code : 10
+                  name : [e]
+                   code = [
+                     {
+                       x : 1
+                       y : [1]
+                     }
+                  ]
+                }
+
+                {
+                  name : [f]
+                   code = [
+                     {
+                       x : 1
+                       y : [1]
+                     }
+                  ]
                 }
               ]
-            
             }
-            
+
             {
               country = [
                 {
-                  name : b2
-                  code : 20
+                  name : [g]
+                   code = [
+                     {
+                       x : 1
+                       y : [1, 2, 3]
+                     }
+                  ]
+                }
+
+                {
+                  name : [h, i]
+                   code = [
+                     {
+                       x : 1
+                       y : [1]
+                     }
+                  ]
+                }
+               {
+                  name : [j]
+                   code = [
+                     {
+                       x : 1
+                       y : [1, 2, 3, 4]
+                     }
+                  ]
+                }
+
+                 {
+                  name : [k]
+                   code = [
+                     {
+                       x : 1
+                       y : [1]
+                     }
+                  ]
+                }
+
+                {
+                  name : [l, m]
+                   code = [
+                     {
+                       x : 1
+                       y : [1]
+                     }
+                  ]
+                }
+               {
+                  name : [n]
+                   code = [
+                     {
+                       x : 1
+                       y : [1]
+                     }
+                  ]
                 }
               ]
             }
@@ -185,42 +285,16 @@ object TypesafeConfigHoconExample extends App {
     ]
     """
 
-  /*  the original tree is Record(
-    Map(
-      accounts -> Sequence(
-        List(
-          Record(
-            Map(
-              accountId -> Sequence(
-                List(
-                  Record(Map(country -> Sequence(List(Record(Map(code -> Leaf(10), name -> Leaf(aus))))))),
-                  Record(Map(country -> Sequence(List(Record(Map(code -> Leaf(20), name -> Leaf(sua)))))))
-                )
-              )
-            )
-          ),
-          Record(
-            Map(
-              accountId -> Sequence(
-                List(
-                  Record(Map(country -> Sequence(List(Record(Map(code -> Leaf(10), name -> Leaf(aus))))))),
-                  Record(Map(country -> Sequence(List(Record(Map(code -> Leaf(20), name -> Leaf(sua)))))))
-                )
-              )
-            )
-          )
-        )
-      )
-    )
-  )*/
-
-  final case class Country(name: String, code: Int)
+  final case class Code(x: Int, y: Option[List[Int]])
+  final case class Country(name: List[String], code: List[Code])
   final case class Details(country: List[Country])
   final case class AccountDetails(details: List[Details])
 
   final case class Accounts(accounts: List[AccountDetails])
 
-  val countryConfig = (string("name") |@| int("code"))(Country.apply, Country.unapply)
+  val codeConfig = (int("x") |@| list(int("y")).optional)(Code.apply, Code.unapply)
+
+  val countryConfig = (list(string("name")) |@| nested("code")(list(codeConfig)))(Country.apply, Country.unapply)
 
   val accountDetailsConfig =
     nested("country")(list(countryConfig).xmap(Details.apply)(_.country))
@@ -242,22 +316,57 @@ object TypesafeConfigHoconExample extends App {
   val listResult =
     read(awsDetailsConfig from hocon(Right(listHocon)))
 
-  println(listResult)
+  println(
+    listResult
+  )
 
-  // Right(AwsDetails(List(AccountRegions(List(AccountIdDetails(List(Country(a1,10), Country(b1,20))))))))
-
-  //Right(AwsDetails(List(AccountRegions(List(AccountIdDetails(List(Country(aus, 10), Country(sua, 20))))))))
-  /*  assert(
+  assert(
     listResult ==
       Right(
-        AwsDetails(
+        Accounts(
           List(
-            AccountRegions(List("x1", "y1", "z1"), "jon"),
-            AccountRegions(List("x2", "y2", "z2"), "chris"),
-            AccountRegions(List("x3", "y3", "z3"), "hello")
-          ),
-          Database(100, "postgres")
+            AccountDetails(
+              List(
+                Details(
+                  List(
+                    Country(List("a"), List(Code(1, Some(List(1))))),
+                    Country(List("b"), List(Code(1, Some(List(1)))))
+                  )
+                )
+              )
+            ),
+            AccountDetails(
+              List(
+                Details(
+                  List(
+                    Country(List("c"), List(Code(1, Some(List(1))))),
+                    Country(List("d"), List(Code(1, Some(List(1, 2, 3)))))
+                  )
+                )
+              )
+            ),
+            AccountDetails(
+              List(
+                Details(
+                  List(
+                    Country(List("e"), List(Code(1, Some(List(1))))),
+                    Country(List("f"), List(Code(1, Some(List(1)))))
+                  )
+                ),
+                Details(
+                  List(
+                    Country(List("g"), List(Code(1, Some(List(1, 2, 3))))),
+                    Country(List("h", "i"), List(Code(1, Some(List(1))))),
+                    Country(List("j"), List(Code(1, Some(List(1, 2, 3, 4))))),
+                    Country(List("k"), List(Code(1, Some(List(1))))),
+                    Country(List("l", "m"), List(Code(1, Some(List(1))))),
+                    Country(List("n"), List(Code(1, Some(List(1)))))
+                  )
+                )
+              )
+            )
+          )
         )
       )
-  )*/
+  )
 }

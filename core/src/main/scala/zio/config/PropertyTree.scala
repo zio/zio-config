@@ -137,8 +137,8 @@ sealed trait PropertyTree[+K, +V] { self =>
     }
 
   def reduceInner[V1 >: V](f: (V1, V1) => V1): PropertyTree[K, V1] = {
-    def flatten[A, B](tuple: (List[(List[A], List[B])], List[B])): (List[A], List[B]) =
-      (tuple._1.flatMap(_._1), tuple._1.flatMap(_._2) ++ tuple._2)
+    // def flatten[A, B](tuple: (List[(List[A], List[B])], List[B])): (List[A], List[B]) =
+    //   (tuple._1.flatMap(_._1), tuple._1.flatMap(_._2) ++ tuple._2)
 
     def pruneEmpty[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
       list.collect {
@@ -150,26 +150,41 @@ sealed trait PropertyTree[+K, +V] { self =>
       case Leaf(value)   => Leaf(value)
       case Record(value) => Record(value.mapValues(_.reduceInner(f)).toMap)
       case Sequence(value) =>
-        val (vs0, rest0) = flatten(PropertyTree.partitionWith(value) {
-          case Sequence(value) =>
-            PropertyTree.partitionWith(value) {
-              case Leaf(value) => value
-            }
-        })
+        val (vs0, rest0) = PropertyTree.partitionWith(value) {
+          case Leaf(value) => value
+
+        }
 
         val (vs, rest) = (vs0, pruneEmpty(rest0))
 
-        println(s"the result of ${self} is ${vs}")
-        println(s"the result of rest${rest}")
-
         (vs, rest) match {
           case (Nil, _)  => Sequence(value.map(_.reduceInner(f)))
-          case (vs, Nil) => Leaf(vs.reduce(f))
+          case (vs, Nil) => vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
           case (vs, _)   => PropertyTree.empty
 
         }
     }
   }
+
+  def getPath2[K1 >: K](k: List[K1]): List[PropertyTree[K1, V]] =
+    k match {
+      case head :: Nil =>
+        self match {
+          case Leaf(value)     => Empty :: Nil
+          case Record(value)   => value.get(head.asInstanceOf[K]).getOrElse(Empty) :: Nil
+          case Sequence(value) => value
+          case Empty           => Empty :: Nil
+
+        }
+      case Nil => self :: Nil
+      case head :: next =>
+        self match {
+          case Empty         => Empty :: Nil
+          case Leaf(_)       => Empty :: Nil
+          case Record(value) => value.get(head.asInstanceOf[K]).map(_.getPath2(next)).getOrElse(Empty :: Nil)
+          case Sequence(r)   => Sequence(r.map(_.getPath2(k)).flatten) :: Nil
+        }
+    }
 
   final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): List[PropertyTree[K1, V1]] =
     (self, that) match {
