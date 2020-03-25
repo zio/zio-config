@@ -12,7 +12,7 @@ object Config {
     def config: A
   }
 
-  def succeed[A](a: A): Service[A] = new Service[A] {
+  def succeed[A](a: => A): Service[A] = new Service[A] {
     def config: A = a
   }
 
