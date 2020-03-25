@@ -12,7 +12,7 @@ object Config {
     def config: A
   }
 
-  def pure[A](a: A): Service[A] = new Service[A] {
+  def succeed[A](a: A): Service[A] = new Service[A] {
     def config: A = a
   }
 
@@ -26,7 +26,7 @@ object Config {
     source: ConfigSource[K, V],
     configDescriptor: ConfigDescriptor[K, V, A]
   ): IO[ReadErrors[Vector[K], V], Service[A]] =
-    read(configDescriptor from source).map(pure)
+    read(configDescriptor from source).map(succeed)
 
   def fromEnv[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
