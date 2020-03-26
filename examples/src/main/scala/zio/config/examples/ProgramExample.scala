@@ -2,10 +2,10 @@ package zio.config.examples
 
 import zio.blocking.Blocking
 import zio.config.ConfigDescriptor._
+import zio.config.examples.aliases._
 import zio.config.{ Config, _ }
 import zio.console.Console
 import zio.{ console, App, Has, ZEnv, ZIO, ZLayer }
-import zio.config.examples.aliases._
 
 /**
  * The pattern is an inspiration from http://degoes.net/articles/zio-environment.

@@ -2,11 +2,11 @@ package zio.config
 
 import zio.ZIO
 import zio.config.ConfigDescriptor._
-import zio.config.helpers._
 import zio.config.ReadWriteRoundtripTestUtils._
+import zio.config.helpers._
 import zio.random.Random
-import zio.test._
 import zio.test.Assertion._
+import zio.test._
 
 object ReadWriteRoundtripTest
     extends BaseSpec(
@@ -55,6 +55,17 @@ object ReadWriteRoundtripTest
             assertM(p2)(equalTo(p))
           }
         },
+        testM("single field case class roundtrip") {
+          checkM(genSingleField) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cSingleField, p))
+                reread  <- read(cSingleField from ConfigSource.fromPropertyTree(written))
+              } yield reread
+
+            assertM(p2)(equalTo(p))
+          }
+        },
         testM("coproduct roundtrip") {
           checkM(genCoproductConfig) { p =>
             val p2 =
@@ -74,6 +85,7 @@ object ReadWriteRoundtripTestUtils {
   final case class DataItem(oid: Option[Id], count: Int)
   final case class EnterpriseAuth(id: Id, dburl: DbUrl)
   final case class NestedPath(enterpriseAuth: EnterpriseAuth, count: Int, factor: Float)
+  final case class SingleField(count: Int)
 
   val genDataItem: Gen[Random, DataItem] =
     for {
@@ -94,18 +106,26 @@ object ReadWriteRoundtripTestUtils {
       factor <- Gen.anyFloat
     } yield NestedPath(auth, count, factor)
 
+  val genSingleField: Gen[Random, SingleField] =
+    for {
+      count <- Gen.anyInt
+    } yield SingleField(count)
+
   val genCoproductConfig: Gen[Random, CoproductConfig] =
     Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
 
-  val cId             = string("kId").xmap(Id)(_.value)
-  val cId2            = string("kId2").xmap(Id)(_.value)
+  val cId             = string("kId")(Id.apply, Id.unapply)
+  val cId2            = string("kId2")(Id.apply, Id.unapply)
   val cDataItem       = (cId2.optional |@| int("kDiCount"))(DataItem.apply, DataItem.unapply)
-  val cDbUrl          = string("kDbUrl").xmap(DbUrl)(_.value)
+  val cDbUrl          = string("kDbUrl")(DbUrl.apply, DbUrl.unapply)
   val cEnterpriseAuth = (cId |@| cDbUrl)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
 
   val cNestedConfig =
     (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedPath.apply, NestedPath.unapply)
 
+  val cSingleField: ConfigDescriptor[String, String, SingleField] =
+    int("kCount")(SingleField.apply, SingleField.unapply)
+
   val cCoproductConfig =
-    (cDataItem.orElseEither(cNestedConfig)).xmap(CoproductConfig)(_.coproduct)
+    (cDataItem.orElseEither(cNestedConfig))(CoproductConfig.apply, CoproductConfig.unapply)
 }

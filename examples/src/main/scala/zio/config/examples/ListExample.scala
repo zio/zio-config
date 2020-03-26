@@ -1,8 +1,8 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
-import zio.DefaultRuntime
-import zio.config.PropertyTree, PropertyTree.{ Leaf, Record }
+import zio.config.ConfigDescriptor._
+import zio.config.PropertyTree.{ Leaf, Record }
+import zio.config.{ PropertyTree, _ }
 
 // List works quite nicely if the source is typesafe HOCON. Refer TypesafeConfigHoconExample.scala to get an idea.
 object ListExample extends App {
@@ -17,7 +17,7 @@ object ListExample extends App {
   val config: ConfigDescriptor[String, String, PgmConfig] =
     (string("xyz") |@| list(string("regions")))(PgmConfig.apply, PgmConfig.unapply)
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   val resultFromMultiMap =
     runtime.unsafeRun(

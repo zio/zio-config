@@ -1,7 +1,6 @@
 package zio.config.examples
 
-import zio.DefaultRuntime
-import zio.config._, ConfigDescriptor._
+import zio.config.ConfigDescriptor._
 import zio.config.ReadError._
 import zio.config._
 
@@ -11,7 +10,7 @@ object ErrorAccumulation extends App {
   val config: ConfigDescriptor[String, String, SampleConfig] =
     (int("envvar") |@| string("envvar2"))(SampleConfig.apply, SampleConfig.unapply)
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   val programWithInvalidSource =
     read(config from ConfigSource.fromMap(Map.empty)).either

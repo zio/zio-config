@@ -48,21 +48,21 @@ object EitherReciprocityTestUtils {
       factor <- Gen.anyFloat
     } yield NestedPath(auth, count, factor)
 
-  private val cIdLeft             = string("klId").xmap(Id)(_.value)
-  private val cDbUrlLeft          = string("klDbUrl").xmap(DbUrl)(_.value)
+  private val cIdLeft             = string("klId")(Id.apply, Id.unapply)
+  private val cDbUrlLeft          = string("klDbUrl")(DbUrl.apply, DbUrl.unapply)
   private val cEnterpriseAuthLeft = (cIdLeft |@| cDbUrlLeft)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
 
   private val cNestedConfigLeft =
     (cEnterpriseAuthLeft |@| int("klCount") |@| float("klFactor"))(NestedPath.apply, NestedPath.unapply)
 
-  private val cIdRight             = string("krId").xmap(Id)(_.value)
-  private val cDbUrlRight          = string("krDbUrl").xmap(DbUrl)(_.value)
+  private val cIdRight             = string("krId")(Id.apply, Id.unapply)
+  private val cDbUrlRight          = string("krDbUrl")(DbUrl.apply, DbUrl.unapply)
   private val cEnterpriseAuthRight = (cIdRight |@| cDbUrlRight)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
 
   private val cNestedConfigRight =
     (cEnterpriseAuthRight |@| int("krCount") |@| float("krFactor"))(NestedPath.apply, NestedPath.unapply)
 
   val cCoproductConfig =
-    (cNestedConfigLeft.orElseEither(cNestedConfigRight)).xmap(CoproductConfig)(_.coproduct)
+    (cNestedConfigLeft.orElseEither(cNestedConfigRight))(CoproductConfig.apply, CoproductConfig.unapply)
 
 }

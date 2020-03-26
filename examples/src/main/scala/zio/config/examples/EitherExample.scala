@@ -1,8 +1,6 @@
 package zio.config.examples
 
-import zio.DefaultRuntime
-import zio.config._
-import ConfigDescriptor._
+import zio.config.ConfigDescriptor._
 import zio.config.ReadError._
 import zio.config.{ ConfigSource, _ }
 
@@ -14,7 +12,7 @@ object EitherExample extends App {
   case class Dev(user: String, password: Int, dburl: Double)
 
   val prod =
-    (string("x1").xmap(Ldap)(_.value) |@| string("x2").xmap(DbUrl)(_.value))(Prod.apply, Prod.unapply)
+    (string("x1")(Ldap.apply, Ldap.unapply) |@| string("x2")(DbUrl.apply, DbUrl.unapply))(Prod.apply, Prod.unapply)
 
   val dev =
     (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
@@ -22,7 +20,7 @@ object EitherExample extends App {
   val prodOrDev =
     prod orElseEither dev
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   val validConfigForSampleConfig =
     Map(

@@ -26,7 +26,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     self orElseEither that
 
   final def default(value: A): ConfigDescriptor[K, V, A] =
-    ConfigDescriptor.Default(self, value) ?? s"default value: $value ("
+    ConfigDescriptor.Default(self, value) ?? s"default value: $value"
 
   final def describe(description: String): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Describe(self, description)
@@ -67,18 +67,42 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
   final def zip[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, (A, B)] =
     ConfigDescriptor.Zip(self, that)
 
-  final def xmapEither[B](
-    f: A => Either[String, B]
-  )(g: B => Either[String, A]): ConfigDescriptor[K, V, B] =
+  final def xmapEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[K, V, B] =
     ConfigDescriptor.XmapEither(self, f, g)
 
   def xmapEither2[B, C](
     that: ConfigDescriptor[K, V, B]
-  )(f: (A, B) => Either[String, C])(g: C => Either[String, (A, B)]): ConfigDescriptor[K, V, C] =
-    (self |@| that).apply[(A, B)](Tuple2.apply, Tuple2.unapply).xmapEither({ case (a, b) => f(a, b) })(g)
+  )(f: (A, B) => Either[String, C], g: C => Either[String, (A, B)]): ConfigDescriptor[K, V, C] =
+    (self |@| that)
+      .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
+      .xmapEither({ case (a, b) => f(a, b) }, g)
 
-  final def xmap[B](to: A => B)(from: B => A): ConfigDescriptor[K, V, B] =
-    self.xmapEither(a => Right(to(a)))(b => Right(from(b)))
+  final def xmap[B](to: A => B, from: B => A): ConfigDescriptor[K, V, B] =
+    self.xmapEither(a => Right(to(a)), b => Right(from(b)))
+
+  /**
+   * This method exists to cover the corner case of a case class with only one field.
+   * For example, a case class with two fields uses the `|@|` syntax to combine them:
+   * {{{
+   *   val cDoubleField: ConfigDescriptor[String, String, DoubleField] =
+   *     (cId |@| cDbUrl)(DoubleField.apply, DoubleField.unapply)
+   * }}}
+   *
+   * However, for a single field it is not clear what to do. For maximum similarity to
+   * the multiple-field version, this method provides a syntax that matches what you
+   * get by taking away the second field and the `|@|`:
+   * {{{
+   *   val cSingleField: ConfigDescriptor[String, String, SingleField] =
+   *     int("cId")(SingleField.apply)(SingleField.unapply)
+   * }}}
+   */
+  def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[K, V, B] =
+    XmapEither(
+      this,
+      (a: A) => Right[String, B](app(a)),
+      unapp(_)
+        .fold[Either[String, A]](Left("Unable to create case class instance"))(Right(_))
+    )
 }
 
 object ConfigDescriptor {
@@ -150,14 +174,13 @@ object ConfigDescriptor {
 
   def sequence[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] = {
     val reversed = configList.reverse
-    reversed.tail.foldLeft(
-      reversed.head.xmap(a => ::(a, Nil))(b => b.head)
+    reversed.tail.foldLeft[ConfigDescriptor[K, V, ::[A]]](
+      reversed.head.xmap((a: A) => ::(a, Nil), (b: ::[A]) => b.head)
     )(
-      (b, a) =>
-        b.xmapEither2(a)((as, a) => {
-          Right(::(a, as))
-        })(
-          t => Right((::(t.tail.head, t.tail.tail), t.head))
+      (b: ConfigDescriptor[K, V, ::[A]], a: ConfigDescriptor[K, V, A]) =>
+        b.xmapEither2(a)(
+          (as: ::[A], a: A) => Right(::(a, as)),
+          (t: ::[A]) => Right((::(t.tail.head, t.tail.tail), t.head))
         )
     )
   }
