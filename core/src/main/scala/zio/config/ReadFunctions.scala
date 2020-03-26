@@ -34,8 +34,6 @@ private[config] trait ReadFunctions {
                       case Right(value) => Right(value)
                     }
 
-                    println(s"the result for key ${keys :+ key} is ${result}")
-
                     result
                 })
             case None => throw new Exception()
@@ -54,14 +52,12 @@ private[config] trait ReadFunctions {
               case PropertyTree.Leaf(Left(value)) => PropertyTree.Sequence(List(PropertyTree.Leaf(Left(value))))
             })
 
-          val res = sequenceErrors.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[K], List[B]]] {
+          sequenceErrors.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[K], List[B]]](Right(Nil)) {
             case (Right(l), Right(r)) => Right(l ++ r)
             case (Left(l), Right(_))  => Left(l)
             case (Right(_), Left(r))  => Left(r)
             case (Left(l), Left(r))   => Left(ReadError.AndErrors(l :: r :: Nil))
           }
-
-          res
 
         //required
 
@@ -113,8 +109,7 @@ private[config] trait ReadFunctions {
 
           val lefts  = loop(left, keys, paths)
           val rights = loop(right, keys, paths)
-          println(s"the left is ${lefts}")
-          println(s"the right is ${rights}")
+
           val zippedRes = (lefts, rights) match {
             case (l, r) =>
               val res = l.zipWith(r) { (l, r) =>
@@ -188,7 +183,6 @@ private[config] trait ReadFunctions {
       case Some(value) =>
         Left(value)
       case None =>
-        println(s"the final result is ...................................... ${tree}")
         PropertyTree.getValue(tree)
 
     }

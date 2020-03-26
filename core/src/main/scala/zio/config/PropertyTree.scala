@@ -2,6 +2,7 @@ package zio.config
 
 import scala.collection.immutable.Nil
 import PropertyTree._
+import zio.config.ReadError.{ FormatError, MissingValue }
 
 sealed trait PropertyTree[+K, +V] { self =>
   final def map[V2](f: V => V2): PropertyTree[K, V2] = self match {
@@ -136,7 +137,7 @@ sealed trait PropertyTree[+K, +V] { self =>
         }
     }
 
-  def reduceInner[V1 >: V](f: (V1, V1) => V1): PropertyTree[K, V1] = {
+  def reduceInner[V1 >: V](zero: V1)(f: (V1, V1) => V1): PropertyTree[K, V1] = {
     // def flatten[A, B](tuple: (List[(List[A], List[B])], List[B])): (List[A], List[B]) =
     //   (tuple._1.flatMap(_._1), tuple._1.flatMap(_._2) ++ tuple._2)
 
@@ -148,7 +149,9 @@ sealed trait PropertyTree[+K, +V] { self =>
     self match {
       case Empty         => Empty
       case Leaf(value)   => Leaf(value)
-      case Record(value) => Record(value.mapValues(_.reduceInner(f)).toMap)
+      case Record(value) => Record(value.mapValues(_.reduceInner(zero)(f)).toMap)
+      //               Sequence(List()), // It should have been Leaf(Right(Nil))
+      case Sequence(value) if value.isEmpty => Leaf(zero)
       case Sequence(value) =>
         val (vs0, rest0) = PropertyTree.partitionWith(value) {
           case Leaf(value) => value
@@ -158,9 +161,9 @@ sealed trait PropertyTree[+K, +V] { self =>
         val (vs, rest) = (vs0, pruneEmpty(rest0))
 
         (vs, rest) match {
-          case (Nil, _)  => Sequence(value.map(_.reduceInner(f)))
+          case (Nil, _)  => Sequence(value.map(_.reduceInner(zero)(f)))
           case (vs, Nil) => vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
-          case (vs, _)   => PropertyTree.empty
+          case (vs, _)   => Sequence(vs.map(Leaf(_)))
 
         }
     }
@@ -470,7 +473,7 @@ object Example extends App {
   // )
 
   // Sequence(List(Sequence(List(Sequence(List(Leaf(aus), Leaf(sua)))), Sequence(List(Sequence(List(Leaf(aus), Leaf(sua)))))))
-  println("result is " + countryTree.map(_ :: Nil).reduceInner(_ ++ _))
+  //println("result is " + countryTree.map(_ :: Nil).reduceInner(_ ++ _))
 
   // Sequence(
   //   List(
@@ -484,7 +487,7 @@ object Example extends App {
   // Step 2: Sequence this PropertyTree, and that's mindbending
   // To narrow dow the example:
 
-  val input: PropertyTree[String, Either[ReadError[String], String]] =
+  /*  val input: PropertyTree[String, Either[ReadError[String], String]] =
     Sequence(
       List(
         Sequence(
@@ -499,9 +502,9 @@ object Example extends App {
           )
         )
       )
-    )
+    )*/
 
-  val transformedErrors =
+  /*  val transformedErrors =
     PropertyTree.transformErrors[String, String, ReadError[String]](input, {
       case PropertyTree.Leaf(Left(value)) => PropertyTree.Sequence(List(PropertyTree.Leaf(Left(value))))
     })
@@ -511,6 +514,103 @@ object Example extends App {
     case (Left(l), Right(_))  => Left(l)
     case (Right(_), Left(r))  => Left(r)
     case (Left(l), Left(r))   => Left(ReadError.AndErrors(l :: r :: Nil))
-  })
+  })*/
+
+  val anotherInput: PropertyTree[String, Either[ReadError[String], String]] =
+    Sequence(
+      List(
+        Sequence(
+          List(
+            Sequence(
+              List(
+                Sequence(
+                  List(
+                    Leaf(
+                      Left(
+                        MissingValue(Vector(Right("export-details")))
+                      )
+                    )
+                  )
+                ),
+                Sequence(
+                  List(
+                    Leaf(
+                      Left(
+                        MissingValue(Vector(Right("export-details")))
+                      )
+                    )
+                  )
+                ),
+                Sequence(
+                  List(
+                    Leaf(Right("1")),
+                    Leaf(Right("2")),
+                    Leaf(
+                      Left(
+                        FormatError(
+                          Vector(Right("export-details")),
+                          "Provided value is xxx, expecting the type int"
+                        )
+                      )
+                    )
+                  )
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+
+  val anotherTransformedErrors =
+    PropertyTree.transformErrors[String, String, ReadError[String]](anotherInput, {
+      case PropertyTree.Leaf(Left(value)) => PropertyTree.Sequence(List(PropertyTree.Leaf(Left(value))))
+    })
+
+//  Sequence(
+//    List(
+//      Sequence(
+//        List(
+//          Sequence(
+//            List(
+//              Sequence(List()),
+//              Sequence(
+//                List(
+//                  Leaf(
+//                    Left(
+//                      MissingValue(Vector(Right("export-details"), Right("extra-details"), Right("r"), Right("vvv")))
+//                    )
+//                  )
+//                )
+//              ),
+//              Sequence(List(Leaf(Right(1)), Leaf(Right(2)), Leaf(Right(3))))
+//            )
+//          )
+//        )
+//      )
+//    )
+//  )
+//
+//  Sequence(
+//    List(
+//      Sequence(
+//        List(
+//          Sequence(
+//            List(
+//              Sequence(List()), // It should have been Leaf(Right(Nil))
+//              Leaf(Left(MissingValue(Vector(Right("export-details"), Right(extra - details), Right(r), Right(vvv))))),
+//              Leaf(Right(List(1, 2, 3)))
+//            )
+//          )
+//        )
+//      )
+//    )
+//  )
+//  println(anotherTransformedErrors.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[String], List[String]]] {
+//    case (Right(l), Right(r)) => Right(l ++ r)
+//    case (Left(l), Right(_))  => Left(l)
+//    case (Right(_), Left(r))  => Left(r)
+//    case (Left(l), Left(r))   => Left(ReadError.AndErrors(l :: r :: Nil))
+//  })
 
 }

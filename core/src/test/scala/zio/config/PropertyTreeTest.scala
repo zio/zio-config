@@ -14,7 +14,7 @@ object PropertyTreeTest
             val (tree, leaves) = input
 
             val reducedTo3Level: PropertyTree[String, List[String]] =
-              tree.map(_ :: Nil).reduceInner(_ ++ _)
+              tree.map(_ :: Nil).reduceInner(Nil)(_ ++ _)
 
             assert(
               reducedTo3Level,
@@ -30,7 +30,7 @@ object PropertyTreeTestUtils {
     Gen.anyString.map(str => Leaf(str))
 
   private[config] val genListOfLeaves: Gen[Random with Sized, List[Leaf[String]]] =
-    Gen.int(1, 20).flatMap(n => Gen.listOfN(n)(genLeaf))
+    Gen.int(0, 20).flatMap(n => Gen.listOfN(n)(genLeaf))
 
   final case class Leaves[V](list: List[List[Leaf[V]]]) {
     def sequenceInner: List[Leaf[List[V]]] =

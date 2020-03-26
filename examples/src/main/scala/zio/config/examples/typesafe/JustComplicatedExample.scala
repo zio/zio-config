@@ -82,7 +82,7 @@ object JustComplicatedExample extends App {
       |            ci : ki
       |            vi : bi
       |            e: [27]
-      |            vvv = [af]
+      |            vvv = []
       |          }
       |        ]
       |      }
@@ -116,7 +116,7 @@ object JustComplicatedExample extends App {
       |            ci : ki
       |            vi : bi
       |            e: [34, 34, 34]
-      |            vvv = [a]
+      |            vvv = []
       |          }
       |          {
       |            ci : ki
@@ -128,7 +128,7 @@ object JustComplicatedExample extends App {
       |            ci : ki
       |            vi : bi
       |            e: [33]
-      |            vvv = [c, d]
+      |            vvv = []
       |          }
       |          {
       |            ci : ki
@@ -170,7 +170,7 @@ object JustComplicatedExample extends App {
   val zioConfigResult =
     read(description[A] from hocon(Right(configString)))
 
-  val s = (
+  assert(
     zioConfigResult ==
 
       Right(
@@ -182,6 +182,7 @@ object JustComplicatedExample extends App {
                   List(
                     D(List(1, 1, 1), List("a", "b", "c")),
                     D(List(12, 12), List("d")),
+                    D(List(13, 13, 13), List()),
                     D(List(14, 14), List("e")),
                     D(List(15, 15), List("f", "g"))
                   )
@@ -198,7 +199,7 @@ object JustComplicatedExample extends App {
                     D(List(22, 22), List("sa", "l")),
                     D(List(23, 23, 23), List("af", "l")),
                     D(List(24, 24, 24), List("l")),
-                    D(List(27), List("af"))
+                    D(List(27), Nil)
                   )
                 )
               ),
@@ -212,9 +213,9 @@ object JustComplicatedExample extends App {
                     D(List(31, 31), List("bb")),
                     D(List(32, 32), List("x")),
                     D(List(33, 33, 33), List("xx")),
-                    D(List(34, 34, 34), List("a")),
+                    D(List(34, 34, 34), Nil),
                     D(List(31), List("b")),
-                    D(List(33), List("c", "d")),
+                    D(List(33), Nil),
                     D(List(37), List("e", "f", "g", "h", "i"))
                   )
                 )
@@ -228,9 +229,6 @@ object JustComplicatedExample extends App {
         )
       )
   )
-
-  assert(s)
-  println(s"the assertion above is true ${s}")
 
   val kebabCaseConfig =
     """
@@ -247,6 +245,7 @@ object JustComplicatedExample extends App {
       |            ci : ki
       |            vi : bi
       |            lst: [1, 1, 1]
+      |            vvv = []
       |          }
       |          {
       |            ci : ki
@@ -276,7 +275,7 @@ object JustComplicatedExample extends App {
     ci: String,
     vi: Either[Int, Either[Long, Either[Double, Either[Float, String]]]],
     lst: List[Int],
-    vvv: Option[List[String]]
+    vvv: Option[List[Int]]
   )
   final case class Extra(hi: String, bi: String, r: List[Extra2])
   final case class Details(table: String, columns: List[String], extraDetails: List[Extra])
@@ -303,9 +302,9 @@ object JustComplicatedExample extends App {
                   "di",
                   "ci",
                   List(
-                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), None),
+                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
                     Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
-                    Extra2("ki", Left(3), List(1, 3, 5), Some(List("1", "2", "3")))
+                    Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
                   )
                 )
               )
