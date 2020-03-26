@@ -153,9 +153,8 @@ sealed trait PropertyTree[+K, +V] { self =>
       //               Sequence(List()), // It should have been Leaf(Right(Nil))
       case Sequence(value) if value.isEmpty => Leaf(zero)
       case Sequence(value) =>
-        val (vs0, rest0) = PropertyTree.partitionWith(value) {
+        val (vs0, rest0) = PropertyTree.partitionWith(zero, value) {
           case Leaf(value) => value
-
         }
 
         val (vs, rest) = (vs0, pruneEmpty(rest0))
@@ -274,14 +273,17 @@ object PropertyTree {
     }
 
   def partitionWith[K, V, A](
+    zero: A,
     trees: List[PropertyTree[K, V]]
   )(pf: PartialFunction[PropertyTree[K, V], A]): (List[A], List[PropertyTree[K, V]]) =
-    trees.collect {
-      case tree if pf.isDefinedAt(tree) => (pf(tree) :: Nil, Nil)
-      case tree                         => (Nil, tree :: Nil)
-    }.foldLeft((List.empty[A], List.empty[PropertyTree[K, V]])) {
-      case ((accLeft, accRight), (left, right)) => (accLeft ++ left, accRight ++ right)
-    }
+    if (trees.isEmpty) (List(zero), Nil)
+    else
+      trees.collect {
+        case tree if pf.isDefinedAt(tree) => (pf(tree) :: Nil, Nil)
+        case tree                         => (Nil, tree :: Nil)
+      }.foldLeft((List.empty[A], List.empty[PropertyTree[K, V]])) {
+        case ((accLeft, accRight), (left, right)) => (accLeft ++ left, accRight ++ right)
+      }
 
   def sequence[K, V](tree: List[PropertyTree[K, V]]): PropertyTree[K, List[V]] =
     tree match {
