@@ -11,8 +11,8 @@ object NestedConfigTest
     extends BaseSpec(
       suite("Nested config")(
         testM("read") {
-          checkM(genNestedConfigParams) { p =>
-            assertM(read(p.config.from(p.source)).either, isRight(equalTo(p.value)))
+          check(genNestedConfigParams) { p =>
+            assert(read(p.config.from(p.source)), isRight(equalTo(p.value)))
           }
         },
         testM("write") {

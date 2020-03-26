@@ -179,67 +179,67 @@ object JustComplicatedExample extends App {
   final case class B(c: List[C], table: String, columns: List[String])
   final case class A(b: List[B], x: X, w: W)
 
-  val zioConfigResult =
-    read(description[A] from hocon(Right(configString)))
+  // val zioConfigResult =
+  //   read(description[A] from hocon(Right(configString)))
 
-  assert(
-    zioConfigResult ==
+  // assert(
+  //   zioConfigResult ==
 
-      Right(
-        A(
-          List(
-            B(
-              List(
-                C(
-                  List(
-                    D(List(1, 1, 1), List("a", "b", "c")),
-                    D(List(12, 12), List("d")),
-                    D(List(14, 14), List("e")),
-                    D(List(15, 15), List("f", "g"))
-                  )
-                )
-              ),
-              "some_name",
-              List("a", "b")
-            ),
-            B(
-              List(
-                C(
-                  List(
-                    D(List(21, 21), List("af")),
-                    D(List(22, 22), List("sa", "l")),
-                    D(List(23, 23, 23), List("af", "l")),
-                    D(List(24, 24, 24), List("l")),
-                    D(List(27), List("af"))
-                  )
-                )
-              ),
-              "some_name",
-              List("a", "b", "c", "d", "e")
-            ),
-            B(
-              List(
-                C(
-                  List(
-                    D(List(31, 31), List("bb")),
-                    D(List(32, 32), List("x")),
-                    D(List(33, 33, 33), List("xx")),
-                    D(List(34, 34, 34), List("a")),
-                    D(List(31), List("b")),
-                    D(List(33), List("c", "d")),
-                    D(List(37), List("e", "f", "g", "h", "i"))
-                  )
-                )
-              ),
-              "some_name",
-              List("a")
-            )
-          ),
-          X(Y("k")),
-          W(X(Y("k")))
-        )
-      )
-  )
+  //     Right(
+  //       A(
+  //         List(
+  //           B(
+  //             List(
+  //               C(
+  //                 List(
+  //                   D(List(1, 1, 1), List("a", "b", "c")),
+  //                   D(List(12, 12), List("d")),
+  //                   D(List(14, 14), List("e")),
+  //                   D(List(15, 15), List("f", "g"))
+  //                 )
+  //               )
+  //             ),
+  //             "some_name",
+  //             List("a", "b")
+  //           ),
+  //           B(
+  //             List(
+  //               C(
+  //                 List(
+  //                   D(List(21, 21), List("af")),
+  //                   D(List(22, 22), List("sa", "l")),
+  //                   D(List(23, 23, 23), List("af", "l")),
+  //                   D(List(24, 24, 24), List("l")),
+  //                   D(List(27), List("af"))
+  //                 )
+  //               )
+  //             ),
+  //             "some_name",
+  //             List("a", "b", "c", "d", "e")
+  //           ),
+  //           B(
+  //             List(
+  //               C(
+  //                 List(
+  //                   D(List(31, 31), List("bb")),
+  //                   D(List(32, 32), List("x")),
+  //                   D(List(33, 33, 33), List("xx")),
+  //                   D(List(34, 34, 34), List("a")),
+  //                   D(List(31), List("b")),
+  //                   D(List(33), List("c", "d")),
+  //                   D(List(37), List("e", "f", "g", "h", "i"))
+  //                 )
+  //               )
+  //             ),
+  //             "some_name",
+  //             List("a")
+  //           )
+  //         ),
+  //         X(Y("k")),
+  //         W(X(Y("k")))
+  //       )
+  //     )
+  // )
 
   println("hello")
 

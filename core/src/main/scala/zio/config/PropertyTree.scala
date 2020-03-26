@@ -467,4 +467,27 @@ object Example extends App {
   // Step 2: Sequence this PropertyTree, and that's mindbending
   // To narrow dow the example:
 
+  val input: PropertyTree[String, Either[ReadError[String], String]] =
+    Sequence(
+      List(
+        Sequence(
+          List(
+            Sequence(
+              List(
+                Sequence(List(Leaf(Right("x")), Leaf(Right("x")), Leaf(Right("z")))),
+                Sequence(List(Leaf(Right("1")), Leaf(Right("2")), Leaf(Right("3"))))
+              )
+            )
+          )
+        )
+      )
+    )
+
+  println(input.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[String], List[String]]] {
+    case (Right(l), Right(r)) => Right(l ++ r)
+    case (Left(l), Right(_))  => Left(l)
+    case (Right(_), Left(r))  => Left(r)
+    case (Left(l), Left(r))   => Left(ReadError.AndErrors(l :: r :: Nil))
+  })
+
 }

@@ -28,11 +28,11 @@ object helpers {
   val genDbUrl: Gen[Random, DbUrl] = genNonEmptyString(20).map(DbUrl)
 
   def assertErrors[A](
-    pred: ReadErrorsVector[String] => Boolean
-  ): Assertion[Either[ReadErrorsVector[String], A]] =
-    assertion[Either[ReadErrorsVector[String], A]]("assertErrors")() {
-      case Left(errs: ReadErrorsVector[String]) => pred(errs)
-      case Right(_)                             => false
+    pred: ReadError[String] => Boolean
+  ): Assertion[Either[ReadError[String], A]] =
+    assertion[Either[ReadError[String], A]]("assertErrors")() {
+      case Left(errs: ReadError[String]) => pred(errs)
+      case Right(_)                      => false
     }
 
   def toMultiMap[K, V](map: Map[K, V]): Map[K, ::[V]] =

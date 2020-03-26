@@ -23,7 +23,7 @@ private[config] trait ReadFunctions {
                 .map({
                   case Left(value) => Left(value)
                   case Right(value) =>
-                    propertyType.read(value) match {
+                    val result = propertyType.read(value) match {
                       case Left(value) =>
                         Left(
                           ReadError.FormatError(
@@ -33,6 +33,10 @@ private[config] trait ReadFunctions {
                         )
                       case Right(value) => Right(value)
                     }
+
+                    println(s"the result for key ${keys :+ key} is ${result}")
+
+                    result
                 })
             case None => throw new Exception()
           }
@@ -40,12 +44,20 @@ private[config] trait ReadFunctions {
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
 
-          loop(config, keys, paths).map(_.map(_ :: Nil)).reduceInner[Either[ReadError[K], List[B]]] {
+          val looped =
+            loop(config, keys, paths)
+
+          val res = looped.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[K], List[B]]] {
             case (Right(l), Right(r)) => Right(l ++ r)
             case (Left(l), Right(_))  => Left(l)
             case (Right(_), Left(r))  => Left(r)
             case (Left(l), Left(r))   => Left(ReadError.AndErrors(l :: r :: Nil))
           }
+
+          println(s"the before seq is ${looped}")
+          println(s"the after seq is ${res}")
+
+          res
 
         //required
 
@@ -54,7 +66,7 @@ private[config] trait ReadFunctions {
 
         case cd: ConfigDescriptor.XmapEither[K, V1, a, B] =>
           val ConfigDescriptor.XmapEither(c, f, _) = cd
-          loop(c, keys, paths).map {
+          val res = loop(c, keys, paths).map {
             case Left(value) => Left(value)
             case Right(value) =>
               f(value) match {
@@ -63,6 +75,10 @@ private[config] trait ReadFunctions {
                   Right(value)
               }
           }
+
+          //println(s"the xmap is ${res}")
+
+          res
 
         case cd: ConfigDescriptor.Default[K, V1, B] =>
           val ConfigDescriptor.Default(config, value) = cd
@@ -77,7 +93,7 @@ private[config] trait ReadFunctions {
 
         case cd: ConfigDescriptor.Optional[K, V1, B] @unchecked =>
           val ConfigDescriptor.Optional(c) = cd
-          loop(c, keys, paths).map {
+          val res = loop(c, keys, paths).map {
             case Left(error) if (hasParseErrors(error) || hasNonFatalErrors(error)) => Left(error)
             case Left(_) =>
               Right(None)
@@ -85,11 +101,16 @@ private[config] trait ReadFunctions {
               Right(Some(value))
           }
 
+          //println(s"the opt is ${res}")
+          res
+
         case r: ConfigDescriptor.Zip[K, V1, a, b] @unchecked =>
           val ConfigDescriptor.Zip(left, right) = r
 
           val lefts  = loop(left, keys, paths)
           val rights = loop(right, keys, paths)
+          println(s"the left is ${lefts}")
+          println(s"the right is ${rights}")
           val zippedRes = (lefts, rights) match {
             case (l, r) =>
               val res = l.zipWith(r) { (l, r) =>
@@ -114,7 +135,7 @@ private[config] trait ReadFunctions {
           val errorsInLeft =
             errors(left1)
 
-          errorsInLeft match {
+          val res = errorsInLeft match {
             case Some(error) if hasNonFatalErrors(error) =>
               left1.map({
                 case Left(value)  => Left(value)
@@ -131,6 +152,10 @@ private[config] trait ReadFunctions {
                 case Right(value) => Right(Left(value): Either[a, b])
               })
           }
+
+          //println(s"the orElseEither is ${res}")
+
+          res
 
         case ConfigDescriptor.OrElse(left, right) =>
           val left1 =
