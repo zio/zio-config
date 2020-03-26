@@ -10,7 +10,7 @@ object JustComplicatedExample extends App {
       |b = [
       |  {
       |   table          : some_name
-      |   columns        : [a, b]
+      |   columns        : []
       |    c = [
       |      {
       |        d = [
@@ -192,7 +192,7 @@ object JustComplicatedExample extends App {
                 )
               ),
               "some_name",
-              List("a", "b")
+              List()
             ),
             B(
               List(
@@ -329,6 +329,13 @@ object JustComplicatedExample extends App {
       |    columns        : []
       |    extra-details = []
       |  }
+      |  
+      |    
+      |   {
+      |    table          : some_name2
+      |    columns        : []
+      |    extra-details = []
+      |  }
       |]
       |
       |database {
@@ -380,44 +387,17 @@ object JustComplicatedExample extends App {
                     Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
                   )
                 ),
-                Extra(
-                  "di",
-                  "ci",
-                  Nil
-                )
+                Extra("di", "ci", Nil)
               )
             ),
             Details(
               "some_name1",
               List(),
-              List(
-                Extra(
-                  "di",
-                  "ci",
-                  Nil
-                ),
-                Extra(
-                  "di",
-                  "ci",
-                  Nil
-                ),
-                Extra(
-                  "di",
-                  "ci",
-                  Nil
-                )
-              )
+              List(Extra("di", "ci", Nil), Extra("di", "ci", Nil), Extra("di", "ci", Nil))
             ),
-            Details(
-              "some_name1",
-              List(),
-              List()
-            ),
-            Details(
-              "some_name2",
-              List(),
-              List()
-            )
+            Details("some_name1", List(), List()),
+            Details("some_name2", List(), List()),
+            Details("some_name2", List(), List())
           ),
           Database(Port("ba"))
         )
