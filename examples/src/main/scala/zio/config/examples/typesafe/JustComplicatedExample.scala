@@ -273,27 +273,21 @@ object JustComplicatedExample extends App {
       |      {
       |        hi : di
       |        bi : ci
-      |        r = [
-      |          {
-      |            ci : ki
-      |            vi : bi
-      |            lst: [1, 1, 1]
-      |            vvv = []
-      |          }
-      |          {
-      |            ci : ki
-      |            vi : 1.0882121
-      |            lst: [1, 2, 1]
-      |          }
-      |           {
-      |            ci : ki
-      |            vi : 3
-      |            lst: [1, 3, 5]
-      |            vvv = [1, 2, 3]
-      |          }
-      |        ]
+      |        r = []
       |      }
       |    ]
+      |  }
+      |  
+      | {
+      |    table          : some_name1
+      |    columns        : []
+      |    extra-details = []
+      |  }
+      |  
+      |   {
+      |    table          : some_name2
+      |    columns        : []
+      |    extra-details = []
       |  }
       |]
       |
@@ -346,13 +340,19 @@ object JustComplicatedExample extends App {
                 Extra(
                   "di",
                   "ci",
-                  List(
-                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
-                    Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
-                    Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
-                  )
+                  Nil
                 )
               )
+            ),
+            Details(
+              "some_name1",
+              List(),
+              List()
+            ),
+            Details(
+              "some_name2",
+              List(),
+              List()
             )
           ),
           Database(Port("ba"))
