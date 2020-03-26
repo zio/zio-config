@@ -247,13 +247,11 @@ object JustComplicatedExample extends App {
       |            ci : ki
       |            vi : bi
       |            lst: [1, 1, 1]
-      |            vvv = [1]
       |          }
       |          {
       |            ci : ki
       |            vi : 1.0882121
       |            lst: [1, 2, 1]
-      |            vvv = [1]
       |          }
       |           {
       |            ci : ki
@@ -305,8 +303,8 @@ object JustComplicatedExample extends App {
                   "di",
                   "ci",
                   List(
-                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(List("1"))),
-                    Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), Some(List("1"))),
+                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), None),
+                    Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
                     Extra2("ki", Left(3), List(1, 3, 5), Some(List("1", "2", "3")))
                   )
                 )

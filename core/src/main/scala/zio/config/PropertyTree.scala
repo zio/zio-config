@@ -320,6 +320,23 @@ object PropertyTree {
         }
     )
 
+  final def transformErrors[K1, V1, E](
+    propertyTree: PropertyTree[K1, Either[E, V1]],
+    f: PartialFunction[PropertyTree[K1, Either[E, V1]], PropertyTree[K1, Either[E, V1]]]
+  ): PropertyTree[K1, Either[E, V1]] =
+    propertyTree match {
+      case x @ Leaf(_) => f.lift(x).getOrElse(x)
+      case x @ Record(value) =>
+        val r: PropertyTree[K1, Either[E, V1]] = Record(
+          value.mapValues(tree => transformErrors(tree, f)).toMap[K1, PropertyTree[K1, Either[E, V1]]]
+        )
+        f.lift(r).getOrElse(r)
+      case x @ PropertyTree.Empty => f.lift(x).getOrElse(x)
+      case x @ Sequence(value) =>
+        val s = Sequence(value.map(tree => transformErrors(tree, f)))
+        f.lift(s).getOrElse(s)
+    }
+
   def getValue[K, V](propertyTree: PropertyTree[K, V]): V =
     propertyTree match {
       case Leaf(value)     => value
@@ -474,7 +491,8 @@ object Example extends App {
           List(
             Sequence(
               List(
-                Sequence(List(Leaf(Right("x")), Leaf(Right("x")), Leaf(Right("z")))),
+                Leaf(Left(ReadError.MissingValue(Vector(Right("a"))))),
+                Leaf(Left(ReadError.MissingValue(Vector(Right("b"))))),
                 Sequence(List(Leaf(Right("1")), Leaf(Right("2")), Leaf(Right("3"))))
               )
             )
@@ -483,7 +501,12 @@ object Example extends App {
       )
     )
 
-  println(input.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[String], List[String]]] {
+  val transformedErrors =
+    PropertyTree.transformErrors[String, String, ReadError[String]](input, {
+      case PropertyTree.Leaf(Left(value)) => PropertyTree.Sequence(List(PropertyTree.Leaf(Left(value))))
+    })
+
+  println(transformedErrors.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[String], List[String]]] {
     case (Right(l), Right(r)) => Right(l ++ r)
     case (Left(l), Right(_))  => Left(l)
     case (Right(_), Left(r))  => Left(r)

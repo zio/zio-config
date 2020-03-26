@@ -44,18 +44,22 @@ private[config] trait ReadFunctions {
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s
 
-          val looped =
+          val looped: PropertyTree[K, Either[ReadError[K], B]] =
             loop(config, keys, paths)
 
-          val res = looped.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[K], List[B]]] {
+          // Any source's missing value never knew it was a sequence until,
+          // Hence we transform all those error nodes to a sequence of error nodes to stabilise the tree
+          val sequenceErrors =
+            PropertyTree.transformErrors[K, B, ReadError[K]](looped, {
+              case PropertyTree.Leaf(Left(value)) => PropertyTree.Sequence(List(PropertyTree.Leaf(Left(value))))
+            })
+
+          val res = sequenceErrors.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[K], List[B]]] {
             case (Right(l), Right(r)) => Right(l ++ r)
             case (Left(l), Right(_))  => Left(l)
             case (Right(_), Left(r))  => Left(r)
             case (Left(l), Left(r))   => Left(ReadError.AndErrors(l :: r :: Nil))
           }
-
-          println(s"the before seq is ${looped}")
-          println(s"the after seq is ${res}")
 
           res
 
