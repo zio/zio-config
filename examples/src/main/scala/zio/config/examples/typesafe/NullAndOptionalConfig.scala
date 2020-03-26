@@ -1,6 +1,5 @@
 package zio.config.examples.typesafe
 
-import zio.DefaultRuntime
 import zio.config.ConfigDescriptor
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.hocon
@@ -80,10 +79,6 @@ object NullAndOptionalConfig extends App {
       )
     )
 
-  val runtime = new DefaultRuntime {}
-
-  val result1 = read(employeeDetails from hocconSourceList)
-
   val expectedResult =
     Right(
       EmployeeDetails(
@@ -91,12 +86,11 @@ object NullAndOptionalConfig extends App {
           Employee("jon", Some(Right("CA")), Left(Left(1.278))),
           Employee("chris", Some(Left(151)), Right("High")),
           Employee("martha", None, Right("Medium")),
-          Employee("susan", None, Right("Low"))
+          Employee("susan", None, Right("f"))
         ),
         1000
       )
     )
 
-  println(result1)
-  //assert(result1 == expectedResult)
+  assert(read(employeeDetails from hocconSourceList) == expectedResult)
 }
