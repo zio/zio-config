@@ -263,6 +263,36 @@ object JustComplicatedExample extends App {
       |          }
       |        ]
       |      }
+      |      
+      |      {
+      |        hi : di
+      |        bi : ci
+      |        r = [
+      |          {
+      |            ci : ki
+      |            vi : bi
+      |            lst: [1, 1, 1]
+      |            vvv = []
+      |          }
+      |          {
+      |            ci : ki
+      |            vi : 1.0882121
+      |            lst: [1, 2, 1]
+      |          }
+      |           {
+      |            ci : ki
+      |            vi : 3
+      |            lst: [1, 3, 5]
+      |            vvv = [1, 2, 3]
+      |          }
+      |        ]
+      |      }
+      |      
+      |     {
+      |        hi : di
+      |        bi : ci
+      |        r = []
+      |      }
       |    ]
       |  }
       |  
@@ -271,6 +301,16 @@ object JustComplicatedExample extends App {
       |    columns        : []
       |    extra-details = [
       |      {
+      |        hi : di
+      |        bi : ci
+      |        r = []
+      |      }
+      |      {
+      |        hi : di
+      |        bi : ci
+      |        r = []
+      |      }
+      |       {
       |        hi : di
       |        bi : ci
       |        r = []
@@ -330,6 +370,20 @@ object JustComplicatedExample extends App {
                     Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
                     Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
                   )
+                ),
+                Extra(
+                  "di",
+                  "ci",
+                  List(
+                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
+                    Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
+                    Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
+                  )
+                ),
+                Extra(
+                  "di",
+                  "ci",
+                  Nil
                 )
               )
             ),
@@ -337,6 +391,16 @@ object JustComplicatedExample extends App {
               "some_name1",
               List(),
               List(
+                Extra(
+                  "di",
+                  "ci",
+                  Nil
+                ),
+                Extra(
+                  "di",
+                  "ci",
+                  Nil
+                ),
                 Extra(
                   "di",
                   "ci",
