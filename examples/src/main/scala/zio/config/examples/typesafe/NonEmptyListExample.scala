@@ -4,34 +4,15 @@ import zio.config.typesafe.TypeSafeConfigSource._
 import zio.config._
 import zio.config.magnolia.ConfigDescriptorProvider.description
 
-object Testing extends App {
-  // This works
-  val another =
-    """
-      |  bs = [
-      |    {
-      |       table : t1
-      |       cs = []
-      |    }
-      |    
-      |  ]
-      |""".stripMargin
-
-  final case class D(x: String, xx: String)
-  final case class C(x: List[D], y: List[String])
-  final case class B(table: String, cs: List[C])
-  final case class A(bs: List[B])
-
-  println(read(description[A] from hocon(Right(another))))
-}
-
-object JustComplicatedExample extends App {
+// Why Maybe[NonEmptyList] could be the right thing to do, stays as a limitation to zio-config:
+// https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
+object NonEmptyListExample {
   val configString =
     """
       |b = [
       |  {
       |   table          : some_name
-      |   columns        : []
+      |   columns        : [aa]
       |    c = [
       |      {
       |        d = [
@@ -46,12 +27,6 @@ object JustComplicatedExample extends App {
       |            vi : bi
       |            e: [12,12]
       |            vvv = [d]
-      |          }
-      |          {
-      |            ci : ki
-      |            vi : bi
-      |            e: [13, 13, 13]
-      |            vvv = []
       |          }
       |          {
       |            ci : ki
@@ -100,12 +75,6 @@ object JustComplicatedExample extends App {
       |            e: [24, 24, 24]
       |            vvv = [l]
       |          }
-      |          {
-      |            ci : ki
-      |            vi : bi
-      |            e: [27]
-      |            vvv = []
-      |          }
       |        ]
       |      }
       |    ]
@@ -137,20 +106,8 @@ object JustComplicatedExample extends App {
       |          {
       |            ci : ki
       |            vi : bi
-      |            e: [34, 34, 34]
-      |            vvv = []
-      |          }
-      |          {
-      |            ci : ki
-      |            vi : bi
       |            e: [31]
       |            vvv = [b]
-      |          }
-      |          {
-      |            ci : ki
-      |            vi : bi
-      |            e: [33]
-      |            vvv = []
       |          }
       |          {
       |            ci : ki
@@ -192,8 +149,6 @@ object JustComplicatedExample extends App {
   val zioConfigResult =
     read(description[A] from hocon(Right(configString)))
 
-  println(zioConfigResult)
-
   assert(
     zioConfigResult ==
 
@@ -204,16 +159,16 @@ object JustComplicatedExample extends App {
               List(
                 C(
                   List(
-                    D(List(1, 1, 1), List("a", "b", "c")),
-                    D(List(12, 12), List("d")),
-                    D(List(13, 13, 13), List()),
-                    D(List(14, 14), List("e")),
-                    D(List(15, 15), List("f", "g"))
+                    // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
+                    D(NonEmptyList(1, 1, 1), List("a", "b", "c")),
+                    D(NonEmptyList(12, 12), List("d")),
+                    D(NonEmptyList(14, 14), List("e")),
+                    D(NonEmptyList(15, 15), List("f", "g"))
                   )
                 )
               ),
               "some_name",
-              List()
+              List("aa")
             ),
             B(
               List(
@@ -222,8 +177,7 @@ object JustComplicatedExample extends App {
                     D(List(21, 21), List("af")),
                     D(List(22, 22), List("sa", "l")),
                     D(List(23, 23, 23), List("af", "l")),
-                    D(List(24, 24, 24), List("l")),
-                    D(List(27), Nil)
+                    D(List(24, 24, 24), List("l"))
                   )
                 )
               ),
@@ -237,9 +191,7 @@ object JustComplicatedExample extends App {
                     D(List(31, 31), List("bb")),
                     D(List(32, 32), List("x")),
                     D(List(33, 33, 33), List("xx")),
-                    D(List(34, 34, 34), Nil),
                     D(List(31), List("b")),
-                    D(List(33), Nil),
                     D(List(37), List("e", "f", "g", "h", "i"))
                   )
                 )
@@ -366,14 +318,21 @@ object JustComplicatedExample extends App {
       |}
       |""".stripMargin
 
+  // Any list which you think could be empty in your application configuration file, which actually shouldn't be,
+  // You can choose to have `Option[NonEmptyList]` to avoid the error outcome
+  // Have a read through https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
   final case class Extra2(
     ci: String,
     vi: Either[Int, Either[Long, Either[Double, Either[Float, String]]]],
-    lst: List[Int],
-    vvv: Option[List[Int]]
+    lst: Option[NonEmptyList[Int]],
+    vvv: Option[NonEmptyList[Int]]
   )
-  final case class Extra(hi: String, bi: String, r: List[Extra2])
-  final case class Details(table: String, columns: List[String], extraDetails: List[Extra])
+  final case class Extra(hi: String, bi: String, r: Option[NonEmptyList[Extra2]])
+  final case class Details(
+    table: String,
+    columns: Option[NonEmptyList[String]],
+    extraDetails: Option[NonEmptyList[Extra]]
+  )
   final case class ExportDetails(exportDetails: List[Details], database: Database)
   final case class Port(va: String)
   final case class Database(port: Port)
@@ -381,6 +340,7 @@ object JustComplicatedExample extends App {
   val zioConfigWithKeysInKebabResult =
     read(description[ExportDetails].mapKey(KeyConversion.camelToKebab) from hocon(Right(kebabCaseConfig)))
 
+  def main(args: Array[String]) = {}
   assert(
     zioConfigWithKeysInKebabResult ==
       Right(
@@ -388,37 +348,43 @@ object JustComplicatedExample extends App {
           List(
             Details(
               "some_name",
-              List("a", "b", "c", "d"),
-              List(
-                Extra(
-                  "di",
-                  "ci",
-                  List(
-                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
-                    Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
-                    Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
-                  )
-                ),
-                Extra(
-                  "di",
-                  "ci",
-                  List(
-                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
-                    Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
-                    Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
-                  )
-                ),
-                Extra("di", "ci", Nil)
+              Some(::("a", List("b", "c", "d"))),
+              Some(
+                NonEmptyList(
+                  Extra(
+                    "di",
+                    "ci",
+                    Some(
+                      NonEmptyList(
+                        Extra2("ki", Right(Right(Right(Right("bi")))), Some(NonEmptyList(1, 1, 1)), None),
+                        Extra2("ki", Right(Right(Left(1.0882121))), Some(NonEmptyList(1, 2, 1)), None),
+                        Extra2("ki", Left(3), Some(NonEmptyList(1, 3, 5)), Some(NonEmptyList(1, 2, 3)))
+                      )
+                    )
+                  ),
+                  Extra(
+                    "di",
+                    "ci",
+                    Some(
+                      NonEmptyList(
+                        Extra2("ki", Right(Right(Right(Right("bi")))), Some(NonEmptyList(1, 1, 1)), None),
+                        Extra2("ki", Right(Right(Left(1.0882121))), Some(NonEmptyList(1, 2, 1)), None),
+                        Extra2("ki", Left(3), Some(NonEmptyList(1, 3, 5)), Some(NonEmptyList(1, 2, 3)))
+                      )
+                    )
+                  ),
+                  Extra("di", "ci", None)
+                )
               )
             ),
             Details(
               "some_name1",
-              List(),
-              List(Extra("di", "ci", Nil), Extra("di", "ci", Nil), Extra("di", "ci", Nil))
+              None,
+              Some(NonEmptyList(Extra("di", "ci", None), Extra("di", "ci", None), Extra("di", "ci", None)))
             ),
-            Details("some_name1", List(), List()),
-            Details("some_name2", List(), List()),
-            Details("some_name2", List(), List())
+            Details("some_name1", None, None),
+            Details("some_name2", None, None),
+            Details("some_name2", None, None)
           ),
           Database(Port("ba"))
         )

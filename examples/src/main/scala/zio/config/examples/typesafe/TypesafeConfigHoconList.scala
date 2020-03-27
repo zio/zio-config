@@ -1,4 +1,3 @@
-/*
 package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
@@ -78,31 +77,35 @@ object TypesafeConfigHoconList extends App {
     read(awsDetailsConfig from hocon(Right(validHocon)))
 
   assert(
-    runtime.unsafeRun(listResult) ==
-      AwsDetails(
-        List(
-          Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
-          Account(Some(Left(123)), List("us-west", "ab", "cd"), Some(Details("zak", 11))),
-          Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
-        ),
-        Database(Some(100), "postgres"),
-        List(1, 2, 3)
+    listResult ==
+      Right(
+        AwsDetails(
+          List(
+            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
+            Account(Some(Left(123)), List("us-west", "ab", "cd"), Some(Details("zak", 11))),
+            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+          ),
+          Database(Some(100), "postgres"),
+          List(1, 2, 3)
+        )
       )
   )
   val automaticAwsDetailsConfig = description[AwsDetails]
 
-  val automaticResult = runtime.unsafeRun(read(automaticAwsDetailsConfig from hocon(Right(validHocon))))
+  val automaticResult = read(automaticAwsDetailsConfig from hocon(Right(validHocon)))
 
   assert(
     automaticResult ==
-      AwsDetails(
-        List(
-          Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
-          Account(Some(Left(123)), List("us-west", "ab", "cd"), Some(Details("zak", 11))),
-          Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
-        ),
-        Database(Some(100), "postgres"),
-        List(1, 2, 3)
+      Right(
+        AwsDetails(
+          List(
+            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
+            Account(Some(Left(123)), List("us-west", "ab", "cd"), Some(Details("zak", 11))),
+            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+          ),
+          Database(Some(100), "postgres"),
+          List(1, 2, 3)
+        )
       )
   )
 
@@ -119,7 +122,7 @@ object TypesafeConfigHoconList extends App {
           accountId: chris
       }
       {
-          accountId: null
+        
       }
     ]
 
@@ -132,7 +135,6 @@ object TypesafeConfigHoconList extends App {
 
     """
 
-  println(runtime.unsafeRun(read(description[AwsDetails] from hocon(Right(invalidHocon))).either))
+  println(read(description[AwsDetails] from hocon(Right(invalidHocon))))
 
 }
- */

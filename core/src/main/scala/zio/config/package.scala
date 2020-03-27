@@ -3,6 +3,14 @@ package zio
 import scala.annotation.tailrec
 
 package object config extends ReadFunctions with WriteFunctions with ConfigDocsFunctions {
+
+  type NonEmptyList[A] = ::[A]
+
+  object NonEmptyList {
+    def apply[A](a: A*) =
+      ::(a.head, a.tail.toList)
+  }
+
   final def config[A]: ZIO[Config[A], Nothing, A] =
     ZIO.access(_.config.config)
 

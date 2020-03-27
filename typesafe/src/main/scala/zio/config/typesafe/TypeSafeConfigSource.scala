@@ -34,32 +34,49 @@ object TypeSafeConfigSource {
 
             case ConfigValueType.LIST =>
               Try {
-                acc.updated(
-                  key,
-                  Sequence(config.getConfigList(key).asScala.toList.map(eachConfig => Record(loop(eachConfig))))
-                )
+                val list =
+                  config.getConfigList(key).asScala.toList
+
+                if (list.isEmpty) {
+                  acc.updated(key, PropertyTree.empty)
+                } else
+                  acc.updated(
+                    key,
+                    Sequence(list.map(eachConfig => Record(loop(eachConfig))))
+                  )
               }.orElse({
                   Try {
-                    acc.updated(
-                      key,
-                      Sequence(
-                        config
-                          .getStringList(key)
-                          .asScala
-                          .map(t => Leaf(t))
-                          .toList
+                    val list = config.getStringList(key).asScala.toList
+
+                    if (list.isEmpty) {
+                      acc.updated(key, PropertyTree.empty)
+                    } else
+                      acc.updated(
+                        key,
+                        Sequence(
+                          config
+                            .getStringList(key)
+                            .asScala
+                            .map(t => Leaf(t))
+                            .toList
+                        )
                       )
-                    )
                   }
                 })
                 .orElse({
                   Try {
-                    acc.updated(
-                      key,
-                      Sequence(
-                        config.getObjectList(key).asScala.toList.map(eachConfig => Record(loop(eachConfig.toConfig)))
+                    val list =
+                      config.getObjectList(key).asScala.toList
+
+                    if (list.isEmpty)
+                      acc.updated(key, PropertyTree.empty)
+                    else
+                      acc.updated(
+                        key,
+                        Sequence(
+                          list.map(eachConfig => Record(loop(eachConfig.toConfig)))
+                        )
                       )
-                    )
                   }
                 }) match {
                 case Failure(_) =>

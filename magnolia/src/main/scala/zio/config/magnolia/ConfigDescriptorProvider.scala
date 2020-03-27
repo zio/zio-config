@@ -39,6 +39,19 @@ object ConfigDescriptorProvider {
   implicit def listt[A: ConfigDescriptorProvider]: ConfigDescriptorProvider[List[A]] =
     a => list(ConfigDescriptorProvider[A].getDescription(a))
 
+  implicit def nonEmptyList[A: ConfigDescriptorProvider]: ConfigDescriptorProvider[::[A]] =
+    a =>
+      list(ConfigDescriptorProvider[A].getDescription(a)).xmapEither(
+        list =>
+          list.headOption match {
+            case Some(value) => Right(::(value, list.tail))
+            case None =>
+              Left(
+                "The list is empty. Either provide a non empty list, and if not mark it as optional and choose to avoid it in the config"
+              )
+          }
+      )(nonEmpty => Right(nonEmpty.toList))
+
   // This is equivalent to saying string("PATH").orElseEither(int("PATH")). During automatic derivations, we are unaware of alternate paths.
   implicit def eith[A: ConfigDescriptorProvider, B: ConfigDescriptorProvider]: ConfigDescriptorProvider[Either[A, B]] =
     new ConfigDescriptorProvider[Either[A, B]] {

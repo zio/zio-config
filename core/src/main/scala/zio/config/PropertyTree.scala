@@ -141,6 +141,7 @@ sealed trait PropertyTree[+K, +V] { self =>
           case Leaf(_)       => Empty
           case Record(value) => value.get(head.asInstanceOf[K]).map(_.getPath(next)).getOrElse(Empty)
           case Sequence(r)   => Sequence(r.map(_.getPath(k)))
+
         }
     }
 
@@ -165,8 +166,6 @@ sealed trait PropertyTree[+K, +V] { self =>
       case Empty         => Empty
       case Leaf(value)   => Leaf(value)
       case Record(value) => Record(value.mapValues(_.reduceInner(zero)(f)).toMap)
-      //               Sequence(List()), // It should have been Leaf(Right(Nil))
-      case Sequence(value) if value.isEmpty => Leaf(zero)
       case Sequence(value) =>
         val (vs0, rest0) = PropertyTree.partitionWith(zero, value) {
           case Leaf(value) => value
@@ -175,9 +174,15 @@ sealed trait PropertyTree[+K, +V] { self =>
         val (vs, rest) = (vs0, pruneEmpty(rest0))
 
         (vs, rest) match {
-          case (Nil, _)  => Sequence(value.map(_.reduceInner(zero)(f)))
-          case (vs, Nil) => vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
-          case (vs, _)   => Sequence(vs.map(Leaf(_)))
+          case (Nil, _) =>
+            Sequence(value.map(_.reduceInner(zero)(f)))
+          case (vs, Nil) =>
+            vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
+          case (vs, res) =>
+            println(Sequence(vs.map(Leaf(_))).zipWith(Sequence(res).reduceInner(zero)(f))(f))
+
+            Sequence(vs.map(Leaf(_))).zipWith(Sequence(res).reduceInner(zero)(f))(f)
+          //Sequence(res)
 
         }
     }
@@ -270,15 +275,19 @@ object PropertyTree {
   def partitionWith[K, V, A](
     zero: A,
     trees: List[PropertyTree[K, V]]
-  )(pf: PartialFunction[PropertyTree[K, V], A]): (List[A], List[PropertyTree[K, V]]) =
-    if (trees.isEmpty) (List(zero), Nil)
-    else
-      trees.collect {
-        case tree if pf.isDefinedAt(tree) => (pf(tree) :: Nil, Nil)
-        case tree                         => (Nil, tree :: Nil)
-      }.foldLeft((List.empty[A], List.empty[PropertyTree[K, V]])) {
-        case ((accLeft, accRight), (left, right)) => (accLeft ++ left, accRight ++ right)
-      }
+  )(pf: PartialFunction[PropertyTree[K, V], A]): (List[A], List[PropertyTree[K, V]]) = {
+    //(trees)
+
+    val res = trees.map {
+      case tree if pf.isDefinedAt(tree) => (pf(tree) :: Nil, Nil)
+      case tree                         => (Nil, tree :: Nil)
+    }.foldLeft((List.empty[A], List.empty[PropertyTree[K, V]])) {
+      case ((accLeft, accRight), (left, right)) => (accLeft ++ left, accRight ++ right)
+    }
+
+//    println(res)
+    res
+  }
 
   def sequence[K, V](tree: List[PropertyTree[K, V]]): PropertyTree[K, List[V]] =
     tree match {
@@ -611,5 +620,24 @@ object Example extends App {
 //  })
 
   println(Sequence(List(Sequence(List()), Sequence(List()))).validTree)
+
+  val input =
+    Sequence(
+      List(
+        Sequence(List(Leaf(Left(MissingValue(Vector(Right("bs"), Right("cs"), Right("str"))))))),
+        Leaf(Right("a"))
+      )
+    )
+
+  val res = input.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[String], List[String]]](Right(Nil)) {
+    case (Right(l), Right(r)) => Right(l ++ r)
+    case (Left(l), Right(_))  => Left(l)
+    case (Right(_), Left(r))  => Left(r)
+    case (Left(l), Left(r))   => Left(ReadError.AndErrors(l :: r :: Nil))
+  }
+
+  println(res)
+
+  //List(Sequence(List(Leaf(Left(MissingValue(Vector(Right(bs), Right(cs), Right(str))))))), Leaf(Right(List(a))))
 
 }
