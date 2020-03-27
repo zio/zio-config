@@ -1,4 +1,3 @@
-/*
 package zio.config.examples
 
 import zio.config._
@@ -52,4 +51,3 @@ object MultipleSources extends App {
     read(myConfigChangedSource) == Right(MyConfig("jolap", 1999, Some("newyork.com")))
   )
 }
- */

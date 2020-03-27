@@ -125,6 +125,13 @@ sealed trait PropertyTree[+K, +V] { self =>
     case Sequence(value) => value.forall(_.isEmpty)
   }
 
+  def hasEmpty: Boolean = self match {
+    case Empty           => true
+    case Leaf(_)         => false
+    case Record(value)   => value.values.exists(_.hasEmpty)
+    case Sequence(value) => value.exists(_.hasEmpty)
+  }
+
   def getPath[K1 >: K](k: List[K1]): PropertyTree[K1, V] =
     k match {
       case Nil => self
@@ -135,6 +142,14 @@ sealed trait PropertyTree[+K, +V] { self =>
           case Record(value) => value.get(head.asInstanceOf[K]).map(_.getPath(next)).getOrElse(Empty)
           case Sequence(r)   => Sequence(r.map(_.getPath(k)))
         }
+    }
+
+  def validTree: Boolean =
+    self match {
+      case Leaf(_)            => true
+      case Record(value)      => value.values.toList.exists(_.validTree)
+      case PropertyTree.Empty => false
+      case Sequence(value)    => if (value.isEmpty) false else value.exists(_.validTree)
     }
 
   def reduceInner[V1 >: V](zero: V1)(f: (V1, V1) => V1): PropertyTree[K, V1] = {
@@ -167,26 +182,6 @@ sealed trait PropertyTree[+K, +V] { self =>
         }
     }
   }
-
-  def getPath2[K1 >: K](k: List[K1]): List[PropertyTree[K1, V]] =
-    k match {
-      case head :: Nil =>
-        self match {
-          case Leaf(value)     => Empty :: Nil
-          case Record(value)   => value.get(head.asInstanceOf[K]).getOrElse(Empty) :: Nil
-          case Sequence(value) => value
-          case Empty           => Empty :: Nil
-
-        }
-      case Nil => self :: Nil
-      case head :: next =>
-        self match {
-          case Empty         => Empty :: Nil
-          case Leaf(_)       => Empty :: Nil
-          case Record(value) => value.get(head.asInstanceOf[K]).map(_.getPath2(next)).getOrElse(Empty :: Nil)
-          case Sequence(r)   => Sequence(r.map(_.getPath2(k)).flatten) :: Nil
-        }
-    }
 
   final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): List[PropertyTree[K1, V1]] =
     (self, that) match {
@@ -614,5 +609,7 @@ object Example extends App {
 //    case (Right(_), Left(r))  => Left(r)
 //    case (Left(l), Left(r))   => Left(ReadError.AndErrors(l :: r :: Nil))
 //  })
+
+  println(Sequence(List(Sequence(List()), Sequence(List()))).validTree)
 
 }

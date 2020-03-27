@@ -13,7 +13,10 @@ final case class ConfigSource[K, V](
 ) { self =>
   final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     ConfigSource(
-      k => getConfigValue(k).orElse(that.getConfigValue(k)),
+      k => {
+        val cv = getConfigValue(k)
+        if (cv.isEmpty || cv.exists(_.hasEmpty)) that.getConfigValue(k) else cv
+      },
       self.sourceDescription ++ that.sourceDescription
     )
 
@@ -92,13 +95,8 @@ object ConfigSource {
     ConfigSource(
       (path: Vector[String]) => {
         list
-          .map(tree => Some(tree.getPath(path.toList)))
-          .collectFirst {
-            case Some(tree) =>
-              //  println(s"for the path ${path}. ${tree}")
-
-              tree
-          }
+          .map(_.getPath(path.toList))
+          .headOption
       },
       sourceName :: Nil
     )

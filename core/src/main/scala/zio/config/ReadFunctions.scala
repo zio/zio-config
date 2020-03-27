@@ -15,8 +15,12 @@ private[config] trait ReadFunctions {
     ): PropertyTree[K, Either[ReadError[K], B]] =
       configuration match {
         case ConfigDescriptor.Source(key, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
+          val newKey =
+            if (source.getConfigValue(keys).fold(true)(_.validTree)) {
+              keys :+ key
+            } else keys
           source
-            .getConfigValue(keys :+ key) match {
+            .getConfigValue(newKey) match {
             case Some(tree) =>
               tree
                 .mapEmptyToError(ReadError.MissingValue((paths :+ Right(key))))

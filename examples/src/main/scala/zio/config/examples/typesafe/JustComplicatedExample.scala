@@ -4,6 +4,27 @@ import zio.config.typesafe.TypeSafeConfigSource._
 import zio.config._
 import zio.config.magnolia.ConfigDescriptorProvider.description
 
+object Testing extends App {
+  // This works
+  val another =
+    """
+      |  bs = [
+      |    {
+      |       table : t1
+      |       cs = []
+      |    }
+      |    
+      |  ]
+      |""".stripMargin
+
+  final case class D(x: String, xx: String)
+  final case class C(x: List[D], y: List[String])
+  final case class B(table: String, cs: List[C])
+  final case class A(bs: List[B])
+
+  println(read(description[A] from hocon(Right(another))))
+}
+
 object JustComplicatedExample extends App {
   val configString =
     """
@@ -327,7 +348,7 @@ object JustComplicatedExample extends App {
       |   {
       |    table          : some_name2
       |    columns        : []
-      |    extra-details = []
+      |    extra-details  = []
       |  }
       |  
       |    

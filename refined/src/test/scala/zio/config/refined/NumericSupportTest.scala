@@ -5,7 +5,7 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric.{ Divisible, Greater, GreaterEqual, Less, LessEqual, NonDivisible }
 import zio.ZIO
 import zio.config.ConfigDescriptor._
-import zio.config.{ helpers, read, write, BaseSpec, ConfigSource, ReadErrorsVector }
+import zio.config.{ helpers, read, write, BaseSpec, ConfigSource, ReadError }
 import zio.test.Assertion._
 import zio.test._
 
@@ -27,7 +27,7 @@ object NumericSupportTest
         testM("Refined config Less invalid") {
           checkM(Gen.int(10, 100)) { p =>
             val cfg = less[W.`10`.T](int("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, Less[W.`10`.T]]] =
+            val p2: ZIO[Any, ReadError[String], Refined[Int, Less[W.`10`.T]]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
             assertM(p2.either, helpers.assertErrors(_.size == 1))
