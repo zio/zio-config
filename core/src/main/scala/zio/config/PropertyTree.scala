@@ -11,6 +11,9 @@ sealed trait PropertyTree[+K, +V] { self =>
     case Empty           => Empty
   }
 
+  final def getOrElse[K1 >: K, V1 >: V](tree: => PropertyTree[K1, V1]): PropertyTree[K1, V1] =
+    if (self == PropertyTree.empty) tree else self
+
   def mapEmptyToError[E, V2](f: => E): PropertyTree[K, Either[E, V]] = self match {
     case Leaf(value)        => Leaf(Right(value))
     case Record(v)          => Record(v.map { case (k, tree) => (k, tree.mapEmptyToError(f)) })

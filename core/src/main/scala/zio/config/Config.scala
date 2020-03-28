@@ -33,7 +33,7 @@ object Config {
     valueDelimiter: Option[Char] = None
   ): IO[ReadError[String], Config[A]] =
     ConfigSource
-      .fromEnv(valueDelimiter)
+      .fromSystemEnv(valueDelimiter)
       .flatMap((r: ConfigSource[String, String]) => make[String, String, A](r, configDescriptor))
 
   def fromMap[A](
@@ -67,7 +67,7 @@ object Config {
         properties =>
           lineSeparator.flatMap(
             ln =>
-              make(ConfigSource.fromJavaProperties(properties), configDescriptor)
+              make(ConfigSource.fromProperties(properties), configDescriptor)
                 .mapError(r => new RuntimeException(s"${ln}${r}"))
           )
       )
@@ -76,5 +76,5 @@ object Config {
     configDescriptor: ConfigDescriptor[String, String, A],
     valueDelimiter: Option[Char] = None
   ): IO[ReadError[String], Config[A]] =
-    ConfigSource.fromProperty(valueDelimiter).flatMap(r => make(r, configDescriptor))
+    ConfigSource.fromSystemProperties(valueDelimiter).flatMap(r => make(r, configDescriptor))
 }
