@@ -22,6 +22,15 @@ object PropertyTreeTest
             )
           }
         },
+        test("reduceInner should not reduce a Sequence(Nil) as it is unaware of the structure of Nil") {
+          val input =
+            Sequence(Nil: List[PropertyTree[Nothing, Nothing]]).map((_: Any) :: Nil)
+
+          assert(
+            input.reduceInner(_ ++ _),
+            equalTo(input)
+          )
+        },
         testM("reduceInner should convert a simple Sequence(List(Leaf(1))) to Leaf(List(1))") {
           check(genLeaf) { input =>
             assert(
