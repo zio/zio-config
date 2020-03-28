@@ -11,7 +11,6 @@ sealed trait PropertyTree[+K, +V] { self =>
     case Empty           => Empty
   }
 
-  // Consider empty as an error
   def mapEmptyToError[E, V2](f: => E): PropertyTree[K, Either[E, V]] = self match {
     case Leaf(value)        => Leaf(Right(value))
     case Record(v)          => Record(v.map { case (k, tree) => (k, tree.mapEmptyToError(f)) })

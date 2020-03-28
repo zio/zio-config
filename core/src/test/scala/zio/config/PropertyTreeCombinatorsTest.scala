@@ -6,9 +6,9 @@ import zio.test.Assertion._
 
 object PropertyTreeCombinatorsTest
     extends BaseSpec(
-      suite("PropertyTree.map")(
+      suite("PropertyTree.combinators")(
         testM(
-          "When tree mapped with identity gives the same tree"
+          "PropertyTree.map(tree, identity) returns tree"
         ) {
           check(nLevelSequenceWithRecords) { input =>
             {
@@ -21,7 +21,7 @@ object PropertyTreeCombinatorsTest
           }
         },
         testM(
-          "PropertyTree.map follows functor associative law"
+          "PropertyTree.map: follows functor associative law"
         ) {
           check(nLevelSequenceWithRecords, Gen.anyString, Gen.anyString) { (input, string, string2) =>
             {
@@ -39,14 +39,51 @@ object PropertyTreeCombinatorsTest
           }
         },
         testM(
-          "When tree mapped with any f change all the leaf values of both records and sequences"
+          "PropertyTree.map(tree, f) ensures all leaves are mapped to f"
         ) {
           check(nLevelSequenceWithRecords, Gen.anyString) { (input, string) =>
             {
               val (tree, leaves, params) = input
               assert(
                 getTreeFromNLevelSequence(tree.map(_ + string), params.nestedSequencesCount),
-                equalTo((1 to params.numberOfKeysInRecordMap).toList.flatMap(_ => leaves.map(_ + string).toSequences))
+                equalTo((1 to params.recordKeyCount).toList.flatMap(_ => leaves.map(_ + string).toSequences))
+              )
+            }
+          }
+        },
+        testM(
+          "PropertyTree.mapEmptyToError on a tree with zero empty returns all leaves with values in Right of Either"
+        ) {
+          check(nLevelSequenceWithRecords, Gen.anyString) { (input, string) =>
+            {
+              val (tree, leaves, params) = input
+              val mapEmpty               = tree.mapEmptyToError(string)
+              assert(
+                getTreeFromNLevelSequence(mapEmpty, params.nestedSequencesCount),
+                equalTo(
+                  (1 to params.recordKeyCount).toList
+                    .flatMap(_ => leaves.map(Right(_): Either[String, String]).toSequences)
+                )
+              )
+            }
+          }
+        },
+        testM(
+          "PropertyTree.mapEmptyToError on a tree with empty returns all leaves that are empty to Left(error)"
+        ) {
+          check(nLevelSequenceWithRecordsEmpty, Gen.anyString) { (input, string) =>
+            {
+              val (tree, params) = input
+              val mapEmpty       = tree.mapEmptyToError(string)
+
+              assert(
+                getTreeFromNLevelSequence(mapEmpty, params.nestedSequencesCount),
+                equalTo(
+                  (List
+                    .fill(params.recordKeyCount)(
+                      PropertyTree.Leaf(Left(string))
+                    ))
+                )
               )
             }
           }
