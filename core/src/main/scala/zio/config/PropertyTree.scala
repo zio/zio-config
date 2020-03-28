@@ -138,14 +138,6 @@ sealed trait PropertyTree[+K, +V] { self =>
         }
     }
 
-  def validTree: Boolean =
-    self match {
-      case Leaf(_)            => true
-      case Record(value)      => value.values.toList.exists(_.validTree)
-      case PropertyTree.Empty => false
-      case Sequence(value)    => if (value.isEmpty) false else value.exists(_.validTree)
-    }
-
   def reduceInner[V1 >: V](f: (V1, V1) => V1): PropertyTree[K, V1] = {
     def pruneEmpty[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
       list.collect {
