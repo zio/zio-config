@@ -10,13 +10,13 @@ final case class ConfigSource[K, V](
   getConfigValue: Vector[K] => IO[ReadErrorsVector[K, V], ConfigValue[V]],
   sourceDescription: List[String]
 ) { self =>
-  final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+  def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     ConfigSource(
       k => getConfigValue(k).orElse(that.getConfigValue(k)),
       self.sourceDescription ++ that.sourceDescription
     )
 
-  final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] = self orElse that
+  def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] = self orElse that
 }
 
 object ConfigSource {
@@ -59,6 +59,34 @@ object ConfigSource {
       },
       SystemEnvironment :: Nil
     )
+
+  /** Forming configuration from command line arguments, eg `List(--param1=xxxx, --param2=yyyy)` */
+  def fromArgs(args: List[String], separator: Option[String] = None): ConfigSource[String, String] = {
+    val map =
+      args
+        .filter(s => s.startsWith("--") && s.contains("="))
+        .map(s => s.substring(2).split('=').toList)
+        .flatMap {
+          _ match {
+            case s1 :: s2 :: Nil => List((s1, s2))
+            case _               => Nil
+          }
+        }
+        .toMap
+
+    ConfigSource(
+      (path: Vector[String]) => {
+        val key = path.mkString(separator.getOrElse(""))
+
+        ZIO
+          .succeed(map.get(key))
+          .map(_.map(value => ConfigValue(::(value, Nil))))
+          .flatMap(IO.fromOption(_))
+          .mapError[ReadErrorsVector[String, String]](_ => singleton(ReadError.MissingValue(path)))
+      },
+      "JVM command line arguments" :: Nil
+    )
+  }
 
   def fromProperty(valueSeparator: Option[String] = None): ConfigSource[String, String] =
     ConfigSource(

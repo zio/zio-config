@@ -19,7 +19,7 @@ object Config {
   def make[K, V, A](
     source: ConfigSource[K, V],
     configDescriptor: ConfigDescriptor[K, V, A]
-  )(implicit tagged: Tagged[Service[A]]): ZLayer.NoDeps[ReadErrors[Vector[K], V], Config[A]] =
+  )(implicit tagged: Tagged[Service[A]]): ZLayer[Any, ReadErrors[Vector[K], V], Config[A]] =
     ZLayer.fromEffect(makeM(source, configDescriptor))
 
   def makeM[K, V, A](
@@ -28,31 +28,38 @@ object Config {
   ): IO[ReadErrors[Vector[K], V], Service[A]] =
     read(configDescriptor from source).map(succeed(_))
 
-  def fromEnv[K, V, A](
+  def fromEnv[A](
     configDescriptor: ConfigDescriptor[String, String, A],
     valueDelimiter: Option[String] = None
-  )(implicit tagged: Tagged[Service[A]]): ZLayer.NoDeps[ReadErrors[Vector[String], String], Config[A]] =
+  )(implicit tagged: Tagged[Service[A]]): ZLayer[Any, ReadErrors[Vector[String], String], Config[A]] =
     make(ConfigSource.fromEnv(valueDelimiter), configDescriptor)
+
+  def fromArgs[A](
+    configDescriptor: ConfigDescriptor[String, String, A],
+    args: List[String],
+    valueDelimiter: Option[String] = None
+  )(implicit tagged: Tagged[Service[A]]): ZLayer[Any, ReadErrors[Vector[String], String], Config[A]] =
+    make(ConfigSource.fromArgs(args, valueDelimiter), configDescriptor)
 
   def fromMap[A](
     map: Map[String, String],
     configDescriptor: ConfigDescriptor[String, String, A],
     pathDelimiter: String = "."
-  )(implicit tagged: Tagged[Service[A]]): ZLayer.NoDeps[ReadErrors[Vector[String], String], Config[A]] =
+  )(implicit tagged: Tagged[Service[A]]): ZLayer[Any, ReadErrors[Vector[String], String], Config[A]] =
     make[String, String, A](ConfigSource.fromMap(map, pathDelimiter), configDescriptor)
 
   def fromMultiMap[A](
     map: Map[String, ::[String]],
     configDescriptor: ConfigDescriptor[String, String, A],
     pathDelimiter: String = "."
-  )(implicit tagged: Tagged[Service[A]]): ZLayer.NoDeps[ReadErrors[Vector[String], String], Config[A]] =
+  )(implicit tagged: Tagged[Service[A]]): ZLayer[Any, ReadErrors[Vector[String], String], Config[A]] =
     make[String, String, A](ConfigSource.fromMultiMap(map, pathDelimiter), configDescriptor)
 
   // If reading a file, this can have read errors as well as throwable when trying to read the file
   def fromPropertyFile[A](
     filePath: String,
     configDescriptor: ConfigDescriptor[String, String, A]
-  )(implicit tagged: Tagged[Service[A]]): ZLayer.NoDeps[Throwable, Config[A]] =
+  )(implicit tagged: Tagged[Service[A]]): ZLayer[Any, Throwable, Config[A]] =
     ZLayer.fromEffect(
       for {
         properties <- ZIO.bracket(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))(
