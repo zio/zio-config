@@ -2,10 +2,10 @@ package zio.config
 
 import zio.ZIO
 import zio.config.ConfigDescriptor._
-import zio.config.helpers._
 import zio.config.ListAndOptionalTestUtils._
-import zio.test._
+import zio.config.helpers._
 import zio.test.Assertion._
+import zio.test._
 
 object ListAndOptionalTest
     extends BaseSpec(suite("List and options")(testM("optional write") {
@@ -16,7 +16,7 @@ object ListAndOptionalTest
           .flatMap(t => t.flatMap(tt => tt.map(ttt => Map("kId" -> singleton(ttt.value)))))
           .getOrElse(Map.empty[String, ::[String]])
 
-        assertM(actual, equalTo(expected))
+        assertM(actual)(equalTo(expected))
       }
     }))
 
@@ -26,8 +26,8 @@ object ListAndOptionalTestUtils {
   val genOverallConfig =
     Gen.option(genId).map(t => OverallConfig(t.map(t => Option(Option(t)))))
 
-  private val cId = string("kId").xmap(Id)(_.value)
+  private val cId = string("kId")(Id.apply, Id.unapply)
 
   val cOverallConfig =
-    cId.optional.optional.optional.xmap(OverallConfig)(_.option)
+    cId.optional.optional.optional(OverallConfig.apply, OverallConfig.unapply)
 }

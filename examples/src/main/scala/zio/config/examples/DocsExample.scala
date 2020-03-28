@@ -1,8 +1,9 @@
 package zio.config.examples
 
+import zio.config.ConfigDescriptor._
+import zio.config.ConfigDocs.Details._
+import zio.config.ConfigDocs.{ Path, _ }
 import zio.config._
-import ConfigDescriptor._, zio.config.ConfigDocs._, Details._
-import zio.config.ConfigDocs.Path
 
 object DocsExample extends App {
 
@@ -22,8 +23,8 @@ object DocsExample extends App {
         Path(
           "URL",
           Descriptions(
-            Sources(List("<empty>", "value of type string")),
-            List("optional value", "Example: abc.com", "Database related")
+            Sources(List("<empty>")),
+            List("value of type string", "optional value", "Example: abc.com", "Database related")
           )
         )
       )

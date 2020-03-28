@@ -1,6 +1,5 @@
 package zio.config.examples.magnolia
 
-import zio.DefaultRuntime
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.{ read, singleton, write, ConfigSource }
 
@@ -41,7 +40,7 @@ object CoproductExample extends App {
     )
   )
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   def readA =
     runtime.unsafeRun(

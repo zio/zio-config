@@ -44,7 +44,7 @@ libraryDependencies += "dev.zio" %% "zio-config-typesafe" % <version>
 
 ## Describe the config by hand
 
-We must be fetching the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
+We must fetch the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
 
 
 ```scala mdoc:silent
@@ -67,11 +67,11 @@ Let's define a simple one.
 val myConfig =
   (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
- // ConfigDescriptor[String, String, MyConfig] 
+ // ConfigDescriptor[String, String, MyConfig]
 
 ```
 
-Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`. 
+Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
 
 ## Fully automated Config Description
 
@@ -98,21 +98,21 @@ There are more information on various sources in [here](../sources/index.md).
 Below given is a simple example.
 
 ```scala mdoc:silent
-val map = 
+val map =
   Map(
     "LDAP" -> "xyz",
     "PORT" -> "8888",
     "DB_URL" -> "postgres"
   )
 
-  val result = 
+  val result =
     Config.fromMap(map, myConfig)
 
-  // IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]]   
+  // IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]]
 
 ```
 
-You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application. 
+You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application.
 
 ## How to use config descriptor
 
@@ -123,7 +123,7 @@ As mentioned before, you can use config descriptor to read from various sources.
 ```scala mdoc:silent
 val source = ConfigSource.fromMap(map)
 
-val anotherResult = 
+val anotherResult =
   read(myConfig from source)
 // IO[ReadErrorsVector[String, String], MyConfig]
 ```
@@ -139,8 +139,8 @@ generateDocs(myConfig)
 //Creates documentation (automatic)
 
 
-val betterConfig = 
-  (string("LDAP") ?? "Related to auth" |@|  int("PORT") ?? "Database port" |@| 
+val betterConfig =
+  (string("LDAP") ?? "Related to auth" |@|  int("PORT") ?? "Database port" |@|
     string("DB_URL") ?? "url of database"
    )(MyConfig.apply, MyConfig.unapply)
 
@@ -181,26 +181,24 @@ This will tell you how to consider configuration as just a part of `Environment`
 
 ```scala mdoc:silent
 
-import zio.ZIO
-import zio.console.Console.Live.console._
+import zio.{ ZIO, ZLayer }
+import zio.console._
 
 case class ApplicationConfig(bridgeIp: String, userName: String)
 
 val configuration =
   (string("bridgeIp") |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
 
-val finalExecution: ZIO[Config[ApplicationConfig], Nothing, Unit] =
+val finalExecution: ZIO[Config[ApplicationConfig] with Console, Nothing, Unit] =
   for {
     appConfig <- config[ApplicationConfig]
     _         <- putStrLn(appConfig.bridgeIp)
     _         <- putStrLn(appConfig.userName)
   } yield ()
 
-// Main App  
-val pgm = 
-  for {
-    config <- Config.fromPropertyFile("file-location", configuration)
-    _      <- finalExecution.provide(config)
-  } yield ()  
+val configLayer = Config.fromPropertyFile("file-location", configuration)
+
+// Main App
+val pgm = finalExecution.provideLayer(configLayer ++ Console.live)
 
 ```

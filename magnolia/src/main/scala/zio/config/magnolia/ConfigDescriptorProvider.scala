@@ -1,18 +1,20 @@
 package zio.config.magnolia
 
 import java.net.URI
-import zio.config.{ ConfigDescriptor }
-import ConfigDescriptor._
+
 import magnolia._
-import scala.util.Success
-import scala.util.Failure
+import zio.config.ConfigDescriptor
+import zio.config.ConfigDescriptor._
+
 import scala.language.experimental.macros
+import scala.util.{ Failure, Success }
 
 trait ConfigDescriptorProvider[T] {
   def getDescription(path: String): ConfigDescriptor[String, String, T]
 }
 
 object ConfigDescriptorProvider {
+
   def apply[T](implicit ev: ConfigDescriptorProvider[T]): ConfigDescriptorProvider[T] = ev
 
   def instance[T](f: String => ConfigDescriptor[String, String, T]): ConfigDescriptorProvider[T] =
@@ -70,17 +72,19 @@ object ConfigDescriptorProvider {
               val withDocs =
                 updateConfigWithDocuments(descriptions, desc)
 
-              withDocs.xmap(r => r: Any)(r => r.asInstanceOf[h.PType])
+              withDocs.xmap((r: h.PType) => r: Any, (r: Any) => r.asInstanceOf[h.PType])
             }
           }
 
         val finalDesc =
-          collectAll(::(result.head, result.tail)).xmap[T](cons => {
-            caseClass.rawConstruct(cons)
-          })(v => {
-            val r = caseClass.parameters.map(_.dereference(v): Any).toList
-            ::(r.head, r.tail)
-          })
+          collectAll(::(result.head, result.tail))
+            .xmap[T](
+              cons => caseClass.rawConstruct(cons),
+              v => {
+                val r = caseClass.parameters.map(_.dereference(v): Any).toList
+                ::(r.head, r.tail)
+              }
+            )
 
         val annotations = caseClass.annotations
           .filter(_.isInstanceOf[zio.config.magnolia.describe])
@@ -99,28 +103,30 @@ object ConfigDescriptorProvider {
         val list         = sealedTrait.subtypes.toList
         val head :: tail = ::(list.head, list.tail)
 
-        tail.foldRight(
+        tail.foldRight[ConfigDescriptor[String, String, T]](
           head.typeclass
             .getDescription(paths)
-            .xmapEither(t => Right(t: T))({ a =>
-              scala.util.Try(head.cast(a)) match {
-                case Success(value) => Right(value)
-                case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage}")
+            .xmapEither(
+              (t: head.SType) => Right(t: T), { a: T =>
+                scala.util.Try(head.cast(a)) match {
+                  case Success(value) => Right(value)
+                  case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage}")
+                }
               }
-            })
+            )
         )(
-          (e, b) =>
+          (e: Subtype[Typeclass, T], b: ConfigDescriptor[String, String, T]) =>
             b.orElse(
               e.typeclass
                 .getDescription(paths)
                 .xmapEither(
-                  t => Right(t: T)
-                )({ a =>
-                  scala.util.Try(e.cast(a)) match {
-                    case Success(value) => Right(value)
-                    case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage}")
-                  }
-                })
+                  (t: e.SType) => Right(t: T),
+                  (a: T) =>
+                    scala.util.Try(e.cast(a)) match {
+                      case Success(value) => Right(value)
+                      case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage}")
+                    }
+                )
             )
         )
 

@@ -1,6 +1,5 @@
 package zio.config.examples.typesafe
 
-import zio.DefaultRuntime
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.typesafe.TypeSafeConfigSource.hocon
 import zio.config.{ read, _ }
@@ -48,7 +47,7 @@ object CoproductAutomaticExample extends App {
     )
   )
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   def readA =
     runtime.unsafeRun(

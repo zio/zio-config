@@ -17,7 +17,7 @@ object ProductBuilderTest
                 reread  <- read(cS22 from ConfigSource.fromMultiMap(written.flattenString(".")))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         }
       )

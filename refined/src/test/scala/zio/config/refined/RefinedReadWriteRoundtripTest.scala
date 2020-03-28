@@ -25,7 +25,7 @@ object RefinedReadWriteRoundtripTest
                 reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config invalid") {
@@ -35,7 +35,7 @@ object RefinedReadWriteRoundtripTest
                 read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
               // 3 errors here because empty string reads as option: None, so refinement doesn't apply
-              assertM(p2.either, helpers.assertErrors(_.size == 3))
+              assertM(p2.either)(helpers.assertErrors(_.size == 3))
           }
         }
       )

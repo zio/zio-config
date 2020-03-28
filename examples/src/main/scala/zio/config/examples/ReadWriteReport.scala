@@ -1,11 +1,12 @@
 package zio.config.examples
 
-import zio.DefaultRuntime
-import zio.config._
-import ConfigDescriptor._
+import zio.config.ConfigDescriptor._
 import zio.config.ConfigDocs.Details._
 import zio.config.ConfigDocs._
-import ConfigSource._
+import zio.config.ConfigSource._
+import zio.config._
+
+import scala.collection.immutable.HashMap
 
 object ReadWriteReport extends App {
 
@@ -19,7 +20,7 @@ object ReadWriteReport extends App {
   // An example where user provides a description once and for all, and use it for read, write, report!
   val configWithoutSource =
     ((string("usr") ?? "Example: some-user" |@|
-      string("pwd").xmap(Password)(_.value).optional ?? "sec" |@|
+      string("pwd")(Password.apply, Password.unapply).optional ?? "sec" |@|
       string("jhi").optional ?? "Ex: ghi" |@|
       (string("xyz") |@| int("abc").orElseEither(string("def")))(XYZ.apply, XYZ.unapply).optional ?? "Ex: ha")(
       UserPwd.apply,
@@ -27,7 +28,7 @@ object ReadWriteReport extends App {
     ) orElseEither
       (string("auth_token") |@| string("clientid"))(Token.apply, Token.unapply)) ?? "Prod Config"
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   val userNamePassword =
     Map(
@@ -53,12 +54,20 @@ object ReadWriteReport extends App {
   assert(
     write(config, result) ==
       Right(
-        PropertyTree.Record(
-          Map(
-            "usr" -> PropertyTree.Leaf("v1"),
-            "pwd" -> PropertyTree.Leaf("v2"),
-            "xyz" -> PropertyTree.Leaf("v3"),
-            "abc" -> PropertyTree.Leaf("1")
+        PropertyTree.Sequence(
+          List(
+            PropertyTree.Record(
+              HashMap(
+                "pwd" -> PropertyTree.Leaf("v2"),
+                "usr" -> PropertyTree.Leaf("v1")
+              )
+            ),
+            PropertyTree.Record(
+              HashMap(
+                "abc" -> PropertyTree.Leaf("1"),
+                "xyz" -> PropertyTree.Leaf("v3")
+              )
+            )
           )
         )
       )

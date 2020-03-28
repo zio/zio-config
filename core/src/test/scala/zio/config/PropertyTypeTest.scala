@@ -91,12 +91,13 @@ object PropertyTypeTest
     )
 
 object PropertyTypeTestUtils {
+
   def propertyTypeRoundtripSuite[A](
     typeInfo: String,
     propType: PropertyType[String, A],
     genValid: Gen[Random with Sized, String],
     parse: String => A
-  ): Spec[TestEnvironment, TestFailure[Nothing], String, TestSuccess[Unit]] =
+  ): Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite(s"${typeInfo}Type")(
       testM(s"valid ${typeInfo} string roundtrip") {
         check(genValid.map(_.toString))(assertValidRoundtrip(propType, parse))
@@ -116,16 +117,13 @@ object PropertyTypeTestUtils {
     propType: PropertyType[String, A],
     parse: String => A
   )(s: String): TestResult =
-    assert(roundTrip(propType, s).map(parse), isRight(equalTo(parse(s))))
+    assert(roundTrip(propType, s).map(parse))(isRight(equalTo(parse(s))))
 
   def assertInvalidRoundtrip[A](
     propType: PropertyType[String, A],
     propReadError: String => PropertyReadError[String]
   )(s: String): TestResult =
-    assert(
-      roundTrip(propType, s),
-      isLeft(equalTo(propReadError(s)))
-    )
+    assert(roundTrip(propType, s))(isLeft(equalTo(propReadError(s))))
 
   private def roundTrip[A](propType: PropertyType[String, A], s: String) =
     propType.read(s).map(propType.write)

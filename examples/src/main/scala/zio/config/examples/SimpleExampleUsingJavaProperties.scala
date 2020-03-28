@@ -1,10 +1,9 @@
 package zio.config.examples
 
-import zio.App
-import zio.config._
-import ConfigDescriptor._
-import zio.ZIO
-import zio.console.Console.Live.console._
+import zio.config.Config
+import zio.config.ConfigDescriptor._
+import zio.console.Console
+import zio.{ config, console, App, ZEnv, ZIO, ZLayer }
 
 /**
  * An example of an entire application that uses java properties
@@ -18,35 +17,37 @@ object ApplicationConfig {
 
 // The main App
 object SimpleExampleMain extends App {
-  override def run(args: List[String]): ZIO[zio.ZEnv, Nothing, Int] = {
+
+  override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
     val pgm =
       for {
         fileLocation <- ZIO.effect(System.getProperty("user.home") + "/somefile.properties")
         // there are many ways of doing this: example: {{{ read(configuration from ConfigSource.fromJavaProperties(propertyFile))) }}}, you may try that as well.
-        config <- Config.fromPropertyFile(fileLocation, ApplicationConfig.configuration)
-        _      <- SimpleExample.finalExecution.provide(config)
+        configLayer = Config.fromPropertyFile(fileLocation, ApplicationConfig.configuration)
+        _           <- SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.requires[Console])
       } yield ()
 
     pgm.foldM(
-      throwable => putStr(throwable.getMessage()) *> ZIO.succeed(1),
-      _ => putStrLn("hurray !! Application ran successfully..") *> ZIO.succeed(0)
+      throwable => console.putStr(throwable.getMessage()) *> ZIO.succeed(1),
+      _ => console.putStrLn("hurray !! Application ran successfully..") *> ZIO.succeed(0)
     )
   }
 }
 
 // The core application functions
 object SimpleExample {
-  val printConfigs: ZIO[Config[ApplicationConfig], Nothing, Unit] =
+
+  val printConfigs: ZIO[Console with Config[ApplicationConfig], Nothing, Unit] =
     for {
-      appConfig <- config[ApplicationConfig]
-      _         <- putStrLn(appConfig.bridgeIp)
-      _         <- putStrLn(appConfig.userName)
+      appConfig <- config.config[ApplicationConfig]
+      _         <- console.putStrLn(appConfig.bridgeIp)
+      _         <- console.putStrLn(appConfig.userName)
     } yield ()
 
-  val finalExecution: ZIO[Config[ApplicationConfig], Nothing, Unit] =
+  val finalExecution: ZIO[Console with Config[ApplicationConfig], Nothing, Unit] =
     for {
       _ <- printConfigs
-      _ <- putStrLn(s"processing data......")
+      _ <- console.putStrLn(s"processing data......")
     } yield ()
 }
 // A note that, with magnolia module (which is still experimental), you can skip writing the {{ configuration }} in ApplicationConfig object

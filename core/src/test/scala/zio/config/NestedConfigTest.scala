@@ -12,15 +12,12 @@ object NestedConfigTest
       suite("Nested config")(
         testM("read") {
           checkM(genNestedConfigParams) { p =>
-            assertM(read(p.config.from(p.source)).either, isRight(equalTo(p.value)))
+            assertM(read(p.config.from(p.source)).either)(isRight(equalTo(p.value)))
           }
         },
         testM("write") {
           check(genNestedConfigParams) { p =>
-            assert(
-              write(p.config, p.value).map(_.flattenString()),
-              isRight(equalTo(toMultiMap(p.map)))
-            )
+            assert(write(p.config, p.value).map(_.flattenString()))(isRight(equalTo(toMultiMap(p.map))))
           }
         }
       )
@@ -74,7 +71,7 @@ object NestedConfigTestUtils {
       val dbConnection = (string(keys.host) |@| int(keys.port))(DbConnection.apply, DbConnection.unapply)
 
       val database =
-        (string(keys.connection).xmap(DbUrl)(_.value).orElseEither(nested(keys.connection)(dbConnection)) |@|
+        (string(keys.connection)(DbUrl.apply, DbUrl.unapply).orElseEither(nested(keys.connection)(dbConnection)) |@|
           nested(keys.credentials)(credentials).optional)(Database.apply, Database.unapply)
 
       (nested(keys.database)(database) |@| double(keys.pricing))(AppConfig, AppConfig.unapply)

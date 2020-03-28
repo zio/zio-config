@@ -1,8 +1,7 @@
 package zio.config.examples
 
-import zio.DefaultRuntime
+import zio.config.ConfigDescriptor._
 import zio.config._
-import ConfigDescriptor._
 
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,
@@ -35,7 +34,7 @@ object CollectAllExample extends App {
       "GROUP4_VARIABLE1" -> "7"
     )
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   val result  = runtime.unsafeRun(read(configOfList from ConfigSource.fromMap(map)))
   val written = write(configOfList, result)
