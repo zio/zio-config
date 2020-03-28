@@ -2,7 +2,7 @@ package zio.config.examples.typesafe
 
 import zio.config.ConfigDescriptor
 import zio.config.read
-import zio.config.typesafe.TypeSafeConfigSource.hocon
+import zio.config.typesafe.TypeSafeConfigSource.fromHoconString
 import EmployeeDetails._
 import zio.config.ConfigDescriptor._
 
@@ -48,9 +48,8 @@ object EmployeeDetails {
 object NullAndOptionalConfig extends App {
   // Take a look at state values, that can either exist, or be given a null
   val hocconSourceList =
-    hocon(
-      Right(
-        """
+    fromHoconString(
+      """
        details {
           employees = [{
             name       : jon
@@ -76,7 +75,6 @@ object NullAndOptionalConfig extends App {
 
       }
        """
-      )
     )
 
   val expectedResult =
@@ -92,5 +90,10 @@ object NullAndOptionalConfig extends App {
       )
     )
 
-  assert(read(employeeDetails from hocconSourceList) == expectedResult)
+  val result = hocconSourceList match {
+    case Left(value)   => Left(value)
+    case Right(source) => read(employeeDetails from source)
+  }
+
+  assert(result == expectedResult)
 }

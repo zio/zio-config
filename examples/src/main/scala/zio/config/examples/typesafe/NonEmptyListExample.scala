@@ -1,12 +1,12 @@
 package zio.config.examples.typesafe
 
-import zio.config.typesafe.TypeSafeConfigSource._
 import zio.config._
 import zio.config.magnolia.ConfigDescriptorProvider.description
+import zio.config.typesafe.TypeSafeConfigSource
 
 // Why Maybe[NonEmptyList] could be the right thing to do, stays as a limitation to zio-config:
 // https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
-object NonEmptyListExample {
+object NonEmptyListExample extends App with EitherImpureOps {
   val configString =
     """
       |b = [
@@ -146,8 +146,12 @@ object NonEmptyListExample {
   final case class B(c: List[C], table: String, columns: List[String])
   final case class A(b: List[B], x: X, w: W)
 
+  // Since we already have a string with us, we don't need Config Service (or ZIO)
+  val source =
+    TypeSafeConfigSource.fromHoconString(configString).loadOrThrow // Don't use loadOrThrow. This is only for example
+
   val zioConfigResult =
-    read(description[A] from hocon(Right(configString)))
+    read(description[A] from source)
 
   assert(
     zioConfigResult ==
@@ -337,10 +341,12 @@ object NonEmptyListExample {
   final case class Port(va: String)
   final case class Database(port: Port)
 
-  val zioConfigWithKeysInKebabResult =
-    read(description[ExportDetails].mapKey(KeyConversion.camelToKebab) from hocon(Right(kebabCaseConfig)))
+  val kebabConfigSource =
+    TypeSafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow
 
-  def main(args: Array[String]) = {}
+  val zioConfigWithKeysInKebabResult =
+    read(description[ExportDetails].mapKey(camelToKebab) from kebabConfigSource)
+
   assert(
     zioConfigWithKeysInKebabResult ==
       Right(

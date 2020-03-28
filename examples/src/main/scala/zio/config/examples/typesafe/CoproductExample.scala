@@ -1,13 +1,12 @@
-/*
 package zio.config.examples.typesafe
 
 import zio.DefaultRuntime
 import zio.config.ConfigDescriptor._
-import zio.config.typesafe.TypeSafeConfigSource.hocon
+import zio.config.typesafe.TypeSafeConfigSource
 import zio.config.{ read, _ }
 
 // see Stackoverflow: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
-object CoproductExample extends App {
+object CoproductExample extends App with EitherImpureOps {
 
   sealed trait Dance
 
@@ -59,51 +58,28 @@ object CoproductExample extends App {
         case a @ A(_) => Left(Left(Left(a)))
       })
 
-  val aSource = hocon(
-    Right(
-      "any.name = chris"
-    )
-  )
+  // Don't use loadOrThrow in your codebase. Keep the Either and use for-comprehension
+  val aSource = TypeSafeConfigSource.fromHoconString("any.name = chris").loadOrThrow
 
-  val bSource = hocon(
-    Right(
-      "body.height = 179"
-    )
-  )
+  val bSource = TypeSafeConfigSource.fromHoconString("body.height = 179").loadOrThrow
 
-  val cSource = hocon(
-    Right(
-      "can = false"
-    )
-  )
+  val cSource = TypeSafeConfigSource.fromHoconString("can = false").loadOrThrow
 
-  val dSource = hocon(
-    Right(
-      """dance = "I am Dancing !!""""
-    )
-  )
+  val dSource = TypeSafeConfigSource.fromHoconString("""dance = "I am Dancing !!"""").loadOrThrow
 
   val runtime = new DefaultRuntime {}
 
   def readA =
-    runtime.unsafeRun(
-      read(danceConfig from aSource)
-    )
+    read(danceConfig from aSource).loadOrThrow
 
   def readB =
-    runtime.unsafeRun(
-      read(danceConfig from bSource)
-    )
+    read(danceConfig from bSource).loadOrThrow
 
   def readC =
-    runtime.unsafeRun(
-      read(danceConfig from cSource)
-    )
+    read(danceConfig from cSource).loadOrThrow
 
   def readD =
-    runtime.unsafeRun(
-      read(danceConfig from dSource)
-    )
+    read(danceConfig from dSource).loadOrThrow
 
   assert(
     readA == A(Person("chris", None)) &&
@@ -131,4 +107,3 @@ object CoproductExample extends App {
       writeD == Right(Map("dance"       -> singleton("I am Dancing !!")))
   )
 }
- */

@@ -1,13 +1,11 @@
-/*
 package zio.config.examples.typesafe
 
-import zio.DefaultRuntime
 import zio.config.magnolia.ConfigDescriptorProvider.description
-import zio.config.typesafe.TypeSafeConfigSource.hocon
+import zio.config.typesafe.{ TypeSafeConfigSource }
 import zio.config.{ read, _ }
 
 // see Stackoverflow: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
-object CoproductAutomaticExample extends App {
+object CoproductAutomaticExample extends App with EitherImpureOps {
 
   sealed trait Dance
 
@@ -23,53 +21,28 @@ object CoproductAutomaticExample extends App {
 
   final case class Height(height: Long)
 
+  // Don't use loadOrThrow in your code base, This is only in examples
   val danceConfig = description[Dance]
 
-  val aSource = hocon(
-    Right(
-      "any.name = chris"
-    )
-  )
+  val aSource = TypeSafeConfigSource.fromHoconString("any.name = chris").loadOrThrow
 
-  val bSource = hocon(
-    Right(
-      "body.height = 179"
-    )
-  )
+  val bSource = TypeSafeConfigSource.fromHoconString("body.height = 179").loadOrThrow
 
-  val cSource = hocon(
-    Right(
-      "can = false"
-    )
-  )
+  val cSource = TypeSafeConfigSource.fromHoconString("can = false").loadOrThrow
 
-  val dSource = hocon(
-    Right(
-      """dance = "I am Dancing !!""""
-    )
-  )
-
-  val runtime = new DefaultRuntime {}
+  val dSource = TypeSafeConfigSource.fromHoconString("""dance = "I am Dancing !!"""").loadOrThrow
 
   def readA =
-    runtime.unsafeRun(
-      read(danceConfig from aSource)
-    )
+    read(danceConfig from aSource).loadOrThrow
 
   def readB =
-    runtime.unsafeRun(
-      read(danceConfig from bSource)
-    )
+    read(danceConfig from bSource).loadOrThrow
 
   def readC =
-    runtime.unsafeRun(
-      read(danceConfig from cSource)
-    )
+    read(danceConfig from cSource).loadOrThrow
 
   def readD =
-    runtime.unsafeRun(
-      read(danceConfig from dSource)
-    )
+    read(danceConfig from dSource).loadOrThrow
 
   assert(
     readA == A(Person("chris", None)) &&
@@ -97,4 +70,3 @@ object CoproductAutomaticExample extends App {
       writeD == Right(Map("dance"       -> singleton("I am Dancing !!")))
   )
 }
- */

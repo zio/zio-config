@@ -9,23 +9,24 @@ import zio.Task
 
 object TypesafeConfig {
   def fromHoconFile[A](configDescriptor: ConfigDescriptor[String, String, A], file: File): Task[Config[A]] =
-    fromHocon(ConfigFactory.parseFile(file).resolve, configDescriptor)
+    getService(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
   def fromHoconString[A](str: String, configDescriptor: ConfigDescriptor[String, String, A]): Task[Config[A]] =
-    fromHocon(ConfigFactory.parseString(str).resolve, configDescriptor)
+    getService(ConfigFactory.parseString(str).resolve, configDescriptor)
 
-  def fromHocon[A](
+  def getService[A](
     f: => com.typesafe.config.Config,
     configDescriptor: ConfigDescriptor[String, String, A]
   ): Task[Config[A]] =
-    ZIO
-      .effect(f)
-      .flatMap(
-        conf =>
-          lineSeparator.flatMap(
-            ln =>
-              make(TypeSafeConfigSource.hocon(Left(conf)), configDescriptor)
-                .mapError(r => new RuntimeException(s"${ln}${r}"))
-          )
-      )
+    for {
+      conf <- ZIO.effect(f)
+      configSource <- ZIO
+                       .fromEither(TypeSafeConfigSource.fromTypesafeConfig(conf))
+                       .mapError(error => new RuntimeException(error): Throwable)
+
+      service <- lineSeparator.flatMap(
+                  ln => make(configSource, configDescriptor).mapError(r => new RuntimeException(s"${ln}${r}"))
+                )
+
+    } yield service
 }

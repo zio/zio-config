@@ -4,10 +4,10 @@ import zio.DefaultRuntime
 import zio.config.ConfigDescriptor.{ int, list, nested, string }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
-import zio.config.typesafe.TypeSafeConfigSource.hocon
+import zio.config.typesafe.TypeSafeConfigSource.fromHoconString
 import zio.config._
 
-object TypesafeConfigHoconList extends App {
+object TypesafeConfigSimpleExample extends App {
   val runtime = new DefaultRuntime {}
 
   // A nested example with type safe config, and usage of magnolia
@@ -74,7 +74,10 @@ object TypesafeConfigHoconList extends App {
     )
 
   val listResult =
-    read(awsDetailsConfig from hocon(Right(validHocon)))
+    fromHoconString(validHocon) match {
+      case Left(value)   => Left(value)
+      case Right(source) => read(awsDetailsConfig from source)
+    }
 
   assert(
     listResult ==
@@ -92,7 +95,11 @@ object TypesafeConfigHoconList extends App {
   )
   val automaticAwsDetailsConfig = description[AwsDetails]
 
-  val automaticResult = read(automaticAwsDetailsConfig from hocon(Right(validHocon)))
+  val automaticResult =
+    fromHoconString(validHocon) match {
+      case Left(value)   => Left(value)
+      case Right(source) => read(automaticAwsDetailsConfig from source)
+    }
 
   assert(
     automaticResult ==
@@ -135,6 +142,8 @@ object TypesafeConfigHoconList extends App {
 
     """
 
-  println(read(description[AwsDetails] from hocon(Right(invalidHocon))))
-
+  println(fromHoconString(invalidHocon) match {
+    case Left(value)   => Left(value)
+    case Right(source) => read(description[AwsDetails] from source)
+  })
 }
