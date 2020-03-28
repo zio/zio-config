@@ -7,6 +7,7 @@ project/travis-deploy-key
 project/secrets.tar.xz
 project/zecret
 target
+project/metals.sbt
 test-output/
 .DS_Store
 website/node_modules
