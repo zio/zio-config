@@ -1,7 +1,6 @@
 package zio.config
 
 import PropertyTreeTestUtils._
-import zio.random.Random
 import zio.test._
 import zio.test.Assertion._
 import PropertyTree._
@@ -18,18 +17,9 @@ object PropertyTreeTest
 
             assert(
               reducedNLevel,
-              equalTo(generateNLevelSequences(levelCount, leaves.sequenceInner))
+              equalTo(generateAtleastNLevelSequenceTree(levelCount, leaves.sequenceInner))
             )
           }
-        },
-        test("reduceInner should not reduce a Sequence(Nil) as it is unaware of the structure of Nil") {
-          val input =
-            Sequence(Nil: List[PropertyTree[Nothing, Nothing]]).map((_: Any) :: Nil)
-
-          assert(
-            input.reduceInner(_ ++ _),
-            equalTo(input)
-          )
         },
         testM("reduceInner should convert a simple Sequence(List(Leaf(1))) to Leaf(List(1))") {
           check(genLeaf) { input =>
@@ -48,6 +38,15 @@ object PropertyTreeTest
               equalTo(Leaf(input.map(_.value)))
             )
           }
+        },
+        test("reduceInner should not reduce a Sequence(Nil) as it is unaware of the structure of Nil") {
+          val input =
+            Sequence(Nil: List[PropertyTree[Nothing, Nothing]]).map((_: Any) :: Nil)
+
+          assert(
+            input.reduceInner(_ ++ _),
+            equalTo(input)
+          )
         },
         testM(
           "reduceInner should keep the outer structure while reducing the inner sequence(leaves)"
@@ -78,50 +77,3 @@ object PropertyTreeTest
         }
       )
     )
-
-object PropertyTreeTestUtils {
-  private[config] val genLeaf: Gen[Random with Sized, Leaf[String]] =
-    Gen.anyString.map(str => Leaf(str))
-
-  private[config] val genListOfLeaves: Gen[Random with Sized, List[Leaf[String]]] =
-    Gen.int(1, 20).flatMap(n => Gen.listOfN(n)(genLeaf))
-
-  final case class Leaves[V](list: List[List[Leaf[V]]]) {
-    def sequenceInner: List[Leaf[List[V]]] =
-      list.map({ l =>
-        Leaf((l.foldRight(List.empty[V]) { (a, acc) =>
-          a.value :: acc
-        }))
-      })
-
-    def toSequences[K]: List[Sequence[K, V]] =
-      list.map(Sequence(_))
-  }
-
-  object Leaves {
-    val genLeaves: Gen[Random with Sized, Leaves[String]] =
-      Gen.int(1, 3).flatMap(n => Gen.listOfN(n)(genListOfLeaves)).map(Leaves(_))
-  }
-
-  private[config] val nLevelSequenceWithLeaves
-    : Gen[Random with Sized, (PropertyTree[String, String], Leaves[String], Int)] =
-    Leaves.genLeaves.flatMap(
-      l =>
-        Gen
-          .int(1, 3)
-          .map(
-            n => (generateNLevelSequences(n, l.toSequences), l, n)
-          )
-    )
-
-  private[config] def generateNLevelSequences[A](
-    n: Int,
-    inject: List[PropertyTree[String, A]]
-  ): PropertyTree[String, A] =
-    if (n <= 1) {
-      Sequence(inject)
-
-    } else {
-      Sequence(List(generateNLevelSequences(n - 1, inject)))
-    }
-}
