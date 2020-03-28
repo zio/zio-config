@@ -11,21 +11,21 @@ object PropertyTreeTest
       suite("PropertyTree.reduceInner")(
         testM("reduceInner goes any n level deep tree and reduce the last Sequence(leaves) ") {
           check(nLevelSequenceWithLeaves) { input =>
-            val (tree, leaves, n) = input
+            val (tree, leaves, levelCount) = input
 
             val reducedNLevel: PropertyTree[String, List[String]] =
-              tree.map(_ :: Nil).reduceInner(Nil)(_ ++ _)
+              tree.map(_ :: Nil).reduceInner(_ ++ _)
 
             assert(
               reducedNLevel,
-              equalTo(generateNLevelSequences(n, leaves.sequenceInner))
+              equalTo(generateNLevelSequences(levelCount, leaves.sequenceInner))
             )
           }
         },
         testM("reduceInner should convert a simple Sequence(List(Leaf(1))) to Leaf(List(1))") {
           check(genLeaf) { input =>
             assert(
-              Sequence(List(input)).map(_ :: Nil).reduceInner(Nil)(_ ++ _),
+              Sequence(List(input)).map(_ :: Nil).reduceInner(_ ++ _),
               equalTo(Leaf(List(input.value)))
             )
           }
@@ -35,7 +35,7 @@ object PropertyTreeTest
         ) {
           check(genListOfLeaves) { input =>
             assert(
-              Sequence(input).map(_ :: Nil).reduceInner(Nil)(_ ++ _),
+              Sequence(input).map(_ :: Nil).reduceInner(_ ++ _),
               equalTo(Leaf(input.map(_.value)))
             )
           }
@@ -45,7 +45,7 @@ object PropertyTreeTest
         ) {
           check(genListOfLeaves) { input =>
             assert(
-              Sequence(List(Sequence(input))).map(_ :: Nil).reduceInner(Nil)(_ ++ _),
+              Sequence(List(Sequence(input))).map(_ :: Nil).reduceInner(_ ++ _),
               equalTo(Sequence(List(Leaf(input.map(_.value)))))
             )
           }
@@ -53,7 +53,7 @@ object PropertyTreeTest
         testM("reduceInner should not change a simple leaf(list(v))") {
           check(genLeaf) { input =>
             assert(
-              input.map(_ :: Nil).reduceInner(Nil)(_ ++ _),
+              input.map(_ :: Nil).reduceInner(_ ++ _),
               equalTo(input.map(_ :: Nil))
             )
           }
@@ -62,7 +62,7 @@ object PropertyTreeTest
           check(Gen.int(1, 20)) { input =>
             val listOfEmpty = List.fill(input)(PropertyTree.empty)
             assert(
-              Sequence(listOfEmpty).map((a: Any) => a :: Nil).reduceInner(Nil)(_ ++ _),
+              Sequence(listOfEmpty).map((a: Any) => a :: Nil).reduceInner(_ ++ _),
               equalTo(Sequence(listOfEmpty).map((a: Any) => a :: Nil))
             )
           }
@@ -115,17 +115,4 @@ object PropertyTreeTestUtils {
     } else {
       Sequence(List(generateNLevelSequences(n - 1, inject)))
     }
-
-  private[config] def generate3Level(l: List[Leaf[List[String]]]): PropertyTree[String, List[String]] =
-    Sequence(
-      List(
-        Sequence(
-          List(
-            Sequence(
-              l
-            )
-          )
-        )
-      )
-    )
 }
