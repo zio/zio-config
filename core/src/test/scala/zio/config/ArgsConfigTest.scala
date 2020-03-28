@@ -129,7 +129,7 @@ object ArgsConfigTest extends DefaultRunnableSpec {
   def toArgs[A](
     descriptor: ConfigDescriptor[String, String, A],
     a: A
-  ): ZIO[Any, ::[ReadError.FatalError[Vector[String]]], List[String]] =
+  ): ZIO[Any, ::[ReadError[Vector[String], String]], List[String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(s => ::(ReadError.FatalError(Vector(s), new RuntimeException), Nil), propertyTreeArgs)
 
