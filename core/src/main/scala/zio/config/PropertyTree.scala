@@ -27,14 +27,13 @@ sealed trait PropertyTree[+K, +V] { self =>
         val min = ls.length.min(rs.length)
         val pad = List.fill(max - min)(Empty)
 
-        val rsss = Sequence(
+        Sequence(
           (ls ++ pad)
             .zip(rs ++ pad)
             .map {
               case (l, r) => l.zipWith(r)(f)
             }
         )
-        rsss
 
       case (l: Record[K, V] @unchecked, r: Record[K, V2] @unchecked) =>
         Record((l.value.keySet ++ r.value.keySet).foldLeft(Map.empty[K, PropertyTree[K, V3]]) {
@@ -45,19 +44,15 @@ sealed trait PropertyTree[+K, +V] { self =>
             map.updated(key, v.zipWith(v2)(f))
         })
 
-      case (Leaf(l), Leaf(r)) =>
-        Leaf(f(l, r))
-      case (Sequence(l), r) =>
-        Sequence(l.map(_.zipWith(r)(f)))
+      case (Leaf(l), Leaf(r)) => Leaf(f(l, r))
 
-      case (l, Sequence(r)) =>
-        Sequence(r.map(tree => l.zipWith(tree)(f)))
+      case (Sequence(l), r) => Sequence(l.map(_.zipWith(r)(f)))
 
-      case (l, r: Record[K, V2] @unchecked) =>
-        Record(r.value.mapValues(v => l.zipWith(v)(f)).toMap)
+      case (l, Sequence(r)) => Sequence(r.map(tree => l.zipWith(tree)(f)))
 
-      case (Record(l), r) =>
-        Record(l.mapValues(v => v.zipWith(r)(f)).toMap)
+      case (l, r: Record[K, V2] @unchecked) => Record(r.value.mapValues(v => l.zipWith(v)(f)).toMap)
+
+      case (Record(l), r) => Record(l.mapValues(v => v.zipWith(r)(f)).toMap)
 
       case (Empty, _) => Empty
 
@@ -154,9 +149,6 @@ sealed trait PropertyTree[+K, +V] { self =>
     }
 
   def reduceInner[V1 >: V](zero: V1)(f: (V1, V1) => V1): PropertyTree[K, V1] = {
-    // def flatten[A, B](tuple: (List[(List[A], List[B])], List[B])): (List[A], List[B]) =
-    //   (tuple._1.flatMap(_._1), tuple._1.flatMap(_._2) ++ tuple._2)
-
     def pruneEmpty[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
       list.collect {
         case tree if !tree.isEmpty => tree
@@ -179,11 +171,8 @@ sealed trait PropertyTree[+K, +V] { self =>
           case (vs, Nil) =>
             vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
           case (vs, res) =>
-            println(Sequence(vs.map(Leaf(_))).zipWith(Sequence(res).reduceInner(zero)(f))(f))
-
-            Sequence(vs.map(Leaf(_))).zipWith(Sequence(res).reduceInner(zero)(f))(f)
-          //Sequence(res)
-
+            Sequence(vs.map(Leaf(_)))
+              .zipWith(Sequence(res).reduceInner(zero)(f))(f) // Well the partitioned value is now valid as well. We zip to not lose the data
         }
     }
   }
