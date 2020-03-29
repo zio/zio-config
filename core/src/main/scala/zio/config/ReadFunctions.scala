@@ -136,7 +136,7 @@ private[config] trait ReadFunctions {
             case Some(_) =>
               (leftTree, loop(right, keys, paths)) match {
                 case (l, r) =>
-                  orElse(l, r)((a, b) => OrErrors(List(a, b)))
+                  orElseEither(l, r)((a, b) => OrErrors(List(a, b))).map(_.map(_.merge))
               }
             case None =>
               leftTree
@@ -170,24 +170,6 @@ object ReadFunctions {
               case Right(value) => Right(Right(value))
             }
           case Right(value) => Right(Left(value))
-        }
-    )
-
-  def orElse[K, E1, E2, E3, A, B](
-    tree1: PropertyTree[K, Either[E1, A]],
-    tree2: PropertyTree[K, Either[E2, A]]
-  )(
-    f: (E1, E2) => E3
-  ): PropertyTree[K, Either[E3, A]] =
-    tree1.zipWith(tree2)(
-      (a, b) =>
-        a match {
-          case Left(error1) =>
-            b match {
-              case Left(error2) => Left(f(error1, error2))
-              case Right(value) => Right(value)
-            }
-          case Right(value) => Right(value)
         }
     )
 
