@@ -62,18 +62,7 @@ object ReadWriteReportExample extends App {
 
   assert(
     write(config, expected) ==
-      Right(
-        Sequence(
-          List(
-            Sequence(
-              List(
-                Sequence(List(Record(Map("usr" -> Leaf("v1"), "pwd" -> Leaf("v2"))))),
-                Record(Map("xyz" -> Leaf("v3"), "abc" -> Leaf("1")))
-              )
-            )
-          )
-        )
-      )
+      Right(Record(Map("usr" -> Leaf("v1"), "pwd" -> Leaf("v2"), "xyz" -> Leaf("v3"), "abc" -> Leaf("1"))))
   )
 
   assert(

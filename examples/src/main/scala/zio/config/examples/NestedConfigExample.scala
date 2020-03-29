@@ -123,49 +123,16 @@ object NestedConfigExample extends App {
 
   // Write your nested config back.
 
-  println(
-    write(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
-  )
-
   import PropertyTree._
+
   assert(
     write(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")) ==
       Right(
-        Sequence(
-          List(
-            Sequence(
-              List(
-                Record(
-                  Map(
-                    "south" ->
-                      Sequence(
-                        List(
-                          Record(
-                            Map(
-                              "connection" -> Leaf("abc.com"),
-                              "port"       -> Leaf("8111")
-                            )
-                          )
-                        )
-                      ),
-                    "east" ->
-                      Sequence(
-                        List(
-                          Record(
-                            Map(
-                              "connection" -> Leaf("xyz.com"),
-                              "port"       -> Leaf("8888")
-                            )
-                          )
-                        )
-                      )
-                  )
-                )
-              )
-            ),
-            Record(
-              Map("appName" -> Leaf("myApp"))
-            )
+        Record(
+          Map(
+            "south"   -> Record(Map("connection" -> Leaf("abc.com"), "port" -> Leaf("8111"))),
+            "east"    -> Record(Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))),
+            "appName" -> Leaf("myApp")
           )
         )
       )

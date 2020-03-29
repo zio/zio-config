@@ -18,9 +18,10 @@ private[config] trait WriteFunctions {
           }
 
         case ConfigDescriptor.Sequence(c) =>
-          seqEither(b.map((eachB: Any) => {
+          val zz = seqEither(b.map((eachB: Any) => {
             go(c, eachB)
-          })).map(PropertyTree.Sequence(_))
+          }))
+          zz.map(PropertyTree.Sequence(_))
 
         case ConfigDescriptor.Optional(c) =>
           b.fold({

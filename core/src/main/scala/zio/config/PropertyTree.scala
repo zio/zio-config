@@ -134,9 +134,12 @@ sealed trait PropertyTree[+K, +V] { self =>
       }
 
     self match {
-      case Empty         => Empty
-      case Leaf(value)   => Leaf(value)
-      case Record(value) => Record(value.mapValues(_.reduceInner(f)).toMap)
+      case Empty       => Empty
+      case Leaf(value) => Leaf(value)
+      case Record(value) =>
+        val result = Record(value.mapValues(_.reduceInner(f)).toMap)
+        println("hello" + result)
+        result
       case Sequence(value) =>
         val (vs0, rest0) = PropertyTree.partitionWith(value) {
           case Leaf(value) => value

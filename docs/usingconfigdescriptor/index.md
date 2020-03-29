@@ -84,26 +84,14 @@ write(appConfig, awsConfigReuslt)
 // yields
 
  Right(
-    Record(
-      Map(
-        "south" ->
-          Record(
-            Map(
-              "connection" -> Leaf("abc.com"),
-              "port"       -> Leaf("8111")
-            )
-          ),
-        "east" ->
-          Record(
-            Map(
-              "connection" -> Leaf("xyz.com"),
-              "port"       -> Leaf("8888")
-            )
-          ),
-        "appName" -> Leaf("myApp")
-      )
+  Record(
+    Map(
+      "south"   -> Record(Map("connection" -> Leaf("abc.com"), "port" -> Leaf("8111"))),
+      "east"    -> Record(Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))),
+      "appName" -> Leaf("myApp")
     )
   )
+)
 
  // To yield the input map that was fed in, call `flattenString` !!
  write(appConfig, awsConfigReuslt).map(_.flattenString())
@@ -138,19 +126,19 @@ To generate the documentation of the config, call `generateDocs`.
      NestedPath(
        "south",
        Both(
-         Path("connection", Descriptions(Sources(List("<empty>", "constant map")), List("value of type string", "South details"))),
-         Path("port", Descriptions(Sources(List("<empty>", "constant map")), List("value of type int", "South details")))
+         Path("connection", Descriptions(Sources(List("constant")), List("value of type string", "South details"))),
+         Path("port", Descriptions(Sources(List("constant")), List("value of type int", "South details")))
        )
      ),
      NestedPath(
        "east",
        Both(
-         Path("connection", Descriptions(Sources(List("<empty>", "constant map")), List("value of type string", "East details"))),
-         Path("port", Descriptions(Sources(List("<empty>", "constant map")), List("value of type int", "East details")))
+         Path("connection", Descriptions(Sources(List("constant")), List("value of type string", "East details"))),
+         Path("port", Descriptions(Sources(List("constant")), List("value of type int", "East details")))
        )
      )
    ),
-   Path("appName", Descriptions(Sources(List("<empty>", "constant map")), List("value of type string")))
+   Path("appName", Descriptions(Sources(List("constant")), List("value of type string")))
  )
 ```
 
@@ -183,11 +171,11 @@ Right(
         Both(
           Path(
             "connection",
-            DescriptionsWithValue(Some("abc.com"), Sources(List("<empty>", "constant map")), List("value of type string", "South details"))
+            DescriptionsWithValue(Some("abc.com"), Sources(List("constant")), List("value of type string", "South details"))
           ),
           Path(
             "port",
-            DescriptionsWithValue(Some("8111"), Sources(List("<empty>", "constant map")), List("value of type int", "South details"))
+            DescriptionsWithValue(Some("8111"), Sources(List("constant")), List("value of type int", "South details"))
           )
         )
       ),
@@ -196,16 +184,16 @@ Right(
         Both(
           Path(
             "connection",
-            DescriptionsWithValue(Some("xyz.com"), Sources(List("<empty>", "constant map")), List("value of type string", "East details"))
+            DescriptionsWithValue(Some("xyz.com"), Sources(List("constant")), List("value of type string", "East details"))
           ),
           Path(
             "port",
-            DescriptionsWithValue(Some("8888"), Sources(List("<empty>", "constant map")), List("value of type int", "East details"))
+            DescriptionsWithValue(Some("8888"), Sources(List("constant")), List("value of type int", "East details"))
           )
         )
       )
     ),
-    Path("appName", DescriptionsWithValue(Some("myApp"), Sources(List("<empty>", "constant map")), List("value of type string")))
+    Path("appName", DescriptionsWithValue(Some("myApp"), Sources(List("constant")), List("value of type string")))
   )
 )
 ```

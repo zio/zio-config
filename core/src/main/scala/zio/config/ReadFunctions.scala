@@ -39,7 +39,7 @@ private[config] trait ReadFunctions {
           val looped: PropertyTree[K, Either[ReadError[K], B]] =
             loop(config, keys, paths)
 
-          // Any source's missing value never knew it was a sequence until,
+          // A source cannot know if a missing value was a sequence or not, until descriptor says it is.
           // Hence we transform all those error nodes to a sequence of error nodes to stabilise the tree
           val sequenceErrors =
             transformErrors[K, B, ReadError[K]](
