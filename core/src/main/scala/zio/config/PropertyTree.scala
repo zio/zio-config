@@ -63,20 +63,6 @@ sealed trait PropertyTree[+K, +V] { self =>
   final def zip[K1 >: K, V2, V3](that: PropertyTree[K1, V2]): PropertyTree[K1, (V, V2)] =
     self.zipWith(that)((a, b) => ((a, b)))
 
-  final def transformSome[K1 >: K, V1 >: V](
-    f: PartialFunction[PropertyTree[K1, V1], PropertyTree[K1, V1]]
-  ): PropertyTree[K1, V1] =
-    self match {
-      case x @ Leaf(_) => f.lift(x).getOrElse(x)
-      case x @ Record(value) =>
-        val r = Record(value.mapValues(_.transformSome(f)).toMap[K1, PropertyTree[K1, V1]])
-        f.lift(r).getOrElse(r)
-      case x @ PropertyTree.Empty => f.lift(x).getOrElse(x)
-      case x @ Sequence(value) =>
-        val s = Sequence(value.map(_.transformSome(f)))
-        f.lift(s).getOrElse(s)
-    }
-
   def mapEmpty[K1 >: K, V1 >: V](f: Vector[Either[Int, K1]] => PropertyTree[K1, V1]): PropertyTree[K1, V1] = {
     def loop(acc: Vector[Either[Int, K1]], tree: PropertyTree[K, V]): PropertyTree[K1, V1] =
       tree match {

@@ -26,7 +26,7 @@ object PropertyTreeTestUtils {
       }
 
     def toSequences[K]: List[Sequence[K, V]] =
-      list.map(Sequence(_))
+      list.map(Sequence[K, V](_))
   }
 
   object Leaves {

@@ -30,10 +30,10 @@ package object config
   private[config] def seqEither2[A, B, C](genError: (Int, A) => C)(list: List[Either[A, B]]): Either[List[C], List[B]] =
     list.zipWithIndex
       .foldLeft(Right(Nil): Either[List[C], List[B]]) {
-        case (Left(cs), (Left(a), index))   => Left(genError(index, a) :: cs)
-        case (Left(cs), (Right(b), index))  => Left(cs)
-        case (Right(bs), (Left(a), index))  => Left(genError(index, a) :: Nil)
-        case (Right(bs), (Right(b), index)) => Right(b :: bs)
+        case (Left(cs), (Left(a), index)) => Left(genError(index, a) :: cs)
+        case (Left(cs), (Right(_), _))    => Left(cs)
+        case (Right(_), (Left(a), index)) => Left(genError(index, a) :: Nil)
+        case (Right(bs), (Right(b), _))   => Right(b :: bs)
       }
       .map(_.reverse)
 

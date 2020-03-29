@@ -46,7 +46,7 @@ object ConfigSource {
   def fromProperties(
     property: ju.Properties,
     source: String,
-    valueSeparator: Option[Char] = None
+    valueDelimiter: Option[Char] = None
   ): ConfigSource[String, String] = {
     val mapString = property.stringPropertyNames().asScala.foldLeft(Map.empty[String, String]) { (acc, a) =>
       acc.updated(a, property.getProperty(a))
@@ -54,7 +54,7 @@ object ConfigSource {
 
     mergeAll(
       PropertyTree
-        .fromStringMap(mapString, '.', valueSeparator.getOrElse(':'))
+        .fromStringMap(mapString, '.', valueDelimiter.getOrElse(':'))
         .map(tree => fromPropertyTree(tree, source))
     )
   }
