@@ -11,82 +11,72 @@ import zio.test.Assertion._
 object ReadWriteRoundtripTest
     extends BaseSpec(
       suite("Coproduct support")(
-//        testM("newtype 1 roundtrip") {
-//          checkM(genId) { p =>
-//            val p2 =
-//              for {
-//                written <- ZIO.fromEither(write(cId, p))
-//                reread  <- ZIO.fromEither(read(cId from ConfigSource.fromPropertyTree(written, "test")))
-//              } yield reread
-//
-//            assertM(p2)(equalTo(p))
-//          }
-//        },
-//        testM("newtype 2 roundtrip") {
-//          checkM(genDbUrl) { p =>
-//            val p2 =
-//              for {
-//                written <- ZIO.fromEither(write(cDbUrl, p))
-//                reread  <- ZIO.fromEither(read(cDbUrl from ConfigSource.fromPropertyTree(written, "test")))
-//              } yield reread
-//
-//            assertM(p2)(equalTo(p))
-//          }
-//        },
-//        testM("case class 1 roundtrip") {
-//          checkM(genEnterpriseAuth) { p =>
-//            val p2 =
-//              for {
-//                written <- ZIO.fromEither(write(cEnterpriseAuth, p))
-//                reread  <- ZIO.fromEither(read(cEnterpriseAuth from ConfigSource.fromPropertyTree(written, "test")))
-//              } yield reread
-//
-//            assertM(p2)(equalTo(p))
-//          }
-//        },
-        testM("nested case class roundtrip") {
-          checkM(genNestedConfig) {
-            p =>
-              println(p)
-              val written = write(cNestedConfig, p)
-              println(written)
-              println(
-                read(
-                  cNestedConfig from ConfigSource
-                    .fromPropertyTree(written.fold(_ => PropertyTree.empty, identity), "test")
-                )
-              )
-              val p2 =
-                for {
-                  written <- ZIO.fromEither(write(cNestedConfig, p))
-                  reread  <- ZIO.fromEither(read(cNestedConfig from ConfigSource.fromPropertyTree(written, "test")))
-                } yield reread
+        testM("newtype 1 roundtrip") {
+          checkM(genId) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cId, p))
+                reread  <- ZIO.fromEither(read(cId from ConfigSource.fromPropertyTree(written, "test")))
+              } yield reread
 
-              assertM(p2)(equalTo(p))
+            assertM(p2)(equalTo(p))
+          }
+        },
+        testM("newtype 2 roundtrip") {
+          checkM(genDbUrl) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cDbUrl, p))
+                reread  <- ZIO.fromEither(read(cDbUrl from ConfigSource.fromPropertyTree(written, "test")))
+              } yield reread
+
+            assertM(p2)(equalTo(p))
+          }
+        },
+        testM("case class 1 roundtrip") {
+          checkM(genEnterpriseAuth) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cEnterpriseAuth, p))
+                reread  <- ZIO.fromEither(read(cEnterpriseAuth from ConfigSource.fromPropertyTree(written, "test")))
+              } yield reread
+
+            assertM(p2)(equalTo(p))
+          }
+        },
+        testM("nested case class roundtrip") {
+          checkM(genNestedConfig) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cNestedConfig, p))
+                reread  <- ZIO.fromEither(read(cNestedConfig from ConfigSource.fromPropertyTree(written, "test")))
+              } yield reread
+
+            assertM(p2)(equalTo(p))
+          }
+        },
+        testM("single field case class roundtrip") {
+          checkM(genSingleField) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cSingleField, p))
+                reread  <- ZIO.fromEither(read(cSingleField from ConfigSource.fromPropertyTree(written, "test")))
+              } yield reread
+
+            assertM(p2)(equalTo(p))
+          }
+        },
+        testM("coproduct roundtrip") {
+          checkM(genCoproductConfig) { p =>
+            val p2 =
+              for {
+                written <- ZIO.fromEither(write(cCoproductConfig, p))
+                reread  <- ZIO.fromEither(read(cCoproductConfig from ConfigSource.fromPropertyTree(written, "test")))
+              } yield reread
+
+            assertM(p2)(equalTo(p))
           }
         }
-//        testM("single field case class roundtrip") {
-//          checkM(genSingleField) { p =>
-//            val p2 =
-//              for {
-//                written <- ZIO.fromEither(write(cSingleField, p))
-//                reread  <- ZIO.fromEither(read(cSingleField from ConfigSource.fromPropertyTree(written, "test")))
-//              } yield reread
-//
-//            assertM(p2)(equalTo(p))
-//          }
-//        },
-//        testM("coproduct roundtrip") {
-//          checkM(genCoproductConfig) { p =>
-//            val p2 =
-//              for {
-//                written <- ZIO.fromEither(write(cCoproductConfig, p))
-//                reread  <- ZIO.fromEither(read(cCoproductConfig from ConfigSource.fromPropertyTree(written, "test")))
-//              } yield reread
-//
-//            assertM(p2)(equalTo(p))
-//          }
-//        }
       )
     )
 
