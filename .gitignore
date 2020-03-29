@@ -8,7 +8,6 @@ project/secrets.tar.xz
 project/zecret
 project/metals.sbt
 target
-project/metals.sbt
 test-output/
 .DS_Store
 website/node_modules
