@@ -265,3 +265,10 @@ object PropertyTree {
       case ((accLeft, accRight), (left, right)) => (accLeft ++ left, accRight ++ right)
     }
 }
+
+object Example extends App {
+  val input1 = Record(Map("kId"    -> Leaf(0)))
+  val input2 = Record(Map("kDbUrl" -> Leaf(0)))
+
+  println(input1.zip(input2))
+}
