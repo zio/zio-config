@@ -115,17 +115,9 @@ private[config] trait ReadFunctions {
           val leftTree =
             loop(left, keys, paths)
 
-          val errorsInLeftTree =
-            errors(leftTree)
-
-          errorsInLeftTree match {
-            case Some(error) if hasConversionErrors(error) =>
-              leftTree.map({
-                case Left(value)  => Left(value)
-                case Right(value) => Right(Left(value): Either[a, b])
-              })
+          errors(leftTree) match {
             case Some(_) =>
-              (loop(left, keys, paths), loop(right, keys, paths)) match {
+              (leftTree, loop(right, keys, paths)) match {
                 case (l, r) =>
                   orElseEither(l, r)((a, b) => OrErrors(List(a, b)))
               }
@@ -137,22 +129,17 @@ private[config] trait ReadFunctions {
           }
 
         case ConfigDescriptor.OrElse(left, right) =>
-          val left1 =
+          val leftTree =
             loop(left, keys, paths)
 
-          val errorsInLeft =
-            errors(left1)
-
-          errorsInLeft match {
-            case Some(error) if hasConversionErrors(error) =>
-              left1
+          errors(leftTree) match {
             case Some(_) =>
-              (loop(left, keys, paths), loop(right, keys, paths)) match {
+              (leftTree, loop(right, keys, paths)) match {
                 case (l, r) =>
                   orElse(l, r)((a, b) => OrErrors(List(a, b)))
               }
             case None =>
-              left1
+              leftTree
           }
       }
 

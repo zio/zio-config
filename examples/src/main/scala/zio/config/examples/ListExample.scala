@@ -23,44 +23,16 @@ object ListExample extends App with EitherImpureOps {
   val tree =
     ConfigSource.fromMultiMap(multiMap, "constant")
 
-  // val resultFromMultiMap =
-  //   read(config from ConfigSource.fromMultiMap(multiMap, "constant"))
+  val resultFromMultiMap =
+    read(config from ConfigSource.fromMultiMap(multiMap, "constant"))
 
   val expected =
     PgmConfig("something", List("australia", "canada", "usa"))
 
-  // assert(
-  //   resultFromMultiMap ==
-  //     Right(
-  //       PgmConfig("something", List("australia", "canada", "usa"))
-  //     )
-  // )
-
-  val h = write(config, expected)
-
-  println(h)
-  // assert(
-  //   h ==
-  //     Right(
-  //       Record(
-  //         Map(
-  //           "xyz"     -> Leaf("something"),
-  //           "regions" -> PropertyTree.Sequence(List(Leaf("australia"), Leaf("canada"), Leaf("usa")))
-  //         )
-  //       )
-  //     )
-  // )
-
-  // println(
-  //   h.loadOrThrow.flattenString()
-  // )
-  // assert(
-  //   h.loadOrThrow.flattenString() ==
-  //     Map(
-  //       "xyz"     -> singleton("something"),
-  //       "regions" -> ::("australia", List("canada", "usa"))
-  //     )
-  // )
-
-  // Keep a note that, handling list in a flattened map like structure may not be what you need to do, have a look at TypesafeConfigHoconExample.
+  assert(
+    resultFromMultiMap ==
+      Right(
+        PgmConfig("something", List("australia", "canada", "usa"))
+      )
+  )
 }

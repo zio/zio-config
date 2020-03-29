@@ -18,10 +18,9 @@ private[config] trait WriteFunctions {
           }
 
         case ConfigDescriptor.Sequence(c) =>
-          val zz = seqEither(b.map((eachB: Any) => {
+          seqEither(b.map((eachB: Any) => {
             go(c, eachB)
-          }))
-          zz.map(PropertyTree.Sequence(_))
+          })).map(PropertyTree.Sequence(_))
 
         case ConfigDescriptor.Optional(c) =>
           b.fold({
@@ -64,7 +63,7 @@ private[config] trait WriteFunctions {
             case Right(m1) =>
               go(config2, b._2) match {
                 case Right(m2) =>
-                  PropertyTree.mergeAll(m1.merge(m2)).reduceOption(_ zip _) match {
+                  m1.merge(m2).reduceOption(_ zip _) match {
                     case Some(value) => Right(value)
                     case None        => Left("Failed to write the config back to property tree, at zip node")
                   }

@@ -49,7 +49,8 @@ sealed trait PropertyTree[+K, +V] { self =>
 
       case (Sequence(l), r) => Sequence(l.map(_.zipWith(r)(f)))
 
-      case (l, Sequence(r)) => Sequence(r.map(tree => l.zipWith(tree)(f)))
+      case (l, Sequence(r)) =>
+        Sequence(r.map(tree => l.zipWith(tree)(f)))
 
       case (l, r: Record[K, V2] @unchecked) => Record(r.value.mapValues(v => l.zipWith(v)(f)).toMap)
 
@@ -253,11 +254,4 @@ object PropertyTree {
     }.foldLeft((List.empty[A], List.empty[PropertyTree[K, V]])) {
       case ((accLeft, accRight), (left, right)) => (accLeft ++ left, accRight ++ right)
     }
-}
-
-object Example extends App {
-  val input1 = Record(Map("kId"    -> Leaf(0)))
-  val input2 = Record(Map("kDbUrl" -> Leaf(0)))
-
-  println(input1.zip(input2))
 }
