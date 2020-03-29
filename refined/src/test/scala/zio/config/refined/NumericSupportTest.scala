@@ -18,7 +18,7 @@ object NumericSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "test")))
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -28,7 +28,7 @@ object NumericSupportTest
           checkM(Gen.int(10, 100)) { p =>
             val cfg = less[W.`10`.T](int("TEST"))
             val p2: ZIO[Any, ReadError[String], Refined[Int, Less[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
+              ZIO.fromEither(read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString), "test")))
 
             assertM(p2.either)(helpers.assertErrors(_.size == 1))
           }
@@ -39,7 +39,7 @@ object NumericSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "test")))
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -48,8 +48,8 @@ object NumericSupportTest
         testM("Refined config Greater invalid") {
           checkM(Gen.int(1, 10)) { p =>
             val cfg = greater[W.`10`.T](int("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, Greater[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
+            val p2: ZIO[Any, ReadError[String], Refined[Int, Greater[W.`10`.T]]] =
+              ZIO.fromEither(read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString))))
 
             assertM(p2.either)(helpers.assertErrors(_.size == 1))
           }
@@ -60,7 +60,7 @@ object NumericSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "test")))
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -69,8 +69,8 @@ object NumericSupportTest
         testM("Refined config LessEqual invalid") {
           checkM(Gen.int(11, 100)) { p =>
             val cfg = lessEqual[W.`10`.T](int("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, LessEqual[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
+            val p2: ZIO[Any, ReadError[String], Refined[Int, LessEqual[W.`10`.T]]] =
+              ZIO.fromEither(read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString), "test")))
 
             assertM(p2.either)(helpers.assertErrors(_.size == 1))
           }
@@ -81,19 +81,19 @@ object NumericSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "test")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config GreaterEqual invalid") {
-          checkM(Gen.int(1, 9)) { p =>
+          check(Gen.int(1, 9)) { p =>
             val cfg = greaterEqual[W.`10`.T](int("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, GreaterEqual[W.`10`.T]]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config Divisible roundtrip") {
@@ -102,19 +102,19 @@ object NumericSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "test")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config Divisible invalid") {
-          checkM(Gen.int(1, 10).map(_ * 10 + 1)) { p =>
+          check(Gen.int(1, 10).map(_ * 10 + 1)) { p =>
             val cfg = divisible[W.`10`.T](int("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, Divisible[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
+            val p2 =
+              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString), "test"))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config NonDivisible roundtrip") {
@@ -123,19 +123,19 @@ object NumericSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "test")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config NonDivisible invalid") {
-          checkM(Gen.int(1, 10).map(_ * 10)) { p =>
+          check(Gen.int(1, 10).map(_ * 10)) { p =>
             val cfg = nonDivisible[W.`10`.T](int("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, NonDivisible[W.`10`.T]]] =
-              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
+            val p2 =
+              read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString), "test"))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         }
       )

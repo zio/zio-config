@@ -25,6 +25,15 @@ sealed trait ReadError[A] extends Exception { self =>
       case ReadError.OrErrors(list)                 => ReadError.OrErrors(list.map(_.atIndex(index)))
       case ReadError.AndErrors(list)                => ReadError.AndErrors(list.map(_.atIndex(index)))
     }
+
+  def size: Int =
+    self match {
+      case ReadError.MissingValue(_)                => self.size + 1
+      case ReadError.FormatError(path, message)     => self.size + 1
+      case ReadError.ConversionError(path, message) => self.size + 1
+      case ReadError.OrErrors(list)                 => list.map(_.size).sum
+      case ReadError.AndErrors(list)                => list.map(_.size).sum
+    }
 }
 
 object ReadError {
