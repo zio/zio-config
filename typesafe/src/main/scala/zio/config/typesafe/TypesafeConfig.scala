@@ -1,32 +1,40 @@
 package zio.config.typesafe
 
-import zio.config._, Config._
 import java.io.File
-import zio.ZIO
+
 import com.typesafe.config.ConfigFactory
-import zio.system.System.Live.system.lineSeparator
-import zio.Task
+import zio.config._
+import zio.{ Layer, Tagged, ZIO }
 
 object TypesafeConfig {
-  def fromHoconFile[A](configDescriptor: ConfigDescriptor[String, String, A], file: File): Task[Config[A]] =
-    getService(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
-  def fromHoconString[A](str: String, configDescriptor: ConfigDescriptor[String, String, A]): Task[Config[A]] =
-    getService(ConfigFactory.parseString(str).resolve, configDescriptor)
+  def fromDefaultLoader[A](
+    configDescriptor: ConfigDescriptor[String, String, A]
+  )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
+    fromHocon(ConfigFactory.load.resolve, configDescriptor)
 
-  def getService[A](
+  def fromHoconFile[A](
+    configDescriptor: ConfigDescriptor[String, String, A],
+    file: File
+  )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
+    fromHocon(ConfigFactory.parseFile(file).resolve, configDescriptor)
+
+  def fromHoconString[A](
+    str: String,
+    configDescriptor: ConfigDescriptor[String, String, A]
+  )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
+    fromHocon(ConfigFactory.parseString(str).resolve, configDescriptor)
+
+  def fromHocon[A](
     f: => com.typesafe.config.Config,
     configDescriptor: ConfigDescriptor[String, String, A]
-  ): Task[Config[A]] =
-    for {
-      conf <- ZIO.effect(f)
-      configSource <- ZIO
-                       .fromEither(TypeSafeConfigSource.fromTypesafeConfig(conf))
-                       .mapError(error => new RuntimeException(error): Throwable)
-
-      service <- lineSeparator.flatMap(
-                  ln => make(configSource, configDescriptor).mapError(r => new RuntimeException(s"${ln}${r}"))
-                )
-
-    } yield service
+  )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
+    Config.fromConfigDescriptorM(
+      for {
+        conf <- ZIO.effect(f)
+        source <- ZIO
+                   .fromEither(TypeSafeConfigSource.fromTypesafeConfig(conf))
+                   .mapError(error => new RuntimeException(error))
+      } yield configDescriptor from source
+    )
 }

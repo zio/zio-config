@@ -23,7 +23,7 @@ object TypeSafeConfigSource {
       case Success(value) =>
         getPropertyTree(value) match {
           case Left(value)  => Left(value)
-          case Right(value) => Right(ConfigSource.fromPropertyTree(List(value), "hocon"))
+          case Right(value) => Right(ConfigSource.fromPropertyTree(value, "hocon"))
         }
     }
 
@@ -32,7 +32,7 @@ object TypeSafeConfigSource {
   ): Either[String, ConfigSource[String, String]] =
     getPropertyTree(input) match {
       case Left(value)  => Left(value)
-      case Right(value) => Right(ConfigSource.fromPropertyTree(List(value), "hocon"))
+      case Right(value) => Right(ConfigSource.fromPropertyTree(value, "hocon"))
     }
 
   private def getPropertyTree(

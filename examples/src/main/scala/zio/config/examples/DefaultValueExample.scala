@@ -2,7 +2,6 @@ package zio.config.examples
 
 import zio.config._
 import ConfigDescriptor._
-import zio.{ DefaultRuntime }
 import zio.config.ConfigDocs
 import ConfigDocs._
 import Details._
@@ -18,7 +17,7 @@ object DefaultValueExample extends App {
 
   val pgmConfig = ConfigSource.fromSystemEnv(None).map(source => conf from source)
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   val confEx = runtime.unsafeRun(pgmConfig)
 
@@ -29,25 +28,26 @@ object DefaultValueExample extends App {
 
   assert(result == Right(PgmConfig("xyz", Right(1))))
 
+  println(generateDocs(confEx))
   assert(
     generateDocs(confEx) ==
       Both(
         Path(
           "HELLO",
           Descriptions(
-            Sources(List(EmptySource, ConfigSource.SystemEnvironment)),
+            Sources(List(ConfigSource.SystemEnvironment)),
             List("value of type string", "default value: xyz")
           )
         ),
         OneOf(
           Path(
             "SOMETHING",
-            Descriptions(Sources(List(EmptySource, ConfigSource.SystemEnvironment)), List("value of type string"))
+            Descriptions(Sources(List(ConfigSource.SystemEnvironment)), List("value of type string"))
           ),
           Path(
             "PORT",
             Descriptions(
-              Sources(List(EmptySource, ConfigSource.SystemEnvironment)),
+              Sources(List(ConfigSource.SystemEnvironment)),
               List("value of type int", "default value: 1")
             )
           )
@@ -63,20 +63,20 @@ object DefaultValueExample extends App {
             "HELLO",
             DescriptionsWithValue(
               Some("xyz"),
-              Sources(List(EmptySource, SystemEnvironment)),
+              Sources(List(SystemEnvironment)),
               List("value of type string", "default value: xyz")
             )
           ),
           OneOf(
             Path(
               "SOMETHING",
-              DescriptionsWithValue(None, Sources(List(EmptySource, SystemEnvironment)), List("value of type string"))
+              DescriptionsWithValue(None, Sources(List(SystemEnvironment)), List("value of type string"))
             ),
             Path(
               "PORT",
               DescriptionsWithValue(
                 Some("1"),
-                Sources(List(EmptySource, SystemEnvironment)),
+                Sources(List(SystemEnvironment)),
                 List("value of type int", "default value: 1")
               )
             )

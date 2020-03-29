@@ -1,6 +1,5 @@
 package zio.config.examples.typesafe
 
-import zio.DefaultRuntime
 import zio.config.ConfigDescriptor._
 import zio.config.typesafe.TypeSafeConfigSource
 import zio.config.{ read, _ }
@@ -26,12 +25,12 @@ object CoproductExample extends App with EitherImpureOps {
     (string("name") |@| int("age").optional)(Person.apply, Person.unapply)
 
   val heightConfig =
-    long("height").xmap(Height)(_.height)
+    long("height")(Height.apply, Height.unapply)
 
-  val aConfig = nested("any")(personConfig).xmap(A)(_.any)
-  val bConfig = nested("body")(heightConfig).xmap(B)(_.body)
-  val cConfig = boolean("can").xmap(C)(_.can)
-  val dConfig = string("dance").xmap(D)(_.dance)
+  val aConfig = nested("any")(personConfig)(A.apply, A.unapply)
+  val bConfig = nested("body")(heightConfig)(B.apply, B.unapply)
+  val cConfig = boolean("can")(C.apply, C.unapply)
+  val dConfig = string("dance")(D.apply, D.unapply)
 
   // Another much more easier logic is in: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
   // You can also choose to use magnolia module to auto generate if this too much of a boilerplate
@@ -40,23 +39,25 @@ object CoproductExample extends App with EitherImpureOps {
       .orElseEither(bConfig)
       .orElseEither(cConfig)
       .orElseEither(dConfig)
-      .xmap({
-        case Right(value) => value: Dance
-        case Left(value) =>
-          value match {
-            case Right(value) => value: Dance
-            case Left(value) =>
-              value match {
-                case Right(value) => value: Dance
-                case Left(value)  => value: Dance
-              }
-          }
-      })({
-        case d @ D(_) => Right(d)
-        case c @ C(_) => Left(Right(c))
-        case b @ B(_) => Left(Left(Right(b)))
-        case a @ A(_) => Left(Left(Left(a)))
-      })
+      .xmap[Dance](
+        {
+          case Right(value) => value: Dance
+          case Left(value) =>
+            value match {
+              case Right(value) => value: Dance
+              case Left(value) =>
+                value match {
+                  case Right(value) => value: Dance
+                  case Left(value)  => value: Dance
+                }
+            }
+        }, {
+          case d @ D(_) => Right(d)
+          case c @ C(_) => Left(Right(c))
+          case b @ B(_) => Left(Left(Right(b)))
+          case a @ A(_) => Left(Left(Left(a)))
+        }
+      )
 
   // Don't use loadOrThrow in your codebase. Keep the Either and use for-comprehension
   val aSource = TypeSafeConfigSource.fromHoconString("any.name = chris").loadOrThrow
@@ -66,8 +67,6 @@ object CoproductExample extends App with EitherImpureOps {
   val cSource = TypeSafeConfigSource.fromHoconString("can = false").loadOrThrow
 
   val dSource = TypeSafeConfigSource.fromHoconString("""dance = "I am Dancing !!"""").loadOrThrow
-
-  val runtime = new DefaultRuntime {}
 
   def readA =
     read(danceConfig from aSource).loadOrThrow

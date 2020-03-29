@@ -14,7 +14,7 @@ object EitherExample extends App {
   case class Dev(user: String, password: Int, dburl: Double)
 
   val prod =
-    (string("x1").xmap(Ldap)(_.value) |@| string("x2").xmap(DbUrl)(_.value))(Prod.apply, Prod.unapply)
+    (string("x1")(Ldap.apply, Ldap.unapply) |@| string("x2")(DbUrl.apply, DbUrl.unapply))(Prod.apply, Prod.unapply)
 
   val dev =
     (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
@@ -31,7 +31,7 @@ object EitherExample extends App {
 
   // Obviously getting a constant map source doesn't need ZIO effect
   val source: ConfigSource[String, String] =
-    ConfigSource.fromMap(validProd)
+    ConfigSource.fromMap(validProd, "constant")
 
   // read(prodOrDev from source) is equivalent to Config.fromMap(prodOrDev). This is only to demonstrate that you can
   // use `from` at any point in your description, making it really flexible for the user to fetch different configs from different
@@ -62,7 +62,7 @@ object EitherExample extends App {
     )
 
   val invalidSource =
-    ConfigSource.fromMap(parseErrorConfig)
+    ConfigSource.fromMap(parseErrorConfig, "constant")
 
   println("errorneous exampl " + read(prodOrDev from invalidSource))
 

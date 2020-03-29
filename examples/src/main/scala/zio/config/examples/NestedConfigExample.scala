@@ -2,9 +2,7 @@ package zio.config.examples
 
 import zio.config._
 import ConfigDescriptor._, zio.config.ConfigDocs.Details._
-import zio.DefaultRuntime
 import zio.config.ConfigDocs._
-import ConfigSource._
 
 object NestedConfigExample extends App {
 
@@ -31,7 +29,7 @@ object NestedConfigExample extends App {
       )
     )
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   // Read
   assert(read(appConfig from source) == Right(AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")))
@@ -46,9 +44,9 @@ object NestedConfigExample extends App {
             Both(
               Path(
                 "connection",
-                Descriptions(Sources(List(EmptySource)), List("value of type string", "South details"))
+                Descriptions(Sources(Nil), List("value of type string", "South details"))
               ),
-              Path("port", Descriptions(Sources(List(EmptySource)), List("value of type int", "South details")))
+              Path("port", Descriptions(Sources(Nil), List("value of type int", "South details")))
             )
           ),
           NestedPath(
@@ -56,13 +54,13 @@ object NestedConfigExample extends App {
             Both(
               Path(
                 "connection",
-                Descriptions(Sources(List(EmptySource)), List("value of type string", "East details"))
+                Descriptions(Sources(Nil), List("value of type string", "East details"))
               ),
-              Path("port", Descriptions(Sources(List(EmptySource)), List("value of type int", "East details")))
+              Path("port", Descriptions(Sources(Nil), List("value of type int", "East details")))
             )
           )
         ),
-        Path("appName", Descriptions(Sources(List(EmptySource)), List("value of type string")))
+        Path("appName", Descriptions(Sources(Nil), List("value of type string")))
       )
   )
 
@@ -79,7 +77,7 @@ object NestedConfigExample extends App {
                   "connection",
                   DescriptionsWithValue(
                     Some("abc.com"),
-                    Sources(List(EmptySource)),
+                    Sources(Nil),
                     List("value of type string", "South details")
                   )
                 ),
@@ -87,7 +85,7 @@ object NestedConfigExample extends App {
                   "port",
                   DescriptionsWithValue(
                     Some("8111"),
-                    Sources(List(EmptySource)),
+                    Sources(Nil),
                     List("value of type int", "South details")
                   )
                 )
@@ -100,7 +98,7 @@ object NestedConfigExample extends App {
                   "connection",
                   DescriptionsWithValue(
                     Some("xyz.com"),
-                    Sources(List(EmptySource)),
+                    Sources(Nil),
                     List("value of type string", "East details")
                   )
                 ),
@@ -108,7 +106,7 @@ object NestedConfigExample extends App {
                   "port",
                   DescriptionsWithValue(
                     Some("8888"),
-                    Sources(List(EmptySource)),
+                    Sources(Nil),
                     List("value of type int", "East details")
                   )
                 )
@@ -117,7 +115,7 @@ object NestedConfigExample extends App {
           ),
           Path(
             "appName",
-            DescriptionsWithValue(Some("myApp"), Sources(List(EmptySource)), List("value of type string"))
+            DescriptionsWithValue(Some("myApp"), Sources(Nil), List("value of type string"))
           )
         )
       )

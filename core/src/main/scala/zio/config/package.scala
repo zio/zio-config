@@ -7,6 +7,8 @@ package object config
     with EitherFunctions
     with KeyConversionFunctions {
 
+  type Config[A] = Has[A]
+
   type NonEmptyList[A] = ::[A]
 
   object NonEmptyList {
@@ -14,8 +16,8 @@ package object config
       ::(a.head, a.tail.toList)
   }
 
-  final def config[A]: ZIO[Config[A], Nothing, A] =
-    ZIO.access(_.config.config)
+  final def config[A](implicit tagged: Tagged[A]): ZIO[Config[A], Nothing, A] =
+    ZIO.access(_.get)
 
   private[config] def concat[A](l: ::[A], r: ::[A]): ::[A] =
     ::(l.head, l.tail ++ r)

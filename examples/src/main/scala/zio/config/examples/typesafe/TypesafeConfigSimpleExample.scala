@@ -1,6 +1,5 @@
 package zio.config.examples.typesafe
 
-import zio.DefaultRuntime
 import zio.config.ConfigDescriptor.{ int, list, nested, string }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
@@ -8,8 +7,6 @@ import zio.config.typesafe.TypeSafeConfigSource.fromHoconString
 import zio.config._
 
 object TypesafeConfigSimpleExample extends App {
-  val runtime = new DefaultRuntime {}
-
   // A nested example with type safe config, and usage of magnolia
   final case class Details(name: String, age: Int)
 

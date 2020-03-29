@@ -8,13 +8,13 @@ or rely on zio-config-magnolia that can automatically generate the description f
 that represents your config.
 
 ```scala mdoc:silent
-import zio.IO
+import zio.{ IO, ZLayer }
 import zio.config._, ConfigDescriptor._
 ```
 
 ## A Simple example
 
-We must be fetching the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
+We must fetch the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
 
 ```scala mdoc:silent
 
@@ -31,7 +31,18 @@ val myConfig =
 
 ```
 
-Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`. 
+Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
+
+Case classes with a single field are simple too.
+
+```scala mdoc:silent
+case class MySingleConfig(ldap: String)
+
+val mySingleConfig =
+  string("LDAP")(MySingleConfig.apply, MySingleConfig.unapply)
+```
+
+Think of this as removing fields one-by-one, along with the `|@|` combinator syntax, ending up with a single field being applied.
 
 ## Fully Automated Config Description: zio-config-magnolia
 
@@ -46,10 +57,10 @@ val myConfigAutomatic = description[MyConfig]
 
 ```
 
-`myConfig` and `myConfigAutomatic` are same description, and is of the same type. 
+`myConfig` and `myConfigAutomatic` are same description, and is of the same type.
 
 If you need more control over the description,
-probably you may choose to write it manually (such as, for adding extra documentations). 
+probably you may choose to write it manually (such as, for adding extra documentations).
 More examples on automatic derivation is in examples module of [zio-config](https://github.com/zio/zio-config)
 
 ## Running the description to ZIO
@@ -58,7 +69,7 @@ To read a config, means it has to perform some effects, and for that reason, it 
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
-val result: IO[ReadErrorsVector[String], zio.config.Config[MyConfig]] = 
+val result: ZLayer.NoDeps[ReadErrors[Vector[String], String], zio.config.Config[MyConfig]] =
   Config.fromEnv(myConfig) // That's system environment
 ```
 
@@ -68,7 +79,7 @@ Another way of doing this is:
 val source = ConfigSource.fromEnv(None)
 
 read(myConfig from source)
-// IO[ReadErrorsVector[String], MyConfig]
+// IO[ReadErrorsVector[String, String], MyConfig]
 ```
 
 You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application. 
@@ -111,7 +122,7 @@ That is,
 case class MyConfigWithOptionalUrl(ldap: String, port: Port, dburl: Option[String])
 
 val myConfigOptional =
-  (string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@| 
+  (string("LDAP") |@| int("PORT")(Port.apply, Port.unapply) |@| 
     string("DB_URL").optional)(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
 
 ```
@@ -150,7 +161,7 @@ In this scenario, you could do
 
 ```scala mdoc:silent
 
-int("PORT").xmap(Port)(_.value)
+int("PORT")(Port.apply, Port.unapply)
 
 ```
 
@@ -169,7 +180,7 @@ That is,
 
  // Before
   val myConfigWithCustomType =
-    (string("LDAP") |@| int("PORT").xmap(Port)(_.value) |@|
+    (string("LDAP") |@| int("PORT")(Port.apply, Port.unapply) |@|
       string("DB_URL"))(MyCustomConfig.apply, MyCustomConfig.unapply)
 
 ```
@@ -185,7 +196,7 @@ val source1 = ConfigSource.fromProperty(None)
 val source2 = ConfigSource.fromEnv(None)
 
 val myMultipleSourceConfig =
-  (string("LDAP").from(source1.orElse(source2)) |@| int("PORT").xmap(Port)(_.value).from(source1) |@|
+  (string("LDAP").from(source1.orElse(source2)) |@| int("PORT").    xmap(Port, (_: Port).value).from(source1) |@|
     string("DB_URL").optional.from(source2))(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
 
 read(myMultipleSourceConfig)

@@ -16,26 +16,22 @@ private[config] trait ReadFunctions {
       configuration match {
         case ConfigDescriptor.Source(key, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
           source
-            .getConfigValue(keys :+ key) match {
-            case Some(tree) =>
-              tree
-                .mapEmptyToError(ReadError.MissingValue((paths :+ Right(key))))
-                .map({
-                  case Left(value) => Left(value)
-                  case Right(value) =>
-                    propertyType.read(value) match {
-                      case Left(value) =>
-                        Left(
-                          ReadError.FormatError(
-                            (paths :+ Right(key)),
-                            ReadFunctions.parseErrorMessage(value.value.toString, value.typeInfo)
-                          )
-                        )
-                      case Right(value) => Right(value)
-                    }
-                })
-            case None => PropertyTree.Leaf(Left(ReadError.MissingValue(paths :+ Right(key))))
-          }
+            .getConfigValue(keys :+ key)
+            .mapEmptyToError(ReadError.MissingValue((paths :+ Right(key))))
+            .map({
+              case Left(value) => Left(value)
+              case Right(value) =>
+                propertyType.read(value) match {
+                  case Left(value) =>
+                    Left(
+                      ReadError.FormatError(
+                        (paths :+ Right(key)),
+                        ReadFunctions.parseErrorMessage(value.value.toString, value.typeInfo)
+                      )
+                    )
+                  case Right(value) => Right(value)
+                }
+            })
 
         case s: Sequence[K, V1, B] @unchecked =>
           val Sequence(config) = s

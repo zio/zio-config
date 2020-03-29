@@ -164,6 +164,7 @@ sealed trait PropertyTree[+K, +V] { self =>
           case (vs, Nil) =>
             vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
           case (vs, res) =>
+            // Fixme
             Sequence(vs.map(Leaf(_)))
               .zipWith(Sequence(res).reduceInner(f))(f) // Well the partitioned value is now valid as well. We zip to not lose the data
         }

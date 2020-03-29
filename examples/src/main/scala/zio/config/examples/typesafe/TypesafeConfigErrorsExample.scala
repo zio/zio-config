@@ -1,14 +1,11 @@
 package zio.config.examples.typesafe
 
-import zio.DefaultRuntime
 import zio.config.typesafe.TypeSafeConfigSource
 import zio.config.ConfigDescriptor.{ int, nested, string }
 import zio.config.magnolia.ConfigDescriptorProvider.description
 import zio.config.read
 
 object TypesafeConfigErrorsExample extends App {
-  val runtime = new DefaultRuntime {}
-
   // A nested example with type safe config, and usage of magnolia
   final case class Account(region: String, accountId: String)
   final case class Database(port: Int, url: String)

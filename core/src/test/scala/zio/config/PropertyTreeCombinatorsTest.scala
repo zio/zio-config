@@ -13,8 +13,7 @@ object PropertyTreeCombinatorsTest
           check(nLevelSequenceWithRecords) { input =>
             {
               val (tree, _, _) = input
-              assert(
-                tree.map(identity),
+              assert(tree.map(identity))(
                 equalTo(tree)
               )
             }
@@ -31,8 +30,7 @@ object PropertyTreeCombinatorsTest
               val (tree, _, _) = input
 
               val composed: String => String = g compose f
-              assert(
-                tree.map(f).map(g),
+              assert(tree.map(f).map(g))(
                 equalTo(tree.map(composed))
               )
             }
@@ -44,8 +42,7 @@ object PropertyTreeCombinatorsTest
           check(nLevelSequenceWithRecords, Gen.anyString) { (input, string) =>
             {
               val (tree, leaves, params) = input
-              assert(
-                getTreeFromNLevelSequence(tree.map(_ + string), params.nestedSequencesCount),
+              assert(getTreeFromNLevelSequence(tree.map(_ + string), params.nestedSequencesCount))(
                 equalTo((1 to params.recordKeyCount).toList.flatMap(_ => leaves.map(_ + string).toSequences))
               )
             }
@@ -58,8 +55,7 @@ object PropertyTreeCombinatorsTest
             {
               val (tree, leaves, params) = input
               val mapEmpty               = tree.mapEmptyToError(string)
-              assert(
-                getTreeFromNLevelSequence(mapEmpty, params.nestedSequencesCount),
+              assert(getTreeFromNLevelSequence(mapEmpty, params.nestedSequencesCount))(
                 equalTo(
                   (1 to params.recordKeyCount).toList
                     .flatMap(_ => leaves.map(Right(_): Either[String, String]).toSequences)
@@ -76,8 +72,7 @@ object PropertyTreeCombinatorsTest
               val (tree, params) = input
               val mapEmpty       = tree.mapEmptyToError(string)
 
-              assert(
-                getTreeFromNLevelSequence(mapEmpty, params.nestedSequencesCount),
+              assert(getTreeFromNLevelSequence(mapEmpty, params.nestedSequencesCount))(
                 equalTo(
                   (List
                     .fill(params.recordKeyCount)(

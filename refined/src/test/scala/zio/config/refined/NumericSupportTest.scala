@@ -21,7 +21,7 @@ object NumericSupportTest
                 reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config Less invalid") {
@@ -30,7 +30,7 @@ object NumericSupportTest
             val p2: ZIO[Any, ReadError[String], Refined[Int, Less[W.`10`.T]]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
-            assertM(p2.either, helpers.assertErrors(_.size == 1))
+            assertM(p2.either)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config Greater roundtrip") {
@@ -42,7 +42,7 @@ object NumericSupportTest
                 reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config Greater invalid") {
@@ -51,7 +51,7 @@ object NumericSupportTest
             val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, Greater[W.`10`.T]]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
-            assertM(p2.either, helpers.assertErrors(_.size == 1))
+            assertM(p2.either)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config LessEqual roundtrip") {
@@ -63,7 +63,7 @@ object NumericSupportTest
                 reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config LessEqual invalid") {
@@ -72,7 +72,7 @@ object NumericSupportTest
             val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, LessEqual[W.`10`.T]]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
-            assertM(p2.either, helpers.assertErrors(_.size == 1))
+            assertM(p2.either)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config GreaterEqual roundtrip") {
@@ -84,7 +84,7 @@ object NumericSupportTest
                 reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config GreaterEqual invalid") {
@@ -93,7 +93,7 @@ object NumericSupportTest
             val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, GreaterEqual[W.`10`.T]]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
-            assertM(p2.either, helpers.assertErrors(_.size == 1))
+            assertM(p2.either)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config Divisible roundtrip") {
@@ -105,7 +105,7 @@ object NumericSupportTest
                 reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config Divisible invalid") {
@@ -114,7 +114,7 @@ object NumericSupportTest
             val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, Divisible[W.`10`.T]]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
-            assertM(p2.either, helpers.assertErrors(_.size == 1))
+            assertM(p2.either)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config NonDivisible roundtrip") {
@@ -126,7 +126,7 @@ object NumericSupportTest
                 reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config NonDivisible invalid") {
@@ -135,7 +135,7 @@ object NumericSupportTest
             val p2: ZIO[Any, ReadErrorsVector[String], Refined[Int, NonDivisible[W.`10`.T]]] =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
-            assertM(p2.either, helpers.assertErrors(_.size == 1))
+            assertM(p2.either)(helpers.assertErrors(_.size == 1))
           }
         }
       )

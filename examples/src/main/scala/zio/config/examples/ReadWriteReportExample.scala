@@ -1,13 +1,11 @@
 package zio.config.examples
 
-import zio.DefaultRuntime
 import zio.config._
 import ConfigDescriptor._
 import zio.config.ConfigDocs.Details._
 import zio.config.ConfigDocs._
-import ConfigSource._
 
-object ReadWriteReport extends App {
+object ReadWriteReportExample extends App {
 
   case class Password(value: String)
   case class UserPwd(name: String, pwd: Option[Password], abc: Option[String], value: Option[XYZ])
@@ -19,7 +17,7 @@ object ReadWriteReport extends App {
   // An example where user provides a description once and for all, and use it for read, write, report!
   val configWithoutSource =
     ((string("usr") ?? "Example: some-user" |@|
-      string("pwd").xmap(Password)(_.value).optional ?? "sec" |@|
+      string("pwd")(Password.apply, Password.unapply).optional ?? "sec" |@|
       string("jhi").optional ?? "Ex: ghi" |@|
       (string("xyz") |@| int("abc").orElseEither(string("def")))(XYZ.apply, XYZ.unapply).optional ?? "Ex: ha")(
       UserPwd.apply,
@@ -27,7 +25,7 @@ object ReadWriteReport extends App {
     ) orElseEither
       (string("auth_token") |@| string("clientid"))(Token.apply, Token.unapply)) ?? "Prod Config"
 
-  val runtime = new DefaultRuntime {}
+  val runtime = zio.Runtime.default
 
   val userNamePassword =
     Map(
@@ -87,14 +85,14 @@ object ReadWriteReport extends App {
               Path(
                 "usr",
                 Descriptions(
-                  Sources(List(EmptySource, ConstantMap)),
+                  Sources(List("constant")),
                   List("value of type string", "Example: some-user", "Prod Config")
                 )
               ),
               Path(
                 "pwd",
                 Descriptions(
-                  Sources(List(EmptySource, ConstantMap)),
+                  Sources(List("constant")),
                   List("value of type string", "optional value", "sec", "Prod Config")
                 )
               )
@@ -102,7 +100,7 @@ object ReadWriteReport extends App {
             Path(
               "jhi",
               Descriptions(
-                Sources(List(EmptySource, ConstantMap)),
+                Sources(List("constant")),
                 List("value of type string", "optional value", "Ex: ghi", "Prod Config")
               )
             )
@@ -111,7 +109,7 @@ object ReadWriteReport extends App {
             Path(
               "xyz",
               Descriptions(
-                Sources(List(EmptySource, ConstantMap)),
+                Sources(List("constant")),
                 List("value of type string", "optional value", "Ex: ha", "Prod Config")
               )
             ),
@@ -119,14 +117,14 @@ object ReadWriteReport extends App {
               Path(
                 "abc",
                 Descriptions(
-                  Sources(List(EmptySource, ConstantMap)),
+                  Sources(List("constant")),
                   List("value of type int", "optional value", "Ex: ha", "Prod Config")
                 )
               ),
               Path(
                 "def",
                 Descriptions(
-                  Sources(List(EmptySource, ConstantMap)),
+                  Sources(List("constant")),
                   List("value of type string", "optional value", "Ex: ha", "Prod Config")
                 )
               )
@@ -136,11 +134,11 @@ object ReadWriteReport extends App {
         Both(
           Path(
             "auth_token",
-            Descriptions(Sources(List(EmptySource, ConstantMap)), List("value of type string", "Prod Config"))
+            Descriptions(Sources(List("constant")), List("value of type string", "Prod Config"))
           ),
           Path(
             "clientid",
-            Descriptions(Sources(List(EmptySource, ConstantMap)), List("value of type string", "Prod Config"))
+            Descriptions(Sources(List("constant")), List("value of type string", "Prod Config"))
           )
         )
       )
@@ -157,7 +155,7 @@ object ReadWriteReport extends App {
                   "usr",
                   DescriptionsWithValue(
                     Some("v1"),
-                    Sources(List(EmptySource, ConstantMap)),
+                    Sources(List("constant")),
                     List("value of type string", "Example: some-user", "Prod Config")
                   )
                 ),
@@ -165,7 +163,7 @@ object ReadWriteReport extends App {
                   "pwd",
                   DescriptionsWithValue(
                     Some("v2"),
-                    Sources(List(EmptySource, ConstantMap)),
+                    Sources(List("constant")),
                     List("value of type string", "optional value", "sec", "Prod Config")
                   )
                 )
@@ -174,7 +172,7 @@ object ReadWriteReport extends App {
                 "jhi",
                 DescriptionsWithValue(
                   None,
-                  Sources(List(EmptySource, ConstantMap)),
+                  Sources(List("constant")),
                   List("value of type string", "optional value", "Ex: ghi", "Prod Config")
                 )
               )
@@ -184,7 +182,7 @@ object ReadWriteReport extends App {
                 "xyz",
                 DescriptionsWithValue(
                   Some("v3"),
-                  Sources(List(EmptySource, ConstantMap)),
+                  Sources(List("constant")),
                   List("value of type string", "optional value", "Ex: ha", "Prod Config")
                 )
               ),
@@ -193,7 +191,7 @@ object ReadWriteReport extends App {
                   "abc",
                   DescriptionsWithValue(
                     Some("1"),
-                    Sources(List(EmptySource, ConstantMap)),
+                    Sources(List("constant")),
                     List("value of type int", "optional value", "Ex: ha", "Prod Config")
                   )
                 ),
@@ -201,7 +199,7 @@ object ReadWriteReport extends App {
                   "def",
                   DescriptionsWithValue(
                     None,
-                    Sources(List(EmptySource, ConstantMap)),
+                    Sources(List("constant")),
                     List("value of type string", "optional value", "Ex: ha", "Prod Config")
                   )
                 )
@@ -213,7 +211,7 @@ object ReadWriteReport extends App {
               "auth_token",
               DescriptionsWithValue(
                 None,
-                Sources(List(EmptySource, ConstantMap)),
+                Sources(List("constant")),
                 List("value of type string", "Prod Config")
               )
             ),
@@ -221,7 +219,7 @@ object ReadWriteReport extends App {
               "clientid",
               DescriptionsWithValue(
                 None,
-                Sources(List(EmptySource, ConstantMap)),
+                Sources(List("constant")),
                 List("value of type string", "Prod Config")
               )
             )

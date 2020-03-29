@@ -14,7 +14,8 @@ final case class ConfigSource[K, V](
   final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     ConfigSource(
       k => getConfigValue(k).getOrElse(that.getConfigValue(k)),
-      self.sourceDescription ++ that.sourceDescription
+      if (self.sourceDescription == that.sourceDescription) self.sourceDescription
+      else self.sourceDescription ++ that.sourceDescription
     )
 
   final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
@@ -31,21 +32,21 @@ object ConfigSource {
   def fromSystemEnv(valueSeparator: Option[Char] = None): UIO[ConfigSource[String, String]] =
     UIO
       .effectTotal(sys.env)
-      .map(map => ConfigSource.fromMap(map, '_', valueSeparator.getOrElse(':'), SystemEnvironment))
+      .map(map => ConfigSource.fromMap(map, SystemEnvironment, '_', valueSeparator.getOrElse(':')))
 
   def fromSystemProperties(valueSeparator: Option[Char] = None): UIO[ConfigSource[String, String]] =
     for {
       systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
     } yield fromProperties(
       systemProperties,
-      valueSeparator,
-      SystemProperties
+      SystemProperties,
+      valueSeparator
     )
 
   def fromProperties(
     property: ju.Properties,
-    valueSeparator: Option[Char] = None,
-    source: String
+    source: String,
+    valueSeparator: Option[Char] = None
   ): ConfigSource[String, String] = {
     val mapString = property.stringPropertyNames().asScala.foldLeft(Map.empty[String, String]) { (acc, a) =>
       acc.updated(a, property.getProperty(a))
@@ -60,29 +61,29 @@ object ConfigSource {
 
   def fromMap(
     map: Map[String, String],
-    pathDelimiter: Char = '.',
-    valueDelimter: Char = ',',
-    source: String
+    source: String = "constant",
+    keyDelimiter: Char = '.',
+    valueDelimter: Char = ','
   ): ConfigSource[String, String] =
-    fromMapInternal(map)(x => { val s = x.split(valueDelimter).toList; ::(s.head, s.tail) }, pathDelimiter, source)
+    fromMapInternal(map)(x => { val s = x.split(valueDelimter).toList; ::(s.head, s.tail) }, keyDelimiter, source)
 
   def fromMultiMap(
     map: Map[String, ::[String]],
-    pathDelimiter: Char = '.',
-    source: String
+    source: String,
+    keyDelimiter: Char = '.'
   ): ConfigSource[String, String] =
-    fromMapInternal(map)(identity, pathDelimiter, source)
+    fromMapInternal(map)(identity, keyDelimiter, source)
 
   def mergeAll[K, V](sources: Iterable[ConfigSource[K, V]]): ConfigSource[K, V] =
     sources.foldLeft(ConfigSource.empty: ConfigSource[K, V])(_ orElse _)
 
   def fromPropertyTree[B](
     tree: PropertyTree[String, B],
-    sourceName: String
+    source: String
   ): ConfigSource[String, B] =
     ConfigSource(
       (path: Vector[String]) => tree.getPath(path.toList),
-      sourceName :: Nil
+      source :: Nil
     )
 
   def fromPropertyTrees[B](
@@ -93,12 +94,12 @@ object ConfigSource {
 
   private def fromMapInternal[A, B](
     map: Map[String, A]
-  )(f: A => ::[B], pathDelimiter: Char, source: String): ConfigSource[String, B] =
+  )(f: A => ::[B], keyDelimiter: Char, source: String): ConfigSource[String, B] =
     fromPropertyTrees(
       unflatten(
         map.map(
           tuple =>
-            tuple._1.split(pathDelimiter).toVector.filterNot(_.trim == "") ->
+            tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "") ->
               f(tuple._2)
         )
       ),
