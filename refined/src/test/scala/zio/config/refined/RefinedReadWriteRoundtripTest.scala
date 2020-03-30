@@ -22,20 +22,20 @@ object RefinedReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
-            assertM(p2, equalTo(p))
+            assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config invalid") {
-          checkM(genRefinedProdInvalid) {
+          check(genRefinedProdInvalid) {
             case (n, envMap) =>
-              val p2: ZIO[Any, ReadErrorsVector[String], RefinedProd] =
+              val p2 =
                 read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
-              // 4 errors. When the value is optional, unless the key itself is missing, the failed predicate will result in failure.
-              assertM(p2.either, helpers.assertErrors(_.size == 1))
+              println(p2)
+              assert(p2)(helpers.assertErrors(_.size == 4))
           }
         }
       )
@@ -97,8 +97,8 @@ object RefinedReadWriteRoundtripTestUtils {
       n,
       Map(
         "LDAP"   -> "",
-        "PORT"   -> port.toString,
         "DB_URL" -> "",
+        "PORT"   -> port.toString,
         "COUNT"  -> n.toString
       ) ++ longs
         .foldRight[List[(String, String)]](Nil)(
