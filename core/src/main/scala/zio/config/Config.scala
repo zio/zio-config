@@ -10,7 +10,7 @@ object Config {
   def fromMap[A](
     map: Map[String, String],
     configDescriptor: ConfigDescriptor[String, String, A],
-    source: String,
+    source: String = "constant",
     keyDelimiter: Char = '.',
     valueDelimiter: Char = ':'
   )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =

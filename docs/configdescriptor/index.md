@@ -69,14 +69,14 @@ To read a config, means it has to perform some effects, and for that reason, it 
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
-val result: ZLayer.NoDeps[ReadErrors[Vector[String], String], zio.config.Config[MyConfig]] =
-  Config.fromEnv(myConfig) // That's system environment
+val result: ZLayer.NoDeps[ReadError[String], zio.config.Config[MyConfig]] =
+  Config.fromSystemEnv(myConfig) // That's system environment
 ```
 
 Another way of doing this is:
 
 ```scala mdoc:silent
-val source = ConfigSource.fromEnv(None)
+val source = ConfigSource.fromSystemEnv
 
 read(myConfig from source)
 // IO[ReadErrorsVector[String, String], MyConfig]
@@ -192,8 +192,8 @@ zio-config do support this scenario. This can happen in complex applications.
 
 
 ```scala mdoc:silent
-val source1 = ConfigSource.fromProperty(None)
-val source2 = ConfigSource.fromEnv(None)
+val source1 = ConfigSource.fromSystemProperties
+val source2 = ConfigSource.fromSystemEnv
 
 val myMultipleSourceConfig =
   (string("LDAP").from(source1.orElse(source2)) |@| int("PORT").    xmap(Port, (_: Port).value).from(source1) |@|
