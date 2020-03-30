@@ -82,6 +82,23 @@ object PropertyTreeCombinatorsTest
               )
             }
           }
+        },
+        testM(
+          "PropertyTree.zip should return the same tree on left and right when zipped with same tree"
+        ) {
+          check(nLevelSequenceWithRecords) { input =>
+            {
+              val (tree, _, _) = input
+              val zippedA      = tree.zipWith(tree)((a, _) => a)
+              val zippedB      = tree.zipWith(tree)((_, b) => b)
+
+              assert((zippedA, zippedB))(
+                equalTo(
+                  ((tree, tree))
+                )
+              )
+            }
+          }
         }
       )
     )

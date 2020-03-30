@@ -149,7 +149,7 @@ private[config] trait ReadFunctions {
 
           errors(leftTree) match {
             case Some(_) =>
-              val (newKey2, rightTree) =
+              val (_, rightTree) =
                 loop(right, keys, paths)
 
               (leftTree, rightTree) match {

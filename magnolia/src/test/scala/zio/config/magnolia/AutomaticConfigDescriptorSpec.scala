@@ -1,6 +1,6 @@
 package zio.config.magnolia
 
-import zio.config.ConfigSource
+import zio.config.{ read, write, BaseSpec, ConfigSource, PropertyTree }
 import zio.config.magnolia.ConfigDescriptorProvider._
 import AutomaticConfigTestUtils._
 import zio.ZIO
@@ -8,11 +8,6 @@ import zio.random.Random
 import zio.test._
 import zio.config.helpers._
 import zio.test.Assertion._
-import zio.config.BaseSpec
-import zio.config.PropertyTree
-import zio.config.read
-import zio.config.write
-import zio.config.ReadErrors
 
 object AutomaticConfigTest
     extends BaseSpec(
@@ -25,9 +20,9 @@ object AutomaticConfigTest
               val source =
                 ConfigSource.fromMap(environment)
 
-              val readAndWrite: ZIO[Any, ReadErrors[Vector[String]], Either[String, PropertyTree[String, String]]] =
+              val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
                 for {
-                  result  <- read(configDesc from source)
+                  result  <- ZIO.fromEither(read(configDesc from source))
                   written <- ZIO.effectTotal(write(configDesc, result))
                 } yield written
 

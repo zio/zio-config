@@ -34,7 +34,6 @@ object RefinedReadWriteRoundtripTest
               val p2 =
                 read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
-              println(p2)
               assert(p2)(helpers.assertErrors(_.size == 4))
           }
         }
