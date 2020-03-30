@@ -15,7 +15,7 @@ object DefaultValueExample extends App {
     (string("HELLO").default("xyz") |@|
       string("SOMETHING").orElseEither(int("PORT").default(1)))(PgmConfig.apply, PgmConfig.unapply)
 
-  val pgmConfig = ConfigSource.fromSystemEnv(None).map(source => conf from source)
+  val pgmConfig = ConfigSource.fromSystemEnv.map(source => conf from source)
 
   val runtime = zio.Runtime.default
 

@@ -22,7 +22,7 @@ object SimpleExampleMain extends App {
       for {
         fileLocation <- ZIO.effect(System.getProperty("user.home") + "/somefile.properties")
         // there are many ways of doing this: example: {{{ read(configuration from ConfigSource.fromJavaProperties(propertyFile))) }}}, you may try that as well.
-        configLayer = Config.fromPropertyFile(fileLocation, ApplicationConfig.configuration)
+        configLayer = Config.fromPropertiesFile(fileLocation, ApplicationConfig.configuration)
         _           <- SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.requires[Console])
       } yield ()
 
