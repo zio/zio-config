@@ -1,11 +1,8 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
-import zio.config.ConfigDocs.Details._
-import zio.config.ConfigDocs._
-import zio.config.ConfigSource._
-import zio.config.PropertyTree.{ Leaf, Record }
 import zio.config._
+import ConfigDescriptor._, zio.config.ConfigDocs.Details._
+import zio.config.ConfigDocs._
 
 object NestedConfigExample extends App {
 
@@ -35,8 +32,7 @@ object NestedConfigExample extends App {
   val runtime = zio.Runtime.default
 
   // Read
-  val result = runtime.unsafeRun(read(appConfig from source))
-  assert(result == AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
+  assert(read(appConfig from source) == Right(AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")))
 
   // Details Both Report of the nested configurations.
   assert(
@@ -48,9 +44,9 @@ object NestedConfigExample extends App {
             Both(
               Path(
                 "connection",
-                Descriptions(Sources(List(EmptySource)), List("value of type string", "South details"))
+                Descriptions(Sources(Nil), List("value of type string", "South details"))
               ),
-              Path("port", Descriptions(Sources(List(EmptySource)), List("value of type int", "South details")))
+              Path("port", Descriptions(Sources(Nil), List("value of type int", "South details")))
             )
           ),
           NestedPath(
@@ -58,19 +54,19 @@ object NestedConfigExample extends App {
             Both(
               Path(
                 "connection",
-                Descriptions(Sources(List(EmptySource)), List("value of type string", "East details"))
+                Descriptions(Sources(Nil), List("value of type string", "East details"))
               ),
-              Path("port", Descriptions(Sources(List(EmptySource)), List("value of type int", "East details")))
+              Path("port", Descriptions(Sources(Nil), List("value of type int", "East details")))
             )
           )
         ),
-        Path("appName", Descriptions(Sources(List(EmptySource)), List("value of type string")))
+        Path("appName", Descriptions(Sources(Nil), List("value of type string")))
       )
   )
 
   // Details with a peek at each value as well
   assert(
-    generateDocsWithValue(appConfig, result) ==
+    generateDocsWithValue(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")) ==
       Right(
         Both(
           Both(
@@ -81,7 +77,7 @@ object NestedConfigExample extends App {
                   "connection",
                   DescriptionsWithValue(
                     Some("abc.com"),
-                    Sources(List(EmptySource)),
+                    Sources(Nil),
                     List("value of type string", "South details")
                   )
                 ),
@@ -89,7 +85,7 @@ object NestedConfigExample extends App {
                   "port",
                   DescriptionsWithValue(
                     Some("8111"),
-                    Sources(List(EmptySource)),
+                    Sources(Nil),
                     List("value of type int", "South details")
                   )
                 )
@@ -102,7 +98,7 @@ object NestedConfigExample extends App {
                   "connection",
                   DescriptionsWithValue(
                     Some("xyz.com"),
-                    Sources(List(EmptySource)),
+                    Sources(Nil),
                     List("value of type string", "East details")
                   )
                 ),
@@ -110,7 +106,7 @@ object NestedConfigExample extends App {
                   "port",
                   DescriptionsWithValue(
                     Some("8888"),
-                    Sources(List(EmptySource)),
+                    Sources(Nil),
                     List("value of type int", "East details")
                   )
                 )
@@ -119,32 +115,23 @@ object NestedConfigExample extends App {
           ),
           Path(
             "appName",
-            DescriptionsWithValue(Some("myApp"), Sources(List(EmptySource)), List("value of type string"))
+            DescriptionsWithValue(Some("myApp"), Sources(Nil), List("value of type string"))
           )
         )
       )
   )
 
   // Write your nested config back.
+
+  import PropertyTree._
+
   assert(
-    write(appConfig, result) ==
+    write(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")) ==
       Right(
         Record(
           Map(
-            "south" ->
-              Record(
-                Map(
-                  "connection" -> Leaf("abc.com"),
-                  "port"       -> Leaf("8111")
-                )
-              ),
-            "east" ->
-              Record(
-                Map(
-                  "connection" -> Leaf("xyz.com"),
-                  "port"       -> Leaf("8888")
-                )
-              ),
+            "south"   -> Record(Map("connection" -> Leaf("abc.com"), "port" -> Leaf("8111"))),
+            "east"    -> Record(Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))),
             "appName" -> Leaf("myApp")
           )
         )

@@ -19,17 +19,17 @@ object ReadErrorsTest
     )
 
 object ReadErrorsTestUtils {
-  private val genParseError =
+  private val genFormatError =
     for {
       s1 <- Gen.anyString
       s2 <- Gen.anyString
       s3 <- Gen.anyString
-    } yield ReadError.ParseError(s1, s2, s3)
+    } yield ReadError.FormatError(Vector(Right(s1)), ReadFunctions.parseErrorMessage(s2, s3))
 
   private val genReadError =
-    Gen.oneOf(Gen.const(ReadError.MissingValue("somekey")), genParseError)
+    Gen.oneOf(Gen.const(ReadError.MissingValue(Vector(Right("somekey")))), genFormatError)
 
-  val genReadErrors: Gen[Random with Sized, List[ReadError[String, String]]] = {
+  val genReadErrors: Gen[Random with Sized, List[ReadError[String]]] = {
     for {
       n    <- Gen.int(1, 20)
       list <- Gen.listOfN(n)(genReadError)

@@ -15,10 +15,14 @@ object EitherReciprocityTest
             p =>
               val lr =
                 for {
-                  writtenLeft  <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
-                  rereadLeft   <- read(cCoproductConfig from ConfigSource.fromPropertyTree(writtenLeft))
+                  writtenLeft <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
+                  rereadLeft <- ZIO.fromEither(
+                                 read(cCoproductConfig from ConfigSource.fromPropertyTree(writtenLeft, "test"))
+                               )
                   writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
-                  rereadRight  <- read(cCoproductConfig from ConfigSource.fromPropertyTree(writtenRight))
+                  rereadRight <- ZIO.fromEither(
+                                  read(cCoproductConfig from ConfigSource.fromPropertyTree(writtenRight, "test"))
+                                )
                 } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
                   case (Left(pl), Right(pr)) => Some(pl -> pr)
                   case _                     => None

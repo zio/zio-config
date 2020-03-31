@@ -10,59 +10,72 @@ import zio.test.Assertion._
 
 object CollectAllRoundtripTest
     extends BaseSpec(
-      suite("sequence round trip")(
-        testM("optional write") {
-          checkM(genOverallConfig) {
-            p =>
+      suite("ConfigDescriptor.collectAll")(
+        testM("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
+          checkM(generateListOfGroups) {
+            groups =>
               val cId: String => ConfigDescriptor[String, String, Id] = string(_)(Id.apply, Id.unapply)
 
               // List is nonempty
               val consOfConfig = {
-                val configs = p.toList.map(
-                  prefix => (cId(prefix._1).optional |@| cId(prefix._1))(OverallConfig.apply, OverallConfig.unapply)
+                val configs = groups.map(
+                  group =>
+                    (cId(group.id1Key).optional |@| cId(group.id2Key))(IdentityDetails.apply, IdentityDetails.unapply)
                 )
                 ::(configs.head, configs.tail)
               }
+
+              val inputSource: Map[String, String] =
+                groups.flatMap(_.toMap.toList).toMap
 
               val config =
                 ConfigDescriptor.sequence(
                   consOfConfig
                 )
 
-              val readAndWrite
-                : ZIO[Any, ReadErrors[Vector[String], String], Either[String, PropertyTree[String, String]]] =
+              val readAndWrite: ZIO[Any, Any, PropertyTree[String, String]] =
                 for {
-                  result  <- read(config from ConfigSource.fromMap(p))
-                  written <- ZIO.effectTotal(write(config, result))
+                  result  <- ZIO.fromEither(read(config from ConfigSource.fromMap(inputSource)))
+                  written <- ZIO.fromEither(write(config, result))
                 } yield written
 
               val actual = readAndWrite
-                .map(_.map(_.flattenString()))
-                .map(_.fold(_ => Nil, _.toList.sortBy(_._1)))
+                .map(_.flattenString())
+                .fold(_ => Nil, _.toList.sortBy(_._1))
 
-              assertM(actual)(equalTo(p.toList.sortBy(_._1).map({ case (k, v) => (k, singleton(v)) })))
+              assertM(actual)(equalTo(inputSource.toList.sortBy(_._1).map({ case (k, v) => (k, singleton(v)) })))
           }
         }
       )
     )
 
 object SequenceRoundtripTestUtils {
-  final case class OverallConfig(id1: Option[Id], id2: Id)
+  final case class IdentityDetails(id1: Option[Id], id2: Id)
 
-  val genOverallConfig: Gen[Random, Map[String, String]] =
+  final case class Group(number: Int, identityDetails: IdentityDetails) {
+    val id1Key =
+      s"GROUP_${number}_id_1"
+
+    val id2Key =
+      s"GROUP_${number}_id_2"
+
+    val toMap: Map[String, String] =
+      Map(id2Key -> identityDetails.id2.value) ++
+        identityDetails.id1.fold(Map.empty[String, String])(v => Map(id1Key -> v.value))
+  }
+
+  val generateListOfGroups: Gen[Random, List[Group]] =
     for {
       optId1 <- Gen.option(genId)
       id2    <- genId
       n      <- Gen.oneOf(Gen.const(1), Gen.const(10), Gen.const(100))
-    } yield rangeMap(optId1, id2, n)
+    } yield rangeMap(n, IdentityDetails(optId1, id2))
 
-  private def rangeMap(optId1: Option[Id], id2: Id, n: Int): Map[String, String] =
-    (1 to n).flatMap { nn =>
-      val pair = makePair(nn, 2, id2.value)
-      optId1.fold(List(pair))(id => List(pair, makePair(nn, 1, id.value)))
-    }.toMap
+  val generateGroupMap: Gen[Random, Map[String, String]] =
+    generateListOfGroups.map(_.flatMap(_.toMap.toList).toMap)
 
-  private def makePair(id: Int, idx: Int, value: String): (String, String) =
-    s"GROUP${id}_id_${idx}" -> value
-
+  private def rangeMap(totalGroups: Int, overallConfig: IdentityDetails): List[Group] =
+    (1 to totalGroups).toList.map { groupNumber =>
+      Group(groupNumber, overallConfig)
+    }
 }

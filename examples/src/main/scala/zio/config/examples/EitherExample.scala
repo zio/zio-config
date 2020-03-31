@@ -1,7 +1,9 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
-import zio.config.ReadError._
+import zio.config._
+import ConfigDescriptor._
+import zio.config.ReadError.{ FormatError, MissingValue, OrErrors }
+//import zio.config.ReadError._
 import zio.config.{ ConfigSource, _ }
 
 object EitherExample extends App {
@@ -20,37 +22,38 @@ object EitherExample extends App {
   val prodOrDev =
     prod orElseEither dev
 
-  val runtime = zio.Runtime.default
-
-  val validConfigForSampleConfig =
+  val validProd =
     Map(
       "x1" -> "v1",
       "x2" -> "v2",
       "x3" -> "v3"
     )
 
+  // Obviously getting a constant map source doesn't need ZIO effect
   val source: ConfigSource[String, String] =
-    ConfigSource.fromMap(validConfigForSampleConfig)
+    ConfigSource.fromMap(validProd, "constant")
 
   // read(prodOrDev from source) is equivalent to Config.fromMap(prodOrDev). This is only to demonstrate that you can
   // use `from` at any point in your description, making it really flexible for the user to fetch different configs from different
   // sources.
-  assert(runtime.unsafeRun(read(prodOrDev from source)) == Left(Prod(Ldap("v1"), DbUrl("v2"))))
+  println("normal result " + read(prodOrDev from source))
+  // assert(read(prodOrDev from source) == Left(Prod(Ldap("v1"), DbUrl("v2"))))
 
-  val validConfigForAnotherConfig =
+  val validDev =
     Map(
-      "x2" -> "v2",
       "x3" -> "v3",
       "x4" -> "1",
       "x5" -> "2.0"
     )
 
   val anotherSource: ConfigSource[String, String] =
-    ConfigSource.fromMap(validConfigForAnotherConfig)
+    ConfigSource.fromMap(validDev)
 
-  assert(runtime.unsafeRun(read(prodOrDev from anotherSource)) == Right(Dev("v3", 1, 2.0)))
+  println("anpther soruce result " + read(prodOrDev from anotherSource))
 
-  val invalidConfig =
+  //assert(read(prodOrDev from anotherSource) == Right(Dev("v3", 1, 2.0)))
+
+  val parseErrorConfig =
     Map(
       "x2" -> "v2",
       "x3" -> "v3",
@@ -59,13 +62,24 @@ object EitherExample extends App {
     )
 
   val invalidSource =
-    ConfigSource.fromMap(invalidConfig)
+    ConfigSource.fromMap(parseErrorConfig, "constant")
+
+  println("errorneous exampl " + read(prodOrDev from invalidSource))
 
   assert(
-    runtime.unsafeRun(read(prodOrDev from invalidSource).either) ==
-      Left(List(MissingValue(Vector("x1")), ParseError(Vector("x5"), "notadouble", "double")))
+    read(prodOrDev from invalidSource) ==
+      Left(
+        // OrErrors indicate that either fix the error with x1 or the error with x5
+        OrErrors(
+          List(
+            MissingValue(Vector(Right("x1"))),
+            FormatError(Vector(Right("x5")), ReadFunctions.parseErrorMessage("notadouble", "double"))
+          )
+        )
+      )
   )
 
+  // It chooses the left, Prod
   val allConfigsExist =
     Map(
       "x1" -> "v1",
@@ -76,7 +90,7 @@ object EitherExample extends App {
     )
 
   assert(
-    runtime.unsafeRun(read(prodOrDev from ConfigSource.fromMap(allConfigsExist))) ==
-      Left(Prod(Ldap("v1"), DbUrl("v2")))
+    read(prodOrDev from ConfigSource.fromMap(allConfigsExist)) ==
+      Right(Left(Prod(Ldap("v1"), DbUrl("v2"))))
   )
 }

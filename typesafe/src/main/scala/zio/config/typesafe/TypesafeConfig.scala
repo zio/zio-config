@@ -1,40 +1,37 @@
 package zio.config.typesafe
 
-import zio.config._, Config._
 import java.io.File
-import zio.ZIO
+
 import com.typesafe.config.ConfigFactory
-import zio.{ system, Tagged, ZEnv, ZLayer }
+import zio.config._
+import zio.{ Layer, Tagged, ZIO }
 
 object TypesafeConfig {
-
   def fromDefaultLoader[A](
     configDescriptor: ConfigDescriptor[String, String, A]
-  )(implicit tagged: Tagged[Config.Service[A]]): ZLayer.NoDeps[Throwable, Config[A]] =
-    fromHocon(ConfigFactory.load.resolve, configDescriptor)
+  )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
+    fromTypesafeConfig(ConfigFactory.load.resolve, configDescriptor)
 
   def fromHoconFile[A](
-    configDescriptor: ConfigDescriptor[String, String, A],
-    file: File
-  )(implicit tagged: Tagged[Config.Service[A]]): ZLayer.NoDeps[Throwable, Config[A]] =
-    fromHocon(ConfigFactory.parseFile(file).resolve, configDescriptor)
+    file: File,
+    configDescriptor: ConfigDescriptor[String, String, A]
+  )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
+    fromTypesafeConfig(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
   def fromHoconString[A](
     str: String,
     configDescriptor: ConfigDescriptor[String, String, A]
-  )(implicit tagged: Tagged[Config.Service[A]]): ZLayer.NoDeps[Throwable, Config[A]] =
-    fromHocon(ConfigFactory.parseString(str).resolve, configDescriptor)
+  )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
+    fromTypesafeConfig(ConfigFactory.parseString(str).resolve, configDescriptor)
 
-  def fromHocon[A](
-    f: => com.typesafe.config.Config,
+  def fromTypesafeConfig[A](
+    conf: => com.typesafe.config.Config,
     configDescriptor: ConfigDescriptor[String, String, A]
-  )(implicit tagged: Tagged[Config.Service[A]]): ZLayer.NoDeps[Throwable, Config[A]] =
-    ZLayer.fromEffect(
-      for {
-        conf <- ZIO.effect(f)
-        ln   <- system.lineSeparator.provideLayer(ZEnv.live)
-        config <- makeM(TypeSafeConfigSource.hocon(Left(conf)), configDescriptor)
-                   .mapError(r => new RuntimeException(s"${ln}${r.mkString(ln)}"))
-      } yield config
+  )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
+    Config.fromConfigDescriptorM(
+      ZIO
+        .fromEither(TypeSafeConfigSource.fromTypesafeConfig(conf))
+        .map(configDescriptor from _)
+        .mapError(error => new RuntimeException(error))
     )
 }

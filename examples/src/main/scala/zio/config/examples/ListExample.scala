@@ -1,11 +1,12 @@
 package zio.config.examples
 
 import zio.config.ConfigDescriptor._
-import zio.config.PropertyTree.{ Leaf, Record }
-import zio.config.{ PropertyTree, _ }
+//import zio.config.PropertyTree.{ Leaf, Record }
+import zio.config._
+import zio.config.examples.typesafe.EitherImpureOps
 
-// List works quite nicely if the source is typesafe HOCON. Refer TypesafeConfigHoconExample.scala to get an idea.
-object ListExample extends App {
+// List works quite nicely if the source is typesafe HOCON. Refer typesafe examples
+object ListExample extends App with EitherImpureOps {
   final case class PgmConfig(a: String, b: List[String])
 
   val multiMap =
@@ -19,31 +20,19 @@ object ListExample extends App {
 
   val runtime = zio.Runtime.default
 
+  val tree =
+    ConfigSource.fromMultiMap(multiMap, "constant")
+
   val resultFromMultiMap =
-    runtime.unsafeRun(
-      read(config from ConfigSource.fromMultiMap(multiMap))
-    )
+    read(config from ConfigSource.fromMultiMap(multiMap, "constant"))
+
+  val expected =
+    PgmConfig("something", List("australia", "canada", "usa"))
 
   assert(
     resultFromMultiMap ==
-      PgmConfig("something", List("australia", "canada", "usa"))
-  )
-
-  assert(
-    write(config, resultFromMultiMap) ==
       Right(
-        PropertyTree.Sequence(
-          List(
-            Record(
-              Map("xyz" -> Leaf("something"))
-            ),
-            Record(Map("regions" -> Leaf("australia"))),
-            Record(Map("regions" -> Leaf("canada"))),
-            Record(Map("regions" -> Leaf("usa")))
-          )
-        )
+        PgmConfig("something", List("australia", "canada", "usa"))
       )
   )
-
-  // Keep a note that, handling list in a flattened map like structure may not be what you need to do, have a look at TypesafeConfigHoconExample.
 }

@@ -22,8 +22,12 @@ object ReadConfig extends App {
 
   override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
     for {
-      console     <- ZIO.environment[Console].map(_.get)
-      configLayer = Config.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"), Prod.prodConfig)
+      console <- ZIO.environment[Console].map(_.get)
+      configLayer = Config.fromMap(
+        Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"),
+        Prod.prodConfig,
+        "constant"
+      )
       out <- Prod.myAppLogic
               .provideLayer(configLayer)
               .foldM(

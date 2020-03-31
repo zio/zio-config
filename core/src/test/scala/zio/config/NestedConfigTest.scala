@@ -11,13 +11,15 @@ object NestedConfigTest
     extends BaseSpec(
       suite("Nested config")(
         testM("read") {
-          checkM(genNestedConfigParams) { p =>
-            assertM(read(p.config.from(p.source)).either)(isRight(equalTo(p.value)))
+          check(genNestedConfigParams) { p =>
+            assert(read(p.config.from(p.source)))(isRight(equalTo(p.value)))
           }
         },
         testM("write") {
           check(genNestedConfigParams) { p =>
-            assert(write(p.config, p.value).map(_.flattenString()))(isRight(equalTo(toMultiMap(p.map))))
+            assert(write(p.config, p.value).map(_.flattenString()))(
+              isRight(equalTo(toMultiMap(p.map)))
+            )
           }
         }
       )
@@ -28,17 +30,6 @@ object NestedConfigTestUtils {
   final case class DbConnection(host: String, port: Int)
   final case class Database(connection: Either[DbUrl, DbConnection], credentials: Option[Credentials])
   final case class AppConfig(db: Database, pricing: Double)
-
-  final case class KeyParams(
-    host: String,
-    port: String,
-    user: String,
-    password: String,
-    connection: String,
-    credentials: String,
-    database: String,
-    pricing: String
-  )
 
   val genCredentials: Gen[Random, Credentials] =
     for {
@@ -64,62 +55,44 @@ object NestedConfigTestUtils {
       pricing <- Gen.anyFloat.map(_.toDouble)
     } yield AppConfig(db, pricing)
 
-  final case class TestParams(keys: KeyParams, value: AppConfig) {
+  final case class TestParams(value: AppConfig) {
 
     val config: ConfigDescriptor[String, String, AppConfig] = {
-      val credentials  = (string(keys.user) |@| string(keys.password))(Credentials.apply, Credentials.unapply)
-      val dbConnection = (string(keys.host) |@| int(keys.port))(DbConnection.apply, DbConnection.unapply)
+      val credentials  = (string("user") |@| string("password"))(Credentials.apply, Credentials.unapply)
+      val dbConnection = (string("host") |@| int("port"))(DbConnection.apply, DbConnection.unapply)
 
       val database =
-        (string(keys.connection)(DbUrl.apply, DbUrl.unapply).orElseEither(nested(keys.connection)(dbConnection)) |@|
-          nested(keys.credentials)(credentials).optional)(Database.apply, Database.unapply)
+        (string("dburl")(DbUrl.apply, DbUrl.unapply)
+          .orElseEither(nested("connection")(dbConnection)) |@|
+          nested("credentials")(credentials).optional)(Database.apply, Database.unapply)
 
-      (nested(keys.database)(database) |@| double(keys.pricing))(AppConfig, AppConfig.unapply)
+      (nested("database")(database) |@| double("pricing"))(AppConfig, AppConfig.unapply)
     }
 
     val map =
       Seq(
         value.db.connection.fold(
-          url => Seq(s"${keys.database}.${keys.connection}" -> url.value),
+          url => Seq("database.dburl" -> url.value),
           connection => {
-            val connectionKey = s"${keys.database}.${keys.connection}"
             Seq(
-              s"$connectionKey.${keys.host}" -> connection.host,
-              s"$connectionKey.${keys.port}" -> connection.port.toString
+              "database.connection.host" -> connection.host,
+              "database.connection.port" -> connection.port.toString
             )
           }
         ),
         value.db.credentials.fold(Seq.empty[(String, String)]) { c =>
-          val credentialsKey = s"${keys.database}.${keys.credentials}"
           Seq(
-            s"$credentialsKey.${keys.user}"     -> c.user,
-            s"$credentialsKey.${keys.password}" -> c.password
+            "database.credentials.user"     -> c.user,
+            "database.credentials.password" -> c.password
           )
         },
-        Seq(keys.pricing -> value.pricing.toString)
+        Seq("pricing" -> value.pricing.toString)
       ).flatten.toMap
 
     def source: ConfigSource[String, String] =
       ConfigSource.fromMap(map)
   }
 
-  private val genKey = genSymbol(1, 20)
-
-  val genConfigKeys: Gen[Random, KeyParams] =
-    for {
-      kHost        <- genKey
-      kPort        <- genKey.filter(_ != kHost)
-      kUser        <- genKey
-      kPassword    <- genKey.filter(_ != kUser)
-      kCredentials <- genKey
-      kConnection  <- genKey.filter(_ != kCredentials)
-      kDb          <- genKey
-      kPricing     <- genKey.filter(_ != kDb)
-    } yield KeyParams(kHost, kPort, kUser, kPassword, kConnection, kCredentials, kDb, kPricing)
-
   val genNestedConfigParams: Gen[Random, TestParams] =
-    for {
-      keys  <- genConfigKeys
-      value <- genAppConfig
-    } yield TestParams(keys, value)
+    genAppConfig.map(TestParams)
 }

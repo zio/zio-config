@@ -2,186 +2,173 @@ package zio.config.typesafe
 
 import com.typesafe.config.ConfigFactory
 import zio.config.ConfigSource
-
-import zio.{ ZIO }
 import zio.config._
 import com.typesafe.config.ConfigValueType
+import zio.config.PropertyTree.Leaf
+
 import scala.util.Try
 import scala.util.Failure
 import scala.util.Success
 import scala.collection.JavaConverters._
+import PropertyTree._
+import java.io.File
+import zio.IO
+import zio.Task
+import zio.ZIO
 
 object TypeSafeConfigSource {
-  def hocon(input: Either[com.typesafe.config.Config, String]): ConfigSource[String, String] =
-    ConfigSource(
-      (path: Vector[String]) => {
-        def effect[A](f: => A): Either[ReadErrorsVector[String, String], A] =
-          Try(f) match {
-            case Success(value)     => Right(value)
-            case Failure(exception) => Left(singleton(ReadError.fatalError(path, exception)))
-          }
+  def fromDefaultLoader: Either[String, ConfigSource[String, String]] =
+    fromTypesafeConfig(ConfigFactory.load.resolve)
 
-        val getValue: (
-          com.typesafe.config.Config,
-          ConfigValueType,
-          String
-        ) => Either[ReadErrorsVector[String, String], ::[String]] =
-          (config, valueType, key) =>
-            if (valueType == ConfigValueType.BOOLEAN) {
-              effect(config.getBoolean(key).toString()).map(singleton)
-            } else if (valueType == ConfigValueType.NULL) {
-              Left(singleton(ReadError.MissingValue(path)))
-            } else if (valueType == ConfigValueType.NUMBER) {
-              effect(config.getNumber(key).toString()).map(singleton)
-            } else if (valueType == ConfigValueType.STRING) {
-              effect(config.getString(key)).map(singleton)
-            } else if (valueType == ConfigValueType.OBJECT) {
-              Left(
-                singleton(
-                  ReadError.FatalError(
-                    path,
-                    new RuntimeException(s"The value for the key ${path} is an object and not a primitive.")
-                  )
+  def fromHoconFile[A](
+    file: File
+  ): Task[ConfigSource[String, String]] =
+    IO.effect(ConfigFactory.parseFile(file).resolve)
+      .flatMap(typesafeConfig => {
+        ZIO
+          .fromEither(fromTypesafeConfig(typesafeConfig))
+          .mapError(str => new RuntimeException(str))
+      })
+
+  def fromHoconString(
+    input: String
+  ): Either[String, ConfigSource[String, String]] =
+    fromTypesafeConfig(
+      ConfigFactory.parseString(input).resolve
+    )
+
+  def fromTypesafeConfig(
+    input: com.typesafe.config.Config
+  ): Either[String, ConfigSource[String, String]] =
+    Try {
+      input
+    } match {
+      case Failure(exception) => Left(exception.getMessage)
+      case Success(value) =>
+        getPropertyTree(value) match {
+          case Left(value)  => Left(value)
+          case Right(value) => Right(ConfigSource.fromPropertyTree(value, "hocon"))
+        }
+    }
+
+  private[config] def getPropertyTree(
+    input: com.typesafe.config.Config
+  ): Either[String, PropertyTree[String, String]] = {
+    def loop(config: com.typesafe.config.Config): Either[String, Map[String, PropertyTree[String, String]]] = {
+      val internal = config.root()
+      val keySet   = internal.keySet().asScala
+
+      keySet.toList.foldLeft(
+        Right(Map.empty[String, PropertyTree[String, String]]): Either[
+          String,
+          Map[String, PropertyTree[String, String]]
+        ]
+      ) { (acc, key) =>
+        val typeOfSubConfig = config.getValue(key).valueType()
+        typeOfSubConfig match {
+          case ConfigValueType.OBJECT =>
+            acc match {
+              case Left(value) => Left(value)
+              case Right(acc) =>
+                loop(config.getConfig(key)) match {
+                  case Left(value)  => Left(value)
+                  case Right(value) => Right(acc.updated(key, Record(value)))
+                }
+            }
+
+          case ConfigValueType.LIST =>
+            Try {
+              val list =
+                config.getConfigList(key).asScala.toList
+
+              if (list.isEmpty) {
+                updateKeyAndTree(acc, key, Right(PropertyTree.empty))
+              } else
+                updateKeyAndTree(
+                  acc,
+                  key,
+                  seqEither(list.map(eachConfig => loop(eachConfig))) match {
+                    case Left(value)  => Left(value)
+                    case Right(value) => Right(Sequence(value.map(Record(_))))
+                  }
                 )
-              )
-            } else if (valueType == ConfigValueType.LIST) {
-              asListOfString(config.getStringList(key))
-                .orElse(
-                  asListOfString(config.getIntList(key))
-                )
-                .orElse(
-                  asListOfString(config.getBooleanList(key))
-                )
-                .orElse(
-                  asListOfString(config.getDurationList(key))
-                )
-                .orElse(
-                  asListOfString(config.getBytesList(key))
-                )
-                .orElse(
-                  asListOfString(config.getDoubleList(key))
-                )
-                .orElse(
-                  asListOfString(config.getLongList(key))
-                )
-                .orElse(
-                  asListOfString(config.getMemorySizeList(key))
-                ) match {
-                case Failure(exception) =>
-                  Left(
-                    singleton(
-                      ReadError.FatalError(
-                        path,
-                        new RuntimeException(
-                          "Trying to parse a list of config. However, the type is unidentified. Supports only [list] of [int, boolean, duration, bytes, double, long, memory size]",
-                          exception
+
+            }.orElse({
+                Try {
+                  val list = config.getStringList(key).asScala.toList
+
+                  if (list.isEmpty) {
+                    updateKeyAndTree(acc, key, Right(PropertyTree.empty))
+                  } else
+                    updateKeyAndTree(
+                      acc,
+                      key,
+                      Right(
+                        Sequence(
+                          config
+                            .getStringList(key)
+                            .asScala
+                            .map(t => Leaf(t))
+                            .toList
                         )
                       )
                     )
-                  )
-                case Success(value) =>
-                  value match {
-                    case h :: t => Right(::(h, t))
-                    case Nil =>
-                      Left(
-                        singleton(
-                          ReadError.MissingValue(path)
-                        )
-                      )
-                  }
-              }
-            } else {
-              Left(singleton(ReadError.FatalError(path, new RuntimeException("Unknown type"))))
-            }
+                }
+              })
+              .orElse({
+                Try {
+                  val list =
+                    config.getObjectList(key).asScala.toList
 
-        def loop(
-          parentConfig: com.typesafe.config.Config,
-          list: List[String],
-          nextPath: List[String]
-        ): Either[ReadErrorsVector[String, String], ::[String]] =
-          list match {
-            case Nil =>
-              nextPath.lastOption match {
-                case Some(lastKey) => getValue(parentConfig, parentConfig.getValue(lastKey).valueType(), lastKey)
-                case None          => Left(singleton(ReadError.missingValue[Vector[String], String](path)))
-              }
-
-            case head :: next => {
-              for {
-                valueType <- effect(parentConfig.getValue(head).valueType())
-                res <- if (valueType == ConfigValueType.LIST) {
-                        for {
-                          // A few extra error handling.
-                          res <- effect(parentConfig.getConfigList(head).asScala.toList) match {
-                                  case Right(allConfigs) =>
-                                    seqEither(allConfigs.map(eachConfig => loop(eachConfig, next, nextPath :+ head)))
-                                      .map(t => t.flatMap(_.toList))
-                                      .flatMap({
-                                        case Nil =>
-                                          Left(singleton(ReadError.missingValue[Vector[String], String](path)))
-                                        case h :: t => Right(::(h, t))
-                                      })
-
-                                  case Left(_) =>
-                                    effect(parentConfig.getList(head).asScala.toList).flatMap {
-                                      {
-                                        case Nil =>
-                                          Left(singleton(ReadError.missingValue[Vector[String], String](path)))
-
-                                        case h :: t
-                                            if (::(h, t).forall(
-                                              t =>
-                                                t.valueType() != ConfigValueType.NULL ||
-                                                  t.valueType() != ConfigValueType.LIST ||
-                                                  t.valueType() != ConfigValueType.OBJECT
-                                            )) =>
-                                          Right(::(h.unwrapped().toString, t.map(_.unwrapped().toString)))
-
-                                        case _ =>
-                                          Left(
-                                            singleton(
-                                              ReadError.fatalError[Vector[String], String](
-                                                path,
-                                                new RuntimeException(
-                                                  s"Wrong types in the list. Identified the value of ${head} in HOCON as a list, however, it should be a list of primitive values. Ex: [1, 2, 3]"
-                                                )
-                                              )
-                                            )
-                                          )
-
-                                      }
-                                    }
-                                }
-                        } yield res
-                      } else {
-                        if (parentConfig.getValue(head).valueType() == ConfigValueType.OBJECT) {
-                          loop(parentConfig.getConfig(head), next, nextPath :+ head)
-                        } else if (next.isEmpty) {
-                          loop(parentConfig, next, nextPath :+ head)
-                        } else {
-                          Left(singleton(ReadError.missingValue[Vector[String], String](path)))
-                        }
+                  if (list.isEmpty)
+                    updateKeyAndTree(acc, key, Right(PropertyTree.empty))
+                  else
+                    updateKeyAndTree(
+                      acc,
+                      key,
+                      seqEither(list.map(eachConfig => loop(eachConfig.toConfig))) match {
+                        case Left(value)  => Left(value)
+                        case Right(value) => Right(Sequence(value.map(Record(_))))
                       }
-              } yield res
+                    )
+                }
+              }) match {
+              case Failure(_) =>
+                Left(
+                  "Unable to form the zio.config.PropertyTree from Hocon string. This may be due to the presence of explicit usage of nulls in hocon string."
+                )
+              case Success(value) => value
             }
-          }
 
-        for {
-          config <- ZIO
-                     .effect(
-                       input.fold(
-                         config => config,
-                         str => ConfigFactory.parseString(str).resolve
-                       )
-                     )
-                     .mapError(throwable => singleton(ReadError.fatalError[Vector[String], String](path, throwable)))
+          case ConfigValueType.BOOLEAN =>
+            updateKeyAndTree(acc, key, Right(Leaf(config.getBoolean(key).toString)))
+          case ConfigValueType.NUMBER =>
+            updateKeyAndTree(acc, key, Right(Leaf(config.getNumber(key).toString)))
+          case ConfigValueType.NULL =>
+            updateKeyAndTree(acc, key, Right(PropertyTree.empty))
+          case ConfigValueType.STRING =>
+            updateKeyAndTree(acc, key, Right(Leaf(config.getString(key))))
+        }
+      }
+    }
 
-          res <- ZIO.fromEither(loop(config, path.toList, Nil)).map(t => ConfigValue(t))
-        } yield res
-      },
-      List("typesafe-config-hocon")
-    )
+    loop(input) match {
+      case Left(value)  => Left(value)
+      case Right(value) => Right(Record(value))
+    }
+  }
 
-  private def asListOfString[A](jlist: => java.util.List[A]): Try[List[String]] =
-    Try(jlist).map(_.asScala.toList.map(_.toString))
+  private def updateKeyAndTree(
+    either: Either[String, Map[String, PropertyTree[String, String]]],
+    key: String,
+    p: Either[String, PropertyTree[String, String]]
+  ): Either[String, Map[String, PropertyTree[String, String]]] =
+    either match {
+      case Left(value) => Left(value)
+      case Right(acc) =>
+        p match {
+          case Left(value)  => Left(value)
+          case Right(value) => Right(acc.updated(key, value))
+        }
+    }
 }

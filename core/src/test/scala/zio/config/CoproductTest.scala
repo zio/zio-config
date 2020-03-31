@@ -1,6 +1,5 @@
 package zio.config
 
-import zio.ZIO
 import zio.config.ConfigDescriptor._
 import ReadError._
 import zio.config.helpers._
@@ -14,28 +13,32 @@ object CoproductTest
     extends BaseSpec(
       suite("Coproduct support")(
         testM("left element satisfied") {
-          checkM(genTestParams) { p =>
-            assertM(readLeft(p))(isLeft(equalTo(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
+          check(genTestParams) { p =>
+            assert(readLeft(p))(isRight(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
           }
         },
         testM("right element satisfied") {
-          checkM(genTestParams) { p =>
-            assertM(readRight(p))(isRight(equalTo(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid)))))
+          check(genTestParams) { p =>
+            assert(readRight(p))(
+              isRight(equalTo(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid)))))
+            )
           }
         },
         testM("should accumulate all errors") {
-          checkM(genTestParams) { p =>
-            val expected: ReadErrorsVector[String, String] = ::(
-              MissingValue(Vector(p.kLdap)),
-              ParseError(Vector(p.kFactor), "notafloat", "float") :: Nil
-            )
-
-            assertM(readWithErrors(p))(isLeft(equalTo(expected)))
+          check(genTestParams) { p =>
+            val expected: ReadError[String] =
+              OrErrors(
+                List(
+                  MissingValue(Vector(Right(p.kLdap))),
+                  FormatError(Vector(Right(p.kFactor)), ReadFunctions.parseErrorMessage("notafloat", "float"))
+                )
+              )
+            assert(readWithErrors(p))(isLeft(equalTo(expected)))
           }
         },
         testM("left and right both populated should choose left") {
-          checkM(genTestParams) { p =>
-            assertM(readChooseLeftFromBoth(p))(isLeft(equalTo(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
+          check(genTestParams) { p =>
+            assert(readChooseLeftFromBoth(p))(isRight(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
           }
         }
       )
@@ -92,7 +95,7 @@ object CoproductTestUtils {
       vCValid
     )
 
-  def readLeft(p: TestParams) = {
+  def readLeft(p: TestParams): Either[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
         EnterpriseAuth.apply,
@@ -142,7 +145,7 @@ object CoproductTestUtils {
 
   def readWithErrors(
     p: TestParams
-  ): ZIO[Any, Nothing, Either[ReadErrors[Vector[String], String], Either[EnterpriseAuth, PasswordAuth]]] = {
+  ): Either[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
         EnterpriseAuth.apply,
@@ -168,7 +171,7 @@ object CoproductTestUtils {
             p.kCodeValid -> p.vCodeValid
           )
         )
-    ).either
+    )
   }
 
   def readChooseLeftFromBoth(p: TestParams) = {
