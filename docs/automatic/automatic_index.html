@@ -1,0 +1,162 @@
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Automatic Derivation of Config · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="By bringing in `zio-config-magnolia` you get to avoid all the boilerplate required to define the config."/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Automatic Derivation of Config · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="By bringing in `zio-config-magnolia` you get to avoid all the boilerplate required to define the config."/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+        document.addEventListener('DOMContentLoaded', function() {
+          addBackToTop(
+            {"zIndex":100,"cornerOffset":100}
+          )
+        });
+        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-config/docs/quickstart/quickstart_index" target="_self">Documentation</a></li><li class=""><a href="https://www.github.com/zio/zio-config" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>ZIO-CONFIG</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">ZIO-CONFIG</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-config/docs/quickstart/quickstart_index">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/configdescriptor/configdescriptor_index">Creation of ConfigDescriptor</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/automatic/automatic_index">Automatic Derivation of Config</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/sources/sources_index">Sources</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index">Using ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/refined/refined_index">Automatic Validations</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/design/design_index">Design Principles</a></li></ul></div></div></section></div><script>
+            var coll = document.getElementsByClassName('collapsible');
+            var checkActiveCategory = true;
+            for (var i = 0; i < coll.length; i++) {
+              var links = coll[i].nextElementSibling.getElementsByTagName('*');
+              if (checkActiveCategory){
+                for (var j = 0; j < links.length; j++) {
+                  if (links[j].classList.contains('navListItemActive')){
+                    coll[i].nextElementSibling.classList.toggle('hide');
+                    coll[i].childNodes[1].classList.toggle('rotate');
+                    checkActiveCategory = false;
+                    break;
+                  }
+                }
+              }
+
+              coll[i].addEventListener('click', function() {
+                var arrow = this.childNodes[1];
+                arrow.classList.toggle('rotate');
+                var content = this.nextElementSibling;
+                content.classList.toggle('hide');
+              });
+            }
+
+            document.addEventListener('DOMContentLoaded', function() {
+              createToggler('#navToggler', '#docsNav', 'docsSliderActive');
+              createToggler('#tocToggler', 'body', 'tocActive');
+
+              var headings = document.querySelector('.toc-headings');
+              headings && headings.addEventListener('click', function(event) {
+                var el = event.target;
+                while(el !== headings){
+                  if (el.tagName === 'A') {
+                    document.body.classList.remove('tocActive');
+                    break;
+                  } else{
+                    el = el.parentNode;
+                  }
+                }
+              }, false);
+
+              function createToggler(togglerSelector, targetSelector, className) {
+                var toggler = document.querySelector(togglerSelector);
+                var target = document.querySelector(targetSelector);
+
+                if (!toggler) {
+                  return;
+                }
+
+                toggler.onclick = function(event) {
+                  event.preventDefault();
+
+                  target.classList.toggle(className);
+                };
+              }
+            });
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Automatic Derivation of Config</h1></header><article><div><span><p>By bringing in <code>zio-config-magnolia</code> you get to avoid all the boilerplate required to define the config.
+With a single import, <code>ConfigDescriptor</code> is automatically derived for your custom type.</p>
+<p>Also, you will find that defining the actual hocon for coproducts is devoid of any extra tagging to satisfy the library.
+This is much easier/intuitive unlike many existing implementations.</p>
+<p>Take a look at the magnolia examples in <code>zio-config</code></p>
+<pre><code class="hljs css language-scala mdoc:silent">
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.read
+import zio.config.typesafe.TypeSafeConfigSource
+
+object CoproductSealedTraitExample extends App {
+
+  sealed trait X
+
+  case object A                extends X
+  case object B                extends X
+  case object C                extends X
+  case class D(detail: Detail) extends X
+  case class Detail(firstName: String, lastName: String, region: Region)
+  case class Region(suburb: String, city: String)
+
+  val aHoconSource =
+    TypeSafeConfigSource
+      .fromHoconString(
+        s"""
+           |x = a
+           |""".stripMargin
+      )
+      .loadOrThrow
+
+  val bHoconSource =
+    TypeSafeConfigSource
+      .fromHoconString(
+        s"""
+           |x = b
+           |""".stripMargin
+      )
+      .loadOrThrow
+
+  val cHoconSource =
+    TypeSafeConfigSource
+      .fromHoconString(
+        s"""
+           |x = c
+           |""".stripMargin
+      )
+      .loadOrThrow
+
+  val dHoconSource =
+    TypeSafeConfigSource
+      .fromHoconString(
+        s"""
+           |x {
+           |  detail  {
+           |    firstName : ff
+           |    lastName  : ll
+           |    region {
+           |      city   : syd
+           |      suburb : strath
+           |
+           |    }
+           |
+           |  }
+           |
+           |}
+           |""".stripMargin
+      )
+      .loadOrThrow
+
+  assert(read(descriptor[X] from aHoconSource) == Right(A))
+  assert(read(descriptor[X] from bHoconSource) == Right(B))
+  assert(read(descriptor[X] from cHoconSource) == Right(C))
+  assert(
+    read(descriptor[X] from dHoconSource) == Right(
+      D(Detail("ff", "ll", Region("strath", "syd")))
+    )
+  )
+
+  // Only for example purpose
+  implicit class ImpureEither[A, B](either: Either[A, B]) {
+     def loadOrThrow: B = either match {
+        case Left(_) =&gt; throw new Exception()
+        case Right(v) =&gt; v
+      
+     }
+  }
+}
+
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="documentation-while-automatic-derivation"></a><a href="#documentation-while-automatic-derivation" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Documentation while automatic derivation</h3>
+<p>With <code>describe</code> annotation you can still document your config while automatically generating the config</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">import</span> zio.config.magnolia.describe
+
+<span class="hljs-meta">@describe</span>(<span class="hljs-string">"This config is about aws"</span>)
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Aws</span>(<span class="hljs-params">region: <span class="hljs-type">String</span>, dburl: <span class="hljs-type">DbUrl</span></span>)</span>
+<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DbUrl</span>(<span class="hljs-params">value: <span class="hljs-type">String</span></span>)</span>
+
+</code></pre>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 3/31/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Creation of ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/sources/sources_index"><span>Sources</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>

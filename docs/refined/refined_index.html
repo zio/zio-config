@@ -4,7 +4,7 @@
             {"zIndex":100,"cornerOffset":100}
           )
         });
-        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-config/docs/quickstart/quickstart_index" target="_self">Documentation</a></li><li class=""><a href="https://www.github.com/zio/zio-config" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>ZIO-CONFIG</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">ZIO-CONFIG</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-config/docs/quickstart/quickstart_index">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/configdescriptor/configdescriptor_index">Creation of ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/sources/sources_index">Sources</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index">Using ConfigDescriptor</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/refined/refined_index">Automatic Validations</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/design/design_index">Design Principles</a></li></ul></div></div></section></div><script>
+        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-config/docs/quickstart/quickstart_index" target="_self">Documentation</a></li><li class=""><a href="https://www.github.com/zio/zio-config" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>ZIO-CONFIG</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">ZIO-CONFIG</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-config/docs/quickstart/quickstart_index">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/configdescriptor/configdescriptor_index">Creation of ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/automatic/automatic_index">Automatic Derivation of Config</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/sources/sources_index">Sources</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index">Using ConfigDescriptor</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/refined/refined_index">Automatic Validations</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/design/design_index">Design Principles</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -65,47 +65,42 @@
 <pre><code class="hljs css language-scala mdoc:silent">
 <span class="hljs-keyword">import</span> eu.timepit.refined.<span class="hljs-type">W</span>
 <span class="hljs-keyword">import</span> eu.timepit.refined.api.<span class="hljs-type">Refined</span>
-<span class="hljs-keyword">import</span> eu.timepit.refined.collection._
-<span class="hljs-keyword">import</span> eu.timepit.refined.numeric._
-<span class="hljs-keyword">import</span> zio.config.<span class="hljs-type">ConfigDescriptor</span>._
-<span class="hljs-keyword">import</span> zio.config._
-<span class="hljs-keyword">import</span> zio.config.refined._
-<span class="hljs-keyword">import</span> zio.{ <span class="hljs-type">App</span>, <span class="hljs-type">ZEnv</span>, <span class="hljs-type">ZIO</span> }
+<span class="hljs-keyword">import</span> eu.timepit.refined.collection.{ <span class="hljs-type">NonEmpty</span>, <span class="hljs-type">Size</span> }
+<span class="hljs-keyword">import</span> eu.timepit.refined.numeric.{ <span class="hljs-type">Greater</span>, <span class="hljs-type">GreaterEqual</span> }
+<span class="hljs-keyword">import</span> zio.config.<span class="hljs-type">ConfigDescriptor</span>.{ int, list, long, string }
+<span class="hljs-keyword">import</span> zio.config.refined.{ greaterEqual, nonEmpty, size }
+<span class="hljs-keyword">import</span> zio.config.{ read, <span class="hljs-type">ConfigSource</span> }
 
-<span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RefinedProd</span>(<span class="hljs-params">
-  ldap: <span class="hljs-type">Refined</span>[<span class="hljs-type">String</span>, <span class="hljs-type">NonEmpty</span>],
-  port: <span class="hljs-type">Refined</span>[<span class="hljs-type">Int</span>, <span class="hljs-type">GreaterEqual</span>[<span class="hljs-type">W</span>.`1024`.<span class="hljs-type">T</span>]],
-  dburl: <span class="hljs-type">Option</span>[<span class="hljs-type">Refined</span>[<span class="hljs-type">String</span>, <span class="hljs-type">NonEmpty</span>]],
-  longs: <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`2`.<span class="hljs-type">T</span>]]]
-</span>)</span>
+<span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">RefinedReadConfig</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">App</span> </span>{
+  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RefinedProd</span>(<span class="hljs-params">
+    ldap: <span class="hljs-type">Refined</span>[<span class="hljs-type">String</span>, <span class="hljs-type">NonEmpty</span>],
+    port: <span class="hljs-type">Refined</span>[<span class="hljs-type">Int</span>, <span class="hljs-type">GreaterEqual</span>[<span class="hljs-type">W</span>.`1024`.<span class="hljs-type">T</span>]],
+    dburl: <span class="hljs-type">Option</span>[<span class="hljs-type">Refined</span>[<span class="hljs-type">String</span>, <span class="hljs-type">NonEmpty</span>]],
+    longs: <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`2`.<span class="hljs-type">T</span>]]]
+  </span>)</span>
 
-<span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">prodConfig</span></span>: <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>, <span class="hljs-type">RefinedProd</span>] =
-  (
-    nonEmpty(string(<span class="hljs-string">"LDAP"</span>)) |@|
-      greaterEqual[<span class="hljs-type">W</span>.`<span class="hljs-number">1024</span>`.<span class="hljs-type">T</span>](int(<span class="hljs-string">"PORT"</span>)) |@|
-      nonEmpty(string(<span class="hljs-string">"DB_URL"</span>)).optional |@|
-      size[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]](list(long(<span class="hljs-string">"LONGVALS"</span>)))
-  )(
-    <span class="hljs-type">RefinedProd</span>.apply,
-    <span class="hljs-type">RefinedProd</span>.unapply
-  )
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">prodConfig</span> </span>=
+    (
+      nonEmpty(string(<span class="hljs-string">"LDAP"</span>)) |@|
+        greaterEqual[<span class="hljs-type">W</span>.`<span class="hljs-number">1024</span>`.<span class="hljs-type">T</span>](int(<span class="hljs-string">"PORT"</span>)) |@|
+        nonEmpty(string(<span class="hljs-string">"DB_URL"</span>)).optional |@|
+        size[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]](list(long(<span class="hljs-string">"LONGVALS"</span>)))
+    )(
+      <span class="hljs-type">RefinedProd</span>.apply,
+      <span class="hljs-type">RefinedProd</span>.unapply
+    )
+  <span class="hljs-keyword">val</span> configMultiMap =
+    <span class="hljs-type">Map</span>(
+      <span class="hljs-string">"LDAP"</span>     -&gt; ::(<span class="hljs-string">"ldap"</span>, <span class="hljs-type">Nil</span>),
+      <span class="hljs-string">"PORT"</span>     -&gt; ::(<span class="hljs-string">"1999"</span>, <span class="hljs-type">Nil</span>),
+      <span class="hljs-string">"DB_URL"</span>   -&gt; ::(<span class="hljs-string">"ddd"</span>, <span class="hljs-type">Nil</span>),
+      <span class="hljs-string">"LONGVALS"</span> -&gt; ::(<span class="hljs-string">"1234"</span>, <span class="hljs-type">List</span>(<span class="hljs-string">"2345"</span>, <span class="hljs-string">"3456"</span>))
+    )
 
-<span class="hljs-keyword">val</span> myAppLogic: <span class="hljs-type">ZIO</span>[<span class="hljs-type">RefinedProd</span>, <span class="hljs-type">Nothing</span>, <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]]]] =
-  <span class="hljs-type">ZIO</span>.access[<span class="hljs-type">RefinedProd</span>](_.longs)
+  read(prodConfig.from(<span class="hljs-type">ConfigSource</span>.fromMultiMap(configMultiMap)))
+  <span class="hljs-comment">// Right(RefinedProd(ldap,1999,Some(ddd),List(1234, 2345, 3456)))</span>
+}
 
-<span class="hljs-keyword">val</span> configMultiMap =
-  <span class="hljs-type">Map</span>(
-    <span class="hljs-string">"LDAP"</span>     -&gt; ::(<span class="hljs-string">"ldap"</span>, <span class="hljs-type">Nil</span>),
-    <span class="hljs-string">"PORT"</span>     -&gt; ::(<span class="hljs-string">"1999"</span>, <span class="hljs-type">Nil</span>),
-    <span class="hljs-string">"DB_URL"</span>   -&gt; ::(<span class="hljs-string">"ddd"</span>, <span class="hljs-type">Nil</span>),
-    <span class="hljs-string">"LONGVALS"</span> -&gt; ::(<span class="hljs-string">"1234"</span>, <span class="hljs-type">List</span>(<span class="hljs-string">"2345"</span>, <span class="hljs-string">"3456"</span>))
-  )
-  
-<span class="hljs-keyword">val</span> outcome: <span class="hljs-type">ZIO</span>[<span class="hljs-type">Any</span>, <span class="hljs-type">ReadErrors</span>[<span class="hljs-type">Vector</span>[<span class="hljs-type">String</span>], <span class="hljs-type">String</span>], <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]]]] =
-  <span class="hljs-keyword">for</span> {
-    config &lt;- read(prodConfig.from(<span class="hljs-type">ConfigSource</span>.fromMultiMap(configMultiMap)))
-    r      &lt;- myAppLogic.provide(config)
-  } <span class="hljs-keyword">yield</span> r
 </code></pre>
 <p>Check out sample usage of <code>zio-config-refined</code> in <code>examples</code> module of the project.</p>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 1/11/2020 by Leigh Perry</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Using ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/design/design_index"><span>Design Principles</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 3/31/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Using ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/design/design_index"><span>Design Principles</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
