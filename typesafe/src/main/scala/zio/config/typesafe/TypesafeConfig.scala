@@ -7,15 +7,14 @@ import zio.config._
 import zio.{ Layer, Tagged, ZIO }
 
 object TypesafeConfig {
-
   def fromDefaultLoader[A](
     configDescriptor: ConfigDescriptor[String, String, A]
   )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
     fromTypesafeConfig(ConfigFactory.load.resolve, configDescriptor)
 
   def fromHoconFile[A](
-    configDescriptor: ConfigDescriptor[String, String, A],
-    file: File
+    file: File,
+    configDescriptor: ConfigDescriptor[String, String, A]
   )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
     fromTypesafeConfig(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
@@ -26,15 +25,13 @@ object TypesafeConfig {
     fromTypesafeConfig(ConfigFactory.parseString(str).resolve, configDescriptor)
 
   def fromTypesafeConfig[A](
-    f: => com.typesafe.config.Config,
+    conf: => com.typesafe.config.Config,
     configDescriptor: ConfigDescriptor[String, String, A]
   )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
     Config.fromConfigDescriptorM(
-      for {
-        conf <- ZIO.effect(f)
-        source <- ZIO
-                   .fromEither(TypeSafeConfigSource.fromTypesafeConfig(conf))
-                   .mapError(error => new RuntimeException(error))
-      } yield configDescriptor from source
+      ZIO
+        .fromEither(TypeSafeConfigSource.fromTypesafeConfig(conf))
+        .map(configDescriptor from _)
+        .mapError(error => new RuntimeException(error))
     )
 }

@@ -235,7 +235,7 @@ Similar to `TypesafeConfig.fromHoconString(str, automaticDescription)`
 
 ```scala mdoc:silent
 
-TypesafeConfig.fromHoconFile(automaticDescription, new java.io.File("fileapth"))
+TypesafeConfig.fromHoconFile(new java.io.File("fileapth"), automaticDescription)
 
 ```
 

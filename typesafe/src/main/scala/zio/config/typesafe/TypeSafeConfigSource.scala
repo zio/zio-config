@@ -33,8 +33,15 @@ object TypeSafeConfigSource {
   def fromHoconString(
     input: String
   ): Either[String, ConfigSource[String, String]] =
-    Try {
+    fromTypesafeConfig(
       ConfigFactory.parseString(input).resolve
+    )
+
+  def fromTypesafeConfig(
+    input: com.typesafe.config.Config
+  ): Either[String, ConfigSource[String, String]] =
+    Try {
+      input
     } match {
       case Failure(exception) => Left(exception.getMessage)
       case Success(value) =>
@@ -44,15 +51,7 @@ object TypeSafeConfigSource {
         }
     }
 
-  def fromTypesafeConfig(
-    input: com.typesafe.config.Config
-  ): Either[String, ConfigSource[String, String]] =
-    getPropertyTree(input) match {
-      case Left(value)  => Left(value)
-      case Right(value) => Right(ConfigSource.fromPropertyTree(value, "hocon"))
-    }
-
-  private[typesafe] def getPropertyTree(
+  private[config] def getPropertyTree(
     input: com.typesafe.config.Config
   ): Either[String, PropertyTree[String, String]] = {
     def loop(config: com.typesafe.config.Config): Either[String, Map[String, PropertyTree[String, String]]] = {
