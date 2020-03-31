@@ -11,21 +11,21 @@ object TypesafeConfig {
   def fromDefaultLoader[A](
     configDescriptor: ConfigDescriptor[String, String, A]
   )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
-    fromHocon(ConfigFactory.load.resolve, configDescriptor)
+    fromTypesafeConfig(ConfigFactory.load.resolve, configDescriptor)
 
   def fromHoconFile[A](
     configDescriptor: ConfigDescriptor[String, String, A],
     file: File
   )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
-    fromHocon(ConfigFactory.parseFile(file).resolve, configDescriptor)
+    fromTypesafeConfig(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
   def fromHoconString[A](
     str: String,
     configDescriptor: ConfigDescriptor[String, String, A]
   )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
-    fromHocon(ConfigFactory.parseString(str).resolve, configDescriptor)
+    fromTypesafeConfig(ConfigFactory.parseString(str).resolve, configDescriptor)
 
-  def fromHocon[A](
+  def fromTypesafeConfig[A](
     f: => com.typesafe.config.Config,
     configDescriptor: ConfigDescriptor[String, String, A]
   )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =

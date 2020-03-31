@@ -73,13 +73,13 @@ import zio.Runtime
       string("appName"))(AwsConfig, AwsConfig.unapply)) ?? "asdf"
     ) from ConfigSource.fromMap(map)
 
-  val awsConfig =
+  val awsConfigResult =
     read(appConfig)
 
-  val awsConfigReuslt: AwsConfig = Runtime.default.unsafeRun(awsConfig)
-   // yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)
+   // yields Right(AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp))
 
-write(appConfig, awsConfigReuslt)
+  
+awsConfigResult.flatMap(result => write(appConfig, result))
 
 // yields
 
@@ -94,7 +94,7 @@ write(appConfig, awsConfigReuslt)
 )
 
  // To yield the input map that was fed in, call `flattenString` !!
- write(appConfig, awsConfigReuslt).map(_.flattenString())
+ awsConfigResult.flatMap(result => write(appConfig, result).map(_.flattenString()))
 
  // yields
   Right(
@@ -159,7 +159,7 @@ along with the rest of the details.
 
 ```scala mdoc:silent
 
-generateDocsWithValue(appConfig, awsConfigReuslt)
+ generateDocsWithValue(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
 
 // yields the result:
 

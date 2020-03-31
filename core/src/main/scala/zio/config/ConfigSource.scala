@@ -43,14 +43,14 @@ object ConfigSource {
 
   def fromMultiMap(
     map: Map[String, ::[String]],
-    source: String,
+    source: String = "constant",
     keyDelimiter: Char = '.'
   ): ConfigSource[String, String] =
     fromMapInternal(map)(identity, keyDelimiter, source)
 
   def fromProperties(
     property: ju.Properties,
-    source: String,
+    source: String = "properties",
     keyDelimiter: Char = '.',
     valueDelimiter: Char = ':'
   ): ConfigSource[String, String] = {
@@ -85,10 +85,10 @@ object ConfigSource {
   def fromSystemEnv: UIO[ConfigSource[String, String]] =
     fromSystemEnv(':')
 
-  def fromSystemEnv(valueSeparator: Char): UIO[ConfigSource[String, String]] =
+  def fromSystemEnv(valueDelimiter: Char): UIO[ConfigSource[String, String]] =
     UIO
       .effectTotal(sys.env)
-      .map(map => ConfigSource.fromMap(map, SystemEnvironment, '_', valueSeparator))
+      .map(map => ConfigSource.fromMap(map, SystemEnvironment, '_', valueDelimiter))
 
   def fromSystemProperties: UIO[ConfigSource[String, String]] =
     fromSystemProperties(':')

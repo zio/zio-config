@@ -105,10 +105,16 @@ val map =
     "DB_URL" -> "postgres"
   )
 
-  val result =
-    Config.fromMap(map, myConfig)
+val source = ConfigSource.fromMap(map)
 
-  // IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]]
+read(myConfig from source)
+// Either[ReadError[String], MyConfig]
+
+// Alternatively, you can rely on `Config.from..` pattern to get ZLayers.
+val result =
+  Config.fromMap(map, myConfig)
+
+// Layer[ReadError[String], Config[A]]  
 
 ```
 
@@ -125,7 +131,7 @@ val source = ConfigSource.fromMap(map)
 
 val anotherResult =
   read(myConfig from source)
-// IO[ReadErrorsVector[String, String], MyConfig]
+// Either[ReadError[String], MyConfig]
 ```
 
 Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the previous section.
@@ -196,7 +202,7 @@ val finalExecution: ZIO[Config[ApplicationConfig] with Console, Nothing, Unit] =
     _         <- putStrLn(appConfig.userName)
   } yield ()
 
-val configLayer = Config.fromPropertyFile("file-location", configuration)
+val configLayer = Config.fromPropertiesFile("file-location", configuration)
 
 // Main App
 val pgm = finalExecution.provideLayer(configLayer ++ Console.live)

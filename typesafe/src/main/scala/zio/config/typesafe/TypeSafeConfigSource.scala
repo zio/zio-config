@@ -11,8 +11,25 @@ import scala.util.Failure
 import scala.util.Success
 import scala.collection.JavaConverters._
 import PropertyTree._
+import java.io.File
+import zio.IO
+import zio.Task
+import zio.ZIO
 
 object TypeSafeConfigSource {
+  def fromDefaultLoader: Either[String, ConfigSource[String, String]] =
+    fromTypesafeConfig(ConfigFactory.load.resolve)
+
+  def fromHoconFile[A](
+    file: File
+  ): Task[ConfigSource[String, String]] =
+    IO.effect(ConfigFactory.parseFile(file).resolve)
+      .flatMap(typesafeConfig => {
+        ZIO
+          .fromEither(fromTypesafeConfig(typesafeConfig))
+          .mapError(str => new RuntimeException(str))
+      })
+
   def fromHoconString(
     input: String
   ): Either[String, ConfigSource[String, String]] =
@@ -35,7 +52,7 @@ object TypeSafeConfigSource {
       case Right(value) => Right(ConfigSource.fromPropertyTree(value, "hocon"))
     }
 
-  private def getPropertyTree(
+  private[typesafe] def getPropertyTree(
     input: com.typesafe.config.Config
   ): Either[String, PropertyTree[String, String]] = {
     def loop(config: com.typesafe.config.Config): Either[String, Map[String, PropertyTree[String, String]]] = {

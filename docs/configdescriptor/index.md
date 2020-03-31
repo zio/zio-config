@@ -8,7 +8,7 @@ or rely on zio-config-magnolia that can automatically generate the description f
 that represents your config.
 
 ```scala mdoc:silent
-import zio.{ IO, ZLayer }
+import zio.{ ZIO, IO, Layer }
 import zio.config._, ConfigDescriptor._
 ```
 
@@ -69,17 +69,17 @@ To read a config, means it has to perform some effects, and for that reason, it 
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
-val result: ZLayer.NoDeps[ReadError[String], zio.config.Config[MyConfig]] =
+val result: Layer[ReadError[String], zio.config.Config[MyConfig]] =
   Config.fromSystemEnv(myConfig) // That's system environment
 ```
 
 Another way of doing this is:
 
 ```scala mdoc:silent
-val source = ConfigSource.fromSystemEnv
+val systemSource = ConfigSource.fromSystemEnv
 
-read(myConfig from source)
-// IO[ReadErrorsVector[String, String], MyConfig]
+systemSource.flatMap(source => ZIO.fromEither(read(myConfig from source)))
+
 ```
 
 You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application. 
@@ -105,6 +105,7 @@ float
 double
 bigDecimal
 uri
+etc
 
 ```
 
@@ -154,7 +155,7 @@ We can also do things like fully overriding the entire configuration; might be h
 myConfigDefault.default(MyConfigWithDefaultUserName("test", 80))
 ```
 
-## Custom types
+## New types
 We love `Port` instead of `Int` that represents a db port.
 
 In this scenario, you could do 
@@ -192,18 +193,20 @@ zio-config do support this scenario. This can happen in complex applications.
 
 
 ```scala mdoc:silent
-val source1 = ConfigSource.fromSystemProperties
-val source2 = ConfigSource.fromSystemEnv
 
-val myMultipleSourceConfig =
-  (string("LDAP").from(source1.orElse(source2)) |@| int("PORT").    xmap(Port, (_: Port).value).from(source1) |@|
+val configDesc = for {
+ source1 <- ConfigSource.fromSystemProperties
+ source2 <- ConfigSource.fromSystemEnv
+ desc = 
+   (string("LDAP").from(source1.orElse(source2)) |@| int("PORT")(Port.apply, Port.unapply).from(source1) |@|
     string("DB_URL").optional.from(source2))(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
+} yield desc
 
-read(myMultipleSourceConfig)
+
+configDesc.flatMap(desc => ZIO.fromEither(read(desc)))    
 
 // we can also separately add new config
-
-read(myMultipleSourceConfig from ConfigSource.fromMap(Map.empty))
+configDesc.flatMap(desc => ZIO.fromEither(read(desc from ConfigSource.fromMap(Map.empty))))    
 
 // In this case, `ConfigSource.fromMap` will also be tried along with the sources that are already given.
 
@@ -213,7 +216,7 @@ We can reset the sources for the config using
 
 ```scala mdoc:silent
 
-myMultipleSourceConfig.unsourced
+configDesc.map(desc => desc.unsourced)    
 
 ```
 
@@ -223,14 +226,12 @@ from a constant map for all of it.
 ```scala mdoc:silent
 
 val testConfig =
-  myMultipleSourceConfig
-    .unsourced
-    .from(ConfigSource.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235")))
+  configDesc
+    .map(
+      desc => 
+        desc.unsourced from ConfigSource.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235")))   
 
 ```
-
-_NOTE_: As of now we support system env, system property and a constant map in `ConfigSource`.
-We will be adding more, however, it will be easy to have any custom source. It is kept as simple as possible.
 
 ## Either Types (orElseEither)
 
@@ -272,6 +273,9 @@ prod <+> dev // that represents a description returning Config
 // ConfigDescriptor[String, String, Config]
 
 ```
+
+`orElseEither` works with complex hocon sources, which is an additional benefit compared to existing configuration libraries.
+You can also choose to avoid a `sealed trait` encoding if all of you need is `Either[Int, String]`, for instance.
 
 ## OrElse
 
