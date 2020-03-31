@@ -127,7 +127,6 @@ You can run this to [completion](https://zio.dev/docs/getting_started.html#main)
 As mentioned before, you can use config descriptor to read from various sources.
 
 ```scala mdoc:silent
-val source = ConfigSource.fromMap(map)
 
 val anotherResult =
   read(myConfig from source)

@@ -28,7 +28,7 @@ object PropertyTreeTest
           }
         },
         testM(
-          "reduceInner should convert multiple leaves to a single leaves of multiple values"
+          "reduceInner should convert multiple leaves to a single leaf of multiple values"
         ) {
           check(genListOfLeaves) { input =>
             assert(Sequence(input).map(_ :: Nil).reduceInner(_ ++ _))(

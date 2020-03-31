@@ -275,7 +275,7 @@ prod <+> dev // that represents a description returning Config
 ```
 
 `orElseEither` works with complex hocon sources, which is an additional benefit compared to existing configuration libraries.
-You can also choose to avoid a `sealed trait` encoding if all of you need is `Either[Int, String]`, for instance.
+You can also choose to avoid a `sealed trait` encoding if all we need is `Either[Int, String]`, for instance.
 
 ## OrElse
 
