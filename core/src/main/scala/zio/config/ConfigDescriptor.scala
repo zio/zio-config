@@ -6,6 +6,13 @@ import java.net.URI
 import zio.config.ConfigDescriptor._
 
 sealed trait ConfigDescriptor[K, V, A] { self =>
+  def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[K, V, B] =
+    XmapEither(
+      this,
+      (a: A) => Right[String, B](app(a)),
+      unapp(_)
+        .fold[Either[String, A]](Left("Unable to create case class instance"))(Right(_))
+    )
 
   final def ??(description: String): ConfigDescriptor[K, V, A] =
     describe(description)
@@ -33,6 +40,22 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
 
   final def from(that: ConfigSource[K, V]): ConfigDescriptor[K, V, A] =
     self.updateSource(_.orElse(that))
+
+  def mapKey(f: K => K): ConfigDescriptor[K, V, A] = {
+    def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
+      case Source(path, source, propertyType) => Source(f(path), source, propertyType)
+      case Nested(path, conf)                 => Nested(f(path), loop(conf))
+      case Sequence(conf)                     => Sequence(loop(conf))
+      case Describe(config, message)          => Describe(loop(config), message)
+      case Default(value, value2)             => Default(loop(value), value2)
+      case Optional(config)                   => Optional(loop(config))
+      case XmapEither(config, f, g)           => XmapEither(loop(config), f, g)
+      case Zip(conf1, conf2)                  => Zip(loop(conf1), loop(conf2))
+      case OrElseEither(value1, value2)       => OrElseEither(loop(value1), loop(value2))
+      case OrElse(value1, value2)             => OrElse(loop(value1), loop(value2))
+    }
+    loop(self)
+  }
 
   final def optional: ConfigDescriptor[K, V, Option[A]] =
     ConfigDescriptor.Optional(self) ?? "optional value"
@@ -64,8 +87,8 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     loop(self)
   }
 
-  final def zip[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, (A, B)] =
-    ConfigDescriptor.Zip(self, that)
+  final def xmap[B](to: A => B, from: B => A): ConfigDescriptor[K, V, B] =
+    self.xmapEither(a => Right(to(a)), b => Right(from(b)))
 
   final def xmapEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[K, V, B] =
     ConfigDescriptor.XmapEither(self, f, g)
@@ -77,32 +100,8 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
       .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
       .xmapEither({ case (a, b) => f(a, b) }, g)
 
-  final def xmap[B](to: A => B, from: B => A): ConfigDescriptor[K, V, B] =
-    self.xmapEither(a => Right(to(a)), b => Right(from(b)))
-
-  /**
-   * This method exists to cover the corner case of a case class with only one field.
-   * For example, a case class with two fields uses the `|@|` syntax to combine them:
-   * {{{
-   *   val cDoubleField: ConfigDescriptor[String, String, DoubleField] =
-   *     (cId |@| cDbUrl)(DoubleField.apply, DoubleField.unapply)
-   * }}}
-   *
-   * However, for a single field it is not clear what to do. For maximum similarity to
-   * the multiple-field version, this method provides a syntax that matches what you
-   * get by taking away the second field and the `|@|`:
-   * {{{
-   *   val cSingleField: ConfigDescriptor[String, String, SingleField] =
-   *     int("cId")(SingleField.apply)(SingleField.unapply)
-   * }}}
-   */
-  def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[K, V, B] =
-    XmapEither(
-      this,
-      (a: A) => Right[String, B](app(a)),
-      unapp(_)
-        .fold[Either[String, A]](Left("Unable to create case class instance"))(Right(_))
-    )
+  final def zip[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, (A, B)] =
+    ConfigDescriptor.Zip(self, that)
 }
 
 object ConfigDescriptor {

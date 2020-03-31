@@ -80,9 +80,9 @@ there is a separate module called `zio-config-magnolia`.
 
 ```scala mdoc:silent
 
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.magnolia.DeriveConfigDescriptor._
 
-val myConfigAutomatic = description[MyConfig]
+val myConfigAutomatic = descriptor[MyConfig]
 // ConfigDescriptor[String, String, MyConfig]
 
 ```
@@ -105,10 +105,16 @@ val map =
     "DB_URL" -> "postgres"
   )
 
-  val result =
-    Config.fromMap(map, myConfig)
+val source = ConfigSource.fromMap(map)
 
-  // IO[ReadErrorsVector[String, String], zio.config.Config[MyConfig]]
+read(myConfig from source)
+// Either[ReadError[String], MyConfig]
+
+// Alternatively, you can rely on `Config.from..` pattern to get ZLayers.
+val result =
+  Config.fromMap(map, myConfig)
+
+// Layer[ReadError[String], Config[A]]  
 
 ```
 
@@ -121,11 +127,10 @@ You can run this to [completion](https://zio.dev/docs/getting_started.html#main)
 As mentioned before, you can use config descriptor to read from various sources.
 
 ```scala mdoc:silent
-val source = ConfigSource.fromMap(map)
 
 val anotherResult =
   read(myConfig from source)
-// IO[ReadErrorsVector[String, String], MyConfig]
+// Either[ReadError[String], MyConfig]
 ```
 
 Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the previous section.
@@ -196,7 +201,7 @@ val finalExecution: ZIO[Config[ApplicationConfig] with Console, Nothing, Unit] =
     _         <- putStrLn(appConfig.userName)
   } yield ()
 
-val configLayer = Config.fromPropertyFile("file-location", configuration)
+val configLayer = Config.fromPropertiesFile("file-location", configuration)
 
 // Main App
 val pgm = finalExecution.provideLayer(configLayer ++ Console.live)

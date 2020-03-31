@@ -8,39 +8,45 @@ object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)
 
   val config: ConfigDescriptor[String, String, SampleConfig] =
-    (int("envvar") |@| string("envvar2"))(SampleConfig.apply, SampleConfig.unapply)
+    (int("envvar") |@| string("envvar2").orElse(string("envvar3")))(SampleConfig.apply, SampleConfig.unapply)
 
   val runtime = zio.Runtime.default
 
-  val programWithInvalidSource =
-    read(config from ConfigSource.fromMap(Map.empty)).either
+  val parsed =
+    read(config from ConfigSource.fromMap(Map.empty))
 
-  val parsed = runtime.unsafeRun(programWithInvalidSource)
+  println(parsed)
 
   assert(
     parsed ==
       Left(
-        ::(
-          MissingValue(Vector("envvar")),
-          MissingValue(Vector("envvar2")) :: Nil
+        // OrErrors indicate fix either of those errors associated with envvar2 or envvar3
+        // AndErrors indicate fix the errors associated with both envvar1 and OrError(envvar2 or envvar3)
+        AndErrors(
+          List(
+            MissingValue(Vector(Right("envvar"))),
+            OrErrors(List(MissingValue(Vector(Right("envvar2"))), MissingValue(Vector(Right("envvar3")))))
+          )
         )
       )
   )
 
   val validSource = ConfigSource.fromMap(Map("envvar" -> "1", "envvar2" -> "value"))
 
-  val validRes = runtime.unsafeRun(read(config from validSource))
+  val validRes = read(config from validSource)
 
-  assert(validRes == SampleConfig(1, "value"))
+  assert(validRes == Right(SampleConfig(1, "value")))
 
   val invalidSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
 
   assert(
-    runtime.unsafeRun(read(config from invalidSource).either) ==
+    read(config from invalidSource) ==
       Left(
-        List(
-          ParseError(Vector("envvar"), "wrong", "int"),
-          MissingValue(Vector("envvar2"))
+        AndErrors(
+          List(
+            FormatError(Vector(Right("envvar")), ReadFunctions.parseErrorMessage("wrong", "int")),
+            OrErrors(List(MissingValue(Vector(Right("envvar2"))), MissingValue(Vector(Right("envvar3")))))
+          )
         )
       )
   )

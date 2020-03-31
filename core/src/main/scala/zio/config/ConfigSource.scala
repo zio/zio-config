@@ -1,166 +1,137 @@
 package zio.config
 
-import zio.{ system, IO, ZIO }
-import zio.system.System
 import java.{ util => ju }
+import zio.UIO
 
-final case class ConfigValue[A](value: ::[A])
+import scala.collection.JavaConverters._
+import scala.collection.immutable.Nil
+import zio.config.PropertyTree.unflatten
+import zio.ZIO
+import java.io.FileInputStream
+import java.io.File
+import zio.Task
 
 final case class ConfigSource[K, V](
-  getConfigValue: Vector[K] => IO[ReadErrorsVector[K, V], ConfigValue[V]],
+  getConfigValue: Vector[K] => PropertyTree[K, V],
   sourceDescription: List[String]
 ) { self =>
   final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     ConfigSource(
-      k => getConfigValue(k).orElse(that.getConfigValue(k)),
-      self.sourceDescription ++ that.sourceDescription
+      k => getConfigValue(k).getOrElse(that.getConfigValue(k)),
+      if (self.sourceDescription == that.sourceDescription) self.sourceDescription
+      else self.sourceDescription ++ that.sourceDescription
     )
 
-  final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] = self orElse that
+  final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+    self orElse that
 }
 
 object ConfigSource {
   val SystemEnvironment = "system environment"
   val SystemProperties  = "system properties"
-  val JavaProperties    = "java properties"
-  val ConstantMap       = "constant <map>"
-  val EmptySource       = "<empty>"
 
   def empty[K, V]: ConfigSource[K, V] =
-    ConfigSource((k: Vector[K]) => IO.fail(singleton(ReadError.MissingValue(k))), EmptySource :: Nil)
+    ConfigSource(_ => PropertyTree.empty, Nil)
 
-  def fromEnv(valueSeparator: Option[String] = None): ConfigSource[String, String] =
-    ConfigSource(
-      (path: Vector[String]) => {
-        val key = path.mkString("_")
-        system
-          .env(key)
-          .bimap(
-            ReadError.FatalError(path, _),
-            opt =>
-              opt.map(r => {
-                val consOfValues: ::[String] =
-                  valueSeparator
-                    .flatMap(
-                      sep =>
-                        r.split(sep).toList.map(_.trim) match {
-                          case h :: tail => Some(::(h, tail))
-                          case Nil       => None
-                        }
-                    )
-                    .getOrElse(::(r, Nil))
+  def fromMap(
+    map: Map[String, String],
+    source: String = "constant",
+    keyDelimiter: Char = '.',
+    valueDelimter: Char = ':'
+  ): ConfigSource[String, String] =
+    fromMapInternal(map)(x => { val s = x.split(valueDelimter).toList; ::(s.head, s.tail) }, keyDelimiter, source)
 
-                ConfigValue(consOfValues)
-              })
-          )
-          .flatMap(IO.fromOption(_))
-          .mapError[ReadErrorsVector[String, String]](_ => singleton(ReadError.MissingValue(path)))
-          .provideLayer(System.live)
-      },
-      SystemEnvironment :: Nil
-    )
+  def fromMultiMap(
+    map: Map[String, ::[String]],
+    source: String = "constant",
+    keyDelimiter: Char = '.'
+  ): ConfigSource[String, String] =
+    fromMapInternal(map)(identity, keyDelimiter, source)
 
-  def fromProperty(valueSeparator: Option[String] = None): ConfigSource[String, String] =
-    ConfigSource(
-      (path: Vector[String]) => {
-        val key = path.mkString(".")
-        system
-          .property(key)
-          .bimap(
-            ReadError.FatalError(path, _),
-            opt =>
-              opt.map(r => {
-                val consOfValues: ::[String] =
-                  valueSeparator
-                    .flatMap(
-                      sep =>
-                        r.split(sep).toList.map(_.trim) match {
-                          case h :: tail => Some(::(h, tail))
-                          case Nil       => None
-                        }
-                    )
-                    .getOrElse(::(r, Nil))
-                ConfigValue(consOfValues)
-              })
-          )
-          .flatMap(IO.fromOption(_))
-          .mapError[ReadErrorsVector[String, String]](_ => singleton(ReadError.MissingValue(path)))
-          .provideLayer(System.live)
-      },
-      SystemProperties :: Nil
-    )
-
-  /**
-   * Pass any Java Properties that you have and you get a ConfigSource.
-   * zio-config tries to not make assumptions on the placement of property file. It may exist
-   * in classpath, or it could be in cloud (AWS S3). Loading to properties file is user's
-   * responsiblity to make things flexible. A typical usage will be
-   *  {{{
-   *      ZIO
-   *        .bracket(ZIO.effect(new FileInputStream("file location")))(file => ZIO.effectTotal(file.close()))(
-   *         file =>
-   *            ZIO.effect {
-   *              val properties = new java.util.Properties()
-   *              properties.load(file)
-   *              properties
-   *            }).map(r => fromJavaProperties(r))
-   *  }}}
-   * We have the above functionality as  {{{ Config.fromJavaProperties() }}}
-   */
-  def fromJavaProperties(
+  def fromProperties(
     property: ju.Properties,
-    valueSeparator: Option[String] = None
-  ): ConfigSource[String, String] =
-    ConfigSource(
-      (path: Vector[String]) => {
-        val key = path.mkString(".")
-        ZIO
-          .effect(
-            Option(property.getProperty(key))
-          )
-          .bimap(
-            ReadError.FatalError(path, _),
-            opt =>
-              opt.map(r => {
-                val consOfValues: ::[String] =
-                  valueSeparator
-                    .flatMap(
-                      sep =>
-                        r.split(sep).toList.map(_.trim) match {
-                          case h :: tail => Some(::(h, tail))
-                          case Nil       => None
-                        }
-                    )
-                    .getOrElse(::(r, Nil))
-                ConfigValue(consOfValues)
-              })
-          )
-          .flatMap(IO.fromOption(_))
-          .mapError(_ => singleton(ReadError.MissingValue(path)))
-      },
-      JavaProperties :: Nil
+    source: String = "properties",
+    keyDelimiter: Char = '.',
+    valueDelimiter: Char = ':'
+  ): ConfigSource[String, String] = {
+    val mapString = property.stringPropertyNames().asScala.foldLeft(Map.empty[String, String]) { (acc, a) =>
+      acc.updated(a, property.getProperty(a))
+    }
+
+    mergeAll(
+      PropertyTree
+        .fromStringMap(mapString, keyDelimiter, valueDelimiter)
+        .map(tree => fromPropertyTree(tree, source))
+    )
+  }
+
+  def fromPropertiesFile[A](
+    filePath: String,
+    keyDelimiter: Char = '.',
+    valueDelimiter: Char = ':'
+  ): Task[ConfigSource[String, String]] =
+    for {
+      properties <- ZIO.bracket(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))(
+                     inputStream => {
+                       ZIO.effect {
+                         val properties = new java.util.Properties()
+                         properties.load(inputStream)
+                         properties
+                       }
+                     }
+                   )
+    } yield ConfigSource.fromProperties(properties, filePath, keyDelimiter, valueDelimiter)
+
+  def fromSystemEnv: UIO[ConfigSource[String, String]] =
+    fromSystemEnv(':')
+
+  def fromSystemEnv(valueDelimiter: Char): UIO[ConfigSource[String, String]] =
+    UIO
+      .effectTotal(sys.env)
+      .map(map => ConfigSource.fromMap(map, SystemEnvironment, '_', valueDelimiter))
+
+  def fromSystemProperties: UIO[ConfigSource[String, String]] =
+    fromSystemProperties(':')
+
+  def fromSystemProperties(valueDelimiter: Char): UIO[ConfigSource[String, String]] =
+    for {
+      systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
+    } yield fromProperties(
+      systemProperties,
+      SystemProperties,
+      valueDelimiter
     )
 
-  def fromMap(map: Map[String, String], pathDelimiter: String = "."): ConfigSource[String, String] =
-    fromMapA(map)(singleton, pathDelimiter)
-
-  def fromMultiMap(map: Map[String, ::[String]], pathDelimiter: String = "."): ConfigSource[String, String] =
-    fromMapA(map)(identity, pathDelimiter)
-
-  private def fromMapA[A, B](map: Map[String, A])(f: A => ::[B], pathDelimiter: String): ConfigSource[String, B] =
-    ConfigSource(
-      (path: Vector[String]) => {
-        val key = path.mkString(pathDelimiter)
-        ZIO.fromOption(map.get(key).map(r => ConfigValue(f(r)))).mapError { _ =>
-          singleton(ReadError.MissingValue(Vector(key)))
-        }
-      },
-      ConstantMap :: Nil
+  private[config] def fromMapInternal[A, B](
+    map: Map[String, A]
+  )(f: A => ::[B], keyDelimiter: Char, source: String): ConfigSource[String, B] =
+    fromPropertyTrees(
+      unflatten(
+        map.map(
+          tuple =>
+            tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "") ->
+              f(tuple._2)
+        )
+      ),
+      source
     )
 
-  def fromPropertyTree(
-    propertyTree: PropertyTree[String, String],
-    delimiter: String = "."
-  ): ConfigSource[String, String] =
-    fromMultiMap(propertyTree.flattenString(delimiter))
+  private[config] def fromPropertyTree[B](
+    tree: PropertyTree[String, B],
+    source: String
+  ): ConfigSource[String, B] =
+    ConfigSource(
+      (path: Vector[String]) => tree.getPath(path.toList),
+      source :: Nil
+    )
+
+  private[config] def fromPropertyTrees[B](
+    trees: Iterable[PropertyTree[String, B]],
+    sourceName: String
+  ): ConfigSource[String, B] =
+    mergeAll(trees.map(fromPropertyTree(_, sourceName)))
+
+  private[config] def mergeAll[K, V](sources: Iterable[ConfigSource[K, V]]): ConfigSource[K, V] =
+    sources.foldLeft(ConfigSource.empty: ConfigSource[K, V])(_ orElse _)
+
 }

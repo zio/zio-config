@@ -4,11 +4,11 @@ import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
-import zio.ZIO
+import zio.{ ZIO }
 import zio.config.ConfigDescriptor._
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
-import zio.config.{ helpers, read, write, BaseSpec, ConfigDescriptor, ConfigSource, ReadErrorsVector }
+import zio.config._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
@@ -22,20 +22,19 @@ object RefinedReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config invalid") {
-          checkM(genRefinedProdInvalid) {
+          check(genRefinedProdInvalid) {
             case (n, envMap) =>
-              val p2: ZIO[Any, ReadErrorsVector[String, String], RefinedProd] =
+              val p2 =
                 read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
-              // 3 errors here because empty string reads as option: None, so refinement doesn't apply
-              assertM(p2.either)(helpers.assertErrors(_.size == 3))
+              assert(p2)(helpers.assertErrors(_.size == 4))
           }
         }
       )
@@ -46,7 +45,7 @@ object RefinedReadWriteRoundtripTestUtils {
   case class RefinedProd(
     ldap: Refined[String, NonEmpty],
     port: Refined[Int, GreaterEqual[W.`1024`.T]],
-    dburl: Option[Refined[String, NonEmpty]],
+    dburl: Option[Refined[String, NonEmpty]], // Even if optional, if the predicate fails for a value that exist, we should fail it and report !
     longs: Refined[::[Long], Size[Greater[W.`2`.T]]]
   )
 
@@ -97,8 +96,8 @@ object RefinedReadWriteRoundtripTestUtils {
       n,
       Map(
         "LDAP"   -> "",
-        "PORT"   -> port.toString,
         "DB_URL" -> "",
+        "PORT"   -> port.toString,
         "COUNT"  -> n.toString
       ) ++ longs
         .foldRight[List[(String, String)]](Nil)(

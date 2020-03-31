@@ -1,5 +1,4 @@
 package zio.config.examples
-
 import zio.config.Config
 import zio.config.ConfigDescriptor._
 import zio.console.Console
@@ -23,7 +22,7 @@ object SimpleExampleMain extends App {
       for {
         fileLocation <- ZIO.effect(System.getProperty("user.home") + "/somefile.properties")
         // there are many ways of doing this: example: {{{ read(configuration from ConfigSource.fromJavaProperties(propertyFile))) }}}, you may try that as well.
-        configLayer = Config.fromPropertyFile(fileLocation, ApplicationConfig.configuration)
+        configLayer = Config.fromPropertiesFile(fileLocation, ApplicationConfig.configuration)
         _           <- SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.requires[Console])
       } yield ()
 
@@ -51,5 +50,4 @@ object SimpleExample {
     } yield ()
 }
 // A note that, with magnolia module (which is still experimental), you can skip writing the {{ configuration }} in ApplicationConfig object
-// import zio.config.magnolia.ConfigDescriptorProvider_,
-// val configuration = description[ApplicationConfig], and requires case class names as configuration keys
+// import zio.config.magnolia.DeriveConfigDescriptor_,

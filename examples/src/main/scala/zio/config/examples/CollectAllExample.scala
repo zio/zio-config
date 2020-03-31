@@ -1,7 +1,8 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
 import zio.config._
+import ConfigDescriptor._
+import zio.config.examples.typesafe.EitherImpureOps
 
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,
@@ -12,7 +13,7 @@ import zio.config._
  */
 final case class Variables(variable1: Int, variable2: Option[Int])
 
-object CollectAllExample extends App {
+object CollectAllExample extends App with EitherImpureOps {
   val listOfConfig: List[ConfigDescriptor[String, String, Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
       .map(
@@ -34,28 +35,38 @@ object CollectAllExample extends App {
       "GROUP4_VARIABLE1" -> "7"
     )
 
-  val runtime = zio.Runtime.default
+  // loadOrThrow here is only for the purpose of example
+  val result: ::[Variables]                 = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
+  val written: PropertyTree[String, String] = write(configOfList, result).loadOrThrow
 
-  val result  = runtime.unsafeRun(read(configOfList from ConfigSource.fromMap(map)))
-  val written = write(configOfList, result)
-
-  assert(result == ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))))
-
-  println(
-    written.map(_.flattenString())
-  )
   assert(
-    written.map(_.flattenString()) ==
-      Right(
-        Map(
-          "GROUP3_VARIABLE1" -> List("5"),
-          "GROUP3_VARIABLE2" -> List("6"),
-          "GROUP1_VARIABLE2" -> List("2"),
-          "GROUP1_VARIABLE1" -> List("1"),
-          "GROUP2_VARIABLE2" -> List("4"),
-          "GROUP2_VARIABLE1" -> List("3"),
-          "GROUP4_VARIABLE1" -> List("7")
-        )
+    result == ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
+  )
+
+  assert(
+    written.flattenString() ==
+      Map(
+        "GROUP3_VARIABLE1" -> List("5"),
+        "GROUP3_VARIABLE2" -> List("6"),
+        "GROUP1_VARIABLE2" -> List("2"),
+        "GROUP1_VARIABLE1" -> List("1"),
+        "GROUP2_VARIABLE2" -> List("4"),
+        "GROUP2_VARIABLE1" -> List("3"),
+        "GROUP4_VARIABLE1" -> List("7")
       )
+  )
+
+  // Read it back from the wrtten tree
+  assert(
+    read(configOfList from ConfigSource.fromPropertyTree(written, "tree")) == Right(
+      ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
+    )
+  )
+
+  // Read it back from the flattened tree
+  assert(
+    read(configOfList from ConfigSource.fromMultiMap(written.flattenString(), "tree")) == Right(
+      ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
+    )
   )
 }

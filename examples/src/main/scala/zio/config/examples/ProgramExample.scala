@@ -24,7 +24,7 @@ object ProgramExample extends App {
       Application.execute.provideLayer(
         ZLayer.requires[Blocking] ++
           ZLayer.requires[Console] ++
-          Config.fromMap(Map("INPUT_PATH" -> "input", "OUTPUT_PATH" -> "output"), programConfig) ++
+          Config.fromMap(Map("INPUT_PATH" -> "input", "OUTPUT_PATH" -> "output"), programConfig, "constant") ++
           SparkEnv.local("some-app")
       )
 

@@ -1,14 +1,18 @@
 package zio
 
-package object config extends ReadFunctions with WriteFunctions with ConfigDocsFunctions {
+package object config extends ReadFunctions with WriteFunctions with ConfigDocsFunctions with KeyConversionFunctions {
 
-  type Config[A] = Has[Config.Service[A]]
+  type Config[A] = Has[A]
 
-  final type ReadErrors[K, V]       = ::[ReadError[K, V]]
-  final type ReadErrorsVector[K, V] = ReadErrors[Vector[K], V]
+  type NonEmptyList[A] = ::[A]
 
-  final def config[A](implicit tagged: Tagged[Config.Service[A]]): ZIO[Config[A], Nothing, A] =
-    ZIO.access(_.get.config)
+  object NonEmptyList {
+    def apply[A](a: A*) =
+      ::(a.head, a.tail.toList)
+  }
+
+  final def config[A](implicit tagged: Tagged[A]): ZIO[Config[A], Nothing, A] =
+    ZIO.access(_.get)
 
   private[config] def concat[A](l: ::[A], r: ::[A]): ::[A] =
     ::(l.head, l.tail ++ r)
@@ -18,10 +22,15 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
   private[config] def seqEither[A, B](either: List[Either[A, B]]): Either[A, List[B]] =
     either.foldRight(Right(List.empty[B]): Either[A, List[B]])((a, b) => a.flatMap(aa => b.map(bb => aa :: bb)))
 
-  private[config] def seqEitherCons[A, B](either: ::[Either[A, B]]): Either[A, ::[B]] = {
-    val reversed = either.reverse
-    reversed.tail.foldLeft(reversed.head.map(singleton))((b, a) => a.flatMap(aa => b.map(bb => ::(aa, bb))))
-  }
+  private[config] def seqEither2[A, B, C](genError: (Int, A) => C)(list: List[Either[A, B]]): Either[List[C], List[B]] =
+    list.zipWithIndex
+      .foldLeft(Right(Nil): Either[List[C], List[B]]) {
+        case (Left(cs), (Left(a), index)) => Left(genError(index, a) :: cs)
+        case (Left(cs), (Right(_), _))    => Left(cs)
+        case (Right(_), (Left(a), index)) => Left(genError(index, a) :: Nil)
+        case (Right(bs), (Right(b), _))   => Right(b :: bs)
+      }
+      .map(_.reverse)
 
   private[config] final def foreach[R, E, A, B](in: ::[A])(f: A => ZIO[R, E, B]): ZIO[R, E, ::[B]] = {
     val reversesd = in.reverse

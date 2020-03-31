@@ -7,7 +7,6 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.{
   EndsWith,
   IPv4,
-  IPv6,
   MatchesRegex,
   Regex,
   Uri,
@@ -22,10 +21,11 @@ import eu.timepit.refined.string.{
   ValidLong,
   ValidShort
 }
+
 import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.helpers._
-import zio.config.{ helpers, read, write, BaseSpec, ConfigSource, ReadErrorsVector }
+import zio.config.{ helpers, read, write, BaseSpec, ConfigSource }
 import zio.test.Assertion._
 import zio.test._
 
@@ -38,19 +38,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config EndsWith invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = endsWith[W.`"abc"`.T](string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, EndsWith[W.`"abc"`.T]]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config IPv4 roundtrip") {
@@ -59,28 +59,28 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config IPv4 invalid") {
-          checkM(Gen.listOfN(4)(Gen.int(256, 1000)).map(_.mkString("."))) { p =>
+          check(Gen.listOfN(4)(Gen.int(256, 1000)).map(_.mkString("."))) { p =>
             val cfg = iPv4(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, IPv4]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config IPv6 invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = iPv6(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, IPv6]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config MatchesRegex roundtrip") {
@@ -89,19 +89,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config MatchesRegex invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = matchesRegex[W.`".*abc"`.T](string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, MatchesRegex[W.`".*abc"`.T]]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config Regex roundtrip") {
@@ -110,19 +110,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config Regex invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "\\q5ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "\\q5ab")) { p =>
             val cfg = regex(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, Regex]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config Uri roundtrip") {
@@ -131,7 +131,7 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -143,7 +143,7 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -155,19 +155,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config Uuid invalid") {
-          checkM(Gen.fromEffect(ZIO.succeed(UUID.randomUUID().toString + "ab"))) { p =>
+          check(Gen.fromEffect(ZIO.succeed(UUID.randomUUID().toString + "ab"))) { p =>
             val cfg = uuid(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, Uuid]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config ValidByte roundtrip") {
@@ -176,19 +176,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config ValidByte invalid") {
-          checkM(genSymbol(0, 10).map(s => s.toString + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s.toString + "ab")) { p =>
             val cfg = validByte(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidByte]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config ValidShort roundtrip") {
@@ -197,19 +197,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config ValidShort invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validShort(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidShort]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config ValidInt roundtrip") {
@@ -218,19 +218,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config ValidInt invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validInt(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidInt]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config ValidLong roundtrip") {
@@ -239,19 +239,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config ValidLong invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validLong(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidLong]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config ValidFloat roundtrip") {
@@ -260,19 +260,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config ValidFloat invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validFloat(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidFloat]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config ValidDouble roundtrip") {
@@ -281,19 +281,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config ValidDouble invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validDouble(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidDouble]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config ValidBigInt roundtrip") {
@@ -302,19 +302,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config ValidBigInt invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validBigInt(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidBigInt]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         },
         testM("Refined config ValidBigDecimal roundtrip") {
@@ -323,19 +323,19 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- read(cfg from ConfigSource.fromPropertyTree(written))
+                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
               } yield reread
 
             assertM(p2)(equalTo(p))
           }
         },
         testM("Refined config ValidBigDecimal invalid") {
-          checkM(genSymbol(0, 10).map(s => s + "ab")) { p =>
+          check(genSymbol(0, 10).map(s => s + "ab")) { p =>
             val cfg = validBigDecimal(string("TEST"))
-            val p2: ZIO[Any, ReadErrorsVector[String, String], Refined[String, ValidBigDecimal]] =
+            val p2 =
               read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-            assertM(p2.either)(helpers.assertErrors(_.size == 1))
+            assert(p2)(helpers.assertErrors(_.size == 1))
           }
         }
       )
