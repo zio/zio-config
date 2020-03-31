@@ -105,7 +105,7 @@ With `describe` annotation you can still document your config while automaticall
 import zio.config.magnolia.describe
 
 @describe("This config is about aws")
-  final case class Aws(region: String, dburl: DbUrl)
-  final case class DbUrl(value: String) extends AnyVal
+case class Aws(region: String, dburl: DbUrl)
+case class DbUrl(value: String)
 
 ```
