@@ -1,4 +1,3 @@
-/*
 package zio.config.examples.magnolia
 
 import zio.config.magnolia.ConfigDescriptorProvider.description
@@ -41,16 +40,16 @@ object CoproductExample extends App {
     )
   )
 
-  def readA: Either[ReadError, Dance] =
+  def readA: Either[ReadError[String], Dance] =
     read(danceConfig from aSource)
 
-  def readB: Either[ReadError, Dance] =
+  def readB: Either[ReadError[String], Dance] =
     read(danceConfig from bSource)
 
-  def readC: Either[ReadError, Dance] =
+  def readC: Either[ReadError[String], Dance] =
     read(danceConfig from cSource)
 
-  def readD: Either[ReadError, Dance] =
+  def readD: Either[ReadError[String], Dance] =
     read(danceConfig from dSource)
 
   val a =
@@ -91,4 +90,3 @@ object CoproductExample extends App {
       writeD == Right(Map("dance"       -> singleton("I am Dancing !!")))
   )
 }
- */
