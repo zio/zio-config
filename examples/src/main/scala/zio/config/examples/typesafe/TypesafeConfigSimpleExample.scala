@@ -1,7 +1,7 @@
 package zio.config.examples.typesafe
 
 import zio.config.ConfigDescriptor.{ int, list, nested, string }
-import zio.config.magnolia.ConfigDescriptorProvider.description
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource.fromHoconString
 import zio.config._
@@ -90,7 +90,7 @@ object TypesafeConfigSimpleExample extends App {
         )
       )
   )
-  val automaticAwsDetailsConfig = description[AwsDetails]
+  val automaticAwsDetailsConfig = descriptor[AwsDetails]
 
   val automaticResult =
     fromHoconString(validHocon) match {
@@ -141,6 +141,6 @@ object TypesafeConfigSimpleExample extends App {
 
   println(fromHoconString(invalidHocon) match {
     case Left(value)   => Left(value)
-    case Right(source) => read(description[AwsDetails] from source)
+    case Right(source) => read(descriptor[AwsDetails] from source)
   })
 }

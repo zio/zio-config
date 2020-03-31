@@ -50,4 +50,4 @@ object SimpleExample {
     } yield ()
 }
 // A note that, with magnolia module (which is still experimental), you can skip writing the {{ configuration }} in ApplicationConfig object
-// import zio.config.magnolia.ConfigDescriptorProvider_,
+// import zio.config.magnolia.DeriveConfigDescriptor_,

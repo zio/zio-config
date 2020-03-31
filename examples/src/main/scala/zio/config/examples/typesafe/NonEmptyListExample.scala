@@ -1,7 +1,7 @@
 package zio.config.examples.typesafe
 
 import zio.config._
-import zio.config.magnolia.ConfigDescriptorProvider.description
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypeSafeConfigSource
 
 // Why Maybe[NonEmptyList] could be the right thing to do, stays as a limitation to zio-config:
@@ -151,7 +151,7 @@ object NonEmptyListExample extends App with EitherImpureOps {
     TypeSafeConfigSource.fromHoconString(configString).loadOrThrow // Don't use loadOrThrow. This is only for example
 
   val zioConfigResult =
-    read(description[A] from source)
+    read(descriptor[A] from source)
 
   assert(
     zioConfigResult ==
@@ -345,7 +345,7 @@ object NonEmptyListExample extends App with EitherImpureOps {
     TypeSafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow
 
   val zioConfigWithKeysInKebabResult =
-    read(description[ExportDetails].mapKey(camelToKebab) from kebabConfigSource)
+    read(descriptor[ExportDetails].mapKey(camelToKebab) from kebabConfigSource)
 
   assert(
     zioConfigWithKeysInKebabResult ==

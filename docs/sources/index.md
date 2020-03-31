@@ -27,7 +27,7 @@ Let's define a simple one.
 val myConfig =
   (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
- // val automatedConfig = description[MyConfig]; using zio-config-magnolia
+ // val automatedConfig = descriptor[MyConfig]; using zio-config-magnolia
 
 ```
 
@@ -167,7 +167,7 @@ Here is an quick example
 ```scala mdoc:silent
 
 import zio.config.typesafe._, TypeSafeConfigSource._
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.magnolia.DeriveConfigDescriptor._
 
 ```
 
@@ -175,7 +175,7 @@ import zio.config.magnolia.ConfigDescriptorProvider._
 
 case class SimpleConfig(port: Int, url: String, region: Option[String])
 
-val automaticDescription = description[SimpleConfig]
+val automaticDescription = descriptor[SimpleConfig]
 
 val hoconSource =
   TypeSafeConfigSource.fromHoconString(

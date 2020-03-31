@@ -51,9 +51,9 @@ there is a separate module called `zio-config-magnolia` which uses `Magnolia` li
 
 ```scala mdoc:silent
 
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.magnolia.DeriveConfigDescriptor._
 
-val myConfigAutomatic = description[MyConfig]
+val myConfigAutomatic = descriptor[MyConfig]
 
 ```
 
@@ -410,14 +410,14 @@ val listHocon = """
 ```scala
 
 import zio.config.typesafe.TypeSafeConfigSource._
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.magnolia.DeriveConfigDescriptor._
 
   // A nested example with type safe config, and usage of magnolia
 final case class Accnt(region: String, accountId: String)
 final case class Db(port: Int, url: String)
 final case class AwsDetails(accounts: List[Accnt], database: Db)
 
-val autoListConfig = description[AwsDetails]
+val autoListConfig = descriptor[AwsDetails]
 
 read(autoListConfig from hocon(listHocon))
 

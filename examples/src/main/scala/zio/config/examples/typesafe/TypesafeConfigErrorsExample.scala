@@ -2,7 +2,7 @@ package zio.config.examples.typesafe
 
 import zio.config.typesafe.TypeSafeConfigSource
 import zio.config.ConfigDescriptor.{ int, nested, string }
-import zio.config.magnolia.ConfigDescriptorProvider.description
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.read
 
 object TypesafeConfigErrorsExample extends App {
@@ -12,7 +12,7 @@ object TypesafeConfigErrorsExample extends App {
   final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
 
   val configNestedAutomatic =
-    description[AwsConfig]
+    descriptor[AwsConfig]
 
   val hocconStringWithStringDb =
     s"""
@@ -139,7 +139,7 @@ object TypesafeConfigErrorsExample extends App {
   final case class Details(clustersize: Int, name: String)
   final case class DatabaseDetails(datacenterwest: Details, datacentereast: Details)
 
-  val configWithHoconSubstitution = description[DatabaseDetails]
+  val configWithHoconSubstitution = descriptor[DatabaseDetails]
 
   val finalResult =
     TypeSafeConfigSource.fromHoconString(hoconStringWithSubstitution) match {

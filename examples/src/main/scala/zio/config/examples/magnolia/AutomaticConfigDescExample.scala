@@ -3,7 +3,7 @@ package zio.config.examples.magnolia
 import zio.config.ConfigSource
 import zio.config.magnolia.describe
 import zio.config.examples.magnolia.MyConfig._
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.magnolia.DeriveConfigDescriptor._
 import zio.config.read
 
 final case class MyConfig(
@@ -33,7 +33,7 @@ object MyConfig {
 }
 
 object AutomaticConfigDescriptor {
-  private val automaticConfig = description[MyConfig]
+  private val automaticConfig = descriptor[MyConfig]
 
   private val source =
     ConfigSource.fromMap(

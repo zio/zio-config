@@ -1,6 +1,6 @@
 package zio.config.examples.typesafe
 
-import zio.config.magnolia.ConfigDescriptorProvider.description
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.{ TypeSafeConfigSource }
 import zio.config.{ read, _ }
 
@@ -22,7 +22,7 @@ object CoproductAutomaticExample extends App with EitherImpureOps {
   final case class Height(height: Long)
 
   // Don't use loadOrThrow in your code base, This is only in examples
-  val danceConfig = description[Dance]
+  val danceConfig = descriptor[Dance]
 
   val aSource = TypeSafeConfigSource.fromHoconString("any.name = chris").loadOrThrow
 

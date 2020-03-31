@@ -31,7 +31,7 @@ Hence, zio-config exposes an intuitive language, that allows you to describe you
 ```
 
 We do have support for **_automatic configuration description through zio-config-magnolia_**, if you consider this description as a boiler-plate.
-In that case all you need is just the case class `Prod` and call `description[Prod]`. 
+In that case all you need is just the case class `Prod` and call `descriptor[Prod]`. 
 More on this later.
 
 _Note_ : We will be using the term "configuration description" quite often across the documentation

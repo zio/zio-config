@@ -1,7 +1,7 @@
 package zio.config.magnolia
 
 import zio.config.{ read, write, BaseSpec, ConfigSource, PropertyTree }
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.magnolia.DeriveConfigDescriptor._
 import AutomaticConfigTestUtils._
 import zio.ZIO
 import zio.random.Random
@@ -15,7 +15,7 @@ object AutomaticConfigTest
         testM("automatic derivation spec") {
           checkM(genEnvironment) {
             environment =>
-              val configDesc = description[MyConfig]
+              val configDesc = descriptor[MyConfig]
 
               val source =
                 ConfigSource.fromMap(environment)

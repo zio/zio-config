@@ -5,7 +5,7 @@ import zio.test.Assertion._
 import zio.config.BaseSpec
 import TypesafeConfigSpecUtils._
 import zio.config._
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.magnolia.DeriveConfigDescriptor._
 
 object TypesafeConfigSpec
     extends BaseSpec(
@@ -21,7 +21,7 @@ object TypesafeConfigSpec
                   TypeSafeConfigSource.fromHoconString(input) match {
                     case Left(value) => Left(value)
                     case Right(value) =>
-                      read(description[A] from value) match {
+                      read(descriptor[A] from value) match {
                         case Left(value)  => Left(value.toString)
                         case Right(value) => Right(value)
                       }
