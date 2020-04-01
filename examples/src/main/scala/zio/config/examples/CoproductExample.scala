@@ -66,69 +66,69 @@ object CoproductExample extends App {
     aConfigAsDance.orElse(bConfigAsDance).orElse(cConfigAsDance).orElse(dConfigAsDance)
 
   val aSource = ConfigSource.fromMap(
-    Map(
-      "any.name" -> "chris"
-    )
+    Map("any.name" -> "chris"),
+    "constant"
   )
 
   val bSource = ConfigSource.fromMap(
-    Map(
-      "body.height" -> "179"
-    )
+    Map("body.height" -> "179"),
+    "constant"
   )
 
   val cSource = ConfigSource.fromMap(
-    Map(
-      "can" -> "false"
-    )
+    Map("can" -> "false"),
+    "constant"
   )
 
   val dSource = ConfigSource.fromMap(
-    Map(
-      "dance" -> "I am Dancing !!"
-    )
+    Map("dance" -> "I am Dancing !!"),
+    "constant"
   )
 
   val runtime = zio.Runtime.default
 
   def readA =
-    runtime.unsafeRun(
-      read(danceConfig from aSource)
-    )
+    read(danceConfig from aSource)
 
   def readB =
-    runtime.unsafeRun(
-      read(danceConfig from bSource)
-    )
+    read(danceConfig from bSource)
 
   def readC =
-    runtime.unsafeRun(
-      read(danceConfig from cSource)
-    )
+    read(danceConfig from cSource)
 
   def readD =
-    runtime.unsafeRun(
-      read(danceConfig from dSource)
-    )
+    read(danceConfig from dSource)
+
+  val a =
+    A(Person("chris", None))
+
+  val b =
+    B(Height(179))
+
+  val c =
+    C(false)
+
+  val d =
+    D("I am Dancing !!")
 
   assert(
-    readA == A(Person("chris", None)) &&
-      readB == B(Height(179)) &&
-      readC == C(false) &&
-      readD == D("I am Dancing !!")
+    readA == Right(a) &&
+      readB == Right(b) &&
+      readC == Right(c) &&
+      readD == Right(d)
   )
 
   val writeA =
-    write(danceConfig, readA).map(_.flattenString())
+    write(danceConfig, a).map(_.flattenString())
 
   val writeB =
-    write(danceConfig, readB).map(_.flattenString())
+    write(danceConfig, b).map(_.flattenString())
 
   val writeC =
-    write(danceConfig, readC).map(_.flattenString())
+    write(danceConfig, c).map(_.flattenString())
 
   val writeD =
-    write(danceConfig, readD).map(_.flattenString())
+    write(danceConfig, d).map(_.flattenString())
 
   assert(
     writeA == Right(Map("any.name"      -> singleton("chris"))) &&

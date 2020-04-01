@@ -27,7 +27,7 @@ Let's define a simple one.
 val myConfig =
   (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
- // val automatedConfig = description[MyConfig]; using zio-config-magnolia
+ // val automatedConfig = descriptor[MyConfig]; using zio-config-magnolia
 
 ```
 
@@ -89,7 +89,7 @@ Alternatively you can follow below snippet, yielding Config[MyConfig], which you
 
 ```scala mdoc:silent
 
-Config.fromMultiMap(Map(), myConfig)
+Config.fromMultiMap(Map(), myConfig, "constant")
 // yielding Config[MyConfig], which is a service of config that you can use as ZIO environments.
 
 ```
@@ -99,15 +99,15 @@ Config.fromMultiMap(Map(), myConfig)
 ```scala mdoc:silent
 
 val sysEnvSource =
-  ConfigSource.fromEnv(None)
+  ConfigSource.fromSystemEnv
 
-// If you want to support list of values, then you should be giving a valueSeparator
+// If you want to support list of values, then you should be giving a valueDelimiter
 val sysEnvSourceSupportingList = 
-  ConfigSource.fromEnv(valueSeparator=Some(",")) 
+  ConfigSource.fromSystemEnv(valueDelimiter = ',') 
 
 ```
 
-Give valueSeparator =  `,` 
+Give valueDelimiter =  `,` 
 and environemnt with `PORT=1222,2221`; then reading config yields 
 `ListConfig(xyz, List(1222, 2221), postgres)`
 
@@ -118,14 +118,14 @@ zio-config can source system properties.
 ```scala mdoc:silent
 
 val sysPropertiesSource =
-  ConfigSource.fromProperty(None)
+  ConfigSource.fromSystemProperties
 
-// If you want to support list of values, then you should be giving a valueSeparator
+// If you want to support list of values, then you should be giving a valueDelimiter
 val sysPropertiesSourceWithList = 
-  ConfigSource.fromProperty(valueSeparator=Some(",")) 
+  ConfigSource.fromSystemProperties(valueDelimiter = ',') 
 
 ```
-Give valueSeparator =  `,` 
+Give valueDelimiter =  `,` 
 and environemnt with `PORT=1222,2221`; then reading config yields 
 `ListConfig(xyz, List(1222, 2221), postgres)`
 
@@ -137,27 +137,25 @@ and environemnt with `PORT=1222,2221`; then reading config yields
 val javaProperties: java.util.Properties = new java.util.Properties() // Ideally loaded with values
 
 val javaPropertiesSource =
-  ConfigSource.fromJavaProperties(javaProperties, None)
+  ConfigSource.fromProperties(javaProperties)
 
 read(myConfig from javaPropertiesSource)  
 
-// If you want to support list of values, then you should be giving a valueSeparator
+// If you want to support list of values, then you should be giving a valueDelimiter
 val javaPropertiesSourceWithList =
-  ConfigSource.fromJavaProperties(javaProperties, valueSeparator = Some(","))
+  ConfigSource.fromProperties(javaProperties, valueDelimiter = ',')
 ```
 
 ## Properties File Source
 
 ```scala mdoc:silent
 
-Config.fromPropertyFile("filepath", myConfig)
+Config.fromPropertiesFile("filepath", myConfig) 
 
 // yielding Config[MyConfig] which you provide to 
 // functions with zio environment as Config[MyConfig]
 
 ```
-
-_Implementation Detail_: `Config.fromPropertyFile` simply yields `java.util.Properties` in a `ZIO` and delegate the rest to `ConfigSource.fromJavaProperties`
 
 ## HOCON String Source
 
@@ -169,7 +167,7 @@ Here is an quick example
 ```scala mdoc:silent
 
 import zio.config.typesafe._, TypeSafeConfigSource._
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.magnolia.DeriveConfigDescriptor._
 
 ```
 
@@ -177,11 +175,10 @@ import zio.config.magnolia.ConfigDescriptorProvider._
 
 case class SimpleConfig(port: Int, url: String, region: Option[String])
 
-val automaticDescription = description[SimpleConfig]
+val automaticDescription = descriptor[SimpleConfig]
 
 val hoconSource =
-  hocon(
-    Right(
+  TypeSafeConfigSource.fromHoconString(
       """
       {
         port : 123
@@ -191,27 +188,34 @@ val hoconSource =
       
       """
     )
-  )
+  
 
 val anotherHoconSource =
-  hocon(
-    Right(
+  TypeSafeConfigSource.fromHoconString(
       """
         port=123
         url=bla
         region=useast
       """
-    )
   )
 
-read(automaticDescription from hoconSource)
-// yielding SimpleConfig(123,bla,Some(useast))
+hoconSource match {
+  case Left(value) => Left(value)
+  case Right(source) => read(automaticDescription from source)
+}  
 
+// yielding Right(SimpleConfig(123,bla,Some(useast)))
 
-read(automaticDescription from anotherHoconSource)
-// yielding SimpleConfig(123,bla,Some(useast))
+anotherHoconSource match {
+  case Left(value) => Left(value)
+  case Right(source) => read(automaticDescription from source)
+}
 
-// You could also do
+// yielding Right(SimpleConfig(123,bla,Some(useast)))
+
+// Please check other ways to load the hocon file in `TypesafeConfig`
+
+// You could also do, in which case the return type is `Config` service
 TypesafeConfig.fromHoconString(
      """
       {
@@ -224,13 +228,14 @@ TypesafeConfig.fromHoconString(
 
 ```
 
+
 ## HOCON File Source
 
 Similar to `TypesafeConfig.fromHoconString(str, automaticDescription)`
 
 ```scala mdoc:silent
 
-TypesafeConfig.fromHoconFile(automaticDescription, new java.io.File("fileapth"))
+TypesafeConfig.fromHoconFile(new java.io.File("fileapth"), automaticDescription)
 
 ```
 
@@ -251,8 +256,9 @@ val jsonString =
    
    """
     
-
 TypesafeConfig.fromHoconString(jsonString, automaticDescription)
 
 
 ```
+
+Please check other ways to load the hocon file in `TypesafeConfig`

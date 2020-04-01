@@ -18,12 +18,12 @@ object DocsExample extends App {
       Both(
         Path(
           "PORT",
-          Descriptions(Sources(List("<empty>")), List("value of type int", "Example: 8088", "Database related"))
+          Descriptions(Sources(Nil), List("value of type int", "Example: 8088", "Database related"))
         ),
         Path(
           "URL",
           Descriptions(
-            Sources(List("<empty>")),
+            Sources(Nil),
             List("value of type string", "optional value", "Example: abc.com", "Database related")
           )
         )
@@ -38,7 +38,7 @@ object DocsExample extends App {
             "PORT",
             DescriptionsWithValue(
               Some("1"),
-              Sources(List("<empty>")),
+              Sources(Nil),
               List("value of type int", "Example: 8088", "Database related")
             )
           ),
@@ -46,7 +46,7 @@ object DocsExample extends App {
             "URL",
             DescriptionsWithValue(
               Some("value"),
-              Sources(List("<empty>")),
+              Sources(Nil),
               List("value of type string", "optional value", "Example: abc.com", "Database related")
             )
           )

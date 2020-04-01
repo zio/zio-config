@@ -1,18 +1,13 @@
 package zio.config.magnolia
 
-import zio.config.ConfigSource
-import zio.config.magnolia.ConfigDescriptorProvider._
+import zio.config.{ read, write, BaseSpec, ConfigSource, PropertyTree }
+import zio.config.magnolia.DeriveConfigDescriptor._
 import AutomaticConfigTestUtils._
 import zio.ZIO
 import zio.random.Random
 import zio.test._
 import zio.config.helpers._
 import zio.test.Assertion._
-import zio.config.BaseSpec
-import zio.config.PropertyTree
-import zio.config.read
-import zio.config.write
-import zio.config.ReadErrors
 
 object AutomaticConfigTest
     extends BaseSpec(
@@ -20,15 +15,14 @@ object AutomaticConfigTest
         testM("automatic derivation spec") {
           checkM(genEnvironment) {
             environment =>
-              val configDesc = description[MyConfig]
+              val configDesc = descriptor[MyConfig]
 
               val source =
                 ConfigSource.fromMap(environment)
 
-              val readAndWrite
-                : ZIO[Any, ReadErrors[Vector[String], String], Either[String, PropertyTree[String, String]]] =
+              val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
                 for {
-                  result  <- read(configDesc from source)
+                  result  <- ZIO.fromEither(read(configDesc from source))
                   written <- ZIO.effectTotal(write(configDesc, result))
                 } yield written
 
@@ -59,13 +53,13 @@ object AutomaticConfigTestUtils {
   case class Description(description: String) extends Price
   case class Currency(dollars: Double)        extends Price
 
-  final case class Aws(region: String, credentials: Credentials)
+  final case class Aws(region: String, security: Credentials)
 
   final case class DbUrl(dburl: String) extends AnyVal
 
   final case class MyConfig(
     aws: Aws,
-    price: Price,
+    cost: Price,
     dburl: DbUrl,
     port: Int,
     amount: Option[Long],
@@ -102,13 +96,13 @@ object AutomaticConfigTestUtils {
       anotherDefault <- Gen.option(Gen.boolean)
       partialMyConfig = Map(
         "aws.region" -> aws.region,
-        aws.credentials match {
-          case Password(password) => "aws.credentials.password" -> password
-          case Token(token)       => "aws.credentials.token"    -> token
+        aws.security match {
+          case Password(password) => "aws.security.credentials.password" -> password
+          case Token(token)       => "aws.security.credentials.token"    -> token
         },
         price match {
-          case Description(description) => "price.description" -> description
-          case Currency(dollars)        => "price.dollars"     -> dollars.toString
+          case Description(description) => "cost.price.description" -> description
+          case Currency(dollars)        => "cost.price.dollars"     -> dollars.toString
         },
         "dburl.dburl" -> dbUrl.dburl,
         "port"        -> port.toString,

@@ -84,14 +84,32 @@ lazy val zioConfigRefined =
     )
     .dependsOn(zioConfig % "compile->compile;test->test")
 
+lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module")
+
 lazy val examples = module("zio-config-examples", "examples")
   .settings(
     skip in publish := true,
     fork := true,
     libraryDependencies ++= Seq(
-      "eu.timepit"     %% "refined"  % refinedVersion,
-      "com.propensive" %% "magnolia" % magnoliaVersion
-    )
+      "eu.timepit"            %% "refined"    % refinedVersion,
+      "com.propensive"        %% "magnolia"   % magnoliaVersion,
+      "com.github.pureconfig" %% "pureconfig" % "0.12.3"
+    ),
+    runAllExamples :=
+      Def
+        .taskDyn({
+          val c    = (discoveredMainClasses in Compile).value
+          val runs = (runMain in Compile)
+
+          val x = c.map(cc => {
+            Def.task {
+              runs.toTask(s" ${cc}").value
+            }
+          })
+
+          Def.sequential(x)
+        })
+        .value
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe)
 
@@ -110,10 +128,12 @@ lazy val zioConfigTypesafe =
   module("zio-config-typesafe", "typesafe")
     .settings(
       libraryDependencies ++= Seq(
-        "com.typesafe" % "config" % "1.4.0"
+        "com.typesafe" % "config"        % "1.4.0",
+        "dev.zio"      %% "zio-test"     % zioVersion % Test,
+        "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
       )
     )
-    .dependsOn(zioConfig)
+    .dependsOn(zioConfig % "compile->compile;test->test", zioConfigMagnolia)
 
 def module(moduleName: String, fileName: String): Project =
   Project(moduleName, file(fileName))

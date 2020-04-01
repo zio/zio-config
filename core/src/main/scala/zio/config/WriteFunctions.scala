@@ -24,7 +24,7 @@ private[config] trait WriteFunctions {
 
         case ConfigDescriptor.Optional(c) =>
           b.fold({
-            Right(PropertyTree.Empty): Either[String, PropertyTree[K, V]]
+            Right(PropertyTree.empty): Either[String, PropertyTree[K, V]]
           })(bb => {
             go(c, bb)
           })
@@ -63,7 +63,10 @@ private[config] trait WriteFunctions {
             case Right(m1) =>
               go(config2, b._2) match {
                 case Right(m2) =>
-                  Right(m1.merge(m2))
+                  m1.merge(m2).reduceOption(_ zip _) match {
+                    case Some(value) => Right(value)
+                    case None        => Left("Failed to write the config back to property tree, at zip node")
+                  }
                 case Left(m1) =>
                   Left(m1)
               }
