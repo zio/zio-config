@@ -66,7 +66,7 @@ With a single import, <code>ConfigDescriptor</code> is automatically derived for
 This is much easier/intuitive unlike many existing implementations.</p>
 <p>Take a look at the magnolia examples in <code>zio-config</code></p>
 <pre><code class="hljs css language-scala mdoc:silent">
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.magnolia.DeriveConfigDescriptor
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource
 
@@ -113,6 +113,7 @@ object CoproductSealedTraitExample extends App {
       .fromHoconString(
         s"""
            |x {
+             d {
            |  detail  {
            |    firstName : ff
            |    lastName  : ll
@@ -121,19 +122,18 @@ object CoproductSealedTraitExample extends App {
            |      suburb : strath
            |
            |    }
-           |
            |  }
-           |
+           | }
            |}
            |""".stripMargin
       )
       .loadOrThrow
 
-  assert(read(descriptor[X] from aHoconSource) == Right(A))
-  assert(read(descriptor[X] from bHoconSource) == Right(B))
-  assert(read(descriptor[X] from cHoconSource) == Right(C))
+  assert(read(DeriveConfigDescriptor[X] from aHoconSource) == Right(A))
+  assert(read(DeriveConfigDescriptor[X] from bHoconSource) == Right(B))
+  assert(read(DeriveConfigDescriptor[X] from cHoconSource) == Right(C))
   assert(
-    read(descriptor[X] from dHoconSource) == Right(
+    read(DeriveConfigDescriptor[X] from dHoconSource) == Right(
       D(Detail("ff", "ll", Region("strath", "syd")))
     )
   )
@@ -159,4 +159,4 @@ object CoproductSealedTraitExample extends App {
 <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DbUrl</span>(<span class="hljs-params">value: <span class="hljs-type">String</span></span>)</span>
 
 </code></pre>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 3/31/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Creation of ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/sources/sources_index"><span>Sources</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 4/1/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Creation of ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/sources/sources_index"><span>Sources</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
