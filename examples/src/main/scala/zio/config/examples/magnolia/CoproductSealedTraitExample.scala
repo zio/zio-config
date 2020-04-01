@@ -19,9 +19,10 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
   case class Detail(firstName: String, lastName: String, region: Region)
   case class Region(suburb: String, city: String)
 
-  assert(read(DeriveConfigDescriptor[X] from ConfigSource.fromMap(Map("x" -> "a"))) == Right(A))
-  assert(read(DeriveConfigDescriptor[X] from ConfigSource.fromMap(Map("x" -> "b"))) == Right(B))
-  assert(read(DeriveConfigDescriptor[X] from ConfigSource.fromMap(Map("x" -> "c"))) == Right(C))
+  println(read(DeriveConfigDescriptor[X] from ConfigSource.fromMap(Map("x" -> "a"))))
+  assert(read(DeriveConfigDescriptor[X] from ConfigSource.fromMap(Map("x"  -> "a"))) == Right(A))
+  assert(read(DeriveConfigDescriptor[X] from ConfigSource.fromMap(Map("x"  -> "b"))) == Right(B))
+  assert(read(DeriveConfigDescriptor[X] from ConfigSource.fromMap(Map("x"  -> "c"))) == Right(C))
   assert(
     read(
       descriptor[X] from ConfigSource.fromMap(

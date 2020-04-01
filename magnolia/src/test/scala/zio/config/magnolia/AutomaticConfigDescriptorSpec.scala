@@ -102,7 +102,7 @@ object AutomaticConfigTestUtils {
         },
         price match {
           case Description(description) => "cost.price.description.value" -> description
-          case Currency(dollars)        => "cost.price.dollars.value"     -> dollars.toString
+          case Currency(dollars)        => "cost.price.currency.value"    -> dollars.toString
         },
         "dburl.dburl" -> dbUrl.dburl,
         "port"        -> port.toString,

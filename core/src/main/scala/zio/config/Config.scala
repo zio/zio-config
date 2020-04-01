@@ -55,7 +55,7 @@ object Config {
 
   def fromSystemProperties[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
-    valueDelimiter: Char = ':'
+    valueDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): ZLayer[System, ReadError[String], Config[A]] =
     fromConfigDescriptorM(ConfigSource.fromSystemProperties(valueDelimiter).map(configDescriptor from _))
 

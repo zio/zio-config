@@ -83,6 +83,7 @@ object DeriveConfigDescriptor {
   def combine[T](caseClass: CaseClass[DeriveConfigDescriptor, T]): DeriveConfigDescriptor[T] =
     new DeriveConfigDescriptor[T] {
       def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, T] = {
+        // A complex nested inductive resolution for parent paths (separately handled for case objects and classes) to get the ergonomics right in the hocon source.
         val finalDesc =
           if (caseClass.isObject) {
             val config = parentClass match {
@@ -91,40 +92,51 @@ object DeriveConfigDescriptor {
                   case Some(path) => nested(parentClass)(string(path))
                   case None       => string(parentClass.toLowerCase())
                 }
-              case None => path.fold(string(""))(string(_))
+              case None =>
+                string("").xmapEither[String](
+                  _ =>
+                    Left(
+                      s"Cannot create the case-object ${caseClass.typeName.short} since it is not part of a coproduct (ie. extends sealed trait)"
+                    ),
+                  (_: String) =>
+                    Left(
+                      s"Cannot write the case-object ${caseClass.typeName.short} since it is not part of a coproduct (i.e, extends sealed trait)"
+                    )
+                )
             }
             config.xmapEither(
               str =>
                 if (str == caseClass.typeName.short.toLowerCase()) Right(caseClass.rawConstruct(Seq.empty))
                 else
-                  Left(s"""Not enough details in the  config source to form the config using automatic derviation."""),
+                  Left("Not enough details in the config source to form the config using automatic derviation."),
               (value: Any) => Right(value.toString.toLowerCase)
             )
           } else {
-            val result: List[ConfigDescriptor[String, String, Any]] =
+            val listOfConfigs: List[ConfigDescriptor[String, String, Any]] =
               caseClass.parameters.toList.map { h =>
-                {
-                  val rawDesc =
-                    h.typeclass.getDescription(Some(h.label), None)
+                val rawDesc =
+                  h.typeclass.getDescription(Some(h.label), None)
 
-                  val descriptions =
-                    h.annotations
-                      .filter(_.isInstanceOf[describe])
-                      .map(_.asInstanceOf[describe].describe)
+                val descriptions =
+                  h.annotations
+                    .filter(_.isInstanceOf[describe])
+                    .map(_.asInstanceOf[describe].describe)
 
-                  val withDefault =
-                    h.default
-                      .map(r => rawDesc.default(r))
-                      .getOrElse(rawDesc)
+                val withDefault =
+                  h.default
+                    .map(r => rawDesc.default(r))
+                    .getOrElse(rawDesc)
 
-                  val withDocs =
-                    updateConfigWithDocuments(descriptions, withDefault)
+                val withDocs =
+                  updateConfigWithDocuments(descriptions, withDefault)
 
-                  withDocs.xmap((r: h.PType) => r: Any, (r: Any) => r.asInstanceOf[h.PType])
-                }
+                val config = withDocs.xmap((r: h.PType) => r: Any, (r: Any) => r.asInstanceOf[h.PType])
+
+                parentClass.fold(config)(_ => nested(caseClass.typeName.short.toLowerCase())(config))
+
               }
 
-            val config = collectAll(::(result.head, result.tail))
+            collectAll(::(listOfConfigs.head, listOfConfigs.tail))
               .xmap[T](
                 cons => caseClass.rawConstruct(cons),
                 v => {
@@ -132,21 +144,21 @@ object DeriveConfigDescriptor {
                   ::(r.head, r.tail)
                 }
               )
-
-            val withPath = path.fold(config)(nested(_)(config))
-
-            parentClass match {
-              case Some(value) =>
-                nested(value.toLowerCase())(nested(caseClass.typeName.short.toLowerCase)(withPath))
-              case None => withPath
-            }
           }
 
         val annotations = caseClass.annotations
           .filter(_.isInstanceOf[zio.config.magnolia.describe])
           .map(_.asInstanceOf[describe].describe)
 
-        updateConfigWithDocuments(annotations, finalDesc)
+        val withParent =
+          if (caseClass.isObject) finalDesc
+          else
+            parentClass.fold(finalDesc)(parentClass => nested(parentClass.toLowerCase())(finalDesc))
+
+        updateConfigWithDocuments(
+          annotations,
+          path.fold(withParent)(nested(_)(withParent))
+        )
       }
     }
 

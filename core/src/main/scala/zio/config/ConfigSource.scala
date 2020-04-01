@@ -98,15 +98,15 @@ object ConfigSource {
       .map(map => ConfigSource.fromMap(map, SystemEnvironment, '_', valueDelimiter))
 
   def fromSystemProperties: UIO[ConfigSource[String, String]] =
-    fromSystemProperties(':')
+    fromSystemProperties(None)
 
-  def fromSystemProperties(valueDelimiter: Char): UIO[ConfigSource[String, String]] =
+  def fromSystemProperties(valueDelimiter: Option[Char]): UIO[ConfigSource[String, String]] =
     for {
       systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
-    } yield fromProperties(
-      systemProperties,
-      SystemProperties,
-      valueDelimiter
+    } yield ConfigSource.fromProperties(
+      property = systemProperties,
+      source = SystemProperties,
+      valueDelimiter = valueDelimiter
     )
 
   private[config] def fromMapInternal[A, B](
