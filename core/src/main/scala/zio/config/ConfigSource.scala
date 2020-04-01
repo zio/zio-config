@@ -37,9 +37,16 @@ object ConfigSource {
     map: Map[String, String],
     source: String = "constant",
     keyDelimiter: Char = '.',
-    valueDelimter: Char = ':'
+    valueDelimter: Option[Char] = None
   ): ConfigSource[String, String] =
-    fromMapInternal(map)(x => { val s = x.split(valueDelimter).toList; ::(s.head, s.tail) }, keyDelimiter, source)
+    fromMapInternal(map)(
+      x => {
+        val listOfValues = valueDelimter.fold(List(x))(delim => x.split(delim).toList)
+        ::(listOfValues.head, listOfValues.tail)
+      },
+      keyDelimiter,
+      source
+    )
 
   def fromMultiMap(
     map: Map[String, ::[String]],
@@ -52,7 +59,7 @@ object ConfigSource {
     property: ju.Properties,
     source: String = "properties",
     keyDelimiter: Char = '.',
-    valueDelimiter: Char = ':'
+    valueDelimiter: Option[Char] = None
   ): ConfigSource[String, String] = {
     val mapString = property.stringPropertyNames().asScala.foldLeft(Map.empty[String, String]) { (acc, a) =>
       acc.updated(a, property.getProperty(a))
@@ -68,7 +75,7 @@ object ConfigSource {
   def fromPropertiesFile[A](
     filePath: String,
     keyDelimiter: Char = '.',
-    valueDelimiter: Char = ':'
+    valueDelimiter: Option[Char] = None
   ): Task[ConfigSource[String, String]] =
     for {
       properties <- ZIO.bracket(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))(
@@ -83,23 +90,23 @@ object ConfigSource {
     } yield ConfigSource.fromProperties(properties, filePath, keyDelimiter, valueDelimiter)
 
   def fromSystemEnv: UIO[ConfigSource[String, String]] =
-    fromSystemEnv(':')
+    fromSystemEnv(None)
 
-  def fromSystemEnv(valueDelimiter: Char): UIO[ConfigSource[String, String]] =
+  def fromSystemEnv(valueDelimiter: Option[Char]): UIO[ConfigSource[String, String]] =
     UIO
       .effectTotal(sys.env)
       .map(map => ConfigSource.fromMap(map, SystemEnvironment, '_', valueDelimiter))
 
   def fromSystemProperties: UIO[ConfigSource[String, String]] =
-    fromSystemProperties(':')
+    fromSystemProperties(None)
 
-  def fromSystemProperties(valueDelimiter: Char): UIO[ConfigSource[String, String]] =
+  def fromSystemProperties(valueDelimiter: Option[Char]): UIO[ConfigSource[String, String]] =
     for {
       systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
-    } yield fromProperties(
-      systemProperties,
-      SystemProperties,
-      valueDelimiter
+    } yield ConfigSource.fromProperties(
+      property = systemProperties,
+      source = SystemProperties,
+      valueDelimiter = valueDelimiter
     )
 
   private[config] def fromMapInternal[A, B](

@@ -103,7 +103,7 @@ val sysEnvSource =
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val sysEnvSourceSupportingList = 
-  ConfigSource.fromSystemEnv(valueDelimiter = ',') 
+  ConfigSource.fromSystemEnv(valueDelimiter = Some(',')) 
 
 ```
 
@@ -122,7 +122,7 @@ val sysPropertiesSource =
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val sysPropertiesSourceWithList = 
-  ConfigSource.fromSystemProperties(valueDelimiter = ',') 
+  ConfigSource.fromSystemProperties(valueDelimiter = Some(',')) 
 
 ```
 Give valueDelimiter =  `,` 
@@ -143,7 +143,7 @@ read(myConfig from javaPropertiesSource)
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val javaPropertiesSourceWithList =
-  ConfigSource.fromProperties(javaProperties, valueDelimiter = ',')
+  ConfigSource.fromProperties(javaProperties, valueDelimiter = Some(','))
 ```
 
 ## Properties File Source
