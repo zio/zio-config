@@ -1,9 +1,9 @@
 package zio.config.examples
 
 import zio.config.ConfigDescriptor._
-//import zio.config.PropertyTree.{ Leaf, Record }
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
+import zio.config.PropertyTree.Leaf
 
 // List works quite nicely if the source is typesafe HOCON. Refer typesafe examples
 object ListExample extends App with EitherImpureOps {
@@ -18,8 +18,6 @@ object ListExample extends App with EitherImpureOps {
   val config: ConfigDescriptor[String, String, PgmConfig] =
     (string("xyz") |@| list(string("regions")))(PgmConfig.apply, PgmConfig.unapply)
 
-  val runtime = zio.Runtime.default
-
   val tree =
     ConfigSource.fromMultiMap(multiMap, "constant")
 
@@ -33,6 +31,19 @@ object ListExample extends App with EitherImpureOps {
     resultFromMultiMap ==
       Right(
         PgmConfig("something", List("australia", "canada", "usa"))
+      )
+  )
+
+  assert(
+    write(config, PgmConfig("something", List("australia", "canada", "usa"))) ==
+      Right(
+        PropertyTree
+          .Record(
+            Map(
+              "xyz"     -> Leaf("something"),
+              "regions" -> PropertyTree.Sequence(List(Leaf("australia"), Leaf("canada"), Leaf("usa")))
+            )
+          )
       )
   )
 }
