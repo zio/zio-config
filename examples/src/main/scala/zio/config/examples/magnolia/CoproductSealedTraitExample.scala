@@ -5,6 +5,7 @@ import zio.config.magnolia.DeriveConfigDescriptor._
 import zio.config.ConfigSource
 import zio.config.PropertyTree._
 import zio.config.examples.typesafe.EitherImpureOps
+import zio.config.magnolia.DeriveConfigDescriptor
 
 object CoproductSealedTraitExample extends App with EitherImpureOps {
 
@@ -18,9 +19,9 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
   case class Detail(firstName: String, lastName: String, region: Region)
   case class Region(suburb: String, city: String)
 
-  assert(read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "a"))) == Right(A))
-  assert(read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "b"))) == Right(B))
-  assert(read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "c"))) == Right(C))
+  assert(read(DeriveConfigDescriptor[X] from ConfigSource.fromMap(Map("x" -> "a"))) == Right(A))
+  assert(read(DeriveConfigDescriptor[X] from ConfigSource.fromMap(Map("x" -> "b"))) == Right(B))
+  assert(read(DeriveConfigDescriptor[X] from ConfigSource.fromMap(Map("x" -> "c"))) == Right(C))
   assert(
     read(
       descriptor[X] from ConfigSource.fromMap(
@@ -51,7 +52,7 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
   )
 
   assert(
-    write(descriptor[X], D(Detail("ff", "ll", Region("strath", "syd")))) ==
+    write(DeriveConfigDescriptor[X], D(Detail("ff", "ll", Region("strath", "syd")))) ==
       Right(
         Record(
           Map(
@@ -75,7 +76,7 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
       )
   )
 
-  assert(write(descriptor[X], A) == Right(Record(Map("x" -> Leaf("a")))))
-  assert(write(descriptor[X], B) == Right(Record(Map("x" -> Leaf("b")))))
-  assert(write(descriptor[X], C) == Right(Record(Map("x" -> Leaf("c")))))
+  assert(write(DeriveConfigDescriptor[X], A) == Right(Record(Map("x" -> Leaf("a")))))
+  assert(write(DeriveConfigDescriptor[X], B) == Right(Record(Map("x" -> Leaf("b")))))
+  assert(write(DeriveConfigDescriptor[X], C) == Right(Record(Map("x" -> Leaf("c")))))
 }

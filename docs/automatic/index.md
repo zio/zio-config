@@ -13,7 +13,7 @@ Take a look at the magnolia examples in `zio-config`
 
 ```scala mdoc:silent
 
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.magnolia.DeriveConfigDescriptor
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource
 
@@ -60,6 +60,7 @@ object CoproductSealedTraitExample extends App {
       .fromHoconString(
         s"""
            |x {
+             d {
            |  detail  {
            |    firstName : ff
            |    lastName  : ll
@@ -68,19 +69,18 @@ object CoproductSealedTraitExample extends App {
            |      suburb : strath
            |
            |    }
-           |
            |  }
-           |
+           | }
            |}
            |""".stripMargin
       )
       .loadOrThrow
 
-  assert(read(descriptor[X] from aHoconSource) == Right(A))
-  assert(read(descriptor[X] from bHoconSource) == Right(B))
-  assert(read(descriptor[X] from cHoconSource) == Right(C))
+  assert(read(DeriveConfigDescriptor[X] from aHoconSource) == Right(A))
+  assert(read(DeriveConfigDescriptor[X] from bHoconSource) == Right(B))
+  assert(read(DeriveConfigDescriptor[X] from cHoconSource) == Right(C))
   assert(
-    read(descriptor[X] from dHoconSource) == Right(
+    read(DeriveConfigDescriptor[X] from dHoconSource) == Right(
       D(Detail("ff", "ll", Region("strath", "syd")))
     )
   )
