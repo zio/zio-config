@@ -14,6 +14,7 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
   case object B                extends X
   case object C                extends X
   case class D(detail: Detail) extends X
+  case class E(detail: Detail) extends X
   case class Detail(firstName: String, lastName: String, region: Region)
   case class Region(suburb: String, city: String)
 
@@ -24,14 +25,28 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
     read(
       descriptor[X] from ConfigSource.fromMap(
         Map(
-          "x.detail.firstName"     -> "ff",
-          "x.detail.lastName"      -> "ll",
-          "x.detail.region.suburb" -> "strath",
-          "x.detail.region.city"   -> "syd"
+          "x.d.detail.firstName"     -> "ff",
+          "x.d.detail.lastName"      -> "ll",
+          "x.d.detail.region.suburb" -> "strath",
+          "x.d.detail.region.city"   -> "syd"
         )
       )
     ) == Right(
       D(Detail("ff", "ll", Region("strath", "syd")))
+    )
+  )
+  assert(
+    read(
+      descriptor[X] from ConfigSource.fromMap(
+        Map(
+          "x.e.detail.firstName"     -> "ff",
+          "x.e.detail.lastName"      -> "ll",
+          "x.e.detail.region.suburb" -> "strath",
+          "x.e.detail.region.city"   -> "syd"
+        )
+      )
+    ) == Right(
+      E(Detail("ff", "ll", Region("strath", "syd")))
     )
   )
 
@@ -42,11 +57,15 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
           Map(
             "x" -> Record(
               Map(
-                "detail" -> Record(
+                "d" -> Record(
                   Map(
-                    "region"    -> Record(Map("city" -> Leaf("syd"), "suburb" -> Leaf("strath"))),
-                    "lastName"  -> Leaf("ll"),
-                    "firstName" -> Leaf("ff")
+                    "detail" -> Record(
+                      Map(
+                        "region"    -> Record(Map("city" -> Leaf("syd"), "suburb" -> Leaf("strath"))),
+                        "lastName"  -> Leaf("ll"),
+                        "firstName" -> Leaf("ff")
+                      )
+                    )
                   )
                 )
               )
