@@ -90,7 +90,7 @@ object NestedConfigTestUtils {
       ).flatten.toMap
 
     def source: ConfigSource[String, String] =
-      ConfigSource.fromMap(map)
+      ConfigSource.fromMap(map, keyDelimiter = Some('.'))
   }
 
   val genNestedConfigParams: Gen[Random, TestParams] =

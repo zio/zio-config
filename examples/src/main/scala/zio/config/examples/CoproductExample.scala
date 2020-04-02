@@ -67,22 +67,26 @@ object CoproductExample extends App {
 
   val aSource = ConfigSource.fromMap(
     Map("any.name" -> "chris"),
-    "constant"
+    "constant",
+    Some('.')
   )
 
   val bSource = ConfigSource.fromMap(
     Map("body.height" -> "179"),
-    "constant"
+    "constant",
+    Some('.')
   )
 
   val cSource = ConfigSource.fromMap(
     Map("can" -> "false"),
-    "constant"
+    "constant",
+    Some('.')
   )
 
   val dSource = ConfigSource.fromMap(
     Map("dance" -> "I am Dancing !!"),
-    "constant"
+    "constant",
+    Some('.')
   )
 
   val runtime = zio.Runtime.default

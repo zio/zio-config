@@ -18,7 +18,7 @@ object AutomaticConfigTest
               val configDesc = descriptor[MyConfig]
 
               val source =
-                ConfigSource.fromMap(environment)
+                ConfigSource.fromMap(environment, keyDelimiter = Some('.'))
 
               val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
                 for {
