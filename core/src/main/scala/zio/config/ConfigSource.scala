@@ -93,7 +93,7 @@ object ConfigSource {
    *
    * Given
    * {{{
-   *   property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent")
+   *   property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
    *   keyDelimiter   = Some('.')
    *   valueDelimiter = Some(',')
    * }}}
@@ -126,7 +126,7 @@ object ConfigSource {
    *
    * Given
    * {{{
-   *   properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent")
+   *   properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
    *   keyDelimiter         = Some('.')
    *   valueDelimiter       = Some(',')
    * }}}
@@ -162,7 +162,7 @@ object ConfigSource {
    *
    * Given
    * {{{
-   *   vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERIALIZERS" = "confluent")
+   *   vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERIALIZERS" = "confluent"
    *   keyDelimiter     = Some('_')
    *   valueDelimiter   = Some(',')
    * }}}
@@ -188,7 +188,7 @@ object ConfigSource {
    *
    * Given
    * {{{
-   *   vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent")
+   *   vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
    *   keyDelimiter     = Some('.')
    *   valueDelimiter   = Some(',')
    * }}}
