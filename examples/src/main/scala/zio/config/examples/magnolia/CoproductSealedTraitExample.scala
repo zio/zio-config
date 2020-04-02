@@ -26,12 +26,13 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
   assert(
     read(
       descriptor[X] from ConfigSource.fromMap(
-        Map(
+        map = Map(
           "x.d.detail.firstName"     -> "ff",
           "x.d.detail.lastName"      -> "ll",
           "x.d.detail.region.suburb" -> "strath",
           "x.d.detail.region.city"   -> "syd"
-        )
+        ),
+        keyDelimiter = Some('.')
       )
     ) == Right(
       D(Detail("ff", "ll", Region("strath", "syd")))
@@ -45,7 +46,8 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
           "x.e.detail.lastName"      -> "ll",
           "x.e.detail.region.suburb" -> "strath",
           "x.e.detail.region.city"   -> "syd"
-        )
+        ),
+        keyDelimiter = Some('.')
       )
     ) == Right(
       E(Detail("ff", "ll", Region("strath", "syd")))
