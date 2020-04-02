@@ -105,7 +105,6 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
 }
 
 object ConfigDescriptor {
-
   final case class Default[K, V, A](config: ConfigDescriptor[K, V, A], value: A) extends ConfigDescriptor[K, V, A]
 
   final case class Describe[K, V, A](config: ConfigDescriptor[K, V, A], message: String)

@@ -80,9 +80,9 @@ there is a separate module called `zio-config-magnolia`.
 
 ```scala mdoc:silent
 
-import zio.config.magnolia.DeriveConfigDescriptor._
+import zio.config.magnolia.DeriveConfigDescriptor
 
-val myConfigAutomatic = descriptor[MyConfig]
+val myConfigAutomatic = DeriveConfigDescriptor[MyConfig]
 // ConfigDescriptor[String, String, MyConfig]
 
 ```

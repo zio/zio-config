@@ -20,13 +20,14 @@ object NestedConfigExample extends App {
   // For simplicity in example, we use map source. Works with HOCON.
   val source =
     ConfigSource.fromMap(
-      Map(
+      map = Map(
         "south.connection" -> "abc.com",
         "east.connection"  -> "xyz.com",
         "east.port"        -> "8888",
         "south.port"       -> "8111",
         "appName"          -> "myApp"
-      )
+      ),
+      keyDelimiter = Some('.')
     )
 
   val runtime = zio.Runtime.default
