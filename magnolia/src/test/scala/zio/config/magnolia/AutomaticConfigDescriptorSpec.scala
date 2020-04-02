@@ -46,12 +46,12 @@ object AutomaticConfigTest
 
 object AutomaticConfigTestUtils {
   sealed trait Credentials
-  case class Password(password: String) extends Credentials
-  case class Token(token: String)       extends Credentials
+  case class Password(value: String) extends Credentials
+  case class Token(value: String)    extends Credentials
 
   sealed trait Price
-  case class Description(description: String) extends Price
-  case class Currency(dollars: Double)        extends Price
+  case class Description(value: String) extends Price
+  case class Currency(value: Double)    extends Price
 
   final case class Aws(region: String, security: Credentials)
 
@@ -97,12 +97,12 @@ object AutomaticConfigTestUtils {
       partialMyConfig = Map(
         "aws.region" -> aws.region,
         aws.security match {
-          case Password(password) => "aws.security.credentials.password" -> password
-          case Token(token)       => "aws.security.credentials.token"    -> token
+          case Password(password) => "aws.security.credentials.password.value" -> password
+          case Token(token)       => "aws.security.credentials.token.value"    -> token
         },
         price match {
-          case Description(description) => "cost.price.description" -> description
-          case Currency(dollars)        => "cost.price.dollars"     -> dollars.toString
+          case Description(description) => "cost.price.description.value" -> description
+          case Currency(dollars)        => "cost.price.currency.value"    -> dollars.toString
         },
         "dburl.dburl" -> dbUrl.dburl,
         "port"        -> port.toString,

@@ -12,7 +12,7 @@ object Config {
     configDescriptor: ConfigDescriptor[String, String, A],
     source: String = "constant",
     keyDelimiter: Char = '.',
-    valueDelimiter: Char = ':'
+    valueDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
     fromConfigDescriptor(configDescriptor from ConfigSource.fromMap(map, source, keyDelimiter, valueDelimiter))
 
@@ -29,7 +29,7 @@ object Config {
     configDescriptor: ConfigDescriptor[String, String, A],
     source: String,
     keyDelimiter: Char = '.',
-    valueDelimiter: Char = ':'
+    valueDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
     fromConfigDescriptor(
       configDescriptor from ConfigSource.fromProperties(properties, source, keyDelimiter, valueDelimiter)
@@ -39,7 +39,7 @@ object Config {
     filePath: String,
     configDescriptor: ConfigDescriptor[String, String, A],
     keyDelimiter: Char = '.',
-    valueDelimiter: Char = ':'
+    valueDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
     fromConfigDescriptorM(
       ConfigSource
@@ -49,13 +49,13 @@ object Config {
 
   def fromSystemEnv[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
-    valueDelimiter: Char = ':'
+    valueDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
     fromConfigDescriptorM(ConfigSource.fromSystemEnv(valueDelimiter).map(configDescriptor from _))
 
   def fromSystemProperties[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
-    valueDelimiter: Char = ':'
+    valueDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): ZLayer[System, ReadError[String], Config[A]] =
     fromConfigDescriptorM(ConfigSource.fromSystemProperties(valueDelimiter).map(configDescriptor from _))
 
