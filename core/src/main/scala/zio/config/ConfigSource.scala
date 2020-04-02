@@ -178,7 +178,7 @@ object ConfigSource {
       .map(map => ConfigSource.fromMap(map, SystemEnvironment, keyDelimiter, valueDelimiter))
 
   def fromSystemProperties: UIO[ConfigSource[String, String]] =
-    fromSystemProperties(None)
+    fromSystemProperties(None, None)
 
   /**
    * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -196,12 +196,16 @@ object ConfigSource {
    * then, the below config will work
    *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    */
-  def fromSystemProperties(valueDelimiter: Option[Char]): UIO[ConfigSource[String, String]] =
+  def fromSystemProperties(
+    keyDelimiter: Option[Char],
+    valueDelimiter: Option[Char]
+  ): UIO[ConfigSource[String, String]] =
     for {
       systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
     } yield ConfigSource.fromProperties(
       property = systemProperties,
       source = SystemProperties,
+      keyDelimiter = keyDelimiter,
       valueDelimiter = valueDelimiter
     )
 

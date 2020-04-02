@@ -151,9 +151,10 @@ object Config {
    */
   def fromSystemProperties[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
+    keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): ZLayer[System, ReadError[String], Config[A]] =
-    fromConfigDescriptorM(ConfigSource.fromSystemProperties(valueDelimiter).map(configDescriptor from _))
+    fromConfigDescriptorM(ConfigSource.fromSystemProperties(keyDelimiter, valueDelimiter).map(configDescriptor from _))
 
   private[config] def fromConfigDescriptor[K, V, A](
     configDescriptor: ConfigDescriptor[K, V, A]
