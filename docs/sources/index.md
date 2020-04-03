@@ -103,12 +103,40 @@ val sysEnvSource =
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val sysEnvSourceSupportingList = 
-  ConfigSource.fromSystemEnv(valueDelimiter = ',') 
+  ConfigSource.fromSystemEnv(keyDelimiter = None, valueDelimiter = Some(',')) 
+
+// If you want to consider system-env as a nested config, provide keyDelimiter. Refer to API docs
+// Example, Given KAFKA_SERVERS = "servers1, server2"
+  ConfigSource.fromSystemEnv(keyDelimiter = Some('_'), valueDelimiter = Some(',')) 
+
 
 ```
 
+
+Provide keyDelimiter if you need to consider flattened config as a nested config.
+Provide valueDelimiter if you need any value to be a list
+   
+Example:
+
+```
+Given:
+
+{{{
+  property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
+  keyDelimiter   = Some('.')
+  valueDelimiter = Some(',')
+}}}
+   
+```
+then, the below config will work
+
+```scala
+nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+```
+
+
 Give valueDelimiter =  `,` 
-and environemnt with `PORT=1222,2221`; then reading config yields 
+and environment with `PORT=1222,2221`; then reading config yields 
 `ListConfig(xyz, List(1222, 2221), postgres)`
 
 ## System Properties
@@ -122,7 +150,12 @@ val sysPropertiesSource =
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val sysPropertiesSourceWithList = 
-  ConfigSource.fromSystemProperties(valueDelimiter = ',') 
+  ConfigSource.fromSystemProperties(None, valueDelimiter = Some(',')) 
+
+// If you want to consider system-properties as a nested config, provide keyDelimiter. Refer to API doc
+// Example, Given KAFKA.SERVERS = "servers1, server2"
+  ConfigSource.fromSystemProperties(keyDelimiter = Some('.'), valueDelimiter = Some(',')) 
+
 
 ```
 Give valueDelimiter =  `,` 
@@ -143,7 +176,7 @@ read(myConfig from javaPropertiesSource)
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val javaPropertiesSourceWithList =
-  ConfigSource.fromProperties(javaProperties, valueDelimiter = ',')
+  ConfigSource.fromProperties(javaProperties, valueDelimiter = Some(','))
 ```
 
 ## Properties File Source

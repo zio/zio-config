@@ -252,18 +252,30 @@ object PropertyTree {
   def fromMap[K, V](map: Map[K, V]): PropertyTree[K, V] =
     Record(map.map(t => t._1 -> Leaf[V](t._2)))
 
-  def fromStringMap(map: Map[String, String], keySep: Char, valueSep: Char): List[PropertyTree[String, String]] =
+  def fromStringMap(
+    map: Map[String, String],
+    keyDelimiter: Option[Char],
+    valueDelimiter: Option[Char]
+  ): List[PropertyTree[String, String]] =
     unflatten(
       map.map(
-        tuple =>
-          tuple._1.split(keySep).toVector.filterNot(_.trim == "") ->
-            (tuple._2
-              .split(valueSep)
-              .toList match {
+        tuple => {
+          val vectorOfKeys = keyDelimiter match {
+            case Some(keyDelimiter) => tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
+            case None               => Vector(tuple._1)
+          }
+          vectorOfKeys ->
+            (valueDelimiter.fold(List(tuple._2))(
+              delim =>
+                tuple._2
+                  .split(delim)
+                  .toList
+            ) match {
               case h :: tail =>
                 ::(h, tail)
               case Nil => singleton(tuple._2)
             })
+        }
       )
     )
 
