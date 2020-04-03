@@ -31,34 +31,31 @@ private[typesafe] trait PropertyTreeFunctions {
               if (keys.isEmpty) {
                 acc.withFallback(nextConfig.toConfig)
               } else {
-                acc.withFallback(acc.withValue(keys.head, nextConfig))
+                acc.withValue(keys.head, nextConfig)
               }
           }
         case PropertyTree.Empty => ConfigFactory.empty()
         case Sequence(values) =>
-          val result =
-            keys.headOption match {
-              case Some(head) =>
-                val r = partitionWith(values) {
-                  case Leaf(value) => Leaf(value)
-                }
+          keys.headOption match {
+            case Some(head) =>
+              val r = partitionWith(values) {
+                case Leaf(value) => Leaf(value)
+              }
 
-                if (r.nonEmpty)
-                  ConfigFactory.empty().withValue(head, ConfigValueFactory.fromIterable(r.map(_.value).asJava))
-                else
-                  ConfigFactory
-                    .empty()
-                    .withValue(
-                      head,
-                      ConfigValueFactory.fromIterable(values.map(loop(_, Vector.empty).root()).asJava)
-                    )
-                    .root()
-                    .toConfig
+              if (r.nonEmpty)
+                ConfigFactory.empty().withValue(head, ConfigValueFactory.fromIterable(r.map(_.value).asJava))
+              else
+                ConfigFactory
+                  .empty()
+                  .withValue(
+                    head,
+                    ConfigValueFactory.fromIterable(values.map(loop(_, Vector.empty).root()).asJava)
+                  )
+                  .root()
+                  .toConfig
 
-              case None => ConfigFactory.empty()
-            }
-
-          result
+            case None => ConfigFactory.empty()
+          }
       }
 
     loop(tree, Vector.empty).root()
