@@ -1,10 +1,10 @@
 package zio.config
 
-import java.io.{File, FileInputStream}
-import java.{util => ju}
+import java.io.{ File, FileInputStream }
+import java.{ util => ju }
 
 import zio.config.PropertyTree.unflatten
-import zio.{Task, UIO, ZIO}
+import zio.{ Task, UIO, ZIO }
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
