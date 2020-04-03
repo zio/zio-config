@@ -21,8 +21,8 @@ object ArgsConfigTest extends DefaultRunnableSpec {
 
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
-      }
-      /*testM("Configuration from arguments roundtrip single arg --key=value") {
+      },
+      testM("Configuration from arguments roundtrip single arg --key=value") {
         checkM(genAppConfig) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
@@ -32,7 +32,7 @@ object ArgsConfigTest extends DefaultRunnableSpec {
 
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
-      }*/
+      }
     )
 
   def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Config[AppConfig]] =
