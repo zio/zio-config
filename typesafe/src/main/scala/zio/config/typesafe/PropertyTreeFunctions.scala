@@ -7,7 +7,7 @@ import scala.collection.JavaConverters._
 
 import scala.collection.immutable.Nil
 
-trait PropertyTreeFunctions {
+private[typesafe] trait PropertyTreeFunctions {
   def treeToTypesafeConfig(
     tree: PropertyTree[String, String]
   ): com.typesafe.config.ConfigObject = {
