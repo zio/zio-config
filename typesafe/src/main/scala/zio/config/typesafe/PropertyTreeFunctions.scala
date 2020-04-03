@@ -20,18 +20,17 @@ private[typesafe] trait PropertyTreeFunctions {
 
         case Record(value) =>
           value.toList.foldLeft(ConfigFactory.empty(): com.typesafe.config.Config) {
-            case (acc, v) =>
-              val path = keys :+ v._1
+            case (acc, (k, v)) =>
+              val path = keys :+ k
               val nextConfig =
                 keys.toList match {
-                  case _ :: t if t.nonEmpty => loop(v._2, path).getObject(keys.tail.mkString("."))
-                  case _                    => loop(v._2, path).root()
+                  case _ :: t if t.nonEmpty => loop(v, path).getObject(keys.tail.mkString("."))
+                  case _                    => loop(v, path).root()
                 }
 
-              if (keys.isEmpty) {
-                acc.withFallback(nextConfig.toConfig)
-              } else {
-                acc.withValue(keys.head, nextConfig)
+              keys.headOption match {
+                case Some(head) => acc.withValue(head, nextConfig)
+                case None       => acc.withFallback(nextConfig.toConfig)
               }
           }
         case PropertyTree.Empty => ConfigFactory.empty()
