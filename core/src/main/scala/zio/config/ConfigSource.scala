@@ -33,10 +33,26 @@ object ConfigSource {
   def empty[K, V]: ConfigSource[K, V] =
     ConfigSource(_ => PropertyTree.empty, Nil)
 
+  /**
+   * Provide keyDelimiter if you need to consider flattened config as a nested config.
+   * Provide valueDelimiter if you need any value to be a list
+   *
+   * Example:
+   *
+   * Given
+   * {{{
+   *   map            = Map("KAFKA_SERVERS" -> "server1, server2", "KAFKA_SERIALIZERS"  -> "confluent")
+   *   keyDelimiter   = Some('_')
+   *   valueDelimiter = Some(',')
+   * }}}
+   *
+   * then, the below config will work
+   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   */
   def fromMap(
     map: Map[String, String],
     source: String = "constant",
-    keyDelimiter: Char = '.',
+    keyDelimiter: Option[Char] = None,
     valueDelimter: Option[Char] = None
   ): ConfigSource[String, String] =
     fromMapInternal(map)(
@@ -48,17 +64,47 @@ object ConfigSource {
       source
     )
 
+  /**
+   * Provide keyDelimiter if you need to consider flattened config as a nested config.
+   *
+   * Example:
+   *
+   * Given
+   * {{{
+   *   map = Map("KAFKA_SERVERS" -> singleton(server1), "KAFKA_SERIALIZERS"  -> singleton("confluent"))
+   *   keyDelimiter = Some('_')
+   * }}}
+   *
+   * then, the below config will work
+   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   */
   def fromMultiMap(
     map: Map[String, ::[String]],
     source: String = "constant",
-    keyDelimiter: Char = '.'
+    keyDelimiter: Option[Char] = None
   ): ConfigSource[String, String] =
     fromMapInternal(map)(identity, keyDelimiter, source)
 
+  /**
+   * Provide keyDelimiter if you need to consider flattened config as a nested config.
+   * Provide valueDelimiter if you need any value to be a list
+   *
+   * Example:
+   *
+   * Given
+   * {{{
+   *   property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
+   *   keyDelimiter   = Some('.')
+   *   valueDelimiter = Some(',')
+   * }}}
+   *
+   * then, the below config will work
+   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   */
   def fromProperties(
     property: ju.Properties,
     source: String = "properties",
-    keyDelimiter: Char = '.',
+    keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
   ): ConfigSource[String, String] = {
     val mapString = property.stringPropertyNames().asScala.foldLeft(Map.empty[String, String]) { (acc, a) =>
@@ -72,9 +118,25 @@ object ConfigSource {
     )
   }
 
+  /**
+   * Provide keyDelimiter if you need to consider flattened config as a nested config.
+   * Provide valueDelimiter if you need any value to be a list
+   *
+   * Example:
+   *
+   * Given
+   * {{{
+   *   properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
+   *   keyDelimiter         = Some('.')
+   *   valueDelimiter       = Some(',')
+   * }}}
+   *
+   * then, the below config will work
+   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   */
   def fromPropertiesFile[A](
     filePath: String,
-    keyDelimiter: Char = '.',
+    keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
   ): Task[ConfigSource[String, String]] =
     for {
@@ -90,34 +152,76 @@ object ConfigSource {
     } yield ConfigSource.fromProperties(properties, filePath, keyDelimiter, valueDelimiter)
 
   def fromSystemEnv: UIO[ConfigSource[String, String]] =
-    fromSystemEnv(None)
+    fromSystemEnv(None, None)
 
-  def fromSystemEnv(valueDelimiter: Option[Char]): UIO[ConfigSource[String, String]] =
+  /**
+   * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
+   * Consider providing valueDelimiter if you need any value to be a list
+   *
+   * Example:
+   *
+   * Given
+   * {{{
+   *   vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERIALIZERS" = "confluent"
+   *   keyDelimiter     = Some('_')
+   *   valueDelimiter   = Some(',')
+   * }}}
+   *
+   * then, the below config will work
+   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *
+   * Note: The delimiter '.' for keys doesn't work in system environment.
+   */
+  def fromSystemEnv(keyDelimiter: Option[Char], valueDelimiter: Option[Char]): UIO[ConfigSource[String, String]] =
     UIO
       .effectTotal(sys.env)
-      .map(map => ConfigSource.fromMap(map, SystemEnvironment, '_', valueDelimiter))
+      .map(map => ConfigSource.fromMap(map, SystemEnvironment, keyDelimiter, valueDelimiter))
 
   def fromSystemProperties: UIO[ConfigSource[String, String]] =
-    fromSystemProperties(None)
+    fromSystemProperties(None, None)
 
-  def fromSystemProperties(valueDelimiter: Option[Char]): UIO[ConfigSource[String, String]] =
+  /**
+   * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
+   * Consider providing valueDelimiter if you need any value to be a list
+   *
+   * Example:
+   *
+   * Given
+   * {{{
+   *   vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
+   *   keyDelimiter     = Some('.')
+   *   valueDelimiter   = Some(',')
+   * }}}
+   *
+   * then, the below config will work
+   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   */
+  def fromSystemProperties(
+    keyDelimiter: Option[Char],
+    valueDelimiter: Option[Char]
+  ): UIO[ConfigSource[String, String]] =
     for {
       systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
     } yield ConfigSource.fromProperties(
       property = systemProperties,
       source = SystemProperties,
+      keyDelimiter = keyDelimiter,
       valueDelimiter = valueDelimiter
     )
 
   private[config] def fromMapInternal[A, B](
     map: Map[String, A]
-  )(f: A => ::[B], keyDelimiter: Char, source: String): ConfigSource[String, B] =
+  )(f: A => ::[B], keyDelimiter: Option[Char], source: String): ConfigSource[String, B] =
     fromPropertyTrees(
       unflatten(
         map.map(
-          tuple =>
-            tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "") ->
-              f(tuple._2)
+          tuple => {
+            val vectorOfKeys = keyDelimiter match {
+              case Some(keyDelimiter) => tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
+              case None               => Vector(tuple._1)
+            }
+            vectorOfKeys -> f(tuple._2)
+          }
         )
       ),
       source
