@@ -32,6 +32,7 @@ object ConfigSource {
   val SystemEnvironment = "system environment"
   val SystemProperties  = "system properties"
 
+  /** Forming configuration from command line arguments, eg `List(--param1=xxxx, --param2=yyyy)` */
   def fromArgs(
     args: List[String],
     keyDelimiter: Option[Char],
@@ -104,34 +105,6 @@ object ConfigSource {
     keyDelimiter: Option[Char] = None
   ): ConfigSource[String, String] =
     fromMapInternal(map)(identity, keyDelimiter, source)
-
-//  /** Forming configuration from command line arguments, eg `List(--param1=xxxx, --param2=yyyy)` */
-//  def fromArgs(args: List[String], separator: Option[String] = None): ConfigSource[String, String] = {
-//    val map =
-//      args
-//        .filter(s => s.startsWith("--") && s.contains("="))
-//        .map(s => s.substring(2).split('=').toList)
-//        .flatMap {
-//          _ match {
-//            case s1 :: s2 :: Nil => List((s1, s2))
-//            case _               => Nil
-//          }
-//        }
-//        .toMap
-//
-//    ConfigSource(
-//      (path: Vector[String]) => {
-//        val key = path.mkString(separator.getOrElse(""))
-//
-//        ZIO
-//          .succeed(map.get(key))
-//          .map(_.map(value => ConfigValue(::(value, Nil))))
-//          .flatMap(IO.fromOption(_))
-//          .mapError[ReadErrorsVector[String, String]](_ => singleton(ReadError.MissingValue(path)))
-//      },
-//      "JVM command line arguments" :: Nil
-//    )
-//  }
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
