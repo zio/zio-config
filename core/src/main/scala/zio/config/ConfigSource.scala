@@ -1,36 +1,54 @@
 package zio.config
 
+import java.io.{File, FileInputStream}
 import java.{util => ju}
 
-import zio.UIO
+import zio.config.PropertyTree.unflatten
+import zio.{Task, UIO, ZIO}
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
-import zio.config.PropertyTree.unflatten
-import zio.ZIO
-import java.io.FileInputStream
-import java.io.File
-
-import zio.Task
 
 final case class ConfigSource[K, V](
   getConfigValue: Vector[K] => PropertyTree[K, V],
   sourceDescription: List[String]
 ) { self =>
-  final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+  def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     ConfigSource(
       k => getConfigValue(k).getOrElse(that.getConfigValue(k)),
       if (self.sourceDescription == that.sourceDescription) self.sourceDescription
       else self.sourceDescription ++ that.sourceDescription
     )
 
-  final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+  def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     self orElse that
+
+  def contramap[W](f: W => V): ConfigSource[K, W] =
+    ???
+
 }
 
 object ConfigSource {
   val SystemEnvironment = "system environment"
   val SystemProperties  = "system properties"
+
+  def fromArgs(
+    args: List[String],
+    keyDelimiter: Option[Char],
+    valueDelimiter: Option[Char]
+  ): UIO[ConfigSource[String, String]] =
+    UIO.effectTotal {
+      args
+        .filter(s => s.startsWith("--") && s.contains("="))
+        .map(s => s.substring(2).split('=').toList)
+        .flatMap {
+          _ match {
+            case s1 :: s2 :: Nil => List((s1, s2))
+            case _               => Nil
+          }
+        }
+        .toMap
+    }.map(map => ConfigSource.fromMap(map, "command line args", keyDelimiter, valueDelimiter))
 
   def empty[K, V]: ConfigSource[K, V] =
     ConfigSource(_ => PropertyTree.empty, Nil)
@@ -55,11 +73,11 @@ object ConfigSource {
     map: Map[String, String],
     source: String = "constant",
     keyDelimiter: Option[Char] = None,
-    valueDelimter: Option[Char] = None
+    valueDelimiter: Option[Char] = None
   ): ConfigSource[String, String] =
     fromMapInternal(map)(
       x => {
-        val listOfValues = valueDelimter.fold(List(x))(delim => x.split(delim).toList)
+        val listOfValues = valueDelimiter.fold(List(x))(delim => x.split(delim).toList)
         ::(listOfValues.head, listOfValues.tail)
       },
       keyDelimiter,

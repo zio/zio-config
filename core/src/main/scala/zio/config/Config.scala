@@ -1,9 +1,18 @@
 package zio.config
 
+import java.util.Properties
+
 import zio.system.System
-import zio.{Layer, Tagged, ZIO, ZLayer}
+import zio.{ Layer, Tagged, ZIO, ZLayer }
 
 object Config {
+  def fromArgs[K, V, A](
+    args: List[String],
+    configDescriptor: ConfigDescriptor[String, String, A],
+    keyDelimiter: Option[Char] = None,
+    valueDelimiter: Option[Char] = None
+  )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+    fromConfigDescriptorM(ConfigSource.fromArgs(args, keyDelimiter, valueDelimiter).map(configDescriptor from _))
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -51,13 +60,6 @@ object Config {
     keyDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
     fromConfigDescriptor(configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter))
-
-  //  def fromArgs[A](
-  //    configDescriptor: ConfigDescriptor[String, String, A],
-  //    args: List[String],
-  //    valueDelimiter: Option[String] = None
-  //  )(implicit tagged: Tagged[Service[A]]): ZLayer[Any, ReadErrors[Vector[String], String], Config[A]] =
-  //    fromConfigDescriptor(ConfigSource.fromArgs(args, valueDelimiter), configDescriptor)
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.

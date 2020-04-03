@@ -1,23 +1,23 @@
 package zio.config
 
-import zio.config.ConfigDescriptor.{boolean, nested, string}
+import zio.config.ConfigDescriptor.{ boolean, nested, string }
 import zio.config.ReadError.ConversionError
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test.Gen.alphaNumericChar
 import zio.test.environment.TestEnvironment
-import zio.test.{DefaultRunnableSpec, _}
-import zio.{IO, ZIO}
+import zio.test.{ DefaultRunnableSpec, _ }
+import zio.{ IO, ZIO }
 
-object ArgsConfigTest extends DefaultRunnableSpec {
+object MapConfigTest extends DefaultRunnableSpec {
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration from command-line-style arguments")(
       testM("Configuration from arguments roundtrip") {
         checkM(genAppConfig) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
-              args   <- toArgs(AppConfig.descriptor, appConfig)
-              reread <- AppConfig.fromArgs(args)
+              args   <- toMap(AppConfig.descriptor, appConfig)
+              reread <- AppConfig.fromMap(args)
             } yield reread.get
 
           assertM(p2.either)(isRight(equalTo(appConfig)))
@@ -58,8 +58,8 @@ object ArgsConfigTest extends DefaultRunnableSpec {
   )
 
   object AppConfig {
-    def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Config[AppConfig]] =
-      ZIO.environment.provideLayer(Config.fromArgs(args, descriptor))
+    def fromMap(args: Map[String, String]): ZIO[Any, ReadError[String], Config[AppConfig]] =
+      ZIO.environment.provideLayer(Config.fromMap(args, descriptor, "WTL", None, None))
 
     private val prefix: String        = "SystemF"
     private val prefixAws: String     = concat(prefix, "aws")
@@ -127,19 +127,20 @@ object ArgsConfigTest extends DefaultRunnableSpec {
       s <- Gen.stringN(n)(alphaNumericChar)
     } yield s
 
-  def toArgs[A](
+  def toMap[A](
     descriptor: ConfigDescriptor[String, String, A],
     a: A
-  ): ZIO[Any, ReadError[String], List[String]] =
+  ): ZIO[Any, ReadError[String], Map[String, String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(
         s => ConversionError[String](Vector(Left(0)), s),
         propertyTreeArgs
       )
+      .map(tuples => Map(tuples : _*))
 
-  def propertyTreeArgs(propertyTree: PropertyTree[String, String]): List[String] =
+  def propertyTreeArgs(propertyTree: PropertyTree[String, String]): List[(String, String)] =
     propertyTree.flatten.toList.map { t: (Vector[String], ::[String]) =>
-      s"--${t._1.mkString(separator)}=${t._2.mkString(separator)}"
+      (s"${t._1.mkString(separator)}", s"${t._2.mkString(separator)}")
     }
 
 }
