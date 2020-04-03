@@ -1,6 +1,6 @@
 package zio.config.typesafe
 
-import com.typesafe.config.{ ConfigFactory, ConfigValueFactory, ConfigValueType }
+import com.typesafe.config.{ ConfigFactory, ConfigValueType }
 import zio.config.ConfigSource
 import zio.config._
 import zio.config.PropertyTree.Leaf
@@ -15,8 +15,6 @@ import java.io.File
 import zio.IO
 import zio.Task
 import zio.ZIO
-
-import scala.collection.immutable.Nil
 
 object TypeSafeConfigSource {
   def fromDefaultLoader: Either[String, ConfigSource[String, String]] =
@@ -173,101 +171,4 @@ object TypeSafeConfigSource {
           case Right(value) => Right(acc.updated(key, value))
         }
     }
-
-  def writeHocon(
-    tree: PropertyTree[String, String]
-  ): com.typesafe.config.ConfigObject = {
-    def loop(tree: PropertyTree[String, String], keys: Vector[String]): com.typesafe.config.Config =
-      tree match {
-        case Leaf(value) =>
-          keys.lastOption.fold(ConfigFactory.empty())(
-            last => ConfigFactory.empty().withValue(last, ConfigValueFactory.fromAnyRef(value))
-          )
-
-        case Record(value) =>
-          value.toList.foldLeft(ConfigFactory.empty(): com.typesafe.config.Config) {
-            case (acc, v) =>
-              val path = keys :+ v._1
-              val nextConfig =
-                keys.toList match {
-                  case _ :: t if t.nonEmpty => loop(v._2, path).getObject(keys.tail.mkString("."))
-                  case _                    => loop(v._2, path).root()
-                }
-
-              if (keys.isEmpty) nextConfig.toConfig else acc.withValue(keys.head, nextConfig)
-          }
-        case PropertyTree.Empty => ConfigFactory.empty()
-        case Sequence(values) =>
-          val result =
-            keys.headOption match {
-              case Some(head) =>
-                val (r, _) = partitionWith(values) {
-                  case Leaf(value) => Leaf(value)
-                }
-
-                if (r.nonEmpty)
-                  ConfigFactory.empty().withValue(head, ConfigValueFactory.fromIterable(r.map(_.value).asJava))
-                else
-                  ConfigFactory
-                    .empty()
-                    .withValue(
-                      head,
-                      ConfigValueFactory.fromIterable(values.map(loop(_, Vector.empty).root()).asJava)
-                    )
-                    .root()
-                    .toConfig
-
-              case None => ConfigFactory.empty()
-            }
-
-          result
-      }
-
-    loop(tree, Vector.empty).root()
-  }
-
-  def partitionWith[K, V, A](
-    trees: List[PropertyTree[K, V]]
-  )(pf: PartialFunction[PropertyTree[K, V], A]): (List[A], List[PropertyTree[K, V]]) =
-    trees.map {
-      case tree if pf.isDefinedAt(tree) => (pf(tree) :: Nil, Nil)
-      case tree                         => (Nil, tree :: Nil)
-    }.foldLeft((List.empty[A], List.empty[PropertyTree[K, V]])) {
-      case ((accLeft, accRight), (left, right)) => (accLeft ++ left, accRight ++ right)
-    }
-
-}
-
-object Main extends App {
-  println(
-    TypeSafeConfigSource
-      .writeHocon(
-        Record(
-          Map(
-            "key1" -> Sequence(
-              List(
-                Record(Map("key2" -> Leaf("value2"))),
-                Record(Map("key3" -> Leaf("value3"))),
-                Record(Map("key4" -> Sequence(List(Leaf("value4")))))
-              )
-            )
-          )
-        )
-      )
-      .render()
-  )
-
-  println(
-    TypeSafeConfigSource
-      .writeHocon(
-        PropertyTree
-          .Record(
-            Map(
-              "xyz"     -> Leaf("something"),
-              "regions" -> PropertyTree.Sequence(List(Leaf("australia"), Leaf("canada"), Leaf("usa")))
-            )
-          )
-      )
-      .render()
-  )
 }
