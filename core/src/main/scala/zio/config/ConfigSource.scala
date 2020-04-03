@@ -6,6 +6,7 @@ import java.{ util => ju }
 import zio.config.PropertyTree.unflatten
 import zio.{ Task, UIO, ZIO }
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 
@@ -23,36 +24,34 @@ final case class ConfigSource[K, V](
   def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     self orElse that
 
-  def contramap[W](f: W => V): ConfigSource[K, W] =
-    ???
-
 }
 
 object ConfigSource {
   val SystemEnvironment = "system environment"
   val SystemProperties  = "system properties"
 
-  /** Forming configuration from command line arguments, eg `List(--param1=xxxx, --param2=yyyy)` */
+  def empty[K, V]: ConfigSource[K, V] =
+    ConfigSource(_ => PropertyTree.empty, Nil)
+
+  /**
+   * Forming configuration from command line arguments, eg `List(--param1=xxxx, --param2=yyyy)`
+   *
+   * Pack all of the command-line arguments into multiple property lists. Using PropertyTree.mergeAll, we can merge a
+   * bunch of command line options into the smallest possible set of property trees, and then use those property trees
+   * to perform lookup.
+   */
   def fromArgs(
     args: List[String],
     keyDelimiter: Option[Char],
     valueDelimiter: Option[Char]
   ): UIO[ConfigSource[String, String]] =
-    UIO.effectTotal {
-      args
-        .filter(s => s.startsWith("--") && s.contains("="))
-        .map(s => s.substring(2).split('=').toList)
-        .flatMap {
-          _ match {
-            case s1 :: s2 :: Nil => List((s1, s2))
-            case _               => Nil
-          }
+    UIO.effectTotal(argsAsKeyValues(args)).map { kvs =>
+      mergeAll(
+        kvs.map { kv =>
+          fromMapInternal(Map(kv))(splitDelimited(_, valueDelimiter), keyDelimiter, "command line arg")
         }
-        .toMap
-    }.map(map => ConfigSource.fromMap(map, "command line args", keyDelimiter, valueDelimiter))
-
-  def empty[K, V]: ConfigSource[K, V] =
-    ConfigSource(_ => PropertyTree.empty, Nil)
+      )
+    }
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -76,14 +75,7 @@ object ConfigSource {
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
   ): ConfigSource[String, String] =
-    fromMapInternal(map)(
-      x => {
-        val listOfValues = valueDelimiter.fold(List(x))(delim => x.split(delim).toList)
-        ::(listOfValues.head, listOfValues.tail)
-      },
-      keyDelimiter,
-      source
-    )
+    fromMapInternal(map)(splitDelimited(_, valueDelimiter), keyDelimiter, source)
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -230,6 +222,26 @@ object ConfigSource {
       valueDelimiter = valueDelimiter
     )
 
+  /**
+   *
+   * Loop through all command line arguments, looking for the form:
+   * --xyz=xyz
+   * --xyz xyz
+   * -xyz=xyz
+   * -xyz xyz
+   */
+  private[config] def argsAsKeyValues(args: List[String]): List[(String, String)] =
+    args.flatMap { s =>
+      if (s.startsWith("-") && s.contains("="))
+        s.substring(2).split('=').toList match {
+          case k :: v :: Nil => List(k, v)
+          case _             => Nil
+        }
+      else List(s)
+    }.sliding(2, 2) // take consecutive pairs of key then value
+      .map(x => (removeLeading(x.head, '-'), x.tail.head))
+      .toList
+
   private[config] def fromMapInternal[A, B](
     map: Map[String, A]
   )(f: A => ::[B], keyDelimiter: Option[Char], source: String): ConfigSource[String, B] =
@@ -266,4 +278,15 @@ object ConfigSource {
   private[config] def mergeAll[K, V](sources: Iterable[ConfigSource[K, V]]): ConfigSource[K, V] =
     sources.foldLeft(ConfigSource.empty: ConfigSource[K, V])(_ orElse _)
 
+  @tailrec
+  private[config] def removeLeading(s: String, toRemove: Char): String =
+    s.headOption match {
+      case Some(c) if (c == toRemove) => removeLeading(s.tail, toRemove)
+      case _                          => s
+    }
+
+  private[config] def splitDelimited(s: String, valueDelimiter: Option[Char]) = {
+    val listOfValues: List[String] = valueDelimiter.fold(List(s))(delim => s.split(delim).toList)
+    ::(listOfValues.head, listOfValues.tail)
+  }
 }
