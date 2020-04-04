@@ -14,14 +14,14 @@ final case class ConfigSource[K, V](
   getConfigValue: Vector[K] => PropertyTree[K, V],
   sourceDescription: List[String]
 ) { self =>
-  def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+  final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     ConfigSource(
       k => getConfigValue(k).getOrElse(that.getConfigValue(k)),
       if (self.sourceDescription == that.sourceDescription) self.sourceDescription
       else self.sourceDescription ++ that.sourceDescription
     )
 
-  def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+  final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     self orElse that
 
 }
@@ -36,9 +36,12 @@ object ConfigSource {
   /**
    * Forming configuration from command line arguments, eg `List(--param1=xxxx, --param2=yyyy)`
    *
-   * Pack all of the command-line arguments into multiple property lists. Using PropertyTree.mergeAll, we can merge a
-   * bunch of command line options into the smallest possible set of property trees, and then use those property trees
-   * to perform lookup.
+   * Pack all of the command-line arguments into multiple property lists. Using PropertyTree.mergeAll, merge a
+   * bunch of command line options into the smallest possible set of property trees, and then use those
+   * property trees to perform lookup.
+   *
+   * This is an experimental implementation for handling of key/value switches, and is not a
+   * fully-featured command line parser.
    */
   def fromArgs(
     args: List[String],
@@ -223,12 +226,10 @@ object ConfigSource {
     )
 
   /**
-   *
    * Loop through all command line arguments, looking for the form:
-   * --xyz=xyz
-   * --xyz xyz
-   * -xyz=xyz
-   * -xyz xyz
+   * --xyz=xyz --xyz xyz -xyz=xyz -xyz xyz
+   * In the case of the key=value syntax, the arg is split into two with the '=' removed. The args
+   * are then gathered in pairs
    */
   private[config] def argsAsKeyValues(args: List[String]): List[(String, String)] =
     args.flatMap { s =>
@@ -281,8 +282,8 @@ object ConfigSource {
   @tailrec
   private[config] def removeLeading(s: String, toRemove: Char): String =
     s.headOption match {
-      case Some(c) if (c == toRemove) => removeLeading(s.tail, toRemove)
-      case _                          => s
+      case Some(c) if c == toRemove => removeLeading(s.tail, toRemove)
+      case _                        => s
     }
 
   private[config] def splitDelimited(s: String, valueDelimiter: Option[Char]) = {
