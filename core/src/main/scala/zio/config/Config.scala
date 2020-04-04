@@ -1,10 +1,31 @@
 package zio.config
 
-import zio.system.System
-import zio.{ Layer, Tagged, ZIO, ZLayer }
 import java.util.Properties
 
+import zio.system.System
+import zio.{ Layer, Tagged, ZIO, ZLayer }
+
 object Config {
+
+  /**
+   * EXPERIMENTAL
+   *
+   * Forming configuration from command line arguments, eg `List(--param1=xxxx, --param2=yyyy)`
+   *
+   * Pack all of the command-line arguments into multiple property lists. Using PropertyTree.mergeAll, merge a
+   * bunch of command line options into the smallest possible set of property trees, and then use those
+   * property trees to perform lookup.
+   *
+   * This is a simple implementation for handling of key/value switches, and is not a
+   * fully-featured command line parser.
+   */
+  def fromArgs[K, V, A](
+    args: List[String],
+    configDescriptor: ConfigDescriptor[String, String, A],
+    keyDelimiter: Option[Char] = None,
+    valueDelimiter: Option[Char] = None
+  )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+    fromConfigDescriptorM(ConfigSource.fromArgs(args, keyDelimiter, valueDelimiter).map(configDescriptor from _))
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
