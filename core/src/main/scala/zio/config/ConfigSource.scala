@@ -34,13 +34,15 @@ object ConfigSource {
     ConfigSource(_ => PropertyTree.empty, Nil)
 
   /**
+   * EXPERIMENTAL
+   *
    * Forming configuration from command line arguments, eg `List(--param1=xxxx, --param2=yyyy)`
    *
    * Pack all of the command-line arguments into multiple property lists. Using PropertyTree.mergeAll, merge a
    * bunch of command line options into the smallest possible set of property trees, and then use those
    * property trees to perform lookup.
    *
-   * This is an experimental implementation for handling of key/value switches, and is not a
+   * This is a simple implementation for handling of key/value switches, and is not a
    * fully-featured command line parser.
    */
   def fromArgs(
