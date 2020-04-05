@@ -105,7 +105,6 @@ object CommandLineArgs extends App {
 
   type KeyValue = These[Key, Value]
 
-  // I have to do this check even before forming a config source, because the p
   object KeyValue {
     def mk(s: String): Option[KeyValue] = {
       val splitted = s.split('=').toList
