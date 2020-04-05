@@ -9,7 +9,7 @@ import scala.collection.immutable.Nil
 object CommandLineArgs extends App {
 
   val argss =
-    "--database -username=1 --database.password=hi --database -url=jdbc://xyz --vault -username=3 --vault -password=10 --vault -something=11 --users 100 --region 111"
+    "--database -username=1 --database.password=hi --database -url=jdbc://xyz --vault -username=3 --vault.password=10 --vault -something=11 --users 100 --region 111"
 
   def unflatten(key: List[String], tree: PropertyTree[String, String]): PropertyTree[String, String] =
     key match {
@@ -36,9 +36,14 @@ object CommandLineArgs extends App {
                             unflattenWith(l2.value, Leaf(r2.value)) :: loop(h3)
 
                         case This(l2) =>
-                          unflattenWith(l1.value, Leaf(r1.value)) :: loop(List(h3.head)).map(
-                            tree => unflattenWith(l2.value, tree)
-                          ) ++ loop(h3.tail)
+                          unflattenWith(l1.value, Leaf(r1.value)) :: h3.headOption.fold(
+                            Nil: List[PropertyTree[String, String]]
+                          )(
+                            x =>
+                              loop(List(x)).map(
+                                tree => unflattenWith(l2.value, tree)
+                              ) ++ loop(h3.tail)
+                          )
 
                         case That(r2) => Leaf(r1.value) :: Leaf(r2.value) :: loop(h3)
                       }
