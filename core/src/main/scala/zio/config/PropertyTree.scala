@@ -77,15 +77,13 @@ sealed trait PropertyTree[+K, +V] { self =>
 
   final def getPath[K1 >: K](k: List[K1]): PropertyTree[K1, V] =
     k match {
-      case Nil =>
-        self
+      case Nil => self
       case head :: next =>
         self match {
-          case Empty   => Empty
-          case Leaf(r) => Leaf(r)
-          case Record(value) =>
-            value.get(head.asInstanceOf[K]).map(_.getPath(next)).getOrElse(Empty)
-          case Sequence(r) => Sequence(r.map(_.getPath(k)))
+          case Empty         => Empty
+          case Leaf(_)       => Empty
+          case Record(value) => value.get(head.asInstanceOf[K]).map(_.getPath(next)).getOrElse(Empty)
+          case Sequence(r)   => Sequence(r.map(_.getPath(k)))
 
         }
     }
@@ -186,10 +184,10 @@ sealed trait PropertyTree[+K, +V] { self =>
 
         //Fixme what should happen if we have Sequence(Nil). We don't know whether or not we should do at this level, or at a deeper level, which we don't know
         (vs, rest) match {
-          case (vs, Nil) =>
-            vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
           case (Nil, _) =>
             Sequence(value.map(_.reduceInner(f)))
+          case (vs, Nil) =>
+            vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
           case (vs, res) =>
             Sequence(vs.map(Leaf(_))).zipWith(Sequence(res).reduceInner(f))(f)
         }

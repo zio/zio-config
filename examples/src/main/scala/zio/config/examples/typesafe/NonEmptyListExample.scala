@@ -208,16 +208,6 @@ object NonEmptyListExample extends App with EitherImpureOps {
 
   assert(zioConfigResult == Right(result))
 
-  println(
-    read(descriptor[A] from ConfigSource.fromPropertyTree(write(descriptor[A], result).loadOrThrow, "tree"))
-  )
-
-  assert(
-    read(descriptor[A] from ConfigSource.fromPropertyTree(write(descriptor[A], result).loadOrThrow, "tree")) == Right(
-      result
-    )
-  )
-
   val kebabCaseConfig =
     """
       |export-details = [
