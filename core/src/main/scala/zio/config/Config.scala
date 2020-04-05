@@ -13,21 +13,30 @@ object Config {
    * Forming configuration from command line arguments.
    * Assumption. All keys should start with either `-` or `--`
    *
-   * Apart from the above assumptions, the source works similar to other sources, while adhering to well-known command-line arguments patterns.
+   * Apart from the above assumptions, the source works similar to other sources, while supporting almost all command-line patterns.
    *
    * Example:
    *
    * Given:
+   *
    * {{{
-   *  args = "-database.username=1 --database.password=hi --database.url=jdbc://xyz --vault -username=3 --vault -password=10 --users 100 --regions 111,122"
-   *  keyDelimiter   = Some('.')
-   *  valueDelimiter = Some(',')
+   *    args = "-db.username=1 --db.password=hi --vault -username=3 --vault -password=10 --regions 111,122"
+   *    keyDelimiter   = Some('.')
+   *    valueDelimiter = Some(',')
    * }}}
    *
-   * then, the below config will work
+   * then, the following works:
    *
-   *  val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
-   *  nested("database") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") (Config.apply, Config.unapply)
+   * {{{
+   *
+   *   final case class Credentials(username: String, password: String)
+   *
+   *   val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
+   *
+   *   final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String)
+   *
+   *   nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") (Config.apply, Config.unapply)
+   * }}}
    *
    * There is more that is in progress with this implementation.
    */
@@ -47,15 +56,19 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   map            = Map("KAFKA_SERVERS" -> "server1, server2", "KAFKA_SERIALIZERS"  -> "confluent")
-   *   keyDelimiter   = Some('_')
-   *   valueDelimiter = Some(',')
+   *    map            = Map("KAFKA_SERVERS" -> "server1, server2", "KAFKA_SERIALIZERS"  -> "confluent")
+   *    keyDelimiter   = Some('_')
+   *    valueDelimiter = Some(',')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
    */
   def fromMap[A](
     map: Map[String, String],
@@ -71,14 +84,18 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   map = Map("KAFKA_SERVERS" -> singleton(server1), "KAFKA_SERIALIZERS"  -> singleton("confluent"))
-   *   keyDelimiter = Some('_')
+   *    map = Map("KAFKA_SERVERS" -> singleton(server1), "KAFKA_SERIALIZERS"  -> singleton("confluent"))
+   *    keyDelimiter = Some('_')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
    */
   def fromMultiMap[A](
     map: Map[String, ::[String]],
@@ -94,15 +111,19 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
-   *   keyDelimiter   = Some('.')
-   *   valueDelimiter = Some(',')
+   *    property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
+   *    keyDelimiter   = Some('.')
+   *    valueDelimiter = Some(',')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
    */
   def fromProperties[A](
     properties: Properties,
@@ -121,15 +142,20 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
-   *   keyDelimiter         = Some('.')
-   *   valueDelimiter       = Some(',')
+   *    properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
+   *    keyDelimiter         = Some('.')
+   *    valueDelimiter       = Some(',')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
+   *
    */
   def fromPropertiesFile[A](
     filePath: String,
@@ -149,15 +175,19 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERIALIZERS" = "confluent"
-   *   keyDelimiter     = Some('_')
-   *   valueDelimiter   = Some(',')
+   *    vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERIALIZERS" = "confluent"
+   *    keyDelimiter     = Some('_')
+   *    valueDelimiter   = Some(',')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
    *
    * Note: The delimiter '.' for keys doesn't work in system environment.
    */
@@ -174,15 +204,20 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
-   *   keyDelimiter     = Some('.')
-   *   valueDelimiter   = Some(',')
+   *    vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
+   *    keyDelimiter     = Some('.')
+   *    valueDelimiter   = Some(',')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
+   *
    */
   def fromSystemProperties[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
