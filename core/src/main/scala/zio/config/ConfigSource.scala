@@ -40,16 +40,17 @@ object ConfigSource {
    * EXPERIMENTAL
    *
    * Forming configuration from command line arguments.
-   * Assumption. All keys should start with either `-` or `--`
    *
-   * Apart from the above assumptions, the source works similar to other sources, while supporting almost all command-line patterns.
+   * Assumption. All keys should start with either - or --
+   *
+   * This source supports almost all standard command-line patterns including nesting/sub-config, repetition/list etc
    *
    * Example:
    *
    * Given:
    *
    * {{{
-   *    args = "-db.username=1 --db.password=hi --vault -username=3 --vault -password=10 --regions 111,122"
+   *    args = "-db.username=1 --db.password=hi --vault -username=3 --vault -password=10 --regions 111,122 --user k1 --user k2"
    *    keyDelimiter   = Some('.')
    *    valueDelimiter = Some(',')
    * }}}
@@ -62,13 +63,15 @@ object ConfigSource {
    *
    *  val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
    *
-   *  final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String)
+   *  final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String, users: List[String])
    *
-   *  nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") (Config.apply, Config.unapply)
+   *  (nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") |@| list(string("user"))(Config.apply, Config.unapply)
+   *
+   *  // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
    *
    * }}}
    *
-   * There is more that is in progress with this implementation.
+   * @see [[https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples/commandline/CommandLineArgsExample.scala]]
    */
   def fromCommandLineArgs(
     args: List[String],
@@ -313,9 +316,6 @@ object ConfigSource {
   ): ConfigSource[String, B] =
     mergeAll(trees.map(fromPropertyTree(_, sourceName)))
 
-  private[config] def mergeAll[K, V](sources: Iterable[ConfigSource[K, V]]): ConfigSource[K, V] =
-    sources.foldLeft(ConfigSource.empty: ConfigSource[K, V])(_ orElse _)
-
   /// CommandLine Argument Source
 
   private[config] final case class Value(value: String) extends AnyVal
@@ -365,7 +365,7 @@ object ConfigSource {
     keyDelimiter: Option[Char],
     valueDelimiter: Option[Char]
   ): List[PropertyTree[String, String]] = {
-    def unflattenWith(
+    def unFlattenWith(
       key: String,
       tree: PropertyTree[String, String]
     ): PropertyTree[String, String] =
@@ -385,24 +385,24 @@ object ConfigSource {
             case (Some(keyValue1), Some(keyValue2)) =>
               (keyValue1, keyValue2) match {
                 case (Both(l1, r1), Both(l2, r2)) =>
-                  unflattenWith(l1.value, toSeq(r1.value)) ::
-                    unflattenWith(l2.value, toSeq(r2.value)) :: loop(h3)
+                  unFlattenWith(l1.value, toSeq(r1.value)) ::
+                    unFlattenWith(l2.value, toSeq(r2.value)) :: loop(h3)
 
                 case (Both(l1, r1), This(l2)) =>
-                  unflattenWith(l1.value, toSeq(r1.value)) :: h3.headOption.fold(
+                  unFlattenWith(l1.value, toSeq(r1.value)) :: h3.headOption.fold(
                     List.empty[PropertyTree[String, String]]
                   )(
                     x =>
                       loop(List(x)).map(
-                        tree => unflattenWith(l2.value, tree)
+                        tree => unFlattenWith(l2.value, tree)
                       ) ++ loop(h3.tail)
                   )
 
                 case (Both(l1, r1), That(r2)) =>
-                  unflattenWith(l1.value, toSeq(r1.value)) :: toSeq(r2.value) :: loop(h3)
+                  unFlattenWith(l1.value, toSeq(r1.value)) :: toSeq(r2.value) :: loop(h3)
 
                 case (This(l1), Both(l2, r2)) =>
-                  unflattenWith(l1.value, unflattenWith(l2.value, toSeq(r2.value))) :: loop(h3)
+                  unFlattenWith(l1.value, unFlattenWith(l2.value, toSeq(r2.value))) :: loop(h3)
 
                 case (This(l1), This(l2)) =>
                   val keysAndTrees =
@@ -417,23 +417,23 @@ object ConfigSource {
                       keys.fold(List.empty[PropertyTree[String, String]]) { nestedKeys =>
                         trees
                           .map(tree => unflatten(l2.value :: nestedKeys.map(_.value), tree))
-                          .map(tree => unflattenWith(l1.value, tree)) ++ loop(h3.drop(index + 1))
+                          .map(tree => unFlattenWith(l1.value, tree)) ++ loop(h3.drop(index + 1))
                       }
 
                     case None => Nil
                   }
 
                 case (This(l1), That(r2)) =>
-                  unflattenWith(l1.value, toSeq(r2.value)) :: loop(h3)
+                  unFlattenWith(l1.value, toSeq(r2.value)) :: loop(h3)
 
                 case (That(r1), Both(l2, r2)) =>
-                  toSeq(r1.value) :: unflattenWith(l2.value, toSeq(r2.value)) :: loop(h3)
+                  toSeq(r1.value) :: unFlattenWith(l2.value, toSeq(r2.value)) :: loop(h3)
 
                 case (That(r1), That(r2)) =>
                   toSeq(r1.value) :: toSeq(r2.value) :: loop(h3)
 
                 case (That(r1), This(l2)) =>
-                  toSeq(r1.value) :: loop(h3).map(tree => unflattenWith(l2.value, tree))
+                  toSeq(r1.value) :: loop(h3).map(tree => unFlattenWith(l2.value, tree))
               }
 
             case (Some(_), None) =>
@@ -448,7 +448,7 @@ object ConfigSource {
           KeyValue.mk(h1) match {
             case Some(value) =>
               value.fold(
-                (left, right) => unflattenWith(left.value, toSeq(right.value)) :: Nil,
+                (left, right) => unFlattenWith(left.value, toSeq(right.value)) :: Nil,
                 _ => Nil, // This is an early Nil unlike others.
                 value => toSeq(value.value) :: Nil
               )
@@ -458,7 +458,10 @@ object ConfigSource {
         case Nil => Nil
       }
 
-    loop(args)
+    PropertyTree.mergeAll(loop(args))
   }
+
+  private[config] def mergeAll[K, V](sources: Iterable[ConfigSource[K, V]]): ConfigSource[K, V] =
+    sources.foldLeft(ConfigSource.empty: ConfigSource[K, V])(_ orElse _)
 
 }

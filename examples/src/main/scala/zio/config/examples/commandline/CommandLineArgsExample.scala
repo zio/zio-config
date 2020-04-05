@@ -3,9 +3,9 @@ package zio.config.examples.commandline
 import zio.config.ConfigDescriptor._
 import zio.config.{ read, ConfigDescriptor, ConfigSource }
 
-object CommandLineArgs extends App {
+object CommandLineArgsExample extends App {
   val argss =
-    "--conf -database.username=1 --conf -database.password=hi --conf.database.url=jdbc://xyz --conf -num_execs=10 --vault.username=3 --vault.password=10 --vault.something=11 --users 100 --region 111,122"
+    "--conf -database.username=1 --conf -database.password=hi --conf.database.url=jdbc://xyz --conf -num_execs=10 --vault.username=3 --vault.password=10 --vault.something=11 --users 1 --users 2 --region 111,112"
 
   val source = ConfigSource.fromCommandLineArgs(argss.split(' ').toList, Some('.'), Some(','))
 
@@ -38,11 +38,11 @@ object CommandLineArgs extends App {
     val desc = (DatabaseConfig.desc |@| int("num_execs"))(SparkConfig.apply, SparkConfig.unapply)
   }
 
-  final case class AppConfig(sparkConfig: SparkConfig, vault: VaultConfig, users: String, region: List[String])
+  final case class AppConfig(sparkConfig: SparkConfig, vault: VaultConfig, users: List[String], region: List[String])
 
   object AppConfig {
     val desc: ConfigDescriptor[String, String, AppConfig] =
-      (nested("conf") { SparkConfig.desc } |@| VaultConfig.desc |@| string("users") |@| list(string("region")))(
+      (nested("conf") { SparkConfig.desc } |@| VaultConfig.desc |@| list(string("users")) |@| list(string("region")))(
         AppConfig.apply,
         AppConfig.unapply
       )
@@ -54,9 +54,17 @@ object CommandLineArgs extends App {
         AppConfig(
           SparkConfig(DatabaseConfig(UserPassword("1", "hi"), "jdbc://xyz"), 10),
           VaultConfig(UserPassword("3", "10")),
-          "100",
-          List("111", "122")
+          List("1", "2"),
+          List("111", "112")
         )
       )
   )
+}
+
+object Hello extends App {
+  import zio.config.PropertyTree._
+
+  val tree = Record(Map("region" -> Sequence(List(Leaf(112), Leaf(111)))))
+
+  println(tree.getPath(List("region")))
 }

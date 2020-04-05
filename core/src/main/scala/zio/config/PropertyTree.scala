@@ -77,14 +77,14 @@ sealed trait PropertyTree[+K, +V] { self =>
 
   final def getPath[K1 >: K](k: List[K1]): PropertyTree[K1, V] =
     k match {
-      case Nil => self
+      case Nil =>
+        self
       case head :: next =>
         self match {
           case Empty   => Empty
           case Leaf(r) => Leaf(r)
           case Record(value) =>
-            val result = value.get(head.asInstanceOf[K]).map(_.getPath(next)).getOrElse(Empty)
-            result
+            value.get(head.asInstanceOf[K]).map(_.getPath(next)).getOrElse(Empty)
           case Sequence(r) => Sequence(r.map(_.getPath(k)))
 
         }
@@ -295,8 +295,8 @@ object PropertyTree {
     mergeAll(map.toList.map(tuple => unflatten(tuple._1.toList, tuple._2)))
 
   def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
-    list.foldLeft(List[PropertyTree[K, V]](PropertyTree.empty)) {
-      case (acc, tree) => acc.flatMap(tree0 => tree.merge(tree0))
+    list.foldRight(List[PropertyTree[K, V]](PropertyTree.empty)) {
+      case (tree, acc) => acc.flatMap(tree0 => tree.merge(tree0))
     }
 
   def partitionWith[K, V, A](

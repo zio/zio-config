@@ -11,16 +11,17 @@ object Config {
    * EXPERIMENTAL
    *
    * Forming configuration from command line arguments.
-   * Assumption. All keys should start with either `-` or `--`
    *
-   * Apart from the above assumptions, the source works similar to other sources, while supporting almost all command-line patterns.
+   * Assumption. All keys should start with either - or --
+   *
+   * This source supports almost all standard command-line patterns including nesting/sub-config, repetition/list etc
    *
    * Example:
    *
    * Given:
    *
    * {{{
-   *    args = "-db.username=1 --db.password=hi --vault -username=3 --vault -password=10 --regions 111,122"
+   *    args = "-db.username=1 --db.password=hi --vault -username=3 --vault -password=10 --regions 111,122 --user k1 --user k2"
    *    keyDelimiter   = Some('.')
    *    valueDelimiter = Some(',')
    * }}}
@@ -29,16 +30,19 @@ object Config {
    *
    * {{{
    *
-   *   final case class Credentials(username: String, password: String)
+   *  final case class Credentials(username: String, password: String)
    *
-   *   val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
+   *  val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
    *
-   *   final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String)
+   *  final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String, users: List[String])
    *
-   *   nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") (Config.apply, Config.unapply)
+   *  (nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") |@| list(string("user"))(Config.apply, Config.unapply)
+   *
+   *  // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
+   *
    * }}}
    *
-   * There is more that is in progress with this implementation.
+   * @see [[https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples/commandline/CommandLineArgsExample.scala]]
    */
   def fromCommandLineArgs[K, V, A](
     args: List[String],
