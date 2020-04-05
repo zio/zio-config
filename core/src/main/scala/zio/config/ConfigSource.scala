@@ -374,7 +374,7 @@ object ConfigSource {
       )
 
     def toSeq[V](leaf: String): PropertyTree[String, String] =
-      valueDelimiter.fold(Leaf(leaf): PropertyTree[String, String])(
+      valueDelimiter.fold(Sequence(List(Leaf(leaf))): PropertyTree[String, String])(
         c => Sequence[String, String](leaf.split(c).toList.map(Leaf(_)))
       )
 

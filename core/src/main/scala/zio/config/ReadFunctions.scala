@@ -52,17 +52,12 @@ private[config] trait ReadFunctions {
               }
             )
 
-          println(s"before ${sequenceErrors}")
-
-          val ss = (newKey, sequenceErrors.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[K], List[B]]] {
+          (newKey, sequenceErrors.map(_.map(_ :: Nil)).reduceInner[Either[ReadError[K], List[B]]] {
             case (Right(l), Right(r)) => Right(l ++ r)
             case (Left(l), Right(_))  => Left(l)
             case (Right(_), Left(r))  => Left(r)
             case (Left(l), Left(r))   => Left(ReadError.AndErrors(l :: r :: Nil))
           })
-
-          println(s"after ${ss}")
-          ss
 
         case ConfigDescriptor.Nested(path, c) =>
           loop(c, keys :+ path, paths :+ Right(path))
