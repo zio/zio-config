@@ -3,6 +3,7 @@ package zio.config.examples.typesafe
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypeSafeConfigSource
+import zio.config.typesafe._
 
 // Why Maybe[NonEmptyList] could be the right thing to do, stays as a limitation to zio-config:
 // https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
@@ -153,61 +154,68 @@ object NonEmptyListExample extends App with EitherImpureOps {
   val zioConfigResult =
     read(descriptor[A] from source)
 
-  assert(
-    zioConfigResult ==
-
-      Right(
-        A(
+  val result =
+    A(
+      List(
+        B(
           List(
-            B(
+            C(
               List(
-                C(
-                  List(
-                    // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
-                    D(NonEmptyList(1, 1, 1), List("a", "b", "c")),
-                    D(NonEmptyList(12, 12), List("d")),
-                    D(NonEmptyList(14, 14), List("e")),
-                    D(NonEmptyList(15, 15), List("f", "g"))
-                  )
-                )
-              ),
-              "some_name",
-              List("aa")
-            ),
-            B(
-              List(
-                C(
-                  List(
-                    D(List(21, 21), List("af")),
-                    D(List(22, 22), List("sa", "l")),
-                    D(List(23, 23, 23), List("af", "l")),
-                    D(List(24, 24, 24), List("l"))
-                  )
-                )
-              ),
-              "some_name",
-              List("a", "b", "c", "d", "e")
-            ),
-            B(
-              List(
-                C(
-                  List(
-                    D(List(31, 31), List("bb")),
-                    D(List(32, 32), List("x")),
-                    D(List(33, 33, 33), List("xx")),
-                    D(List(31), List("b")),
-                    D(List(37), List("e", "f", "g", "h", "i"))
-                  )
-                )
-              ),
-              "some_name",
-              List("a")
+                // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
+                D(NonEmptyList(1, 1, 1), List("a", "b", "c")),
+                D(NonEmptyList(12, 12), List("d")),
+                D(NonEmptyList(14, 14), List("e")),
+                D(NonEmptyList(15, 15), List("f", "g"))
+              )
             )
           ),
-          X(Y("k")),
-          W(X(Y("k")))
+          "some_name",
+          List("aa")
+        ),
+        B(
+          List(
+            C(
+              List(
+                D(List(21, 21), List("af")),
+                D(List(22, 22), List("sa", "l")),
+                D(List(23, 23, 23), List("af", "l")),
+                D(List(24, 24, 24), List("l"))
+              )
+            )
+          ),
+          "some_name",
+          List("a", "b", "c", "d", "e")
+        ),
+        B(
+          List(
+            C(
+              List(
+                D(List(31, 31), List("bb")),
+                D(List(32, 32), List("x")),
+                D(List(33, 33, 33), List("xx")),
+                D(List(31), List("b")),
+                D(List(37), List("e", "f", "g", "h", "i"))
+              )
+            )
+          ),
+          "some_name",
+          List("a")
         )
-      )
+      ),
+      X(Y("k")),
+      W(X(Y("k")))
+    )
+
+  assert(zioConfigResult == Right(result))
+
+  println(
+    read(descriptor[A] from ConfigSource.fromPropertyTree(write(descriptor[A], result).loadOrThrow, "tree"))
+  )
+
+  assert(
+    read(descriptor[A] from ConfigSource.fromPropertyTree(write(descriptor[A], result).loadOrThrow, "tree")) == Right(
+      result
+    )
   )
 
   val kebabCaseConfig =

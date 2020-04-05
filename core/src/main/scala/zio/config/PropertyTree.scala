@@ -80,10 +80,12 @@ sealed trait PropertyTree[+K, +V] { self =>
       case Nil => self
       case head :: next =>
         self match {
-          case Empty         => Empty
-          case Leaf(_)       => Empty
-          case Record(value) => value.get(head.asInstanceOf[K]).map(_.getPath(next)).getOrElse(Empty)
-          case Sequence(r)   => Sequence(r.map(_.getPath(k)))
+          case Empty   => Empty
+          case Leaf(r) => Leaf(r)
+          case Record(value) =>
+            val result = value.get(head.asInstanceOf[K]).map(_.getPath(next)).getOrElse(Empty)
+            result
+          case Sequence(r) => Sequence(r.map(_.getPath(k)))
 
         }
     }
@@ -170,9 +172,10 @@ sealed trait PropertyTree[+K, +V] { self =>
       }
 
     self match {
-      case Empty         => Empty
-      case Leaf(value)   => Leaf(value)
-      case Record(value) => Record(value.mapValues(_.reduceInner(f)).toMap)
+      case Empty       => Empty
+      case Leaf(value) => Leaf(value)
+      case Record(value) =>
+        Record(value.mapValues(_.reduceInner(f)).toMap)
 
       case Sequence(value) =>
         val (vs0, rest0) = PropertyTree.partitionWith(value) {
