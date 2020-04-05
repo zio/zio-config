@@ -57,12 +57,12 @@ object ConfigSource {
    * There is more that is in progress with this implementation.
    */
   def fromCommandLineArgs(
-    args: Array[String],
+    args: List[String],
     keyDelimiter: Option[Char],
     valueDelimiter: Option[Char]
   ): ConfigSource[String, String] =
     ConfigSource.fromPropertyTrees(
-      getPropertyTreeFromArgs(args.toList.filter(_.nonEmpty), keyDelimiter, valueDelimiter),
+      getPropertyTreeFromArgs(args.filter(_.nonEmpty), keyDelimiter, valueDelimiter),
       "command line args"
     )
 

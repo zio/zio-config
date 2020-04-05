@@ -1,10 +1,42 @@
 package zio.config
 
-import zio.system.System
-import zio.{ Layer, Tagged, ZIO, ZLayer }
 import java.util.Properties
 
+import zio.system.System
+import zio.{ Layer, Tagged, ZIO, ZLayer }
+
 object Config {
+
+  /**
+   * EXPERIMENTAL
+   *
+   * Forming configuration from command line arguments:
+   *
+   * Example:  You can see various ways in which someone can encode keys and values.
+   *
+   * Given:
+   * {{{
+   *  args = "-database.username=1 --database.password=hi --database.url=jdbc://xyz --vault -username=3 --vault -password=10 --users 100 --regions 111,122"
+   *  keyDelimiter   = Some('.')
+   *  valueDelimiter = Some(',')
+   * }}}
+   *
+   * then, the below config will work
+   *
+   *  val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
+   *  nested("database") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") (Config.apply, Config.unapply)
+   *
+   * There is more that is in progress with this implementation.
+   */
+  def fromCommandLineArgs[K, V, A](
+    args: List[String],
+    configDescriptor: ConfigDescriptor[String, String, A],
+    keyDelimiter: Option[Char] = None,
+    valueDelimiter: Option[Char] = None
+  )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+    fromConfigDescriptor(
+      configDescriptor from ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter)
+    )
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
