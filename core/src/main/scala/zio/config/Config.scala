@@ -10,9 +10,12 @@ object Config {
   /**
    * EXPERIMENTAL
    *
-   * Forming configuration from command line arguments:
+   * Forming configuration from command line arguments.
+   * Assumption. All keys should start with either `-` or `--`
    *
-   * Example:  You can see various ways in which someone can encode keys and values.
+   * Apart from the above assumptions, the source works similar to other sources, while adhering to well-known command-line arguments patterns.
+   *
+   * Example:
    *
    * Given:
    * {{{
