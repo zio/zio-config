@@ -9,7 +9,7 @@ import scala.collection.immutable.Nil
 object CommandLineArgs extends App {
 
   val argss =
-    "--database -username=1 --database.password=hi --database -url=jdbc://xyz --vault -username=3 --vault.password=10 --vault -something=11 --users 100 --region 111,122"
+    "--psql.database -username=1 --psql.database.password=hi --psql.database -url=jdbc://xyz --vault -username=3 --vault.password=10 --vault -something=11 --users 100 --region 111,122"
 
   def getPropertyTree(
     args: List[String],
@@ -204,7 +204,7 @@ object CommandLineArgs extends App {
 
   object AppConfig {
     val desc: ConfigDescriptor[String, String, AppConfig] =
-      (DatabaseConfig.desc |@| VaultConfig.desc |@| string("users") |@| list(string("region")))(
+      (nested("psql") { DatabaseConfig.desc } |@| VaultConfig.desc |@| string("users") |@| list(string("region")))(
         AppConfig.apply,
         AppConfig.unapply
       )
