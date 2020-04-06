@@ -235,9 +235,12 @@ object PropertyTree {
     )
 
   def unflatten[K, V](key: List[K], value: ::[V]): PropertyTree[K, V] =
+    unflatten(key, Sequence(value.map(Leaf(_))))
+
+  def unflatten[K, V](key: List[K], tree: PropertyTree[K, V]): PropertyTree[K, V] =
     key match {
-      case head :: next => Record(Map(head -> unflatten(next, value)))
-      case Nil          => Sequence(value.map(Leaf(_)))
+      case head :: next => Record(Map(head -> unflatten(next, tree)))
+      case Nil          => tree
     }
 
   def unflatten[K, V](map: Map[Vector[K], ::[V]]): List[PropertyTree[K, V]] =

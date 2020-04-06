@@ -3,7 +3,7 @@ package zio.config
 import java.io.{ File, FileInputStream }
 import java.{ util => ju }
 
-import zio.config.PropertyTree.{ unflatten, Record }
+import zio.config.PropertyTree.{ unflatten, Leaf, Record, Sequence }
 import zio.{ Task, UIO, ZIO }
 
 import scala.annotation.tailrec
@@ -52,12 +52,17 @@ object ConfigSource {
   ): UIO[ConfigSource[String, String]] =
     UIO.effectTotal(argsAsKeyValues(args)).map { kvs =>
       ConfigSource.fromPropertyTrees(
-        PropertyTree.mergeAll(
-          kvs.map {
-            case (str, str1) =>
-              Record(Map(str -> PropertyTree.Sequence(List(PropertyTree.Leaf(str1)))))
-          }
-        ),
+        PropertyTree.mergeAll(kvs.map {
+          case (k, v) =>
+            val valueTree =
+              valueDelimiter.fold(Sequence(List(Leaf(v)))) { value =>
+                Sequence(v.split(value).toList.map(Leaf(_)))
+              }
+
+            keyDelimiter.fold(Record(Map(k -> valueTree)): PropertyTree[String, String])(
+              value => PropertyTree.unflatten(k.split(value).toList, valueTree)
+            )
+        }),
         "command line args"
       )
     }
