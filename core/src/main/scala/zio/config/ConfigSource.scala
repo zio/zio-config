@@ -3,7 +3,7 @@ package zio.config
 import java.io.{ File, FileInputStream }
 import java.{ util => ju }
 
-import zio.config.PropertyTree.unflatten
+import zio.config.PropertyTree.{ unflatten, Leaf, Record, Sequence }
 import zio.{ Task, UIO, ZIO }
 
 import scala.annotation.tailrec
@@ -29,6 +29,7 @@ final case class ConfigSource[K, V](
 object ConfigSource {
   val SystemEnvironment = "system environment"
   val SystemProperties  = "system properties"
+  val CommandLineArgs   = "command line args"
 
   def empty[K, V]: ConfigSource[K, V] =
     ConfigSource(_ => PropertyTree.empty, Nil)
@@ -49,14 +50,21 @@ object ConfigSource {
     args: List[String],
     keyDelimiter: Option[Char],
     valueDelimiter: Option[Char]
-  ): UIO[ConfigSource[String, String]] =
-    UIO.effectTotal(argsAsKeyValues(args)).map { kvs =>
-      mergeAll(
-        kvs.map { kv =>
-          fromMapInternal(Map(kv))(splitDelimited(_, valueDelimiter), keyDelimiter, "command line arg")
-        }
-      )
-    }
+  ): ConfigSource[String, String] =
+    ConfigSource.fromPropertyTrees(
+      PropertyTree.mergeAll(argsAsKeyValues(args).map {
+        case (k, v) =>
+          val valueTree =
+            valueDelimiter.fold(Sequence(List(Leaf(v)))) { value =>
+              Sequence(v.split(value).toList.map(Leaf(_)))
+            }
+
+          keyDelimiter.fold(Record(Map(k -> valueTree)): PropertyTree[String, String])(
+            value => PropertyTree.unflatten(k.split(value).toList, valueTree)
+          )
+      }),
+      CommandLineArgs
+    )
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -236,7 +244,7 @@ object ConfigSource {
   private[config] def argsAsKeyValues(args: List[String]): List[(String, String)] =
     args.flatMap { s =>
       if (s.startsWith("-") && s.contains("="))
-        s.substring(2).split('=').toList match {
+        s.split('=').toList match {
           case k :: v :: Nil => List(k, v)
           case _             => Nil
         }

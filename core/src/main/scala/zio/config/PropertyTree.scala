@@ -235,17 +235,20 @@ object PropertyTree {
     )
 
   def unflatten[K, V](key: List[K], value: ::[V]): PropertyTree[K, V] =
+    unflatten(key, Sequence(value.map(Leaf(_))))
+
+  def unflatten[K, V](key: List[K], tree: PropertyTree[K, V]): PropertyTree[K, V] =
     key match {
-      case head :: next => Record(Map(head -> unflatten(next, value)))
-      case Nil          => Sequence(value.map(Leaf(_)))
+      case head :: next => Record(Map(head -> unflatten(next, tree)))
+      case Nil          => tree
     }
 
   def unflatten[K, V](map: Map[Vector[K], ::[V]]): List[PropertyTree[K, V]] =
     mergeAll(map.toList.map(tuple => unflatten(tuple._1.toList, tuple._2)))
 
   def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
-    list.foldLeft(List[PropertyTree[K, V]](PropertyTree.empty)) {
-      case (acc, tree) => acc.flatMap(tree0 => tree.merge(tree0))
+    list.foldRight(List[PropertyTree[K, V]](PropertyTree.empty)) {
+      case (tree, acc) => acc.flatMap(tree0 => tree.merge(tree0))
     }
 
   def partitionWith[K, V, A](
