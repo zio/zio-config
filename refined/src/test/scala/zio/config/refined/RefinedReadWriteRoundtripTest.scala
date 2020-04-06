@@ -4,11 +4,11 @@ import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
-import zio.{ ZIO }
+import zio.ZIO
 import zio.config.ConfigDescriptor._
+import zio.config._
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
-import zio.config._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._

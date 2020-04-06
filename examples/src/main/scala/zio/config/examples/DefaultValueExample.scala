@@ -1,12 +1,9 @@
 package zio.config.examples
 
+import zio.config.ConfigDescriptor._
+import zio.config.ConfigDocs._
+import zio.config.ConfigSource._
 import zio.config._
-import ConfigDescriptor._
-import zio.config.ConfigDocs
-import ConfigDocs._
-import Details._
-import zio.config.ConfigDocs.Path
-import ConfigSource._
 
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
@@ -32,21 +29,21 @@ object DefaultValueExample extends App {
   assert(
     generateDocs(confEx) ==
       Both(
-        Path(
+        NestedPath(
           "HELLO",
-          Descriptions(
+          Leaf(
             Sources(List(ConfigSource.SystemEnvironment)),
             List("value of type string", "default value: xyz")
           )
         ),
         OneOf(
-          Path(
+          NestedPath(
             "SOMETHING",
-            Descriptions(Sources(List(ConfigSource.SystemEnvironment)), List("value of type string"))
+            Leaf(Sources(List(ConfigSource.SystemEnvironment)), List("value of type string"))
           ),
-          Path(
+          NestedPath(
             "PORT",
-            Descriptions(
+            Leaf(
               Sources(List(ConfigSource.SystemEnvironment)),
               List("value of type int", "default value: 1")
             )
@@ -59,25 +56,25 @@ object DefaultValueExample extends App {
     generateDocsWithValue(confEx, expected) ==
       Right(
         Both(
-          Path(
+          NestedPath(
             "HELLO",
-            DescriptionsWithValue(
-              Some("xyz"),
+            Leaf(
               Sources(List(SystemEnvironment)),
-              List("value of type string", "default value: xyz")
+              List("value of type string", "default value: xyz"),
+              Some("xyz")
             )
           ),
           OneOf(
-            Path(
+            NestedPath(
               "SOMETHING",
-              DescriptionsWithValue(None, Sources(List(SystemEnvironment)), List("value of type string"))
+              Leaf(Sources(List(SystemEnvironment)), List("value of type string"), None)
             ),
-            Path(
+            NestedPath(
               "PORT",
-              DescriptionsWithValue(
-                Some("1"),
+              Leaf(
                 Sources(List(SystemEnvironment)),
-                List("value of type int", "default value: 1")
+                List("value of type int", "default value: 1"),
+                Some("1")
               )
             )
           )

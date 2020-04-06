@@ -66,9 +66,9 @@ object ConfigSource {
    *
    *    val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
    *
-   *    final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String, users: List[String])
+   *    final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String], users: List[String])
    *
-   *    (nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") |@| list(string("user"))(Config.apply, Config.unapply)
+   *    (nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions")) |@| list(string("user")))(Config.apply, Config.unapply)
    *
    *    // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
    *

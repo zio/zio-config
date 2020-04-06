@@ -103,7 +103,7 @@ object DeriveConfigDescriptor {
         parentClass: Option[String]
       ): ConfigDescriptor[String, String, T] =
         path.fold(
-          string("").xmapEither[T](
+          string.xmapEither[T](
             _ => Left("unable to fetch the primitive without a path"),
             (_: T) => Left("unable to write the primitive back to a config source without a path")
           )
@@ -166,7 +166,7 @@ object DeriveConfigDescriptor {
               case Some(parentClass) => string(parentClass.toLowerCase())
 
               case None =>
-                string("").xmapEither[String](
+                string.xmapEither[String](
                   _ =>
                     Left(
                       s"Cannot create the case-object ${caseClass.typeName.short} since it is not part of a coproduct (ie. extends sealed trait)"

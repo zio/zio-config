@@ -14,13 +14,12 @@ private[config] trait ReadFunctions {
       paths: Vector[Either[Int, K]]
     ): (Vector[K], PropertyTree[K, Either[ReadError[K], B]]) =
       configuration match {
-        case ConfigDescriptor.Source(key, source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
-          val newKey = keys :+ key
+        case ConfigDescriptor.Source(source: ConfigSource[K, V1], propertyType: PropertyType[V1, B]) =>
           (
-            newKey,
+            keys,
             source
-              .getConfigValue(keys :+ key)
-              .mapEmptyToError(ReadError.MissingValue((paths :+ Right(key))))
+              .getConfigValue(keys)
+              .mapEmptyToError(ReadError.MissingValue(paths))
               .map({
                 case Left(value) => Left(value)
                 case Right(value) =>
@@ -28,7 +27,7 @@ private[config] trait ReadFunctions {
                     case Left(value) =>
                       Left(
                         ReadError.FormatError(
-                          (paths :+ Right(key)),
+                          paths,
                           ReadFunctions.parseErrorMessage(value.value.toString, value.typeInfo)
                         )
                       )
@@ -217,7 +216,7 @@ object ReadFunctions {
           case Right(value) => Right(value)
         }
       case PropertyTree.Record(value) => getValue(value.toList.map(_._2).head)
-      case PropertyTree.Empty =>
+      case PropertyTree.Empty | PropertyTree.Sequence(Nil) =>
         Left(ReadError.ConversionError(Vector.empty, "Unable to form the configuration."))
       case PropertyTree.Sequence(value) => getValue(value.head)
     }

@@ -1,9 +1,8 @@
 package zio.config.examples
 
-import zio.config._
-import ConfigDescriptor._
-import zio.config.ConfigDocs.Details._
+import zio.config.ConfigDescriptor._
 import zio.config.ConfigDocs._
+import zio.config._
 
 object ReadWriteReportExample extends App {
 
@@ -58,11 +57,18 @@ object ReadWriteReportExample extends App {
       )
   )
 
-  import PropertyTree._
-
   assert(
     write(config, expected) ==
-      Right(Record(Map("usr" -> Leaf("v1"), "pwd" -> Leaf("v2"), "xyz" -> Leaf("v3"), "abc" -> Leaf("1"))))
+      Right(
+        PropertyTree.Record(
+          Map(
+            "usr" -> PropertyTree.Leaf("v1"),
+            "pwd" -> PropertyTree.Leaf("v2"),
+            "xyz" -> PropertyTree.Leaf("v3"),
+            "abc" -> PropertyTree.Leaf("1")
+          )
+        )
+      )
   )
 
   assert(
@@ -71,48 +77,48 @@ object ReadWriteReportExample extends App {
         Both(
           Both(
             Both(
-              Path(
+              NestedPath(
                 "usr",
-                Descriptions(
+                Leaf(
                   Sources(List("constant")),
                   List("value of type string", "Example: some-user", "Prod Config")
                 )
               ),
-              Path(
+              NestedPath(
                 "pwd",
-                Descriptions(
+                Leaf(
                   Sources(List("constant")),
                   List("value of type string", "optional value", "sec", "Prod Config")
                 )
               )
             ),
-            Path(
+            NestedPath(
               "jhi",
-              Descriptions(
+              Leaf(
                 Sources(List("constant")),
                 List("value of type string", "optional value", "Ex: ghi", "Prod Config")
               )
             )
           ),
           Both(
-            Path(
+            NestedPath(
               "xyz",
-              Descriptions(
+              Leaf(
                 Sources(List("constant")),
                 List("value of type string", "optional value", "Ex: ha", "Prod Config")
               )
             ),
             OneOf(
-              Path(
+              NestedPath(
                 "abc",
-                Descriptions(
+                Leaf(
                   Sources(List("constant")),
                   List("value of type int", "optional value", "Ex: ha", "Prod Config")
                 )
               ),
-              Path(
+              NestedPath(
                 "def",
-                Descriptions(
+                Leaf(
                   Sources(List("constant")),
                   List("value of type string", "optional value", "Ex: ha", "Prod Config")
                 )
@@ -121,13 +127,13 @@ object ReadWriteReportExample extends App {
           )
         ),
         Both(
-          Path(
+          NestedPath(
             "auth_token",
-            Descriptions(Sources(List("constant")), List("value of type string", "Prod Config"))
+            Leaf(Sources(List("constant")), List("value of type string", "Prod Config"))
           ),
-          Path(
+          NestedPath(
             "clientid",
-            Descriptions(Sources(List("constant")), List("value of type string", "Prod Config"))
+            Leaf(Sources(List("constant")), List("value of type string", "Prod Config"))
           )
         )
       )
@@ -140,54 +146,52 @@ object ReadWriteReportExample extends App {
           Both(
             Both(
               Both(
-                Path(
+                NestedPath(
                   "usr",
-                  DescriptionsWithValue(
-                    Some("v1"),
+                  Leaf(
                     Sources(List("constant")),
-                    List("value of type string", "Example: some-user", "Prod Config")
+                    List("value of type string", "Example: some-user", "Prod Config"),
+                    Some("v1")
                   )
                 ),
-                Path(
+                NestedPath(
                   "pwd",
-                  DescriptionsWithValue(
-                    Some("v2"),
+                  Leaf(
                     Sources(List("constant")),
-                    List("value of type string", "optional value", "sec", "Prod Config")
+                    List("value of type string", "optional value", "sec", "Prod Config"),
+                    Some("v2")
                   )
                 )
               ),
-              Path(
+              NestedPath(
                 "jhi",
-                DescriptionsWithValue(
-                  None,
+                Leaf(
                   Sources(List("constant")),
                   List("value of type string", "optional value", "Ex: ghi", "Prod Config")
                 )
               )
             ),
             Both(
-              Path(
+              NestedPath(
                 "xyz",
-                DescriptionsWithValue(
-                  Some("v3"),
+                Leaf(
                   Sources(List("constant")),
-                  List("value of type string", "optional value", "Ex: ha", "Prod Config")
+                  List("value of type string", "optional value", "Ex: ha", "Prod Config"),
+                  Some("v3")
                 )
               ),
               OneOf(
-                Path(
+                NestedPath(
                   "abc",
-                  DescriptionsWithValue(
-                    Some("1"),
+                  Leaf(
                     Sources(List("constant")),
-                    List("value of type int", "optional value", "Ex: ha", "Prod Config")
+                    List("value of type int", "optional value", "Ex: ha", "Prod Config"),
+                    Some("1")
                   )
                 ),
-                Path(
+                NestedPath(
                   "def",
-                  DescriptionsWithValue(
-                    None,
+                  Leaf(
                     Sources(List("constant")),
                     List("value of type string", "optional value", "Ex: ha", "Prod Config")
                   )
@@ -196,18 +200,16 @@ object ReadWriteReportExample extends App {
             )
           ),
           Both(
-            Path(
+            NestedPath(
               "auth_token",
-              DescriptionsWithValue(
-                None,
+              Leaf(
                 Sources(List("constant")),
                 List("value of type string", "Prod Config")
               )
             ),
-            Path(
+            NestedPath(
               "clientid",
-              DescriptionsWithValue(
-                None,
+              Leaf(
                 Sources(List("constant")),
                 List("value of type string", "Prod Config")
               )
