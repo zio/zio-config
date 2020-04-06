@@ -29,6 +29,7 @@ final case class ConfigSource[K, V](
 object ConfigSource {
   val SystemEnvironment = "system environment"
   val SystemProperties  = "system properties"
+  val CommandLineArgs   = "command line args"
 
   def empty[K, V]: ConfigSource[K, V] =
     ConfigSource(_ => PropertyTree.empty, Nil)
@@ -49,23 +50,21 @@ object ConfigSource {
     args: List[String],
     keyDelimiter: Option[Char],
     valueDelimiter: Option[Char]
-  ): UIO[ConfigSource[String, String]] =
-    UIO.effectTotal(argsAsKeyValues(args)).map { kvs =>
-      ConfigSource.fromPropertyTrees(
-        PropertyTree.mergeAll(kvs.map {
-          case (k, v) =>
-            val valueTree =
-              valueDelimiter.fold(Sequence(List(Leaf(v)))) { value =>
-                Sequence(v.split(value).toList.map(Leaf(_)))
-              }
+  ): ConfigSource[String, String] =
+    ConfigSource.fromPropertyTrees(
+      PropertyTree.mergeAll(argsAsKeyValues(args).map {
+        case (k, v) =>
+          val valueTree =
+            valueDelimiter.fold(Sequence(List(Leaf(v)))) { value =>
+              Sequence(v.split(value).toList.map(Leaf(_)))
+            }
 
-            keyDelimiter.fold(Record(Map(k -> valueTree)): PropertyTree[String, String])(
-              value => PropertyTree.unflatten(k.split(value).toList, valueTree)
-            )
-        }),
-        "command line args"
-      )
-    }
+          keyDelimiter.fold(Record(Map(k -> valueTree)): PropertyTree[String, String])(
+            value => PropertyTree.unflatten(k.split(value).toList, valueTree)
+          )
+      }),
+      CommandLineArgs
+    )
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.

@@ -25,7 +25,7 @@ object Config {
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
-    fromConfigDescriptorM(ConfigSource.fromArgs(args, keyDelimiter, valueDelimiter).map(configDescriptor from _))
+    fromConfigDescriptor(configDescriptor from ConfigSource.fromArgs(args, keyDelimiter, valueDelimiter))
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
