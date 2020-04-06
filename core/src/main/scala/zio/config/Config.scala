@@ -63,7 +63,7 @@ object Config {
    * Given:
    *
    * {{{
-   *    map            = Map("KAFKA_SERVERS" -> "server1, server2", "KAFKA_SERIALIZERS"  -> "confluent")
+   *    map            = Map("KAFKA_SERVERS" -> "server1, server2", "KAFKA_SERDE"  -> "confluent")
    *    keyDelimiter   = Some('_')
    *    valueDelimiter = Some(',')
    * }}}
@@ -71,8 +71,8 @@ object Config {
    * then, the following works:
    *
    * {{{
-   *    final case class kafkaConfig(server: String, serializers: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
   def fromMap[A](
@@ -92,15 +92,15 @@ object Config {
    * Given:
    *
    * {{{
-   *    map = Map("KAFKA_SERVERS" -> singleton(server1), "KAFKA_SERIALIZERS"  -> singleton("confluent"))
+   *    map = Map("KAFKA_SERVERS" -> singleton(server1), "KAFKA_SERDE"  -> singleton("confluent"))
    *    keyDelimiter = Some('_')
    * }}}
    *
    * then, the following works:
    *
    * {{{
-   *    final case class kafkaConfig(server: String, serializers: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
   def fromMultiMap[A](
@@ -120,7 +120,7 @@ object Config {
    * Given:
    *
    * {{{
-   *    property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
+   *    property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
    *    keyDelimiter   = Some('.')
    *    valueDelimiter = Some(',')
    * }}}
@@ -128,8 +128,8 @@ object Config {
    * then, the following works:
    *
    * {{{
-   *    final case class kafkaConfig(server: String, serializers: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
   def fromProperties[A](
@@ -152,7 +152,7 @@ object Config {
    * Given:
    *
    * {{{
-   *    properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
+   *    properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
    *    keyDelimiter         = Some('.')
    *    valueDelimiter       = Some(',')
    * }}}
@@ -160,8 +160,8 @@ object Config {
    * then, the following works:
    *
    * {{{
-   *    final case class kafkaConfig(server: String, serializers: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    *
    */
@@ -186,7 +186,7 @@ object Config {
    * Given:
    *
    * {{{
-   *    vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERIALIZERS" = "confluent"
+   *    vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERDE" = "confluent"
    *    keyDelimiter     = Some('_')
    *    valueDelimiter   = Some(',')
    * }}}
@@ -194,8 +194,8 @@ object Config {
    * then, the following works:
    *
    * {{{
-   *    final case class kafkaConfig(server: String, serializers: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    *
    * Note: The delimiter '.' for keys doesn't work in system environment.
@@ -216,7 +216,7 @@ object Config {
    * Given:
    *
    * {{{
-   *    vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
+   *    vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
    *    keyDelimiter     = Some('.')
    *    valueDelimiter   = Some(',')
    * }}}
@@ -224,8 +224,8 @@ object Config {
    * then, the following works:
    *
    * {{{
-   *    final case class kafkaConfig(server: String, serializers: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    *
    */

@@ -2,7 +2,7 @@ package zio.config.examples.commandline
 
 import zio.config.ConfigSource
 import zio.config.magnolia.DeriveConfigDescriptor
-import zio.config._, ConfigDescriptor._
+import zio.config._
 
 object NestedExample extends App {
   val cmdLineArgs =
@@ -35,6 +35,44 @@ object NestedExample extends App {
   assert(
     read(DeriveConfigDescriptor[A] from source2) == Right(
       A(SparkConf("v1", "v2"), "v3")
+    )
+  )
+
+  /**
+   *  A typical of using nesting is when we need to automatically derive config
+   *  while keeping the configuration classes encapsulated and separated nicely.
+   */
+  final case class KinesisConfig(input: String, output: String)
+  final case class S3Config(input: String, output: String)
+  final case class AwsConfig(kinesis: KinesisConfig, s3: S3Config)
+  final case class AppConfig(aws: AwsConfig, user: String)
+
+  val awsCmdLineArgs =
+    "--aws.kinesis.input=v1 --aws.kinesis.output=v2  --aws.s3.input=v3 --aws.s3.output=v4 --user jo"
+
+  val source3 =
+    ConfigSource.fromCommandLineArgs(awsCmdLineArgs.split(' ').toList, keyDelimiter = Some('.'))
+
+  assert(
+    read(DeriveConfigDescriptor[AppConfig] from source3) == Right(
+      AppConfig(AwsConfig(KinesisConfig("v1", "v2"), S3Config("v3", "v4")), "jo")
+    )
+  )
+
+  // The above example is equivalent to the below args which uses both type of nesting.
+  // The alternative shows how flexible the implementation is, although you may choose to use the simplest approach
+  val awsCmdLineArgs2 =
+    "--aws -kinesis.input=v1 --aws -kinesis.output=v2  --aws -s3.input=v3 --aws -s3.output=v4 --user jo"
+  // same as "--aws --kinesis.input=v1 --aws --kinesis.output=v2  --aws --s3.input=v3 --aws --s3.output=v4 --user jo"
+  // same as "--aws --kinesis --input=v1 --aws --kinesis --output=v2  --aws --s3 --input=v3 --aws --s3 --output=v4 --user jo"
+  // same as "--aws --kinesis --input v1 --aws --kinesis --output v2  --aws --s3 --input v3 --aws --s3 --output v4 --user jo"
+
+  val source4 =
+    ConfigSource.fromCommandLineArgs(awsCmdLineArgs2.split(' ').toList, keyDelimiter = Some('.'))
+
+  assert(
+    read(DeriveConfigDescriptor[AppConfig] from source4) == Right(
+      AppConfig(AwsConfig(KinesisConfig("v1", "v2"), S3Config("v3", "v4")), "jo")
     )
   )
 }
