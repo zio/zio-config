@@ -36,6 +36,6 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
       .toList
 
   def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Config[SomeConfig]] =
-    ZIO.environment.provideLayer(Config.fromArgs(args, SomeConfig.descriptor, None, None))
+    ZIO.environment.provideLayer(Config.fromCommandLineArgs(args, SomeConfig.descriptor, None, None))
 
 }
