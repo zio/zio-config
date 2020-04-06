@@ -9,14 +9,90 @@ import zio.config.ConfigDescriptor._
 import scala.language.experimental.macros
 import scala.util.{ Failure, Success }
 
-trait DeriveConfigDescriptor[T] {
-  def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, T]
+/**
+ * DeriveConfigDescriptor[Config] gives an automatic ConfigDescriptor for the case class Config
+ * given each field in the case class has an instance of DeriveConfigDescriptor
+ *
+ * DeriveConfigDescriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
+ * given each term in the coproduct has an instance of DeriveConfigDescriptor
+ *
+ * {{{
+ *
+ *    // Given
+ *    final case class Config(username: String, age: Int)
+ *
+ *    // should work with no additional code
+ *    val description = DeriveConfigDescriptor[Config]
+ *
+ *    val config = Config.fromSystemEnv(description)
+ *
+ * Please find more (complex) examples in the examples module in zio-config
+ *
+ * }}}
+ */
+trait DeriveConfigDescriptor[A] { self =>
+  def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, A]
+
+  def xmap[B](f: A => B)(g: B => A): DeriveConfigDescriptor[B] =
+    xmapEither(a => Right(f(a)))(b => Right(g(b)))
+
+  def xmapEither[B](f: A => Either[String, B])(g: B => Either[String, A]): DeriveConfigDescriptor[B] =
+    new DeriveConfigDescriptor[B] {
+      override def getDescription(
+        path: Option[String],
+        parentClass: Option[String]
+      ): ConfigDescriptor[String, String, B] =
+        self.getDescription(path, parentClass).xmapEither(a => f(a), (b: B) => g(b))
+    }
 }
 
 object DeriveConfigDescriptor {
+
+  /**
+   * DeriveConfigDescriptor[Config] gives an automatic ConfigDescriptor for the case class Config
+   * given each field in the case class has an instance of DeriveConfigDescriptor
+   *
+   * DeriveConfigDescriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
+   * given each term in the coproduct has an instance of DeriveConfigDescriptor
+   *
+   * {{{
+   *
+   *    // Given
+   *    final case class Config(username: String, age: Int)
+   *
+   *    // should work with no additional code
+   *    val description = DeriveConfigDescriptor[Config]
+   *
+   *    val config = Config.fromSystemEnv(description)
+   *
+   * }}}
+   *
+   * Please find more (complex) examples in the examples module in zio-config
+   */
   def apply[T](implicit ev: DeriveConfigDescriptor[T]): ConfigDescriptor[String, String, T] =
     ev.getDescription(None, None)
 
+  /**
+   * DeriveConfigDescriptor.descriptor[Config] gives an automatic ConfigDescriptor for the case class Config
+   * given each field in the case class has an instance of DeriveConfigDescriptor
+   *
+   * DeriveConfigDescriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
+   * given each term in the coproduct has an instance of DeriveConfigDescriptor
+   *
+   * {{{
+   *
+   *    // Given
+   *    final case class Config(username: String, age: Int)
+   *
+   *    // should work with no additional code
+   *    val description = DeriveConfigDescriptor[Config]
+   *
+   *    val config = Config.fromSystemEnv(description)
+   *
+   * }}}
+   *
+   * Please find more (complex) examples in the examples module in zio-config
+   */
   def descriptor[T](implicit ev: DeriveConfigDescriptor[T]): ConfigDescriptor[String, String, T] =
     ev.getDescription(None, None)
 

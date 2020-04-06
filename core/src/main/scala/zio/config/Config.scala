@@ -71,6 +71,7 @@ object Config {
    * then, the following works:
    *
    * {{{
+   *    final case class kafkaConfig(server: String, serializers: String)
    *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
@@ -98,6 +99,7 @@ object Config {
    * then, the following works:
    *
    * {{{
+   *    final case class kafkaConfig(server: String, serializers: String)
    *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
@@ -126,6 +128,7 @@ object Config {
    * then, the following works:
    *
    * {{{
+   *    final case class kafkaConfig(server: String, serializers: String)
    *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
@@ -157,6 +160,7 @@ object Config {
    * then, the following works:
    *
    * {{{
+   *    final case class kafkaConfig(server: String, serializers: String)
    *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    *
@@ -190,6 +194,7 @@ object Config {
    * then, the following works:
    *
    * {{{
+   *    final case class kafkaConfig(server: String, serializers: String)
    *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    *
@@ -219,6 +224,7 @@ object Config {
    * then, the following works:
    *
    * {{{
+   *    final case class kafkaConfig(server: String, serializers: String)
    *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    *

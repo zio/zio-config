@@ -59,15 +59,15 @@ object ConfigSource {
    *
    * {{{
    *
-   *  final case class Credentials(username: String, password: String)
+   *    final case class Credentials(username: String, password: String)
    *
-   *  val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
+   *    val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
    *
-   *  final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String, users: List[String])
+   *    final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String, users: List[String])
    *
-   *  (nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") |@| list(string("user"))(Config.apply, Config.unapply)
+   *    (nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") |@| list(string("user"))(Config.apply, Config.unapply)
    *
-   *  // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
+   *    // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
    *
    * }}}
    *
@@ -100,6 +100,7 @@ object ConfigSource {
    * tthen, the following works:
    *
    * {{{
+   *    final case class kafkaConfig(server: String, serializers: String)
    *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
@@ -133,7 +134,8 @@ object ConfigSource {
    * then, the following works:
    *
    * {{{
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    final case class kafkaConfig(server: String, serializers: String)
+   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
   def fromMultiMap(
@@ -160,7 +162,8 @@ object ConfigSource {
    * then, the following works:
    *
    * {{{
-   * nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    final case class kafkaConfig(server: String, serializers: String)
+   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
   def fromProperties(
@@ -197,6 +200,7 @@ object ConfigSource {
    * then, the following works:
    *
    * {{{
+   *    final case class kafkaConfig(server: String, serializers: String)
    *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
@@ -237,7 +241,8 @@ object ConfigSource {
    * then, the following works:
    *
    * {{{
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    final case class kafkaConfig(server: String, serializers: String)
+   *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    *
    * Note: The delimiter '.' for keys doesn't work in system environment.
@@ -267,6 +272,7 @@ object ConfigSource {
    * then, the following works:
    *
    * {{{
+   *    final case class kafkaConfig(server: String, serializers: String)
    *    nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
