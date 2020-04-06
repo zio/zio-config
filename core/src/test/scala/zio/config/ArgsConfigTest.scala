@@ -68,7 +68,7 @@ object ArgsConfigTest extends DefaultRunnableSpec {
         s => ConversionError[String](Vector(Left(0)), s),
         propertyTree =>
           propertyTree.flatten.toList.flatMap { t: (Vector[String], ::[String]) =>
-            List(s"--${t._1.mkString("_")}=${t._2.mkString}")
+            List(s"-${t._1.mkString("_")}=${t._2.mkString}")
           }
       )
 

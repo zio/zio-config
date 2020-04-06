@@ -244,7 +244,7 @@ object ConfigSource {
   private[config] def argsAsKeyValues(args: List[String]): List[(String, String)] =
     args.flatMap { s =>
       if (s.startsWith("-") && s.contains("="))
-        s.substring(2).split('=').toList match {
+        s.split('=').toList match {
           case k :: v :: Nil => List(k, v)
           case _             => Nil
         }
