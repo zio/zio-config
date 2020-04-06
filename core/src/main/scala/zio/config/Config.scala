@@ -12,7 +12,7 @@ object Config {
    *
    * Forming configuration from command line arguments.
    *
-   * Assumption. All keys should start with either - or --
+   * Assumption. All keys should start with either -
    *
    * This source supports almost all standard command-line patterns including nesting/sub-config, repetition/list etc
    *

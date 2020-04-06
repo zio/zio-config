@@ -10,8 +10,11 @@ import zio.config.PropertyTree.{ unflatten, Leaf, Record, Sequence }
 import zio.ZIO
 import java.io.FileInputStream
 import java.io.File
+
 import These._
 import zio.Task
+
+import scala.annotation.tailrec
 
 final case class ConfigSource[K, V](
   getConfigValue: Vector[K] => PropertyTree[K, V],
@@ -41,7 +44,7 @@ object ConfigSource {
    *
    * Forming configuration from command line arguments.
    *
-   * Assumption. All keys should start with either - or --
+   * Assumption. All keys should start with -
    *
    * This source supports almost all standard command-line patterns including nesting/sub-config, repetition/list etc
    *
@@ -358,12 +361,7 @@ object ConfigSource {
 
   object Key {
     def mk(s: String): Option[Key] =
-      if (s.startsWith("--")) {
-        Some(new Key(s.replace("--", "")))
-      } else if (s.startsWith("-")) {
-        Some(new Key(s.replace("-", "")))
-      } else
-        None
+      if (s.startsWith("-")) Some(new Key(removeLeading(s, '-'))) else None
   }
 
   private[config] def getPropertyTreeFromArgs(
@@ -470,4 +468,10 @@ object ConfigSource {
   private[config] def mergeAll[K, V](sources: Iterable[ConfigSource[K, V]]): ConfigSource[K, V] =
     sources.foldLeft(ConfigSource.empty: ConfigSource[K, V])(_ orElse _)
 
+  @tailrec
+  private[config] def removeLeading(s: String, toRemove: Char): String =
+    s.headOption match {
+      case Some(c) if c == toRemove => removeLeading(s.tail, toRemove)
+      case _                        => s
+    }
 }
