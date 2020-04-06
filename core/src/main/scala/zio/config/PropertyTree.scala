@@ -244,8 +244,8 @@ object PropertyTree {
     mergeAll(map.toList.map(tuple => unflatten(tuple._1.toList, tuple._2)))
 
   def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
-    list.foldLeft(List[PropertyTree[K, V]](PropertyTree.empty)) {
-      case (acc, tree) => acc.flatMap(tree0 => tree.merge(tree0))
+    list.foldRight(List[PropertyTree[K, V]](PropertyTree.empty)) {
+      case (tree, acc) => acc.flatMap(tree0 => tree.merge(tree0))
     }
 
   def partitionWith[K, V, A](
