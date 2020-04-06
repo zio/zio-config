@@ -361,7 +361,12 @@ object ConfigSource {
 
   object Key {
     def mk(s: String): Option[Key] =
-      if (s.startsWith("-")) Some(new Key(removeLeading(s, '-'))) else None
+      if (s.startsWith("-")) {
+        val key = removeLeading(s, '-')
+        if (key.nonEmpty) Some(new Key(key)) else None
+      } else {
+        None
+      }
   }
 
   private[config] def getPropertyTreeFromArgs(
