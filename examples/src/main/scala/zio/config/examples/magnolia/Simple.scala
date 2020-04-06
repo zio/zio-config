@@ -19,10 +19,11 @@ case class Z(a: String) extends Y
 case class G(l: String)
 
 case class Cfg(fieldName: X)
-case class CfgCfg(cfg: Cfg)
+case class CfgCfg(cfg: Cfg, n: Int, c: String)
 
 case class K(a: String)
 
+// Fix me: Add to tests (not possible currently coz modules are independent of each other)
 object Cfg extends App with EitherImpureOps {
 
   val s1 =
@@ -39,12 +40,14 @@ object Cfg extends App with EitherImpureOps {
       |  }
       | }
       |}
+      |n = 1
+      |c = l
       |
       |""".stripMargin
 
   assert(
     read(DeriveConfigDescriptor[CfgCfg] from TypeSafeConfigSource.fromHoconString(s1).loadOrThrow) == Right(
-      CfgCfg(Cfg(C("b", G("hi"))))
+      CfgCfg(Cfg(C("b", G("hi"))), 1, "l")
     )
   )
 
