@@ -163,11 +163,8 @@ object DeriveConfigDescriptor {
         val finalDesc =
           if (caseClass.isObject) {
             val config = parentClass match {
-              case Some(parentClass) =>
-                path match {
-                  case Some(path) => nested(parentClass)(string(path))
-                  case None       => string(parentClass.toLowerCase())
-                }
+              case Some(parentClass) => string(parentClass.toLowerCase())
+
               case None =>
                 string("").xmapEither[String](
                   _ =>
@@ -246,7 +243,7 @@ object DeriveConfigDescriptor {
 
         tail.foldRight[ConfigDescriptor[String, String, T]](
           head.typeclass
-            .getDescription(paths, Some(sealedTrait.typeName.short))
+            .getDescription(paths, Some(sealedTrait.typeName.short.toLowerCase()))
             .xmapEither(
               (t: head.SType) => Right(t: T), { a: T =>
                 scala.util.Try(head.cast(a)) match {
@@ -259,7 +256,7 @@ object DeriveConfigDescriptor {
           (e: Subtype[Typeclass, T], b: ConfigDescriptor[String, String, T]) =>
             b.orElse(
               e.typeclass
-                .getDescription(paths, Some(sealedTrait.typeName.short.toString))
+                .getDescription(paths, Some(sealedTrait.typeName.short.toLowerCase()))
                 .xmapEither(
                   (t: e.SType) => Right(t: T),
                   (a: T) =>
