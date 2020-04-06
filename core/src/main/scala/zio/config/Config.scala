@@ -72,7 +72,7 @@ object Config {
    *
    * {{{
    *    final case class kafkaConfig(server: String, serde: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
   def fromMap[A](
@@ -100,7 +100,7 @@ object Config {
    *
    * {{{
    *    final case class kafkaConfig(server: String, serde: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
   def fromMultiMap[A](
@@ -129,7 +129,7 @@ object Config {
    *
    * {{{
    *    final case class kafkaConfig(server: String, serde: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
   def fromProperties[A](
@@ -161,7 +161,7 @@ object Config {
    *
    * {{{
    *    final case class kafkaConfig(server: String, serde: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    *
    */
@@ -195,7 +195,7 @@ object Config {
    *
    * {{{
    *    final case class kafkaConfig(server: String, serde: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    *
    * Note: The delimiter '.' for keys doesn't work in system environment.
@@ -225,7 +225,7 @@ object Config {
    *
    * {{{
    *    final case class kafkaConfig(server: String, serde: String)
-   *    nested("KAFKA")(string("SERVER") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    *
    */
