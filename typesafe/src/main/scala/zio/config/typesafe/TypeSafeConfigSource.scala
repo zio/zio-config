@@ -1,9 +1,8 @@
 package zio.config.typesafe
 
-import com.typesafe.config.ConfigFactory
+import com.typesafe.config.{ ConfigFactory, ConfigValueType }
 import zio.config.ConfigSource
 import zio.config._
-import com.typesafe.config.ConfigValueType
 import zio.config.PropertyTree.Leaf
 
 import scala.util.Try
@@ -12,6 +11,7 @@ import scala.util.Success
 import scala.collection.JavaConverters._
 import PropertyTree._
 import java.io.File
+
 import zio.IO
 import zio.Task
 import zio.ZIO

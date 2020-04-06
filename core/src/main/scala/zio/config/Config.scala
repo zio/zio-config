@@ -10,22 +10,49 @@ object Config {
   /**
    * EXPERIMENTAL
    *
-   * Forming configuration from command line arguments, eg `List(--param1=xxxx, --param2=yyyy)`
+   * Forming configuration from command line arguments.
    *
-   * Pack all of the command-line arguments into multiple property lists. Using PropertyTree.mergeAll, merge a
-   * bunch of command line options into the smallest possible set of property trees, and then use those
-   * property trees to perform lookup.
+   * Assumption. All keys should start with either -
    *
-   * This is a simple implementation for handling of key/value switches, and is not a
-   * fully-featured command line parser.
+   * This source supports almost all standard command-line patterns including nesting/sub-config, repetition/list etc
+   *
+   * Example:
+   *
+   * Given:
+   *
+   * {{{
+   *    args = "-db.username=1 --db.password=hi --vault -username=3 --vault -password=10 --regions 111,122 --user k1 --user k2"
+   *    keyDelimiter   = Some('.')
+   *    valueDelimiter = Some(',')
+   * }}}
+   *
+   * then, the following works:
+   *
+   * {{{
+   *
+   *  final case class Credentials(username: String, password: String)
+   *
+   *  val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
+   *
+   *  final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String, users: List[String])
+   *
+   *  (nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions") |@| list(string("user"))(Config.apply, Config.unapply)
+   *
+   *  // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
+   *
+   * }}}
+   *
+   * @see [[https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples/commandline/CommandLineArgsExample.scala]]
    */
-  def fromArgs[K, V, A](
+  def fromCommandLineArgs[K, V, A](
     args: List[String],
     configDescriptor: ConfigDescriptor[String, String, A],
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
-    fromConfigDescriptor(configDescriptor from ConfigSource.fromArgs(args, keyDelimiter, valueDelimiter))
+    fromConfigDescriptor(
+      configDescriptor from ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter)
+    )
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -33,15 +60,20 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   map            = Map("KAFKA_SERVERS" -> "server1, server2", "KAFKA_SERIALIZERS"  -> "confluent")
-   *   keyDelimiter   = Some('_')
-   *   valueDelimiter = Some(',')
+   *    map            = Map("KAFKA_SERVERS" -> "server1, server2", "KAFKA_SERDE"  -> "confluent")
+   *    keyDelimiter   = Some('_')
+   *    valueDelimiter = Some(',')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
    */
   def fromMap[A](
     map: Map[String, String],
@@ -57,14 +89,19 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   map = Map("KAFKA_SERVERS" -> singleton(server1), "KAFKA_SERIALIZERS"  -> singleton("confluent"))
-   *   keyDelimiter = Some('_')
+   *    map = Map("KAFKA_SERVERS" -> singleton(server1), "KAFKA_SERDE"  -> singleton("confluent"))
+   *    keyDelimiter = Some('_')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
    */
   def fromMultiMap[A](
     map: Map[String, ::[String]],
@@ -80,15 +117,20 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
-   *   keyDelimiter   = Some('.')
-   *   valueDelimiter = Some(',')
+   *    property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
+   *    keyDelimiter   = Some('.')
+   *    valueDelimiter = Some(',')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
    */
   def fromProperties[A](
     properties: Properties,
@@ -107,15 +149,21 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
-   *   keyDelimiter         = Some('.')
-   *   valueDelimiter       = Some(',')
+   *    properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
+   *    keyDelimiter         = Some('.')
+   *    valueDelimiter       = Some(',')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
+   *
    */
   def fromPropertiesFile[A](
     filePath: String,
@@ -135,15 +183,20 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERIALIZERS" = "confluent"
-   *   keyDelimiter     = Some('_')
-   *   valueDelimiter   = Some(',')
+   *    vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERDE" = "confluent"
+   *    keyDelimiter     = Some('_')
+   *    valueDelimiter   = Some(',')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
    *
    * Note: The delimiter '.' for keys doesn't work in system environment.
    */
@@ -160,15 +213,21 @@ object Config {
    *
    * Example:
    *
-   * Given
+   * Given:
+   *
    * {{{
-   *   vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERIALIZERS" = "confluent"
-   *   keyDelimiter     = Some('.')
-   *   valueDelimiter   = Some(',')
+   *    vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
+   *    keyDelimiter     = Some('.')
+   *    valueDelimiter   = Some(',')
    * }}}
    *
-   * then, the below config will work
-   *  nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
+   *
    */
   def fromSystemProperties[K, V, A](
     configDescriptor: ConfigDescriptor[String, String, A],
