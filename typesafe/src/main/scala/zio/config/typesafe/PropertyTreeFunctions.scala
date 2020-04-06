@@ -24,7 +24,8 @@ private[typesafe] trait PropertyTreeFunctions {
               val path = keys :+ k
               val nextConfig =
                 keys.toList match {
-                  case _ :: t if t.nonEmpty => loop(v, path).getObject(keys.tail.mkString("."))
+                  // typsafe config uses path expressions using hardcoded dot
+                  case _ :: t if t.nonEmpty => loop(v, path).getObject(t.mkString("."))
                   case _                    => loop(v, path).root()
                 }
 
