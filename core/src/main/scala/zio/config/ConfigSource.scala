@@ -75,8 +75,8 @@ object ConfigSource {
    */
   def fromCommandLineArgs(
     args: List[String],
-    keyDelimiter: Option[Char],
-    valueDelimiter: Option[Char]
+    keyDelimiter: Option[Char] = None,
+    valueDelimiter: Option[Char] = None
   ): ConfigSource[String, String] =
     ConfigSource.fromPropertyTrees(
       getPropertyTreeFromArgs(args.filter(_.nonEmpty), keyDelimiter, valueDelimiter),
