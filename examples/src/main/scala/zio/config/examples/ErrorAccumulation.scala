@@ -24,8 +24,8 @@ object ErrorAccumulation extends App {
         // AndErrors indicate fix the errors associated with both envvar1 and OrError(envvar2 or envvar3)
         AndErrors(
           List(
-            MissingValue(Vector(Right("envvar"))),
-            OrErrors(List(MissingValue(Vector(Right("envvar2"))), MissingValue(Vector(Right("envvar3")))))
+            MissingValue(List(KeyStep("envvar"))),
+            OrErrors(List(MissingValue(List(KeyStep("envvar2"))), MissingValue(List(KeyStep("envvar3")))))
           )
         )
       )
@@ -44,8 +44,8 @@ object ErrorAccumulation extends App {
       Left(
         AndErrors(
           List(
-            FormatError(Vector(Right("envvar")), ReadFunctions.parseErrorMessage("wrong", "int")),
-            OrErrors(List(MissingValue(Vector(Right("envvar2"))), MissingValue(Vector(Right("envvar3")))))
+            FormatError(List(KeyStep("envvar")), ReadFunctions.parseErrorMessage("wrong", "int")),
+            OrErrors(List(MissingValue(List(KeyStep("envvar2"))), MissingValue(List(KeyStep("envvar3")))))
           )
         )
       )

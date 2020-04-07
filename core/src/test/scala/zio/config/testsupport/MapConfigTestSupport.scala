@@ -1,7 +1,7 @@
 package zio.config.testsupport
 
 import zio.config.ConfigDescriptor
-import zio.config.ConfigDescriptor.{ boolean, nested, string }
+import zio.config.ConfigDescriptor.{ boolean, first, string }
 import zio.random.Random
 import zio.test.Gen.alphaNumericChar
 import zio.test.{ Gen, Sized }
@@ -40,8 +40,11 @@ object MapConfigTestSupport {
 
     object AwsConfig {
       val description: ConfigDescriptor[String, String, AwsConfig] =
-        nested("aws")(
-          (string("key") |@| string("secret") |@| KinesisConfig.description)(AwsConfig.apply, AwsConfig.unapply)
+        first("aws")(
+          (first("key")(string) |@| first("secret")(string) |@| KinesisConfig.description)(
+            AwsConfig.apply,
+            AwsConfig.unapply
+          )
         )
     }
 
@@ -49,18 +52,18 @@ object MapConfigTestSupport {
 
     object KinesisConfig {
       val description =
-        (nested("kinesis")(string("inputtopic"))(KinesisConfig.apply, KinesisConfig.unapply))
+        (first("kinesis")(first("inputtopic")(string))(KinesisConfig.apply, KinesisConfig.unapply))
     }
 
     final case class PubSubConfig(outputTopic: String)
 
     object PubSubConfig {
       val description =
-        nested("ps")((string("outputtopic"))(PubSubConfig.apply, PubSubConfig.unapply))
+        first("ps")(first("outputtopic")(string)(PubSubConfig.apply, PubSubConfig.unapply))
     }
 
     val descriptor: ConfigDescriptor[String, String, AppConfig] =
-      nested("SystemF")(
+      first("SystemF")(
         (AwsConfig.description |@| AppConfig.PubSubConfig.description |@| JobConfig.descriptor)(
           AppConfig.apply,
           AppConfig.unapply
@@ -79,13 +82,13 @@ object MapConfigTestSupport {
 
   object DataflowConfig {
     val descriptor: ConfigDescriptor[String, String, DataflowConfig] =
-      nested("df")(
-        ((string("name")) |@|
-          string("project") |@|
-          string("region") |@|
-          string("zone") |@|
-          string("subnet") |@|
-          string("gcptemplocation"))(DataflowConfig.apply, DataflowConfig.unapply)
+      first("df")(
+        ((first("name")(string)) |@|
+          first("project")(string) |@|
+          first("region")(string) |@|
+          first("zone")(string) |@|
+          first("subnet")(string) |@|
+          first("gcptemplocation")(string))(DataflowConfig.apply, DataflowConfig.unapply)
       )
   }
 
@@ -98,7 +101,9 @@ object MapConfigTestSupport {
 
   object JobConfig {
     val descriptor: ConfigDescriptor[String, String, JobConfig] =
-      nested("job")((DataflowConfig.descriptor.optional |@| boolean("supervise"))(JobConfig.apply, JobConfig.unapply))
+      first("job")(
+        (DataflowConfig.descriptor.optional |@| first("supervise")(boolean))(JobConfig.apply, JobConfig.unapply)
+      )
   }
 
   def stringN(min: Int, max: Int): Gen[Random with Sized, String] =

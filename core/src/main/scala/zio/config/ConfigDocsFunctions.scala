@@ -17,8 +17,8 @@ private[config] trait ConfigDocsFunctions {
         case ConfigDescriptor.Default(c, _) =>
           loop(sources, descriptions, c, docs)
 
-        case ConfigDescriptor.Sequence(c) =>
-          ConfigDocs.Sequence(loop(sources, descriptions, c, docs) :: Nil)
+        case ConfigDescriptor.Sequence(source, c) =>
+          ConfigDocs.Sequence(loop(Sources(source.sourceDescription ++ sources.list), descriptions, c, docs) :: Nil)
 
         case ConfigDescriptor.Describe(c, desc) =>
           loop(sources, desc :: descriptions, c, docs)

@@ -46,7 +46,12 @@ trait DeriveConfigDescriptor[A] { self =>
     }
 }
 
-object DeriveConfigDescriptor {
+trait LowPriorityDeriveConfigDescriptor {
+  implicit def opt[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[Option[A]] =
+    (a, b) => ev.getDescription(a, b).optional
+}
+
+object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
 
   /**
    * DeriveConfigDescriptor[Config] gives an automatic ConfigDescriptor for the case class Config
@@ -122,8 +127,15 @@ object DeriveConfigDescriptor {
   implicit val bigDecimalDesc: DeriveConfigDescriptor[BigDecimal] = instance(bigDecimal)
   implicit val uriDesc: DeriveConfigDescriptor[URI]               = instance(uri)
 
-  implicit def opt[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[Option[A]] =
-    (a, b) => ev.getDescription(a, b).optional
+  implicit def optNonEmptyList[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[Option[::[A]]] =
+    (a, b) =>
+      list(ev.getDescription(a, b)).optional.xmap(
+        {
+          case None | Some(Nil)   => None
+          case Some(head :: tail) => Some(::(head, tail))
+        },
+        x => x
+      )
 
   implicit def listt[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[List[A]] =
     (a, b) => list(ev.getDescription(a, b))

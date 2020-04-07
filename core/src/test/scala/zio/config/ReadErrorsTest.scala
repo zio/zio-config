@@ -1,9 +1,10 @@
 package zio.config
 
-import ReadErrorsTestUtils._
+import zio.config.ReadError.KeyStep
+import zio.config.ReadErrorsTestUtils._
 import zio.random.Random
-import zio.test._
 import zio.test.Assertion._
+import zio.test._
 
 object ReadErrorsTest
     extends BaseSpec(
@@ -24,10 +25,10 @@ object ReadErrorsTestUtils {
       s1 <- Gen.anyString
       s2 <- Gen.anyString
       s3 <- Gen.anyString
-    } yield ReadError.FormatError(Vector(Right(s1)), ReadFunctions.parseErrorMessage(s2, s3))
+    } yield ReadError.FormatError(List(KeyStep(s1)), ReadFunctions.parseErrorMessage(s2, s3))
 
   private val genReadError =
-    Gen.oneOf(Gen.const(ReadError.MissingValue(Vector(Right("somekey")))), genFormatError)
+    Gen.oneOf(Gen.const(ReadError.MissingValue(List(KeyStep("somekey")))), genFormatError)
 
   val genReadErrors: Gen[Random with Sized, List[ReadError[String]]] = {
     for {

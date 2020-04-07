@@ -3,6 +3,8 @@ package zio.config
 import scala.collection.immutable.Nil
 import PropertyTree._
 
+import scala.annotation.tailrec
+
 sealed trait PropertyTree[+K, +V] { self =>
   final def ++[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): PropertyTree[K1, V1] =
     (self, that) match {
@@ -75,16 +77,18 @@ sealed trait PropertyTree[+K, +V] { self =>
   final def getOrElse[K1 >: K, V1 >: V](tree: => PropertyTree[K1, V1]): PropertyTree[K1, V1] =
     if (self == PropertyTree.empty) tree else self
 
+  @tailrec
   final def getPath[K1 >: K](k: List[K1]): PropertyTree[K1, V] =
     k match {
       case Nil => self
       case head :: next =>
         self match {
-          case Empty         => Empty
-          case Leaf(_)       => Empty
-          case Record(value) => value.get(head.asInstanceOf[K]).map(_.getPath(next)).getOrElse(Empty)
-          case Sequence(r)   => Sequence(r.map(_.getPath(k)))
-
+          case Empty | Leaf(_) | Sequence(_) => Empty
+          case Record(value) =>
+            value.get(head.asInstanceOf[K]) match {
+              case Some(value) => value.getPath(next)
+              case None        => Empty
+            }
         }
     }
 
@@ -292,10 +296,13 @@ object PropertyTree {
   def unflatten[K, V](map: Map[Vector[K], ::[V]]): List[PropertyTree[K, V]] =
     mergeAll(map.toList.map(tuple => unflatten(tuple._1.toList, tuple._2)))
 
-  def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
-    list.foldRight(List[PropertyTree[K, V]](PropertyTree.empty)) {
-      case (tree, acc) => acc.flatMap(tree0 => tree.merge(tree0))
-    }
+  def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] = list.reverse match {
+    case Nil => PropertyTree.empty :: Nil
+    case head :: tail =>
+      tail.foldLeft(List(head)) {
+        case (acc, tree) => acc.flatMap(tree0 => tree.merge(tree0))
+      }
+  }
 
   def partitionWith[K, V, A](
     trees: List[PropertyTree[K, V]]

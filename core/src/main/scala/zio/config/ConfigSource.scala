@@ -16,19 +16,28 @@ import zio.Task
 
 import scala.annotation.tailrec
 
-final case class ConfigSource[K, V](
-  getConfigValue: Vector[K] => PropertyTree[K, V],
-  sourceDescription: List[String]
-) { self =>
-  final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
-    ConfigSource(
-      k => getConfigValue(k).getOrElse(that.getConfigValue(k)),
-      if (self.sourceDescription == that.sourceDescription) self.sourceDescription
-      else self.sourceDescription ++ that.sourceDescription
-    )
+sealed trait ConfigSource[K, V] { self =>
+  def sourceDescription: List[String]
 
-  final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] =
-    self orElse that
+  def getConfigValue(path: List[K]): PropertyTree[K, V]
+
+  final def orElse(that: ConfigSource[K, V]): ConfigSource[K, V] = MergedConfigSource(self, that)
+
+  final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] = self orElse that
+}
+
+final case class TreeConfigSource[K, V](tree: PropertyTree[K, V], sourceDescription: List[String])
+    extends ConfigSource[K, V] {
+  def getConfigValue(path: List[K]): PropertyTree[K, V] = tree.getPath(path)
+}
+final case class MergedConfigSource[K, V](left: ConfigSource[K, V], right: ConfigSource[K, V])
+    extends ConfigSource[K, V] {
+  def getConfigValue(path: List[K]): PropertyTree[K, V] =
+    left.getConfigValue(path).getOrElse(right.getConfigValue(path))
+
+  val sourceDescription: List[String] =
+    if (left.sourceDescription == right.sourceDescription) left.sourceDescription
+    else left.sourceDescription ::: right.sourceDescription
 }
 
 object ConfigSource {
@@ -36,8 +45,8 @@ object ConfigSource {
   private[config] val SystemProperties     = "system properties"
   private[config] val CommandLineArguments = "command line arguments"
 
-  def empty[K, V]: ConfigSource[K, V] =
-    ConfigSource(_ => PropertyTree.empty, Nil)
+  def empty[K, V]: ConfigSource[K, V]                                        = TreeConfigSource(PropertyTree.empty, Nil)
+  def apply[K, V](tree: PropertyTree[K, V], sourceDescription: List[String]) = TreeConfigSource(tree, sourceDescription)
 
   /**
    * EXPERIMENTAL
@@ -296,28 +305,53 @@ object ConfigSource {
     map: Map[String, A]
   )(f: A => ::[B], keyDelimiter: Option[Char], source: String): ConfigSource[String, B] =
     fromPropertyTrees(
-      unflatten(
-        map.map(
-          tuple => {
-            val vectorOfKeys = keyDelimiter match {
-              case Some(keyDelimiter) => tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
-              case None               => Vector(tuple._1)
-            }
-            vectorOfKeys -> f(tuple._2)
-          }
+      unwrapSingletonLists(
+        dropEmpty(
+          unflatten(
+            map.map(
+              tuple => {
+                val vectorOfKeys = keyDelimiter match {
+                  case Some(keyDelimiter) => tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
+                  case None               => Vector(tuple._1)
+                }
+                vectorOfKeys -> f(tuple._2)
+              }
+            )
+          )
         )
       ),
       source
     )
 
-  private[config] def fromPropertyTree[B](
-    tree: PropertyTree[String, B],
-    source: String
-  ): ConfigSource[String, B] =
-    ConfigSource(
-      (path: Vector[String]) => tree.getPath(path.toList),
-      source :: Nil
-    )
+  private def dropEmpty[K, V](tree: PropertyTree[K, V]): PropertyTree[K, V] =
+    if (tree.isEmpty) PropertyTree.Empty
+    else
+      tree match {
+        case l @ Leaf(_)        => l
+        case Record(value)      => Record(value.filterNot { case (_, v) => v.isEmpty })
+        case PropertyTree.Empty => PropertyTree.Empty
+        case Sequence(value)    => Sequence(value.filterNot(_.isEmpty))
+      }
+
+  private def dropEmpty[K, V](trees: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] = {
+    val res = trees.map(dropEmpty(_)).filterNot(_.isEmpty)
+    if (res.isEmpty) PropertyTree.Empty :: Nil
+    else res
+  }
+
+  private def unwrapSingletonLists[K, V](tree: PropertyTree[K, V]): PropertyTree[K, V] = tree match {
+    case l @ Leaf(_)            => l
+    case Record(value)          => Record(value.map { case (k, v) => k -> unwrapSingletonLists(v) })
+    case PropertyTree.Empty     => PropertyTree.Empty
+    case Sequence(value :: Nil) => unwrapSingletonLists(value)
+    case Sequence(value)        => Sequence(value.map(unwrapSingletonLists(_)))
+  }
+
+  private def unwrapSingletonLists[K, V](trees: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
+    trees.map(unwrapSingletonLists(_))
+
+  private[config] def fromPropertyTree[B](tree: PropertyTree[String, B], source: String): ConfigSource[String, B] =
+    ConfigSource(tree, source :: Nil)
 
   private[config] def fromPropertyTrees[B](
     trees: Iterable[PropertyTree[String, B]],
@@ -467,11 +501,11 @@ object ConfigSource {
         case Nil => Nil
       }
 
-    PropertyTree.mergeAll(loop(args))
+    unwrapSingletonLists(dropEmpty(PropertyTree.mergeAll(loop(args))))
   }
 
   private[config] def mergeAll[K, V](sources: Iterable[ConfigSource[K, V]]): ConfigSource[K, V] =
-    sources.foldLeft(ConfigSource.empty: ConfigSource[K, V])(_ orElse _)
+    sources.reduceLeftOption(_ orElse _).getOrElse(ConfigSource.empty)
 
   @tailrec
   private[config] def removeLeading(s: String, toRemove: Char): String =

@@ -1,16 +1,30 @@
 package zio.config.typesafe
 
-import zio.test._
-import zio.test.Assertion._
-import zio.config.BaseSpec
-import TypesafeConfigSpecUtils._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.config._
+import zio.config.{ BaseSpec, _ }
 import zio.config.magnolia.DeriveConfigDescriptor._
+import zio.config.typesafe.TypesafeConfigSpecUtils._
+import zio.test.Assertion._
+import zio.test._
 
 object TypesafeConfigSpec
     extends BaseSpec(
       suite("TypesafeConfig")(
+        test("Read empty list") {
+          val res =
+            TypeSafeConfigSource.fromHoconString(
+              """
+                |a {
+                |  b = "s"
+                |  c = []
+                |}
+                |""".stripMargin
+            )
+
+          val expected = Record(Map("a" -> Record(Map("b" -> Leaf("s"), "c" -> Sequence(Nil)))))
+
+          assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
+        },
         test("Read mixed list") {
           val res =
             TypeSafeConfigSource.fromHoconString(
@@ -24,7 +38,7 @@ object TypesafeConfigSpec
 
           val expected = Record(Map("list" -> Sequence(List(Leaf("a"), Record(Map("b" -> Leaf("c")))))))
 
-          assert(res.map(_.getConfigValue(Vector.empty)))(isRight(equalTo(expected)))
+          assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
         },
         testM(
           "Read a complex hocon structure successfully"

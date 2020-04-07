@@ -29,8 +29,8 @@ object CoproductTest
             val expected: ReadError[String] =
               OrErrors(
                 List(
-                  MissingValue(Vector(Right(p.kLdap))),
-                  FormatError(Vector(Right(p.kFactor)), ReadFunctions.parseErrorMessage("notafloat", "float"))
+                  MissingValue(List(KeyStep(p.kLdap))),
+                  FormatError(List(KeyStep(p.kFactor)), ReadFunctions.parseErrorMessage("notafloat", "float"))
                 )
               )
             assert(readWithErrors(p))(isLeft(equalTo(expected)))
