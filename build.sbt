@@ -131,7 +131,8 @@ lazy val zioConfigTypesafe =
         "com.typesafe" % "config"        % "1.4.0",
         "dev.zio"      %% "zio-test"     % zioVersion % Test,
         "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
-      )
+      ),
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
     .dependsOn(zioConfig % "compile->compile;test->test", zioConfigMagnolia)
 
