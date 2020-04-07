@@ -1,8 +1,8 @@
 package zio.config.examples
 
-import zio.config._
-import ConfigDescriptor._, zio.config.ConfigDocs.Details._
+import zio.config.ConfigDescriptor._
 import zio.config.ConfigDocs._
+import zio.config._
 
 object NestedConfigExample extends App {
 
@@ -43,25 +43,25 @@ object NestedConfigExample extends App {
           NestedPath(
             "south",
             Both(
-              Path(
+              NestedPath(
                 "connection",
-                Descriptions(Sources(Nil), List("value of type string", "South details"))
+                Leaf(Sources(Nil), List("value of type string", "South details"))
               ),
-              Path("port", Descriptions(Sources(Nil), List("value of type int", "South details")))
+              NestedPath("port", Leaf(Sources(Nil), List("value of type int", "South details")))
             )
           ),
           NestedPath(
             "east",
             Both(
-              Path(
+              NestedPath(
                 "connection",
-                Descriptions(Sources(Nil), List("value of type string", "East details"))
+                Leaf(Sources(Nil), List("value of type string", "East details"))
               ),
-              Path("port", Descriptions(Sources(Nil), List("value of type int", "East details")))
+              NestedPath("port", Leaf(Sources(Nil), List("value of type int", "East details")))
             )
           )
         ),
-        Path("appName", Descriptions(Sources(Nil), List("value of type string")))
+        NestedPath("appName", Leaf(Sources(Nil), List("value of type string")))
       )
   )
 
@@ -74,20 +74,20 @@ object NestedConfigExample extends App {
             NestedPath(
               "south",
               Both(
-                Path(
+                NestedPath(
                   "connection",
-                  DescriptionsWithValue(
-                    Some("abc.com"),
+                  Leaf(
                     Sources(Nil),
-                    List("value of type string", "South details")
+                    List("value of type string", "South details"),
+                    Some("abc.com")
                   )
                 ),
-                Path(
+                NestedPath(
                   "port",
-                  DescriptionsWithValue(
-                    Some("8111"),
+                  Leaf(
                     Sources(Nil),
-                    List("value of type int", "South details")
+                    List("value of type int", "South details"),
+                    Some("8111")
                   )
                 )
               )
@@ -95,28 +95,28 @@ object NestedConfigExample extends App {
             NestedPath(
               "east",
               Both(
-                Path(
+                NestedPath(
                   "connection",
-                  DescriptionsWithValue(
-                    Some("xyz.com"),
+                  Leaf(
                     Sources(Nil),
-                    List("value of type string", "East details")
+                    List("value of type string", "East details"),
+                    Some("xyz.com")
                   )
                 ),
-                Path(
+                NestedPath(
                   "port",
-                  DescriptionsWithValue(
-                    Some("8888"),
+                  Leaf(
                     Sources(Nil),
-                    List("value of type int", "East details")
+                    List("value of type int", "East details"),
+                    Some("8888")
                   )
                 )
               )
             )
           ),
-          Path(
+          NestedPath(
             "appName",
-            DescriptionsWithValue(Some("myApp"), Sources(Nil), List("value of type string"))
+            Leaf(Sources(Nil), List("value of type string"), Some("myApp"))
           )
         )
       )

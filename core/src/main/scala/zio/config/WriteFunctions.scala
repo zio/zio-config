@@ -5,8 +5,8 @@ private[config] trait WriteFunctions {
   final def write[K, V, A](config: ConfigDescriptor[K, V, A], a: A): Either[String, PropertyTree[K, V]] = {
     def go[B](config: ConfigDescriptor[K, V, B], b: B): Either[String, PropertyTree[K, V]] =
       config match {
-        case ConfigDescriptor.Source(path, _, propertyType) =>
-          Right(PropertyTree.Record(Map(path -> PropertyTree.Leaf(propertyType.write(b)))))
+        case ConfigDescriptor.Source(_, propertyType) =>
+          Right(PropertyTree.Leaf(propertyType.write(b)))
 
         case ConfigDescriptor.Describe(c, _) =>
           go(c, b)
@@ -17,17 +17,14 @@ private[config] trait WriteFunctions {
             case Left(v)     => Left(v)
           }
 
-        case ConfigDescriptor.Sequence(c) =>
-          seqEither(b.map((eachB: Any) => {
-            go(c, eachB)
-          })).map(PropertyTree.Sequence(_))
+        case cd: ConfigDescriptor.Sequence[K, V, a] =>
+          val bs = (b: List[a]).map(go(cd.config, _))
+          seqEither[String, PropertyTree[K, V]](bs).map(PropertyTree.Sequence(_))
 
         case ConfigDescriptor.Optional(c) =>
-          b.fold({
+          b.fold(
             Right(PropertyTree.empty): Either[String, PropertyTree[K, V]]
-          })(bb => {
-            go(c, bb)
-          })
+          )(go(c, _))
 
         case ConfigDescriptor.Default(c, _) =>
           go(c, b)
@@ -58,20 +55,19 @@ private[config] trait WriteFunctions {
 
           }
 
-        case ConfigDescriptor.Zip(config1, config2) =>
-          go(config1, b._1) match {
-            case Right(m1) =>
-              go(config2, b._2) match {
-                case Right(m2) =>
-                  m1.merge(m2).reduceOption(_ zip _) match {
-                    case Some(value) => Right(value)
-                    case None        => Left("Failed to write the config back to property tree, at zip node")
-                  }
-                case Left(m1) =>
-                  Left(m1)
-              }
-            case Left(e) => Left(e)
-          }
+        case cd: ConfigDescriptor.Zip[K, V, a, b] =>
+          val tuple: (a, b) = b
+
+          val leftResult  = go(cd.left, tuple._1)
+          val rightResult = go(cd.right, tuple._2)
+
+          for {
+            left   <- leftResult
+            right  <- rightResult
+            merged = left.condense.merge(right.condense)
+            result <- merged.headOption
+                       .toRight("Failed to write the config back to property tree, at zip node")
+          } yield result
       }
     go(config, a)
   }

@@ -21,7 +21,7 @@ You should be familiar with reading config from various sources, given a  config
 import zio.IO
 import zio.config._, ConfigDescriptor._
 import zio.config.PropertyTree._
-import zio.config.ConfigDocs._, ConfigDocs.Details._
+import zio.config.ConfigDocs.{Leaf => _, _}
 
 ```
 
@@ -126,19 +126,19 @@ To generate the documentation of the config, call `generateDocs`.
      NestedPath(
        "south",
        Both(
-         Path("connection", Descriptions(Sources(List("constant")), List("value of type string", "South details"))),
-         Path("port", Descriptions(Sources(List("constant")), List("value of type int", "South details")))
+         NestedPath("connection", ConfigDocs.Leaf(Sources(List("constant")), List("value of type string", "South details"))),
+         NestedPath("port", ConfigDocs.Leaf(Sources(List("constant")), List("value of type int", "South details")))
        )
      ),
      NestedPath(
        "east",
        Both(
-         Path("connection", Descriptions(Sources(List("constant")), List("value of type string", "East details"))),
-         Path("port", Descriptions(Sources(List("constant")), List("value of type int", "East details")))
+         NestedPath("connection", ConfigDocs.Leaf(Sources(List("constant")), List("value of type string", "East details"))),
+         NestedPath("port", ConfigDocs.Leaf(Sources(List("constant")), List("value of type int", "East details")))
        )
      )
    ),
-   Path("appName", Descriptions(Sources(List("constant")), List("value of type string")))
+   NestedPath("appName", ConfigDocs.Leaf(Sources(List("constant")), List("value of type string")))
  )
 ```
 
@@ -169,31 +169,31 @@ Right(
       NestedPath(
         "south",
         Both(
-          Path(
+          NestedPath(
             "connection",
-            DescriptionsWithValue(Some("abc.com"), Sources(List("constant")), List("value of type string", "South details"))
+            ConfigDocs.Leaf(Sources(List("constant")), List("value of type string", "South details"), Some("abc.com"))
           ),
-          Path(
+          NestedPath(
             "port",
-            DescriptionsWithValue(Some("8111"), Sources(List("constant")), List("value of type int", "South details"))
+            ConfigDocs.Leaf(Sources(List("constant")), List("value of type int", "South details"), Some("8111"))
           )
         )
       ),
       NestedPath(
         "east",
         Both(
-          Path(
+          NestedPath(
             "connection",
-            DescriptionsWithValue(Some("xyz.com"), Sources(List("constant")), List("value of type string", "East details"))
+            ConfigDocs.Leaf(Sources(List("constant")), List("value of type string", "East details"), Some("xyz.com"))
           ),
-          Path(
+          NestedPath(
             "port",
-            DescriptionsWithValue(Some("8888"), Sources(List("constant")), List("value of type int", "East details"))
+            ConfigDocs.Leaf(Sources(List("constant")), List("value of type int", "East details"), Some("8888"))
           )
         )
       )
     ),
-    Path("appName", DescriptionsWithValue(Some("myApp"), Sources(List("constant")), List("value of type string")))
+    NestedPath("appName", ConfigDocs.Leaf(Sources(List("constant")), List("value of type string"), Some("myApp")))
   )
 )
 ```

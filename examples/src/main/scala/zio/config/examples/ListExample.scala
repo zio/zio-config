@@ -1,9 +1,10 @@
 package zio.config.examples
 
 import zio.config.ConfigDescriptor._
-//import zio.config.PropertyTree.{ Leaf, Record }
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
+import zio.config.PropertyTree.Leaf
+import zio.config.typesafe._
 
 // List works quite nicely if the source is typesafe HOCON. Refer typesafe examples
 object ListExample extends App with EitherImpureOps {
@@ -17,8 +18,6 @@ object ListExample extends App with EitherImpureOps {
 
   val config: ConfigDescriptor[String, String, PgmConfig] =
     (string("xyz") |@| list(string("regions")))(PgmConfig.apply, PgmConfig.unapply)
-
-  val runtime = zio.Runtime.default
 
   val tree =
     ConfigSource.fromMultiMap(multiMap, "constant")
@@ -35,4 +34,40 @@ object ListExample extends App with EitherImpureOps {
         PgmConfig("something", List("australia", "canada", "usa"))
       )
   )
+
+  val propertyTree =
+    write(config, PgmConfig("something", List("australia", "canada", "usa")))
+
+  assert(
+    propertyTree ==
+      Right(
+        PropertyTree
+          .Record(
+            Map(
+              "xyz"     -> Leaf("something"),
+              "regions" -> PropertyTree.Sequence(List(Leaf("australia"), Leaf("canada"), Leaf("usa")))
+            )
+          )
+      )
+  )
+
+  println(propertyTree.map(_.toHocon))
+  // Right(SimpleConfigObject({"regions":["australia","canada","usa"],"xyz":"something"}))
+  println(propertyTree.map(_.toHocon.render()))
+
+//  Right({
+//    # hardcoded value
+//      "regions" : [
+//    # hardcoded value
+//      "australia",
+//    # hardcoded value
+//      "canada",
+//    # hardcoded value
+//      "usa"
+//    ],
+//    # hardcoded value
+//      "xyz" : "something"
+//  }
+// )
+
 }

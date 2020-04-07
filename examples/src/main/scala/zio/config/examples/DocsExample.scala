@@ -1,8 +1,7 @@
 package zio.config.examples
 
 import zio.config.ConfigDescriptor._
-import zio.config.ConfigDocs.Details._
-import zio.config.ConfigDocs.{ Path, _ }
+import zio.config.ConfigDocs._
 import zio.config._
 
 object DocsExample extends App {
@@ -16,13 +15,13 @@ object DocsExample extends App {
   assert(
     generateDocs(config) ==
       Both(
-        Path(
+        NestedPath(
           "PORT",
-          Descriptions(Sources(Nil), List("value of type int", "Example: 8088", "Database related"))
+          Leaf(Sources(Nil), List("value of type int", "Example: 8088", "Database related"))
         ),
-        Path(
+        NestedPath(
           "URL",
-          Descriptions(
+          Leaf(
             Sources(Nil),
             List("value of type string", "optional value", "Example: abc.com", "Database related")
           )
@@ -34,20 +33,20 @@ object DocsExample extends App {
     generateDocsWithValue(config, Database(1, Some("value"))) ==
       Right(
         Both(
-          Path(
+          NestedPath(
             "PORT",
-            DescriptionsWithValue(
-              Some("1"),
+            Leaf(
               Sources(Nil),
-              List("value of type int", "Example: 8088", "Database related")
+              List("value of type int", "Example: 8088", "Database related"),
+              Some("1")
             )
           ),
-          Path(
+          NestedPath(
             "URL",
-            DescriptionsWithValue(
-              Some("value"),
+            Leaf(
               Sources(Nil),
-              List("value of type string", "optional value", "Example: abc.com", "Database related")
+              List("value of type string", "optional value", "Example: abc.com", "Database related"),
+              Some("value")
             )
           )
         )

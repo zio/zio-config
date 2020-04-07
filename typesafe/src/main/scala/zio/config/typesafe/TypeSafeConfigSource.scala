@@ -1,20 +1,15 @@
 package zio.config.typesafe
 
-import com.typesafe.config.ConfigFactory
-import zio.config.ConfigSource
-import zio.config._
-import com.typesafe.config.ConfigValueType
-import zio.config.PropertyTree.Leaf
-
-import scala.util.Try
-import scala.util.Failure
-import scala.util.Success
-import scala.collection.JavaConverters._
-import PropertyTree._
 import java.io.File
-import zio.IO
-import zio.Task
-import zio.ZIO
+import java.lang.{ Boolean => JBoolean }
+
+import com.typesafe.config._
+import zio.config.PropertyTree.{ Leaf, _ }
+import zio.config.{ ConfigSource, _ }
+import zio.{ IO, Task, ZIO }
+
+import scala.collection.JavaConverters._
+import scala.util.{ Failure, Success, Try }
 
 object TypeSafeConfigSource {
   def fromDefaultLoader: Either[String, ConfigSource[String, String]] =
@@ -54,121 +49,38 @@ object TypeSafeConfigSource {
   private[config] def getPropertyTree(
     input: com.typesafe.config.Config
   ): Either[String, PropertyTree[String, String]] = {
-    def loop(config: com.typesafe.config.Config): Either[String, Map[String, PropertyTree[String, String]]] = {
-      val internal = config.root()
-      val keySet   = internal.keySet().asScala
+    def loopBoolean(value: Boolean) = Leaf(value.toString)
+    def loopNumber(value: Number)   = Leaf(value.toString)
+    val loopNull                    = PropertyTree.empty
+    def loopString(value: String)   = Leaf(value)
 
-      keySet.toList.foldLeft(
-        Right(Map.empty[String, PropertyTree[String, String]]): Either[
-          String,
-          Map[String, PropertyTree[String, String]]
-        ]
-      ) { (acc, key) =>
-        val typeOfSubConfig = config.getValue(key).valueType()
-        typeOfSubConfig match {
-          case ConfigValueType.OBJECT =>
-            acc match {
-              case Left(value) => Left(value)
-              case Right(acc) =>
-                loop(config.getConfig(key)) match {
-                  case Left(value)  => Left(value)
-                  case Right(value) => Right(acc.updated(key, Record(value)))
-                }
-            }
+    def loopList(values: List[ConfigValue]) = {
+      val list = values.map(loopAny)
 
-          case ConfigValueType.LIST =>
-            Try {
-              val list =
-                config.getConfigList(key).asScala.toList
-
-              if (list.isEmpty) {
-                updateKeyAndTree(acc, key, Right(PropertyTree.empty))
-              } else
-                updateKeyAndTree(
-                  acc,
-                  key,
-                  seqEither(list.map(eachConfig => loop(eachConfig))) match {
-                    case Left(value)  => Left(value)
-                    case Right(value) => Right(Sequence(value.map(Record(_))))
-                  }
-                )
-
-            }.orElse({
-                Try {
-                  val list = config.getStringList(key).asScala.toList
-
-                  if (list.isEmpty) {
-                    updateKeyAndTree(acc, key, Right(PropertyTree.empty))
-                  } else
-                    updateKeyAndTree(
-                      acc,
-                      key,
-                      Right(
-                        Sequence(
-                          config
-                            .getStringList(key)
-                            .asScala
-                            .map(t => Leaf(t))
-                            .toList
-                        )
-                      )
-                    )
-                }
-              })
-              .orElse({
-                Try {
-                  val list =
-                    config.getObjectList(key).asScala.toList
-
-                  if (list.isEmpty)
-                    updateKeyAndTree(acc, key, Right(PropertyTree.empty))
-                  else
-                    updateKeyAndTree(
-                      acc,
-                      key,
-                      seqEither(list.map(eachConfig => loop(eachConfig.toConfig))) match {
-                        case Left(value)  => Left(value)
-                        case Right(value) => Right(Sequence(value.map(Record(_))))
-                      }
-                    )
-                }
-              }) match {
-              case Failure(_) =>
-                Left(
-                  "Unable to form the zio.config.PropertyTree from Hocon string. This may be due to the presence of explicit usage of nulls in hocon string."
-                )
-              case Success(value) => value
-            }
-
-          case ConfigValueType.BOOLEAN =>
-            updateKeyAndTree(acc, key, Right(Leaf(config.getBoolean(key).toString)))
-          case ConfigValueType.NUMBER =>
-            updateKeyAndTree(acc, key, Right(Leaf(config.getNumber(key).toString)))
-          case ConfigValueType.NULL =>
-            updateKeyAndTree(acc, key, Right(PropertyTree.empty))
-          case ConfigValueType.STRING =>
-            updateKeyAndTree(acc, key, Right(Leaf(config.getString(key))))
-        }
-      }
+      if (list.isEmpty) PropertyTree.empty // FIXME incorrect empty Sequence() processing
+      else Sequence(list)
     }
 
-    loop(input) match {
-      case Left(value)  => Left(value)
-      case Right(value) => Right(Record(value))
+    def loopConfig(config: ConfigObject) =
+      Record(config.asScala.toVector.map { case (key, value) => key -> loopAny(value) }.toMap)
+
+    def loopAny(value: ConfigValue): PropertyTree[String, String] = value.valueType() match {
+      case ConfigValueType.OBJECT  => loopConfig(value.asInstanceOf[ConfigObject])
+      case ConfigValueType.LIST    => loopList(value.asInstanceOf[ConfigList].asScala.toList)
+      case ConfigValueType.BOOLEAN => loopBoolean(value.unwrapped().asInstanceOf[JBoolean])
+      case ConfigValueType.NUMBER  => loopNumber(value.unwrapped().asInstanceOf[Number])
+      case ConfigValueType.NULL    => loopNull
+      case ConfigValueType.STRING  => loopString(value.unwrapped().asInstanceOf[String])
+    }
+
+    Try(loopConfig(input.root())) match {
+      case Failure(t) =>
+        Left(
+          "Unable to form the zio.config.PropertyTree from Hocon string." +
+            " This may be due to the presence of explicit usage of nulls in hocon string. " +
+            t.getMessage
+        )
+      case Success(value) => Right(value)
     }
   }
-
-  private def updateKeyAndTree(
-    either: Either[String, Map[String, PropertyTree[String, String]]],
-    key: String,
-    p: Either[String, PropertyTree[String, String]]
-  ): Either[String, Map[String, PropertyTree[String, String]]] =
-    either match {
-      case Left(value) => Left(value)
-      case Right(acc) =>
-        p match {
-          case Left(value)  => Left(value)
-          case Right(value) => Right(acc.updated(key, value))
-        }
-    }
 }

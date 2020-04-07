@@ -6,7 +6,7 @@ import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
 import zio.test.{ DefaultRunnableSpec, _ }
 
-object ArgsListAccumulationTest extends DefaultRunnableSpec {
+object ListAccumulationTest extends DefaultRunnableSpec {
 
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration of a list from multiple entries")(
@@ -17,7 +17,7 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
             fromArgs(args)
               .map(config => config.get)
 
-          val expected = (1 to count).toList // O is missing values.
+          val expected = (1 to count).toList
           assertM(p2.either)(isRight(equalTo(SomeConfig(expected))))
         }
       }

@@ -9,14 +9,90 @@ import zio.config.ConfigDescriptor._
 import scala.language.experimental.macros
 import scala.util.{ Failure, Success }
 
-trait DeriveConfigDescriptor[T] {
-  def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, T]
+/**
+ * DeriveConfigDescriptor[Config] gives an automatic ConfigDescriptor for the case class Config
+ * given each field in the case class has an instance of DeriveConfigDescriptor
+ *
+ * DeriveConfigDescriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
+ * given each term in the coproduct has an instance of DeriveConfigDescriptor
+ *
+ * {{{
+ *
+ *    // Given
+ *    final case class Config(username: String, age: Int)
+ *
+ *    // should work with no additional code
+ *    val description = DeriveConfigDescriptor[Config]
+ *
+ *    val config = Config.fromSystemEnv(description)
+ *
+ * Please find more (complex) examples in the examples module in zio-config
+ *
+ * }}}
+ */
+trait DeriveConfigDescriptor[A] { self =>
+  def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, A]
+
+  def xmap[B](f: A => B)(g: B => A): DeriveConfigDescriptor[B] =
+    xmapEither(a => Right(f(a)))(b => Right(g(b)))
+
+  def xmapEither[B](f: A => Either[String, B])(g: B => Either[String, A]): DeriveConfigDescriptor[B] =
+    new DeriveConfigDescriptor[B] {
+      override def getDescription(
+        path: Option[String],
+        parentClass: Option[String]
+      ): ConfigDescriptor[String, String, B] =
+        self.getDescription(path, parentClass).xmapEither(a => f(a), (b: B) => g(b))
+    }
 }
 
 object DeriveConfigDescriptor {
+
+  /**
+   * DeriveConfigDescriptor[Config] gives an automatic ConfigDescriptor for the case class Config
+   * given each field in the case class has an instance of DeriveConfigDescriptor
+   *
+   * DeriveConfigDescriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
+   * given each term in the coproduct has an instance of DeriveConfigDescriptor
+   *
+   * {{{
+   *
+   *    // Given
+   *    final case class Config(username: String, age: Int)
+   *
+   *    // should work with no additional code
+   *    val description = DeriveConfigDescriptor[Config]
+   *
+   *    val config = Config.fromSystemEnv(description)
+   *
+   * }}}
+   *
+   * Please find more (complex) examples in the examples module in zio-config
+   */
   def apply[T](implicit ev: DeriveConfigDescriptor[T]): ConfigDescriptor[String, String, T] =
     ev.getDescription(None, None)
 
+  /**
+   * DeriveConfigDescriptor.descriptor[Config] gives an automatic ConfigDescriptor for the case class Config
+   * given each field in the case class has an instance of DeriveConfigDescriptor
+   *
+   * DeriveConfigDescriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
+   * given each term in the coproduct has an instance of DeriveConfigDescriptor
+   *
+   * {{{
+   *
+   *    // Given
+   *    final case class Config(username: String, age: Int)
+   *
+   *    // should work with no additional code
+   *    val description = DeriveConfigDescriptor[Config]
+   *
+   *    val config = Config.fromSystemEnv(description)
+   *
+   * }}}
+   *
+   * Please find more (complex) examples in the examples module in zio-config
+   */
   def descriptor[T](implicit ev: DeriveConfigDescriptor[T]): ConfigDescriptor[String, String, T] =
     ev.getDescription(None, None)
 
@@ -27,7 +103,7 @@ object DeriveConfigDescriptor {
         parentClass: Option[String]
       ): ConfigDescriptor[String, String, T] =
         path.fold(
-          string("").xmapEither[T](
+          string.xmapEither[T](
             _ => Left("unable to fetch the primitive without a path"),
             (_: T) => Left("unable to write the primitive back to a config source without a path")
           )
@@ -87,13 +163,10 @@ object DeriveConfigDescriptor {
         val finalDesc =
           if (caseClass.isObject) {
             val config = parentClass match {
-              case Some(parentClass) =>
-                path match {
-                  case Some(path) => nested(parentClass)(string(path))
-                  case None       => string(parentClass.toLowerCase())
-                }
+              case Some(parentClass) => string(parentClass.toLowerCase())
+
               case None =>
-                string("").xmapEither[String](
+                string.xmapEither[String](
                   _ =>
                     Left(
                       s"Cannot create the case-object ${caseClass.typeName.short} since it is not part of a coproduct (ie. extends sealed trait)"
@@ -170,7 +243,7 @@ object DeriveConfigDescriptor {
 
         tail.foldRight[ConfigDescriptor[String, String, T]](
           head.typeclass
-            .getDescription(paths, Some(sealedTrait.typeName.short))
+            .getDescription(paths, Some(sealedTrait.typeName.short.toLowerCase()))
             .xmapEither(
               (t: head.SType) => Right(t: T), { a: T =>
                 scala.util.Try(head.cast(a)) match {
@@ -183,7 +256,7 @@ object DeriveConfigDescriptor {
           (e: Subtype[Typeclass, T], b: ConfigDescriptor[String, String, T]) =>
             b.orElse(
               e.typeclass
-                .getDescription(paths, Some(sealedTrait.typeName.short.toString))
+                .getDescription(paths, Some(sealedTrait.typeName.short.toLowerCase()))
                 .xmapEither(
                   (t: e.SType) => Right(t: T),
                   (a: T) =>

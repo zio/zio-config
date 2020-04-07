@@ -4,6 +4,44 @@ import scala.collection.immutable.Nil
 import PropertyTree._
 
 sealed trait PropertyTree[+K, +V] { self =>
+  final def ++[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): PropertyTree[K1, V1] =
+    (self, that) match {
+      case (Sequence(l), Sequence(r)) => Sequence(l ++ r)
+      case (l, Sequence(r))           => Sequence(l :: r)
+      case (Sequence(l), r)           => Sequence(l ::: List(r))
+      case (l, r)                     => Sequence(l :: r :: Nil)
+    }
+
+  final def condense: PropertyTree[K, V] =
+    self match {
+      case Leaf(value)    => Leaf(value)
+      case Record(values) => Record(values.mapValues(_.condense).toMap)
+      case Empty          => Empty
+      case Sequence(values) =>
+        PropertyTree.partitionWith(values) {
+          case Record(value) => value
+        } match {
+          case (Nil, rs) => Sequence(rs.map(_.condense))
+          case (ls, Nil) =>
+            Record(ls.foldLeft(Map.empty[K, PropertyTree[K, V]]) {
+              case (acc, map) =>
+                map.foldLeft(acc) {
+                  case (acc, (k, v)) =>
+                    acc.updated(k, acc.get(k).fold(v)(_ ++ v))
+                }
+            })
+
+          case (ls, rs) =>
+            Sequence(Record(ls.foldLeft(Map.empty[K, PropertyTree[K, V]]) {
+              case (acc, map) =>
+                map.foldLeft(acc) {
+                  case (acc, (k, v)) =>
+                    acc.updated(k, acc.get(k).fold(v)(_ ++ v))
+                }
+            }) :: rs.map(_.condense))
+        }
+
+    }
   final def flatten[K1 >: K, V1 >: V]: Map[Vector[K1], ::[V1]] = {
     def go(key: Vector[K1], propertyTree: PropertyTree[K1, V], acc: Map[Vector[K1], ::[V1]]): Map[Vector[K1], ::[V1]] =
       propertyTree match {
@@ -96,6 +134,14 @@ sealed trait PropertyTree[+K, +V] { self =>
     case Sequence(value)    => Sequence(value.map(_.mapEmptyToError(f)))
   }
 
+  /**
+   * Fix me
+   * merge empty = self
+   * merge self = ??? (uncertain)
+   *
+   * @param that
+   * @return
+   */
   final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): List[PropertyTree[K1, V1]] =
     (self, that) match {
       case (left, right) if left.isEmpty  => singleton(right)
@@ -124,9 +170,10 @@ sealed trait PropertyTree[+K, +V] { self =>
       }
 
     self match {
-      case Empty         => Empty
-      case Leaf(value)   => Leaf(value)
-      case Record(value) => Record(value.mapValues(_.reduceInner(f)).toMap)
+      case Empty       => Empty
+      case Leaf(value) => Leaf(value)
+      case Record(value) =>
+        Record(value.mapValues(_.reduceInner(f)).toMap)
 
       case Sequence(value) =>
         val (vs0, rest0) = PropertyTree.partitionWith(value) {
@@ -135,15 +182,14 @@ sealed trait PropertyTree[+K, +V] { self =>
 
         val (vs, rest) = (vs0, pruneEmpty(rest0))
 
+        //Fixme what should happen if we have Sequence(Nil). We don't know whether or not we should do at this level, or at a deeper level, which we don't know
         (vs, rest) match {
           case (Nil, _) =>
             Sequence(value.map(_.reduceInner(f)))
           case (vs, Nil) =>
             vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
           case (vs, res) =>
-            // Fixme
-            Sequence(vs.map(Leaf(_)))
-              .zipWith(Sequence(res).reduceInner(f))(f) // Well the partitioned value is now valid as well. We zip to not lose the data
+            Sequence(vs.map(Leaf(_))).zipWith(Sequence(res).reduceInner(f))(f)
         }
     }
   }
@@ -239,8 +285,8 @@ object PropertyTree {
 
   def unflatten[K, V](key: List[K], tree: PropertyTree[K, V]): PropertyTree[K, V] =
     key match {
-      case head :: next => Record(Map(head -> unflatten(next, tree)))
-      case Nil          => tree
+      case ::(head, next) => Record(Map(head -> unflatten(next, tree)))
+      case Nil            => tree
     }
 
   def unflatten[K, V](map: Map[Vector[K], ::[V]]): List[PropertyTree[K, V]] =

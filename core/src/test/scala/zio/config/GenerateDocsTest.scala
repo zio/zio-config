@@ -1,8 +1,7 @@
 package zio.config
 
 import zio.config.ConfigDescriptor.{ int, nested, string }
-import zio.config.ConfigDocs.Details.{ Descriptions, DescriptionsWithValue }
-import zio.config.ConfigDocs.{ Both, NestedPath, Path, Sources }
+import zio.config.ConfigDocs.{ Both, Leaf, NestedPath, Sources }
 import zio.config.GenerateDocsTestUtils._
 import zio.config.helpers._
 import zio.random.Random
@@ -73,9 +72,9 @@ object GenerateDocsTestUtils {
     def docs: ConfigDocs[String, String] =
       Both(
         Both(
-          Path(
+          NestedPath(
             keys.secret,
-            Descriptions(
+            Leaf(
               Sources(List("test")),
               List("value of type string", "optional value", "Application secret")
             )
@@ -83,16 +82,16 @@ object GenerateDocsTestUtils {
           NestedPath(
             keys.credentials,
             Both(
-              Path(
+              NestedPath(
                 keys.user,
-                Descriptions(
+                Leaf(
                   Sources(List("test")),
                   List("value of type string", "Example: ZioUser", "Credentials")
                 )
               ),
-              Path(
+              NestedPath(
                 keys.password,
-                Descriptions(
+                Leaf(
                   Sources(List("test")),
                   List("value of type string", "Example: ZioPass", "Credentials")
                 )
@@ -103,16 +102,16 @@ object GenerateDocsTestUtils {
         NestedPath(
           keys.database,
           Both(
-            Path(
+            NestedPath(
               keys.port,
-              Descriptions(
+              Leaf(
                 Sources(List("test")),
                 List("value of type int", "Example: 8088", "Database")
               )
             ),
-            Path(
+            NestedPath(
               keys.url,
-              Descriptions(
+              Leaf(
                 Sources(List("test")),
                 List("value of type string", "Example: abc.com", "Database")
               )
@@ -125,31 +124,31 @@ object GenerateDocsTestUtils {
       Right(
         Both(
           Both(
-            Path(
+            NestedPath(
               keys.secret,
-              DescriptionsWithValue(
-                value.secret,
+              Leaf(
                 Sources(List("test")),
-                List("value of type string", "optional value", "Application secret")
+                List("value of type string", "optional value", "Application secret"),
+                value.secret
               )
             ),
             NestedPath(
               keys.credentials,
               Both(
-                Path(
+                NestedPath(
                   keys.user,
-                  DescriptionsWithValue(
-                    Some(value.credentials.user),
+                  Leaf(
                     Sources(List("test")),
-                    List("value of type string", "Example: ZioUser", "Credentials")
+                    List("value of type string", "Example: ZioUser", "Credentials"),
+                    Some(value.credentials.user)
                   )
                 ),
-                Path(
+                NestedPath(
                   keys.password,
-                  DescriptionsWithValue(
-                    Some(value.credentials.password),
+                  Leaf(
                     Sources(List("test")),
-                    List("value of type string", "Example: ZioPass", "Credentials")
+                    List("value of type string", "Example: ZioPass", "Credentials"),
+                    Some(value.credentials.password)
                   )
                 )
               )
@@ -158,20 +157,20 @@ object GenerateDocsTestUtils {
           NestedPath(
             keys.database,
             Both(
-              Path(
+              NestedPath(
                 keys.port,
-                DescriptionsWithValue(
-                  Some(value.database.port).map(_.toString),
+                Leaf(
                   Sources(List("test")),
-                  List("value of type int", "Example: 8088", "Database")
+                  List("value of type int", "Example: 8088", "Database"),
+                  Some(value.database.port).map(_.toString)
                 )
               ),
-              Path(
+              NestedPath(
                 keys.url,
-                DescriptionsWithValue(
-                  Some(value.database.url),
+                Leaf(
                   Sources(List("test")),
-                  List("value of type string", "Example: abc.com", "Database")
+                  List("value of type string", "Example: abc.com", "Database"),
+                  Some(value.database.url)
                 )
               )
             )
