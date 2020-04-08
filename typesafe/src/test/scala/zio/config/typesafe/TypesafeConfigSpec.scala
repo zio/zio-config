@@ -70,11 +70,13 @@ object TypesafeConfigSpec
                                   D(NonEmptyList(12, 12), List("d"), Some(Nil), List(Nil)),
                                   D(NonEmptyList(14, 14), Nil, Some(List("a")), List(List(Nil))),
                                   D(NonEmptyList(15, 15), List("f", "g"), Some(List("", "")), List(List(List("x"))))
-                                )
+                                ),
+                                Nil
                               )
                             ),
                             "some_name",
-                            List("aa")
+                            List("aa"),
+                            Nil
                           ),
                           B(
                             List(
@@ -84,11 +86,13 @@ object TypesafeConfigSpec
                                   D(List(22, 22), List("sa", "l"), None, Nil),
                                   D(List(23, 23, 23), List("af", "l"), Some(Nil), List(Nil)),
                                   D(List(24, 24, 24), List("l"), Some(Nil), List(List(Nil)))
-                                )
+                                ),
+                                Nil
                               )
                             ),
                             "some_name",
-                            List("a", "b", "c", "d", "e")
+                            List("a", "b", "c", "d", "e"),
+                            Nil
                           ),
                           B(
                             List(
@@ -99,15 +103,18 @@ object TypesafeConfigSpec
                                   D(List(33, 33, 33), List("xx"), None, Nil),
                                   D(Nil, List("b"), None, Nil),
                                   D(List(37), List("e", "f", "g", "h", "i"), None, Nil)
-                                )
+                                ),
+                                Nil
                               )
                             ),
                             "some_name",
-                            List("a")
+                            List("a"),
+                            Nil
                           )
                         ),
                         X(Y("k")),
-                        W(X(Y("k")))
+                        W(X(Y("k"))),
+                        Nil
                       )
                     )
                   )
@@ -124,9 +131,9 @@ object TypesafeConfigSpecUtils {
   final case class X(y: Y)
   final case class W(x: X)
   final case class D(e: List[Int], vvv: List[String], y: Option[List[String]], z: List[List[List[String]]])
-  final case class C(d: List[D])
-  final case class B(c: List[C], table: String, columns: List[String])
-  final case class A(b: List[B], x: X, w: W)
+  final case class C(d: List[D], mmm: List[D])
+  final case class B(c: List[C], table: String, columns: List[String], mm: List[C])
+  final case class A(b: List[B], x: X, w: W, m: List[B])
 
   //Fixme; Make it Gen
   val configString =
@@ -170,8 +177,10 @@ object TypesafeConfigSpecUtils {
       |            z = [[["x"]]]
       |          }
       |        ]
+      |        mmm = []
       |      }
       |    ]
+      |    mm = []
       |  }
       |  
       |  {
@@ -211,8 +220,10 @@ object TypesafeConfigSpecUtils {
       |            z = [[[]]]
       |          }
       |        ]
+      |        mmm = []
       |      }
       |    ]
+      |    mm = []
       |  }
       |   {
       |    table          : some_name
@@ -256,8 +267,10 @@ object TypesafeConfigSpecUtils {
       |            z = []
       |          }
       |        ]
+      |        mmm = []
       |      }
       |    ]
+      |    mm = []
       |  }
       |]
       |
@@ -275,5 +288,6 @@ object TypesafeConfigSpecUtils {
       | }
       |}
       |
+      |m = []
       |""".stripMargin
 }
