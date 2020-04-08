@@ -32,19 +32,19 @@ object DefaultValueExample extends App {
         NestedPath(
           "HELLO",
           Leaf(
-            Sources(List(ConfigSource.SystemEnvironment)),
+            Sources(Set(ConfigSource.SystemEnvironment)),
             List("value of type string", "default value: xyz")
           )
         ),
         OneOf(
           NestedPath(
             "SOMETHING",
-            Leaf(Sources(List(ConfigSource.SystemEnvironment)), List("value of type string"))
+            Leaf(Sources(Set(ConfigSource.SystemEnvironment)), List("value of type string"))
           ),
           NestedPath(
             "PORT",
             Leaf(
-              Sources(List(ConfigSource.SystemEnvironment)),
+              Sources(Set(ConfigSource.SystemEnvironment)),
               List("value of type int", "default value: 1")
             )
           )
@@ -59,7 +59,7 @@ object DefaultValueExample extends App {
           NestedPath(
             "HELLO",
             Leaf(
-              Sources(List(SystemEnvironment)),
+              Sources(Set(SystemEnvironment)),
               List("value of type string", "default value: xyz"),
               Some("xyz")
             )
@@ -67,12 +67,12 @@ object DefaultValueExample extends App {
           OneOf(
             NestedPath(
               "SOMETHING",
-              Leaf(Sources(List(SystemEnvironment)), List("value of type string"), None)
+              Leaf(Sources(Set(SystemEnvironment)), List("value of type string"), None)
             ),
             NestedPath(
               "PORT",
               Leaf(
-                Sources(List(SystemEnvironment)),
+                Sources(Set(SystemEnvironment)),
                 List("value of type int", "default value: 1"),
                 Some("1")
               )

@@ -178,9 +178,14 @@ object ConfigDescriptor {
   val float: ConfigDescriptor[String, String, Float] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
 
-  def first[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]) =
-    list(path)(desc)
-      .xmapEither[A](_.headOption.fold[Either[String, A]](Left("Element is missing"))(Right(_)), v => Right(v :: Nil))
+  def head[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+    desc.orElse(
+      listStrict(desc)
+        .xmapEither[A](_.headOption.fold[Either[String, A]](Left("Element is missing"))(Right(_)), v => Right(v :: Nil))
+    )
+
+  def head[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+    nested(path)(head(desc))
 
   def float(path: String): ConfigDescriptor[String, String, Float] = nested(path)(float)
 
@@ -190,54 +195,28 @@ object ConfigDescriptor {
   def int(path: String): ConfigDescriptor[String, String, Int] = nested(path)(int)
 
   /**
-   * Leaks out path in simple cases, i.e.
-   * `list(string(path))` == `list(path)(string)` == `nested(path)(listOrSingle(string))`
-   *
-   * `nested("a")(list(string("b")))` describes configuration `{a: { b: ["s1", "s2"] }}`
-   *
    * Allows scalar value instead of list
    * */
-  def list[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] = {
-    def extractPath(cfg: ConfigDescriptor[K, V, A]): Option[(K, ConfigDescriptor[K, V, A])] = cfg match {
-      case Describe(config, message) =>
-        extractPath(config).map { case (path, inner) => (path, Describe(inner, message)) }
-      case Nested(path, config) => Some((path, config))
-      case _                    => None
-    }
-
-    extractPath(desc) match {
-      case Some((path, inner)) => list(path)(inner)
-      case None                => listOrSingle(desc)
-    }
-  }
-
-  /**
-   * Keeps inner description intact.
-   *
-   * Allows scalar value instead of list
-   * */
-  def list[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
-    nested(path)(listOrSingle(desc))
-
-  /**
-   * Keeps inner description intact.
-   *
-   * `nested("a")(listOrSingle(string("b")))` describes configuration `{a: [{b: "s1"}, {b: "s2"}]}`
-   *
-   * Allows scalar value instead of list
-   * */
-  def listOrSingle[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+  def list[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
     listStrict(desc).orElse(desc(_ :: Nil, _.headOption))
 
   /**
-   * Keeps inner description intact.
-   *
-   * `nested("a")(strictList(string("b")))` describes configuration `{a: [{b: "s1"}, {b: "s2"}]}`
-   *
+   * Allows scalar value instead of list
+   * */
+  def list[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+    nested(path)(list(desc))
+
+  /**
    * Rejects scalar value in place of list
    * */
   def listStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
     ConfigDescriptor.Sequence(ConfigSource.empty, desc)
+
+  /**
+   * Rejects scalar value in place of list
+   * */
+  def listStrict[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+    nested(path)(listStrict(desc))
 
   val long: ConfigDescriptor[String, String, Long] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LongType) ?? "value of type long"

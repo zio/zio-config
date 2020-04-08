@@ -75,7 +75,7 @@ object GenerateDocsTestUtils {
           NestedPath(
             keys.secret,
             Leaf(
-              Sources(List("test")),
+              Sources(Set("test")),
               List("value of type string", "optional value", "Application secret")
             )
           ),
@@ -85,14 +85,14 @@ object GenerateDocsTestUtils {
               NestedPath(
                 keys.user,
                 Leaf(
-                  Sources(List("test")),
+                  Sources(Set("test")),
                   List("value of type string", "Example: ZioUser", "Credentials")
                 )
               ),
               NestedPath(
                 keys.password,
                 Leaf(
-                  Sources(List("test")),
+                  Sources(Set("test")),
                   List("value of type string", "Example: ZioPass", "Credentials")
                 )
               )
@@ -105,14 +105,14 @@ object GenerateDocsTestUtils {
             NestedPath(
               keys.port,
               Leaf(
-                Sources(List("test")),
+                Sources(Set("test")),
                 List("value of type int", "Example: 8088", "Database")
               )
             ),
             NestedPath(
               keys.url,
               Leaf(
-                Sources(List("test")),
+                Sources(Set("test")),
                 List("value of type string", "Example: abc.com", "Database")
               )
             )
@@ -127,7 +127,7 @@ object GenerateDocsTestUtils {
             NestedPath(
               keys.secret,
               Leaf(
-                Sources(List("test")),
+                Sources(Set("test")),
                 List("value of type string", "optional value", "Application secret"),
                 value.secret
               )
@@ -138,7 +138,7 @@ object GenerateDocsTestUtils {
                 NestedPath(
                   keys.user,
                   Leaf(
-                    Sources(List("test")),
+                    Sources(Set("test")),
                     List("value of type string", "Example: ZioUser", "Credentials"),
                     Some(value.credentials.user)
                   )
@@ -146,7 +146,7 @@ object GenerateDocsTestUtils {
                 NestedPath(
                   keys.password,
                   Leaf(
-                    Sources(List("test")),
+                    Sources(Set("test")),
                     List("value of type string", "Example: ZioPass", "Credentials"),
                     Some(value.credentials.password)
                   )
@@ -160,7 +160,7 @@ object GenerateDocsTestUtils {
               NestedPath(
                 keys.port,
                 Leaf(
-                  Sources(List("test")),
+                  Sources(Set("test")),
                   List("value of type int", "Example: 8088", "Database"),
                   Some(value.database.port).map(_.toString)
                 )
@@ -168,7 +168,7 @@ object GenerateDocsTestUtils {
               NestedPath(
                 keys.url,
                 Leaf(
-                  Sources(List("test")),
+                  Sources(Set("test")),
                   List("value of type string", "Example: abc.com", "Database"),
                   Some(value.database.url)
                 )

@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ReadError.{ ConversionError, IndexStep }
+import zio.config.ReadError.{ ConversionError, Step }
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.config.testsupport.MapConfigTestSupport.{ genAppConfig, AppConfig }
 import zio.test.Assertion._
@@ -55,7 +55,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
   ): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(
-        s => ConversionError[String](List(IndexStep(0)), s),
+        s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
           propertyTree.flatten.toList.flatMap { t: (Vector[String], ::[String]) =>
             List(s"--${t._1.mkString("_")}", t._2.mkString)
@@ -65,7 +65,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
   def toSingleArg[A](descriptor: ConfigDescriptor[String, String, A], a: A): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(
-        s => ConversionError[String](List(IndexStep(0)), s),
+        s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
           propertyTree.flatten.toList.flatMap { t: (Vector[String], ::[String]) =>
             List(s"-${t._1.mkString("_")}=${t._2.mkString}")
@@ -78,7 +78,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
   ): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(
-        s => ConversionError[String](List(IndexStep(0)), s),
+        s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
           propertyTree.flatten.toList.flatMap { t: (Vector[String], ::[String]) =>
             List(s"--${t._1.mkString("_")}=${t._2.mkString}") ++

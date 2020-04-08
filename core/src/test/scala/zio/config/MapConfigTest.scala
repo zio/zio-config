@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ReadError.{ ConversionError, IndexStep }
+import zio.config.ReadError.{ ConversionError, Step }
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.test.Assertion._
 import zio.test._
@@ -34,7 +34,7 @@ object MapConfigTest extends DefaultRunnableSpec {
   ): ZIO[Any, ReadError[String], Map[String, String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(
-        s => ConversionError[String](List(IndexStep(0)), s),
+        s => ConversionError[String](List(Step.Index(0)), s),
         propertyTreeArgs
       )
       .map(tuples => Map(tuples: _*))

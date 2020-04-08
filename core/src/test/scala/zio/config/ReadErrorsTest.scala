@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ReadError.KeyStep
+import zio.config.ReadError.Step
 import zio.config.ReadErrorsTestUtils._
 import zio.random.Random
 import zio.test.Assertion._
@@ -25,10 +25,10 @@ object ReadErrorsTestUtils {
       s1 <- Gen.anyString
       s2 <- Gen.anyString
       s3 <- Gen.anyString
-    } yield ReadError.FormatError(List(KeyStep(s1)), ReadFunctions.parseErrorMessage(s2, s3))
+    } yield ReadError.FormatError(List(Step.Key(s1)), ReadFunctions.parseErrorMessage(s2, s3))
 
   private val genReadError =
-    Gen.oneOf(Gen.const(ReadError.MissingValue(List(KeyStep("somekey")))), genFormatError)
+    Gen.oneOf(Gen.const(ReadError.MissingValue(List(Step.Key("somekey")))), genFormatError)
 
   val genReadErrors: Gen[Random with Sized, List[ReadError[String]]] = {
     for {

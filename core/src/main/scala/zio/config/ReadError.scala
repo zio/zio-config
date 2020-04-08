@@ -21,8 +21,10 @@ sealed trait ReadError[A] extends Exception { self =>
 
 object ReadError {
   sealed trait Step[+K]
-  case class KeyStep[+K](key: K)   extends Step[K]
-  case class IndexStep(index: Int) extends Step[Nothing]
+  object Step {
+    final case class Key[+K](key: K)   extends Step[K]
+    final case class Index(index: Int) extends Step[Nothing]
+  }
 
   final case class MissingValue[A](path: List[Step[A]])                     extends ReadError[A]
   final case class FormatError[A](path: List[Step[A]], message: String)     extends ReadError[A]

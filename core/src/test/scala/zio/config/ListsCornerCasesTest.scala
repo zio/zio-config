@@ -13,7 +13,7 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| list("b")(string))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))), Nil))
+          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))), Set.empty))
 
           assert(res)(isRight(equalTo(Cfg("sa", Nil))))
         },
@@ -23,7 +23,9 @@ object ListsCornerCasesTest
           val cCfg = (string("a") |@| list("b")(list(string)))(Cfg, Cfg.unapply)
 
           val res =
-            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Sequence(Nil) :: Nil))), Nil))
+            read(
+              cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Sequence(Nil) :: Nil))), Set.empty)
+            )
 
           assert(res)(isRight(equalTo(Cfg("sa", Nil :: Nil))))
         },
@@ -33,7 +35,7 @@ object ListsCornerCasesTest
           val cCfg = (string("a") |@| list("b")(string).optional)(Cfg, Cfg.unapply)
 
           val res =
-            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"))), Nil))
+            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"))), Set.empty))
 
           assert(res)(isRight(equalTo(Cfg("sa", None))))
         },
@@ -43,7 +45,7 @@ object ListsCornerCasesTest
           val cCfg = (string("a") |@| list("b")(string).optional)(Cfg, Cfg.unapply)
 
           val res =
-            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))), Nil))
+            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))), Set.empty))
 
           assert(res)(isRight(equalTo(Cfg("sa", Some(Nil)))))
         },
@@ -52,7 +54,7 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| list("b")(string).default("x" :: Nil))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"))), Nil))
+          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"))), Set.empty))
 
           assert(res)(isRight(equalTo(Cfg("sa", "x" :: Nil))))
         },
@@ -61,7 +63,7 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| list("b")(string).default("x" :: Nil))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))), Nil))
+          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))), Set.empty))
 
           assert(res)(isRight(equalTo(Cfg("sa", Nil))))
         },
@@ -70,7 +72,8 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| nested("b")(listStrict(string).orElseEither(string)))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))), Nil))
+          val res =
+            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))), Set.empty))
 
           assert(res)(isRight(equalTo(Cfg("sa", Left("v" :: Nil)))))
         },
@@ -79,7 +82,8 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| nested("b")(string.orElseEither(listStrict(string))))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))), Nil))
+          val res =
+            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))), Set.empty))
 
           assert(res)(isRight(equalTo(Cfg("sa", Right("v" :: Nil)))))
         },
@@ -88,7 +92,7 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| nested("b")(string.orElseEither(listStrict(string))))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Nil))
+          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Set.empty))
 
           assert(res)(isRight(equalTo(Cfg("sa", Left("v")))))
         },
@@ -97,7 +101,7 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| nested("b")(listStrict(string).orElseEither(string)))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Nil))
+          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Set.empty))
 
           assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
         },
@@ -106,19 +110,19 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| list("b")(string))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Nil))
+          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Set.empty))
 
           assert(res)(isRight(equalTo(Cfg("sa", "v" :: Nil))))
         },
         test("read list as scalar") {
           case class Cfg(a: String, b: String)
 
-          val cCfg = (string("a") |@| first("b")(string))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| head("b")(string))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Nil))),
-              Nil
+              Set.empty
             )
           )
 
@@ -142,7 +146,7 @@ object ListsCornerCasesTest
                   )
                 )
               ),
-              Nil
+              Set.empty
             )
           )
 
@@ -158,7 +162,7 @@ object ListsCornerCasesTest
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Record[String, String](Map.empty) :: Sequence(Nil) :: Nil))
               ),
-              Nil
+              Set.empty
             )
           )
 

@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.config.ConfigDescriptor._
-import zio.config.ReadError.{ AndErrors, IndexStep, KeyStep, OrErrors, Step }
+import zio.config.ReadError.{ AndErrors, OrErrors, Step }
 import zio.config.ReadFunctions._
 
 private[config] trait ReadFunctions {
@@ -27,7 +27,7 @@ private[config] trait ReadFunctions {
       loopAny(path, keys, cfg.config)
 
     def loopNested[B](path: List[Step[K]], keys: List[K], cfg: Nested[K, V, B]): Res[B] =
-      loopAny(KeyStep(cfg.path) :: path, cfg.path :: keys, cfg.config)
+      loopAny(Step.Key(cfg.path) :: path, cfg.path :: keys, cfg.config)
 
     def loopOptional[B](path: List[Step[K]], keys: List[K], cfg: Optional[K, V, B]): Res[Option[B]] =
       loopAny(path, keys, cfg.config) match {
@@ -97,7 +97,7 @@ private[config] trait ReadFunctions {
           val list = values.zipWithIndex.map {
             case (tree, idx) =>
               val source = ConfigSource(tree, cfg.source.sourceDescription)
-              loopAny(IndexStep(idx) :: path, Nil, cfg.config.updateSource(_ => source))
+              loopAny(Step.Index(idx) :: path, Nil, cfg.config.updateSource(_ => source))
           }
           seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list).swap.map(AndErrors(_)).swap
       }

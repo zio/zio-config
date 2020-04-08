@@ -1,9 +1,7 @@
 package zio.config.examples
 
 import zio.config.ConfigDescriptor._
-import zio.config.ReadError.{ FormatError, KeyStep, MissingValue, OrErrors }
-import zio.config._
-//import zio.config.ReadError._
+import zio.config.ReadError.{ FormatError, MissingValue, OrErrors, Step }
 import zio.config.{ ConfigSource, _ }
 
 object EitherExample extends App {
@@ -72,8 +70,8 @@ object EitherExample extends App {
         // OrErrors indicate that either fix the error with x1 or the error with x5
         OrErrors(
           List(
-            MissingValue(List(KeyStep("x1"))),
-            FormatError(List(KeyStep("x5")), ReadFunctions.parseErrorMessage("notadouble", "double"))
+            MissingValue(List(Step.Key("x1"))),
+            FormatError(List(Step.Key("x5")), ReadFunctions.parseErrorMessage("notadouble", "double"))
           )
         )
       )

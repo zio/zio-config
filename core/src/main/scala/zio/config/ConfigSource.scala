@@ -17,27 +17,28 @@ import zio.Task
 import scala.annotation.tailrec
 
 sealed trait ConfigSource[K, V] { self =>
-  def sourceDescription: List[String]
+  def sourceDescription: Set[String]
 
   def getConfigValue(path: List[K]): PropertyTree[K, V]
 
-  final def orElse(that: ConfigSource[K, V]): ConfigSource[K, V] = MergedConfigSource(self, that)
+  final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] = new MergedConfigSource(self, that)
 
   final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] = self orElse that
 }
 
-final case class TreeConfigSource[K, V](tree: PropertyTree[K, V], sourceDescription: List[String])
+final case class TreeConfigSource[K, V](tree: PropertyTree[K, V], sourceDescription: Set[String])
     extends ConfigSource[K, V] {
   def getConfigValue(path: List[K]): PropertyTree[K, V] = tree.getPath(path)
 }
-final case class MergedConfigSource[K, V](left: ConfigSource[K, V], right: ConfigSource[K, V])
+final class MergedConfigSource[K, V](_left: => ConfigSource[K, V], _right: => ConfigSource[K, V])
     extends ConfigSource[K, V] {
+  private lazy val left  = _left
+  private lazy val right = _right
+
   def getConfigValue(path: List[K]): PropertyTree[K, V] =
     left.getConfigValue(path).getOrElse(right.getConfigValue(path))
 
-  val sourceDescription: List[String] =
-    if (left.sourceDescription == right.sourceDescription) left.sourceDescription
-    else left.sourceDescription ::: right.sourceDescription
+  lazy val sourceDescription: Set[String] = left.sourceDescription ++ right.sourceDescription
 }
 
 object ConfigSource {
@@ -45,8 +46,8 @@ object ConfigSource {
   private[config] val SystemProperties     = "system properties"
   private[config] val CommandLineArguments = "command line arguments"
 
-  def empty[K, V]: ConfigSource[K, V]                                        = TreeConfigSource(PropertyTree.empty, Nil)
-  def apply[K, V](tree: PropertyTree[K, V], sourceDescription: List[String]) = TreeConfigSource(tree, sourceDescription)
+  def empty[K, V]: ConfigSource[K, V]                                       = TreeConfigSource(PropertyTree.empty, Set.empty)
+  def apply[K, V](tree: PropertyTree[K, V], sourceDescription: Set[String]) = TreeConfigSource(tree, sourceDescription)
 
   /**
    * EXPERIMENTAL
@@ -351,7 +352,7 @@ object ConfigSource {
     trees.map(unwrapSingletonLists(_))
 
   private[config] def fromPropertyTree[B](tree: PropertyTree[String, B], source: String): ConfigSource[String, B] =
-    ConfigSource(tree, source :: Nil)
+    ConfigSource(tree, Set(source))
 
   private[config] def fromPropertyTrees[B](
     trees: Iterable[PropertyTree[String, B]],

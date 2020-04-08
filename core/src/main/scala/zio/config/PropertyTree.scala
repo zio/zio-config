@@ -297,7 +297,7 @@ object PropertyTree {
     mergeAll(map.toList.map(tuple => unflatten(tuple._1.toList, tuple._2)))
 
   def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] = list.reverse match {
-    case Nil => PropertyTree.empty :: Nil
+    case Nil => Nil
     case head :: tail =>
       tail.foldLeft(List(head)) {
         case (acc, tree) => acc.flatMap(tree0 => tree.merge(tree0))
