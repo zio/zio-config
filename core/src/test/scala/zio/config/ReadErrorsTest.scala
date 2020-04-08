@@ -30,7 +30,7 @@ object ReadErrorsTestUtils {
   private val genReadError =
     Gen.oneOf(Gen.const(ReadError.MissingValue(List(Step.Key("somekey")))), genFormatError)
 
-  val genReadErrors: Gen[Random with Sized, List[ReadError[String]]] = {
+  val genReadErrors: Gen[Random with Sized, List[ReadError]] = {
     for {
       n    <- Gen.int(1, 20)
       list <- Gen.listOfN(n)(genReadError)

@@ -8,7 +8,7 @@ import zio.config._
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
 
-  val conf: ConfigDescriptor[String, String, PgmConfig] =
+  val conf: ConfigDescriptor[PgmConfig] =
     (string("HELLO").default("xyz") |@|
       string("SOMETHING").orElseEither(int("PORT").default(1)))(PgmConfig.apply, PgmConfig.unapply)
 

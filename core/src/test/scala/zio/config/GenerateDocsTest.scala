@@ -40,7 +40,7 @@ object GenerateDocsTestUtils {
   )
   final case class GenerateDocsParams(keys: KeyParams, value: AppConfig) {
 
-    def descriptor: ConfigDescriptor[String, String, AppConfig] = {
+    def descriptor: ConfigDescriptor[AppConfig] = {
       val credentials = (string(keys.user) ?? "Example: ZioUser" |@| string(keys.password) ?? "Example: ZioPass")(
         Credentials.apply,
         Credentials.unapply
@@ -59,7 +59,7 @@ object GenerateDocsTestUtils {
       )
     }
 
-    def source: ConfigSource[String, String] = {
+    def source: ConfigSource = {
       val source = Seq(
         s"${keys.credentials}.${keys.user}"     -> value.credentials.user,
         s"${keys.credentials}.${keys.password}" -> value.credentials.password,
@@ -69,7 +69,7 @@ object GenerateDocsTestUtils {
       ConfigSource.fromMap(value.secret.fold(source)(v => (keys.secret -> v) +: source).toMap, "test")
     }
 
-    def docs: ConfigDocs[String, String] =
+    def docs: ConfigDocs =
       Both(
         Both(
           NestedPath(
@@ -120,7 +120,7 @@ object GenerateDocsTestUtils {
         )
       )
 
-    def docsWithValue: Either[String, ConfigDocs[String, String]] =
+    def docsWithValue: Either[String, ConfigDocs] =
       Right(
         Both(
           Both(

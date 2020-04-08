@@ -14,14 +14,14 @@ import zio.config.examples.typesafe.EitherImpureOps
 final case class Variables(variable1: Int, variable2: Option[Int])
 
 object CollectAllExample extends App with EitherImpureOps {
-  val listOfConfig: List[ConfigDescriptor[String, String, Variables]] =
+  val listOfConfig: List[ConfigDescriptor[Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
       .map(
         group =>
           (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
       )
 
-  val configOfList: ConfigDescriptor[String, String, ::[Variables]] =
+  val configOfList: ConfigDescriptor[::[Variables]] =
     ConfigDescriptor.collectAll(::(listOfConfig.head, listOfConfig.tail))
 
   val map =
@@ -36,8 +36,8 @@ object CollectAllExample extends App with EitherImpureOps {
     )
 
   // loadOrThrow here is only for the purpose of example
-  val result: ::[Variables]                 = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
-  val written: PropertyTree[String, String] = write(configOfList, result).loadOrThrow
+  val result: ::[Variables] = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
+  val written: PropertyTree = write(configOfList, result).loadOrThrow
 
   assert(
     result == ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))

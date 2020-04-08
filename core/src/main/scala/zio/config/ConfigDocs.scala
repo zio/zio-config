@@ -1,15 +1,14 @@
 package zio.config
 
-sealed trait ConfigDocs[+K, +V]
+sealed trait ConfigDocs
 object ConfigDocs {
-  final case class Leaf[V](sources: Sources, descriptions: List[String], value: Option[V] = None)
-      extends ConfigDocs[Nothing, V]
+  final case class Leaf[V](sources: Sources, descriptions: List[String], value: Option[V] = None) extends ConfigDocs
 
   final case class Sources(set: Set[String])
 
-  final case object Empty                                                       extends ConfigDocs[Nothing, Nothing]
-  final case class NestedPath[K, V](path: K, docs: ConfigDocs[K, V])            extends ConfigDocs[K, V]
-  final case class Both[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])  extends ConfigDocs[K, V]
-  final case class OneOf[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V]) extends ConfigDocs[K, V]
-  final case class Sequence[K, V](element: List[ConfigDocs[K, V]])              extends ConfigDocs[K, V]
+  final case object Empty                                     extends ConfigDocs
+  final case class NestedPath(path: String, docs: ConfigDocs) extends ConfigDocs
+  final case class Both(left: ConfigDocs, right: ConfigDocs)  extends ConfigDocs
+  final case class OneOf(left: ConfigDocs, right: ConfigDocs) extends ConfigDocs
+  final case class Sequence(element: List[ConfigDocs])        extends ConfigDocs
 }

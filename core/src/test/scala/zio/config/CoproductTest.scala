@@ -26,7 +26,7 @@ object CoproductTest
         },
         testM("should accumulate all errors") {
           check(genTestParams) { p =>
-            val expected: ReadError[String] =
+            val expected: ReadError =
               OrErrors(
                 List(
                   MissingValue(List(Step.Key(p.kLdap))),
@@ -95,7 +95,7 @@ object CoproductTestUtils {
       vCValid
     )
 
-  def readLeft(p: TestParams): Either[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
+  def readLeft(p: TestParams): Either[ReadError, Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
         EnterpriseAuth.apply,
@@ -145,7 +145,7 @@ object CoproductTestUtils {
 
   def readWithErrors(
     p: TestParams
-  ): Either[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
+  ): Either[ReadError, Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
         EnterpriseAuth.apply,

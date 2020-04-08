@@ -67,11 +67,11 @@ Let's define a simple one.
 val myConfig =
   (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
- // ConfigDescriptor[String, String, MyConfig]
+ // ConfigDescriptor[MyConfig]
 
 ```
 
-Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
+Type of `myConfig` is `ConfigDescriptor[MyConfig]`.
 
 ## Fully automated Config Description
 
@@ -83,7 +83,7 @@ there is a separate module called `zio-config-magnolia`.
 import zio.config.magnolia.DeriveConfigDescriptor
 
 val myConfigAutomatic = DeriveConfigDescriptor[MyConfig]
-// ConfigDescriptor[String, String, MyConfig]
+// ConfigDescriptor[MyConfig]
 
 ```
 
@@ -108,13 +108,13 @@ val map =
 val source = ConfigSource.fromMap(map)
 
 read(myConfig from source)
-// Either[ReadError[String], MyConfig]
+// Either[ReadError, MyConfig]
 
 // Alternatively, you can rely on `Config.from..` pattern to get ZLayers.
 val result =
   Config.fromMap(map, myConfig)
 
-// Layer[ReadError[String], Config[A]]  
+// Layer[ReadError, Config[A]]  
 
 ```
 
@@ -130,7 +130,7 @@ As mentioned before, you can use config descriptor to read from various sources.
 
 val anotherResult =
   read(myConfig from source)
-// Either[ReadError[String], MyConfig]
+// Either[ReadError, MyConfig]
 ```
 
 Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the previous section.

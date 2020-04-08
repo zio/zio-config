@@ -39,7 +39,7 @@ object MapConfigTestSupport {
     final case class AwsConfig(key: String, secret: String, kinesisConfig: KinesisConfig)
 
     object AwsConfig {
-      val description: ConfigDescriptor[String, String, AwsConfig] =
+      val description: ConfigDescriptor[AwsConfig] =
         head("aws")(
           (head("key")(string) |@| head("secret")(string) |@| KinesisConfig.description)(
             AwsConfig.apply,
@@ -62,7 +62,7 @@ object MapConfigTestSupport {
         head("ps")(head("outputtopic")(string)(PubSubConfig.apply, PubSubConfig.unapply))
     }
 
-    val descriptor: ConfigDescriptor[String, String, AppConfig] =
+    val descriptor: ConfigDescriptor[AppConfig] =
       head("SystemF")(
         (AwsConfig.description |@| AppConfig.PubSubConfig.description |@| JobConfig.descriptor)(
           AppConfig.apply,
@@ -81,7 +81,7 @@ object MapConfigTestSupport {
   )
 
   object DataflowConfig {
-    val descriptor: ConfigDescriptor[String, String, DataflowConfig] =
+    val descriptor: ConfigDescriptor[DataflowConfig] =
       head("df")(
         ((head("name")(string)) |@|
           head("project")(string) |@|
@@ -100,7 +100,7 @@ object MapConfigTestSupport {
   )
 
   object JobConfig {
-    val descriptor: ConfigDescriptor[String, String, JobConfig] =
+    val descriptor: ConfigDescriptor[JobConfig] =
       head("job")(
         (DataflowConfig.descriptor.optional |@| head("supervise")(boolean))(JobConfig.apply, JobConfig.unapply)
       )

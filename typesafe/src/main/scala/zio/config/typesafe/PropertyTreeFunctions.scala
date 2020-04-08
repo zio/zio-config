@@ -9,9 +9,9 @@ import scala.collection.immutable.Nil
 
 private[typesafe] trait PropertyTreeFunctions {
   def treeToTypesafeConfig(
-    tree: PropertyTree[String, String]
+    tree: PropertyTree
   ): com.typesafe.config.ConfigObject = {
-    def loop(tree: PropertyTree[String, String], keys: Vector[String]): com.typesafe.config.Config =
+    def loop(tree: PropertyTree, keys: Vector[String]): com.typesafe.config.Config =
       tree match {
         case Leaf(value) =>
           keys.lastOption.fold(ConfigFactory.empty())(
@@ -61,13 +61,13 @@ private[typesafe] trait PropertyTreeFunctions {
     loop(tree, Vector.empty).root()
   }
 
-  def partitionWith[K, V, A](
-    trees: List[PropertyTree[K, V]]
-  )(pf: PartialFunction[PropertyTree[K, V], A]): List[A] =
+  def partitionWith[A](
+    trees: List[PropertyTree]
+  )(pf: PartialFunction[PropertyTree, A]): List[A] =
     trees.map {
       case tree if pf.isDefinedAt(tree) => pf(tree) :: Nil
       case _                            => Nil
     }.foldLeft(List.empty[A]) {
-      case (accLeft, left) => (accLeft ++ left)
+      case (accLeft, left) => accLeft ++ left
     }
 }

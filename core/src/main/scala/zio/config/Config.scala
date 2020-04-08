@@ -44,12 +44,12 @@ object Config {
    *
    * @see [[https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples/commandline/CommandLineArgsExample.scala]]
    */
-  def fromCommandLineArgs[K, V, A](
+  def fromCommandLineArgs[A](
     args: List[String],
-    configDescriptor: ConfigDescriptor[String, String, A],
+    configDescriptor: ConfigDescriptor[A],
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
-  )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+  )(implicit tagged: Tagged[A]): Layer[ReadError, Config[A]] =
     fromConfigDescriptor(
       configDescriptor from ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter)
     )
@@ -77,11 +77,11 @@ object Config {
    */
   def fromMap[A](
     map: Map[String, String],
-    configDescriptor: ConfigDescriptor[String, String, A],
+    configDescriptor: ConfigDescriptor[A],
     source: String = "constant",
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
-  )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+  )(implicit tagged: Tagged[A]): Layer[ReadError, Config[A]] =
     fromConfigDescriptor(configDescriptor from ConfigSource.fromMap(map, source, keyDelimiter, valueDelimiter))
 
   /**
@@ -105,10 +105,10 @@ object Config {
    */
   def fromMultiMap[A](
     map: Map[String, ::[String]],
-    configDescriptor: ConfigDescriptor[String, String, A],
+    configDescriptor: ConfigDescriptor[A],
     source: String,
     keyDelimiter: Option[Char] = None
-  )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+  )(implicit tagged: Tagged[A]): Layer[ReadError, Config[A]] =
     fromConfigDescriptor(configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter))
 
   /**
@@ -134,11 +134,11 @@ object Config {
    */
   def fromProperties[A](
     properties: Properties,
-    configDescriptor: ConfigDescriptor[String, String, A],
+    configDescriptor: ConfigDescriptor[A],
     source: String,
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
-  )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+  )(implicit tagged: Tagged[A]): Layer[ReadError, Config[A]] =
     fromConfigDescriptor(
       configDescriptor from ConfigSource.fromProperties(properties, source, keyDelimiter, valueDelimiter)
     )
@@ -167,7 +167,7 @@ object Config {
    */
   def fromPropertiesFile[A](
     filePath: String,
-    configDescriptor: ConfigDescriptor[String, String, A],
+    configDescriptor: ConfigDescriptor[A],
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
   )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
@@ -200,11 +200,11 @@ object Config {
    *
    * Note: The delimiter '.' for keys doesn't work in system environment.
    */
-  def fromSystemEnv[K, V, A](
-    configDescriptor: ConfigDescriptor[String, String, A],
+  def fromSystemEnv[A](
+    configDescriptor: ConfigDescriptor[A],
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
-  )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+  )(implicit tagged: Tagged[A]): Layer[ReadError, Config[A]] =
     fromConfigDescriptorM(ConfigSource.fromSystemEnv(keyDelimiter, valueDelimiter).map(configDescriptor from _))
 
   /**
@@ -229,20 +229,20 @@ object Config {
    * }}}
    *
    */
-  def fromSystemProperties[K, V, A](
-    configDescriptor: ConfigDescriptor[String, String, A],
+  def fromSystemProperties[A](
+    configDescriptor: ConfigDescriptor[A],
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
-  )(implicit tagged: Tagged[A]): ZLayer[System, ReadError[String], Config[A]] =
-    fromConfigDescriptorM(ConfigSource.fromSystemProperties(keyDelimiter, valueDelimiter).map(configDescriptor from _))
+  )(implicit tagged: Tagged[A]): ZLayer[System, ReadError, Config[A]] =
+    fromConfigDescriptorM(ConfigSource.fromSystemProperties(keyDelimiter, valueDelimiter).map(configDescriptor.from))
 
-  private[config] def fromConfigDescriptor[K, V, A](
-    configDescriptor: ConfigDescriptor[K, V, A]
-  )(implicit tagged: Tagged[A]): Layer[ReadError[K], Config[A]] =
+  private[config] def fromConfigDescriptor[A](
+    configDescriptor: ConfigDescriptor[A]
+  )(implicit tagged: Tagged[A]): Layer[ReadError, Config[A]] =
     ZLayer.fromEffect(ZIO.fromEither(read(configDescriptor)))
 
-  private[config] def fromConfigDescriptorM[R, E >: ReadError[K], K, V, A](
-    configDescriptor: ZIO[R, E, ConfigDescriptor[K, V, A]]
+  private[config] def fromConfigDescriptorM[R, E >: ReadError, A](
+    configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
   )(implicit tagged: Tagged[A]): ZLayer[R, E, Config[A]] =
     ZLayer.fromEffect(
       configDescriptor.flatMap(

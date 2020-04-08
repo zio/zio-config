@@ -27,7 +27,7 @@ object SystemTest extends DefaultRunnableSpec {
   final case class SomeConfig(size: Int, description: String)
 
   object SomeConfig {
-    val descriptor: ConfigDescriptor[String, String, SomeConfig] =
+    val descriptor: ConfigDescriptor[SomeConfig] =
       nested("SYSTEMPROPERTIESTEST")(
         (int("SIZE") |@| string("DESCRIPTION"))(SomeConfig.apply, SomeConfig.unapply)
       )

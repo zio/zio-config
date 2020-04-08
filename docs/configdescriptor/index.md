@@ -31,7 +31,7 @@ val myConfig =
 
 ```
 
-Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
+Type of `myConfig` is `ConfigDescriptor[MyConfig]`.
 
 Case classes with a single field are simple too.
 
@@ -69,7 +69,7 @@ To read a config, means it has to perform some effects, and for that reason, it 
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
-val result: Layer[ReadError[String], zio.config.Config[MyConfig]] =
+val result: Layer[ReadError, zio.config.Config[MyConfig]] =
   Config.fromSystemEnv(myConfig) // That's system environment
 ```
 
@@ -275,7 +275,7 @@ val dev = (string("USERNAME") |@| string("PASSWORD"))(Dev.apply, Dev.unapply)
 val prod = (string("TOKEN") |@| int("CODE"))(Prod.apply, Prod.unapply)
 
 prod <+> dev // that represents a description returning Config
-// ConfigDescriptor[String, String, Config]
+// ConfigDescriptor[Config]
 
 ```
 
@@ -362,7 +362,7 @@ Note that, you can write this back as well. This is discussed in write section
  def database(i: Int) = 
    (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
 
- val list: ConfigDescriptor[String, String, ::[Database]] =
+ val list: ConfigDescriptor[::[Database]] =
    collectAll(::(database(0), (1 to 10).map(database).toList)) 
    // collectAll takes `::` (cons, representing non-empty list) instead of a `List`.
 

@@ -7,8 +7,8 @@ import java.util.UUID
 
 import zio.config.ConfigDescriptor._
 
-sealed trait ConfigDescriptor[K, V, A] { self =>
-  def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[K, V, B] =
+sealed trait ConfigDescriptor[A] { self =>
+  def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[B] =
     XmapEither(
       this,
       (a: A) => Right[String, B](app(a)),
@@ -16,35 +16,35 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
         .fold[Either[String, A]](Left("Unable to create case class instance"))(Right(_))
     )
 
-  final def ??(description: String): ConfigDescriptor[K, V, A] =
+  final def ??(description: String): ConfigDescriptor[A] =
     describe(description)
 
-  final def |@|[B](f: => ConfigDescriptor[K, V, B]): ProductBuilder[K, V, A, B] =
-    new ProductBuilder[K, V, A, B] {
-      override val a: ConfigDescriptor[K, V, A] = self
-      override val b: ConfigDescriptor[K, V, B] = f
+  final def |@|[B](f: => ConfigDescriptor[B]): ProductBuilder[A, B] =
+    new ProductBuilder[A, B] {
+      override val a: ConfigDescriptor[A] = self
+      override val b: ConfigDescriptor[B] = f
     }
 
-  final def <>(that: => ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+  final def <>(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
     self orElse that
 
-  final def <*>[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, (A, B)] =
+  final def <*>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
     self zip that
 
-  final def <+>[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, Either[A, B]] =
+  final def <+>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[Either[A, B]] =
     self orElseEither that
 
-  final def default(value: A): ConfigDescriptor[K, V, A] =
+  final def default(value: A): ConfigDescriptor[A] =
     ConfigDescriptor.Default(self, value) ?? s"default value: $value"
 
-  final def describe(description: String): ConfigDescriptor[K, V, A] =
+  final def describe(description: String): ConfigDescriptor[A] =
     ConfigDescriptor.Describe(self, description)
 
-  final def from(that: ConfigSource[K, V]): ConfigDescriptor[K, V, A] =
+  final def from(that: ConfigSource): ConfigDescriptor[A] =
     self.updateSource(_.orElse(that))
 
-  def mapKey(f: K => K): ConfigDescriptor[K, V, A] = {
-    def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
+  def mapKey(f: String => String): ConfigDescriptor[A] = {
+    def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] = config match {
       case Source(source, propertyType) => Source(source, propertyType)
       case Nested(path, conf)           => Nested(f(path), loop(conf))
       case Sequence(source, conf)       => Sequence(source, loop(conf))
@@ -59,22 +59,22 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     loop(self)
   }
 
-  final def optional: ConfigDescriptor[K, V, Option[A]] =
+  final def optional: ConfigDescriptor[Option[A]] =
     ConfigDescriptor.Optional(self) ?? "optional value"
 
-  final def orElse(that: => ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+  final def orElse(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
     ConfigDescriptor.OrElse(self, that)
 
   final def orElseEither[B](
-    that: => ConfigDescriptor[K, V, B]
-  ): ConfigDescriptor[K, V, Either[A, B]] =
+    that: => ConfigDescriptor[B]
+  ): ConfigDescriptor[Either[A, B]] =
     ConfigDescriptor.OrElseEither(self, that)
 
-  final def unsourced: ConfigDescriptor[K, V, A] =
+  final def unsourced: ConfigDescriptor[A] =
     self.updateSource(_ => ConfigSource.empty)
 
-  final def updateSource(f: ConfigSource[K, V] => ConfigSource[K, V]): ConfigDescriptor[K, V, A] = {
-    def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
+  final def updateSource(f: ConfigSource => ConfigSource): ConfigDescriptor[A] = {
+    def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] = config match {
       case Source(source, propertyType) => Source(f(source), propertyType)
       case Nested(path, conf)           => Nested(path, loop(conf))
       case Sequence(source, conf)       => Sequence(f(source), loop(conf))
@@ -89,149 +89,144 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     loop(self)
   }
 
-  final def xmap[B](to: A => B, from: B => A): ConfigDescriptor[K, V, B] =
+  final def xmap[B](to: A => B, from: B => A): ConfigDescriptor[B] =
     self.xmapEither(a => Right(to(a)), b => Right(from(b)))
 
-  final def xmapEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[K, V, B] =
+  final def xmapEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[B] =
     ConfigDescriptor.XmapEither(self, f, g)
 
   def xmapEither2[B, C](
-    that: ConfigDescriptor[K, V, B]
-  )(f: (A, B) => Either[String, C], g: C => Either[String, (A, B)]): ConfigDescriptor[K, V, C] =
+    that: ConfigDescriptor[B]
+  )(f: (A, B) => Either[String, C], g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
     (self |@| that)
       .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
       .xmapEither({ case (a, b) => f(a, b) }, g)
 
-  final def zip[B](that: => ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, (A, B)] =
+  final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
     ConfigDescriptor.Zip(self, that)
 }
 
 object ConfigDescriptor {
-  final case class Default[K, V, A](config: ConfigDescriptor[K, V, A], value: A) extends ConfigDescriptor[K, V, A]
+  final case class Default[A](config: ConfigDescriptor[A], value: A) extends ConfigDescriptor[A]
 
-  final case class Describe[K, V, A](config: ConfigDescriptor[K, V, A], message: String)
-      extends ConfigDescriptor[K, V, A]
+  final case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-  final case class Nested[K, V, A](path: K, config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, A]
+  final case class Nested[A](path: String, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
-  final case class Optional[K, V, A](config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, Option[A]]
+  final case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
-  final case class OrElse[K, V, A](left: ConfigDescriptor[K, V, A], right: ConfigDescriptor[K, V, A])
-      extends ConfigDescriptor[K, V, A]
+  final case class OrElse[A](left: ConfigDescriptor[A], right: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
-  final case class OrElseEither[K, V, A, B](left: ConfigDescriptor[K, V, A], right: ConfigDescriptor[K, V, B])
-      extends ConfigDescriptor[K, V, Either[A, B]]
+  final case class OrElseEither[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
+      extends ConfigDescriptor[Either[A, B]]
 
-  final case class Sequence[K, V, A](source: ConfigSource[K, V], config: ConfigDescriptor[K, V, A])
-      extends ConfigDescriptor[K, V, List[A]]
+  final case class Sequence[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
 
-  final case class Source[K, V, A](source: ConfigSource[K, V], propertyType: PropertyType[V, A])
-      extends ConfigDescriptor[K, V, A]
+  final case class Source[A](source: ConfigSource, propertyType: PropertyType[A]) extends ConfigDescriptor[A]
 
-  final case class Zip[K, V, A, B](left: ConfigDescriptor[K, V, A], right: ConfigDescriptor[K, V, B])
-      extends ConfigDescriptor[K, V, (A, B)]
+  final case class Zip[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B]) extends ConfigDescriptor[(A, B)]
 
-  final case class XmapEither[K, V, A, B](
-    config: ConfigDescriptor[K, V, A],
+  final case class XmapEither[A, B](
+    config: ConfigDescriptor[A],
     f: A => Either[String, B],
     g: B => Either[String, A]
-  ) extends ConfigDescriptor[K, V, B]
+  ) extends ConfigDescriptor[B]
 
-  val bigDecimal: ConfigDescriptor[String, String, BigDecimal] =
+  val bigDecimal: ConfigDescriptor[BigDecimal] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal"
 
-  def bigDecimal(path: String): ConfigDescriptor[String, String, BigDecimal] = nested(path)(bigDecimal)
+  def bigDecimal(path: String): ConfigDescriptor[BigDecimal] = nested(path)(bigDecimal)
 
-  val bigInt: ConfigDescriptor[String, String, BigInt] =
+  val bigInt: ConfigDescriptor[BigInt] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint"
 
-  def bigInt(path: String): ConfigDescriptor[String, String, BigInt] = nested(path)(bigInt)
+  def bigInt(path: String): ConfigDescriptor[BigInt] = nested(path)(bigInt)
 
-  val boolean: ConfigDescriptor[String, String, Boolean] =
+  val boolean: ConfigDescriptor[Boolean] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.BooleanType) ?? "value of type boolean"
 
-  def boolean(path: String): ConfigDescriptor[String, String, Boolean] = nested(path)(boolean)
+  def boolean(path: String): ConfigDescriptor[Boolean] = nested(path)(boolean)
 
-  val byte: ConfigDescriptor[String, String, Byte] =
+  val byte: ConfigDescriptor[Byte] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.ByteType) ?? "value of type byte"
 
-  def byte(path: String): ConfigDescriptor[String, String, Byte] = nested(path)(byte)
+  def byte(path: String): ConfigDescriptor[Byte] = nested(path)(byte)
 
-  def collectAll[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] =
+  def collectAll[A](configList: ::[ConfigDescriptor[A]]): ConfigDescriptor[::[A]] =
     sequence(configList)
 
-  val double: ConfigDescriptor[String, String, Double] =
+  val double: ConfigDescriptor[Double] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double"
 
-  def double(path: String): ConfigDescriptor[String, String, Double] = nested(path)(double)
+  def double(path: String): ConfigDescriptor[Double] = nested(path)(double)
 
-  val duration: ConfigDescriptor[String, String, Duration] =
+  val duration: ConfigDescriptor[Duration] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.DurationType) ?? "value of type duration"
 
-  def duration(path: String): ConfigDescriptor[String, String, Duration] = nested(path)(duration)
+  def duration(path: String): ConfigDescriptor[Duration] = nested(path)(duration)
 
-  val zioDuration: ConfigDescriptor[String, String, zio.duration.Duration] =
+  val zioDuration: ConfigDescriptor[zio.duration.Duration] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
 
-  def zioDuration(path: String): ConfigDescriptor[String, String, zio.duration.Duration] = nested(path)(zioDuration)
+  def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
 
-  val float: ConfigDescriptor[String, String, Float] =
+  val float: ConfigDescriptor[Float] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
 
-  def head[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+  def head[A](desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
     desc.orElse(
       listStrict(desc)
         .xmapEither[A](_.headOption.fold[Either[String, A]](Left("Element is missing"))(Right(_)), v => Right(v :: Nil))
     )
 
-  def head[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+  def head[A](path: String)(desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
     nested(path)(head(desc))
 
-  def float(path: String): ConfigDescriptor[String, String, Float] = nested(path)(float)
+  def float(path: String): ConfigDescriptor[Float] = nested(path)(float)
 
-  val int: ConfigDescriptor[String, String, Int] =
+  val int: ConfigDescriptor[Int] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.IntType) ?? "value of type int"
 
-  def int(path: String): ConfigDescriptor[String, String, Int] = nested(path)(int)
+  def int(path: String): ConfigDescriptor[Int] = nested(path)(int)
 
   /**
    * Allows scalar value instead of list
    * */
-  def list[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+  def list[A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
     listStrict(desc).orElse(desc(_ :: Nil, _.headOption))
 
   /**
    * Allows scalar value instead of list
    * */
-  def list[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+  def list[A](path: String)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
     nested(path)(list(desc))
 
   /**
    * Rejects scalar value in place of list
    * */
-  def listStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+  def listStrict[A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
     ConfigDescriptor.Sequence(ConfigSource.empty, desc)
 
   /**
    * Rejects scalar value in place of list
    * */
-  def listStrict[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+  def listStrict[A](path: String)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
     nested(path)(listStrict(desc))
 
-  val long: ConfigDescriptor[String, String, Long] =
+  val long: ConfigDescriptor[Long] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LongType) ?? "value of type long"
 
-  def long(path: String): ConfigDescriptor[String, String, Long] = nested(path)(long)
+  def long(path: String): ConfigDescriptor[Long] = nested(path)(long)
 
-  def nested[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+  def nested[A](path: String)(desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
     ConfigDescriptor.Nested(path, desc)
 
-  def sequence[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] = {
+  def sequence[A](configList: ::[ConfigDescriptor[A]]): ConfigDescriptor[::[A]] = {
     val reversed = configList.reverse
-    reversed.tail.foldLeft[ConfigDescriptor[K, V, ::[A]]](
+    reversed.tail.foldLeft[ConfigDescriptor[::[A]]](
       reversed.head.xmap((a: A) => ::(a, Nil), (b: ::[A]) => b.head)
     )(
-      (b: ConfigDescriptor[K, V, ::[A]], a: ConfigDescriptor[K, V, A]) =>
+      (b: ConfigDescriptor[::[A]], a: ConfigDescriptor[A]) =>
         b.xmapEither2(a)(
           (as: ::[A], a: A) => Right(::(a, as)),
           (t: ::[A]) => Right((::(t.tail.head, t.tail.tail), t.head))
@@ -239,43 +234,43 @@ object ConfigDescriptor {
     )
   }
 
-  val short: ConfigDescriptor[String, String, Short] =
+  val short: ConfigDescriptor[Short] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.ShortType) ?? "value of type short"
 
-  def short(path: String): ConfigDescriptor[String, String, Short] = nested(path)(short)
+  def short(path: String): ConfigDescriptor[Short] = nested(path)(short)
 
-  val string: ConfigDescriptor[String, String, String] =
+  val string: ConfigDescriptor[String] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
 
-  def string(path: String): ConfigDescriptor[String, String, String] = nested(path)(string)
+  def string(path: String): ConfigDescriptor[String] = nested(path)(string)
 
-  val uri: ConfigDescriptor[String, String, URI] =
+  val uri: ConfigDescriptor[URI] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
 
-  def uri(path: String): ConfigDescriptor[String, String, URI] = nested(path)(uri)
+  def uri(path: String): ConfigDescriptor[URI] = nested(path)(uri)
 
-  val uuid: ConfigDescriptor[String, String, UUID] =
+  val uuid: ConfigDescriptor[UUID] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
 
-  def uuid(path: String): ConfigDescriptor[String, String, UUID] = nested(path)(uuid)
+  def uuid(path: String): ConfigDescriptor[UUID] = nested(path)(uuid)
 
-  val localDate: ConfigDescriptor[String, String, LocalDate] =
+  val localDate: ConfigDescriptor[LocalDate] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LocalDateType) ?? "value of type localdate"
 
-  def localDate(path: String): ConfigDescriptor[String, String, LocalDate] = nested(path)(localDate)
+  def localDate(path: String): ConfigDescriptor[LocalDate] = nested(path)(localDate)
 
-  val localTime: ConfigDescriptor[String, String, LocalTime] =
+  val localTime: ConfigDescriptor[LocalTime] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LocalTimeType) ?? "value of type localtime"
 
-  def localTime(path: String): ConfigDescriptor[String, String, LocalTime] = nested(path)(localTime)
+  def localTime(path: String): ConfigDescriptor[LocalTime] = nested(path)(localTime)
 
-  val localDateTime: ConfigDescriptor[String, String, LocalDateTime] =
+  val localDateTime: ConfigDescriptor[LocalDateTime] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LocalDateTimeType) ?? "value of type localdatetime"
 
-  def localDateTime(path: String): ConfigDescriptor[String, String, LocalDateTime] = nested(path)(localDateTime)
+  def localDateTime(path: String): ConfigDescriptor[LocalDateTime] = nested(path)(localDateTime)
 
-  val instant: ConfigDescriptor[String, String, Instant] =
+  val instant: ConfigDescriptor[Instant] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant"
 
-  def instant(path: String): ConfigDescriptor[String, String, Instant] = nested(path)(instant)
+  def instant(path: String): ConfigDescriptor[Instant] = nested(path)(instant)
 }

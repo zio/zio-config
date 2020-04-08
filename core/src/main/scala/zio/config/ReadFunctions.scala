@@ -5,38 +5,38 @@ import zio.config.ReadError.{ AndErrors, OrErrors, Step }
 import zio.config.ReadFunctions._
 
 private[config] trait ReadFunctions {
-  final def read[K, V, A](
-    configuration: ConfigDescriptor[K, V, A]
-  ): Either[ReadError[K], A] = {
+  final def read[A](
+    configuration: ConfigDescriptor[A]
+  ): Either[ReadError, A] = {
 
-    type Res[+B] = Either[ReadError[K], B]
+    type Res[+B] = Either[ReadError, B]
 
-    def formatError(paths: List[Step[K]], actualType: String, expectedType: String) =
+    def formatError(paths: List[Step], actualType: String, expectedType: String) =
       Left(
         ReadError.FormatError(paths.reverse, s"Provided value is of type $actualType, expecting the type $expectedType")
       )
 
-    def loopDefault[B](path: List[Step[K]], keys: List[K], cfg: Default[K, V, B]): Res[B] =
+    def loopDefault[B](path: List[Step], keys: List[String], cfg: Default[B]): Res[B] =
       loopAny(path, keys, cfg.config) match {
         case Left(error) if hasParseErrors(error) || hasConversionErrors(error) => Left(error)
         case Left(_)                                                            => Right(cfg.value)
         case Right(value)                                                       => Right(value)
       }
 
-    def loopDescribe[B](path: List[Step[K]], keys: List[K], cfg: Describe[K, V, B]): Res[B] =
+    def loopDescribe[B](path: List[Step], keys: List[String], cfg: Describe[B]): Res[B] =
       loopAny(path, keys, cfg.config)
 
-    def loopNested[B](path: List[Step[K]], keys: List[K], cfg: Nested[K, V, B]): Res[B] =
+    def loopNested[B](path: List[Step], keys: List[String], cfg: Nested[B]): Res[B] =
       loopAny(Step.Key(cfg.path) :: path, cfg.path :: keys, cfg.config)
 
-    def loopOptional[B](path: List[Step[K]], keys: List[K], cfg: Optional[K, V, B]): Res[Option[B]] =
+    def loopOptional[B](path: List[Step], keys: List[String], cfg: Optional[B]): Res[Option[B]] =
       loopAny(path, keys, cfg.config) match {
         case Left(error) if hasParseErrors(error) || hasConversionErrors(error) => Left(error)
         case Left(_)                                                            => Right(None)
         case Right(value)                                                       => Right(Some(value))
       }
 
-    def loopOrElse[B](path: List[Step[K]], keys: List[K], cfg: OrElse[K, V, B]): Res[B] =
+    def loopOrElse[B](path: List[Step], keys: List[String], cfg: OrElse[B]): Res[B] =
       loopAny(path, keys, cfg.left) match {
         case Right(value) => Right(value)
         case Left(leftError) =>
@@ -46,7 +46,7 @@ private[config] trait ReadFunctions {
           }
       }
 
-    def loopOrElseEither[B, C](path: List[Step[K]], keys: List[K], cfg: OrElseEither[K, V, B, C]): Res[Either[B, C]] =
+    def loopOrElseEither[B, C](path: List[Step], keys: List[String], cfg: OrElseEither[B, C]): Res[Either[B, C]] =
       loopAny(path, keys, cfg.left) match {
         case Right(value) => Right(Left(value))
         case Left(leftError) =>
@@ -56,7 +56,7 @@ private[config] trait ReadFunctions {
           }
       }
 
-    def loopSource[B](path: List[Step[K]], keys: List[K], cfg: Source[K, V, B]): Res[B] =
+    def loopSource[B](path: List[Step], keys: List[String], cfg: Source[B]): Res[B] =
       cfg.source.getConfigValue(keys.reverse) match {
         case PropertyTree.Empty       => Left(ReadError.MissingValue(path.reverse))
         case PropertyTree.Record(_)   => formatError(path, "Record", "Leaf")
@@ -74,7 +74,7 @@ private[config] trait ReadFunctions {
           }
       }
 
-    def loopZip[B, C](path: List[Step[K]], keys: List[K], cfg: Zip[K, V, B, C]): Res[(B, C)] =
+    def loopZip[B, C](path: List[Step], keys: List[String], cfg: Zip[B, C]): Res[(B, C)] =
       (loopAny(path, keys, cfg.left), loopAny(path, keys, cfg.right)) match {
         case (Right(leftV), Right(rightV)) => Right((leftV, rightV))
         case (Left(leftE), Left(rightE))   => Left(AndErrors(leftE :: rightE :: Nil))
@@ -82,13 +82,13 @@ private[config] trait ReadFunctions {
         case (_, Left(rightE))             => Left(rightE)
       }
 
-    def loopXmapEither[B, C](path: List[Step[K]], keys: List[K], cfg: XmapEither[K, V, B, C]): Res[C] =
+    def loopXmapEither[B, C](path: List[Step], keys: List[String], cfg: XmapEither[B, C]): Res[C] =
       loopAny(path, keys, cfg.config) match {
         case Left(error) => Left(error)
         case Right(a)    => cfg.f(a).swap.map(ReadError.ConversionError(path.reverse, _)).swap
       }
 
-    def loopSequence[B](path: List[Step[K]], keys: List[K], cfg: Sequence[K, V, B]): Res[List[B]] =
+    def loopSequence[B](path: List[Step], keys: List[String], cfg: Sequence[B]): Res[List[B]] =
       cfg.source.getConfigValue(keys.reverse) match {
         case PropertyTree.Leaf(_)   => formatError(path, "Leaf", "Sequence")
         case PropertyTree.Record(_) => formatError(path, "Record", "Sequence")
@@ -99,10 +99,10 @@ private[config] trait ReadFunctions {
               val source = ConfigSource(tree, cfg.source.sourceDescription)
               loopAny(Step.Index(idx) :: path, Nil, cfg.config.updateSource(_ => source))
           }
-          seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list).swap.map(AndErrors(_)).swap
+          seqEither2[ReadError, B, ReadError]((_, a) => a)(list).swap.map(AndErrors(_)).swap
       }
 
-    def loopAny[B](path: List[Step[K]], keys: List[K], config: ConfigDescriptor[K, V, B]): Res[B] =
+    def loopAny[B](path: List[Step], keys: List[String], config: ConfigDescriptor[B]): Res[B] =
       config match {
         case c @ Default(_, _)       => loopDefault(path, keys, c)
         case c @ Describe(_, _)      => loopDescribe(path, keys, c)
@@ -125,17 +125,17 @@ object ReadFunctions {
   def parseErrorMessage(given: String, expectedType: String) =
     s"Provided value is ${given.toString}, expecting the type ${expectedType}"
 
-  private def hasErrors[K](value: ReadError[K])(f: PartialFunction[ReadError[K], Boolean]): Boolean =
-    f.orElse[ReadError[K], Boolean]({
+  private def hasErrors[K](value: ReadError)(f: PartialFunction[ReadError, Boolean]): Boolean =
+    f.orElse[ReadError, Boolean]({
         case OrErrors(errors)  => errors.exists(hasErrors(_)(f))
         case AndErrors(errors) => errors.exists(hasErrors(_)(f))
       })
       .lift(value)
       .getOrElse(false)
 
-  private def hasParseErrors[K](error: ReadError[K]): Boolean =
+  private def hasParseErrors[K](error: ReadError): Boolean =
     hasErrors(error)({ case ReadError.FormatError(_, _) => true })
 
-  private def hasConversionErrors[K](error: ReadError[K]): Boolean =
+  private def hasConversionErrors[K](error: ReadError): Boolean =
     hasErrors(error)({ case ReadError.ConversionError(_, _) => true })
 }

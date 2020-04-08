@@ -27,7 +27,7 @@ object NumericSupportTest
         testM("Refined config Less invalid") {
           checkM(Gen.int(10, 100)) { p =>
             val cfg = less[W.`10`.T](int("TEST"))
-            val p2: ZIO[Any, ReadError[String], Refined[Int, Less[W.`10`.T]]] =
+            val p2: ZIO[Any, ReadError, Refined[Int, Less[W.`10`.T]]] =
               ZIO.fromEither(read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString), "test")))
 
             assertM(p2.either)(helpers.assertErrors(_.size == 1))
@@ -48,7 +48,7 @@ object NumericSupportTest
         testM("Refined config Greater invalid") {
           checkM(Gen.int(1, 10)) { p =>
             val cfg = greater[W.`10`.T](int("TEST"))
-            val p2: ZIO[Any, ReadError[String], Refined[Int, Greater[W.`10`.T]]] =
+            val p2: ZIO[Any, ReadError, Refined[Int, Greater[W.`10`.T]]] =
               ZIO.fromEither(read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString))))
 
             assertM(p2.either)(helpers.assertErrors(_.size == 1))
@@ -69,7 +69,7 @@ object NumericSupportTest
         testM("Refined config LessEqual invalid") {
           checkM(Gen.int(11, 100)) { p =>
             val cfg = lessEqual[W.`10`.T](int("TEST"))
-            val p2: ZIO[Any, ReadError[String], Refined[Int, LessEqual[W.`10`.T]]] =
+            val p2: ZIO[Any, ReadError, Refined[Int, LessEqual[W.`10`.T]]] =
               ZIO.fromEither(read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString), "test")))
 
             assertM(p2.either)(helpers.assertErrors(_.size == 1))

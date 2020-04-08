@@ -138,7 +138,7 @@ object ListsCornerCasesTest
               Record(
                 Map(
                   "a" -> Leaf("sa"),
-                  "b" -> Sequence[String, String](
+                  "b" -> Sequence(
                     Sequence(Record(Map("c" -> Leaf("v1"))) :: Nil) ::
                       Sequence(Nil) ::
                       Sequence(Record(Map("c" -> Leaf("v2"))) :: Record(Map("c" -> Leaf("v3"))) :: Nil) ::
@@ -160,7 +160,7 @@ object ListsCornerCasesTest
           val res = read(
             cCfg from ConfigSource(
               Record(
-                Map("a" -> Leaf("sa"), "b" -> Sequence(Record[String, String](Map.empty) :: Sequence(Nil) :: Nil))
+                Map("a" -> Leaf("sa"), "b" -> Sequence(Record(Map.empty) :: Sequence(Nil) :: Nil))
               ),
               Set.empty
             )

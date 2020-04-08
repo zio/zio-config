@@ -12,12 +12,12 @@ import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 
 object TypeSafeConfigSource {
-  def fromDefaultLoader: Either[String, ConfigSource[String, String]] =
+  def fromDefaultLoader: Either[String, ConfigSource] =
     fromTypesafeConfig(ConfigFactory.load.resolve)
 
   def fromHoconFile[A](
     file: File
-  ): Task[ConfigSource[String, String]] =
+  ): Task[ConfigSource] =
     IO.effect(ConfigFactory.parseFile(file).resolve)
       .flatMap(typesafeConfig => {
         ZIO
@@ -27,14 +27,14 @@ object TypeSafeConfigSource {
 
   def fromHoconString(
     input: String
-  ): Either[String, ConfigSource[String, String]] =
+  ): Either[String, ConfigSource] =
     fromTypesafeConfig(
       ConfigFactory.parseString(input).resolve
     )
 
   def fromTypesafeConfig(
     input: com.typesafe.config.Config
-  ): Either[String, ConfigSource[String, String]] =
+  ): Either[String, ConfigSource] =
     Try {
       input
     } match {
@@ -48,7 +48,7 @@ object TypeSafeConfigSource {
 
   private[config] def getPropertyTree(
     input: com.typesafe.config.Config
-  ): Either[String, PropertyTree[String, String]] = {
+  ): Either[String, PropertyTree] = {
     def loopBoolean(value: Boolean)         = Leaf(value.toString)
     def loopNumber(value: Number)           = Leaf(value.toString)
     val loopNull                            = PropertyTree.empty
@@ -58,7 +58,7 @@ object TypeSafeConfigSource {
     def loopConfig(config: ConfigObject) =
       Record(config.asScala.toVector.map { case (key, value) => key -> loopAny(value) }.toMap)
 
-    def loopAny(value: ConfigValue): PropertyTree[String, String] = value.valueType() match {
+    def loopAny(value: ConfigValue): PropertyTree = value.valueType() match {
       case ConfigValueType.OBJECT  => loopConfig(value.asInstanceOf[ConfigObject])
       case ConfigValueType.LIST    => loopList(value.asInstanceOf[ConfigList].asScala.toList)
       case ConfigValueType.BOOLEAN => loopBoolean(value.unwrapped().asInstanceOf[JBoolean])

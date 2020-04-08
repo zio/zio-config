@@ -132,15 +132,15 @@ object PropertyTypeTestUtils {
 
   def propertyTypeRoundtripSuite[A](
     typeInfo: String,
-    propType: PropertyType[String, A],
+    propType: PropertyType[A],
     genValid: Gen[Random with Sized, String],
     parse: String => A
   ): Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite(s"${typeInfo}Type")(
-      testM(s"valid ${typeInfo} string roundtrip") {
+      testM(s"valid $typeInfo string roundtrip") {
         check(genValid.map(_.toString))(assertValidRoundtrip(propType, parse))
       },
-      testM(s"invalid ${typeInfo} string roundtrip") {
+      testM(s"invalid $typeInfo string roundtrip") {
         val invalidString = Gen.anyString.filter(s => Try(parse(s)).isFailure)
         check(invalidString)(
           assertInvalidRoundtrip(
@@ -152,18 +152,18 @@ object PropertyTypeTestUtils {
     )
 
   def assertValidRoundtrip[A](
-    propType: PropertyType[String, A],
+    propType: PropertyType[A],
     parse: String => A
   )(s: String): TestResult =
     assert(roundTrip(propType, s).map(parse))(isRight(equalTo(parse(s))))
 
   def assertInvalidRoundtrip[A](
-    propType: PropertyType[String, A],
-    propReadError: String => PropertyReadError[String]
+    propType: PropertyType[A],
+    propReadError: String => PropertyReadError
   )(s: String): TestResult =
     assert(roundTrip(propType, s))(isLeft(equalTo(propReadError(s))))
 
-  private def roundTrip[A](propType: PropertyType[String, A], s: String) =
+  private def roundTrip[A](propType: PropertyType[A], s: String) =
     propType.read(s).map(propType.write)
 
   /** Generates all case permutations of a string */

@@ -1,41 +1,34 @@
 package zio.config
 
+import java.io.{ File, FileInputStream }
 import java.{ util => ju }
 
-import zio.UIO
-
-import scala.collection.JavaConverters._
-import scala.collection.immutable.Nil
+import zio.{ Task, UIO, ZIO }
 import zio.config.PropertyTree.{ unflatten, Leaf, Record, Sequence }
-import zio.ZIO
-import java.io.FileInputStream
-import java.io.File
-
-import These._
-import zio.Task
+import zio.config.These._
 
 import scala.annotation.tailrec
+import scala.collection.JavaConverters._
+import scala.collection.immutable.Nil
 
-sealed trait ConfigSource[K, V] { self =>
+sealed trait ConfigSource { self =>
   def sourceDescription: Set[String]
 
-  def getConfigValue(path: List[K]): PropertyTree[K, V]
+  def getConfigValue(path: List[String]): PropertyTree
 
-  final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] = new MergedConfigSource(self, that)
+  final def orElse(that: => ConfigSource): ConfigSource = new MergedConfigSource(self, that)
 
-  final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] = self orElse that
+  final def <>(that: => ConfigSource): ConfigSource = self orElse that
 }
 
-final case class TreeConfigSource[K, V](tree: PropertyTree[K, V], sourceDescription: Set[String])
-    extends ConfigSource[K, V] {
-  def getConfigValue(path: List[K]): PropertyTree[K, V] = tree.getPath(path)
+final case class TreeConfigSource(tree: PropertyTree, sourceDescription: Set[String]) extends ConfigSource {
+  def getConfigValue(path: List[String]): PropertyTree = tree.getPath(path)
 }
-final class MergedConfigSource[K, V](_left: => ConfigSource[K, V], _right: => ConfigSource[K, V])
-    extends ConfigSource[K, V] {
+final class MergedConfigSource(_left: => ConfigSource, _right: => ConfigSource) extends ConfigSource {
   private lazy val left  = _left
   private lazy val right = _right
 
-  def getConfigValue(path: List[K]): PropertyTree[K, V] =
+  def getConfigValue(path: List[String]): PropertyTree =
     left.getConfigValue(path).getOrElse(right.getConfigValue(path))
 
   lazy val sourceDescription: Set[String] = left.sourceDescription ++ right.sourceDescription
@@ -46,8 +39,9 @@ object ConfigSource {
   private[config] val SystemProperties     = "system properties"
   private[config] val CommandLineArguments = "command line arguments"
 
-  def empty[K, V]: ConfigSource[K, V]                                       = TreeConfigSource(PropertyTree.empty, Set.empty)
-  def apply[K, V](tree: PropertyTree[K, V], sourceDescription: Set[String]) = TreeConfigSource(tree, sourceDescription)
+  def empty: ConfigSource = TreeConfigSource(PropertyTree.empty, Set.empty)
+  def apply(tree: PropertyTree, sourceDescription: Set[String]): TreeConfigSource =
+    TreeConfigSource(tree, sourceDescription)
 
   /**
    * EXPERIMENTAL
@@ -90,7 +84,7 @@ object ConfigSource {
     args: List[String],
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
-  ): ConfigSource[String, String] =
+  ): ConfigSource =
     ConfigSource.fromPropertyTrees(
       getPropertyTreeFromArgs(args.filter(_.nonEmpty), keyDelimiter, valueDelimiter),
       CommandLineArguments
@@ -122,7 +116,7 @@ object ConfigSource {
     source: String = "constant",
     keyDelimiter: Option[Char] = None,
     valueDelimter: Option[Char] = None
-  ): ConfigSource[String, String] =
+  ): ConfigSource =
     fromMapInternal(map)(
       x => {
         val listOfValues = valueDelimter.fold(List(x))(delim => x.split(delim).toList)
@@ -155,7 +149,7 @@ object ConfigSource {
     map: Map[String, ::[String]],
     source: String = "constant",
     keyDelimiter: Option[Char] = None
-  ): ConfigSource[String, String] =
+  ): ConfigSource =
     fromMapInternal(map)(identity, keyDelimiter, source)
 
   /**
@@ -184,7 +178,7 @@ object ConfigSource {
     source: String = "properties",
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
-  ): ConfigSource[String, String] = {
+  ): ConfigSource = {
     val mapString = property.stringPropertyNames().asScala.foldLeft(Map.empty[String, String]) { (acc, a) =>
       acc.updated(a, property.getProperty(a))
     }
@@ -219,11 +213,11 @@ object ConfigSource {
    *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
    * }}}
    */
-  def fromPropertiesFile[A](
+  def fromPropertiesFile(
     filePath: String,
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
-  ): Task[ConfigSource[String, String]] =
+  ): Task[ConfigSource] =
     for {
       properties <- ZIO.bracket(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))(
                      inputStream => {
@@ -236,7 +230,7 @@ object ConfigSource {
                    )
     } yield ConfigSource.fromProperties(properties, filePath, keyDelimiter, valueDelimiter)
 
-  def fromSystemEnv: UIO[ConfigSource[String, String]] =
+  def fromSystemEnv: UIO[ConfigSource] =
     fromSystemEnv(None, None)
 
   /**
@@ -262,12 +256,12 @@ object ConfigSource {
    *
    * Note: The delimiter '.' for keys doesn't work in system environment.
    */
-  def fromSystemEnv(keyDelimiter: Option[Char], valueDelimiter: Option[Char]): UIO[ConfigSource[String, String]] =
+  def fromSystemEnv(keyDelimiter: Option[Char], valueDelimiter: Option[Char]): UIO[ConfigSource] =
     UIO
       .effectTotal(sys.env)
       .map(map => ConfigSource.fromMap(map, SystemEnvironment, keyDelimiter, valueDelimiter))
 
-  def fromSystemProperties: UIO[ConfigSource[String, String]] =
+  def fromSystemProperties: UIO[ConfigSource] =
     fromSystemProperties(None, None)
 
   /**
@@ -294,7 +288,7 @@ object ConfigSource {
   def fromSystemProperties(
     keyDelimiter: Option[Char],
     valueDelimiter: Option[Char]
-  ): UIO[ConfigSource[String, String]] =
+  ): UIO[ConfigSource] =
     for {
       systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
     } yield ConfigSource.fromProperties(
@@ -304,9 +298,9 @@ object ConfigSource {
       valueDelimiter = valueDelimiter
     )
 
-  private[config] def fromMapInternal[A, B](
-    map: Map[String, A]
-  )(f: A => ::[B], keyDelimiter: Option[Char], source: String): ConfigSource[String, B] =
+  private[config] def fromMapInternal[V](
+    map: Map[String, V]
+  )(f: V => ::[String], keyDelimiter: Option[Char], source: String): ConfigSource =
     fromPropertyTrees(
       unwrapSingletonLists(
         dropEmpty(
@@ -326,7 +320,7 @@ object ConfigSource {
       source
     )
 
-  private def dropEmpty[K, V](tree: PropertyTree[K, V]): PropertyTree[K, V] =
+  private def dropEmpty(tree: PropertyTree): PropertyTree =
     if (tree.isEmpty) PropertyTree.Empty
     else
       tree match {
@@ -336,30 +330,30 @@ object ConfigSource {
         case Sequence(value)    => Sequence(value.filterNot(_.isEmpty))
       }
 
-  private def dropEmpty[K, V](trees: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] = {
-    val res = trees.map(dropEmpty(_)).filterNot(_.isEmpty)
+  private def dropEmpty(trees: List[PropertyTree]): List[PropertyTree] = {
+    val res = trees.map(dropEmpty).filterNot(_.isEmpty)
     if (res.isEmpty) PropertyTree.Empty :: Nil
     else res
   }
 
-  private def unwrapSingletonLists[K, V](tree: PropertyTree[K, V]): PropertyTree[K, V] = tree match {
+  private def unwrapSingletonLists(tree: PropertyTree): PropertyTree = tree match {
     case l @ Leaf(_)            => l
     case Record(value)          => Record(value.map { case (k, v) => k -> unwrapSingletonLists(v) })
     case PropertyTree.Empty     => PropertyTree.Empty
     case Sequence(value :: Nil) => unwrapSingletonLists(value)
-    case Sequence(value)        => Sequence(value.map(unwrapSingletonLists(_)))
+    case Sequence(value)        => Sequence(value.map(unwrapSingletonLists))
   }
 
-  private def unwrapSingletonLists[K, V](trees: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
-    trees.map(unwrapSingletonLists(_))
+  private def unwrapSingletonLists(trees: List[PropertyTree]): List[PropertyTree] =
+    trees.map(unwrapSingletonLists)
 
-  private[config] def fromPropertyTree[B](tree: PropertyTree[String, B], source: String): ConfigSource[String, B] =
+  private[config] def fromPropertyTree(tree: PropertyTree, source: String): ConfigSource =
     ConfigSource(tree, Set(source))
 
-  private[config] def fromPropertyTrees[B](
-    trees: Iterable[PropertyTree[String, B]],
+  private[config] def fromPropertyTrees(
+    trees: Iterable[PropertyTree],
     sourceName: String
-  ): ConfigSource[String, B] =
+  ): ConfigSource =
     mergeAll(trees.map(fromPropertyTree(_, sourceName)))
 
   /// CommandLine Argument Source
@@ -410,21 +404,21 @@ object ConfigSource {
     args: List[String],
     keyDelimiter: Option[Char],
     valueDelimiter: Option[Char]
-  ): List[PropertyTree[String, String]] = {
+  ): List[PropertyTree] = {
     def unFlattenWith(
       key: String,
-      tree: PropertyTree[String, String]
-    ): PropertyTree[String, String] =
-      keyDelimiter.fold(Record(Map(key -> tree)): PropertyTree[String, String])(
+      tree: PropertyTree
+    ): PropertyTree =
+      keyDelimiter.fold(Record(Map(key -> tree)): PropertyTree)(
         value => unflatten(key.split(value).toList, tree)
       )
 
-    def toSeq[V](leaf: String): PropertyTree[String, String] =
-      valueDelimiter.fold(Sequence(List(Leaf(leaf))): PropertyTree[String, String])(
-        c => Sequence[String, String](leaf.split(c).toList.map(Leaf(_)))
+    def toSeq(leaf: String): PropertyTree =
+      valueDelimiter.fold(Sequence(List(Leaf(leaf))): PropertyTree)(
+        c => Sequence(leaf.split(c).toList.map(Leaf))
       )
 
-    def loop(args: List[String]): List[PropertyTree[String, String]] =
+    def loop(args: List[String]): List[PropertyTree] =
       args match {
         case h1 :: h2 :: h3 =>
           (KeyValue.mk(h1), KeyValue.mk(h2)) match {
@@ -436,7 +430,7 @@ object ConfigSource {
 
                 case (Both(l1, r1), This(l2)) =>
                   unFlattenWith(l1.value, toSeq(r1.value)) :: h3.headOption.fold(
-                    List.empty[PropertyTree[String, String]]
+                    List.empty[PropertyTree]
                   )(
                     x =>
                       loop(List(x)).map(
@@ -460,7 +454,7 @@ object ConfigSource {
                     case Some((index, trees)) =>
                       val keys = seqOption(h3.take(index).map(Key.mk))
 
-                      keys.fold(List.empty[PropertyTree[String, String]]) { nestedKeys =>
+                      keys.fold(List.empty[PropertyTree]) { nestedKeys =>
                         trees
                           .map(tree => unflatten(l2.value :: nestedKeys.map(_.value), tree))
                           .map(tree => unFlattenWith(l1.value, tree)) ++ loop(h3.drop(index + 1))
@@ -507,7 +501,7 @@ object ConfigSource {
     unwrapSingletonLists(dropEmpty(PropertyTree.mergeAll(loop(args))))
   }
 
-  private[config] def mergeAll[K, V](sources: Iterable[ConfigSource[K, V]]): ConfigSource[K, V] =
+  private[config] def mergeAll(sources: Iterable[ConfigSource]): ConfigSource =
     sources.reduceLeftOption(_ orElse _).getOrElse(ConfigSource.empty)
 
   @tailrec

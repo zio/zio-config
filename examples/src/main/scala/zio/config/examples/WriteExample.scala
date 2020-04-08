@@ -27,7 +27,7 @@ object WriteExample extends App with EitherImpureOps {
   val readFromSource: A =
     read(description from ConfigSource.fromMap(map, "map")).loadOrThrow
 
-  val written: PropertyTree[String, String] =
+  val written: PropertyTree =
     write(description, readFromSource).loadOrThrow
 
   val flattenedTree: Map[String, ::[String]] =

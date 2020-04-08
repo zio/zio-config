@@ -28,7 +28,7 @@ object EitherExample extends App {
     )
 
   // Obviously getting a constant map source doesn't need ZIO effect
-  val source: ConfigSource[String, String] =
+  val source: ConfigSource =
     ConfigSource.fromMap(validProd, "constant")
 
   // read(prodOrDev from source) is equivalent to Config.fromMap(prodOrDev). This is only to demonstrate that you can
@@ -44,7 +44,7 @@ object EitherExample extends App {
       "x5" -> "2.0"
     )
 
-  val anotherSource: ConfigSource[String, String] =
+  val anotherSource: ConfigSource =
     ConfigSource.fromMap(validDev)
 
   println("anpther soruce result " + read(prodOrDev from anotherSource))

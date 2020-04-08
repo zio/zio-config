@@ -41,7 +41,7 @@ object MorePatternsExample extends App {
   final case class AppConfig(sparkConfig: SparkConfig, vault: VaultConfig, users: List[String], region: List[String])
 
   object AppConfig {
-    val desc: ConfigDescriptor[String, String, AppConfig] =
+    val desc: ConfigDescriptor[AppConfig] =
       (nested("conf") { SparkConfig.desc } |@| VaultConfig.desc |@| list("users")(string) |@| list("region")(string))(
         AppConfig.apply,
         AppConfig.unapply
@@ -59,12 +59,4 @@ object MorePatternsExample extends App {
         )
       )
   )
-}
-
-object Hello extends App {
-  import zio.config.PropertyTree._
-
-  val tree = Record(Map("region" -> Sequence(List(Leaf(112), Leaf(111)))))
-
-  println(tree.getPath(List("region")))
 }

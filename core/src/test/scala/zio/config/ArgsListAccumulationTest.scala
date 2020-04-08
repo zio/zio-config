@@ -13,7 +13,7 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
       testM("Using single arg --key=value style") {
         checkM(Gen.int(1, 10)) { count =>
           val args = renderArgs(count)
-          val p2: zio.IO[ReadError[String], SomeConfig] =
+          val p2: zio.IO[ReadError, SomeConfig] =
             fromArgs(args)
               .map(config => config.get)
 
@@ -26,7 +26,7 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
   final case class SomeConfig(ints: List[Int])
 
   object SomeConfig {
-    val descriptor: ConfigDescriptor[String, String, SomeConfig] =
+    val descriptor: ConfigDescriptor[SomeConfig] =
       list("ints")(int)(SomeConfig.apply, SomeConfig.unapply)
   }
 
@@ -35,7 +35,7 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
       .map(i => s"--ints=$i")
       .toList
 
-  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Config[SomeConfig]] =
+  def fromArgs(args: List[String]): ZIO[Any, ReadError, Config[SomeConfig]] =
     ZIO.environment.provideLayer(Config.fromCommandLineArgs(args, SomeConfig.descriptor, None, None))
 
 }

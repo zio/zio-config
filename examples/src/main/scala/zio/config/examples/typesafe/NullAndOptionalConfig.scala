@@ -22,7 +22,7 @@ object EmployeeDetails {
    * will be just based on keys, and you can ofcourse manipulate keys later on but there is times when you really
    * need to describe your little configurations
    */
-  val employee: ConfigDescriptor[String, String, Employee] =
+  val employee: ConfigDescriptor[Employee] =
     (string("name") |@|
       int("state").orElseEither(string("state")).optional |@|
       double("confidence")
@@ -36,7 +36,7 @@ object EmployeeDetails {
       Employee.unapply
     )
 
-  val employeeDetails: ConfigDescriptor[String, String, EmployeeDetails] =
+  val employeeDetails: ConfigDescriptor[EmployeeDetails] =
     nested("details") {
       (nested("employees")(list(employee)) |@| int("accountId"))(
         EmployeeDetails.apply,

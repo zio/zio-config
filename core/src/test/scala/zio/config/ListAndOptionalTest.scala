@@ -86,7 +86,7 @@ object ListAndOptionalTest
 
           val src =
             ConfigSource.fromPropertyTree(
-              Record(Map("list" -> PropertyTree.Sequence[String, String](Nil))),
+              Record(Map("list" -> PropertyTree.Sequence(Nil))),
               "src"
             )
 

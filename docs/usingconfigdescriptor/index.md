@@ -119,7 +119,7 @@ To generate the documentation of the config, call `generateDocs`.
 
  generateDocs(appConfig)
 
-  // yields the result `ConfigDocs[String, String]`:
+  // yields the result `ConfigDocs`:
 
  Both(
    Both(

@@ -13,7 +13,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
     suite("Configuration from command-line-style arguments")(
       testM("Configuration from arguments roundtrip separate args --key value") {
         checkM(genAppConfig) { appConfig =>
-          val p2: zio.IO[ReadError[String], AppConfig] =
+          val p2: zio.IO[ReadError, AppConfig] =
             for {
               args   <- toSeparateArgs(AppConfig.descriptor, appConfig)
               reread <- fromArgs(args)
@@ -24,7 +24,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
       },
       testM("Configuration from arguments roundtrip single arg --key=value") {
         checkM(genAppConfig) { appConfig =>
-          val p2: zio.IO[ReadError[String], AppConfig] =
+          val p2: zio.IO[ReadError, AppConfig] =
             for {
               args   <- toSingleArg(AppConfig.descriptor, appConfig)
               reread <- fromArgs(args)
@@ -35,7 +35,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
       },
       testM("Configuration from arguments roundtrip single arg --key=value multiple values take the head") {
         checkM(genAppConfig) { appConfig =>
-          val p2: zio.IO[ReadError[String], AppConfig] =
+          val p2: zio.IO[ReadError, AppConfig] =
             for {
               args   <- toMultiSingleArg(AppConfig.descriptor, appConfig)
               reread <- fromArgs(args)
@@ -46,13 +46,13 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
       }
     )
 
-  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Config[AppConfig]] =
+  def fromArgs(args: List[String]): ZIO[Any, ReadError, Config[AppConfig]] =
     ZIO.environment.provideLayer(Config.fromCommandLineArgs(args, descriptor, Some('_'), None))
 
   def toSeparateArgs[A](
-    descriptor: ConfigDescriptor[String, String, A],
+    descriptor: ConfigDescriptor[A],
     a: A
-  ): ZIO[Any, ReadError[String], List[String]] =
+  ): ZIO[Any, ReadError, List[String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(
         s => ConversionError[String](List(Step.Index(0)), s),
@@ -62,7 +62,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
           }
       )
 
-  def toSingleArg[A](descriptor: ConfigDescriptor[String, String, A], a: A): ZIO[Any, ReadError[String], List[String]] =
+  def toSingleArg[A](descriptor: ConfigDescriptor[A], a: A): ZIO[Any, ReadError, List[String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(
         s => ConversionError[String](List(Step.Index(0)), s),
@@ -73,9 +73,9 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
       )
 
   def toMultiSingleArg[A](
-    descriptor: ConfigDescriptor[String, String, A],
+    descriptor: ConfigDescriptor[A],
     a: A
-  ): ZIO[Any, ReadError[String], List[String]] =
+  ): ZIO[Any, ReadError, List[String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(
         s => ConversionError[String](List(Step.Index(0)), s),

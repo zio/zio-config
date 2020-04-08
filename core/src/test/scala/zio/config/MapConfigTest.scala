@@ -14,7 +14,7 @@ object MapConfigTest extends DefaultRunnableSpec {
     suite("Configuration from Map")(
       testM("Configuration from Map roundtrip") {
         checkM(genAppConfig) { appConfig =>
-          val p2: zio.IO[ReadError[String], AppConfig] =
+          val p2: zio.IO[ReadError, AppConfig] =
             for {
               args   <- toMap(AppConfig.descriptor, appConfig)
               reread <- fromMap(args)
@@ -25,13 +25,13 @@ object MapConfigTest extends DefaultRunnableSpec {
       }
     )
 
-  def fromMap(args: Map[String, String]): ZIO[Any, ReadError[String], Config[AppConfig]] =
+  def fromMap(args: Map[String, String]): ZIO[Any, ReadError, Config[AppConfig]] =
     ZIO.environment.provideLayer(Config.fromMap(args, descriptor, "WTL", Some('_'), None))
 
   def toMap[A](
-    descriptor: ConfigDescriptor[String, String, A],
+    descriptor: ConfigDescriptor[A],
     a: A
-  ): ZIO[Any, ReadError[String], Map[String, String]] =
+  ): ZIO[Any, ReadError, Map[String, String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(
         s => ConversionError[String](List(Step.Index(0)), s),
@@ -39,7 +39,7 @@ object MapConfigTest extends DefaultRunnableSpec {
       )
       .map(tuples => Map(tuples: _*))
 
-  def propertyTreeArgs(propertyTree: PropertyTree[String, String]): List[(String, String)] =
+  def propertyTreeArgs(propertyTree: PropertyTree): List[(String, String)] =
     propertyTree.flatten.toList.map { t: (Vector[String], ::[String]) =>
       (s"${t._1.mkString("_")}", s"${t._2.mkString}")
     }

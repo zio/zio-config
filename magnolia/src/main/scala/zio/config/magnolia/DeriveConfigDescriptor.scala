@@ -31,7 +31,7 @@ import scala.util.{ Failure, Success }
  * }}}
  */
 trait DeriveConfigDescriptor[A] { self =>
-  def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, A]
+  def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[A]
 
   def xmap[B](f: A => B)(g: B => A): DeriveConfigDescriptor[B] =
     xmapEither(a => Right(f(a)))(b => Right(g(b)))
@@ -41,7 +41,7 @@ trait DeriveConfigDescriptor[A] { self =>
       override def getDescription(
         path: Option[String],
         parentClass: Option[String]
-      ): ConfigDescriptor[String, String, B] =
+      ): ConfigDescriptor[B] =
         self.getDescription(path, parentClass).xmapEither(a => f(a), (b: B) => g(b))
     }
 }
@@ -74,7 +74,7 @@ object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
    *
    * Please find more (complex) examples in the examples module in zio-config
    */
-  def apply[T](implicit ev: DeriveConfigDescriptor[T]): ConfigDescriptor[String, String, T] =
+  def apply[T](implicit ev: DeriveConfigDescriptor[T]): ConfigDescriptor[T] =
     ev.getDescription(None, None)
 
   /**
@@ -98,15 +98,15 @@ object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
    *
    * Please find more (complex) examples in the examples module in zio-config
    */
-  def descriptor[T](implicit ev: DeriveConfigDescriptor[T]): ConfigDescriptor[String, String, T] =
+  def descriptor[T](implicit ev: DeriveConfigDescriptor[T]): ConfigDescriptor[T] =
     ev.getDescription(None, None)
 
-  def instance[T](f: String => ConfigDescriptor[String, String, T]): DeriveConfigDescriptor[T] =
+  def instance[T](f: String => ConfigDescriptor[T]): DeriveConfigDescriptor[T] =
     new DeriveConfigDescriptor[T] {
       override def getDescription(
         path: Option[String],
         parentClass: Option[String]
-      ): ConfigDescriptor[String, String, T] =
+      ): ConfigDescriptor[T] =
         path.fold(
           string.xmapEither[T](
             _ => Left("unable to fetch the primitive without a path"),
@@ -135,8 +135,8 @@ object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
    *
    * Allows scalar value instead of list
    * */
-  def legacyList[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] = {
-    def extractPath(cfg: ConfigDescriptor[K, V, A]): Option[(K, ConfigDescriptor[K, V, A])] = cfg match {
+  def legacyList[A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] = {
+    def extractPath(cfg: ConfigDescriptor[A]): Option[(String, ConfigDescriptor[A])] = cfg match {
       case Describe(config, message) =>
         extractPath(config).map { case (path, inner) => (path, Describe(inner, message)) }
       case Nested(path, config) => Some((path, config))
@@ -182,7 +182,7 @@ object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
       override def getDescription(
         path: Option[String],
         parentClass: Option[String]
-      ): ConfigDescriptor[String, String, Either[A, B]] =
+      ): ConfigDescriptor[Either[A, B]] =
         implicitly[DeriveConfigDescriptor[A]]
           .getDescription(path, parentClass)
           .orElseEither(implicitly[DeriveConfigDescriptor[B]].getDescription(path, parentClass))
@@ -192,7 +192,7 @@ object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
 
   def combine[T](caseClass: CaseClass[DeriveConfigDescriptor, T]): DeriveConfigDescriptor[T] =
     new DeriveConfigDescriptor[T] {
-      def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, T] = {
+      def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[T] = {
         // A complex nested inductive resolution for parent paths (separately handled for case objects and classes) to get the ergonomics right in the hocon source.
         val finalDesc =
           if (caseClass.isObject) {
@@ -219,7 +219,7 @@ object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
               (value: Any) => Right(value.toString.toLowerCase)
             )
           } else {
-            val listOfConfigs: List[ConfigDescriptor[String, String, Any]] =
+            val listOfConfigs: List[ConfigDescriptor[Any]] =
               caseClass.parameters.toList.map { h =>
                 val rawDesc =
                   h.typeclass.getDescription(Some(h.label), None)
@@ -271,11 +271,11 @@ object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
 
   def dispatch[T](sealedTrait: SealedTrait[DeriveConfigDescriptor, T]): DeriveConfigDescriptor[T] =
     new DeriveConfigDescriptor[T] {
-      def getDescription(paths: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, T] = {
+      def getDescription(paths: Option[String], parentClass: Option[String]): ConfigDescriptor[T] = {
         val list         = sealedTrait.subtypes.toList
         val head :: tail = ::(list.head, list.tail)
 
-        tail.foldRight[ConfigDescriptor[String, String, T]](
+        tail.foldRight[ConfigDescriptor[T]](
           head.typeclass
             .getDescription(paths, Some(sealedTrait.typeName.short.toLowerCase()))
             .xmapEither(
@@ -287,7 +287,7 @@ object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
               }
             )
         )(
-          (e: Subtype[Typeclass, T], b: ConfigDescriptor[String, String, T]) =>
+          (e: Subtype[Typeclass, T], b: ConfigDescriptor[T]) =>
             b.orElse(
               e.typeclass
                 .getDescription(paths, Some(sealedTrait.typeName.short.toLowerCase()))
@@ -307,9 +307,9 @@ object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
 
   implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
 
-  private[config] def updateConfigWithDocuments[K, V, A](
+  private[config] def updateConfigWithDocuments[A](
     documents: Seq[String],
-    config: ConfigDescriptor[K, V, A]
-  ): ConfigDescriptor[K, V, A] =
+    config: ConfigDescriptor[A]
+  ): ConfigDescriptor[A] =
     documents.foldLeft(config)((cf, doc) => cf ?? doc)
 }

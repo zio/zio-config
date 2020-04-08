@@ -1,10 +1,10 @@
 package zio.config
 
-sealed trait ReadError[A] extends Exception { self =>
+sealed trait ReadError extends Exception { self =>
   override def toString: String = self match {
-    case ReadError.MissingValue(path)             => s"MissingValue(${path})"
-    case ReadError.FormatError(path, message)     => s"FormatError(${path}, ${message})"
-    case ReadError.ConversionError(path, message) => s"ConversionError(${path},${message}"
+    case ReadError.MissingValue(path)             => s"MissingValue($path)"
+    case ReadError.FormatError(path, message)     => s"FormatError($path, $message)"
+    case ReadError.ConversionError(path, message) => s"ConversionError($path,$message"
     case ReadError.OrErrors(list)                 => s"OrErrors(${list.map(_.toString)})"
     case ReadError.AndErrors(list)                => s"AndErrors(${list.map(_.toString)}"
   }
@@ -20,15 +20,15 @@ sealed trait ReadError[A] extends Exception { self =>
 }
 
 object ReadError {
-  sealed trait Step[+K]
+  sealed trait Step
   object Step {
-    final case class Key[+K](key: K)   extends Step[K]
-    final case class Index(index: Int) extends Step[Nothing]
+    final case class Key(key: String)  extends Step
+    final case class Index(index: Int) extends Step
   }
 
-  final case class MissingValue[A](path: List[Step[A]])                     extends ReadError[A]
-  final case class FormatError[A](path: List[Step[A]], message: String)     extends ReadError[A]
-  final case class ConversionError[A](path: List[Step[A]], message: String) extends ReadError[A]
-  final case class OrErrors[A](list: List[ReadError[A]])                    extends ReadError[A]
-  final case class AndErrors[A](list: List[ReadError[A]])                   extends ReadError[A]
+  final case class MissingValue[A](path: List[Step])                     extends ReadError
+  final case class FormatError[A](path: List[Step], message: String)     extends ReadError
+  final case class ConversionError[A](path: List[Step], message: String) extends ReadError
+  final case class OrErrors[A](list: List[ReadError])                    extends ReadError
+  final case class AndErrors[A](list: List[ReadError])                   extends ReadError
 }

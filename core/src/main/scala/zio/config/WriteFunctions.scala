@@ -2,8 +2,8 @@ package zio.config
 
 private[config] trait WriteFunctions {
 
-  final def write[K, V, A](config: ConfigDescriptor[K, V, A], a: A): Either[String, PropertyTree[K, V]] = {
-    def go[B](config: ConfigDescriptor[K, V, B], b: B): Either[String, PropertyTree[K, V]] =
+  final def write[A](config: ConfigDescriptor[A], a: A): Either[String, PropertyTree] = {
+    def go[B](config: ConfigDescriptor[B], b: B): Either[String, PropertyTree] =
       config match {
         case ConfigDescriptor.Source(_, propertyType) =>
           Right(PropertyTree.Leaf(propertyType.write(b)))
@@ -17,13 +17,13 @@ private[config] trait WriteFunctions {
             case Left(v)     => Left(v)
           }
 
-        case cd: ConfigDescriptor.Sequence[K, V, a] =>
+        case cd: ConfigDescriptor.Sequence[a] =>
           val bs = (b: List[a]).map(go(cd.config, _))
-          seqEither[String, PropertyTree[K, V]](bs).map(PropertyTree.Sequence(_))
+          seqEither[String, PropertyTree](bs).map(PropertyTree.Sequence)
 
         case ConfigDescriptor.Optional(c) =>
           b.fold(
-            Right(PropertyTree.empty): Either[String, PropertyTree[K, V]]
+            Right(PropertyTree.empty): Either[String, PropertyTree]
           )(go(c, _))
 
         case ConfigDescriptor.Default(c, _) =>
@@ -55,7 +55,7 @@ private[config] trait WriteFunctions {
 
           }
 
-        case cd: ConfigDescriptor.Zip[K, V, a, b] =>
+        case cd: ConfigDescriptor.Zip[a, b] =>
           val tuple: (a, b) = b
 
           val leftResult  = go(cd.left, tuple._1)

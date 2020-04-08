@@ -20,7 +20,7 @@ object AutomaticConfigTest
               val source =
                 ConfigSource.fromMap(environment, keyDelimiter = Some('.'))
 
-              val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
+              val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree]] =
                 for {
                   result  <- ZIO.fromEither(read(configDesc from source))
                   written <- ZIO.effectTotal(write(configDesc, result))

@@ -49,7 +49,7 @@ object RefinedReadWriteRoundtripTestUtils {
     longs: Refined[::[Long], Size[Greater[W.`2`.T]]]
   )
 
-  def longList(n: Int): ::[ConfigDescriptor[String, String, Long]] = {
+  def longList(n: Int): ::[ConfigDescriptor[Long]] = {
     val list =
       (1 to n).toList
         .map(group => long(s"GROUP${group}_LONGVAL"))
@@ -57,10 +57,10 @@ object RefinedReadWriteRoundtripTestUtils {
     ::(list.head, list.tail)
   }
 
-  def longs(n: Int): ConfigDescriptor[String, String, ::[Long]] =
-    ConfigDescriptor.collectAll[String, String, Long](longList(n))
+  def longs(n: Int): ConfigDescriptor[::[Long]] =
+    ConfigDescriptor.collectAll(longList(n))
 
-  def prodConfig(n: Int): ConfigDescriptor[String, String, RefinedProd] =
+  def prodConfig(n: Int): ConfigDescriptor[RefinedProd] =
     (
       nonEmpty(string("LDAP")) |@|
         greaterEqual[W.`1024`.T](int("PORT")) |@|

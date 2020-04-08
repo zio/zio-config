@@ -3,13 +3,13 @@ package zio.config
 private[config] trait ConfigDocsFunctions {
   import ConfigDocs._
 
-  final def generateDocs[K, V, A](config: ConfigDescriptor[K, V, A]): ConfigDocs[K, V] = {
+  final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
     def loop[B](
       sources: Sources,
       descriptions: List[String],
-      config: ConfigDescriptor[K, V, B],
-      docs: ConfigDocs[K, V]
-    ): ConfigDocs[K, V] =
+      config: ConfigDescriptor[B],
+      docs: ConfigDocs
+    ): ConfigDocs =
       config match {
         case ConfigDescriptor.Source(source, _) =>
           Leaf(Sources(source.sourceDescription ++ sources.set), descriptions, None)
@@ -54,25 +54,25 @@ private[config] trait ConfigDocsFunctions {
     loop(Sources(Set.empty), Nil, config, Empty)
   }
 
-  def generateDocsWithValue[K, V, A](
-    config: ConfigDescriptor[K, V, A],
+  def generateDocsWithValue[A](
+    config: ConfigDescriptor[A],
     value: A
-  ): Either[String, ConfigDocs[K, V]] =
+  ): Either[String, ConfigDocs] =
     write(config, value)
       .map(tree => {
         def loop(
-          tree: PropertyTree[K, V],
-          flattened: Map[Vector[K], ::[V]],
-          c: ConfigDocs[K, V],
-          initialValue: Vector[K]
-        ): ConfigDocs[K, V] =
+          tree: PropertyTree,
+          flattened: Map[Vector[String], ::[String]],
+          c: ConfigDocs,
+          initialValue: Vector[String]
+        ): ConfigDocs =
           c match {
             case Empty => Empty
 
             case Leaf(sources, descriptions, None) =>
               Leaf(sources, descriptions, flattened.get(initialValue).flatMap(_.headOption))
 
-            case a: Leaf[V] => a
+            case a: Leaf[v] => a
 
             case NestedPath(path, docs) =>
               NestedPath(path, loop(tree, flattened, docs, initialValue :+ path))
@@ -90,7 +90,7 @@ private[config] trait ConfigDocsFunctions {
                 case _ => Sequence(loop(tree, flattened, element, initialValue) :: Nil)
               }
 
-            case s: Sequence[K, V] => s
+            case s: Sequence => s
           }
 
         loop(tree, tree.flatten, generateDocs(config), Vector.empty)
