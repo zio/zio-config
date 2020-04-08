@@ -1,6 +1,7 @@
 package zio.config
 
 import java.net.URI
+import java.util.UUID
 
 import zio.config.PropertyType.PropertyReadError
 
@@ -84,6 +85,12 @@ object PropertyType {
     def read(value: String): Either[PropertyReadError[String], Duration] =
       attempt(Duration.apply(value), _ => PropertyReadError(value, "duration"))
     def write(value: Duration): String = value.toString
+  }
+
+  case object UuidType extends PropertyType[String, UUID] {
+    def read(value: String): Either[PropertyReadError[String], UUID] =
+      attempt(UUID.fromString(value), _ => PropertyReadError(value, "uuid"))
+    def write(value: UUID): String = value.toString
   }
 
   private def attempt[A, E](a: => A, f: Throwable => E): Either[E, A] =

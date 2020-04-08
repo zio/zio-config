@@ -1,8 +1,9 @@
 package zio.config
 
 import scala.concurrent.duration.Duration
-
 import java.net.URI
+import java.util.UUID
+
 import zio.config.ConfigDescriptor._
 
 sealed trait ConfigDescriptor[K, V, A] { self =>
@@ -215,4 +216,9 @@ object ConfigDescriptor {
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
 
   def uri(path: String): ConfigDescriptor[String, String, URI] = nested(path)(uri)
+
+  val uuid: ConfigDescriptor[String, String, UUID] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
+
+  def uuid(path: String): ConfigDescriptor[String, String, UUID] = nested(path)(uuid)
 }

@@ -105,6 +105,7 @@ float
 double
 bigDecimal
 uri
+uuid
 etc
 
 ```

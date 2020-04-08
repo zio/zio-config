@@ -1,6 +1,7 @@
 package zio.config
 
 import java.net.URI
+import java.util.UUID
 
 import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
@@ -86,6 +87,12 @@ object PropertyTypeTest
           propType = DurationType,
           genValid = Gen.sized(helpers.genDuration),
           parse = Duration(_)
+        ),
+        propertyTypeRoundtripSuite(
+          typeInfo = "UUID",
+          propType = UuidType,
+          genValid = Gen.anyUUID.map(_.toString),
+          parse = UUID.fromString(_)
         )
       )
     )
