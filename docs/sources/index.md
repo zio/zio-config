@@ -69,7 +69,7 @@ This support a list of values for a key.
 ```scala mdoc:silent
 case class ListConfig(ldap: String, port: List[Int], dburl: String)
 
-val listConfig = (string("LDAP") |@| list(int("PORT")) |@| string("DB_URL"))(ListConfig.apply, ListConfig.unapply)
+val listConfig = (string("LDAP") |@| list("PORT")(int) |@| string("DB_URL"))(ListConfig.apply, ListConfig.unapply)
 
 val multiMapSource =
   ConfigSource.fromMultiMap(

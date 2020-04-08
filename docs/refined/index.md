@@ -29,7 +29,7 @@ object RefinedReadConfig extends App {
       nonEmpty(string("LDAP")) |@|
         greaterEqual[W.`1024`.T](int("PORT")) |@|
         nonEmpty(string("DB_URL")).optional |@|
-        size[Greater[W.`2`.T]](list(long("LONGVALS")))
+        size[Greater[W.`2`.T]](list("LONGVALS")(long))
     )(
       RefinedProd.apply,
       RefinedProd.unapply

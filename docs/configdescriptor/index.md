@@ -378,7 +378,7 @@ NOTE: `collectAll` is a synonym for `sequence`.
   final case class PgmConfig(a: String, b: List[String])
   
   val configWithList = 
-    (string("xyz") |@| list(string("regions")))(PgmConfig.apply, PgmConfig.unapply)
+    (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
 
   
   Config.fromEnv(configWithList, valueDelimiter = Some(","))

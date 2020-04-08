@@ -129,9 +129,9 @@ object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
 
   /**
    * Leaks out path in simple cases, i.e.
-   * `list(string(path))` == `list(path)(string)` == `nested(path)(listOrSingle(string))`
+   * `legacyList(string(path))` == `list(path)(string)` == `nested(path)(list(string))`
    *
-   * `nested("a")(list(string("b")))` describes configuration `{a: { b: ["s1", "s2"] }}`
+   * `nested("a")(legacyList(string("b")))` describes configuration `{a: { b: ["s1", "s2"] }}`
    *
    * Allows scalar value instead of list
    * */
