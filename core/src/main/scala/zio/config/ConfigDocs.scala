@@ -5,7 +5,7 @@ object ConfigDocs {
   final case class Leaf[V](sources: Sources, descriptions: List[String], value: Option[V] = None)
       extends ConfigDocs[Nothing, V]
 
-  final case class Sources(list: List[String])
+  final case class Sources(set: Set[String])
 
   final case object Empty                                                       extends ConfigDocs[Nothing, Nothing]
   final case class NestedPath[K, V](path: K, docs: ConfigDocs[K, V])            extends ConfigDocs[K, V]

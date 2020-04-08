@@ -17,7 +17,7 @@ object ListExample extends App with EitherImpureOps {
     )
 
   val config: ConfigDescriptor[String, String, PgmConfig] =
-    (string("xyz") |@| list(string("regions")))(PgmConfig.apply, PgmConfig.unapply)
+    (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
 
   val tree =
     ConfigSource.fromMultiMap(multiMap, "constant")

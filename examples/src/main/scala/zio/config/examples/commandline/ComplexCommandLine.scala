@@ -42,7 +42,7 @@ object MorePatternsExample extends App {
 
   object AppConfig {
     val desc: ConfigDescriptor[String, String, AppConfig] =
-      (nested("conf") { SparkConfig.desc } |@| VaultConfig.desc |@| list(string("users")) |@| list(string("region")))(
+      (nested("conf") { SparkConfig.desc } |@| VaultConfig.desc |@| list("users")(string) |@| list("region")(string))(
         AppConfig.apply,
         AppConfig.unapply
       )

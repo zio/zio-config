@@ -49,17 +49,11 @@ object TypeSafeConfigSource {
   private[config] def getPropertyTree(
     input: com.typesafe.config.Config
   ): Either[String, PropertyTree[String, String]] = {
-    def loopBoolean(value: Boolean) = Leaf(value.toString)
-    def loopNumber(value: Number)   = Leaf(value.toString)
-    val loopNull                    = PropertyTree.empty
-    def loopString(value: String)   = Leaf(value)
-
-    def loopList(values: List[ConfigValue]) = {
-      val list = values.map(loopAny)
-
-      if (list.isEmpty) PropertyTree.empty // FIXME incorrect empty Sequence() processing
-      else Sequence(list)
-    }
+    def loopBoolean(value: Boolean)         = Leaf(value.toString)
+    def loopNumber(value: Number)           = Leaf(value.toString)
+    val loopNull                            = PropertyTree.empty
+    def loopString(value: String)           = Leaf(value)
+    def loopList(values: List[ConfigValue]) = Sequence(values.map(loopAny))
 
     def loopConfig(config: ConfigObject) =
       Record(config.asScala.toVector.map { case (key, value) => key -> loopAny(value) }.toMap)

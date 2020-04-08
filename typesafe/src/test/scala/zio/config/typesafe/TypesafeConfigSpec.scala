@@ -1,16 +1,30 @@
 package zio.config.typesafe
 
-import zio.test._
-import zio.test.Assertion._
-import zio.config.BaseSpec
-import TypesafeConfigSpecUtils._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.config._
+import zio.config.{ BaseSpec, _ }
 import zio.config.magnolia.DeriveConfigDescriptor._
+import zio.config.typesafe.TypesafeConfigSpecUtils._
+import zio.test.Assertion._
+import zio.test._
 
 object TypesafeConfigSpec
     extends BaseSpec(
       suite("TypesafeConfig")(
+        test("Read empty list") {
+          val res =
+            TypeSafeConfigSource.fromHoconString(
+              """
+                |a {
+                |  b = "s"
+                |  c = []
+                |}
+                |""".stripMargin
+            )
+
+          val expected = Record(Map("a" -> Record(Map("b" -> Leaf("s"), "c" -> Sequence(Nil)))))
+
+          assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
+        },
         test("Read mixed list") {
           val res =
             TypeSafeConfigSource.fromHoconString(
@@ -24,7 +38,7 @@ object TypesafeConfigSpec
 
           val expected = Record(Map("list" -> Sequence(List(Leaf("a"), Record(Map("b" -> Leaf("c")))))))
 
-          assert(res.map(_.getConfigValue(Vector.empty)))(isRight(equalTo(expected)))
+          assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
         },
         testM(
           "Read a complex hocon structure successfully"
@@ -52,48 +66,55 @@ object TypesafeConfigSpec
                             List(
                               C(
                                 List(
-                                  D(NonEmptyList(1, 1, 1), List("a", "b", "c")),
-                                  D(NonEmptyList(12, 12), List("d")),
-                                  D(NonEmptyList(14, 14), List("e")),
-                                  D(NonEmptyList(15, 15), List("f", "g"))
-                                )
+                                  D(NonEmptyList(1, 1, 1), List("a", "b", "c"), None, Nil),
+                                  D(NonEmptyList(12, 12), List("d"), Some(Nil), List(Nil)),
+                                  D(NonEmptyList(14, 14), Nil, Some(List("a")), List(List(Nil))),
+                                  D(NonEmptyList(15, 15), List("f", "g"), Some(List("", "")), List(List(List("x"))))
+                                ),
+                                Nil
                               )
                             ),
                             "some_name",
-                            List("aa")
+                            List("aa"),
+                            Nil
                           ),
                           B(
                             List(
                               C(
                                 List(
-                                  D(List(21, 21), List("af")),
-                                  D(List(22, 22), List("sa", "l")),
-                                  D(List(23, 23, 23), List("af", "l")),
-                                  D(List(24, 24, 24), List("l"))
-                                )
+                                  D(List(21, 21), List("af"), None, Nil),
+                                  D(List(22, 22), List("sa", "l"), None, Nil),
+                                  D(List(23, 23, 23), List("af", "l"), Some(Nil), List(Nil)),
+                                  D(List(24, 24, 24), List("l"), Some(Nil), List(List(Nil)))
+                                ),
+                                Nil
                               )
                             ),
                             "some_name",
-                            List("a", "b", "c", "d", "e")
+                            List("a", "b", "c", "d", "e"),
+                            Nil
                           ),
                           B(
                             List(
                               C(
                                 List(
-                                  D(List(31, 31), List("bb")),
-                                  D(List(32, 32), List("x")),
-                                  D(List(33, 33, 33), List("xx")),
-                                  D(List(31), List("b")),
-                                  D(List(37), List("e", "f", "g", "h", "i"))
-                                )
+                                  D(List(31, 31), List("bb"), None, Nil),
+                                  D(List(32, 32), List("x"), None, Nil),
+                                  D(List(33, 33, 33), List("xx"), None, Nil),
+                                  D(Nil, List("b"), None, Nil),
+                                  D(List(37), List("e", "f", "g", "h", "i"), None, Nil)
+                                ),
+                                Nil
                               )
                             ),
                             "some_name",
-                            List("a")
+                            List("a"),
+                            Nil
                           )
                         ),
                         X(Y("k")),
-                        W(X(Y("k")))
+                        W(X(Y("k"))),
+                        Nil
                       )
                     )
                   )
@@ -109,10 +130,10 @@ object TypesafeConfigSpecUtils {
   final case class Y(z: String)
   final case class X(y: Y)
   final case class W(x: X)
-  final case class D(e: List[Int], vvv: List[String])
-  final case class C(d: List[D])
-  final case class B(c: List[C], table: String, columns: List[String])
-  final case class A(b: List[B], x: X, w: W)
+  final case class D(e: List[Int], vvv: List[String], y: Option[List[String]], z: List[List[List[String]]])
+  final case class C(d: List[D], mmm: List[D])
+  final case class B(c: List[C], table: String, columns: List[String], mm: List[C])
+  final case class A(b: List[B], x: X, w: W, m: List[B])
 
   //Fixme; Make it Gen
   val configString =
@@ -129,28 +150,37 @@ object TypesafeConfigSpecUtils {
       |            vi : bi
       |            e: [1, 1, 1]
       |            vvv = [a, b, c]
+      |            z = []
       |          }
       |          {
       |            ci : ki
       |            vi : bi
       |            e: [12,12]
       |            vvv = [d]
+      |            y = []
+      |            z = [[]]
       |          }
       |          {
       |            ci : ki
       |            vi : bi
       |            e: [14,14]
-      |            vvv = [e]
+      |            vvv = []
+      |            y = ["a"]
+      |            z = [[[]]]
       |          }
       |          {
       |            ci : ki
       |            vi : bi
       |            e: [15,15]
       |            vvv = [f, g]
+      |            y = ["", ""]
+      |            z = [[["x"]]]
       |          }
       |        ]
+      |        mmm = []
       |      }
       |    ]
+      |    mm = []
       |  }
       |  
       |  {
@@ -164,28 +194,36 @@ object TypesafeConfigSpecUtils {
       |            vi : bi
       |            e: [21, 21]
       |            vvv = [af]
+      |            z = []
       |          }
       |          {
       |            ci : ki
       |            vi : bi
       |            e: [22, 22]
       |            vvv = [sa, l]
+      |            z = []
       |          }
       |          {
       |            ci : ki
       |            vi : bi
       |            e: [23, 23, 23]
       |            vvv = [af, l]
+      |            y = []
+      |            z = [[]]
       |          }
       |          {
       |            ci : ki
       |            vi : bi
       |            e: [24, 24, 24]
       |            vvv = [l]
+      |            y = []
+      |            z = [[[]]]
       |          }
       |        ]
+      |        mmm = []
       |      }
       |    ]
+      |    mm = []
       |  }
       |   {
       |    table          : some_name
@@ -198,34 +236,41 @@ object TypesafeConfigSpecUtils {
       |            vi : bi
       |            e: [31, 31]
       |            vvv = [bb]
+      |            z = []
       |          }
       |          {
       |            ci : ki
       |            vi : bi
       |            e: [32, 32]
       |            vvv = [x]
+      |            z = []
       |          }
       |          {
       |            ci : ki
       |            vi : bi
       |            e: [33, 33, 33]
       |            vvv = [xx]
+      |            z = []
       |          }
       |          {
       |            ci : ki
       |            vi : bi
-      |            e: [31]
+      |            e: []
       |            vvv = [b]
+      |            z = []
       |          }
       |          {
       |            ci : ki
       |            vi : bi
       |            e: [37]
       |            vvv = [e,f,g,h,i]
+      |            z = []
       |          }
       |        ]
+      |        mmm = []
       |      }
       |    ]
+      |    mm = []
       |  }
       |]
       |
@@ -243,5 +288,6 @@ object TypesafeConfigSpecUtils {
       | }
       |}
       |
+      |m = []
       |""".stripMargin
 }

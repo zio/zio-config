@@ -80,14 +80,14 @@ object ReadWriteReportExample extends App {
               NestedPath(
                 "usr",
                 Leaf(
-                  Sources(List("constant")),
+                  Sources(Set("constant")),
                   List("value of type string", "Example: some-user", "Prod Config")
                 )
               ),
               NestedPath(
                 "pwd",
                 Leaf(
-                  Sources(List("constant")),
+                  Sources(Set("constant")),
                   List("value of type string", "optional value", "sec", "Prod Config")
                 )
               )
@@ -95,7 +95,7 @@ object ReadWriteReportExample extends App {
             NestedPath(
               "jhi",
               Leaf(
-                Sources(List("constant")),
+                Sources(Set("constant")),
                 List("value of type string", "optional value", "Ex: ghi", "Prod Config")
               )
             )
@@ -104,7 +104,7 @@ object ReadWriteReportExample extends App {
             NestedPath(
               "xyz",
               Leaf(
-                Sources(List("constant")),
+                Sources(Set("constant")),
                 List("value of type string", "optional value", "Ex: ha", "Prod Config")
               )
             ),
@@ -112,14 +112,14 @@ object ReadWriteReportExample extends App {
               NestedPath(
                 "abc",
                 Leaf(
-                  Sources(List("constant")),
+                  Sources(Set("constant")),
                   List("value of type int", "optional value", "Ex: ha", "Prod Config")
                 )
               ),
               NestedPath(
                 "def",
                 Leaf(
-                  Sources(List("constant")),
+                  Sources(Set("constant")),
                   List("value of type string", "optional value", "Ex: ha", "Prod Config")
                 )
               )
@@ -129,11 +129,11 @@ object ReadWriteReportExample extends App {
         Both(
           NestedPath(
             "auth_token",
-            Leaf(Sources(List("constant")), List("value of type string", "Prod Config"))
+            Leaf(Sources(Set("constant")), List("value of type string", "Prod Config"))
           ),
           NestedPath(
             "clientid",
-            Leaf(Sources(List("constant")), List("value of type string", "Prod Config"))
+            Leaf(Sources(Set("constant")), List("value of type string", "Prod Config"))
           )
         )
       )
@@ -149,7 +149,7 @@ object ReadWriteReportExample extends App {
                 NestedPath(
                   "usr",
                   Leaf(
-                    Sources(List("constant")),
+                    Sources(Set("constant")),
                     List("value of type string", "Example: some-user", "Prod Config"),
                     Some("v1")
                   )
@@ -157,7 +157,7 @@ object ReadWriteReportExample extends App {
                 NestedPath(
                   "pwd",
                   Leaf(
-                    Sources(List("constant")),
+                    Sources(Set("constant")),
                     List("value of type string", "optional value", "sec", "Prod Config"),
                     Some("v2")
                   )
@@ -166,7 +166,7 @@ object ReadWriteReportExample extends App {
               NestedPath(
                 "jhi",
                 Leaf(
-                  Sources(List("constant")),
+                  Sources(Set("constant")),
                   List("value of type string", "optional value", "Ex: ghi", "Prod Config")
                 )
               )
@@ -175,7 +175,7 @@ object ReadWriteReportExample extends App {
               NestedPath(
                 "xyz",
                 Leaf(
-                  Sources(List("constant")),
+                  Sources(Set("constant")),
                   List("value of type string", "optional value", "Ex: ha", "Prod Config"),
                   Some("v3")
                 )
@@ -184,7 +184,7 @@ object ReadWriteReportExample extends App {
                 NestedPath(
                   "abc",
                   Leaf(
-                    Sources(List("constant")),
+                    Sources(Set("constant")),
                     List("value of type int", "optional value", "Ex: ha", "Prod Config"),
                     Some("1")
                   )
@@ -192,7 +192,7 @@ object ReadWriteReportExample extends App {
                 NestedPath(
                   "def",
                   Leaf(
-                    Sources(List("constant")),
+                    Sources(Set("constant")),
                     List("value of type string", "optional value", "Ex: ha", "Prod Config")
                   )
                 )
@@ -203,14 +203,14 @@ object ReadWriteReportExample extends App {
             NestedPath(
               "auth_token",
               Leaf(
-                Sources(List("constant")),
+                Sources(Set("constant")),
                 List("value of type string", "Prod Config")
               )
             ),
             NestedPath(
               "clientid",
               Leaf(
-                Sources(List("constant")),
+                Sources(Set("constant")),
                 List("value of type string", "Prod Config")
               )
             )

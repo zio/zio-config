@@ -27,6 +27,12 @@ object helpers {
 
   val genDbUrl: Gen[Random, DbUrl] = genNonEmptyString(20).map(DbUrl)
 
+  def isErrors[A](assertion: Assertion[ReadError[String]]): Assertion[Either[ReadError[String], A]] =
+    Assertion.assertionRec("isErrors")(Assertion.Render.param(assertion))(assertion) {
+      case Left(errs: ReadError[String]) => Some(errs)
+      case Right(_)                      => None
+    }
+
   def assertErrors[A](
     pred: ReadError[String] => Boolean
   ): Assertion[Either[ReadError[String], A]] =

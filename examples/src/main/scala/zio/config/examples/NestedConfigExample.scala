@@ -45,9 +45,9 @@ object NestedConfigExample extends App {
             Both(
               NestedPath(
                 "connection",
-                Leaf(Sources(Nil), List("value of type string", "South details"))
+                Leaf(Sources(Set.empty), List("value of type string", "South details"))
               ),
-              NestedPath("port", Leaf(Sources(Nil), List("value of type int", "South details")))
+              NestedPath("port", Leaf(Sources(Set.empty), List("value of type int", "South details")))
             )
           ),
           NestedPath(
@@ -55,13 +55,13 @@ object NestedConfigExample extends App {
             Both(
               NestedPath(
                 "connection",
-                Leaf(Sources(Nil), List("value of type string", "East details"))
+                Leaf(Sources(Set.empty), List("value of type string", "East details"))
               ),
-              NestedPath("port", Leaf(Sources(Nil), List("value of type int", "East details")))
+              NestedPath("port", Leaf(Sources(Set.empty), List("value of type int", "East details")))
             )
           )
         ),
-        NestedPath("appName", Leaf(Sources(Nil), List("value of type string")))
+        NestedPath("appName", Leaf(Sources(Set.empty), List("value of type string")))
       )
   )
 
@@ -77,7 +77,7 @@ object NestedConfigExample extends App {
                 NestedPath(
                   "connection",
                   Leaf(
-                    Sources(Nil),
+                    Sources(Set.empty),
                     List("value of type string", "South details"),
                     Some("abc.com")
                   )
@@ -85,7 +85,7 @@ object NestedConfigExample extends App {
                 NestedPath(
                   "port",
                   Leaf(
-                    Sources(Nil),
+                    Sources(Set.empty),
                     List("value of type int", "South details"),
                     Some("8111")
                   )
@@ -98,7 +98,7 @@ object NestedConfigExample extends App {
                 NestedPath(
                   "connection",
                   Leaf(
-                    Sources(Nil),
+                    Sources(Set.empty),
                     List("value of type string", "East details"),
                     Some("xyz.com")
                   )
@@ -106,7 +106,7 @@ object NestedConfigExample extends App {
                 NestedPath(
                   "port",
                   Leaf(
-                    Sources(Nil),
+                    Sources(Set.empty),
                     List("value of type int", "East details"),
                     Some("8888")
                   )
@@ -116,7 +116,7 @@ object NestedConfigExample extends App {
           ),
           NestedPath(
             "appName",
-            Leaf(Sources(Nil), List("value of type string"), Some("myApp"))
+            Leaf(Sources(Set.empty), List("value of type string"), Some("myApp"))
           )
         )
       )
