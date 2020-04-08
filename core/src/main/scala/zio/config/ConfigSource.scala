@@ -190,9 +190,11 @@ object ConfigSource {
     }
 
     mergeAll(
-      PropertyTree
-        .fromStringMap(mapString, keyDelimiter, valueDelimiter)
-        .map(tree => fromPropertyTree(tree, source))
+      unwrapSingletonLists(
+        dropEmpty(
+          PropertyTree.fromStringMap(mapString, keyDelimiter, valueDelimiter)
+        )
+      ).map(tree => fromPropertyTree(tree, source))
     )
   }
 
