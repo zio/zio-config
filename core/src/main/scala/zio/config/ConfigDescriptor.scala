@@ -2,6 +2,7 @@ package zio.config
 
 import scala.concurrent.duration.Duration
 import java.net.URI
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 
 import zio.config.ConfigDescriptor._
@@ -168,6 +169,11 @@ object ConfigDescriptor {
 
   def duration(path: String): ConfigDescriptor[String, String, Duration] = nested(path)(duration)
 
+  val zioDuration: ConfigDescriptor[String, String, zio.duration.Duration] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
+
+  def zioDuration(path: String): ConfigDescriptor[String, String, zio.duration.Duration] = nested(path)(zioDuration)
+
   val float: ConfigDescriptor[String, String, Float] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
 
@@ -221,4 +227,24 @@ object ConfigDescriptor {
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
 
   def uuid(path: String): ConfigDescriptor[String, String, UUID] = nested(path)(uuid)
+
+  val localDate: ConfigDescriptor[String, String, LocalDate] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LocalDateType) ?? "value of type localdate"
+
+  def localDate(path: String): ConfigDescriptor[String, String, LocalDate] = nested(path)(localDate)
+
+  val localTime: ConfigDescriptor[String, String, LocalTime] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LocalTimeType) ?? "value of type localtime"
+
+  def localTime(path: String): ConfigDescriptor[String, String, LocalTime] = nested(path)(localTime)
+
+  val localDateTime: ConfigDescriptor[String, String, LocalDateTime] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LocalDateTimeType) ?? "value of type localdatetime"
+
+  def localDateTime(path: String): ConfigDescriptor[String, String, LocalDateTime] = nested(path)(localDateTime)
+
+  val instant: ConfigDescriptor[String, String, Instant] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant"
+
+  def instant(path: String): ConfigDescriptor[String, String, Instant] = nested(path)(instant)
 }

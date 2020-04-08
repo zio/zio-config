@@ -106,6 +106,10 @@ double
 bigDecimal
 uri
 uuid
+localDate
+localTime
+localDateTime
+instant
 etc
 
 ```
