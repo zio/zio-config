@@ -17,12 +17,12 @@ object DocsExample extends App {
       Both(
         NestedPath(
           "PORT",
-          Leaf(Sources(Nil), List("value of type int", "Example: 8088", "Database related"))
+          Leaf(Sources(Set.empty), List("value of type int", "Example: 8088", "Database related"))
         ),
         NestedPath(
           "URL",
           Leaf(
-            Sources(Nil),
+            Sources(Set.empty),
             List("value of type string", "optional value", "Example: abc.com", "Database related")
           )
         )
@@ -36,7 +36,7 @@ object DocsExample extends App {
           NestedPath(
             "PORT",
             Leaf(
-              Sources(Nil),
+              Sources(Set.empty),
               List("value of type int", "Example: 8088", "Database related"),
               Some("1")
             )
@@ -44,7 +44,7 @@ object DocsExample extends App {
           NestedPath(
             "URL",
             Leaf(
-              Sources(Nil),
+              Sources(Set.empty),
               List("value of type string", "optional value", "Example: abc.com", "Database related"),
               Some("value")
             )

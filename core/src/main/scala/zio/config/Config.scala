@@ -36,7 +36,7 @@ object Config {
    *
    *  final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String], users: List[String])
    *
-   *  (nested("db") { credentials } |@| nested("vault") { credentials } |@| list(string("regions")) |@| list(string("user")))(Config.apply, Config.unapply)
+   *  (nested("db") { credentials } |@| nested("vault") { credentials } |@| list("regions")(string) |@| list("user")(string))(Config.apply, Config.unapply)
    *
    *  // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
    *

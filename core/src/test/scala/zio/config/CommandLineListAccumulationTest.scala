@@ -27,7 +27,7 @@ object ListAccumulationTest extends DefaultRunnableSpec {
 
   object SomeConfig {
     val descriptor: ConfigDescriptor[String, String, SomeConfig] =
-      list(int("ints"))(SomeConfig.apply, SomeConfig.unapply)
+      list("ints")(int)(SomeConfig.apply, SomeConfig.unapply)
   }
 
   def renderArgs(count: Int): List[String] =

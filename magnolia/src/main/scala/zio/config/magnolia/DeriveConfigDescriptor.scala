@@ -46,7 +46,12 @@ trait DeriveConfigDescriptor[A] { self =>
     }
 }
 
-object DeriveConfigDescriptor {
+trait LowPriorityDeriveConfigDescriptor {
+  implicit def opt[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[Option[A]] =
+    (a, b) => ev.getDescription(a, b).optional
+}
+
+object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
 
   /**
    * DeriveConfigDescriptor[Config] gives an automatic ConfigDescriptor for the case class Config
@@ -122,15 +127,44 @@ object DeriveConfigDescriptor {
   implicit val bigDecimalDesc: DeriveConfigDescriptor[BigDecimal] = instance(bigDecimal)
   implicit val uriDesc: DeriveConfigDescriptor[URI]               = instance(uri)
 
-  implicit def opt[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[Option[A]] =
-    (a, b) => ev.getDescription(a, b).optional
+  /**
+   * Leaks out path in simple cases, i.e.
+   * `legacyList(string(path))` == `list(path)(string)` == `nested(path)(list(string))`
+   *
+   * `nested("a")(legacyList(string("b")))` describes configuration `{a: { b: ["s1", "s2"] }}`
+   *
+   * Allows scalar value instead of list
+   * */
+  def legacyList[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] = {
+    def extractPath(cfg: ConfigDescriptor[K, V, A]): Option[(K, ConfigDescriptor[K, V, A])] = cfg match {
+      case Describe(config, message) =>
+        extractPath(config).map { case (path, inner) => (path, Describe(inner, message)) }
+      case Nested(path, config) => Some((path, config))
+      case _                    => None
+    }
+
+    extractPath(desc) match {
+      case Some((path, inner)) => list(path)(inner)
+      case None                => list(desc)
+    }
+  }
+
+  implicit def optNonEmptyList[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[Option[::[A]]] =
+    (a, b) =>
+      legacyList(ev.getDescription(a, b)).optional.xmap(
+        {
+          case None | Some(Nil)   => None
+          case Some(head :: tail) => Some(::(head, tail))
+        },
+        x => x
+      )
 
   implicit def listt[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[List[A]] =
-    (a, b) => list(ev.getDescription(a, b))
+    (a, b) => legacyList(ev.getDescription(a, b))
 
   implicit def nonEmptyList[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[::[A]] =
     (a, b) =>
-      list(ev.getDescription(a, b)).xmapEither(
+      legacyList(ev.getDescription(a, b)).xmapEither(
         list =>
           list.headOption match {
             case Some(value) => Right(::(value, list.tail))
