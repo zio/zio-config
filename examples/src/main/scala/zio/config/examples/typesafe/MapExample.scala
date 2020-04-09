@@ -4,7 +4,7 @@ import zio.config.ConfigDescriptor
 import zio.config._, ConfigDescriptor._
 import zio.config.typesafe.TypeSafeConfigSource
 
-object Hello extends App with EitherImpureOps {
+object MapExample extends App with EitherImpureOps {
   val hocon =
     s"""
        | zones: {
