@@ -21,8 +21,8 @@ object CollectAllExample extends App with EitherImpureOps {
           (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
       )
 
-  val configOfList: ConfigDescriptor[String, String, ::[Variables]] =
-    ConfigDescriptor.collectAll(::(listOfConfig.head, listOfConfig.tail))
+  val configOfList: ConfigDescriptor[String, String, List[Variables]] =
+    ConfigDescriptor.collectAll(listOfConfig.head, listOfConfig.tail: _*)
 
   val map =
     Map(
@@ -36,11 +36,11 @@ object CollectAllExample extends App with EitherImpureOps {
     )
 
   // loadOrThrow here is only for the purpose of example
-  val result: ::[Variables]                 = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
+  val result: List[Variables]               = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
   val written: PropertyTree[String, String] = write(configOfList, result).loadOrThrow
 
   assert(
-    result == ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
+    result == List(Variables(1, Some(2)), Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))
   )
 
   assert(

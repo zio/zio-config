@@ -46,7 +46,7 @@ object RefinedReadWriteRoundtripTestUtils {
     ldap: Refined[String, NonEmpty],
     port: Refined[Int, GreaterEqual[W.`1024`.T]],
     dburl: Option[Refined[String, NonEmpty]], // Even if optional, if the predicate fails for a value that exist, we should fail it and report !
-    longs: Refined[::[Long], Size[Greater[W.`2`.T]]]
+    longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
   )
 
   def longList(n: Int): ::[ConfigDescriptor[String, String, Long]] = {
@@ -57,8 +57,10 @@ object RefinedReadWriteRoundtripTestUtils {
     ::(list.head, list.tail)
   }
 
-  def longs(n: Int): ConfigDescriptor[String, String, ::[Long]] =
-    ConfigDescriptor.collectAll[String, String, Long](longList(n))
+  def longs(n: Int): ConfigDescriptor[String, String, List[Long]] = {
+    val ll = longList(n)
+    ConfigDescriptor.collectAll[String, String, Long](ll.head, ll.tail: _*)
+  }
 
   def prodConfig(n: Int): ConfigDescriptor[String, String, RefinedProd] =
     (
