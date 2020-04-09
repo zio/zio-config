@@ -290,4 +290,9 @@ object ConfigDescriptor {
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL"
 
   def url(path: String): ConfigDescriptor[String, String, URL] = nested(path)(url)
+
+  val set: ConfigDescriptor[String, String, Set[String]] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.SetType) ?? "value of type set"
+
+  def set(path: String): ConfigDescriptor[String, String, Set[String]] = nested(path)(set)
 }
