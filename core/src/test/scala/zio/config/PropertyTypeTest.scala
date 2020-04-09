@@ -1,5 +1,6 @@
 package zio.config
 
+import java.io.File
 import java.net.URI
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset }
 import java.util.UUID
@@ -10,7 +11,6 @@ import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
 import zio.test.environment.TestEnvironment
-
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
@@ -124,7 +124,10 @@ object PropertyTypeTest
           propType = InstantType,
           genValid = genInstant.map(_.toString),
           parse = Instant.parse(_)
-        )
+        ),
+        testM(s"valid FileType string roundtrip") {
+          check(Gen.anyString)(assertValidRoundtrip(FileType, new File(_)))
+        }
       )
     )
 
