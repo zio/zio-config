@@ -110,6 +110,7 @@ localDate
 localTime
 localDateTime
 instant
+file
 etc
 
 ```

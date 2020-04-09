@@ -1,5 +1,7 @@
 package zio.config
 
+import java.io.File
+
 import scala.concurrent.duration.Duration
 import java.net.URI
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
@@ -278,4 +280,10 @@ object ConfigDescriptor {
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant"
 
   def instant(path: String): ConfigDescriptor[String, String, Instant] = nested(path)(instant)
+
+  def file: ConfigDescriptor[String, String, File] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.FileType) ?? "value of type file"
+
+  def file(path: String): ConfigDescriptor[String, String, File] = nested(path)(file)
+
 }
