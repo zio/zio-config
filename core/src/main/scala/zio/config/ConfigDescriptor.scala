@@ -3,7 +3,7 @@ package zio.config
 import java.io.File
 
 import scala.concurrent.duration.Duration
-import java.net.URI
+import java.net.{ URI, URL }
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 
@@ -255,6 +255,11 @@ object ConfigDescriptor {
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
 
   def uri(path: String): ConfigDescriptor[String, String, URI] = nested(path)(uri)
+
+  val url: ConfigDescriptor[String, String, URL] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UrlType) ?? "value of type url"
+
+  def url(path: String): ConfigDescriptor[String, String, URL] = nested(path)(url)
 
   val uuid: ConfigDescriptor[String, String, UUID] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
