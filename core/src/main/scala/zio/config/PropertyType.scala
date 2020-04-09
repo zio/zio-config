@@ -1,7 +1,7 @@
 package zio.config
 
 import java.io.File
-import java.net.URI
+import java.net.{ URI, URL }
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 
@@ -130,6 +130,13 @@ object PropertyType {
       attempt(new File(value), _ => PropertyReadError(value, "file"))
 
     def write(value: File): String = value.toString
+  }
+
+  case object UrlType extends PropertyType[String, URL] {
+    def read(value: String): Either[PropertyReadError[String], URL] =
+      attempt(new URL(value), _ => PropertyReadError(value, "url"))
+
+    def write(value: URL): String = value.toString
   }
 
   private def attempt[A, E](a: => A, f: Throwable => E): Either[E, A] =
