@@ -89,12 +89,6 @@ object PropertyTypeTest
           parse = new URI(_)
         ),
         propertyTypeRoundtripSuite(
-          typeInfo = "Url",
-          propType = UrlType,
-          genValid = genValidUrlString,
-          parse = new URL(_)
-        ),
-        propertyTypeRoundtripSuite(
           typeInfo = "Duration",
           propType = DurationType,
           genValid = Gen.sized(helpers.genDuration),
@@ -348,11 +342,4 @@ object PropertyTypeTestUtils {
   val genLocalTimeString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
 
-  val genValidUrlString: Gen[Random with Sized, String] = genAppend(
-    Gen.const("https"),
-    const(":"),
-    genAuthorityAndPath,
-    genOptionalStr(genQuery),
-    genOptionalStr(genFragment)
-  )
 }

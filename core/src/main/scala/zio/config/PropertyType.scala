@@ -87,12 +87,6 @@ object PropertyType {
     def write(value: URI): String = value.toString
   }
 
-  case object UrlType extends PropertyType[String, URL] {
-    def read(value: String): Either[PropertyReadError[String], URL] =
-      attempt(new URL(value), _ => PropertyReadError(value, "url"))
-    def write(value: URL): String = value.toString
-  }
-
   case object DurationType extends PropertyType[String, Duration] {
     def read(value: String): Either[PropertyReadError[String], Duration] =
       attempt(Duration.apply(value), _ => PropertyReadError(value, "duration"))

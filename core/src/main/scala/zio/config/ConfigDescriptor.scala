@@ -256,11 +256,6 @@ object ConfigDescriptor {
 
   def uri(path: String): ConfigDescriptor[String, String, URI] = nested(path)(uri)
 
-  val url: ConfigDescriptor[String, String, URL] =
-    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UrlType) ?? "value of type url"
-
-  def url(path: String): ConfigDescriptor[String, String, URL] = nested(path)(url)
-
   val uuid: ConfigDescriptor[String, String, UUID] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
 
