@@ -17,6 +17,9 @@ private[config] trait ConfigDocsFunctions {
         case ConfigDescriptor.Default(c, _) =>
           loop(sources, descriptions, c, docs)
 
+        case ConfigDescriptor.DynamicMap(_, _) =>
+          throw new Exception("")
+
         case ConfigDescriptor.Sequence(source, c) =>
           ConfigDocs.Sequence(loop(Sources(source.sourceDescription ++ sources.set), descriptions, c, docs) :: Nil)
 

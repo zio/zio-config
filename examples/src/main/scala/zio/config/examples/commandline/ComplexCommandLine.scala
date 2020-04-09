@@ -81,15 +81,3 @@ object MorePatternsExample extends App {
       )
   )
 }
-
-object Hello extends App with EitherImpureOps {
-  import zio.config.PropertyTree._
-
- val source =  TypeSafeConfigSource.fromHoconString(s"{key: value, key1: value1 }").loadOrThrow
-
-
-  val record = Record(Map("region2" -> Sequence(List(Leaf(112), Leaf(222)))))
-  val tree = Record(Map("region" -> Sequence(List(record))))
-
-  println(tree.getPath(List("region")))
-}

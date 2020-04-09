@@ -11,6 +11,9 @@ private[config] trait WriteFunctions {
         case ConfigDescriptor.Describe(c, _) =>
           go(c, b)
 
+        case ConfigDescriptor.DynamicMap(c, _) =>
+           throw new Exception("")
+
         case ConfigDescriptor.Nested(parent, c) =>
           go(c, b) match {
             case Right(prop) => Right(PropertyTree.Record(Map(parent -> prop)))

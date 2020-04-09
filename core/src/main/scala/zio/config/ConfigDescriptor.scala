@@ -116,7 +116,7 @@ object ConfigDescriptor {
   final case class Describe[K, V, A](config: ConfigDescriptor[K, V, A], message: String)
       extends ConfigDescriptor[K, V, A]
 
-  final case class DynamicMap[K, V, A](path: ConfigSource[K, V], config: ConfigDescriptor[K, V, A])
+  final case class DynamicMap[K, V, A](source: ConfigSource[K, V], config: ConfigDescriptor[K, V, A])
       extends ConfigDescriptor[K, V, Map[K, A]]
 
   final case class Nested[K, V, A](path: K, config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, A]
