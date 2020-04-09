@@ -1,7 +1,7 @@
 package zio.config.magnolia
 
-import zio.config.ConfigDescriptor.{Describe, Nested}
-import zio.config.PropertyTree.{Leaf, Record, Sequence}
+import zio.config.ConfigDescriptor.{ Describe, Nested }
+import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.test.Assertion._
@@ -87,19 +87,14 @@ object DerivationTest extends DefaultRunnableSpec {
       case class A3(a: List[A2])
       case class A4(a: List[A3])
       case class A5(a: List[A4])
-      case class A6(a: List[A5])
-      case class A7(a: List[A6])
-      case class A8(a: List[A7])
-      case class A9(a: List[A8])
-      case class A10(a: List[A9])
 
       def loop(depth: Int): PropertyTree[String, String] =
         if (depth > 0) Record(Map("a" -> Sequence(List(loop(depth - 1)))))
         else Leaf("str")
 
-      val src = ConfigSource(loop(10), Set.empty)
+      val src = ConfigSource(loop(5), Set.empty)
 
-      val res = read(descriptor[A10] from src)
+      val res = read(descriptor[A5] from src)
 
       assert(res)(isRight(anything))
     },
@@ -111,25 +106,25 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Record(Map("a" -> Sequence(List(loop(depth - 1)))))
         else Leaf("str")
 
-      val src = ConfigSource(loop(10), Set.empty)
+      val src = ConfigSource(loop(5), Set.empty)
 
-      val res = read(descriptor[A10] from src)
+      val res = read(descriptor[A5] from src)
 
       assert(res)(isRight(anything))
     },
     test("support nested lists non-recursive") {
-      import NonRecursiveDerivation.{Descriptor, descriptor}
+      import NonRecursiveDerivation.{ descriptor, Descriptor }
 
       case class A(a: List[String])
       implicit val cA: Descriptor[A] = descriptor[A]
       val _                          = cA
-      case class B(a: List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[A]]]]]]]]]]]]]]]]]]]])
+      case class B(a: List[List[List[List[List[List[List[List[List[List[A]]]]]]]]]])
 
       def loop(depth: Int): PropertyTree[String, String] =
         if (depth > 0) Sequence(List(loop(depth - 1)))
         else Record(Map("a" -> Sequence(List(Leaf("s")))))
 
-      val src = ConfigSource(Record(Map("a" -> loop(20))), Set.empty)
+      val src = ConfigSource(Record(Map("a" -> loop(10))), Set.empty)
 
       val res = read(descriptor[B] from src)
 
@@ -137,13 +132,13 @@ object DerivationTest extends DefaultRunnableSpec {
     },
     test("support nested lists recursive") {
       case class A(a: List[String])
-      case class B(a: List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[List[A]]]]]]]]]]]]]]]]]]]])
+      case class B(a: List[List[List[List[List[List[List[List[List[List[A]]]]]]]]]])
 
       def loop(depth: Int): PropertyTree[String, String] =
         if (depth > 0) Sequence(List(loop(depth - 1)))
         else Record(Map("a" -> Sequence(List(Leaf("s")))))
 
-      val src = ConfigSource(Record(Map("a" -> loop(2))), Set.empty)
+      val src = ConfigSource(Record(Map("a" -> loop(10))), Set.empty)
 
       val res = read(descriptor[B] from src)
 
@@ -153,7 +148,7 @@ object DerivationTest extends DefaultRunnableSpec {
 }
 
 object NonRecursiveListHelper {
-  import NonRecursiveDerivation.{Descriptor, descriptor}
+  import NonRecursiveDerivation.{ descriptor, Descriptor }
 
   case class A1(a: List[String])
   implicit val cA1: Descriptor[A1] = descriptor[A1]
@@ -164,15 +159,5 @@ object NonRecursiveListHelper {
   case class A4(a: List[A3])
   implicit val cA4: Descriptor[A4] = descriptor[A4]
   case class A5(a: List[A4])
-  implicit val cA5: Descriptor[A5] = descriptor[A5]
-  case class A6(a: List[A5])
-  implicit val cA6: Descriptor[A6] = descriptor[A6]
-  case class A7(a: List[A6])
-  implicit val cA7: Descriptor[A7] = descriptor[A7]
-  case class A8(a: List[A7])
-  implicit val cA8: Descriptor[A8] = descriptor[A8]
-  case class A9(a: List[A8])
-  implicit val cA9: Descriptor[A9] = descriptor[A9]
-  case class A10(a: List[A9])
 
 }
