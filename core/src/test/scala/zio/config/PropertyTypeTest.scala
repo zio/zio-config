@@ -138,7 +138,13 @@ object PropertyTypeTest
         ),
         testM(s"valid FileType string roundtrip") {
           check(Gen.anyString)(assertValidRoundtrip(FileType, new File(_)))
-        }
+        },
+        propertyTypeRoundtripSuite(
+          typeInfo = "URL",
+          propType = UrlType,
+          genValid = genValidUrlString,
+          parse = new URL(_)
+        )
       )
     )
 
@@ -341,4 +347,12 @@ object PropertyTypeTestUtils {
 
   val genLocalTimeString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
+
+  val genValidUrlString: Gen[Random with Sized, String] = genAppend(
+    Gen.const("https"),
+    const(":"),
+    genAuthorityAndPath,
+    genOptionalStr(genQuery),
+    genOptionalStr(genFragment)
+  )
 }
