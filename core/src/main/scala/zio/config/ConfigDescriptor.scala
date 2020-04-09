@@ -48,6 +48,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
   def mapKey(f: K => K): ConfigDescriptor[K, V, A] = {
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
       case Source(source, propertyType) => Source(source, propertyType)
+      case DynamicMap(source, conf)     => DynamicMap(source, loop(conf))
       case Nested(path, conf)           => Nested(f(path), loop(conf))
       case Sequence(source, conf)       => Sequence(source, loop(conf))
       case Describe(config, message)    => Describe(loop(config), message)
@@ -78,6 +79,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
   final def updateSource(f: ConfigSource[K, V] => ConfigSource[K, V]): ConfigDescriptor[K, V, A] = {
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
       case Source(source, propertyType) => Source(f(source), propertyType)
+      case DynamicMap(source, conf)     => DynamicMap(f(source), loop(conf))
       case Nested(path, conf)           => Nested(path, loop(conf))
       case Sequence(source, conf)       => Sequence(f(source), loop(conf))
       case Describe(config, message)    => Describe(loop(config), message)
@@ -113,6 +115,9 @@ object ConfigDescriptor {
 
   final case class Describe[K, V, A](config: ConfigDescriptor[K, V, A], message: String)
       extends ConfigDescriptor[K, V, A]
+
+  final case class DynamicMap[K, V, A](path: ConfigSource[K, V], config: ConfigDescriptor[K, V, A])
+      extends ConfigDescriptor[K, V, Map[K, A]]
 
   final case class Nested[K, V, A](path: K, config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, A]
 
@@ -200,7 +205,7 @@ object ConfigDescriptor {
    * Allows scalar value instead of list
    * */
   def list[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
-    listStrict(desc).orElse(desc(_ :: Nil, _.headOption))
+    listStrict(desc).orElse(desc.apply(_ :: Nil, _.headOption))
 
   /**
    * Allows scalar value instead of list
@@ -224,6 +229,61 @@ object ConfigDescriptor {
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LongType) ?? "value of type long"
 
   def long(path: String): ConfigDescriptor[String, String, Long] = nested(path)(long)
+
+  def map[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Map[K, A]] =
+    mapStrict[K, V, A](desc).orElse(desc.apply(_ => Map.empty, (e: Map[K, A]) => e.headOption.map(_._2)))
+
+  def map[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Map[K, A]] =
+    nested(path)(mapStrict(desc))
+
+  def mapStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Map[K, A]] =
+    ConfigDescriptor.DynamicMap(ConfigSource.empty, desc)
+
+  /**
+   * A map that doesn't take a path mean the following
+   *
+   * mao("a")(string("b")
+   * holds the following result
+   *
+   *  Within a:
+   *    Map(
+   *      "k1" -> {  b : "value"  },
+   *      "k2" -> {  b : "value2" },
+   *      "k3  -> {  b: "value3"),
+   *
+   *    )
+   *
+   * map(string("b"))
+   *     Map(
+   *      "k1" -> { "value"  },
+   *      "k2" -> { "value2" },
+   *      "k3  -> { value3" ),
+   *    )
+   *
+   * map(list(string("b")))
+   *
+   *
+   * map("a", List("a1", "a2", "a3")
+   *
+   * map(list("a")(string) leads to the situation of a singular map, and that's the expectation.
+   *  Map("a" -> List(a1, a2, a3)
+   *  or
+   *  Record("a" -> Sequence([a1, a2, a3]))
+   *
+   *
+   * map("path", String)
+   * Map(k -> List(a1, a2, a3), k2 -> List(a1, a4)
+   *
+   * Record("path" -> Record(
+   *
+   * @param desc
+   * @tparam K
+   * @tparam V
+   * @tparam A
+   * @return
+   */
+  //def map[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[String, String, Map[String, A]] =
+  //  ConfigDescriptor.DynamicMap(path, desc)
 
   def nested[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Nested(path, desc)
