@@ -25,13 +25,13 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
   private[config] def seqOption[A](options: List[Option[A]]): Option[List[A]] =
     options.foldRight(Some(Nil): Option[List[A]])((a, b) => a.flatMap(aa => b.map(bb => aa :: bb)))
 
-  private[config] def seqMap2[K, A, B, C](genError: (Int, A) => C)(list: Map[K, Either[A, B]]): Either[List[C], Map[K, B]] =
+  private[config] def seqMap2[K, A, B, C](genError: (Int, K, A) => C)(list: Map[K, Either[A, B]]): Either[List[C], Map[K, B]] =
     list.zipWithIndex.foldLeft(
       Right(Map.empty: Map[K, B]): Either[List[C], Map[K, B]]
     ) {
-      case (Left(cs), ((_, Left(a)), index)) => Left(genError(index, a) :: cs)
+      case (Left(cs), ((k, Left(a)), index)) => Left(genError(index, k,  a) :: cs)
       case (Left(cs), ((_, Right(_)), _))    => Left(cs)
-      case (Right(_), ((_, Left(a)), index)) => Left(genError(index, a) :: Nil)
+      case (Right(_), ((k, Left(a)), index)) => Left(genError(index, k, a) :: Nil)
       case (Right(bs), ((k, Right(b)), _))   => Right(bs.updated(k, b))
     }
 

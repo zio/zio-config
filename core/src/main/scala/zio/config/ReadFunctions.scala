@@ -11,13 +11,8 @@ private[config] trait ReadFunctions {
 
     type Res[+B] = Either[ReadError[K], B]
 
-    def formatError(paths: List[Step[K]], actualType: String, expectedType: String) =
-      Left(
-        ReadError.FormatError(
-          paths.reverse,
-          s"Provided value is of type $actualType, expecting the type $expectedType"
-        )
-      )
+    def carryForwardErrors[B] : Res[B] =
+      Left(AndErrors(Nil))
 
     def loopDefault[B](path: List[Step[K]], keys: List[K], cfg: Default[K, V, B]): Res[B] =
       loopAny(path, keys, cfg.config) match {
@@ -64,8 +59,8 @@ private[config] trait ReadFunctions {
     def loopSource[B](path: List[Step[K]], keys: List[K], cfg: Source[K, V, B]): Res[B] =
       cfg.source.getConfigValue(keys.reverse) match {
         case PropertyTree.Empty       => Left(ReadError.MissingValue(path.reverse))
-        case PropertyTree.Record(_)   => formatError(path, "Record", "Leaf")
-        case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Leaf")
+        case PropertyTree.Record(_)   => carryForwardErrors
+        case PropertyTree.Sequence(_) => carryForwardErrors
         case PropertyTree.Leaf(value) =>
           cfg.propertyType.read(value) match {
             case Left(parseError) =>
@@ -100,8 +95,8 @@ private[config] trait ReadFunctions {
     
     def loopMap[B](path: List[Step[K]], keys: List[K], cfg: DynamicMap[K, V, B]): Res[Map[K, B]] =
       cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Leaf(_)     => formatError(path, "Leaf", "Map")
-        case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Map")
+        case PropertyTree.Leaf(_)     => Left(AndErrors(Nil))
+        case PropertyTree.Sequence(_) => Left(AndErrors(Nil))
         case PropertyTree.Record(values) =>
           val result: List[(K, Res[B])] = values.toList.zipWithIndex.map {
             case ((k, tree), idx) =>
@@ -111,15 +106,15 @@ private[config] trait ReadFunctions {
               (k, loopAny(Step.Index(idx) :: path, Nil, cfg.config.updateSource(_ => source)))
           }
 
-          seqMap2[K, ReadError[K], B, ReadError[K]]((_, a) => a)(result.toMap).swap.map(AndErrors(_)).swap
+          seqMap2[K, ReadError[K], B, ReadError[K]]((index, k, error) => error.atKey(k).atIndex(index))(result.toMap).swap.map(AndErrors(_)).swap
 
         case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse))
       }
 
     def loopSequence[B](path: List[Step[K]], keys: List[K], cfg: Sequence[K, V, B]): Res[List[B]] =
       cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Leaf(_)   => formatError(path, "Leaf", "Sequence")
-        case PropertyTree.Record(_) => formatError(path, "Record", "Sequence")
+        case PropertyTree.Leaf(_)   => carryForwardErrors
+        case PropertyTree.Record(_) => carryForwardErrors
         case PropertyTree.Empty     => Left(ReadError.MissingValue(path.reverse))
         case PropertyTree.Sequence(values) =>
           val list = values.zipWithIndex.map {

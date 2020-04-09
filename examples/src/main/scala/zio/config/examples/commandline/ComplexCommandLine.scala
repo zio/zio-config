@@ -1,8 +1,6 @@
 package zio.config.examples.commandline
 
 import zio.config.ConfigDescriptor._
-import zio.config.examples.typesafe.EitherImpureOps
-import zio.config.typesafe.TypeSafeConfigSource
 import zio.config.{ConfigDescriptor, ConfigSource, read}
 
 object MorePatternsExample extends App {
