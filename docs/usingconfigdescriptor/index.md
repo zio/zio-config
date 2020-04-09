@@ -126,19 +126,19 @@ To generate the documentation of the config, call `generateDocs`.
      NestedPath(
        "south",
        Both(
-         NestedPath("connection", ConfigDocs.Leaf(Sources(List("constant")), List("value of type string", "South details"))),
-         NestedPath("port", ConfigDocs.Leaf(Sources(List("constant")), List("value of type int", "South details")))
+         NestedPath("connection", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "South details"))),
+         NestedPath("port", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "South details")))
        )
      ),
      NestedPath(
        "east",
        Both(
-         NestedPath("connection", ConfigDocs.Leaf(Sources(List("constant")), List("value of type string", "East details"))),
-         NestedPath("port", ConfigDocs.Leaf(Sources(List("constant")), List("value of type int", "East details")))
+         NestedPath("connection", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "East details"))),
+         NestedPath("port", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "East details")))
        )
      )
    ),
-   NestedPath("appName", ConfigDocs.Leaf(Sources(List("constant")), List("value of type string")))
+   NestedPath("appName", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string")))
  )
 ```
 
@@ -171,11 +171,11 @@ Right(
         Both(
           NestedPath(
             "connection",
-            ConfigDocs.Leaf(Sources(List("constant")), List("value of type string", "South details"), Some("abc.com"))
+            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "South details"), Some("abc.com"))
           ),
           NestedPath(
             "port",
-            ConfigDocs.Leaf(Sources(List("constant")), List("value of type int", "South details"), Some("8111"))
+            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "South details"), Some("8111"))
           )
         )
       ),
@@ -184,16 +184,16 @@ Right(
         Both(
           NestedPath(
             "connection",
-            ConfigDocs.Leaf(Sources(List("constant")), List("value of type string", "East details"), Some("xyz.com"))
+            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "East details"), Some("xyz.com"))
           ),
           NestedPath(
             "port",
-            ConfigDocs.Leaf(Sources(List("constant")), List("value of type int", "East details"), Some("8888"))
+            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "East details"), Some("8888"))
           )
         )
       )
     ),
-    NestedPath("appName", ConfigDocs.Leaf(Sources(List("constant")), List("value of type string"), Some("myApp")))
+    NestedPath("appName", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string"), Some("myApp")))
   )
 )
 ```

@@ -12,13 +12,13 @@ private[config] trait ConfigDocsFunctions {
     ): ConfigDocs[K, V] =
       config match {
         case ConfigDescriptor.Source(source, _) =>
-          Leaf(Sources(source.sourceDescription ++ sources.list), descriptions, None)
+          Leaf(Sources(source.sourceDescription ++ sources.set), descriptions, None)
 
         case ConfigDescriptor.Default(c, _) =>
           loop(sources, descriptions, c, docs)
 
-        case ConfigDescriptor.Sequence(c) =>
-          ConfigDocs.Sequence(loop(sources, descriptions, c, docs) :: Nil)
+        case ConfigDescriptor.Sequence(source, c) =>
+          ConfigDocs.Sequence(loop(Sources(source.sourceDescription ++ sources.set), descriptions, c, docs) :: Nil)
 
         case ConfigDescriptor.Describe(c, desc) =>
           loop(sources, desc :: descriptions, c, docs)
@@ -51,7 +51,7 @@ private[config] trait ConfigDocsFunctions {
           )
       }
 
-    loop(Sources(Nil), Nil, config, Empty)
+    loop(Sources(Set.empty), Nil, config, Empty)
   }
 
   def generateDocsWithValue[K, V, A](

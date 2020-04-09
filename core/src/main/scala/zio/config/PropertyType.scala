@@ -1,6 +1,8 @@
 package zio.config
 
 import java.net.URI
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
+import java.util.UUID
 
 import zio.config.PropertyType.PropertyReadError
 
@@ -84,6 +86,42 @@ object PropertyType {
     def read(value: String): Either[PropertyReadError[String], Duration] =
       attempt(Duration.apply(value), _ => PropertyReadError(value, "duration"))
     def write(value: Duration): String = value.toString
+  }
+
+  case object UuidType extends PropertyType[String, UUID] {
+    def read(value: String): Either[PropertyReadError[String], UUID] =
+      attempt(UUID.fromString(value), _ => PropertyReadError(value, "uuid"))
+    def write(value: UUID): String = value.toString
+  }
+
+  case object ZioDurationType extends PropertyType[String, zio.duration.Duration] {
+    def read(value: String): Either[PropertyReadError[String], zio.duration.Duration] =
+      attempt(zio.duration.Duration.fromScala(Duration.apply(value)), _ => PropertyReadError(value, "duration"))
+    def write(value: zio.duration.Duration): String = value.render
+  }
+
+  case object LocalDateType extends PropertyType[String, LocalDate] {
+    def read(value: String): Either[PropertyReadError[String], LocalDate] =
+      attempt(LocalDate.parse(value), _ => PropertyReadError(value, "localdate"))
+    def write(value: LocalDate): String = value.toString
+  }
+
+  case object LocalDateTimeType extends PropertyType[String, LocalDateTime] {
+    def read(value: String): Either[PropertyReadError[String], LocalDateTime] =
+      attempt(LocalDateTime.parse(value), _ => PropertyReadError(value, "localdatetime"))
+    def write(value: LocalDateTime): String = value.toString
+  }
+
+  case object LocalTimeType extends PropertyType[String, LocalTime] {
+    def read(value: String): Either[PropertyReadError[String], LocalTime] =
+      attempt(LocalTime.parse(value), _ => PropertyReadError(value, "localtime"))
+    def write(value: LocalTime): String = value.toString
+  }
+
+  case object InstantType extends PropertyType[String, Instant] {
+    def read(value: String): Either[PropertyReadError[String], Instant] =
+      attempt(Instant.parse(value), _ => PropertyReadError(value, "instant"))
+    def write(value: Instant): String = value.toString
   }
 
   private def attempt[A, E](a: => A, f: Throwable => E): Either[E, A] =

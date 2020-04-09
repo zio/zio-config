@@ -1,6 +1,8 @@
 package zio.config
 
 import java.net.URI
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset }
+import java.util.UUID
 
 import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
@@ -86,6 +88,42 @@ object PropertyTypeTest
           propType = DurationType,
           genValid = Gen.sized(helpers.genDuration),
           parse = Duration(_)
+        ),
+        propertyTypeRoundtripSuite(
+          typeInfo = "UUID",
+          propType = UuidType,
+          genValid = Gen.anyUUID.map(_.toString),
+          parse = UUID.fromString(_)
+        ),
+        propertyTypeRoundtripSuite(
+          typeInfo = "Duration",
+          propType = ZioDurationType,
+          genValid = Gen.sized(helpers.genDuration),
+          parse = s => zio.duration.Duration.fromScala(Duration(s))
+        ),
+        propertyTypeRoundtripSuite(
+          typeInfo = "LocalDate",
+          propType = LocalDateType,
+          genValid = genLocalDateString,
+          parse = LocalDate.parse(_)
+        ),
+        propertyTypeRoundtripSuite(
+          typeInfo = "LocalDateTime",
+          propType = LocalDateTimeType,
+          genValid = genLocalDateTimeString,
+          parse = LocalDateTime.parse(_)
+        ),
+        propertyTypeRoundtripSuite(
+          typeInfo = "LocalTime",
+          propType = LocalTimeType,
+          genValid = genLocalTimeString,
+          parse = LocalTime.parse(_)
+        ),
+        propertyTypeRoundtripSuite(
+          typeInfo = "Instant",
+          propType = InstantType,
+          genValid = genInstant.map(_.toString),
+          parse = Instant.parse(_)
         )
       )
     )
@@ -266,4 +304,16 @@ object PropertyTypeTestUtils {
     genOptionalStr(genQuery),
     genOptionalStr(genFragment)
   )
+
+  val genInstant: Gen[Random, Instant] =
+    Gen.anyLong.map(Instant.ofEpochMilli)
+
+  val genLocalDateString: Gen[Random with Sized, String] =
+    genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDate.toString)
+
+  val genLocalDateTimeString: Gen[Random with Sized, String] =
+    genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDateTime.toString)
+
+  val genLocalTimeString: Gen[Random with Sized, String] =
+    genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
 }

@@ -55,7 +55,7 @@ object TypesafeConfigSimpleExample extends App {
   val details = (string("name") |@| int("age"))(Details.apply, Details.unapply)
 
   val accountConfig =
-    (int("accountId").orElseEither(string("accountId")).optional |@| list(string("regions")) |@| nested("details")(
+    (int("accountId").orElseEither(string("accountId")).optional |@| list("regions")(string) |@| nested("details")(
       details
     ).optional)(
       Account.apply,
@@ -65,7 +65,7 @@ object TypesafeConfigSimpleExample extends App {
   val databaseConfig = (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
 
   val awsDetailsConfig =
-    (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig) |@| list(int("users")))(
+    (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig) |@| list("users")(int))(
       AwsDetails.apply,
       AwsDetails.unapply
     )

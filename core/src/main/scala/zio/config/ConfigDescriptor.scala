@@ -1,8 +1,10 @@
 package zio.config
 
 import scala.concurrent.duration.Duration
-
 import java.net.URI
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
+import java.util.UUID
+
 import zio.config.ConfigDescriptor._
 
 sealed trait ConfigDescriptor[K, V, A] { self =>
@@ -45,7 +47,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
       case Source(source, propertyType) => Source(source, propertyType)
       case Nested(path, conf)           => Nested(f(path), loop(conf))
-      case Sequence(conf)               => Sequence(loop(conf))
+      case Sequence(source, conf)       => Sequence(source, loop(conf))
       case Describe(config, message)    => Describe(loop(config), message)
       case Default(value, value2)       => Default(loop(value), value2)
       case Optional(config)             => Optional(loop(config))
@@ -75,7 +77,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
       case Source(source, propertyType) => Source(f(source), propertyType)
       case Nested(path, conf)           => Nested(path, loop(conf))
-      case Sequence(conf)               => Sequence(loop(conf))
+      case Sequence(source, conf)       => Sequence(f(source), loop(conf))
       case Describe(config, message)    => Describe(loop(config), message)
       case Default(value, value2)       => Default(loop(value), value2)
       case Optional(config)             => Optional(loop(config))
@@ -120,7 +122,8 @@ object ConfigDescriptor {
   final case class OrElseEither[K, V, A, B](left: ConfigDescriptor[K, V, A], right: ConfigDescriptor[K, V, B])
       extends ConfigDescriptor[K, V, Either[A, B]]
 
-  final case class Sequence[K, V, A](config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, List[A]]
+  final case class Sequence[K, V, A](source: ConfigSource[K, V], config: ConfigDescriptor[K, V, A])
+      extends ConfigDescriptor[K, V, List[A]]
 
   final case class Source[K, V, A](source: ConfigSource[K, V], propertyType: PropertyType[V, A])
       extends ConfigDescriptor[K, V, A]
@@ -167,8 +170,22 @@ object ConfigDescriptor {
 
   def duration(path: String): ConfigDescriptor[String, String, Duration] = nested(path)(duration)
 
+  val zioDuration: ConfigDescriptor[String, String, zio.duration.Duration] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
+
+  def zioDuration(path: String): ConfigDescriptor[String, String, zio.duration.Duration] = nested(path)(zioDuration)
+
   val float: ConfigDescriptor[String, String, Float] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
+
+  def head[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+    desc.orElse(
+      listStrict(desc)
+        .xmapEither[A](_.headOption.fold[Either[String, A]](Left("Element is missing"))(Right(_)), v => Right(v :: Nil))
+    )
+
+  def head[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
+    nested(path)(head(desc))
 
   def float(path: String): ConfigDescriptor[String, String, Float] = nested(path)(float)
 
@@ -177,8 +194,29 @@ object ConfigDescriptor {
 
   def int(path: String): ConfigDescriptor[String, String, Int] = nested(path)(int)
 
+  /**
+   * Allows scalar value instead of list
+   * */
   def list[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
-    ConfigDescriptor.Sequence(desc)
+    listStrict(desc).orElse(desc(_ :: Nil, _.headOption))
+
+  /**
+   * Allows scalar value instead of list
+   * */
+  def list[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+    nested(path)(list(desc))
+
+  /**
+   * Rejects scalar value in place of list
+   * */
+  def listStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+    ConfigDescriptor.Sequence(ConfigSource.empty, desc)
+
+  /**
+   * Rejects scalar value in place of list
+   * */
+  def listStrict[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
+    nested(path)(listStrict(desc))
 
   val long: ConfigDescriptor[String, String, Long] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LongType) ?? "value of type long"
@@ -215,4 +253,29 @@ object ConfigDescriptor {
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
 
   def uri(path: String): ConfigDescriptor[String, String, URI] = nested(path)(uri)
+
+  val uuid: ConfigDescriptor[String, String, UUID] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
+
+  def uuid(path: String): ConfigDescriptor[String, String, UUID] = nested(path)(uuid)
+
+  val localDate: ConfigDescriptor[String, String, LocalDate] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LocalDateType) ?? "value of type localdate"
+
+  def localDate(path: String): ConfigDescriptor[String, String, LocalDate] = nested(path)(localDate)
+
+  val localTime: ConfigDescriptor[String, String, LocalTime] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LocalTimeType) ?? "value of type localtime"
+
+  def localTime(path: String): ConfigDescriptor[String, String, LocalTime] = nested(path)(localTime)
+
+  val localDateTime: ConfigDescriptor[String, String, LocalDateTime] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.LocalDateTimeType) ?? "value of type localdatetime"
+
+  def localDateTime(path: String): ConfigDescriptor[String, String, LocalDateTime] = nested(path)(localDateTime)
+
+  val instant: ConfigDescriptor[String, String, Instant] =
+    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant"
+
+  def instant(path: String): ConfigDescriptor[String, String, Instant] = nested(path)(instant)
 }
