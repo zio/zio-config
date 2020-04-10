@@ -1,7 +1,7 @@
 package zio.config
 
-import zio.config.ConfigDescriptor.{Source => _, _}
-import zio.config.PropertyTree.{Leaf, Record, Sequence}
+import zio.config.ConfigDescriptor.{ Source => _, _ }
+import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.test.Assertion._
 import zio.test._
 
@@ -210,10 +210,10 @@ object ListsCornerCasesTest
                     Sequence(Record(Map("c" -> Leaf("v1"))) :: Nil) ::
                       Sequence(Nil) ::
                       Sequence(
-                      Record(Map("c" -> Leaf("v2"))) :: Record(
-                        Map("c" -> Leaf("v3"))
-                      ) :: Nil
-                    ) ::
+                        Record(Map("c" -> Leaf("v2"))) :: Record(
+                          Map("c"      -> Leaf("v3"))
+                        ) :: Nil
+                      ) ::
                       Nil
                   )
                 )

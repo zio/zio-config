@@ -1,7 +1,7 @@
 package zio.config.examples.commandline
 
 import zio.config.ConfigDescriptor._
-import zio.config.{ConfigDescriptor, ConfigSource, read}
+import zio.config.{ read, ConfigDescriptor, ConfigSource }
 
 object MorePatternsExample extends App {
   val argss =
@@ -42,8 +42,7 @@ object MorePatternsExample extends App {
       }(VaultConfig.apply, VaultConfig.unapply)
   }
 
-  final case class SparkConfig(databaseConfig: DatabaseConfig,
-                               numberOfExecutors: Int)
+  final case class SparkConfig(databaseConfig: DatabaseConfig, numberOfExecutors: Int)
 
   object SparkConfig {
     val desc = (DatabaseConfig.desc |@| int("num_execs"))(
@@ -52,10 +51,7 @@ object MorePatternsExample extends App {
     )
   }
 
-  final case class AppConfig(sparkConfig: SparkConfig,
-                             vault: VaultConfig,
-                             users: List[String],
-                             region: List[String])
+  final case class AppConfig(sparkConfig: SparkConfig, vault: VaultConfig, users: List[String], region: List[String])
 
   object AppConfig {
     val desc: ConfigDescriptor[String, String, AppConfig] =

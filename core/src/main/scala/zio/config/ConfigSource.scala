@@ -1,12 +1,12 @@
 package zio.config
 
-import java.{util => ju}
+import java.{ util => ju }
 
 import zio.UIO
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
-import zio.config.PropertyTree.{unflatten, Leaf, Record, Sequence}
+import zio.config.PropertyTree.{ unflatten, Leaf, Record, Sequence }
 import zio.ZIO
 import java.io.FileInputStream
 import java.io.File
@@ -31,55 +31,53 @@ final case class ConfigSource[K, V](
 }
 
 object ConfigSource {
-  private[config] val SystemEnvironment = "system environment"
-  private[config] val SystemProperties = "system properties"
+  private[config] val SystemEnvironment    = "system environment"
+  private[config] val SystemProperties     = "system properties"
   private[config] val CommandLineArguments = "command line arguments"
 
   def empty[K, V]: ConfigSource[K, V] =
     ConfigSource(Set.empty, _ => PropertyTree.empty)
 
-  def mk[K, V](tree: PropertyTree[K, V],
-               descriptions: Set[String]): ConfigSource[K, V] = {
+  def mk[K, V](tree: PropertyTree[K, V], descriptions: Set[String]): ConfigSource[K, V] =
     ConfigSource(descriptions, path => tree.getPath(path))
-  }
 
   /**
-    * EXPERIMENTAL
-    *
-    * Forming configuration from command line arguments.
-    *
-    * Assumption. All keys should start with -
-    *
-    * This source supports almost all standard command-line patterns including nesting/sub-config, repetition/list etc
-    *
-    * Example:
-    *
-    * Given:
-    *
-    * {{{
-    *    args = "-db.username=1 --db.password=hi --vault -username=3 --vault -password=10 --regions 111,122 --user k1 --user k2"
-    *    keyDelimiter   = Some('.')
-    *    valueDelimiter = Some(',')
-    * }}}
-    *
-    * then, the following works:
-    *
-    * {{{
-    *
-    *    final case class Credentials(username: String, password: String)
-    *
-    *    val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
-    *
-    *    final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String], users: List[String])
-    *
-    *    (nested("db") { credentials } |@| nested("vault") { credentials } |@| list("regions")(string) |@| list("user")(string))(Config.apply, Config.unapply)
-    *
-    *    // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
-    *
-    * }}}
-    *
-    * @see [[https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples/commandline/CommandLineArgsExample.scala]]
-    */
+   * EXPERIMENTAL
+   *
+   * Forming configuration from command line arguments.
+   *
+   * Assumption. All keys should start with -
+   *
+   * This source supports almost all standard command-line patterns including nesting/sub-config, repetition/list etc
+   *
+   * Example:
+   *
+   * Given:
+   *
+   * {{{
+   *    args = "-db.username=1 --db.password=hi --vault -username=3 --vault -password=10 --regions 111,122 --user k1 --user k2"
+   *    keyDelimiter   = Some('.')
+   *    valueDelimiter = Some(',')
+   * }}}
+   *
+   * then, the following works:
+   *
+   * {{{
+   *
+   *    final case class Credentials(username: String, password: String)
+   *
+   *    val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
+   *
+   *    final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String], users: List[String])
+   *
+   *    (nested("db") { credentials } |@| nested("vault") { credentials } |@| list("regions")(string) |@| list("user")(string))(Config.apply, Config.unapply)
+   *
+   *    // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
+   *
+   * }}}
+   *
+   * @see [[https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples/commandline/CommandLineArgsExample.scala]]
+   */
   def fromCommandLineArgs(
     args: List[String],
     keyDelimiter: Option[Char] = None,
@@ -95,26 +93,26 @@ object ConfigSource {
     )
 
   /**
-    * Provide keyDelimiter if you need to consider flattened config as a nested config.
-    * Provide valueDelimiter if you need any value to be a list
-    *
-    * Example:
-    *
-    * Given:
-    *
-    * {{{
-    *    map            = Map("KAFKA_SERVERS" -> "server1, server2", "KAFKA_SERDE"  -> "confluent")
-    *    keyDelimiter   = Some('_')
-    *    valueDelimiter = Some(',')
-    * }}}
-    *
-    * tthen, the following works:
-    *
-    * {{{
-    *    final case class kafkaConfig(server: String, serde: String)
-    *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
-    * }}}
-    */
+   * Provide keyDelimiter if you need to consider flattened config as a nested config.
+   * Provide valueDelimiter if you need any value to be a list
+   *
+   * Example:
+   *
+   * Given:
+   *
+   * {{{
+   *    map            = Map("KAFKA_SERVERS" -> "server1, server2", "KAFKA_SERDE"  -> "confluent")
+   *    keyDelimiter   = Some('_')
+   *    valueDelimiter = Some(',')
+   * }}}
+   *
+   * tthen, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
+   */
   def fromMap(
     map: Map[String, String],
     source: String = "constant",
@@ -128,24 +126,24 @@ object ConfigSource {
     }, keyDelimiter, source)
 
   /**
-    * Provide keyDelimiter if you need to consider flattened config as a nested config.
-    *
-    * Example:
-    *
-    * Given:
-    *
-    * {{{
-    *   map = Map("KAFKA_SERVERS" -> singleton(server1), "KAFKA_SERDE"  -> singleton("confluent"))
-    *   keyDelimiter = Some('_')
-    * }}}
-    *
-    * then, the following works:
-    *
-    * {{{
-    *    final case class kafkaConfig(server: String, serde: String)
-    *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
-    * }}}
-    */
+   * Provide keyDelimiter if you need to consider flattened config as a nested config.
+   *
+   * Example:
+   *
+   * Given:
+   *
+   * {{{
+   *   map = Map("KAFKA_SERVERS" -> singleton(server1), "KAFKA_SERDE"  -> singleton("confluent"))
+   *   keyDelimiter = Some('_')
+   * }}}
+   *
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
+   */
   def fromMultiMap(
     map: Map[String, ::[String]],
     source: String = "constant",
@@ -154,26 +152,26 @@ object ConfigSource {
     fromMapInternal(map)(identity, keyDelimiter, source)
 
   /**
-    * Provide keyDelimiter if you need to consider flattened config as a nested config.
-    * Provide valueDelimiter if you need any value to be a list
-    *
-    * Example:
-    *
-    * Given:
-    *
-    * {{{
-    *   property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
-    *   keyDelimiter   = Some('.')
-    *   valueDelimiter = Some(',')
-    * }}}
-    *
-    * then, the following works:
-    *
-    * {{{
-    *    final case class kafkaConfig(server: String, serde: String)
-    *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
-    * }}}
-    */
+   * Provide keyDelimiter if you need to consider flattened config as a nested config.
+   * Provide valueDelimiter if you need any value to be a list
+   *
+   * Example:
+   *
+   * Given:
+   *
+   * {{{
+   *   property      = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
+   *   keyDelimiter   = Some('.')
+   *   valueDelimiter = Some(',')
+   * }}}
+   *
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
+   */
   def fromProperties(
     property: ju.Properties,
     source: String = "properties",
@@ -197,26 +195,26 @@ object ConfigSource {
   }
 
   /**
-    * Provide keyDelimiter if you need to consider flattened config as a nested config.
-    * Provide valueDelimiter if you need any value to be a list
-    *
-    * Example:
-    *
-    * Given:
-    *
-    * {{{
-    *   properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
-    *   keyDelimiter         = Some('.')
-    *   valueDelimiter       = Some(',')
-    * }}}
-    *
-    * then, the following works:
-    *
-    * {{{
-    *    final case class kafkaConfig(server: String, serde: String)
-    *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
-    * }}}
-    */
+   * Provide keyDelimiter if you need to consider flattened config as a nested config.
+   * Provide valueDelimiter if you need any value to be a list
+   *
+   * Example:
+   *
+   * Given:
+   *
+   * {{{
+   *   properties (in file) = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
+   *   keyDelimiter         = Some('.')
+   *   valueDelimiter       = Some(',')
+   * }}}
+   *
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
+   */
   def fromPropertiesFile[A](
     filePath: String,
     keyDelimiter: Option[Char] = None,
@@ -224,48 +222,47 @@ object ConfigSource {
   ): Task[ConfigSource[String, String]] =
     for {
       properties <- ZIO.bracket(
-        ZIO.effect(new FileInputStream(new File(filePath)))
-      )(r => ZIO.effectTotal(r.close()))(inputStream => {
-        ZIO.effect {
-          val properties = new java.util.Properties()
-          properties.load(inputStream)
-          properties
-        }
-      })
-    } yield
-      ConfigSource.fromProperties(
-        properties,
-        filePath,
-        keyDelimiter,
-        valueDelimiter
-      )
+                     ZIO.effect(new FileInputStream(new File(filePath)))
+                   )(r => ZIO.effectTotal(r.close()))(inputStream => {
+                     ZIO.effect {
+                       val properties = new java.util.Properties()
+                       properties.load(inputStream)
+                       properties
+                     }
+                   })
+    } yield ConfigSource.fromProperties(
+      properties,
+      filePath,
+      keyDelimiter,
+      valueDelimiter
+    )
 
   def fromSystemEnv: UIO[ConfigSource[String, String]] =
     fromSystemEnv(None, None)
 
   /**
-    * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
-    * Consider providing valueDelimiter if you need any value to be a list
-    *
-    * Example:
-    *
-    * Given:
-    *
-    * {{{
-    *    vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERDE" = "confluent"
-    *    keyDelimiter     = Some('_')
-    *    valueDelimiter   = Some(',')
-    * }}}
-    *
-    * then, the following works:
-    *
-    * {{{
-    *    final case class kafkaConfig(server: String, serde: String)
-    *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
-    * }}}
-    *
-    * Note: The delimiter '.' for keys doesn't work in system environment.
-    */
+   * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
+   * Consider providing valueDelimiter if you need any value to be a list
+   *
+   * Example:
+   *
+   * Given:
+   *
+   * {{{
+   *    vars in sys.env  = "KAFKA_SERVERS" = "server1, server2" ; "KAFKA_SERDE" = "confluent"
+   *    keyDelimiter     = Some('_')
+   *    valueDelimiter   = Some(',')
+   * }}}
+   *
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
+   *
+   * Note: The delimiter '.' for keys doesn't work in system environment.
+   */
   def fromSystemEnv(
     keyDelimiter: Option[Char],
     valueDelimiter: Option[Char]
@@ -282,39 +279,38 @@ object ConfigSource {
     fromSystemProperties(None, None)
 
   /**
-    * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
-    * Consider providing valueDelimiter if you need any value to be a list
-    *
-    * Example:
-    *
-    * Given:
-    *
-    * {{{
-    *    vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
-    *    keyDelimiter     = Some('.')
-    *    valueDelimiter   = Some(',')
-    * }}}
-    *
-    * then, the following works:
-    *
-    * {{{
-    *    final case class kafkaConfig(server: String, serde: String)
-    *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
-    * }}}
-    */
+   * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
+   * Consider providing valueDelimiter if you need any value to be a list
+   *
+   * Example:
+   *
+   * Given:
+   *
+   * {{{
+   *    vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
+   *    keyDelimiter     = Some('.')
+   *    valueDelimiter   = Some(',')
+   * }}}
+   *
+   * then, the following works:
+   *
+   * {{{
+   *    final case class kafkaConfig(server: String, serde: String)
+   *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+   * }}}
+   */
   def fromSystemProperties(
     keyDelimiter: Option[Char],
     valueDelimiter: Option[Char]
   ): UIO[ConfigSource[String, String]] =
     for {
       systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
-    } yield
-      ConfigSource.fromProperties(
-        property = systemProperties,
-        source = SystemProperties,
-        keyDelimiter = keyDelimiter,
-        valueDelimiter = valueDelimiter
-      )
+    } yield ConfigSource.fromProperties(
+      property = systemProperties,
+      source = SystemProperties,
+      keyDelimiter = keyDelimiter,
+      valueDelimiter = valueDelimiter
+    )
 
   private[config] def fromMapInternal[A, B](map: Map[String, A])(
     f: A => ::[B],
@@ -459,7 +455,7 @@ object ConfigSource {
                         loop(List(x))
                           .map(tree => unFlattenWith(l2.value, tree)) ++ loop(
                           h3.tail
-                      )
+                        )
                     )
 
                 case (Both(l1, r1), That(r2)) =>
@@ -475,29 +471,26 @@ object ConfigSource {
 
                 case (This(l1), This(l2)) =>
                   val keysAndTrees =
-                    h3.zipWithIndex
-                      .map {
-                        case (key, index) => (index, loop(List(key)))
-                      }
-                      .find(_._2.nonEmpty)
+                    h3.zipWithIndex.map {
+                      case (key, index) => (index, loop(List(key)))
+                    }.find(_._2.nonEmpty)
 
                   keysAndTrees match {
                     case Some((index, trees)) =>
                       val keys = seqOption(h3.take(index).map(Key.mk))
 
-                      keys.fold(List.empty[PropertyTree[String, String]]) {
-                        nestedKeys =>
-                          trees
-                            .map(
-                              tree =>
-                                unflatten(
-                                  l2.value :: nestedKeys.map(_.value),
-                                  tree
+                      keys.fold(List.empty[PropertyTree[String, String]]) { nestedKeys =>
+                        trees
+                          .map(
+                            tree =>
+                              unflatten(
+                                l2.value :: nestedKeys.map(_.value),
+                                tree
                               )
-                            )
-                            .map(tree => unFlattenWith(l1.value, tree)) ++ loop(
-                            h3.drop(index + 1)
                           )
+                          .map(tree => unFlattenWith(l1.value, tree)) ++ loop(
+                          h3.drop(index + 1)
+                        )
                       }
 
                     case None => Nil
@@ -532,8 +525,7 @@ object ConfigSource {
           KeyValue.mk(h1) match {
             case Some(value) =>
               value.fold(
-                (left, right) =>
-                  unFlattenWith(left.value, toSeq(right.value)) :: Nil,
+                (left, right) => unFlattenWith(left.value, toSeq(right.value)) :: Nil,
                 _ => Nil, // This is an early Nil unlike others.
                 value => toSeq(value.value) :: Nil
               )

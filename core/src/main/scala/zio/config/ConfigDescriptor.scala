@@ -238,7 +238,7 @@ object ConfigDescriptor {
 
   def mapStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Map[K, A]] =
     ConfigDescriptor.DynamicMap(ConfigSource.empty, desc)
-  
+
   def nested[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Nested(path, desc)
 

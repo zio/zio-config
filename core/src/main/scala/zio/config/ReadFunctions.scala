@@ -111,7 +111,9 @@ private[config] trait ReadFunctions {
               (k, loopAny(Step.Index(idx) :: path, Nil, cfg.config.updateSource(_ => source)))
           }
 
-          seqMap2[K, ReadError[K], B, ReadError[K]]((index, k, error) => error.atKey(k).atIndex(index))(result.toMap).swap.map(AndErrors(_)).swap
+          seqMap2[K, ReadError[K], B, ReadError[K]]((index, k, error) => error.atKey(k).atIndex(index))(result.toMap).swap
+            .map(AndErrors(_))
+            .swap
 
         case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse))
       }

@@ -53,7 +53,7 @@ object ReadError {
 
   def partitionWith[K, V, A](
     trees: List[ReadError[V]]
-   )(pf: PartialFunction[ReadError[V], A]): List[A] =
+  )(pf: PartialFunction[ReadError[V], A]): List[A] =
     trees.collect {
       case tree if pf.isDefinedAt(tree) => pf(tree) :: Nil
     }.foldLeft((List.empty[A])) {

@@ -24,7 +24,7 @@ object MapExample extends App with EitherImpureOps {
        |  }
        |""".stripMargin
 
-  val source =  TypeSafeConfigSource.fromHoconString(hocon).loadOrThrow
+  val source = TypeSafeConfigSource.fromHoconString(hocon).loadOrThrow
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
@@ -38,7 +38,7 @@ object MapExample extends App with EitherImpureOps {
     map("z")(string)
 
   val description =
-    (c1 |@| c2 |@| c3 |@| c4) ((a, b, c, d) => sss(a, b, c, d ), sss.unapply )
+    (c1 |@| c2 |@| c3 |@| c4)((a, b, c, d) => sss(a, b, c, d), sss.unapply)
 
   val result =
     read(description from source).loadOrThrow
@@ -66,4 +66,3 @@ object MapExample extends App with EitherImpureOps {
 //    }
 //  }
 }
-

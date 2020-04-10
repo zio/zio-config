@@ -208,7 +208,10 @@ object NonEmptyListExample extends App with EitherImpureOps {
     )
 
   val writtenBack =
-    write(descriptor[A], result).loadOrThrow.toHocon.render(ConfigRenderOptions.concise())
+    write(descriptor[A], result).loadOrThrow.toHocon
+      .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
+
+  println(writtenBack)
 
   val readWritten = read(descriptor[A] from TypeSafeConfigSource.fromHoconString(writtenBack).loadOrThrow)
 

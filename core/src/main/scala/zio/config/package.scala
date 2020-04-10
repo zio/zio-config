@@ -26,13 +26,17 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
     options.foldRight(Some(Nil): Option[List[A]])((a, b) => a.flatMap(aa => b.map(bb => aa :: bb)))
 
   private[config] def seqMap[K, A, B](map: Map[K, Either[A, B]]): Either[A, Map[K, B]] =
-    map.foldRight(Right(Map.empty[K, B]): Either[A, Map[K, B]])((a, b) => a._2.flatMap(aa => b.map(bb => bb.updated(a._1, aa))))
+    map.foldRight(Right(Map.empty[K, B]): Either[A, Map[K, B]])(
+      (a, b) => a._2.flatMap(aa => b.map(bb => bb.updated(a._1, aa)))
+    )
 
-  private[config] def seqMap2[K, A, B, C](genError: (Int, K, A) => C)(list: Map[K, Either[A, B]]): Either[List[C], Map[K, B]] =
+  private[config] def seqMap2[K, A, B, C](
+    genError: (Int, K, A) => C
+  )(list: Map[K, Either[A, B]]): Either[List[C], Map[K, B]] =
     list.zipWithIndex.foldLeft(
       Right(Map.empty: Map[K, B]): Either[List[C], Map[K, B]]
     ) {
-      case (Left(cs), ((k, Left(a)), index)) => Left(genError(index, k,  a) :: cs)
+      case (Left(cs), ((k, Left(a)), index)) => Left(genError(index, k, a) :: cs)
       case (Left(cs), ((_, Right(_)), _))    => Left(cs)
       case (Right(_), ((k, Left(a)), index)) => Left(genError(index, k, a) :: Nil)
       case (Right(bs), ((k, Right(b)), _))   => Right(bs.updated(k, b))
