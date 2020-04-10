@@ -9,8 +9,8 @@ import scala.collection.immutable.Nil
 
 private[typesafe] trait PropertyTreeFunctions {
   def treeToTypesafeConfig(
-                            tree: PropertyTree[String, String]
-                          ): com.typesafe.config.ConfigObject =
+    tree: PropertyTree[String, String]
+  ): com.typesafe.config.ConfigObject =
     loopAny(tree, None)
 
   def loopAny(tree: PropertyTree[String, String], key: Option[String]): com.typesafe.config.ConfigObject =

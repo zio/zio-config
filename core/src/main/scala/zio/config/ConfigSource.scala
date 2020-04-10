@@ -114,12 +114,12 @@ object ConfigSource {
    * }}}
    */
   def fromMap(
-    map: Map[String, String],
+    constantMap: Map[String, String],
     source: String = "constant",
     keyDelimiter: Option[Char] = None,
     valueDelimter: Option[Char] = None
   ): ConfigSource[String, String] =
-    fromMapInternal(map)(x => {
+    fromMapInternal(constantMap)(x => {
       val listOfValues =
         valueDelimter.fold(List(x))(delim => x.split(delim).toList)
       ::(listOfValues.head, listOfValues.tail)

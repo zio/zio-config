@@ -27,7 +27,7 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
   assert(
     read(
       descriptor[X] from ConfigSource.fromMap(
-        map = Map(
+        constantMap = Map(
           "x.d.detail.firstName"     -> "ff",
           "x.d.detail.lastName"      -> "ll",
           "x.d.detail.region.suburb" -> "strath",
