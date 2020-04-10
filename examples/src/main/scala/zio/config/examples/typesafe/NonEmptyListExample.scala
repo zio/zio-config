@@ -1,5 +1,6 @@
 package zio.config.examples.typesafe
 
+import com.typesafe.config.ConfigRenderOptions
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypeSafeConfigSource
@@ -206,9 +207,13 @@ object NonEmptyListExample extends App with EitherImpureOps {
       W(X(Y("k")))
     )
 
-  println(write(descriptor[A], result).map(_.toHocon))
+  val writtenBack =
+    write(descriptor[A], result).loadOrThrow.toHocon.render(ConfigRenderOptions.concise())
+
+  val readWritten = read(descriptor[A] from TypeSafeConfigSource.fromHoconString(writtenBack).loadOrThrow)
 
   assert(zioConfigResult == Right(result))
+  assert(zioConfigResult.loadOrThrow == readWritten.loadOrThrow)
 
   val kebabCaseConfig =
     """

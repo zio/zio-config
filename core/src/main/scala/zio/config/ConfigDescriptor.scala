@@ -238,53 +238,7 @@ object ConfigDescriptor {
 
   def mapStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Map[K, A]] =
     ConfigDescriptor.DynamicMap(ConfigSource.empty, desc)
-
-  /**
-   * A map that doesn't take a path mean the following
-   *
-   * mao("a")(string("b")
-   * holds the following result
-   *
-   *  Within a:
-   *    Map(
-   *      "k1" -> {  b : "value"  },
-   *      "k2" -> {  b : "value2" },
-   *      "k3  -> {  b: "value3"),
-   *
-   *    )
-   *
-   * map(string("b"))
-   *     Map(
-   *      "k1" -> { "value"  },
-   *      "k2" -> { "value2" },
-   *      "k3  -> { value3" ),
-   *    )
-   *
-   * map(list(string("b")))
-   *
-   *
-   * map("a", List("a1", "a2", "a3")
-   *
-   * map(list("a")(string) leads to the situation of a singular map, and that's the expectation.
-   *  Map("a" -> List(a1, a2, a3)
-   *  or
-   *  Record("a" -> Sequence([a1, a2, a3]))
-   *
-   *
-   * map("path", String)
-   * Map(k -> List(a1, a2, a3), k2 -> List(a1, a4)
-   *
-   * Record("path" -> Record(
-   *
-   * @param desc
-   * @tparam K
-   * @tparam V
-   * @tparam A
-   * @return
-   */
-  //def map[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[String, String, Map[String, A]] =
-  //  ConfigDescriptor.DynamicMap(path, desc)
-
+  
   def nested[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Nested(path, desc)
 
