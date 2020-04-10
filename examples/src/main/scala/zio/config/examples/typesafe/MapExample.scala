@@ -1,7 +1,10 @@
 package zio.config.examples.typesafe
 
 import zio.config.ConfigDescriptor
-import zio.config._, ConfigDescriptor._
+import zio.config._
+import typesafe._
+import ConfigDescriptor._
+import com.typesafe.config.ConfigRenderOptions
 import zio.config.typesafe.TypeSafeConfigSource
 
 object MapExample extends App with EitherImpureOps {
@@ -10,12 +13,11 @@ object MapExample extends App with EitherImpureOps {
        | zones: {
        |    syd  : [1, 2]
        |    melb : [1]
-       |    adl  : [1, 2, 3]
        |  }
        |
-       |  l : [1, 2, 3]
+       |  l : []
        |
-       |   l2: [1, 3m, 3]
+       |   l2: [1, 3, 3]
        |
        |  z : {
        |     v : a
@@ -35,31 +37,33 @@ object MapExample extends App with EitherImpureOps {
   val c4: ConfigDescriptor[String, String, Map[String, String]] =
     map("z")(string)
 
-  val result =
+  val description =
     (c1 |@| c2 |@| c3 |@| c4) ((a, b, c, d) => sss(a, b, c, d ), sss.unapply )
 
-  println(read( result from source))
+  val result =
+    read(description from source).loadOrThrow
 
+  assert(result == sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a")))
+  println(write(description, result).loadOrThrow.toHocon.render(ConfigRenderOptions.concise().setFormatted(true)))
 
-  val wronHocon =
-    s"""
-       | zones: {
-       |    syd  : [1, 2]
-       |    melb : [1]
-       |    adl  : [1, 2, 3]
-       |  }
-       |
-       | l : [1, m, 3]
-       |
-       | l2: [1, 3m, 3]
-       |
-       |  z : {
-       |     v : a
-       |  }
-       |""".stripMargin
-
-  val wrongSource = TypeSafeConfigSource.fromHoconString(wronHocon).loadOrThrow
-
-  println(read(result from wrongSource) )
+//  {
+//    "l2" : [
+//      "1",
+//      "3",
+//      "3"
+//    ],
+//    "z" : {
+//      "v" : "a"
+//    },
+//    "zones" : {
+//      "melb" : [
+//        "1"
+//       ],
+//      "syd" : [
+//        "1",
+//        "2"
+//        ]
+//    }
+//  }
 }
 

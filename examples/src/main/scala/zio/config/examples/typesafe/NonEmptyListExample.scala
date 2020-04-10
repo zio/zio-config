@@ -206,6 +206,8 @@ object NonEmptyListExample extends App with EitherImpureOps {
       W(X(Y("k")))
     )
 
+  println(write(descriptor[A], result).map(_.toHocon))
+
   assert(zioConfigResult == Right(result))
 
   val kebabCaseConfig =
