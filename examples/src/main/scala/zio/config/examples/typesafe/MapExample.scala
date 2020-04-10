@@ -66,4 +66,69 @@ object MapExample extends App with EitherImpureOps {
 //    }
 //  }
 
+  final case class Nested(s: Map[String, sss])
+
+  val hocon2 =
+    s"""
+       |result : {
+       | dynamic1 : {
+       |       zones: {
+       |         syd  : [1, 2]
+       |         melb : [1]
+       |      }
+       |
+       |       l : []
+       |
+       |       l2: [1, 3, 3]
+       |
+       |       z : {
+       |         v : a
+       |       }
+       | }
+       |
+       | dynamic2 : {
+       |      zones: {
+       |        syd  : [1, 2]
+       |        melb : [1]
+       |      }
+       |
+       |      l : []
+       |
+       |     l2: [1, 3, 3]
+       |
+       |      z : {
+       |         v : a
+       |      }
+       | }
+       |}
+       |""".stripMargin
+
+  val result3 =
+    read(nested("result")(mapStrict(description)) from TypeSafeConfigSource.fromHoconString(hocon2).loadOrThrow)
+
+  println(result3)
+
+  // It picks the value corresponding to y in the value of the dynamic map inside s. This is much powerful
+  val hocon3 =
+    s"""
+       |k : {
+       |  s : {
+       |     dynamicMap : { y : z }
+       |  }
+       |}
+       |""".stripMargin
+
+  val xx = nested("k") { map("s")(string("y")) }
+
+  println(read(xx from TypeSafeConfigSource.fromHoconString(hocon3).loadOrThrow))
+
+  val hocon4 =
+    s"""
+       |k : { dynamicMap : { y : z } }
+       |""".stripMargin
+
+  val xx2 = nested("k") { map(string("y")) }
+
+  println(read(xx2 from TypeSafeConfigSource.fromHoconString(hocon4).loadOrThrow))
+
 }

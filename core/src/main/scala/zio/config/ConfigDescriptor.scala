@@ -231,7 +231,7 @@ object ConfigDescriptor {
   def long(path: String): ConfigDescriptor[String, String, Long] = nested(path)(long)
 
   def map[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Map[K, A]] =
-    mapStrict[K, V, A](desc).orElse(desc.apply(_ => Map.empty, (e: Map[K, A]) => e.headOption.map(_._2)))
+    mapStrict[K, V, A](desc)
 
   def map[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Map[K, A]] =
     nested(path)(mapStrict(desc))
