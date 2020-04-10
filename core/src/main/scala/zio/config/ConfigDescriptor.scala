@@ -159,8 +159,11 @@ object ConfigDescriptor {
 
   def byte(path: String): ConfigDescriptor[String, String, Byte] = nested(path)(byte)
 
-  def collectAll[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] =
-    sequence(configList)
+  def collectAll[K, V, A](
+    head: ConfigDescriptor[K, V, A],
+    tail: ConfigDescriptor[K, V, A]*
+  ): ConfigDescriptor[K, V, List[A]] =
+    sequence(head, tail: _*)({ case (a, t) => a :: t }, l => l.headOption.map(h => (h, l.tail)))
 
   val double: ConfigDescriptor[String, String, Double] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double"
@@ -228,18 +231,21 @@ object ConfigDescriptor {
   def nested[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Nested(path, desc)
 
-  def sequence[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] = {
-    val reversed = configList.reverse
-    reversed.tail.foldLeft[ConfigDescriptor[K, V, ::[A]]](
-      reversed.head.xmap((a: A) => ::(a, Nil), (b: ::[A]) => b.head)
+  def sequence[K, V, A](
+    head: ConfigDescriptor[K, V, A],
+    tail: ConfigDescriptor[K, V, A]*
+  ): ConfigDescriptor[K, V, (A, List[A])] =
+    tail.reverse.foldLeft[ConfigDescriptor[K, V, (A, List[A])]](
+      head.xmap((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
     )(
-      (b: ConfigDescriptor[K, V, ::[A]], a: ConfigDescriptor[K, V, A]) =>
+      (b: ConfigDescriptor[K, V, (A, List[A])], a: ConfigDescriptor[K, V, A]) =>
         b.xmapEither2(a)(
-          (as: ::[A], a: A) => Right(::(a, as)),
-          (t: ::[A]) => Right((::(t.tail.head, t.tail.tail), t.head))
+          { case ((first, tail), a)    => Right((first, a :: tail)) }, {
+            case (_, Nil)              => Left("Invalid list length")
+            case (first, head :: tail) => Right(((first, tail), head))
+          }
         )
     )
-  }
 
   val short: ConfigDescriptor[String, String, Short] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.ShortType) ?? "value of type short"

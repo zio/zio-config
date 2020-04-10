@@ -364,9 +364,8 @@ Note that, you can write this back as well. This is discussed in write section
  def database(i: Int) = 
    (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
 
- val list: ConfigDescriptor[String, String, ::[Database]] =
-   collectAll(::(database(0), (1 to 10).map(database).toList)) 
-   // collectAll takes `::` (cons, representing non-empty list) instead of a `List`.
+ val list: ConfigDescriptor[String, String, List[Database]] =
+   collectAll(database(0), (1 to 10).map(database): _*) 
 
 ```
 Running this to ZIO will result in non empty list of database
