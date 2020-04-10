@@ -3,7 +3,6 @@ package zio.config.examples.typesafe
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.read
 import zio.config.typesafe.TypeSafeConfigSource
-import zio.config.magnolia.DeriveConfigDescriptor
 
 object CoproductSealedTraitExample extends App with EitherImpureOps {
 
@@ -64,9 +63,9 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
       )
       .loadOrThrow
 
-  assert(read(DeriveConfigDescriptor[X] from aHoconSource) == Right(A))
-  assert(read(DeriveConfigDescriptor[X] from bHoconSource) == Right(B))
-  assert(read(DeriveConfigDescriptor[X] from cHoconSource) == Right(C))
+  assert(read(descriptor[X] from aHoconSource) == Right(A))
+  assert(read(descriptor[X] from bHoconSource) == Right(B))
+  assert(read(descriptor[X] from cHoconSource) == Right(C))
   assert(
     read(descriptor[X] from dHoconSource) == Right(
       D(Detail("ff", "ll", Region("strath", "syd")))

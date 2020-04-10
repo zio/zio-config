@@ -4,13 +4,6 @@ package object config extends ReadFunctions with WriteFunctions with ConfigDocsF
 
   type Config[A] = Has[A]
 
-  type NonEmptyList[A] = ::[A]
-
-  object NonEmptyList {
-    def apply[A](a: A*) =
-      ::(a.head, a.tail.toList)
-  }
-
   final def config[A](implicit tagged: Tagged[A]): ZIO[Config[A], Nothing, A] =
     ZIO.access(_.get)
 

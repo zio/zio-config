@@ -1,7 +1,7 @@
 package zio.config.examples.commandline
 
 import zio.config.ConfigSource
-import zio.config.magnolia.DeriveConfigDescriptor
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config._
 
 object NestedExample extends App {
@@ -18,7 +18,7 @@ object NestedExample extends App {
   final case class A(conf: SparkConf, key3: String)
 
   assert(
-    read(DeriveConfigDescriptor[A] from source) == Right(
+    read(descriptor[A] from source) == Right(
       A(SparkConf("v1", "v2"), "v3")
     )
   )
@@ -33,7 +33,7 @@ object NestedExample extends App {
     ConfigSource.fromCommandLineArgs(cmdLineArgsAlternative.split(' ').toList)
 
   assert(
-    read(DeriveConfigDescriptor[A] from source2) == Right(
+    read(descriptor[A] from source2) == Right(
       A(SparkConf("v1", "v2"), "v3")
     )
   )
@@ -54,7 +54,7 @@ object NestedExample extends App {
     ConfigSource.fromCommandLineArgs(awsCmdLineArgs.split(' ').toList, keyDelimiter = Some('.'))
 
   assert(
-    read(DeriveConfigDescriptor[AppConfig] from source3) == Right(
+    read(descriptor[AppConfig] from source3) == Right(
       AppConfig(AwsConfig(KinesisConfig("v1", "v2"), S3Config("v3", "v4")), "jo")
     )
   )
@@ -71,7 +71,7 @@ object NestedExample extends App {
     ConfigSource.fromCommandLineArgs(awsCmdLineArgs2.split(' ').toList, keyDelimiter = Some('.'))
 
   assert(
-    read(DeriveConfigDescriptor[AppConfig] from source4) == Right(
+    read(descriptor[AppConfig] from source4) == Right(
       AppConfig(AwsConfig(KinesisConfig("v1", "v2"), S3Config("v3", "v4")), "jo")
     )
   )
