@@ -12,4 +12,5 @@ object ConfigDocs {
   final case class Both[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])  extends ConfigDocs[K, V]
   final case class OneOf[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V]) extends ConfigDocs[K, V]
   final case class Sequence[K, V](element: List[ConfigDocs[K, V]])              extends ConfigDocs[K, V]
+  final case class Map[K, V](path: K, element: ConfigDocs[K, V])                extends ConfigDocs[K, V]
 }

@@ -46,7 +46,7 @@ object MapExample extends App with EitherImpureOps {
   assert(result == sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a")))
   println(write(description, result).loadOrThrow.toHocon.render(ConfigRenderOptions.concise().setFormatted(true)))
 
-//  {
+  //  {
 //    "l2" : [
 //      "1",
 //      "3",
@@ -65,4 +65,5 @@ object MapExample extends App with EitherImpureOps {
 //        ]
 //    }
 //  }
+
 }
