@@ -201,27 +201,16 @@ object ConfigDescriptor {
 
   def int(path: String): ConfigDescriptor[String, String, Int] = nested(path)(int)
 
-  /**
-   * Allows scalar value instead of list
-   * */
+  // Fixme: Add detailed API docs
   def list[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
     listStrict(desc).orElse(desc.apply(_ :: Nil, _.headOption))
 
-  /**
-   * Allows scalar value instead of list
-   * */
   def list[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
     nested(path)(list(desc))
 
-  /**
-   * Rejects scalar value in place of list
-   * */
   def listStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
     ConfigDescriptor.Sequence(ConfigSource.empty, desc)
 
-  /**
-   * Rejects scalar value in place of list
-   * */
   def listStrict[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
     nested(path)(listStrict(desc))
 
