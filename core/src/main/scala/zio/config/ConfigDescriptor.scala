@@ -291,8 +291,15 @@ object ConfigDescriptor {
 
   def url(path: String): ConfigDescriptor[String, String, URL] = nested(path)(url)
 
-  val set: ConfigDescriptor[String, String, Set[String]] =
-    ConfigDescriptor.Source(ConfigSource.empty, PropertyType.SetType) ?? "value of type set"
+  def set[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Set[A]] =
+    list(desc).xmapEither(distinctListToSet, s => Right(s.toList))
 
-  def set(path: String): ConfigDescriptor[String, String, Set[String]] = nested(path)(set)
+  def set[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Set[A]] =
+    nested(path)(set(desc))
+
+  def setStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Set[A]] =
+    listStrict(desc).xmapEither(distinctListToSet, s => Right(s.toList))
+
+  private def distinctListToSet[A](list: List[A]): Either[String, Set[A]] =
+    if (list.size == list.distinct.size) Right(list.toSet) else Left("Duplicated values found")
 }

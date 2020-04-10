@@ -143,17 +143,6 @@ object PropertyType {
     def write(value: URL): String = value.toString
   }
 
-  case object SetType extends PropertyType[String, Set[String]] {
-    def read(value: String): Either[PropertyReadError[String], Set[String]] =
-      if (value.trim.startsWith("[") && value.trim.endsWith("]")) {
-        Right(value.drop(1).dropRight(1).split(",").toSet)
-      } else {
-        Left(PropertyReadError(value, "set"))
-      }
-
-    def write(value: Set[String]): String = value.mkString("[", ",", "]")
-  }
-
   private def attempt[A, E](a: => A, f: Throwable => E): Either[E, A] =
     Try(a) match {
       case Success(value)     => Right(value)

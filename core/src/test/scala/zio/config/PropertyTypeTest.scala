@@ -138,17 +138,6 @@ object PropertyTypeTest
           propType = UrlType,
           genValid = genValidUrlString,
           parse = new URL(_)
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "Set",
-          propType = SetType,
-          genValid = genValidSetString,
-          parse = input =>
-            if (input.matches("\\[.*\\]")) {
-              input.dropRight(1).drop(1).split(",").toSet
-            } else {
-              throw new IllegalArgumentException(s"For input string: '$input'")
-            }
         )
       )
     )
@@ -353,7 +342,4 @@ object PropertyTypeTestUtils {
   val genLocalTimeString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
 
-  val genValidSetString: Gen[Random with Sized, String] =
-    listOfBounded(0, 10)(crossN(anyInt, anyString, anyDouble) { case (i, s, d) => s"$i, $s, $d" })
-      .map(_.mkString("[", ",", "]"))
 }
