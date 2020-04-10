@@ -1,13 +1,9 @@
 package zio.config.examples.typesafe
 
-import com.typesafe.config.ConfigRenderOptions
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypeSafeConfigSource
-import zio.config.typesafe._
 
-// Why Maybe[NonEmptyList] could be the right thing to do, stays as a limitation to zio-config:
-// https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
 object NonEmptyListExample extends App with EitherImpureOps {
   val configString =
     """
@@ -207,16 +203,7 @@ object NonEmptyListExample extends App with EitherImpureOps {
       W(X(Y("k")))
     )
 
-  val writtenBack =
-    write(descriptor[A], result).loadOrThrow.toHocon
-      .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
-
-  println(writtenBack)
-
-  val readWritten = read(descriptor[A] from TypeSafeConfigSource.fromHoconString(writtenBack).loadOrThrow)
-
   assert(zioConfigResult == Right(result))
-  assert(zioConfigResult.loadOrThrow == readWritten.loadOrThrow)
 
   val kebabCaseConfig =
     """
