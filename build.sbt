@@ -134,7 +134,7 @@ lazy val zioConfigTypesafe =
       ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
-    .dependsOn(zioConfig % "compile->compile;test->test", zioConfigMagnolia)
+    .dependsOn(zioConfig % "compile->compile;test->test", zioConfigMagnolia % "test")
 
 def module(moduleName: String, fileName: String): Project =
   Project(moduleName, file(fileName))

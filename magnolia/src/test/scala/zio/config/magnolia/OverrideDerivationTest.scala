@@ -23,7 +23,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
       val res = write(descriptor[Cfg], Cfg("a"))
 
       assert(res)(isRight(equalTo(Record(Map("prefix_field_name" -> Leaf("a")))))) &&
-      assert(res.map(ConfigSource(_, Set.empty)).flatMap(v => read(descriptor[Cfg] from v)))(
+      assert(res.map(ConfigSource.fromPropertyTree(_, "tree")).flatMap(v => read(descriptor[Cfg] from v)))(
         isRight(equalTo(Cfg("a")))
       )
     },
@@ -38,7 +38,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       case class Outer(list: List[Inner])
 
-      implicit val cInner: Typeclass[Inner] = descriptor[Inner]
+      implicit val cInner: Descriptor[Inner] = descriptor[Inner]
 
       val _ = cInner
 
@@ -61,7 +61,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       assert(res)(isRight(equalTo(expected))) &&
       assert(
-        res.map(ConfigSource(_, Set.empty)).flatMap(v => read(descriptor[Outer] from v))
+        res.map(ConfigSource.fromPropertyTree(_, "tree")).flatMap(v => read(descriptor[Outer] from v))
       )(
         isRight(equalTo(cfg))
       )
@@ -95,7 +95,11 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
       )
 
       assert(res)(isRight(equalTo(expected))) &&
-      assert(res.map(ConfigSource(_, Set.empty)).flatMap(v => read(DeriveConfigDescriptor.descriptor[Outer] from v)))(
+      assert(
+        res
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
+          .flatMap(v => read(DeriveConfigDescriptor.descriptor[Outer] from v))
+      )(
         isRight(equalTo(cfg))
       )
     }

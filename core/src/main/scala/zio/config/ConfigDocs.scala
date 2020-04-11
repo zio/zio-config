@@ -7,9 +7,10 @@ object ConfigDocs {
 
   final case class Sources(set: Set[String])
 
-  final case object Empty                                                       extends ConfigDocs[Nothing, Nothing]
-  final case class NestedPath[K, V](path: K, docs: ConfigDocs[K, V])            extends ConfigDocs[K, V]
-  final case class Both[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])  extends ConfigDocs[K, V]
-  final case class OneOf[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V]) extends ConfigDocs[K, V]
-  final case class Sequence[K, V](element: List[ConfigDocs[K, V]])              extends ConfigDocs[K, V]
+  final case object Empty                                                               extends ConfigDocs[Nothing, Nothing]
+  final case class NestedPath[K, V](path: K, docs: ConfigDocs[K, V])                    extends ConfigDocs[K, V]
+  final case class Both[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])          extends ConfigDocs[K, V]
+  final case class OneOf[K, V](left: ConfigDocs[K, V], right: ConfigDocs[K, V])         extends ConfigDocs[K, V]
+  final case class Sequence[K, V](element: List[ConfigDocs[K, V]])                      extends ConfigDocs[K, V]
+  final case class DynamicMap[K, V](element: scala.collection.Map[K, ConfigDocs[K, V]]) extends ConfigDocs[K, V]
 }

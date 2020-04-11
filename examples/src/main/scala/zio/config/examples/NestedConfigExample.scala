@@ -20,7 +20,7 @@ object NestedConfigExample extends App {
   // For simplicity in example, we use map source. Works with HOCON.
   val source =
     ConfigSource.fromMap(
-      map = Map(
+      constantMap = Map(
         "south.connection" -> "abc.com",
         "east.connection"  -> "xyz.com",
         "east.port"        -> "8888",
