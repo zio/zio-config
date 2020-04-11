@@ -6,7 +6,7 @@ import magnolia._
 import zio.config.ConfigDescriptor._
 import zio.config.{ ConfigDescriptor, ConfigSource, PropertyType }
 
-import scala.annotation.tailrec
+import scala.annotation.{ implicitAmbiguous, tailrec }
 import scala.collection.JavaConverters._
 import scala.language.experimental.macros
 
@@ -82,26 +82,26 @@ trait DeriveConfigDescriptor { self =>
   protected def bigDecimalDesc: ConfigDescriptor[String, String, BigDecimal] = bigDecimal
   protected def uriDesc: ConfigDescriptor[String, String, URI]               = uri
 
-  implicit val implicitStringDesc: Typeclass[String]         = Descriptor(stringDesc)
-  implicit val implicitBooleanDesc: Typeclass[Boolean]       = Descriptor(booleanDesc)
-  implicit val implicitByteDesc: Typeclass[Byte]             = Descriptor(byteDesc)
-  implicit val implicitShortDesc: Typeclass[Short]           = Descriptor(shortDesc)
-  implicit val implicitIntDesc: Typeclass[Int]               = Descriptor(intDesc)
-  implicit val implicitLongDesc: Typeclass[Long]             = Descriptor(longDesc)
-  implicit val implicitBigIntDesc: Typeclass[BigInt]         = Descriptor(bigIntDesc)
-  implicit val implicitFloatDesc: Typeclass[Float]           = Descriptor(floatDesc)
-  implicit val implicitDoubleDesc: Typeclass[Double]         = Descriptor(doubleDesc)
-  implicit val implicitBigDecimalDesc: Typeclass[BigDecimal] = Descriptor(bigDecimalDesc)
-  implicit val implicitUriDesc: Typeclass[URI]               = Descriptor(uriDesc)
+  implicit val implicitStringDesc: Descriptor[String]         = Descriptor(stringDesc)
+  implicit val implicitBooleanDesc: Descriptor[Boolean]       = Descriptor(booleanDesc)
+  implicit val implicitByteDesc: Descriptor[Byte]             = Descriptor(byteDesc)
+  implicit val implicitShortDesc: Descriptor[Short]           = Descriptor(shortDesc)
+  implicit val implicitIntDesc: Descriptor[Int]               = Descriptor(intDesc)
+  implicit val implicitLongDesc: Descriptor[Long]             = Descriptor(longDesc)
+  implicit val implicitBigIntDesc: Descriptor[BigInt]         = Descriptor(bigIntDesc)
+  implicit val implicitFloatDesc: Descriptor[Float]           = Descriptor(floatDesc)
+  implicit val implicitDoubleDesc: Descriptor[Double]         = Descriptor(doubleDesc)
+  implicit val implicitBigDecimalDesc: Descriptor[BigDecimal] = Descriptor(bigDecimalDesc)
+  implicit val implicitUriDesc: Descriptor[URI]               = Descriptor(uriDesc)
 
-  implicit def implicitListDesc[A: Typeclass]: Typeclass[List[A]] =
-    Descriptor(listDesc(implicitly[Typeclass[A]].desc))
+  implicit def implicitListDesc[A: Descriptor]: Descriptor[List[A]] =
+    Descriptor(listDesc(implicitly[Descriptor[A]].desc))
 
-  implicit def implicitEitherDesc[A: Typeclass, B: Typeclass]: Typeclass[Either[A, B]] =
-    Descriptor(eitherDesc(implicitly[Typeclass[A]].desc, implicitly[Typeclass[B]].desc))
+  implicit def implicitEitherDesc[A: Descriptor, B: Descriptor]: Descriptor[Either[A, B]] =
+    Descriptor(eitherDesc(implicitly[Descriptor[A]].desc, implicitly[Descriptor[B]].desc))
 
-  implicit def implicitOptionDesc[A: Typeclass]: Typeclass[Option[A]] =
-    Descriptor(optionDesc(implicitly[Typeclass[A]].desc))
+  implicit def implicitOptionDesc[A: Descriptor]: Descriptor[Option[A]] =
+    Descriptor(optionDesc(implicitly[Descriptor[A]].desc))
 
   protected def listDesc[A](desc: ConfigDescriptor[String, String, A]): ConfigDescriptor[String, String, List[A]] =
     list(desc)
@@ -167,7 +167,7 @@ trait DeriveConfigDescriptor { self =>
   final def prepareFieldName(annotations: Seq[Any], name: String): String =
     annotations.collectFirst { case d: name => d.name }.getOrElse(mapFieldName(name))
 
-  final def combine[T](caseClass: CaseClass[Typeclass, T]): Typeclass[T] = {
+  final def combine[T](caseClass: CaseClass[Descriptor, T]): Descriptor[T] = {
     val descriptions = caseClass.annotations.collect { case d: describe => d.describe }
     val ccName       = prepareClassName(caseClass.annotations, caseClass.typeName.short)
 
@@ -181,7 +181,7 @@ trait DeriveConfigDescriptor { self =>
               _ => ccName
             )
           case head :: tail =>
-            def makeDescriptor(param: Param[Typeclass, T]): ConfigDescriptor[String, String, Any] = {
+            def makeDescriptor(param: Param[Descriptor, T]): ConfigDescriptor[String, String, Any] = {
               val descriptions =
                 param.annotations
                   .filter(_.isInstanceOf[describe])
@@ -207,7 +207,7 @@ trait DeriveConfigDescriptor { self =>
     Descriptor(descriptions.foldLeft(res)(_ ?? _), caseClass.isObject || caseClass.parameters.isEmpty)
   }
 
-  final def dispatch[T](sealedTrait: SealedTrait[Typeclass, T]): Typeclass[T] = {
+  final def dispatch[T](sealedTrait: SealedTrait[Descriptor, T]): Descriptor[T] = {
     val nameToLabel =
       sealedTrait.subtypes
         .map(tc => prepareClassName(tc.annotations, tc.typeName.short) -> tc.typeName.full)
@@ -253,12 +253,25 @@ trait DeriveConfigDescriptor { self =>
 
     implicit def needsDerive[R]: NeedsDerive[R] = NeedsDerive
 
+    @implicitAmbiguous(
+      "Can't derive ConfigDescriptor for `List[T]` directly." +
+        " Wrap it with a `case class Config(list: List[T])` or use `list(descriptor[T])` manually."
+    )
     implicit def needsDeriveAmbiguousList1: NeedsDerive[List[Nothing]] = NeedsDerive
     implicit def needsDeriveAmbiguousList2: NeedsDerive[List[Nothing]] = NeedsDerive
 
+    @implicitAmbiguous(
+      "Can't derive ConfigDescriptor for `Option[T]` directly." +
+        " Wrap it with a `case class Config(list: Option[T])` or use `descriptor[T].optional` manually."
+    )
     implicit def needsDeriveAmbiguousOption1: NeedsDerive[Option[Nothing]] = NeedsDerive
     implicit def needsDeriveAmbiguousOption2: NeedsDerive[Option[Nothing]] = NeedsDerive
 
+    @implicitAmbiguous(
+      "Can't derive ConfigDescriptor for `Either[A, B]` directly." +
+        " Wrap it with a `case class Config(list: Either[A, B])`" +
+        " or use `descriptor[A].orElseEither(descriptor[B])` manually."
+    )
     implicit def needsDeriveAmbiguousEither1: NeedsDerive[Either[Nothing, Nothing]] = NeedsDerive
     implicit def needsDeriveAmbiguousEither2: NeedsDerive[Either[Nothing, Nothing]] = NeedsDerive
   }
