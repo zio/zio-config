@@ -17,10 +17,11 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[String, String, T],
         path: Option[String]
       ): List[(Option[String], String)] = desc match {
-        case ConfigDescriptor.Default(config, _) => collectDescriptions(config, path)
-        case Describe(config, message)           => (path, message) :: collectDescriptions(config, path)
-        case Nested(path, config)                => collectDescriptions(config, Some(path))
-        case ConfigDescriptor.Optional(config)   => collectDescriptions(config, path)
+        case ConfigDescriptor.Default(config, _)    => collectDescriptions(config, path)
+        case ConfigDescriptor.DynamicMap(config, _) => collectDescriptions(config, path)
+        case Describe(config, message)              => (path, message) :: collectDescriptions(config, path)
+        case Nested(path, config)                   => collectDescriptions(config, Some(path))
+        case ConfigDescriptor.Optional(config)      => collectDescriptions(config, path)
         case ConfigDescriptor.OrElse(left, right) =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
         case ConfigDescriptor.OrElseEither(left, right) =>
@@ -46,6 +47,7 @@ object DerivationTest extends DefaultRunnableSpec {
       def collectPath[T](desc: ConfigDescriptor[String, String, T]): List[String] = desc match {
         case ConfigDescriptor.Default(config, _)        => collectPath(config)
         case Describe(config, _)                        => collectPath(config)
+        case ConfigDescriptor.DynamicMap(_, config)     => collectPath(config)
         case Nested(path, config)                       => path :: collectPath(config)
         case ConfigDescriptor.Optional(config)          => collectPath(config)
         case ConfigDescriptor.OrElse(left, right)       => collectPath(left) ::: collectPath(right)
@@ -66,11 +68,12 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[String, String, T],
         path: Option[String]
       ): List[(Option[String], Any)] = desc match {
-        case ConfigDescriptor.Default(config, v)  => (path -> v) :: collectDefault(config, path)
-        case Describe(config, _)                  => collectDefault(config, path)
-        case Nested(path, config)                 => collectDefault(config, Some(path))
-        case ConfigDescriptor.Optional(config)    => collectDefault(config, path)
-        case ConfigDescriptor.OrElse(left, right) => collectDefault(left, path) ::: collectDefault(right, path)
+        case ConfigDescriptor.Default(config, v)    => (path -> v) :: collectDefault(config, path)
+        case Describe(config, _)                    => collectDefault(config, path)
+        case ConfigDescriptor.DynamicMap(_, config) => collectDefault(config)
+        case Nested(path, config)                   => collectDefault(config, Some(path))
+        case ConfigDescriptor.Optional(config)      => collectDefault(config, path)
+        case ConfigDescriptor.OrElse(left, right)   => collectDefault(left, path) ::: collectDefault(right, path)
         case ConfigDescriptor.OrElseEither(left, right) =>
           collectDefault(left, path) ::: collectDefault(right, path)
         case ConfigDescriptor.Sequence(_, config)      => collectDefault(config, path)
@@ -92,7 +95,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Record(Map("a" -> Sequence(List(loop(depth - 1)))))
         else Leaf("str")
 
-      val src = ConfigSource(loop(5), Set.empty)
+      val src = ConfigSource.fromPropertyTree(loop(5), "tree")
 
       val res = read(descriptor[A5] from src)
 
@@ -106,7 +109,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Record(Map("a" -> Sequence(List(loop(depth - 1)))))
         else Leaf("str")
 
-      val src = ConfigSource(loop(5), Set.empty)
+      val src = ConfigSource.fromPropertyTree(loop(5), "tree")
 
       val res = read(descriptor[A5] from src)
 
@@ -124,7 +127,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Sequence(List(loop(depth - 1)))
         else Record(Map("a" -> Sequence(List(Leaf("s")))))
 
-      val src = ConfigSource(Record(Map("a" -> loop(10))), Set.empty)
+      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree")
 
       val res = read(descriptor[B] from src)
 
@@ -138,7 +141,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Sequence(List(loop(depth - 1)))
         else Record(Map("a" -> Sequence(List(Leaf("s")))))
 
-      val src = ConfigSource(Record(Map("a" -> loop(10))), Set.empty)
+      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree")
 
       val res = read(descriptor[B] from src)
 
