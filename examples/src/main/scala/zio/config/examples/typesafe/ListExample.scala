@@ -1,5 +1,6 @@
 package zio.config.examples.typesafe
 
+import com.typesafe.config.ConfigRenderOptions
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypeSafeConfigSource
@@ -151,7 +152,28 @@ object ListExample extends App with EitherImpureOps {
   val zioConfigResult =
     read(descriptor[A] from source)
 
-  val result =
+  val anoth =
+    A(
+      List(
+        B(
+          List(
+            C(
+              List(
+                // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
+                D(List(1, 1), List("a", "b", "c")),
+                D(List(12, 12), List("d"))
+              )
+            )
+          ),
+          "some_name",
+          List("aa")
+        )
+      ),
+      X(Y("k")),
+      W(X(Y("k")))
+    )
+
+  val expectedResult =
     A(
       List(
         B(
@@ -203,7 +225,18 @@ object ListExample extends App with EitherImpureOps {
       W(X(Y("k")))
     )
 
-  assert(zioConfigResult == Right(result))
+  import zio.config.typesafe._
+
+  // Being able to write back hocon
+  val written =
+    write(descriptor[A], expectedResult).loadOrThrow.toHocon
+      .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
+
+  val readWritten = read(descriptor[A] from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
+
+  assert(readWritten == zioConfigResult)
+
+  assert(zioConfigResult == Right(expectedResult))
 
   val kebabCaseConfig =
     """

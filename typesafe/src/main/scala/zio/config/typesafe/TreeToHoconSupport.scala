@@ -7,7 +7,7 @@ import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 
-private[typesafe] trait PropertyTreeFunctions {
+private[typesafe] trait TreeToHoconSupport {
   def treeToTypesafeConfig(
     tree: PropertyTree[String, String]
   ): com.typesafe.config.ConfigObject =
@@ -17,7 +17,11 @@ private[typesafe] trait PropertyTreeFunctions {
     tree match {
       case leaf @ Leaf(_)     => loopLeaf(key, leaf)
       case record @ Record(_) => loopRecord(record)
-      case PropertyTree.Empty => ConfigFactory.empty().root()
+      case PropertyTree.Empty =>
+        key.fold(ConfigFactory.empty().root()) { k =>
+          ConfigFactory.empty().withValue(k, ConfigValueFactory.fromAnyRef(null: Option[String])).root()
+        }
+
       case seqq @ Sequence(_) => loopSequence(key, seqq)
     }
 
@@ -51,7 +55,14 @@ private[typesafe] trait PropertyTreeFunctions {
             .empty()
             .withValue(
               key,
-              ConfigValueFactory.fromIterable(tree.value.map(loopAny(_, None)).asJava)
+              ConfigValueFactory.fromIterable(
+                tree.value
+                  .map({ t =>
+                    val newObj = loopAny(t, Some(key))
+                    newObj.getOrDefault(key, newObj)
+                  })
+                  .asJava
+              )
             )
             .root()
         }

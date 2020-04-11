@@ -5,6 +5,7 @@ import zio.config.ConfigDescriptor.{ Source => _, _ }
 import zio.test.Assertion._
 import zio.test._
 import TypesafeConfigMapSpecUtils._
+import TypesafeConfigTestSupport._
 
 object TypesafeConfigMapSpec
     extends BaseSpec(
@@ -148,7 +149,4 @@ object TypesafeConfigMapSpecUtils {
        |}
        |""".stripMargin
 
-  implicit class ImpureEitherOps[A, B](s: Either[A, B]) {
-    def loadOrThrow: B = s.fold(_ => throw new Exception("failed"), identity)
-  }
 }
