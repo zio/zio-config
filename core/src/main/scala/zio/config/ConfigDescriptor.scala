@@ -309,6 +309,9 @@ object ConfigDescriptor {
   def setStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Set[A]] =
     listStrict(desc).xmapEither(distinctListToSet, s => Right(s.toList))
 
+  def setStrict[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Set[A]] =
+    nested(path)(setStrict(desc))
+
   private def distinctListToSet[A](list: List[A]): Either[String, Set[A]] =
     if (list.size == list.distinct.size) Right(list.toSet) else Left("Duplicated values found")
 }
