@@ -15,7 +15,12 @@ object SetTest
 
           val cCfg = (string("a") |@| set("b")(string))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))), Set.empty))
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
+              "tree"
+            )
+          )
 
           assert(res)(isRight(equalTo(Cfg("sa", Set.empty))))
         },
@@ -26,7 +31,10 @@ object SetTest
 
           val res =
             read(
-              cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Sequence(Nil) :: Nil))), Set.empty)
+              cCfg from ConfigSource.fromPropertyTree(
+                Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Sequence(Nil) :: Nil))),
+                "tree"
+              )
             )
 
           assert(res)(isRight(equalTo(Cfg("sa", Set(Set.empty)))))
@@ -37,7 +45,12 @@ object SetTest
           val cCfg = (string("a") |@| set("b")(string).optional)(Cfg, Cfg.unapply)
 
           val res =
-            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"))), Set.empty))
+            read(
+              cCfg from ConfigSource.fromPropertyTree(
+                Record(Map("a" -> Leaf("sa"))),
+                "tree"
+              )
+            )
 
           assert(res)(isRight(equalTo(Cfg("sa", None))))
         },
@@ -47,7 +60,12 @@ object SetTest
           val cCfg = (string("a") |@| set("b")(string).optional)(Cfg, Cfg.unapply)
 
           val res =
-            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))), Set.empty))
+            read(
+              cCfg from ConfigSource.fromPropertyTree(
+                Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
+                "tree"
+              )
+            )
 
           assert(res)(isRight(equalTo(Cfg("sa", Some(Set.empty)))))
         },
@@ -56,7 +74,12 @@ object SetTest
 
           val cCfg = (string("a") |@| set("b")(string).default(Set("x")))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"))), Set.empty))
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(Map("a" -> Leaf("sa"))),
+              "tree"
+            )
+          )
 
           assert(res)(isRight(equalTo(Cfg("sa", Set("x")))))
         },
@@ -65,7 +88,12 @@ object SetTest
 
           val cCfg = (string("a") |@| set("b")(string).default(Set("x")))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))), Set.empty))
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
+              "tree"
+            )
+          )
 
           assert(res)(isRight(equalTo(Cfg("sa", Set.empty))))
         },
@@ -74,8 +102,12 @@ object SetTest
 
           val cCfg = (string("a") |@| nested("b")(setStrict(string).orElseEither(string)))(Cfg, Cfg.unapply)
 
-          val res =
-            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))), Set.empty))
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))),
+              "tree"
+            )
+          )
 
           assert(res)(isRight(equalTo(Cfg("sa", Left(Set("v"))))))
         },
@@ -84,8 +116,12 @@ object SetTest
 
           val cCfg = (string("a") |@| nested("b")(string.orElseEither(setStrict(string))))(Cfg, Cfg.unapply)
 
-          val res =
-            read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))), Set.empty))
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))),
+              "tree"
+            )
+          )
 
           assert(res)(isRight(equalTo(Cfg("sa", Right(Set("v"))))))
         },
@@ -94,7 +130,12 @@ object SetTest
 
           val cCfg = (string("a") |@| nested("b")(string.orElseEither(setStrict(string))))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Set.empty))
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))),
+              "tree"
+            )
+          )
 
           assert(res)(isRight(equalTo(Cfg("sa", Left("v")))))
         },
@@ -103,7 +144,12 @@ object SetTest
 
           val cCfg = (string("a") |@| nested("b")(setStrict(string).orElseEither(string)))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Set.empty))
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))),
+              "tree"
+            )
+          )
 
           assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
         },
@@ -112,7 +158,12 @@ object SetTest
 
           val cCfg = (string("a") |@| set("b")(string))(Cfg, Cfg.unapply)
 
-          val res = read(cCfg from ConfigSource(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Set.empty))
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))),
+              "tree"
+            )
+          )
 
           assert(res)(isRight(equalTo(Cfg("sa", Set("v")))))
         },
@@ -122,9 +173,9 @@ object SetTest
           val cCfg = (string("a") |@| head("b")(string))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource(
+            cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Nil))),
-              Set.empty
+              "tree"
             )
           )
 
@@ -136,7 +187,7 @@ object SetTest
           val cCfg = (string("a") |@| set("b")(setStrict(string("c"))))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource(
+            cCfg from ConfigSource.fromPropertyTree(
               Record(
                 Map(
                   "a" -> Leaf("sa"),
@@ -148,7 +199,7 @@ object SetTest
                   )
                 )
               ),
-              Set.empty
+              "tree"
             )
           )
 
@@ -160,11 +211,11 @@ object SetTest
           val cCfg = (string("a") |@| nested("b")(setStrict(string)))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource(
+            cCfg from ConfigSource.fromPropertyTree(
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Record[String, String](Map.empty) :: Sequence(Nil) :: Nil))
               ),
-              Set.empty
+              "tree"
             )
           )
 
@@ -176,11 +227,11 @@ object SetTest
           val cCfg = (string("a") |@| nested("b")(set(string)))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource(
+            cCfg from ConfigSource.fromPropertyTree(
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Leaf("v1") :: Nil))
               ),
-              Set.empty
+              "tree"
             )
           )
 
@@ -192,7 +243,7 @@ object SetTest
           val cCfg = (string("a") |@| set("b")(setStrict(string("c"))))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource(
+            cCfg from ConfigSource.fromPropertyTree(
               Record(
                 Map(
                   "a" -> Leaf("sa"),
@@ -207,7 +258,7 @@ object SetTest
                   )
                 )
               ),
-              Set.empty
+              "tree"
             )
           )
 
