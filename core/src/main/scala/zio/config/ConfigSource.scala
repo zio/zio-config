@@ -16,29 +16,18 @@ import zio.Task
 
 import scala.annotation.tailrec
 
-sealed trait ConfigSource[K, V] { self =>
-  def sourceDescription: Set[String]
+final case class ConfigSource[K, V](
+  sourceDescription: Set[String],
+  getConfigValue: List[K] => PropertyTree[K, V]
+) { self =>
 
-  def getConfigValue(path: List[K]): PropertyTree[K, V]
+  def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
+    ConfigSource(
+      self.sourceDescription ++ that.sourceDescription,
+      path => self.getConfigValue(path).getOrElse(that.getConfigValue(path))
+    )
 
-  final def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] = new MergedConfigSource(self, that)
-
-  final def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] = self orElse that
-}
-
-final case class TreeConfigSource[K, V](tree: PropertyTree[K, V], sourceDescription: Set[String])
-    extends ConfigSource[K, V] {
-  def getConfigValue(path: List[K]): PropertyTree[K, V] = tree.getPath(path)
-}
-final class MergedConfigSource[K, V](_left: => ConfigSource[K, V], _right: => ConfigSource[K, V])
-    extends ConfigSource[K, V] {
-  private lazy val left  = _left
-  private lazy val right = _right
-
-  def getConfigValue(path: List[K]): PropertyTree[K, V] =
-    left.getConfigValue(path).getOrElse(right.getConfigValue(path))
-
-  lazy val sourceDescription: Set[String] = left.sourceDescription ++ right.sourceDescription
+  def <>(that: => ConfigSource[K, V]): ConfigSource[K, V] = self orElse that
 }
 
 object ConfigSource {
@@ -46,8 +35,8 @@ object ConfigSource {
   private[config] val SystemProperties     = "system properties"
   private[config] val CommandLineArguments = "command line arguments"
 
-  def empty[K, V]: ConfigSource[K, V]                                       = TreeConfigSource(PropertyTree.empty, Set.empty)
-  def apply[K, V](tree: PropertyTree[K, V], sourceDescription: Set[String]) = TreeConfigSource(tree, sourceDescription)
+  def empty[K, V]: ConfigSource[K, V] =
+    ConfigSource(Set.empty, _ => PropertyTree.empty)
 
   /**
    * EXPERIMENTAL
@@ -92,7 +81,11 @@ object ConfigSource {
     valueDelimiter: Option[Char] = None
   ): ConfigSource[String, String] =
     ConfigSource.fromPropertyTrees(
-      getPropertyTreeFromArgs(args.filter(_.nonEmpty), keyDelimiter, valueDelimiter),
+      getPropertyTreeFromArgs(
+        args.filter(_.nonEmpty),
+        keyDelimiter,
+        valueDelimiter
+      ),
       CommandLineArguments
     )
 
@@ -118,19 +111,16 @@ object ConfigSource {
    * }}}
    */
   def fromMap(
-    map: Map[String, String],
+    constantMap: Map[String, String],
     source: String = "constant",
     keyDelimiter: Option[Char] = None,
     valueDelimter: Option[Char] = None
   ): ConfigSource[String, String] =
-    fromMapInternal(map)(
-      x => {
-        val listOfValues = valueDelimter.fold(List(x))(delim => x.split(delim).toList)
-        ::(listOfValues.head, listOfValues.tail)
-      },
-      keyDelimiter,
-      source
-    )
+    fromMapInternal(constantMap)(x => {
+      val listOfValues =
+        valueDelimter.fold(List(x))(delim => x.split(delim).toList)
+      ::(listOfValues.head, listOfValues.tail)
+    }, keyDelimiter, source)
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -185,9 +175,12 @@ object ConfigSource {
     keyDelimiter: Option[Char] = None,
     valueDelimiter: Option[Char] = None
   ): ConfigSource[String, String] = {
-    val mapString = property.stringPropertyNames().asScala.foldLeft(Map.empty[String, String]) { (acc, a) =>
-      acc.updated(a, property.getProperty(a))
-    }
+    val mapString = property
+      .stringPropertyNames()
+      .asScala
+      .foldLeft(Map.empty[String, String]) { (acc, a) =>
+        acc.updated(a, property.getProperty(a))
+      }
 
     mergeAll(
       unwrapSingletonLists(
@@ -225,16 +218,21 @@ object ConfigSource {
     valueDelimiter: Option[Char] = None
   ): Task[ConfigSource[String, String]] =
     for {
-      properties <- ZIO.bracket(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))(
-                     inputStream => {
-                       ZIO.effect {
-                         val properties = new java.util.Properties()
-                         properties.load(inputStream)
-                         properties
-                       }
+      properties <- ZIO.bracket(
+                     ZIO.effect(new FileInputStream(new File(filePath)))
+                   )(r => ZIO.effectTotal(r.close()))(inputStream => {
+                     ZIO.effect {
+                       val properties = new java.util.Properties()
+                       properties.load(inputStream)
+                       properties
                      }
-                   )
-    } yield ConfigSource.fromProperties(properties, filePath, keyDelimiter, valueDelimiter)
+                   })
+    } yield ConfigSource.fromProperties(
+      properties,
+      filePath,
+      keyDelimiter,
+      valueDelimiter
+    )
 
   def fromSystemEnv: UIO[ConfigSource[String, String]] =
     fromSystemEnv(None, None)
@@ -262,10 +260,17 @@ object ConfigSource {
    *
    * Note: The delimiter '.' for keys doesn't work in system environment.
    */
-  def fromSystemEnv(keyDelimiter: Option[Char], valueDelimiter: Option[Char]): UIO[ConfigSource[String, String]] =
+  def fromSystemEnv(
+    keyDelimiter: Option[Char],
+    valueDelimiter: Option[Char]
+  ): UIO[ConfigSource[String, String]] =
     UIO
       .effectTotal(sys.env)
-      .map(map => ConfigSource.fromMap(map, SystemEnvironment, keyDelimiter, valueDelimiter))
+      .map(
+        map =>
+          ConfigSource
+            .fromMap(map, SystemEnvironment, keyDelimiter, valueDelimiter)
+      )
 
   def fromSystemProperties: UIO[ConfigSource[String, String]] =
     fromSystemProperties(None, None)
@@ -304,25 +309,20 @@ object ConfigSource {
       valueDelimiter = valueDelimiter
     )
 
-  private[config] def fromMapInternal[A, B](
-    map: Map[String, A]
-  )(f: A => ::[B], keyDelimiter: Option[Char], source: String): ConfigSource[String, B] =
+  private[config] def fromMapInternal[A, B](map: Map[String, A])(
+    f: A => ::[B],
+    keyDelimiter: Option[Char],
+    source: String
+  ): ConfigSource[String, B] =
     fromPropertyTrees(
-      unwrapSingletonLists(
-        dropEmpty(
-          unflatten(
-            map.map(
-              tuple => {
-                val vectorOfKeys = keyDelimiter match {
-                  case Some(keyDelimiter) => tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
-                  case None               => Vector(tuple._1)
-                }
-                vectorOfKeys -> f(tuple._2)
-              }
-            )
-          )
-        )
-      ),
+      unwrapSingletonLists(dropEmpty(unflatten(map.map(tuple => {
+        val vectorOfKeys = keyDelimiter match {
+          case Some(keyDelimiter) =>
+            tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
+          case None => Vector(tuple._1)
+        }
+        vectorOfKeys -> f(tuple._2)
+      })))),
       source
     )
 
@@ -330,31 +330,42 @@ object ConfigSource {
     if (tree.isEmpty) PropertyTree.Empty
     else
       tree match {
-        case l @ Leaf(_)        => l
-        case Record(value)      => Record(value.filterNot { case (_, v) => v.isEmpty })
+        case l @ Leaf(_) => l
+        case Record(value) =>
+          Record(value.filterNot { case (_, v) => v.isEmpty })
         case PropertyTree.Empty => PropertyTree.Empty
         case Sequence(value)    => Sequence(value.filterNot(_.isEmpty))
       }
 
-  private def dropEmpty[K, V](trees: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] = {
+  private def dropEmpty[K, V](
+    trees: List[PropertyTree[K, V]]
+  ): List[PropertyTree[K, V]] = {
     val res = trees.map(dropEmpty(_)).filterNot(_.isEmpty)
     if (res.isEmpty) PropertyTree.Empty :: Nil
     else res
   }
 
-  private def unwrapSingletonLists[K, V](tree: PropertyTree[K, V]): PropertyTree[K, V] = tree match {
-    case l @ Leaf(_)            => l
-    case Record(value)          => Record(value.map { case (k, v) => k -> unwrapSingletonLists(v) })
+  private def unwrapSingletonLists[K, V](
+    tree: PropertyTree[K, V]
+  ): PropertyTree[K, V] = tree match {
+    case l @ Leaf(_) => l
+    case Record(value) =>
+      Record(value.map { case (k, v) => k -> unwrapSingletonLists(v) })
     case PropertyTree.Empty     => PropertyTree.Empty
     case Sequence(value :: Nil) => unwrapSingletonLists(value)
     case Sequence(value)        => Sequence(value.map(unwrapSingletonLists(_)))
   }
 
-  private def unwrapSingletonLists[K, V](trees: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
+  private def unwrapSingletonLists[K, V](
+    trees: List[PropertyTree[K, V]]
+  ): List[PropertyTree[K, V]] =
     trees.map(unwrapSingletonLists(_))
 
-  private[config] def fromPropertyTree[B](tree: PropertyTree[String, B], source: String): ConfigSource[String, B] =
-    ConfigSource(tree, Set(source))
+  private[config] def fromPropertyTree[K, B](
+    tree: PropertyTree[K, B],
+    source: String
+  ): ConfigSource[K, B] =
+    ConfigSource(Set(source), tree.getPath)
 
   private[config] def fromPropertyTrees[B](
     trees: Iterable[PropertyTree[String, B]],
@@ -420,9 +431,9 @@ object ConfigSource {
       )
 
     def toSeq[V](leaf: String): PropertyTree[String, String] =
-      valueDelimiter.fold(Sequence(List(Leaf(leaf))): PropertyTree[String, String])(
-        c => Sequence[String, String](leaf.split(c).toList.map(Leaf(_)))
-      )
+      valueDelimiter.fold(
+        Sequence(List(Leaf(leaf))): PropertyTree[String, String]
+      )(c => Sequence[String, String](leaf.split(c).toList.map(Leaf(_))))
 
     def loop(args: List[String]): List[PropertyTree[String, String]] =
       args match {
@@ -435,20 +446,25 @@ object ConfigSource {
                     unFlattenWith(l2.value, toSeq(r2.value)) :: loop(h3)
 
                 case (Both(l1, r1), This(l2)) =>
-                  unFlattenWith(l1.value, toSeq(r1.value)) :: h3.headOption.fold(
-                    List.empty[PropertyTree[String, String]]
-                  )(
-                    x =>
-                      loop(List(x)).map(
-                        tree => unFlattenWith(l2.value, tree)
-                      ) ++ loop(h3.tail)
-                  )
+                  unFlattenWith(l1.value, toSeq(r1.value)) :: h3.headOption
+                    .fold(List.empty[PropertyTree[String, String]])(
+                      x =>
+                        loop(List(x))
+                          .map(tree => unFlattenWith(l2.value, tree)) ++ loop(
+                          h3.tail
+                        )
+                    )
 
                 case (Both(l1, r1), That(r2)) =>
-                  unFlattenWith(l1.value, toSeq(r1.value)) :: toSeq(r2.value) :: loop(h3)
+                  unFlattenWith(l1.value, toSeq(r1.value)) :: toSeq(r2.value) :: loop(
+                    h3
+                  )
 
                 case (This(l1), Both(l2, r2)) =>
-                  unFlattenWith(l1.value, unFlattenWith(l2.value, toSeq(r2.value))) :: loop(h3)
+                  unFlattenWith(
+                    l1.value,
+                    unFlattenWith(l2.value, toSeq(r2.value))
+                  ) :: loop(h3)
 
                 case (This(l1), This(l2)) =>
                   val keysAndTrees =
@@ -462,8 +478,16 @@ object ConfigSource {
 
                       keys.fold(List.empty[PropertyTree[String, String]]) { nestedKeys =>
                         trees
-                          .map(tree => unflatten(l2.value :: nestedKeys.map(_.value), tree))
-                          .map(tree => unFlattenWith(l1.value, tree)) ++ loop(h3.drop(index + 1))
+                          .map(
+                            tree =>
+                              unflatten(
+                                l2.value :: nestedKeys.map(_.value),
+                                tree
+                              )
+                          )
+                          .map(tree => unFlattenWith(l1.value, tree)) ++ loop(
+                          h3.drop(index + 1)
+                        )
                       }
 
                     case None => Nil
@@ -473,13 +497,17 @@ object ConfigSource {
                   unFlattenWith(l1.value, toSeq(r2.value)) :: loop(h3)
 
                 case (That(r1), Both(l2, r2)) =>
-                  toSeq(r1.value) :: unFlattenWith(l2.value, toSeq(r2.value)) :: loop(h3)
+                  toSeq(r1.value) :: unFlattenWith(l2.value, toSeq(r2.value)) :: loop(
+                    h3
+                  )
 
                 case (That(r1), That(r2)) =>
                   toSeq(r1.value) :: toSeq(r2.value) :: loop(h3)
 
                 case (That(r1), This(l2)) =>
-                  toSeq(r1.value) :: loop(h3).map(tree => unFlattenWith(l2.value, tree))
+                  toSeq(r1.value) :: loop(h3).map(
+                    tree => unFlattenWith(l2.value, tree)
+                  )
               }
 
             case (Some(_), None) =>
@@ -507,7 +535,9 @@ object ConfigSource {
     unwrapSingletonLists(dropEmpty(PropertyTree.mergeAll(loop(args))))
   }
 
-  private[config] def mergeAll[K, V](sources: Iterable[ConfigSource[K, V]]): ConfigSource[K, V] =
+  private[config] def mergeAll[K, V](
+    sources: Iterable[ConfigSource[K, V]]
+  ): ConfigSource[K, V] =
     sources.reduceLeftOption(_ orElse _).getOrElse(ConfigSource.empty)
 
   @tailrec

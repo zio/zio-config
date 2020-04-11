@@ -1,5 +1,7 @@
 package zio.config
 
+import zio.config.PropertyTree.Record
+
 private[config] trait WriteFunctions {
 
   final def write[K, V, A](config: ConfigDescriptor[K, V, A], a: A): Either[String, PropertyTree[K, V]] = {
@@ -10,6 +12,10 @@ private[config] trait WriteFunctions {
 
         case ConfigDescriptor.Describe(c, _) =>
           go(c, b)
+
+        case cd: ConfigDescriptor.DynamicMap[K, V, a] =>
+          val bs = (b: Map[K, a]).toList.map(t => (t._1 -> go(cd.config, t._2)))
+          seqMap(bs.toMap).map(t => Record(t))
 
         case ConfigDescriptor.Nested(parent, c) =>
           go(c, b) match {

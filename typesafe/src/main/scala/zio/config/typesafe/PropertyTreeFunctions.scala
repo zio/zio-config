@@ -1,65 +1,63 @@
 package zio.config.typesafe
 
-import com.typesafe.config.{ ConfigFactory, ConfigValueFactory }
+import com.typesafe.config._
 import zio.config.PropertyTree
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import scala.collection.JavaConverters._
 
+import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 
 private[typesafe] trait PropertyTreeFunctions {
   def treeToTypesafeConfig(
     tree: PropertyTree[String, String]
-  ): com.typesafe.config.ConfigObject = {
-    def loop(tree: PropertyTree[String, String], keys: Vector[String]): com.typesafe.config.Config =
-      tree match {
-        case Leaf(value) =>
-          keys.lastOption.fold(ConfigFactory.empty())(
-            last => ConfigFactory.empty().withValue(last, ConfigValueFactory.fromAnyRef(value))
-          )
+  ): com.typesafe.config.ConfigObject =
+    loopAny(tree, None)
 
-        case Record(value) =>
-          value.toList.foldLeft(ConfigFactory.empty(): com.typesafe.config.Config) {
-            case (acc, (k, v)) =>
-              val path = keys :+ k
-              val nextConfig =
-                keys.toList match {
-                  // typsafe config uses path expressions using hardcoded dot
-                  case _ :: t if t.nonEmpty => loop(v, path).getObject(t.mkString("."))
-                  case _                    => loop(v, path).root()
-                }
+  def loopAny(tree: PropertyTree[String, String], key: Option[String]): com.typesafe.config.ConfigObject =
+    tree match {
+      case leaf @ Leaf(_)     => loopLeaf(key, leaf)
+      case record @ Record(_) => loopRecord(record)
+      case PropertyTree.Empty => ConfigFactory.empty().root()
+      case seqq @ Sequence(_) => loopSequence(key, seqq)
+    }
 
-              keys.headOption match {
-                case Some(head) => acc.withValue(head, nextConfig)
-                case None       => acc.withFallback(nextConfig.toConfig)
-              }
-          }
-        case PropertyTree.Empty => ConfigFactory.empty()
-        case Sequence(values) =>
-          keys.headOption match {
-            case Some(head) =>
-              val r = partitionWith(values) {
-                case Leaf(value) => Leaf(value)
-              }
+  def loopLeaf(key: Option[String], tree: Leaf[String]): ConfigObject =
+    key
+      .fold(ConfigFactory.empty())(
+        last => ConfigFactory.empty().withValue(last, ConfigValueFactory.fromAnyRef(tree.value))
+      )
+      .root()
 
-              if (r.nonEmpty)
-                ConfigFactory.empty().withValue(head, ConfigValueFactory.fromIterable(r.map(_.value).asJava))
-              else
-                ConfigFactory
-                  .empty()
-                  .withValue(
-                    head,
-                    ConfigValueFactory.fromIterable(values.map(loop(_, Vector.empty).root()).asJava)
-                  )
-                  .root()
-                  .toConfig
+  def loopRecord(tree: Record[String, String]): ConfigObject =
+    tree.value.toList.foldLeft(ConfigFactory.empty().root()) {
+      case (acc, (k, tree)) =>
+        val newObject =
+          loopAny(tree, Some(k))
 
-            case None => ConfigFactory.empty()
-          }
-      }
+        acc.withValue(k, newObject.getOrDefault(k, newObject))
+    }
 
-    loop(tree, Vector.empty).root()
-  }
+  def loopSequence(key: Option[String], tree: Sequence[String, String]): ConfigObject =
+    key match {
+      case Some(key) =>
+        val leaves = partitionWith(tree.value) {
+          case Leaf(value) => Leaf(value)
+        }
+
+        if (leaves.nonEmpty)
+          ConfigFactory.empty().withValue(key, ConfigValueFactory.fromIterable(leaves.map(_.value).asJava)).root()
+        else {
+          ConfigFactory
+            .empty()
+            .withValue(
+              key,
+              ConfigValueFactory.fromIterable(tree.value.map(loopAny(_, None)).asJava)
+            )
+            .root()
+        }
+
+      case None => ConfigFactory.empty().root()
+    }
 
   def partitionWith[K, V, A](
     trees: List[PropertyTree[K, V]]
