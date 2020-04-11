@@ -104,11 +104,11 @@ private[config] trait ReadFunctions {
         case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Record")
         case PropertyTree.Record(values) =>
           val result: List[(K, Res[B])] = values.toList.zipWithIndex.map {
-            case ((k, tree), idx) =>
+            case ((k, tree), _) =>
               val source: ConfigSource[K, V] =
                 ConfigSource(cfg.source.sourceDescription, tree.getPath)
 
-              (k, loopAny(Step.Index(idx) :: path, Nil, cfg.config.updateSource(_ => source)))
+              (k, loopAny(path, Nil, cfg.config.updateSource(_ => source)))
           }
 
           seqMap2[K, ReadError[K], B, ReadError[K]]((index, k, error) => error.atKey(k).atIndex(index))(result.toMap).swap

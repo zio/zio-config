@@ -130,5 +130,5 @@ object MapExample extends App with EitherImpureOps {
   val xx2 = nested("k") { map(string("y")) }
 
   println(read(xx2 from TypeSafeConfigSource.fromHoconString(hocon4).loadOrThrow))
-
+  
 }

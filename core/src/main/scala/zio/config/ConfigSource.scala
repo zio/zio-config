@@ -38,9 +38,6 @@ object ConfigSource {
   def empty[K, V]: ConfigSource[K, V] =
     ConfigSource(Set.empty, _ => PropertyTree.empty)
 
-  def mk[K, V](tree: PropertyTree[K, V], descriptions: Set[String]): ConfigSource[K, V] =
-    ConfigSource(descriptions, path => tree.getPath(path))
-
   /**
    * EXPERIMENTAL
    *

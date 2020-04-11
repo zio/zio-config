@@ -14,9 +14,9 @@ object ListsCornerCasesTest
           val cCfg = (string("a") |@| list("b")(string))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource.mk(
+            cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-              Set.empty
+              "tree"
             )
           )
 
@@ -29,11 +29,11 @@ object ListsCornerCasesTest
 
           val res =
             read(
-              cCfg from ConfigSource.mk(
+              cCfg from ConfigSource.fromPropertyTree(
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Sequence(Sequence(Nil) :: Nil))
                 ),
-                Set.empty
+                "tree"
               )
             )
 
@@ -48,7 +48,7 @@ object ListsCornerCasesTest
           val res =
             read(
               cCfg from ConfigSource
-                .mk(Record(Map("a" -> Leaf("sa"))), Set.empty)
+                .fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
             )
 
           assert(res)(isRight(equalTo(Cfg("sa", None))))
@@ -61,9 +61,9 @@ object ListsCornerCasesTest
 
           val res =
             read(
-              cCfg from ConfigSource.mk(
+              cCfg from ConfigSource.fromPropertyTree(
                 Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-                Set.empty
+                "tree"
               )
             )
 
@@ -76,7 +76,7 @@ object ListsCornerCasesTest
             .default("x" :: Nil))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource.mk(Record(Map("a" -> Leaf("sa"))), Set.empty)
+            cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", "x" :: Nil))))
@@ -88,9 +88,9 @@ object ListsCornerCasesTest
             .default("x" :: Nil))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource.mk(
+            cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-              Set.empty
+              "tree"
             )
           )
 
@@ -105,11 +105,11 @@ object ListsCornerCasesTest
 
           val res =
             read(
-              cCfg from ConfigSource.mk(
+              cCfg from ConfigSource.fromPropertyTree(
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))
                 ),
-                Set.empty
+                "tree"
               )
             )
 
@@ -124,11 +124,11 @@ object ListsCornerCasesTest
 
           val res =
             read(
-              cCfg from ConfigSource.mk(
+              cCfg from ConfigSource.fromPropertyTree(
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))
                 ),
-                Set.empty
+                "tree"
               )
             )
 
@@ -143,7 +143,7 @@ object ListsCornerCasesTest
 
           val res = read(
             cCfg from ConfigSource
-              .mk(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Set.empty)
+              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", Left("v")))))
@@ -157,7 +157,7 @@ object ListsCornerCasesTest
 
           val res = read(
             cCfg from ConfigSource
-              .mk(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Set.empty)
+              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
@@ -169,7 +169,7 @@ object ListsCornerCasesTest
 
           val res = read(
             cCfg from ConfigSource
-              .mk(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), Set.empty)
+              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", "v" :: Nil))))
@@ -180,14 +180,14 @@ object ListsCornerCasesTest
           val cCfg = (string("a") |@| head("b")(string))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource.mk(
+            cCfg from ConfigSource.fromPropertyTree(
               Record(
                 Map(
                   "a" -> Leaf("sa"),
                   "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Nil)
                 )
               ),
-              Set.empty
+              "tree"
             )
           )
 
@@ -202,7 +202,7 @@ object ListsCornerCasesTest
           )
 
           val res = read(
-            cCfg from ConfigSource.mk(
+            cCfg from ConfigSource.fromPropertyTree(
               Record(
                 Map(
                   "a" -> Leaf("sa"),
@@ -218,7 +218,7 @@ object ListsCornerCasesTest
                   )
                 )
               ),
-              Set.empty
+              "tree"
             )
           )
 
@@ -235,7 +235,7 @@ object ListsCornerCasesTest
             (string("a") |@| nested("b")(listStrict(string)))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource.mk(
+            cCfg from ConfigSource.fromPropertyTree(
               Record(
                 Map(
                   "a" -> Leaf("sa"),
@@ -244,7 +244,7 @@ object ListsCornerCasesTest
                   )
                 )
               ),
-              Set.empty
+              "tree"
             )
           )
 
