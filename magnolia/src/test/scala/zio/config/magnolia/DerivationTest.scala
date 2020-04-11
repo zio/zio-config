@@ -18,7 +18,7 @@ object DerivationTest extends DefaultRunnableSpec {
         path: Option[String]
       ): List[(Option[String], String)] = desc match {
         case ConfigDescriptor.Default(config, _)    => collectDescriptions(config, path)
-        case ConfigDescriptor.DynamicMap(config, _) => collectDescriptions(config, path)
+        case ConfigDescriptor.DynamicMap(_, config) => collectDescriptions(config, path)
         case Describe(config, message)              => (path, message) :: collectDescriptions(config, path)
         case Nested(path, config)                   => collectDescriptions(config, Some(path))
         case ConfigDescriptor.Optional(config)      => collectDescriptions(config, path)
@@ -70,7 +70,7 @@ object DerivationTest extends DefaultRunnableSpec {
       ): List[(Option[String], Any)] = desc match {
         case ConfigDescriptor.Default(config, v)    => (path -> v) :: collectDefault(config, path)
         case Describe(config, _)                    => collectDefault(config, path)
-        case ConfigDescriptor.DynamicMap(_, config) => collectDefault(config)
+        case ConfigDescriptor.DynamicMap(_, config) => collectDefault(config, path)
         case Nested(path, config)                   => collectDefault(config, Some(path))
         case ConfigDescriptor.Optional(config)      => collectDefault(config, path)
         case ConfigDescriptor.OrElse(left, right)   => collectDefault(left, path) ::: collectDefault(right, path)
