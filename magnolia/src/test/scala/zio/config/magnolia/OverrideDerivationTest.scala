@@ -38,7 +38,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       case class Outer(list: List[Inner])
 
-      implicit val cInner: Typeclass[Inner] = descriptor[Inner]
+      implicit val cInner: Descriptor[Inner] = descriptor[Inner]
 
       val _ = cInner
 
