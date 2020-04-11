@@ -161,7 +161,7 @@ object ListExample extends App with EitherImpureOps {
               List(
                 // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
                 D(List(1, 1), List("a", "b", "c")),
-                D(List(12, 12), List("d")),
+                D(List(12, 12), List("d"))
               )
             )
           ),
@@ -229,7 +229,8 @@ object ListExample extends App with EitherImpureOps {
 
   // Being able to write back hocon
   val written =
-    write(descriptor[A], expectedResult).loadOrThrow.toHocon.render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
+    write(descriptor[A], expectedResult).loadOrThrow.toHocon
+      .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
 
   val readWritten = read(descriptor[A] from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
 

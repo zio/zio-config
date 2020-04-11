@@ -7,7 +7,7 @@ import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 
-private[typesafe] trait PropertyTreeFunctions {
+private[typesafe] trait TreeToHoconSupport {
   def treeToTypesafeConfig(
     tree: PropertyTree[String, String]
   ): com.typesafe.config.ConfigObject =
@@ -68,4 +68,8 @@ private[typesafe] trait PropertyTreeFunctions {
     }.foldLeft(List.empty[A]) {
       case (accLeft, left) => (accLeft ++ left)
     }
+}
+
+object Ex extends App {
+  println(ConfigValueFactory.fromIterable(Nil.asJava))
 }

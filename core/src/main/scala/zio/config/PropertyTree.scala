@@ -118,7 +118,7 @@ sealed trait PropertyTree[+K, +V] { self =>
    */
   final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): List[PropertyTree[K1, V1]] =
     (self, that) match {
-      case (Sequence(l), Sequence(r))     => singleton(Sequence(l ++ r))
+      case (Sequence(l), Sequence(r)) => singleton(Sequence(l ++ r))
       case (l: Record[K, V], r: Record[K1, V1]) =>
         (l.value.keySet ++ r.value.keySet)
           .foldLeft(List[Map[K1, PropertyTree[K1, V1]]](Map.empty)) {
@@ -134,7 +134,7 @@ sealed trait PropertyTree[+K, +V] { self =>
           .map(v => PropertyTree.Record(v))
       case (left, right) if left.isEmpty  => singleton(right)
       case (left, right) if right.isEmpty => singleton(left)
-      case (l, r) => l :: r :: Nil
+      case (l, r)                         => l :: r :: Nil
     }
 
   final def reduceInner[V1 >: V](f: (V1, V1) => V1): PropertyTree[K, V1] = {
