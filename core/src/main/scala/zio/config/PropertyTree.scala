@@ -14,36 +14,6 @@ sealed trait PropertyTree[+K, +V] { self =>
       case (l, r)                     => Sequence(l :: r :: Nil)
     }
 
-  final def condense: PropertyTree[K, V] =
-    self match {
-      case Leaf(value)    => Leaf(value)
-      case Record(values) => Record(values.mapValues(_.condense).toMap)
-      case Empty          => Empty
-      case Sequence(values) =>
-        PropertyTree.partitionWith(values) {
-          case Record(value) => value
-        } match {
-          case (Nil, rs) => Sequence(rs.map(_.condense))
-          case (ls, Nil) =>
-            Record(ls.foldLeft(Map.empty[K, PropertyTree[K, V]]) {
-              case (acc, map) =>
-                map.foldLeft(acc) {
-                  case (acc, (k, v)) =>
-                    acc.updated(k, acc.get(k).fold(v)(_ ++ v))
-                }
-            })
-
-          case (ls, rs) =>
-            Sequence(Record(ls.foldLeft(Map.empty[K, PropertyTree[K, V]]) {
-              case (acc, map) =>
-                map.foldLeft(acc) {
-                  case (acc, (k, v)) =>
-                    acc.updated(k, acc.get(k).fold(v)(_ ++ v))
-                }
-            }) :: rs.map(_.condense))
-        }
-
-    }
   final def flatten[K1 >: K, V1 >: V]: Map[Vector[K1], ::[V1]] = {
     def go(key: Vector[K1], propertyTree: PropertyTree[K1, V], acc: Map[Vector[K1], ::[V1]]): Map[Vector[K1], ::[V1]] =
       propertyTree match {

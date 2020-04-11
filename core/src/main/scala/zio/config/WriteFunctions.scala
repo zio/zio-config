@@ -70,9 +70,8 @@ private[config] trait WriteFunctions {
           for {
             left   <- leftResult
             right  <- rightResult
-            merged = left.condense.merge(right.condense)
-            result <- merged.headOption
-                       .toRight("Failed to write the config back to property tree, at zip node")
+            merged = PropertyTree.mergeAll(List(left, right))
+            result <- merged.headOption.toRight("Failed to write the config back to property tree, at zip node")
           } yield result
       }
     go(config, a)
