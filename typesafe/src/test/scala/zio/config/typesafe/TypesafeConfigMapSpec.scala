@@ -148,6 +148,7 @@ object TypesafeConfigMapSpecUtils {
        |}
        |""".stripMargin
 
+
   implicit class ImpureEitherOps[A, B](s: Either[A, B]) {
     def loadOrThrow: B = s.fold(_ => throw new Exception("failed"), identity)
   }
