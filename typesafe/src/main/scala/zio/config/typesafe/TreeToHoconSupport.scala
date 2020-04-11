@@ -17,7 +17,11 @@ private[typesafe] trait TreeToHoconSupport {
     tree match {
       case leaf @ Leaf(_)     => loopLeaf(key, leaf)
       case record @ Record(_) => loopRecord(record)
-      case PropertyTree.Empty => ConfigFactory.empty().root()
+      case PropertyTree.Empty =>
+        key.fold(ConfigFactory.empty().root()) { k =>
+          ConfigFactory.empty().withValue(k, ConfigValueFactory.fromAnyRef(null: Option[String])).root()
+        }
+
       case seqq @ Sequence(_) => loopSequence(key, seqq)
     }
 
@@ -51,7 +55,14 @@ private[typesafe] trait TreeToHoconSupport {
             .empty()
             .withValue(
               key,
-              ConfigValueFactory.fromIterable(tree.value.map(loopAny(_, None)).asJava)
+              ConfigValueFactory.fromIterable(
+                tree.value
+                  .map({ t =>
+                    val newObj = loopAny(t, Some(key))
+                    newObj.getOrDefault(key, newObj)
+                  })
+                  .asJava
+              )
             )
             .root()
         }
@@ -68,8 +79,4 @@ private[typesafe] trait TreeToHoconSupport {
     }.foldLeft(List.empty[A]) {
       case (accLeft, left) => (accLeft ++ left)
     }
-}
-
-object Ex extends App {
-  println(ConfigValueFactory.fromIterable(Nil.asJava))
 }

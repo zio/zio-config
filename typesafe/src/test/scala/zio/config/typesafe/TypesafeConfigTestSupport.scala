@@ -230,5 +230,4 @@ object TypesafeConfigTestSupport extends EitherSupport {
       W(X(Y("k"))),
       Nil
     )
-
 }
