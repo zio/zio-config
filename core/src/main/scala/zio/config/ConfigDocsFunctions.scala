@@ -1,7 +1,7 @@
 package zio.config
 
 private[config] trait ConfigDocsFunctions {
-  import ConfigDocs.{Map => DocsMap, _}
+  import ConfigDocs.{ DynamicMap => DocsMap, _ }
 
   final def generateDocs[K, V, A](config: ConfigDescriptor[K, V, A]): ConfigDocs[K, V] = {
     def loop[B](
@@ -19,10 +19,10 @@ private[config] trait ConfigDocsFunctions {
           loop(sources, descriptions, c, docs, latestPath)
 
         case ConfigDescriptor.DynamicMap(source, c) =>
-          ConfigDocs.Map(
-           latestPath.fold(Map.empty[K, ConfigDocs[K, V]]) {
-             latestPath =>  Map(latestPath -> loop(Sources(source.sourceDescription ++ sources.set), descriptions, c, docs, None))
-           }
+          ConfigDocs.DynamicMap(
+            latestPath.fold(Map.empty[K, ConfigDocs[K, V]]) { latestPath =>
+              Map(latestPath -> loop(Sources(source.sourceDescription ++ sources.set), descriptions, c, docs, None))
+            }
           )
 
         case ConfigDescriptor.Sequence(source, c) =>
@@ -82,32 +82,28 @@ private[config] trait ConfigDocsFunctions {
               // Feed value when it hits leaf
               tree.getPath(keys) match {
                 case PropertyTree.Leaf(value) => Leaf(sources, descriptions, Some(value))
-                case _ => Leaf(sources, descriptions, None)
+                case _                        => Leaf(sources, descriptions, None)
               }
 
             case a: Leaf[V] => a
 
             case NestedPath(path, docs) =>
-             NestedPath(path, loop(tree, docs, keys :+ path))
+              NestedPath(path, loop(tree, docs, keys :+ path))
 
             case Both(left, right) =>
-              Both( loop(tree, left, keys),  loop(tree, right, keys))
+              Both(loop(tree, left, keys), loop(tree, right, keys))
 
             case OneOf(left, right) =>
               OneOf(loop(tree, left, keys), loop(tree, right, keys))
 
             case cd: DocsMap[K, V] =>
               DocsMap(cd.element.toList.map {
-                case (k, value) => (k -> {tree.getPath(keys :+ k) match {
-                  case tree @ PropertyTree.Leaf(_) => loop(tree, value, keys :+ k)
-                  case tree @ PropertyTree.Record(_) => loop(tree, value, keys :+ k)
-                  case tree @ PropertyTree.Empty => loop(tree, value, keys :+ k)
-                  case tree @ PropertyTree.Sequence(_) => loop(tree, value, keys :+ k)
-                }})
+                case (k, value) =>
+                  k -> loop(tree.getPath(keys :+ k), value, keys :+ k)
               }.toMap)
 
             case Sequence(element :: Nil) =>
-              tree.getPath(keys.toList) match {
+              tree.getPath(keys) match {
                 case PropertyTree.Sequence(value) if value.nonEmpty =>
                   Sequence(value.map(t => loop(t, element, List.empty)))
                 case _ => Sequence(loop(tree, element, keys) :: Nil)

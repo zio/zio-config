@@ -32,7 +32,10 @@ object MapTest
 
           val res = read(
             cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Record(Map("c" -> Leaf("d"))))))), "tree")
+              .fromPropertyTree(
+                Record(Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Record(Map("c" -> Leaf("d"))))))),
+                "tree"
+              )
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", Map("z" -> "d")))))

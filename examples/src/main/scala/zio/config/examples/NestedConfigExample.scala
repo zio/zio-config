@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config.ConfigDescriptor._
-import zio.config.ConfigDocs.{ Map => _, _ }
+import zio.config.ConfigDocs._
 import zio.config._
 
 object NestedConfigExample extends App {
