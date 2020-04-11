@@ -4,7 +4,7 @@ import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypeSafeConfigSource
 
-object NonEmptyListExample extends App with EitherImpureOps {
+object ListExample extends App with EitherImpureOps {
   val configString =
     """
       |b = [
@@ -159,10 +159,10 @@ object NonEmptyListExample extends App with EitherImpureOps {
             C(
               List(
                 // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
-                D(NonEmptyList(1, 1, 1), List("a", "b", "c")),
-                D(NonEmptyList(12, 12), List("d")),
-                D(NonEmptyList(14, 14), List("e")),
-                D(NonEmptyList(15, 15), List("f", "g"))
+                D(List(1, 1, 1), List("a", "b", "c")),
+                D(List(12, 12), List("d")),
+                D(List(14, 14), List("e")),
+                D(List(15, 15), List("f", "g"))
               )
             )
           ),
@@ -323,14 +323,14 @@ object NonEmptyListExample extends App with EitherImpureOps {
   final case class Extra2(
     ci: String,
     vi: Either[Int, Either[Long, Either[Double, Either[Float, String]]]],
-    lst: Option[NonEmptyList[Int]],
-    vvv: Option[NonEmptyList[Int]]
+    lst: List[Int],
+    vvv: Option[List[Int]]
   )
-  final case class Extra(hi: String, bi: String, r: Option[NonEmptyList[Extra2]])
+  final case class Extra(hi: String, bi: String, r: List[Extra2])
   final case class Details(
     table: String,
-    columns: Option[NonEmptyList[String]],
-    extraDetails: Option[NonEmptyList[Extra]]
+    columns: List[String],
+    extraDetails: List[Extra]
   )
   final case class ExportDetails(exportDetails: List[Details], database: Database)
   final case class Port(va: String)
@@ -349,43 +349,37 @@ object NonEmptyListExample extends App with EitherImpureOps {
           List(
             Details(
               "some_name",
-              Some(::("a", List("b", "c", "d"))),
-              Some(
-                NonEmptyList(
-                  Extra(
-                    "di",
-                    "ci",
-                    Some(
-                      NonEmptyList(
-                        Extra2("ki", Right(Right(Right(Right("bi")))), Some(NonEmptyList(1, 1, 1)), None),
-                        Extra2("ki", Right(Right(Left(1.0882121))), Some(NonEmptyList(1, 2, 1)), None),
-                        Extra2("ki", Left(3), Some(NonEmptyList(1, 3, 5)), Some(NonEmptyList(1, 2, 3)))
-                      )
-                    )
-                  ),
-                  Extra(
-                    "di",
-                    "ci",
-                    Some(
-                      NonEmptyList(
-                        Extra2("ki", Right(Right(Right(Right("bi")))), Some(NonEmptyList(1, 1, 1)), None),
-                        Extra2("ki", Right(Right(Left(1.0882121))), Some(NonEmptyList(1, 2, 1)), None),
-                        Extra2("ki", Left(3), Some(NonEmptyList(1, 3, 5)), Some(NonEmptyList(1, 2, 3)))
-                      )
-                    )
-                  ),
-                  Extra("di", "ci", None)
-                )
+              List("a", "b", "c", "d"),
+              List(
+                Extra(
+                  "di",
+                  "ci",
+                  List(
+                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
+                    Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
+                    Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
+                  )
+                ),
+                Extra(
+                  "di",
+                  "ci",
+                  List(
+                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
+                    Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
+                    Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
+                  )
+                ),
+                Extra("di", "ci", Nil)
               )
             ),
             Details(
               "some_name1",
-              None,
-              Some(NonEmptyList(Extra("di", "ci", None), Extra("di", "ci", None), Extra("di", "ci", None)))
+              Nil,
+              List(Extra("di", "ci", Nil), Extra("di", "ci", Nil), Extra("di", "ci", Nil))
             ),
-            Details("some_name1", None, None),
-            Details("some_name2", None, None),
-            Details("some_name2", None, None)
+            Details("some_name1", Nil, Nil),
+            Details("some_name2", Nil, Nil),
+            Details("some_name2", Nil, Nil)
           ),
           Database(Port("ba"))
         )

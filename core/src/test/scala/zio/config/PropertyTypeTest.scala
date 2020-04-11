@@ -1,7 +1,7 @@
 package zio.config
 
 import java.io.File
-import java.net.URI
+import java.net.{ URI, URL }
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset }
 import java.util.UUID
 
@@ -27,7 +27,12 @@ object PropertyTypeTest
           typeInfo = "Boolean",
           propType = BooleanType,
           genValid = genValidBooleanStrings,
-          parse = _.toBoolean
+          parse = input =>
+            input.toLowerCase match {
+              case "true" | "on" | "1"   => true
+              case "false" | "off" | "0" => false
+              case _                     => throw new IllegalArgumentException(s"For input string: '$input'")
+            }
         ),
         propertyTypeRoundtripSuite(
           typeInfo = "Byte",
@@ -127,7 +132,13 @@ object PropertyTypeTest
         ),
         testM(s"valid FileType string roundtrip") {
           check(Gen.anyString)(assertValidRoundtrip(FileType, new File(_)))
-        }
+        },
+        propertyTypeRoundtripSuite(
+          typeInfo = "URL",
+          propType = UrlType,
+          genValid = genValidUrlString,
+          parse = new URL(_)
+        )
       )
     )
 
@@ -188,7 +199,10 @@ object PropertyTypeTestUtils {
   import Gen._
 
   val validBooleanStrings: List[String] =
-    casePermutations("true") ++ casePermutations("false")
+    casePermutations("true") ++ casePermutations("false") ++ casePermutations("on") ++ casePermutations("off") ++ List(
+      "1",
+      "0"
+    )
 
   val genValidBooleanStrings: Gen[Any, String] = Gen.fromIterable(validBooleanStrings)
 
@@ -308,6 +322,14 @@ object PropertyTypeTestUtils {
     genOptionalStr(genFragment)
   )
 
+  val genValidUrlString: Gen[Random with Sized, String] = genAppend(
+    Gen.elements("http", "https", "ftp", "file"),
+    const(":"),
+    genAuthorityAndPath,
+    genOptionalStr(genQuery),
+    genOptionalStr(genFragment)
+  )
+
   val genInstant: Gen[Random, Instant] =
     Gen.anyLong.map(Instant.ofEpochMilli)
 
@@ -319,4 +341,5 @@ object PropertyTypeTestUtils {
 
   val genLocalTimeString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
+
 }

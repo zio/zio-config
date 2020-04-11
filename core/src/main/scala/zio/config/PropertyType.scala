@@ -1,7 +1,7 @@
 package zio.config
 
 import java.io.File
-import java.net.URI
+import java.net.{ URI, URL }
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 
@@ -25,7 +25,11 @@ object PropertyType {
 
   case object BooleanType extends PropertyType[String, Boolean] {
     def read(value: String): Either[PropertyReadError[String], Boolean] =
-      attempt(value.toBoolean, _ => PropertyReadError(value, "boolean"))
+      value.toLowerCase match {
+        case "true" | "on" | "1"   => Right(true)
+        case "false" | "off" | "0" => Right(false)
+        case _                     => Left(PropertyReadError(value, "boolean"))
+      }
     def write(value: Boolean): String = value.toString
   }
 
@@ -130,6 +134,13 @@ object PropertyType {
       attempt(new File(value), _ => PropertyReadError(value, "file"))
 
     def write(value: File): String = value.toString
+  }
+
+  case object UrlType extends PropertyType[String, URL] {
+    def read(value: String): Either[PropertyReadError[String], URL] =
+      attempt(new URL(value), _ => PropertyReadError(value, "url"))
+
+    def write(value: URL): String = value.toString
   }
 
   private def attempt[A, E](a: => A, f: Throwable => E): Either[E, A] =
