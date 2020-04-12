@@ -50,7 +50,7 @@ addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
 lazy val zioVersion      = "1.0.0-RC18-2"
-lazy val magnoliaVersion = "0.12.8"
+lazy val magnoliaVersion = "0.14.4"
 lazy val refinedVersion  = "0.9.13"
 
 lazy val root =
@@ -134,7 +134,7 @@ lazy val zioConfigTypesafe =
       ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
-    .dependsOn(zioConfig % "compile->compile;test->test", zioConfigMagnolia)
+    .dependsOn(zioConfig % "compile->compile;test->test", zioConfigMagnolia % "test")
 
 def module(moduleName: String, fileName: String): Project =
   Project(moduleName, file(fileName))

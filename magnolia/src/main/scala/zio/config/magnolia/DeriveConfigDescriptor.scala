@@ -3,18 +3,17 @@ package zio.config.magnolia
 import java.net.URI
 
 import magnolia._
-import zio.config.ConfigDescriptor
 import zio.config.ConfigDescriptor._
+import zio.config.{ ConfigDescriptor, ConfigSource, PropertyType }
 
+import scala.annotation.{ implicitAmbiguous, tailrec }
+import scala.collection.JavaConverters._
 import scala.language.experimental.macros
-import scala.util.{ Failure, Success }
 
 /**
- * DeriveConfigDescriptor[Config] gives an automatic ConfigDescriptor for the case class Config
- * given each field in the case class has an instance of DeriveConfigDescriptor
+ * DeriveConfigDescriptor.descriptor[Config] gives an automatic ConfigDescriptor for the case class Config recursively
  *
- * DeriveConfigDescriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
- * given each term in the coproduct has an instance of DeriveConfigDescriptor
+ * DeriveConfigDescriptor.descriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
  *
  * {{{
  *
@@ -22,294 +21,258 @@ import scala.util.{ Failure, Success }
  *    final case class Config(username: String, age: Int)
  *
  *    // should work with no additional code
- *    val description = DeriveConfigDescriptor[Config]
+ *    val description = descriptor[Config]
  *
  *    val config = Config.fromSystemEnv(description)
  *
- * Please find more (complex) examples in the examples module in zio-config
- *
  * }}}
+ *
+ *
+ * Please find more (complex) examples in the examples module in zio-config
  */
-trait DeriveConfigDescriptor[A] { self =>
-  def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, A]
+object DeriveConfigDescriptor extends DeriveConfigDescriptor {
+  def mapClassName(name: String): String = toSnakeCase(name)
+  def mapFieldName(name: String): String = name
 
-  def xmap[B](f: A => B)(g: B => A): DeriveConfigDescriptor[B] =
-    xmapEither(a => Right(f(a)))(b => Right(g(b)))
-
-  def xmapEither[B](f: A => Either[String, B])(g: B => Either[String, A]): DeriveConfigDescriptor[B] =
-    new DeriveConfigDescriptor[B] {
-      override def getDescription(
-        path: Option[String],
-        parentClass: Option[String]
-      ): ConfigDescriptor[String, String, B] =
-        self.getDescription(path, parentClass).xmapEither(a => f(a), (b: B) => g(b))
-    }
-}
-
-trait LowPriorityDeriveConfigDescriptor {
-  implicit def opt[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[Option[A]] =
-    (a, b) => ev.getDescription(a, b).optional
-}
-
-object DeriveConfigDescriptor extends LowPriorityDeriveConfigDescriptor {
+  val wrapSealedTraitClasses: Boolean = true
+  val wrapSealedTraits: Boolean       = true
 
   /**
-   * DeriveConfigDescriptor[Config] gives an automatic ConfigDescriptor for the case class Config
-   * given each field in the case class has an instance of DeriveConfigDescriptor
-   *
-   * DeriveConfigDescriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
-   * given each term in the coproduct has an instance of DeriveConfigDescriptor
-   *
-   * {{{
-   *
-   *    // Given
-   *    final case class Config(username: String, age: Int)
-   *
-   *    // should work with no additional code
-   *    val description = DeriveConfigDescriptor[Config]
-   *
-   *    val config = Config.fromSystemEnv(description)
-   *
-   * }}}
-   *
-   * Please find more (complex) examples in the examples module in zio-config
-   */
-  def apply[T](implicit ev: DeriveConfigDescriptor[T]): ConfigDescriptor[String, String, T] =
-    ev.getDescription(None, None)
-
-  /**
-   * DeriveConfigDescriptor.descriptor[Config] gives an automatic ConfigDescriptor for the case class Config
-   * given each field in the case class has an instance of DeriveConfigDescriptor
-   *
-   * DeriveConfigDescriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
-   * given each term in the coproduct has an instance of DeriveConfigDescriptor
-   *
-   * {{{
-   *
-   *    // Given
-   *    final case class Config(username: String, age: Int)
-   *
-   *    // should work with no additional code
-   *    val description = DeriveConfigDescriptor[Config]
-   *
-   *    val config = Config.fromSystemEnv(description)
-   *
-   * }}}
-   *
-   * Please find more (complex) examples in the examples module in zio-config
-   */
-  def descriptor[T](implicit ev: DeriveConfigDescriptor[T]): ConfigDescriptor[String, String, T] =
-    ev.getDescription(None, None)
-
-  def instance[T](f: String => ConfigDescriptor[String, String, T]): DeriveConfigDescriptor[T] =
-    new DeriveConfigDescriptor[T] {
-      override def getDescription(
-        path: Option[String],
-        parentClass: Option[String]
-      ): ConfigDescriptor[String, String, T] =
-        path.fold(
-          string.xmapEither[T](
-            _ => Left("unable to fetch the primitive without a path"),
-            (_: T) => Left("unable to write the primitive back to a config source without a path")
-          )
-        )(f)
-    }
-
-  implicit val stringDesc: DeriveConfigDescriptor[String]         = instance(string)
-  implicit val booleanDesc: DeriveConfigDescriptor[Boolean]       = instance(boolean)
-  implicit val byteDesc: DeriveConfigDescriptor[Byte]             = instance(byte)
-  implicit val shortDesc: DeriveConfigDescriptor[Short]           = instance(short)
-  implicit val intDesc: DeriveConfigDescriptor[Int]               = instance(int)
-  implicit val longDesc: DeriveConfigDescriptor[Long]             = instance(long)
-  implicit val bigIntDesc: DeriveConfigDescriptor[BigInt]         = instance(bigInt)
-  implicit val floatDesc: DeriveConfigDescriptor[Float]           = instance(float)
-  implicit val doubleDesc: DeriveConfigDescriptor[Double]         = instance(double)
-  implicit val bigDecimalDesc: DeriveConfigDescriptor[BigDecimal] = instance(bigDecimal)
-  implicit val uriDesc: DeriveConfigDescriptor[URI]               = instance(uri)
-
-  /**
-   * Leaks out path in simple cases, i.e.
-   * `legacyList(string(path))` == `list(path)(string)` == `nested(path)(list(string))`
-   *
-   * `nested("a")(legacyList(string("b")))` describes configuration `{a: { b: ["s1", "s2"] }}`
-   *
-   * Allows scalar value instead of list
+   * By default this method is not implicit to allow custom non-recursive derivation
    * */
-  def legacyList[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] = {
-    def extractPath(cfg: ConfigDescriptor[K, V, A]): Option[(K, ConfigDescriptor[K, V, A])] = cfg match {
-      case Describe(config, message) =>
-        extractPath(config).map { case (path, inner) => (path, Describe(inner, message)) }
-      case Nested(path, config) => Some((path, config))
-      case _                    => None
-    }
+  override implicit def descriptor[T: NeedsDerive]: Descriptor[T] = macro DescriptorMacro.gen[T]
+}
 
-    extractPath(desc) match {
-      case Some((path, inner)) => list(path)(inner)
-      case None                => list(desc)
-    }
+/**
+ * Non-recursive derivation
+ *
+ * */
+object NonRecursiveDerivation extends DeriveConfigDescriptor {
+  def mapClassName(name: String): String = toSnakeCase(name)
+  def mapFieldName(name: String): String = name
+
+  val wrapSealedTraitClasses: Boolean = true
+  val wrapSealedTraits: Boolean       = true
+}
+
+trait DeriveConfigDescriptor { self =>
+
+  case class ConstantString(value: String) extends PropertyType[String, String] {
+    def read(propertyValue: String): Either[PropertyType.PropertyReadError[String], String] =
+      if (propertyValue == value) Right(value)
+      else Left(PropertyType.PropertyReadError(propertyValue, s"constant string '$value'"))
+    def write(a: String): String = a
   }
 
-  implicit def optNonEmptyList[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[Option[::[A]]] =
-    (a, b) =>
-      legacyList(ev.getDescription(a, b)).optional.xmap(
-        {
-          case None | Some(Nil)   => None
-          case Some(head :: tail) => Some(::(head, tail))
-        },
-        x => x
-      )
+  def constantString(value: String): ConfigDescriptor[String, String, String] =
+    ConfigDescriptor.Source(ConfigSource.empty, ConstantString(value)) ?? s"constant string '$value'"
 
-  implicit def listt[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[List[A]] =
-    (a, b) => legacyList(ev.getDescription(a, b))
+  def constant[T](label: String, value: T): ConfigDescriptor[String, String, T] =
+    constantString(label)(_ => value, (p: T) => Some(p).filter(_ == value).map(_ => label))
 
-  implicit def nonEmptyList[A](implicit ev: DeriveConfigDescriptor[A]): DeriveConfigDescriptor[::[A]] =
-    (a, b) =>
-      legacyList(ev.getDescription(a, b)).xmapEither(
-        list =>
-          list.headOption match {
-            case Some(value) => Right(::(value, list.tail))
-            case None =>
-              Left(
-                "The list is empty. Either provide a non empty list, and if not mark it as optional and choose to avoid it in the config"
-              )
-          },
-        ((nonEmpty: ::[A]) => Right(nonEmpty.toList))
-      )
+  protected def stringDesc: ConfigDescriptor[String, String, String]         = string
+  protected def booleanDesc: ConfigDescriptor[String, String, Boolean]       = boolean
+  protected def byteDesc: ConfigDescriptor[String, String, Byte]             = byte
+  protected def shortDesc: ConfigDescriptor[String, String, Short]           = short
+  protected def intDesc: ConfigDescriptor[String, String, Int]               = int
+  protected def longDesc: ConfigDescriptor[String, String, Long]             = long
+  protected def bigIntDesc: ConfigDescriptor[String, String, BigInt]         = bigInt
+  protected def floatDesc: ConfigDescriptor[String, String, Float]           = float
+  protected def doubleDesc: ConfigDescriptor[String, String, Double]         = double
+  protected def bigDecimalDesc: ConfigDescriptor[String, String, BigDecimal] = bigDecimal
+  protected def uriDesc: ConfigDescriptor[String, String, URI]               = uri
 
-  // This is equivalent to saying string("PATH").orElseEither(int("PATH")). During automatic derivations, we are unaware of alternate paths.
-  implicit def eith[A: DeriveConfigDescriptor, B: DeriveConfigDescriptor]: DeriveConfigDescriptor[Either[A, B]] =
-    new DeriveConfigDescriptor[Either[A, B]] {
-      override def getDescription(
-        path: Option[String],
-        parentClass: Option[String]
-      ): ConfigDescriptor[String, String, Either[A, B]] =
-        implicitly[DeriveConfigDescriptor[A]]
-          .getDescription(path, parentClass)
-          .orElseEither(implicitly[DeriveConfigDescriptor[B]].getDescription(path, parentClass))
+  implicit val implicitStringDesc: Descriptor[String]         = Descriptor(stringDesc)
+  implicit val implicitBooleanDesc: Descriptor[Boolean]       = Descriptor(booleanDesc)
+  implicit val implicitByteDesc: Descriptor[Byte]             = Descriptor(byteDesc)
+  implicit val implicitShortDesc: Descriptor[Short]           = Descriptor(shortDesc)
+  implicit val implicitIntDesc: Descriptor[Int]               = Descriptor(intDesc)
+  implicit val implicitLongDesc: Descriptor[Long]             = Descriptor(longDesc)
+  implicit val implicitBigIntDesc: Descriptor[BigInt]         = Descriptor(bigIntDesc)
+  implicit val implicitFloatDesc: Descriptor[Float]           = Descriptor(floatDesc)
+  implicit val implicitDoubleDesc: Descriptor[Double]         = Descriptor(doubleDesc)
+  implicit val implicitBigDecimalDesc: Descriptor[BigDecimal] = Descriptor(bigDecimalDesc)
+  implicit val implicitUriDesc: Descriptor[URI]               = Descriptor(uriDesc)
+
+  implicit def implicitListDesc[A: Descriptor]: Descriptor[List[A]] =
+    Descriptor(listDesc(implicitly[Descriptor[A]].desc))
+
+  implicit def implicitEitherDesc[A: Descriptor, B: Descriptor]: Descriptor[Either[A, B]] =
+    Descriptor(eitherDesc(implicitly[Descriptor[A]].desc, implicitly[Descriptor[B]].desc))
+
+  implicit def implicitOptionDesc[A: Descriptor]: Descriptor[Option[A]] =
+    Descriptor(optionDesc(implicitly[Descriptor[A]].desc))
+
+  protected def listDesc[A](desc: ConfigDescriptor[String, String, A]): ConfigDescriptor[String, String, List[A]] =
+    list(desc)
+
+  protected def eitherDesc[A, B](
+    left: ConfigDescriptor[String, String, A],
+    right: ConfigDescriptor[String, String, B]
+  ): ConfigDescriptor[String, String, Either[A, B]] =
+    left.orElseEither(right)
+
+  protected def optionDesc[A](desc: ConfigDescriptor[String, String, A]): ConfigDescriptor[String, String, Option[A]] =
+    desc.optional
+
+  case class Descriptor[T](desc: ConfigDescriptor[String, String, T], isObject: Boolean = false)
+
+  object Descriptor {
+    implicit def toConfigDescriptor[T](ev: Descriptor[T]): ConfigDescriptor[String, String, T] = ev.desc
+  }
+
+  type Typeclass[T] = Descriptor[T]
+
+  def toSnakeCase(name: String): String = {
+    def addToAcc(acc: List[String], current: List[Int]) = {
+      def currentWord = current.reverse.flatMap(i => Character.toChars(i)).mkString.toLowerCase
+      if (current.isEmpty) acc
+      else if (acc.isEmpty) currentWord :: Nil
+      else currentWord :: "_" :: acc
     }
 
-  type Typeclass[T] = DeriveConfigDescriptor[T]
+    @tailrec
+    def loop(chars: List[Int], acc: List[String], current: List[Int], beginning: Boolean): String =
+      chars match {
+        case Nil => addToAcc(acc, current).reverse.mkString
+        case head :: tail if beginning =>
+          loop(tail, acc, head :: current, Character.isUpperCase(head) || !Character.isLetter(head))
+        case head :: tail if Character.isUpperCase(head) =>
+          loop(tail, addToAcc(acc, current), head :: Nil, beginning = true)
+        case head :: tail =>
+          loop(tail, acc, head :: current, beginning = false)
+      }
 
-  def combine[T](caseClass: CaseClass[DeriveConfigDescriptor, T]): DeriveConfigDescriptor[T] =
-    new DeriveConfigDescriptor[T] {
-      def getDescription(path: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, T] = {
-        // A complex nested inductive resolution for parent paths (separately handled for case objects and classes) to get the ergonomics right in the hocon source.
-        val finalDesc =
-          if (caseClass.isObject) {
-            val config = parentClass match {
-              case Some(parentClass) => string(parentClass.toLowerCase())
+    loop(name.codePoints().iterator().asScala.map(x => x: Int).toList, Nil, Nil, beginning = true)
+  }
 
-              case None =>
-                string.xmapEither[String](
-                  _ =>
-                    Left(
-                      s"Cannot create the case-object ${caseClass.typeName.short} since it is not part of a coproduct (ie. extends sealed trait)"
-                    ),
-                  (_: String) =>
-                    Left(
-                      s"Cannot write the case-object ${caseClass.typeName.short} since it is not part of a coproduct (i.e, extends sealed trait)"
-                    )
-                )
+  def mapClassName(name: String): String
+
+  def mapFieldName(name: String): String
+
+  def wrapSealedTraitClasses: Boolean
+
+  def wrapSealedTraits: Boolean
+
+  final def wrapSealedTrait[T](
+    label: String,
+    desc: ConfigDescriptor[String, String, T]
+  ): ConfigDescriptor[String, String, T] =
+    if (wrapSealedTraits) nested(label)(desc)
+    else desc
+
+  final def prepareClassName(annotations: Seq[Any], name: String): String =
+    annotations.collectFirst { case d: name => d.name }.getOrElse(mapClassName(name))
+
+  final def prepareFieldName(annotations: Seq[Any], name: String): String =
+    annotations.collectFirst { case d: name => d.name }.getOrElse(mapFieldName(name))
+
+  final def combine[T](caseClass: CaseClass[Descriptor, T]): Descriptor[T] = {
+    val descriptions = caseClass.annotations.collect { case d: describe => d.describe }
+    val ccName       = prepareClassName(caseClass.annotations, caseClass.typeName.short)
+
+    val res =
+      if (caseClass.isObject) constant[T](ccName, caseClass.construct(_ => ???))
+      else
+        caseClass.parameters.toList match {
+          case Nil =>
+            constantString(ccName).xmap[T](
+              _ => caseClass.construct(_ => ???),
+              _ => ccName
+            )
+          case head :: tail =>
+            def makeDescriptor(param: Param[Descriptor, T]): ConfigDescriptor[String, String, Any] = {
+              val descriptions =
+                param.annotations
+                  .filter(_.isInstanceOf[describe])
+                  .map(_.asInstanceOf[describe].describe)
+
+              val paramName = prepareFieldName(param.annotations, param.label)
+
+              val raw = param.typeclass.desc
+
+              val withDefaults = param.default.fold(raw)(raw.default(_))
+
+              val described = descriptions.foldLeft(withDefaults)(_ ?? _)
+
+              nested(paramName)(described).asInstanceOf[ConfigDescriptor[String, String, Any]]
             }
-            config.xmapEither(
-              str =>
-                if (str == caseClass.typeName.short.toLowerCase()) Right(caseClass.rawConstruct(Seq.empty))
-                else
-                  Left("Not enough details in the config source to form the config using automatic derviation."),
-              (value: Any) => Right(value.toString.toLowerCase)
+
+            collectAll(makeDescriptor(head), tail.map(makeDescriptor): _*).xmap[T](
+              l => caseClass.rawConstruct(l),
+              t => caseClass.parameters.map(_.dereference(t)).toList
             )
-          } else {
-            val listOfConfigs: List[ConfigDescriptor[String, String, Any]] =
-              caseClass.parameters.toList.map { h =>
-                val rawDesc =
-                  h.typeclass.getDescription(Some(h.label), None)
+        }
 
-                val descriptions =
-                  h.annotations
-                    .filter(_.isInstanceOf[describe])
-                    .map(_.asInstanceOf[describe].describe)
+    Descriptor(descriptions.foldLeft(res)(_ ?? _), caseClass.isObject || caseClass.parameters.isEmpty)
+  }
 
-                val withDefault =
-                  h.default
-                    .map(r => rawDesc.default(r))
-                    .getOrElse(rawDesc)
+  final def dispatch[T](sealedTrait: SealedTrait[Descriptor, T]): Descriptor[T] = {
+    val nameToLabel =
+      sealedTrait.subtypes
+        .map(tc => prepareClassName(tc.annotations, tc.typeName.short) -> tc.typeName.full)
+        .groupBy(_._1)
+        .toSeq
+        .flatMap {
+          case (label, Seq((_, fullName))) => (fullName -> label) :: Nil
+          case (label, seq) =>
+            seq.zipWithIndex.map { case ((_, fullName), idx) => fullName -> s"${label}_$idx" }
+        }
+        .toMap
 
-                val withDocs =
-                  updateConfigWithDocuments(descriptions, withDefault)
+    val desc =
+      sealedTrait.subtypes.map { subtype =>
+        val typeclass = subtype.typeclass
+        val desc =
+          if (typeclass.isObject || !wrapSealedTraitClasses) typeclass.desc
+          else nested(nameToLabel(subtype.typeName.full))(typeclass.desc)
 
-                val config = withDocs.xmap((r: h.PType) => r: Any, (r: Any) => r.asInstanceOf[h.PType])
-
-                parentClass.fold(config)(_ => nested(caseClass.typeName.short.toLowerCase())(config))
-
-              }
-
-            collectAll(::(listOfConfigs.head, listOfConfigs.tail))
-              .xmap[T](
-                cons => caseClass.rawConstruct(cons),
-                v => {
-                  val r = caseClass.parameters.map(_.dereference(v): Any).toList
-                  ::(r.head, r.tail)
-                }
-              )
-          }
-
-        val annotations = caseClass.annotations
-          .filter(_.isInstanceOf[zio.config.magnolia.describe])
-          .map(_.asInstanceOf[describe].describe)
-
-        val withParent =
-          if (caseClass.isObject) finalDesc
-          else
-            parentClass.fold(finalDesc)(parentClass => nested(parentClass.toLowerCase())(finalDesc))
-
-        updateConfigWithDocuments(
-          annotations,
-          path.fold(withParent)(nested(_)(withParent))
+        wrapSealedTrait(prepareClassName(sealedTrait.annotations, sealedTrait.typeName.short), desc).xmapEither[T](
+          st => Right(st),
+          t =>
+            subtype.cast
+              .andThen(Right(_))
+              .applyOrElse(t, (_: T) => Left(s"Expected ${subtype.typeName.full}, but got ${t.getClass.getName}"))
         )
-      }
-    }
+      }.reduce(_.orElse(_))
 
-  def dispatch[T](sealedTrait: SealedTrait[DeriveConfigDescriptor, T]): DeriveConfigDescriptor[T] =
-    new DeriveConfigDescriptor[T] {
-      def getDescription(paths: Option[String], parentClass: Option[String]): ConfigDescriptor[String, String, T] = {
-        val list         = sealedTrait.subtypes.toList
-        val head :: tail = ::(list.head, list.tail)
+    Descriptor(desc)
+  }
 
-        tail.foldRight[ConfigDescriptor[String, String, T]](
-          head.typeclass
-            .getDescription(paths, Some(sealedTrait.typeName.short.toLowerCase()))
-            .xmapEither(
-              (t: head.SType) => Right(t: T), { a: T =>
-                scala.util.Try(head.cast(a)) match {
-                  case Success(value) => Right(value)
-                  case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage}")
-                }
-              }
-            )
-        )(
-          (e: Subtype[Typeclass, T], b: ConfigDescriptor[String, String, T]) =>
-            b.orElse(
-              e.typeclass
-                .getDescription(paths, Some(sealedTrait.typeName.short.toLowerCase()))
-                .xmapEither(
-                  (t: e.SType) => Right(t: T),
-                  (a: T) =>
-                    scala.util.Try(e.cast(a)) match {
-                      case Success(value) => Right(value)
-                      case Failure(value) => Left(s"Failure when trying to write: ${value.getMessage}")
-                    }
-                )
-            )
-        )
+  /**
+   * By default this method is not implicit to allow custom non-recursive derivation
+   * */
+  def descriptor[T: NeedsDerive]: Descriptor[T] = macro DescriptorMacro.gen[T]
 
-      }
-    }
+  /**
+   * Preventing derivation for List, Option and Either.
+   * */
+  sealed trait NeedsDerive[+T]
 
-  implicit def gen[T]: Typeclass[T] = macro Magnolia.gen[T]
+  object NeedsDerive extends NeedsDerive[Nothing] {
 
-  private[config] def updateConfigWithDocuments[K, V, A](
-    documents: Seq[String],
-    config: ConfigDescriptor[K, V, A]
-  ): ConfigDescriptor[K, V, A] =
-    documents.foldLeft(config)((cf, doc) => cf ?? doc)
+    implicit def needsDerive[R]: NeedsDerive[R] = NeedsDerive
+
+    @implicitAmbiguous(
+      "Can't derive ConfigDescriptor for `List[T]` directly." +
+        " Wrap it with a `case class Config(list: List[T])` or use `list(descriptor[T])` manually."
+    )
+    implicit def needsDeriveAmbiguousList1: NeedsDerive[List[Nothing]] = NeedsDerive
+    implicit def needsDeriveAmbiguousList2: NeedsDerive[List[Nothing]] = NeedsDerive
+
+    @implicitAmbiguous(
+      "Can't derive ConfigDescriptor for `Option[T]` directly." +
+        " Wrap it with a `case class Config(list: Option[T])` or use `descriptor[T].optional` manually."
+    )
+    implicit def needsDeriveAmbiguousOption1: NeedsDerive[Option[Nothing]] = NeedsDerive
+    implicit def needsDeriveAmbiguousOption2: NeedsDerive[Option[Nothing]] = NeedsDerive
+
+    @implicitAmbiguous(
+      "Can't derive ConfigDescriptor for `Either[A, B]` directly." +
+        " Wrap it with a `case class Config(list: Either[A, B])`" +
+        " or use `descriptor[A].orElseEither(descriptor[B])` manually."
+    )
+    implicit def needsDeriveAmbiguousEither1: NeedsDerive[Either[Nothing, Nothing]] = NeedsDerive
+    implicit def needsDeriveAmbiguousEither2: NeedsDerive[Either[Nothing, Nothing]] = NeedsDerive
+  }
 }
