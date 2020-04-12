@@ -1,7 +1,7 @@
 ## To run microsite 
 
-## Guidelines to raising a PR
-1. Please raise an issue before you raise a PR on the code blocks.
+## Steps for raising a Pull Request
+1. Please raise an issue in [here](https://github.com/zio/zio-config/issues) before you raise a pull request directly.
 2. Tag the issue in PR description.
 3. Contributions to documentation/website is always welcome and can be raised without tagging an issue.
 
