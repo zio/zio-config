@@ -1,7 +1,7 @@
 package zio.config
 
 private[config] trait ConfigDocsFunctions {
-  import ConfigDocs.{ DynamicMap => DocsMap, _ }
+  import ConfigDocs._
 
   final def generateDocs[K, V, A](config: ConfigDescriptor[K, V, A]): ConfigDocs[K, V] = {
     def loop[B](
@@ -19,10 +19,8 @@ private[config] trait ConfigDocsFunctions {
           loop(sources, descriptions, c, docs, latestPath)
 
         case ConfigDescriptor.DynamicMap(source, c) =>
-          ConfigDocs.DynamicMap(
-            latestPath.fold(Map.empty[K, ConfigDocs[K, V]]) { latestPath =>
-              Map(latestPath -> loop(Sources(source.sourceDescription ++ sources.set), descriptions, c, docs, None))
-            }
+          ConfigDocs.DynamicMapInit(
+            loop(Sources(source.sourceDescription ++ sources.set), descriptions, c, docs, None)
           )
 
         case ConfigDescriptor.Sequence(source, c) =>
@@ -82,7 +80,9 @@ private[config] trait ConfigDocsFunctions {
               // Feed value when it hits leaf
               tree.getPath(keys) match {
                 case PropertyTree.Leaf(value) => Leaf(sources, descriptions, Some(value))
-                case _                        => Leaf(sources, descriptions, None)
+                case t =>
+                  println(t + " " + keys + "   " + tree)
+                  Leaf(sources, descriptions, None)
               }
 
             case a: Leaf[V] => a
@@ -96,10 +96,18 @@ private[config] trait ConfigDocsFunctions {
             case OneOf(left, right) =>
               OneOf(loop(tree, left, keys), loop(tree, right, keys))
 
-            case cd: DocsMap[K, V] =>
-              DocsMap(cd.element.toList.map {
-                case (k, value) =>
-                  k -> loop(tree.getPath(keys :+ k), value, keys :+ k)
+            case cd: DynamicMapInit[K, V] =>
+              tree.getPath(keys) match {
+                case rec: PropertyTree.Record[K, V] =>
+                  DynamicMap(rec.value.toList.map { keyTree =>
+                    keyTree._1 -> loop(keyTree._2, cd.element, List.empty)
+                  }.toMap)
+                case v => DynamicMapInit(loop(v, cd.element, keys))
+              }
+
+            case cd: DynamicMap[K, V] =>
+              DynamicMap(cd.element.toList.map {
+                case (k, value) => (k -> loop(tree, value, Nil))
               }.toMap)
 
             case Sequence(element :: Nil) =>

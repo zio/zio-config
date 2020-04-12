@@ -107,7 +107,15 @@ object MapExample extends App with EitherImpureOps {
   val result3 =
     read(nested("result")(mapStrict(description)) from TypeSafeConfigSource.fromHoconString(hocon2).loadOrThrow)
 
-  println(result3)
+  assert(
+    result3 ==
+      Right(
+        Map(
+          "dynamic2" -> Cfg(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a")),
+          "dynamic1" -> Cfg(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a"))
+        )
+      )
+  )
 
   // It picks the value corresponding to y in the value of the dynamic map inside s. This is much powerful
   val hocon3 =
@@ -121,7 +129,7 @@ object MapExample extends App with EitherImpureOps {
 
   val xx = nested("k") { map("s")(string("y")) }
 
-  println(read(xx from TypeSafeConfigSource.fromHoconString(hocon3).loadOrThrow))
+  assert(read(xx from TypeSafeConfigSource.fromHoconString(hocon3).loadOrThrow) == Right(Map("dynamicMap" -> "z")))
 
   val hocon4 =
     s"""
@@ -130,8 +138,24 @@ object MapExample extends App with EitherImpureOps {
 
   val xx2 = nested("k") { map(string("y")) }
 
-  println(read(xx2 from TypeSafeConfigSource.fromHoconString(hocon4).loadOrThrow))
+  assert(read(xx2 from TypeSafeConfigSource.fromHoconString(hocon4).loadOrThrow) == Right(Map("dynamicMap" -> "z")))
 
-  println(generateDocs(map("s")(string) from ConfigSource.fromMap(Map.empty)))
+  // Reporting of map values (More to come in this space: Fixme: https://github.com/zio/zio-config/issues/287)
+  import ConfigDocs._
+
+  assert(
+    generateDocsWithValue(map("key")(string) from ConfigSource.fromMap(Map()), Map("d1" -> "value1", "d2" -> "value2")) ==
+      Right(
+        NestedPath(
+          "key",
+          DynamicMap(
+            Map(
+              "d2" -> Leaf(Sources(Set("constant")), List("value of type string"), Some("value2")),
+              "d1" -> Leaf(Sources(Set("constant")), List("value of type string"), Some("value1"))
+            )
+          )
+        )
+      )
+  )
 
 }
