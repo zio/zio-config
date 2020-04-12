@@ -80,9 +80,7 @@ private[config] trait ConfigDocsFunctions {
               // Feed value when it hits leaf
               tree.getPath(keys) match {
                 case PropertyTree.Leaf(value) => Leaf(sources, descriptions, Some(value))
-                case t =>
-                  println(t + " " + keys + "   " + tree)
-                  Leaf(sources, descriptions, None)
+                case _                        => Leaf(sources, descriptions, None)
               }
 
             case a: Leaf[V] => a
