@@ -107,7 +107,7 @@ val written: PropertyTree[String, String] =
       "east"    -> Record(Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))),
       "appName" -> Leaf("myApp")
     )
-  )
+  )  
 
 ```
 

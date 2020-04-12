@@ -188,7 +188,8 @@ object TypesafeConfigReadWriteTest
           "complex source: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
         ) {
           val writtenHocon =
-            write(complexDescription, readComplexSource).loadOrThrow.toHoconString
+            write(complexDescription, readComplexSource).loadOrThrow.toHocon
+              .render(ConfigRenderOptions.concise().setFormatted(true).setJson(false))
 
           val writtenProperty =
             write(complexDescription, readComplexSource).loadOrThrow
