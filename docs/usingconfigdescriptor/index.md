@@ -20,7 +20,7 @@ You should be familiar with reading config from various sources, given a  config
 ```scala mdoc:silent
 import zio.IO
 import zio.config._, ConfigDescriptor._
-import zio.config.PropertyTree._
+import zio.config.PropertyTree, PropertyTree._
 import zio.config.ConfigDocs.{Leaf => _, _}
 
 ```
@@ -28,6 +28,18 @@ import zio.config.ConfigDocs.{Leaf => _, _}
 ```scala mdoc:silent
 
 case class MyConfig(ldap: String, port: Int, dburl: String)
+
+```
+
+To not divert our focus on handling Either (only for explanation purpose), we will use 
+the below syntax troughout the code
+
+```scala mdoc:silent
+
+implicit class EitherImpureOps[A, B](self: Either[A, B]) {
+  def getOrThrow: B =
+   self.fold(a => throw new Exception(a.toString), identity)
+}
 
 ```
 
@@ -46,8 +58,7 @@ read(myConfig from ConfigSource.fromMap(Map()))
 
 ## Writer from config descriptor
 
-
-To write a configured value back:
+Let's use `read` and get the result. Using the same result, we will write the config back to the source!
 
 ```scala mdoc:silent
 import zio.Runtime
@@ -71,19 +82,25 @@ import zio.Runtime
     (((nested("south") { database } ?? "South details" |@|
       nested("east") { database } ?? "East details" |@|
       string("appName"))(AwsConfig, AwsConfig.unapply)) ?? "asdf"
-    ) from ConfigSource.fromMap(map)
+    ) from ConfigSource.fromMap(map, keyDelimiter = Some('.'))
 
   val awsConfigResult =
-    read(appConfig)
+    read(appConfig).getOrThrow
 
-   // yields Right(AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp))
+   // yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)
 
   
-awsConfigResult.flatMap(result => write(appConfig, result))
+```
+
+#### Writing the config back to property tree
+
+```scala mdoc:silent
+
+val written: PropertyTree[String, String] = 
+  write(appConfig, awsConfigResult).getOrThrow
 
 // yields
 
- Right(
   Record(
     Map(
       "south"   -> Record(Map("connection" -> Leaf("abc.com"), "port" -> Leaf("8111"))),
@@ -91,13 +108,17 @@ awsConfigResult.flatMap(result => write(appConfig, result))
       "appName" -> Leaf("myApp")
     )
   )
-)
+
+```
+
+#### Writing the config back to a Map
+
+```scala mdoc:silent
 
  // To yield the input map that was fed in, call `flattenString` !!
- awsConfigResult.flatMap(result => write(appConfig, result).map(_.flattenString()))
+ written.flattenString()
 
  // yields
-  Right(
      Map(
       "south.connection" -> "abc.com",
       "south.port" -> "8111",
@@ -105,9 +126,82 @@ awsConfigResult.flatMap(result => write(appConfig, result))
       "east.port" -> "8888",
       "appName" -> "myApp"
     )
-  )
 
 ```
+
+#### Writing the config back to a Typesafe Hocon
+
+```scala mdoc:silent
+
+import zio.config.typesafe._
+
+written.toHocon
+
+// yields
+// SimpleConfigObject({"appName":"myApp","east":{"connection":"xyz.com","port":"8888"},"south":{"connection":"abc.com","port":"8111"}})
+
+```
+
+#### Writing the config back to a Typesafe Hocon String
+
+Once we get `SimpleConfigObject` (i.e, from `toHocon`), rendering them is straight forward, as typesafe-config library
+provides us with an exhaustive combinations of rendering options.
+
+However, we thought we will provide a few helper functions which is a simple delegation to typesafe functionalities.
+
+```scala mdoc:silent
+
+import zio.config.typesafe._
+
+written.toHoconString
+  /**
+   *  yieling :
+   *  {{{
+   *
+   *    appName=myApp
+   *    east {
+   *       connection="xyz.com"
+   *       port="8888"
+   *    }
+   *   south {
+   *     connection="abc.com"
+   *     port="8111"
+   *   }
+   *
+   *  }}}
+   */
+
+```
+
+#### Writing the config back to JSON
+
+Once we get `SimpleConfigObject` (i.e, from `toHocon`), rendering them is straight forward, as typesafe-config library
+provides us with an exhaustive combinations of rendering options.
+
+However, we thought we will provide a few helper functions which is a simple delegation to typesafe functionalities.
+
+```scala mdoc:silent
+
+written.toJson
+
+  /**
+   *  yieling :
+   *  {{{
+   *
+   *    "appName" : "myApp"
+   *    "east" : {
+   *       "connection" : "xyz.com"
+   *       "port" : "8888"
+   *    }
+   *   "south" : {
+   *     "connection" : "abc.com"
+   *     "port" : "8111"
+   *   }
+   *
+   *  }}}
+   */
+```
+
 
 ## Document the config
 

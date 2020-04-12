@@ -38,9 +38,7 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
       assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
     },
     test("Read a complex hocon structure successfully") {
-
       assert(readComplexSource)(equalTo(expectedResult))
-
     }
   )
 }

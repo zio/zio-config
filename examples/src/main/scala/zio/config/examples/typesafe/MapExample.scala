@@ -17,7 +17,7 @@ object MapExample extends App with EitherImpureOps {
        |
        |  l : []
        |
-       |   l2: [1, 3, 3]
+       |  l2: [1, 3, 3]
        |
        |  z : {
        |     v : a
@@ -26,7 +26,7 @@ object MapExample extends App with EitherImpureOps {
 
   val source = TypeSafeConfigSource.fromHoconString(hocon).loadOrThrow
 
-  final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
+  final case class Cfg(zones: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
   val c1: ConfigDescriptor[String, String, Map[String, List[Int]]] =
     map("zones")(list(int))
@@ -38,12 +38,13 @@ object MapExample extends App with EitherImpureOps {
     map("z")(string)
 
   val description =
-    (c1 |@| c2 |@| c3 |@| c4)((a, b, c, d) => sss(a, b, c, d), sss.unapply)
+    (c1 |@| c2 |@| c3 |@| c4)((a, b, c, d) => Cfg(a, b, c, d), Cfg.unapply)
 
   val result =
     read(description from source).loadOrThrow
 
-  assert(result == sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a")))
+  assert(result == Cfg(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a")))
+
   println(write(description, result).loadOrThrow.toHocon.render(ConfigRenderOptions.concise().setFormatted(true)))
 
   //  {
@@ -66,7 +67,7 @@ object MapExample extends App with EitherImpureOps {
 //    }
 //  }
 
-  final case class Nested(s: Map[String, sss])
+  final case class Nested(s: Map[String, Cfg])
 
   val hocon2 =
     s"""

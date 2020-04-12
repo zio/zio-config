@@ -3,8 +3,9 @@ package zio.config.examples
 import zio.config.ConfigDescriptor._
 import zio.config.ConfigDocs._
 import zio.config._
+import zio.config.examples.typesafe.EitherImpureOps
 
-object NestedConfigExample extends App {
+object NestedConfigExample extends App with EitherImpureOps {
 
   final case class Database(url: String, port: Int)
   final case class AwsConfig(c1: Database, c2: Database, c3: String)
@@ -32,9 +33,63 @@ object NestedConfigExample extends App {
 
   val runtime = zio.Runtime.default
 
-  // Read
-  assert(read(appConfig from source) == Right(AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")))
+  val readConfig =
+    read(appConfig from source).loadOrThrow
 
+  // Read
+  assert(readConfig == AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
+
+  // Write your nested config back.
+  val writtenResult: PropertyTree[String, String] =
+    write(appConfig, readConfig).loadOrThrow
+
+  assert(
+    writtenResult ==
+      PropertyTree.Record(
+        Map(
+          "south" -> PropertyTree.Record(
+            Map("connection" -> PropertyTree.Leaf("abc.com"), "port" -> PropertyTree.Leaf("8111"))
+          ),
+          "east" -> PropertyTree.Record(
+            Map("connection" -> PropertyTree.Leaf("xyz.com"), "port" -> PropertyTree.Leaf("8888"))
+          ),
+          "appName" -> PropertyTree.Leaf("myApp")
+        )
+      )
+  )
+
+  // Writing the tree back to Map
+  assert(
+    writtenResult.flattenString() ==
+      Map(
+        "east.port"        -> List("8888"),
+        "appName"          -> List("myApp"),
+        "east.connection"  -> List("xyz.com"),
+        "south.port"       -> List("8111"),
+        "south.connection" -> List("abc.com")
+      )
+  )
+
+  // Let's write them back as hocon which is more prefered over representing it as a map
+  import zio.config.typesafe._
+  println(writtenResult.toJson)
+
+  /**
+   *  Result:
+   *  {{{
+   *
+   *    appName=myApp
+   *    east {
+   *       connection="xyz.com"
+   *       port="8888"
+   *    }
+   *   south {
+   *     connection="abc.com"
+   *     port="8111"
+   *   }
+   *
+   *  }}}
+   */
   // Details Both Report of the nested configurations.
   assert(
     generateDocs(appConfig) ==
@@ -117,23 +172,6 @@ object NestedConfigExample extends App {
           NestedPath(
             "appName",
             Leaf(Sources(Set.empty), List("value of type string"), Some("myApp"))
-          )
-        )
-      )
-  )
-
-  // Write your nested config back.
-
-  import PropertyTree._
-
-  assert(
-    write(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")) ==
-      Right(
-        Record(
-          Map(
-            "south"   -> Record(Map("connection" -> Leaf("abc.com"), "port" -> Leaf("8111"))),
-            "east"    -> Record(Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))),
-            "appName" -> Leaf("myApp")
           )
         )
       )
