@@ -25,7 +25,11 @@ object PropertyType {
 
   case object BooleanType extends PropertyType[String, Boolean] {
     def read(value: String): Either[PropertyReadError[String], Boolean] =
-      attempt(value.toBoolean, _ => PropertyReadError(value, "boolean"))
+      value.toLowerCase match {
+        case "true" | "on" | "1"   => Right(true)
+        case "false" | "off" | "0" => Right(false)
+        case _                     => Left(PropertyReadError(value, "boolean"))
+      }
     def write(value: Boolean): String = value.toString
   }
 

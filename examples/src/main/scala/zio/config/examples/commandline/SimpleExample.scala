@@ -1,7 +1,7 @@
 package zio.config.examples.commandline
 
 import zio.config.ConfigSource
-import zio.config.magnolia.DeriveConfigDescriptor
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config._, ConfigDescriptor._
 
 object SimpleExample extends App {
@@ -14,7 +14,7 @@ object SimpleExample extends App {
   final case class A(key1: String, key2: String)
 
   assert(
-    read(DeriveConfigDescriptor[A] from ConfigSource.fromCommandLineArgs(cmdLineArgs.split(' ').toList)) == Right(
+    read(descriptor[A] from ConfigSource.fromCommandLineArgs(cmdLineArgs.split(' ').toList)) == Right(
       A("value1", "value2")
     )
   )

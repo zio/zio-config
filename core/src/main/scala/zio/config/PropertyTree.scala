@@ -14,36 +14,6 @@ sealed trait PropertyTree[+K, +V] { self =>
       case (l, r)                     => Sequence(l :: r :: Nil)
     }
 
-  final def condense: PropertyTree[K, V] =
-    self match {
-      case Leaf(value)    => Leaf(value)
-      case Record(values) => Record(values.mapValues(_.condense).toMap)
-      case Empty          => Empty
-      case Sequence(values) =>
-        PropertyTree.partitionWith(values) {
-          case Record(value) => value
-        } match {
-          case (Nil, rs) => Sequence(rs.map(_.condense))
-          case (ls, Nil) =>
-            Record(ls.foldLeft(Map.empty[K, PropertyTree[K, V]]) {
-              case (acc, map) =>
-                map.foldLeft(acc) {
-                  case (acc, (k, v)) =>
-                    acc.updated(k, acc.get(k).fold(v)(_ ++ v))
-                }
-            })
-
-          case (ls, rs) =>
-            Sequence(Record(ls.foldLeft(Map.empty[K, PropertyTree[K, V]]) {
-              case (acc, map) =>
-                map.foldLeft(acc) {
-                  case (acc, (k, v)) =>
-                    acc.updated(k, acc.get(k).fold(v)(_ ++ v))
-                }
-            }) :: rs.map(_.condense))
-        }
-
-    }
   final def flatten[K1 >: K, V1 >: V]: Map[Vector[K1], ::[V1]] = {
     def go(key: Vector[K1], propertyTree: PropertyTree[K1, V], acc: Map[Vector[K1], ::[V1]]): Map[Vector[K1], ::[V1]] =
       propertyTree match {
@@ -148,9 +118,7 @@ sealed trait PropertyTree[+K, +V] { self =>
    */
   final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): List[PropertyTree[K1, V1]] =
     (self, that) match {
-      case (left, right) if left.isEmpty  => singleton(right)
-      case (left, right) if right.isEmpty => singleton(left)
-      case (Sequence(l), Sequence(r))     => singleton(Sequence(l ++ r))
+      case (Sequence(l), Sequence(r)) => singleton(Sequence(l ++ r))
       case (l: Record[K, V], r: Record[K1, V1]) =>
         (l.value.keySet ++ r.value.keySet)
           .foldLeft(List[Map[K1, PropertyTree[K1, V1]]](Map.empty)) {
@@ -164,7 +132,9 @@ sealed trait PropertyTree[+K, +V] { self =>
               }
           }
           .map(v => PropertyTree.Record(v))
-      case (l, r) => l :: r :: Nil
+      case (left, right) if left.isEmpty  => singleton(right)
+      case (left, right) if right.isEmpty => singleton(left)
+      case (l, r)                         => l :: r :: Nil
     }
 
   final def reduceInner[V1 >: V](f: (V1, V1) => V1): PropertyTree[K, V1] = {

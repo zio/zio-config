@@ -48,6 +48,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
   def mapKey(f: K => K): ConfigDescriptor[K, V, A] = {
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
       case Source(source, propertyType) => Source(source, propertyType)
+      case DynamicMap(source, conf)     => DynamicMap(source, loop(conf))
       case Nested(path, conf)           => Nested(f(path), loop(conf))
       case Sequence(source, conf)       => Sequence(source, loop(conf))
       case Describe(config, message)    => Describe(loop(config), message)
@@ -78,6 +79,7 @@ sealed trait ConfigDescriptor[K, V, A] { self =>
   final def updateSource(f: ConfigSource[K, V] => ConfigSource[K, V]): ConfigDescriptor[K, V, A] = {
     def loop[B](config: ConfigDescriptor[K, V, B]): ConfigDescriptor[K, V, B] = config match {
       case Source(source, propertyType) => Source(f(source), propertyType)
+      case DynamicMap(source, conf)     => DynamicMap(f(source), loop(conf))
       case Nested(path, conf)           => Nested(path, loop(conf))
       case Sequence(source, conf)       => Sequence(f(source), loop(conf))
       case Describe(config, message)    => Describe(loop(config), message)
@@ -113,6 +115,9 @@ object ConfigDescriptor {
 
   final case class Describe[K, V, A](config: ConfigDescriptor[K, V, A], message: String)
       extends ConfigDescriptor[K, V, A]
+
+  final case class DynamicMap[K, V, A](source: ConfigSource[K, V], config: ConfigDescriptor[K, V, A])
+      extends ConfigDescriptor[K, V, Map[K, A]]
 
   final case class Nested[K, V, A](path: K, config: ConfigDescriptor[K, V, A]) extends ConfigDescriptor[K, V, A]
 
@@ -159,8 +164,11 @@ object ConfigDescriptor {
 
   def byte(path: String): ConfigDescriptor[String, String, Byte] = nested(path)(byte)
 
-  def collectAll[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] =
-    sequence(configList)
+  def collectAll[K, V, A](
+    head: ConfigDescriptor[K, V, A],
+    tail: ConfigDescriptor[K, V, A]*
+  ): ConfigDescriptor[K, V, List[A]] =
+    sequence(head, tail: _*)({ case (a, t) => a :: t }, l => l.headOption.map(h => (h, l.tail)))
 
   val double: ConfigDescriptor[String, String, Double] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double"
@@ -196,27 +204,16 @@ object ConfigDescriptor {
 
   def int(path: String): ConfigDescriptor[String, String, Int] = nested(path)(int)
 
-  /**
-   * Allows scalar value instead of list
-   * */
+  // Fixme: Add detailed API docs
   def list[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
-    listStrict(desc).orElse(desc(_ :: Nil, _.headOption))
+    listStrict(desc).orElse(desc.apply(_ :: Nil, _.headOption))
 
-  /**
-   * Allows scalar value instead of list
-   * */
   def list[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
     nested(path)(list(desc))
 
-  /**
-   * Rejects scalar value in place of list
-   * */
   def listStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
     ConfigDescriptor.Sequence(ConfigSource.empty, desc)
 
-  /**
-   * Rejects scalar value in place of list
-   * */
   def listStrict[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, List[A]] =
     nested(path)(listStrict(desc))
 
@@ -225,21 +222,33 @@ object ConfigDescriptor {
 
   def long(path: String): ConfigDescriptor[String, String, Long] = nested(path)(long)
 
+  def map[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Map[K, A]] =
+    mapStrict[K, V, A](desc)
+
+  def map[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Map[K, A]] =
+    nested(path)(mapStrict(desc))
+
+  def mapStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Map[K, A]] =
+    ConfigDescriptor.DynamicMap(ConfigSource.empty, desc)
+
   def nested[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, A] =
     ConfigDescriptor.Nested(path, desc)
 
-  def sequence[K, V, A](configList: ::[ConfigDescriptor[K, V, A]]): ConfigDescriptor[K, V, ::[A]] = {
-    val reversed = configList.reverse
-    reversed.tail.foldLeft[ConfigDescriptor[K, V, ::[A]]](
-      reversed.head.xmap((a: A) => ::(a, Nil), (b: ::[A]) => b.head)
+  def sequence[K, V, A](
+    head: ConfigDescriptor[K, V, A],
+    tail: ConfigDescriptor[K, V, A]*
+  ): ConfigDescriptor[K, V, (A, List[A])] =
+    tail.reverse.foldLeft[ConfigDescriptor[K, V, (A, List[A])]](
+      head.xmap((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
     )(
-      (b: ConfigDescriptor[K, V, ::[A]], a: ConfigDescriptor[K, V, A]) =>
+      (b: ConfigDescriptor[K, V, (A, List[A])], a: ConfigDescriptor[K, V, A]) =>
         b.xmapEither2(a)(
-          (as: ::[A], a: A) => Right(::(a, as)),
-          (t: ::[A]) => Right((::(t.tail.head, t.tail.tail), t.head))
+          { case ((first, tail), a)    => Right((first, a :: tail)) }, {
+            case (_, Nil)              => Left("Invalid list length")
+            case (first, head :: tail) => Right(((first, tail), head))
+          }
         )
     )
-  }
 
   val short: ConfigDescriptor[String, String, Short] =
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.ShortType) ?? "value of type short"
@@ -290,4 +299,19 @@ object ConfigDescriptor {
     ConfigDescriptor.Source(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL"
 
   def url(path: String): ConfigDescriptor[String, String, URL] = nested(path)(url)
+
+  def set[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Set[A]] =
+    list(desc).xmapEither(distinctListToSet, s => Right(s.toList))
+
+  def set[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Set[A]] =
+    nested(path)(set(desc))
+
+  def setStrict[K, V, A](desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Set[A]] =
+    listStrict(desc).xmapEither(distinctListToSet, s => Right(s.toList))
+
+  def setStrict[K, V, A](path: K)(desc: ConfigDescriptor[K, V, A]): ConfigDescriptor[K, V, Set[A]] =
+    nested(path)(setStrict(desc))
+
+  private def distinctListToSet[A](list: List[A]): Either[String, Set[A]] =
+    if (list.size == list.distinct.size) Right(list.toSet) else Left("Duplicated values found")
 }
