@@ -105,7 +105,7 @@ object ConfigSource {
    *    valueDelimiter = Some(',')
    * }}}
    *
-   * tthen, the following works:
+   * then, the following works:
    *
    * {{{
    *    final case class kafkaConfig(server: String, serde: String)
