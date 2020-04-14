@@ -2,7 +2,7 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.config.ReadError.{ AndErrors, ConversionError, MissingValue, OrErrors }
+import zio.config.ReadError.{ AndErrors, ConversionError, FormatError, MissingValue, OrErrors }
 import zio.config.ReadError.Step.{ Index, Key }
 import zio.test.Assertion._
 import zio.test._
@@ -270,6 +270,36 @@ object SetTest
               )
             )
           )
+          assert(res)(isLeft(equalTo(expected)))
+        },
+        test("accumulates all errors") {
+          case class Cfg(a: Set[Boolean], b: Set[Int])
+
+          val cCfg = (nested("a")(setStrict(boolean)) |@| nested("b")(setStrict(int)))(Cfg, Cfg.unapply)
+
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(
+                Map(
+                  "a" -> Sequence(Leaf("true") :: Leaf("lorem ipsum") :: Nil),
+                  "b" -> Sequence(Leaf("one") :: Leaf("2") :: Nil)
+                )
+              ),
+              "tree"
+            )
+          )
+          val expected: ReadError[String] =
+            AndErrors(
+              List(
+                AndErrors(
+                  List(
+                    FormatError(List(Key("a"), Index(1)), "Provided value is lorem ipsum, expecting the type boolean")
+                  )
+                ),
+                AndErrors(List(FormatError(List(Key("b"), Index(0)), "Provided value is one, expecting the type int")))
+              )
+            )
+
           assert(res)(isLeft(equalTo(expected)))
         }
       )
