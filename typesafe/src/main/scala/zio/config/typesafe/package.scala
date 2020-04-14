@@ -11,7 +11,7 @@ package object typesafe extends TreeToHoconSupport {
      * @return
      */
     def toHocon: ConfigObject =
-      treeToTypesafeConfig(tree)
+      propertyTreeToTypesafeConfig(tree)
 
     /**
      * A helper function that convert property tree to a HOCON string.

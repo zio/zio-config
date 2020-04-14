@@ -1,14 +1,16 @@
 package zio.config.examples.typesafe
 
+import java.util.Properties
+
 import zio.config.ConfigDescriptor
 import zio.config._
-import typesafe._
+//import typesafe._
 import ConfigDescriptor._
-import com.typesafe.config.ConfigRenderOptions
-import zio.config.typesafe.TypeSafeConfigSource
+//import com.typesafe.config.ConfigRenderOptions
+//import zio.config.typesafe.TypesafeConfigSource
 
 object MapExample extends App with EitherImpureOps {
-  val hocon =
+/*  val hocon =
     s"""
        | zones: {
        |    syd  : [1, 2]
@@ -24,7 +26,7 @@ object MapExample extends App with EitherImpureOps {
        |  }
        |""".stripMargin
 
-  val source = TypeSafeConfigSource.fromHoconString(hocon).loadOrThrow
+  val source = TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
 
   final case class Cfg(zones: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
@@ -105,7 +107,7 @@ object MapExample extends App with EitherImpureOps {
        |""".stripMargin
 
   val result3 =
-    read(nested("result")(mapStrict(description)) from TypeSafeConfigSource.fromHoconString(hocon2).loadOrThrow)
+    read(nested("result")(mapStrict(description)) from TypesafeConfigSource.fromHoconString(hocon2).loadOrThrow)
 
   assert(
     result3 ==
@@ -129,7 +131,7 @@ object MapExample extends App with EitherImpureOps {
 
   val xx = nested("k") { map("s")(string("y")) }
 
-  assert(read(xx from TypeSafeConfigSource.fromHoconString(hocon3).loadOrThrow) == Right(Map("dynamicMap" -> "z")))
+  assert(read(xx from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow) == Right(Map("dynamicMap" -> "z")))
 
   val hocon4 =
     s"""
@@ -138,24 +140,35 @@ object MapExample extends App with EitherImpureOps {
 
   val xx2 = nested("k") { map(string("y")) }
 
-  assert(read(xx2 from TypeSafeConfigSource.fromHoconString(hocon4).loadOrThrow) == Right(Map("dynamicMap" -> "z")))
+  assert(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow) == Right(Map("dynamicMap" -> "z")))
 
   // Reporting of map values (More to come in this space: Fixme: https://github.com/zio/zio-config/issues/287)
-  import ConfigDocs._
+  //import ConfigDocs._
+*/
+  val source2 =
+    ConfigSource.fromMap(Map("key" -> "1"), keyDelimiter = Some('.'), valueDelimter = Some(','))
 
-  assert(
-    generateDocsWithValue(map("key")(string) from ConfigSource.fromMap(Map()), Map("d1" -> "value1", "d2" -> "value2")) ==
-      Right(
-        NestedPath(
-          "key",
-          DynamicMap(
-            Map(
-              "d2" -> Leaf(Sources(Set("constant")), List("value of type string"), Some("value2")),
-              "d1" -> Leaf(Sources(Set("constant")), List("value of type string"), Some("value1"))
-            )
-          )
-        )
-      )
-  )
+  val source1 =
+    ConfigSource.fromProperties(new Properties())
+
+  println(read(listStrict("key")(string) from source2))
+  //println(read(list("key")((int from source2).orElseEither(string from source1))))
+
+  //println(generateReport(map("key")(string from source1.orElse(source2)), Map("d1" -> "value1", "d2" -> "value2")))
+
+//  assert(
+//    generateReport(map("key")(string) from ConfigSource.fromMap(Map()), Map("d1" -> "value1", "d2" -> "value2")) ==
+//      Right(
+//        ConfigDocs.Nested(
+//          "key",
+//          DynamicMap(
+//            Map(
+//              "d2" -> Leaf((Set(ConfigSource.Name("constant"))), List("value of type string"), Some("value2")),
+//              "d1" -> Leaf((Set(ConfigSource.Name("constant"))), List("value of type string"), Some("value1"))
+//            )
+//          )
+//        )
+//      )
+//  )
 
 }

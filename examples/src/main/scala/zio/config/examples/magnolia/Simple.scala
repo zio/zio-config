@@ -3,7 +3,7 @@ package zio.config.examples.magnolia
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.typesafe.TypeSafeConfigSource
+import zio.config.typesafe.TypesafeConfigSource
 
 sealed trait X
 case object A                                 extends X
@@ -46,7 +46,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[CfgCfg] from TypeSafeConfigSource.fromHoconString(s1).loadOrThrow) == Right(
+    read(descriptor[CfgCfg] from TypesafeConfigSource.fromHoconString(s1).loadOrThrow) == Right(
       CfgCfg(Cfg(C("b", G("hi"))), 1, "l")
     )
   )
@@ -59,7 +59,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypeSafeConfigSource.fromHoconString(s2).loadOrThrow) == Right(Cfg(A))
+    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2).loadOrThrow) == Right(Cfg(A))
   )
 
   val s3 =
@@ -70,7 +70,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypeSafeConfigSource.fromHoconString(s3).loadOrThrow) == Right(Cfg(B))
+    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s3).loadOrThrow) == Right(Cfg(B))
   )
 
   val s4 =
@@ -91,7 +91,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypeSafeConfigSource.fromHoconString(s4).loadOrThrow) == Right(Cfg(D(Z("1"))))
+    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s4).loadOrThrow) == Right(Cfg(D(Z("1"))))
   )
 
   val s5 =
@@ -108,7 +108,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypeSafeConfigSource.fromHoconString(s5).loadOrThrow) == Right(Cfg(E("1", 2)))
+    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s5).loadOrThrow) == Right(Cfg(E("1", 2)))
   )
 
   val s6 =
@@ -131,7 +131,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypeSafeConfigSource.fromHoconString(s6).loadOrThrow) == Right(
+    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s6).loadOrThrow) == Right(
       Cfg(F("1", None, Z("2")))
     )
   )
@@ -157,7 +157,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypeSafeConfigSource.fromHoconString(s7).loadOrThrow) == Right(
+    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s7).loadOrThrow) == Right(
       Cfg(F("1", Some(2), Z("2")))
     )
   )

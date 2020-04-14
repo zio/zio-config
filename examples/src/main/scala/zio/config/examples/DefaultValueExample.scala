@@ -28,23 +28,23 @@ object DefaultValueExample extends App {
   println(generateDocs(confEx))
   assert(
     generateDocs(confEx) ==
-      Both(
-        NestedPath(
+      ConfigDocs.Zip(
+       ConfigDocs.Nested(
           "HELLO",
           Leaf(
-            Sources(Set(ConfigSource.SystemEnvironment)),
+            Set(ConfigSource.Name(ConfigSource.SystemEnvironment)),
             List("value of type string", "default value: xyz")
           )
         ),
-        OneOf(
-          NestedPath(
+        ConfigDocs.OrElse(
+          ConfigDocs.Nested(
             "SOMETHING",
-            Leaf(Sources(Set(ConfigSource.SystemEnvironment)), List("value of type string"))
+            Leaf(Set(ConfigSource.Name(ConfigSource.SystemEnvironment)), List("value of type string"))
           ),
-          NestedPath(
+          ConfigDocs.Nested(
             "PORT",
             Leaf(
-              Sources(Set(ConfigSource.SystemEnvironment)),
+              Set(ConfigSource.Name(ConfigSource.SystemEnvironment)),
               List("value of type int", "default value: 1")
             )
           )
@@ -53,26 +53,26 @@ object DefaultValueExample extends App {
   )
 
   assert(
-    generateDocsWithValue(confEx, expected) ==
+    generateReport(confEx, expected) ==
       Right(
-        Both(
-          NestedPath(
+        ConfigDocs.Zip(
+         ConfigDocs.Nested(
             "HELLO",
             Leaf(
-              Sources(Set(SystemEnvironment)),
+              Set(ConfigSource.Name(SystemEnvironment)),
               List("value of type string", "default value: xyz"),
               Some("xyz")
             )
           ),
-          OneOf(
-            NestedPath(
+          ConfigDocs.OrElse(
+            ConfigDocs.Nested(
               "SOMETHING",
-              Leaf(Sources(Set(SystemEnvironment)), List("value of type string"), None)
+              Leaf(Set(ConfigSource.Name(SystemEnvironment)), List("value of type string"), None)
             ),
-            NestedPath(
+            ConfigDocs.Nested(
               "PORT",
-              Leaf(
-                Sources(Set(SystemEnvironment)),
+              ConfigDocs.Leaf(
+                Set(ConfigSource.Name(SystemEnvironment)),
                 List("value of type int", "default value: 1"),
                 Some("1")
               )

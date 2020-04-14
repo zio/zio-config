@@ -9,7 +9,7 @@ private[config] trait ReadFunctions {
     configuration: ConfigDescriptor[K, V, A]
   ): Either[ReadError[K], A] = {
 
-    type Res[+B] = Either[ReadError[K], B]
+    type Res[+B] = PropertyTree[K, Either[ReadError[K], B]]
 
     def formatError(paths: List[Step[K]], actualType: String, expectedType: String) =
       Left(
@@ -20,15 +20,14 @@ private[config] trait ReadFunctions {
       )
 
     def loopDefault[B](path: List[Step[K]], keys: List[K], cfg: Default[K, V, B]): Res[B] =
-      loopAny(path, keys, cfg.config) match {
-        case Left(error) if hasParseErrors(error) || hasConversionErrors(error) =>
-          Left(error)
-        case Left(_)      => Right(cfg.value)
-        case Right(value) => Right(value)
+      loopAny(path, keys, cfg.config).map {
+        case Left(error) if hasParseErrors(error) || hasConversionErrors(error) => Left(error)
+        case Left(_)                                                            => Right(cfg.value)
+        case Right(value)                                                       => Right(value)
       }
 
     def loopOptional[B](path: List[Step[K]], keys: List[K], cfg: Optional[K, V, B]): Res[Option[B]] =
-      loopAny(path, keys, cfg.config) match {
+      loopAny(path, keys, cfg.config).map {
         case Left(error) if hasParseErrors(error) || hasConversionErrors(error) =>
           Left(error)
         case Left(_)      => Right(None)
@@ -36,14 +35,15 @@ private[config] trait ReadFunctions {
       }
 
     def loopOrElse[B](path: List[Step[K]], keys: List[K], cfg: OrElse[K, V, B]): Res[B] =
-      loopAny(path, keys, cfg.left) match {
-        case Right(value) => Right(value)
-        case Left(leftError) =>
-          loopAny(path, keys, cfg.right) match {
-            case Right(rightValue) => Right(rightValue)
-            case Left(rightError) =>
-              Left(ReadError.OrErrors(leftError :: rightError :: Nil))
-          }
+      loopAny(path, keys, cfg.left).zipWith(
+        loopAny(path, keys, cfg.right)
+      ) { (a, b) =>
+        (a, b) match {
+          case (Left(v1), Left(v2))  => Left(ReadError.OrErrors(v1 :: v2 :: Nil))
+          case (Left(_), Right(v2))  => Right(v2)
+          case (Right(v1), Left(_))  => Right(v1)
+          case (Right(v1), Right(_)) => Right(v1)
+        }
       }
 
     def loopOrElseEither[B, C](
@@ -51,39 +51,36 @@ private[config] trait ReadFunctions {
       keys: List[K],
       cfg: OrElseEither[K, V, B, C]
     ): Res[Either[B, C]] =
-      loopAny(path, keys, cfg.left) match {
-        case Right(value) => Right(Left(value))
-        case Left(leftError) =>
-          loopAny(path, keys, cfg.right) match {
-            case Right(rightValue) => Right(Right(rightValue))
-            case Left(rightError) =>
-              Left(ReadError.OrErrors(leftError :: rightError :: Nil))
-          }
+      loopAny(path, keys, cfg.left).zipWith(
+        loopAny(path, keys, cfg.right)
+      ) { (a, b) =>
+        (a, b) match {
+          case (Left(v1), Left(v2))  => Left(ReadError.OrErrors(v1 :: v2 :: Nil))
+          case (Left(_), Right(v2))  => Right(Right(v2))
+          case (Right(v1), Left(_))  => Right(Left(v1))
+          case (Right(v1), Right(_)) => Right(Left(v1))
+        }
       }
 
     def loopSource[B](path: List[Step[K]], keys: List[K], cfg: Source[K, V, B]): Res[B] =
-      cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Empty       => Left(ReadError.MissingValue(path.reverse))
-        case PropertyTree.Record(_)   => formatError(path, "Record", "Leaf")
-        case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Leaf")
-        case PropertyTree.Leaf(value) =>
-          cfg.propertyType.read(value) match {
-            case Left(parseError) =>
-              Left(
-                ReadError.FormatError(
-                  path.reverse,
-                  ReadFunctions.parseErrorMessage(
-                    parseError.value.toString,
-                    parseError.typeInfo
-                  )
+      cfg.source.getConfigValue(keys.reverse).map { r =>
+        cfg.propertyType.read(r) match {
+          case Left(parseError) =>
+            Left(
+              ReadError.FormatError(
+                path.reverse,
+                ReadFunctions.parseErrorMessage(
+                  parseError.value.toString,
+                  parseError.typeInfo
                 )
               )
-            case Right(parsed) => Right(parsed)
-          }
+            )
+          case Right(parsed) => Right(parsed)
+        }
       }
 
     def loopZip[B, C](path: List[Step[K]], keys: List[K], cfg: Zip[K, V, B, C]): Res[(B, C)] =
-      (loopAny(path, keys, cfg.left), loopAny(path, keys, cfg.right)) match {
+      loopAny(path, keys, cfg.left).zipWith(loopAny(path, keys, cfg.right)) {
         case (Right(leftV), Right(rightV)) => Right((leftV, rightV))
         case (Left(leftE), Left(rightE)) =>
           Left(AndErrors(leftE :: rightE :: Nil))
@@ -92,23 +89,25 @@ private[config] trait ReadFunctions {
       }
 
     def loopXmapEither[B, C](path: List[Step[K]], keys: List[K], cfg: XmapEither[K, V, B, C]): Res[C] =
-      loopAny(path, keys, cfg.config) match {
+      loopAny(path, keys, cfg.config) map {
         case Left(error) => Left(error)
         case Right(a) =>
           cfg.f(a).swap.map(ReadError.ConversionError(path.reverse, _)).swap
       }
 
-    def loopMap[B](path: List[Step[K]], keys: List[K], cfg: DynamicMap[K, V, B]): Res[Map[K, B]] =
+    def loopMap[B](path: List[Step[K]], keys: List[K], cfg: DynamicMap[K, V, B]): Res[Map[K, B]] = {
+      println(cfg.source.names)
+      println("hi " + cfg.source.getConfigValue(keys.reverse))
       cfg.source.getConfigValue(keys.reverse) match {
         case PropertyTree.Leaf(_)     => formatError(path, "Leaf", "Record")
         case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Record")
         case PropertyTree.Record(values) =>
           val result: List[(K, Res[B])] = values.toList.zipWithIndex.map {
-            case ((k, tree), _) =>
+            case ((k, tree), id) =>
               val source: ConfigSource[K, V] =
-                ConfigSource(cfg.source.sourceDescription, tree.getPath)
+                ConfigSource(cfg.source.names, tree.getPath)
 
-              (k, loopAny(path, Nil, cfg.config.updateSource(_ => source)))
+              (k, loopAny(Step.Index(id) :: path, Nil, cfg.config.updateSource(_ => source)))
           }
 
           seqMap2[K, ReadError[K], B, ReadError[K]]((index, k, error) => error.atKey(k).atIndex(index))(result.toMap).swap
@@ -117,23 +116,28 @@ private[config] trait ReadFunctions {
 
         case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse))
       }
+    }
 
     def loopSequence[B](path: List[Step[K]], keys: List[K], cfg: Sequence[K, V, B]): Res[List[B]] =
-      cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Leaf(_)   => formatError(path, "Leaf", "Sequence")
-        case PropertyTree.Record(_) => formatError(path, "Record", "Sequence")
-        case PropertyTree.Empty     => Left(ReadError.MissingValue(path.reverse))
-        case PropertyTree.Sequence(values) =>
+      loopAny(path, keys, cfg.config) match {
+        case PropertyTree.Leaf(_) =>  PropertyTree.Leaf(formatError(path, "Leaf", "Sequence"))
+        case PropertyTree.Record(_) => PropertyTree.Leaf(formatError(path, "Record", "Sequence"))
+        case PropertyTree.Empty => PropertyTree.Leaf(Left(ReadError.MissingValue(path.reverse)))
+        case seqq @ PropertyTree.Sequence(values) =>
+          seqq.reduceInner()
+
+
           val list = values.zipWithIndex.map {
             case (tree, idx) =>
               val source =
-                ConfigSource(cfg.source.sourceDescription, tree.getPath)
+                ConfigSource(cfg.source.names, tree.getPath)
               loopAny(
                 Step.Index(idx) :: path,
                 Nil,
                 cfg.config.updateSource(_ => source)
               )
           }
+
           seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list).swap
             .map(AndErrors(_))
             .swap

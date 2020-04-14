@@ -8,7 +8,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 
 private[typesafe] trait TreeToHoconSupport {
-  def treeToTypesafeConfig(
+  def propertyTreeToTypesafeConfig(
     tree: PropertyTree[String, String]
   ): com.typesafe.config.ConfigObject =
     loopAny(tree, None)

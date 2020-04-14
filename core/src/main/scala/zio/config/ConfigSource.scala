@@ -16,14 +16,14 @@ import zio.Task
 
 import scala.annotation.tailrec
 
-final case class ConfigSource[K, V](
-  sourceDescription: Set[String],
-  getConfigValue: List[K] => PropertyTree[K, V]
+final case class  ConfigSource[K, V](
+                                     names: Set[ConfigSource.Name],
+                                     getConfigValue: List[K] => PropertyTree[K, V]
 ) { self =>
 
   def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
     ConfigSource(
-      self.sourceDescription ++ that.sourceDescription,
+      self.names ++ that.names,
       path => self.getConfigValue(path).getOrElse(that.getConfigValue(path))
     )
 
@@ -31,6 +31,8 @@ final case class ConfigSource[K, V](
 }
 
 object ConfigSource {
+  final case class Name(name: String)
+
   private[config] val SystemEnvironment    = "system environment"
   private[config] val SystemProperties     = "system properties"
   private[config] val CommandLineArguments = "command line arguments"
@@ -120,7 +122,7 @@ object ConfigSource {
       val listOfValues =
         valueDelimter.fold(List(x))(delim => x.split(delim).toList)
       ::(listOfValues.head, listOfValues.tail)
-    }, keyDelimiter, source)
+    }, keyDelimiter, ConfigSource.Name(source))
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -146,7 +148,7 @@ object ConfigSource {
     source: String = "constant",
     keyDelimiter: Option[Char] = None
   ): ConfigSource[String, String] =
-    fromMapInternal(map)(identity, keyDelimiter, source)
+    fromMapInternal(map)(identity, keyDelimiter, ConfigSource.Name(source))
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -312,7 +314,7 @@ object ConfigSource {
   private[config] def fromMapInternal[A, B](map: Map[String, A])(
     f: A => ::[B],
     keyDelimiter: Option[Char],
-    source: String
+    source: ConfigSource.Name
   ): ConfigSource[String, B] =
     fromPropertyTrees(
       unwrapSingletonLists(dropEmpty(unflatten(map.map(tuple => {
@@ -323,7 +325,7 @@ object ConfigSource {
         }
         vectorOfKeys -> f(tuple._2)
       })))),
-      source
+      source.name
     )
 
   private def dropEmpty[K, V](tree: PropertyTree[K, V]): PropertyTree[K, V] =
@@ -365,13 +367,13 @@ object ConfigSource {
     tree: PropertyTree[K, B],
     source: String
   ): ConfigSource[K, B] =
-    ConfigSource(Set(source), tree.getPath)
+    ConfigSource(Set(Name(source)), tree.getPath)
 
   private[config] def fromPropertyTrees[B](
     trees: Iterable[PropertyTree[String, B]],
-    sourceName: String
+    source: String
   ): ConfigSource[String, B] =
-    mergeAll(trees.map(fromPropertyTree(_, sourceName)))
+    mergeAll(trees.map(fromPropertyTree(_, source)))
 
   /// CommandLine Argument Source
 

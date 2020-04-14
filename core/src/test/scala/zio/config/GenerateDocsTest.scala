@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.config.ConfigDescriptor.{ int, nested, string }
-import zio.config.ConfigDocs.{ Both, Leaf, NestedPath, Sources }
+import zio.config.ConfigDocs.{ Zip, Leaf, Nested }
 import zio.config.GenerateDocsTestUtils._
 import zio.config.helpers._
 import zio.random.Random
@@ -18,7 +18,7 @@ object GenerateDocsTest
         },
         testM("generate docs with value") {
           check(generateDocsParams) { p =>
-            assert(generateDocsWithValue(p.descriptor from p.source, p.value))(equalTo(p.docsWithValue))
+            assert(generateReport(p.descriptor from p.source, p.value))(equalTo(p.docsWithValue))
           }
         }
       )
@@ -70,49 +70,49 @@ object GenerateDocsTestUtils {
     }
 
     def docs: ConfigDocs[String, String] =
-      Both(
-        Both(
-          NestedPath(
+      Zip(
+        Zip(
+          Nested(
             keys.secret,
             Leaf(
-              Sources(Set("test")),
+              (Set(ConfigSource.Name("test"))),
               List("value of type string", "optional value", "Application secret")
             )
           ),
-          NestedPath(
+          Nested(
             keys.credentials,
-            Both(
-              NestedPath(
+            Zip(
+              Nested(
                 keys.user,
                 Leaf(
-                  Sources(Set("test")),
+                  (Set(ConfigSource.Name("test"))),
                   List("value of type string", "Example: ZioUser", "Credentials")
                 )
               ),
-              NestedPath(
+              Nested(
                 keys.password,
                 Leaf(
-                  Sources(Set("test")),
+                  (Set(ConfigSource.Name("test"))),
                   List("value of type string", "Example: ZioPass", "Credentials")
                 )
               )
             )
           )
         ),
-        NestedPath(
+        Nested(
           keys.database,
-          Both(
-            NestedPath(
+          Zip(
+            Nested(
               keys.port,
               Leaf(
-                Sources(Set("test")),
+                (Set(ConfigSource.Name("test"))),
                 List("value of type int", "Example: 8088", "Database")
               )
             ),
-            NestedPath(
+            Nested(
               keys.url,
               Leaf(
-                Sources(Set("test")),
+                (Set(ConfigSource.Name("test"))),
                 List("value of type string", "Example: abc.com", "Database")
               )
             )
@@ -122,31 +122,31 @@ object GenerateDocsTestUtils {
 
     def docsWithValue: Either[String, ConfigDocs[String, String]] =
       Right(
-        Both(
-          Both(
-            NestedPath(
+        Zip(
+          Zip(
+            Nested(
               keys.secret,
               Leaf(
-                Sources(Set("test")),
+                (Set(ConfigSource.Name("test"))),
                 List("value of type string", "optional value", "Application secret"),
                 value.secret
               )
             ),
-            NestedPath(
+            Nested(
               keys.credentials,
-              Both(
-                NestedPath(
+              Zip(
+                Nested(
                   keys.user,
                   Leaf(
-                    Sources(Set("test")),
+                    (Set(ConfigSource.Name("test"))),
                     List("value of type string", "Example: ZioUser", "Credentials"),
                     Some(value.credentials.user)
                   )
                 ),
-                NestedPath(
+                Nested(
                   keys.password,
                   Leaf(
-                    Sources(Set("test")),
+                    (Set(ConfigSource.Name("test"))),
                     List("value of type string", "Example: ZioPass", "Credentials"),
                     Some(value.credentials.password)
                   )
@@ -154,21 +154,21 @@ object GenerateDocsTestUtils {
               )
             )
           ),
-          NestedPath(
+          Nested(
             keys.database,
-            Both(
-              NestedPath(
+            Zip(
+              Nested(
                 keys.port,
                 Leaf(
-                  Sources(Set("test")),
+                  (Set(ConfigSource.Name("test"))),
                   List("value of type int", "Example: 8088", "Database"),
                   Some(value.database.port).map(_.toString)
                 )
               ),
-              NestedPath(
+              Nested(
                 keys.url,
                 Leaf(
-                  Sources(Set("test")),
+                  (Set(ConfigSource.Name("test"))),
                   List("value of type string", "Example: abc.com", "Database"),
                   Some(value.database.url)
                 )

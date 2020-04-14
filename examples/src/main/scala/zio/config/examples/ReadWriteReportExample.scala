@@ -73,144 +73,144 @@ object ReadWriteReportExample extends App {
 
   assert(
     generateDocs(config) ==
-      OneOf(
-        Both(
-          Both(
-            Both(
-              NestedPath(
+      ConfigDocs.OrElse(
+        ConfigDocs.Zip(
+          ConfigDocs.Zip(
+            ConfigDocs.Zip(
+              ConfigDocs.Nested(
                 "usr",
                 Leaf(
-                  Sources(Set("constant")),
+                 Set(ConfigSource.Name("constant")),
                   List("value of type string", "Example: some-user", "Prod Config")
                 )
               ),
-              NestedPath(
+              ConfigDocs.Nested(
                 "pwd",
                 Leaf(
-                  Sources(Set("constant")),
+                 Set(ConfigSource.Name("constant")),
                   List("value of type string", "optional value", "sec", "Prod Config")
                 )
               )
             ),
-            NestedPath(
+            ConfigDocs.Nested(
               "jhi",
               Leaf(
-                Sources(Set("constant")),
+               Set(ConfigSource.Name("constant")),
                 List("value of type string", "optional value", "Ex: ghi", "Prod Config")
               )
             )
           ),
-          Both(
-            NestedPath(
+          ConfigDocs.Zip(
+            ConfigDocs.Nested(
               "xyz",
               Leaf(
-                Sources(Set("constant")),
+               Set(ConfigSource.Name("constant")),
                 List("value of type string", "optional value", "Ex: ha", "Prod Config")
               )
             ),
-            OneOf(
-              NestedPath(
+            ConfigDocs.OrElse(
+              ConfigDocs.Nested(
                 "abc",
                 Leaf(
-                  Sources(Set("constant")),
+                 Set(ConfigSource.Name("constant")),
                   List("value of type int", "optional value", "Ex: ha", "Prod Config")
                 )
               ),
-              NestedPath(
+              ConfigDocs.Nested(
                 "def",
                 Leaf(
-                  Sources(Set("constant")),
+                 Set(ConfigSource.Name("constant")),
                   List("value of type string", "optional value", "Ex: ha", "Prod Config")
                 )
               )
             )
           )
         ),
-        Both(
-          NestedPath(
+        ConfigDocs.Zip(
+          ConfigDocs.Nested(
             "auth_token",
-            Leaf(Sources(Set("constant")), List("value of type string", "Prod Config"))
+            Leaf(Set(ConfigSource.Name("constant")), List("value of type string", "Prod Config"))
           ),
-          NestedPath(
+          ConfigDocs.Nested(
             "clientid",
-            Leaf(Sources(Set("constant")), List("value of type string", "Prod Config"))
+            Leaf(Set(ConfigSource.Name("constant")), List("value of type string", "Prod Config"))
           )
         )
       )
   )
 
   assert(
-    generateDocsWithValue(config, expected) ==
+    generateReport(config, expected) ==
       Right(
-        OneOf(
-          Both(
-            Both(
-              Both(
-                NestedPath(
+        ConfigDocs.OrElse(
+          ConfigDocs.Zip(
+            ConfigDocs.Zip(
+              ConfigDocs.Zip(
+                ConfigDocs.Nested(
                   "usr",
                   Leaf(
-                    Sources(Set("constant")),
+                   Set(ConfigSource.Name("constant")),
                     List("value of type string", "Example: some-user", "Prod Config"),
                     Some("v1")
                   )
                 ),
-                NestedPath(
+                ConfigDocs.Nested(
                   "pwd",
                   Leaf(
-                    Sources(Set("constant")),
+                   Set(ConfigSource.Name("constant")),
                     List("value of type string", "optional value", "sec", "Prod Config"),
                     Some("v2")
                   )
                 )
               ),
-              NestedPath(
+              ConfigDocs.Nested(
                 "jhi",
                 Leaf(
-                  Sources(Set("constant")),
+                 Set(ConfigSource.Name("constant")),
                   List("value of type string", "optional value", "Ex: ghi", "Prod Config")
                 )
               )
             ),
-            Both(
-              NestedPath(
+            ConfigDocs.Zip(
+              ConfigDocs.Nested(
                 "xyz",
                 Leaf(
-                  Sources(Set("constant")),
+                 Set(ConfigSource.Name("constant")),
                   List("value of type string", "optional value", "Ex: ha", "Prod Config"),
                   Some("v3")
                 )
               ),
-              OneOf(
-                NestedPath(
+              ConfigDocs.OrElse(
+                ConfigDocs.Nested(
                   "abc",
                   Leaf(
-                    Sources(Set("constant")),
+                   Set(ConfigSource.Name("constant")),
                     List("value of type int", "optional value", "Ex: ha", "Prod Config"),
                     Some("1")
                   )
                 ),
-                NestedPath(
+                ConfigDocs.Nested(
                   "def",
                   Leaf(
-                    Sources(Set("constant")),
+                   Set(ConfigSource.Name("constant")),
                     List("value of type string", "optional value", "Ex: ha", "Prod Config")
                   )
                 )
               )
             )
           ),
-          Both(
-            NestedPath(
+          ConfigDocs.Zip(
+            ConfigDocs.Nested(
               "auth_token",
               Leaf(
-                Sources(Set("constant")),
+               Set(ConfigSource.Name("constant")),
                 List("value of type string", "Prod Config")
               )
             ),
-            NestedPath(
+            ConfigDocs.Nested(
               "clientid",
               Leaf(
-                Sources(Set("constant")),
+               Set(ConfigSource.Name("constant")),
                 List("value of type string", "Prod Config")
               )
             )

@@ -93,75 +93,75 @@ object NestedConfigExample extends App with EitherImpureOps {
   // Details Both Report of the nested configurations.
   assert(
     generateDocs(appConfig) ==
-      Both(
-        Both(
-          NestedPath(
+      ConfigDocs.Zip(
+        ConfigDocs.Zip(
+          ConfigDocs.Nested(
             "south",
-            Both(
-              NestedPath(
+            ConfigDocs.Zip(
+              ConfigDocs.Nested(
                 "connection",
-                Leaf(Sources(Set.empty), List("value of type string", "South details"))
+                Leaf((Set.empty), List("value of type string", "South details"))
               ),
-              NestedPath("port", Leaf(Sources(Set.empty), List("value of type int", "South details")))
+              ConfigDocs.Nested("port", Leaf((Set.empty), List("value of type int", "South details")))
             )
           ),
-          NestedPath(
+          ConfigDocs.Nested(
             "east",
-            Both(
-              NestedPath(
+            ConfigDocs.Zip(
+              ConfigDocs.Nested(
                 "connection",
-                Leaf(Sources(Set.empty), List("value of type string", "East details"))
+                Leaf((Set.empty), List("value of type string", "East details"))
               ),
-              NestedPath("port", Leaf(Sources(Set.empty), List("value of type int", "East details")))
+              ConfigDocs.Nested("port", Leaf((Set.empty), List("value of type int", "East details")))
             )
           )
         ),
-        NestedPath("appName", Leaf(Sources(Set.empty), List("value of type string")))
+        ConfigDocs.Nested("appName", Leaf((Set.empty), List("value of type string")))
       )
   )
 
   // Details with a peek at each value as well
   assert(
-    generateDocsWithValue(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")) ==
+    generateReport(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")) ==
       Right(
-        Both(
-          Both(
-            NestedPath(
+        ConfigDocs.Zip(
+          ConfigDocs.Zip(
+            ConfigDocs.Nested(
               "south",
-              Both(
-                NestedPath(
+              ConfigDocs.Zip(
+                ConfigDocs.Nested(
                   "connection",
                   Leaf(
-                    Sources(Set.empty),
+                    (Set.empty),
                     List("value of type string", "South details"),
                     Some("abc.com")
                   )
                 ),
-                NestedPath(
+                ConfigDocs.Nested(
                   "port",
                   Leaf(
-                    Sources(Set.empty),
+                    (Set.empty),
                     List("value of type int", "South details"),
                     Some("8111")
                   )
                 )
               )
             ),
-            NestedPath(
+            ConfigDocs.Nested(
               "east",
-              Both(
-                NestedPath(
+              ConfigDocs.Zip(
+                ConfigDocs.Nested(
                   "connection",
                   Leaf(
-                    Sources(Set.empty),
+                    (Set.empty),
                     List("value of type string", "East details"),
                     Some("xyz.com")
                   )
                 ),
-                NestedPath(
+                ConfigDocs.Nested(
                   "port",
                   Leaf(
-                    Sources(Set.empty),
+                    (Set.empty),
                     List("value of type int", "East details"),
                     Some("8888")
                   )
@@ -169,9 +169,9 @@ object NestedConfigExample extends App with EitherImpureOps {
               )
             )
           ),
-          NestedPath(
+          ConfigDocs.Nested(
             "appName",
-            Leaf(Sources(Set.empty), List("value of type string"), Some("myApp"))
+            Leaf((Set.empty), List("value of type string"), Some("myApp"))
           )
         )
       )

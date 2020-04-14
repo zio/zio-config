@@ -14,15 +14,15 @@ object DocsExample extends App {
 
   assert(
     generateDocs(config) ==
-      Both(
-        NestedPath(
+      ConfigDocs.Zip(
+        ConfigDocs.Nested(
           "PORT",
-          Leaf(Sources(Set.empty), List("value of type int", "Example: 8088", "Database related"))
+          Leaf((Set.empty), List("value of type int", "Example: 8088", "Database related"))
         ),
-        NestedPath(
+        ConfigDocs.Nested(
           "URL",
           Leaf(
-            Sources(Set.empty),
+            (Set.empty),
             List("value of type string", "optional value", "Example: abc.com", "Database related")
           )
         )
@@ -30,21 +30,21 @@ object DocsExample extends App {
   )
 
   assert(
-    generateDocsWithValue(config, Database(1, Some("value"))) ==
+    generateReport(config, Database(1, Some("value"))) ==
       Right(
-        Both(
-          NestedPath(
+        ConfigDocs.Zip(
+          ConfigDocs.Nested(
             "PORT",
             Leaf(
-              Sources(Set.empty),
+              (Set.empty),
               List("value of type int", "Example: 8088", "Database related"),
               Some("1")
             )
           ),
-          NestedPath(
+          ConfigDocs.Nested(
             "URL",
             Leaf(
-              Sources(Set.empty),
+              (Set.empty),
               List("value of type string", "optional value", "Example: abc.com", "Database related"),
               Some("value")
             )
