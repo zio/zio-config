@@ -2,8 +2,8 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.config.ReadError.{ AndErrors, ConversionError, FormatError, MissingValue, OrErrors }
 import zio.config.ReadError.Step.{ Index, Key }
+import zio.config.ReadError.{ AndErrors, ConversionError, FormatError, MissingValue, OrErrors }
 import zio.test.Assertion._
 import zio.test._
 
@@ -273,16 +273,33 @@ object SetTest
           assert(res)(isLeft(equalTo(expected)))
         },
         test("accumulates all errors") {
-          case class Cfg(a: Set[Boolean], b: Set[Int])
+          case class CfgA(a1: Boolean, a2: Int)
+          case class Cfg(a: Set[CfgA], b: Set[Int])
 
-          val cCfg = (nested("a")(setStrict(boolean)) |@| nested("b")(setStrict(int)))(Cfg, Cfg.unapply)
+          val cCfgA = (boolean("a1") |@| int("a2"))(CfgA, CfgA.unapply)
+          val cCfg  = (nested("a")(setStrict(cCfgA)) |@| nested("b")(setStrict(int)))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(
                 Map(
-                  "a" -> Sequence(Leaf("true") :: Leaf("lorem ipsum") :: Nil),
-                  "b" -> Sequence(Leaf("one") :: Leaf("2") :: Nil)
+                  "a" -> PropertyTree.Sequence(
+                    List(
+                      Record(
+                        Map("a1" -> Leaf("true"), "a2" -> Leaf("lorem ipsum"))
+                      ),
+                      Record(
+                        Map("a1" -> Leaf("true"), "a2" -> Leaf("1"))
+                      ),
+                      Record(
+                        Map("a1" -> Leaf("false"))
+                      ),
+                      Record(
+                        Map("a2" -> Leaf("2"))
+                      )
+                    )
+                  ),
+                  "b" -> Sequence(Leaf("2") :: Leaf("one") :: Leaf("2") :: Nil)
                 )
               ),
               "tree"
@@ -293,14 +310,74 @@ object SetTest
               List(
                 AndErrors(
                   List(
-                    FormatError(List(Key("a"), Index(1)), "Provided value is lorem ipsum, expecting the type boolean")
+                    MissingValue(List(Key("a"), Index(3), Key("a1"))),
+                    MissingValue(List(Key("a"), Index(2), Key("a2"))),
+                    FormatError(
+                      List(Key("a"), Index(0), Key("a2")),
+                      "Provided value is lorem ipsum, expecting the type int"
+                    )
                   )
                 ),
-                AndErrors(List(FormatError(List(Key("b"), Index(0)), "Provided value is one, expecting the type int")))
+                AndErrors(
+                  List(
+                    FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int")
+                  )
+                )
+              )
+            )
+          assert(res)(isLeft(hasField("size", _.size, equalTo(expected.size))))
+        },
+        test("accumulates all errors - pretty print") {
+          case class CfgA(a1: Boolean, a2: Int)
+          case class Cfg(a: Set[CfgA], b: Set[Int])
+
+          val cCfgA = (boolean("a1") |@| int("a2"))(CfgA, CfgA.unapply)
+          val cCfg  = (nested("a")(setStrict(cCfgA)) |@| nested("b")(setStrict(int)))(Cfg, Cfg.unapply)
+
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(
+                Map(
+                  "a" -> PropertyTree.Sequence(
+                    List(
+                      Record(
+                        Map("a1" -> Leaf("true"), "a2" -> Leaf("lorem ipsum"))
+                      ),
+                      Record(
+                        Map("a1" -> Leaf("true"), "a2" -> Leaf("1"))
+                      ),
+                      Record(
+                        Map("a1" -> Leaf("false"))
+                      ),
+                      Record(
+                        Map("a2" -> Leaf("2"))
+                      )
+                    )
+                  ),
+                  "b" -> Sequence(Leaf("2") :: Leaf("one") :: Leaf("2") :: Nil)
+                )
+              ),
+              "tree"
+            )
+          )
+          val expected: ReadError[String] =
+            AndErrors(
+              List(
+                AndErrors(
+                  List(
+                    MissingValue(List(Key("a"), Index(3), Key("a1"))),
+                    MissingValue(List(Key("a"), Index(2), Key("a2"))),
+                    FormatError(
+                      List(Key("a"), Index(0), Key("a2")),
+                      "Provided value is lorem ipsum, expecting the type int"
+                    )
+                  )
+                ),
+                AndErrors(List(FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int")))
               )
             )
 
-          assert(res)(isLeft(equalTo(expected)))
+          assert(res.left.map(_.prettyPrint()))(isLeft(equalTo(expected.prettyPrint())))
         }
       )
     )
