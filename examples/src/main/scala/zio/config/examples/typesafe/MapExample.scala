@@ -5,7 +5,7 @@ import zio.config._
 import typesafe._
 import ConfigDescriptor._
 import com.typesafe.config.ConfigRenderOptions
-import zio.config.typesafe.TypeSafeConfigSource
+import zio.config.typesafe.TypesafeConfigSource
 
 object MapExample extends App with EitherImpureOps {
   val hocon =
@@ -24,7 +24,7 @@ object MapExample extends App with EitherImpureOps {
        |  }
        |""".stripMargin
 
-  val source = TypeSafeConfigSource.fromHoconString(hocon).loadOrThrow
+  val source = TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
@@ -104,7 +104,7 @@ object MapExample extends App with EitherImpureOps {
        |""".stripMargin
 
   val result3 =
-    read(nested("result")(mapStrict(description)) from TypeSafeConfigSource.fromHoconString(hocon2).loadOrThrow)
+    read(nested("result")(mapStrict(description)) from TypesafeConfigSource.fromHoconString(hocon2).loadOrThrow)
 
   println(result3)
 
@@ -120,7 +120,7 @@ object MapExample extends App with EitherImpureOps {
 
   val xx = nested("k") { map("s")(string("y")) }
 
-  println(read(xx from TypeSafeConfigSource.fromHoconString(hocon3).loadOrThrow))
+  println(read(xx from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow))
 
   val hocon4 =
     s"""
@@ -129,7 +129,7 @@ object MapExample extends App with EitherImpureOps {
 
   val xx2 = nested("k") { map(string("y")) }
 
-  println(read(xx2 from TypeSafeConfigSource.fromHoconString(hocon4).loadOrThrow))
+  println(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow))
 
   println(generateDocs(map("s")(string) from ConfigSource.fromMap(Map.empty)))
 
