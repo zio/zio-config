@@ -30,7 +30,7 @@ object TypesafeConfig {
   )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
     Config.fromConfigDescriptorM(
       ZIO
-        .fromEither(TypeSafeConfigSource.fromTypesafeConfig(conf))
+        .fromEither(TypesafeConfigSource.fromTypesafeConfig(conf))
         .map(configDescriptor from _)
         .mapError(error => new RuntimeException(error))
     )
