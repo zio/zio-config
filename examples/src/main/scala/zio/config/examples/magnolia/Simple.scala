@@ -102,7 +102,7 @@ object Cfg extends App with EitherImpureOps {
       |      a = 1
       |      b = 2
       |    }
-      |  
+      |
       |  }
       |}
       |""".stripMargin
@@ -125,7 +125,7 @@ object Cfg extends App with EitherImpureOps {
       |        }
       |      }
       |    }
-      |  
+      |
       |  }
       |}
       |""".stripMargin
@@ -151,7 +151,7 @@ object Cfg extends App with EitherImpureOps {
       |        }
       |      }
       |    }
-      |  
+      |
       |  }
       |}
       |""".stripMargin
