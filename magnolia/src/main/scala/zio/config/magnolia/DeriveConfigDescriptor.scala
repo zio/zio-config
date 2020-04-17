@@ -1,14 +1,19 @@
 package zio.config.magnolia
 
-import java.net.URI
+import java.io.File
+import java.net.{ URI, URL }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
+import java.util.UUID
 
 import magnolia._
 import zio.config.ConfigDescriptor._
 import zio.config.{ ConfigDescriptor, ConfigSource, PropertyType }
+import zio.duration.Duration
 
 import scala.annotation.{ implicitAmbiguous, tailrec }
 import scala.collection.JavaConverters._
 import scala.language.experimental.macros
+import scala.concurrent.duration.{ Duration => ScalaDuration }
 
 /**
  * DeriveConfigDescriptor.descriptor[Config] gives an automatic ConfigDescriptor for the case class Config recursively
@@ -70,32 +75,56 @@ trait DeriveConfigDescriptor { self =>
   def constant[T](label: String, value: T): ConfigDescriptor[String, String, T] =
     constantString(label)(_ => value, (p: T) => Some(p).filter(_ == value).map(_ => label))
 
-  protected def stringDesc: ConfigDescriptor[String, String, String]         = string
-  protected def booleanDesc: ConfigDescriptor[String, String, Boolean]       = boolean
-  protected def byteDesc: ConfigDescriptor[String, String, Byte]             = byte
-  protected def shortDesc: ConfigDescriptor[String, String, Short]           = short
-  protected def intDesc: ConfigDescriptor[String, String, Int]               = int
-  protected def longDesc: ConfigDescriptor[String, String, Long]             = long
-  protected def bigIntDesc: ConfigDescriptor[String, String, BigInt]         = bigInt
-  protected def floatDesc: ConfigDescriptor[String, String, Float]           = float
-  protected def doubleDesc: ConfigDescriptor[String, String, Double]         = double
-  protected def bigDecimalDesc: ConfigDescriptor[String, String, BigDecimal] = bigDecimal
-  protected def uriDesc: ConfigDescriptor[String, String, URI]               = uri
+  protected def stringDesc: ConfigDescriptor[String, String, String]               = string
+  protected def booleanDesc: ConfigDescriptor[String, String, Boolean]             = boolean
+  protected def byteDesc: ConfigDescriptor[String, String, Byte]                   = byte
+  protected def shortDesc: ConfigDescriptor[String, String, Short]                 = short
+  protected def intDesc: ConfigDescriptor[String, String, Int]                     = int
+  protected def longDesc: ConfigDescriptor[String, String, Long]                   = long
+  protected def bigIntDesc: ConfigDescriptor[String, String, BigInt]               = bigInt
+  protected def floatDesc: ConfigDescriptor[String, String, Float]                 = float
+  protected def doubleDesc: ConfigDescriptor[String, String, Double]               = double
+  protected def bigDecimalDesc: ConfigDescriptor[String, String, BigDecimal]       = bigDecimal
+  protected def uriDesc: ConfigDescriptor[String, String, URI]                     = uri
+  protected def urlDesc: ConfigDescriptor[String, String, URL]                     = url
+  protected def scalaDurationDesc: ConfigDescriptor[String, String, ScalaDuration] = duration
+  protected def durationDesc: ConfigDescriptor[String, String, Duration]           = zioDuration
+  protected def uuidDesc: ConfigDescriptor[String, String, UUID]                   = uuid
+  protected def localDateDesc: ConfigDescriptor[String, String, LocalDate]         = localDate
+  protected def localTimeDesc: ConfigDescriptor[String, String, LocalTime]         = localTime
+  protected def localDateTimeDesc: ConfigDescriptor[String, String, LocalDateTime] = localDateTime
+  protected def instantDesc: ConfigDescriptor[String, String, Instant]             = instant
+  protected def fileDesc: ConfigDescriptor[String, String, File]                   = file
 
-  implicit val implicitStringDesc: Descriptor[String]         = Descriptor(stringDesc)
-  implicit val implicitBooleanDesc: Descriptor[Boolean]       = Descriptor(booleanDesc)
-  implicit val implicitByteDesc: Descriptor[Byte]             = Descriptor(byteDesc)
-  implicit val implicitShortDesc: Descriptor[Short]           = Descriptor(shortDesc)
-  implicit val implicitIntDesc: Descriptor[Int]               = Descriptor(intDesc)
-  implicit val implicitLongDesc: Descriptor[Long]             = Descriptor(longDesc)
-  implicit val implicitBigIntDesc: Descriptor[BigInt]         = Descriptor(bigIntDesc)
-  implicit val implicitFloatDesc: Descriptor[Float]           = Descriptor(floatDesc)
-  implicit val implicitDoubleDesc: Descriptor[Double]         = Descriptor(doubleDesc)
-  implicit val implicitBigDecimalDesc: Descriptor[BigDecimal] = Descriptor(bigDecimalDesc)
-  implicit val implicitUriDesc: Descriptor[URI]               = Descriptor(uriDesc)
+  implicit val implicitStringDesc: Descriptor[String]               = Descriptor(stringDesc)
+  implicit val implicitBooleanDesc: Descriptor[Boolean]             = Descriptor(booleanDesc)
+  implicit val implicitByteDesc: Descriptor[Byte]                   = Descriptor(byteDesc)
+  implicit val implicitShortDesc: Descriptor[Short]                 = Descriptor(shortDesc)
+  implicit val implicitIntDesc: Descriptor[Int]                     = Descriptor(intDesc)
+  implicit val implicitLongDesc: Descriptor[Long]                   = Descriptor(longDesc)
+  implicit val implicitBigIntDesc: Descriptor[BigInt]               = Descriptor(bigIntDesc)
+  implicit val implicitFloatDesc: Descriptor[Float]                 = Descriptor(floatDesc)
+  implicit val implicitDoubleDesc: Descriptor[Double]               = Descriptor(doubleDesc)
+  implicit val implicitBigDecimalDesc: Descriptor[BigDecimal]       = Descriptor(bigDecimalDesc)
+  implicit val implicitUriDesc: Descriptor[URI]                     = Descriptor(uriDesc)
+  implicit val implicitUrlDesc: Descriptor[URL]                     = Descriptor(urlDesc)
+  implicit val implicitScalaDurationDesc: Descriptor[ScalaDuration] = Descriptor(scalaDurationDesc)
+  implicit val implicitDurationDesc: Descriptor[Duration]           = Descriptor(durationDesc)
+  implicit val implicitUUIDDesc: Descriptor[UUID]                   = Descriptor(uuidDesc)
+  implicit val implicitLocalDateDesc: Descriptor[LocalDate]         = Descriptor(localDateDesc)
+  implicit val implicitLocalTimeDesc: Descriptor[LocalTime]         = Descriptor(localTimeDesc)
+  implicit val implicitLocalDateTimeDesc: Descriptor[LocalDateTime] = Descriptor(localDateTimeDesc)
+  implicit val implicitInstantDesc: Descriptor[Instant]             = Descriptor(instantDesc)
+  implicit val implicitFileDesc: Descriptor[File]                   = Descriptor(fileDesc)
 
   implicit def implicitListDesc[A: Descriptor]: Descriptor[List[A]] =
     Descriptor(listDesc(implicitly[Descriptor[A]].desc))
+
+  implicit def implicitSetDesc[A: Descriptor]: Descriptor[Set[A]] =
+    Descriptor(setDesc(implicitly[Descriptor[A]].desc))
+
+  implicit def implicitMapDesc[A: Descriptor]: Descriptor[Map[String, A]] =
+    Descriptor(mapDesc(implicitly[Descriptor[A]].desc))
 
   implicit def implicitEitherDesc[A: Descriptor, B: Descriptor]: Descriptor[Either[A, B]] =
     Descriptor(eitherDesc(implicitly[Descriptor[A]].desc, implicitly[Descriptor[B]].desc))
@@ -105,6 +134,14 @@ trait DeriveConfigDescriptor { self =>
 
   protected def listDesc[A](desc: ConfigDescriptor[String, String, A]): ConfigDescriptor[String, String, List[A]] =
     list(desc)
+
+  protected def setDesc[A](desc: ConfigDescriptor[String, String, A]): ConfigDescriptor[String, String, Set[A]] =
+    set(desc)
+
+  protected def mapDesc[A](
+    desc: ConfigDescriptor[String, String, A]
+  ): ConfigDescriptor[String, String, Map[String, A]] =
+    map(desc)
 
   protected def eitherDesc[A, B](
     left: ConfigDescriptor[String, String, A],
