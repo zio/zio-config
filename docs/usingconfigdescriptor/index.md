@@ -19,7 +19,7 @@ You should be familiar with reading config from various sources, given a  config
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config.ConfigSource, ConfigSource._, ConfigDescriptor._
+import zio.config.ConfigSource, ConfigSource._, zio.config.string._
 import zio.config.PropertyTree, PropertyTree._
 import zio.config.ConfigDocs.{Leaf => _, _}
 
@@ -210,35 +210,36 @@ To generate the documentation of the config, call `generateDocs`.
 
 
 ```scala mdoc:silent
+ import zio.config.ConfigDocs
 
  generateDocs(appConfig)
 
   // yields the result `ConfigDocs[String, String]`:
 
- Both(
-   Both(
-     NestedPath(
+ ConfigDocs.Zip(
+   ConfigDocs.Zip(
+     ConfigDocs.Nested(
        "south",
-       Both(
-         NestedPath("connection", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "South details"))),
-         NestedPath("port", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "South details")))
+       ConfigDocs.Zip(
+         ConfigDocs.Nested("connection", ConfigDocs.Leaf(Set(ConfigSource.Name("constant")), List("value of type string", "South details"))),
+         ConfigDocs.Nested("port", ConfigDocs.Leaf(Set(ConfigSource.Name("constant")), List("value of type int", "South details")))
        )
      ),
-     NestedPath(
+     ConfigDocs.Nested(
        "east",
-       Both(
-         NestedPath("connection", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "East details"))),
-         NestedPath("port", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "East details")))
+       ConfigDocs.Zip(
+         ConfigDocs.Nested("connection", ConfigDocs.Leaf(Set(ConfigSource.Name("constant")), List("value of type string", "East details"))),
+         ConfigDocs.Nested("port", ConfigDocs.Leaf(Set(ConfigSource.Name("constant")), List("value of type int", "East details")))
        )
      )
    ),
-   NestedPath("appName", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string")))
+   ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSource.Name("constant")), List("value of type string")))
  )
 ```
 
 #### More detail
-`Both(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
-`NestedPath`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
+`ConfigDocs.Zip(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
+`ConfigDocs.Nested`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
 the type of the value before it gets parsed.
 
 We will see more better representation of the documentation in the immediate future versions of zio-config.
@@ -253,46 +254,43 @@ along with the rest of the details.
 
 ```scala mdoc:silent
 
- generateDocsWithValue(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
+ generateReport(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
 
 // yields the result:
 
 Right(
-  Both(
-    Both(
-      NestedPath(
+  ConfigDocs.Zip(
+    ConfigDocs.Zip(
+      ConfigDocs.Nested(
         "south",
-        Both(
-          NestedPath(
+        ConfigDocs.Zip(
+          ConfigDocs.Nested(
             "connection",
-            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "South details"), Some("abc.com"))
+            ConfigDocs.Leaf(Set(ConfigSource.Name("constant")), List("value of type string", "South details"), Some("abc.com"))
           ),
-          NestedPath(
+          ConfigDocs.Nested(
             "port",
-            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "South details"), Some("8111"))
+            ConfigDocs.Leaf(Set(ConfigSource.Name("constant")), List("value of type int", "South details"), Some("8111"))
           )
         )
       ),
-      NestedPath(
+      ConfigDocs.Nested(
         "east",
-        Both(
-          NestedPath(
+        ConfigDocs.Zip(
+          ConfigDocs.Nested(
             "connection",
-            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "East details"), Some("xyz.com"))
+            ConfigDocs.Leaf(Set(ConfigSource.Name("constant")), List("value of type string", "East details"), Some("xyz.com"))
           ),
-          NestedPath(
+          ConfigDocs.Nested(
             "port",
-            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "East details"), Some("8888"))
+            ConfigDocs.Leaf(Set(ConfigSource.Name("constant")), List("value of type int", "East details"), Some("8888"))
           )
         )
       )
     ),
-    NestedPath("appName", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string"), Some("myApp")))
+    ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSource.Name("constant")), List("value of type string"), Some("myApp")))
   )
 )
 ```
 
-#### More detail
-`Both(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
-`NestedPath`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
-the type of the value before it gets parsed.g
+Pretty print will be coming soon!

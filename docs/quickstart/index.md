@@ -49,7 +49,10 @@ We must fetch the configuration from the environment to a case class (product) i
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config.ConfigSource, ConfigSource._, ConfigDescriptor._
+import zio.config.config
+import zio.config.string._
+import zio.config.ConfigSource, ConfigSource._
+import zio.config.Config
 
 ```
 
@@ -171,7 +174,7 @@ More details in [here](../configdescriptor/index.md).
 
 
 ```scala mdoc:silent
-generateDocsWithValue(myConfig, MyConfig("xyz", 8888, "postgres"))
+generateReport(myConfig, MyConfig("xyz", 8888, "postgres"))
 // Generates documentation showing value of each parameter
 
 ```

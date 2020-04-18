@@ -9,7 +9,10 @@ that represents your config.
 
 ```scala mdoc:silent
 import zio.{ ZIO, IO, Layer }
-import zio.config.ConfigSource, ConfigSource._, ConfigDescriptor._
+import zio.config.ConfigSource, ConfigSource._
+import zio.config.string._
+import zio.config.ReadError
+import zio.config.Config
 ```
 
 ## A Simple example
@@ -93,7 +96,8 @@ We have already seen `string("TOKEN")` and `int("PORT")` to fetch string and int
 We support the following:
 
 ```scala
-
+map
+list
 string
 boolean
 byte
