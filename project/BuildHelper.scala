@@ -34,7 +34,7 @@ object BuildHelper {
 
   val buildInfoSettings = Seq(
     buildInfoKeys := Seq[BuildInfoKey](name, version, scalaVersion, sbtVersion, isSnapshot),
-    buildInfoPackage := "zio",
+    buildInfoPackage := "zio.config",
     buildInfoObject := "BuildInfo"
   )
 

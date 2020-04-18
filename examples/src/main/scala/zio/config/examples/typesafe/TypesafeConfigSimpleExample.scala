@@ -3,7 +3,7 @@ package zio.config.examples.typesafe
 import zio.config.ConfigDescriptor.{ int, list, nested, string }
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.read
-import zio.config.typesafe.TypeSafeConfigSource.fromHoconString
+import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 import zio.config._
 
 object TypesafeConfigSimpleExample extends App {
@@ -126,7 +126,7 @@ object TypesafeConfigSimpleExample extends App {
           accountId: chris
       }
       {
-        
+
       }
     ]
 

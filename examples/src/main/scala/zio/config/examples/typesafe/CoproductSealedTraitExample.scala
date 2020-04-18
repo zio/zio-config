@@ -2,7 +2,7 @@ package zio.config.examples.typesafe
 
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.read
-import zio.config.typesafe.TypeSafeConfigSource
+import zio.config.typesafe.TypesafeConfigSource
 
 object CoproductSealedTraitExample extends App with EitherImpureOps {
 
@@ -16,7 +16,7 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
   case class Region(suburb: String, city: String)
 
   val aHoconSource =
-    TypeSafeConfigSource
+    TypesafeConfigSource
       .fromHoconString(
         s"""
            |x = a
@@ -25,7 +25,7 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
       .loadOrThrow
 
   val bHoconSource =
-    TypeSafeConfigSource
+    TypesafeConfigSource
       .fromHoconString(
         s"""
            |x = b
@@ -34,7 +34,7 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
       .loadOrThrow
 
   val cHoconSource =
-    TypeSafeConfigSource
+    TypesafeConfigSource
       .fromHoconString(
         s"""
            |x = c
@@ -43,7 +43,7 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
       .loadOrThrow
 
   val dHoconSource =
-    TypeSafeConfigSource
+    TypesafeConfigSource
       .fromHoconString(
         s"""
            |x {
