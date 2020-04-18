@@ -20,7 +20,7 @@ package object typesafe extends TreeToHoconSupport {
       toHocon.render(ConfigRenderOptions.concise().setFormatted(true).setJson(false))
 
     /**
-     * A helper function that convert property tree to a HOCON string
+     * A helper function that convert property tree to a Json string
      * Other options are directly available in ConfigObject of typesafe.
      */
     def toJson: String =
