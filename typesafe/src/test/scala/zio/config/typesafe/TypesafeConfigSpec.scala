@@ -9,7 +9,7 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
   val spec = suite("TypesafeConfig")(
     test("Read empty list") {
       val res =
-        TypeSafeConfigSource.fromHoconString(
+        TypesafeConfigSource.fromHoconString(
           """
             |a {
             |  b = "s"
@@ -24,7 +24,7 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
     },
     test("Read mixed list") {
       val res =
-        TypeSafeConfigSource.fromHoconString(
+        TypesafeConfigSource.fromHoconString(
           """
             |list = [
             |  "a",

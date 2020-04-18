@@ -11,7 +11,7 @@ import zio.{ IO, Task, ZIO }
 import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 
-object TypeSafeConfigSource {
+object TypesafeConfigSource {
   def fromDefaultLoader: Either[String, ConfigSource[String, String]] =
     fromTypesafeConfig(ConfigFactory.load.resolve)
 

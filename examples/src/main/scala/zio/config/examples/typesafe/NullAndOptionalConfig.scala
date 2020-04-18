@@ -2,7 +2,7 @@ package zio.config.examples.typesafe
 
 import zio.config.ConfigDescriptor
 import zio.config.read
-import zio.config.typesafe.TypeSafeConfigSource.fromHoconString
+import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 import EmployeeDetails._
 import zio.config.ConfigDescriptor._
 
