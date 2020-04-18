@@ -96,8 +96,6 @@ We have already seen `string("TOKEN")` and `int("PORT")` to fetch string and int
 We support the following:
 
 ```scala
-map
-list
 string
 boolean
 byte
@@ -119,6 +117,8 @@ url
 etc
 
 ```
+
+Complex types include `list`, `map` etc. More details to follow
 
 ## Optional Types
 
