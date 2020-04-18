@@ -5,7 +5,7 @@ import eu.timepit.refined.string._
 import zio.config.refined.internal._
 import zio.config.string._
 
-private[refined] trait StringSupport extends RefinedModule {
+private[refined] trait StringSupport {
 
   /** Predicate that checks if a `String` ends with the suffix `S` */
   def endsWith[S]: EndsWithPartiallyApplied[S] =

@@ -1,8 +1,8 @@
 package zio.config.typesafe
 
-import zio.config.ConfigSource
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.ConfigSource, ConfigSource._
+import zio.config.ConfigSource
+import zio.config.string.read
 
 object TypesafeConfigTestSupport extends EitherSupport {
   final case class Y(z: String)

@@ -5,7 +5,7 @@ import eu.timepit.refined.boolean._
 import zio.config.refined.internal._
 import zio.config.string._
 
-private[refined] trait BooleanSupport extends RefinedModule {
+private[refined] trait BooleanSupport {
 
   /** Constant predicate that is always `true` */
   def pTrue[A](

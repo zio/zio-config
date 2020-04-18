@@ -19,11 +19,11 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], String)] = desc match {
-        case Default(config, _)    => collectDescriptions(config, path)
-        case DynamicMap(_, config) => collectDescriptions(config, path)
-        case Describe(config, message)              => (path, message) :: collectDescriptions(config, path)
-        case Nested(path, config)                   => collectDescriptions(config, Some(path))
-        case Optional(config)      => collectDescriptions(config, path)
+        case Default(config, _)        => collectDescriptions(config, path)
+        case DynamicMap(_, config)     => collectDescriptions(config, path)
+        case Describe(config, message) => (path, message) :: collectDescriptions(config, path)
+        case Nested(path, config)      => collectDescriptions(config, Some(path))
+        case Optional(config)          => collectDescriptions(config, path)
         case OrElse(left, right) =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
         case OrElseEither(left, right) =>
@@ -48,9 +48,9 @@ object DerivationTest extends DefaultRunnableSpec {
 
       def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
         case Default(config, _)        => collectPath(config)
-        case Describe(config, _)                        => collectPath(config)
+        case Describe(config, _)       => collectPath(config)
         case DynamicMap(_, config)     => collectPath(config)
-        case Nested(path, config)                       => path :: collectPath(config)
+        case Nested(path, config)      => path :: collectPath(config)
         case Optional(config)          => collectPath(config)
         case OrElse(left, right)       => collectPath(left) ::: collectPath(right)
         case OrElseEither(left, right) => collectPath(left) ::: collectPath(right)
@@ -71,9 +71,9 @@ object DerivationTest extends DefaultRunnableSpec {
         path: Option[String]
       ): List[(Option[String], Any)] = desc match {
         case Default(config, v)    => (path -> v) :: collectDefault(config, path)
-        case Describe(config, _)                    => collectDefault(config, path)
+        case Describe(config, _)   => collectDefault(config, path)
         case DynamicMap(_, config) => collectDefault(config, path)
-        case Nested(path, config)                   => collectDefault(config, Some(path))
+        case Nested(path, config)  => collectDefault(config, Some(path))
         case Optional(config)      => collectDefault(config, path)
         case OrElse(left, right)   => collectDefault(left, path) ::: collectDefault(right, path)
         case OrElseEither(left, right) =>

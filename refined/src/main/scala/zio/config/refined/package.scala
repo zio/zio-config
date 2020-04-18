@@ -1,9 +1,14 @@
-package zio.config.refined
+package zio.config
 
 import eu.timepit.refined.api.{ RefType, Refined, Validate }
 import zio.config.string._
 
-trait RefinedModule {
+package object refined
+    extends NumericSupport
+    with StringSupport
+    with CharSupport
+    with BooleanSupport
+    with CollectionSupport {
 
   /** Add support for custom predicates */
   def asRefined[A, P](
@@ -16,5 +21,4 @@ trait RefinedModule {
         RefType.applyRef[Refined[A, P]](_),
         rf => Right(rf.value)
       )
-
 }

@@ -5,7 +5,7 @@ import eu.timepit.refined.numeric._
 import zio.config.refined.internal._
 import zio.config.string._
 
-private[refined] trait NumericSupport extends RefinedModule {
+private[refined] trait NumericSupport {
 
   /** Predicate that checks if a numeric value is less than `N` */
   def less[N]: LessPartiallyApplied[N] =

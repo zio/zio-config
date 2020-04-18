@@ -13,7 +13,7 @@ import zio.config.string._
 
 //// Numeric
 
-final class LessPartiallyApplied[N] extends RefinedModule {
+final class LessPartiallyApplied[N] {
   type K
   type V
 
@@ -25,7 +25,7 @@ final class LessPartiallyApplied[N] extends RefinedModule {
     asRefined[A, Less[N]](desc)
 }
 
-final class GreaterPartiallyApplied[N] extends RefinedModule {
+final class GreaterPartiallyApplied[N] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -34,7 +34,7 @@ final class GreaterPartiallyApplied[N] extends RefinedModule {
     asRefined[A, Greater[N]](desc)
 }
 
-final class LessEqualPartiallyApplied[N] extends RefinedModule {
+final class LessEqualPartiallyApplied[N] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -43,7 +43,7 @@ final class LessEqualPartiallyApplied[N] extends RefinedModule {
     asRefined[A, LessEqual[N]](desc)
 }
 
-final class GreaterEqualPartiallyApplied[N] extends RefinedModule {
+final class GreaterEqualPartiallyApplied[N] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -52,7 +52,7 @@ final class GreaterEqualPartiallyApplied[N] extends RefinedModule {
     asRefined[A, GreaterEqual[N]](desc)
 }
 
-final class DivisiblePartiallyApplied[N] extends RefinedModule {
+final class DivisiblePartiallyApplied[N] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -61,7 +61,7 @@ final class DivisiblePartiallyApplied[N] extends RefinedModule {
     asRefined[A, Divisible[N]](desc)
 }
 
-final class NonDivisiblePartiallyApplied[N] extends RefinedModule {
+final class NonDivisiblePartiallyApplied[N] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -72,7 +72,7 @@ final class NonDivisiblePartiallyApplied[N] extends RefinedModule {
 
 //// Collection
 
-final class CountPartiallyApplied[PA, PC] extends RefinedModule {
+final class CountPartiallyApplied[PA, PC] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -81,7 +81,7 @@ final class CountPartiallyApplied[PA, PC] extends RefinedModule {
     asRefined[A, Count[PA, PC]](desc)
 }
 
-final class EmptyPartiallyApplied extends RefinedModule {
+final class EmptyPartiallyApplied {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -90,7 +90,7 @@ final class EmptyPartiallyApplied extends RefinedModule {
     asRefined[A, Empty](desc)
 }
 
-final class ForallPartiallyApplied[P] extends RefinedModule {
+final class ForallPartiallyApplied[P] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -99,7 +99,7 @@ final class ForallPartiallyApplied[P] extends RefinedModule {
     asRefined[A, Forall[P]](desc)
 }
 
-final class HeadPartiallyApplied[P] extends RefinedModule {
+final class HeadPartiallyApplied[P] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -108,7 +108,7 @@ final class HeadPartiallyApplied[P] extends RefinedModule {
     asRefined[A, Head[P]](desc)
 }
 
-final class IndexPartiallyApplied[N, P] extends RefinedModule {
+final class IndexPartiallyApplied[N, P] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -117,7 +117,7 @@ final class IndexPartiallyApplied[N, P] extends RefinedModule {
     asRefined[A, Index[N, P]](desc)
 }
 
-final class InitPartiallyApplied[P] extends RefinedModule {
+final class InitPartiallyApplied[P] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -126,7 +126,7 @@ final class InitPartiallyApplied[P] extends RefinedModule {
     asRefined[A, Init[P]](desc)
 }
 
-final class LastPartiallyApplied[P] extends RefinedModule {
+final class LastPartiallyApplied[P] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -135,7 +135,7 @@ final class LastPartiallyApplied[P] extends RefinedModule {
     asRefined[A, Last[P]](desc)
 }
 
-final class SizePartiallyApplied[P] extends RefinedModule {
+final class SizePartiallyApplied[P] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -144,7 +144,7 @@ final class SizePartiallyApplied[P] extends RefinedModule {
     asRefined[A, Size[P]](desc)
 }
 
-final class TailPartiallyApplied[P] extends RefinedModule {
+final class TailPartiallyApplied[P] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -153,7 +153,7 @@ final class TailPartiallyApplied[P] extends RefinedModule {
     asRefined[A, Tail[P]](desc)
 }
 
-final class ContainsPartiallyApplied[U] extends RefinedModule {
+final class ContainsPartiallyApplied[U] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -162,7 +162,7 @@ final class ContainsPartiallyApplied[U] extends RefinedModule {
     asRefined[A, Contains[U]](desc)
 }
 
-final class ExistsPartiallyApplied[P] extends RefinedModule {
+final class ExistsPartiallyApplied[P] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -171,7 +171,7 @@ final class ExistsPartiallyApplied[P] extends RefinedModule {
     asRefined[A, Exists[P]](desc)
 }
 
-final class MinSizePartiallyApplied[N] extends RefinedModule {
+final class MinSizePartiallyApplied[N] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -180,7 +180,7 @@ final class MinSizePartiallyApplied[N] extends RefinedModule {
     asRefined[A, MinSize[N]](desc)
 }
 
-final class MaxSizePartiallyApplied[N] extends RefinedModule {
+final class MaxSizePartiallyApplied[N] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -191,7 +191,7 @@ final class MaxSizePartiallyApplied[N] extends RefinedModule {
 
 //// String
 
-final class EndsWithPartiallyApplied[S] extends RefinedModule {
+final class EndsWithPartiallyApplied[S] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -200,7 +200,7 @@ final class EndsWithPartiallyApplied[S] extends RefinedModule {
     asRefined[A, EndsWith[S]](desc)
 }
 
-final class MatchesRegexPartiallyApplied[S] extends RefinedModule {
+final class MatchesRegexPartiallyApplied[S] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -209,7 +209,7 @@ final class MatchesRegexPartiallyApplied[S] extends RefinedModule {
     asRefined[A, MatchesRegex[S]](desc)
 }
 
-final class StartsWithPartiallyApplied[S] extends RefinedModule {
+final class StartsWithPartiallyApplied[S] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -220,7 +220,7 @@ final class StartsWithPartiallyApplied[S] extends RefinedModule {
 
 //// Boolean
 
-final class NotPartiallyApplied[P] extends RefinedModule {
+final class NotPartiallyApplied[P] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -229,7 +229,7 @@ final class NotPartiallyApplied[P] extends RefinedModule {
     asRefined[A, Not[P]](desc)
 }
 
-final class AndPartiallyApplied[A, B] extends RefinedModule {
+final class AndPartiallyApplied[A, B] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -238,7 +238,7 @@ final class AndPartiallyApplied[A, B] extends RefinedModule {
     asRefined[A, And[A, B]](desc)
 }
 
-final class OrPartiallyApplied[A, B] extends RefinedModule {
+final class OrPartiallyApplied[A, B] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -247,7 +247,7 @@ final class OrPartiallyApplied[A, B] extends RefinedModule {
     asRefined[A, Or[A, B]](desc)
 }
 
-final class XorPartiallyApplied[A, B] extends RefinedModule {
+final class XorPartiallyApplied[A, B] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -256,7 +256,7 @@ final class XorPartiallyApplied[A, B] extends RefinedModule {
     asRefined[A, Xor[A, B]](desc)
 }
 
-final class AllOfPartiallyApplied[S] extends RefinedModule {
+final class AllOfPartiallyApplied[S] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -265,7 +265,7 @@ final class AllOfPartiallyApplied[S] extends RefinedModule {
     asRefined[A, AllOf[S]](desc)
 }
 
-final class AnyOfPartiallyApplied[S] extends RefinedModule {
+final class AnyOfPartiallyApplied[S] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -274,7 +274,7 @@ final class AnyOfPartiallyApplied[S] extends RefinedModule {
     asRefined[A, AnyOf[S]](desc)
 }
 
-final class OneOfPartiallyApplied[S] extends RefinedModule {
+final class OneOfPartiallyApplied[S] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -283,7 +283,7 @@ final class OneOfPartiallyApplied[S] extends RefinedModule {
     asRefined[A, OneOf[S]](desc)
 }
 
-final class NandPartiallyApplied[A, B] extends RefinedModule {
+final class NandPartiallyApplied[A, B] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
@@ -292,7 +292,7 @@ final class NandPartiallyApplied[A, B] extends RefinedModule {
     asRefined[A, Nand[A, B]](desc)
 }
 
-final class NorPartiallyApplied[A, B] extends RefinedModule {
+final class NorPartiallyApplied[A, B] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(

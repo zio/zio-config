@@ -6,7 +6,7 @@ import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 import zio.ZIO
 import zio.config.string._
-import zio.config.ConfigSource, ConfigSource._
+import zio.config.{ helpers, BaseSpec, ConfigSource }
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
 import zio.random.Random
@@ -49,7 +49,7 @@ object RefinedReadWriteRoundtripTestUtils {
     longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
   )
 
-  def longList(n: Int): ::[ConfigDescriptor[String, String, Long]] = {
+  def longList(n: Int): ::[ConfigDescriptor[Long]] = {
     val list =
       (1 to n).toList
         .map(group => long(s"GROUP${group}_LONGVAL"))
@@ -59,7 +59,7 @@ object RefinedReadWriteRoundtripTestUtils {
 
   def longs(n: Int): ConfigDescriptor[List[Long]] = {
     val ll = longList(n)
-    ConfigDescriptor.collectAll[String, String, Long](ll.head, ll.tail: _*)
+    collectAll(ll.head, ll.tail: _*)
   }
 
   def prodConfig(n: Int): ConfigDescriptor[RefinedProd] =
