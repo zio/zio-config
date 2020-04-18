@@ -57,12 +57,12 @@ object RefinedReadWriteRoundtripTestUtils {
     ::(list.head, list.tail)
   }
 
-  def longs(n: Int): ConfigDescriptor[ List[Long]] = {
+  def longs(n: Int): ConfigDescriptor[List[Long]] = {
     val ll = longList(n)
     ConfigDescriptor.collectAll[String, String, Long](ll.head, ll.tail: _*)
   }
 
-  def prodConfig(n: Int): ConfigDescriptor[ RefinedProd] =
+  def prodConfig(n: Int): ConfigDescriptor[RefinedProd] =
     (
       nonEmpty(string("LDAP")) |@|
         greaterEqual[W.`1024`.T](int("PORT")) |@|

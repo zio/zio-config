@@ -9,7 +9,7 @@ import zio.{ App, ZEnv, ZIO }
 case class Prod(ldap: String, port: Int, dburl: Option[String])
 
 object Prod {
-  val prodConfig: ConfigDescriptor[ Prod] =
+  val prodConfig: ConfigDescriptor[Prod] =
     (string("LDAP") |@| int("PORT") |@|
       string("DB_URL").optional)(Prod.apply, Prod.unapply)
 

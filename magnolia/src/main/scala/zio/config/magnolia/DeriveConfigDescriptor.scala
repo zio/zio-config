@@ -1,17 +1,17 @@
 package zio.config.magnolia
 
 import java.io.File
-import java.net.{URI, URL}
-import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import java.net.{ URI, URL }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 
 import magnolia._
-import zio.config.{ConfigSource, PropertyType}
+import zio.config.{ ConfigSource, PropertyType }
 import zio.duration.Duration
 
-import scala.annotation.{implicitAmbiguous, tailrec}
+import scala.annotation.{ implicitAmbiguous, tailrec }
 import scala.collection.JavaConverters._
-import scala.concurrent.duration.{Duration => ScalaDuration}
+import scala.concurrent.duration.{ Duration => ScalaDuration }
 import scala.language.experimental.macros
 
 /**
@@ -69,32 +69,32 @@ trait DeriveConfigDescriptor { self =>
     def write(a: String): String = a
   }
 
-  def constantString(value: String): ConfigDescriptor[ String] =
+  def constantString(value: String): ConfigDescriptor[String] =
     Source(ConfigSource.empty, ConstantString(value)) ?? s"constant string '$value'"
 
-  def constant[T](label: String, value: T): ConfigDescriptor[ T] =
+  def constant[T](label: String, value: T): ConfigDescriptor[T] =
     constantString(label)(_ => value, (p: T) => Some(p).filter(_ == value).map(_ => label))
 
-  protected def stringDesc: ConfigDescriptor[ String]               = string
-  protected def booleanDesc: ConfigDescriptor[ Boolean]             = boolean
-  protected def byteDesc: ConfigDescriptor[ Byte]                   = byte
-  protected def shortDesc: ConfigDescriptor[ Short]                 = short
-  protected def intDesc: ConfigDescriptor[ Int]                     = int
-  protected def longDesc: ConfigDescriptor[ Long]                   = long
-  protected def bigIntDesc: ConfigDescriptor[ BigInt]               = bigInt
-  protected def floatDesc: ConfigDescriptor[ Float]                 = float
-  protected def doubleDesc: ConfigDescriptor[ Double]               = double
-  protected def bigDecimalDesc: ConfigDescriptor[ BigDecimal]       = bigDecimal
-  protected def uriDesc: ConfigDescriptor[ URI]                     = uri
-  protected def urlDesc: ConfigDescriptor[ URL]                     = url
-  protected def scalaDurationDesc: ConfigDescriptor[ ScalaDuration] = duration
-  protected def durationDesc: ConfigDescriptor[ Duration]           = zioDuration
-  protected def uuidDesc: ConfigDescriptor[ UUID]                   = uuid
-  protected def localDateDesc: ConfigDescriptor[ LocalDate]         = localDate
-  protected def localTimeDesc: ConfigDescriptor[ LocalTime]         = localTime
-  protected def localDateTimeDesc: ConfigDescriptor[ LocalDateTime] = localDateTime
-  protected def instantDesc: ConfigDescriptor[ Instant]             = instant
-  protected def fileDesc: ConfigDescriptor[ File]                   = file
+  protected def stringDesc: ConfigDescriptor[String]               = string
+  protected def booleanDesc: ConfigDescriptor[Boolean]             = boolean
+  protected def byteDesc: ConfigDescriptor[Byte]                   = byte
+  protected def shortDesc: ConfigDescriptor[Short]                 = short
+  protected def intDesc: ConfigDescriptor[Int]                     = int
+  protected def longDesc: ConfigDescriptor[Long]                   = long
+  protected def bigIntDesc: ConfigDescriptor[BigInt]               = bigInt
+  protected def floatDesc: ConfigDescriptor[Float]                 = float
+  protected def doubleDesc: ConfigDescriptor[Double]               = double
+  protected def bigDecimalDesc: ConfigDescriptor[BigDecimal]       = bigDecimal
+  protected def uriDesc: ConfigDescriptor[URI]                     = uri
+  protected def urlDesc: ConfigDescriptor[URL]                     = url
+  protected def scalaDurationDesc: ConfigDescriptor[ScalaDuration] = duration
+  protected def durationDesc: ConfigDescriptor[Duration]           = zioDuration
+  protected def uuidDesc: ConfigDescriptor[UUID]                   = uuid
+  protected def localDateDesc: ConfigDescriptor[LocalDate]         = localDate
+  protected def localTimeDesc: ConfigDescriptor[LocalTime]         = localTime
+  protected def localDateTimeDesc: ConfigDescriptor[LocalDateTime] = localDateTime
+  protected def instantDesc: ConfigDescriptor[Instant]             = instant
+  protected def fileDesc: ConfigDescriptor[File]                   = file
 
   implicit val implicitStringDesc: Descriptor[String]               = Descriptor(stringDesc)
   implicit val implicitBooleanDesc: Descriptor[Boolean]             = Descriptor(booleanDesc)
@@ -132,30 +132,30 @@ trait DeriveConfigDescriptor { self =>
   implicit def implicitOptionDesc[A: Descriptor]: Descriptor[Option[A]] =
     Descriptor(optionDesc(implicitly[Descriptor[A]].desc))
 
-  protected def listDesc[A](desc: ConfigDescriptor[ A]): ConfigDescriptor[ List[A]] =
+  protected def listDesc[A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
     list(desc)
 
-  protected def setDesc[A](desc: ConfigDescriptor[ A]): ConfigDescriptor[ Set[A]] =
+  protected def setDesc[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
     set(desc)
 
   protected def mapDesc[A](
-    desc: ConfigDescriptor[ A]
-  ): ConfigDescriptor[ Map[String, A]] =
+    desc: ConfigDescriptor[A]
+  ): ConfigDescriptor[Map[String, A]] =
     map(desc)
 
   protected def eitherDesc[A, B](
-    left: ConfigDescriptor[ A],
-    right: ConfigDescriptor[ B]
-  ): ConfigDescriptor[ Either[A, B]] =
+    left: ConfigDescriptor[A],
+    right: ConfigDescriptor[B]
+  ): ConfigDescriptor[Either[A, B]] =
     left.orElseEither(right)
 
-  protected def optionDesc[A](desc: ConfigDescriptor[ A]): ConfigDescriptor[ Option[A]] =
+  protected def optionDesc[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
     desc.optional
 
-  case class Descriptor[T](desc: ConfigDescriptor[ T], isObject: Boolean = false)
+  case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false)
 
   object Descriptor {
-    implicit def toConfigDescriptor[T](ev: Descriptor[T]): ConfigDescriptor[ T] = ev.desc
+    implicit def toConfigDescriptor[T](ev: Descriptor[T]): ConfigDescriptor[T] = ev.desc
   }
 
   type Typeclass[T] = Descriptor[T]
@@ -193,8 +193,8 @@ trait DeriveConfigDescriptor { self =>
 
   final def wrapSealedTrait[T](
     label: String,
-    desc: ConfigDescriptor[ T]
-  ): ConfigDescriptor[ T] =
+    desc: ConfigDescriptor[T]
+  ): ConfigDescriptor[T] =
     if (wrapSealedTraits) nested(label)(desc)
     else desc
 
@@ -218,7 +218,7 @@ trait DeriveConfigDescriptor { self =>
               _ => ccName
             )
           case head :: tail =>
-            def makeDescriptor(param: Param[Descriptor, T]): ConfigDescriptor[ Any] = {
+            def makeDescriptor(param: Param[Descriptor, T]): ConfigDescriptor[Any] = {
               val descriptions =
                 param.annotations
                   .filter(_.isInstanceOf[describe])

@@ -123,7 +123,7 @@ object ReadWriteRoundtripTestUtils {
   val cNestedConfig =
     (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedPath.apply, NestedPath.unapply)
 
-  val cSingleField: ConfigDescriptor[ SingleField] =
+  val cSingleField: ConfigDescriptor[SingleField] =
     int("kCount")(SingleField.apply, SingleField.unapply)
 
   val cCoproductConfig =

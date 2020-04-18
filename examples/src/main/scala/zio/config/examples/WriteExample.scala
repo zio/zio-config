@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.config.{ConfigSource, PropertyTree}
+import zio.config.{ ConfigSource, PropertyTree }
 import zio.config.string._
 import zio.config.examples.typesafe.EitherImpureOps
 

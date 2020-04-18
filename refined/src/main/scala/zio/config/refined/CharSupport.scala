@@ -4,7 +4,6 @@ import eu.timepit.refined.api.{ Refined, Validate }
 import eu.timepit.refined.char._
 import zio.config.string._
 
-
 private[refined] trait CharSupport extends RefinedModule {
 
   /** Predicate that checks if a `Char` is a digit */

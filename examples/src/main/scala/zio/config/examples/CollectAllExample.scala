@@ -22,7 +22,7 @@ object CollectAllExample extends App with EitherImpureOps {
           (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
       )
 
-  val configOfList: ConfigDescriptor[ List[Variables]] =
+  val configOfList: ConfigDescriptor[List[Variables]] =
     collectAll(listOfConfig.head, listOfConfig.tail: _*)
 
   val map =

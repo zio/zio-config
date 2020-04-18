@@ -7,7 +7,7 @@ import java.util.UUID
 
 import scala.concurrent.duration.Duration
 
-trait string extends ReadFunctions with ConfigDocsFunctions {
+object string extends ReadFunctions with ConfigDocsFunctions {
   type K = String
   type V = String
 

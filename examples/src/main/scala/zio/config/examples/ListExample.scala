@@ -18,7 +18,7 @@ object ListExample extends App with EitherImpureOps {
       "regions" -> ::("australia", List("canada", "usa"))
     )
 
-  val config: ConfigDescriptor[ PgmConfig] =
+  val config: ConfigDescriptor[PgmConfig] =
     (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
 
   val tree =

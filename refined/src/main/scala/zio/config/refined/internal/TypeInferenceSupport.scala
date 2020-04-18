@@ -1,7 +1,7 @@
 package zio.config.refined
 package internal
 
-import eu.timepit.refined.api.{Refined, Validate}
+import eu.timepit.refined.api.{ Refined, Validate }
 import eu.timepit.refined.boolean._
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._

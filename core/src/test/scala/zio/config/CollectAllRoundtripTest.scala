@@ -14,7 +14,7 @@ object CollectAllRoundtripTest
         testM("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
           checkM(generateListOfGroups) {
             groups =>
-              val cId: String => ConfigDescriptor[ Id] = string(_)(Id.apply, Id.unapply)
+              val cId: String => ConfigDescriptor[Id] = string(_)(Id.apply, Id.unapply)
 
               // List is nonempty
               val consOfConfig = {

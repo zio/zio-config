@@ -5,7 +5,6 @@ import eu.timepit.refined.collection._
 import zio.config.refined.internal._
 import zio.config.string._
 
-
 private[refined] trait CollectionSupport extends RefinedModule {
 
   /**

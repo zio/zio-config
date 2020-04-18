@@ -8,7 +8,7 @@ import zio.config.ConfigDocs
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
 
-  val conf: ConfigDescriptor[ PgmConfig] =
+  val conf: ConfigDescriptor[PgmConfig] =
     (string("HELLO").default("xyz") |@|
       string("SOMETHING").orElseEither(int("PORT").default(1)))(PgmConfig.apply, PgmConfig.unapply)
 
@@ -29,7 +29,7 @@ object DefaultValueExample extends App {
   assert(
     generateDocs(confEx) ==
       ConfigDocs.Zip(
-       ConfigDocs.Nested(
+        ConfigDocs.Nested(
           "HELLO",
           Leaf(
             Set(ConfigSource.Name(ConfigSource.SystemEnvironment)),
@@ -56,7 +56,7 @@ object DefaultValueExample extends App {
     generateReport(confEx, expected) ==
       Right(
         ConfigDocs.Zip(
-         ConfigDocs.Nested(
+          ConfigDocs.Nested(
             "HELLO",
             Leaf(
               Set(ConfigSource.Name(SystemEnvironment)),

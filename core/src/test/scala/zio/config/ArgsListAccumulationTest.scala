@@ -26,7 +26,7 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
   final case class SomeConfig(ints: List[Int])
 
   object SomeConfig {
-    val descriptor: ConfigDescriptor[ SomeConfig] =
+    val descriptor: ConfigDescriptor[SomeConfig] =
       list("ints")(int)(SomeConfig.apply, SomeConfig.unapply)
   }
 

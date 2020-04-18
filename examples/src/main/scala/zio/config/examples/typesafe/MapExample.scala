@@ -27,13 +27,13 @@ object MapExample extends App with EitherImpureOps {
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
-  val c1: ConfigDescriptor[ Map[String, List[Int]]] =
+  val c1: ConfigDescriptor[Map[String, List[Int]]] =
     map("zones")(list(int))
 
   val c2 = list("l")(int)
   val c3 = list("l2")(int)
 
-  val c4: ConfigDescriptor[ Map[String, String]] =
+  val c4: ConfigDescriptor[Map[String, String]] =
     map("z")(string)
 
   val description =

@@ -14,7 +14,7 @@ object DerivationTest extends DefaultRunnableSpec {
       case class Cfg(@describe("field desc") fname: String)
 
       def collectDescriptions[T](
-        desc: ConfigDescriptor[ T],
+        desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], String)] = desc match {
         case ConfigDescriptor.Default(config, _)    => collectDescriptions(config, path)
@@ -44,7 +44,7 @@ object DerivationTest extends DefaultRunnableSpec {
       @name("className")
       case class Cfg(@name("otherName") fname: String) extends St
 
-      def collectPath[T](desc: ConfigDescriptor[ T]): List[String] = desc match {
+      def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
         case ConfigDescriptor.Default(config, _)        => collectPath(config)
         case Describe(config, _)                        => collectPath(config)
         case ConfigDescriptor.DynamicMap(_, config)     => collectPath(config)
@@ -65,7 +65,7 @@ object DerivationTest extends DefaultRunnableSpec {
       case class Cfg(fname: String = "defaultV")
 
       def collectDefault[T](
-        desc: ConfigDescriptor[ T],
+        desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], Any)] = desc match {
         case ConfigDescriptor.Default(config, v)    => (path -> v) :: collectDefault(config, path)
