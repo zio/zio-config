@@ -3,9 +3,6 @@ package zio.config
 import zio.config.PropertyTree.Record
 
 private[config] trait WriteFunctions extends ConfigModule {
-  type K
-  type V
-
   final def write[A](config: ConfigDescriptor[A], a: A): Either[String, PropertyTree[K, V]] = {
     def go[B](config: ConfigDescriptor[B], b: B): Either[String, PropertyTree[K, V]] =
       config match {

@@ -1,9 +1,6 @@
 package zio.config
 
 private[config] trait ConfigDocsFunctions extends WriteFunctions {
-  type K
-  type V
-
   import ConfigDocs.{ DynamicMap => DocsMap, Leaf => DocsLeaf }
 
   final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs[K, V] = {
