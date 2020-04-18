@@ -3,7 +3,8 @@ package zio.config.magnolia
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset }
 import java.util.UUID
 
-import zio.config.{ read, write, BaseSpec, ConfigSource, PropertyTree }
+import zio.config.string._
+import zio.config.{ BaseSpec, ConfigSource, PropertyTree }
 import zio.config.magnolia.DeriveConfigDescriptor._
 import AutomaticConfigTestUtils._
 import zio.ZIO
