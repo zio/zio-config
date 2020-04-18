@@ -126,7 +126,7 @@ object TypesafeConfigSimpleExample extends App {
           accountId: chris
       }
       {
-        
+
       }
     ]
 

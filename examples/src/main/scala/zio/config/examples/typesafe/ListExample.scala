@@ -43,7 +43,7 @@ object ListExample extends App with EitherImpureOps {
       |      }
       |    ]
       |  }
-      |  
+      |
       |  {
       |   table          : some_name
       |   columns        : [a, b, c, d, e]
@@ -268,7 +268,7 @@ object ListExample extends App with EitherImpureOps {
       |          }
       |        ]
       |      }
-      |      
+      |
       |      {
       |        hi : di
       |        bi : ci
@@ -292,7 +292,7 @@ object ListExample extends App with EitherImpureOps {
       |          }
       |        ]
       |      }
-      |      
+      |
       |     {
       |        hi : di
       |        bi : ci
@@ -300,7 +300,7 @@ object ListExample extends App with EitherImpureOps {
       |      }
       |    ]
       |  }
-      |  
+      |
       |  {
       |    table          : some_name1
       |    columns        : []
@@ -322,20 +322,20 @@ object ListExample extends App with EitherImpureOps {
       |      }
       |    ]
       |  }
-      |  
+      |
       | {
       |    table          : some_name1
       |    columns        : []
       |    extra-details = []
       |  }
-      |  
+      |
       |   {
       |    table          : some_name2
       |    columns        : []
       |    extra-details  = []
       |  }
-      |  
-      |    
+      |
+      |
       |   {
       |    table          : some_name2
       |    columns        : []

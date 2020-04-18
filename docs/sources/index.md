@@ -45,7 +45,7 @@ val mapSource =
       "PORT" -> "1222",
       "DB_URL" -> "postgres"
     )
-  )  
+  )
 
 val io = read(myConfig from mapSource)
 // Running io (which is a zio) to completion yields  MyConfig(xyz, 1222, postgres)
@@ -79,7 +79,7 @@ val multiMapSource =
       "DB_URL" -> ::("postgres",  Nil)
     )
   )
-  
+
 read(myConfig from multiMapSource)
 // Running this to completion yields ListConfig(xyz, List(1222, 2221), postgres)
 
@@ -102,12 +102,12 @@ val sysEnvSource =
   ConfigSource.fromSystemEnv
 
 // If you want to support list of values, then you should be giving a valueDelimiter
-val sysEnvSourceSupportingList = 
-  ConfigSource.fromSystemEnv(keyDelimiter = None, valueDelimiter = Some(',')) 
+val sysEnvSourceSupportingList =
+  ConfigSource.fromSystemEnv(keyDelimiter = None, valueDelimiter = Some(','))
 
 // If you want to consider system-env as a nested config, provide keyDelimiter. Refer to API docs
 // Example, Given KAFKA_SERVERS = "servers1, server2"
-  ConfigSource.fromSystemEnv(keyDelimiter = Some('_'), valueDelimiter = Some(',')) 
+  ConfigSource.fromSystemEnv(keyDelimiter = Some('_'), valueDelimiter = Some(','))
 
 
 ```
@@ -115,7 +115,7 @@ val sysEnvSourceSupportingList =
 
 Provide keyDelimiter if you need to consider flattened config as a nested config.
 Provide valueDelimiter if you need any value to be a list
-   
+
 Example:
 
 ```
@@ -126,7 +126,7 @@ Given:
   keyDelimiter   = Some('.')
   valueDelimiter = Some(',')
 }}}
-   
+
 ```
 then, the below config will work
 
@@ -135,8 +135,8 @@ nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaCon
 ```
 
 
-Give valueDelimiter =  `,` 
-and environment with `PORT=1222,2221`; then reading config yields 
+Give valueDelimiter =  `,`
+and environment with `PORT=1222,2221`; then reading config yields
 `ListConfig(xyz, List(1222, 2221), postgres)`
 
 ## System Properties
@@ -149,17 +149,17 @@ val sysPropertiesSource =
   ConfigSource.fromSystemProperties
 
 // If you want to support list of values, then you should be giving a valueDelimiter
-val sysPropertiesSourceWithList = 
-  ConfigSource.fromSystemProperties(None, valueDelimiter = Some(',')) 
+val sysPropertiesSourceWithList =
+  ConfigSource.fromSystemProperties(None, valueDelimiter = Some(','))
 
 // If you want to consider system-properties as a nested config, provide keyDelimiter. Refer to API doc
 // Example, Given KAFKA.SERVERS = "servers1, server2"
-  ConfigSource.fromSystemProperties(keyDelimiter = Some('.'), valueDelimiter = Some(',')) 
+  ConfigSource.fromSystemProperties(keyDelimiter = Some('.'), valueDelimiter = Some(','))
 
 
 ```
-Give valueDelimiter =  `,` 
-and environemnt with `PORT=1222,2221`; then reading config yields 
+Give valueDelimiter =  `,`
+and environemnt with `PORT=1222,2221`; then reading config yields
 `ListConfig(xyz, List(1222, 2221), postgres)`
 
 
@@ -172,7 +172,7 @@ val javaProperties: java.util.Properties = new java.util.Properties() // Ideally
 val javaPropertiesSource =
   ConfigSource.fromProperties(javaProperties)
 
-read(myConfig from javaPropertiesSource)  
+read(myConfig from javaPropertiesSource)
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val javaPropertiesSourceWithList =
@@ -183,9 +183,9 @@ val javaPropertiesSourceWithList =
 
 ```scala mdoc:silent
 
-Config.fromPropertiesFile("filepath", myConfig) 
+Config.fromPropertiesFile("filepath", myConfig)
 
-// yielding Config[MyConfig] which you provide to 
+// yielding Config[MyConfig] which you provide to
 // functions with zio environment as Config[MyConfig]
 
 ```
@@ -193,13 +193,13 @@ Config.fromPropertiesFile("filepath", myConfig)
 ## HOCON String Source
 
 To enable HOCON source, you have to bring in `zio-config-typesafe` module.
-There are many examples in examples module in zio-config. 
+There are many examples in examples module in zio-config.
 
 Here is an quick example
 
 ```scala mdoc:silent
 
-import zio.config.typesafe._, TypeSafeConfigSource._
+import zio.config.typesafe._, TypesafeConfigSource._
 import zio.config.magnolia.DeriveConfigDescriptor._
 
 ```
@@ -211,20 +211,20 @@ case class SimpleConfig(port: Int, url: String, region: Option[String])
 val automaticDescription = descriptor[SimpleConfig]
 
 val hoconSource =
-  TypeSafeConfigSource.fromHoconString(
+  TypesafeConfigSource.fromHoconString(
       """
       {
         port : 123
         url  : bla
         region: useast
       }
-      
+
       """
     )
-  
+
 
 val anotherHoconSource =
-  TypeSafeConfigSource.fromHoconString(
+  TypesafeConfigSource.fromHoconString(
       """
         port=123
         url=bla
@@ -235,7 +235,7 @@ val anotherHoconSource =
 hoconSource match {
   case Left(value) => Left(value)
   case Right(source) => read(automaticDescription from source)
-}  
+}
 
 // yielding Right(SimpleConfig(123,bla,Some(useast)))
 
@@ -286,9 +286,9 @@ val jsonString =
      "url"  : "bla"
      "region": "useast"
    }
-   
+
    """
-    
+
 TypesafeConfig.fromHoconString(jsonString, automaticDescription)
 
 
