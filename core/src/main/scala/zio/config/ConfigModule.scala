@@ -140,6 +140,12 @@ trait ConfigModule { module =>
   case class XmapEither[A, B](config: ConfigDescriptor[A], f: A => Either[String, B], g: B => Either[String, A])
       extends ConfigDescriptor[B]
 
+  def collectAll[A](
+    head: ConfigDescriptor[A],
+    tail: ConfigDescriptor[A]*
+  ): ConfigDescriptor[List[A]] =
+    sequence(head, tail: _*)({ case (a, t) => a :: t }, l => l.headOption.map(h => (h, l.tail)))
+
   def head[A](desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
     desc.orElse(
       listStrict(desc)
