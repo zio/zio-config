@@ -23,7 +23,7 @@ import eu.timepit.refined.string.{
 }
 
 import zio.ZIO
-import zio.config.ConfigDescriptor._
+import zio.config.string._
 import zio.config.helpers._
 import zio.config.{ helpers, read, write, BaseSpec, ConfigSource }
 import zio.test.Assertion._

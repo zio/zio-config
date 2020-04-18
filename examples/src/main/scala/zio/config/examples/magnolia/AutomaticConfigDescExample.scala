@@ -4,7 +4,7 @@ import zio.config.ConfigSource
 import zio.config.magnolia.describe
 import zio.config.examples.magnolia.MyConfig._
 import zio.config.magnolia.DeriveConfigDescriptor._
-import zio.config.read
+import zio.config.string._
 
 final case class MyConfig(
   aws: Aws,

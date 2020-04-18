@@ -1,14 +1,14 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
+import zio.config.string._
 import zio.config.ConfigDocs._
-import zio.config.ConfigSource._
-import zio.config._
+import zio.config.ConfigSource, ConfigSource._
+import zio.config.ConfigDocs
 
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
 
-  val conf: ConfigDescriptor[String, String, PgmConfig] =
+  val conf: ConfigDescriptor[ PgmConfig] =
     (string("HELLO").default("xyz") |@|
       string("SOMETHING").orElseEither(int("PORT").default(1)))(PgmConfig.apply, PgmConfig.unapply)
 

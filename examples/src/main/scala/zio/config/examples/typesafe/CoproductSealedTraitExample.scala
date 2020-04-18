@@ -1,7 +1,7 @@
 package zio.config.examples.typesafe
 
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.read
+import zio.config.string._
 import zio.config.typesafe.TypesafeConfigSource
 
 object CoproductSealedTraitExample extends App with EitherImpureOps {

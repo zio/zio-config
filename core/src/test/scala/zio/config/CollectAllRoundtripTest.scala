@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.ConfigDescriptor._
+import zio.config.string._
 import zio.config.helpers._
 import zio.config.SequenceRoundtripTestUtils._
 import zio.random.Random
@@ -14,7 +14,7 @@ object CollectAllRoundtripTest
         testM("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
           checkM(generateListOfGroups) {
             groups =>
-              val cId: String => ConfigDescriptor[String, String, Id] = string(_)(Id.apply, Id.unapply)
+              val cId: String => ConfigDescriptor[ Id] = string(_)(Id.apply, Id.unapply)
 
               // List is nonempty
               val consOfConfig = {

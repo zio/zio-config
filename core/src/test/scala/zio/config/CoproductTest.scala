@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ConfigDescriptor._
+import zio.config.string._
 import ReadError._
 import zio.config.helpers._
 import CoproductTestUtils._

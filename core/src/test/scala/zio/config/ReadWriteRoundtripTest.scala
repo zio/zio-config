@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.ConfigDescriptor._
+import zio.config.string._
 import zio.config.helpers._
 import zio.config.ReadWriteRoundtripTestUtils._
 import zio.random.Random
@@ -123,7 +123,7 @@ object ReadWriteRoundtripTestUtils {
   val cNestedConfig =
     (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedPath.apply, NestedPath.unapply)
 
-  val cSingleField: ConfigDescriptor[String, String, SingleField] =
+  val cSingleField: ConfigDescriptor[ SingleField] =
     int("kCount")(SingleField.apply, SingleField.unapply)
 
   val cCoproductConfig =

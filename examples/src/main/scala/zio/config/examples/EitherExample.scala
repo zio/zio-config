@@ -1,8 +1,9 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
+import zio.config.string._
 import zio.config.ReadError.{ FormatError, MissingValue, OrErrors, Step }
-import zio.config.{ ConfigSource, _ }
+import zio.config.ConfigSource
+import zio.config.ReadFunctions
 
 object EitherExample extends App {
   final case class Ldap(value: String)  extends AnyVal

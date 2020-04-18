@@ -7,7 +7,7 @@ import java.util.UUID
 
 import scala.concurrent.duration.Duration
 
-object string extends ReadFunctions with ConfigDocsFunctions {
+trait StringConfigModule extends ReadFunctions with ConfigDocsFunctions {
   type K = String
   type V = String
 
@@ -118,3 +118,5 @@ object string extends ReadFunctions with ConfigDocsFunctions {
   def url(path: String): ConfigDescriptor[URL] = nested(path)(url)
 
 }
+
+object string extends StringConfigModule

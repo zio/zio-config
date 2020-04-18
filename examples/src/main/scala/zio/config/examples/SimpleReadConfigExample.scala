@@ -1,14 +1,15 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
-import zio.config._
+import zio.config.string._
 import zio.console.Console
+import zio.config.Config
+import zio.config.config
 import zio.{ App, ZEnv, ZIO }
 
 case class Prod(ldap: String, port: Int, dburl: Option[String])
 
 object Prod {
-  val prodConfig: ConfigDescriptor[String, String, Prod] =
+  val prodConfig: ConfigDescriptor[ Prod] =
     (string("LDAP") |@| int("PORT") |@|
       string("DB_URL").optional)(Prod.apply, Prod.unapply)
 

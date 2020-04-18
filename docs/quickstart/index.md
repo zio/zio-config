@@ -49,7 +49,7 @@ We must fetch the configuration from the environment to a case class (product) i
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config._, ConfigDescriptor._
+import zio.config.ConfigSource, ConfigSource._, ConfigDescriptor._
 
 ```
 
@@ -67,7 +67,7 @@ Let's define a simple one.
 val myConfig =
   (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
- // ConfigDescriptor[String, String, MyConfig]
+ // ConfigDescriptor[ MyConfig]
 
 ```
 
@@ -83,7 +83,7 @@ there is a separate module called `zio-config-magnolia`.
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 
 val myConfigAutomatic = descriptor[MyConfig]
-// ConfigDescriptor[String, String, MyConfig]
+// ConfigDescriptor[ MyConfig]
 
 ```
 

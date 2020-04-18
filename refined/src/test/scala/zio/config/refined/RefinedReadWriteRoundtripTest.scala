@@ -5,8 +5,8 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 import zio.ZIO
-import zio.config.ConfigDescriptor._
-import zio.config._
+import zio.config.string._
+import zio.config.ConfigSource, ConfigSource._
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
 import zio.random.Random
@@ -57,12 +57,12 @@ object RefinedReadWriteRoundtripTestUtils {
     ::(list.head, list.tail)
   }
 
-  def longs(n: Int): ConfigDescriptor[String, String, List[Long]] = {
+  def longs(n: Int): ConfigDescriptor[ List[Long]] = {
     val ll = longList(n)
     ConfigDescriptor.collectAll[String, String, Long](ll.head, ll.tail: _*)
   }
 
-  def prodConfig(n: Int): ConfigDescriptor[String, String, RefinedProd] =
+  def prodConfig(n: Int): ConfigDescriptor[ RefinedProd] =
     (
       nonEmpty(string("LDAP")) |@|
         greaterEqual[W.`1024`.T](int("PORT")) |@|

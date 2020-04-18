@@ -1,6 +1,6 @@
 package zio.config.typesafe
 
-import zio.config._
+import zio.config.ConfigSource, ConfigSource._
 import zio.config.ConfigDescriptor.{ Source => _, _ }
 import zio.test.Assertion._
 import zio.test._
@@ -228,16 +228,16 @@ object TypesafeConfigReadWriteTestUtils {
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
-  val c1: ConfigDescriptor[String, String, Map[String, List[Int]]] =
+  val c1: ConfigDescriptor[ Map[String, List[Int]]] =
     map("zones")(list(int))
 
   private val c2 = list("l")(int)
   private val c3 = list("l2")(int)
 
-  val c4: ConfigDescriptor[String, String, Map[String, String]] =
+  val c4: ConfigDescriptor[ Map[String, String]] =
     map("z")(string)
 
-  val sssDescription: ConfigDescriptor[String, String, sss] =
+  val sssDescription: ConfigDescriptor[ sss] =
     (c1 |@| c2 |@| c3 |@| c4)((a, b, c, d) => sss(a, b, c, d), sss.unapply)
 
   final case class Nested(s: Map[String, sss])
@@ -277,7 +277,7 @@ object TypesafeConfigReadWriteTestUtils {
        |}
        |""".stripMargin
 
-  val complexConfig: ConfigDescriptor[String, String, Nested] =
+  val complexConfig: ConfigDescriptor[ Nested] =
     nested("result")(mapStrict(sssDescription))(
       TypesafeConfigReadWriteTestUtils.Nested.apply,
       TypesafeConfigReadWriteTestUtils.Nested.unapply

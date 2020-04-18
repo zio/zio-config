@@ -57,7 +57,7 @@ object NestedConfigTestUtils {
 
   final case class TestParams(value: AppConfig) {
 
-    val config: ConfigDescriptor[String, String, AppConfig] = {
+    val config: ConfigDescriptor[ AppConfig] = {
       val credentials  = (string("user") |@| string("password"))(Credentials.apply, Credentials.unapply)
       val dbConnection = (string("host") |@| int("port"))(DbConnection.apply, DbConnection.unapply)
 

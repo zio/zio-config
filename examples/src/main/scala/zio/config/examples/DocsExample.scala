@@ -1,8 +1,7 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
-import zio.config.ConfigDocs._
-import zio.config._
+import zio.config.string._
+import zio.config.ConfigDocs, ConfigDocs._
 
 object DocsExample extends App {
 

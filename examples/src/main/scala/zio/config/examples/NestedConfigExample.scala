@@ -1,8 +1,9 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
-import zio.config.ConfigDocs._
-import zio.config._
+import zio.config.ConfigDocs, ConfigDocs._
+import zio.config.PropertyTree
+import zio.config.string._
+import zio.config.ConfigSource
 import zio.config.examples.typesafe.EitherImpureOps
 
 object NestedConfigExample extends App with EitherImpureOps {

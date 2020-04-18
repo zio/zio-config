@@ -1,9 +1,8 @@
 package zio.config
 
-import com.typesafe.config.{ ConfigObject, ConfigRenderOptions }
+import com.typesafe.config.{ConfigObject, ConfigRenderOptions}
 
 package object typesafe extends TreeToHoconSupport {
-  //Fixme reorganise code
   implicit class PropertyTreeOps(tree: PropertyTree[String, String]) { self =>
 
     /**

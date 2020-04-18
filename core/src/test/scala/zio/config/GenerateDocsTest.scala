@@ -40,7 +40,7 @@ object GenerateDocsTestUtils {
   )
   final case class GenerateDocsParams(keys: KeyParams, value: AppConfig) {
 
-    def descriptor: ConfigDescriptor[String, String, AppConfig] = {
+    def descriptor: ConfigDescriptor[ AppConfig] = {
       val credentials = (string(keys.user) ?? "Example: ZioUser" |@| string(keys.password) ?? "Example: ZioPass")(
         Credentials.apply,
         Credentials.unapply

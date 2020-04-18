@@ -1,7 +1,7 @@
 package zio.config.magnolia
 
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.config._
+import zio.config.ConfigSource, ConfigSource._
 import zio.test.Assertion._
 import zio.test._
 
