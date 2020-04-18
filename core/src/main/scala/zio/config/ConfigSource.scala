@@ -16,9 +16,9 @@ import zio.Task
 
 import scala.annotation.tailrec
 
-final case class  ConfigSource[K, V](
-                                     names: Set[ConfigSource.Name],
-                                     getConfigValue: List[K] => PropertyTree[K, V]
+final case class ConfigSource[K, V](
+  names: Set[ConfigSource.Name],
+  getConfigValue: List[K] => PropertyTree[K, V]
 ) { self =>
 
   def orElse(that: => ConfigSource[K, V]): ConfigSource[K, V] =
@@ -118,11 +118,15 @@ object ConfigSource {
     keyDelimiter: Option[Char] = None,
     valueDelimter: Option[Char] = None
   ): ConfigSource[String, String] =
-    fromMapInternal(constantMap)(x => {
-      val listOfValues =
-        valueDelimter.fold(List(x))(delim => x.split(delim).toList)
-      ::(listOfValues.head, listOfValues.tail)
-    }, keyDelimiter, ConfigSource.Name(source))
+    fromMapInternal(constantMap)(
+      x => {
+        val listOfValues =
+          valueDelimter.fold(List(x))(delim => x.split(delim).toList)
+        ::(listOfValues.head, listOfValues.tail)
+      },
+      keyDelimiter,
+      ConfigSource.Name(source)
+    )
 
   /**
    * Provide keyDelimiter if you need to consider flattened config as a nested config.

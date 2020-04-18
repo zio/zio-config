@@ -2,40 +2,42 @@ package zio.config
 
 import zio.config.PropertyTree.Record
 
-private[config] trait WriteFunctions {
+private[config] trait WriteFunctions extends ConfigModule {
+  type K
+  type V
 
-  final def write[K, V, A](config: ConfigDescriptor[K, V, A], a: A): Either[String, PropertyTree[K, V]] = {
-    def go[B](config: ConfigDescriptor[K, V, B], b: B): Either[String, PropertyTree[K, V]] =
+  final def write[A](config: ConfigDescriptor[A], a: A): Either[String, PropertyTree[K, V]] = {
+    def go[B](config: ConfigDescriptor[B], b: B): Either[String, PropertyTree[K, V]] =
       config match {
-        case ConfigDescriptor.Source(_, propertyType) =>
+        case Source(_, propertyType) =>
           Right(PropertyTree.Leaf(propertyType.write(b)))
 
-        case ConfigDescriptor.Describe(c, _) =>
+        case Describe(c, _) =>
           go(c, b)
 
-        case cd: ConfigDescriptor.DynamicMap[K, V, a] =>
+        case cd: DynamicMap[a] =>
           val bs = (b: Map[K, a]).toList.map(t => (t._1 -> go(cd.config, t._2)))
           seqMap(bs.toMap).map(t => Record(t))
 
-        case ConfigDescriptor.Nested(parent, c) =>
+        case Nested(parent, c) =>
           go(c, b) match {
             case Right(prop) => Right(PropertyTree.Record(Map(parent -> prop)))
             case Left(v)     => Left(v)
           }
 
-        case cd: ConfigDescriptor.Sequence[K, V, a] =>
+        case cd: Sequence[a] =>
           val bs = (b: List[a]).map(go(cd.config, _))
           seqEither[String, PropertyTree[K, V]](bs).map(PropertyTree.Sequence(_))
 
-        case ConfigDescriptor.Optional(c) =>
+        case Optional(c) =>
           b.fold(
             Right(PropertyTree.empty): Either[String, PropertyTree[K, V]]
           )(go(c, _))
 
-        case ConfigDescriptor.Default(c, _) =>
+        case Default(c, _) =>
           go(c, b)
 
-        case ConfigDescriptor.XmapEither(c, _, to) => {
+        case XmapEither(c, _, to) => {
           to(b) match {
             case Right(before) =>
               go(c, before)
@@ -44,14 +46,14 @@ private[config] trait WriteFunctions {
           }
         }
 
-        case ConfigDescriptor.OrElseEither(left, right) => {
+        case OrElseEither(left, right) => {
           b.fold(
             aa => go(left, aa),
             b => go(right, b)
           )
         }
 
-        case ConfigDescriptor.OrElse(left, right) =>
+        case OrElse(left, right) =>
           go(left, b) match {
             case Right(a) =>
               Right(a)
@@ -61,7 +63,7 @@ private[config] trait WriteFunctions {
 
           }
 
-        case cd: ConfigDescriptor.Zip[K, V, a, b] =>
+        case cd: Zip[a, b] =>
           val tuple: (a, b) = b
 
           val leftResult  = go(cd.left, tuple._1)

@@ -1,11 +1,10 @@
 package zio.config
 
 import scala.collection.immutable.Nil
-import PropertyTree._
-
 import scala.annotation.tailrec
 
 sealed trait PropertyTree[+K, +V] { self =>
+  import PropertyTree._
   final def ++[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): PropertyTree[K1, V1] =
     (self, that) match {
       case (Sequence(l), Sequence(r)) => Sequence(l ++ r)

@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.config.ConfigDescriptor.{ int, nested, string }
-import zio.config.ConfigDocs.{ Zip, Leaf, Nested }
+import zio.config.ConfigDocs.{ Leaf, Nested, Zip }
 import zio.config.GenerateDocsTestUtils._
 import zio.config.helpers._
 import zio.random.Random

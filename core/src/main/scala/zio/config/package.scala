@@ -1,6 +1,6 @@
 package zio
 
-package object config extends ReadFunctions with WriteFunctions with ConfigDocsFunctions with KeyConversionFunctions {
+package object config extends KeyConversionFunctions {
 
   type Config[A] = Has[A]
 
