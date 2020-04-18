@@ -3,6 +3,7 @@ package zio.config
 import zio.config.ReadError.{ ConversionError, Step }
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.test.Assertion._
+import zio.config.string._
 import zio.test._
 import zio.test.environment.TestEnvironment
 import zio.{ IO, ZIO }

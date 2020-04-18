@@ -28,7 +28,7 @@ object CollectAllRoundtripTest
               val inputSource: Map[String, String] =
                 groups.flatMap(_.toMap.toList).toMap
 
-              val config = ConfigDescriptor.sequence(consOfConfig.head, consOfConfig.tail: _*)
+              val config = sequence(consOfConfig.head, consOfConfig.tail: _*)
 
               val readAndWrite: ZIO[Any, Any, PropertyTree[String, String]] =
                 for {

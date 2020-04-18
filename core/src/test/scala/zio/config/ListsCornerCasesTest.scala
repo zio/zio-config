@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ConfigDescriptor.{ Source => _, _ }
+import zio.config.string._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.test.Assertion._
 import zio.test._

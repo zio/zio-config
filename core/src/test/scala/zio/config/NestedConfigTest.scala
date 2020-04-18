@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ConfigDescriptor.{ double, int, nested, string }
+import zio.config.string._
 import zio.config.NestedConfigTestUtils._
 import zio.config.helpers._
 import zio.random.Random

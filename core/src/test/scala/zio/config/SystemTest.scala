@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.ConfigDescriptor.{ int, nested, string }
+import zio.config.string._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
