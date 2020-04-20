@@ -20,7 +20,7 @@ object TypesafeConfigMapSpec
 
         },
         test("read nested typesafe config map using mapStrict") {
-          val source = TypeSafeConfigSource.fromHoconString(hocon2).loadOrThrow
+          val source = TypesafeConfigSource.fromHoconString(hocon2).loadOrThrow
           val result = read(
             nested("result")(mapStrict(sssDescription))(
               TypesafeConfigMapSpecUtils.Nested.apply,
@@ -51,7 +51,7 @@ object TypesafeConfigMapSpec
 
           val desc = (nested("k") { map("s")(string("y")) } |@| string("y"))(Cfg.apply, Cfg.unapply)
 
-          val result = read(desc from TypeSafeConfigSource.fromHoconString(hocon3).loadOrThrow)
+          val result = read(desc from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow)
 
           assert(result)(isRight(equalTo(Cfg(Map("dynamicKey" -> "z"), "z"))))
         },
@@ -72,7 +72,7 @@ object TypesafeConfigMapSpec
 
           val xx2 = nested("k") { map(string("y")) }
 
-          assert(read(xx2 from TypeSafeConfigSource.fromHoconString(hocon4).loadOrThrow))(
+          assert(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow))(
             isRight(equalTo(Map("dynamicKey" -> "z", "dynamicKey2" -> "z2")))
           )
         }
@@ -96,7 +96,7 @@ object TypesafeConfigMapSpecUtils {
        |  }
        |""".stripMargin
 
-  val source: ConfigSource[String, String] = TypeSafeConfigSource.fromHoconString(hocon).loadOrThrow
+  val source: ConfigSource[String, String] = TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 

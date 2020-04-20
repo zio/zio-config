@@ -3,7 +3,7 @@ package zio.config.examples.typesafe
 import com.typesafe.config.ConfigRenderOptions
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.typesafe.TypeSafeConfigSource
+import zio.config.typesafe.TypesafeConfigSource
 
 object ListExample extends App with EitherImpureOps {
   val configString =
@@ -43,7 +43,7 @@ object ListExample extends App with EitherImpureOps {
       |      }
       |    ]
       |  }
-      |  
+      |
       |  {
       |   table          : some_name
       |   columns        : [a, b, c, d, e]
@@ -147,7 +147,7 @@ object ListExample extends App with EitherImpureOps {
 
   // Since we already have a string with us, we don't need Config Service (or ZIO)
   val source =
-    TypeSafeConfigSource.fromHoconString(configString).loadOrThrow // Don't use loadOrThrow. This is only for example
+    TypesafeConfigSource.fromHoconString(configString).loadOrThrow // Don't use loadOrThrow. This is only for example
 
   val zioConfigResult =
     read(descriptor[A] from source)
@@ -232,7 +232,7 @@ object ListExample extends App with EitherImpureOps {
     write(descriptor[A], expectedResult).loadOrThrow.toHocon
       .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
 
-  val readWritten = read(descriptor[A] from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
+  val readWritten = read(descriptor[A] from TypesafeConfigSource.fromHoconString(written).loadOrThrow)
 
   assert(readWritten == zioConfigResult)
 
@@ -268,7 +268,7 @@ object ListExample extends App with EitherImpureOps {
       |          }
       |        ]
       |      }
-      |      
+      |
       |      {
       |        hi : di
       |        bi : ci
@@ -292,7 +292,7 @@ object ListExample extends App with EitherImpureOps {
       |          }
       |        ]
       |      }
-      |      
+      |
       |     {
       |        hi : di
       |        bi : ci
@@ -300,7 +300,7 @@ object ListExample extends App with EitherImpureOps {
       |      }
       |    ]
       |  }
-      |  
+      |
       |  {
       |    table          : some_name1
       |    columns        : []
@@ -322,20 +322,20 @@ object ListExample extends App with EitherImpureOps {
       |      }
       |    ]
       |  }
-      |  
+      |
       | {
       |    table          : some_name1
       |    columns        : []
       |    extra-details = []
       |  }
-      |  
+      |
       |   {
       |    table          : some_name2
       |    columns        : []
       |    extra-details  = []
       |  }
-      |  
-      |    
+      |
+      |
       |   {
       |    table          : some_name2
       |    columns        : []
@@ -370,7 +370,7 @@ object ListExample extends App with EitherImpureOps {
   final case class Database(port: Port)
 
   val kebabConfigSource =
-    TypeSafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow
+    TypesafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow
 
   val zioConfigWithKeysInKebabResult =
     read(descriptor[ExportDetails].mapKey(camelToKebab) from kebabConfigSource)

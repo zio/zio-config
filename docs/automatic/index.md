@@ -15,7 +15,7 @@ Take a look at the magnolia examples in `zio-config`
 
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.read
-import zio.config.typesafe.TypeSafeConfigSource
+import zio.config.typesafe.TypesafeConfigSource
 
 object CoproductSealedTraitExample extends App {
 
@@ -29,7 +29,7 @@ object CoproductSealedTraitExample extends App {
   case class Region(suburb: String, city: String)
 
   val aHoconSource =
-    TypeSafeConfigSource
+    TypesafeConfigSource
       .fromHoconString(
         s"""
            |x = a
@@ -38,7 +38,7 @@ object CoproductSealedTraitExample extends App {
       .loadOrThrow
 
   val bHoconSource =
-    TypeSafeConfigSource
+    TypesafeConfigSource
       .fromHoconString(
         s"""
            |x = b
@@ -47,7 +47,7 @@ object CoproductSealedTraitExample extends App {
       .loadOrThrow
 
   val cHoconSource =
-    TypeSafeConfigSource
+    TypesafeConfigSource
       .fromHoconString(
         s"""
            |x = c
@@ -56,7 +56,7 @@ object CoproductSealedTraitExample extends App {
       .loadOrThrow
 
   val dHoconSource =
-    TypeSafeConfigSource
+    TypesafeConfigSource
       .fromHoconString(
         s"""
            |x {
@@ -90,7 +90,7 @@ object CoproductSealedTraitExample extends App {
      def loadOrThrow: B = either match {
         case Left(_) => throw new Exception()
         case Right(v) => v
-      
+
      }
   }
 }
