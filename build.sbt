@@ -50,8 +50,13 @@ addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
 lazy val zioVersion      = "1.0.0-RC18-2"
-lazy val magnoliaVersion = "0.14.5"
+lazy val magnoliaVersion = "0.15.0"
 lazy val refinedVersion  = "0.9.13"
+
+lazy val magnoliaDependencies = libraryDependencies ++= Seq(
+  "com.propensive" %% "magnolia"     % magnoliaVersion,
+  "org.scala-lang" % "scala-reflect" % scalaVersion.value
+)
 
 lazy val root =
   project
@@ -90,9 +95,9 @@ lazy val examples = module("zio-config-examples", "examples")
   .settings(
     skip in publish := true,
     fork := true,
+    magnoliaDependencies,
     libraryDependencies ++= Seq(
       "eu.timepit"            %% "refined"    % refinedVersion,
-      "com.propensive"        %% "magnolia"   % magnoliaVersion,
       "com.github.pureconfig" %% "pureconfig" % "0.12.3"
     ),
     runAllExamples :=
@@ -115,10 +120,10 @@ lazy val examples = module("zio-config-examples", "examples")
 
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
+    magnoliaDependencies,
     libraryDependencies ++= Seq(
-      "com.propensive" %% "magnolia"     % magnoliaVersion,
-      "dev.zio"        %% "zio-test"     % zioVersion % Test,
-      "dev.zio"        %% "zio-test-sbt" % zioVersion % Test
+      "dev.zio" %% "zio-test"     % zioVersion % Test,
+      "dev.zio" %% "zio-test-sbt" % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
@@ -152,10 +157,10 @@ lazy val docs = project
     moduleName := "zio-config-docs",
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
+    magnoliaDependencies,
     libraryDependencies ++= Seq(
-      "eu.timepit"     %% "refined"  % refinedVersion,
-      "dev.zio"        %% "zio"      % zioVersion,
-      "com.propensive" %% "magnolia" % magnoliaVersion
+      "eu.timepit" %% "refined" % refinedVersion,
+      "dev.zio"    %% "zio"     % zioVersion
     )
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigTypesafe, zioConfigRefined)
