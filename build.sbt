@@ -51,7 +51,7 @@ addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck"
 
 lazy val zioVersion      = "1.0.0-RC18-2"
 lazy val magnoliaVersion = "0.15.0"
-lazy val refinedVersion  = "0.9.13"
+lazy val refinedVersion  = "0.9.14"
 
 lazy val magnoliaDependencies = libraryDependencies ++= Seq(
   "com.propensive" %% "magnolia"     % magnoliaVersion,
