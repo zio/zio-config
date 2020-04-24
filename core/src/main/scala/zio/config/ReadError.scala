@@ -138,7 +138,7 @@ sealed trait ReadError[A] extends Exception { self =>
 
         case _ => format(sequence).updated(0, "╥")
       }
-    }).mkString("\n")
+    }).mkString(System.lineSeparator())
   }
 }
 
