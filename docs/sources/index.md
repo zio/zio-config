@@ -34,7 +34,7 @@ val myConfig =
 More details about defining config descriptor is in [here](../configdescriptor/index.md).
 
 
-## Constant Map Source
+## Constant Map
 
 ```scala mdoc:silent
 
@@ -94,7 +94,7 @@ Config.fromMultiMap(Map(), myConfig, "constant")
 
 ```
 
-## System Env Source
+## System Environment
 
 ```scala mdoc:silent
 
@@ -179,7 +179,7 @@ val javaPropertiesSourceWithList =
   ConfigSource.fromProperties(javaProperties, valueDelimiter = Some(','))
 ```
 
-## Properties File Source
+## Properties File
 
 ```scala mdoc:silent
 
@@ -190,7 +190,7 @@ Config.fromPropertiesFile("filepath", myConfig)
 
 ```
 
-## HOCON String Source
+## HOCON String
 
 To enable HOCON source, you have to bring in `zio-config-typesafe` module.
 There are many examples in examples module in zio-config.
@@ -262,7 +262,7 @@ TypesafeConfig.fromHoconString(
 ```
 
 
-## HOCON File Source
+## HOCON File
 
 Similar to `TypesafeConfig.fromHoconString(str, automaticDescription)`
 
@@ -272,7 +272,7 @@ TypesafeConfig.fromHoconFile(new java.io.File("fileapth"), automaticDescription)
 
 ```
 
-## Json Source
+## Json
 You can use `zio-config-typesafe` module to fetch json as well
 
 
@@ -294,8 +294,11 @@ TypesafeConfig.fromHoconString(jsonString, automaticDescription)
 ```
 Please check other ways to load the hocon file in `TypesafeConfig`
 
-## Command Line Arguments Source
-### Simply source config from command line arguments
+## Command Line Arguments
+
+This is currently experimental.
+
+### Simple
 ```scala mdoc:silent
 final case class SimpleCommandLineConfig(key1: String, key2: String)
 
@@ -303,7 +306,7 @@ val simpleCmdLineArgs = "--key1 value1 --key2 value2"
 val simpleSource = ConfigSource.fromCommandLineArgs(simpleCmdLineArgs.split(' ').toList)
 val simpleConfig = descriptor[SimpleCommandLineConfig] from simpleSource
 ```
-### Nested config using command line arguments: Approach 1
+### Nested: Approach 1
 
 ```scala mdoc:silent
 final case class SparkConf(key1: String, key2: String)
@@ -327,7 +330,7 @@ Here we make use of delimiter `.` as the tool to nesting.
 
 For those who hate delimited keys in command line arguments and the associated nesting, we will have different approach as given below
 
-### Nested config using command line arguments: Approach 2
+#### Nested: Approach 2
 
 ```scala mdoc:silent
 
@@ -344,7 +347,7 @@ In this case any key-value that comes after `--conf` comes under the root path c
 In fact, we can go any level nesting. For example, we can give `---aws --db -url="v" ---aws --kinesis -topic=x`,
 although let's don't complicate our command line arguments.
 
-### Map using command line arguments
+#### Map
 Both the approaches that we saw with nesting is applicable to `map`.
 
 ```scala mdoc:silent
@@ -357,7 +360,7 @@ val mapArgs = "--conf.key1=value1  --conf.key2=value2"
 
 This will also work if `mapArgs` is `--conf -key1=value1 --conf -key2=value2`.
 
-### Lists in command line arguments: Approach 1
+#### List: Approach 1
 
 ```scala mdoc:silent
 
@@ -369,7 +372,7 @@ assert(read(listConfigCmdLineArgs) == Right(List("Jane", "Jack")))
 
 ```
 
-### Lists in command line arguments: Approach 2
+### Lists: Approach 2
 
 ```scala mdoc:silent
 
@@ -386,7 +389,7 @@ assert(read(list("users")(string) from listSource2) == Right(List("Jane", "Jack"
 
 ```
 
-### A complex production application config (demo)
+### A Production application config using command line arguments (demo)
 
 ```scala mdoc:silent
 
