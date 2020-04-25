@@ -8,9 +8,7 @@ Forming a source gets into a standard pattern, and is easy for you to add anothe
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config.ConfigDescriptor._
-import zio.config.Config
-import zio.config.ConfigSource, ConfigSource._ 
+import zio.config._, ConfigDescriptor._, ConfigSource._
 
 ```
 
@@ -306,6 +304,7 @@ val simpleSource = ConfigSource.fromCommandLineArgs(simpleCmdLineArgs.split(' ')
 val simpleConfig = descriptor[SimpleCommandLineConfig] from simpleSource
 ```
 ### Nested config using command line arguments: Approach 1
+
 ```scala mdoc:silent
 final case class SparkConf(key1: String, key2: String)
 final case class NestedCommandLineConfig(conf: SparkConf, key3: String)
@@ -320,19 +319,25 @@ val nestedSource =
 
 val nestedConfig = descriptor[NestedCommandLineConfig] from nestedSource
 assert(read(nestedConfig) == Right(NestedCommandLineConfig(SparkConf("v1", "v2"), "v3")))
+
 ```
+
 This config is for those developers who really used to system properties `(-Dconf.key=1)` and want to take the same approach towards command line arguments.
 Here we make use of delimiter `.` as the tool to nesting.
 
 For those who hate delimited keys in command line arguments and the associated nesting, we will have different approach as given below
+
 ### Nested config using command line arguments: Approach 2
+
 ```scala mdoc:silent
+
 val nestedCmdLineArgs2 = "--conf -key1=v1 --conf -key2=v2 --key3 v3"
 val nestedSource2 = ConfigSource.fromCommandLineArgs(nestedCmdLineArgs2.split(' ').toList)
 val nestedConfig2 = descriptor[NestedCommandLineConfig] from nestedSource2
 
 assert(read(nestedConfig2) == Right(NestedCommandLineConfig(SparkConf("v1", "v2"), "v3")))
 ```
+
 Here we don't use delimiters for nesting, hence keyDelimiter is `None`. 
 In this case any key-value that comes after `--conf` comes under the root path conf. This is followed in various places such as `SparkConf`.
 
@@ -341,34 +346,50 @@ although let's don't complicate our command line arguments.
 
 ### Map using command line arguments
 Both the approaches that we saw with nesting is applicable to `map`.
+
 ```scala mdoc:silent
+
 val mapArgs = "--conf.key1=value1  --conf.key2=value2"
+
 ```
+
 `map("conf")(string)` retrieving `Map("key1" -> "value1", "key2" -> "value2")`.  
+
 This will also work if `mapArgs` is `--conf -key1=value1 --conf -key2=value2`.
 
 ### Lists in command line arguments: Approach 1
+
 ```scala mdoc:silent
+
 val listArgs = "--users Jane --users Jack"
 val listSource = ConfigSource.fromCommandLineArgs(listArgs.split(' ').toList)
 val listConfigCmdLineArgs = list("users")(string) from listSource
 
 assert(read(listConfigCmdLineArgs) == Right(List("Jane", "Jack")))
+
 ```
+
 ### Lists in command line arguments: Approach 2
+
 ```scala mdoc:silent
+
 val listArgs2 = "--users Jane,Jack"
 
 // args.split(' ') is only for demo purpose. We already get a list if we use zio.App
+
 val listSource2 = ConfigSource.fromCommandLineArgs(
    listArgs2.split(' ').toList,
    valueDelimiter = Some(',')
 )
 
 assert(read(list("users")(string) from listSource2) == Right(List("Jane", "Jack")))
+
 ```
+
 ### A complex production application config (demo)
+
 ```scala mdoc:silent
+
 final case class UserPassword(username: String, password: String)
 final case class DatabaseConfig(database: UserPassword, url: String)
 final case class VaultConfig(userPassword: UserPassword)
@@ -383,4 +404,5 @@ val complexSource = ConfigSource.fromCommandLineArgs(
   Some(',')
 )
 val appConfig = descriptor[AppConfig] from complexSource
+
 ```

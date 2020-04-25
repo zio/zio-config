@@ -14,7 +14,7 @@ Take a look at the magnolia examples in `zio-config`
 ```scala mdoc:silent
 
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.string.read
+import zio.config.read
 import zio.config.typesafe.TypesafeConfigSource
 
 object CoproductSealedTraitExample extends App {

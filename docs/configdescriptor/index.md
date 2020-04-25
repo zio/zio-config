@@ -9,10 +9,7 @@ that represents your config.
 
 ```scala mdoc:silent
 import zio.{ ZIO, IO, Layer }
-import zio.config.ConfigSource, ConfigSource._
-import zio.config.ConfigDescriptor._
-import zio.config.ReadError
-import zio.config.Config
+import zio.config._, ConfigDescriptor._, ConfigSource._
 ```
 
 ## A Simple example

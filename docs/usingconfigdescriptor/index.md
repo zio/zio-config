@@ -19,8 +19,7 @@ You should be familiar with reading config from various sources, given a  config
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config.ConfigSource, ConfigSource._, zio.config.ConfigDescriptor._
-import zio.config.PropertyTree, PropertyTree._
+import zio.config._, ConfigDescriptor._, PropertyTree._
 import zio.config.ConfigDocs.{Leaf => _, _}
 
 ```
