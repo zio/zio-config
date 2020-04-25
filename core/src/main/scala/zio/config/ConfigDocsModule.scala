@@ -6,13 +6,13 @@ trait ConfigDocsModule extends WriteModule {
   sealed trait ConfigDocs
 
   object ConfigDocs {
-     case class Leaf(sources: Set[ConfigSourceName], descriptions: List[String], value: Option[V] = None)
+    case class Leaf(sources: Set[ConfigSourceName], descriptions: List[String], value: Option[V] = None)
         extends ConfigDocs
-     case class Nested(path: K, docs: ConfigDocs)                                          extends ConfigDocs
-     case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
-     case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
-     case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
-     case class DynamicMap(
+    case class Nested(path: K, docs: ConfigDocs)                                          extends ConfigDocs
+    case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
+    case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
+    case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
+    case class DynamicMap(
       schemaDocs: ConfigDocs,
       valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs]
     ) extends ConfigDocs

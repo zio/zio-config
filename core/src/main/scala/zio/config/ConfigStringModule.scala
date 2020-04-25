@@ -1,13 +1,13 @@
 package zio.config
 
 import java.io.File
-import java.net.{URI, URL}
-import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
-import java.util.{UUID}
+import java.net.{ URI, URL }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
+import java.util.{ UUID }
 import java.util.Properties
 import zio.{ Layer, Tagged }
 import zio.system.System
-import zio.{ZIO, ZLayer}
+import zio.{ ZIO, ZLayer }
 
 import scala.concurrent.duration.Duration
 
@@ -237,7 +237,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
   }
 
-
   /**
    * Use functions in this `Config` object when you need to retrieve your instance of config in terms of zio.Layer.
    *
@@ -339,11 +338,11 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * @see [[https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples/commandline/CommandLineArgsExample.scala]]
      */
     def fromCommandLineArgs[A](
-                                args: List[String],
-                                configDescriptor: ConfigDescriptor[A],
-                                keyDelimiter: Option[Char] = None,
-                                valueDelimiter: Option[Char] = None
-                              )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+      args: List[String],
+      configDescriptor: ConfigDescriptor[A],
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None
+    )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter)
       )
@@ -370,12 +369,12 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * }}}
      */
     def fromMap[A](
-                    map: Map[String, String],
-                    configDescriptor: ConfigDescriptor[A],
-                    source: String = "constant",
-                    keyDelimiter: Option[Char] = None,
-                    valueDelimiter: Option[Char] = None
-                  )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+      map: Map[String, String],
+      configDescriptor: ConfigDescriptor[A],
+      source: String = "constant",
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None
+    )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
       fromConfigDescriptor(configDescriptor from ConfigSource.fromMap(map, source, keyDelimiter, valueDelimiter))
 
     /**
@@ -398,11 +397,11 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * }}}
      */
     def fromMultiMap[A](
-                         map: Map[String, ::[String]],
-                         configDescriptor: ConfigDescriptor[A],
-                         source: String,
-                         keyDelimiter: Option[Char] = None
-                       )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+      map: Map[String, ::[String]],
+      configDescriptor: ConfigDescriptor[A],
+      source: String,
+      keyDelimiter: Option[Char] = None
+    )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
       fromConfigDescriptor(configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter))
 
     /**
@@ -427,12 +426,12 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * }}}
      */
     def fromProperties[A](
-                           properties: Properties,
-                           configDescriptor: ConfigDescriptor[A],
-                           source: String,
-                           keyDelimiter: Option[Char] = None,
-                           valueDelimiter: Option[Char] = None
-                         )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+      properties: Properties,
+      configDescriptor: ConfigDescriptor[A],
+      source: String,
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None
+    )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromProperties(properties, source, keyDelimiter, valueDelimiter)
       )
@@ -460,11 +459,11 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      */
     def fromPropertiesFile[A](
-                               filePath: String,
-                               configDescriptor: ConfigDescriptor[A],
-                               keyDelimiter: Option[Char] = None,
-                               valueDelimiter: Option[Char] = None
-                             )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
+      filePath: String,
+      configDescriptor: ConfigDescriptor[A],
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None
+    )(implicit tagged: Tagged[A]): Layer[Throwable, Config[A]] =
       fromConfigDescriptorM(
         ConfigSource
           .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter)
@@ -495,10 +494,10 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * Note: The delimiter '.' for keys doesn't work in system environment.
      */
     def fromSystemEnv[K, V, A](
-                                configDescriptor: ConfigDescriptor[A],
-                                keyDelimiter: Option[Char] = None,
-                                valueDelimiter: Option[Char] = None
-                              )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
+      configDescriptor: ConfigDescriptor[A],
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None
+    )(implicit tagged: Tagged[A]): Layer[ReadError[String], Config[A]] =
       fromConfigDescriptorM(ConfigSource.fromSystemEnv(keyDelimiter, valueDelimiter).map(configDescriptor from _))
 
     /**
@@ -524,20 +523,22 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      */
     def fromSystemProperties[K, V, A](
-                                       configDescriptor: ConfigDescriptor[A],
-                                       keyDelimiter: Option[Char] = None,
-                                       valueDelimiter: Option[Char] = None
-                                     )(implicit tagged: Tagged[A]): ZLayer[System, ReadError[String], Config[A]] =
-      fromConfigDescriptorM(ConfigSource.fromSystemProperties(keyDelimiter, valueDelimiter).map(configDescriptor from _))
+      configDescriptor: ConfigDescriptor[A],
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None
+    )(implicit tagged: Tagged[A]): ZLayer[System, ReadError[String], Config[A]] =
+      fromConfigDescriptorM(
+        ConfigSource.fromSystemProperties(keyDelimiter, valueDelimiter).map(configDescriptor from _)
+      )
 
     private[config] def fromConfigDescriptor[A](
-                                                 configDescriptor: ConfigDescriptor[A]
-                                               )(implicit tagged: Tagged[A]): Layer[ReadError[K], Config[A]] =
+      configDescriptor: ConfigDescriptor[A]
+    )(implicit tagged: Tagged[A]): Layer[ReadError[K], Config[A]] =
       ZLayer.fromEffect(ZIO.fromEither(read(configDescriptor)))
 
     private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
-                                                                        configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
-                                                                      )(implicit tagged: Tagged[A]): ZLayer[R, E, Config[A]] =
+      configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
+    )(implicit tagged: Tagged[A]): ZLayer[R, E, Config[A]] =
       ZLayer.fromEffect(
         configDescriptor.flatMap(
           descriptor => ZIO.fromEither(read(descriptor))

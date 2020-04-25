@@ -31,9 +31,12 @@ trait ConfigSourceModule extends KeyValueModule {
     def <>(that: => ConfigSource): ConfigSource = self orElse that
   }
 
-  protected def getConfigSource(sourceNames: Set[ConfigSourceName], getTree: List[K] => PropertyTree[K, V]): ConfigSource =
+  protected def getConfigSource(
+    sourceNames: Set[ConfigSourceName],
+    getTree: List[K] => PropertyTree[K, V]
+  ): ConfigSource =
     new ConfigSource {
-      def names: Set[ConfigSourceName] = sourceNames
+      def names: Set[ConfigSourceName]                  = sourceNames
       def getConfigValue: List[K] => PropertyTree[K, V] = getTree
     }
 
@@ -412,7 +415,6 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         valueDelimiter.fold(
           Sequence(List(Leaf(leaf))): PropertyTree[String, String]
         )(c => Sequence[String, String](leaf.split(c).toList.map(Leaf(_))))
-
 
       /// CommandLine Argument Source
 
