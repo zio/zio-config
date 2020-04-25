@@ -1,5 +1,3 @@
-## To run microsite 
-
 ## Steps for raising a Pull Request
 1. Please raise an issue in [here](https://github.com/zio/zio-config/issues) before you raise a pull request directly.
 2. Tag the issue in PR description.
@@ -28,7 +26,7 @@ bloop test zio-config
 We recommend you run the examples in zio-config using `sbt runAllExamples` making sure
 that all assertions in the example holds true even after your change.
 
-## Build website
+## Build website in Local
 
 ```
 cd zio-config
