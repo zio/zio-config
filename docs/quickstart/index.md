@@ -74,6 +74,16 @@ val myConfig: ConfigDescriptor[MyConfig] =
 
 ```
 
+To get a tuple,
+
+```scala mdoc:silent
+
+val myConfigTupled: ConfigDescriptor[(String, Int, String)] =
+  (string("LDAP") |@| int("PORT")|@| string("DB_URL")).tupled
+
+
+```
+
 ## Fully automated Config Description
 
 If you don't like describing your configuration manually, and rely on the names of the parameter in the case class (or sealed trait),
@@ -224,9 +234,10 @@ import zio.config.magnolia.DeriveConfigDescriptor
 trait Endpoint
 trait Repository
 
-final case class AppConfig(api: ApiConfig, db: DbConfig)
-final case class DbConfig (url: String,    driver: String)
-final case class ApiConfig(host: String,   port: Int)
+case class AppConfig(api: ApiConfig, db: DbConfig)
+case class DbConfig (url: String,    driver: String)
+case class ApiConfig(host: String,   port: Int)
+
 val configDescription = DeriveConfigDescriptor.descriptor[AppConfig]
 
 // components have only required dependencies

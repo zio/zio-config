@@ -32,26 +32,36 @@ object ProductBuilderCodeGen {
     val letters  = (0 to n).map(letter)
     val letters2 = letters.map(c => s"$c$c")
 
-    val cL0        = letters.mkString(", ").toUpperCase // eg "A, B, C, D"
-    val cll0       = letters2.mkString(", ") // eg "aa, bb, cc, dd"
-    val zipped     = letters.mkString(" zip ")
-    val cll0Tupled = "(" * n + "aa, " + letters2.drop(1).mkString("", "), ", ")") // eg "(((aa, bb), cc), dd)"
+    val cL0WithTypes = letters.map(a => s"${a}:${a.toUpperCase}").mkString(", ")
+
+    val cLoDerefernce = (0 to n).map(n => s"t._${n + 1}").mkString(", ")
+    val cL0           = letters.mkString(", ").toUpperCase // eg "A, B, C, D"
+    val cL0Lower      = cL0.toLowerCase
+    val cll0          = letters2.mkString(", ") // eg "aa, bb, cc, dd"
+    val zipped        = letters.mkString(" zip ")
+    val cll0Tupled = "(" * n + "aa, " + letters2
+      .drop(1)
+      .mkString("", "), ", ")") // eg "(((aa, bb), cc), dd)"
 
     val part1 =
       s"""
          |  sealed abstract class ProductBuilder[$L0] {
-         |    val $l0: ConfigDescriptor[KK, VV, $L0]
-         |    def apply[$L1](ff: ($cL0) => $L1, gg: $L1 => Option[($cL0)]): ConfigDescriptor[KK, VV, $L1] =
+         |    val $l0: F[$L0]
+         |    
+         |    def apply[$L1](ff: ($cL0) => $L1, gg: $L1 => Option[($cL0)]): F[$L1] =
          |      ($zipped)
          |        .xmapEither[$L1] (
          |          { case $cll0Tupled => Right(ff($cll0)) },
          |          liftWrite($l1 => gg($l1).map { case ($cll0) => $cll0Tupled })
-         |        )""".stripMargin
+         |        )
+         |        
+         |    def tupled = apply[($cL0)](($cL0WithTypes) => ($cL0Lower), t => Some(($cLoDerefernce)))
+         |        """.stripMargin
     val part2 =
       s"""
-         |    def |@|[$L1]($ll1: ConfigDescriptor[KK, VV, $L1]): ProductBuilder[$L1] =
+         |    def |@|[$L1]($ll1: F[$L1]): ProductBuilder[$L1] =
          |      new ProductBuilder[$L1] {
-         |        val $l1: ConfigDescriptor[KK, VV, $L1] = $ll1
+         |        val $l1: F[$L1] = $ll1
          |      }""".stripMargin
 
     if (n == count - 1) List(part1) else List(part1, part2)
@@ -87,12 +97,17 @@ object ProductBuilderCodeGen {
 
     val toWrite: List[String] = (beforeMarker :+ markerStartLine) ++ (newContents :+ markerEndLine) ++ afterMarker
 
-    val result = IO.read(scalaFmtPath).replace("maxColumn = 120", "maxColumn = 12000")
+    val result =
+      IO.read(scalaFmtPath).replace("maxColumn = 120", "maxColumn = 12000")
 
     IO.write(tempScalaFmtFile, result)
 
     val formatted =
-      scalafmt.format(tempScalaFmtFile.toPath, Paths.get("Main.scala"), toWrite.mkString("\n"))
+      scalafmt.format(
+        tempScalaFmtFile.toPath,
+        Paths.get("Main.scala"),
+        toWrite.mkString("\n")
+      )
 
     IO.write(filepath, formatted)
   }
@@ -100,7 +115,11 @@ object ProductBuilderCodeGen {
   private def findLine(lines: List[String], marker: String, filepath: File): String =
     lines
       .find(_.contains(marker))
-      .getOrElse(throw new RuntimeException(s"Cannot find marker $marker in file $filepath"))
+      .getOrElse(
+        throw new RuntimeException(
+          s"Cannot find marker $marker in file $filepath"
+        )
+      )
 
   // shabby-code: OFF
 }
