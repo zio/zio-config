@@ -1,7 +1,7 @@
 package zio.config.typesafe
 
 import zio.config.ConfigDescriptor._
-import zio.config.{ read, ConfigDescriptor }
+import zio.config.read
 import zio.config.typesafe.EmployeeDetails._
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 import zio.test.Assertion._
@@ -17,7 +17,7 @@ final case class Employee(
 
 object EmployeeDetails {
 
-  val employee: ConfigDescriptor[String, String, Employee] =
+  val employee =
     (string("name") |@|
       int("state").orElseEither(string("state")).optional |@|
       double("confidence")
@@ -31,7 +31,7 @@ object EmployeeDetails {
       Employee.unapply
     )
 
-  val employeeDetails: ConfigDescriptor[String, String, EmployeeDetails] =
+  val employeeDetails =
     nested("details") {
       (nested("employees")(list(employee)) |@| int("accountId"))(
         EmployeeDetails.apply,
