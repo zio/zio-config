@@ -3,7 +3,7 @@ package zio.config
 import java.io.File
 import java.net.{ URI, URL }
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
-import java.util.{ UUID }
+import java.util.UUID
 import java.util.Properties
 import zio.{ Layer, Tagged }
 import zio.system.System
@@ -16,224 +16,104 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
   object ConfigDescriptor extends ConfigDescriptorFunctions {
     import ConfigDescriptorAdt._
 
-    /**
-     * A descriptor that represents retrieving the BigDecimal
-     */
     val bigDecimal: ConfigDescriptor[BigDecimal] =
       Source(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal"
 
-    /**
-     * A descriptor that represents retrieving the BigDecimal from a specific path
-     */
     def bigDecimal(path: String): ConfigDescriptor[BigDecimal] = nested(path)(bigDecimal)
 
-    /**
-     * A descriptor that represents retrieving the BigInt
-     */
     val bigInt: ConfigDescriptor[BigInt] =
       Source(ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint"
 
-    /**
-     * A descriptor that represents retrieving the BigInt from a specific path
-     */
     def bigInt(path: String): ConfigDescriptor[BigInt] = nested(path)(bigInt)
 
-    /**
-     * A descriptor that represents retrieving the Boolean
-     */
     val boolean: ConfigDescriptor[Boolean] =
       Source(ConfigSource.empty, PropertyType.BooleanType) ?? "value of type boolean"
 
-    /**
-     * A descriptor that represents retrieving the Boolean from a specific path
-     */
     def boolean(path: String): ConfigDescriptor[Boolean] = nested(path)(boolean)
 
-    /**
-     * A descriptor that represents retrieving the Byte
-     */
     val byte: ConfigDescriptor[Byte] =
       Source(ConfigSource.empty, PropertyType.ByteType) ?? "value of type byte"
 
-    /**
-     * A descriptor that represents retrieving the Byte from a specific path
-     */
     def byte(path: String): ConfigDescriptor[Byte] = nested(path)(byte)
 
-    /**
-     * A descriptor that represents retrieving the Double
-     */
     val double: ConfigDescriptor[Double] =
       Source(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double"
 
-    /**
-     * A descriptor that represents retrieving the Double from a specific path
-     */
     def double(path: String): ConfigDescriptor[Double] = nested(path)(double)
 
-    /**
-     * A descriptor that represents retrieving the Duration
-     */
     val duration: ConfigDescriptor[Duration] =
       Source(ConfigSource.empty, PropertyType.DurationType) ?? "value of type duration"
 
-    /**
-     * A descriptor that represents retrieving the Duration from a specific path
-     */
     def duration(path: String): ConfigDescriptor[Duration] = nested(path)(duration)
 
-    /**
-     * A descriptor that represents retrieving the File
-     */
     val file: ConfigDescriptor[File] =
       Source(ConfigSource.empty, PropertyType.FileType) ?? "value of type file"
 
-    /**
-     * A descriptor that represents retrieving the File from a specific path
-     */
     def file(path: String): ConfigDescriptor[File] = nested(path)(file)
 
-    /**
-     * A descriptor that represents retrieving the Float
-     */
     val float: ConfigDescriptor[Float] =
       Source(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
 
-    /**
-     * A descriptor that represents retrieving the Float from a specific path
-     */
     def float(path: String): ConfigDescriptor[Float] = nested(path)(float)
 
-    /**
-     * A descriptor that represents retrieving the Instant
-     */
     val instant: ConfigDescriptor[Instant] =
       Source(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant"
 
-    /**
-     * A descriptor that represents retrieving the Instant from a specific path
-     */
     def instant(path: String): ConfigDescriptor[Instant] = nested(path)(instant)
 
-    /**
-     * A descriptor that represents retrieving the Int
-     */
     val int: ConfigDescriptor[Int] =
       Source(ConfigSource.empty, PropertyType.IntType) ?? "value of type int"
 
-    /**
-     * A descriptor that represents retrieving the Int from a specific path
-     */
     def int(path: String): ConfigDescriptor[Int] = nested(path)(int)
 
-    /**
-     * A descriptor that represents retrieving the LocalDate
-     */
     val localDate: ConfigDescriptor[LocalDate] =
       Source(ConfigSource.empty, PropertyType.LocalDateType) ?? "value of type localdate"
 
-    /**
-     * A descriptor that represents retrieving the LocalDate from a specific path
-     */
     def localDate(path: String): ConfigDescriptor[LocalDate] = nested(path)(localDate)
 
-    /**
-     * A descriptor that represents retrieving the LocalDateTime
-     */
     val localDateTime: ConfigDescriptor[LocalDateTime] =
       Source(ConfigSource.empty, PropertyType.LocalDateTimeType) ?? "value of type localdatetime"
 
-    /**
-     * A descriptor that represents retrieving the LocalDateTime from a specific path
-     */
     def localDateTime(path: String): ConfigDescriptor[LocalDateTime] = nested(path)(localDateTime)
 
-    /**
-     * A descriptor that represents retrieving the LocalTime
-     */
     val localTime: ConfigDescriptor[LocalTime] =
       Source(ConfigSource.empty, PropertyType.LocalTimeType) ?? "value of type localtime"
 
-    /**
-     * A descriptor that represents retrieving the LocalTime from a specific path
-     */
     def localTime(path: String): ConfigDescriptor[LocalTime] = nested(path)(localTime)
 
-    /**
-     * A descriptor that represents retrieving the Long
-     */
     val long: ConfigDescriptor[Long] =
       Source(ConfigSource.empty, PropertyType.LongType) ?? "value of type long"
 
-    /**
-     * A descriptor that represents retrieving the Long from a specific path
-     */
     def long(path: String): ConfigDescriptor[Long] = nested(path)(long)
 
-    /**
-     * A descriptor that represents retrieving the Short
-     */
     val short: ConfigDescriptor[Short] =
       Source(ConfigSource.empty, PropertyType.ShortType) ?? "value of type short"
 
-    /**
-     * A descriptor that represents retrieving the Short from a specific path
-     */
     def short(path: String): ConfigDescriptor[Short] = nested(path)(short)
 
-    /**
-     * A descriptor that represents retrieving the String
-     */
     val string: ConfigDescriptor[String] =
       Source(ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
 
-    /**
-     * A descriptor that represents retrieving the String from a specific path
-     */
     def string(path: String): ConfigDescriptor[String] = nested(path)(string)
 
-    /**
-     * A descriptor that represents retrieving the URI
-     */
     val uri: ConfigDescriptor[URI] =
       Source(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
 
-    /**
-     * A descriptor that represents retrieving the URI from a specific path
-     */
     def uri(path: String): ConfigDescriptor[URI] = nested(path)(uri)
 
-    /**
-     * A descriptor that represents retrieving the UUID
-     */
     val uuid: ConfigDescriptor[UUID] =
       Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
 
-    /**
-     * A descriptor that represents retrieving the UUID from a specific path
-     */
     def uuid(path: String): ConfigDescriptor[UUID] = nested(path)(uuid)
 
-    /**
-     * A descriptor that represents retrieving the URL
-     */
     val url: ConfigDescriptor[URL] =
       Source(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL"
 
-    /**
-     * A descriptor that represents retrieving the URL from a specific path
-     */
     def url(path: String): ConfigDescriptor[URL] = nested(path)(url)
 
-    /**
-     * A descriptor that represents retrieving the zio.duration.Duration
-     */
     val zioDuration: ConfigDescriptor[zio.duration.Duration] =
       Source(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
 
-    /**
-     * A descriptor that represents retrieving the zio.duration.Duration from a specific path
-     */
     def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
   }
 

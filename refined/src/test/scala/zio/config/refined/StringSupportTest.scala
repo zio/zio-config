@@ -21,12 +21,11 @@ import eu.timepit.refined.string.{
   ValidLong,
   ValidShort
 }
-
 import zio.ZIO
 import zio.config.helpers._
 import zio.config.{ helpers, BaseSpec, ConfigSource }
 import zio.test.Assertion._
-import zio.config.string.{ read, string, write }
+import zio.config.{ read, write, ConfigDescriptor }, ConfigDescriptor._
 import zio.test._
 
 object StringSupportTest

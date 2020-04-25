@@ -3,8 +3,7 @@ package zio.config.examples.typesafe
 import zio.config.ConfigSource
 import com.typesafe.config.ConfigRenderOptions
 import zio.config.typesafe.TypesafeConfigSource
-import zio.config.ConfigDescriptor._
-import zio.config.typesafe._
+import zio.config._, typesafe._, ConfigDescriptor._
 
 object MapExample extends App with EitherImpureOps {
   val hocon =

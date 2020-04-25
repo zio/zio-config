@@ -104,11 +104,10 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
   type K = String
   type V = String
 
-  private[config] val SystemEnvironment    = "system environment"
-  private[config] val SystemProperties     = "system properties"
-  private[config] val CommandLineArguments = "command line arguments"
-
   object ConfigSource extends ConfigSourceFunctions {
+    private[config] val SystemEnvironment    = "system environment"
+    private[config] val SystemProperties     = "system properties"
+    private[config] val CommandLineArguments = "command line arguments"
 
     /**
      * EXPERIMENTAL

@@ -1,7 +1,6 @@
 package zio.config
 
 import eu.timepit.refined.api.{ RefType, Refined, Validate }
-import zio.config.ConfigDescriptor._
 
 package object refined
     extends NumericSupport

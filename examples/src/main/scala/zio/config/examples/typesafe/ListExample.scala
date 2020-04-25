@@ -2,7 +2,6 @@ package zio.config.examples.typesafe
 
 import com.typesafe.config.ConfigRenderOptions
 import zio.config._
-import zio.config.ConfigDescriptor._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
 

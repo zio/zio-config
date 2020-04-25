@@ -1,6 +1,6 @@
 package zio.config.examples.typesafe
 
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 

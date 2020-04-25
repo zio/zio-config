@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 import zio.config.ConfigSource
 import zio.config.singleton
 

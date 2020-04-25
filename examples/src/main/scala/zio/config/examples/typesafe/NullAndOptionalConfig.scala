@@ -2,7 +2,7 @@ package zio.config.examples.typesafe
 
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 import EmployeeDetails._
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 

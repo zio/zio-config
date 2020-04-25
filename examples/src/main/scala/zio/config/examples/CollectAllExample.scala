@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config.ConfigSource
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 import zio.config.PropertyTree
 import zio.config.examples.typesafe.EitherImpureOps
 

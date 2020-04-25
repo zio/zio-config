@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 import zio.config.ConfigDocs._
 import zio.config.ConfigSource, ConfigSource._
 import zio.config.ConfigDocs
@@ -32,19 +32,19 @@ object DefaultValueExample extends App {
         ConfigDocs.Nested(
           "HELLO",
           Leaf(
-            Set(ConfigSource.Name(ConfigSource.SystemEnvironment)),
+            Set(ConfigSourceName(ConfigSource.SystemEnvironment)),
             List("value of type string", "default value: xyz")
           )
         ),
         ConfigDocs.OrElse(
           ConfigDocs.Nested(
             "SOMETHING",
-            Leaf(Set(ConfigSource.Name(ConfigSource.SystemEnvironment)), List("value of type string"))
+            Leaf(Set(ConfigSourceName(ConfigSource.SystemEnvironment)), List("value of type string"))
           ),
           ConfigDocs.Nested(
             "PORT",
             Leaf(
-              Set(ConfigSource.Name(ConfigSource.SystemEnvironment)),
+              Set(ConfigSourceName(ConfigSource.SystemEnvironment)),
               List("value of type int", "default value: 1")
             )
           )
@@ -59,7 +59,7 @@ object DefaultValueExample extends App {
           ConfigDocs.Nested(
             "HELLO",
             Leaf(
-              Set(ConfigSource.Name(SystemEnvironment)),
+              Set(ConfigSourceName(SystemEnvironment)),
               List("value of type string", "default value: xyz"),
               Some("xyz")
             )
@@ -67,12 +67,12 @@ object DefaultValueExample extends App {
           ConfigDocs.OrElse(
             ConfigDocs.Nested(
               "SOMETHING",
-              Leaf(Set(ConfigSource.Name(SystemEnvironment)), List("value of type string"), None)
+              Leaf(Set(ConfigSourceName(SystemEnvironment)), List("value of type string"), None)
             ),
             ConfigDocs.Nested(
               "PORT",
               ConfigDocs.Leaf(
-                Set(ConfigSource.Name(SystemEnvironment)),
+                Set(ConfigSourceName(SystemEnvironment)),
                 List("value of type int", "default value: 1"),
                 Some("1")
               )

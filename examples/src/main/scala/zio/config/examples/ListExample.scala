@@ -6,7 +6,7 @@ import zio.config.PropertyTree.Leaf
 import zio.config.PropertyTree
 import zio.config.singleton
 import zio.config.ConfigDescriptor._
-import zio.config.typesafe._
+import zio.config._, zio.config.typesafe._
 
 // List works quite nicely if the source is typesafe HOCON. Refer typesafe examples
 object ListExample extends App with EitherImpureOps {

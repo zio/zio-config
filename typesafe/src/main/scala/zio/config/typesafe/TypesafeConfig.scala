@@ -3,9 +3,9 @@ package zio.config.typesafe
 import java.io.File
 
 import com.typesafe.config.ConfigFactory
-import zio.config.{ Config }
+import zio.config.Config
 import zio.{ Layer, Tagged, ZIO }
-import zio.config.ConfigDescriptor._
+import zio.config.ConfigDescriptor
 
 object TypesafeConfig {
   def fromDefaultLoader[A](

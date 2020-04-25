@@ -2,7 +2,7 @@ package zio.config.refined
 
 import eu.timepit.refined.api.{ Refined, Validate }
 import eu.timepit.refined.char._
-import zio.config.ConfigDescriptor._
+import zio.config.ConfigDescriptor
 
 private[refined] trait CharSupport {
 

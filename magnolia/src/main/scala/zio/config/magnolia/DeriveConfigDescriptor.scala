@@ -6,7 +6,7 @@ import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 
 import magnolia._
-import zio.config.{ ConfigSource, PropertyType }
+import zio.config._
 import zio.duration.Duration
 
 import scala.annotation.{ implicitAmbiguous, tailrec }
@@ -70,10 +70,10 @@ trait DeriveConfigDescriptor { self =>
   }
 
   def constantString(value: String): ConfigDescriptor[String] =
-    Source(ConfigSource.empty, ConstantString(value)) ?? s"constant string '$value'"
+    ConfigDescriptorAdt.Source(ConfigSource.empty, ConstantString(value)) ?? s"constant string '$value'"
 
   def constant[T](label: String, value: T): ConfigDescriptor[T] =
-    constantString(label)(_ => value, (p: T) => Some(p).filter(_ == value).map(_ => label))
+    constantString(label)(_ => value, p => Some(p).filter(_ == value).map(_ => label))
 
   protected def stringDesc: ConfigDescriptor[String]               = string
   protected def booleanDesc: ConfigDescriptor[Boolean]             = boolean

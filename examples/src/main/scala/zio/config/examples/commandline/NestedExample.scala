@@ -2,7 +2,7 @@ package zio.config.examples.commandline
 
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.ConfigSource
-import zio.config.ConfigDescriptor._
+import zio.config._
 
 object NestedExample extends App {
   val cmdLineArgs =

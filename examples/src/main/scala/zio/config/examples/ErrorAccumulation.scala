@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.config.{ ConfigSource, ReadFunctions }
+import zio.config._
 import zio.config.ConfigDescriptor._
 import zio.config.ReadError._
 
@@ -44,7 +44,7 @@ object ErrorAccumulation extends App {
       Left(
         AndErrors(
           List(
-            FormatError(List(Step.Key("envvar")), ReadFunctions.parseErrorMessage("wrong", "int")),
+            FormatError(List(Step.Key("envvar")), parseErrorMessage("wrong", "int")),
             OrErrors(List(MissingValue(List(Step.Key("envvar2"))), MissingValue(List(Step.Key("envvar3")))))
           )
         )

@@ -1,7 +1,7 @@
 package zio.config.typesafe
 
 import zio.config.{ BaseSpec, ConfigSource }
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test._
 import TypesafeConfigMapSpecUtils._
@@ -96,7 +96,7 @@ object TypesafeConfigMapSpecUtils {
        |  }
        |""".stripMargin
 
-  val source: ConfigSource[String, String] = TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
+  val source: ConfigSource = TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 

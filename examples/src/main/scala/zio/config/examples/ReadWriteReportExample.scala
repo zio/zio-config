@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 import zio.config.ConfigDocs._
 import zio.config.ConfigSource
 import zio.config.PropertyTree
@@ -82,14 +82,14 @@ object ReadWriteReportExample extends App {
               ConfigDocs.Nested(
                 "usr",
                 Leaf(
-                  Set(ConfigSource.Name("constant")),
+                  Set(ConfigSourceName("constant")),
                   List("value of type string", "Example: some-user", "Prod Config")
                 )
               ),
               ConfigDocs.Nested(
                 "pwd",
                 Leaf(
-                  Set(ConfigSource.Name("constant")),
+                  Set(ConfigSourceName("constant")),
                   List("value of type string", "optional value", "sec", "Prod Config")
                 )
               )
@@ -97,7 +97,7 @@ object ReadWriteReportExample extends App {
             ConfigDocs.Nested(
               "jhi",
               Leaf(
-                Set(ConfigSource.Name("constant")),
+                Set(ConfigSourceName("constant")),
                 List("value of type string", "optional value", "Ex: ghi", "Prod Config")
               )
             )
@@ -106,7 +106,7 @@ object ReadWriteReportExample extends App {
             ConfigDocs.Nested(
               "xyz",
               Leaf(
-                Set(ConfigSource.Name("constant")),
+                Set(ConfigSourceName("constant")),
                 List("value of type string", "optional value", "Ex: ha", "Prod Config")
               )
             ),
@@ -114,14 +114,14 @@ object ReadWriteReportExample extends App {
               ConfigDocs.Nested(
                 "abc",
                 Leaf(
-                  Set(ConfigSource.Name("constant")),
+                  Set(ConfigSourceName("constant")),
                   List("value of type int", "optional value", "Ex: ha", "Prod Config")
                 )
               ),
               ConfigDocs.Nested(
                 "def",
                 Leaf(
-                  Set(ConfigSource.Name("constant")),
+                  Set(ConfigSourceName("constant")),
                   List("value of type string", "optional value", "Ex: ha", "Prod Config")
                 )
               )
@@ -131,11 +131,11 @@ object ReadWriteReportExample extends App {
         ConfigDocs.Zip(
           ConfigDocs.Nested(
             "auth_token",
-            Leaf(Set(ConfigSource.Name("constant")), List("value of type string", "Prod Config"))
+            Leaf(Set(ConfigSourceName("constant")), List("value of type string", "Prod Config"))
           ),
           ConfigDocs.Nested(
             "clientid",
-            Leaf(Set(ConfigSource.Name("constant")), List("value of type string", "Prod Config"))
+            Leaf(Set(ConfigSourceName("constant")), List("value of type string", "Prod Config"))
           )
         )
       )
@@ -151,7 +151,7 @@ object ReadWriteReportExample extends App {
                 ConfigDocs.Nested(
                   "usr",
                   Leaf(
-                    Set(ConfigSource.Name("constant")),
+                    Set(ConfigSourceName("constant")),
                     List("value of type string", "Example: some-user", "Prod Config"),
                     Some("v1")
                   )
@@ -159,7 +159,7 @@ object ReadWriteReportExample extends App {
                 ConfigDocs.Nested(
                   "pwd",
                   Leaf(
-                    Set(ConfigSource.Name("constant")),
+                    Set(ConfigSourceName("constant")),
                     List("value of type string", "optional value", "sec", "Prod Config"),
                     Some("v2")
                   )
@@ -168,7 +168,7 @@ object ReadWriteReportExample extends App {
               ConfigDocs.Nested(
                 "jhi",
                 Leaf(
-                  Set(ConfigSource.Name("constant")),
+                  Set(ConfigSourceName("constant")),
                   List("value of type string", "optional value", "Ex: ghi", "Prod Config")
                 )
               )
@@ -177,7 +177,7 @@ object ReadWriteReportExample extends App {
               ConfigDocs.Nested(
                 "xyz",
                 Leaf(
-                  Set(ConfigSource.Name("constant")),
+                  Set(ConfigSourceName("constant")),
                   List("value of type string", "optional value", "Ex: ha", "Prod Config"),
                   Some("v3")
                 )
@@ -186,7 +186,7 @@ object ReadWriteReportExample extends App {
                 ConfigDocs.Nested(
                   "abc",
                   Leaf(
-                    Set(ConfigSource.Name("constant")),
+                    Set(ConfigSourceName("constant")),
                     List("value of type int", "optional value", "Ex: ha", "Prod Config"),
                     Some("1")
                   )
@@ -194,7 +194,7 @@ object ReadWriteReportExample extends App {
                 ConfigDocs.Nested(
                   "def",
                   Leaf(
-                    Set(ConfigSource.Name("constant")),
+                    Set(ConfigSourceName("constant")),
                     List("value of type string", "optional value", "Ex: ha", "Prod Config")
                   )
                 )
@@ -205,14 +205,14 @@ object ReadWriteReportExample extends App {
             ConfigDocs.Nested(
               "auth_token",
               Leaf(
-                Set(ConfigSource.Name("constant")),
+                Set(ConfigSourceName("constant")),
                 List("value of type string", "Prod Config")
               )
             ),
             ConfigDocs.Nested(
               "clientid",
               Leaf(
-                Set(ConfigSource.Name("constant")),
+                Set(ConfigSourceName("constant")),
                 List("value of type string", "Prod Config")
               )
             )

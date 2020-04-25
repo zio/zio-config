@@ -3,7 +3,7 @@ package zio.config.examples
 import zio.config.ConfigDescriptor._
 import zio.config.ReadError.{ FormatError, MissingValue, OrErrors, Step }
 import zio.config.ConfigSource
-import zio.config.ReadFunctions
+import zio.config._
 
 object EitherExample extends App {
   final case class Ldap(value: String)  extends AnyVal
@@ -29,7 +29,7 @@ object EitherExample extends App {
     )
 
   // Obviously getting a constant map source doesn't need ZIO effect
-  val source: ConfigSource[String, String] =
+  val source: ConfigSource =
     ConfigSource.fromMap(validProd, "constant")
 
   // read(prodOrDev from source) is equivalent to Config.fromMap(prodOrDev). This is only to demonstrate that you can
@@ -45,7 +45,7 @@ object EitherExample extends App {
       "x5" -> "2.0"
     )
 
-  val anotherSource: ConfigSource[String, String] =
+  val anotherSource: ConfigSource =
     ConfigSource.fromMap(validDev)
 
   println("anpther soruce result " + read(prodOrDev from anotherSource))
@@ -72,7 +72,7 @@ object EitherExample extends App {
         OrErrors(
           List(
             MissingValue(List(Step.Key("x1"))),
-            FormatError(List(Step.Key("x5")), ReadFunctions.parseErrorMessage("notadouble", "double"))
+            FormatError(List(Step.Key("x5")), parseErrorMessage("notadouble", "double"))
           )
         )
       )
