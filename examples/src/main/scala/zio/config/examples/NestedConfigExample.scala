@@ -38,7 +38,13 @@ object NestedConfigExample extends App with EitherImpureOps {
     read(appConfig from source).loadOrThrow
 
   // Read
-  assert(readConfig == AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
+  assert(
+    readConfig == AwsConfig(
+      Database("abc.com", 8111),
+      Database("xyz.com", 8888),
+      "myApp"
+    )
+  )
 
   // Write your nested config back.
   val writtenResult: PropertyTree[String, String] =
@@ -49,10 +55,16 @@ object NestedConfigExample extends App with EitherImpureOps {
       PropertyTree.Record(
         Map(
           "south" -> PropertyTree.Record(
-            Map("connection" -> PropertyTree.Leaf("abc.com"), "port" -> PropertyTree.Leaf("8111"))
+            Map(
+              "connection" -> PropertyTree.Leaf("abc.com"),
+              "port"       -> PropertyTree.Leaf("8111")
+            )
           ),
           "east" -> PropertyTree.Record(
-            Map("connection" -> PropertyTree.Leaf("xyz.com"), "port" -> PropertyTree.Leaf("8888"))
+            Map(
+              "connection" -> PropertyTree.Leaf("xyz.com"),
+              "port"       -> PropertyTree.Leaf("8888")
+            )
           ),
           "appName" -> PropertyTree.Leaf("myApp")
         )
@@ -72,9 +84,6 @@ object NestedConfigExample extends App with EitherImpureOps {
   )
 
   // Let's write them back as hocon which is more prefered over representing it as a map
-  import zio.config.typesafe._
-  println(writtenResult.toJson)
-
   /**
    *  Result:
    *  {{{
@@ -103,7 +112,10 @@ object NestedConfigExample extends App with EitherImpureOps {
                 "connection",
                 Leaf((Set.empty), List("value of type string", "South details"))
               ),
-              ConfigDocs.Nested("port", Leaf((Set.empty), List("value of type int", "South details")))
+              ConfigDocs.Nested(
+                "port",
+                Leaf((Set.empty), List("value of type int", "South details"))
+              )
             )
           ),
           ConfigDocs.Nested(
@@ -113,17 +125,24 @@ object NestedConfigExample extends App with EitherImpureOps {
                 "connection",
                 Leaf((Set.empty), List("value of type string", "East details"))
               ),
-              ConfigDocs.Nested("port", Leaf((Set.empty), List("value of type int", "East details")))
+              ConfigDocs.Nested(
+                "port",
+                Leaf((Set.empty), List("value of type int", "East details"))
+              )
             )
           )
         ),
-        ConfigDocs.Nested("appName", Leaf((Set.empty), List("value of type string")))
+        ConfigDocs
+          .Nested("appName", Leaf((Set.empty), List("value of type string")))
       )
   )
 
   // Details with a peek at each value as well
   assert(
-    generateReport(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")) ==
+    generateReport(
+      appConfig,
+      AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")
+    ) ==
       Right(
         ConfigDocs.Zip(
           ConfigDocs.Zip(
