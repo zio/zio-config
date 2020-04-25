@@ -1,9 +1,9 @@
 package zio.config.examples.commandline
 
-import zio.config.ConfigDescriptor._
-import zio.config.{ read, ConfigDescriptor, ConfigSource }
+import zio.config._, ConfigDescriptor._
+import zio.config.ConfigSource
 
-object MorePatternsExample extends App {
+object ComplexExample extends App {
   val argss =
     "--conf -database.username=1 --conf -database.password=hi --conf.database.url=jdbc://xyz --conf -num_execs=10 --vault.username=3 --vault.password=10 --vault.something=11 --users 1 --users 2 --region 111,112"
 
@@ -54,7 +54,7 @@ object MorePatternsExample extends App {
   final case class AppConfig(sparkConfig: SparkConfig, vault: VaultConfig, users: List[String], region: List[String])
 
   object AppConfig {
-    val desc: ConfigDescriptor[String, String, AppConfig] =
+    val desc: ConfigDescriptor[AppConfig] =
       (nested("conf") { SparkConfig.desc } |@| VaultConfig.desc |@| list(
         "users"
       )(string) |@| list("region")(string))(AppConfig.apply, AppConfig.unapply)

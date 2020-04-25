@@ -29,7 +29,7 @@ object MapConfigTest extends DefaultRunnableSpec {
     ZIO.environment.provideLayer(Config.fromMap(args, descriptor, "WTL", Some('_'), None))
 
   def toMap[A](
-    descriptor: ConfigDescriptor[String, String, A],
+    descriptor: ConfigDescriptor[A],
     a: A
   ): ZIO[Any, ReadError[String], Map[String, String]] =
     IO.fromEither(write(descriptor, a))

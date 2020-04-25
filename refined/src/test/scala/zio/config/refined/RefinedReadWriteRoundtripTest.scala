@@ -5,13 +5,13 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 import zio.ZIO
-import zio.config.ConfigDescriptor._
-import zio.config._
+import zio.config.{ helpers, BaseSpec, ConfigSource }
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
+import zio.config.{ read, write, ConfigDescriptor }, ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest
     extends BaseSpec(
@@ -49,7 +49,7 @@ object RefinedReadWriteRoundtripTestUtils {
     longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
   )
 
-  def longList(n: Int): ::[ConfigDescriptor[String, String, Long]] = {
+  def longList(n: Int): ::[ConfigDescriptor[Long]] = {
     val list =
       (1 to n).toList
         .map(group => long(s"GROUP${group}_LONGVAL"))
@@ -57,12 +57,12 @@ object RefinedReadWriteRoundtripTestUtils {
     ::(list.head, list.tail)
   }
 
-  def longs(n: Int): ConfigDescriptor[String, String, List[Long]] = {
+  def longs(n: Int): ConfigDescriptor[List[Long]] = {
     val ll = longList(n)
-    ConfigDescriptor.collectAll[String, String, Long](ll.head, ll.tail: _*)
+    collectAll(ll.head, ll.tail: _*)
   }
 
-  def prodConfig(n: Int): ConfigDescriptor[String, String, RefinedProd] =
+  def prodConfig(n: Int): ConfigDescriptor[RefinedProd] =
     (
       nonEmpty(string("LDAP")) |@|
         greaterEqual[W.`1024`.T](int("PORT")) |@|

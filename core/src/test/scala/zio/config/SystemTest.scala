@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.ConfigDescriptor.{ int, nested, string }
+import zio.config.ConfigDescriptor._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
@@ -27,7 +27,7 @@ object SystemTest extends DefaultRunnableSpec {
   final case class SomeConfig(size: Int, description: String)
 
   object SomeConfig {
-    val descriptor: ConfigDescriptor[String, String, SomeConfig] =
+    val descriptor: ConfigDescriptor[SomeConfig] =
       nested("SYSTEMPROPERTIESTEST")(
         (int("SIZE") |@| string("DESCRIPTION"))(SomeConfig.apply, SomeConfig.unapply)
       )

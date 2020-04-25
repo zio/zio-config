@@ -2,26 +2,26 @@ package zio.config.refined
 
 import eu.timepit.refined.api.{ Refined, Validate }
 import eu.timepit.refined.boolean._
-import zio.config.ConfigDescriptor
 import zio.config.refined.internal._
+import zio.config.ConfigDescriptor
 
 private[refined] trait BooleanSupport {
 
   /** Constant predicate that is always `true` */
-  def pTrue[K, V, A](
-    desc: ConfigDescriptor[K, V, A]
+  def pTrue[A](
+    desc: ConfigDescriptor[A]
   )(
     implicit ev: Validate[A, True]
-  ): ConfigDescriptor[K, V, Refined[A, True]] =
-    asRefined[K, V, A, True](desc)
+  ): ConfigDescriptor[Refined[A, True]] =
+    asRefined[A, True](desc)
 
   /** Constant predicate that is always `false` */
-  def pFalse[K, V, A](
-    desc: ConfigDescriptor[K, V, A]
+  def pFalse[A](
+    desc: ConfigDescriptor[A]
   )(
     implicit ev: Validate[A, False]
-  ): ConfigDescriptor[K, V, Refined[A, False]] =
-    asRefined[K, V, A, False](desc)
+  ): ConfigDescriptor[Refined[A, False]] =
+    asRefined[A, False](desc)
 
   /** Negation of the predicate `P` */
   def not[P]: NotPartiallyApplied[P] =

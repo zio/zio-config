@@ -1,14 +1,14 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 import zio.config.ConfigDocs._
-import zio.config.ConfigSource._
-import zio.config._
+import zio.config.ConfigSource, ConfigSource._
+import zio.config.ConfigDocs
 
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
 
-  val conf: ConfigDescriptor[String, String, PgmConfig] =
+  val conf: ConfigDescriptor[PgmConfig] =
     (string("HELLO").default("xyz") |@|
       string("SOMETHING").orElseEither(int("PORT").default(1)))(PgmConfig.apply, PgmConfig.unapply)
 
@@ -28,23 +28,23 @@ object DefaultValueExample extends App {
   println(generateDocs(confEx))
   assert(
     generateDocs(confEx) ==
-      Both(
-        NestedPath(
+      ConfigDocs.Zip(
+        ConfigDocs.Nested(
           "HELLO",
           Leaf(
-            Sources(Set(ConfigSource.SystemEnvironment)),
+            Set(ConfigSourceName(ConfigSource.SystemEnvironment)),
             List("value of type string", "default value: xyz")
           )
         ),
-        OneOf(
-          NestedPath(
+        ConfigDocs.OrElse(
+          ConfigDocs.Nested(
             "SOMETHING",
-            Leaf(Sources(Set(ConfigSource.SystemEnvironment)), List("value of type string"))
+            Leaf(Set(ConfigSourceName(ConfigSource.SystemEnvironment)), List("value of type string"))
           ),
-          NestedPath(
+          ConfigDocs.Nested(
             "PORT",
             Leaf(
-              Sources(Set(ConfigSource.SystemEnvironment)),
+              Set(ConfigSourceName(ConfigSource.SystemEnvironment)),
               List("value of type int", "default value: 1")
             )
           )
@@ -53,26 +53,26 @@ object DefaultValueExample extends App {
   )
 
   assert(
-    generateDocsWithValue(confEx, expected) ==
+    generateReport(confEx, expected) ==
       Right(
-        Both(
-          NestedPath(
+        ConfigDocs.Zip(
+          ConfigDocs.Nested(
             "HELLO",
             Leaf(
-              Sources(Set(SystemEnvironment)),
+              Set(ConfigSourceName(SystemEnvironment)),
               List("value of type string", "default value: xyz"),
               Some("xyz")
             )
           ),
-          OneOf(
-            NestedPath(
+          ConfigDocs.OrElse(
+            ConfigDocs.Nested(
               "SOMETHING",
-              Leaf(Sources(Set(SystemEnvironment)), List("value of type string"), None)
+              Leaf(Set(ConfigSourceName(SystemEnvironment)), List("value of type string"), None)
             ),
-            NestedPath(
+            ConfigDocs.Nested(
               "PORT",
-              Leaf(
-                Sources(Set(SystemEnvironment)),
+              ConfigDocs.Leaf(
+                Set(ConfigSourceName(SystemEnvironment)),
                 List("value of type int", "default value: 1"),
                 Some("1")
               )

@@ -19,8 +19,7 @@ You should be familiar with reading config from various sources, given a  config
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config._, ConfigDescriptor._
-import zio.config.PropertyTree._
+import zio.config._, ConfigDescriptor._, PropertyTree._
 import zio.config.ConfigDocs.{Leaf => _, _}
 
 ```
@@ -28,6 +27,18 @@ import zio.config.ConfigDocs.{Leaf => _, _}
 ```scala mdoc:silent
 
 case class MyConfig(ldap: String, port: Int, dburl: String)
+
+```
+
+To not divert our focus on handling Either (only for explanation purpose), we will use 
+the below syntax troughout the code
+
+```scala mdoc:silent
+
+implicit class EitherImpureOps[A, B](self: Either[A, B]) {
+  def getOrThrow: B =
+   self.fold(a => throw new Exception(a.toString), identity)
+}
 
 ```
 
@@ -46,8 +57,7 @@ read(myConfig from ConfigSource.fromMap(Map()))
 
 ## Writer from config descriptor
 
-
-To write a configured value back:
+Let's use `read` and get the result. Using the same result, we will write the config back to the source!
 
 ```scala mdoc:silent
 import zio.Runtime
@@ -71,33 +81,43 @@ import zio.Runtime
     (((nested("south") { database } ?? "South details" |@|
       nested("east") { database } ?? "East details" |@|
       string("appName"))(AwsConfig, AwsConfig.unapply)) ?? "asdf"
-    ) from ConfigSource.fromMap(map)
+    ) from ConfigSource.fromMap(map, keyDelimiter = Some('.'))
 
   val awsConfigResult =
-    read(appConfig)
+    read(appConfig).getOrThrow
 
-   // yields Right(AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp))
+   // yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)
 
   
-awsConfigResult.flatMap(result => write(appConfig, result))
+```
+
+#### Writing the config back to property tree
+
+```scala mdoc:silent
+
+val written: PropertyTree[String, String] = 
+  write(appConfig, awsConfigResult).getOrThrow
 
 // yields
 
- Right(
   Record(
     Map(
       "south"   -> Record(Map("connection" -> Leaf("abc.com"), "port" -> Leaf("8111"))),
       "east"    -> Record(Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))),
       "appName" -> Leaf("myApp")
     )
-  )
-)
+  )  
+
+```
+
+#### Writing the config back to a Map
+
+```scala mdoc:silent
 
  // To yield the input map that was fed in, call `flattenString` !!
- awsConfigResult.flatMap(result => write(appConfig, result).map(_.flattenString()))
+ written.flattenString()
 
  // yields
-  Right(
      Map(
       "south.connection" -> "abc.com",
       "south.port" -> "8111",
@@ -105,9 +125,82 @@ awsConfigResult.flatMap(result => write(appConfig, result))
       "east.port" -> "8888",
       "appName" -> "myApp"
     )
-  )
 
 ```
+
+#### Writing the config back to a Typesafe Hocon
+
+```scala mdoc:silent
+
+import zio.config.typesafe._
+
+written.toHocon
+
+// yields
+// SimpleConfigObject({"appName":"myApp","east":{"connection":"xyz.com","port":"8888"},"south":{"connection":"abc.com","port":"8111"}})
+
+```
+
+#### Writing the config back to a Typesafe Hocon String
+
+Once we get `SimpleConfigObject` (i.e, from `toHocon`), rendering them is straight forward, as typesafe-config library
+provides us with an exhaustive combinations of rendering options.
+
+However, we thought we will provide a few helper functions which is a simple delegation to typesafe functionalities.
+
+```scala mdoc:silent
+
+import zio.config.typesafe._
+
+written.toHoconString
+  /**
+   *  yieling :
+   *  {{{
+   *
+   *    appName=myApp
+   *    east {
+   *       connection="xyz.com"
+   *       port="8888"
+   *    }
+   *   south {
+   *     connection="abc.com"
+   *     port="8111"
+   *   }
+   *
+   *  }}}
+   */
+
+```
+
+#### Writing the config back to JSON
+
+Once we get `SimpleConfigObject` (i.e, from `toHocon`), rendering them is straight forward, as typesafe-config library
+provides us with an exhaustive combinations of rendering options.
+
+However, we thought we will provide a few helper functions which is a simple delegation to typesafe functionalities.
+
+```scala mdoc:silent
+
+written.toJson
+
+  /**
+   *  yieling :
+   *  {{{
+   *
+   *    "appName" : "myApp"
+   *    "east" : {
+   *       "connection" : "xyz.com"
+   *       "port" : "8888"
+   *    }
+   *   "south" : {
+   *     "connection" : "abc.com"
+   *     "port" : "8111"
+   *   }
+   *
+   *  }}}
+   */
+```
+
 
 ## Document the config
 
@@ -116,35 +209,36 @@ To generate the documentation of the config, call `generateDocs`.
 
 
 ```scala mdoc:silent
+ import zio.config.ConfigDocs
 
  generateDocs(appConfig)
 
   // yields the result `ConfigDocs[String, String]`:
 
- Both(
-   Both(
-     NestedPath(
+ ConfigDocs.Zip(
+   ConfigDocs.Zip(
+     ConfigDocs.Nested(
        "south",
-       Both(
-         NestedPath("connection", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "South details"))),
-         NestedPath("port", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "South details")))
+       ConfigDocs.Zip(
+         ConfigDocs.Nested("connection", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string", "South details"))),
+         ConfigDocs.Nested("port", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type int", "South details")))
        )
      ),
-     NestedPath(
+     ConfigDocs.Nested(
        "east",
-       Both(
-         NestedPath("connection", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "East details"))),
-         NestedPath("port", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "East details")))
+       ConfigDocs.Zip(
+         ConfigDocs.Nested("connection", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string", "East details"))),
+         ConfigDocs.Nested("port", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type int", "East details")))
        )
      )
    ),
-   NestedPath("appName", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string")))
+   ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string")))
  )
 ```
 
 #### More detail
-`Both(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
-`NestedPath`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
+`ConfigDocs.Zip(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
+`ConfigDocs.Nested`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
 the type of the value before it gets parsed.
 
 We will see more better representation of the documentation in the immediate future versions of zio-config.
@@ -159,46 +253,43 @@ along with the rest of the details.
 
 ```scala mdoc:silent
 
- generateDocsWithValue(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
+ generateReport(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
 
 // yields the result:
 
 Right(
-  Both(
-    Both(
-      NestedPath(
+  ConfigDocs.Zip(
+    ConfigDocs.Zip(
+      ConfigDocs.Nested(
         "south",
-        Both(
-          NestedPath(
+        ConfigDocs.Zip(
+          ConfigDocs.Nested(
             "connection",
-            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "South details"), Some("abc.com"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string", "South details"), Some("abc.com"))
           ),
-          NestedPath(
+          ConfigDocs.Nested(
             "port",
-            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "South details"), Some("8111"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type int", "South details"), Some("8111"))
           )
         )
       ),
-      NestedPath(
+      ConfigDocs.Nested(
         "east",
-        Both(
-          NestedPath(
+        ConfigDocs.Zip(
+          ConfigDocs.Nested(
             "connection",
-            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string", "East details"), Some("xyz.com"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string", "East details"), Some("xyz.com"))
           ),
-          NestedPath(
+          ConfigDocs.Nested(
             "port",
-            ConfigDocs.Leaf(Sources(Set("constant")), List("value of type int", "East details"), Some("8888"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type int", "East details"), Some("8888"))
           )
         )
       )
     ),
-    NestedPath("appName", ConfigDocs.Leaf(Sources(Set("constant")), List("value of type string"), Some("myApp")))
+    ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string"), Some("myApp")))
   )
 )
 ```
 
-#### More detail
-`Both(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
-`NestedPath`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
-the type of the value before it gets parsed.g
+Pretty print will be coming soon!

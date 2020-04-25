@@ -1,13 +1,13 @@
 package zio.config.examples
 
+import zio.config._
 import zio.config.ConfigDescriptor._
 import zio.config.ReadError._
-import zio.config._
 
 object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)
 
-  val config: ConfigDescriptor[String, String, SampleConfig] =
+  val config: ConfigDescriptor[SampleConfig] =
     (int("envvar") |@| string("envvar2").orElse(string("envvar3")))(SampleConfig.apply, SampleConfig.unapply)
 
   val runtime = zio.Runtime.default
@@ -44,7 +44,7 @@ object ErrorAccumulation extends App {
       Left(
         AndErrors(
           List(
-            FormatError(List(Step.Key("envvar")), ReadFunctions.parseErrorMessage("wrong", "int")),
+            FormatError(List(Step.Key("envvar")), parseErrorMessage("wrong", "int")),
             OrErrors(List(MissingValue(List(Step.Key("envvar2"))), MissingValue(List(Step.Key("envvar3")))))
           )
         )
