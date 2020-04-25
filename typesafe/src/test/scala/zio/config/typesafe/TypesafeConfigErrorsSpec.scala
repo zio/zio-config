@@ -118,7 +118,8 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
           case Left(value)   => Left(value)
           case Right(source) => read(configNestedManual from source)
         }
-      val nestedConfigManualExpect1 = Right(AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
+      val nestedConfigManualExpect1 =
+        Right(AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
 
       val nestedConfigManualResult2 =
         TypesafeConfigSource.fromHoconString(hocconStringWithStringDb) match {
