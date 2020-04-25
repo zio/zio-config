@@ -74,16 +74,21 @@ that represents your config.</p>
 </code></pre>
 <p>To perform any action using zio-config, we need a configuration description.
 Let's define a simple one.</p>
-<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> myConfig =
+<pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">val</span> myConfig: <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">MyConfig</span>] =
   (string(<span class="hljs-string">"LDAP"</span>) |@| int(<span class="hljs-string">"PORT"</span>)|@| string(<span class="hljs-string">"DB_URL"</span>))(<span class="hljs-type">MyConfig</span>.apply, <span class="hljs-type">MyConfig</span>.unapply)
 
 </code></pre>
-<p>Type of <code>myConfig</code> is <code>ConfigDescriptor[String, String, MyConfig]</code>.</p>
 <p>Case classes with a single field are simple too.</p>
 <pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MySingleConfig</span>(<span class="hljs-params">ldap: <span class="hljs-type">String</span></span>)</span>
 
-<span class="hljs-keyword">val</span> mySingleConfig =
+<span class="hljs-keyword">val</span> mySingleConfig: <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">MySingleConfig</span>] =
   string(<span class="hljs-string">"LDAP"</span>)(<span class="hljs-type">MySingleConfig</span>.apply, <span class="hljs-type">MySingleConfig</span>.unapply)
+</code></pre>
+<p>If the config is not a case class, but a tuple, then call <code>.tupled</code></p>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">val</span> mySingleConfigTupled: <span class="hljs-type">ConfigDescriptor</span>[(<span class="hljs-type">String</span>, <span class="hljs-type">Int</span>)] =
+  (string(<span class="hljs-string">"LDAP"</span>) |@| int(<span class="hljs-string">"PORT"</span>)).tupled
+
 </code></pre>
 <p>Think of this as removing fields one-by-one, along with the <code>|@|</code> combinator syntax, ending up with a single field being applied.</p>
 <h2><a class="anchor" aria-hidden="true" id="fully-automated-config-description-zio-config-magnolia"></a><a href="#fully-automated-config-description-zio-config-magnolia" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Fully Automated Config Description: zio-config-magnolia</h2>
