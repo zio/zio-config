@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.ConfigDocs._
 import zio.config.ConfigSource
 import zio.config.PropertyTree

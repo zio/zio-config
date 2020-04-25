@@ -4,7 +4,7 @@ import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.ConfigSource
 import zio.config.PropertyTree._
 import zio.config.examples.typesafe.EitherImpureOps
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 
 object CoproductSealedTraitExample extends App with EitherImpureOps {
 

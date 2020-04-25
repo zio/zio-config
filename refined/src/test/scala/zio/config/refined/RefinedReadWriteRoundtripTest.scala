@@ -5,7 +5,7 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 import zio.ZIO
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.{ helpers, BaseSpec, ConfigSource }
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._

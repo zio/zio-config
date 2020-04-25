@@ -3,7 +3,7 @@ package zio.config.examples.typesafe
 import zio.config.ConfigSource
 import com.typesafe.config.ConfigRenderOptions
 import zio.config.typesafe.TypesafeConfigSource
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.typesafe._
 
 object MapExample extends App with EitherImpureOps {

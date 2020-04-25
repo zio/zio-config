@@ -5,7 +5,7 @@ import java.io.File
 import com.typesafe.config.ConfigFactory
 import zio.config.{ Config }
 import zio.{ Layer, Tagged, ZIO }
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 
 object TypesafeConfig {
   def fromDefaultLoader[A](

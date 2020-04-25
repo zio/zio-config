@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config.{ ConfigSource, ReadFunctions }
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.ReadError._
 
 object ErrorAccumulation extends App {

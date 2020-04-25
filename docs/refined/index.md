@@ -14,7 +14,7 @@ import eu.timepit.refined.collection.{ NonEmpty, Size }
 import eu.timepit.refined.numeric.{ Greater, GreaterEqual }
 import zio.config.string.{ int, list, long, string }
 import zio.config.refined.{ greaterEqual, nonEmpty, size }
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.ConfigSource
 
 object RefinedReadConfig extends App {

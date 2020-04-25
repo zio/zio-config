@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import ReadError._
 import zio.config.helpers._
 import CoproductTestUtils._
@@ -30,7 +30,7 @@ object CoproductTest
               OrErrors(
                 List(
                   MissingValue(List(Step.Key(p.kLdap))),
-                  FormatError(List(Step.Key(p.kFactor)), ReadFunctions.parseErrorMessage("notafloat", "float"))
+                  FormatError(List(Step.Key(p.kFactor)), parseErrorMessage("notafloat", "float"))
                 )
               )
             assert(readWithErrors(p))(isLeft(equalTo(expected)))

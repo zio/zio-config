@@ -1,15 +1,37 @@
 package zio.config
 
-private[config] trait ConfigDocsFunctions extends WriteFunctions {
+trait ConfigDocsModule extends WriteModule {
+  import ConfigDescriptorAdt._
+
+  sealed trait ConfigDocs
+
+  object ConfigDocs {
+     case class Leaf(sources: Set[ConfigSourceName], descriptions: List[String], value: Option[V] = None)
+        extends ConfigDocs
+     case class Nested(path: K, docs: ConfigDocs)                                          extends ConfigDocs
+     case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
+     case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
+     case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
+     case class DynamicMap(
+      schemaDocs: ConfigDocs,
+      valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs]
+    ) extends ConfigDocs
+  }
+
   import ConfigDocs.{ DynamicMap => DocsMap, Leaf => DocsLeaf }
 
-  final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs[K, V] = {
+  /**
+   * Generate documentation based on the `ConfigDescriptor`, where a
+   * `ConfigDescriptor` is a structure representing the logic to fetch the application config
+   * from various sources.
+   */
+  final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
     def loop[B](
-      sources: Set[ConfigSource.Name],
+      sources: Set[ConfigSourceName],
       descriptions: List[String],
       config: ConfigDescriptor[B],
       latestPath: Option[K]
-    ): ConfigDocs[K, V] =
+    ): ConfigDocs =
       config match {
         case Source(source, _) =>
           DocsLeaf((source.names ++ sources), descriptions, None)
@@ -18,7 +40,7 @@ private[config] trait ConfigDocsFunctions extends WriteFunctions {
           loop(sources, descriptions, c, latestPath)
 
         case cd: DynamicMap[_] =>
-          ConfigDocs.DynamicMap[K, V](
+          ConfigDocs.DynamicMap(
             loop((cd.source.names ++ sources), descriptions, cd.config, None)
           )
 
@@ -61,17 +83,22 @@ private[config] trait ConfigDocsFunctions extends WriteFunctions {
     loop(Set.empty, Nil, config, None)
   }
 
+  /**
+   * Generate a report based on the `ConfigDescriptor` and an `A`, where a
+   * `ConfigDescriptor` represents the logic to fetch the application config
+   * from various sources, and `A` represents the actual config value that was retrieved.
+   */
   def generateReport[A](
     config: ConfigDescriptor[A],
     value: A
-  ): Either[String, ConfigDocs[K, V]] =
+  ): Either[String, ConfigDocs] =
     write[A](config, value)
       .map(tree => {
         def loop(
           tree: PropertyTree[K, V],
-          schemaDocs: ConfigDocs[K, V],
+          schemaDocs: ConfigDocs,
           keys: List[K]
-        ): ConfigDocs[K, V] =
+        ): ConfigDocs =
           schemaDocs match {
             case DocsLeaf(sources, descriptions, None) =>
               // Feed value when it hits leaf
@@ -80,7 +107,7 @@ private[config] trait ConfigDocsFunctions extends WriteFunctions {
                 case _                        => DocsLeaf(sources, descriptions, None)
               }
 
-            case a: DocsLeaf[V] => a
+            case a: DocsLeaf => a
 
             case ConfigDocs.Nested(path, docs) =>
               ConfigDocs.Nested(path, loop(tree, docs, keys :+ path))
@@ -91,13 +118,13 @@ private[config] trait ConfigDocsFunctions extends WriteFunctions {
             case ConfigDocs.OrElse(left, right) =>
               ConfigDocs.OrElse(loop(tree, left, keys), loop(tree, right, keys))
 
-            case cd: DocsMap[K, V] =>
+            case cd: DocsMap =>
               tree.getPath(keys) match {
                 case rec: PropertyTree.Record[K, V] =>
                   DocsMap(cd.schemaDocs, rec.value.toList.map { keyTree =>
                     keyTree._1 -> loop(keyTree._2, cd.schemaDocs, List.empty)
                   }.toMap)
-                case v => DocsMap(loop(v, cd.schemaDocs, keys), Map.empty[K, ConfigDocs[K, V]])
+                case v => DocsMap(loop(v, cd.schemaDocs, keys), Map.empty[K, ConfigDocs])
               }
 
             case ConfigDocs.Sequence(schema, values) =>

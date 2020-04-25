@@ -1,6 +1,6 @@
 package zio.config.magnolia
 
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree
 import zio.config.PropertyTree.Leaf
 import zio.config.PropertyTree.Record

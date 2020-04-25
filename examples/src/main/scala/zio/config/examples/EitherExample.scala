@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.ReadError.{ FormatError, MissingValue, OrErrors, Step }
 import zio.config.ConfigSource
 import zio.config.ReadFunctions

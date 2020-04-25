@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.ListAndOptionalTestUtils._
 import zio.config.PropertyTree.{ Leaf, Record }
 import zio.config.helpers._

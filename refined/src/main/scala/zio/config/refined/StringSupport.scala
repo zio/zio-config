@@ -3,7 +3,7 @@ package zio.config.refined
 import eu.timepit.refined.api.{ Refined, Validate }
 import eu.timepit.refined.string._
 import zio.config.refined.internal._
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 
 private[refined] trait StringSupport {
 

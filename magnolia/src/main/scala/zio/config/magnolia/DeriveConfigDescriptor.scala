@@ -60,7 +60,7 @@ object NonRecursiveDerivation extends DeriveConfigDescriptor {
 }
 
 trait DeriveConfigDescriptor { self =>
-  import zio.config.string._
+  import zio.config.ConfigDescriptor._
 
   case class ConstantString(value: String) extends PropertyType[String, String] {
     def read(propertyValue: String): Either[PropertyType.PropertyReadError[String], String] =

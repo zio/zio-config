@@ -8,7 +8,7 @@ Forming a source gets into a standard pattern, and is easy for you to add anothe
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.Config
 import zio.config.ConfigSource, ConfigSource._ 
 

@@ -1,7 +1,6 @@
 package zio.config
 
-import zio.config.string._
-import zio.config.ConfigDocs.{ Leaf, Nested, Zip }
+import zio.config.ConfigDescriptor._
 import zio.config.GenerateDocsTestUtils._
 import zio.config.helpers._
 import zio.random.Random
@@ -59,7 +58,7 @@ object GenerateDocsTestUtils {
       )
     }
 
-    def source: ConfigSource[String, String] = {
+    def source: ConfigSource = {
       val source = Seq(
         s"${keys.credentials}.${keys.user}"     -> value.credentials.user,
         s"${keys.credentials}.${keys.password}" -> value.credentials.password,
@@ -69,13 +68,14 @@ object GenerateDocsTestUtils {
       ConfigSource.fromMap(value.secret.fold(source)(v => (keys.secret -> v) +: source).toMap, "test")
     }
 
-    def docs: ConfigDocs[String, String] =
+    import ConfigDocs._
+    def docs: ConfigDocs =
       Zip(
         Zip(
           Nested(
             keys.secret,
             Leaf(
-              (Set(ConfigSource.Name("test"))),
+              (Set(ConfigSourceName("test"))),
               List("value of type string", "optional value", "Application secret")
             )
           ),
@@ -85,14 +85,14 @@ object GenerateDocsTestUtils {
               Nested(
                 keys.user,
                 Leaf(
-                  (Set(ConfigSource.Name("test"))),
+                  (Set(ConfigSourceName("test"))),
                   List("value of type string", "Example: ZioUser", "Credentials")
                 )
               ),
               Nested(
                 keys.password,
                 Leaf(
-                  (Set(ConfigSource.Name("test"))),
+                  (Set(ConfigSourceName("test"))),
                   List("value of type string", "Example: ZioPass", "Credentials")
                 )
               )
@@ -105,14 +105,14 @@ object GenerateDocsTestUtils {
             Nested(
               keys.port,
               Leaf(
-                (Set(ConfigSource.Name("test"))),
+                (Set(ConfigSourceName("test"))),
                 List("value of type int", "Example: 8088", "Database")
               )
             ),
             Nested(
               keys.url,
               Leaf(
-                (Set(ConfigSource.Name("test"))),
+                (Set(ConfigSourceName("test"))),
                 List("value of type string", "Example: abc.com", "Database")
               )
             )
@@ -120,14 +120,14 @@ object GenerateDocsTestUtils {
         )
       )
 
-    def docsWithValue: Either[String, ConfigDocs[String, String]] =
+    def docsWithValue: Either[String, ConfigDocs] =
       Right(
         Zip(
           Zip(
             Nested(
               keys.secret,
               Leaf(
-                (Set(ConfigSource.Name("test"))),
+                (Set(ConfigSourceName("test"))),
                 List("value of type string", "optional value", "Application secret"),
                 value.secret
               )
@@ -138,7 +138,7 @@ object GenerateDocsTestUtils {
                 Nested(
                   keys.user,
                   Leaf(
-                    (Set(ConfigSource.Name("test"))),
+                    (Set(ConfigSourceName("test"))),
                     List("value of type string", "Example: ZioUser", "Credentials"),
                     Some(value.credentials.user)
                   )
@@ -146,7 +146,7 @@ object GenerateDocsTestUtils {
                 Nested(
                   keys.password,
                   Leaf(
-                    (Set(ConfigSource.Name("test"))),
+                    (Set(ConfigSourceName("test"))),
                     List("value of type string", "Example: ZioPass", "Credentials"),
                     Some(value.credentials.password)
                   )
@@ -160,7 +160,7 @@ object GenerateDocsTestUtils {
               Nested(
                 keys.port,
                 Leaf(
-                  (Set(ConfigSource.Name("test"))),
+                  (Set(ConfigSourceName("test"))),
                   List("value of type int", "Example: 8088", "Database"),
                   Some(value.database.port).map(_.toString)
                 )
@@ -168,7 +168,7 @@ object GenerateDocsTestUtils {
               Nested(
                 keys.url,
                 Leaf(
-                  (Set(ConfigSource.Name("test"))),
+                  (Set(ConfigSourceName("test"))),
                   List("value of type string", "Example: abc.com", "Database"),
                   Some(value.database.url)
                 )

@@ -50,7 +50,7 @@ We must fetch the configuration from the environment to a case class (product) i
 ```scala mdoc:silent
 import zio.IO
 import zio.config.config
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.ConfigSource, ConfigSource._
 import zio.config.Config
 

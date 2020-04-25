@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.string._
+import zio.config.ConfigDescriptor.{ int, list }
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
 import zio.test.{ DefaultRunnableSpec, _ }

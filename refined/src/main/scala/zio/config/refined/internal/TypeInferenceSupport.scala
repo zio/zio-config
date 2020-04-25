@@ -6,7 +6,7 @@ import eu.timepit.refined.boolean._
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 import eu.timepit.refined.string._
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 
 // This collection of classes is to ease type inference, as ordained by
 // high priest Rob Norris http://tpolecat.github.io/2015/07/30/infer.html

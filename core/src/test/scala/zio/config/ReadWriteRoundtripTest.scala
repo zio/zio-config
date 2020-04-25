@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.helpers._
 import zio.config.ReadWriteRoundtripTestUtils._
 import zio.random.Random

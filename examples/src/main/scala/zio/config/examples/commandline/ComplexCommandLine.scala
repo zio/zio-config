@@ -1,6 +1,6 @@
 package zio.config.examples.commandline
 
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.{ ConfigSource }
 
 object MorePatternsExample extends App {

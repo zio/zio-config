@@ -2,7 +2,9 @@ package zio.config
 
 import zio.config.PropertyTree.Record
 
-private[config] trait WriteFunctions extends ConfigModule {
+private[config] trait WriteModule extends ConfigDescriptorModule {
+  import ConfigDescriptorAdt._
+
   final def write[A](config: ConfigDescriptor[A], a: A): Either[String, PropertyTree[K, V]] = {
     def go[B](config: ConfigDescriptor[B], b: B): Either[String, PropertyTree[K, V]] =
       config match {

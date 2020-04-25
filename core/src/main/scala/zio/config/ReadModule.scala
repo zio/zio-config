@@ -1,17 +1,14 @@
 package zio.config
 
 import zio.config.ReadError.{ AndErrors, OrErrors, Step }
-import zio.config.ReadFunctions._
 
-private[config] trait ReadFunctions extends ConfigModule {
-  type K
-  type V
-
+private[config] trait ReadModule extends ConfigDescriptorModule {
   final def read[A](
     configuration: ConfigDescriptor[A]
   ): Either[ReadError[K], A] = {
-
     type Res[+B] = Either[ReadError[K], B]
+
+    import ConfigDescriptorAdt._
 
     def formatError(paths: List[Step[K]], actualType: String, expectedType: String) =
       Left(
@@ -74,7 +71,7 @@ private[config] trait ReadFunctions extends ConfigModule {
               Left(
                 ReadError.FormatError(
                   path.reverse,
-                  ReadFunctions.parseErrorMessage(
+                  parseErrorMessage(
                     parseError.value.toString,
                     parseError.typeInfo
                   )
@@ -107,8 +104,8 @@ private[config] trait ReadFunctions extends ConfigModule {
         case PropertyTree.Record(values) =>
           val result: List[(K, Res[B])] = values.toList.zipWithIndex.map {
             case ((k, tree), _) =>
-              val source: ConfigSource[K, V] =
-                ConfigSource(cfg.source.names, tree.getPath)
+              val source: ConfigSource =
+                getConfigSource(cfg.source.names, tree.getPath)
 
               (k, loopAny(path, Nil, cfg.config.updateSource(_ => source)))
           }
@@ -129,7 +126,7 @@ private[config] trait ReadFunctions extends ConfigModule {
           val list = values.zipWithIndex.map {
             case (tree, idx) =>
               val source =
-                ConfigSource(cfg.source.names, tree.getPath)
+                getConfigSource(cfg.source.names, tree.getPath)
               loopAny(
                 Step.Index(idx) :: path,
                 Nil,
@@ -160,9 +157,6 @@ private[config] trait ReadFunctions extends ConfigModule {
 
     loopAny(Nil, Nil, configuration)
   }
-}
-
-object ReadFunctions {
 
   def parseErrorMessage(given: String, expectedType: String) =
     s"Provided value is ${given.toString}, expecting the type ${expectedType}"

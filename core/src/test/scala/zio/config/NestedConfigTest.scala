@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.NestedConfigTestUtils._
 import zio.config.helpers._
 import zio.random.Random
@@ -89,7 +89,7 @@ object NestedConfigTestUtils {
         Seq("pricing" -> value.pricing.toString)
       ).flatten.toMap
 
-    def source: ConfigSource[String, String] =
+    val source: ConfigSource =
       ConfigSource.fromMap(map, keyDelimiter = Some('.'))
   }
 

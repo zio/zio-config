@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.blocking.Blocking
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.examples.aliases._
 import zio.config.config, zio.config.Config
 import zio.console.Console

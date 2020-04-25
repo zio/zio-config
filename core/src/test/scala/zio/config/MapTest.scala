@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.test.Assertion.{ equalTo, isRight }
 import zio.test.{ assert, suite, test }

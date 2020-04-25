@@ -1,7 +1,7 @@
 package zio.config.examples.typesafe
 
 import zio.config.typesafe.TypesafeConfigSource
-import zio.config.string._
+import zio.config.ConfigDescriptor._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 
 object TypesafeConfigErrorsExample extends App {
