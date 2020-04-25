@@ -71,13 +71,21 @@
 <h2><a class="anchor" aria-hidden="true" id="reader-from-config-descriptor"></a><a href="#reader-from-config-descriptor" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Reader from Config Descriptor</h2>
 <p>You should be familiar with reading config from various sources, given a  config descriptor.</p>
 <pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">import</span> zio.<span class="hljs-type">IO</span>
-<span class="hljs-keyword">import</span> zio.config._, <span class="hljs-type">ConfigDescriptor</span>._
-<span class="hljs-keyword">import</span> zio.config.<span class="hljs-type">PropertyTree</span>._
+<span class="hljs-keyword">import</span> zio.config._, <span class="hljs-type">ConfigDescriptor</span>._, <span class="hljs-type">PropertyTree</span>._
 <span class="hljs-keyword">import</span> zio.config.<span class="hljs-type">ConfigDocs</span>.{<span class="hljs-type">Leaf</span> =&gt; _, _}
 
 </code></pre>
 <pre><code class="hljs css language-scala mdoc:silent">
 <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyConfig</span>(<span class="hljs-params">ldap: <span class="hljs-type">String</span>, port: <span class="hljs-type">Int</span>, dburl: <span class="hljs-type">String</span></span>)</span>
+
+</code></pre>
+<p>To not divert our focus on handling Either (only for explanation purpose), we will use
+the below syntax troughout the code</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">implicit</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">EitherImpureOps</span>[<span class="hljs-type">A</span>, <span class="hljs-type">B</span>](<span class="hljs-params">self: <span class="hljs-type">Either</span>[<span class="hljs-type">A</span>, <span class="hljs-type">B</span>]</span>) </span>{
+  <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">getOrThrow</span></span>: <span class="hljs-type">B</span> =
+   self.fold(a =&gt; <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-type">Exception</span>(a.toString), identity)
+}
 
 </code></pre>
 <p>To perform any action using zio-config, we need a configuration description.
@@ -90,7 +98,7 @@ read(myConfig from <span class="hljs-type">ConfigSource</span>.fromMap(<span cla
 
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="writer-from-config-descriptor"></a><a href="#writer-from-config-descriptor" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Writer from config descriptor</h2>
-<p>To write a configured value back:</p>
+<p>Let's use <code>read</code> and get the result. Using the same result, we will write the config back to the source!</p>
 <pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">import</span> zio.<span class="hljs-type">Runtime</span>
 
   <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Database</span>(<span class="hljs-params">url: <span class="hljs-type">String</span>, port: <span class="hljs-type">Int</span></span>)</span>
@@ -112,33 +120,37 @@ read(myConfig from <span class="hljs-type">ConfigSource</span>.fromMap(<span cla
     (((nested(<span class="hljs-string">"south"</span>) { database } ?? <span class="hljs-string">"South details"</span> |@|
       nested(<span class="hljs-string">"east"</span>) { database } ?? <span class="hljs-string">"East details"</span> |@|
       string(<span class="hljs-string">"appName"</span>))(<span class="hljs-type">AwsConfig</span>, <span class="hljs-type">AwsConfig</span>.unapply)) ?? <span class="hljs-string">"asdf"</span>
-    ) from <span class="hljs-type">ConfigSource</span>.fromMap(map)
+    ) from <span class="hljs-type">ConfigSource</span>.fromMap(map, keyDelimiter = <span class="hljs-type">Some</span>('.'))
 
   <span class="hljs-keyword">val</span> awsConfigResult =
-    read(appConfig)
+    read(appConfig).getOrThrow
 
-   <span class="hljs-comment">// yields Right(AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp))</span>
+   <span class="hljs-comment">// yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)</span>
 
   
-awsConfigResult.flatMap(result =&gt; write(appConfig, result))
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="writing-the-config-back-to-property-tree"></a><a href="#writing-the-config-back-to-property-tree" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Writing the config back to property tree</h4>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">val</span> written: <span class="hljs-type">PropertyTree</span>[<span class="hljs-type">String</span>, <span class="hljs-type">String</span>] = 
+  write(appConfig, awsConfigResult).getOrThrow
 
 <span class="hljs-comment">// yields</span>
 
- <span class="hljs-type">Right</span>(
   <span class="hljs-type">Record</span>(
     <span class="hljs-type">Map</span>(
       <span class="hljs-string">"south"</span>   -&gt; <span class="hljs-type">Record</span>(<span class="hljs-type">Map</span>(<span class="hljs-string">"connection"</span> -&gt; <span class="hljs-type">Leaf</span>(<span class="hljs-string">"abc.com"</span>), <span class="hljs-string">"port"</span> -&gt; <span class="hljs-type">Leaf</span>(<span class="hljs-string">"8111"</span>))),
       <span class="hljs-string">"east"</span>    -&gt; <span class="hljs-type">Record</span>(<span class="hljs-type">Map</span>(<span class="hljs-string">"connection"</span> -&gt; <span class="hljs-type">Leaf</span>(<span class="hljs-string">"xyz.com"</span>), <span class="hljs-string">"port"</span> -&gt; <span class="hljs-type">Leaf</span>(<span class="hljs-string">"8888"</span>))),
       <span class="hljs-string">"appName"</span> -&gt; <span class="hljs-type">Leaf</span>(<span class="hljs-string">"myApp"</span>)
     )
-  )
-)
+  )  
 
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="writing-the-config-back-to-a-map"></a><a href="#writing-the-config-back-to-a-map" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Writing the config back to a Map</h4>
+<pre><code class="hljs css language-scala mdoc:silent">
  <span class="hljs-comment">// To yield the input map that was fed in, call `flattenString` !!</span>
- awsConfigResult.flatMap(result =&gt; write(appConfig, result).map(_.flattenString()))
+ written.flattenString()
 
  <span class="hljs-comment">// yields</span>
-  <span class="hljs-type">Right</span>(
      <span class="hljs-type">Map</span>(
       <span class="hljs-string">"south.connection"</span> -&gt; <span class="hljs-string">"abc.com"</span>,
       <span class="hljs-string">"south.port"</span> -&gt; <span class="hljs-string">"8111"</span>,
@@ -146,39 +158,99 @@ awsConfigResult.flatMap(result =&gt; write(appConfig, result))
       <span class="hljs-string">"east.port"</span> -&gt; <span class="hljs-string">"8888"</span>,
       <span class="hljs-string">"appName"</span> -&gt; <span class="hljs-string">"myApp"</span>
     )
-  )
 
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="writing-the-config-back-to-a-typesafe-hocon"></a><a href="#writing-the-config-back-to-a-typesafe-hocon" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Writing the config back to a Typesafe Hocon</h4>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">import</span> zio.config.typesafe._
+
+written.toHocon
+
+<span class="hljs-comment">// yields</span>
+<span class="hljs-comment">// SimpleConfigObject({"appName":"myApp","east":{"connection":"xyz.com","port":"8888"},"south":{"connection":"abc.com","port":"8111"}})</span>
+
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="writing-the-config-back-to-a-typesafe-hocon-string"></a><a href="#writing-the-config-back-to-a-typesafe-hocon-string" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Writing the config back to a Typesafe Hocon String</h4>
+<p>Once we get <code>SimpleConfigObject</code> (i.e, from <code>toHocon</code>), rendering them is straight forward, as typesafe-config library
+provides us with an exhaustive combinations of rendering options.</p>
+<p>However, we thought we will provide a few helper functions which is a simple delegation to typesafe functionalities.</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">import</span> zio.config.typesafe._
+
+written.toHoconString
+  <span class="hljs-comment">/**
+   *  yieling :
+   *  {{{
+   *
+   *    appName=myApp
+   *    east {
+   *       connection="xyz.com"
+   *       port="8888"
+   *    }
+   *   south {
+   *     connection="abc.com"
+   *     port="8111"
+   *   }
+   *
+   *  }}}
+   */</span>
+
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="writing-the-config-back-to-json"></a><a href="#writing-the-config-back-to-json" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Writing the config back to JSON</h4>
+<p>Once we get <code>SimpleConfigObject</code> (i.e, from <code>toHocon</code>), rendering them is straight forward, as typesafe-config library
+provides us with an exhaustive combinations of rendering options.</p>
+<p>However, we thought we will provide a few helper functions which is a simple delegation to typesafe functionalities.</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+written.toJson
+
+  <span class="hljs-comment">/**
+   *  yieling :
+   *  {{{
+   *
+   *    "appName" : "myApp"
+   *    "east" : {
+   *       "connection" : "xyz.com"
+   *       "port" : "8888"
+   *    }
+   *   "south" : {
+   *     "connection" : "abc.com"
+   *     "port" : "8111"
+   *   }
+   *
+   *  }}}
+   */</span>
 </code></pre>
 <h2><a class="anchor" aria-hidden="true" id="document-the-config"></a><a href="#document-the-config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Document the config</h2>
 <p>To generate the documentation of the config, call <code>generateDocs</code>.</p>
-<pre><code class="hljs css language-scala mdoc:silent">
+<pre><code class="hljs css language-scala mdoc:silent"> <span class="hljs-keyword">import</span> zio.config.<span class="hljs-type">ConfigDocs</span>
+
  generateDocs(appConfig)
 
   <span class="hljs-comment">// yields the result `ConfigDocs[String, String]`:</span>
 
- <span class="hljs-type">Both</span>(
-   <span class="hljs-type">Both</span>(
-     <span class="hljs-type">NestedPath</span>(
+ <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
+   <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
+     <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
        <span class="hljs-string">"south"</span>,
-       <span class="hljs-type">Both</span>(
-         <span class="hljs-type">NestedPath</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">Set</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>))),
-         <span class="hljs-type">NestedPath</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">Set</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>)))
+       <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
+         <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>))),
+         <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>)))
        )
      ),
-     <span class="hljs-type">NestedPath</span>(
+     <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
        <span class="hljs-string">"east"</span>,
-       <span class="hljs-type">Both</span>(
-         <span class="hljs-type">NestedPath</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">Set</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>))),
-         <span class="hljs-type">NestedPath</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">Set</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>)))
+       <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
+         <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>))),
+         <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>)))
        )
      )
    ),
-   <span class="hljs-type">NestedPath</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">Set</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>)))
+   <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>)))
  )
 </code></pre>
 <h4><a class="anchor" aria-hidden="true" id="more-detail"></a><a href="#more-detail" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>More detail</h4>
-<p><code>Both(left, right)</code> means the <code>left</code> and <code>right</code> should exist in the config. For the same reason we have
-<code>NestedPath</code>, <code>Or</code> etc, that are nodes of <code>ConfigDocs[K,V]</code>. <code>K</code> means, the value of <code>key</code> and <code>V</code> is
+<p><code>ConfigDocs.Zip(left, right)</code> means the <code>left</code> and <code>right</code> should exist in the config. For the same reason we have
+<code>ConfigDocs.Nested</code>, <code>Or</code> etc, that are nodes of <code>ConfigDocs[K,V]</code>. <code>K</code> means, the value of <code>key</code> and <code>V</code> is
 the type of the value before it gets parsed.</p>
 <p>We will see more better representation of the documentation in the immediate future versions of zio-config.</p>
 <h2><a class="anchor" aria-hidden="true" id="report-on-the-config"></a><a href="#report-on-the-config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Report on the config</h2>
@@ -186,46 +258,43 @@ the type of the value before it gets parsed.</p>
 But most often, we need these docs to act as a report that holds the value of the actual config parameter
 along with the rest of the details.</p>
 <pre><code class="hljs css language-scala mdoc:silent">
- generateDocsWithValue(appConfig, <span class="hljs-type">AwsConfig</span>(<span class="hljs-type">Database</span>(<span class="hljs-string">"abc.com"</span>, <span class="hljs-number">8111</span>), <span class="hljs-type">Database</span>(<span class="hljs-string">"xyz.com"</span>, <span class="hljs-number">8888</span>), <span class="hljs-string">"myApp"</span>))
+ generateReport(appConfig, <span class="hljs-type">AwsConfig</span>(<span class="hljs-type">Database</span>(<span class="hljs-string">"abc.com"</span>, <span class="hljs-number">8111</span>), <span class="hljs-type">Database</span>(<span class="hljs-string">"xyz.com"</span>, <span class="hljs-number">8888</span>), <span class="hljs-string">"myApp"</span>))
 
 <span class="hljs-comment">// yields the result:</span>
 
 <span class="hljs-type">Right</span>(
-  <span class="hljs-type">Both</span>(
-    <span class="hljs-type">Both</span>(
-      <span class="hljs-type">NestedPath</span>(
+  <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
+    <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
+      <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
         <span class="hljs-string">"south"</span>,
-        <span class="hljs-type">Both</span>(
-          <span class="hljs-type">NestedPath</span>(
+        <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
+          <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
             <span class="hljs-string">"connection"</span>,
-            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">Set</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"abc.com"</span>))
+            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"abc.com"</span>))
           ),
-          <span class="hljs-type">NestedPath</span>(
+          <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
             <span class="hljs-string">"port"</span>,
-            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">Set</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"8111"</span>))
+            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"8111"</span>))
           )
         )
       ),
-      <span class="hljs-type">NestedPath</span>(
+      <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
         <span class="hljs-string">"east"</span>,
-        <span class="hljs-type">Both</span>(
-          <span class="hljs-type">NestedPath</span>(
+        <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
+          <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
             <span class="hljs-string">"connection"</span>,
-            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">Set</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"xyz.com"</span>))
+            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"xyz.com"</span>))
           ),
-          <span class="hljs-type">NestedPath</span>(
+          <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
             <span class="hljs-string">"port"</span>,
-            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">Set</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"8888"</span>))
+            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"8888"</span>))
           )
         )
       )
     ),
-    <span class="hljs-type">NestedPath</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Sources</span>(<span class="hljs-type">Set</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"myApp"</span>)))
+    <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"myApp"</span>)))
   )
 )
 </code></pre>
-<h4><a class="anchor" aria-hidden="true" id="more-detail-1"></a><a href="#more-detail-1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>More detail</h4>
-<p><code>Both(left, right)</code> means the <code>left</code> and <code>right</code> should exist in the config. For the same reason we have
-<code>NestedPath</code>, <code>Or</code> etc, that are nodes of <code>ConfigDocs[K,V]</code>. <code>K</code> means, the value of <code>key</code> and <code>V</code> is
-the type of the value before it gets parsed.g</p>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 4/8/2020 by Simon Popugaev</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/sources/sources_index"><span class="arrow-prev">← </span><span>Sources</span></a><a class="docs-next button" href="/zio-config/docs/refined/refined_index"><span>Automatic Validations</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#using-config-descriptor">Using Config Descriptor</a></li><li><a href="#reader-from-config-descriptor">Reader from Config Descriptor</a></li><li><a href="#writer-from-config-descriptor">Writer from config descriptor</a></li><li><a href="#document-the-config">Document the config</a></li><li><a href="#report-on-the-config">Report on the config</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
+<p>Pretty print will be coming soon!</p>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 4/25/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/sources/sources_index"><span class="arrow-prev">← </span><span>Sources</span></a><a class="docs-next button" href="/zio-config/docs/refined/refined_index"><span>Automatic Validations</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#using-config-descriptor">Using Config Descriptor</a></li><li><a href="#reader-from-config-descriptor">Reader from Config Descriptor</a></li><li><a href="#writer-from-config-descriptor">Writer from config descriptor</a></li><li><a href="#document-the-config">Document the config</a></li><li><a href="#report-on-the-config">Report on the config</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
