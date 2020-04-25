@@ -1,6 +1,10 @@
 package zio.config.magnolia
 
-import zio.config.{ read, write, BaseSpec, ConfigSource, PropertyTree }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset }
+import java.util.UUID
+
+import zio.config._
+import zio.config.{ BaseSpec, ConfigSource, PropertyTree }
 import zio.config.magnolia.DeriveConfigDescriptor._
 import AutomaticConfigTestUtils._
 import zio.ZIO
@@ -65,7 +69,12 @@ object AutomaticConfigTestUtils {
     amount: Option[Long],
     quantity: Either[Long, String],
     default: Int = 1,
-    anotherDefault: Boolean = true
+    anotherDefault: Boolean = true,
+    descriptions: List[String],
+    created: LocalDate,
+    updated: LocalTime,
+    lastVisited: LocalDateTime,
+    id: UUID
   )
 
   private val genPriceDescription                = genNonEmptyString(5).map(Description)
@@ -94,6 +103,11 @@ object AutomaticConfigTestUtils {
       quantity       <- Gen.either(Gen.long(5, 10), genAlpha)
       default        <- Gen.option(Gen.anyInt)
       anotherDefault <- Gen.option(Gen.boolean)
+      descriptions   <- Gen.listOfBounded(1, 10)(Gen.anyString)
+      created        <- genLocalDateString
+      updated        <- genLocalTimeString
+      lastVisited    <- genLocalDateTimeString
+      id             <- Gen.anyUUID
       partialMyConfig = Map(
         "aws.region" -> aws.region,
         aws.security match {
@@ -104,9 +118,14 @@ object AutomaticConfigTestUtils {
           case Description(description) => "cost.price.description.value" -> description
           case Currency(dollars)        => "cost.price.currency.value"    -> dollars.toString
         },
-        "dburl.dburl" -> dbUrl.dburl,
-        "port"        -> port.toString,
-        "quantity"    -> quantity.fold(d => d.toString, s => s)
+        "dburl.dburl"  -> dbUrl.dburl,
+        "port"         -> port.toString,
+        "quantity"     -> quantity.fold(d => d.toString, s => s),
+        "descriptions" -> descriptions.toString,
+        "created"      -> created,
+        "updated"      -> updated,
+        "lastVisited"  -> lastVisited,
+        "id"           -> id.toString
       ) ++ amount.map(double => ("amount", double.toString)).toList
     } yield (default, anotherDefault) match {
       case (Some(v1), Some(v2)) => partialMyConfig ++ List(("default", v1.toString), ("anotherDefault", v2.toString))
@@ -120,4 +139,16 @@ object AutomaticConfigTestUtils {
       n <- Gen.int(1, 10) // zio-config supports only cons hence starting with 1
       s <- Gen.listOfN(n)(Gen.char(65, 122))
     } yield s.mkString
+
+  val genInstant: Gen[Random, Instant] =
+    Gen.anyLong.map(Instant.ofEpochMilli)
+
+  val genLocalDateString: Gen[Random with Sized, String] =
+    genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDate.toString)
+
+  val genLocalDateTimeString: Gen[Random with Sized, String] =
+    genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDateTime.toString)
+
+  val genLocalTimeString: Gen[Random with Sized, String] =
+    genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
 }

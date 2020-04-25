@@ -3,13 +3,13 @@ id: configdescriptor_index
 title:  "Creation of ConfigDescriptor"
 ---
 
-Config Descriptor is the core of your configuration management. You can write a description by hand, 
+Config Descriptor is the core of your configuration management. You can write a description by hand,
 or rely on zio-config-magnolia that can automatically generate the description for you, based on the case classes (pr sealed traits)
 that represents your config.
 
 ```scala mdoc:silent
 import zio.{ ZIO, IO, Layer }
-import zio.config._, ConfigDescriptor._
+import zio.config._, ConfigDescriptor._, ConfigSource._
 ```
 
 ## A Simple example
@@ -82,7 +82,7 @@ systemSource.flatMap(source => ZIO.fromEither(read(myConfig from source)))
 
 ```
 
-You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application. 
+You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application.
 
 We will not be discussing about running with ZIO again, as it is just the same regardless of what the description is.
 We will discuss only about how to describe your configuration for the rest of this page.
@@ -93,7 +93,6 @@ We have already seen `string("TOKEN")` and `int("PORT")` to fetch string and int
 We support the following:
 
 ```scala
-
 string
 boolean
 byte
@@ -116,21 +115,23 @@ etc
 
 ```
 
+Complex types include `list`, `map` etc. More details to follow
+
 ## Optional Types
 
-Say, dburl is an optional type, then it is as simple as 
+Say, dburl is an optional type, then it is as simple as
 
 ```scala mdoc:silent
 string("DB_URL").optional
 ```
 
-That is, 
+That is,
 
 ```scala mdoc:silent
 case class MyConfigWithOptionalUrl(ldap: String, port: Port, dburl: Option[String])
 
 val myConfigOptional =
-  (string("LDAP") |@| int("PORT")(Port.apply, Port.unapply) |@| 
+  (string("LDAP") |@| int("PORT")(Port.apply, Port.unapply) |@|
     string("DB_URL").optional)(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
 
 ```
@@ -139,10 +140,10 @@ val myConfigOptional =
 Sometimes, we don't need an optional value and instead happy providing a default value.
 
 ```scala mdoc:silent
- 
- val defaultConfig = 
+
+ val defaultConfig =
   string("USERNAME").default("ROOT")
- 
+
 ```
 
  That is,
@@ -165,7 +166,7 @@ myConfigDefault.default(MyConfigWithDefaultUserName("test", 80))
 ## New types
 We love `Port` instead of `Int` that represents a db port.
 
-In this scenario, you could do 
+In this scenario, you could do
 
 ```scala mdoc:silent
 
@@ -180,7 +181,7 @@ where port is;
 
 ```
 
-That is, 
+That is,
 
 ```scala mdoc:silent
 
@@ -204,26 +205,26 @@ zio-config do support this scenario. This can happen in complex applications.
 val configDesc = for {
  source1 <- ConfigSource.fromSystemProperties
  source2 <- ConfigSource.fromSystemEnv
- desc = 
+ desc =
    (string("LDAP").from(source1.orElse(source2)) |@| int("PORT")(Port.apply, Port.unapply).from(source1) |@|
     string("DB_URL").optional.from(source2))(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
 } yield desc
 
 
-configDesc.flatMap(desc => ZIO.fromEither(read(desc)))    
+configDesc.flatMap(desc => ZIO.fromEither(read(desc)))
 
 // we can also separately add new config
-configDesc.flatMap(desc => ZIO.fromEither(read(desc from ConfigSource.fromMap(Map.empty))))    
+configDesc.flatMap(desc => ZIO.fromEither(read(desc from ConfigSource.fromMap(Map.empty))))
 
 // In this case, `ConfigSource.fromMap` will also be tried along with the sources that are already given.
 
 ```
 
-We can reset the sources for the config using  
+We can reset the sources for the config using
 
 ```scala mdoc:silent
 
-configDesc.map(desc => desc.unsourced)    
+configDesc.map(desc => desc.unsourced)
 
 ```
 
@@ -235,8 +236,8 @@ from a constant map for all of it.
 val testConfig =
   configDesc
     .map(
-      desc => 
-        desc.unsourced from ConfigSource.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235")))   
+      desc =>
+        desc.unsourced from ConfigSource.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235")))
 
 ```
 
@@ -277,7 +278,7 @@ val dev = (string("USERNAME") |@| string("PASSWORD"))(Dev.apply, Dev.unapply)
 val prod = (string("TOKEN") |@| int("CODE"))(Prod.apply, Prod.unapply)
 
 prod <+> dev // that represents a description returning Config
-// ConfigDescriptor[String, String, Config]
+// ConfigDescriptor[ Config]
 
 ```
 
@@ -298,7 +299,7 @@ string("TOKEN") orElse string("token")
 Example:
 
 ```scala mdoc:silent
-val configOrElse = 
+val configOrElse =
   (string("TOKEN").orElse(string("token_x")) |@| int("CODE")) (Prod.apply, Prod.unapply)
 
 ```
@@ -308,13 +309,13 @@ It tries to fetch the value corresponding to "TOKEN", and if it fails, it tries 
 We can also use `<>` combinator.
 
 ```scala mdoc:silent
-string("TOKEN") <> string("token") <> string("TOKEN_INFO") 
+string("TOKEN") <> string("token") <> string("TOKEN_INFO")
 ```
 
 ## Composing multiple configurations
 
 This is more of a real life scenario, where you can different micro configurations for readability and maintainability.
- 
+
 ```scala mdoc:silent
   case class Database(url: String, port: Int)
   case class AwsConfig(c1: Database, c3: String)
@@ -327,7 +328,7 @@ This is more of a real life scenario, where you can different micro configuratio
 
 ```
 
-## Nesting 
+## Nesting
 
 In addition to the primitive types, zio-config provides a combinator for nesting a configuration within another.
 
@@ -351,7 +352,7 @@ any other configuration parsing libraries that deal with file formats such as HO
       "south.port"       -> "8111",
       "appName"          -> "myApp"
     )
-    
+
   Config.fromMap(constantMap, appConfig)
 ```
 
@@ -361,11 +362,11 @@ Note that, you can write this back as well. This is discussed in write section
 
 
 ```scala mdoc:silent
- def database(i: Int) = 
+ def database(i: Int) =
    (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
 
- val list: ConfigDescriptor[String, String, List[Database]] =
-   collectAll(database(0), (1 to 10).map(database): _*) 
+ val list: ConfigDescriptor[ List[Database]] =
+   collectAll(database(0), (1 to 10).map(database): _*)
 
 ```
 Running this to ZIO will result in non empty list of database
@@ -377,17 +378,17 @@ NOTE: `collectAll` is a synonym for `sequence`.
 ```scala
 
   final case class PgmConfig(a: String, b: List[String])
-  
-  val configWithList = 
+
+  val configWithList =
     (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
 
-  
+
   Config.fromEnv(configWithList, valueDelimiter = Some(","))
-  // or read(configWithList from ConfigSource.fromEnv(valueDelimiter = Some(",")))  
+  // or read(configWithList from ConfigSource.fromEnv(valueDelimiter = Some(",")))
 
 ```
 
-List is probably better represented in HOCON files. 
+List is probably better represented in HOCON files.
 zio-config-typesafe enables you to depend on HOCON files to manage your configuration.
 
 Given;
@@ -405,7 +406,7 @@ val listHocon = """
          accountId: chris
       }
     ]
-    database { 
+    database {
         port : 100
         url  : postgres
     }
@@ -415,7 +416,7 @@ val listHocon = """
 
 ```scala
 
-import zio.config.typesafe.TypeSafeConfigSource._
+import zio.config.typesafe.TypesafeConfigSource._
 import zio.config.magnolia.DeriveConfigDescriptor._
 
   // A nested example with type safe config, and usage of magnolia

@@ -1,9 +1,8 @@
 package zio.config.examples.typesafe
 
-import zio.config.typesafe.TypeSafeConfigSource
-import zio.config.ConfigDescriptor.{ int, nested, string }
+import zio.config.typesafe.TypesafeConfigSource
+import zio.config._, ConfigDescriptor._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.read
 
 object TypesafeConfigErrorsExample extends App {
   // A nested example with type safe config, and usage of magnolia
@@ -59,19 +58,19 @@ object TypesafeConfigErrorsExample extends App {
    """
 
   val nestedConfigAutomaticResult1 =
-    TypeSafeConfigSource.fromHoconString(hocconStringWithStringDb) match {
+    TypesafeConfigSource.fromHoconString(hocconStringWithStringDb) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedAutomatic from source)
     }
 
   val nestedConfigAutomaticResult2 =
-    TypeSafeConfigSource.fromHoconString(hocconStringWithDb) match {
+    TypesafeConfigSource.fromHoconString(hocconStringWithDb) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedAutomatic from source)
     }
 
   val nestedConfigAutomaticResult3 =
-    TypeSafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll) match {
+    TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedAutomatic from source)
     }
@@ -105,19 +104,19 @@ object TypesafeConfigErrorsExample extends App {
   }
 
   val nestedConfigManualResult1 =
-    TypeSafeConfigSource.fromHoconString(hocconStringWithDb) match {
+    TypesafeConfigSource.fromHoconString(hocconStringWithDb) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedManual from source)
     }
 
   val nestedConfigManualResult2 =
-    TypeSafeConfigSource.fromHoconString(hocconStringWithStringDb) match {
+    TypesafeConfigSource.fromHoconString(hocconStringWithStringDb) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedManual from source)
     }
 
   val nestedConfigManualResult3 =
-    TypeSafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll) match {
+    TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedManual from source)
     }
@@ -142,7 +141,7 @@ object TypesafeConfigErrorsExample extends App {
   val configWithHoconSubstitution = descriptor[DatabaseDetails]
 
   val finalResult =
-    TypeSafeConfigSource.fromHoconString(hoconStringWithSubstitution) match {
+    TypesafeConfigSource.fromHoconString(hoconStringWithSubstitution) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configWithHoconSubstitution from source)
     }

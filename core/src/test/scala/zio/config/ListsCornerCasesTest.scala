@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ConfigDescriptor.{ Source => _, _ }
+import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config.ReadError.Step.{ Index, Key }
 import zio.config.ReadError.{ AndErrors, FormatError }

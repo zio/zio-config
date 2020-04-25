@@ -1,7 +1,7 @@
 package zio.config.typesafe
 
-import zio.config._
-import zio.config.ConfigDescriptor.{ Source => _, _ }
+import zio.config.{ BaseSpec, ConfigSource }
+import zio.config._, ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test._
 import TypesafeConfigReadWriteTestUtils._
@@ -15,13 +15,13 @@ object TypesafeConfigReadWriteTest
           "Simple: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
         ) {
           val readSource =
-            read(string("a") from TypeSafeConfigSource.fromHoconString("a=b").loadOrThrow)
+            read(string("a") from TypesafeConfigSource.fromHoconString("a=b").loadOrThrow)
 
           val written =
             write(string("a"), "b").loadOrThrow.toHocon.render()
 
           val readWritten =
-            read(string("a") from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
+            read(string("a") from TypesafeConfigSource.fromHoconString(written).loadOrThrow)
 
           assert((readWritten, readSource))(equalTo((readSource, Right("b"))))
         },
@@ -32,13 +32,13 @@ object TypesafeConfigReadWriteTest
             nested("a") { string("b") }
 
           val readSource =
-            read(config from TypeSafeConfigSource.fromHoconString("a : { b = c }").loadOrThrow)
+            read(config from TypesafeConfigSource.fromHoconString("a : { b = c }").loadOrThrow)
 
           val written =
             write(config, "c").loadOrThrow.toHocon.render()
 
           val readWritten =
-            read(config from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
+            read(config from TypesafeConfigSource.fromHoconString(written).loadOrThrow)
 
           assert((readWritten, readSource))(equalTo((readSource, Right("c"))))
         },
@@ -49,13 +49,13 @@ object TypesafeConfigReadWriteTest
             nested("a") { list("b") { string } }
 
           val readSource =
-            read(config from TypeSafeConfigSource.fromHoconString("a : { b = [c, c] }").loadOrThrow)
+            read(config from TypesafeConfigSource.fromHoconString("a : { b = [c, c] }").loadOrThrow)
 
           val written =
             write(config, readSource.loadOrThrow).loadOrThrow.toHocon.render()
 
           val readWritten =
-            read(config from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
+            read(config from TypesafeConfigSource.fromHoconString(written).loadOrThrow)
 
           assert((readWritten, readSource))(equalTo((readSource, Right(List("c", "c")))))
         },
@@ -66,13 +66,13 @@ object TypesafeConfigReadWriteTest
             nested("a") { list("b") { string } }
 
           val readSource =
-            read(config from TypeSafeConfigSource.fromHoconString("a : { b = [] }").loadOrThrow)
+            read(config from TypesafeConfigSource.fromHoconString("a : { b = [] }").loadOrThrow)
 
           val written =
             write(config, readSource.loadOrThrow).loadOrThrow.toHocon.render()
 
           val readWritten =
-            read(config from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
+            read(config from TypesafeConfigSource.fromHoconString(written).loadOrThrow)
 
           assert((readWritten, readSource))(equalTo((readSource, Right(Nil))))
         },
@@ -118,14 +118,14 @@ object TypesafeConfigReadWriteTest
           val config = (fConfig |@| deConfig)(Cfg.apply, Cfg.unapply)
 
           val readSource =
-            read(config from TypeSafeConfigSource.fromHoconString(hocon).loadOrThrow)
+            read(config from TypesafeConfigSource.fromHoconString(hocon).loadOrThrow)
 
           val written =
             write(config, readSource.loadOrThrow).loadOrThrow.toHocon
               .render(ConfigRenderOptions.concise().setFormatted(true).setJson(false))
 
           val readWritten =
-            read(config from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
+            read(config from TypesafeConfigSource.fromHoconString(written).loadOrThrow)
 
           assert((readWritten, readSource))(equalTo((readSource, Right(expected))))
         },
@@ -139,7 +139,7 @@ object TypesafeConfigReadWriteTest
             write(sssDescription, readSource.loadOrThrow).loadOrThrow.toHocon.render()
 
           val readWritten =
-            read(sssDescription from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
+            read(sssDescription from TypesafeConfigSource.fromHoconString(written).loadOrThrow)
 
           assert((readWritten, readSource))(
             equalTo(
@@ -157,7 +157,7 @@ object TypesafeConfigReadWriteTest
             write(complexConfig, readSource.loadOrThrow).loadOrThrow.toHocon.render()
 
           val readWritten =
-            read(complexConfig from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
+            read(complexConfig from TypesafeConfigSource.fromHoconString(written).loadOrThrow)
 
           val innerResult =
             sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a"))
@@ -174,13 +174,13 @@ object TypesafeConfigReadWriteTest
             string("a").optional
 
           val readSource =
-            read(optionalConfig from TypeSafeConfigSource.fromHoconString("b = 1").loadOrThrow)
+            read(optionalConfig from TypesafeConfigSource.fromHoconString("b = 1").loadOrThrow)
 
           val written =
             write(optionalConfig, readSource.loadOrThrow).loadOrThrow.toHocon.render()
 
           val readWritten =
-            read(optionalConfig from TypeSafeConfigSource.fromHoconString(written).loadOrThrow)
+            read(optionalConfig from TypesafeConfigSource.fromHoconString(written).loadOrThrow)
 
           assert((readWritten, readSource))(equalTo((readSource, Right(None))))
         },
@@ -198,7 +198,7 @@ object TypesafeConfigReadWriteTest
             read(complexDescription from ConfigSource.fromPropertyTree(writtenProperty, "tree")).loadOrThrow
 
           val readWrittenHocon =
-            read(complexDescription from TypeSafeConfigSource.fromHoconString(writtenHocon).loadOrThrow).loadOrThrow
+            read(complexDescription from TypesafeConfigSource.fromHoconString(writtenHocon).loadOrThrow).loadOrThrow
 
           assert((readWrittenHocon, readWrittenProperty, readComplexSource))(
             equalTo((readComplexSource, expectedResult, expectedResult))
@@ -224,20 +224,20 @@ object TypesafeConfigReadWriteTestUtils {
        |  }
        |""".stripMargin
 
-  val source: ConfigSource[String, String] = TypeSafeConfigSource.fromHoconString(hocon).loadOrThrow
+  val source: ConfigSource = TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
-  val c1: ConfigDescriptor[String, String, Map[String, List[Int]]] =
+  val c1: ConfigDescriptor[Map[String, List[Int]]] =
     map("zones")(list(int))
 
   private val c2 = list("l")(int)
   private val c3 = list("l2")(int)
 
-  val c4: ConfigDescriptor[String, String, Map[String, String]] =
+  val c4: ConfigDescriptor[Map[String, String]] =
     map("z")(string)
 
-  val sssDescription: ConfigDescriptor[String, String, sss] =
+  val sssDescription: ConfigDescriptor[sss] =
     (c1 |@| c2 |@| c3 |@| c4)((a, b, c, d) => sss(a, b, c, d), sss.unapply)
 
   final case class Nested(s: Map[String, sss])
@@ -277,12 +277,12 @@ object TypesafeConfigReadWriteTestUtils {
        |}
        |""".stripMargin
 
-  val complexConfig: ConfigDescriptor[String, String, Nested] =
+  val complexConfig: ConfigDescriptor[Nested] =
     nested("result")(mapStrict(sssDescription))(
       TypesafeConfigReadWriteTestUtils.Nested.apply,
       TypesafeConfigReadWriteTestUtils.Nested.unapply
     )
 
-  val complexSource: ConfigSource[String, String] =
-    TypeSafeConfigSource.fromHoconString(hocon2).loadOrThrow
+  val complexSource: ConfigSource =
+    TypesafeConfigSource.fromHoconString(hocon2).loadOrThrow
 }

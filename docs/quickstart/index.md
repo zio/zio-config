@@ -49,7 +49,10 @@ We must fetch the configuration from the environment to a case class (product) i
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config._, ConfigDescriptor._
+import zio.config.config
+import zio.config.ConfigDescriptor, ConfigDescriptor._
+import zio.config.ConfigSource, ConfigSource._
+import zio.config.Config
 
 ```
 
@@ -64,14 +67,12 @@ Let's define a simple one.
 
 ```scala mdoc:silent
 
-val myConfig =
+val myConfig: ConfigDescriptor[MyConfig] =
   (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
- // ConfigDescriptor[String, String, MyConfig]
+ // ConfigDescriptor[ MyConfig]
 
 ```
-
-Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
 
 ## Fully automated Config Description
 
@@ -80,10 +81,10 @@ there is a separate module called `zio-config-magnolia`.
 
 ```scala mdoc:silent
 
+import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 
-val myConfigAutomatic = descriptor[MyConfig]
-// ConfigDescriptor[String, String, MyConfig]
+val myConfigAutomatic: ConfigDescriptor[MyConfig] = descriptor[MyConfig]
 
 ```
 
@@ -171,7 +172,7 @@ More details in [here](../configdescriptor/index.md).
 
 
 ```scala mdoc:silent
-generateDocsWithValue(myConfig, MyConfig("xyz", 8888, "postgres"))
+generateReport(myConfig, MyConfig("xyz", 8888, "postgres"))
 // Generates documentation showing value of each parameter
 
 ```
@@ -206,4 +207,34 @@ val configLayer = Config.fromPropertiesFile("file-location", configuration)
 // Main App
 val pgm = finalExecution.provideLayer(configLayer ++ Console.live)
 
+```
+
+### Separation of concerns with `narrow`
+
+In bigger apps you can have a lot of components and, consequently - a lot of configuration fields. It's not ideal to pass around the whole configuration object as a dependency for all of those components: this way you break the separation of concerns principle. Component should be aware only about dependencies it cares about and uses somehow.
+
+So to avoid that and do it in an ergonomic way, there's a `narrow` syntax extension for `ZLayer`, available under `import zio.config.syntax._` import:
+
+```scala mdoc:silent
+import zio._
+import zio.config.typesafe._
+import zio.config.syntax._
+import zio.config.magnolia.DeriveConfigDescriptor
+
+trait Endpoint
+trait Repository
+
+final case class AppConfig(api: ApiConfig, db: DbConfig)
+final case class DbConfig (url: String,    driver: String)
+final case class ApiConfig(host: String,   port: Int)
+val configDescription = DeriveConfigDescriptor.descriptor[AppConfig]
+
+// components have only required dependencies
+val endpoint: ZLayer[Has[ApiConfig], Nothing, Has[Endpoint]]    = ZLayer.fromService(_ => new Endpoint {})
+val repository: ZLayer[Has[DbConfig], Nothing, Has[Repository]] = ZLayer.fromService(_ => new Repository {}) 
+
+val cfg = TypesafeConfig.fromDefaultLoader(configDescription)
+
+cfg.narrow(_.api) >>> endpoint // narrowing down to a proper config subtree
+cfg.narrow(_.db) >>> repository
 ```

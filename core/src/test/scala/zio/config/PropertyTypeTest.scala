@@ -82,12 +82,9 @@ object PropertyTypeTest
           genValid = genValidBigDecimalString,
           parse = BigDecimal(_)
         ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "Uri",
-          propType = UriType,
-          genValid = genValidUriString,
-          parse = new URI(_)
-        ),
+        testM(s"valid URI string roundtrip") {
+          check(Gen.anyString)(assertValidRoundtrip(UriType, new URI(_)))
+        },
         propertyTypeRoundtripSuite(
           typeInfo = "Duration",
           propType = DurationType,

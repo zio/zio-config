@@ -7,43 +7,43 @@ import zio.config.ConfigDescriptor
 private[refined] trait CharSupport {
 
   /** Predicate that checks if a `Char` is a digit */
-  def digit[K, V, A](
-    desc: ConfigDescriptor[K, V, A]
+  def digit[A](
+    desc: ConfigDescriptor[A]
   )(
     implicit ev: Validate[A, Digit]
-  ): ConfigDescriptor[K, V, Refined[A, Digit]] =
-    asRefined[K, V, A, Digit](desc)
+  ): ConfigDescriptor[Refined[A, Digit]] =
+    asRefined[A, Digit](desc)
 
   /** Predicate that checks if a `Char` is a letter */
-  def letter[K, V, A](
-    desc: ConfigDescriptor[K, V, A]
+  def letter[A](
+    desc: ConfigDescriptor[A]
   )(
     implicit ev: Validate[A, Letter]
-  ): ConfigDescriptor[K, V, Refined[A, Letter]] =
-    asRefined[K, V, A, Letter](desc)
+  ): ConfigDescriptor[Refined[A, Letter]] =
+    asRefined[A, Letter](desc)
 
   /** Predicate that checks if a `Char` is a lower case character */
-  def lowerCase[K, V, A](
-    desc: ConfigDescriptor[K, V, A]
+  def lowerCase[A](
+    desc: ConfigDescriptor[A]
   )(
     implicit ev: Validate[A, LowerCase]
-  ): ConfigDescriptor[K, V, Refined[A, LowerCase]] =
-    asRefined[K, V, A, LowerCase](desc)
+  ): ConfigDescriptor[Refined[A, LowerCase]] =
+    asRefined[A, LowerCase](desc)
 
   /** Predicate that checks if a `Char` is an upper case character */
-  def upperCase[K, V, A](
-    desc: ConfigDescriptor[K, V, A]
+  def upperCase[A](
+    desc: ConfigDescriptor[A]
   )(
     implicit ev: Validate[A, UpperCase]
-  ): ConfigDescriptor[K, V, Refined[A, UpperCase]] =
-    asRefined[K, V, A, UpperCase](desc)
+  ): ConfigDescriptor[Refined[A, UpperCase]] =
+    asRefined[A, UpperCase](desc)
 
   /** Predicate that checks if a `Char` is white space */
-  def whitespace[K, V, A](
-    desc: ConfigDescriptor[K, V, A]
+  def whitespace[A](
+    desc: ConfigDescriptor[A]
   )(
     implicit ev: Validate[A, Whitespace]
-  ): ConfigDescriptor[K, V, Refined[A, Whitespace]] =
-    asRefined[K, V, A, Whitespace](desc)
+  ): ConfigDescriptor[Refined[A, Whitespace]] =
+    asRefined[A, Whitespace](desc)
 
 }

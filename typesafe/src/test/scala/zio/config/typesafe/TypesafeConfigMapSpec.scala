@@ -1,7 +1,7 @@
 package zio.config.typesafe
 
-import zio.config._
-import zio.config.ConfigDescriptor.{ Source => _, _ }
+import zio.config.{ BaseSpec, ConfigSource }
+import zio.config._, ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test._
 import TypesafeConfigMapSpecUtils._
@@ -20,7 +20,7 @@ object TypesafeConfigMapSpec
 
         },
         test("read nested typesafe config map using mapStrict") {
-          val source = TypeSafeConfigSource.fromHoconString(hocon2).loadOrThrow
+          val source = TypesafeConfigSource.fromHoconString(hocon2).loadOrThrow
           val result = read(
             nested("result")(mapStrict(sssDescription))(
               TypesafeConfigMapSpecUtils.Nested.apply,
@@ -51,7 +51,7 @@ object TypesafeConfigMapSpec
 
           val desc = (nested("k") { map("s")(string("y")) } |@| string("y"))(Cfg.apply, Cfg.unapply)
 
-          val result = read(desc from TypeSafeConfigSource.fromHoconString(hocon3).loadOrThrow)
+          val result = read(desc from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow)
 
           assert(result)(isRight(equalTo(Cfg(Map("dynamicKey" -> "z"), "z"))))
         },
@@ -72,7 +72,7 @@ object TypesafeConfigMapSpec
 
           val xx2 = nested("k") { map(string("y")) }
 
-          assert(read(xx2 from TypeSafeConfigSource.fromHoconString(hocon4).loadOrThrow))(
+          assert(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow))(
             isRight(equalTo(Map("dynamicKey" -> "z", "dynamicKey2" -> "z2")))
           )
         }
@@ -96,20 +96,20 @@ object TypesafeConfigMapSpecUtils {
        |  }
        |""".stripMargin
 
-  val source: ConfigSource[String, String] = TypeSafeConfigSource.fromHoconString(hocon).loadOrThrow
+  val source: ConfigSource = TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
-  val c1: ConfigDescriptor[String, String, Map[String, List[Int]]] =
+  val c1: ConfigDescriptor[Map[String, List[Int]]] =
     map("zones")(list(int))
 
   private val c2 = list("l")(int)
   private val c3 = list("l2")(int)
 
-  val c4: ConfigDescriptor[String, String, Map[String, String]] =
+  val c4: ConfigDescriptor[Map[String, String]] =
     map("z")(string)
 
-  val sssDescription: ConfigDescriptor[String, String, sss] =
+  val sssDescription: ConfigDescriptor[sss] =
     (c1 |@| c2 |@| c3 |@| c4)((a, b, c, d) => sss(a, b, c, d), sss.unapply)
 
   final case class Nested(s: Map[String, sss])

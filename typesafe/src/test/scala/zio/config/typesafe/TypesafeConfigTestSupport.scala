@@ -1,8 +1,8 @@
 package zio.config.typesafe
 
-import zio.config.ConfigSource
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config._
+import zio.config.ConfigSource
+import zio.config.read
 
 object TypesafeConfigTestSupport extends EitherSupport {
   final case class Y(z: String)
@@ -168,7 +168,7 @@ object TypesafeConfigTestSupport extends EitherSupport {
       |m = []
       |""".stripMargin
 
-  val complexHoconSource: ConfigSource[String, String] = TypeSafeConfigSource.fromHoconString(hocon).loadOrThrow
+  val complexHoconSource: ConfigSource = TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
 
   val complexDescription = descriptor[A]
   val readComplexSource  = read(complexDescription from complexHoconSource).loadOrThrow

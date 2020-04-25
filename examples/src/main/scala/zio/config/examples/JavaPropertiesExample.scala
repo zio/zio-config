@@ -1,4 +1,5 @@
 package zio.config.examples
+
 import zio.config.Config
 import zio.config.ConfigDescriptor._
 import zio.console.Console
@@ -15,19 +16,21 @@ object ApplicationConfig {
 }
 
 // The main App
-object SimpleExampleMain extends App {
+object JavaPropertiesExample extends App {
+
+  val properties = new java.util.Properties()
+  properties.put("bridgeIp", "10.0.0.1")
+  properties.put("username", "afs")
 
   override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
+    val configLayer =
+      Config.fromProperties(properties, ApplicationConfig.configuration, "constant")
+
     val pgm =
-      for {
-        fileLocation <- ZIO.effect(System.getProperty("user.home") + "/somefile.properties")
-        // there are many ways of doing this: example: {{{ read(configuration from ConfigSource.fromJavaProperties(propertyFile))) }}}, you may try that as well.
-        configLayer = Config.fromPropertiesFile(fileLocation, ApplicationConfig.configuration)
-        _           <- SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.requires[Console])
-      } yield ()
+      SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.requires[Console])
 
     pgm.foldM(
-      throwable => console.putStr(throwable.getMessage()) *> ZIO.succeed(1),
+      throwable => console.putStr(throwable.getMessage) *> ZIO.succeed(1),
       _ => console.putStrLn("hurray !! Application ran successfully..") *> ZIO.succeed(0)
     )
   }
