@@ -1,10 +1,8 @@
 package zio.config.examples.typesafe
 
-import zio.config.ConfigDescriptor
-import zio.config.read
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 import EmployeeDetails._
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
@@ -22,7 +20,7 @@ object EmployeeDetails {
    * will be just based on keys, and you can ofcourse manipulate keys later on but there is times when you really
    * need to describe your little configurations
    */
-  val employee: ConfigDescriptor[String, String, Employee] =
+  val employee: ConfigDescriptor[Employee] =
     (string("name") |@|
       int("state").orElseEither(string("state")).optional |@|
       double("confidence")
@@ -36,7 +34,7 @@ object EmployeeDetails {
       Employee.unapply
     )
 
-  val employeeDetails: ConfigDescriptor[String, String, EmployeeDetails] =
+  val employeeDetails: ConfigDescriptor[EmployeeDetails] =
     nested("details") {
       (nested("employees")(list(employee)) |@| int("accountId"))(
         EmployeeDetails.apply,

@@ -1,10 +1,8 @@
 package zio.config.examples.typesafe
 
-import zio.config.ConfigDescriptor.{ int, list, nested, string }
+import zio.config._, ConfigDescriptor._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.read
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
-import zio.config._
 
 object TypesafeConfigSimpleExample extends App {
   // A nested example with type safe config, and usage of magnolia

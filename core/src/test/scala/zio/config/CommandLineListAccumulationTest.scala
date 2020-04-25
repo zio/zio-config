@@ -6,7 +6,7 @@ import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
 import zio.test.{ DefaultRunnableSpec, _ }
 
-object ListAccumulationTest extends DefaultRunnableSpec {
+object CommandLineListAccumulationTest extends DefaultRunnableSpec {
 
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration of a list from multiple entries")(
@@ -26,7 +26,7 @@ object ListAccumulationTest extends DefaultRunnableSpec {
   final case class SomeConfig(ints: List[Int])
 
   object SomeConfig {
-    val descriptor: ConfigDescriptor[String, String, SomeConfig] =
+    val descriptor: ConfigDescriptor[SomeConfig] =
       list("ints")(int)(SomeConfig.apply, SomeConfig.unapply)
   }
 

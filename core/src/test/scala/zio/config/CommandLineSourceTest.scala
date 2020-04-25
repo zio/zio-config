@@ -50,7 +50,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
     ZIO.environment.provideLayer(Config.fromCommandLineArgs(args, descriptor, Some('_'), None))
 
   def toSeparateArgs[A](
-    descriptor: ConfigDescriptor[String, String, A],
+    descriptor: ConfigDescriptor[A],
     a: A
   ): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
@@ -62,7 +62,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
           }
       )
 
-  def toSingleArg[A](descriptor: ConfigDescriptor[String, String, A], a: A): ZIO[Any, ReadError[String], List[String]] =
+  def toSingleArg[A](descriptor: ConfigDescriptor[A], a: A): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
       .bimap(
         s => ConversionError[String](List(Step.Index(0)), s),
@@ -73,7 +73,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
       )
 
   def toMultiSingleArg[A](
-    descriptor: ConfigDescriptor[String, String, A],
+    descriptor: ConfigDescriptor[A],
     a: A
   ): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))

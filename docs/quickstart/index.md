@@ -49,7 +49,10 @@ We must fetch the configuration from the environment to a case class (product) i
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config._, ConfigDescriptor._
+import zio.config.config
+import zio.config.ConfigDescriptor, ConfigDescriptor._
+import zio.config.ConfigSource, ConfigSource._
+import zio.config.Config
 
 ```
 
@@ -64,14 +67,12 @@ Let's define a simple one.
 
 ```scala mdoc:silent
 
-val myConfig =
+val myConfig: ConfigDescriptor[MyConfig] =
   (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
- // ConfigDescriptor[String, String, MyConfig]
+ // ConfigDescriptor[ MyConfig]
 
 ```
-
-Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
 
 ## Fully automated Config Description
 
@@ -80,10 +81,10 @@ there is a separate module called `zio-config-magnolia`.
 
 ```scala mdoc:silent
 
+import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 
-val myConfigAutomatic = descriptor[MyConfig]
-// ConfigDescriptor[String, String, MyConfig]
+val myConfigAutomatic: ConfigDescriptor[MyConfig] = descriptor[MyConfig]
 
 ```
 
@@ -171,7 +172,7 @@ More details in [here](../configdescriptor/index.md).
 
 
 ```scala mdoc:silent
-generateDocsWithValue(myConfig, MyConfig("xyz", 8888, "postgres"))
+generateReport(myConfig, MyConfig("xyz", 8888, "postgres"))
 // Generates documentation showing value of each parameter
 
 ```

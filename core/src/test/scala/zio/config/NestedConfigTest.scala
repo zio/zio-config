@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ConfigDescriptor.{ double, int, nested, string }
+import zio.config.ConfigDescriptor._
 import zio.config.NestedConfigTestUtils._
 import zio.config.helpers._
 import zio.random.Random
@@ -57,7 +57,7 @@ object NestedConfigTestUtils {
 
   final case class TestParams(value: AppConfig) {
 
-    val config: ConfigDescriptor[String, String, AppConfig] = {
+    val config: ConfigDescriptor[AppConfig] = {
       val credentials  = (string("user") |@| string("password"))(Credentials.apply, Credentials.unapply)
       val dbConnection = (string("host") |@| int("port"))(DbConnection.apply, DbConnection.unapply)
 
@@ -89,7 +89,7 @@ object NestedConfigTestUtils {
         Seq("pricing" -> value.pricing.toString)
       ).flatten.toMap
 
-    def source: ConfigSource[String, String] =
+    val source: ConfigSource =
       ConfigSource.fromMap(map, keyDelimiter = Some('.'))
   }
 

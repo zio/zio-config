@@ -4,9 +4,9 @@ import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric.{ Divisible, Greater, GreaterEqual, Less, LessEqual, NonDivisible }
 import zio.ZIO
-import zio.config.ConfigDescriptor._
-import zio.config.{ helpers, read, write, BaseSpec, ConfigSource, ReadError }
+import zio.config.{ helpers, BaseSpec, ConfigSource, ReadError }
 import zio.test.Assertion._
+import zio.config._, ConfigDescriptor._
 import zio.test._
 
 object NumericSupportTest

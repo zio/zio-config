@@ -9,7 +9,7 @@ that represents your config.
 
 ```scala mdoc:silent
 import zio.{ ZIO, IO, Layer }
-import zio.config._, ConfigDescriptor._
+import zio.config._, ConfigDescriptor._, ConfigSource._
 ```
 
 ## A Simple example
@@ -93,7 +93,6 @@ We have already seen `string("TOKEN")` and `int("PORT")` to fetch string and int
 We support the following:
 
 ```scala
-
 string
 boolean
 byte
@@ -115,6 +114,8 @@ url
 etc
 
 ```
+
+Complex types include `list`, `map` etc. More details to follow
 
 ## Optional Types
 
@@ -277,7 +278,7 @@ val dev = (string("USERNAME") |@| string("PASSWORD"))(Dev.apply, Dev.unapply)
 val prod = (string("TOKEN") |@| int("CODE"))(Prod.apply, Prod.unapply)
 
 prod <+> dev // that represents a description returning Config
-// ConfigDescriptor[String, String, Config]
+// ConfigDescriptor[ Config]
 
 ```
 
@@ -364,7 +365,7 @@ Note that, you can write this back as well. This is discussed in write section
  def database(i: Int) =
    (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
 
- val list: ConfigDescriptor[String, String, List[Database]] =
+ val list: ConfigDescriptor[ List[Database]] =
    collectAll(database(0), (1 to 10).map(database): _*)
 
 ```
