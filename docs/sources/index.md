@@ -330,7 +330,7 @@ Here we make use of delimiter `.` as the tool to nesting.
 
 For those who hate delimited keys in command line arguments and the associated nesting, we will have different approach as given below
 
-#### Nested: Approach 2
+### Nested: Approach 2
 
 ```scala mdoc:silent
 
@@ -347,7 +347,7 @@ In this case any key-value that comes after `--conf` comes under the root path c
 In fact, we can go any level nesting. For example, we can give `---aws --db -url="v" ---aws --kinesis -topic=x`,
 although let's don't complicate our command line arguments.
 
-#### Map
+### Map
 Both the approaches that we saw with nesting is applicable to `map`.
 
 ```scala mdoc:silent
@@ -360,7 +360,7 @@ val mapArgs = "--conf.key1=value1  --conf.key2=value2"
 
 This will also work if `mapArgs` is `--conf -key1=value1 --conf -key2=value2`.
 
-#### List: Approach 1
+### List: Approach 1
 
 ```scala mdoc:silent
 
