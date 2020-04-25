@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.ConfigDescriptor.{ int, list }
+import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
 import zio.test.{ DefaultRunnableSpec, _ }
@@ -26,7 +26,7 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
   final case class SomeConfig(ints: List[Int])
 
   object SomeConfig {
-    val descriptor: ConfigDescriptor[String, String, SomeConfig] =
+    val descriptor: ConfigDescriptor[SomeConfig] =
       list("ints")(int)(SomeConfig.apply, SomeConfig.unapply)
   }
 

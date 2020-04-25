@@ -2,8 +2,8 @@ package zio.config.refined
 
 import eu.timepit.refined.api.{ Refined, Validate }
 import eu.timepit.refined.collection._
-import zio.config.ConfigDescriptor
 import zio.config.refined.internal._
+import zio.config.ConfigDescriptor
 
 private[refined] trait CollectionSupport {
 
@@ -16,12 +16,12 @@ private[refined] trait CollectionSupport {
     new CountPartiallyApplied[PA, PC]
 
   /** Predicate that checks if a `Traversable` is empty */
-  def empty[K, V, A](
-    desc: ConfigDescriptor[K, V, A]
+  def empty[A](
+    desc: ConfigDescriptor[A]
   )(
     implicit ev: Validate[A, Empty]
-  ): ConfigDescriptor[K, V, Refined[A, Empty]] =
-    asRefined[K, V, A, Empty](desc)
+  ): ConfigDescriptor[Refined[A, Empty]] =
+    asRefined[A, Empty](desc)
 
   /**
    * Predicate that checks if the predicate `P` holds for all elements of a
@@ -101,11 +101,11 @@ private[refined] trait CollectionSupport {
     new MaxSizePartiallyApplied[N]
 
   /** Predicate that checks if a `Traversable` is not empty */
-  def nonEmpty[K, V, A](
-    desc: ConfigDescriptor[K, V, A]
+  def nonEmpty[A](
+    desc: ConfigDescriptor[A]
   )(
     implicit ev: Validate[A, NonEmpty]
-  ): ConfigDescriptor[K, V, Refined[A, NonEmpty]] =
-    asRefined[K, V, A, NonEmpty](desc)
+  ): ConfigDescriptor[Refined[A, NonEmpty]] =
+    asRefined[A, NonEmpty](desc)
 
 }

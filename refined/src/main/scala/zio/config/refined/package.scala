@@ -10,15 +10,14 @@ package object refined
     with CollectionSupport {
 
   /** Add support for custom predicates */
-  def asRefined[K, V, A, P](
-    desc: ConfigDescriptor[K, V, A]
+  def asRefined[A, P](
+    desc: ConfigDescriptor[A]
   )(
     implicit ev: Validate[A, P]
-  ): ConfigDescriptor[K, V, Refined[A, P]] =
+  ): ConfigDescriptor[Refined[A, P]] =
     desc
       .xmapEither[Refined[A, P]](
         RefType.applyRef[Refined[A, P]](_),
         rf => Right(rf.value)
       )
-
 }

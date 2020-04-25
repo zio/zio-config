@@ -14,7 +14,7 @@ object CollectAllRoundtripTest
         testM("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
           checkM(generateListOfGroups) {
             groups =>
-              val cId: String => ConfigDescriptor[String, String, Id] = string(_)(Id.apply, Id.unapply)
+              val cId: String => ConfigDescriptor[Id] = string(_)(Id.apply, Id.unapply)
 
               // List is nonempty
               val consOfConfig = {
@@ -28,7 +28,7 @@ object CollectAllRoundtripTest
               val inputSource: Map[String, String] =
                 groups.flatMap(_.toMap.toList).toMap
 
-              val config = ConfigDescriptor.sequence(consOfConfig.head, consOfConfig.tail: _*)
+              val config = sequence(consOfConfig.head, consOfConfig.tail: _*)
 
               val readAndWrite: ZIO[Any, Any, PropertyTree[String, String]] =
                 for {

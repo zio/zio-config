@@ -12,12 +12,12 @@ import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 
 object TypesafeConfigSource {
-  def fromDefaultLoader: Either[String, ConfigSource[String, String]] =
+  def fromDefaultLoader: Either[String, ConfigSource] =
     fromTypesafeConfig(ConfigFactory.load.resolve)
 
   def fromHoconFile[A](
     file: File
-  ): Task[ConfigSource[String, String]] =
+  ): Task[ConfigSource] =
     IO.effect(ConfigFactory.parseFile(file).resolve)
       .flatMap(typesafeConfig => {
         ZIO
@@ -27,14 +27,14 @@ object TypesafeConfigSource {
 
   def fromHoconString(
     input: String
-  ): Either[String, ConfigSource[String, String]] =
+  ): Either[String, ConfigSource] =
     fromTypesafeConfig(
       ConfigFactory.parseString(input).resolve
     )
 
   def fromTypesafeConfig(
     input: com.typesafe.config.Config
-  ): Either[String, ConfigSource[String, String]] =
+  ): Either[String, ConfigSource] =
     Try {
       input
     } match {

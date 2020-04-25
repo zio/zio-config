@@ -8,7 +8,7 @@ import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 
 private[typesafe] trait TreeToHoconSupport {
-  def treeToTypesafeConfig(
+  def propertyTreeToTypesafeConfig(
     tree: PropertyTree[String, String]
   ): com.typesafe.config.ConfigObject =
     loopAny(tree, None)
@@ -17,12 +17,13 @@ private[typesafe] trait TreeToHoconSupport {
     tree match {
       case leaf @ Leaf(_)     => loopLeaf(key, leaf)
       case record @ Record(_) => loopRecord(record)
-      case PropertyTree.Empty =>
-        key.fold(ConfigFactory.empty().root()) { k =>
-          ConfigFactory.empty().withValue(k, ConfigValueFactory.fromAnyRef(null: Option[String])).root()
-        }
-
+      case PropertyTree.Empty => loopEmpty(key)
       case seqq @ Sequence(_) => loopSequence(key, seqq)
+    }
+
+  def loopEmpty(key: Option[String]): ConfigObject =
+    key.fold(ConfigFactory.empty().root()) { k =>
+      ConfigFactory.empty().withValue(k, ConfigValueFactory.fromAnyRef(null)).root()
     }
 
   def loopLeaf(key: Option[String], tree: Leaf[String]): ConfigObject =
