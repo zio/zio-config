@@ -10,7 +10,10 @@ object DefaultValueExample extends App {
 
   val conf: ConfigDescriptor[PgmConfig] =
     (string("HELLO").default("xyz") |@|
-      string("SOMETHING").orElseEither(int("PORT").default(1)))(PgmConfig.apply, PgmConfig.unapply)
+      string("SOMETHING").orElseEither(int("PORT").default(1)))(
+      PgmConfig.apply,
+      PgmConfig.unapply
+    )
 
   val pgmConfig = ConfigSource.fromSystemEnv.map(source => conf from source)
 
@@ -25,7 +28,6 @@ object DefaultValueExample extends App {
 
   assert(result == Right(PgmConfig("xyz", Right(1))))
 
-  println(generateDocs(confEx))
   assert(
     generateDocs(confEx) ==
       ConfigDocs.Zip(
@@ -39,7 +41,10 @@ object DefaultValueExample extends App {
         ConfigDocs.OrElse(
           ConfigDocs.Nested(
             "SOMETHING",
-            Leaf(Set(ConfigSourceName(ConfigSource.SystemEnvironment)), List("value of type string"))
+            Leaf(
+              Set(ConfigSourceName(ConfigSource.SystemEnvironment)),
+              List("value of type string")
+            )
           ),
           ConfigDocs.Nested(
             "PORT",
@@ -67,7 +72,11 @@ object DefaultValueExample extends App {
           ConfigDocs.OrElse(
             ConfigDocs.Nested(
               "SOMETHING",
-              Leaf(Set(ConfigSourceName(SystemEnvironment)), List("value of type string"), None)
+              Leaf(
+                Set(ConfigSourceName(SystemEnvironment)),
+                List("value of type string"),
+                None
+              )
             ),
             ConfigDocs.Nested(
               "PORT",

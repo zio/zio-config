@@ -300,7 +300,7 @@ This is currently experimental.
 
 ### Simple
 ```scala mdoc:silent
-final case class SimpleCommandLineConfig(key1: String, key2: String)
+case class SimpleCommandLineConfig(key1: String, key2: String)
 
 val simpleCmdLineArgs = "--key1 value1 --key2 value2"
 val simpleSource = ConfigSource.fromCommandLineArgs(simpleCmdLineArgs.split(' ').toList)
@@ -309,8 +309,8 @@ val simpleConfig = descriptor[SimpleCommandLineConfig] from simpleSource
 ### Nested: Approach 1
 
 ```scala mdoc:silent
-final case class SparkConf(key1: String, key2: String)
-final case class NestedCommandLineConfig(conf: SparkConf, key3: String)
+case class SparkConf(key1: String, key2: String)
+case class NestedCommandLineConfig(conf: SparkConf, key3: String)
 
 val nestedCmdLineArgs = "--conf.key1 v1 --conf.key2 v2 --key3 v3"
  
@@ -393,11 +393,11 @@ assert(read(list("users")(string) from listSource2) == Right(List("Jane", "Jack"
 
 ```scala mdoc:silent
 
-final case class UserPassword(username: String, password: String)
-final case class DatabaseConfig(database: UserPassword, url: String)
-final case class VaultConfig(userPassword: UserPassword)
-final case class SparkConfig(databaseConfig: DatabaseConfig, numexecs: Int)
-final case class AppConfig(conf: SparkConfig, vault: VaultConfig, users: List[String], region: List[String])
+case class UserPassword(username: String, password: String)
+case class DatabaseConfig(database: UserPassword, url: String)
+case class VaultConfig(userPassword: UserPassword)
+case class SparkConfig(databaseConfig: DatabaseConfig, numexecs: Int)
+case class AppConfig(conf: SparkConfig, vault: VaultConfig, users: List[String], region: List[String])
 
 val complexArgs = "--conf.database.username=Foo --conf.database.password=Bar --conf.database.url=jdbc://xyz --conf.numexecs=10 --vault.username=Foo2 --vault.password=Bar2 --users Jane --users Jack --region TW,US"
 
