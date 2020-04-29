@@ -23,4 +23,30 @@ object SimpleExample extends App {
   assert(
     read((string("key1") |@| string("key2"))(A.apply, A.unapply) from source) == Right(A("value1", "value2"))
   )
+
+  /**
+   * Keys and Values could be also separated with '='
+   */
+  val cmdLineArgsWithEqualSeparator =
+    "--key1=value1 --key2=value2"
+
+  val source2 = ConfigSource.fromCommandLineArgs(cmdLineArgsWithEqualSeparator.split(' ').toList)
+
+  assert(
+    read(descriptor[A] from source2) == Right(A("value1", "value2"))
+  )
+
+  /**
+   * Values could contain '=' but only when key and value are separated also by equal sign.
+   */
+  val cmdLineArgsWithEqualInValue =
+    "--key1==1 --key2=value="
+
+  val source3 = ConfigSource.fromCommandLineArgs(cmdLineArgsWithEqualInValue.split(' ').toList)
+
+  assert {
+    read(descriptor[A] from source3) == Right(
+      A("=1", "value=")
+    )
+  }
 }
