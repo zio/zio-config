@@ -111,19 +111,17 @@ object MapConfigTestSupport {
       s <- Gen.stringN(n)(alphaNumericChar)
     } yield s
 
-  def stringNWithInjector(min: 1, max: 15, inj: String): Gen[Random with Sized, String] = {
+  def stringNWithInjector(min: Int, max: Int, inj: String): Gen[Random with Sized, String] =
     for {
-      length <- Gen.int(min, max)
-      index <- Gen.int(0, length - 1)
+      length  <- Gen.int(min, max)
+      index   <- Gen.int(0, length - 1)
       decider <- Gen.boolean
-      text <- Gen.stringN(length)(alphaNumericChar).map(s => injectString(s, inj, index, decider))
+      text    <- Gen.stringN(length)(alphaNumericChar).map(s => injectString(s, inj, index, decider))
     } yield text
-  }
 
-  def injectString(text: String, inject: String, index: Int, randomizer: Boolean): String = {
-    if(randomizer) {
-        val (start, end) = text.splitAt(index)
-        s"$start$inject$end"
+  def injectString(text: String, inject: String, index: Int, randomizer: Boolean): String =
+    if (randomizer) {
+      val (start, end) = text.splitAt(index)
+      s"$start$inject$end"
     } else text
-  }
 }

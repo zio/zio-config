@@ -25,7 +25,7 @@ object SimpleExample extends App {
   )
 
   /**
-   * Keys and Values could be also separated with '=' sign in such case valud could also contain '='
+   * Keys and Values could be also separated with '='
    */
   val cmdLineArgsWithEqualSeparator =
     "--key1=value1 --key2=value2"

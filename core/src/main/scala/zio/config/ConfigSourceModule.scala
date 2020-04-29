@@ -422,8 +422,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       type KeyValue = These[Key, Value]
 
       object KeyValue {
-        def mk(s: String): Option[KeyValue] = {
-
+        def mk(s: String): Option[KeyValue] =
           splitAtFirstOccurence(s, "=") match {
             case (Some(possibleKey), Some(possibleValue)) =>
               Key.mk(possibleKey) match {
@@ -441,7 +440,6 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
 
             case (None, None) => None
           }
-        }
 
         def splitAtFirstOccurence(text: String, char: String): (Option[String], Option[String]) = {
           val splitted = text.split(char, 2)

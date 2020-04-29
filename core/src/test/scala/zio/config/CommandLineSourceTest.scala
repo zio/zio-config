@@ -44,12 +44,12 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
       },
-      testM("Configuration from arguments roundtrip singe arg --key-value where value contains = char"){
-        checkM(genAppConfig(stringNWithInjector(1, 15, "="))){ appConfig =>
+      testM("Configuration from arguments roundtrip singe arg --key-value where value contains = char") {
+        checkM(genAppConfig(stringNWithInjector(1, 15, "="))) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
-            args <- toSingleArg(AppConfig.descriptor, appConfig)
-            reread <-fromArgs(args)
+              args   <- toSingleArg(AppConfig.descriptor, appConfig)
+              reread <- fromArgs(args)
             } yield reread.get
 
           assertM(p2.either)(isRight(equalTo(appConfig)))
