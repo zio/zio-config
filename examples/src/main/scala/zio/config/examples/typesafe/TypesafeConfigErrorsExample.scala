@@ -75,32 +75,33 @@ object TypesafeConfigErrorsExample extends App {
       case Right(source) => read(configNestedAutomatic from source)
     }
 
-  /*
-  val nestedConfigAutomaticResult4 =
-    read(configNestedAutomatic from hocon(Right(hocconStringWithDbWithParseError)))*/
-
-  // println(nestedConfigAutomaticResult4)
-
-  assert(nestedConfigAutomaticResult1 == Right(AwsConfig(Account("us-east", "jon"), Some(Right("hi")))))
   assert(
-    nestedConfigAutomaticResult2 == Right(AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
-  )
-  assert(nestedConfigAutomaticResult3 == Right(AwsConfig(Account("us-east", "jon"), None)))
-
-  /*  assert(
-    nestedConfigAutomaticResult4 == Left(
-      ParseError(Vector("database", "port").toString, ReadFunctions.parseErrorMessage("1ab200", "int"))
+    nestedConfigAutomaticResult1 == Right(
+      AwsConfig(Account("us-east", "jon"), Some(Right("hi")))
     )
-  )*/
+  )
+  assert(
+    nestedConfigAutomaticResult2 == Right(
+      AwsConfig(
+        Account("us-east", "jon"),
+        Some(Left(Database(1200, "postgres")))
+      )
+    )
+  )
+  assert(
+    nestedConfigAutomaticResult3 == Right(
+      AwsConfig(Account("us-east", "jon"), None)
+    )
+  )
 
   val configNestedManual = {
     val accountConfig =
       (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
-    val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
-    (nested("account")(accountConfig) |@| nested("database")(databaseConfig).orElseEither(string("database")).optional)(
-      AwsConfig.apply,
-      AwsConfig.unapply
-    )
+    val databaseConfig =
+      (int("port") |@| string("url"))(Database.apply, Database.unapply)
+    (nested("account")(accountConfig) |@| nested("database")(databaseConfig)
+      .orElseEither(string("database"))
+      .optional)(AwsConfig.apply, AwsConfig.unapply)
   }
 
   val nestedConfigManualResult1 =
@@ -122,10 +123,23 @@ object TypesafeConfigErrorsExample extends App {
     }
 
   assert(
-    nestedConfigManualResult1 == Right(AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres")))))
+    nestedConfigManualResult1 == Right(
+      AwsConfig(
+        Account("us-east", "jon"),
+        Some(Left(Database(1200, "postgres")))
+      )
+    )
   )
-  assert(nestedConfigManualResult2 == Right(AwsConfig(Account("us-east", "jon"), Some(Right("hi")))))
-  assert(nestedConfigManualResult3 == Right(AwsConfig(Account("us-east", "jon"), None)))
+  assert(
+    nestedConfigManualResult2 == Right(
+      AwsConfig(Account("us-east", "jon"), Some(Right("hi")))
+    )
+  )
+  assert(
+    nestedConfigManualResult3 == Right(
+      AwsConfig(Account("us-east", "jon"), None)
+    )
+  )
 
   // Substitution Example, Example from typesafe/config documentation
   val hoconStringWithSubstitution =
@@ -146,5 +160,9 @@ object TypesafeConfigErrorsExample extends App {
       case Right(source) => read(configWithHoconSubstitution from source)
     }
 
-  assert(finalResult == Right(DatabaseDetails(Details(8, "west"), Details(6, "east"))))
+  assert(
+    finalResult == Right(
+      DatabaseDetails(Details(8, "west"), Details(6, "east"))
+    )
+  )
 }

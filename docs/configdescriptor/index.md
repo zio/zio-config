@@ -26,20 +26,28 @@ Let's define a simple one.
 
 
 ```scala mdoc:silent
-val myConfig =
+val myConfig: ConfigDescriptor[MyConfig] =
   (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
 ```
 
-Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
 
 Case classes with a single field are simple too.
 
 ```scala mdoc:silent
 case class MySingleConfig(ldap: String)
 
-val mySingleConfig =
+val mySingleConfig: ConfigDescriptor[MySingleConfig] =
   string("LDAP")(MySingleConfig.apply, MySingleConfig.unapply)
+```
+
+If the config is not a case class, but a tuple, then call `.tupled`
+
+```scala mdoc:silent
+
+val mySingleConfigTupled: ConfigDescriptor[(String, Int)] =
+  (string("LDAP") |@| int("PORT")).tupled
+
 ```
 
 Think of this as removing fields one-by-one, along with the `|@|` combinator syntax, ending up with a single field being applied.
