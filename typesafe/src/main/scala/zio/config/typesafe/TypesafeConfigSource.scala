@@ -33,7 +33,7 @@ object TypesafeConfigSource {
     )
 
   def fromTypesafeConfig(
-    input: com.typesafe.config.Config
+    input: => com.typesafe.config.Config
   ): Either[String, ConfigSource] =
     Try {
       input

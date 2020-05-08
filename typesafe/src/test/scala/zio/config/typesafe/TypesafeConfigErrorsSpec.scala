@@ -101,6 +101,17 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
       assert(nestedConfigAutomaticResult3)(equalTo(nestedConfigAutomaticExpect3)) &&
       assert(nestedConfigAutomaticResult4)(equalTo(nestedConfigAutomaticExpect4))
     },
+    test("A variant error case with a not well-formed typesafe HOCON config") {
+      val hocconStringWithParseError =
+        s"""
+         account {
+        """
+
+      val notWellFormedConfigResult = TypesafeConfigSource.fromHoconString(hocconStringWithParseError)
+      val notWellFormedConfigExpect = Left("String: 3: expecting a close parentheses ')' here, not: end of file")
+
+      assert(notWellFormedConfigResult)(equalTo(notWellFormedConfigExpect))
+    },
     test("A variant error case with typesafe HOCON config and a manual description") {
       val configNestedManual = {
         val accountConfig =
