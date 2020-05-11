@@ -183,12 +183,12 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       constantMap: Map[String, String],
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
-      valueDelimter: Option[Char] = None
+      valueDelimiter: Option[Char] = None
     ): ConfigSource =
       fromMapInternal(constantMap)(
         x => {
           val listOfValues =
-            valueDelimter.fold(List(x))(delim => x.split(delim).toList)
+            valueDelimiter.fold(List(x))(delim => x.split(delim).toList)
           ::(listOfValues.head, listOfValues.tail)
         },
         keyDelimiter,
