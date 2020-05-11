@@ -57,6 +57,27 @@ object MapTest
 
           assert(res)(isRight(equalTo(Cfg("sa", Map("z" -> List("d"))))))
         },
+        test("list of delimited values from Map.") {
+          case class Cfg(a: String, b: List[String])
+
+          val cCfg = (string("a") |@| list("b")(string))(Cfg, Cfg.unapply)
+
+          // also for ConfigSource.fromSystemEnv
+          val res = read(
+            cCfg from ConfigSource
+              .fromMap(
+                Map(
+                  "a" -> "sa",
+                  "b" -> "q,w,e,r,ty,uio"
+                ),
+                "string map",
+                None,
+                Some(',')
+              )
+          )
+
+          assert(res)(isRight(equalTo(Cfg("sa", List("q", "w", "e", "r", "ty", "uio")))))
+        },
         test("read empty map") {
           case class Cfg(a: String, b: Map[String, String])
 
