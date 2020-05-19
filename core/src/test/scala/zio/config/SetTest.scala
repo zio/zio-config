@@ -281,7 +281,7 @@ object SetTest
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
-              Record(
+              Record[String, String](
                 Map(
                   "a" -> PropertyTree.Sequence(
                     List(
@@ -336,7 +336,7 @@ object SetTest
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
-              Record(
+              Record[String, String](
                 Map(
                   "a" -> PropertyTree.Sequence(
                     List(
