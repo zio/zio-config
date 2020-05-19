@@ -49,7 +49,7 @@ createProductBuilder := {
 addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
 addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
 
-lazy val zioVersion      = "1.0.0-RC19"
+lazy val zioVersion      = "1.0.0-RC19-1"
 lazy val magnoliaVersion = "0.16.0"
 lazy val refinedVersion  = "0.9.14"
 
