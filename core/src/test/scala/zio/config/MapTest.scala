@@ -2,7 +2,9 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.test.Assertion.{ equalTo, isRight }
+import zio.config.ReadError.{ AndErrors, FormatError }
+import zio.config.ReadError.Step.{ Index, Key }
+import zio.test.Assertion.{ equalTo, isLeft, isRight }
 import zio.test.{ assert, suite, test }
 
 object MapTest
@@ -231,6 +233,43 @@ object MapTest
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
+        },
+        test("accumulates all errors") {
+          case class Cfg(a: Map[String, Boolean], b: Map[String, Int])
+
+          val cCfg = (nested("a")(mapStrict(boolean)) |@| nested("b")(mapStrict(int)))(Cfg, Cfg.unapply)
+
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(
+                Map(
+                  "a" -> Record(Map("a1" -> Leaf("true"), "a2" -> Leaf("lorem ipsum"))),
+                  "b" -> Record(Map("b1" -> Leaf("one"), "b2"  -> Leaf("2")))
+                )
+              ),
+              "tree"
+            )
+          )
+          val expected: ReadError[String] =
+            AndErrors(
+              List(
+                AndErrors(
+                  List(
+                    FormatError(
+                      List(Key("a"), Key("a2"), Index(1)),
+                      "Provided value is lorem ipsum, expecting the type boolean"
+                    )
+                  )
+                ),
+                AndErrors(
+                  List(
+                    FormatError(List(Key("b"), Key("b1"), Index(0)), "Provided value is one, expecting the type int")
+                  )
+                )
+              )
+            )
+
+          assert(res)(isLeft(equalTo(expected)))
         }
       )
     )
