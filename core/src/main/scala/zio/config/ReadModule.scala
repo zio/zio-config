@@ -1,6 +1,7 @@
 package zio.config
 
 import zio.config.ReadError.{ AndErrors, OrErrors, Step }
+import VersionSpecificSupport._
 
 private[config] trait ReadModule extends ConfigDescriptorModule {
   final def read[A](
