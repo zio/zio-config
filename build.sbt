@@ -55,9 +55,10 @@ addCommandAlias(
 addCommandAlias("compileAll", "; ++2.11.12; root2-11/compile; ++2.12.11; root2-12/compile; ++2.13.2!; root2-13/compile")
 addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.11; root2-12/test; ++2.13.2!; root2-13/test")
 
-lazy val zioVersion      = "1.0.0-RC20"
-lazy val magnoliaVersion = "0.16.0"
-lazy val refinedVersion  = "0.9.14"
+lazy val zioVersion       = "1.0.0-RC20"
+lazy val magnoliaVersion  = "0.16.0"
+lazy val refinedVersion   = "0.9.14"
+lazy val shapelessVersion = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
   libraryDependencies ++= {
@@ -75,7 +76,7 @@ lazy val refinedDependencies =
     else Seq("eu.timepit" %% "refined" % refinedVersion)
   }
 
-lazy val scala211projects = Seq[ProjectReference](zioConfig, zioConfigTypesafe)
+lazy val scala211projects = Seq[ProjectReference](zioConfig, zioConfigTypesafe, zioConfigShapeless, zioConfigDerivation)
 lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
   zioConfigRefined,
   zioConfigMagnolia,
@@ -161,6 +162,9 @@ lazy val examples = module("zio-config-examples", "examples")
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe)
 
+lazy val zioConfigDerivation = module("zio-config-derivation", "derivation")
+  .dependsOn(zioConfig)
+
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
     magnoliaDependencies,
@@ -170,7 +174,19 @@ lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-  .dependsOn(zioConfig % "compile->compile;test->test")
+  .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
+
+lazy val zioConfigShapeless = module("zio-config-shapeless", "shapeless")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio"        %% "zio-test"     % zioVersion % Test,
+      "dev.zio"        %% "zio-test-sbt" % zioVersion % Test,
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "com.chuusai"    %% "shapeless"    % shapelessVersion
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
 
 lazy val zioConfigTypesafe =
   module("zio-config-typesafe", "typesafe")

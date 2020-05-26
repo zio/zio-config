@@ -7,10 +7,10 @@ import java.util.UUID
 
 import magnolia._
 import zio.config._
+import zio.config.derivation.{ DerivationUtils, NeedsDerive }
+import zio.config.derivation.DerivationUtils._
 import zio.duration.Duration
 
-import scala.annotation.{ implicitAmbiguous, tailrec }
-import scala.collection.JavaConverters._
 import scala.concurrent.duration.{ Duration => ScalaDuration }
 import scala.language.experimental.macros
 
@@ -61,19 +61,6 @@ object NonRecursiveDerivation extends DeriveConfigDescriptor {
 
 trait DeriveConfigDescriptor { self =>
   import zio.config.ConfigDescriptor._
-
-  case class ConstantString(value: String) extends PropertyType[String, String] {
-    def read(propertyValue: String): Either[PropertyType.PropertyReadError[String], String] =
-      if (propertyValue == value) Right(value)
-      else Left(PropertyType.PropertyReadError(propertyValue, s"constant string '$value'"))
-    def write(a: String): String = a
-  }
-
-  def constantString(value: String): ConfigDescriptor[String] =
-    ConfigDescriptorAdt.Source(ConfigSource.empty, ConstantString(value)) ?? s"constant string '$value'"
-
-  def constant[T](label: String, value: T): ConfigDescriptor[T] =
-    constantString(label)(_ => value, p => Some(p).filter(_ == value).map(_ => label))
 
   protected def stringDesc: ConfigDescriptor[String]               = string
   protected def booleanDesc: ConfigDescriptor[Boolean]             = boolean
@@ -160,28 +147,7 @@ trait DeriveConfigDescriptor { self =>
 
   type Typeclass[T] = Descriptor[T]
 
-  def toSnakeCase(name: String): String = {
-    def addToAcc(acc: List[String], current: List[Int]) = {
-      def currentWord = current.reverse.flatMap(i => Character.toChars(i)).mkString.toLowerCase
-      if (current.isEmpty) acc
-      else if (acc.isEmpty) currentWord :: Nil
-      else currentWord :: "_" :: acc
-    }
-
-    @tailrec
-    def loop(chars: List[Int], acc: List[String], current: List[Int], beginning: Boolean): String =
-      chars match {
-        case Nil => addToAcc(acc, current).reverse.mkString
-        case head :: tail if beginning =>
-          loop(tail, acc, head :: current, Character.isUpperCase(head) || !Character.isLetter(head))
-        case head :: tail if Character.isUpperCase(head) =>
-          loop(tail, addToAcc(acc, current), head :: Nil, beginning = true)
-        case head :: tail =>
-          loop(tail, acc, head :: current, beginning = false)
-      }
-
-    loop(name.codePoints().iterator().asScala.map(x => x: Int).toList, Nil, Nil, beginning = true)
-  }
+  def toSnakeCase(name: String): String = DerivationUtils.toSnakeCase(name)
 
   def mapClassName(name: String): String
 
@@ -280,36 +246,4 @@ trait DeriveConfigDescriptor { self =>
    * By default this method is not implicit to allow custom non-recursive derivation
    * */
   def descriptor[T: NeedsDerive]: Descriptor[T] = macro DescriptorMacro.gen[T]
-
-  /**
-   * Preventing derivation for List, Option and Either.
-   * */
-  sealed trait NeedsDerive[+T]
-
-  object NeedsDerive extends NeedsDerive[Nothing] {
-
-    implicit def needsDerive[R]: NeedsDerive[R] = NeedsDerive
-
-    @implicitAmbiguous(
-      "Can't derive ConfigDescriptor for `List[T]` directly." +
-        " Wrap it with a `case class Config(list: List[T])` or use `list(descriptor[T])` manually."
-    )
-    implicit def needsDeriveAmbiguousList1: NeedsDerive[List[Nothing]] = NeedsDerive
-    implicit def needsDeriveAmbiguousList2: NeedsDerive[List[Nothing]] = NeedsDerive
-
-    @implicitAmbiguous(
-      "Can't derive ConfigDescriptor for `Option[T]` directly." +
-        " Wrap it with a `case class Config(list: Option[T])` or use `descriptor[T].optional` manually."
-    )
-    implicit def needsDeriveAmbiguousOption1: NeedsDerive[Option[Nothing]] = NeedsDerive
-    implicit def needsDeriveAmbiguousOption2: NeedsDerive[Option[Nothing]] = NeedsDerive
-
-    @implicitAmbiguous(
-      "Can't derive ConfigDescriptor for `Either[A, B]` directly." +
-        " Wrap it with a `case class Config(list: Either[A, B])`" +
-        " or use `descriptor[A].orElseEither(descriptor[B])` manually."
-    )
-    implicit def needsDeriveAmbiguousEither1: NeedsDerive[Either[Nothing, Nothing]] = NeedsDerive
-    implicit def needsDeriveAmbiguousEither2: NeedsDerive[Either[Nothing, Nothing]] = NeedsDerive
-  }
 }
