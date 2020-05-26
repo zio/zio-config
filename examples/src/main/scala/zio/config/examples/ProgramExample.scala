@@ -1,11 +1,13 @@
 package zio.config.examples
 
 import zio.blocking.Blocking
-import zio.config._, ConfigDescriptor._
+import zio.config._
+import ConfigDescriptor._
 import zio.config.examples.aliases._
-import zio.config.config, zio.config.Config
+import zio.config.config
+import zio.config.Config
 import zio.console.Console
-import zio.{ console, App, Has, ZEnv, ZIO, ZLayer }
+import zio.{ console, App, ExitCode, Has, ZEnv, ZIO, ZLayer }
 
 /**
  * The pattern is an inspiration from http://degoes.net/articles/zio-environment.
@@ -19,7 +21,7 @@ object ProgramExample extends App {
   private val programConfig =
     (string("INPUT_PATH") |@| string("OUTPUT_PATH"))(ProgramConfig.apply, ProgramConfig.unapply)
 
-  override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
+  override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
     val pgm =
       Application.execute.provideLayer(
         ZLayer.requires[Blocking] ++
@@ -29,8 +31,8 @@ object ProgramExample extends App {
       )
 
     pgm.foldM(
-      fail => console.putStrLn(s"Failed $fail") *> ZIO.succeed(1),
-      _ => console.putStrLn(s"Succeeded") *> ZIO.succeed(0)
+      fail => console.putStrLn(s"Failed $fail").as(ExitCode.failure),
+      _ => console.putStrLn(s"Succeeded").as(ExitCode.success)
     )
   }
 }
