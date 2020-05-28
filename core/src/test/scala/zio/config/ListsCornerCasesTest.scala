@@ -3,7 +3,7 @@ package zio.config
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config.ReadError.Step.{ Index, Key }
-import zio.config.ReadError.{ AndErrors, FormatError }
+import zio.config.ReadError.{ AndErrors, ForceSeverity, FormatError }
 import zio.test.Assertion._
 import zio.test._
 
@@ -271,12 +271,20 @@ object ListsCornerCasesTest
           val expected: ReadError[String] =
             AndErrors(
               List(
-                AndErrors(
-                  List(
-                    FormatError(List(Key("a"), Index(1)), "Provided value is lorem ipsum, expecting the type boolean")
-                  )
+                ForceSeverity(
+                  AndErrors(
+                    List(
+                      FormatError(List(Key("a"), Index(1)), "Provided value is lorem ipsum, expecting the type boolean")
+                    )
+                  ),
+                  false
                 ),
-                AndErrors(List(FormatError(List(Key("b"), Index(0)), "Provided value is one, expecting the type int")))
+                ForceSeverity(
+                  AndErrors(
+                    List(FormatError(List(Key("b"), Index(0)), "Provided value is one, expecting the type int"))
+                  ),
+                  false
+                )
               )
             )
 

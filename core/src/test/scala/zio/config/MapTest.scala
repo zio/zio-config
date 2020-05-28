@@ -2,9 +2,9 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.config.ReadError.{ AndErrors, FormatError }
+import zio.config.ReadError.{ AndErrors, ForceSeverity, FormatError }
 import zio.config.ReadError.Step.{ Index, Key }
-import zio.test.Assertion.{ equalTo, isLeft, isRight }
+import zio.test.Assertion.{ anything, equalTo, isLeft, isNone, isRight }
 import zio.test.{ assert, suite, test }
 
 object MapTest
@@ -253,23 +253,45 @@ object MapTest
           val expected: ReadError[String] =
             AndErrors(
               List(
-                AndErrors(
-                  List(
-                    FormatError(
-                      List(Key("a"), Key("a2"), Index(1)),
-                      "Provided value is lorem ipsum, expecting the type boolean"
+                ForceSeverity(
+                  AndErrors(
+                    List(
+                      FormatError(
+                        List(Key("a"), Key("a2"), Index(1)),
+                        "Provided value is lorem ipsum, expecting the type boolean"
+                      )
                     )
-                  )
+                  ),
+                  false
                 ),
-                AndErrors(
-                  List(
-                    FormatError(List(Key("b"), Key("b1"), Index(0)), "Provided value is one, expecting the type int")
-                  )
+                ForceSeverity(
+                  AndErrors(
+                    List(
+                      FormatError(List(Key("b"), Key("b1"), Index(0)), "Provided value is one, expecting the type int")
+                    )
+                  ),
+                  false
                 )
               )
             )
 
           assert(res)(isLeft(equalTo(expected)))
+        },
+        test("key doesn't exist in map") {
+          val src = ConfigSource.fromPropertyTree(
+            PropertyTree.Record(Map("usr" -> PropertyTree.Leaf("v1"))),
+            "src"
+          )
+          val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("keyNotExists")).optional
+          assert(read(optional from src))(isLeft(anything))
+        },
+        test("when empty map") {
+          val src = ConfigSource.fromPropertyTree(
+            PropertyTree.empty,
+            "src"
+          )
+          val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("usr")).optional
+          assert(read(optional from src))(isRight(isNone))
         }
       )
     )

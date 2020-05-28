@@ -3,7 +3,7 @@ package zio.config
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config.ReadError.Step.{ Index, Key }
-import zio.config.ReadError.{ AndErrors, ConversionError, FormatError, MissingValue, OrErrors }
+import zio.config.ReadError.{ AndErrors, ConversionError, ForceSeverity, FormatError, MissingValue, OrErrors }
 import zio.test.Assertion._
 import zio.test._
 
@@ -264,9 +264,18 @@ object SetTest
 
           val expected: ReadError[String] = OrErrors(
             List(
-              AndErrors(List(ConversionError(List(Key("b"), Index(1)), "Duplicated values found"))),
-              AndErrors(
-                List(MissingValue(List(Key("b"), Index(1), Key("c"))), MissingValue(List(Key("b"), Index(0), Key("c"))))
+              ForceSeverity(
+                AndErrors(List(ConversionError(List(Key("b"), Index(1)), "Duplicated values found"))),
+                false
+              ),
+              ForceSeverity(
+                AndErrors(
+                  List(
+                    MissingValue(List(Key("b"), Index(1), Key("c"))),
+                    MissingValue(List(Key("b"), Index(0), Key("c")))
+                  )
+                ),
+                false
               )
             )
           )
@@ -308,20 +317,26 @@ object SetTest
           val expected: ReadError[String] =
             AndErrors(
               List(
-                AndErrors(
-                  List(
-                    MissingValue(List(Key("a"), Index(3), Key("a1"))),
-                    MissingValue(List(Key("a"), Index(2), Key("a2"))),
-                    FormatError(
-                      List(Key("a"), Index(0), Key("a2")),
-                      "Provided value is lorem ipsum, expecting the type int"
+                ForceSeverity(
+                  AndErrors(
+                    List(
+                      MissingValue(List(Key("a"), Index(3), Key("a1"))),
+                      MissingValue(List(Key("a"), Index(2), Key("a2"))),
+                      FormatError(
+                        List(Key("a"), Index(0), Key("a2")),
+                        "Provided value is lorem ipsum, expecting the type int"
+                      )
                     )
-                  )
+                  ),
+                  false
                 ),
-                AndErrors(
-                  List(
-                    FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int")
-                  )
+                ForceSeverity(
+                  AndErrors(
+                    List(
+                      FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int")
+                    )
+                  ),
+                  false
                 )
               )
             )
@@ -363,17 +378,25 @@ object SetTest
           val expected: ReadError[String] =
             AndErrors(
               List(
-                AndErrors(
-                  List(
-                    MissingValue(List(Key("a"), Index(3), Key("a1"))),
-                    MissingValue(List(Key("a"), Index(2), Key("a2"))),
-                    FormatError(
-                      List(Key("a"), Index(0), Key("a2")),
-                      "Provided value is lorem ipsum, expecting the type int"
+                ForceSeverity(
+                  AndErrors(
+                    List(
+                      MissingValue(List(Key("a"), Index(3), Key("a1"))),
+                      MissingValue(List(Key("a"), Index(2), Key("a2"))),
+                      FormatError(
+                        List(Key("a"), Index(0), Key("a2")),
+                        "Provided value is lorem ipsum, expecting the type int"
+                      )
                     )
-                  )
+                  ),
+                  false
                 ),
-                AndErrors(List(FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int")))
+                ForceSeverity(
+                  AndErrors(
+                    List(FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int"))
+                  ),
+                  false
+                )
               )
             )
 
