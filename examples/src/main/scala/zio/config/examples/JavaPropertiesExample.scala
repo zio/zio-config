@@ -3,7 +3,7 @@ package zio.config.examples
 import zio.config.Config
 import zio.config.ConfigDescriptor._
 import zio.console.Console
-import zio.{ config, console, App, ZEnv, ZIO, ZLayer }
+import zio.{ config, console, App, ExitCode, ZEnv, ZIO, ZLayer }
 
 /**
  * An example of an entire application that uses java properties
@@ -22,7 +22,7 @@ object JavaPropertiesExample extends App {
   properties.put("bridgeIp", "10.0.0.1")
   properties.put("username", "afs")
 
-  override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] = {
+  override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
     val configLayer =
       Config.fromProperties(properties, ApplicationConfig.configuration, "constant")
 
@@ -30,8 +30,8 @@ object JavaPropertiesExample extends App {
       SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.requires[Console])
 
     pgm.foldM(
-      throwable => console.putStr(throwable.getMessage) *> ZIO.succeed(1),
-      _ => console.putStrLn("hurray !! Application ran successfully..") *> ZIO.succeed(0)
+      throwable => console.putStr(throwable.getMessage).as(ExitCode.failure),
+      _ => console.putStrLn("hurray !! Application ran successfully..").as(ExitCode.success)
     )
   }
 }

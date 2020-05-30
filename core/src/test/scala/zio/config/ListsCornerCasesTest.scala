@@ -2,6 +2,8 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
+import zio.config.ReadError.Step.{ Index, Key }
+import zio.config.ReadError.{ AndErrors, ForceSeverity, FormatError }
 import zio.test.Assertion._
 import zio.test._
 
@@ -249,6 +251,44 @@ object ListsCornerCasesTest
           )
 
           assert(res)(isLeft(hasField("size", _.size, equalTo(2))))
+        },
+        test("accumulates all errors") {
+          case class Cfg(a: List[Boolean], b: List[Int])
+
+          val cCfg = (nested("a")(listStrict(boolean)) |@| nested("b")(listStrict(int)))(Cfg, Cfg.unapply)
+
+          val res = read(
+            cCfg from ConfigSource.fromPropertyTree(
+              Record(
+                Map(
+                  "a" -> Sequence(Leaf("true") :: Leaf("lorem ipsum") :: Nil),
+                  "b" -> Sequence(Leaf("one") :: Leaf("2") :: Nil)
+                )
+              ),
+              "tree"
+            )
+          )
+          val expected: ReadError[String] =
+            AndErrors(
+              List(
+                ForceSeverity(
+                  AndErrors(
+                    List(
+                      FormatError(List(Key("a"), Index(1)), "Provided value is lorem ipsum, expecting the type boolean")
+                    )
+                  ),
+                  false
+                ),
+                ForceSeverity(
+                  AndErrors(
+                    List(FormatError(List(Key("b"), Index(0)), "Provided value is one, expecting the type int"))
+                  ),
+                  false
+                )
+              )
+            )
+
+          assert(res)(isLeft(equalTo(expected)))
         }
       )
     )

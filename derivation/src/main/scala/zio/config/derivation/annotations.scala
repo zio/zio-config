@@ -1,4 +1,4 @@
-package zio.config.magnolia
+package zio.config.derivation
 
 import scala.annotation.StaticAnnotation
 

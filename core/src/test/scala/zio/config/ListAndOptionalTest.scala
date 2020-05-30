@@ -70,7 +70,7 @@ object ListAndOptionalTest
 
           val actual = ZIO.fromEither(read(cListConfig from src))
 
-          val expectet = ListConfig(
+          val expected = ListConfig(
             List(
               Opt3Config(Id("1"), Some(Id("1")), Some(Id("1"))),
               Opt3Config(Id("2"), Some(Id("2")), None),
@@ -80,7 +80,7 @@ object ListAndOptionalTest
             )
           )
 
-          assertM(actual)(equalTo(expectet))
+          assertM(actual)(equalTo(expected))
         },
         testM("empty list read") {
 
@@ -96,6 +96,22 @@ object ListAndOptionalTest
 
           assertM(actual)(equalTo(expected))
         },
+        test("key doesn't exist in list") {
+          val src = ConfigSource.fromPropertyTree(
+            PropertyTree.Sequence(List(Record(Map()))),
+            "src"
+          )
+          val optional: ConfigDescriptor[Option[List[String]]] = list(string("keyNotExists")).optional
+          assert(read(optional from src))(isLeft(anything))
+        },
+        test("when empty list") {
+          val src = ConfigSource.fromPropertyTree(
+            PropertyTree.empty,
+            "src"
+          )
+          val optional: ConfigDescriptor[Option[List[String]]] = list(string("usr")).optional
+          assert(read(optional from src))(isRight(isNone))
+        },
         testM("list write read") {
           checkM(genListConfig) { p =>
             val actual = ZIO.fromEither(write(cListConfig, p).flatMap { tree =>
@@ -103,6 +119,37 @@ object ListAndOptionalTest
             })
             assertM(actual)(equalTo(p))
           }
+        },
+        test("return failure when branch is not defined correctly") {
+          val src = ConfigSource.fromPropertyTree(
+            Record(
+              Map(
+                "branches" -> PropertyTree.Sequence[String, String](
+                  List(
+                    Record(Map("pattern" -> Leaf("master"), "tag"  -> Leaf("true"))),
+                    Record(Map("name"    -> Leaf("pull/.*"), "tag" -> Leaf("true")))
+                  )
+                )
+              )
+            ),
+            "src"
+          )
+          case class AppConfig(branches: Option[List[Branch]])
+          case class Branch(pattern: String, tag: Boolean)
+
+          val patternDesc = string("pattern")
+          val tagDesc     = boolean("tag")
+
+          val branchConfigDesc =
+            (
+              patternDesc |@|
+                tagDesc
+            )(Branch.apply, Branch.unapply)
+
+          val appConfigDesc =
+            (listStrict("branches")(branchConfigDesc).optional)(AppConfig.apply, AppConfig.unapply)
+
+          assert(read(appConfigDesc from src))(isLeft(anything))
         }
       )
     )
