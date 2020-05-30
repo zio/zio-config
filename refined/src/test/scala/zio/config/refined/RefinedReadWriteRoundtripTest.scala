@@ -2,16 +2,18 @@ package zio.config.refined
 
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
+import eu.timepit.refined.boolean.And
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
+import eu.timepit.refined.string.Trimmed
 import zio.ZIO
-import zio.config.{ helpers, BaseSpec, ConfigSource }
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
+import zio.config.{ helpers, read, write, BaseSpec, ConfigDescriptor, ConfigSource }
+import ConfigDescriptor._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.config.{ read, write, ConfigDescriptor }, ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest
     extends BaseSpec(
@@ -34,7 +36,7 @@ object RefinedReadWriteRoundtripTest
               val p2 =
                 read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
-              assert(p2)(helpers.isErrors(hasField("size", _.size, equalTo(4))))
+              assert(p2)(helpers.isErrors(hasField("size", _.size, equalTo(5))))
           }
         }
       )
@@ -46,7 +48,8 @@ object RefinedReadWriteRoundtripTestUtils {
     ldap: Refined[String, NonEmpty],
     port: Refined[Int, GreaterEqual[W.`1024`.T]],
     dburl: Option[Refined[String, NonEmpty]], // Even if optional, if the predicate fails for a value that exist, we should fail it and report !
-    longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
+    longs: Refined[List[Long], Size[Greater[W.`2`.T]]],
+    pwd: Refined[String, Trimmed And NonEmpty]
   )
 
   def longList(n: Int): ::[ConfigDescriptor[Long]] = {
@@ -67,7 +70,8 @@ object RefinedReadWriteRoundtripTestUtils {
       nonEmpty(string("LDAP")) |@|
         greaterEqual[W.`1024`.T](int("PORT")) |@|
         nonEmpty(string("DB_URL")).optional |@|
-        size[Greater[W.`2`.T]](longs(n))
+        size[Greater[W.`2`.T]](longs(n)) |@|
+        and[Trimmed, NonEmpty](string("PWD"))
     )(
       RefinedProd.apply,
       RefinedProd.unapply
@@ -82,11 +86,13 @@ object RefinedReadWriteRoundtripTestUtils {
       dburl <- Gen.option(genSymbol(1, 20))
       n     <- Gen.int(3, 10)
       longs <- Gen.listOfN(n)(Gen.anyLong)
+      pwd   <- genSymbol(1, 10)
     } yield RefinedProd(
       Refined.unsafeApply(ldap),
       Refined.unsafeApply(port),
       dburl.map(Refined.unsafeApply),
-      Refined.unsafeApply(::(longs.head, longs.tail))
+      Refined.unsafeApply(::(longs.head, longs.tail)),
+      Refined.unsafeApply(pwd)
     )
 
   def genRefinedProdInvalid: Gen[Random, (Int, Map[String, String])] =
@@ -100,7 +106,8 @@ object RefinedReadWriteRoundtripTestUtils {
         "LDAP"   -> "",
         "DB_URL" -> "",
         "PORT"   -> port.toString,
-        "COUNT"  -> n.toString
+        "COUNT"  -> n.toString,
+        "PWD"    -> ""
       ) ++ longs
         .foldRight[List[(String, String)]](Nil)(
           (v, list) => s"GROUP${list.size + 1}_LONGVAL" -> v.toString :: list
