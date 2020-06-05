@@ -115,6 +115,11 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       Source(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
 
     def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
+
+    val javaFilePath: ConfigDescriptor[java.nio.file.Path] =
+      Source(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path"
+
+    def javaFilePath(path: String): ConfigDescriptor[java.nio.file.Path] = nested(path)(javaFilePath)
   }
 
   /**
