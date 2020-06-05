@@ -30,7 +30,7 @@ object CoproductTest
               OrErrors(
                 List(
                   MissingValue(List(Step.Key(p.kLdap))),
-                  FormatError(List(Step.Key(p.kFactor)), ReadFunctions.parseErrorMessage("notafloat", "float"))
+                  FormatError(List(Step.Key(p.kFactor)), parseErrorMessage("notafloat", "float"))
                 )
               )
             assert(readWithErrors(p))(isLeft(equalTo(expected)))

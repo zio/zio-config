@@ -1,7 +1,7 @@
 package zio.config.examples
 
-import zio.config._
-import ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
+import zio.config.ConfigSource
 
 object MultipleSourcesExample extends App {
 

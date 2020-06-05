@@ -4,9 +4,9 @@ import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.{ NonEmpty, Size }
 import eu.timepit.refined.numeric.{ Greater, GreaterEqual }
-import zio.config.ConfigDescriptor.{ int, list, long, string }
-import zio.config.refined.{ greaterEqual, nonEmpty, size }
-import zio.config.{ read, ConfigSource }
+import zio.config.refined._
+import zio.config._, ConfigDescriptor._
+import zio.config.ConfigSource
 
 object RefinedReadConfig extends App {
   case class RefinedProd(

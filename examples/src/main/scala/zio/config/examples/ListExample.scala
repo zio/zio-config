@@ -1,10 +1,12 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
-import zio.config._
+import zio.config.ConfigSource
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.PropertyTree.Leaf
-import zio.config.typesafe._
+import zio.config.PropertyTree
+import zio.config.singleton
+import zio.config.ConfigDescriptor._
+import zio.config._, zio.config.typesafe._
 
 // List works quite nicely if the source is typesafe HOCON. Refer typesafe examples
 object ListExample extends App with EitherImpureOps {
@@ -16,7 +18,7 @@ object ListExample extends App with EitherImpureOps {
       "regions" -> ::("australia", List("canada", "usa"))
     )
 
-  val config: ConfigDescriptor[String, String, PgmConfig] =
+  val config: ConfigDescriptor[PgmConfig] =
     (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
 
   val tree =

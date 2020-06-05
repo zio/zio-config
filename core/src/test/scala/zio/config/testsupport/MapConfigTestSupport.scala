@@ -1,18 +1,17 @@
 package zio.config.testsupport
 
-import zio.config.ConfigDescriptor
-import zio.config.ConfigDescriptor.{ boolean, head, string }
+import zio.config.ConfigDescriptor, ConfigDescriptor._
 import zio.random.Random
 import zio.test.Gen.alphaNumericChar
 import zio.test.{ Gen, Sized }
 
 object MapConfigTestSupport {
-  def genAppConfig: Gen[Random with Sized, AppConfig] =
+  def genAppConfig(stringGen: Gen[Random with Sized, String] = stringN(1, 15)): Gen[Random with Sized, AppConfig] =
     for {
-      strings   <- Gen.listOfN(10)(stringN(1, 15))
+      strings   <- Gen.listOfN(10)(stringGen)
       supervise <- Gen.boolean
     } yield AppConfig(
-      awsConfig = AppConfig.AwsConfig(strings(0), strings(1), AppConfig.KinesisConfig(strings(2))),
+      awsConfig = AppConfig.AwsConfig(strings.head, strings(1), AppConfig.KinesisConfig(strings(2))),
       pubSubConfig = AppConfig.PubSubConfig(strings(9)),
       jobConfig = JobConfig(
         dataflowConfig = Some(
@@ -39,7 +38,7 @@ object MapConfigTestSupport {
     final case class AwsConfig(key: String, secret: String, kinesisConfig: KinesisConfig)
 
     object AwsConfig {
-      val description: ConfigDescriptor[String, String, AwsConfig] =
+      val description: ConfigDescriptor[AwsConfig] =
         head("aws")(
           (head("key")(string) |@| head("secret")(string) |@| KinesisConfig.description)(
             AwsConfig.apply,
@@ -62,7 +61,7 @@ object MapConfigTestSupport {
         head("ps")(head("outputtopic")(string)(PubSubConfig.apply, PubSubConfig.unapply))
     }
 
-    val descriptor: ConfigDescriptor[String, String, AppConfig] =
+    val descriptor: ConfigDescriptor[AppConfig] =
       head("SystemF")(
         (AwsConfig.description |@| AppConfig.PubSubConfig.description |@| JobConfig.descriptor)(
           AppConfig.apply,
@@ -81,7 +80,7 @@ object MapConfigTestSupport {
   )
 
   object DataflowConfig {
-    val descriptor: ConfigDescriptor[String, String, DataflowConfig] =
+    val descriptor: ConfigDescriptor[DataflowConfig] =
       head("df")(
         ((head("name")(string)) |@|
           head("project")(string) |@|
@@ -100,7 +99,7 @@ object MapConfigTestSupport {
   )
 
   object JobConfig {
-    val descriptor: ConfigDescriptor[String, String, JobConfig] =
+    val descriptor: ConfigDescriptor[JobConfig] =
       head("job")(
         (DataflowConfig.descriptor.optional |@| head("supervise")(boolean))(JobConfig.apply, JobConfig.unapply)
       )
@@ -112,4 +111,17 @@ object MapConfigTestSupport {
       s <- Gen.stringN(n)(alphaNumericChar)
     } yield s
 
+  def stringNWithInjector(min: Int, max: Int, inj: String): Gen[Random with Sized, String] =
+    for {
+      length  <- Gen.int(min, max)
+      index   <- Gen.int(0, length - 1)
+      decider <- Gen.boolean
+      text    <- Gen.stringN(length)(alphaNumericChar).map(s => injectString(s, inj, index, decider))
+    } yield text
+
+  def injectString(text: String, inject: String, index: Int, randomizer: Boolean): String =
+    if (randomizer) {
+      val (start, end) = text.splitAt(index)
+      s"$start$inject$end"
+    } else text
 }

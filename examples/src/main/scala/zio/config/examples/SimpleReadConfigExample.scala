@@ -1,14 +1,16 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
 import zio.config._
+import ConfigDescriptor._
 import zio.console.Console
-import zio.{ App, ZEnv, ZIO }
+import zio.config.Config
+import zio.config.config
+import zio.{ App, ExitCode, ZEnv, ZIO }
 
 case class Prod(ldap: String, port: Int, dburl: Option[String])
 
 object Prod {
-  val prodConfig: ConfigDescriptor[String, String, Prod] =
+  val prodConfig: ConfigDescriptor[Prod] =
     (string("LDAP") |@| int("PORT") |@|
       string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
@@ -20,7 +22,7 @@ object Prod {
 
 object ReadConfig extends App {
 
-  override def run(args: List[String]): ZIO[ZEnv, Nothing, Int] =
+  override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     for {
       console <- ZIO.environment[Console].map(_.get)
       configLayer = Config.fromMap(
@@ -31,8 +33,8 @@ object ReadConfig extends App {
       out <- Prod.myAppLogic
               .provideLayer(configLayer)
               .foldM(
-                failure => console.putStrLn(failure.toString) *> ZIO.succeed(1),
-                _ => ZIO.succeed(0)
+                failure => console.putStrLn(failure.toString).as(ExitCode.failure),
+                _ => ZIO.succeed(ExitCode.success)
               )
     } yield out
 }

@@ -1,13 +1,16 @@
 version: 2.1
 
-#scala_211: &scala_211
- # SCALA_VERSION: 2.11.12
+scala_211: &scala_211
+  SCALA_VERSION: 2.11.12
+  ROOT_PROJECT: root2-11
 
 scala_212: &scala_212
-  SCALA_VERSION: 2.12.10
+  SCALA_VERSION: 2.12.11
+  ROOT_PROJECT: root2-12
 
 scala_213: &scala_213
-  SCALA_VERSION: 2.13.0
+  SCALA_VERSION: 2.13.2
+  ROOT_PROJECT: root2-13
 
 jdk_8: &jdk_8
   JDK_VERSION: 8
@@ -73,6 +76,8 @@ install_yarn: &install_yarn
   - run:
       name: Install Yarn
       command: |
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 78BD65473CB3BD13
+        sudo apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 5DC22404A6F9F1CA
         curl -sL https://dl.yarnpkg.com/debian/pubkey.gpg | sudo apt-key add -
         sudo bash -c 'echo "deb https://dl.yarnpkg.com/debian/ stable main" > /etc/apt/sources.list.d/yarn.list'
         sudo apt update && sudo apt install yarn -y
@@ -95,7 +100,7 @@ compile: &compile
     - <<: *load_cache
     - run:
         name: Compile code
-        command: ./sbt ++${SCALA_VERSION}! compile
+        command: ./sbt ++${SCALA_VERSION}! ${ROOT_PROJECT}/compile
     - <<: *clean_cache
     - <<: *save_cache
 
@@ -105,7 +110,7 @@ lint: &lint
     - <<: *load_cache
     - run:
         name: Lint code
-        command: ./sbt ++${SCALA_VERSION}! check
+        command: ./sbt checkAll
     - <<: *clean_cache
     - <<: *save_cache
 
@@ -128,7 +133,7 @@ testJVM: &testJVM
     - <<: *install_jdk
     - run:
         name: Run tests
-        command: ./sbt ++${SCALA_VERSION}! test
+        command: ./sbt ++${SCALA_VERSION}! ${ROOT_PROJECT}/test
     - <<: *clean_cache
     - <<: *save_cache
     - store_test_results:
@@ -152,7 +157,7 @@ release: &release
           command: echo -n "${PGP_SECRET}" | base64 -d > /tmp/secret.asc
       - run:
           name: Release artifacts
-          command: ./sbt ++${SCALA_VERSION}! clean sonatypeBundleClean +publishSigned sonatypeBundleRelease
+          command: ./sbt clean sonatypeBundleClean ++2.11.12 root2-11/publishSigned ++2.12.11 root2-12/publishSigned ++2.13.2! root2-13/publishSigned sonatypeBundleRelease
 
 microsite: &microsite
   steps:
@@ -196,13 +201,13 @@ jobs:
       - <<: *scala_212
       - <<: *jdk_8
 
-  #test_211_jdk8_jvm:
-   # <<: *testJVM
-    #<<: *machine_ubuntu
-    #<<: *machine_resource
-    #environment:
-     # - <<: *scala_211
-      #- <<: *jdk_8
+  test_211_jdk8_jvm:
+    <<: *testJVM
+    <<: *machine_ubuntu
+    <<: *machine_resource
+    environment:
+      - <<: *scala_211
+      - <<: *jdk_8
 
   test_212_jdk8_jvm:
     <<: *testJVM
@@ -256,12 +261,12 @@ workflows:
           filters:
             tags:
               only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
-  #    - test_211_jdk8_jvm:
-   #       requires:
-    #        - lint
-     #     filters:
-      #      tags:
-       #       only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
+      - test_211_jdk8_jvm:
+          requires:
+            - lint
+          filters:
+            tags:
+              only: /^v(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$/
       - test_212_jdk8_jvm:
           requires:
             - lint
@@ -283,7 +288,7 @@ workflows:
       - microsite:
           context: Website
           requires:
-            #- test_211_jdk8_jvm
+            - test_211_jdk8_jvm
             - test_212_jdk8_jvm
             - test_212_jdk11_jvm
             - test_213_jdk8_jvm

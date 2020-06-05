@@ -13,7 +13,7 @@ object MapConfigTest extends DefaultRunnableSpec {
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration from Map")(
       testM("Configuration from Map roundtrip") {
-        checkM(genAppConfig) { appConfig =>
+        checkM(genAppConfig()) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
               args   <- toMap(AppConfig.descriptor, appConfig)
@@ -29,7 +29,7 @@ object MapConfigTest extends DefaultRunnableSpec {
     ZIO.environment.provideLayer(Config.fromMap(args, descriptor, "WTL", Some('_'), None))
 
   def toMap[A](
-    descriptor: ConfigDescriptor[String, String, A],
+    descriptor: ConfigDescriptor[A],
     a: A
   ): ZIO[Any, ReadError[String], Map[String, String]] =
     IO.fromEither(write(descriptor, a))

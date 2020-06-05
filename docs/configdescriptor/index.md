@@ -9,7 +9,7 @@ that represents your config.
 
 ```scala mdoc:silent
 import zio.{ ZIO, IO, Layer }
-import zio.config._, ConfigDescriptor._
+import zio.config._, ConfigDescriptor._, ConfigSource._
 ```
 
 ## A Simple example
@@ -26,20 +26,28 @@ Let's define a simple one.
 
 
 ```scala mdoc:silent
-val myConfig =
+val myConfig: ConfigDescriptor[MyConfig] =
   (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
 
 ```
 
-Type of `myConfig` is `ConfigDescriptor[String, String, MyConfig]`.
 
 Case classes with a single field are simple too.
 
 ```scala mdoc:silent
 case class MySingleConfig(ldap: String)
 
-val mySingleConfig =
+val mySingleConfig: ConfigDescriptor[MySingleConfig] =
   string("LDAP")(MySingleConfig.apply, MySingleConfig.unapply)
+```
+
+If the config is not a case class, but a tuple, then call `.tupled`
+
+```scala mdoc:silent
+
+val mySingleConfigTupled: ConfigDescriptor[(String, Int)] =
+  (string("LDAP") |@| int("PORT")).tupled
+
 ```
 
 Think of this as removing fields one-by-one, along with the `|@|` combinator syntax, ending up with a single field being applied.
@@ -93,7 +101,6 @@ We have already seen `string("TOKEN")` and `int("PORT")` to fetch string and int
 We support the following:
 
 ```scala
-
 string
 boolean
 byte
@@ -115,6 +122,8 @@ url
 etc
 
 ```
+
+Complex types include `list`, `map` etc. More details to follow
 
 ## Optional Types
 
@@ -277,7 +286,7 @@ val dev = (string("USERNAME") |@| string("PASSWORD"))(Dev.apply, Dev.unapply)
 val prod = (string("TOKEN") |@| int("CODE"))(Prod.apply, Prod.unapply)
 
 prod <+> dev // that represents a description returning Config
-// ConfigDescriptor[String, String, Config]
+// ConfigDescriptor[ Config]
 
 ```
 
@@ -364,7 +373,7 @@ Note that, you can write this back as well. This is discussed in write section
  def database(i: Int) =
    (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
 
- val list: ConfigDescriptor[String, String, List[Database]] =
+ val list: ConfigDescriptor[ List[Database]] =
    collectAll(database(0), (1 to 10).map(database): _*)
 
 ```

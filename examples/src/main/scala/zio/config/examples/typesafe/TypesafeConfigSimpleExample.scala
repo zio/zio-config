@@ -1,12 +1,10 @@
 package zio.config.examples.typesafe
 
-import zio.config.ConfigDescriptor.{ int, list, nested, string }
+import zio.config._, ConfigDescriptor._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.read
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
-import zio.config._
 
-object TypesafeConfigSimpleExample extends App {
+object TypesafeConfigSimpleExample extends App with EitherImpureOps {
   // A nested example with type safe config, and usage of magnolia
   final case class Details(name: String, age: Int)
 
@@ -55,20 +53,20 @@ object TypesafeConfigSimpleExample extends App {
   val details = (string("name") |@| int("age"))(Details.apply, Details.unapply)
 
   val accountConfig =
-    (int("accountId").orElseEither(string("accountId")).optional |@| list("regions")(string) |@| nested("details")(
-      details
-    ).optional)(
+    (int("accountId").orElseEither(string("accountId")).optional |@| list(
+      "regions"
+    )(string) |@| nested("details")(details).optional)(
       Account.apply,
       Account.unapply
     )
 
-  val databaseConfig = (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
+  val databaseConfig =
+    (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
 
   val awsDetailsConfig =
-    (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig) |@| list("users")(int))(
-      AwsDetails.apply,
-      AwsDetails.unapply
-    )
+    (nested("accounts")(list(accountConfig)) |@| nested("database")(
+      databaseConfig
+    ) |@| list("users")(int))(AwsDetails.apply, AwsDetails.unapply)
 
   val listResult =
     fromHoconString(validHocon) match {
@@ -81,8 +79,16 @@ object TypesafeConfigSimpleExample extends App {
       Right(
         AwsDetails(
           List(
-            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
-            Account(Some(Left(123)), List("us-west", "ab", "cd"), Some(Details("zak", 11))),
+            Account(
+              Some(Right("jon")),
+              List("us-east", "dd", "ee"),
+              Some(Details("jaku", 10))
+            ),
+            Account(
+              Some(Left(123)),
+              List("us-west", "ab", "cd"),
+              Some(Details("zak", 11))
+            ),
             Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
           ),
           Database(Some(100), "postgres"),
@@ -103,8 +109,16 @@ object TypesafeConfigSimpleExample extends App {
       Right(
         AwsDetails(
           List(
-            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
-            Account(Some(Left(123)), List("us-west", "ab", "cd"), Some(Details("zak", 11))),
+            Account(
+              Some(Right("jon")),
+              List("us-east", "dd", "ee"),
+              Some(Details("jaku", 10))
+            ),
+            Account(
+              Some(Left(123)),
+              List("us-west", "ab", "cd"),
+              Some(Details("zak", 11))
+            ),
             Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
           ),
           Database(Some(100), "postgres"),
@@ -139,8 +153,7 @@ object TypesafeConfigSimpleExample extends App {
 
     """
 
-  println(fromHoconString(invalidHocon) match {
-    case Left(value)   => Left(value)
-    case Right(source) => read(descriptor[AwsDetails] from source)
-  })
+  println(
+    read(descriptor[AwsDetails] from fromHoconString(invalidHocon).loadOrThrow)
+  )
 }

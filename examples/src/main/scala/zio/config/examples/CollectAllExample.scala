@@ -1,7 +1,8 @@
 package zio.config.examples
 
-import zio.config._
-import ConfigDescriptor._
+import zio.config.ConfigSource
+import zio.config._, ConfigDescriptor._
+import zio.config.PropertyTree
 import zio.config.examples.typesafe.EitherImpureOps
 
 /**
@@ -14,15 +15,15 @@ import zio.config.examples.typesafe.EitherImpureOps
 final case class Variables(variable1: Int, variable2: Option[Int])
 
 object CollectAllExample extends App with EitherImpureOps {
-  val listOfConfig: List[ConfigDescriptor[String, String, Variables]] =
+  val listOfConfig: List[ConfigDescriptor[Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
       .map(
         group =>
           (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
       )
 
-  val configOfList: ConfigDescriptor[String, String, List[Variables]] =
-    ConfigDescriptor.collectAll(listOfConfig.head, listOfConfig.tail: _*)
+  val configOfList: ConfigDescriptor[List[Variables]] =
+    collectAll(listOfConfig.head, listOfConfig.tail: _*)
 
   val map =
     Map(

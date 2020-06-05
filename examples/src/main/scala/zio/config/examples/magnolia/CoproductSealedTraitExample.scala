@@ -1,10 +1,10 @@
 package zio.config.examples.magnolia
 
-import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.ConfigSource
 import zio.config.PropertyTree._
 import zio.config.examples.typesafe.EitherImpureOps
+import zio.config._
 
 object CoproductSealedTraitExample extends App with EitherImpureOps {
 
@@ -18,11 +18,15 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
   case class Detail(firstName: String, lastName: String, region: Region)
   case class Region(suburb: String, city: String)
 
-  println(read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "b"))))
-
-  assert(read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "a"))) == Right(A))
-  assert(read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "b"))) == Right(B))
-  assert(read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "c"))) == Right(C))
+  assert(
+    read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "a"))) == Right(A)
+  )
+  assert(
+    read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "b"))) == Right(B)
+  )
+  assert(
+    read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "c"))) == Right(C)
+  )
   assert(
     read(
       descriptor[X] from ConfigSource.fromMap(
@@ -34,9 +38,7 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
         ),
         keyDelimiter = Some('.')
       )
-    ) == Right(
-      D(Detail("ff", "ll", Region("strath", "syd")))
-    )
+    ) == Right(D(Detail("ff", "ll", Region("strath", "syd"))))
   )
   assert(
     read(
@@ -49,9 +51,7 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
         ),
         keyDelimiter = Some('.')
       )
-    ) == Right(
-      E(Detail("ff", "ll", Region("strath", "syd")))
-    )
+    ) == Right(E(Detail("ff", "ll", Region("strath", "syd"))))
   )
 
   assert(
@@ -65,7 +65,9 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
                   Map(
                     "detail" -> Record(
                       Map(
-                        "region"    -> Record(Map("city" -> Leaf("syd"), "suburb" -> Leaf("strath"))),
+                        "region" -> Record(
+                          Map("city" -> Leaf("syd"), "suburb" -> Leaf("strath"))
+                        ),
                         "lastName"  -> Leaf("ll"),
                         "firstName" -> Leaf("ff")
                       )

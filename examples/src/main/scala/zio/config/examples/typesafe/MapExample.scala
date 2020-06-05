@@ -1,11 +1,9 @@
 package zio.config.examples.typesafe
 
-import zio.config.ConfigDescriptor
-import zio.config._
-import typesafe._
-import ConfigDescriptor._
+import zio.config.ConfigSource
 import com.typesafe.config.ConfigRenderOptions
 import zio.config.typesafe.TypesafeConfigSource
+import zio.config._, typesafe._, ConfigDescriptor._
 
 object MapExample extends App with EitherImpureOps {
   val hocon =
@@ -28,13 +26,13 @@ object MapExample extends App with EitherImpureOps {
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
-  val c1: ConfigDescriptor[String, String, Map[String, List[Int]]] =
+  val c1: ConfigDescriptor[Map[String, List[Int]]] =
     map("zones")(list(int))
 
   val c2 = list("l")(int)
   val c3 = list("l2")(int)
 
-  val c4: ConfigDescriptor[String, String, Map[String, String]] =
+  val c4: ConfigDescriptor[Map[String, String]] =
     map("z")(string)
 
   val description =
@@ -43,8 +41,18 @@ object MapExample extends App with EitherImpureOps {
   val result =
     read(description from source).loadOrThrow
 
-  assert(result == sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a")))
-  println(write(description, result).loadOrThrow.toHocon.render(ConfigRenderOptions.concise().setFormatted(true)))
+  assert(
+    result == sss(
+      Map("melb" -> List(1), "syd" -> List(1, 2)),
+      List(),
+      List(1, 3, 3),
+      Map("v" -> "a")
+    )
+  )
+  println(
+    write(description, result).loadOrThrow.toHocon
+      .render(ConfigRenderOptions.concise().setFormatted(true))
+  )
 
   //  {
 //    "l2" : [
@@ -104,9 +112,11 @@ object MapExample extends App with EitherImpureOps {
        |""".stripMargin
 
   val result3 =
-    read(nested("result")(mapStrict(description)) from TypesafeConfigSource.fromHoconString(hocon2).loadOrThrow)
-
-  println(result3)
+    read(
+      nested("result")(mapStrict(description)) from TypesafeConfigSource
+        .fromHoconString(hocon2)
+        .loadOrThrow
+    )
 
   // It picks the value corresponding to y in the value of the dynamic map inside s. This is much powerful
   val hocon3 =
@@ -120,7 +130,9 @@ object MapExample extends App with EitherImpureOps {
 
   val xx = nested("k") { map("s")(string("y")) }
 
-  println(read(xx from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow))
+  println(
+    read(xx from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow)
+  )
 
   val hocon4 =
     s"""
@@ -129,7 +141,9 @@ object MapExample extends App with EitherImpureOps {
 
   val xx2 = nested("k") { map(string("y")) }
 
-  println(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow))
+  println(
+    read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow)
+  )
 
   println(generateDocs(map("s")(string) from ConfigSource.fromMap(Map.empty)))
 
