@@ -21,10 +21,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopDefault[B](path: List[Step[K]], keys: List[K], cfg: Default[B]): Res[B] =
       loopAny(path, keys, cfg.config) match {
-        case Left(error) if hasUnrecoverableErrors(error) =>
-          Left(error)
-        case Left(_)      => Right(cfg.value)
-        case Right(value) => Right(value)
+        case Left(error) if hasUnrecoverableErrors(error) => Left(error)
+        case Left(_)                                      => Right(cfg.value)
+        case Right(value)                                 => Right(value)
       }
 
     def loopOptional[B](path: List[Step[K]], keys: List[K], cfg: Optional[B]): Res[Option[B]] =
@@ -87,8 +86,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case (Right(leftV), Right(rightV)) => Right((leftV, rightV))
         case (Left(leftE), Left(rightE)) =>
           Left(AndErrors(leftE :: rightE :: Nil))
-        case (Left(leftE), _)  => Left(leftE)
-        case (_, Left(rightE)) => Left(rightE)
+        case (Left(leftE), result) => Left(leftE)
+        case (_, Left(rightE))     => Left(rightE)
       }
 
     def loopXmapEither[B, C](path: List[Step[K]], keys: List[K], cfg: XmapEither[B, C]): Res[C] =
@@ -111,7 +110,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               (k, loopAny(path, Nil, cfg.config.updateSource(_ => source)))
           }
 
-          seqMap2[K, ReadError[K], B, ReadError[K]]((index, k, error) => error.atKey(k).atIndex(index))(result.toMap).swap
+          seqMap2[K, ReadError[K], B, ReadError[K]]((_, k, error) => error.atKey(k))(result.toMap).swap
             .map(errs => ReadError.ForceSeverity(AndErrors(errs), treatAsMissing = false))
             .swap
 
