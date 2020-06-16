@@ -3,7 +3,7 @@ package zio.config
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config.ReadError.{ AndErrors, ForceSeverity, FormatError }
-import zio.config.ReadError.Step.{ Index, Key }
+import zio.config.ReadError.Step.{ Key }
 import zio.test.Assertion.{ anything, equalTo, isLeft, isNone, isRight }
 import zio.test.{ assert, suite, test }
 
@@ -257,7 +257,7 @@ object MapTest
                   AndErrors(
                     List(
                       FormatError(
-                        List(Key("a"), Key("a2"), Index(1)),
+                        List(Key("a"), Key("a2")),
                         "Provided value is lorem ipsum, expecting the type boolean"
                       )
                     )
@@ -267,7 +267,7 @@ object MapTest
                 ForceSeverity(
                   AndErrors(
                     List(
-                      FormatError(List(Key("b"), Key("b1"), Index(0)), "Provided value is one, expecting the type int")
+                      FormatError(List(Key("b"), Key("b1")), "Provided value is one, expecting the type int")
                     )
                   ),
                   false
