@@ -229,31 +229,31 @@ final class NotPartiallyApplied[P] {
     asRefined[A, Not[P]](desc)
 }
 
-final class AndPartiallyApplied[A, B] {
+final class AndPartiallyApplied[PA, PB] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
-    implicit ev: Validate[A, And[A, B]]
-  ): ConfigDescriptor[Refined[A, And[A, B]]] =
-    asRefined[A, And[A, B]](desc)
+    implicit ev: Validate[A, And[PA, PB]]
+  ): ConfigDescriptor[Refined[A, And[PA, PB]]] =
+    asRefined[A, And[PA, PB]](desc)
 }
 
-final class OrPartiallyApplied[A, B] {
+final class OrPartiallyApplied[PA, PB] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
-    implicit ev: Validate[A, Or[A, B]]
-  ): ConfigDescriptor[Refined[A, Or[A, B]]] =
-    asRefined[A, Or[A, B]](desc)
+    implicit ev: Validate[A, Or[PA, PB]]
+  ): ConfigDescriptor[Refined[A, Or[PA, PB]]] =
+    asRefined[A, Or[PA, PB]](desc)
 }
 
-final class XorPartiallyApplied[A, B] {
+final class XorPartiallyApplied[PA, PB] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
-    implicit ev: Validate[A, Xor[A, B]]
-  ): ConfigDescriptor[Refined[A, Xor[A, B]]] =
-    asRefined[A, Xor[A, B]](desc)
+    implicit ev: Validate[A, Xor[PA, PB]]
+  ): ConfigDescriptor[Refined[A, Xor[PA, PB]]] =
+    asRefined[A, Xor[PA, PB]](desc)
 }
 
 final class AllOfPartiallyApplied[S] {
@@ -283,20 +283,20 @@ final class OneOfPartiallyApplied[S] {
     asRefined[A, OneOf[S]](desc)
 }
 
-final class NandPartiallyApplied[A, B] {
+final class NandPartiallyApplied[PA, PB] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
-    implicit ev: Validate[A, Nand[A, B]]
-  ): ConfigDescriptor[Refined[A, Nand[A, B]]] =
-    asRefined[A, Nand[A, B]](desc)
+    implicit ev: Validate[A, Nand[PA, PB]]
+  ): ConfigDescriptor[Refined[A, Nand[PA, PB]]] =
+    asRefined[A, Nand[PA, PB]](desc)
 }
 
-final class NorPartiallyApplied[A, B] {
+final class NorPartiallyApplied[PA, PB] {
   def apply[A](
     desc: ConfigDescriptor[A]
   )(
-    implicit ev: Validate[A, Nor[A, B]]
-  ): ConfigDescriptor[Refined[A, Nor[A, B]]] =
-    asRefined[A, Nor[A, B]](desc)
+    implicit ev: Validate[A, Nor[PA, PB]]
+  ): ConfigDescriptor[Refined[A, Nor[PA, PB]]] =
+    asRefined[A, Nor[PA, PB]](desc)
 }

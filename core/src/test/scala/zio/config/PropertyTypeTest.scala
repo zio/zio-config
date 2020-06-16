@@ -135,7 +135,10 @@ object PropertyTypeTest
           propType = UrlType,
           genValid = genValidUrlString,
           parse = new URL(_)
-        )
+        ),
+        testM("valid JavaFilePathType string roundtrip") {
+          check(Gen.anyString)(assertValidRoundtrip(JavaFilePathType, java.nio.file.Paths.get(_)))
+        }
       )
     )
 

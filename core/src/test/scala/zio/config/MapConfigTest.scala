@@ -13,7 +13,7 @@ object MapConfigTest extends DefaultRunnableSpec {
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration from Map")(
       testM("Configuration from Map roundtrip") {
-        checkM(genAppConfig) { appConfig =>
+        checkM(genAppConfig()) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
               args   <- toMap(AppConfig.descriptor, appConfig)

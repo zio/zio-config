@@ -46,23 +46,68 @@ createProductBuilder := {
   )
 }
 
-addCommandAlias("fmt", "all scalafmtSbt scalafmt test:scalafmt")
-addCommandAlias("check", "all scalafmtSbtCheck scalafmtCheck test:scalafmtCheck")
-
-lazy val zioVersion      = "1.0.0-RC18-2"
-lazy val magnoliaVersion = "0.15.0"
-lazy val refinedVersion  = "0.9.14"
-
-lazy val magnoliaDependencies = libraryDependencies ++= Seq(
-  "com.propensive" %% "magnolia"     % magnoliaVersion,
-  "org.scala-lang" % "scala-reflect" % scalaVersion.value
+addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
+addCommandAlias("check", "; scalafmtSbtCheck; scalafmtCheck; test:scalafmtCheck")
+addCommandAlias(
+  "checkAll",
+  "; ++2.11.12; project root2-11; check; ++2.12.11; project root2-12; check; ++2.13.2; project root2-13; check"
 )
+addCommandAlias("compileAll", "; ++2.11.12; root2-11/compile; ++2.12.11; root2-12/compile; ++2.13.2!; root2-13/compile")
+addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.11; root2-12/test; ++2.13.2!; root2-13/test")
+
+lazy val zioVersion       = "1.0.0-RC20"
+lazy val magnoliaVersion  = "0.16.0"
+lazy val refinedVersion   = "0.9.14"
+lazy val shapelessVersion = "2.4.0-M1"
+
+lazy val magnoliaDependencies =
+  libraryDependencies ++= {
+    if (scalaBinaryVersion.value == "2.11") Seq.empty // Just to make IntelliJ happy
+    else
+      Seq(
+        "com.propensive" %% "magnolia"     % magnoliaVersion,
+        "org.scala-lang" % "scala-reflect" % scalaVersion.value
+      )
+  }
+
+lazy val refinedDependencies =
+  libraryDependencies ++= {
+    if (scalaBinaryVersion.value == "2.11") Seq.empty // Just to make IntelliJ happy
+    else Seq("eu.timepit" %% "refined" % refinedVersion)
+  }
+
+lazy val scala211projects = Seq[ProjectReference](zioConfig, zioConfigTypesafe, zioConfigShapeless, zioConfigDerivation)
+lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
+  zioConfigRefined,
+  zioConfigMagnolia,
+  examples,
+  zioConfigTypesafeMagnoliaTests
+)
+lazy val scala213projects = scala212projects
 
 lazy val root =
   project
     .in(file("."))
     .settings(skip in publish := true)
-    .aggregate(zioConfig, zioConfigMagnolia, examples, zioConfigRefined, zioConfigTypesafe)
+    .aggregate(scala211projects: _*)
+
+lazy val `root2-11` =
+  project
+    .in(file("2-11"))
+    .settings(skip in publish := true)
+    .aggregate(scala211projects: _*)
+
+lazy val `root2-12` =
+  project
+    .in(file("2-12"))
+    .settings(skip in publish := true)
+    .aggregate(scala212projects: _*)
+
+lazy val `root2-13` =
+  project
+    .in(file("2-13"))
+    .settings(skip in publish := true)
+    .aggregate(scala213projects: _*)
 
 lazy val zioConfig =
   module("zio-config", "core")
@@ -73,17 +118,18 @@ lazy val zioConfig =
         "dev.zio" %% "zio-test"     % zioVersion % Test,
         "dev.zio" %% "zio-test-sbt" % zioVersion % Test
       ),
-      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+      scalacOptions += "-P:silencer:lineContentFilters=import VersionSpecificSupport\\._"
     )
 
 lazy val zioConfigRefined =
   module("zio-config-refined", "refined")
     .settings(
+      refinedDependencies,
       libraryDependencies ++=
         Seq(
-          "eu.timepit" %% "refined"      % refinedVersion,
-          "dev.zio"    %% "zio-test"     % zioVersion % Test,
-          "dev.zio"    %% "zio-test-sbt" % zioVersion % Test
+          "dev.zio" %% "zio-test"     % zioVersion % Test,
+          "dev.zio" %% "zio-test-sbt" % zioVersion % Test
         ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
@@ -96,10 +142,8 @@ lazy val examples = module("zio-config-examples", "examples")
     skip in publish := true,
     fork := true,
     magnoliaDependencies,
-    libraryDependencies ++= Seq(
-      "eu.timepit"            %% "refined"    % refinedVersion,
-      "com.github.pureconfig" %% "pureconfig" % "0.12.3"
-    ),
+    refinedDependencies,
+    libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.12.3",
     runAllExamples :=
       Def
         .taskDyn({
@@ -118,6 +162,9 @@ lazy val examples = module("zio-config-examples", "examples")
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe)
 
+lazy val zioConfigDerivation = module("zio-config-derivation", "derivation")
+  .dependsOn(zioConfig)
+
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
     magnoliaDependencies,
@@ -127,7 +174,19 @@ lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-  .dependsOn(zioConfig % "compile->compile;test->test")
+  .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
+
+lazy val zioConfigShapeless = module("zio-config-shapeless", "shapeless")
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio"        %% "zio-test"     % zioVersion % Test,
+      "dev.zio"        %% "zio-test-sbt" % zioVersion % Test,
+      "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+      "com.chuusai"    %% "shapeless"    % shapelessVersion
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
 
 lazy val zioConfigTypesafe =
   module("zio-config-typesafe", "typesafe")
@@ -139,7 +198,20 @@ lazy val zioConfigTypesafe =
       ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
-    .dependsOn(zioConfig % "compile->compile;test->test", zioConfigMagnolia % "test")
+    .dependsOn(zioConfig % "compile->compile;test->test")
+
+lazy val zioConfigTypesafeMagnoliaTests =
+  module("zio-config-typesafe-magnolia-tests", "typesafe-magnolia-tests")
+    .settings(
+      skip in publish := true,
+      libraryDependencies ++= Seq(
+        "com.typesafe" % "config"        % "1.4.0",
+        "dev.zio"      %% "zio-test"     % zioVersion % Test,
+        "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
+      ),
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
+    .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia)
 
 def module(moduleName: String, fileName: String): Project =
   Project(moduleName, file(fileName))
@@ -158,10 +230,8 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     magnoliaDependencies,
-    libraryDependencies ++= Seq(
-      "eu.timepit" %% "refined" % refinedVersion,
-      "dev.zio"    %% "zio"     % zioVersion
-    )
+    refinedDependencies,
+    libraryDependencies += "dev.zio" %% "zio" % zioVersion
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigTypesafe, zioConfigRefined)
   .enablePlugins(MdocPlugin, DocusaurusPlugin)

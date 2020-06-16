@@ -1,6 +1,7 @@
 package zio.config
 
 import zio.config.ReadError.{ AndErrors, OrErrors, Step }
+import VersionSpecificSupport._
 
 private[config] trait ReadModule extends ConfigDescriptorModule {
   final def read[A](
@@ -20,7 +21,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopDefault[B](path: List[Step[K]], keys: List[K], cfg: Default[B]): Res[B] =
       loopAny(path, keys, cfg.config) match {
-        case Left(error) if hasParseErrors(error) || hasConversionErrors(error) =>
+        case Left(error) if hasUnrecoverableErrors(error) =>
           Left(error)
         case Left(_)      => Right(cfg.value)
         case Right(value) => Right(value)
@@ -28,7 +29,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopOptional[B](path: List[Step[K]], keys: List[K], cfg: Optional[B]): Res[Option[B]] =
       loopAny(path, keys, cfg.config) match {
-        case Left(error) if hasParseErrors(error) || hasConversionErrors(error) =>
+        case Left(error) if hasUnrecoverableErrors(error) =>
           Left(error)
         case Left(_)      => Right(None)
         case Right(value) => Right(Some(value))
@@ -111,7 +112,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           }
 
           seqMap2[K, ReadError[K], B, ReadError[K]]((index, k, error) => error.atKey(k).atIndex(index))(result.toMap).swap
-            .map(AndErrors(_))
+            .map(errs => ReadError.ForceSeverity(AndErrors(errs), treatAsMissing = false))
             .swap
 
         case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse))
@@ -134,7 +135,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               )
           }
           seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list).swap
-            .map(AndErrors(_))
+            .map(errs => ReadError.ForceSeverity(AndErrors(errs), treatAsMissing = false))
             .swap
       }
 
@@ -161,19 +162,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   def parseErrorMessage(given: String, expectedType: String) =
     s"Provided value is ${given.toString}, expecting the type ${expectedType}"
 
-  private def hasErrors[K](
+  private def hasUnrecoverableErrors[K](
     value: ReadError[K]
-  )(f: PartialFunction[ReadError[K], Boolean]): Boolean =
-    f.orElse[ReadError[K], Boolean]({
-        case OrErrors(errors)  => errors.exists(hasErrors(_)(f))
-        case AndErrors(errors) => errors.exists(hasErrors(_)(f))
-      })
-      .lift(value)
-      .getOrElse(false)
-
-  private def hasParseErrors[K](error: ReadError[K]): Boolean =
-    hasErrors(error)({ case ReadError.FormatError(_, _) => true })
-
-  private def hasConversionErrors[K](error: ReadError[K]): Boolean =
-    hasErrors(error)({ case ReadError.ConversionError(_, _) => true })
+  ): Boolean = value match {
+    case ReadError.ForceSeverity(_, treatAsMissing) => !treatAsMissing
+    case ReadError.FormatError(_, _)                => true
+    case ReadError.ConversionError(_, _)            => true
+    case OrErrors(errors)                           => errors.exists(hasUnrecoverableErrors)
+    case AndErrors(errors)                          => errors.exists(hasUnrecoverableErrors)
+    case _                                          => false
+  }
 }

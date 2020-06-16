@@ -183,12 +183,12 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       constantMap: Map[String, String],
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
-      valueDelimter: Option[Char] = None
+      valueDelimiter: Option[Char] = None
     ): ConfigSource =
       fromMapInternal(constantMap)(
         x => {
           val listOfValues =
-            valueDelimter.fold(List(x))(delim => x.split(delim).toList)
+            valueDelimiter.fold(List(x))(delim => x.split(delim).toList)
           ::(listOfValues.head, listOfValues.tail)
         },
         keyDelimiter,
@@ -422,10 +422,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       type KeyValue = These[Key, Value]
 
       object KeyValue {
-        def mk(s: String): Option[KeyValue] = {
-          val splitted = s.split('=').toList
-
-          (splitted.headOption, splitted.lift(1)) match {
+        def mk(s: String): Option[KeyValue] =
+          splitAtFirstOccurence(s, "=") match {
             case (Some(possibleKey), Some(possibleValue)) =>
               Key.mk(possibleKey) match {
                 case Some(actualKey) => Some(Both(actualKey, Value(possibleValue)))
@@ -442,6 +440,10 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
 
             case (None, None) => None
           }
+
+        def splitAtFirstOccurence(text: String, char: String): (Option[String], Option[String]) = {
+          val splitted = text.split(char, 2)
+          splitted.headOption.filterNot(_.isEmpty) -> splitted.lift(1)
         }
       }
 

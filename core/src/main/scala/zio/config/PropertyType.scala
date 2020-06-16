@@ -143,6 +143,13 @@ object PropertyType {
     def write(value: URL): String = value.toString
   }
 
+  case object JavaFilePathType extends PropertyType[String, java.nio.file.Path] {
+    def read(value: String): Either[PropertyReadError[String], java.nio.file.Path] =
+      attempt(java.nio.file.Paths.get(value), _ => PropertyReadError(value, " java.nio.file.Path"))
+
+    def write(value: java.nio.file.Path): String = value.toString
+  }
+
   private def attempt[A, E](a: => A, f: Throwable => E): Either[E, A] =
     Try(a) match {
       case Success(value)     => Right(value)

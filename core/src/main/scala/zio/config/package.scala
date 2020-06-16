@@ -4,7 +4,7 @@ package object config extends KeyConversionFunctions with ConfigStringModule {
 
   type Config[A] = Has[A]
 
-  final def config[A](implicit tagged: Tagged[A]): ZIO[Config[A], Nothing, A] =
+  final def config[A](implicit tag: Tag[A]): ZIO[Config[A], Nothing, A] =
     ZIO.access(_.get)
 
   private[config] def concat[A](l: ::[A], r: ::[A]): ::[A] =

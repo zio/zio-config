@@ -7,10 +7,10 @@ import java.util.UUID
 
 import magnolia._
 import zio.config._
+import zio.config.derivation.{ DerivationUtils, NeedsDerive }
+import zio.config.derivation.DerivationUtils._
 import zio.duration.Duration
 
-import scala.annotation.{ implicitAmbiguous, tailrec }
-import scala.collection.JavaConverters._
 import scala.concurrent.duration.{ Duration => ScalaDuration }
 import scala.language.experimental.macros
 
@@ -62,60 +62,49 @@ object NonRecursiveDerivation extends DeriveConfigDescriptor {
 trait DeriveConfigDescriptor { self =>
   import zio.config.ConfigDescriptor._
 
-  case class ConstantString(value: String) extends PropertyType[String, String] {
-    def read(propertyValue: String): Either[PropertyType.PropertyReadError[String], String] =
-      if (propertyValue == value) Right(value)
-      else Left(PropertyType.PropertyReadError(propertyValue, s"constant string '$value'"))
-    def write(a: String): String = a
-  }
+  protected def stringDesc: ConfigDescriptor[String]                   = string
+  protected def booleanDesc: ConfigDescriptor[Boolean]                 = boolean
+  protected def byteDesc: ConfigDescriptor[Byte]                       = byte
+  protected def shortDesc: ConfigDescriptor[Short]                     = short
+  protected def intDesc: ConfigDescriptor[Int]                         = int
+  protected def longDesc: ConfigDescriptor[Long]                       = long
+  protected def bigIntDesc: ConfigDescriptor[BigInt]                   = bigInt
+  protected def floatDesc: ConfigDescriptor[Float]                     = float
+  protected def doubleDesc: ConfigDescriptor[Double]                   = double
+  protected def bigDecimalDesc: ConfigDescriptor[BigDecimal]           = bigDecimal
+  protected def uriDesc: ConfigDescriptor[URI]                         = uri
+  protected def urlDesc: ConfigDescriptor[URL]                         = url
+  protected def scalaDurationDesc: ConfigDescriptor[ScalaDuration]     = duration
+  protected def durationDesc: ConfigDescriptor[Duration]               = zioDuration
+  protected def uuidDesc: ConfigDescriptor[UUID]                       = uuid
+  protected def localDateDesc: ConfigDescriptor[LocalDate]             = localDate
+  protected def localTimeDesc: ConfigDescriptor[LocalTime]             = localTime
+  protected def localDateTimeDesc: ConfigDescriptor[LocalDateTime]     = localDateTime
+  protected def instantDesc: ConfigDescriptor[Instant]                 = instant
+  protected def fileDesc: ConfigDescriptor[File]                       = file
+  protected def javaFilePathDesc: ConfigDescriptor[java.nio.file.Path] = javaFilePath
 
-  def constantString(value: String): ConfigDescriptor[String] =
-    ConfigDescriptorAdt.Source(ConfigSource.empty, ConstantString(value)) ?? s"constant string '$value'"
-
-  def constant[T](label: String, value: T): ConfigDescriptor[T] =
-    constantString(label)(_ => value, p => Some(p).filter(_ == value).map(_ => label))
-
-  protected def stringDesc: ConfigDescriptor[String]               = string
-  protected def booleanDesc: ConfigDescriptor[Boolean]             = boolean
-  protected def byteDesc: ConfigDescriptor[Byte]                   = byte
-  protected def shortDesc: ConfigDescriptor[Short]                 = short
-  protected def intDesc: ConfigDescriptor[Int]                     = int
-  protected def longDesc: ConfigDescriptor[Long]                   = long
-  protected def bigIntDesc: ConfigDescriptor[BigInt]               = bigInt
-  protected def floatDesc: ConfigDescriptor[Float]                 = float
-  protected def doubleDesc: ConfigDescriptor[Double]               = double
-  protected def bigDecimalDesc: ConfigDescriptor[BigDecimal]       = bigDecimal
-  protected def uriDesc: ConfigDescriptor[URI]                     = uri
-  protected def urlDesc: ConfigDescriptor[URL]                     = url
-  protected def scalaDurationDesc: ConfigDescriptor[ScalaDuration] = duration
-  protected def durationDesc: ConfigDescriptor[Duration]           = zioDuration
-  protected def uuidDesc: ConfigDescriptor[UUID]                   = uuid
-  protected def localDateDesc: ConfigDescriptor[LocalDate]         = localDate
-  protected def localTimeDesc: ConfigDescriptor[LocalTime]         = localTime
-  protected def localDateTimeDesc: ConfigDescriptor[LocalDateTime] = localDateTime
-  protected def instantDesc: ConfigDescriptor[Instant]             = instant
-  protected def fileDesc: ConfigDescriptor[File]                   = file
-
-  implicit val implicitStringDesc: Descriptor[String]               = Descriptor(stringDesc)
-  implicit val implicitBooleanDesc: Descriptor[Boolean]             = Descriptor(booleanDesc)
-  implicit val implicitByteDesc: Descriptor[Byte]                   = Descriptor(byteDesc)
-  implicit val implicitShortDesc: Descriptor[Short]                 = Descriptor(shortDesc)
-  implicit val implicitIntDesc: Descriptor[Int]                     = Descriptor(intDesc)
-  implicit val implicitLongDesc: Descriptor[Long]                   = Descriptor(longDesc)
-  implicit val implicitBigIntDesc: Descriptor[BigInt]               = Descriptor(bigIntDesc)
-  implicit val implicitFloatDesc: Descriptor[Float]                 = Descriptor(floatDesc)
-  implicit val implicitDoubleDesc: Descriptor[Double]               = Descriptor(doubleDesc)
-  implicit val implicitBigDecimalDesc: Descriptor[BigDecimal]       = Descriptor(bigDecimalDesc)
-  implicit val implicitUriDesc: Descriptor[URI]                     = Descriptor(uriDesc)
-  implicit val implicitUrlDesc: Descriptor[URL]                     = Descriptor(urlDesc)
-  implicit val implicitScalaDurationDesc: Descriptor[ScalaDuration] = Descriptor(scalaDurationDesc)
-  implicit val implicitDurationDesc: Descriptor[Duration]           = Descriptor(durationDesc)
-  implicit val implicitUUIDDesc: Descriptor[UUID]                   = Descriptor(uuidDesc)
-  implicit val implicitLocalDateDesc: Descriptor[LocalDate]         = Descriptor(localDateDesc)
-  implicit val implicitLocalTimeDesc: Descriptor[LocalTime]         = Descriptor(localTimeDesc)
-  implicit val implicitLocalDateTimeDesc: Descriptor[LocalDateTime] = Descriptor(localDateTimeDesc)
-  implicit val implicitInstantDesc: Descriptor[Instant]             = Descriptor(instantDesc)
-  implicit val implicitFileDesc: Descriptor[File]                   = Descriptor(fileDesc)
+  implicit val implicitStringDesc: Descriptor[String]                   = Descriptor(stringDesc)
+  implicit val implicitBooleanDesc: Descriptor[Boolean]                 = Descriptor(booleanDesc)
+  implicit val implicitByteDesc: Descriptor[Byte]                       = Descriptor(byteDesc)
+  implicit val implicitShortDesc: Descriptor[Short]                     = Descriptor(shortDesc)
+  implicit val implicitIntDesc: Descriptor[Int]                         = Descriptor(intDesc)
+  implicit val implicitLongDesc: Descriptor[Long]                       = Descriptor(longDesc)
+  implicit val implicitBigIntDesc: Descriptor[BigInt]                   = Descriptor(bigIntDesc)
+  implicit val implicitFloatDesc: Descriptor[Float]                     = Descriptor(floatDesc)
+  implicit val implicitDoubleDesc: Descriptor[Double]                   = Descriptor(doubleDesc)
+  implicit val implicitBigDecimalDesc: Descriptor[BigDecimal]           = Descriptor(bigDecimalDesc)
+  implicit val implicitUriDesc: Descriptor[URI]                         = Descriptor(uriDesc)
+  implicit val implicitUrlDesc: Descriptor[URL]                         = Descriptor(urlDesc)
+  implicit val implicitScalaDurationDesc: Descriptor[ScalaDuration]     = Descriptor(scalaDurationDesc)
+  implicit val implicitDurationDesc: Descriptor[Duration]               = Descriptor(durationDesc)
+  implicit val implicitUUIDDesc: Descriptor[UUID]                       = Descriptor(uuidDesc)
+  implicit val implicitLocalDateDesc: Descriptor[LocalDate]             = Descriptor(localDateDesc)
+  implicit val implicitLocalTimeDesc: Descriptor[LocalTime]             = Descriptor(localTimeDesc)
+  implicit val implicitLocalDateTimeDesc: Descriptor[LocalDateTime]     = Descriptor(localDateTimeDesc)
+  implicit val implicitInstantDesc: Descriptor[Instant]                 = Descriptor(instantDesc)
+  implicit val implicitFileDesc: Descriptor[File]                       = Descriptor(fileDesc)
+  implicit val implicitJavaFilePathDesc: Descriptor[java.nio.file.Path] = Descriptor(javaFilePathDesc)
 
   implicit def implicitListDesc[A: Descriptor]: Descriptor[List[A]] =
     Descriptor(listDesc(implicitly[Descriptor[A]].desc))
@@ -160,28 +149,7 @@ trait DeriveConfigDescriptor { self =>
 
   type Typeclass[T] = Descriptor[T]
 
-  def toSnakeCase(name: String): String = {
-    def addToAcc(acc: List[String], current: List[Int]) = {
-      def currentWord = current.reverse.flatMap(i => Character.toChars(i)).mkString.toLowerCase
-      if (current.isEmpty) acc
-      else if (acc.isEmpty) currentWord :: Nil
-      else currentWord :: "_" :: acc
-    }
-
-    @tailrec
-    def loop(chars: List[Int], acc: List[String], current: List[Int], beginning: Boolean): String =
-      chars match {
-        case Nil => addToAcc(acc, current).reverse.mkString
-        case head :: tail if beginning =>
-          loop(tail, acc, head :: current, Character.isUpperCase(head) || !Character.isLetter(head))
-        case head :: tail if Character.isUpperCase(head) =>
-          loop(tail, addToAcc(acc, current), head :: Nil, beginning = true)
-        case head :: tail =>
-          loop(tail, acc, head :: current, beginning = false)
-      }
-
-    loop(name.codePoints().iterator().asScala.map(x => x: Int).toList, Nil, Nil, beginning = true)
-  }
+  def toSnakeCase(name: String): String = DerivationUtils.toSnakeCase(name)
 
   def mapClassName(name: String): String
 
@@ -280,36 +248,4 @@ trait DeriveConfigDescriptor { self =>
    * By default this method is not implicit to allow custom non-recursive derivation
    * */
   def descriptor[T: NeedsDerive]: Descriptor[T] = macro DescriptorMacro.gen[T]
-
-  /**
-   * Preventing derivation for List, Option and Either.
-   * */
-  sealed trait NeedsDerive[+T]
-
-  object NeedsDerive extends NeedsDerive[Nothing] {
-
-    implicit def needsDerive[R]: NeedsDerive[R] = NeedsDerive
-
-    @implicitAmbiguous(
-      "Can't derive ConfigDescriptor for `List[T]` directly." +
-        " Wrap it with a `case class Config(list: List[T])` or use `list(descriptor[T])` manually."
-    )
-    implicit def needsDeriveAmbiguousList1: NeedsDerive[List[Nothing]] = NeedsDerive
-    implicit def needsDeriveAmbiguousList2: NeedsDerive[List[Nothing]] = NeedsDerive
-
-    @implicitAmbiguous(
-      "Can't derive ConfigDescriptor for `Option[T]` directly." +
-        " Wrap it with a `case class Config(list: Option[T])` or use `descriptor[T].optional` manually."
-    )
-    implicit def needsDeriveAmbiguousOption1: NeedsDerive[Option[Nothing]] = NeedsDerive
-    implicit def needsDeriveAmbiguousOption2: NeedsDerive[Option[Nothing]] = NeedsDerive
-
-    @implicitAmbiguous(
-      "Can't derive ConfigDescriptor for `Either[A, B]` directly." +
-        " Wrap it with a `case class Config(list: Either[A, B])`" +
-        " or use `descriptor[A].orElseEither(descriptor[B])` manually."
-    )
-    implicit def needsDeriveAmbiguousEither1: NeedsDerive[Either[Nothing, Nothing]] = NeedsDerive
-    implicit def needsDeriveAmbiguousEither2: NeedsDerive[Either[Nothing, Nothing]] = NeedsDerive
-  }
 }
