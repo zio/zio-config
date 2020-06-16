@@ -21,17 +21,6 @@ sealed trait ReadError[A] extends Exception { self =>
       case ReadError.ForceSeverity(error, treatAsMissing) => ReadError.ForceSeverity(error.atKey(key), treatAsMissing)
     }
 
-  def atIndex(index: Int): ReadError[A] =
-    self match {
-      case ReadError.MissingValue(path)             => ReadError.MissingValue(path :+ Step.Index(index))
-      case ReadError.FormatError(path, message)     => ReadError.FormatError(path :+ Step.Index(index), message)
-      case ReadError.ConversionError(path, message) => ReadError.ConversionError(path :+ Step.Index(index), message)
-      case ReadError.OrErrors(list)                 => ReadError.OrErrors(list.map(_.atIndex(index)))
-      case ReadError.AndErrors(list)                => ReadError.AndErrors(list.map(_.atIndex(index)))
-      case ReadError.ForceSeverity(error, treatAsMissing) =>
-        ReadError.ForceSeverity(error.atIndex(index), treatAsMissing)
-    }
-
   def size: Int =
     self match {
       case ReadError.MissingValue(_)         => 1
