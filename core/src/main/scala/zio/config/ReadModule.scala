@@ -86,8 +86,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case (Right(leftV), Right(rightV)) => Right((leftV, rightV))
         case (Left(leftE), Left(rightE)) =>
           Left(AndErrors(leftE :: rightE :: Nil))
-        case (Left(leftE), result) => Left(leftE)
-        case (_, Left(rightE))     => Left(rightE)
+        case (Left(leftE), _)  => Left(leftE)
+        case (_, Left(rightE)) => Left(rightE)
       }
 
     def loopXmapEither[B, C](path: List[Step[K]], keys: List[K], cfg: XmapEither[B, C]): Res[C] =
