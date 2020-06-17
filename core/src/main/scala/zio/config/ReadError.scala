@@ -3,7 +3,7 @@ package zio.config
 import ReadError._
 sealed trait ReadError[A] extends Exception { self =>
   override def toString: String = self match {
-    case ReadError.MissingValue(path)                   => s"MissingValue(${path})"
+    case ReadError.MissingValue(path, message)          => s"MissingValue(${path}, ${message})"
     case ReadError.FormatError(path, message)           => s"FormatError(${path}, ${message})"
     case ReadError.ConversionError(path, message)       => s"ConversionError(${path},${message}"
     case ReadError.OrErrors(list)                       => s"OrErrors(${list.map(_.toString)})"
@@ -13,7 +13,7 @@ sealed trait ReadError[A] extends Exception { self =>
 
   def atKey(key: A): ReadError[A] =
     self match {
-      case ReadError.MissingValue(path)                   => ReadError.MissingValue(path :+ Step.Key(key))
+      case ReadError.MissingValue(path, message)          => ReadError.MissingValue(path :+ Step.Key(key), message)
       case ReadError.FormatError(path, message)           => ReadError.FormatError(path :+ Step.Key(key), message)
       case ReadError.ConversionError(path, message)       => ReadError.ConversionError(path :+ Step.Key(key), message)
       case ReadError.OrErrors(list)                       => ReadError.OrErrors(list.map(_.atKey(key)))
@@ -23,7 +23,7 @@ sealed trait ReadError[A] extends Exception { self =>
 
   def size: Int =
     self match {
-      case ReadError.MissingValue(_)         => 1
+      case ReadError.MissingValue(_, _)      => 1
       case ReadError.FormatError(_, _)       => 1
       case ReadError.ConversionError(_, _)   => 1
       case ReadError.OrErrors(list)          => list.map(_.size).sum
@@ -73,7 +73,12 @@ sealed trait ReadError[A] extends Exception { self =>
 
     def renderMissingValue[A](err: ReadError.MissingValue[A]): Sequential =
       Sequential(
-        List(Failure("MissingValue" :: s"path: ${renderSteps(err.path)}" :: Nil))
+        err.detail match {
+          case ::(head, next) =>
+            List(Failure("MissingValue"  :: s"Details: ${(head :: next).mkString(", ")}" :: s"path: ${renderSteps(err.path)}"  :: Nil))
+          case Nil =>
+            List(Failure("MissingValue"  :: s"path: ${renderSteps(err.path)}"  :: Nil))
+        }
       )
 
     def renderFormatError[A](err: ReadError.FormatError[A]): Sequential =
@@ -125,7 +130,7 @@ sealed trait ReadError[A] extends Exception { self =>
 
     val sequence = readErrorToSequential(self)
 
-    ("ReadError failed." :: {
+    ("ReadError:" :: {
       sequence match {
         // use simple report for single failures
         case Sequential(List(Failure(readError))) => readError
@@ -138,12 +143,13 @@ sealed trait ReadError[A] extends Exception { self =>
 
 object ReadError {
   sealed trait Step[+K]
+
   object Step {
-    final case class Key[+K](key: K)   extends Step[K]
+    final case class Key[+K](key: K) extends Step[K]
     final case class Index(index: Int) extends Step[Nothing]
   }
 
-  final case class MissingValue[A](path: List[Step[A]])                           extends ReadError[A]
+  final case class MissingValue[A](path: List[Step[A]], detail: List[String] = Nil)   extends ReadError[A]
   final case class FormatError[A](path: List[Step[A]], message: String)           extends ReadError[A]
   final case class ConversionError[A](path: List[Step[A]], message: String)       extends ReadError[A]
   final case class OrErrors[A](list: List[ReadError[A]])                          extends ReadError[A]

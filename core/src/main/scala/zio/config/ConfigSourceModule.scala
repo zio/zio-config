@@ -179,7 +179,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
-    def fromMap(
+    def   fromMap(
       constantMap: Map[String, String],
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
@@ -188,7 +188,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       fromMapInternal(constantMap)(
         x => {
           val listOfValues =
-            valueDelimiter.fold(List(x))(delim => x.split(delim).toList)
+            valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
           ::(listOfValues.head, listOfValues.tail)
         },
         keyDelimiter,

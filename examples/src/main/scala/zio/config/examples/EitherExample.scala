@@ -1,8 +1,7 @@
 package zio.config.examples
 
 import zio.config.ConfigDescriptor._
-import zio.config.ReadError.{ FormatError, MissingValue, OrErrors, Step }
-import zio.config.ConfigSource
+import zio.config.ReadError.{ ForceSeverity, FormatError, MissingValue, OrErrors, Step }
 import zio.config._
 
 object EitherExample extends App {
@@ -45,16 +44,37 @@ object EitherExample extends App {
   val invalidSource =
     ConfigSource.fromMap(parseErrorConfig, "constant")
 
+  println(
+    read(prodOrDev from invalidSource).swap.map(_.prettyPrint()).swap
+  )
+
+  read(prodOrDev from invalidSource).swap.map(_.prettyPrint()).swap
+  /*
+      ReadError:
+      ╥
+      ╠─MissingValue
+      ║ Details: value of type string
+      ║ path: x1
+      ║
+      ╠─FormatError
+      ║ cause: Provided value is notadouble, expecting the type double
+      ║ path: x5
+      ▼
+   */
+
   assert(
     read(prodOrDev from invalidSource) ==
       Left(
         // OrErrors indicate that either fix the error with x1 or the error with x5
         OrErrors(
           List(
-            MissingValue(List(Step.Key("x1"))),
-            FormatError(
-              List(Step.Key("x5")),
-              parseErrorMessage("notadouble", "double")
+            ForceSeverity(MissingValue(List(Step.Key("x1")), List("value of type string")), false),
+            ForceSeverity(
+              FormatError(
+                List(Step.Key("x5")),
+                parseErrorMessage("notadouble", "double")
+              ),
+              false
             )
           )
         )

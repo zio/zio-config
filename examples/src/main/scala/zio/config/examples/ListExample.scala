@@ -4,7 +4,6 @@ import zio.config.ConfigSource
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.PropertyTree.Leaf
 import zio.config.PropertyTree
-import zio.config.singleton
 import zio.config.ConfigDescriptor._
 import zio.config._, zio.config.typesafe._
 
@@ -12,21 +11,22 @@ import zio.config._, zio.config.typesafe._
 object ListExample extends App with EitherImpureOps {
   final case class PgmConfig(a: String, b: List[String])
 
-  val multiMap =
+  val map =
     Map(
-      "xyz"     -> singleton("something"),
-      "regions" -> ::("australia", List("canada", "usa"))
+      "xyz"     -> "something",
+      "regions" -> "australia, canada, usa"
     )
 
   val config: ConfigDescriptor[PgmConfig] =
     (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
 
-  val tree =
-    ConfigSource.fromMultiMap(multiMap, "constant")
+  val mapSource =
+    ConfigSource.fromMap(map, "constant", keyDelimiter = None, valueDelimiter = Some(','))
 
   val resultFromMultiMap =
-    read(config from ConfigSource.fromMultiMap(multiMap, "constant"))
+    read(config from mapSource)
 
+  println(resultFromMultiMap)
   val expected =
     PgmConfig("something", List("australia", "canada", "usa"))
 

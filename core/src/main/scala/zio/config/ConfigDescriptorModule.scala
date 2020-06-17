@@ -110,6 +110,21 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
         .xmapEither({ case (a, b) => f(a, b) }, g)
 
+    def xmapEitherE[E, B](f: A => Either[E, B])(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
+      self.xmapEither(a => f(a).swap.map(h).swap, b => g(b).swap.map(h).swap)
+
+    def xmapEitherELeftPartial[E, B](f: A => Either[E, B])(g: B => A)(h: E => String):ConfigDescriptor[B] =
+       self.xmapEitherE[E, B](f)(b => Right(g(b)))(h)
+
+    def xmapEitherERightPartial[E, B](f: A => B)(g: B => Either[E, A])(h: E => String):ConfigDescriptor[B] =
+       self.xmapEitherE[E, B](t => Right(f(t)))(g)(h)
+
+    def xmapEitherLeftPartial[B](f: A => Either[String, B], g: B => A): ConfigDescriptor[B] =
+      xmapEitherELeftPartial(f)(g)(identity)
+
+    def xmapEitherRightPartial[B](f: A => B, g: B => Either[String, A]): ConfigDescriptor[B] =
+      xmapEitherERightPartial(f)(g)(identity)
+
     final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
       Zip(self, that)
   }
@@ -135,13 +150,13 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       nested(path)(head(desc))
 
     def list[K, V, A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      listStrict(desc).orElse(desc.apply(_ :: Nil, _.headOption))
+      listStrict(desc)
 
     def list[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       nested(path)(list(desc))
 
     def listStrict[A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      Sequence(ConfigSourceFunctions.empty, desc)
+      Sequence(ConfigSourceFunctions.empty, desc) ?? "list"
 
     def listStrict[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       nested(path)(listStrict(desc))
@@ -153,7 +168,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       nested(path)(mapStrict(desc))
 
     def mapStrict[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(ConfigSourceFunctions.empty, desc)
+      DynamicMap(ConfigSourceFunctions.empty, desc) ?? "map"
 
     def nested[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(path, desc)
