@@ -75,9 +75,13 @@ sealed trait ReadError[A] extends Exception { self =>
       Sequential(
         err.detail match {
           case ::(head, next) =>
-            List(Failure("MissingValue"  :: s"Details: ${(head :: next).mkString(", ")}" :: s"path: ${renderSteps(err.path)}"  :: Nil))
+            List(
+              Failure(
+                "MissingValue" :: s"Details: ${(head :: next).mkString(", ")}" :: s"path: ${renderSteps(err.path)}" :: Nil
+              )
+            )
           case Nil =>
-            List(Failure("MissingValue"  :: s"path: ${renderSteps(err.path)}"  :: Nil))
+            List(Failure("MissingValue" :: s"path: ${renderSteps(err.path)}" :: Nil))
         }
       )
 
@@ -145,16 +149,16 @@ object ReadError {
   sealed trait Step[+K]
 
   object Step {
-    final case class Key[+K](key: K) extends Step[K]
+    final case class Key[+K](key: K)   extends Step[K]
     final case class Index(index: Int) extends Step[Nothing]
   }
 
-  final case class MissingValue[A](path: List[Step[A]], detail: List[String] = Nil)   extends ReadError[A]
-  final case class FormatError[A](path: List[Step[A]], message: String)           extends ReadError[A]
-  final case class ConversionError[A](path: List[Step[A]], message: String)       extends ReadError[A]
-  final case class OrErrors[A](list: List[ReadError[A]])                          extends ReadError[A]
-  final case class AndErrors[A](list: List[ReadError[A]])                         extends ReadError[A]
-  final case class ForceSeverity[A](error: ReadError[A], treatAsMissing: Boolean) extends ReadError[A]
+  final case class MissingValue[A](path: List[Step[A]], detail: List[String] = Nil) extends ReadError[A]
+  final case class FormatError[A](path: List[Step[A]], message: String)             extends ReadError[A]
+  final case class ConversionError[A](path: List[Step[A]], message: String)         extends ReadError[A]
+  final case class OrErrors[A](list: List[ReadError[A]])                            extends ReadError[A]
+  final case class AndErrors[A](list: List[ReadError[A]])                           extends ReadError[A]
+  final case class ForceSeverity[A](error: ReadError[A], treatAsMissing: Boolean)   extends ReadError[A]
 
   def partitionWith[K, V, A](
     trees: List[ReadError[V]]

@@ -179,7 +179,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
-    def   fromMap(
+    def fromMap(
       constantMap: Map[String, String],
       source: String = "constant",
       keyDelimiter: Option[Char] = None,

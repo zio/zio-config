@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ReadError.{AndErrors, MissingValue, OrErrors, Step}
+import zio.config.ReadError.{ AndErrors, MissingValue, OrErrors, Step }
 import VersionSpecificSupport._
 
 private[config] trait ReadModule extends ConfigDescriptorModule {
@@ -26,11 +26,16 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case Right(value)                                 => Right(value)
       }
 
-    def loopOptional[B](path: List[Step[K]], keys: List[K], cfg: Optional[B],  descriptions: List[String]): Res[Option[B]] =
+    def loopOptional[B](
+      path: List[Step[K]],
+      keys: List[K],
+      cfg: Optional[B],
+      descriptions: List[String]
+    ): Res[Option[B]] =
       loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) if hasUnrecoverableErrors(error) =>
           Left(error)
-        case Left(_) => Right(None)
+        case Left(_)      => Right(None)
         case Right(value) => Right(Some(value))
       }
 
@@ -85,12 +90,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     def loopZip[B, C](path: List[Step[K]], keys: List[K], cfg: Zip[B, C], descriptions: List[String]): Res[(B, C)] =
       (loopAny(path, keys, cfg.left, descriptions), loopAny(path, keys, cfg.right, descriptions)) match {
         case (Right(leftV), Right(rightV)) => Right((leftV, rightV))
-        case (Left(leftE), Left(rightE)) => Left(AndErrors(leftE :: rightE :: Nil))
-        case (Left(leftE), _)  => Left(ReadError.ForceSeverity(leftE, false))
-        case (_, Left(rightE)) => Left(ReadError.ForceSeverity(rightE, false))
+        case (Left(leftE), Left(rightE))   => Left(AndErrors(leftE :: rightE :: Nil))
+        case (Left(leftE), _)              => Left(ReadError.ForceSeverity(leftE, false))
+        case (_, Left(rightE))             => Left(ReadError.ForceSeverity(rightE, false))
       }
 
-    def loopXmapEither[B, C](path: List[Step[K]], keys: List[K], cfg: XmapEither[B, C], descriptions: List[String]): Res[C] =
+    def loopXmapEither[B, C](
+      path: List[Step[K]],
+      keys: List[K],
+      cfg: XmapEither[B, C],
+      descriptions: List[String]
+    ): Res[C] =
       loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) => Left(error)
         case Right(a) =>
@@ -117,7 +127,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse, descriptions))
       }
 
-    def loopSequence[B](path: List[Step[K]], keys: List[K], cfg: Sequence[B], descriptions: List[String]): Res[List[B]] =
+    def loopSequence[B](
+      path: List[Step[K]],
+      keys: List[K],
+      cfg: Sequence[B],
+      descriptions: List[String]
+    ): Res[List[B]] =
       cfg.source.getConfigValue(keys.reverse) match {
         case PropertyTree.Leaf(_)   => formatError(path, "Leaf", "Sequence")
         case PropertyTree.Record(_) => formatError(path, "Record", "Sequence")
@@ -139,11 +154,16 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
             .swap
       }
 
-    def loopAny[B](path: List[Step[K]], keys: List[K], config: ConfigDescriptor[B], descriptions: List[String]): Res[B] =
+    def loopAny[B](
+      path: List[Step[K]],
+      keys: List[K],
+      config: ConfigDescriptor[B],
+      descriptions: List[String]
+    ): Res[B] =
       config match {
-        case c @ Default(_, _)    => loopDefault(path, keys, c, descriptions)
-        case c @ Describe(_, message)   => loopAny(path, keys, c.config, descriptions :+ message)
-        case c @ DynamicMap(_, _) => loopMap(path, keys, c, descriptions)
+        case c @ Default(_, _)        => loopDefault(path, keys, c, descriptions)
+        case c @ Describe(_, message) => loopAny(path, keys, c.config, descriptions :+ message)
+        case c @ DynamicMap(_, _)     => loopMap(path, keys, c, descriptions)
         case c @ Nested(_, _) =>
           loopAny(Step.Key(c.path) :: path, c.path :: keys, c.config, descriptions)
 
