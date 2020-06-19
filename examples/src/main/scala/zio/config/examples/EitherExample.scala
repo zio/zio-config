@@ -62,6 +62,7 @@ object EitherExample extends App {
       ▼
    */
 
+  println(read(prodOrDev from invalidSource) )
   assert(
     read(prodOrDev from invalidSource) ==
       Left(
