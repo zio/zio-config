@@ -115,7 +115,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def xmapEitherE[E, B](f: A => Either[E, B])(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
       self.xmapEither[B](
         (a: A) => ((f(a): Either[E, B]).swap: Either[B, E]).map(h).swap,
-        (b: B) => ((g(b): Either[E, A]).swap : Either[A, E]).map(h).swap
+        (b: B) => ((g(b): Either[E, A]).swap: Either[A, E]).map(h).swap
       )
 
     def xmapEitherELeftPartial[E, B](f: A => Either[E, B])(g: B => A)(h: E => String): ConfigDescriptor[B] =

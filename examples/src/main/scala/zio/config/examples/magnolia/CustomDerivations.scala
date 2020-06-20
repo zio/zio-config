@@ -14,7 +14,7 @@ object CustomDerivations extends App {
 
   case class S3Path(s: String)
 
-  object  S3Path {
+  object S3Path {
     // For some reason you decided to check if the string inside s3Path is empty or not while writing back as well
     // If this implicit doesn't exist, zio-config-magnolia falls back to its default behaviour
     // and finds out an instance for S3Path as it is a simple case class.
@@ -52,7 +52,6 @@ object CustomDerivations extends App {
         x => Try(ZonedDateTime.parse(x)).toEither
       )(_.toString)(_.getMessage) ?? "time in zoned date time"
 
-
   val appConfigDesc =
     descriptor[AppConfig]
 
@@ -63,5 +62,13 @@ object CustomDerivations extends App {
 
   val s = read(appConfigDesc from source)
 
-  assert(s == Right(AppConfig("spark", Some(Detail("abcdefg", Left(ZonedDateTime.parse("2020-06-20T17:15:23.601712+10:00[Australia/Sydney]")))), S3Path("s3://path"))))
+  assert(
+    s == Right(
+      AppConfig(
+        "spark",
+        Some(Detail("abcdefg", Left(ZonedDateTime.parse("2020-06-20T17:15:23.601712+10:00[Australia/Sydney]")))),
+        S3Path("s3://path")
+      )
+    )
+  )
 }
