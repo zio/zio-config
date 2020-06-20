@@ -30,7 +30,6 @@ object Cfg extends App with EitherImpureOps {
     """
       |cfg{
       | fieldName {
-      |  x {
       |   c {
       |     value = b
       |     g {
@@ -38,7 +37,6 @@ object Cfg extends App with EitherImpureOps {
       |     }
       |    }
       |  }
-      | }
       |}
       |n = 1
       |c = l
@@ -53,9 +51,7 @@ object Cfg extends App with EitherImpureOps {
 
   val s2 =
     """
-      |fieldName {
-      |  x = a
-      |}
+      |fieldName = a
       |""".stripMargin
 
   assert(
@@ -64,9 +60,7 @@ object Cfg extends App with EitherImpureOps {
 
   val s3 =
     """
-      |fieldName {
-      |  x = b
-      |}
+      |fieldName = b
       |""".stripMargin
 
   assert(
@@ -76,17 +70,13 @@ object Cfg extends App with EitherImpureOps {
   val s4 =
     """
       |fieldName {
-      | x {
       |  d {
       |   value {
-      |     y {
       |       z {
       |         a = 1
       |       }
       |     }
-      |    }
       |  }
-      | }
       |}
       |""".stripMargin
 
@@ -97,13 +87,10 @@ object Cfg extends App with EitherImpureOps {
   val s5 =
     """
       |fieldName {
-      |  x {
       |    e {
       |      a = 1
       |      b = 2
       |    }
-      |
-      |  }
       |}
       |""".stripMargin
 
@@ -114,19 +101,14 @@ object Cfg extends App with EitherImpureOps {
   val s6 =
     """
       |fieldName {
-      |  x {
       |    f {
       |      a = 1
       |      c {
-      |        y {
       |          z {
       |            a = 2
       |          }
-      |        }
       |      }
       |    }
-      |
-      |  }
       |}
       |""".stripMargin
 
@@ -139,20 +121,15 @@ object Cfg extends App with EitherImpureOps {
   val s7 =
     """
       |fieldName {
-      |  x {
       |    f {
       |      a = 1
       |      b = 2
       |      c {
-      |        y {
       |          z {
       |            a = 2
       |          }
-      |        }
       |      }
       |    }
-      |
-      |  }
       |}
       |""".stripMargin
 

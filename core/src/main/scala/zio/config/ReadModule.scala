@@ -3,6 +3,7 @@ package zio.config
 import zio.config.ReadError.{ AndErrors, MissingValue, OrErrors, Step }
 import VersionSpecificSupport._
 
+// (string("name") |@| int("age").optional)(Person.apply, Person.unapply)
 private[config] trait ReadModule extends ConfigDescriptorModule {
   final def read[A](
     configuration: ConfigDescriptor[A]
@@ -220,7 +221,13 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case c @ Describe(_, message) => loopAny(path, keys, c.config, descriptions :+ message, optionalParentPath)
         case c @ DynamicMap(_, _)     => loopMap(path, keys, c, descriptions, optionalParentPath)
         case c @ Nested(_, _) =>
-          loopAny(Step.Key(c.path) :: path, c.path :: keys, c.config, descriptions, optionalParentPath)
+          loopAny(
+            Step.Key(c.path) :: path,
+            c.path :: keys,
+            c.config,
+            descriptions,
+            if (optionalParentPath.isEmpty) Nil else optionalParentPath :+ c.path
+          )
 
         case c @ Optional(_)         => loopOptional(path, keys, c, descriptions)
         case c @ OrElse(_, _)        => loopOrElse(path, keys, c, descriptions, optionalParentPath)

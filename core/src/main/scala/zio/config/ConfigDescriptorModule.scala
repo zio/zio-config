@@ -1,5 +1,7 @@
 package zio.config
 
+import VersionSpecificSupport._
+
 trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   import ConfigDescriptorAdt._
 
@@ -111,7 +113,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         .xmapEither({ case (a, b) => f(a, b) }, g)
 
     def xmapEitherE[E, B](f: A => Either[E, B])(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
-      self.xmapEither(a => f(a).swap.map(h).swap, b => g(b).swap.map(h).swap)
+      self.xmapEither[B](
+        (a: A) => ((f(a): Either[E, B]).swap: Either[B, E]).map(h).swap,
+        (b: B) => ((g(b): Either[E, A]).swap : Either[A, E]).map(h).swap
+      )
 
     def xmapEitherELeftPartial[E, B](f: A => Either[E, B])(g: B => A)(h: E => String): ConfigDescriptor[B] =
       self.xmapEitherE[E, B](f)(b => Right(g(b)))(h)

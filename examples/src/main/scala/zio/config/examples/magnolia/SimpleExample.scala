@@ -20,11 +20,11 @@ final case class MyConfig(
 object MyConfig {
 
   sealed trait Credentials
-  case class Password(password: String) extends Credentials
-  case class Token(token: String)       extends Credentials
+  case class Password(value: String) extends Credentials
+  case class Token(value: String)    extends Credentials
 
   sealed trait Price
-  case class INR(inr: Int)        extends Price
+  case class INR(value: Int)      extends Price
   case class AUD(dollars: Double) extends Price
 
   @describe("This config is about aws")
@@ -32,22 +32,23 @@ object MyConfig {
   final case class DbUrl(value: String) extends AnyVal
 }
 
-object AutomaticConfigDescriptor {
+object AutomaticConfigDescriptor extends App {
   private val automaticConfig = descriptor[MyConfig]
 
   private val source =
     ConfigSource.fromMap(
       Map(
-        "aws.region"            -> "us-east",
-        "aws.credentials.token" -> "token",
-        "port"                  -> "10",
-        "default"               -> "12",
-        "dburl.value"           -> "some url",
-        "amount"                -> "3.14",
-        "quanity"               -> "30.0",
-        "price.inr"             -> "1000",
-        "anotherDefault"        -> "14"
-      )
+        "aws.region"                  -> "us-east",
+        "aws.credentials.token.value" -> "token",
+        "port"                        -> "10",
+        "default"                     -> "12",
+        "dburl.value"                 -> "some url",
+        "amount"                      -> "3.14",
+        "quanity"                     -> "30.0",
+        "price.inr.value"             -> "1000",
+        "anotherDefault"              -> "14"
+      ),
+      keyDelimiter = Some('.')
     )
 
   private val config = read(automaticConfig from source)

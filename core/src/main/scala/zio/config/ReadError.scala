@@ -71,19 +71,19 @@ sealed trait ReadError[A] extends Exception { self =>
         case _                                => readErrorToSequential(readError).all
       }
 
-    def renderMissingValue[A](err: ReadError.MissingValue[A]): Sequential =
+    def renderMissingValue[A](err: ReadError.MissingValue[A]): Sequential = {
+      val strings =
+        "MissingValue" :: s"path: ${renderSteps(err.path)}" :: Nil
+
       Sequential(
         err.detail match {
           case ::(head, next) =>
-            List(
-              Failure(
-                "MissingValue" :: s"Details: ${(head :: next).mkString(", ")}" :: s"path: ${renderSteps(err.path)}" :: Nil
-              )
-            )
+            List(Failure(strings :+ s"Details: ${(head :: next).mkString(", ")}"))
           case Nil =>
-            List(Failure("MissingValue" :: s"path: ${renderSteps(err.path)}" :: Nil))
+            List(Failure(strings))
         }
       )
+    }
 
     def renderFormatError[A](err: ReadError.FormatError[A]): Sequential =
       Sequential(
