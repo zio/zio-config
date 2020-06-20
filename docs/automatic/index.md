@@ -3,30 +3,41 @@ id: automatic_index
 title:  "Automatic Derivation of Config"
 ---
 
-By bringing in `zio-config-magnolia` you get to avoid all the boilerplate required to define the config.
-With a single import, `ConfigDescriptor` is automatically derived for your custom type.
+By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config.
+With a single import, `ConfigDescriptor` is automatically derived.
 
-Also, you will find that defining the actual hocon for coproducts is devoid of any extra tagging to satisfy the library.
+Also, we will get to see the Hocon config for coproducts is devoid of any extra tagging to satisfy the library.
 This is much easier/intuitive unlike many existing implementations.
 
-Take a look at the magnolia examples in `zio-config`
+Take a look at the magnolia examples in `zio-config`. One of them is provided here for quick access.
 
 ```scala mdoc:silent
 
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.read
 import zio.config.typesafe.TypesafeConfigSource
+import zio.config.read
 
 object CoproductSealedTraitExample extends App {
 
   sealed trait X
-
-  case object A                extends X
-  case object B                extends X
-  case object C                extends X
-  case class D(detail: Detail) extends X
-  case class Detail(firstName: String, lastName: String, region: Region)
-  case class Region(suburb: String, city: String)
+ 
+   object X {
+     case object A extends X
+     case object B extends X
+     case object C extends X
+     case class D(detail: Detail) extends X
+     
+     case class Detail(firstName: String, lastName: String, region: Region)
+     case class Region(suburb: String, city: String)
+   }
+ 
+   /**
+    * We use automatic derivation here.
+    * As an example, In order to specify, {{{ x = a }}} in the source where `a`
+    * represents X.A object, we need a case class that wraps
+    * the sealed trait, where the field name is x
+    */
+   final case class Config(x: X)
 
   val aHoconSource =
     TypesafeConfigSource
@@ -59,7 +70,7 @@ object CoproductSealedTraitExample extends App {
     TypesafeConfigSource
       .fromHoconString(
         s"""
-           |  d {
+           | d {
            |  detail  {
            |    firstName : ff
            |    lastName  : ll
@@ -74,11 +85,11 @@ object CoproductSealedTraitExample extends App {
       )
       .loadOrThrow
 
-  assert(read(descriptor[X] from aHoconSource) == Right(A))
-  assert(read(descriptor[X] from bHoconSource) == Right(B))
-  assert(read(descriptor[X] from cHoconSource) == Right(C))
+  assert(read(descriptor[Config] from aHoconSource) == Right(A))
+  assert(read(descriptor[Config] from bHoconSource) == Right(B))
+  assert(read(descriptor[Config] from cHoconSource) == Right(C))
   assert(
-    read(descriptor[X] from dHoconSource) == Right(
+    read(descriptor[Config] from dHoconSource) == Right(
       D(Detail("ff", "ll", Region("strath", "syd")))
     )
   )
@@ -111,14 +122,20 @@ case class DbUrl(value: String)
 
 ```
 
+This will be equivalent to specifying:
+
+```scala
+   (string("region") |@| string("dburl").xmap(DbUrl, _.value))(Aws.apply, Aws.unapply) ?? "This config is about aws"
+```
+
 ### Custom ConfigDescription
 
-The way automatic derivation works is that every field in your config class should have an instance of the typeclass
-Descriptor. This doesn't mean the entire design of zio-config is typeclass based. For the same reason, the typeclass
+Every field in a case class should have an instance of `Descriptor` in order for the automatic derivation to work.
+This doesn't mean the entire design of zio-config is typeclass based. For the same reason, the typeclass
 Derivation exists only in zio-config-magnolia (or zio-config-shapeless) package.
 
-As an example, below given is a case class where automatic derivation won't work, and result in a compile time error:
-Given, `AwsRegion` is a type that comes from AWS SDK.
+As an example, given below is a case class where automatic derivation won't work, and result in a compile time error:
+Assume that, `AwsRegion` is a type that comes from AWS SDK.
 
 ```scala
   import java.time.ZonedDateTime
@@ -130,7 +147,7 @@ In this case, `descriptor[Execution]` will give us the following descriptive com
 
 ```scala
 magnolia: could not find Descriptor.Typeclass for type <outside.library.package>.AwsRegion
-  in parameter 'time' of product type <packagename>.Execution
+  in parameter 'time' of product type <your.packagename>.Execution
 ```
 
 This is because zio-config-magnolia failed to derive an instance of Descriptor for AwsRegion.
@@ -147,9 +164,9 @@ In order to provide implicit instances, following choices are there
 
 Now `descriptor[Execution]` compiles.
 
-#### Is that the only way for custom derivation.
+#### Is that the only way for custom derivation ?
 
-Well, what if our custom type is complex enough that, parsing from a string would actually fail?
+What if our custom type is complex enough that, parsing from a string would actually fail?
 The answer is, zio-config provides with all the functions that you need to handle errors.
 
 ```scala mdoc:silent
@@ -160,16 +177,16 @@ The answer is, zio-config provides with all the functions that you need to handl
       .xmapEitherELeftPartial(x => Try (ZonedDateTime.parse(x)).toEither)(_.toString)(_.getMessage)
 ```
 
-So, what is xmapEitherLeftPartial ? Yes, parsing a String to ZonedDateTime can fail, but converting it bacck to a string
-won't fail. Logically, these are respectively the first 2 functions that you passed to xmapEitherELeftPartial. The third
-parameter talks about how to covert the error type E, which in this case is Throwable to a proper string, which is required
+What is xmapEitherLeftPartial ? Parsing a String to ZonedDateTime can fail, but converting it back to a string
+won't fail. Logically, these are respectively the first 2 functions that we passed to xmapEitherELeftPartial. The third
+parameter talks about how to covert the error type E, which in this case is Throwable, to a proper string which is then required
 for zio-config to report back to the user what's going on.
 
 PS: We recommend not to use `throwable.getMessage`. Provide more descriptive error message.
 
 You can also rely on `xmapEitherE` if both `to` and `fro` can fail. This is the most commonly used combinator in zio-config.
-Similary if your error type is already String, then you can use `xmapEither` and avoid having to tell the API, how to convert
-`E` to `String`. 
+Similarly if the error type is already String, then you can use `xmapEither` and avoid having to tell the API, how to convert
+`E` to `String`. We have already seen these types.
 
 #### Please give descriptions wherever possible for a better experience
 
@@ -188,3 +205,29 @@ some description to custom types as well. For example, its goofd
 
 This way, when there is an error due to MissingValue, we get an error message (don't forget to use prettyPrint)
 that describes about the config parameter.
+
+##### Where to place these implicits.
+
+If the types are owned by us, then the best place to keep implicit instance is companion object.
+
+```
+
+final case clas MyAwsRegion(value: AwsRegion)
+
+object MyCustomTime {
+    implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
+      Descriptor[String]
+        .xmap(string => MyAwsRegion(AwsRegion.from(string)), _.value.toString) ?? "value of type AWS.Region"
+}
+
+```
+
+However, most of the time, it's either incovenient, or the types are owned by an external dependency.
+In these situations, better off place the implicit closer to where we call the automatic derivation.
+Please find the example in `magnolia` package in examples module.
+
+### Change Keys (CamelCase, kebab-case etc)
+
+Please find the examples in ChangeKeys.scala in magnolia module to find how to manipulate
+keys in an automatic derivation such as being able to specify keys as camelCase, kebabCase or snakeCase in
+the source config.

@@ -1,7 +1,6 @@
 package zio.config
 
 import zio.config.PropertyTree.Record
-import zio.config.ConfigDescriptorModule
 
 private[config] trait WriteModule extends ConfigDescriptorModule {
   import ConfigDescriptorAdt._

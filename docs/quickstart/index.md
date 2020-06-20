@@ -186,9 +186,53 @@ generateReport(myConfig, MyConfig("xyz", 8888, "postgres"))
 // Generates documentation showing value of each parameter
 
 ```
+### Accumulating all errors
 
+For any misconfiguration, the ReadError collects all of them with proper semantics: `AndErrors` and `OrErrors`. 
+Instead of directly printing misconfigurations, the `ReadError.prettyPrint` shows the path, detail of collected misconfigurations.
 
-More details in [here](../configdescriptor/index.md).
+1. All misconfigurations of `AndErrors` are put in parallel lines.
+```text
+╥
+╠══╗ 
+║  ║ FormatError
+║ MissingValue
+``` 
+2. `OrErrors` are in the same line which indicates a sequential misconfiguration    
+```text
+╥
+╠MissingValue
+║
+╠FormatError
+```
+
+Here is a complete example:
+
+```text
+   ReadError:
+   ╥
+   ╠══╦══╗
+   ║  ║  ║
+   ║  ║  ╠─MissingValue
+   ║  ║  ║ path: var2
+   ║  ║  ║ Details: value of type string
+   ║  ║  ║ 
+   ║  ║  ╠─MissingValue path: envvar3
+   ║  ║  ║ path: var3
+   ║  ║  ║ Details: value of type string
+   ║  ║  ║ 
+   ║  ║  ▼
+   ║  ║
+   ║  ╠─FormatError
+   ║  ║ cause: Provided value is wrong, expecting the type int
+   ║  ║ path: var1
+   ║  ▼
+   ▼
+
+```
+
+It says, fix `FormatError` related to path "var1" in the source. For the next error, either provide var2 or var3
+to fix `MissingValue` error.
 
 ## Config is your ZIO environment
 

@@ -6,12 +6,16 @@ import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
 
 sealed trait X
-case object A                                 extends X
-case object B                                 extends X
-case class C(value: String, g: G)             extends X
-case class D(value: Y)                        extends X
-case class E(a: String, b: Int)               extends X
-case class F(a: String, b: Option[Int], c: Y) extends X
+
+object X {
+  case object A extends X
+  case object B extends X
+
+  final case class C(value: String, g: G) extends X
+  final case class D(value: Y) extends X
+  final case class E(a: String, b: Int) extends X
+  final case class F(a: String, b: Option[Int], c: Y) extends X
+}
 
 sealed trait Y
 case class Z(a: String) extends Y
@@ -21,10 +25,10 @@ case class G(l: String)
 case class Cfg(fieldName: X)
 case class CfgCfg(cfg: Cfg, n: Int, c: String)
 
-case class K(a: String)
 
-// Fix me: Add to tests (not possible currently coz modules are independent of each other)
 object Cfg extends App with EitherImpureOps {
+
+  import X._
 
   val s1 =
     """

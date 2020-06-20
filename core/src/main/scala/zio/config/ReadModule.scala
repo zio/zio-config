@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ReadError.{ AndErrors, MissingValue, OrErrors, Step }
+import zio.config.ReadError._
 import VersionSpecificSupport._
 
 private[config] trait ReadModule extends ConfigDescriptorModule {
