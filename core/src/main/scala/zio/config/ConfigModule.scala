@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.{Has, Tag, ZIO}
+import zio.{ Has, Tag, ZIO }
 
 trait ConfigModule extends ConfigDocsModule with ReadModule with WriteModule {
   type Config[A] = Has[A]
