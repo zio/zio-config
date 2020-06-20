@@ -1,35 +1,30 @@
 package zio.config.examples
 
 import zio.config._
+import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.DeriveConfigDescriptor._
 import zio.config.typesafe._
 
-object OptionalExample extends App {
+object OptionalExample extends App with EitherImpureOps {
 
-  case class AppConfig(jobName: String, hello: Option[Detail])
+  case class AppConfig(jobName: String, detail: Option[Detail])
 
   case class Detail(x: String, y: Either[Int, String])
 
   val validConfig =
     """
        jobName: 1
-       hello: {
+       detail: {
          x : 1
          y: 1
        }
     """
-
-  def getSource(str: String): ConfigSource = TypesafeConfigSource.fromHoconString(str) match {
-    case Right(a) => a
-    case Left(_)  => throw new Exception("bad hocon string")
-  }
-
   assert(read(descriptor[AppConfig] from getSource(validConfig)) == Right(AppConfig("1", Some(Detail("1", Left(1))))))
 
   val validConfig2 =
     """
        jobName: 1
-       hello: null
+       detail: null
     """
 
   assert(read(descriptor[AppConfig] from getSource(validConfig2)) == Right(AppConfig("1", None)))
@@ -44,7 +39,7 @@ object OptionalExample extends App {
   val invalidConfig =
     """
        jobName: 1
-       hello: {
+       detail: {
          x : 1
        }
     """
@@ -61,4 +56,7 @@ object OptionalExample extends App {
      ║ Details: optional value, value of type string
      ▼
      */
+
+  private def getSource(str: String): ConfigSource =
+    TypesafeConfigSource.fromHoconString(str).loadOrThrow
 }
