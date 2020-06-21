@@ -64,7 +64,7 @@ object ReadErrorsTestUtils {
   )
 
   val complexErrorsPrettyPrint =
-    """ReadError failed.
+    """ReadError:
       |╥
       |╠══╦══╦══╦══╦══╦══╗
       |║  ║  ║  ║  ║  ║  ║
