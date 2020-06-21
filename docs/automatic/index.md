@@ -158,7 +158,7 @@ This is because zio-config-magnolia failed to derive an instance of Descriptor f
 
 In order to provide implicit instances, following choices are there
 
-```
+```scala
  import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
 
  implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
@@ -173,7 +173,7 @@ Now `descriptor[Execution]` compiles.
 What if our custom type is complex enough that, parsing from a string would actually fail?
 The answer is, zio-config provides with all the functions that you need to handle errors.
 
-```scala mdoc:silent
+```scala
  import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
 
   implicit val descriptorO: Descriptor[ZonedDateTime] =
@@ -198,7 +198,7 @@ Giving descriptions is going to be helpful. While all the built-in types have do
 some description to custom types as well. For example, its goofd
 
 
-```scala mdoc:silent
+```scala
  import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
 
 
@@ -214,7 +214,7 @@ that describes about the config parameter.
 
 If the types are owned by us, then the best place to keep implicit instance is companion object.
 
-```
+```scala
 
 final case clas MyAwsRegion(value: AwsRegion)
 
