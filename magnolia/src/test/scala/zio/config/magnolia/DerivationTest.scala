@@ -45,8 +45,8 @@ object DerivationTest extends DefaultRunnableSpec {
       val customDerivation = new DeriveConfigDescriptor {
         override def mapClassName(name: String): String = name
         override def mapFieldName(name: String): String = name
-        override def wrapSealedTraitClasses: Boolean = true
-        override def wrapSealedTraits: Boolean = true
+        override def wrapSealedTraitClasses: Boolean    = true
+        override def wrapSealedTraits: Boolean          = true
       }
 
       @name("St")
@@ -108,8 +108,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Record(Map("a" -> PropertyTree.Sequence(List(loop(depth - 1)))))
         else Leaf("str")
 
-      val src = ConfigSource.fromPropertyTree(loop(5), "tree",               LeafForSequence.Valid
-      )
+      val src = ConfigSource.fromPropertyTree(loop(5), "tree", LeafForSequence.Valid)
 
       val res = read(descriptor[A5] from src)
 
@@ -123,8 +122,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Record(Map("a" -> PropertyTree.Sequence(List(loop(depth - 1)))))
         else Leaf("str")
 
-      val src = ConfigSource.fromPropertyTree(loop(5), "tree",               LeafForSequence.Valid
-      )
+      val src = ConfigSource.fromPropertyTree(loop(5), "tree", LeafForSequence.Valid)
 
       val res = read(descriptor[A5] from src)
 
@@ -142,8 +140,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) PropertyTree.Sequence(List(loop(depth - 1)))
         else Record(Map("a" -> PropertyTree.Sequence(List(Leaf("s")))))
 
-      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree",               LeafForSequence.Valid
-      )
+      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree", LeafForSequence.Valid)
 
       val res = read(descriptor[B] from src)
 
@@ -157,8 +154,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) PropertyTree.Sequence(List(loop(depth - 1)))
         else Record(Map("a" -> PropertyTree.Sequence(List(Leaf("s")))))
 
-      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree",               LeafForSequence.Valid
-      )
+      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree", LeafForSequence.Valid)
 
       val res = read(descriptor[B] from src)
 

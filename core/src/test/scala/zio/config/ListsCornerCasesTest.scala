@@ -165,7 +165,7 @@ object ListsCornerCasesTest
 
           val res = read(
             cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
+              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Invalid)
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))

@@ -157,7 +157,7 @@ object SetTest
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))),
               "tree",
-              LeafForSequence.Valid
+              LeafForSequence.Invalid
             )
           )
 

@@ -1,6 +1,6 @@
 package zio.config.magnolia
 
-import zio.config.PropertyTree.{Leaf, Record, Sequence}
+import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config.ConfigSource
 import zio.test.Assertion._
 import zio.test._
@@ -25,7 +25,11 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
       val res = write(descriptor[Cfg], Cfg("a"))
 
       assert(res)(isRight(equalTo(Record(Map("prefix_field_name" -> Leaf("a")))))) &&
-      assert(res.map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid)).flatMap(v => read(descriptor[Cfg] from v)))(
+      assert(
+        res
+          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+          .flatMap(v => read(descriptor[Cfg] from v))
+      )(
         isRight(equalTo(Cfg("a")))
       )
     },
@@ -63,15 +67,17 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       assert(res)(isRight(equalTo(expected))) &&
       assert(
-        res.map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid)).flatMap(v => read(descriptor[Outer] from v))
+        res
+          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+          .flatMap(v => read(descriptor[Outer] from v))
       )(
         isRight(equalTo(cfg))
       )
     },
     test("wrapped sealed hierarchy") {
       val wrappedSealedHierarchy = new DeriveConfigDescriptor {
-        override def wrapSealedTraitClasses: Boolean = true
-        override def wrapSealedTraits: Boolean = true
+        override def wrapSealedTraitClasses: Boolean    = true
+        override def wrapSealedTraits: Boolean          = true
         override def mapClassName(name: String): String = DerivationUtils.toSnakeCase(name)
         override def mapFieldName(name: String): String = name
       }
