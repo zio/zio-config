@@ -92,7 +92,7 @@ object CoproductSealedTraitExample extends App {
   assert(read(descriptor[Config] from cHoconSource) == Right(Config(C)))
   assert(
     read(descriptor[Config] from dHoconSource) == Right(
-      Config(D(Detail("ff", "ll", Region("strath", "syd"))))
+      Config(DetailsWrapped(Detail("ff", "ll", Region("strath", "syd"))))
     )
   )
 
