@@ -160,14 +160,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def list[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       nested(path)(list(desc))
 
-    /**
-     * If a single value need to be considered as a list, then use listFlexible.
-     * listFlexible needs to be explicitly specified by the user.
-     * @param path
-     * @param desc
-     * @tparam A
-     * @return
-     */
     def listFlexible[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       listStrict(path)(desc) orElse (desc.xmapEither[List[A]](value => Right(List(value)), _.headOption match {
         case Some(value) => Right(value)
