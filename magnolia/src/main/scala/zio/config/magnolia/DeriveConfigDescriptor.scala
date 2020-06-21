@@ -56,7 +56,7 @@ object NonRecursiveDerivation extends DeriveConfigDescriptor {
   def mapFieldName(name: String): String = name
 
   val wrapSealedTraitClasses: Boolean = true
-  val wrapSealedTraits: Boolean       = true
+  val wrapSealedTraits: Boolean       = false
 }
 
 trait DeriveConfigDescriptor { self =>

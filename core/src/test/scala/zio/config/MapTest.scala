@@ -21,7 +21,8 @@ object MapTest
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Record(Map("c" -> Leaf("d"), "f" -> Leaf("h"))))))
                 ),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
           )
 
@@ -36,7 +37,8 @@ object MapTest
             cCfg from ConfigSource
               .fromPropertyTree(
                 Record(Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Record(Map("c" -> Leaf("d"))))))),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
           )
 
@@ -53,7 +55,8 @@ object MapTest
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Sequence(List(Record(Map("c" -> Leaf("d"))))))))
                 ),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
           )
 
@@ -88,7 +91,8 @@ object MapTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -105,7 +109,8 @@ object MapTest
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Record(Map("k" -> Record(Map("hello" -> Sequence(Nil))))))
                 ),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -120,7 +125,7 @@ object MapTest
           val res =
             read(
               cCfg from ConfigSource
-                .fromPropertyTree(Record(Map("a" -> Record(Map("c" -> Leaf("a"))))), "tree")
+                .fromPropertyTree(Record(Map("a" -> Record(Map("c" -> Leaf("a"))))), "tree", LeafForSequence.Valid)
             )
 
           assert(res)(isRight(equalTo(Cfg(None))))
@@ -135,7 +140,8 @@ object MapTest
             read(
               cCfg from ConfigSource.fromPropertyTree(
                 Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -148,7 +154,7 @@ object MapTest
             .default(Map("x" -> "y", "z" -> "a")))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
+            cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", Map("x" -> "y", "z" -> "a")))))
@@ -162,7 +168,8 @@ object MapTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -181,7 +188,8 @@ object MapTest
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Record(Map("k" -> PropertyTree.Leaf("v"))))
                 ),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -200,7 +208,8 @@ object MapTest
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Record(Map("x" -> Leaf("v"))))
                 ),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -215,7 +224,7 @@ object MapTest
 
           val res = read(
             cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
+              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", Left("v")))))
@@ -229,7 +238,7 @@ object MapTest
 
           val res = read(
             cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
+              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
@@ -247,7 +256,8 @@ object MapTest
                   "b" -> Record(Map("b1" -> Leaf("one"), "b2"  -> Leaf("2")))
                 )
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
           val expected: ReadError[String] =
@@ -280,7 +290,8 @@ object MapTest
         test("key doesn't exist in map") {
           val src = ConfigSource.fromPropertyTree(
             PropertyTree.Record(Map("usr" -> PropertyTree.Leaf("v1"))),
-            "src"
+            "src",
+            LeafForSequence.Valid
           )
           val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("keyNotExists")).optional
           assert(read(optional from src))(isLeft(anything))
@@ -288,7 +299,8 @@ object MapTest
         test("when empty map") {
           val src = ConfigSource.fromPropertyTree(
             PropertyTree.empty,
-            "src"
+            "src",
+            LeafForSequence.Valid
           )
           val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("usr")).optional
           assert(read(optional from src))(isRight(isNone))

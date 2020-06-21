@@ -42,7 +42,7 @@ object TypesafeConfigSource {
       case Success(value) =>
         getPropertyTree(value) match {
           case Left(value)  => Left(value)
-          case Right(value) => Right(ConfigSource.fromPropertyTree(value, "hocon"))
+          case Right(value) => Right(ConfigSource.fromPropertyTree(value, "hocon", LeafForSequence.Invalid))
         }
     }
 

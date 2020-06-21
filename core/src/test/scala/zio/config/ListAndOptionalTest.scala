@@ -65,7 +65,8 @@ object ListAndOptionalTest
                   )
                 )
               ),
-              "src"
+              "src",
+              LeafForSequence.Valid
             )
 
           val actual = ZIO.fromEither(read(cListConfig from src))
@@ -87,7 +88,8 @@ object ListAndOptionalTest
           val src =
             ConfigSource.fromPropertyTree(
               Record(Map("list" -> PropertyTree.Sequence[String, String](Nil))),
-              "src"
+              "src",
+              LeafForSequence.Valid
             )
 
           val actual = ZIO.fromEither(read(cListConfig from src))
@@ -99,7 +101,8 @@ object ListAndOptionalTest
         test("key doesn't exist in list") {
           val src = ConfigSource.fromPropertyTree(
             PropertyTree.Sequence(List(Record(Map()))),
-            "src"
+            "src",
+            LeafForSequence.Valid
           )
           val optional: ConfigDescriptor[Option[List[String]]] = list(string("keyNotExists")).optional
           assert(read(optional from src))(isLeft(anything))
@@ -107,7 +110,8 @@ object ListAndOptionalTest
         test("when empty list") {
           val src = ConfigSource.fromPropertyTree(
             PropertyTree.empty,
-            "src"
+            "src",
+            LeafForSequence.Valid
           )
           val optional: ConfigDescriptor[Option[List[String]]] = list(string("usr")).optional
           assert(read(optional from src))(isRight(isNone))
@@ -115,7 +119,7 @@ object ListAndOptionalTest
         testM("list write read") {
           checkM(genListConfig) { p =>
             val actual = ZIO.fromEither(write(cListConfig, p).flatMap { tree =>
-              read(cListConfig from ConfigSource.fromPropertyTree(tree, "tree"))
+              read(cListConfig from ConfigSource.fromPropertyTree(tree, "tree", LeafForSequence.Valid))
             })
             assertM(actual)(equalTo(p))
           }
@@ -132,7 +136,8 @@ object ListAndOptionalTest
                 )
               )
             ),
-            "src"
+            "src",
+            LeafForSequence.Valid
           )
           case class AppConfig(branches: Option[List[Branch]])
           case class Branch(pattern: String, tag: Boolean)

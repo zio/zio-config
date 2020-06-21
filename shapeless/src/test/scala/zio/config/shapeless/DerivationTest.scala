@@ -1,6 +1,7 @@
 package zio.config.shapeless
 
-import zio.config._, ConfigDescriptorAdt._
+import zio.config._
+import ConfigDescriptorAdt._
 import zio.config.PropertyTree
 import zio.config.PropertyTree.Leaf
 import zio.config.PropertyTree.Record
@@ -41,6 +42,13 @@ object DerivationTest extends DefaultRunnableSpec {
       )
     },
     test("support name annotation") {
+      val customDerivation = new DeriveConfigDescriptor {
+        override def mapClassName(name: String): String = name
+        override def mapFieldName(name: String): String = name
+        override def wrapSealedTraitClasses: Boolean    = true
+        override def wrapSealedTraits: Boolean          = true
+      }
+
       @name("SealedTrait")
       sealed trait St
       @name("className")
@@ -60,7 +68,10 @@ object DerivationTest extends DefaultRunnableSpec {
         case XmapEither(config, _, _)  => collectPath(config)
       }
 
-      assert(collectPath(descriptor[St]))(equalTo("SealedTrait" :: "className" :: "otherName" :: Nil))
+      // IntelliJ will hide this, however it is required
+      import customDerivation._
+
+      assert(collectPath(customDerivation.descriptor[St]))(equalTo("SealedTrait" :: "className" :: "otherName" :: Nil))
     },
     test("support default value") {
       @describe("class desc")
@@ -97,7 +108,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Record(Map("a" -> PropertyTree.Sequence(List(loop(depth - 1)))))
         else Leaf("str")
 
-      val src = ConfigSource.fromPropertyTree(loop(5), "tree")
+      val src = ConfigSource.fromPropertyTree(loop(5), "tree", LeafForSequence.Valid)
 
       val res = read(descriptor[A5] from src)
 
@@ -111,7 +122,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Record(Map("a" -> PropertyTree.Sequence(List(loop(depth - 1)))))
         else Leaf("str")
 
-      val src = ConfigSource.fromPropertyTree(loop(5), "tree")
+      val src = ConfigSource.fromPropertyTree(loop(5), "tree", LeafForSequence.Valid)
 
       val res = read(descriptor[A5] from src)
 
@@ -129,7 +140,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) PropertyTree.Sequence(List(loop(depth - 1)))
         else Record(Map("a" -> PropertyTree.Sequence(List(Leaf("s")))))
 
-      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree")
+      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree", LeafForSequence.Valid)
 
       val res = read(descriptor[B] from src)
 
@@ -143,7 +154,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) PropertyTree.Sequence(List(loop(depth - 1)))
         else Record(Map("a" -> PropertyTree.Sequence(List(Leaf("s")))))
 
-      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree")
+      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree", LeafForSequence.Valid)
 
       val res = read(descriptor[B] from src)
 

@@ -59,7 +59,7 @@ object CollectAllExample extends App with EitherImpureOps {
 
   // Read it back from the wrtten tree
   assert(
-    read(configOfList from ConfigSource.fromPropertyTree(written, "tree")) == Right(
+    read(configOfList from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid)) == Right(
       ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
     )
   )

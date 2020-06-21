@@ -79,7 +79,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       OrElseEither(self, that)
 
     final def unsourced: ConfigDescriptor[A] =
-      self.updateSource(_ => ConfigSourceFunctions.empty)
+      self.updateSource(source => ConfigSourceFunctions.empty)
 
     final def updateSource(f: ConfigSource => ConfigSource): ConfigDescriptor[A] = {
       def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] = config match {
@@ -159,6 +159,20 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     def list[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       nested(path)(list(desc))
+
+    /**
+     * If a single value need to be considered as a list, then use listFlexible.
+     * listFlexible needs to be explicitly specified by the user.
+     * @param path
+     * @param desc
+     * @tparam A
+     * @return
+     */
+    def listFlexible[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
+      listStrict(path)(desc) orElse (desc.xmapEither[List[A]](value => Right(List(value)), _.headOption match {
+        case Some(value) => Right(value)
+        case None        => Left("Cannot write an empty list back")
+      }))
 
     def listStrict[A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       Sequence(ConfigSourceFunctions.empty, desc) ?? "list"

@@ -3,7 +3,7 @@ package zio.config
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config.ReadError.Step.{ Index, Key }
-import zio.config.ReadError.{ AndErrors, ConversionError, ForceSeverity, FormatError, MissingValue, OrErrors }
+import zio.config.ReadError.{ AndErrors, ConversionError, ForceSeverity, FormatError, MissingValue }
 import zio.test.Assertion._
 import zio.test._
 
@@ -18,7 +18,8 @@ object SetTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -33,7 +34,8 @@ object SetTest
             read(
               cCfg from ConfigSource.fromPropertyTree(
                 Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Sequence(Nil) :: Nil))),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -48,7 +50,8 @@ object SetTest
             read(
               cCfg from ConfigSource.fromPropertyTree(
                 Record(Map("a" -> Leaf("sa"))),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -63,7 +66,8 @@ object SetTest
             read(
               cCfg from ConfigSource.fromPropertyTree(
                 Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -77,7 +81,8 @@ object SetTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -91,7 +96,8 @@ object SetTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -105,7 +111,8 @@ object SetTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -119,7 +126,8 @@ object SetTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -133,7 +141,8 @@ object SetTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -147,7 +156,8 @@ object SetTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -161,7 +171,8 @@ object SetTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Nil))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -185,7 +196,8 @@ object SetTest
                   )
                 )
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -201,7 +213,8 @@ object SetTest
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Record[String, String](Map.empty) :: Sequence(Nil) :: Nil))
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -217,7 +230,8 @@ object SetTest
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Leaf("v1") :: Nil))
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -246,7 +260,8 @@ object SetTest
                   )
                 )
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -291,7 +306,8 @@ object SetTest
                   "b" -> Sequence(Leaf("2") :: Leaf("one") :: Leaf("2") :: Nil)
                 )
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
           val expected: ReadError[String] =
@@ -352,7 +368,8 @@ object SetTest
                   "b" -> Sequence(Leaf("2") :: Leaf("one") :: Leaf("2") :: Nil)
                 )
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
           val expected: ReadError[String] =

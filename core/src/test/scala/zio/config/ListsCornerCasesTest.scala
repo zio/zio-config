@@ -18,7 +18,8 @@ object ListsCornerCasesTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -35,7 +36,8 @@ object ListsCornerCasesTest
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Sequence(Sequence(Nil) :: Nil))
                 ),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -50,7 +52,7 @@ object ListsCornerCasesTest
           val res =
             read(
               cCfg from ConfigSource
-                .fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
+                .fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
             )
 
           assert(res)(isRight(equalTo(Cfg("sa", None))))
@@ -65,7 +67,8 @@ object ListsCornerCasesTest
             read(
               cCfg from ConfigSource.fromPropertyTree(
                 Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -78,7 +81,7 @@ object ListsCornerCasesTest
             .default("x" :: Nil))(Cfg, Cfg.unapply)
 
           val res = read(
-            cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
+            cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", "x" :: Nil))))
@@ -92,7 +95,8 @@ object ListsCornerCasesTest
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -111,7 +115,8 @@ object ListsCornerCasesTest
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))
                 ),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -130,7 +135,8 @@ object ListsCornerCasesTest
                 Record(
                   Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))
                 ),
-                "tree"
+                "tree",
+                LeafForSequence.Valid
               )
             )
 
@@ -145,7 +151,7 @@ object ListsCornerCasesTest
 
           val res = read(
             cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
+              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", Left("v")))))
@@ -159,7 +165,7 @@ object ListsCornerCasesTest
 
           val res = read(
             cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
+              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
           )
 
           assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
@@ -177,7 +183,8 @@ object ListsCornerCasesTest
                   "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Nil)
                 )
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -208,7 +215,8 @@ object ListsCornerCasesTest
                   )
                 )
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -234,7 +242,8 @@ object ListsCornerCasesTest
                   )
                 )
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
 
@@ -253,7 +262,8 @@ object ListsCornerCasesTest
                   "b" -> Sequence(Leaf("one") :: Leaf("2") :: Nil)
                 )
               ),
-              "tree"
+              "tree",
+              LeafForSequence.Valid
             )
           )
           val expected: ReadError[String] =

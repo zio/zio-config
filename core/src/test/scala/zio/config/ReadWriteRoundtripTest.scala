@@ -16,7 +16,9 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cId, p))
-                reread  <- ZIO.fromEither(read(cId from ConfigSource.fromPropertyTree(written, "test")))
+                reread <- ZIO.fromEither(
+                           read(cId from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -27,7 +29,9 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cDbUrl, p))
-                reread  <- ZIO.fromEither(read(cDbUrl from ConfigSource.fromPropertyTree(written, "test")))
+                reread <- ZIO.fromEither(
+                           read(cDbUrl from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -38,7 +42,11 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cEnterpriseAuth, p))
-                reread  <- ZIO.fromEither(read(cEnterpriseAuth from ConfigSource.fromPropertyTree(written, "test")))
+                reread <- ZIO.fromEither(
+                           read(
+                             cEnterpriseAuth from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                           )
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -49,7 +57,11 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cNestedConfig, p))
-                reread  <- ZIO.fromEither(read(cNestedConfig from ConfigSource.fromPropertyTree(written, "test")))
+                reread <- ZIO.fromEither(
+                           read(
+                             cNestedConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                           )
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -60,7 +72,9 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cSingleField, p))
-                reread  <- ZIO.fromEither(read(cSingleField from ConfigSource.fromPropertyTree(written, "test")))
+                reread <- ZIO.fromEither(
+                           read(cSingleField from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -71,7 +85,11 @@ object ReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cCoproductConfig, p))
-                reread  <- ZIO.fromEither(read(cCoproductConfig from ConfigSource.fromPropertyTree(written, "test")))
+                reread <- ZIO.fromEither(
+                           read(
+                             cCoproductConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                           )
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))

@@ -115,7 +115,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           val result: List[(K, Res[B])] = values.toList.zipWithIndex.map {
             case ((k, tree), _) =>
               val source: ConfigSource =
-                getConfigSource(cfg.source.names, tree.getPath)
+                getConfigSource(cfg.source.names, tree.getPath, cfg.source.leafForSequence)
 
               (k, loopAny(path, Nil, cfg.config.updateSource(_ => source), descriptions))
           }
@@ -132,27 +132,36 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       keys: List[K],
       cfg: Sequence[B],
       descriptions: List[String]
-    ): Res[List[B]] =
-      cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Leaf(_)   => formatError(path, "Leaf", "Sequence")
-        case PropertyTree.Record(_) => formatError(path, "Record", "Sequence")
-        case PropertyTree.Empty     => Left(ReadError.MissingValue(path.reverse, descriptions))
-        case PropertyTree.Sequence(values) =>
-          val list = values.zipWithIndex.map {
-            case (tree, idx) =>
-              val source =
-                getConfigSource(cfg.source.names, tree.getPath)
-              loopAny(
-                Step.Index(idx) :: path,
-                Nil,
-                cfg.config.updateSource(_ => source),
-                descriptions
-              )
-          }
-          seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list).swap
-            .map(errs => ReadError.ForceSeverity(AndErrors(errs), treatAsMissing = false))
-            .swap
+    ): Res[List[B]] = {
+      def fromTrees(values: List[PropertyTree[K, V]]) = {
+        val list = values.zipWithIndex.map {
+          case (tree, idx) =>
+            val source =
+              getConfigSource(cfg.source.names, tree.getPath, cfg.source.leafForSequence)
+            loopAny(
+              Step.Index(idx) :: path,
+              Nil,
+              cfg.config.updateSource(_ => source),
+              descriptions
+            )
+        }
+        seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list).swap
+          .map(errs => ReadError.ForceSeverity(AndErrors(errs), treatAsMissing = false))
+          .swap
       }
+
+      cfg.source.getConfigValue(keys.reverse) match {
+        case leaf @ PropertyTree.Leaf(_) =>
+          cfg.source.leafForSequence match {
+            case LeafForSequence.Invalid => formatError(path, "Leaf", "Sequence")
+            case LeafForSequence.Valid   => fromTrees(List(leaf))
+          }
+
+        case PropertyTree.Record(_)        => formatError(path, "Record", "Sequence")
+        case PropertyTree.Empty            => Left(ReadError.MissingValue(path.reverse, descriptions))
+        case PropertyTree.Sequence(values) => fromTrees(values)
+      }
+    }
 
     def loopAny[B](
       path: List[Step[K]],

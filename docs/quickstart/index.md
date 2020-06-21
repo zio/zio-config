@@ -234,6 +234,8 @@ Here is a complete example:
 It says, fix `FormatError` related to path "var1" in the source. For the next error, either provide var2 or var3
 to fix `MissingValue` error.
 
+**Note**: Use prettyPrint method to avoid having to avoid seeing highly nested ReadErrors, that can be difficult to read.
+
 ## Config is your ZIO environment
 
 Take a look at the below example that shows an entire mini app.

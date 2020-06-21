@@ -21,11 +21,13 @@ trait ConfigSourceModule extends KeyValueModule {
   trait ConfigSource { self =>
     def names: Set[ConfigSourceName]
     def getConfigValue: List[K] => PropertyTree[K, V]
+    def leafForSequence: LeafForSequence
 
     def orElse(that: => ConfigSource): ConfigSource =
       getConfigSource(
         self.names ++ that.names,
-        path => self.getConfigValue(path).getOrElse(that.getConfigValue(path))
+        path => self.getConfigValue(path).getOrElse(that.getConfigValue(path)),
+        that.leafForSequence
       )
 
     def <>(that: => ConfigSource): ConfigSource = self orElse that
@@ -33,16 +35,25 @@ trait ConfigSourceModule extends KeyValueModule {
 
   protected def getConfigSource(
     sourceNames: Set[ConfigSourceName],
-    getTree: List[K] => PropertyTree[K, V]
+    getTree: List[K] => PropertyTree[K, V],
+    isLeafValidSequence: LeafForSequence
   ): ConfigSource =
-    new ConfigSource {
+    new ConfigSource { self =>
       def names: Set[ConfigSourceName]                  = sourceNames
       def getConfigValue: List[K] => PropertyTree[K, V] = getTree
+      def leafForSequence: LeafForSequence              = isLeafValidSequence
     }
 
+  sealed trait LeafForSequence
+
+  object LeafForSequence {
+    case object Invalid extends LeafForSequence
+    case object Valid   extends LeafForSequence
+  }
+
   trait ConfigSourceFunctions {
-    def empty: ConfigSource =
-      getConfigSource(Set.empty, _ => PropertyTree.empty)
+    val empty: ConfigSource =
+      getConfigSource(Set.empty, _ => PropertyTree.empty, LeafForSequence.Valid)
 
     protected def dropEmpty(tree: PropertyTree[K, V]): PropertyTree[K, V] =
       if (tree.isEmpty) PropertyTree.Empty
@@ -79,17 +90,28 @@ trait ConfigSourceModule extends KeyValueModule {
     ): List[PropertyTree[K, V]] =
       trees.map(unwrapSingletonLists(_))
 
+    /**
+     *
+     * To obtain a config source directly from a property tree.
+     *
+     * @param tree            : PropertyTree
+     * @param source          : Label the source with a name
+     * @param leafForSequence : Should a single value wrapped in Leaf be considered as Sequence
+     * @return
+     */
     def fromPropertyTree(
       tree: PropertyTree[K, V],
-      source: String
+      source: String,
+      leafForSequence: LeafForSequence
     ): ConfigSource =
-      getConfigSource(Set(ConfigSourceName(source)), tree.getPath)
+      getConfigSource(Set(ConfigSourceName(source)), tree.getPath, leafForSequence)
 
     protected def fromPropertyTrees(
       trees: Iterable[PropertyTree[K, V]],
-      source: String
+      source: String,
+      leafForSequence: LeafForSequence
     ): ConfigSource =
-      mergeAll(trees.map(fromPropertyTree(_, source)))
+      mergeAll(trees.map(fromPropertyTree(_, source, leafForSequence)))
 
     private[config] def mergeAll(
       sources: Iterable[ConfigSource]
@@ -155,7 +177,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
           keyDelimiter,
           valueDelimiter
         ),
-        CommandLineArguments
+        CommandLineArguments,
+        LeafForSequence.Valid
       )
 
     /**
@@ -178,21 +201,27 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
+     *
+     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromMap(
       constantMap: Map[String, String],
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None
+      valueDelimiter: Option[Char] = None,
+      leafForSequence: LeafForSequence = LeafForSequence.Valid
     ): ConfigSource =
       fromMapInternal(constantMap)(
         x => {
-          val listOfValues =
+          val listOfValues = {
             valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
+          }
+
           ::(listOfValues.head, listOfValues.tail)
         },
         keyDelimiter,
-        ConfigSourceName(source)
+        ConfigSourceName(source),
+        leafForSequence
       )
 
     /**
@@ -213,13 +242,16 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
+     *
+     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromMultiMap(
       map: Map[String, ::[String]],
       source: String = "constant",
-      keyDelimiter: Option[Char] = None
+      keyDelimiter: Option[Char] = None,
+      leafForSequence: LeafForSequence = LeafForSequence.Valid
     ): ConfigSource =
-      fromMapInternal(map)(identity, keyDelimiter, ConfigSourceName(source))
+      fromMapInternal(map)(identity, keyDelimiter, ConfigSourceName(source), leafForSequence)
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -241,12 +273,15 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
+     *
+     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromProperties(
       property: ju.Properties,
       source: String = "properties",
       keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None
+      valueDelimiter: Option[Char] = None,
+      leafForSequence: LeafForSequence = LeafForSequence.Valid
     ): ConfigSource = {
       val mapString = property
         .stringPropertyNames()
@@ -260,7 +295,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
           dropEmpty(
             PropertyTree.fromStringMap(mapString, keyDelimiter, valueDelimiter)
           )
-        ).map(tree => fromPropertyTree(tree, source))
+        ).map(tree => fromPropertyTree(tree, source, leafForSequence))
       )
     }
 
@@ -284,11 +319,14 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
+     *
+     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromPropertiesFile[A](
       filePath: String,
       keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None
+      valueDelimiter: Option[Char] = None,
+      leafForSequence: LeafForSequence = LeafForSequence.Valid
     ): Task[ConfigSource] =
       for {
         properties <- ZIO.bracket(
@@ -304,7 +342,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         properties,
         filePath,
         keyDelimiter,
-        valueDelimiter
+        valueDelimiter,
+        leafForSequence
       )
 
     def fromSystemEnv: UIO[ConfigSource] =
@@ -335,12 +374,13 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
      */
     def fromSystemEnv(
       keyDelimiter: Option[Char],
-      valueDelimiter: Option[Char]
+      valueDelimiter: Option[Char],
+      leafForSequence: LeafForSequence = LeafForSequence.Valid
     ): UIO[ConfigSource] =
       UIO
         .effectTotal(sys.env)
         .map(
-          map => fromMap(map, SystemEnvironment, keyDelimiter, valueDelimiter)
+          map => fromMap(map, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
         )
 
     def fromSystemProperties: UIO[ConfigSource] =
@@ -369,7 +409,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
      */
     def fromSystemProperties(
       keyDelimiter: Option[Char],
-      valueDelimiter: Option[Char]
+      valueDelimiter: Option[Char],
+      leafForSequence: LeafForSequence = LeafForSequence.Valid
     ): UIO[ConfigSource] =
       for {
         systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
@@ -377,13 +418,15 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         property = systemProperties,
         source = SystemProperties,
         keyDelimiter = keyDelimiter,
-        valueDelimiter = valueDelimiter
+        valueDelimiter = valueDelimiter,
+        leafForSequence = leafForSequence
       )
 
     private def fromMapInternal[A](map: Map[String, A])(
       f: A => ::[String],
       keyDelimiter: Option[Char],
-      source: ConfigSourceName
+      source: ConfigSourceName,
+      leafForSequence: LeafForSequence
     ): ConfigSource =
       fromPropertyTrees(
         unwrapSingletonLists(dropEmpty(unflatten(map.map(tuple => {
@@ -394,7 +437,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
           }
           vectorOfKeys -> f(tuple._2)
         })))),
-        source.name
+        source.name,
+        leafForSequence
       )
 
     private[config] def getPropertyTreeFromArgs(
