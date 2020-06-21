@@ -45,7 +45,7 @@ object OptionalExample extends App with EitherImpureOps {
     """
 
   assert(read(descriptor[AppConfig] from getSource(invalidConfig)).isLeft)
-    /*
+  /*
      ╥
      ╠─MissingValue
      ║ path: hello.y
@@ -55,7 +55,7 @@ object OptionalExample extends App with EitherImpureOps {
      ║ path: hello.y
      ║ Details: optional value, value of type string
      ▼
-     */
+   */
 
   private def getSource(str: String): ConfigSource =
     TypesafeConfigSource.fromHoconString(str).loadOrThrow

@@ -19,7 +19,7 @@ object ChangeKeys extends App with EitherImpureOps {
   // Default behaviour, and hence no mapKey
   val camelCaseResult =
     read(
-      descriptor[MyConfig] from(TypesafeConfigSource.fromHoconString(camelCaseConfig).loadOrThrow)
+      descriptor[MyConfig] from (TypesafeConfigSource.fromHoconString(camelCaseConfig).loadOrThrow)
     )
 
   assert(camelCaseResult == Right(MyConfig("abcd", "us-east")))
@@ -34,7 +34,7 @@ object ChangeKeys extends App with EitherImpureOps {
 
   val kebabCaseResult =
     read(
-      descriptor[MyConfig].mapKey(camelToKebab) from(TypesafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow)
+      descriptor[MyConfig].mapKey(camelToKebab) from (TypesafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow)
     )
 
   assert(kebabCaseResult == Right(MyConfig("abcd", "us-east")))
@@ -47,9 +47,8 @@ object ChangeKeys extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-
   val snakeCaseResult =
     read(
-      descriptor[MyConfig].mapKey(camelToSnake) from(TypesafeConfigSource.fromHoconString(snakeCaseConfig).loadOrThrow)
+      descriptor[MyConfig].mapKey(camelToSnake) from (TypesafeConfigSource.fromHoconString(snakeCaseConfig).loadOrThrow)
     )
 }

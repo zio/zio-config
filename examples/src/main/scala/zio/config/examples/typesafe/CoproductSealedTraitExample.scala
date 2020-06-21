@@ -9,9 +9,9 @@ object CoproductSealedTraitExample extends App with EitherImpureOps {
   sealed trait X
 
   object X {
-    case object A extends X
-    case object B extends X
-    case object C extends X
+    case object A                extends X
+    case object B                extends X
+    case object C                extends X
     case class D(detail: Detail) extends X
 
     case class Detail(firstName: String, lastName: String, region: Region)

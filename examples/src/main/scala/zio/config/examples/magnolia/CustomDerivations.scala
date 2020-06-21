@@ -47,10 +47,10 @@ object CustomDerivations extends App {
   // we couldn't have a companion object to place this implicit, and hence placed
   // globally for the automatic derivation to work.
   implicit val descriptorOfZonedDateTime: Descriptor[ZonedDateTime] =
-  Descriptor[String]
-    .xmapEitherELeftPartial(
-      x => Try(ZonedDateTime.parse(x)).toEither
-    )(_.toString)(_.getMessage) ?? "time in zoned date time"
+    Descriptor[String]
+      .xmapEitherELeftPartial(
+        x => Try(ZonedDateTime.parse(x)).toEither
+      )(_.toString)(_.getMessage) ?? "time in zoned date time"
 
   val appConfigDesc =
     descriptor[AppConfig]
