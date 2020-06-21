@@ -31,6 +31,8 @@ object CoproductSealedTraitExample extends App {
      case class Region(suburb: String, city: String)
    }
  
+   import X._
+
    /**
     * We use automatic derivation here.
     * As an example, In order to specify, {{{ x = a }}} in the source where `a`
@@ -85,12 +87,12 @@ object CoproductSealedTraitExample extends App {
       )
       .loadOrThrow
 
-  assert(read(descriptor[Config] from aHoconSource) == Right(A))
-  assert(read(descriptor[Config] from bHoconSource) == Right(B))
-  assert(read(descriptor[Config] from cHoconSource) == Right(C))
+  assert(read(descriptor[Config] from aHoconSource) == Right(Config(A)))
+  assert(read(descriptor[Config] from bHoconSource) == Right(Config(B)))
+  assert(read(descriptor[Config] from cHoconSource) == Right(Config(C)))
   assert(
     read(descriptor[Config] from dHoconSource) == Right(
-      D(Detail("ff", "ll", Region("strath", "syd")))
+      Config(D(Detail("ff", "ll", Region("strath", "syd"))))
     )
   )
 
