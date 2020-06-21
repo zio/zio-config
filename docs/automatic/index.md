@@ -130,7 +130,7 @@ case class DbUrl(value: String)
 
 This will be equivalent to specifying:
 
-```scala
+```
    (string("region") |@| string("dburl").xmap(DbUrl, _.value))(Aws.apply, Aws.unapply) ?? "This config is about aws"
 ```
 
@@ -143,7 +143,7 @@ Derivation exists only in zio-config-magnolia (or zio-config-shapeless) package.
 As an example, given below is a case class where automatic derivation won't work, and result in a compile time error:
 Assume that, `AwsRegion` is a type that comes from AWS SDK.
 
-```scala
+```
   import java.time.ZonedDateTime
 
   case class Execution(time: AwsRegion, id: Int)
@@ -151,7 +151,7 @@ Assume that, `AwsRegion` is a type that comes from AWS SDK.
 
 In this case, `descriptor[Execution]` will give us the following descriptive compile error.
 
-```scala
+```
 magnolia: could not find Descriptor.Typeclass for type <outside.library.package>.AwsRegion
   in parameter 'time' of product type <your.packagename>.Execution
 ```
@@ -160,7 +160,7 @@ This is because zio-config-magnolia failed to derive an instance of Descriptor f
 
 In order to provide implicit instances, following choices are there
 
-```scala
+```
  import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
 
  implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
@@ -175,7 +175,7 @@ Now `descriptor[Execution]` compiles.
 What if our custom type is complex enough that, parsing from a string would actually fail?
 The answer is, zio-config provides with all the functions that you need to handle errors.
 
-```scala
+```
  import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
 
   implicit val descriptorO: Descriptor[ZonedDateTime] =
@@ -200,7 +200,7 @@ Giving descriptions is going to be helpful. While all the built-in types have do
 some description to custom types as well. For example, its goofd
 
 
-```scala
+```
  import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
 
 
@@ -216,7 +216,7 @@ that describes about the config parameter.
 
 If the types are owned by us, then the best place to keep implicit instance is companion object.
 
-```scala
+```
 
 final case clas MyAwsRegion(value: AwsRegion)
 
