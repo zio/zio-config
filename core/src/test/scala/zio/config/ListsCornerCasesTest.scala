@@ -164,18 +164,6 @@ object ListsCornerCasesTest
 
           assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
         },
-        test("read scalar as list") {
-          case class Cfg(a: String, b: List[String])
-
-          val cCfg = (string("a") |@| list("b")(string))(Cfg, Cfg.unapply)
-
-          val res = read(
-            cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
-          )
-
-          assert(res)(isRight(equalTo(Cfg("sa", "v" :: Nil))))
-        },
         test("read list as scalar") {
           case class Cfg(a: String, b: String)
 

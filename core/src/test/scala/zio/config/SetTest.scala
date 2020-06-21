@@ -153,20 +153,6 @@ object SetTest
 
           assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
         },
-        test("read scalar as set") {
-          case class Cfg(a: String, b: Set[String])
-
-          val cCfg = (string("a") |@| set("b")(string))(Cfg, Cfg.unapply)
-
-          val res = read(
-            cCfg from ConfigSource.fromPropertyTree(
-              Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))),
-              "tree"
-            )
-          )
-
-          assert(res)(isRight(equalTo(Cfg("sa", Set("v")))))
-        },
         test("read set as scalar") {
           case class Cfg(a: String, b: String)
 
@@ -235,7 +221,9 @@ object SetTest
             )
           )
 
-          assert(res)(isLeft(equalTo(ConversionError[String](Key("b") :: Nil, "Duplicated values found"))))
+          assert(res)(
+            isLeft(equalTo(ForceSeverity(ConversionError[String](Key("b") :: Nil, "Duplicated values found"), false)))
+          )
         },
         test("fails if nested set contains duplicates") {
           case class Cfg(a: String, b: Set[Set[String]])
@@ -262,23 +250,15 @@ object SetTest
             )
           )
 
-          val expected: ReadError[String] = OrErrors(
-            List(
+          val expected: ReadError[String] =
+            ForceSeverity(
               ForceSeverity(
                 AndErrors(List(ConversionError(List(Key("b"), Index(1)), "Duplicated values found"))),
                 false
               ),
-              ForceSeverity(
-                AndErrors(
-                  List(
-                    MissingValue(List(Key("b"), Index(1), Key("c"))),
-                    MissingValue(List(Key("b"), Index(0), Key("c")))
-                  )
-                ),
-                false
-              )
+              false
             )
-          )
+
           assert(res)(isLeft(equalTo(expected)))
         },
         test("accumulates all errors") {
@@ -381,8 +361,8 @@ object SetTest
                 ForceSeverity(
                   AndErrors(
                     List(
-                      MissingValue(List(Key("a"), Index(3), Key("a1"))),
-                      MissingValue(List(Key("a"), Index(2), Key("a2"))),
+                      MissingValue(List(Key("a"), Index(3), Key("a1")), List("list", "value of type boolean")),
+                      MissingValue(List(Key("a"), Index(2), Key("a2")), List("list", "value of type int")),
                       FormatError(
                         List(Key("a"), Index(0), Key("a2")),
                         "Provided value is lorem ipsum, expecting the type int"
