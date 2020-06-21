@@ -424,39 +424,19 @@ However the following configs will work, as it clearly indicate it is a `List` w
 
 ```
 
-If the source is a map given below (for example, in system environment)
+If the source is a map given below (for example, in system environment), then it succeeds given any delimiter
+as it contains only one single value.
 
 ```scala
 export key="value"
 ``` 
 
-then it fails, that it expects a Sequence but retrieved a Leaf. However, given `valueDelimiter=Some(',')` the following config will work
+Given `valueDelimiter=Some(',')` the following config will work and we are able to retrieve List(value1, value2)
 
 ```scala
 export key="value1, value2"
 
 ```
-
-
-However, say users can end up accidentally giving `{key : value}` instead of `{key : [value]}` then may be consider defining this
-behaviour in the config,
-
-
-```scala
-case class Config(key: Either[List[String], String]) 
-```
-
-With the above config, it tries to retrieve it as List and if it fails, 
-Logically, this was done internally by the library in earlier versions, resulting in confusions. This feature has been removed.
-
-With the above Config, a Hocon source can be 
-
-`Key : “value”` or `key : [“value”, “value2”]`. As mentioned before, `key: [“value”]` will also work and will be retrieved as List[String] 
-
-If source is system env
-
-`Key: “value”` will result `Config(Right(“value”))` and `key: “value1, value2”` will be retrieved as `Config(Left(List(“value1”, “value2”)))`
-
 
 ### A Production application config using command line arguments (demo)
 
