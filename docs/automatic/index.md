@@ -25,7 +25,7 @@ object CoproductSealedTraitExample extends App {
      case object A extends X
      case object B extends X
      case object C extends X
-     case class D(detail: Detail) extends X
+     case class  DetailsWrapped(detail: Detail) extends X
      
      case class Detail(firstName: String, lastName: String, region: Region)
      case class Region(suburb: String, city: String)
@@ -70,7 +70,7 @@ object CoproductSealedTraitExample extends App {
     TypesafeConfigSource
       .fromHoconString(
         s"""
-           | d {
+           | details_wrapped {
            |  detail  {
            |    firstName : ff
            |    lastName  : ll
@@ -105,6 +105,10 @@ object CoproductSealedTraitExample extends App {
 }
 
 ```
+
+Please note that, by default the class names in the sealed trait terms will be mapped to their names converted
+to snake_case in the config. For example DetailsWrapped in scala code is "details_wrapped" in HOCON.
+This is overridable.
 
 There are various ways in which you can customise the derivation of sealed traits. 
 This is a bit involving, and more documentations will be provided soon.
