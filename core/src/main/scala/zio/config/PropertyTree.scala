@@ -19,7 +19,11 @@ sealed trait PropertyTree[+K, +V] { self =>
         case Empty           => acc
         case Sequence(value) => value.foldLeft(acc)((acc, propertyTree) => go(key, propertyTree, acc))
         case Leaf(v) =>
-          acc.get(key).fold(acc.updated(key, ::(v, Nil)))(value => acc.updated(key, ::(value.head, value.tail :+ v)))
+          acc
+            .get(key)
+            .fold[Map[Vector[K1], ::[V1]]](acc.updated(key, ::(v, Nil)))(
+              value => acc.updated(key, ::(value.head, value.tail :+ v))
+            )
         case Record(value) => value.flatMap(t => go(key :+ t._1, t._2, acc))
       }
 

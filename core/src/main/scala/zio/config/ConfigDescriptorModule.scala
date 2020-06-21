@@ -79,7 +79,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       OrElseEither(self, that)
 
     final def unsourced: ConfigDescriptor[A] =
-      self.updateSource(source => ConfigSourceFunctions.empty)
+      self.updateSource(_ => ConfigSourceFunctions.empty)
 
     final def updateSource(f: ConfigSource => ConfigSource): ConfigDescriptor[A] = {
       def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] = config match {
