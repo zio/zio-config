@@ -142,28 +142,6 @@ trait DeriveConfigDescriptor { self =>
     desc.optional
 
   case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
-
-    /**
-     * A set of helpers to do custom implicit derivations, that is
-     * a subset of functionalities provided for ConfigDescriptor.
-     *
-     * {{{
-     *   implicit val awsRegionDesc: Descriptor[AmazonRegion] =
-     *     Descriptor[String].xmap(Region.fromString, _.value)
-     * }}}
-     *
-     * Another example where only Left fails, but with a different error type.
-     * In this case, it's better to give proper descriptive error message.
-     * Example:
-     *
-     *  {{{
-     *     implicit val descriptorO: Descriptor[ZonedDateTime] =
-     *        Descriptor[String].xmapEitherELeftPartial(
-     *          x => Try (ZonedDateTime.parse(x)).toEither)(_.toString)(
-     *          t => s"Cannot parse zoned date time. ${t.getMessage}"
-     *        )
-     *  }}}
-     */
     final def ??(description: String): Descriptor[T] =
       describe(description)
 
