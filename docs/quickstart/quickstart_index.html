@@ -183,7 +183,50 @@ write(myConfig, <span class="hljs-type">MyConfig</span>(<span class="hljs-string
 <span class="hljs-comment">// Generates documentation showing value of each parameter</span>
 
 </code></pre>
-<p>More details in <a href="/zio-config/docs/configdescriptor/configdescriptor_index">here</a>.</p>
+<h3><a class="anchor" aria-hidden="true" id="accumulating-all-errors"></a><a href="#accumulating-all-errors" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Accumulating all errors</h3>
+<p>For any misconfiguration, the ReadError collects all of them with proper semantics: <code>AndErrors</code> and <code>OrErrors</code>.
+Instead of directly printing misconfigurations, the <code>ReadError.prettyPrint</code> shows the path, detail of collected misconfigurations.</p>
+<ol>
+<li>All misconfigurations of <code>AndErrors</code> are put in parallel lines.</li>
+</ol>
+<pre><code class="hljs css language-text">╥
+╠══╗ 
+║  ║ FormatError
+║ MissingValue
+</code></pre>
+<ol start="2">
+<li><code>OrErrors</code> are in the same line which indicates a sequential misconfiguration</li>
+</ol>
+<pre><code class="hljs css language-text">╥
+╠MissingValue
+║
+╠FormatError
+</code></pre>
+<p>Here is a complete example:</p>
+<pre><code class="hljs css language-text">   ReadError:
+   ╥
+   ╠══╦══╗
+   ║  ║  ║
+   ║  ║  ╠─MissingValue
+   ║  ║  ║ path: var2
+   ║  ║  ║ Details: value of type string
+   ║  ║  ║ 
+   ║  ║  ╠─MissingValue path: envvar3
+   ║  ║  ║ path: var3
+   ║  ║  ║ Details: value of type string
+   ║  ║  ║ 
+   ║  ║  ▼
+   ║  ║
+   ║  ╠─FormatError
+   ║  ║ cause: Provided value is wrong, expecting the type int
+   ║  ║ path: var1
+   ║  ▼
+   ▼
+
+</code></pre>
+<p>It says, fix <code>FormatError</code> related to path &quot;var1&quot; in the source. For the next error, either provide var2 or var3
+to fix <code>MissingValue</code> error.</p>
+<p><strong>Note</strong>: Use prettyPrint method to avoid having to avoid seeing highly nested ReadErrors, that can be difficult to read.</p>
 <h2><a class="anchor" aria-hidden="true" id="config-is-your-zio-environment"></a><a href="#config-is-your-zio-environment" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Config is your ZIO environment</h2>
 <p>Take a look at the below example that shows an entire mini app.
 This will tell you how to consider configuration as just a part of <code>Environment</code> of your ZIO functions across your application.</p>
@@ -235,4 +278,4 @@ This will tell you how to consider configuration as just a part of <code>Environ
 cfg.narrow(_.api) &gt;&gt;&gt; endpoint <span class="hljs-comment">// narrowing down to a proper config subtree</span>
 cfg.narrow(_.db) &gt;&gt;&gt; repository
 </code></pre>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 4/25/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-next button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="function-name-prevnext">Creation of ConfigDescriptor</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#adding-dependency">Adding dependency</a></li><li><a href="#describe-the-config-by-hand">Describe the config by hand</a></li><li><a href="#fully-automated-config-description">Fully automated Config Description</a></li><li><a href="#read-config-from-various-sources">Read config from various sources</a></li><li><a href="#how-to-use-config-descriptor">How to use config descriptor</a><ul class="toc-headings"><li><a href="#readers-from-configdescriptor">Readers from configdescriptor</a></li><li><a href="#documentations-using-configdescriptor">Documentations using configdescriptor</a></li><li><a href="#writers-from-configdescriptor">Writers from configdescriptor</a></li><li><a href="#report-generation-from-configdescriptor">Report generation from configdescriptor</a></li></ul></li><li><a href="#config-is-your-zio-environment">Config is your ZIO environment</a><ul class="toc-headings"><li><a href="#separation-of-concerns-with-narrow">Separation of concerns with <code>narrow</code></a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 6/22/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-next button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="function-name-prevnext">Creation of ConfigDescriptor</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#adding-dependency">Adding dependency</a></li><li><a href="#describe-the-config-by-hand">Describe the config by hand</a></li><li><a href="#fully-automated-config-description">Fully automated Config Description</a></li><li><a href="#read-config-from-various-sources">Read config from various sources</a></li><li><a href="#how-to-use-config-descriptor">How to use config descriptor</a><ul class="toc-headings"><li><a href="#readers-from-configdescriptor">Readers from configdescriptor</a></li><li><a href="#documentations-using-configdescriptor">Documentations using configdescriptor</a></li><li><a href="#writers-from-configdescriptor">Writers from configdescriptor</a></li><li><a href="#report-generation-from-configdescriptor">Report generation from configdescriptor</a></li><li><a href="#accumulating-all-errors">Accumulating all errors</a></li></ul></li><li><a href="#config-is-your-zio-environment">Config is your ZIO environment</a><ul class="toc-headings"><li><a href="#separation-of-concerns-with-narrow">Separation of concerns with <code>narrow</code></a></li></ul></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Automatic Derivation of Config · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="By bringing in `zio-config-magnolia` you get to avoid all the boilerplate required to define the config."/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Automatic Derivation of Config · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="By bringing in `zio-config-magnolia` you get to avoid all the boilerplate required to define the config."/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Automatic Derivation of Config · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config."/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Automatic Derivation of Config · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config."/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100,"cornerOffset":100}
@@ -60,95 +60,122 @@
                 };
               }
             });
-        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Automatic Derivation of Config</h1></header><article><div><span><p>By bringing in <code>zio-config-magnolia</code> you get to avoid all the boilerplate required to define the config.
-With a single import, <code>ConfigDescriptor</code> is automatically derived for your custom type.</p>
-<p>Also, you will find that defining the actual hocon for coproducts is devoid of any extra tagging to satisfy the library.
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Automatic Derivation of Config</h1></header><article><div><span><p>By bringing in <code>zio-config-magnolia</code> we  avoid all the boilerplate required to define the config.
+With a single import, <code>ConfigDescriptor</code> is automatically derived.</p>
+<p>Also, we will get to see the Hocon config for coproducts is devoid of any extra tagging to satisfy the library.
 This is much easier/intuitive unlike many existing implementations.</p>
-<p>Take a look at the magnolia examples in <code>zio-config</code></p>
-<pre><code class="hljs css language-scala mdoc:silent">
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.read
-import zio.config.typesafe.TypesafeConfigSource
+<p>Take a look at the magnolia examples in <code>zio-config</code>. One of them is provided here for quick access.</p>
+<h3><a class="anchor" aria-hidden="true" id="example"></a><a href="#example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Example</h3>
+<h4><a class="anchor" aria-hidden="true" id="config"></a><a href="#config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Config</h4>
+<pre><code class="hljs css language-scala">
 
-object CoproductSealedTraitExample extends App {
+   <span class="hljs-keyword">sealed</span> <span class="hljs-class"><span class="hljs-keyword">trait</span> <span class="hljs-title">X</span></span>
+ 
+   <span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">X</span> </span>{
+     <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">A</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">X</span></span>
+     <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">B</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">X</span></span>
+     <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">C</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">X</span></span>
+     <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span>  <span class="hljs-title">DetailsWrapped</span>(<span class="hljs-params">detail: <span class="hljs-type">Detail</span></span>) <span class="hljs-keyword">extends</span> <span class="hljs-title">X</span></span>
+     
+     <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Detail</span>(<span class="hljs-params">firstName: <span class="hljs-type">String</span>, lastName: <span class="hljs-type">String</span>, region: <span class="hljs-type">Region</span></span>)</span>
+     <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Region</span>(<span class="hljs-params">suburb: <span class="hljs-type">String</span>, city: <span class="hljs-type">String</span></span>)</span>
+   }
 
-  sealed trait X
+   <span class="hljs-comment">/**
+    * We use automatic derivation here.
+    * As an example, In order to specify, {{{ x = a }}} in the source where `a`
+    * represents X.A object, we need a case class that wraps
+    * the sealed trait, and we use the field name of this case class as the key
+    */</span>
+  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">MyConfig</span>(<span class="hljs-params">x: <span class="hljs-type">X</span></span>)</span>
+</code></pre>
+<h4><a class="anchor" aria-hidden="true" id="autoderivation"></a><a href="#autoderivation" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>AutoDerivation</h4>
+<pre><code class="hljs css language-scala">  <span class="hljs-comment">// Setting up imports</span>
+  <span class="hljs-keyword">import</span> zio.config.magnolia.<span class="hljs-type">DeriveConfigDescriptor</span>._
+  <span class="hljs-keyword">import</span> zio.config.typesafe.<span class="hljs-type">TypesafeConfigSource</span>
+  <span class="hljs-keyword">import</span> zio.config.read
 
-  case object A                extends X
-  case object B                extends X
-  case object C                extends X
-  case class D(detail: Detail) extends X
-  case class Detail(firstName: String, lastName: String, region: Region)
-  case class Region(suburb: String, city: String)
+  <span class="hljs-keyword">import</span> <span class="hljs-type">X</span>._
+</code></pre>
+<pre><code class="hljs css language-scala">  <span class="hljs-comment">// Only for example purpose</span>
+  <span class="hljs-keyword">implicit</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">ImpureEither</span>[<span class="hljs-type">A</span>, <span class="hljs-type">B</span>](<span class="hljs-params">either: <span class="hljs-type">Either</span>[<span class="hljs-type">A</span>, <span class="hljs-type">B</span>]</span>) </span>{
+    <span class="hljs-function"><span class="hljs-keyword">def</span> <span class="hljs-title">loadOrThrow</span></span>: <span class="hljs-type">B</span> = either <span class="hljs-keyword">match</span> {
+      <span class="hljs-keyword">case</span> <span class="hljs-type">Left</span>(_) =&gt; <span class="hljs-keyword">throw</span> <span class="hljs-keyword">new</span> <span class="hljs-type">Exception</span>()
+      <span class="hljs-keyword">case</span> <span class="hljs-type">Right</span>(v) =&gt; v
+     }
+  }
+</code></pre>
+<pre><code class="hljs css language-scala">
+  <span class="hljs-comment">// Defining different possibility of HOCON source</span>
 
-  val aHoconSource =
-    TypesafeConfigSource
-      .fromHoconString(
-        s"""
-           |x = a
-           |""".stripMargin
-      )
+  <span class="hljs-keyword">val</span> aHoconSource =
+    <span class="hljs-type">TypesafeConfigSource</span>
+      .fromHoconString(<span class="hljs-string">"x = a"</span>)
       .loadOrThrow
-
-  val bHoconSource =
-    TypesafeConfigSource
-      .fromHoconString(
-        s"""
-           |x = b
-           |""".stripMargin
-      )
+</code></pre>
+<pre><code class="hljs css language-scala">  <span class="hljs-keyword">val</span> bHoconSource =
+    <span class="hljs-type">TypesafeConfigSource</span>
+      .fromHoconString(<span class="hljs-string">"x = b"</span>)
       .loadOrThrow
-
-  val cHoconSource =
-    TypesafeConfigSource
-      .fromHoconString(
-        s"""
-           |x = c
-           |""".stripMargin
-      )
+</code></pre>
+<pre><code class="hljs css language-scala">  <span class="hljs-keyword">val</span> cHoconSource =
+    <span class="hljs-type">TypesafeConfigSource</span>
+      .fromHoconString(<span class="hljs-string">"x = c"</span>)
       .loadOrThrow
-
-  val dHoconSource =
+</code></pre>
+<pre><code class="hljs css language-scala">  val dHoconSource =
     TypesafeConfigSource
       .fromHoconString(
         s"""
-           |x {
-             d {
-           |  detail  {
-           |    firstName : ff
-           |    lastName  : ll
-           |    region {
-           |      city   : syd
-           |      suburb : strath
-           |
-           |    }
+           | x {
+           |   details_wrapped {
+           |    detail  {
+           |      firstName : ff
+           |      lastName  : ll
+           |      region {
+           |        city   : syd
+           |        suburb : strath
+           |     }
+           |   }
            |  }
-           | }
            |}
            |""".stripMargin
       )
       .loadOrThrow
 
-  assert(read(descriptor[X] from aHoconSource) == Right(A))
-  assert(read(descriptor[X] from bHoconSource) == Right(B))
-  assert(read(descriptor[X] from cHoconSource) == Right(C))
-  assert(
-    read(descriptor[X] from dHoconSource) == Right(
-      D(Detail("ff", "ll", Region("strath", "syd")))
-    )
-  )
+</code></pre>
+<pre><code class="hljs css language-scala">  <span class="hljs-comment">// Let's try automatic derivation</span>
 
-  // Only for example purpose
-  implicit class ImpureEither[A, B](either: Either[A, B]) {
-     def loadOrThrow: B = either match {
-        case Left(_) =&gt; throw new Exception()
-        case Right(v) =&gt; v
+  read(descriptor[<span class="hljs-type">MyConfig</span>] from aHoconSource)
+  <span class="hljs-comment">// res0: Right(MyConfig(A))</span>
 
-     }
-  }
-}
+  read(descriptor[<span class="hljs-type">MyConfig</span>] from bHoconSource)
+  <span class="hljs-comment">// res0: Right(MyConfig(B))</span>
+
+  read(descriptor[<span class="hljs-type">MyConfig</span>] from cHoconSource)
+  <span class="hljs-comment">// res0: Right(MyConfig(C))</span>
+
+  read(descriptor[<span class="hljs-type">MyConfig</span>] from dHoconSource)
+  <span class="hljs-comment">// res0: Right(MyConfig(DetailsWrapped(Detail("ff", "ll", Region("strath", "syd")))))</span>
 
 </code></pre>
+<p><strong>NOTE</strong></p>
+<p>By default the class names in the sealed trait terms will be mapped to their names converted
+to snake_case in the config.</p>
+<p>For example <code>details_wrapped</code> in the above HOCON string corresponds to <code>DetailsWrapped</code> which is the name of the case class in Scala code.
+This is overridable.</p>
+<p>The fieldNames remain as it is as you can see. You can override this one as well.
+They can be easily changed using <code>mapKey</code>. Note that, fieldName is not equal to className. So the <code>DetailsWrapped</code>
+in Scala code has to be <code>details_wrapped</code> in HOCON even after the below code.</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> zio.config._
+
+descriptor[<span class="hljs-type">MyConfig</span>].mapKey(camelToKebab)
+
+</code></pre>
+<p>With the above change<code>firstName</code> and <code>lastName</code> in the above HOCON example can be <code>first-name</code> and <code>last-name</code>
+respectively.</p>
+<p>There are various ways in which you can customise the derivation of sealed traits.
+This is a bit involving, and more documentations will be provided soon.</p>
 <h3><a class="anchor" aria-hidden="true" id="documentation-while-automatic-derivation"></a><a href="#documentation-while-automatic-derivation" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Documentation while automatic derivation</h3>
 <p>With <code>describe</code> annotation you can still document your config while automatically generating the config</p>
 <pre><code class="hljs css language-scala mdoc:silent">
@@ -159,4 +186,94 @@ object CoproductSealedTraitExample extends App {
 <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DbUrl</span>(<span class="hljs-params">value: <span class="hljs-type">String</span></span>)</span>
 
 </code></pre>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 4/17/2020 by Jan Ziniewicz</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Creation of ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/sources/sources_index"><span>Sources</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
+<p>This will be equivalent to specifying:</p>
+<pre><code class="hljs">   <span class="hljs-built_in">(string</span>(<span class="hljs-string">"region"</span>) |@|<span class="hljs-built_in"> string</span>(<span class="hljs-string">"dburl"</span>).xmap(DbUrl, <span class="hljs-number">_</span>.<span class="hljs-keyword">value</span>))(Aws<span class="hljs-built_in">.apply</span>, Aws.unapply) ?? <span class="hljs-string">"This config is about aws"</span>
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="custom-configdescription"></a><a href="#custom-configdescription" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Custom ConfigDescription</h3>
+<p>Every field in a case class should have an instance of <code>Descriptor</code> in order for the automatic derivation to work.
+This doesn't mean the entire design of zio-config is typeclass based. For the same reason, the typeclass
+<code>Descriptor</code> exists only in zio-config-magnolia (or zio-config-shapeless) package.</p>
+<p>As an example, given below is a case class where automatic derivation won't work, and result in a compile time error:
+Assume that, <code>AwsRegion</code> is a type that comes from AWS SDK.</p>
+<pre><code class="hljs">  <span class="hljs-keyword">import</span> java.time.ZonedDateTime
+
+  <span class="hljs-keyword">case</span> <span class="hljs-keyword">class</span> <span class="hljs-symbol">Execution</span>(<span class="hljs-symbol">time: <span class="hljs-symbol">AwsRegion</span>, <span class="hljs-symbol">id</span>: <span class="hljs-symbol">Int</span></span>)
+</code></pre>
+<p>In this case, <code>descriptor[Execution]</code> will give us the following descriptive compile error.</p>
+<pre><code class="hljs">magnolia: could <span class="hljs-keyword">not</span> <span class="hljs-builtin-name">find</span> Descriptor.Typeclass <span class="hljs-keyword">for</span><span class="hljs-built_in"> type </span>&lt;outside.library.package&gt;.AwsRegion
+  <span class="hljs-keyword">in</span> parameter <span class="hljs-string">'time'</span> of product<span class="hljs-built_in"> type </span>&lt;your.packagename&gt;.Execution
+</code></pre>
+<p>This is because zio-config-magnolia failed to derive an instance of Descriptor for AwsRegion.</p>
+<p>In order to provide implicit instances, following choices are there</p>
+<pre><code class="hljs"> <span class="hljs-keyword">import</span> zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
+
+ <span class="hljs-keyword">implicit</span> val awsRegionDescriptor: Descriptor[Aws.Region] =
+   Descriptor[String].xmap(string =&gt; AwsRegion.from(string), _.toString)
+
+</code></pre>
+<p>Now <code>descriptor[Execution]</code> compiles.</p>
+<h3><a class="anchor" aria-hidden="true" id="is-that-the-only-way-for-custom-derivation-"></a><a href="#is-that-the-only-way-for-custom-derivation-" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Is that the only way for custom derivation ?</h3>
+<p>What if our custom type is complex enough that, parsing from a string would actually fail?
+The answer is, zio-config provides with all the functions that you need to handle errors.</p>
+<pre><code class="hljs"> import zio.config.magnolia.<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">DeriveConfigDescriptor</span>.</span>{<span class="hljs-module"><span class="hljs-identifier">Descriptor</span>,</span> descriptor}</span>
+
+  implicit <span class="hljs-keyword">val</span> descriptorO: Descriptor<span class="hljs-literal">[Z<span class="hljs-identifier">onedDateTime</span>]</span> =
+    Descriptor<span class="hljs-literal">[S<span class="hljs-identifier">tring</span>]</span>
+      .xmap<span class="hljs-constructor">EitherELeftPartial(<span class="hljs-params">x</span> =&gt; Try (ZonedDateTime.<span class="hljs-params">parse</span>(<span class="hljs-params">x</span>)</span>).toEither)(<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">_</span>.</span></span>toString)(<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">_</span>.</span></span>getMessage)
+</code></pre>
+<p>What is xmapEitherLeftPartial ? Parsing a String to ZonedDateTime can fail, but converting it back to a string
+won't fail. Logically, these are respectively the first 2 functions that we passed to xmapEitherELeftPartial. The third
+parameter talks about how to covert the error type E, which in this case is Throwable, to a proper string which is then required
+for zio-config to report back to the user what's going on.</p>
+<p>PS: We recommend not to use <code>throwable.getMessage</code>. Provide more descriptive error message.</p>
+<p>You can also rely on <code>xmapEitherE</code> if both <code>to</code> and <code>fro</code> can fail. This is the most commonly used combinator in zio-config.
+Similarly if the error type is already String, then you can use <code>xmapEither</code> and avoid having to tell the API, how to convert
+<code>E</code> to <code>String</code>. We have already seen these types.</p>
+<h3><a class="anchor" aria-hidden="true" id="please-give-descriptions-wherever-possible-for-a-better-experience"></a><a href="#please-give-descriptions-wherever-possible-for-a-better-experience" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Please give descriptions wherever possible for a better experience</h3>
+<p>Giving descriptions is going to be helpful. While all the built-in types have documentations, it is better we give
+some description to custom types as well. For example:</p>
+<pre><code class="hljs"> <span class="hljs-keyword">import</span> zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
+
+
+  <span class="hljs-keyword">implicit</span> val awsRegionDescriptor: Descriptor[Aws.Region] =
+    Descriptor[String]
+      .xmap(string =&gt; AwsRegion.from(string), _.toString) ?? <span class="hljs-string">"value of type AWS.Region"</span>
+</code></pre>
+<p>This way, when there is an error due to MissingValue, we get an error message (don't forget to use prettyPrint)
+that describes about the config parameter. For example, see the <code>Details</code> corresponding to the first
+<code>MissingValue</code> in a sample error message below.</p>
+<pre><code class="hljs css language-scala"> <span class="hljs-type">ReadError</span>:
+ ╥
+ ╠─<span class="hljs-type">MissingValue</span>
+ ║ path: aws.region
+ ║ <span class="hljs-type">Details</span>: value of <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">AWS</span>.<span class="hljs-title">Region</span></span>
+ ║
+ ╠─<span class="hljs-type">FormatError</span>
+ ║ cause: <span class="hljs-type">Provided</span> value is <span class="hljs-number">3</span>dollars, expecting the <span class="hljs-class"><span class="hljs-keyword">type</span> <span class="hljs-title">double</span></span>
+ ║ path: cost
+ ▼
+
+</code></pre>
+<h3><a class="anchor" aria-hidden="true" id="where-to-place-these-implicits-"></a><a href="#where-to-place-these-implicits-" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Where to place these implicits ?</h3>
+<p>If the types are owned by us, then the best place to keep implicit instance is the companion object of that type.</p>
+<pre><code class="hljs css language-scala">
+<span class="hljs-keyword">final</span> <span class="hljs-keyword">case</span> clas <span class="hljs-type">MyAwsRegion</span>(value: <span class="hljs-type">AwsRegion</span>)
+
+<span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">MyAwsRegion</span> </span>{
+  <span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> awsRegionDescriptor: <span class="hljs-type">Descriptor</span>[<span class="hljs-type">MyAwsRegion</span>] =
+    <span class="hljs-type">Descriptor</span>[<span class="hljs-type">String</span>]
+      .xmap(
+        string =&gt; <span class="hljs-type">MyAwsRegion</span>(<span class="hljs-type">AwsRegion</span>.from(string)), 
+        _.value.toString
+      ) ?? <span class="hljs-string">"value of type AWS.Region"</span>
+}
+
+</code></pre>
+<p>However, sometimes, the types are owned by an external library.</p>
+<p>In these situations, better off place the implicit closer to where we call the automatic derivation.
+Please find the example in <code>magnolia</code> package in examples module.</p>
+<h3><a class="anchor" aria-hidden="true" id="change-keys-camelcase-kebab-case-etc"></a><a href="#change-keys-camelcase-kebab-case-etc" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Change Keys (CamelCase, kebab-case etc)</h3>
+<p>Please find the examples in ChangeKeys.scala in magnolia module to find how to manipulate
+keys in an automatic derivation such as being able to specify keys as camelCase, kebabCase or snakeCase in
+the source config.</p>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 6/22/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Creation of ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/sources/sources_index"><span>Sources</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
