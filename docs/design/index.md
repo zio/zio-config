@@ -46,25 +46,6 @@ As mentioned before, in situations where you need a fully automated description,
 ### Zero dependency
 zio-config stays zero dependent from core functional libraries in scala, and hence don't intercept your choice.
 
-### Accumulating all errors
-For any misconfiguration, the ReadError collects all of them with proper semantics: `AndErrors` and `OrErrors`. 
-Instead of directly printing misconfigurations, the `ReadError.prettyPrint` shows the path, detail of collected misconfigurations.
-
-1. All misconfigurations of `AndErrors` are put in parallel lines.
-```text
-╥
-╠══╗ 
-║  ║ FormatError
-║ MissingValue
-``` 
-2. `OrErrors` are in the same line which indicates a sequential misconfiguration    
-```text
-╥
-╠MissingValue
-║
-╠FormatError
-```
-
 ## Notable features
 
 * **Describe once and use it for different actions:**

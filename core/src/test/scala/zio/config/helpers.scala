@@ -44,7 +44,7 @@ object helpers {
   def toMultiMap[K, V](map: Map[K, V]): Map[K, ::[V]] =
     map.toList.map { case (k, v) => (k, singleton(v)) }.toMap
 
-  def fromMultiMap[K, V](map: Map[K, ::[V]]): Map[K, V] =
-    map.toList.map { case (k, v) => (k, v.head) }.toMap
+  def fromMultiMap[K, V](map: Map[K, ::[V]], appendString: String = ","): Map[K, String] =
+    map.toList.map { case (k, v) => (k, v.mkString(appendString)) }.toMap
 
 }

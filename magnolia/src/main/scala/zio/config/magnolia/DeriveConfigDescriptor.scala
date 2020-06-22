@@ -39,7 +39,7 @@ object DeriveConfigDescriptor extends DeriveConfigDescriptor {
   def mapFieldName(name: String): String = name
 
   val wrapSealedTraitClasses: Boolean = true
-  val wrapSealedTraits: Boolean       = true
+  val wrapSealedTraits: Boolean       = false
 
   /**
    * By default this method is not implicit to allow custom non-recursive derivation
@@ -56,7 +56,7 @@ object NonRecursiveDerivation extends DeriveConfigDescriptor {
   def mapFieldName(name: String): String = name
 
   val wrapSealedTraitClasses: Boolean = true
-  val wrapSealedTraits: Boolean       = true
+  val wrapSealedTraits: Boolean       = false
 }
 
 trait DeriveConfigDescriptor { self =>
@@ -141,9 +141,60 @@ trait DeriveConfigDescriptor { self =>
   protected def optionDesc[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
     desc.optional
 
-  case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false)
+  case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
+
+    /**
+     * A set of helpers to do custom implicit derivations, that is
+     * a subset of functionalities provided for ConfigDescriptor.
+     *
+     * {{{
+     *   implicit val awsRegionDesc: Descriptor[AmazonRegion] =
+     *     Descriptor[String].xmap(Region.fromString, _.value)
+     * }}}
+     *
+     * Another example where only Left fails, but with a different error type.
+     * In this case, it's better to give proper descriptive error message.
+     * Example:
+     *
+     *  {{{
+     *     implicit val descriptorO: Descriptor[ZonedDateTime] =
+     *        Descriptor[String].xmapEitherELeftPartial(
+     *          x => Try (ZonedDateTime.parse(x)).toEither)(_.toString)(
+     *          t => s"Cannot parse zoned date time. ${t.getMessage}"
+     *        )
+     *  }}}
+     */
+    final def ??(description: String): Descriptor[T] =
+      describe(description)
+
+    def describe(description: String): Descriptor[T] =
+      Descriptor(desc.describe(description))
+
+    def xmap[B](f: T => B, g: B => T): Descriptor[B] =
+      Descriptor(desc.xmap(f, g))
+
+    def xmapEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
+      Descriptor(desc.xmapEither(f, g))
+
+    def xmapEitherE[E, B](f: T => Either[E, B])(g: B => Either[E, T])(h: E => String): Descriptor[B] =
+      Descriptor(desc.xmapEitherE[E, B](f)(g)(h))
+
+    def xmapEitherELeftPartial[E, B](f: T => Either[E, B])(g: B => T)(h: E => String): Descriptor[B] =
+      Descriptor(desc.xmapEitherELeftPartial[E, B](f)(g)(h))
+
+    def xmapEitherERightPartial[E, B](f: T => B)(g: B => Either[E, T])(h: E => String): Descriptor[B] =
+      Descriptor(desc.xmapEitherERightPartial[E, B](f)(g)(h))
+
+    def xmapEitherLeftPartial[B](f: T => Either[String, B], g: B => T): Descriptor[B] =
+      Descriptor(desc.xmapEitherLeftPartial(f, g))
+
+    def xmapEitherRightPartial[E, B](f: T => B, g: B => Either[String, T]): Descriptor[B] =
+      Descriptor(desc.xmapEitherRightPartial(f, g))
+  }
 
   object Descriptor {
+    def apply[A](implicit ev: Descriptor[A]): Descriptor[A] = ev
+
     implicit def toConfigDescriptor[T](ev: Descriptor[T]): ConfigDescriptor[T] = ev.desc
   }
 

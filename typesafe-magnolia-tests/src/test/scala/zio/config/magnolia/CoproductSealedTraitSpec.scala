@@ -18,13 +18,15 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
   case class Detail(firstName: String, lastName: String, region: Region)
   case class Region(suburb: String, city: String)
 
+  case class Config(x: X)
+
   val spec = suite("MagnoliaConfig")(test("descriptor of coproduct sealed trait") {
-    assert(read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "a"))))(equalTo(Right(A))) &&
-    assert(read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "b"))))(equalTo(Right(B))) &&
-    assert(read(descriptor[X] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Right(C))) &&
+    assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "a"))))(equalTo(Right(Config(A)))) &&
+    assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "b"))))(equalTo(Right(Config(B)))) &&
+    assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Right(Config(C)))) &&
     assert(
       read(
-        descriptor[X] from ConfigSource.fromMap(
+        descriptor[Config] from ConfigSource.fromMap(
           constantMap = Map(
             "x.d.detail.firstName"     -> "ff",
             "x.d.detail.lastName"      -> "ll",
@@ -34,10 +36,10 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
           keyDelimiter = Some('.')
         )
       )
-    )(equalTo(Right(D(Detail("ff", "ll", Region("strath", "syd")))))) &&
+    )(equalTo(Right(Config(D(Detail("ff", "ll", Region("strath", "syd"))))))) &&
     assert(
       read(
-        descriptor[X] from ConfigSource.fromMap(
+        descriptor[Config] from ConfigSource.fromMap(
           Map(
             "x.e.detail.firstName"     -> "ff",
             "x.e.detail.lastName"      -> "ll",
@@ -47,8 +49,8 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
           keyDelimiter = Some('.')
         )
       )
-    )(equalTo(Right(E(Detail("ff", "ll", Region("strath", "syd")))))) &&
-    assert(write(descriptor[X], D(Detail("ff", "ll", Region("strath", "syd")))))(
+    )(equalTo(Right(Config(E(Detail("ff", "ll", Region("strath", "syd"))))))) &&
+    assert(write(descriptor[Config], Config(D(Detail("ff", "ll", Region("strath", "syd"))))))(
       equalTo(
         Right(
           Record(
@@ -73,8 +75,8 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
         )
       )
     ) &&
-    assert(write(descriptor[X], A))(equalTo(Right(Record(Map("x" -> Leaf("a")))))) &&
-    assert(write(descriptor[X], B))(equalTo(Right(Record(Map("x" -> Leaf("b")))))) &&
-    assert(write(descriptor[X], C))(equalTo(Right(Record(Map("x" -> Leaf("c"))))))
+    assert(write(descriptor[Config], Config(A)))(equalTo(Right(Record(Map("x" -> Leaf("a")))))) &&
+    assert(write(descriptor[Config], Config(B)))(equalTo(Right(Record(Map("x" -> Leaf("b")))))) &&
+    assert(write(descriptor[Config], Config(C)))(equalTo(Right(Record(Map("x" -> Leaf("c"))))))
   })
 }

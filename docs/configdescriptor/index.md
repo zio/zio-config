@@ -460,3 +460,5 @@ Note that `autoListConfig` (automatically generated) config, is exactly similar 
     )
 
 ```
+
+Please find more details on the behaviour of `List` for various sources in `Sources` section of the documentation.

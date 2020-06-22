@@ -14,6 +14,7 @@ import ConfigDescriptor._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
+import zio.config.LeafForSequence
 
 object RefinedReadWriteRoundtripTest
     extends BaseSpec(
@@ -24,7 +25,9 @@ object RefinedReadWriteRoundtripTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))

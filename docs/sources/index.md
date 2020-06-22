@@ -389,6 +389,55 @@ assert(read(list("users")(string) from listSource2) == Right(List("Jane", "Jack"
 
 ```
 
+### Behaviour of List in various sources
+
+No single values will be regarded as list. This is based on feedback from users.
+
+For the config:
+ 
+```
+Case class Config(key: List[String]) 
+```
+
+If the source is below HOCON (or json)
+
+```scala
+ {
+   Key : value
+ }
+```
+
+then it fails, saying a `Sequence` is expected. This is quite intuitive but worth mentioning for users who are new to HOCON.
+
+However the following configs will work, as it clearly indicate it is a `List` with square brackets 
+```scala
+{
+   Key: [value]
+}
+```
+```scala
+
+{
+   key: [value1, value2]
+}
+
+
+```
+
+If the source is a map given below (for example, in system environment), then it succeeds given any delimiter
+as it contains only one single value.
+
+```scala
+export key="value"
+``` 
+
+Given `valueDelimiter=Some(',')` the following config will work and we are able to retrieve List(value1, value2)
+
+```scala
+export key="value1, value2"
+
+```
+
 ### A Production application config using command line arguments (demo)
 
 ```scala mdoc:silent

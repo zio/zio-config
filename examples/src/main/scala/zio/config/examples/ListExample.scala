@@ -4,7 +4,6 @@ import zio.config.ConfigSource
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.PropertyTree.Leaf
 import zio.config.PropertyTree
-import zio.config.singleton
 import zio.config.ConfigDescriptor._
 import zio.config._, zio.config.typesafe._
 
@@ -12,21 +11,23 @@ import zio.config._, zio.config.typesafe._
 object ListExample extends App with EitherImpureOps {
   final case class PgmConfig(a: String, b: List[String])
 
-  val multiMap =
+  // Fails if regions had only one element,
+  val map =
     Map(
-      "xyz"     -> singleton("something"),
-      "regions" -> ::("australia", List("canada", "usa"))
+      "xyz"     -> "something",
+      "regions" -> "australia, canada, usa"
     )
 
   val config: ConfigDescriptor[PgmConfig] =
     (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
 
-  val tree =
-    ConfigSource.fromMultiMap(multiMap, "constant")
+  val mapSource =
+    ConfigSource.fromMap(map, "constant", keyDelimiter = None, valueDelimiter = Some(','))
 
   val resultFromMultiMap =
-    read(config from ConfigSource.fromMultiMap(multiMap, "constant"))
+    read(config from mapSource)
 
+  println(resultFromMultiMap)
   val expected =
     PgmConfig("something", List("australia", "canada", "usa"))
 
@@ -53,23 +54,20 @@ object ListExample extends App with EitherImpureOps {
       )
   )
 
-  println(propertyTree.map(_.toHocon))
-  // Right(SimpleConfigObject({"regions":["australia","canada","usa"],"xyz":"something"}))
-  println(propertyTree.map(_.toHocon.render()))
+  println(propertyTree.map(_.flattenString()))
+  // Right(Map(xyz -> List(something), regions -> List(australia, canada, usa)))
 
-//  Right({
-//    # hardcoded value
-//      "regions" : [
-//    # hardcoded value
-//      "australia",
-//    # hardcoded value
-//      "canada",
-//    # hardcoded value
-//      "usa"
-//    ],
-//    # hardcoded value
-//      "xyz" : "something"
-//  }
-// )
+  println(propertyTree.map(_.toJson))
+
+  /*
+  Right({
+    "regions" : [
+       "australia",
+       "canada",
+       "usa"
+    ],
+    "xyz" : "something"
+  })
+ */
 
 }

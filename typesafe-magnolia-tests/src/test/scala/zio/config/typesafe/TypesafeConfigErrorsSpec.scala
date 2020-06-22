@@ -2,7 +2,7 @@ package zio.config.typesafe
 
 import zio.config.ConfigDescriptor.{ int, nested, string }
 import zio.config.ReadError.Step.Key
-import zio.config.ReadError.{ FormatError, OrErrors }
+import zio.config.ReadError.{ ForceSeverity, FormatError, OrErrors }
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.read
 import zio.test.Assertion._
@@ -87,14 +87,21 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
         case Left(value)   => Left(value)
         case Right(source) => read(configNestedAutomatic from source)
       }
-      val nestedConfigAutomaticExpect4 = Left(
-        OrErrors(
-          List(
-            FormatError(List(Key("database"), Key("port")), "Provided value is 1ab200, expecting the type int"),
-            FormatError(List(Key("database")), "Provided value is of type Record, expecting the type Leaf")
+      val nestedConfigAutomaticExpect4 =
+        Left(
+          ForceSeverity(
+            OrErrors(
+              List(
+                ForceSeverity(
+                  FormatError(List(Key("database"), Key("port")), "Provided value is 1ab200, expecting the type int"),
+                  false
+                ),
+                FormatError(List(Key("database")), "Provided value is of type Record, expecting the type Leaf")
+              )
+            ),
+            false
           )
         )
-      )
 
       assert(nestedConfigAutomaticResult1)(equalTo(nestedConfigAutomaticExpect1)) &&
       assert(nestedConfigAutomaticResult2)(equalTo(nestedConfigAutomaticExpect2)) &&

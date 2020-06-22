@@ -25,7 +25,7 @@ import zio.ZIO
 import zio.config.helpers._
 import zio.config.{ helpers, BaseSpec, ConfigSource }
 import zio.test.Assertion._
-import zio.config.{ read, write, ConfigDescriptor }, ConfigDescriptor._
+import zio.config.{ read, write, ConfigDescriptor, LeafForSequence }, ConfigDescriptor._
 import zio.test._
 
 object StringSupportTest
@@ -37,7 +37,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -58,7 +60,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -88,7 +92,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -109,7 +115,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -130,7 +138,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -142,7 +152,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -154,7 +166,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -175,7 +189,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -196,7 +212,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -217,7 +235,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -238,7 +258,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -259,7 +281,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -280,7 +304,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -301,7 +327,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))
@@ -322,7 +350,9 @@ object StringSupportTest
             val p2 =
               for {
                 written <- ZIO.fromEither(write(cfg, p))
-                reread  <- ZIO.fromEither(read(cfg from ConfigSource.fromPropertyTree(written, "tree")))
+                reread <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
               } yield reread
 
             assertM(p2)(equalTo(p))

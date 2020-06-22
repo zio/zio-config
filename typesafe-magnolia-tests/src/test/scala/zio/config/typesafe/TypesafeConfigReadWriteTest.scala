@@ -195,7 +195,7 @@ object TypesafeConfigReadWriteTest
             write(complexDescription, readComplexSource).loadOrThrow
 
           val readWrittenProperty =
-            read(complexDescription from ConfigSource.fromPropertyTree(writtenProperty, "tree")).loadOrThrow
+            read(complexDescription from ConfigSource.fromPropertyTree(writtenProperty, "tree", LeafForSequence.Valid)).loadOrThrow
 
           val readWrittenHocon =
             read(complexDescription from TypesafeConfigSource.fromHoconString(writtenHocon).loadOrThrow).loadOrThrow

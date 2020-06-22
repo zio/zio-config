@@ -22,7 +22,7 @@ object AutomaticConfigTest
               val configDesc = descriptor[MyConfig]
 
               val source =
-                ConfigSource.fromMap(environment, keyDelimiter = Some('.'))
+                ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
 
               val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
                 for {
@@ -103,7 +103,7 @@ object AutomaticConfigTestUtils {
       quantity       <- Gen.either(Gen.long(5, 10), genAlpha)
       default        <- Gen.option(Gen.anyInt)
       anotherDefault <- Gen.option(Gen.boolean)
-      descriptions   <- Gen.listOfBounded(1, 10)(Gen.anyString)
+      descriptions   <- Gen.int(1, 10).flatMap(n => Gen.listOfN(n)(genNonEmptyString(10)))
       created        <- genLocalDateString
       updated        <- genLocalTimeString
       lastVisited    <- genLocalDateTimeString
@@ -111,17 +111,17 @@ object AutomaticConfigTestUtils {
       partialMyConfig = Map(
         "aws.region" -> aws.region,
         aws.security match {
-          case Password(password) => "aws.security.credentials.password.value" -> password
-          case Token(token)       => "aws.security.credentials.token.value"    -> token
+          case Password(password) => "aws.security.password.value" -> password
+          case Token(token)       => "aws.security.token.value"    -> token
         },
         price match {
-          case Description(description) => "cost.price.description.value" -> description
-          case Currency(dollars)        => "cost.price.currency.value"    -> dollars.toString
+          case Description(description) => "cost.description.value" -> description
+          case Currency(dollars)        => "cost.currency.value"    -> dollars.toString
         },
         "dburl.dburl"  -> dbUrl.dburl,
         "port"         -> port.toString,
         "quantity"     -> quantity.fold(d => d.toString, s => s),
-        "descriptions" -> descriptions.toString,
+        "descriptions" -> descriptions.mkString(","),
         "created"      -> created,
         "updated"      -> updated,
         "lastVisited"  -> lastVisited,

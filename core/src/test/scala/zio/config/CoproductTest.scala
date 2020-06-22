@@ -4,9 +4,11 @@ import zio.config.ConfigDescriptor._
 import ReadError._
 import zio.config.helpers._
 import CoproductTestUtils._
+import zio.config.ReadError.Step.Key
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
+
 import scala.concurrent.duration.Duration
 
 object CoproductTest
@@ -29,10 +31,17 @@ object CoproductTest
             val expected: ReadError[String] =
               OrErrors(
                 List(
-                  MissingValue(List(Step.Key(p.kLdap))),
-                  FormatError(List(Step.Key(p.kFactor)), parseErrorMessage("notafloat", "float"))
+                  ForceSeverity(MissingValue(List(Key(p.kLdap)), List("value of type string")), false),
+                  ForceSeverity(
+                    ForceSeverity(
+                      FormatError(List(Key(p.kFactor)), "Provided value is notafloat, expecting the type float"),
+                      false
+                    ),
+                    false
+                  )
                 )
               )
+
             assert(readWithErrors(p))(isLeft(equalTo(expected)))
           }
         },

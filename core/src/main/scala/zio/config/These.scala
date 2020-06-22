@@ -2,15 +2,15 @@ package zio.config
 
 import These._
 
-private[config] sealed trait These[+A, +B] {
+private[config] sealed trait These[+A, +B] { self =>
   def fold[C](
     f: (A, B) => C,
     g: A => C,
     h: B => C
-  ): C = this match {
-    case Both(left, right) => f(left, right)
+  ): C = self match {
     case This(left)        => g(left)
     case That(right)       => h(right)
+    case Both(left, right) => f(left, right)
   }
 }
 

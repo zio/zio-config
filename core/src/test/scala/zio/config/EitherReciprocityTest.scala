@@ -17,11 +17,17 @@ object EitherReciprocityTest
                 for {
                   writtenLeft <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
                   rereadLeft <- ZIO.fromEither(
-                                 read(cCoproductConfig from ConfigSource.fromPropertyTree(writtenLeft, "test"))
+                                 read(
+                                   cCoproductConfig from ConfigSource
+                                     .fromPropertyTree(writtenLeft, "test", LeafForSequence.Valid)
+                                 )
                                )
                   writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
                   rereadRight <- ZIO.fromEither(
-                                  read(cCoproductConfig from ConfigSource.fromPropertyTree(writtenRight, "test"))
+                                  read(
+                                    cCoproductConfig from ConfigSource
+                                      .fromPropertyTree(writtenRight, "test", LeafForSequence.Valid)
+                                  )
                                 )
                 } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
                   case (Left(pl), Right(pr)) => Some(pl -> pr)

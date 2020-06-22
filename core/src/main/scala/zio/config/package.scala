@@ -1,12 +1,6 @@
 package zio
 
 package object config extends KeyConversionFunctions with ConfigStringModule {
-
-  type Config[A] = Has[A]
-
-  final def config[A](implicit tag: Tag[A]): ZIO[Config[A], Nothing, A] =
-    ZIO.access(_.get)
-
   private[config] def concat[A](l: ::[A], r: ::[A]): ::[A] =
     ::(l.head, l.tail ++ r)
 

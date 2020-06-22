@@ -44,7 +44,7 @@ object WriteExample extends App with EitherImpureOps {
   )
 
   val readFromTree: A =
-    read(description from ConfigSource.fromPropertyTree(written, "tree")).loadOrThrow
+    read(description from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid)).loadOrThrow
 
   assert(readFromTree == readFromSource)
 
