@@ -167,7 +167,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       }))
 
     def listStrict[A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      Sequence(ConfigSourceFunctions.empty, desc) ?? "list"
+      Sequence(ConfigSourceFunctions.empty, desc)
 
     def listStrict[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       nested(path)(listStrict(desc))
@@ -179,7 +179,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       nested(path)(mapStrict(desc))
 
     def mapStrict[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(ConfigSourceFunctions.empty, desc) ?? "map"
+      DynamicMap(ConfigSourceFunctions.empty, desc)
 
     def nested[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(path, desc)

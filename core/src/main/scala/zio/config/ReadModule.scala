@@ -112,18 +112,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case PropertyTree.Leaf(_)     => formatError(path, "Leaf", "Record")
         case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Record")
         case PropertyTree.Record(values) =>
-          val result: List[(K, Res[B])] = values.toList.zipWithIndex.map {
-            case ((k, tree), _) =>
+          val result: List[(K, Res[B])] = values.toList.map {
+            case ((k, tree)) =>
               val source: ConfigSource =
                 getConfigSource(cfg.source.names, tree.getPath, cfg.source.leafForSequence)
 
-              (k, loopAny(path, Nil, cfg.config.updateSource(_ => source), descriptions))
+              (k, loopAny(Step.Key(k) :: path, Nil, cfg.config.updateSource(_ => source), descriptions))
           }
 
-          seqMap2[K, ReadError[K], B, ReadError[K]]((_, k, error) => error.atKey(k))(result.toMap).swap
+          seqMap2[K, ReadError[K], B](result.toMap).swap
             .map(errs => ReadError.ForceSeverity(AndErrors(errs), treatAsMissing = false))
             .swap
-
         case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse, descriptions))
       }
 

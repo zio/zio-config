@@ -378,8 +378,8 @@ object SetTest
                 ForceSeverity(
                   AndErrors(
                     List(
-                      MissingValue(List(Key("a"), Index(3), Key("a1")), List("list", "value of type boolean")),
-                      MissingValue(List(Key("a"), Index(2), Key("a2")), List("list", "value of type int")),
+                      MissingValue(List(Key("a"), Index(3), Key("a1")), List("value of type boolean")),
+                      MissingValue(List(Key("a"), Index(2), Key("a2")), List("value of type int")),
                       FormatError(
                         List(Key("a"), Index(0), Key("a2")),
                         "Provided value is lorem ipsum, expecting the type int"

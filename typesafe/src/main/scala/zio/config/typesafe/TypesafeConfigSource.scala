@@ -27,7 +27,7 @@ object TypesafeConfigSource {
 
   def fromHoconString(
     input: String
-  ): Either[String, ConfigSource] =
+  ): Either[String, zio.config.ConfigSource] =
     fromTypesafeConfig(
       ConfigFactory.parseString(input).resolve
     )
