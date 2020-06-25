@@ -1,6 +1,5 @@
 package zio.config
 
-import ReadError._
 sealed trait ReadError[A] extends Exception { self =>
   override def toString: String = self match {
     case ReadError.MissingValue(path, message)          => s"MissingValue(${path}, ${message})"
@@ -10,16 +9,6 @@ sealed trait ReadError[A] extends Exception { self =>
     case ReadError.AndErrors(list)                      => s"AndErrors(${list.map(_.toString)}"
     case ReadError.ForceSeverity(error, treatAsMissing) => s"ForceSeverity(${error.toString},${treatAsMissing})"
   }
-
-  def atKey(key: A): ReadError[A] =
-    self match {
-      case ReadError.MissingValue(path, message)          => ReadError.MissingValue(path :+ Step.Key(key), message)
-      case ReadError.FormatError(path, message)           => ReadError.FormatError(path :+ Step.Key(key), message)
-      case ReadError.ConversionError(path, message)       => ReadError.ConversionError(path :+ Step.Key(key), message)
-      case ReadError.OrErrors(list)                       => ReadError.OrErrors(list.map(_.atKey(key)))
-      case ReadError.AndErrors(list)                      => ReadError.AndErrors(list.map(_.atKey(key)))
-      case ReadError.ForceSeverity(error, treatAsMissing) => ReadError.ForceSeverity(error.atKey(key), treatAsMissing)
-    }
 
   def size: Int =
     self match {
