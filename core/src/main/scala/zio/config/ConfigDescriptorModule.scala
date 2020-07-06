@@ -78,6 +78,46 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[Either[A, B]] =
       OrElseEither(self, that)
 
+    final def productTerms: Int = {
+      def loop[B](count: Int, config: ConfigDescriptor[B]): Int =
+        config match {
+          case cd @ Zip(left, right)      => loop(count, left) + loop(count, right)
+          case cd @ XmapEither(cfg, f, g) => loop(count, cfg)
+          case _                          => 1
+        }
+
+      loop(0, self)
+    }
+
+    final def requiredTerms: Int = {
+      def loop[B](count: List[K], config: ConfigDescriptor[B]): Int =
+        config match {
+          case cd @ Zip(left, right)             => loop(count, left) + loop(count, right)
+          case cd @ XmapEither(cfg, f, g)        => loop(count, cfg)
+          case cd @ Describe(cfg, msg)           => loop(count, cfg)
+          case cd @ Nested(path, next)           => loop(count, next)
+          case cd @ Optional(cfg)                => 0
+          case cd @ Source(source, propertyType) => 1
+          case cd @ OrElse(cfg, cfg2)            => Math.min(loop(count, cfg), loop(count, cfg2))
+          case cd @ OrElseEither(cfg, cfg2)      => Math.min(loop(count, cfg), loop(count, cfg2))
+          case cd @ Default(config, _)           => 0
+          case cd @ Sequence(source, config)     => loop(count, config)
+          case cd @ DynamicMap(source, config)   => loop(count, config)
+        }
+
+      loop(Nil, self)
+    }
+
+    final def sumTerms: Int = {
+      def loop[B](count: Int, config: ConfigDescriptor[B]): Int = config match {
+        case cd @ OrElseEither(left, right) => loop(loop(count, left), right)
+        case cd @ OrElse(left, right)       => loop(loop(count, left), right)
+        case _                              => 1
+      }
+
+      loop(0, self)
+    }
+
     final def unsourced: ConfigDescriptor[A] =
       self.updateSource(_ => ConfigSourceFunctions.empty)
 

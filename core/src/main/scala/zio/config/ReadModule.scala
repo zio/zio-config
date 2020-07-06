@@ -4,10 +4,35 @@ import zio.config.ReadError._
 import VersionSpecificSupport._
 
 private[config] trait ReadModule extends ConfigDescriptorModule {
+  sealed trait ResultType[+A] {
+    def value: A
+    def map[B](f: A => B): ResultType[B] =
+      this match {
+        case ResultType.Raw(value)         => ResultType.raw(f(value))
+        case ResultType.FallBack(value)    => ResultType.fallBack(f(value))
+        case ResultType.OptionalRaw(value) => ResultType.optionalRaw(f(value))
+      }
+  }
+
+  object ResultType {
+    case class OptionalRaw[A](value: A) extends ResultType[A]
+    case class Raw[A](value: A)         extends ResultType[A]
+    case class FallBack[A](value: A)    extends ResultType[A]
+
+    def raw[A](value: A): ResultType[A] =
+      Raw(value)
+
+    def fallBack[A](value: A): ResultType[A] =
+      FallBack(value)
+
+    def optionalRaw[A](value: A): ResultType[A] =
+      OptionalRaw(value)
+  }
+
   final def read[A](
     configuration: ConfigDescriptor[A]
   ): Either[ReadError[K], A] = {
-    type Res[+B] = Either[ReadError[K], B]
+    type Res[+B] = Either[ReadError[K], ResultType[B]]
 
     import ConfigDescriptorAdt._
 
@@ -21,11 +46,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopDefault[B](path: List[Step[K]], keys: List[K], cfg: Default[B], descriptions: List[String]): Res[B] =
       loopAny(path, keys, cfg.config, descriptions) match {
-        case Left(error) if hasUnrecoverableErrors(error) => Left(error)
-        case Left(_)                                      => Right(cfg.value)
-        case Right(value)                                 => Right(value)
+        case Left(error) if countMissingValueProductTerms(error) < cfg.config.productTerms => Left(error)
+        case Left(_)                                                                       => Right(ResultType.FallBack(cfg.value))
+        case Right(value)                                                                  => Right(value)
       }
 
+    // Optional(Zip(...)
     def loopOptional[B](
       path: List[Step[K]],
       keys: List[K],
@@ -33,18 +59,41 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String]
     ): Res[Option[B]] =
       loopAny(path, keys, cfg.config, descriptions) match {
-        case Left(error) if hasUnrecoverableErrors(error) =>
-          Left(error)
-        case Left(_)      => Right(None)
-        case Right(value) => Right(Some(value))
+        case Left(error) =>
+          println(s"the error is ${error}")
+          error match {
+            case ReadError.AndErrors(errors, anyOptionalValuePresent) if errors.forall(_.is({
+                  case MissingValue(_, _) => true
+                })) && error.cardinality >= cfg.config.requiredTerms && !anyOptionalValuePresent =>
+              Right(ResultType.fallBack(None))
+            case ReadError.OrErrors(errors) if errors.forall(_.is {
+                  case MissingValue(_, _) => true
+                }) =>
+              Right(ResultType.fallBack(None))
+            case ReadError.ListErrors(errors) if errors.forall(_.is {
+                  case MissingValue(_, _) => true
+                }) && error.cardinality >= cfg.config.requiredTerms =>
+              Right(ResultType.fallBack(None))
+            case ReadError.MapErrors(errors) if errors.forall(_.is {
+                  case MissingValue(_, _) => true
+                }) && error.cardinality >= cfg.config.requiredTerms =>
+              Right(ResultType.fallBack(None))
+
+            case MissingValue(_, _) =>
+              Right(ResultType.fallBack((None)))
+            case _ =>
+              Left(Irrecoverable(List(error)))
+          }
+        case Right(value) =>
+          Right(ResultType.optionalRaw(Some(value.value)))
       }
 
     def loopOrElse[B](path: List[Step[K]], keys: List[K], cfg: OrElse[B], descriptions: List[String]): Res[B] =
       loopAny(path, keys, cfg.left, descriptions) match {
-        case Right(value) => Right(value)
+        case a @ Right(_) => a
         case Left(leftError) =>
           loopAny(path, keys, cfg.right, descriptions) match {
-            case Right(rightValue) => Right(rightValue)
+            case a @ Right(_) => a
             case Left(rightError) =>
               Left(ReadError.OrErrors(leftError :: rightError :: Nil))
           }
@@ -57,10 +106,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String]
     ): Res[Either[B, C]] =
       loopAny(path, keys, cfg.left, descriptions) match {
-        case Right(value) => Right(Left(value))
+        case Right(value) =>
+          Right(value.map(Left(_)))
+
         case Left(leftError) =>
           loopAny(path, keys, cfg.right, descriptions) match {
-            case Right(rightValue) => Right(Right(rightValue))
+            case Right(rightValue) =>
+              Right(rightValue.map(Right(_)))
+
             case Left(rightError) =>
               Left(ReadError.OrErrors(leftError :: rightError :: Nil))
           }
@@ -83,16 +136,45 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                   )
                 )
               )
-            case Right(parsed) => Right(parsed)
+            case Right(parsed) => Right(ResultType.raw(parsed))
           }
       }
 
-    def loopZip[B, C](path: List[Step[K]], keys: List[K], cfg: Zip[B, C], descriptions: List[String]): Res[(B, C)] =
+    def loopZip[B, C](
+      path: List[Step[K]],
+      keys: List[K],
+      cfg: Zip[B, C],
+      descriptions: List[String]
+    ): Res[(B, C)] =
       (loopAny(path, keys, cfg.left, descriptions), loopAny(path, keys, cfg.right, descriptions)) match {
-        case (Right(leftV), Right(rightV)) => Right((leftV, rightV))
-        case (Left(leftE), Left(rightE))   => Left(AndErrors(leftE :: rightE :: Nil))
-        case (Left(leftE), _)              => Left(ReadError.ForceSeverity(leftE, false))
-        case (_, Left(rightE))             => Left(ReadError.ForceSeverity(rightE, false))
+        case (Right(leftV), Right(rightV)) =>
+          (leftV, rightV) match {
+            case (ResultType.FallBack(v1), v2) => Right(ResultType.fallBack((v1, v2.value)))
+            case (v1, ResultType.FallBack(v2)) => Right(ResultType.fallBack((v1.value, v2)))
+            case (v1, v2)                      => Right(ResultType.raw((v1.value, v2.value)))
+          }
+
+        case (Left(leftE), Left(rightE)) =>
+          (leftE, rightE) match {
+            case (AndErrors(_, fallBack1), AndErrors(_, fallBack2)) =>
+              Left(AndErrors(leftE :: rightE :: Nil, fallBack1 || fallBack2))
+            case (AndErrors(_, fallBack1), _) => Left(AndErrors(leftE :: rightE :: Nil, fallBack1))
+            case (_, AndErrors(_, fallBack2)) => Left(AndErrors(leftE :: rightE :: Nil, fallBack2))
+            case (_, _)                       => Left(AndErrors(leftE :: rightE :: Nil))
+          }
+
+        case (Left(leftE), Right(value)) =>
+          value match {
+            case ResultType.Raw(_)         => Left(AndErrors(List(leftE)))
+            case ResultType.FallBack(_)    => Left(AndErrors(List(leftE)))
+            case ResultType.OptionalRaw(_) => Left(AndErrors(List(leftE), anyOptionalValuePresent = true))
+          }
+        case (Right(value), Left(rightE)) =>
+          value match {
+            case ResultType.Raw(_)         => Left(AndErrors(List(rightE)))
+            case ResultType.FallBack(_)    => Left(AndErrors(List(rightE)))
+            case ResultType.OptionalRaw(_) => Left(AndErrors(List(rightE), anyOptionalValuePresent = true))
+          }
       }
 
     def loopXmapEither[B, C](
@@ -104,7 +186,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) => Left(error)
         case Right(a) =>
-          cfg.f(a).swap.map(ReadError.ConversionError(path.reverse, _)).swap
+          val result =
+            a match {
+              case ResultType.Raw(value)         => cfg.f(value).map(c => ResultType.raw(c))
+              case ResultType.FallBack(value)    => cfg.f(value).map(c => ResultType.fallBack(c))
+              case ResultType.OptionalRaw(value) => cfg.f(value).map(c => ResultType.optionalRaw(c))
+            }
+
+          result.swap.map(ReadError.ConversionError(path.reverse, _)).swap
       }
 
     def loopMap[B](path: List[Step[K]], keys: List[K], cfg: DynamicMap[B], descriptions: List[String]): Res[Map[K, B]] =
@@ -120,9 +209,13 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               (k, loopAny(Step.Key(k) :: path, Nil, cfg.config.updateSource(_ => source), descriptions))
           }
 
-          seqMap2[K, ReadError[K], B](result.toMap).swap
-            .map(errs => ReadError.ForceSeverity(AndErrors(errs), treatAsMissing = false))
-            .swap
+          val map: Either[MapErrors[K], Map[K, B]] =
+            seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap).swap
+              .map(errs => ReadError.MapErrors(errs))
+              .swap
+
+          map.map(mapp => ResultType.raw(mapp))
+
         case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse, descriptions))
       }
 
@@ -144,9 +237,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               descriptions
             )
         }
-        seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list).swap
-          .map(errs => ReadError.ForceSeverity(AndErrors(errs), treatAsMissing = false))
-          .swap
+        val result: Either[ListErrors[K], List[B]] =
+          seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list.map(res => res.map(_.value))).swap
+            .map(errs => ReadError.ListErrors(errs))
+            .swap
+
+        result.map(list => ResultType.raw(list))
       }
 
       cfg.source.getConfigValue(keys.reverse) match {
@@ -184,20 +280,28 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case c @ Sequence(_, _)      => loopSequence(path, keys, c, descriptions)
       }
 
-    loopAny(Nil, Nil, configuration, Nil)
+    loopAny(Nil, Nil, configuration, Nil).map(_.value)
   }
 
   def parseErrorMessage(given: String, expectedType: String) =
     s"Provided value is ${given.toString}, expecting the type ${expectedType}"
 
-  private def hasUnrecoverableErrors[K](
+  /* def optionalCondition[A](requiredTerms: Int): PartialFunction[ReadError[K], Boolean] = {
+    case error @ ReadError.AndErrors(errors, anyOptionalValuePresent) if errors.forall(_.is({
+          case MissingValue(_, _) => true
+        })) && error.cardinality == requiredTerms && !anyOptionalValuePresent => true
+    case error @ ReadError.OrErrors(errors) => optionalCondition(error)
+  }*/
+
+  private def countMissingValueProductTerms[K](
     value: ReadError[K]
-  ): Boolean = value match {
-    case ReadError.ForceSeverity(_, treatAsMissing) => !treatAsMissing
-    case ReadError.FormatError(_, _)                => true
-    case ReadError.ConversionError(_, _)            => true
-    case OrErrors(errors)                           => errors.exists(hasUnrecoverableErrors)
-    case AndErrors(errors)                          => errors.exists(hasUnrecoverableErrors)
-    case MissingValue(_, _)                         => false
+  ): Int = value match {
+    case ReadError.FormatError(_, _)     => 0
+    case ReadError.ConversionError(_, _) => 0
+    case OrErrors(errors)                => errors.map(countMissingValueProductTerms).max
+    case AndErrors(errors, _) =>
+      errors.map(countMissingValueProductTerms).sum
+    case MissingValue(_, _) => 1
+    case _                  => 0
   }
 }

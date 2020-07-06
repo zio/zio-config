@@ -1,3 +1,4 @@
+/*
 package zio.config.examples
 
 import zio.config.ConfigDescriptor._
@@ -91,3 +92,4 @@ object EitherExample extends App {
       Right(Left(Prod(Ldap("v1"), DbUrl("v2"))))
   )
 }
+*/
