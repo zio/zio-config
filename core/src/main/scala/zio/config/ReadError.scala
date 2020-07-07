@@ -72,14 +72,19 @@ sealed trait ReadError[A] extends Exception { self =>
       )
     }
 
-    def renderFormatError[A](err: ReadError.FormatError[A]): Sequential =
+    def renderFormatError[A](err: ReadError.FormatError[A]): Sequential = {
+      val strings =
+        "FormatError" :: s"cause: ${err.message}" :: s"path: ${renderSteps(err.path)}" :: Nil
+
       Sequential(
-        List(
-          Failure(
-            "FormatError" :: s"cause: ${err.message}" :: s"path: ${renderSteps(err.path)}" :: Nil
-          )
-        )
+        err.detail match {
+          case ::(head, next) =>
+            List(Failure(strings :+ s"Details: ${(head :: next).mkString(", ")}"))
+          case Nil =>
+            List(Failure(strings))
+        }
       )
+    }
 
     def renderConversionError[A](err: ReadError.ConversionError[A]): Sequential =
       Sequential(
@@ -141,7 +146,7 @@ sealed trait ReadError[A] extends Exception { self =>
   def cardinality: Int =
     self match {
       case ReadError.MissingValue(_, _)    => 1
-      case ReadError.FormatError(_, _)     => 1
+      case ReadError.FormatError(_, _, _)  => 1
       case ReadError.ConversionError(_, _) => 1
       case ReadError.OrErrors(list)        => list.map(_.size).sum
       case ReadError.AndErrors(list, _)    => list.map(_.size).sum
@@ -153,7 +158,7 @@ sealed trait ReadError[A] extends Exception { self =>
   def size: Int =
     self match {
       case ReadError.MissingValue(_, _)    => 1
-      case ReadError.FormatError(_, _)     => 1
+      case ReadError.FormatError(_, _, _)  => 1
       case ReadError.ConversionError(_, _) => 1
       case ReadError.OrErrors(list)        => list.map(_.size).sum
       case ReadError.AndErrors(list, _)    => list.map(_.size).sum
@@ -169,10 +174,10 @@ sealed trait ReadError[A] extends Exception { self =>
     }
 
   override def toString: String = self match {
-    case ReadError.MissingValue(path, message)    => s"MissingValue(${path}, ${message})"
-    case ReadError.FormatError(path, message)     => s"FormatError(${path}, ${message})"
-    case ReadError.ConversionError(path, message) => s"ConversionError(${path},${message}"
-    case ReadError.OrErrors(list)                 => s"OrErrors(${list.map(_.toString)})"
+    case ReadError.MissingValue(path, message)        => s"MissingValue(${path}, ${message})"
+    case ReadError.FormatError(path, message, detail) => s"FormatError(${path}, ${message}, ${detail})"
+    case ReadError.ConversionError(path, message)     => s"ConversionError(${path},${message}"
+    case ReadError.OrErrors(list)                     => s"OrErrors(${list.map(_.toString)})"
     case ReadError.AndErrors(list, fallBack) =>
       s"AndErrors(${list.map(t => t.toString)}, appliedAnyFallBacks = ${fallBack})"
     case ReadError.ListErrors(list)    => s"ListErrors(${list.map(_.toString)})"
@@ -189,14 +194,14 @@ object ReadError {
     final case class Index(index: Int) extends Step[Nothing]
   }
 
-  final case class MissingValue[A](path: List[Step[A]], detail: List[String] = Nil)            extends ReadError[A]
-  final case class FormatError[A](path: List[Step[A]], message: String)                        extends ReadError[A]
-  final case class ConversionError[A](path: List[Step[A]], message: String)                    extends ReadError[A]
-  final case class Irrecoverable[A](list: List[ReadError[A]])                                  extends ReadError[A]
-  final case class OrErrors[A](list: List[ReadError[A]])                                       extends ReadError[A]
-  final case class AndErrors[A](list: List[ReadError[A]], anyNonDefaultValue: Boolean = false) extends ReadError[A]
-  final case class ListErrors[A](list: List[ReadError[A]])                                     extends ReadError[A]
-  final case class MapErrors[A](list: List[ReadError[A]])                                      extends ReadError[A]
+  final case class MissingValue[A](path: List[Step[A]], detail: List[String] = Nil)                 extends ReadError[A]
+  final case class FormatError[A](path: List[Step[A]], message: String, detail: List[String] = Nil) extends ReadError[A]
+  final case class ConversionError[A](path: List[Step[A]], message: String)                         extends ReadError[A]
+  final case class Irrecoverable[A](list: List[ReadError[A]])                                       extends ReadError[A]
+  final case class OrErrors[A](list: List[ReadError[A]])                                            extends ReadError[A]
+  final case class AndErrors[A](list: List[ReadError[A]], anyNonDefaultValue: Boolean = false)      extends ReadError[A]
+  final case class ListErrors[A](list: List[ReadError[A]])                                          extends ReadError[A]
+  final case class MapErrors[A](list: List[ReadError[A]])                                           extends ReadError[A]
 
   def partitionWith[K, V, A](
     trees: List[ReadError[V]]

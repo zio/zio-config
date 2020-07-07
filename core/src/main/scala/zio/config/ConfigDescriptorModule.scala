@@ -94,8 +94,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case OrElse(cfg, cfg2)       => loop(count, cfg) + loop(count, cfg2)
           case OrElseEither(cfg, cfg2) => loop(count, cfg) + loop(count, cfg2)
           case Default(_, _)           => 0
-          case Sequence(_, config)     => loop(count, config)
-          case DynamicMap(_, config)   => loop(count, config)
+          case Sequence(_, _)          => 1
+          case DynamicMap(_, _)        => 1
         }
 
       loop(Nil, self)

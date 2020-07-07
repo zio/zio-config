@@ -36,11 +36,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     import ConfigDescriptorAdt._
 
-    def formatError(paths: List[Step[K]], actualType: String, expectedType: String) =
+    def formatError(paths: List[Step[K]], actualType: String, expectedType: String, descriptions: List[String]) =
       Left(
         ReadError.FormatError(
           paths.reverse,
-          s"Provided value is of type $actualType, expecting the type $expectedType"
+          s"Provided value is of type $actualType, expecting the type $expectedType",
+          descriptions
         )
       )
 
@@ -59,21 +60,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               Right(ResultType.defaultValue(cfg.default))
 
             case ReadError.OrErrors(errors)
-                if errors.forall(error => error.allMissingValues) &&
+                if errors.forall(_.allMissingValues) &&
                   error.cardinality == cfg.config.requiredTerms &&
                   !appliedNonDefaultValue(error) =>
-              Right(ResultType.defaultValue(cfg.default))
-
-            case ReadError.ListErrors(errors)
-                if errors.forall(_.allMissingValues) && errors.forall(
-                  error => error.cardinality == cfg.config.requiredTerms
-                ) && errors.forall(error => !appliedNonDefaultValue(error)) =>
-              Right(ResultType.defaultValue(cfg.default))
-
-            case ReadError.MapErrors(errors)
-                if errors.forall(_.allMissingValues) && errors.forall(
-                  error => error.cardinality == cfg.config.requiredTerms
-                ) && errors.forall(error => !appliedNonDefaultValue(error)) =>
               Right(ResultType.defaultValue(cfg.default))
 
             case MissingValue(_, _) =>
@@ -113,7 +102,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               Right(rightValue.map(Right(_)))
 
             case Left(rightError) =>
-              println("here???")
               Left(ReadError.OrErrors(leftError :: rightError :: Nil))
           }
       }
@@ -121,8 +109,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     def loopSource[B](path: List[Step[K]], keys: List[K], cfg: Source[B], descriptions: List[String]): Res[B] =
       cfg.source.getConfigValue(keys.reverse) match {
         case PropertyTree.Empty       => Left(ReadError.MissingValue(path.reverse, descriptions))
-        case PropertyTree.Record(_)   => formatError(path, "Record", "Leaf")
-        case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Leaf")
+        case PropertyTree.Record(_)   => formatError(path, "Record", "Leaf", descriptions)
+        case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Leaf", descriptions)
         case PropertyTree.Leaf(value) =>
           cfg.propertyType.read(value) match {
             case Left(parseError) =>
@@ -198,8 +186,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopMap[B](path: List[Step[K]], keys: List[K], cfg: DynamicMap[B], descriptions: List[String]): Res[Map[K, B]] =
       cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Leaf(_)     => formatError(path, "Leaf", "Record")
-        case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Record")
+        case PropertyTree.Leaf(_)     => formatError(path, "Leaf", "Record", descriptions)
+        case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Record", descriptions)
         case PropertyTree.Record(values) =>
           val result: List[(K, Res[B])] = values.toList.map {
             case ((k, tree)) =>
@@ -248,11 +236,11 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       cfg.source.getConfigValue(keys.reverse) match {
         case leaf @ PropertyTree.Leaf(_) =>
           cfg.source.leafForSequence match {
-            case LeafForSequence.Invalid => formatError(path, "Leaf", "Sequence")
+            case LeafForSequence.Invalid => formatError(path, "Leaf", "Sequence", descriptions)
             case LeafForSequence.Valid   => fromTrees(List(leaf))
           }
 
-        case PropertyTree.Record(_)        => formatError(path, "Record", "Sequence")
+        case PropertyTree.Record(_)        => formatError(path, "Record", "Sequence", descriptions)
         case PropertyTree.Empty            => Left(ReadError.MissingValue(path.reverse, descriptions))
         case PropertyTree.Sequence(values) => fromTrees(values)
       }
@@ -291,20 +279,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       case ListErrors(list)                 => list.exists(appliedNonDefaultValue)
       case MapErrors(list)                  => list.exists(appliedNonDefaultValue)
       case MissingValue(_, _)               => false
-      case FormatError(_, _)                => false
+      case FormatError(_, _, _)             => false
       case ConversionError(_, _)            => false
       case Irrecoverable(_)                 => false
     }
 
-  private def countMissingValueProductTerms[K](
-    value: ReadError[K]
-  ): Int = value match {
-    case ReadError.FormatError(_, _)     => 0
-    case ReadError.ConversionError(_, _) => 0
-    case OrErrors(errors)                => errors.map(countMissingValueProductTerms).max
-    case AndErrors(errors, _) =>
-      errors.map(countMissingValueProductTerms).sum
-    case MissingValue(_, _) => 1
-    case _                  => 0
-  }
 }
