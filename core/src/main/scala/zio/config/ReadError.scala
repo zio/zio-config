@@ -1,23 +1,20 @@
 package zio.config
 
 sealed trait ReadError[A] extends Exception { self =>
-
-  def is(f: PartialFunction[ReadError[A], Boolean]): Boolean =
+  def forAll(f: PartialFunction[ReadError[A], Boolean]): Boolean =
     self match {
-      case ReadError.OrErrors(list)     => list.forall(_.is(f))
-      case ReadError.AndErrors(list, _) => list.forall(_.is(f))
-      case ReadError.ListErrors(list)   => list.forall(_.is(f))
-      case ReadError.MapErrors(list)    => list.forall(_.is(f))
+      case ReadError.OrErrors(list)     => list.forall(_.forAll(f))
+      case ReadError.ZipErrors(list, _) => list.forall(_.forAll(f))
+      case ReadError.ListErrors(list)   => list.forall(_.forAll(f))
+      case ReadError.MapErrors(list)    => list.forall(_.forAll(f))
       case a                            => f.applyOrElse(a, (_: ReadError[A]) => false)
     }
 
-  def allMissingValues: Boolean = is {
-    case ReadError.MissingValue(_, _) => true
-  }
+  def allMissingValues: Boolean =
+    forAll {
+      case ReadError.MissingValue(_, _) => true
+    }
 
-  /**
-   * Returns a `String` with the ReadError pretty-printed.
-   */
   final def prettyPrint(keyDelimiter: Char = '.'): String = {
 
     sealed trait Segment
@@ -45,7 +42,7 @@ sealed trait ReadError[A] extends Exception { self =>
 
     def parallelSegments[A](readError: ReadError[A]): List[Sequential] =
       readError match {
-        case ReadError.AndErrors(head :: tail, _)  => parallelSegments(head) ++ tail.flatMap(parallelSegments)
+        case ReadError.ZipErrors(head :: tail, _)  => parallelSegments(head) ++ tail.flatMap(parallelSegments)
         case ReadError.ListErrors(head :: tail)    => parallelSegments(head) ++ tail.flatMap(parallelSegments)
         case ReadError.MapErrors(head :: tail)     => parallelSegments(head) ++ tail.flatMap(parallelSegments)
         case ReadError.Irrecoverable(head :: tail) => parallelSegments(head) ++ tail.flatMap(parallelSegments)
@@ -101,7 +98,7 @@ sealed trait ReadError[A] extends Exception { self =>
         case r: ReadError.FormatError[A]     => renderFormatError(r)
         case r: ReadError.ConversionError[A] => renderConversionError(r)
         case t: ReadError.OrErrors[A]        => Sequential(linearSegments(t))
-        case b: ReadError.AndErrors[A]       => Sequential(List(Parallel(parallelSegments(b))))
+        case b: ReadError.ZipErrors[A]       => Sequential(List(Parallel(parallelSegments(b))))
         case b: ReadError.ListErrors[A]      => Sequential(List(Parallel(parallelSegments(b))))
         case b: ReadError.MapErrors[A]       => Sequential(List(Parallel(parallelSegments(b))))
         case b: ReadError.Irrecoverable[A]   => Sequential(List(Parallel(parallelSegments(b))))
@@ -139,7 +136,7 @@ sealed trait ReadError[A] extends Exception { self =>
 
   def productTerms: Int =
     self match {
-      case ReadError.AndErrors(list, _) => list.map(_.productTerms).sum
+      case ReadError.ZipErrors(list, _) => list.map(_.productTerms).sum
       case _                            => 1
     }
 
@@ -149,7 +146,7 @@ sealed trait ReadError[A] extends Exception { self =>
       case ReadError.FormatError(_, _, _)  => 1
       case ReadError.ConversionError(_, _) => 1
       case ReadError.OrErrors(list)        => list.map(_.size).sum
-      case ReadError.AndErrors(list, _)    => list.map(_.size).sum
+      case ReadError.ZipErrors(list, _)    => list.map(_.size).sum
       case ReadError.ListErrors(_)         => 1
       case ReadError.MapErrors(_)          => 1
       case ReadError.Irrecoverable(_)      => 1
@@ -161,7 +158,7 @@ sealed trait ReadError[A] extends Exception { self =>
       case ReadError.FormatError(_, _, _)  => 1
       case ReadError.ConversionError(_, _) => 1
       case ReadError.OrErrors(list)        => list.map(_.size).sum
-      case ReadError.AndErrors(list, _)    => list.map(_.size).sum
+      case ReadError.ZipErrors(list, _)    => list.map(_.size).sum
       case ReadError.ListErrors(list)      => list.map(_.size).sum
       case ReadError.MapErrors(list)       => list.map(_.size).sum
       case ReadError.Irrecoverable(list)   => list.map(_.size).sum
@@ -178,8 +175,8 @@ sealed trait ReadError[A] extends Exception { self =>
     case ReadError.FormatError(path, message, detail) => s"FormatError(${path}, ${message}, ${detail})"
     case ReadError.ConversionError(path, message)     => s"ConversionError(${path},${message}"
     case ReadError.OrErrors(list)                     => s"OrErrors(${list.map(_.toString)})"
-    case ReadError.AndErrors(list, fallBack) =>
-      s"AndErrors(${list.map(t => t.toString)}, appliedAnyFallBacks = ${fallBack})"
+    case ReadError.ZipErrors(list, fallBack) =>
+      s"ZipErrors(${list.map(t => t.toString)}, appliedAnyFallBacks = ${fallBack})"
     case ReadError.ListErrors(list)    => s"ListErrors(${list.map(_.toString)})"
     case ReadError.MapErrors(list)     => s"MapErrors(${list.map(_.toString)})"
     case ReadError.Irrecoverable(list) => s"Irrecoverable(${list.map(_.toString)})"
@@ -199,16 +196,7 @@ object ReadError {
   final case class ConversionError[A](path: List[Step[A]], message: String)                         extends ReadError[A]
   final case class Irrecoverable[A](list: List[ReadError[A]])                                       extends ReadError[A]
   final case class OrErrors[A](list: List[ReadError[A]])                                            extends ReadError[A]
-  final case class AndErrors[A](list: List[ReadError[A]], anyNonDefaultValue: Boolean = false)      extends ReadError[A]
+  final case class ZipErrors[A](list: List[ReadError[A]], anyNonDefaultValue: Boolean = false)      extends ReadError[A]
   final case class ListErrors[A](list: List[ReadError[A]])                                          extends ReadError[A]
   final case class MapErrors[A](list: List[ReadError[A]])                                           extends ReadError[A]
-
-  def partitionWith[K, V, A](
-    trees: List[ReadError[V]]
-  )(pf: PartialFunction[ReadError[V], A]): List[A] =
-    trees.collect {
-      case tree if pf.isDefinedAt(tree) => pf(tree) :: Nil
-    }.foldLeft((List.empty[A])) {
-      case (accLeft, left) => (accLeft ++ left)
-    }
 }

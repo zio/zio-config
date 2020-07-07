@@ -45,21 +45,21 @@ object ReadErrorsTestUtils {
   val simpleMissingValue    = ReadError.MissingValue(List(Step.Key("k1"), Step.Key("k2"), Step.Index(1), Step.Key("k3")))
   val simpleFormatError     = ReadError.FormatError(List(Step.Key("k1"), Step.Key("k2")), "Format error")
   val simpleConversionError = ReadError.ConversionError(List(Step.Key("k1"), Step.Key("k2")), "Conversion error")
-  val complexErrorsForPrettyPrint = ReadError.AndErrors(
+  val complexErrorsForPrettyPrint = ReadError.ZipErrors(
     List(
       simpleMissingValue,
       simpleFormatError,
       simpleConversionError,
       ReadError.OrErrors(
         List(
-          ReadError.AndErrors(
+          ReadError.ZipErrors(
             List(ReadError.OrErrors(List(simpleMissingValue, simpleMissingValue)), simpleFormatError)
           ),
           ReadError.OrErrors(List(simpleMissingValue, simpleMissingValue)),
           simpleConversionError
         )
       ),
-      ReadError.AndErrors(List(ReadError.OrErrors(List(simpleMissingValue, simpleMissingValue)), simpleFormatError))
+      ReadError.ZipErrors(List(ReadError.OrErrors(List(simpleMissingValue, simpleMissingValue)), simpleFormatError))
     )
   )
 

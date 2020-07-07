@@ -55,7 +55,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) =>
           error match {
-            case ReadError.AndErrors(errors, anyDefaultValuePresent)
+            case ReadError.ZipErrors(errors, anyDefaultValuePresent)
                 if errors.forall(_.allMissingValues) && error.cardinality == cfg.config.requiredTerms && !anyDefaultValuePresent =>
               Right(ResultType.defaultValue(cfg.default))
 
@@ -144,24 +144,24 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
         case (Left(leftE), Left(rightE)) =>
           (leftE, rightE) match {
-            case (AndErrors(_, fallBack1), AndErrors(_, fallBack2)) =>
-              Left(AndErrors(leftE :: rightE :: Nil, fallBack1 || fallBack2))
-            case (AndErrors(_, fallBack1), _) => Left(AndErrors(leftE :: rightE :: Nil, fallBack1))
-            case (_, AndErrors(_, fallBack2)) => Left(AndErrors(leftE :: rightE :: Nil, fallBack2))
-            case (_, _)                       => Left(AndErrors(leftE :: rightE :: Nil))
+            case (ZipErrors(_, fallBack1), ZipErrors(_, fallBack2)) =>
+              Left(ZipErrors(leftE :: rightE :: Nil, fallBack1 || fallBack2))
+            case (ZipErrors(_, fallBack1), _) => Left(ZipErrors(leftE :: rightE :: Nil, fallBack1))
+            case (_, ZipErrors(_, fallBack2)) => Left(ZipErrors(leftE :: rightE :: Nil, fallBack2))
+            case (_, _)                       => Left(ZipErrors(leftE :: rightE :: Nil))
           }
 
         case (Left(leftE), Right(value)) =>
           value match {
-            case ResultType.Raw(_)             => Left(AndErrors(List(leftE)))
-            case ResultType.DefaultValue(_)    => Left(AndErrors(List(leftE)))
-            case ResultType.NonDefaultValue(_) => Left(AndErrors(List(leftE), anyNonDefaultValue = true))
+            case ResultType.Raw(_)             => Left(ZipErrors(List(leftE)))
+            case ResultType.DefaultValue(_)    => Left(ZipErrors(List(leftE)))
+            case ResultType.NonDefaultValue(_) => Left(ZipErrors(List(leftE), anyNonDefaultValue = true))
           }
         case (Right(value), Left(rightE)) =>
           value match {
-            case ResultType.Raw(_)             => Left(AndErrors(List(rightE)))
-            case ResultType.DefaultValue(_)    => Left(AndErrors(List(rightE)))
-            case ResultType.NonDefaultValue(_) => Left(AndErrors(List(rightE), anyNonDefaultValue = true))
+            case ResultType.Raw(_)             => Left(ZipErrors(List(rightE)))
+            case ResultType.DefaultValue(_)    => Left(ZipErrors(List(rightE)))
+            case ResultType.NonDefaultValue(_) => Left(ZipErrors(List(rightE), anyNonDefaultValue = true))
           }
       }
 
@@ -274,7 +274,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
   def appliedNonDefaultValue(error: ReadError[K]): Boolean =
     error match {
-      case AndErrors(_, anyNonDefaultValue) => anyNonDefaultValue
+      case ZipErrors(_, anyNonDefaultValue) => anyNonDefaultValue
       case OrErrors(list)                   => list.exists(e => appliedNonDefaultValue(e))
       case ListErrors(list)                 => list.exists(appliedNonDefaultValue)
       case MapErrors(list)                  => list.exists(appliedNonDefaultValue)

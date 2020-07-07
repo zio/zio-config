@@ -47,7 +47,7 @@ object ErrorAccumulation extends App {
       Left(
         // OrErrors indicate fix either of those errors associated with envvar2 or envvar3
         // AndErrors indicate fix the errors associated with both envvar1 and OrError(envvar2 or envvar3)
-        AndErrors(
+        ZipErrors(
           List(
             MissingValue(List(Step.Key("envvar")), List("value of type int")),
             OrErrors(
@@ -100,7 +100,7 @@ object ErrorAccumulation extends App {
   assert(
     read(config from invalidSource) ==
       Left(
-        AndErrors(
+        ZipErrors(
           List(
             FormatError(
               List(Step.Key("envvar")),
