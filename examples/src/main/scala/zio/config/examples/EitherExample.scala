@@ -61,7 +61,7 @@ object EitherExample extends App {
       ║ cause: Provided value is notadouble, expecting the type double
       ║ path: x5
       ▼
-   */
+ */
 
   println(read(prodOrDev from invalidSource))
   assert(
@@ -92,4 +92,4 @@ object EitherExample extends App {
       Right(Left(Prod(Ldap("v1"), DbUrl("v2"))))
   )
 }
-*/
+ */

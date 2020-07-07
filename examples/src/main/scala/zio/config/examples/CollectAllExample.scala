@@ -37,7 +37,9 @@ object CollectAllExample extends App with EitherImpureOps {
     )
 
   // loadOrThrow here is only for the purpose of example
-  val result: List[Variables]               = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
+  val result: List[Variables] = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
+  println(result)
+
   val written: PropertyTree[String, String] = write(configOfList, result).loadOrThrow
 
   assert(

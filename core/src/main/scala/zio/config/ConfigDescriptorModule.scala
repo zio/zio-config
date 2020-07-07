@@ -54,6 +54,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         case Source(source, propertyType) => Source(source, propertyType)
         case DynamicMap(source, conf)     => DynamicMap(source, loop(conf))
         case Nested(path, conf)           => Nested(f(path), loop(conf))
+        case Optional(config)             => Optional(loop(config))
         case Sequence(source, conf)       => Sequence(source, loop(conf))
         case Describe(config, message)    => Describe(loop(config), message)
         case Default(value, value2)       => Default(loop(value), value2)
@@ -67,13 +68,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     }
 
     final def optional: ConfigDescriptor[Option[A]] =
-      Default(
-        self.xmapEither[Option[A]](
-          value => Right(Some(value)),
-          option => option.fold[Either[String, A]](Left("Failed to write the non option"))(value => Right(value))
-        ),
-        None: Option[A]
-      ) ?? "optional value"
+      Optional(self) ?? "optional value"
 
     final def orElse(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       OrElse(self, that)
@@ -91,6 +86,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Describe(cfg, _)        => loop(count, cfg)
           case Nested(_, next)         => loop(count, next)
           case Source(_, _)            => 1
+          case Optional(_)             => 0
           case OrElse(cfg, cfg2)       => loop(count, cfg) + loop(count, cfg2)
           case OrElseEither(cfg, cfg2) => loop(count, cfg) + loop(count, cfg2)
           case Default(_, _)           => 0
@@ -109,6 +105,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         case Source(source, propertyType) => Source(f(source), propertyType)
         case DynamicMap(source, conf)     => DynamicMap(f(source), loop(conf))
         case Nested(path, conf)           => Nested(path, loop(conf))
+        case Optional(config)             => Optional(loop(config))
         case Sequence(source, conf)       => Sequence(f(source), loop(conf))
         case Describe(config, message)    => Describe(loop(config), message)
         case Default(value, value2)       => Default(loop(value), value2)
@@ -247,6 +244,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[Map[K, A]]
 
     case class Nested[A](path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
+
+    case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
     case class OrElse[A](left: ConfigDescriptor[A], right: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 

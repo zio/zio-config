@@ -44,6 +44,9 @@ trait ConfigDocsModule extends WriteModule {
             loop((cd.source.names ++ sources), descriptions, cd.config, None)
           )
 
+        case Optional(c) =>
+          loop(sources, descriptions, c, latestPath)
+
         case Sequence(source, c) =>
           ConfigDocs.Sequence(
             loop((source.names ++ sources), descriptions, c, latestPath)
