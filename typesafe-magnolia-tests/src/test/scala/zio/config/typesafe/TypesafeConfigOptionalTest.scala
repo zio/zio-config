@@ -473,6 +473,12 @@ object OptionalSpecUtils {
     case class CaseClass4(f: Option[String], g: Option[String], i: String, h: String)
   }
 
+  object TestCase2 {
+    final case class CaseClass1(a: Option[CaseClass2])
+    final case class CaseClass2(a: String, b: Either[Int, CaseClass3])
+    final case class CaseClass3(a: String, b: String, c: Option[Int], d: Option[Int], e: String, f: Option[Int])
+  }
+
   def checkIfOnlyMissingValues[K](error: ReadError[K]): Boolean =
     error.fold(false) {
       case ReadError.MissingValue(_, _) => true

@@ -309,21 +309,16 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case ReadError.Irrecoverable(_)   => false
       }(_ && _, true)
 
-    def preCondition(errors: List[ReadError[K]]): Boolean = {
-      println(error.cardinality)
-      println(config.requiredTerms)
-
+    def checkIfAllRequiredValuesAreMissing(errors: List[ReadError[K]]): Boolean =
       errors.forall(hasOnlyMissingValuesIfNotIrrecoverable) && error.cardinality == config.requiredTerms
-    }
-
-    println(s"the error is ${error}")
 
     error match {
       case MissingValue(_, _) => Right(ResultType.defaultValue(default))
-      case ReadError.ZipErrors(errors, anyDefaultValuePresent) if preCondition(errors) && !anyDefaultValuePresent =>
+      case ReadError.ZipErrors(errors, anyDefaultValuePresent)
+          if checkIfAllRequiredValuesAreMissing(errors) && !anyDefaultValuePresent =>
         Right(ResultType.defaultValue(default))
 
-      case ReadError.OrErrors(errors) if preCondition(errors) && !appliedNonDefaultValue(error) =>
+      case ReadError.OrErrors(errors) if checkIfAllRequiredValuesAreMissing(errors) && !appliedNonDefaultValue(error) =>
         Right(ResultType.defaultValue(default))
 
       case ListErrors(_)        => Left(Irrecoverable(List(error)))
