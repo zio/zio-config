@@ -12,7 +12,7 @@ object OptionalSpec
     extends BaseSpec(
       suite("partial products fail instead of returning none")(
         test(
-          "Presence of one optional value in an optional product cannot bypass failures"
+          "Presence of one optional value in an optional product returns failures"
         ) {
           val validConfig =
             s"""
@@ -48,7 +48,7 @@ object OptionalSpec
           )
         },
         test(
-          "Presence of another optional value in an optional product cannot bypass failures"
+          "Presence of another optional value in an optional product returns failures"
         ) {
           val validConfig =
             s"""
@@ -84,7 +84,7 @@ object OptionalSpec
           )
         },
         test(
-          "Presence of all optional values in an optional product cannot bypass failures"
+          "Presence of all optional values in an optional product returns failures"
         ) {
           val validConfig =
             s"""
@@ -121,7 +121,7 @@ object OptionalSpec
           )
         },
         test(
-          "Presence of one required value in an optional product cannot bypass failures"
+          "Presence of one required value in an optional product returns failures"
         ) {
           val validConfig =
             s"""
@@ -156,7 +156,7 @@ object OptionalSpec
           )
         },
         test(
-          "Presence of another required value in an optional product cannot bypass failures"
+          "Presence of another required value in an optional product returns failures"
         ) {
           val validConfig =
             s"""
@@ -191,7 +191,7 @@ object OptionalSpec
           )
         },
         test(
-          "Presence of one required value and one optional value cannot bypass failures"
+          "Presence of one required value and one optional value returns failures"
         ) {
           val validConfig =
             s"""
@@ -227,7 +227,7 @@ object OptionalSpec
           )
         },
         test(
-          "Presence of another required value and another optional value cannot bypass failures"
+          "Presence of another required value and another optional value returns failures"
         ) {
           val validConfig =
             s"""
