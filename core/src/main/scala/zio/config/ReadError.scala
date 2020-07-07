@@ -1,19 +1,28 @@
 package zio.config
 
-sealed trait ReadError[A] extends Exception { self =>
-  def forAll(f: PartialFunction[ReadError[A], Boolean]): Boolean =
-    self match {
-      case ReadError.OrErrors(list)     => list.forall(_.forAll(f))
-      case ReadError.ZipErrors(list, _) => list.forall(_.forAll(f))
-      case ReadError.ListErrors(list)   => list.forall(_.forAll(f))
-      case ReadError.MapErrors(list)    => list.forall(_.forAll(f))
-      case a                            => f.applyOrElse(a, (_: ReadError[A]) => false)
-    }
+import zio.config.ReadError.Step
 
-  def allMissingValues: Boolean =
-    forAll {
-      case ReadError.MissingValue(_, _) => true
+sealed trait ReadError[A] extends Exception { self =>
+  def fold[B](default: B)(f: PartialFunction[ReadError[A], B])(g: (B, B) => B, zero: B): B = {
+    def go(list: List[ReadError[A]]): B =
+      list.foldLeft(zero)((a, b) => g(b.fold(default)(f)(g, zero), a))
+
+    self match {
+      case e @ ReadError.MissingValue(_, _)    => f.applyOrElse(e, (_: ReadError[A]) => default)
+      case e @ ReadError.FormatError(_, _, _)  => f.applyOrElse(e, (_: ReadError[A]) => default)
+      case e @ ReadError.ConversionError(_, _) => f.applyOrElse(e, (_: ReadError[A]) => default)
+      case e @ ReadError.Irrecoverable(list)   => f.applyOrElse(e, (_: ReadError[A]) => go(list))
+      case e @ ReadError.OrErrors(list)        => f.applyOrElse(e, (_: ReadError[A]) => go(list))
+      case e @ ReadError.ZipErrors(list, _)    => f.applyOrElse(e, (_: ReadError[A]) => go(list))
+      case e @ ReadError.ListErrors(list)      => f.applyOrElse(e, (_: ReadError[A]) => go(list))
+      case e @ ReadError.MapErrors(list)       => f.applyOrElse(e, (_: ReadError[A]) => go(list))
     }
+  }
+
+  def getListOfSteps: List[List[Step[A]]] =
+    fold(List.empty[List[Step[A]]]) {
+      case ReadError.MissingValue(steps, _) => List(steps)
+    }(_ ++ _, List.empty[List[Step[A]]])
 
   final def prettyPrint(keyDelimiter: Char = '.'): String = {
 

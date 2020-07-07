@@ -146,14 +146,16 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[(B, C)] =
       (loopAny(path, keys, cfg.left, descriptions), loopAny(path, keys, cfg.right, descriptions)) match {
         case (Right(leftV), Right(rightV)) =>
-          // Not really required
+          println(leftV + "  " + rightV)
           (leftV, rightV) match {
-            case (ResultType.DefaultValue(v1), v2) => Right(ResultType.defaultValue((v1, v2.value)))
-            case (v1, ResultType.DefaultValue(v2)) => Right(ResultType.defaultValue((v1.value, v2)))
-            case (v1, v2)                          => Right(ResultType.raw((v1.value, v2.value)))
+            case (ResultType.NonDefaultValue(v1), v2) => Right(ResultType.nonDefaultValue((v1, v2.value)))
+            case (v1, ResultType.NonDefaultValue(v2)) => Right(ResultType.nonDefaultValue((v1.value, v2)))
+            case (v1, v2)                             => Right(ResultType.raw((v1.value, v2.value)))
           }
 
         case (Left(leftE), Left(rightE)) =>
+          println("e " + leftE + "  " + rightE)
+
           (leftE, rightE) match {
             case (ZipErrors(_, fallBack1), ZipErrors(_, fallBack2)) =>
               Left(ZipErrors(leftE :: rightE :: Nil, fallBack1 || fallBack2))
@@ -163,16 +165,29 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           }
 
         case (Left(leftE), Right(value)) =>
-          value match {
-            case ResultType.Raw(_)             => Left(ZipErrors(List(leftE)))
-            case ResultType.DefaultValue(_)    => Left(ZipErrors(List(leftE)))
+          println("e2 " + leftE + "  " + value)
+
+          def result(defaultValueApplied: Boolean) = value match {
+            case ResultType.Raw(_)             => Left(ZipErrors(List(leftE), defaultValueApplied))
+            case ResultType.DefaultValue(_)    => Left(ZipErrors(List(leftE), defaultValueApplied))
             case ResultType.NonDefaultValue(_) => Left(ZipErrors(List(leftE), anyNonDefaultValue = true))
           }
+
+          leftE match {
+            case ZipErrors(_, anyNonDefaultValue) => result(anyNonDefaultValue)
+            case _                                => result(false)
+          }
+
         case (Right(value), Left(rightE)) =>
-          value match {
+          def result(defaultValueApplied: Boolean) = value match {
             case ResultType.Raw(_)             => Left(ZipErrors(List(rightE)))
             case ResultType.DefaultValue(_)    => Left(ZipErrors(List(rightE)))
             case ResultType.NonDefaultValue(_) => Left(ZipErrors(List(rightE), anyNonDefaultValue = true))
+          }
+
+          rightE match {
+            case ZipErrors(list, anyNonDefaultValue) => result(anyNonDefaultValue)
+            case _                                   => result(false)
           }
       }
 
@@ -293,8 +308,20 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     config: ConfigDescriptor[A],
     default: B
   ): Either[ReadError[K], ResultType[B]] = {
-    def preCondition(errors: List[ReadError[K]]): Boolean =
-      errors.forall(_.allMissingValues) && error.cardinality == config.requiredTerms
+    def hasOnlyMissingValuesIfNotIrrecoverable(error: ReadError[K]): Boolean =
+      error.fold(false) {
+        case ReadError.MissingValue(_, _) => true
+        case ReadError.Irrecoverable(_)   => false
+      }(_ && _, true)
+
+    def preCondition(errors: List[ReadError[K]]): Boolean = {
+      println(error.cardinality)
+      println(config.requiredTerms)
+
+      errors.forall(hasOnlyMissingValuesIfNotIrrecoverable) && error.cardinality == config.requiredTerms
+    }
+
+    println(s"the error is ${error}")
 
     error match {
       case MissingValue(_, _) => Right(ResultType.defaultValue(default))
@@ -307,7 +334,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       case ListErrors(_)        => Left(Irrecoverable(List(error)))
       case MapErrors(_)         => Left(Irrecoverable(List(error)))
       case FormatError(_, _, _) => Left(Irrecoverable(List(error)))
-      case e @ Irrecoverable(_) => Left(e)
+      case e                    => Left(Irrecoverable(List(e)))
     }
   }
 }

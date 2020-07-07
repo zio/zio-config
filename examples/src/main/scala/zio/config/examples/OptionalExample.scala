@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.DeriveConfigDescriptor._
 import zio.config.typesafe._
@@ -9,7 +9,7 @@ object OptionalExample extends App with EitherImpureOps {
   case class AppConfig(detail: Option[Detail])
   case class Detail(a: String, b: Option[Detail2])
   case class Detail2(c: String, e: Option[Detail3])
-  case class Detail3(f: String, g: String, h: Option[String])
+  case class Detail3(f: Option[String], g: Option[String], i: String, h: String)
 
   val validConfig =
     """
@@ -19,13 +19,15 @@ object OptionalExample extends App with EitherImpureOps {
          c : 1
          e : {
            f : 1
-           g : 1
          }
        }
        }
     """
 
-  println(read(nested("detail")(descriptor[Detail]) from getSource(validConfig)).swap.map(_.prettyPrint()))
+  println(
+    read(descriptor[AppConfig] from getSource(validConfig)).swap
+      .map(_.prettyPrint())
+  )
 
   def getSource(str: String): ConfigSource =
     TypesafeConfigSource.fromHoconString(str).loadOrThrow
@@ -86,7 +88,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase3.CaseClass1] from getSource(validConfig3)).swap.map(_.prettyPrint()))
+  //println(read(descriptor[TestCase3.CaseClass1] from getSource(validConfig3)).swap.map(_.prettyPrint()))
 
   object TestCase4 {
     final case class CaseClass1(a: Option[CaseClass2])
@@ -103,7 +105,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase4.CaseClass1] from getSource(validConfig4)).swap.map(_.prettyPrint()))
+  //println(read(descriptor[TestCase4.CaseClass1] from getSource(validConfig4)).swap.map(_.prettyPrint()))
 
   object TestCase5 {
     final case class CaseClass1(a: Option[CaseClass2])
@@ -121,7 +123,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase5.CaseClass1] from getSource(validConfig5)).swap.map(_.prettyPrint()))
+  //println(read(descriptor[TestCase5.CaseClass1] from getSource(validConfig5)).swap.map(_.prettyPrint()))
 
   object TestCase6 {
     final case class CaseClass1(a: CaseClass2)
@@ -137,7 +139,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase6.CaseClass1] from getSource(validConfig6)).swap.map(_.prettyPrint()))
+  // println(read(descriptor[TestCase6.CaseClass1] from getSource(validConfig6)).swap.map(_.prettyPrint()))
 
   object TestCase7 {
     final case class CaseClass1(a: CaseClass2)
@@ -158,7 +160,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase7.CaseClass1] from getSource(validConfig7)).swap.map(_.prettyPrint()))
+  //println(read(descriptor[TestCase7.CaseClass1] from getSource(validConfig7)).swap.map(_.prettyPrint()))
 
   object TestCase8 {
     final case class CaseClass1(a: CaseClass2)
@@ -196,7 +198,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase8.CaseClass1] from getSource(validConfig8)).swap.map(_.prettyPrint()))
+  //println(read(descriptor[TestCase8.CaseClass1] from getSource(validConfig8)).swap.map(_.prettyPrint()))
 
   object TestCase9 {
     final case class CaseClass1(a: CaseClass2)
@@ -229,7 +231,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase9.CaseClass1] from getSource(validConfig9)).swap.map(_.prettyPrint()))
+  //println(read(descriptor[TestCase9.CaseClass1] from getSource(validConfig9)).swap.map(_.prettyPrint()))
 
   object TestCase10 {
     final case class CaseClass1(a: CaseClass2)
@@ -258,7 +260,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase10.CaseClass1] from getSource(validConfig10)).swap.map(_.prettyPrint()))
+  // println(read(descriptor[TestCase10.CaseClass1] from getSource(validConfig10)).swap.map(_.prettyPrint()))
 
   object TestCase11 {
     final case class CaseClass1(a: CaseClass2)
@@ -283,7 +285,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase11.CaseClass1] from getSource(validConfig11)).swap.map(_.prettyPrint()))
+  // println(read(descriptor[TestCase11.CaseClass1] from getSource(validConfig11)).swap.map(_.prettyPrint()))
 
   object TestCase12 {
     final case class CaseClass1(a: CaseClass2)
@@ -300,7 +302,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase12.CaseClass1] from getSource(validConfig12)).swap.map(_.prettyPrint()))
+  // println(read(descriptor[TestCase12.CaseClass1] from getSource(validConfig12)).swap.map(_.prettyPrint()))
 
   object TestCase13 {
     final case class CaseClass1(a: CaseClass2)
@@ -322,7 +324,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase13.CaseClass1] from getSource(validConfig13)).swap.map(_.prettyPrint()))
+  // println(read(descriptor[TestCase13.CaseClass1] from getSource(validConfig13)).swap.map(_.prettyPrint()))
 
   object TestCase14 {
     final case class CaseClass1(a: CaseClass2)
@@ -344,7 +346,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase14.CaseClass1] from getSource(validConfig14)).swap.map(_.prettyPrint()))
+  // println(read(descriptor[TestCase14.CaseClass1] from getSource(validConfig14)).swap.map(_.prettyPrint()))
 
   object TestCase15 {
     final case class CaseClass1(a: CaseClass2)
@@ -375,7 +377,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase15.CaseClass1] from getSource(validConfig15)).swap.map(_.prettyPrint()))
+  //println(read(descriptor[TestCase15.CaseClass1] from getSource(validConfig15)).swap.map(_.prettyPrint()))
 
   object TestCase16 {
     final case class CaseClass1(a: Option[CaseClass2])
@@ -393,7 +395,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase16.CaseClass1] from getSource(validConfig16)).swap.map(_.prettyPrint()))
+  //println(read(descriptor[TestCase16.CaseClass1] from getSource(validConfig16)).swap.map(_.prettyPrint()))
 
   object TestCase17 {
     final case class CaseClass1(a: Option[CaseClass2])
@@ -411,6 +413,6 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  println(read(descriptor[TestCase17.CaseClass1] from getSource(validConfig17)).swap.map(_.prettyPrint()))
+  // println(read(descriptor[TestCase17.CaseClass1] from getSource(validConfig17)).swap.map(_.prettyPrint()))
 
 }
