@@ -146,7 +146,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[(B, C)] =
       (loopAny(path, keys, cfg.left, descriptions), loopAny(path, keys, cfg.right, descriptions)) match {
         case (Right(leftV), Right(rightV)) =>
-          println(leftV + "  " + rightV)
           (leftV, rightV) match {
             case (ResultType.NonDefaultValue(v1), v2) => Right(ResultType.nonDefaultValue((v1, v2.value)))
             case (v1, ResultType.NonDefaultValue(v2)) => Right(ResultType.nonDefaultValue((v1.value, v2)))
@@ -154,8 +153,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           }
 
         case (Left(leftE), Left(rightE)) =>
-          println("e " + leftE + "  " + rightE)
-
           (leftE, rightE) match {
             case (ZipErrors(_, fallBack1), ZipErrors(_, fallBack2)) =>
               Left(ZipErrors(leftE :: rightE :: Nil, fallBack1 || fallBack2))
@@ -165,8 +162,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           }
 
         case (Left(leftE), Right(value)) =>
-          println("e2 " + leftE + "  " + value)
-
           def result(defaultValueApplied: Boolean) = value match {
             case ResultType.Raw(_)             => Left(ZipErrors(List(leftE), defaultValueApplied))
             case ResultType.DefaultValue(_)    => Left(ZipErrors(List(leftE), defaultValueApplied))
