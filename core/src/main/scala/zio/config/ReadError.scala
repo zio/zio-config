@@ -143,13 +143,7 @@ sealed trait ReadError[A] extends Exception { self =>
     }).mkString(System.lineSeparator())
   }
 
-  def productTerms: Int =
-    self match {
-      case ReadError.ZipErrors(list, _) => list.map(_.productTerms).sum
-      case _                            => 1
-    }
-
-  def cardinality: Int =
+  def sizeOfZipAndOrErrors: Int =
     self match {
       case ReadError.MissingValue(_, _)    => 1
       case ReadError.FormatError(_, _, _)  => 1
@@ -171,12 +165,6 @@ sealed trait ReadError[A] extends Exception { self =>
       case ReadError.ListErrors(list)      => list.map(_.size).sum
       case ReadError.MapErrors(list)       => list.map(_.size).sum
       case ReadError.Irrecoverable(list)   => list.map(_.size).sum
-    }
-
-  def sumTerms: Int =
-    self match {
-      case ReadError.OrErrors(list) => list.map(_.sumTerms).sum
-      case _                        => 1
     }
 
   override def toString: String = self match {

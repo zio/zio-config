@@ -310,7 +310,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       }(_ && _, true)
 
     def checkIfAllRequiredValuesAreMissing(errors: List[ReadError[K]]): Boolean =
-      errors.forall(hasOnlyMissingValuesIfNotIrrecoverable) && error.cardinality == config.requiredTerms
+      errors.forall(hasOnlyMissingValuesIfNotIrrecoverable) && error.sizeOfZipAndOrErrors == config.requiredTerms
 
     error match {
       case MissingValue(_, _) => Right(ResultType.defaultValue(default))
