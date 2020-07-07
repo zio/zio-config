@@ -681,6 +681,28 @@ object OptionalSpec
               )
             )
           )
+        },
+        test(
+          "An optional either[a, product] returns none if the parent key is missing"
+        ) {
+          val validConfig =
+            s"""
+               |      a: {
+               |         a : 10
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase3.CaseClass1] from getSource(validConfig))
+
+          val summary =
+            result.swap.map(fetchMissingValueAndFormatErrors).swap
+
+          assert(summary)(
+            equalTo(
+              Right(TestCase3.CaseClass1(TestCase3.CaseClass2("10", None)))
+            )
+          )
         }
       )
     )
