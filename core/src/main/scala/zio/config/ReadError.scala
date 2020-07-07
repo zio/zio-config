@@ -11,6 +11,10 @@ sealed trait ReadError[A] extends Exception { self =>
       case a                            => f.applyOrElse(a, (_: ReadError[A]) => false)
     }
 
+  def allMissingValues: Boolean = is {
+    case ReadError.MissingValue(_, _) => true
+  }
+
   /**
    * Returns a `String` with the ReadError pretty-printed.
    */
@@ -139,7 +143,7 @@ sealed trait ReadError[A] extends Exception { self =>
       case ReadError.MissingValue(_, _)    => 1
       case ReadError.FormatError(_, _)     => 1
       case ReadError.ConversionError(_, _) => 1
-      case ReadError.OrErrors(list)        => list.map(_.size).max
+      case ReadError.OrErrors(list)        => list.map(_.size).sum
       case ReadError.AndErrors(list, _)    => list.map(_.size).sum
       case ReadError.ListErrors(_)         => 1
       case ReadError.MapErrors(_)          => 1
@@ -185,14 +189,14 @@ object ReadError {
     final case class Index(index: Int) extends Step[Nothing]
   }
 
-  final case class MissingValue[A](path: List[Step[A]], detail: List[String] = Nil)                 extends ReadError[A]
-  final case class FormatError[A](path: List[Step[A]], message: String)                             extends ReadError[A]
-  final case class ConversionError[A](path: List[Step[A]], message: String)                         extends ReadError[A]
-  final case class Irrecoverable[A](list: List[ReadError[A]])                                       extends ReadError[A]
-  final case class OrErrors[A](list: List[ReadError[A]])                                            extends ReadError[A]
-  final case class AndErrors[A](list: List[ReadError[A]], anyOptionalValuePresent: Boolean = false) extends ReadError[A]
-  final case class ListErrors[A](list: List[ReadError[A]])                                          extends ReadError[A]
-  final case class MapErrors[A](list: List[ReadError[A]])                                           extends ReadError[A]
+  final case class MissingValue[A](path: List[Step[A]], detail: List[String] = Nil)            extends ReadError[A]
+  final case class FormatError[A](path: List[Step[A]], message: String)                        extends ReadError[A]
+  final case class ConversionError[A](path: List[Step[A]], message: String)                    extends ReadError[A]
+  final case class Irrecoverable[A](list: List[ReadError[A]])                                  extends ReadError[A]
+  final case class OrErrors[A](list: List[ReadError[A]])                                       extends ReadError[A]
+  final case class AndErrors[A](list: List[ReadError[A]], anyNonDefaultValue: Boolean = false) extends ReadError[A]
+  final case class ListErrors[A](list: List[ReadError[A]])                                     extends ReadError[A]
+  final case class MapErrors[A](list: List[ReadError[A]])                                      extends ReadError[A]
 
   def partitionWith[K, V, A](
     trees: List[ReadError[V]]

@@ -28,11 +28,6 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
           val bs = (b: List[a]).map(go(cd.config, _))
           seqEither[String, PropertyTree[K, V]](bs).map(PropertyTree.Sequence(_))
 
-        case Optional(c) =>
-          b.fold(
-            Right(PropertyTree.empty): Either[String, PropertyTree[K, V]]
-          )(go(c, _))
-
         case Default(c, _) =>
           go(c, b)
 

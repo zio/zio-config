@@ -8,25 +8,25 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     def value: A
     def map[B](f: A => B): ResultType[B] =
       this match {
-        case ResultType.Raw(value)         => ResultType.raw(f(value))
-        case ResultType.FallBack(value)    => ResultType.fallBack(f(value))
-        case ResultType.OptionalRaw(value) => ResultType.optionalRaw(f(value))
+        case ResultType.Raw(value)             => ResultType.raw(f(value))
+        case ResultType.DefaultValue(value)    => ResultType.defaultValue(f(value))
+        case ResultType.NonDefaultValue(value) => ResultType.nonDefaultValue(f(value))
       }
   }
 
   object ResultType {
-    case class OptionalRaw[A](value: A) extends ResultType[A]
-    case class Raw[A](value: A)         extends ResultType[A]
-    case class FallBack[A](value: A)    extends ResultType[A]
+    case class NonDefaultValue[A](value: A) extends ResultType[A]
+    case class Raw[A](value: A)             extends ResultType[A]
+    case class DefaultValue[A](value: A)    extends ResultType[A]
 
     def raw[A](value: A): ResultType[A] =
       Raw(value)
 
-    def fallBack[A](value: A): ResultType[A] =
-      FallBack(value)
+    def defaultValue[A](value: A): ResultType[A] =
+      DefaultValue(value)
 
-    def optionalRaw[A](value: A): ResultType[A] =
-      OptionalRaw(value)
+    def nonDefaultValue[A](value: A): ResultType[A] =
+      NonDefaultValue(value)
   }
 
   final def read[A](
@@ -44,48 +44,46 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         )
       )
 
-    def loopDefault[B](path: List[Step[K]], keys: List[K], cfg: Default[B], descriptions: List[String]): Res[B] =
-      loopAny(path, keys, cfg.config, descriptions) match {
-        case Left(error) if countMissingValueProductTerms(error) < cfg.config.productTerms => Left(error)
-        case Left(_)                                                                       => Right(ResultType.FallBack(cfg.value))
-        case Right(value)                                                                  => Right(value)
-      }
-
     // Optional(Zip(...)
-    def loopOptional[B](
+    def loopDefault[B](
       path: List[Step[K]],
       keys: List[K],
-      cfg: Optional[B],
+      cfg: Default[B],
       descriptions: List[String]
-    ): Res[Option[B]] =
+    ): Res[B] =
       loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) =>
-          println(s"the error is ${error}")
           error match {
-            case ReadError.AndErrors(errors, anyOptionalValuePresent) if errors.forall(_.is({
-                  case MissingValue(_, _) => true
-                })) && error.cardinality >= cfg.config.requiredTerms && !anyOptionalValuePresent =>
-              Right(ResultType.fallBack(None))
-            case ReadError.OrErrors(errors) if errors.forall(_.is {
-                  case MissingValue(_, _) => true
-                }) =>
-              Right(ResultType.fallBack(None))
-            case ReadError.ListErrors(errors) if errors.forall(_.is {
-                  case MissingValue(_, _) => true
-                }) && error.cardinality >= cfg.config.requiredTerms =>
-              Right(ResultType.fallBack(None))
-            case ReadError.MapErrors(errors) if errors.forall(_.is {
-                  case MissingValue(_, _) => true
-                }) && error.cardinality >= cfg.config.requiredTerms =>
-              Right(ResultType.fallBack(None))
+            case ReadError.AndErrors(errors, anyDefaultValuePresent)
+                if errors.forall(_.allMissingValues) && error.cardinality == cfg.config.requiredTerms && !anyDefaultValuePresent =>
+              Right(ResultType.defaultValue(cfg.default))
+
+            case ReadError.OrErrors(errors)
+                if errors.forall(error => error.allMissingValues) &&
+                  error.cardinality == cfg.config.requiredTerms &&
+                  !appliedNonDefaultValue(error) =>
+              Right(ResultType.defaultValue(cfg.default))
+
+            case ReadError.ListErrors(errors)
+                if errors.forall(_.allMissingValues) && errors.forall(
+                  error => error.cardinality == cfg.config.requiredTerms
+                ) && errors.forall(error => !appliedNonDefaultValue(error)) =>
+              Right(ResultType.defaultValue(cfg.default))
+
+            case ReadError.MapErrors(errors)
+                if errors.forall(_.allMissingValues) && errors.forall(
+                  error => error.cardinality == cfg.config.requiredTerms
+                ) && errors.forall(error => !appliedNonDefaultValue(error)) =>
+              Right(ResultType.defaultValue(cfg.default))
 
             case MissingValue(_, _) =>
-              Right(ResultType.fallBack((None)))
+              Right(ResultType.defaultValue(cfg.default))
+
             case _ =>
               Left(Irrecoverable(List(error)))
           }
         case Right(value) =>
-          Right(ResultType.optionalRaw(Some(value.value)))
+          Right(ResultType.nonDefaultValue(value.value))
       }
 
     def loopOrElse[B](path: List[Step[K]], keys: List[K], cfg: OrElse[B], descriptions: List[String]): Res[B] =
@@ -115,6 +113,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               Right(rightValue.map(Right(_)))
 
             case Left(rightError) =>
+              println("here???")
               Left(ReadError.OrErrors(leftError :: rightError :: Nil))
           }
       }
@@ -148,10 +147,11 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[(B, C)] =
       (loopAny(path, keys, cfg.left, descriptions), loopAny(path, keys, cfg.right, descriptions)) match {
         case (Right(leftV), Right(rightV)) =>
+          // Not really required
           (leftV, rightV) match {
-            case (ResultType.FallBack(v1), v2) => Right(ResultType.fallBack((v1, v2.value)))
-            case (v1, ResultType.FallBack(v2)) => Right(ResultType.fallBack((v1.value, v2)))
-            case (v1, v2)                      => Right(ResultType.raw((v1.value, v2.value)))
+            case (ResultType.DefaultValue(v1), v2) => Right(ResultType.defaultValue((v1, v2.value)))
+            case (v1, ResultType.DefaultValue(v2)) => Right(ResultType.defaultValue((v1.value, v2)))
+            case (v1, v2)                          => Right(ResultType.raw((v1.value, v2.value)))
           }
 
         case (Left(leftE), Left(rightE)) =>
@@ -165,15 +165,15 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
         case (Left(leftE), Right(value)) =>
           value match {
-            case ResultType.Raw(_)         => Left(AndErrors(List(leftE)))
-            case ResultType.FallBack(_)    => Left(AndErrors(List(leftE)))
-            case ResultType.OptionalRaw(_) => Left(AndErrors(List(leftE), anyOptionalValuePresent = true))
+            case ResultType.Raw(_)             => Left(AndErrors(List(leftE)))
+            case ResultType.DefaultValue(_)    => Left(AndErrors(List(leftE)))
+            case ResultType.NonDefaultValue(_) => Left(AndErrors(List(leftE), anyNonDefaultValue = true))
           }
         case (Right(value), Left(rightE)) =>
           value match {
-            case ResultType.Raw(_)         => Left(AndErrors(List(rightE)))
-            case ResultType.FallBack(_)    => Left(AndErrors(List(rightE)))
-            case ResultType.OptionalRaw(_) => Left(AndErrors(List(rightE), anyOptionalValuePresent = true))
+            case ResultType.Raw(_)             => Left(AndErrors(List(rightE)))
+            case ResultType.DefaultValue(_)    => Left(AndErrors(List(rightE)))
+            case ResultType.NonDefaultValue(_) => Left(AndErrors(List(rightE), anyNonDefaultValue = true))
           }
       }
 
@@ -188,9 +188,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case Right(a) =>
           val result =
             a match {
-              case ResultType.Raw(value)         => cfg.f(value).map(c => ResultType.raw(c))
-              case ResultType.FallBack(value)    => cfg.f(value).map(c => ResultType.fallBack(c))
-              case ResultType.OptionalRaw(value) => cfg.f(value).map(c => ResultType.optionalRaw(c))
+              case ResultType.Raw(value)             => cfg.f(value).map(c => ResultType.raw(c))
+              case ResultType.DefaultValue(value)    => cfg.f(value).map(c => ResultType.defaultValue(c))
+              case ResultType.NonDefaultValue(value) => cfg.f(value).map(c => ResultType.nonDefaultValue(c))
             }
 
           result.swap.map(ReadError.ConversionError(path.reverse, _)).swap
@@ -270,8 +270,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case c @ DynamicMap(_, _)     => loopMap(path, keys, c, descriptions)
         case c @ Nested(_, _) =>
           loopAny(Step.Key(c.path) :: path, c.path :: keys, c.config, descriptions)
-
-        case c @ Optional(_)         => loopOptional(path, keys, c, descriptions)
         case c @ OrElse(_, _)        => loopOrElse(path, keys, c, descriptions)
         case c @ OrElseEither(_, _)  => loopOrElseEither(path, keys, c, descriptions)
         case c @ Source(_, _)        => loopSource(path, keys, c, descriptions)
@@ -286,12 +284,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   def parseErrorMessage(given: String, expectedType: String) =
     s"Provided value is ${given.toString}, expecting the type ${expectedType}"
 
-  /* def optionalCondition[A](requiredTerms: Int): PartialFunction[ReadError[K], Boolean] = {
-    case error @ ReadError.AndErrors(errors, anyOptionalValuePresent) if errors.forall(_.is({
-          case MissingValue(_, _) => true
-        })) && error.cardinality == requiredTerms && !anyOptionalValuePresent => true
-    case error @ ReadError.OrErrors(errors) => optionalCondition(error)
-  }*/
+  def appliedNonDefaultValue(error: ReadError[K]): Boolean =
+    error match {
+      case AndErrors(_, anyNonDefaultValue) => anyNonDefaultValue
+      case OrErrors(list)                   => list.exists(e => appliedNonDefaultValue(e))
+      case ListErrors(list)                 => list.exists(appliedNonDefaultValue)
+      case MapErrors(list)                  => list.exists(appliedNonDefaultValue)
+      case MissingValue(_, _)               => false
+      case FormatError(_, _)                => false
+      case ConversionError(_, _)            => false
+      case Irrecoverable(_)                 => false
+    }
 
   private def countMissingValueProductTerms[K](
     value: ReadError[K]

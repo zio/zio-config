@@ -1,22 +1,11 @@
 package zio.config.examples
 
-import zio.config._ //, ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.DeriveConfigDescriptor._
 import zio.config.typesafe._
 
 object OptionalExample extends App with EitherImpureOps {
-
-  /**
-   * case class Detail(a: String, b: Option[Detail2])
-   * case class Detail2(c: String, d: Option[Detail3], e: Detail3)
-   * case class Detail3(f: String, g: String)
-   *
-   * The issue is, that,
-   * the total number of missing ind detail 2 for e is 2 and the total
-   * of terms is 2
-   *
-   */
   case class AppConfig(detail: Option[Detail])
   case class Detail(a: String, b: Option[Detail2])
   case class Detail2(c: String, e: Option[Detail3])
@@ -36,13 +25,7 @@ object OptionalExample extends App with EitherImpureOps {
        }
     """
 
-  //println((descriptor[Detail]).requiredTerms)
-  // println(descriptor[Detail2].requiredTerms)
-  //println(read(nested("detail")(descriptor[Detail]) from getSource(validConfig)).swap.map(_.prettyPrint()))
-
-  /*  assert(
-    read(descriptor[AppConfig] from getSource(validConfig)) == Right(AppConfig("1", Some(Detail("1", 1, 1))))
-  )*/
+  println(read(nested("detail")(descriptor[Detail]) from getSource(validConfig)).swap.map(_.prettyPrint()))
 
   def getSource(str: String): ConfigSource =
     TypesafeConfigSource.fromHoconString(str).loadOrThrow
@@ -74,7 +57,7 @@ object OptionalExample extends App with EitherImpureOps {
            }
            
            d : {
-             a : 15
+             a : 15 
            }
          }
        }
@@ -86,8 +69,9 @@ object OptionalExample extends App with EitherImpureOps {
 
     final case class CaseClass1(a: Option[CaseClass2])
 
-    final case class CaseClass2(a: String, b: Option[Either[Int, CaseClass3]])
+    final case class CaseClass2(a: String, b: Option[Either[CaseClass3, CaseClass4]])
     final case class CaseClass3(a: String, b: String, c: Option[Int], d: Option[Int], e: String, f: Option[Int])
+    final case class CaseClass4(a1: String, b1: String)
 
   }
 
@@ -95,11 +79,13 @@ object OptionalExample extends App with EitherImpureOps {
     """
        a : { 
          a : 1
-         b : 2
+         b : {
+          a1 : 1
+          b1 : 2
+         }
        }
     """
 
-  println(descriptor[TestCase3.CaseClass1].requiredTerms)
   println(read(descriptor[TestCase3.CaseClass1] from getSource(validConfig3)).swap.map(_.prettyPrint()))
 
   object TestCase4 {
@@ -111,7 +97,7 @@ object OptionalExample extends App with EitherImpureOps {
 
   val validConfig4 =
     """
-       a : { 
+       a : {
          a : 1
          b : 1
        }
@@ -128,7 +114,7 @@ object OptionalExample extends App with EitherImpureOps {
 
   val validConfig5 =
     """
-       a : { 
+       a : {
          a : 1
          b : {
          }
@@ -140,13 +126,13 @@ object OptionalExample extends App with EitherImpureOps {
   object TestCase6 {
     final case class CaseClass1(a: CaseClass2)
 
-    final case class CaseClass2(a: String, b: Option[Either[Int, Option[CaseClass3]]])
+    final case class CaseClass2(a: String, b: Option[Either[Int, CaseClass3]])
     final case class CaseClass3(a: String, b: String, c: Option[Int], d: Option[Int], e: String, f: Option[Int])
   }
 
   val validConfig6 =
     """
-       a : { 
+       a : {
          a : 1
        }
     """
@@ -162,7 +148,7 @@ object OptionalExample extends App with EitherImpureOps {
 
   val validConfig7 =
     """
-       a : { 
+       a : {
          a : 1
          b : {
            a : 1
@@ -183,18 +169,27 @@ object OptionalExample extends App with EitherImpureOps {
 
   val validConfig8 =
     """
-       a : { 
+       a : {
          a : 1
          b : [
           {
+           e : 3
+           a : 1
+          }
+          {
+           e : 2
            a : 1
            b : 1
-           e : 1
+          }
+           {
+           a : 1
+           b : 1
+           e : 2
           }
           {
            a : 1
            b : 1
-           e : 2    
+           e : 2
           }
          ]
        }

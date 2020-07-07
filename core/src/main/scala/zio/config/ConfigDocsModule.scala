@@ -52,9 +52,6 @@ trait ConfigDocsModule extends WriteModule {
         case Describe(c, desc) =>
           loop(sources, desc :: descriptions, c, latestPath)
 
-        case Optional(c) =>
-          loop(sources, descriptions, c, latestPath)
-
         case Nested(path, c) =>
           ConfigDocs.Nested(path, loop(sources, descriptions, c, Some(path)))
 
