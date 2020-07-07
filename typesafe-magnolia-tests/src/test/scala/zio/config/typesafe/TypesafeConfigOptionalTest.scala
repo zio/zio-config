@@ -7,6 +7,7 @@ import zio.config.{ BaseSpec, ConfigSource, _ }
 import zio.test.Assertion._
 import zio.test._
 import ReadError.Step.Key
+import ReadError._
 
 object OptionalSpec
     extends BaseSpec(
@@ -539,6 +540,147 @@ object OptionalSpec
               )
             )
           )
+        },
+        test(
+          "An either[a, product] in an optional product returns failure if product is partially applied"
+        ) {
+          val validConfig =
+            s"""
+               |      a: {
+               |         a : 10
+               |         b : {
+               |           a : 1
+               |           b : 1
+               |           c : 2
+               |           d : 1
+               |           f : 1
+               |         }
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase2.CaseClass1] from getSource(validConfig))
+
+          val summary =
+            result.swap.map(fetchMissingValueAndFormatErrors).swap
+
+          assert(summary)(
+            equalTo(
+              Left(
+                List(
+                  ReadError
+                    .MissingValue(List(Key("a"), Key("b"), Key("e")), List("optional value", "value of type string")),
+                  ReadError.FormatError(
+                    List(Key("a"), Key("b")),
+                    "Provided value is of type Record, expecting the type Leaf",
+                    List("optional value", "value of type int")
+                  )
+                )
+              )
+            )
+          )
+        },
+        test(
+          "An either[a, product] in an optional product returns format failures on the left, and reports missing value on the right"
+        ) {
+          val validConfig =
+            s"""
+               |      a: {
+               |         a : 10
+               |         b : "jj"
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase2.CaseClass1] from getSource(validConfig))
+
+          val summary =
+            result.swap.map(fetchMissingValueAndFormatErrors).swap
+
+          assert(summary)(
+            equalTo(
+              Left(
+                List(
+                  MissingValue(List(Key("a"), Key("b"), Key("b")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("b"), Key("e")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("b"), Key("a")), List("optional value", "value of type string")),
+                  FormatError(List(Key("a"), Key("b")), "Provided value is jj, expecting the type int")
+                )
+              )
+            )
+          )
+        },
+        test(
+          "An either[a, product] in an optional product failures on the right, and reports missing value on the left and right"
+        ) {
+          val validConfig =
+            s"""
+               |      a: {
+               |         a : 10
+               |         b : {
+               |           c : nonint
+               |         }
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase2.CaseClass1] from getSource(validConfig))
+
+          val summary =
+            result.swap.map(fetchMissingValueAndFormatErrors).swap
+
+          assert(summary)(
+            equalTo(
+              Left(
+                List(
+                  MissingValue(List(Key("a"), Key("b"), Key("b")), List("optional value", "value of type string")),
+                  FormatError(List(Key("a"), Key("b"), Key("c")), "Provided value is nonint, expecting the type int"),
+                  MissingValue(List(Key("a"), Key("b"), Key("e")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("b"), Key("a")), List("optional value", "value of type string")),
+                  FormatError(
+                    List(Key("a"), Key("b")),
+                    "Provided value is of type Record, expecting the type Leaf",
+                    List("optional value", "value of type int")
+                  )
+                )
+              )
+            )
+          )
+        },
+        test(
+          "An optional either[a, product] returns failures if product is partially applied"
+        ) {
+          val validConfig =
+            s"""
+               |      a: {
+               |         a : 10
+               |         b : {
+               |           a : 1
+               |           b : 1
+               |         }
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase3.CaseClass1] from getSource(validConfig))
+
+          val summary =
+            result.swap.map(fetchMissingValueAndFormatErrors).swap
+
+          assert(summary)(
+            equalTo(
+              Left(
+                List(
+                  MissingValue(List(Key("a"), Key("b"), Key("e")), List("optional value", "value of type string")),
+                  FormatError(
+                    List(Key("a"), Key("b")),
+                    "Provided value is of type Record, expecting the type Leaf",
+                    List("optional value", "value of type int")
+                  )
+                )
+              )
+            )
+          )
         }
       )
     )
@@ -557,10 +699,22 @@ object OptionalSpecUtils {
     final case class CaseClass3(a: String, b: String, c: Option[Int], d: Option[Int], e: String, f: Option[Int])
   }
 
+  object TestCase3 {
+    final case class CaseClass1(a: CaseClass2)
+    final case class CaseClass2(a: String, b: Option[Either[Int, CaseClass3]])
+    final case class CaseClass3(a: String, b: String, c: Option[Int], d: Option[Int], e: String, f: Option[Int])
+  }
+
   def checkIfOnlyMissingValues[K](error: ReadError[K]): Boolean =
     error.fold(false) {
       case ReadError.MissingValue(_, _) => true
     }(_ && _, true)
+
+  def fetchMissingValueAndFormatErrors[K](error: ReadError[K]): List[ReadError[K]] =
+    error.fold(List.empty[ReadError[K]]) {
+      case e @ ReadError.MissingValue(_, _)   => List(e)
+      case e @ ReadError.FormatError(_, _, _) => List(e)
+    }(_ ++ _, List.empty[ReadError[K]])
 
   def getSource(str: String): ConfigSource =
     TypesafeConfigSource.fromHoconString(str).loadOrThrow

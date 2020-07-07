@@ -143,7 +143,22 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       keys: List[K],
       cfg: Zip[B, C],
       descriptions: List[String]
-    ): Res[(B, C)] =
+    ): Res[(B, C)] = {
+
+      def carryForwardNonDefaultValueApplied[V](error: ReadError[K], value: ResultType[V]) = {
+        def result(defaultValueApplied: Boolean) =
+          value match {
+            case ResultType.Raw(_)             => Left(ZipErrors(List(error), defaultValueApplied))
+            case ResultType.DefaultValue(_)    => Left(ZipErrors(List(error), defaultValueApplied))
+            case ResultType.NonDefaultValue(_) => Left(ZipErrors(List(error), anyNonDefaultValue = true))
+          }
+
+        error match {
+          case ZipErrors(_, anyNonDefaultValue) => result(anyNonDefaultValue)
+          case _                                => result(false)
+        }
+      }
+
       (loopAny(path, keys, cfg.left, descriptions), loopAny(path, keys, cfg.right, descriptions)) match {
         case (Right(leftV), Right(rightV)) =>
           (leftV, rightV) match {
@@ -162,29 +177,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           }
 
         case (Left(leftE), Right(value)) =>
-          def result(defaultValueApplied: Boolean) = value match {
-            case ResultType.Raw(_)             => Left(ZipErrors(List(leftE), defaultValueApplied))
-            case ResultType.DefaultValue(_)    => Left(ZipErrors(List(leftE), defaultValueApplied))
-            case ResultType.NonDefaultValue(_) => Left(ZipErrors(List(leftE), anyNonDefaultValue = true))
-          }
-
-          leftE match {
-            case ZipErrors(_, anyNonDefaultValue) => result(anyNonDefaultValue)
-            case _                                => result(false)
-          }
+          carryForwardNonDefaultValueApplied(leftE, value)
 
         case (Right(value), Left(rightE)) =>
-          def result(defaultValueApplied: Boolean) = value match {
-            case ResultType.Raw(_)             => Left(ZipErrors(List(rightE)))
-            case ResultType.DefaultValue(_)    => Left(ZipErrors(List(rightE)))
-            case ResultType.NonDefaultValue(_) => Left(ZipErrors(List(rightE), anyNonDefaultValue = true))
-          }
-
-          rightE match {
-            case ZipErrors(list, anyNonDefaultValue) => result(anyNonDefaultValue)
-            case _                                   => result(false)
-          }
+          carryForwardNonDefaultValueApplied(rightE, value)
       }
+    }
 
     def loopXmapEither[B, C](
       path: List[Step[K]],
@@ -211,12 +209,10 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               (k, loopAny(Step.Key(k) :: path, Nil, cfg.config.updateSource(_ => source), descriptions))
           }
 
-          val map: Either[MapErrors[K], Map[K, B]] =
-            seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap).swap
-              .map(errs => ReadError.MapErrors(errs))
-              .swap
-
-          map.map(mapp => ResultType.raw(mapp))
+          seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap).swap
+            .map(errs => ReadError.MapErrors(errs))
+            .swap
+            .map(mapp => ResultType.raw(mapp))
 
         case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse, descriptions))
       }
@@ -239,12 +235,11 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               descriptions
             )
         }
-        val result: Either[ListErrors[K], List[B]] =
-          seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list.map(res => res.map(_.value))).swap
-            .map(errs => ReadError.ListErrors(errs))
-            .swap
 
-        result.map(list => ResultType.raw(list))
+        seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list.map(res => res.map(_.value))).swap
+          .map(errs => ReadError.ListErrors(errs))
+          .swap
+          .map(list => ResultType.raw(list))
       }
 
       cfg.source.getConfigValue(keys.reverse) match {
