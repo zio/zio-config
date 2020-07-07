@@ -461,6 +461,84 @@ object OptionalSpec
               Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", Some(TestCase1.CaseClass3("1", None))))))
             )
           )
+        },
+        test(
+          "Absence of an optional product which itself has optional and required fields, within another optional product returns some of that product"
+        ) {
+          val validConfig =
+            s"""
+               |      detail: {
+               |       a : 10
+               |       b : {
+               |         c : 1
+               |         e : null
+               |       }
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
+
+          assert(result)(
+            equalTo(
+              Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", Some(TestCase1.CaseClass3("1", None))))))
+            )
+          )
+        },
+        test(
+          "Absence of an optional product and a required field within another optional product returns none"
+        ) {
+          val validConfig =
+            s"""
+               |      detail: {
+               |         a : 10
+               |         b : {}
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
+
+          assert(result)(
+            equalTo(
+              Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", None))))
+            )
+          )
+        },
+        test(
+          "Absence of a required field and presence of an optional product within another optional product returns failure"
+        ) {
+          val validConfig =
+            s"""
+               |      detail: {
+               |         a : 10
+               |         b : {
+               |           e : {
+               |             h : 1
+               |             i : 1
+               |           }
+               |         }
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
+
+          val summary =
+            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfSteps)).swap
+
+          assert(summary)(
+            equalTo(
+              Left(
+                (
+                  true,
+                  List(
+                    List(Key("detail"), Key("b"), Key("c"))
+                  )
+                )
+              )
+            )
+          )
         }
       )
     )
