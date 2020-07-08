@@ -78,26 +78,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[Either[A, B]] =
       OrElseEither(self, that)
 
-    // FIXME: Move this function to ReadModule
-    final def requiredTerms: Int = {
-      def loop[B](count: List[K], config: ConfigDescriptor[B]): Int =
-        config match {
-          case Zip(left, right)        => loop(count, left) + loop(count, right)
-          case XmapEither(cfg, _, _)   => loop(count, cfg)
-          case Describe(cfg, _)        => loop(count, cfg)
-          case Nested(_, next)         => loop(count, next)
-          case Source(_, _)            => 1
-          case Optional(_)             => 0
-          case OrElse(cfg, cfg2)       => loop(count, cfg) + loop(count, cfg2)
-          case OrElseEither(cfg, cfg2) => loop(count, cfg) + loop(count, cfg2)
-          case Default(_, _)           => 0
-          case Sequence(_, _)          => 1
-          case DynamicMap(_, _)        => 1
-        }
-
-      loop(Nil, self)
-    }
-
     final def unsourced: ConfigDescriptor[A] =
       self.updateSource(_ => ConfigSourceFunctions.empty)
 

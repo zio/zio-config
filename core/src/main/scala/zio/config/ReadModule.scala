@@ -214,9 +214,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     loopAny(Nil, Nil, configuration, Nil).map(_.value)
   }
 
-  def parseErrorMessage(given: String, expectedType: String) =
-    s"Provided value is ${given.toString}, expecting the type ${expectedType}"
-
   def handleDefaultValues[A, B](
     error: ReadError[K],
     config: ConfigDescriptor[A],
@@ -230,7 +227,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       }(_ && _, true)
 
     val baseConditionForFallBack =
-      hasOnlyMissingValuesAndZeroIrrecoverable && error.sizeOfZipAndOrErrors == config.requiredTerms
+      hasOnlyMissingValuesAndZeroIrrecoverable && error.sizeOfZipAndOrErrors == requiredZipAndOrFields(config)
 
     def hasZeroNonDefaultValues(annotations: Set[AnnotatedRead.Annotation]) =
       !annotations.contains(AnnotatedRead.Annotation.NonDefaultValue)
@@ -246,5 +243,27 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       case e =>
         Left(Irrecoverable(List(e)))
     }
+  }
+
+  def parseErrorMessage(given: String, expectedType: String) =
+    s"Provided value is ${given.toString}, expecting the type ${expectedType}"
+
+  final def requiredZipAndOrFields[A](config: ConfigDescriptor[A]): Int = {
+    def loop[B](count: List[K], config: ConfigDescriptor[B]): Int =
+      config match {
+        case ConfigDescriptorAdt.Zip(left, right)        => loop(count, left) + loop(count, right)
+        case ConfigDescriptorAdt.XmapEither(cfg, _, _)   => loop(count, cfg)
+        case ConfigDescriptorAdt.Describe(cfg, _)        => loop(count, cfg)
+        case ConfigDescriptorAdt.Nested(_, next)         => loop(count, next)
+        case ConfigDescriptorAdt.Source(_, _)            => 1
+        case ConfigDescriptorAdt.Optional(_)             => 0
+        case ConfigDescriptorAdt.OrElse(cfg, cfg2)       => loop(count, cfg) + loop(count, cfg2)
+        case ConfigDescriptorAdt.OrElseEither(cfg, cfg2) => loop(count, cfg) + loop(count, cfg2)
+        case ConfigDescriptorAdt.Default(_, _)           => 0
+        case ConfigDescriptorAdt.Sequence(_, _)          => 1
+        case ConfigDescriptorAdt.DynamicMap(_, _)        => 1
+      }
+
+    loop(Nil, config)
   }
 }
