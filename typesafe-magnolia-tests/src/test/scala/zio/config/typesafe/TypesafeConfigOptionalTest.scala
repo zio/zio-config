@@ -8,7 +8,7 @@ import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.OptionalSpecUtils._
 import ReadError._
 
-object OpSpec
+object TypesafeConfigOptionalTest
     extends BaseSpec(
       suite("partial products fail instead of returning none")(
         test(

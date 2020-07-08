@@ -1,4 +1,3 @@
-/*
 package zio.config.typesafe
 
 import zio.config.{ BaseSpec, ConfigSource }
@@ -287,4 +286,3 @@ object TypesafeConfigReadWriteTestUtils {
   val complexSource: ConfigSource =
     TypesafeConfigSource.fromHoconString(hocon2).loadOrThrow
 }
-*/
