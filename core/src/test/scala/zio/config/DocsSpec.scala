@@ -1,0 +1,118 @@
+package zio.config
+
+import ConfigDescriptor._
+import zio.config.DocsSpecUtils._
+import zio.test.Assertion._
+import zio.test._
+
+object DocsSpec
+    extends BaseSpec(
+      suite("partial products fail instead of returning none")(
+        test(
+          "Generate docs for simple config"
+        ) {
+          val caseClass2 =
+            (string("a1") |@| string("b1"))(TestCase1.CaseClass2.apply, TestCase1.CaseClass2.unapply)
+
+          val config: ConfigDescriptor[TestCase1.CaseClass1] =
+            (string("a") |@| caseClass2 |@| list("c")(string))(
+              TestCase1.CaseClass1.apply,
+              TestCase1.CaseClass1.unapply
+            )
+
+          val result = generateDocs(config from ConfigSource.fromMap(Map.empty))
+
+          println(getDocs(result).asString)
+          assert(Some(result))(
+            equalTo(None: Option[ConfigDocs])
+          )
+        }
+      )
+    )
+
+object DocsSpecUtils {
+  object TestCase1 {
+    case class CaseClass1(a: String, b: CaseClass2, c: List[String])
+    case class CaseClass2(a: String, b: String)
+  }
+
+  def getDocs(config: ConfigDocs): Table = config match {
+    case ConfigDocs.Leaf(sources, descriptions, value) =>
+      Table(List(TableRow(None, Some(Format.PrimitiveFormat), descriptions, None, sources.map(_.name))))
+    case ConfigDocs.Nested(path, docs)              => getDocs(docs).setName(path)
+    case ConfigDocs.Zip(left, right)                => getDocs(left) ++ getDocs(right)
+    case ConfigDocs.OrElse(leftDocs, rightDocs)     => getDocs(leftDocs) ++ getDocs(rightDocs)
+    case ConfigDocs.Sequence(schemaDocs, valueDocs) => getDocs(schemaDocs).setFormat(Format.ListFormat)
+    case ConfigDocs.DynamicMap(schemaDocs, valueDocs) =>
+      getDocs(schemaDocs).setFormat(Format.MapFormat)
+  }
+
+  final case class TableRow(
+    name: Option[String],
+    format: Option[Format],
+    description: List[String],
+    link: Option[String],
+    sources: Set[String]
+  )
+
+  sealed trait Format
+
+  object Format {
+    case object ListFormat      extends Format
+    case object MapFormat       extends Format
+    case object PrimitiveFormat extends Format
+  }
+
+  final case class Table(list: List[TableRow]) {
+    def setName(name: String): Table     = Table(list.map(_.copy(name = Some(name))))
+    def setFormat(format: Format): Table = Table(list.map(_.copy(format = Some(format))))
+
+    def ++(table: Table): Table =
+      Table(list ++ table.list)
+
+    val maxNameLength: Int   = Math.max(10, size(list.flatMap(_.name.map(_.length).toList)))
+    val maxFormatLength: Int = Math.max(10, size(list.flatMap(_.format.map(_.toString.length).toList)))
+    val maxDescriptionLength: Int =
+      Math.max(10, size(list.flatMap(_.description.map(_.mkString(",").length))))
+    val maxLinkLength: Int    = Math.max(10, size(list.flatMap(_.link.map(_.length).toList)))
+    val maxSourcesLength: Int = Math.max(10, size(list.flatMap(_.sources.map(_.mkString(", ").length))))
+
+    def size(list: List[Int]) =
+      if (list.isEmpty) 0 else list.max
+
+    val heading: String =
+      "| " ++
+        List(
+          "Name".padTo(maxNameLength, ' '),
+          "Format".padTo(maxFormatLength, ' '),
+          "Description".padTo(maxDescriptionLength, ' '),
+          "Link".padTo(maxLinkLength, ' '),
+          "Sources".padTo(maxSourcesLength, ' ')
+        ).mkString("| ") ++ "| "
+
+    val secondRow: String =
+      "| " ++ List(maxNameLength, maxFormatLength, maxDescriptionLength, maxLinkLength, maxSourcesLength)
+        .map(
+          length => "----------".padTo(length, ' ')
+        )
+        .mkString("| ") ++ "| "
+
+    val content = list.map(
+      t =>
+        "| " ++
+          List(
+            getString(t.name, maxNameLength),
+            getString(t.format.map(_.toString), maxFormatLength),
+            t.description.mkString(", ").padTo(maxDescriptionLength, ' '),
+            getString(t.link, maxLinkLength),
+            t.sources.mkString(", ").padTo(maxSourcesLength, ' ')
+          ).mkString("| ") ++ "| "
+    )
+
+    val asString = (heading :: secondRow :: content).mkString("\n")
+
+    def getString(option: Option[String], size: Int): String =
+      option.map(_.padTo(size, ' ')).getOrElse(" ".padTo(size, ' '))
+
+  }
+}
