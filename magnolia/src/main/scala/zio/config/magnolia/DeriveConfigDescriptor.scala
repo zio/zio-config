@@ -149,10 +149,10 @@ trait DeriveConfigDescriptor { self =>
       Descriptor(desc.describe(description))
 
     def xmap[B](f: T => B, g: B => T): Descriptor[B] =
-      Descriptor(desc.transform(f, g))
+      Descriptor(desc.xmap(f, g))
 
     def xmapEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
-      Descriptor(desc.transformEither(f, g))
+      Descriptor(desc.xmapEither(f, g))
 
     def xmapEitherE[E, B](f: T => Either[E, B])(g: B => Either[E, T])(h: E => String): Descriptor[B] =
       Descriptor(desc.xmapEitherE[E, B](f)(g)(h))
@@ -210,7 +210,7 @@ trait DeriveConfigDescriptor { self =>
       else
         caseClass.parameters.toList match {
           case Nil =>
-            constantString(ccName).transform[T](
+            constantString(ccName).xmap[T](
               _ => caseClass.construct(_ => ???),
               _ => ccName
             )
@@ -232,7 +232,7 @@ trait DeriveConfigDescriptor { self =>
               nested(paramName)(described).asInstanceOf[ConfigDescriptor[Any]]
             }
 
-            collectAll(makeDescriptor(head), tail.map(makeDescriptor): _*).transform[T](
+            collectAll(makeDescriptor(head), tail.map(makeDescriptor): _*).xmap[T](
               l => caseClass.rawConstruct(l),
               t => caseClass.parameters.map(_.dereference(t)).toList
             )
@@ -261,7 +261,7 @@ trait DeriveConfigDescriptor { self =>
           if (typeclass.isObject || !wrapSealedTraitClasses) typeclass.desc
           else nested(nameToLabel(subtype.typeName.full))(typeclass.desc)
 
-        wrapSealedTrait(prepareClassName(sealedTrait.annotations, sealedTrait.typeName.short), desc).transformEither[T](
+        wrapSealedTrait(prepareClassName(sealedTrait.annotations, sealedTrait.typeName.short), desc).xmapEither[T](
           st => Right(st),
           t =>
             subtype.cast

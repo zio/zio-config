@@ -28,7 +28,7 @@ object CoproductExample extends App {
   val dConfig = string("dance")(D.apply, D.unapply)
 
   val aConfigAsDance: ConfigDescriptor[Dance] =
-    aConfig.transformEither(
+    aConfig.xmapEither(
       (a: A) => Right(a: Dance),
       (_: Dance) match {
         case a: A => Right(a)
@@ -37,7 +37,7 @@ object CoproductExample extends App {
     )
 
   val bConfigAsDance: ConfigDescriptor[Dance] =
-    bConfig.transformEither(
+    bConfig.xmapEither(
       (a: B) => Right(a: Dance),
       (_: Dance) match {
         case a: B => Right(a)
@@ -46,7 +46,7 @@ object CoproductExample extends App {
     )
 
   val cConfigAsDance: ConfigDescriptor[Dance] =
-    cConfig.transformEither(
+    cConfig.xmapEither(
       (a: C) => Right(a: Dance),
       (_: Dance) match {
         case a: C => Right(a)
@@ -55,7 +55,7 @@ object CoproductExample extends App {
     )
 
   val dConfigAsDance: ConfigDescriptor[Dance] =
-    dConfig.transformEither(
+    dConfig.xmapEither(
       (a: D) => Right(a: Dance),
       (_: Dance) match {
         case a: D => Right(a)

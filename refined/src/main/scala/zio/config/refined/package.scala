@@ -16,7 +16,7 @@ package object refined
     implicit ev: Validate[A, P]
   ): ConfigDescriptor[Refined[A, P]] =
     desc
-      .transformEither[Refined[A, P]](
+      .xmapEither[Refined[A, P]](
         RefType.applyRef[Refined[A, P]](_),
         rf => Right(rf.value)
       )

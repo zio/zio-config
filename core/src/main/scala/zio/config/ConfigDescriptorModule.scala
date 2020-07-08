@@ -25,7 +25,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
         override def xmapEither[X, Y]
           : (ConfigDescriptor[X], X => Either[String, Y], Y => Either[String, X]) => ConfigDescriptor[Y] =
-          (a, b, c) => a.transformEither(b, c)
+          (a, b, c) => a.xmapEither(b, c)
 
         override val a: ConfigDescriptor[A] = self
         override val b: ConfigDescriptor[B] = that
@@ -119,10 +119,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       loop(self)
     }
 
-    final def transform[B](to: A => B, from: B => A): ConfigDescriptor[B] =
-      self.transformEither(a => Right(to(a)), b => Right(from(b)))
+    final def xmap[B](to: A => B, from: B => A): ConfigDescriptor[B] =
+      self.xmapEither(a => Right(to(a)), b => Right(from(b)))
 
-    final def transformEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[B] =
+    final def xmapEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[B] =
       XmapEither(self, f, g)
 
     def xmapEither2[B, C](
@@ -130,10 +130,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     )(f: (A, B) => Either[String, C], g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
       (self |@| that)
         .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
-        .transformEither({ case (a, b) => f(a, b) }, g)
+        .xmapEither({ case (a, b) => f(a, b) }, g)
 
     def xmapEitherE[E, B](f: A => Either[E, B])(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
-      self.transformEither[B](
+      self.xmapEither[B](
         (a: A) => ((f(a): Either[E, B]).swap: Either[B, E]).map(h).swap,
         (b: B) => ((g(b): Either[E, A]).swap: Either[A, E]).map(h).swap
       )
@@ -165,7 +165,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def head[A](desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
       desc.orElse(
         list(desc)
-          .transformEither[A](
+          .xmapEither[A](
             _.headOption.fold[Either[String, A]](Left("Element is missing"))(Right(_)),
             v => Right(v :: Nil)
           )
@@ -182,7 +182,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     def listOrSingleton[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       list(path)(desc) orElse (
-        desc.transformEither[List[A]](
+        desc.xmapEither[List[A]](
           value => Right(List(value)),
           _.headOption match {
             case Some(value) => Right(value)
@@ -205,7 +205,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       tail: ConfigDescriptor[A]*
     ): ConfigDescriptor[(A, List[A])] =
       tail.reverse.foldLeft[ConfigDescriptor[(A, List[A])]](
-        head.transform((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
+        head.xmap((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
       )(
         (b: ConfigDescriptor[(A, List[A])], a: ConfigDescriptor[A]) =>
           b.xmapEither2(a)(
@@ -217,7 +217,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       )
 
     def set[K, V, A](desc: ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
-      list(desc).transformEither(distinctListToSet, s => Right(s.toList))
+      list(desc).xmapEither(distinctListToSet, s => Right(s.toList))
 
     def set[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
       nested(path)(set(desc))

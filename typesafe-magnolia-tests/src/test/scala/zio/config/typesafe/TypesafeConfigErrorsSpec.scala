@@ -181,4 +181,4 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
     }
   )
 }
-*/
+ */
