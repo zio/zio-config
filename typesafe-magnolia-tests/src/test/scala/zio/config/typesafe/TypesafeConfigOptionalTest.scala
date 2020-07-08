@@ -725,6 +725,121 @@ object TypesafeConfigOptionalTest
               Right(TestCase3.CaseClass1(TestCase3.CaseClass2("10", None)))
             )
           )
+        },
+        test(
+          "An optional product with multiple either[product1, product2] returns failures if any either has partial configs"
+        ) {
+          val validConfig =
+            s"""
+               |      a: {
+               |         a : { a1 : 10 }
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase4.CaseClass1] from getSource(validConfig))
+
+          val summary =
+            result.swap.map(fetchMissingValueAndFormatErrors).swap
+
+          assert(summary)(
+            equalTo(
+              Left(
+                List(
+                  MissingValue(List(Key("a"), Key("c"), Key("b2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c"), Key("a2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c"), Key("b1")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c"), Key("a1")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("b2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("a2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("b1")), List("optional value", "value of type string"))
+                )
+              )
+            )
+          )
+        },
+        test(
+          "An optional product with 2 required either[product1, product2] and 1 optional either[product1, product2] returns failures if optional value is present"
+        ) {
+          val validConfig =
+            s"""
+               |      a: {
+               |         b : { 
+               |           a1 : 10
+               |           b1 : 10
+               |         }
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase4.CaseClass1] from getSource(validConfig))
+
+          val summary =
+            result.swap.map(fetchMissingValueAndFormatErrors).swap
+
+          assert(summary)(
+            equalTo(
+              Left(
+                List(
+                  MissingValue(List(Key("a"), Key("c"), Key("b2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c"), Key("a2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c"), Key("b1")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c"), Key("a1")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("b2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("a2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("b1")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("a1")), List("optional value", "value of type string"))
+                )
+              )
+            )
+          )
+        },
+        test(
+          "An optional product with 2 required either[product1, product2] and 1 optional either[product1, product2] returns failures if optional value is present partially"
+        ) {
+          val validConfig =
+            s"""
+               |      a: {
+               |         b : { 
+               |           a1 : 10
+               |         }
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase4.CaseClass1] from getSource(validConfig))
+
+          val summary =
+            result.swap.map(fetchMissingValueAndFormatErrors).swap
+
+          assert(summary)(
+            equalTo(
+              Left(
+                List(
+                  MissingValue(
+                    List(Key("a"), Key("b"), Key("b2")),
+                    List("optional value", "optional value", "value of type string")
+                  ),
+                  MissingValue(
+                    List(Key("a"), Key("b"), Key("a2")),
+                    List("optional value", "optional value", "value of type string")
+                  ),
+                  MissingValue(
+                    List(Key("a"), Key("b"), Key("b1")),
+                    List("optional value", "optional value", "value of type string")
+                  ),
+                  MissingValue(List(Key("a"), Key("c"), Key("b2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c"), Key("a2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c"), Key("b1")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c"), Key("a1")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("b2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("a2")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("b1")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("a"), Key("a1")), List("optional value", "value of type string"))
+                )
+              )
+            )
+          )
         }
       )
     )
@@ -747,6 +862,17 @@ object OptionalSpecUtils {
     final case class CaseClass1(a: CaseClass2)
     final case class CaseClass2(a: String, b: Option[Either[Int, CaseClass3]])
     final case class CaseClass3(a: String, b: String, c: Option[Int], d: Option[Int], e: String, f: Option[Int])
+  }
+
+  object TestCase4 {
+    final case class CaseClass1(a: Option[CaseClass2])
+    final case class CaseClass2(
+      a: Either[CaseClass3, CaseClass4],
+      b: Option[Either[CaseClass3, CaseClass4]],
+      c: Either[CaseClass3, CaseClass4]
+    )
+    final case class CaseClass3(a1: String, b1: String)
+    final case class CaseClass4(a2: String, b2: String)
   }
 
   def checkIfOnlyMissingValues[K](error: ReadError[K]): Boolean =

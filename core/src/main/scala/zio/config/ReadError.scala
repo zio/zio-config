@@ -8,7 +8,7 @@ import scala.util.control.NoStackTrace
 sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
   def annotations: Set[Annotation]
 
-  def fold[B](alternative: B)(f: PartialFunction[ReadError[A], B])(g: (B, B) => B, zero: B): B = {
+  final def fold[B](alternative: B)(f: PartialFunction[ReadError[A], B])(g: (B, B) => B, zero: B): B = {
     def go(list: List[ReadError[A]]): B =
       list.foldLeft(zero)((a, b) => g(b.fold(alternative)(f)(g, zero), a))
 
@@ -27,10 +27,29 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
   override def getMessage: String =
     prettyPrint()
 
-  def getListOfMissingValueSteps: List[List[Step[A]]] =
+  final def getListOfMissingValueSteps: List[List[Step[A]]] =
     fold(List.empty[List[Step[A]]]) {
       case ReadError.MissingValue(steps, _, _) => List(steps)
     }(_ ++ _, List.empty[List[Step[A]]])
+
+  final def nonPrettyPrintedString: String = self match {
+    case ReadError.MissingValue(path, message, annotations) =>
+      s"MissingValue(${path}, ${message}, ${annotations})"
+    case ReadError.FormatError(path, message, detail, annotations) =>
+      s"FormatError(${path}, ${message}, ${detail}, ${annotations})"
+    case ReadError.ConversionError(path, message, annotations) =>
+      s"ConversionError(${path}, ${message}, ${annotations}"
+    case ReadError.OrErrors(list, annotations) =>
+      s"OrErrors(${list.map(_.nonPrettyPrintedString)}, ${annotations})"
+    case ReadError.ZipErrors(list, annotations) =>
+      s"ZipErrors(${list.map(_.nonPrettyPrintedString)}, ${annotations})"
+    case ReadError.ListErrors(list, annotations) =>
+      s"ListErrors(${list.map(_.nonPrettyPrintedString)}, ${annotations})"
+    case ReadError.MapErrors(list, annotations) =>
+      s"MapErrors(${list.map(_.nonPrettyPrintedString)}, ${annotations})"
+    case ReadError.Irrecoverable(list, annotations) =>
+      s"Irrecoverable(${list.map(_.nonPrettyPrintedString)}, ${annotations})"
+  }
 
   final def prettyPrint(keyDelimiter: Char = '.'): String = {
 
