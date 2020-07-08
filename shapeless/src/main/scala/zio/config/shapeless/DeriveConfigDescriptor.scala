@@ -174,7 +174,7 @@ trait DeriveConfigDescriptor {
           defaultValue = evDf(defaults.head),
           description = evDs(descs.head)
         )
-        fieldDesc.xmap(field[K](_) :: HNil, _.head)
+        fieldDesc.transform(field[K](_) :: HNil, _.head)
       }
 
     implicit def caseHCons[K <: Symbol, V, T <: HList, N, Ds, Df, TN <: HList, TDs <: HList, TDf <: HList](
@@ -235,7 +235,7 @@ trait DeriveConfigDescriptor {
   ): ClassDescriptor[T] = {
     val ccName = optName().map(_.name).getOrElse(mapClassName(typeName()))
 
-    val desc = collectFields(names(), descs(), defaults()).xmap(gen.from, gen.to)
+    val desc = collectFields(names(), descs(), defaults()).transform(gen.from, gen.to)
 
     ClassDescriptor(optDesc().map(_.describe).fold(desc)(desc ?? _), ccName, isObject = false)
   }
@@ -279,7 +279,7 @@ trait DeriveConfigDescriptor {
         if (sc.desc.isObject || !wrapSealedTraitClasses) sc.desc.desc
         else nested(sc.desc.name)(sc.desc.desc)
 
-      wrapSealedTrait(optName().map(_.name).getOrElse(mapClassName(typeName())), desc).xmapEither[T](
+      wrapSealedTrait(optName().map(_.name).getOrElse(mapClassName(typeName())), desc).transformEither[T](
         st => Right(st.asInstanceOf[T]),
         t => sc.cast(t).map(Right(_)).getOrElse(Left(s"Expected ${sc.desc.name}, but got ${t.getClass.getName}"))
       )

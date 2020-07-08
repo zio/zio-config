@@ -4,49 +4,10 @@ import zio.config.ReadError._
 import VersionSpecificSupport._
 
 private[config] trait ReadModule extends ConfigDescriptorModule {
-  sealed trait ResultType[+A] {
-    def value: A
-    def map[B](f: A => B): ResultType[B] =
-      this match {
-        case ResultType.Raw(value)             => ResultType.raw(f(value))
-        case ResultType.DefaultValue(value)    => ResultType.defaultValue(f(value))
-        case ResultType.NonDefaultValue(value) => ResultType.nonDefaultValue(f(value))
-      }
-
-    def mapError[E, B](f: A => Either[E, B]): Either[E, ResultType[B]] = {
-      def fromEither(either: Either[E, B], f: B => ResultType[B]): Either[E, ResultType[B]] =
-        either match {
-          case Left(value)  => Left(value)
-          case Right(value) => Right(f(value))
-        }
-
-      map(f) match {
-        case ResultType.NonDefaultValue(value) => fromEither(value, ResultType.nonDefaultValue)
-        case ResultType.Raw(value)             => fromEither(value, ResultType.raw)
-        case ResultType.DefaultValue(value)    => fromEither(value, ResultType.defaultValue)
-      }
-    }
-  }
-
-  object ResultType {
-    case class NonDefaultValue[A](value: A) extends ResultType[A]
-    case class Raw[A](value: A)             extends ResultType[A]
-    case class DefaultValue[A](value: A)    extends ResultType[A]
-
-    def raw[A](value: A): ResultType[A] =
-      Raw(value)
-
-    def defaultValue[A](value: A): ResultType[A] =
-      DefaultValue(value)
-
-    def nonDefaultValue[A](value: A): ResultType[A] =
-      NonDefaultValue(value)
-  }
-
   final def read[A](
     configuration: ConfigDescriptor[A]
   ): Either[ReadError[K], A] = {
-    type Res[+B] = Either[ReadError[K], ResultType[B]]
+    type Res[+B] = Either[ReadError[K], AnnotatedRead[B]]
 
     import ConfigDescriptorAdt._
 
@@ -58,6 +19,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           descriptions
         )
       )
+
     def loopOptional[B](
       path: List[Step[K]],
       keys: List[K],
@@ -66,10 +28,10 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[Option[B]] =
       loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) =>
-          handleOption(error, cfg.config, None)
+          handleDefaultValues(error, cfg.config, None)
 
         case Right(value) =>
-          Right(ResultType.nonDefaultValue(Some(value.value)))
+          Right(AnnotatedRead(Some(value.value), Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations))
       }
 
     def loopDefault[B](
@@ -80,10 +42,10 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[B] =
       loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) =>
-          handleOption(error, cfg.config, cfg.default)
+          handleDefaultValues(error, cfg.config, cfg.default)
 
         case Right(value) =>
-          Right(ResultType.nonDefaultValue(value.value))
+          Right(AnnotatedRead(value.value, Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations))
       }
 
     def loopOrElse[B](path: List[Step[K]], keys: List[K], cfg: OrElse[B], descriptions: List[String]): Res[B] =
@@ -93,7 +55,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           loopAny(path, keys, cfg.right, descriptions) match {
             case a @ Right(_) => a
             case Left(rightError) =>
-              Left(ReadError.OrErrors(leftError :: rightError :: Nil))
+              Left(ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations))
           }
       }
 
@@ -113,7 +75,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               Right(rightValue.map(Right(_)))
 
             case Left(rightError) =>
-              Left(ReadError.OrErrors(leftError :: rightError :: Nil))
+              Left(ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations))
           }
       }
 
@@ -134,7 +96,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                   )
                 )
               )
-            case Right(parsed) => Right(ResultType.raw(parsed))
+            case Right(parsed) => Right(AnnotatedRead(parsed, Set.empty))
           }
       }
 
@@ -143,46 +105,20 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       keys: List[K],
       cfg: Zip[B, C],
       descriptions: List[String]
-    ): Res[(B, C)] = {
-
-      def carryForwardNonDefaultValueApplied[V](error: ReadError[K], value: ResultType[V]) = {
-        def result(defaultValueApplied: Boolean) =
-          value match {
-            case ResultType.Raw(_)             => Left(ZipErrors(List(error), defaultValueApplied))
-            case ResultType.DefaultValue(_)    => Left(ZipErrors(List(error), defaultValueApplied))
-            case ResultType.NonDefaultValue(_) => Left(ZipErrors(List(error), anyNonDefaultValue = true))
-          }
-
-        error match {
-          case ZipErrors(_, anyNonDefaultValue) => result(anyNonDefaultValue)
-          case _                                => result(false)
-        }
-      }
-
+    ): Res[(B, C)] =
       (loopAny(path, keys, cfg.left, descriptions), loopAny(path, keys, cfg.right, descriptions)) match {
         case (Right(leftV), Right(rightV)) =>
-          (leftV, rightV) match {
-            case (ResultType.NonDefaultValue(v1), v2) => Right(ResultType.nonDefaultValue((v1, v2.value)))
-            case (v1, ResultType.NonDefaultValue(v2)) => Right(ResultType.nonDefaultValue((v1.value, v2)))
-            case (v1, v2)                             => Right(ResultType.raw((v1.value, v2.value)))
-          }
+          Right(leftV.zip(rightV))
 
-        case (Left(leftE), Left(rightE)) =>
-          (leftE, rightE) match {
-            case (ZipErrors(_, fallBack1), ZipErrors(_, fallBack2)) =>
-              Left(ZipErrors(leftE :: rightE :: Nil, fallBack1 || fallBack2))
-            case (ZipErrors(_, fallBack1), _) => Left(ZipErrors(leftE :: rightE :: Nil, fallBack1))
-            case (_, ZipErrors(_, fallBack2)) => Left(ZipErrors(leftE :: rightE :: Nil, fallBack2))
-            case (_, _)                       => Left(ZipErrors(leftE :: rightE :: Nil))
-          }
+        case (Left(error1), Left(error2)) =>
+          Left(ZipErrors(error1 :: error2 :: Nil, error1.annotations ++ error2.annotations))
 
-        case (Left(leftE), Right(value)) =>
-          carryForwardNonDefaultValueApplied(leftE, value)
+        case (Left(error), Right(annotated)) =>
+          Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
 
-        case (Right(value), Left(rightE)) =>
-          carryForwardNonDefaultValueApplied(rightE, value)
+        case (Right(annotated), Left(error)) =>
+          Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
       }
-    }
 
     def loopXmapEither[B, C](
       path: List[Step[K]],
@@ -193,7 +129,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) => Left(error)
         case Right(a) =>
-          a.mapError(cfg.f).swap.map(ReadError.ConversionError(path.reverse, _)).swap
+          a.mapError(cfg.f).swap.map(message => ReadError.ConversionError(path.reverse, message, a.annotations)).swap
       }
 
     def loopMap[B](path: List[Step[K]], keys: List[K], cfg: DynamicMap[B], descriptions: List[String]): Res[Map[K, B]] =
@@ -210,9 +146,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           }
 
           seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap).swap
-            .map(errs => ReadError.MapErrors(errs))
+            .map(errs => ReadError.MapErrors(errs, errs.flatMap(_.annotations).toSet))
             .swap
-            .map(mapp => ResultType.raw(mapp))
+            .map(mapp => AnnotatedRead(mapp, Set.empty))
 
         case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse, descriptions))
       }
@@ -237,9 +173,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         }
 
         seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list.map(res => res.map(_.value))).swap
-          .map(errs => ReadError.ListErrors(errs))
+          .map(errs => ReadError.ListErrors(errs, errs.flatMap(_.annotations).toSet))
           .swap
-          .map(list => ResultType.raw(list))
+          .map(list => AnnotatedRead(list, Set.empty))
       }
 
       cfg.source.getConfigValue(keys.reverse) match {
@@ -281,45 +217,34 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   def parseErrorMessage(given: String, expectedType: String) =
     s"Provided value is ${given.toString}, expecting the type ${expectedType}"
 
-  def appliedNonDefaultValue(error: ReadError[K]): Boolean =
-    error match {
-      case ZipErrors(_, anyNonDefaultValue) => anyNonDefaultValue
-      case OrErrors(list)                   => list.exists(e => appliedNonDefaultValue(e))
-      case ListErrors(list)                 => list.exists(appliedNonDefaultValue)
-      case MapErrors(list)                  => list.exists(appliedNonDefaultValue)
-      case MissingValue(_, _)               => false
-      case FormatError(_, _, _)             => false
-      case ConversionError(_, _)            => false
-      case Irrecoverable(_)                 => false
-    }
-
-  def handleOption[A, B](
+  def handleDefaultValues[A, B](
     error: ReadError[K],
     config: ConfigDescriptor[A],
     default: B
-  ): Either[ReadError[K], ResultType[B]] = {
-    def hasOnlyMissingValuesIfNotIrrecoverable(error: ReadError[K]): Boolean =
-      error.fold(false) {
-        case ReadError.MissingValue(_, _) => true
-        case ReadError.Irrecoverable(_)   => false
+  ): Either[ReadError[K], AnnotatedRead[B]] = {
+
+    val hasOnlyMissingValuesAndZeroIrrecoverable =
+      error.fold(alternative = false) {
+        case ReadError.MissingValue(_, _, _) => true
+        case ReadError.Irrecoverable(_, _)   => false
       }(_ && _, true)
 
-    def checkIfAllRequiredValuesAreMissing(errors: List[ReadError[K]]): Boolean =
-      errors.forall(hasOnlyMissingValuesIfNotIrrecoverable) && error.sizeOfZipAndOrErrors == config.requiredTerms
+    val baseConditionForFallBack =
+      hasOnlyMissingValuesAndZeroIrrecoverable && error.sizeOfZipAndOrErrors == config.requiredTerms
+
+    def hasZeroNonDefaultValues(annotations: Set[AnnotatedRead.Annotation]) =
+      !annotations.contains(AnnotatedRead.Annotation.NonDefaultValue)
 
     error match {
-      case MissingValue(_, _) => Right(ResultType.defaultValue(default))
-      case ReadError.ZipErrors(errors, anyDefaultValuePresent)
-          if checkIfAllRequiredValuesAreMissing(errors) && !anyDefaultValuePresent =>
-        Right(ResultType.defaultValue(default))
+      case MissingValue(_, _, annotations) => Right(AnnotatedRead(default, annotations))
+      case ReadError.ZipErrors(_, annotations) if baseConditionForFallBack && hasZeroNonDefaultValues(annotations) =>
+        Right(AnnotatedRead(default, annotations))
 
-      case ReadError.OrErrors(errors) if checkIfAllRequiredValuesAreMissing(errors) && !appliedNonDefaultValue(error) =>
-        Right(ResultType.defaultValue(default))
+      case ReadError.OrErrors(_, annotations) if baseConditionForFallBack && hasZeroNonDefaultValues(annotations) =>
+        Right(AnnotatedRead(default, annotations))
 
-      case ListErrors(_)        => Left(Irrecoverable(List(error)))
-      case MapErrors(_)         => Left(Irrecoverable(List(error)))
-      case FormatError(_, _, _) => Left(Irrecoverable(List(error)))
-      case e                    => Left(Irrecoverable(List(e)))
+      case e =>
+        Left(Irrecoverable(List(e)))
     }
   }
 }

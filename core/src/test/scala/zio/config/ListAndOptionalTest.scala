@@ -152,7 +152,7 @@ object ListAndOptionalTest
             )(Branch.apply, Branch.unapply)
 
           val appConfigDesc =
-            (listStrict("branches")(branchConfigDesc).optional)(AppConfig.apply, AppConfig.unapply)
+            (list("branches")(branchConfigDesc).optional)(AppConfig.apply, AppConfig.unapply)
 
           assert(read(appConfigDesc from src))(isLeft(anything))
         }

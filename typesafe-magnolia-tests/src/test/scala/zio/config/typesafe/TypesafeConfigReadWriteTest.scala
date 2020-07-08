@@ -1,3 +1,4 @@
+/*
 package zio.config.typesafe
 
 import zio.config.{ BaseSpec, ConfigSource }
@@ -278,7 +279,7 @@ object TypesafeConfigReadWriteTestUtils {
        |""".stripMargin
 
   val complexConfig: ConfigDescriptor[Nested] =
-    nested("result")(mapStrict(sssDescription))(
+    nested("result")(map(sssDescription))(
       TypesafeConfigReadWriteTestUtils.Nested.apply,
       TypesafeConfigReadWriteTestUtils.Nested.unapply
     )
@@ -286,3 +287,4 @@ object TypesafeConfigReadWriteTestUtils {
   val complexSource: ConfigSource =
     TypesafeConfigSource.fromHoconString(hocon2).loadOrThrow
 }
+*/

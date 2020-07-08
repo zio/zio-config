@@ -1,15 +1,14 @@
 package zio.config.typesafe
 
+import zio.config.ReadError.Step.Key
+import zio.config.{ read, BaseSpec, ReadError }
+import zio.test._
+import zio.test.Assertion._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.OptionalSpecUtils._
-import zio.config.typesafe.TypesafeConfigTestSupport._
-import zio.config.{ BaseSpec, ConfigSource, _ }
-import zio.test.Assertion._
-import zio.test._
-import ReadError.Step.Key
 import ReadError._
 
-object OptionalSpec
+object OpSpec
     extends BaseSpec(
       suite("partial products fail instead of returning none")(
         test(
@@ -29,10 +28,10 @@ object OptionalSpec
                |""".stripMargin
 
           val result =
-            read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
+            read(descriptor[TestCase1.CaseClass1] from OptionalSpecUtils.getSource(validConfig))
 
           val summary =
-            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfSteps)).swap
+            result.swap.map(t => (OptionalSpecUtils.checkIfOnlyMissingValues(t), t.getListOfMissingValueSteps)).swap
 
           assert(summary)(
             equalTo(
@@ -68,7 +67,7 @@ object OptionalSpec
             read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
           val summary =
-            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfSteps)).swap
+            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfMissingValueSteps)).swap
 
           assert(summary)(
             equalTo(
@@ -105,7 +104,7 @@ object OptionalSpec
             read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
           val summary =
-            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfSteps)).swap
+            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfMissingValueSteps)).swap
 
           assert(summary)(
             equalTo(
@@ -141,7 +140,7 @@ object OptionalSpec
             read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
           val summary =
-            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfSteps)).swap
+            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfMissingValueSteps)).swap
 
           assert(summary)(
             equalTo(
@@ -176,7 +175,7 @@ object OptionalSpec
             read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
           val summary =
-            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfSteps)).swap
+            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfMissingValueSteps)).swap
 
           assert(summary)(
             equalTo(
@@ -212,7 +211,7 @@ object OptionalSpec
             read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
           val summary =
-            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfSteps)).swap
+            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfMissingValueSteps)).swap
 
           assert(summary)(
             equalTo(
@@ -248,7 +247,7 @@ object OptionalSpec
             read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
           val summary =
-            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfSteps)).swap
+            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfMissingValueSteps)).swap
 
           assert(summary)(
             equalTo(
@@ -526,7 +525,7 @@ object OptionalSpec
             read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
           val summary =
-            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfSteps)).swap
+            result.swap.map(t => (checkIfOnlyMissingValues(t), t.getListOfMissingValueSteps)).swap
 
           assert(summary)(
             equalTo(
@@ -703,6 +702,29 @@ object OptionalSpec
               Right(TestCase3.CaseClass1(TestCase3.CaseClass2("10", None)))
             )
           )
+        },
+        test(
+          "An optional either[a, product] returns none if the parent key is null"
+        ) {
+          val validConfig =
+            s"""
+               |      a: {
+               |         a : 10
+               |         b : null
+               |       }
+               |""".stripMargin
+
+          val result =
+            read(descriptor[TestCase3.CaseClass1] from getSource(validConfig))
+
+          val summary =
+            result.swap.map(fetchMissingValueAndFormatErrors).swap
+
+          assert(summary)(
+            equalTo(
+              Right(TestCase3.CaseClass1(TestCase3.CaseClass2("10", None)))
+            )
+          )
         }
       )
     )
@@ -728,16 +750,16 @@ object OptionalSpecUtils {
   }
 
   def checkIfOnlyMissingValues[K](error: ReadError[K]): Boolean =
-    error.fold(false) {
-      case ReadError.MissingValue(_, _) => true
+    error.fold(alternative = false) {
+      case ReadError.MissingValue(_, _, _) => true
     }(_ && _, true)
 
   def fetchMissingValueAndFormatErrors[K](error: ReadError[K]): List[ReadError[K]] =
-    error.fold(List.empty[ReadError[K]]) {
-      case e @ ReadError.MissingValue(_, _)   => List(e)
-      case e @ ReadError.FormatError(_, _, _) => List(e)
+    error.fold(alternative = List.empty[ReadError[K]]) {
+      case e @ ReadError.MissingValue(_, _, _)   => List(e)
+      case e @ ReadError.FormatError(_, _, _, _) => List(e)
     }(_ ++ _, List.empty[ReadError[K]])
 
-  def getSource(str: String): ConfigSource =
-    TypesafeConfigSource.fromHoconString(str).loadOrThrow
+  def getSource(str: String): zio.config.ConfigSource =
+    TypesafeConfigSource.fromHoconString(str).fold(_ => throw new Exception("failed"), identity)
 }
