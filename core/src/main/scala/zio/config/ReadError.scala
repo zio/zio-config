@@ -8,9 +8,6 @@ import scala.util.control.NoStackTrace
 sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
   def annotations: Set[Annotation]
 
-  override def getMessage: String =
-    prettyPrint()
-
   def fold[B](alternative: B)(f: PartialFunction[ReadError[A], B])(g: (B, B) => B, zero: B): B = {
     def go(list: List[ReadError[A]]): B =
       list.foldLeft(zero)((a, b) => g(b.fold(alternative)(f)(g, zero), a))
@@ -26,6 +23,9 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
       case e @ ReadError.MapErrors(list, _)       => f.applyOrElse(e, (_: ReadError[A]) => go(list))
     }
   }
+
+  /*  override def getMessage: String =
+    prettyPrint()*/
 
   def getListOfMissingValueSteps: List[List[Step[A]]] =
     fold(List.empty[List[Step[A]]]) {
@@ -175,8 +175,23 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
       case ReadError.Irrecoverable(_, _)      => 1
     }
 
-  override def toString: String =
-    prettyPrint()
+  /*  override def toString: String =
+    prettyPrint()*/
+
+  // OrErrors(List(MissingValue(List(Key(0)), List(value of type string)), FormatError(List(Key(4)), Provided value is notafloat, expecting the type float, List())))
+  // OrErrors(List(ZipErrors(List(MissingValue(List(Key(0)), List(value of type string))), appliedAnyFallBacks = Set()), ZipErrors(List(ZipErrors(List(FormatError(List(Key(4)), Provided value is notafloat, expecting the type float, List())), appliedAnyFallBacks = Set())), appliedAnyFallBacks = Set())))
+
+  override def toString: String = self match {
+    case ReadError.MissingValue(path, message, _)        => s"MissingValue(${path}, ${message})"
+    case ReadError.FormatError(path, message, detail, _) => s"FormatError(${path}, ${message}, ${detail})"
+    case ReadError.ConversionError(path, message, _)     => s"ConversionError(${path},${message}"
+    case ReadError.OrErrors(list, _)                     => s"OrErrors(${list.map(_.toString)})"
+    case ReadError.ZipErrors(list, fallBack) =>
+      s"ZipErrors(${list.map(t => t.toString)}, appliedAnyFallBacks = ${fallBack})"
+    case ReadError.ListErrors(list, _)    => s"ListErrors(${list.map(_.toString)})"
+    case ReadError.MapErrors(list, _)     => s"MapErrors(${list.map(_.toString)})"
+    case ReadError.Irrecoverable(list, _) => s"Irrecoverable(${list.map(_.toString)})"
+  }
 }
 
 object ReadError {
