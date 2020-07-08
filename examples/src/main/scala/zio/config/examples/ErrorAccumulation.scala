@@ -18,8 +18,6 @@ object ErrorAccumulation extends App {
   val parsed =
     read(config from ConfigSource.fromMap(Map.empty))
 
-  println(parsed)
-
   println(parsed.swap.map(_.prettyPrint()))
   /*
     ReadError:

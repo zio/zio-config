@@ -1,8 +1,6 @@
-/*
 package zio.config.examples
 
 import zio.config.ConfigDescriptor._
-import zio.config.ReadError.{ ForceSeverity, FormatError, MissingValue, OrErrors, Step }
 import zio.config._
 
 object EitherExample extends App {
@@ -48,40 +46,26 @@ object EitherExample extends App {
   println(
     read(prodOrDev from invalidSource).swap.map(_.prettyPrint()).swap
   )
-
-  read(prodOrDev from invalidSource).swap.map(_.prettyPrint()).swap
   /*
-      ReadError:
       ╥
-      ╠─MissingValue
-      ║ Details: value of type string
-      ║ path: x1
+      ╠══╗
+      ║  ║
+      ║  ╠─MissingValue
+      ║  ║ path: x1
+      ║  ║ Details: value of type string
+      ║  ▼
       ║
-      ╠─FormatError
-      ║ cause: Provided value is notadouble, expecting the type double
-      ║ path: x5
+      ╠══╗
+      ║  ║
+      ║  ╠─FormatError
+      ║  ║ cause: Provided value is notadouble, expecting the type double
+      ║  ║ path: x5
+      ║  ▼
       ▼
- */
+   */
 
-  println(read(prodOrDev from invalidSource))
-  assert(
-    read(prodOrDev from invalidSource) ==
-      Left(
-        // OrErrors indicate that either fix the error with x1 or the error with x5
-        OrErrors(
-          List(
-            ForceSeverity(MissingValue(List(Step.Key("x1")), List("value of type string")), false),
-            ForceSeverity(
-              FormatError(
-                List(Step.Key("x5")),
-                parseErrorMessage("notadouble", "double")
-              ),
-              false
-            )
-          )
-        )
-      )
-  )
+  // Please refer to accumulated errors section in quick start page to know more about the structure of errors.
+  // In the above case, it means, fix either x1 or x5.
 
   // It chooses the left, Prod
   val allConfigsExist =
@@ -92,4 +76,3 @@ object EitherExample extends App {
       Right(Left(Prod(Ldap("v1"), DbUrl("v2"))))
   )
 }
- */
