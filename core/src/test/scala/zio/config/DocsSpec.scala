@@ -22,7 +22,6 @@ object DocsSpec
 
           val result = generateDocs(config from ConfigSource.fromMap(Map.empty))
 
-          println(getDocs(result).asString)
           assert(Some(result))(
             equalTo(None: Option[ConfigDocs])
           )
@@ -39,8 +38,18 @@ object DocsSpecUtils {
   def getDocs(config: ConfigDocs): Table = config match {
     case ConfigDocs.Leaf(sources, descriptions, value) =>
       Table(List(TableRow(None, Some(Format.Primitive), descriptions, None, sources.map(_.name))))
-    case ConfigDocs.Nested(path, docs)              => getDocs(docs).setName(path)
-    case ConfigDocs.Zip(left, right)                => getDocs(left) ++ getDocs(right)
+    case ConfigDocs.Nested(path, docs) => {
+      val existingDoc  = getDocs(docs)
+      val existingPath = existingDoc.list.flatMap(_.name.toList)
+
+      if (existingPath.nonEmpty) {
+        Table(existingDoc.list.map(t => t.copy(link = t.name)))
+      }
+
+    }
+
+    getDocs(docs).setName(path)
+  case ConfigDocs.Zip(left, right)                  => getDocs(left) ++ getDocs(right)
     case ConfigDocs.OrElse(leftDocs, rightDocs)     => getDocs(leftDocs) ++ getDocs(rightDocs)
     case ConfigDocs.Sequence(schemaDocs, valueDocs) => getDocs(schemaDocs).setFormat(Format.List)
     case ConfigDocs.DynamicMap(schemaDocs, valueDocs) =>
@@ -63,12 +72,13 @@ object DocsSpecUtils {
     case object Primitive extends Format
   }
 
-  final case class Table(list: List[TableRow]) {
-    def setName(name: String): Table     = Table(list.map(_.copy(name = Some(name))))
-    def setFormat(format: Format): Table = Table(list.map(_.copy(format = Some(format))))
+  final case class Table(parentNode: Option[String], list: List[TableRow]) {
+    def setName(name: String): Table     = Table(parentNode, list.map(_.copy(name = Some(name))))
+    def setFormat(format: Format): Table = Table(parentNode, list.map(_.copy(format = Some(format))))
+    def setLink(link: String): Table     = Table(parentNode, list.map(_.copy(link = Some(link))))
 
     def ++(table: Table): Table =
-      Table(list ++ table.list)
+      Table(parentNode, list ++ table.list)
 
     val maxNameLength: Int   = Math.max(10, size(list.flatMap(_.name.map(_.length).toList)))
     val maxFormatLength: Int = Math.max(10, size(list.flatMap(_.format.map(_.toString.length).toList)))
@@ -113,6 +123,9 @@ object DocsSpecUtils {
 
     def getString(option: Option[String], size: Int): String =
       option.map(_.padTo(size, ' ')).getOrElse(" ".padTo(size, ' '))
+
+    // A data type that can be printed to html and markdown
+    case class Segment(table: Table, segments: List[Segment])
 
   }
 }
