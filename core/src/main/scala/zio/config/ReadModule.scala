@@ -214,6 +214,24 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     loopAny(Nil, Nil, configuration, Nil).map(_.value)
   }
 
+  def foldReadError[B](
+    error: ReadError[K]
+  )(alternative: B)(f: PartialFunction[ReadError[K], B])(g: (B, B) => B, zero: B): B = {
+    def go(list: List[ReadError[K]]): B =
+      list.foldLeft(zero)((a, b) => g(foldReadError(b)(alternative)(f)(g, zero), a))
+
+    error match {
+      case e @ ReadError.MissingValue(_, _, _)    => f.applyOrElse(e, (_: ReadError[K]) => alternative)
+      case e @ ReadError.FormatError(_, _, _, _)  => f.applyOrElse(e, (_: ReadError[K]) => alternative)
+      case e @ ReadError.ConversionError(_, _, _) => f.applyOrElse(e, (_: ReadError[K]) => alternative)
+      case e @ ReadError.Irrecoverable(list, _)   => f.applyOrElse(e, (_: ReadError[K]) => go(list))
+      case e @ ReadError.OrErrors(list, _)        => f.applyOrElse(e, (_: ReadError[K]) => go(list))
+      case e @ ReadError.ZipErrors(list, _)       => f.applyOrElse(e, (_: ReadError[K]) => go(list))
+      case e @ ReadError.ListErrors(list, _)      => f.applyOrElse(e, (_: ReadError[K]) => go(list))
+      case e @ ReadError.MapErrors(list, _)       => f.applyOrElse(e, (_: ReadError[K]) => go(list))
+    }
+  }
+
   def handleDefaultValues[A, B](
     error: ReadError[K],
     config: ConfigDescriptor[A],
@@ -221,7 +239,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   ): Either[ReadError[K], AnnotatedRead[B]] = {
 
     val hasOnlyMissingValuesAndZeroIrrecoverable =
-      error.fold(alternative = false) {
+      foldReadError(error)(alternative = false) {
         case ReadError.MissingValue(_, _, _) => true
         case ReadError.Irrecoverable(_, _)   => false
       }(_ && _, true)
@@ -267,8 +285,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     loop(Nil, config)
   }
 
-  def sizeOfZipAndOrErrors[K](error: ReadError[K]): Int =
-    error.fold(0) {
+  def sizeOfZipAndOrErrors(error: ReadError[K]): Int =
+    foldReadError(error)(0) {
       case ReadError.ListErrors(_, _)         => 1
       case ReadError.MapErrors(_, _)          => 1
       case ReadError.Irrecoverable(_, _)      => 1
