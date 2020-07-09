@@ -31,13 +31,18 @@ object CoproductTest
             val expected: ReadError[String] =
               OrErrors(
                 List(
-                  ForceSeverity(MissingValue(List(Key(p.kLdap)), List("value of type string")), false),
-                  ForceSeverity(
-                    ForceSeverity(
-                      FormatError(List(Key(p.kFactor)), "Provided value is notafloat, expecting the type float"),
-                      false
-                    ),
-                    false
+                  ZipErrors(List(MissingValue(List(Key(p.kLdap)), List("value of type string"))), Set()),
+                  ZipErrors(
+                    List(
+                      ZipErrors(
+                        List(
+                          FormatError(
+                            List(Key(p.kFactor)),
+                            "Provided value is notafloat, expecting the type float"
+                          )
+                        )
+                      )
+                    )
                   )
                 )
               )

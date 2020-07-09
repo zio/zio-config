@@ -156,4 +156,26 @@ object TypesafeConfigSimpleExample extends App with EitherImpureOps {
   println(
     read(descriptor[AwsDetails] from fromHoconString(invalidHocon).loadOrThrow)
   )
+  /*
+    ╥
+    ╠══╦══╦══╦══╗
+    ║  ║  ║  ║  ║
+    ║  ║  ║  ║  ╠─FormatError
+    ║  ║  ║  ║  ║ cause: Provided value is 1abcd, expecting the type int
+    ║  ║  ║  ║  ║ path: database.port
+    ║  ║  ║  ║  ▼
+    ║  ║  ║  ║
+    ║  ║  ║  ╠─MissingValue
+    ║  ║  ║  ║ path: accounts[0].regions
+    ║  ║  ║  ▼
+    ║  ║  ║
+    ║  ║  ╠─MissingValue
+    ║  ║  ║ path: accounts[1].regions
+    ║  ║  ▼
+    ║  ║
+    ║  ╠─MissingValue
+    ║  ║ path: accounts[2].regions
+    ║  ▼
+    ▼
+ */
 }

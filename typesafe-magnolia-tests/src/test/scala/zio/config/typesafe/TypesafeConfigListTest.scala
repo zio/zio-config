@@ -5,7 +5,7 @@ import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.test.Assertion._
 import zio.test.{ DefaultRunnableSpec, suite, test, _ }
 
-object ListSpec extends DefaultRunnableSpec {
+object TypesafeConfigListTest extends DefaultRunnableSpec {
 
   val spec = suite("TypesafeConfig List")(
     test("A kebab case for testing HOCON List config") {

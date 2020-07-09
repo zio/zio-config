@@ -3,7 +3,7 @@ package zio.config
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config.ReadError.Step.{ Index, Key }
-import zio.config.ReadError.{ AndErrors, ConversionError, ForceSeverity, FormatError, MissingValue }
+import zio.config.ReadError.{ ConversionError, FormatError, ListErrors, MissingValue, ZipErrors }
 import zio.test.Assertion._
 import zio.test._
 
@@ -106,7 +106,7 @@ object SetTest
         test("distinguish set from scalar left") {
           case class Cfg(a: String, b: Either[Set[String], String])
 
-          val cCfg = (string("a") |@| nested("b")(setStrict(string).orElseEither(string)))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| nested("b")(set(string).orElseEither(string)))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -121,7 +121,7 @@ object SetTest
         test("distinguish set from scalar right") {
           case class Cfg(a: String, b: Either[String, Set[String]])
 
-          val cCfg = (string("a") |@| nested("b")(string.orElseEither(setStrict(string))))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| nested("b")(string.orElseEither(set(string))))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -136,7 +136,7 @@ object SetTest
         test("distinguish scalar from set left") {
           case class Cfg(a: String, b: Either[String, Set[String]])
 
-          val cCfg = (string("a") |@| nested("b")(string.orElseEither(setStrict(string))))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| nested("b")(string.orElseEither(set(string))))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -151,7 +151,7 @@ object SetTest
         test("distinguish scalar from set right") {
           case class Cfg(a: String, b: Either[Set[String], String])
 
-          val cCfg = (string("a") |@| nested("b")(setStrict(string).orElseEither(string)))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| nested("b")(set(string).orElseEither(string)))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -181,7 +181,7 @@ object SetTest
         test("read single key objects in nested sets") {
           case class Cfg(a: String, b: Set[Set[String]])
 
-          val cCfg = (string("a") |@| set("b")(setStrict(string("c"))))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| set("b")(set(string("c"))))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -206,7 +206,7 @@ object SetTest
         test("collect errors from set elements") {
           case class Cfg(a: String, b: Set[String])
 
-          val cCfg = (string("a") |@| nested("b")(setStrict(string)))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| nested("b")(set(string)))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -236,13 +236,17 @@ object SetTest
           )
 
           assert(res)(
-            isLeft(equalTo(ForceSeverity(ConversionError[String](Key("b") :: Nil, "Duplicated values found"), false)))
+            isLeft(
+              equalTo(
+                ZipErrors(List(ConversionError(List(Key("b")), "Duplicated values found")))
+              )
+            )
           )
         },
         test("fails if nested set contains duplicates") {
           case class Cfg(a: String, b: Set[Set[String]])
 
-          val cCfg = (string("a") |@| set("b")(setStrict(string("c"))))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| set("b")(set(string("c"))))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -266,13 +270,7 @@ object SetTest
           )
 
           val expected: ReadError[String] =
-            ForceSeverity(
-              ForceSeverity(
-                AndErrors(List(ConversionError(List(Key("b"), Index(1)), "Duplicated values found"))),
-                false
-              ),
-              false
-            )
+            ZipErrors(List(ListErrors(List(ConversionError(List(Key("b"), Index(1)), "Duplicated values found")))))
 
           assert(res)(isLeft(equalTo(expected)))
         },
@@ -281,7 +279,7 @@ object SetTest
           case class Cfg(a: Set[CfgA], b: Set[Int])
 
           val cCfgA = (boolean("a1") |@| int("a2"))(CfgA, CfgA.unapply)
-          val cCfg  = (nested("a")(setStrict(cCfgA)) |@| nested("b")(setStrict(int)))(Cfg, Cfg.unapply)
+          val cCfg  = (nested("a")(set(cCfgA)) |@| nested("b")(set(int)))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -311,31 +309,26 @@ object SetTest
             )
           )
           val expected: ReadError[String] =
-            AndErrors(
+            ZipErrors(
               List(
-                ForceSeverity(
-                  AndErrors(
-                    List(
-                      MissingValue(List(Key("a"), Index(3), Key("a1"))),
-                      MissingValue(List(Key("a"), Index(2), Key("a2"))),
-                      FormatError(
-                        List(Key("a"), Index(0), Key("a2")),
-                        "Provided value is lorem ipsum, expecting the type int"
-                      )
+                ZipErrors(
+                  List(
+                    MissingValue(List(Key("a"), Index(3), Key("a1"))),
+                    MissingValue(List(Key("a"), Index(2), Key("a2"))),
+                    FormatError(
+                      List(Key("a"), Index(0), Key("a2")),
+                      "Provided value is lorem ipsum, expecting the type int"
                     )
-                  ),
-                  false
+                  )
                 ),
-                ForceSeverity(
-                  AndErrors(
-                    List(
-                      FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int")
-                    )
-                  ),
-                  false
+                ZipErrors(
+                  List(
+                    FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int")
+                  )
                 )
               )
             )
+
           assert(res)(isLeft(hasField("size", _.size, equalTo(expected.size))))
         },
         test("accumulates all errors - pretty print") {
@@ -343,7 +336,7 @@ object SetTest
           case class Cfg(a: Set[CfgA], b: Set[Int])
 
           val cCfgA = (boolean("a1") |@| int("a2"))(CfgA, CfgA.unapply)
-          val cCfg  = (nested("a")(setStrict(cCfgA)) |@| nested("b")(setStrict(int)))(Cfg, Cfg.unapply)
+          val cCfg  = (nested("a")(set(cCfgA)) |@| nested("b")(set(int)))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -373,26 +366,20 @@ object SetTest
             )
           )
           val expected: ReadError[String] =
-            AndErrors(
+            ZipErrors(
               List(
-                ForceSeverity(
-                  AndErrors(
-                    List(
-                      MissingValue(List(Key("a"), Index(3), Key("a1")), List("value of type boolean")),
-                      MissingValue(List(Key("a"), Index(2), Key("a2")), List("value of type int")),
-                      FormatError(
-                        List(Key("a"), Index(0), Key("a2")),
-                        "Provided value is lorem ipsum, expecting the type int"
-                      )
+                ZipErrors(
+                  List(
+                    MissingValue(List(Key("a"), Index(3), Key("a1")), List("value of type boolean")),
+                    MissingValue(List(Key("a"), Index(2), Key("a2")), List("value of type int")),
+                    FormatError(
+                      List(Key("a"), Index(0), Key("a2")),
+                      "Provided value is lorem ipsum, expecting the type int"
                     )
-                  ),
-                  false
+                  )
                 ),
-                ForceSeverity(
-                  AndErrors(
-                    List(FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int"))
-                  ),
-                  false
+                ZipErrors(
+                  List(FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int"))
                 )
               )
             )

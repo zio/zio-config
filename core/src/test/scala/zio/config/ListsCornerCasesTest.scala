@@ -3,7 +3,7 @@ package zio.config
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config.ReadError.Step.{ Index, Key }
-import zio.config.ReadError.{ AndErrors, ForceSeverity, FormatError }
+import zio.config.ReadError.{ FormatError, ListErrors, ZipErrors }
 import zio.test.Assertion._
 import zio.test._
 
@@ -106,7 +106,7 @@ object ListsCornerCasesTest
           case class Cfg(a: String, b: Either[List[String], String])
 
           val cCfg = (string("a") |@| nested("b")(
-            listStrict(string).orElseEither(string)
+            list(string).orElseEither(string)
           ))(Cfg, Cfg.unapply)
 
           val res =
@@ -126,7 +126,7 @@ object ListsCornerCasesTest
           case class Cfg(a: String, b: Either[String, List[String]])
 
           val cCfg = (string("a") |@| nested("b")(
-            string.orElseEither(listStrict(string))
+            string.orElseEither(list(string))
           ))(Cfg, Cfg.unapply)
 
           val res =
@@ -146,7 +146,7 @@ object ListsCornerCasesTest
           case class Cfg(a: String, b: Either[String, List[String]])
 
           val cCfg = (string("a") |@| nested("b")(
-            string.orElseEither(listStrict(string))
+            string.orElseEither(list(string))
           ))(Cfg, Cfg.unapply)
 
           val res = read(
@@ -160,7 +160,7 @@ object ListsCornerCasesTest
           case class Cfg(a: String, b: Either[List[String], String])
 
           val cCfg = (string("a") |@| nested("b")(
-            listStrict(string).orElseEither(string)
+            list(string).orElseEither(string)
           ))(Cfg, Cfg.unapply)
 
           val res = read(
@@ -193,7 +193,7 @@ object ListsCornerCasesTest
         test("read single key objects in nested lists") {
           case class Cfg(a: String, b: List[List[String]])
 
-          val cCfg = (string("a") |@| list("b")(listStrict(string("c"))))(
+          val cCfg = (string("a") |@| list("b")(list(string("c"))))(
             Cfg,
             Cfg.unapply
           )
@@ -230,7 +230,7 @@ object ListsCornerCasesTest
           case class Cfg(a: String, b: List[String])
 
           val cCfg =
-            (string("a") |@| nested("b")(listStrict(string)))(Cfg, Cfg.unapply)
+            (string("a") |@| nested("b")(list(string)))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -252,7 +252,7 @@ object ListsCornerCasesTest
         test("accumulates all errors") {
           case class Cfg(a: List[Boolean], b: List[Int])
 
-          val cCfg = (nested("a")(listStrict(boolean)) |@| nested("b")(listStrict(int)))(Cfg, Cfg.unapply)
+          val cCfg = (nested("a")(list(boolean)) |@| nested("b")(list(int)))(Cfg, Cfg.unapply)
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -266,23 +266,16 @@ object ListsCornerCasesTest
               LeafForSequence.Valid
             )
           )
-          val expected: ReadError[String] =
-            AndErrors(
+
+          val expected =
+            ZipErrors(
               List(
-                ForceSeverity(
-                  AndErrors(
-                    List(
-                      FormatError(List(Key("a"), Index(1)), "Provided value is lorem ipsum, expecting the type boolean")
-                    )
-                  ),
-                  false
+                ListErrors(
+                  List(
+                    FormatError(List(Key("a"), Index(1)), "Provided value is lorem ipsum, expecting the type boolean")
+                  )
                 ),
-                ForceSeverity(
-                  AndErrors(
-                    List(FormatError(List(Key("b"), Index(0)), "Provided value is one, expecting the type int"))
-                  ),
-                  false
-                )
+                ListErrors(List(FormatError(List(Key("b"), Index(0)), "Provided value is one, expecting the type int")))
               )
             )
 

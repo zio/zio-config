@@ -44,6 +44,9 @@ trait ConfigDocsModule extends WriteModule {
             loop((cd.source.names ++ sources), descriptions, cd.config, None)
           )
 
+        case Optional(c) =>
+          loop(sources, descriptions, c, latestPath)
+
         case Sequence(source, c) =>
           ConfigDocs.Sequence(
             loop((source.names ++ sources), descriptions, c, latestPath)
@@ -51,9 +54,6 @@ trait ConfigDocsModule extends WriteModule {
 
         case Describe(c, desc) =>
           loop(sources, desc :: descriptions, c, latestPath)
-
-        case Optional(c) =>
-          loop(sources, descriptions, c, latestPath)
 
         case Nested(path, c) =>
           ConfigDocs.Nested(path, loop(sources, descriptions, c, Some(path)))

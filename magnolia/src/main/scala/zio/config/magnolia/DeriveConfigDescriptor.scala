@@ -112,7 +112,7 @@ trait DeriveConfigDescriptor { self =>
   implicit def implicitSetDesc[A: Descriptor]: Descriptor[Set[A]] =
     Descriptor(setDesc(implicitly[Descriptor[A]].desc))
 
-  implicit def implicitMapDesc[A: Descriptor]: Descriptor[Map[String, A]] =
+  implicit def implicitMapDesc[K, A: Descriptor]: Descriptor[Map[String, A]] =
     Descriptor(mapDesc(implicitly[Descriptor[A]].desc))
 
   implicit def implicitEitherDesc[A: Descriptor, B: Descriptor]: Descriptor[Either[A, B]] =

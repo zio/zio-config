@@ -278,7 +278,7 @@ object TypesafeConfigReadWriteTestUtils {
        |""".stripMargin
 
   val complexConfig: ConfigDescriptor[Nested] =
-    nested("result")(mapStrict(sssDescription))(
+    nested("result")(map(sssDescription))(
       TypesafeConfigReadWriteTestUtils.Nested.apply,
       TypesafeConfigReadWriteTestUtils.Nested.unapply
     )

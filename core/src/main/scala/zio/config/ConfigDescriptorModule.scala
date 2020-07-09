@@ -54,10 +54,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         case Source(source, propertyType) => Source(source, propertyType)
         case DynamicMap(source, conf)     => DynamicMap(source, loop(conf))
         case Nested(path, conf)           => Nested(f(path), loop(conf))
+        case Optional(config)             => Optional(loop(config))
         case Sequence(source, conf)       => Sequence(source, loop(conf))
         case Describe(config, message)    => Describe(loop(config), message)
         case Default(value, value2)       => Default(loop(value), value2)
-        case Optional(config)             => Optional(loop(config))
         case XmapEither(config, f, g)     => XmapEither(loop(config), f, g)
         case Zip(conf1, conf2)            => Zip(loop(conf1), loop(conf2))
         case OrElseEither(value1, value2) => OrElseEither(loop(value1), loop(value2))
@@ -86,10 +86,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         case Source(source, propertyType) => Source(f(source), propertyType)
         case DynamicMap(source, conf)     => DynamicMap(f(source), loop(conf))
         case Nested(path, conf)           => Nested(path, loop(conf))
+        case Optional(config)             => Optional(loop(config))
         case Sequence(source, conf)       => Sequence(f(source), loop(conf))
         case Describe(config, message)    => Describe(loop(config), message)
         case Default(value, value2)       => Default(loop(value), value2)
-        case Optional(config)             => Optional(loop(config))
         case XmapEither(config, f, g)     => XmapEither(loop(config), f, g)
         case Zip(conf1, conf2)            => Zip(loop(conf1), loop(conf2))
         case OrElseEither(value1, value2) => OrElseEither(loop(value1), loop(value2))
@@ -144,7 +144,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     def head[A](desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
       desc.orElse(
-        listStrict(desc)
+        list(desc)
           .xmapEither[A](
             _.headOption.fold[Either[String, A]](Left("Element is missing"))(Right(_)),
             v => Right(v :: Nil)
@@ -155,31 +155,27 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       nested(path)(head(desc))
 
     def list[K, V, A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      listStrict(desc)
+      Sequence(ConfigSourceFunctions.empty, desc)
 
     def list[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       nested(path)(list(desc))
 
-    def listFlexible[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      listStrict(path)(desc) orElse (desc.xmapEither[List[A]](value => Right(List(value)), _.headOption match {
-        case Some(value) => Right(value)
-        case None        => Left("Cannot write an empty list back")
-      }))
-
-    def listStrict[A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      Sequence(ConfigSourceFunctions.empty, desc)
-
-    def listStrict[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      nested(path)(listStrict(desc))
+    def listOrSingleton[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
+      list(path)(desc) orElse (
+        desc.xmapEither[List[A]](
+          value => Right(List(value)),
+          _.headOption match {
+            case Some(value) => Right(value)
+            case None        => Left("Cannot write an empty list back")
+          }
+        )
+      )
 
     def map[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      mapStrict[A](desc)
+      DynamicMap(ConfigSourceFunctions.empty, desc)
 
     def map[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      nested(path)(mapStrict(desc))
-
-    def mapStrict[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(ConfigSourceFunctions.empty, desc)
+      nested(path)(map(desc))
 
     def nested[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(path, desc)
@@ -206,19 +202,13 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def set[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
       nested(path)(set(desc))
 
-    def setStrict[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
-      listStrict(desc).xmapEither(distinctListToSet, s => Right(s.toList))
-
-    def setStrict[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
-      nested(path)(setStrict(desc))
-
     private def distinctListToSet[A](list: List[A]): Either[String, Set[A]] =
       if (list.size == list.distinct.size) Right(list.toSet) else Left("Duplicated values found")
 
   }
 
   object ConfigDescriptorAdt {
-    case class Default[A](config: ConfigDescriptor[A], value: A) extends ConfigDescriptor[A]
+    case class Default[A](config: ConfigDescriptor[A], default: A) extends ConfigDescriptor[A]
 
     case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
