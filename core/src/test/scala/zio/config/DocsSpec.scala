@@ -38,13 +38,13 @@ object DocsSpecUtils {
 
   def getDocs(config: ConfigDocs): Table = config match {
     case ConfigDocs.Leaf(sources, descriptions, value) =>
-      Table(List(TableRow(None, Some(Format.PrimitiveFormat), descriptions, None, sources.map(_.name))))
+      Table(List(TableRow(None, Some(Format.Primitive), descriptions, None, sources.map(_.name))))
     case ConfigDocs.Nested(path, docs)              => getDocs(docs).setName(path)
     case ConfigDocs.Zip(left, right)                => getDocs(left) ++ getDocs(right)
     case ConfigDocs.OrElse(leftDocs, rightDocs)     => getDocs(leftDocs) ++ getDocs(rightDocs)
-    case ConfigDocs.Sequence(schemaDocs, valueDocs) => getDocs(schemaDocs).setFormat(Format.ListFormat)
+    case ConfigDocs.Sequence(schemaDocs, valueDocs) => getDocs(schemaDocs).setFormat(Format.List)
     case ConfigDocs.DynamicMap(schemaDocs, valueDocs) =>
-      getDocs(schemaDocs).setFormat(Format.MapFormat)
+      getDocs(schemaDocs).setFormat(Format.Map)
   }
 
   final case class TableRow(
@@ -58,9 +58,9 @@ object DocsSpecUtils {
   sealed trait Format
 
   object Format {
-    case object ListFormat      extends Format
-    case object MapFormat       extends Format
-    case object PrimitiveFormat extends Format
+    case object List      extends Format
+    case object Map       extends Format
+    case object Primitive extends Format
   }
 
   final case class Table(list: List[TableRow]) {
