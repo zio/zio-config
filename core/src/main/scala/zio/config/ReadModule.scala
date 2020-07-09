@@ -227,7 +227,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       }(_ && _, true)
 
     val baseConditionForFallBack =
-      hasOnlyMissingValuesAndZeroIrrecoverable && error.sizeOfZipAndOrErrors == requiredZipAndOrFields(config)
+      hasOnlyMissingValuesAndZeroIrrecoverable && sizeOfZipAndOrErrors(error) == requiredZipAndOrFields(config)
 
     def hasZeroNonDefaultValues(annotations: Set[AnnotatedRead.Annotation]) =
       !annotations.contains(AnnotatedRead.Annotation.NonDefaultValue)
@@ -266,4 +266,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     loop(Nil, config)
   }
+
+  def sizeOfZipAndOrErrors[K](error: ReadError[K]): Int =
+    error.fold(0) {
+      case ReadError.ListErrors(_, _)         => 1
+      case ReadError.MapErrors(_, _)          => 1
+      case ReadError.Irrecoverable(_, _)      => 1
+      case ReadError.MissingValue(_, _, _)    => 1
+      case ReadError.FormatError(_, _, _, _)  => 1
+      case ReadError.ConversionError(_, _, _) => 1
+    }(_ + _, 0)
 }

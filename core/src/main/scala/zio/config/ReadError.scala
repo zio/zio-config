@@ -182,18 +182,6 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
       case ReadError.Irrecoverable(list, _)   => list.map(_.size).sum
     }
 
-  def sizeOfZipAndOrErrors: Int =
-    self match {
-      case ReadError.MissingValue(_, _, _)    => 1
-      case ReadError.FormatError(_, _, _, _)  => 1
-      case ReadError.ConversionError(_, _, _) => 1
-      case ReadError.OrErrors(list, _)        => list.map(_.size).sum
-      case ReadError.ZipErrors(list, _)       => list.map(_.size).sum
-      case ReadError.ListErrors(_, _)         => 1
-      case ReadError.MapErrors(_, _)          => 1
-      case ReadError.Irrecoverable(_, _)      => 1
-    }
-
   override def toString: String =
     prettyPrint()
 }
