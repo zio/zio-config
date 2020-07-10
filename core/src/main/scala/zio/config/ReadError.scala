@@ -1,36 +1,14 @@
 package zio.config
 
 import zio.config.AnnotatedRead.Annotation
-import zio.config.ReadError.Step
 
 import scala.util.control.NoStackTrace
 
 sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
   def annotations: Set[Annotation]
 
-  final def fold[B](alternative: B)(f: PartialFunction[ReadError[A], B])(g: (B, B) => B, zero: B): B = {
-    def go(list: List[ReadError[A]]): B =
-      list.foldLeft(zero)((a, b) => g(b.fold(alternative)(f)(g, zero), a))
-
-    self match {
-      case e @ ReadError.MissingValue(_, _, _)    => f.applyOrElse(e, (_: ReadError[A]) => alternative)
-      case e @ ReadError.FormatError(_, _, _, _)  => f.applyOrElse(e, (_: ReadError[A]) => alternative)
-      case e @ ReadError.ConversionError(_, _, _) => f.applyOrElse(e, (_: ReadError[A]) => alternative)
-      case e @ ReadError.Irrecoverable(list, _)   => f.applyOrElse(e, (_: ReadError[A]) => go(list))
-      case e @ ReadError.OrErrors(list, _)        => f.applyOrElse(e, (_: ReadError[A]) => go(list))
-      case e @ ReadError.ZipErrors(list, _)       => f.applyOrElse(e, (_: ReadError[A]) => go(list))
-      case e @ ReadError.ListErrors(list, _)      => f.applyOrElse(e, (_: ReadError[A]) => go(list))
-      case e @ ReadError.MapErrors(list, _)       => f.applyOrElse(e, (_: ReadError[A]) => go(list))
-    }
-  }
-
   override def getMessage: String =
     prettyPrint()
-
-  final def getListOfMissingValueSteps: List[List[Step[A]]] =
-    fold(List.empty[List[Step[A]]]) {
-      case ReadError.MissingValue(steps, _, _) => List(steps)
-    }(_ ++ _, List.empty[List[Step[A]]])
 
   final def nonPrettyPrintedString: String = self match {
     case ReadError.MissingValue(path, message, annotations) =>
@@ -180,18 +158,6 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
       case ReadError.ListErrors(list, _)      => list.map(_.size).sum
       case ReadError.MapErrors(list, _)       => list.map(_.size).sum
       case ReadError.Irrecoverable(list, _)   => list.map(_.size).sum
-    }
-
-  def sizeOfZipAndOrErrors: Int =
-    self match {
-      case ReadError.MissingValue(_, _, _)    => 1
-      case ReadError.FormatError(_, _, _, _)  => 1
-      case ReadError.ConversionError(_, _, _) => 1
-      case ReadError.OrErrors(list, _)        => list.map(_.size).sum
-      case ReadError.ZipErrors(list, _)       => list.map(_.size).sum
-      case ReadError.ListErrors(_, _)         => 1
-      case ReadError.MapErrors(_, _)          => 1
-      case ReadError.Irrecoverable(_, _)      => 1
     }
 
   override def toString: String =
