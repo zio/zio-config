@@ -30,6 +30,9 @@ object DocsSpec
     )
 
 object DocsSpecUtils {
+  // A data type that can be printed to html and markdown
+  case class Segment(table: Table, segments: List[Segment])
+
   object TestCase1 {
     case class CaseClass1(a: String, b: CaseClass2, c: List[String])
     case class CaseClass2(a: String, b: String)
@@ -43,7 +46,7 @@ object DocsSpecUtils {
       val existingPath = existingDoc.list.flatMap(_.name.toList)
 
       if (existingPath.nonEmpty) {
-        Table(existingDoc.list.map(t => t.copy(link = t.name)))
+        Table(existingDoc.list.map(t => t.copy(link = t.name), ))
       }
 
     }
@@ -123,9 +126,6 @@ object DocsSpecUtils {
 
     def getString(option: Option[String], size: Int): String =
       option.map(_.padTo(size, ' ')).getOrElse(" ".padTo(size, ' '))
-
-    // A data type that can be printed to html and markdown
-    case class Segment(table: Table, segments: List[Segment])
 
   }
 }
