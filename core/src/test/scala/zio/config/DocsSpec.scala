@@ -127,8 +127,18 @@ object DocsSpecUtils {
           )
         )
 
-        val maxFormatLength: Int =
-          size(table.list.flatMap(_.format.map(_.toString.length).toList))
+        val maxFormatLength =
+          size(
+            table.list.flatMap(
+              table =>
+                table.nested match {
+                  case Some(_) =>
+                    table.format.map(format => getHeadingLabels(format.toString).length).toList
+                  case None =>
+                    table.format.map(format => format.toString.length).toList
+                }
+            )
+          )
 
         val maxDescriptionLength: Int =
           size(table.list.flatMap(_.description.map(_.toString.length)))
@@ -158,21 +168,25 @@ object DocsSpecUtils {
               (
                 " | " ++ {
 
-                  val name = t.nested match {
+                  val (name, format) = t.nested match {
                     case Some(value) =>
                       value.label match {
                         case Some(value) =>
-                          getString(Some(s"[${value}](#${value})"), maxNameLength)
+                          (
+                            getString(Some(s"[${value}](#${value})"), maxNameLength),
+                            getString(Some(getHeadingLabels(Format.Nested.toString)), maxFormatLength)
+                          )
                         case None =>
-                          getString(t.name, maxNameLength)
+                          (getString(t.name, maxNameLength), getString(t.format.map(_.toString), maxFormatLength))
                       }
 
-                    case None => getString(t.name, maxNameLength)
+                    case None =>
+                      (getString(t.name, maxNameLength), getString(t.format.map(_.toString), maxFormatLength))
                   }
 
                   List(
                     name,
-                    getString(t.format.map(_.toString), maxFormatLength),
+                    format,
                     t.description.mkString(", ").padTo(maxDescriptionLength, ' '),
                     t.sources.mkString(", ").padTo(maxSourcesLength, ' ')
                   ).mkString(" | ")
