@@ -203,7 +203,7 @@ object DocsSpecUtils {
         )
       }
 
-      go(self).mkString("\n\n")
+      s"## Configuration Details" ++ "\n \n" ++ go(self).mkString("\n\n")
     }
 
     def getString(option: Option[String], size: Int): String =
