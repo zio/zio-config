@@ -46,7 +46,7 @@ object DocsSpecUtils {
 
   def getDocs(config: ConfigDocs, previousPath: Option[K]): Table = config match {
     case ConfigDocs.Leaf(sources, descriptions, value) =>
-      Table(None, List(TableRow(previousPath, Some(Format.PrimitiveFormat), descriptions, None, sources.map(_.name))))
+      Table.fromRow(None, TableRow(previousPath, Some(Format.Primitive), descriptions, None, sources.map(_.name)))
 
     case ConfigDocs.Nested(path, docs) =>
       getDocs(docs, Some(path))
@@ -54,16 +54,14 @@ object DocsSpecUtils {
     case ConfigDocs.Zip(left, right) =>
       previousPath match {
         case Some(value) =>
-          Table(
+          Table.fromRow(
             previousPath,
-            List(
-              TableRow(
-                Some(value),
-                Some(Format.Nested),
-                Nil,
-                Some((getDocs(left, None) ++ getDocs(right, None)).copy(label = previousPath)),
-                Set.empty
-              )
+            TableRow(
+              Some(value),
+              Some(Format.Nested),
+              Nil,
+              Some((getDocs(left, None) ++ getDocs(right, None)).copy(label = previousPath)),
+              Set.empty
             )
           )
 
@@ -72,28 +70,26 @@ object DocsSpecUtils {
       }
 
     case ConfigDocs.OrElse(leftDocs, rightDocs)     => getDocs(leftDocs, previousPath) ++ getDocs(rightDocs, previousPath)
-    case ConfigDocs.Sequence(schemaDocs, valueDocs) => getDocs(schemaDocs, previousPath).setFormat(Format.ListFormat)
+    case ConfigDocs.Sequence(schemaDocs, valueDocs) => getDocs(schemaDocs, previousPath).setFormat(Format.List)
     case ConfigDocs.DynamicMap(schemaDocs, valueDocs) =>
-      getDocs(schemaDocs, previousPath).setFormat(Format.MapFormat)
+      getDocs(schemaDocs, previousPath).setFormat(Format.Map)
   }
-
-  sealed trait Markdown
 
   final case class TableRow(
     name: Option[String],
     format: Option[Format],
     description: List[String],
-    link: Option[Table],
+    nested: Option[Table],
     sources: Set[String]
   )
 
   sealed trait Format
 
   object Format {
-    case object ListFormat      extends Format
-    case object MapFormat       extends Format
-    case object PrimitiveFormat extends Format
-    case object Nested          extends Format
+    case object List      extends Format
+    case object Map       extends Format
+    case object Primitive extends Format
+    case object Nested    extends Format
   }
 
   final case class Table(label: Option[K], list: List[TableRow]) { self =>
@@ -103,63 +99,106 @@ object DocsSpecUtils {
     def ++(table: Table): Table =
       Table(label, list ++ table.list)
 
-    val maxNameLength: Int   = Math.max(10, size(list.flatMap(_.name.map(_.length).toList)))
-    val maxFormatLength: Int = Math.max(10, size(list.flatMap(_.format.map(_.toString.length).toList)))
-    val maxDescriptionLength: Int =
-      Math.max(10, size(list.flatMap(_.description.map(_.mkString(",").length))))
-    val maxLinkLength: Int    = 30
-    val maxSourcesLength: Int = Math.max(10, size(list.flatMap(_.sources.map(_.mkString(", ").length))))
+    def getHeadingLabels(label: String): String =
+      s"[${label}](#${label})"
 
     def size(list: List[Int]) =
-      if (list.isEmpty) 0 else list.max
+      if (list.isEmpty) 0 else Math.max(10, list.max)
 
     def getContent: String = {
       def go(table: Table): List[String] = {
+        val maxNameLength: Int = Math.max(
+          10,
+          size(
+            table.list.flatMap(
+              table =>
+                table.nested match {
+                  case Some(value) =>
+                    value.label
+                      .map(
+                        t =>
+                          table.name
+                            .fold(getHeadingLabels(t).length)(name => Math.max(getHeadingLabels(t).length, name.length))
+                      )
+                      .toList
+                  case None => table.name.map(_.length).toList
+                }
+            )
+          )
+        )
+
+        val maxFormatLength: Int =
+          size(table.list.flatMap(_.format.map(_.toString.length).toList))
+
+        val maxDescriptionLength: Int =
+          size(table.list.flatMap(_.description.map(_.toString.length)))
+
+        val maxSourcesLength: Int =
+          size(table.list.flatMap(_.sources.map(_.toString.length)))
+
         val heading: String =
           " | " ++
             List(
               "FieldName".padTo(maxNameLength, ' '),
               "Format".padTo(maxFormatLength, ' '),
               "Description".padTo(maxDescriptionLength, ' '),
-              "Link".padTo(maxLinkLength, ' '),
               "Sources".padTo(maxSourcesLength, ' ')
             ).mkString(" | ") ++ " | "
 
         val secondRow: String =
-          " | " ++ List(maxNameLength, maxFormatLength, maxDescriptionLength, maxLinkLength, maxSourcesLength)
+          " | " ++ List(maxNameLength, maxFormatLength, maxDescriptionLength, maxSourcesLength)
             .map(
               length => "----------".padTo(length, ' ')
             )
             .mkString(" | ") + " | "
 
-        val xx: (List[String], List[Table]) = {
+        val (contents, nestedTables): (List[String], List[Table]) = {
           table.list.foldLeft((List.empty[String], List.empty[Table])) {
             case ((contentList, tableList), t) => {
               (
-                " | " ++
+                " | " ++ {
+
+                  val name = t.nested match {
+                    case Some(value) =>
+                      value.label match {
+                        case Some(value) =>
+                          getString(Some(s"[${value}](#${value})"), maxNameLength)
+                        case None =>
+                          getString(t.name, maxNameLength)
+                      }
+
+                    case None => getString(t.name, maxNameLength)
+                  }
+
                   List(
-                    getString(t.name, maxNameLength),
+                    name,
                     getString(t.format.map(_.toString), maxFormatLength),
                     t.description.mkString(", ").padTo(maxDescriptionLength, ' '),
-                    getString(t.link.flatMap(t => t.label.map(k => s"[${k}](#${k})")), maxLinkLength),
                     t.sources.mkString(", ").padTo(maxSourcesLength, ' ')
-                  ).mkString(" | ") + " | " :: contentList,
-                t.link.toList ++ tableList
+                  ).mkString(" | ")
+
+                } + " | " :: contentList,
+                t.nested.toList ++ tableList
               )
             }
           }
         }
 
-        val asString = (List(heading, secondRow) ++ xx._1).mkString("\n")
-
-        asString :: xx._2.flatMap(t => t.label.toList.map(t => s"### ${t}") ++ go(t))
+        (List(heading, secondRow) ++ contents).mkString("\n") :: nestedTables.flatMap(
+          t => t.label.toList.map(t => s"### ${t}") ++ go(t)
+        )
       }
 
-      go(self).mkString("\n \n")
+      go(self).mkString("\n\n")
     }
 
     def getString(option: Option[String], size: Int): String =
       option.map(t => t.padTo(Math.max(t.length, size), ' ')).getOrElse(" ".padTo(size, ' '))
 
+  }
+
+  object Table {
+    def fromRow(label: Option[String], tableRow: TableRow) =
+      Table(label, List(tableRow))
   }
 }
