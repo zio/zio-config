@@ -1,5 +1,7 @@
 package zio.config
 
+import java.io.{ File, PrintWriter }
+
 import ConfigDescriptor._
 import zio.config.DocsSpecUtils._
 import zio.test.Assertion._
@@ -12,15 +14,22 @@ object DocsSpec
           "Generate docs for simple config"
         ) {
           val caseClass2 =
-            (string("a1") |@| string("b1"))(TestCase1.CaseClass2.apply, TestCase1.CaseClass2.unapply)
+            (string("region") |@| string("account_name"))(TestCase1.CaseClass2.apply, TestCase1.CaseClass2.unapply)
 
           val config: ConfigDescriptor[TestCase1.CaseClass1] =
-            (string("a") |@| caseClass2 |@| list("c")(string))(
+            (string("user") |@| nested("aws")(caseClass2) |@| list("locations")(string))(
               TestCase1.CaseClass1.apply,
               TestCase1.CaseClass1.unapply
             )
 
-          val result = generateDocs(config from ConfigSource.fromMap(Map.empty))
+          val result = generateDocs(config from ConfigSource.fromMap(Map.empty, source = "system environment"))
+
+          println(getDocs(result, None).getContent)
+
+          val writer = new PrintWriter(new File("config.md"))
+
+          writer.write(getDocs(result, None).getContent)
+          writer.close()
 
           assert(Some(result))(
             equalTo(None: Option[ConfigDocs])
@@ -30,102 +39,127 @@ object DocsSpec
     )
 
 object DocsSpecUtils {
-  // A data type that can be printed to html and markdown
-  case class Segment(table: Table, segments: List[Segment])
-
   object TestCase1 {
     case class CaseClass1(a: String, b: CaseClass2, c: List[String])
     case class CaseClass2(a: String, b: String)
   }
 
-  def getDocs(config: ConfigDocs): Table = config match {
+  def getDocs(config: ConfigDocs, previousPath: Option[K]): Table = config match {
     case ConfigDocs.Leaf(sources, descriptions, value) =>
-      Table(List(TableRow(None, Some(Format.Primitive), descriptions, None, sources.map(_.name))))
-    case ConfigDocs.Nested(path, docs) => {
-      val existingDoc  = getDocs(docs)
-      val existingPath = existingDoc.list.flatMap(_.name.toList)
+      Table(None, List(TableRow(previousPath, Some(Format.PrimitiveFormat), descriptions, None, sources.map(_.name))))
 
-      if (existingPath.nonEmpty) {
-        Table(existingDoc.list.map(t => t.copy(link = t.name), ))
+    case ConfigDocs.Nested(path, docs) =>
+      getDocs(docs, Some(path))
+
+    case ConfigDocs.Zip(left, right) =>
+      previousPath match {
+        case Some(value) =>
+          Table(
+            previousPath,
+            List(
+              TableRow(
+                Some(value),
+                Some(Format.Nested),
+                Nil,
+                Some((getDocs(left, None) ++ getDocs(right, None)).copy(label = previousPath)),
+                Set.empty
+              )
+            )
+          )
+
+        case None =>
+          getDocs(left, None) ++ getDocs(right, None)
       }
 
-    }
-
-    getDocs(docs).setName(path)
-  case ConfigDocs.Zip(left, right)                  => getDocs(left) ++ getDocs(right)
-    case ConfigDocs.OrElse(leftDocs, rightDocs)     => getDocs(leftDocs) ++ getDocs(rightDocs)
-    case ConfigDocs.Sequence(schemaDocs, valueDocs) => getDocs(schemaDocs).setFormat(Format.List)
+    case ConfigDocs.OrElse(leftDocs, rightDocs)     => getDocs(leftDocs, previousPath) ++ getDocs(rightDocs, previousPath)
+    case ConfigDocs.Sequence(schemaDocs, valueDocs) => getDocs(schemaDocs, previousPath).setFormat(Format.ListFormat)
     case ConfigDocs.DynamicMap(schemaDocs, valueDocs) =>
-      getDocs(schemaDocs).setFormat(Format.Map)
+      getDocs(schemaDocs, previousPath).setFormat(Format.MapFormat)
   }
+
+  sealed trait Markdown
 
   final case class TableRow(
     name: Option[String],
     format: Option[Format],
     description: List[String],
-    link: Option[String],
+    link: Option[Table],
     sources: Set[String]
   )
 
   sealed trait Format
 
   object Format {
-    case object List      extends Format
-    case object Map       extends Format
-    case object Primitive extends Format
+    case object ListFormat      extends Format
+    case object MapFormat       extends Format
+    case object PrimitiveFormat extends Format
+    case object Nested          extends Format
   }
 
-  final case class Table(parentNode: Option[String], list: List[TableRow]) {
-    def setName(name: String): Table     = Table(parentNode, list.map(_.copy(name = Some(name))))
-    def setFormat(format: Format): Table = Table(parentNode, list.map(_.copy(format = Some(format))))
-    def setLink(link: String): Table     = Table(parentNode, list.map(_.copy(link = Some(link))))
+  final case class Table(label: Option[K], list: List[TableRow]) { self =>
+    def setName(name: String): Table     = Table(label, list.map(_.copy(name = Some(name))))
+    def setFormat(format: Format): Table = Table(label, list.map(_.copy(format = Some(format))))
 
     def ++(table: Table): Table =
-      Table(parentNode, list ++ table.list)
+      Table(label, list ++ table.list)
 
     val maxNameLength: Int   = Math.max(10, size(list.flatMap(_.name.map(_.length).toList)))
     val maxFormatLength: Int = Math.max(10, size(list.flatMap(_.format.map(_.toString.length).toList)))
     val maxDescriptionLength: Int =
       Math.max(10, size(list.flatMap(_.description.map(_.mkString(",").length))))
-    val maxLinkLength: Int    = Math.max(10, size(list.flatMap(_.link.map(_.length).toList)))
+    val maxLinkLength: Int    = 30
     val maxSourcesLength: Int = Math.max(10, size(list.flatMap(_.sources.map(_.mkString(", ").length))))
 
     def size(list: List[Int]) =
       if (list.isEmpty) 0 else list.max
 
-    val heading: String =
-      "| " ++
-        List(
-          "Name".padTo(maxNameLength, ' '),
-          "Format".padTo(maxFormatLength, ' '),
-          "Description".padTo(maxDescriptionLength, ' '),
-          "Link".padTo(maxLinkLength, ' '),
-          "Sources".padTo(maxSourcesLength, ' ')
-        ).mkString("| ") ++ "| "
+    def getContent: String = {
+      def go(table: Table): List[String] = {
+        val heading: String =
+          " | " ++
+            List(
+              "FieldName".padTo(maxNameLength, ' '),
+              "Format".padTo(maxFormatLength, ' '),
+              "Description".padTo(maxDescriptionLength, ' '),
+              "Link".padTo(maxLinkLength, ' '),
+              "Sources".padTo(maxSourcesLength, ' ')
+            ).mkString(" | ") ++ " | "
 
-    val secondRow: String =
-      "| " ++ List(maxNameLength, maxFormatLength, maxDescriptionLength, maxLinkLength, maxSourcesLength)
-        .map(
-          length => "----------".padTo(length, ' ')
-        )
-        .mkString("| ") ++ "| "
+        val secondRow: String =
+          " | " ++ List(maxNameLength, maxFormatLength, maxDescriptionLength, maxLinkLength, maxSourcesLength)
+            .map(
+              length => "----------".padTo(length, ' ')
+            )
+            .mkString(" | ") + " | "
 
-    val content = list.map(
-      t =>
-        "| " ++
-          List(
-            getString(t.name, maxNameLength),
-            getString(t.format.map(_.toString), maxFormatLength),
-            t.description.mkString(", ").padTo(maxDescriptionLength, ' '),
-            getString(t.link, maxLinkLength),
-            t.sources.mkString(", ").padTo(maxSourcesLength, ' ')
-          ).mkString("| ") ++ "| "
-    )
+        val xx: (List[String], List[Table]) = {
+          table.list.foldLeft((List.empty[String], List.empty[Table])) {
+            case ((contentList, tableList), t) => {
+              (
+                " | " ++
+                  List(
+                    getString(t.name, maxNameLength),
+                    getString(t.format.map(_.toString), maxFormatLength),
+                    t.description.mkString(", ").padTo(maxDescriptionLength, ' '),
+                    getString(t.link.flatMap(t => t.label.map(k => s"[${k}](#${k})")), maxLinkLength),
+                    t.sources.mkString(", ").padTo(maxSourcesLength, ' ')
+                  ).mkString(" | ") + " | " :: contentList,
+                t.link.toList ++ tableList
+              )
+            }
+          }
+        }
 
-    val asString = (heading :: secondRow :: content).mkString("\n")
+        val asString = (List(heading, secondRow) ++ xx._1).mkString("\n")
+
+        asString :: xx._2.flatMap(t => t.label.toList.map(t => s"### ${t}") ++ go(t))
+      }
+
+      go(self).mkString("\n \n")
+    }
 
     def getString(option: Option[String], size: Int): String =
-      option.map(_.padTo(size, ' ')).getOrElse(" ".padTo(size, ' '))
+      option.map(t => t.padTo(Math.max(t.length, size), ' ')).getOrElse(" ".padTo(size, ' '))
 
   }
 }
