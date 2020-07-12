@@ -113,9 +113,20 @@ trait ConfigDocsModule extends WriteModule {
           size(
             table.list.flatMap(
               table =>
-                table.nested match {
-                  case Some(_) =>
-                    table.format.map(format => getHeadingLabels(format.toString).length).toList
+                table.format match {
+                  case Some(value) =>
+                    value match {
+                      case Table.Format.List =>
+                        table.format.map(format => format.toString.length).toList
+                      case Table.Format.Map =>
+                        table.format.map(format => format.toString.length).toList
+                      case Table.Format.Primitive =>
+                        table.format.map(format => format.toString.length).toList
+                      case Table.Format.Nested =>
+                        table.format.map(format => getHeadingLabels(format.toString).length).toList
+                      case Table.Format.AnyOneOf =>
+                        table.format.map(format => getHeadingLabels(format.toString).length).toList
+                    }
                   case None =>
                     table.format.map(format => format.toString.length).toList
                 }
@@ -225,7 +236,7 @@ trait ConfigDocsModule extends WriteModule {
     abstract sealed class FieldName(val name: String) {
       override def toString: String = this match {
         case FieldName.Raw(k)   => k.toString
-        case FieldName.AnyOneOf => "<Not Applicable>"
+        case FieldName.AnyOneOf => "Not Applicable"
       }
     }
 
