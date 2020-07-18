@@ -120,18 +120,19 @@ trait ConfigDocsModule extends WriteModule {
           )
         }
 
-        contentsString.mkString(System.lineSeparator()) :: nestedTables.flatMap(
-          table =>
-            mkStringAndWrapWith(List(s"### ${table.parentPaths.map(_.asString).mkString(".")}"), System.lineSeparator()) :: go(
-              table
-            )
-        )
+        contentsString.mkString(System.lineSeparator()) ::
+          nestedTables.flatMap(
+            table =>
+              mkStringAndWrapWith(
+                List(s"### ${table.parentPaths.map(_.asString).mkString(".")}"),
+                System.lineSeparator()
+              ) :: go(
+                table
+              )
+          )
       }
 
-      mkStringAndWrapWith(
-        List(s"## Configuration Details", System.lineSeparator()) ++ (go(self) :+ System.lineSeparator()),
-        System.lineSeparator()
-      )
+      mkStringAndWrapWith(s"## Configuration Details" :: go(self), System.lineSeparator())
     }
 
     private def padToEmpty(string: String, size: Int): String = {
