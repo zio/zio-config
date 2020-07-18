@@ -27,12 +27,17 @@ object DocsSpec
               "username"
             ))(TestCase1.CaseClass3.apply, TestCase1.CaseClass3.unapply)
 
+          val caseClass4 =
+            nested("azure") {
+              (string("a") |@| string("b"))(TestCase1.CaseClass4.apply, TestCase1.CaseClass4.unapply)
+            }
+
           val either1 =
-            (nested("aws1")(caseClass2))
+            (nested("aws")(caseClass2))
               .orElseEither(nested("credentials")(caseClass3))
 
           val config: ConfigDescriptor[TestCase1.CaseClass1] =
-            (string("user") |@| either1)(
+            (string("user") |@| either1 |@| caseClass4)(
               TestCase1.CaseClass1.apply,
               TestCase1.CaseClass1.unapply
             )
@@ -54,10 +59,12 @@ object DocsSpecUtils {
   object TestCase1 {
     case class CaseClass1(
       a: String,
-      b: Either[CaseClass2, CaseClass3]
+      b: Either[CaseClass2, CaseClass3],
+      c: CaseClass4
     )
     case class CaseClass2(a: String, b: String)
     case class CaseClass3(c: String, d: String)
+    case class CaseClass4(c: String, d: String)
   }
 
   val expected =
@@ -65,17 +72,25 @@ object DocsSpecUtils {
        |## Configuration Details
        |
        |
-       ||FieldName|Format             |Description         |Sources           |
-       ||---      |---                |---                 |---               |
-       ||         |[any-one-of](#root)|                    |                  |
-       ||user     |primitive          |value of type string|system environment|
+       ||FieldName           |Format               |Description         |Sources           |
+       ||---                 |---                  |---                 |---               |
+       ||[azure](#root.azure)|[all-of](#root.azure)|                    |                  |
+       ||                    |[any-one-of](#root)  |                    |                  |
+       ||user                |primitive            |value of type string|system environment|
+       |
+       |### root.azure
+       |
+       ||FieldName|Format   |Description         |Sources           |
+       ||---      |---      |---                 |---               |
+       ||b        |primitive|value of type string|system environment|
+       ||a        |primitive|value of type string|system environment|
        |
        |### root
        |
        ||FieldName                       |Format                     |Description|Sources|
        ||---                             |---                        |---        |---    |
        ||[credentials](#root.credentials)|[all-of](#root.credentials)|           |       |
-       ||[aws1](#root.aws1)              |[all-of](#root.aws1)       |           |       |
+       ||[aws](#root.aws)                |[all-of](#root.aws)        |           |       |
        |
        |### root.credentials
        |
@@ -84,7 +99,7 @@ object DocsSpecUtils {
        ||username |primitive|value of type string|system environment                               |
        ||token_id |primitive|value of type string|docker env, system properties, system environment|
        |
-       |### root.aws1
+       |### root.aws
        |
        ||FieldName   |Format   |Description         |Sources           |
        ||---         |---      |---                 |---               |
