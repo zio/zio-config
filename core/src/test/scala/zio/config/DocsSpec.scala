@@ -1,6 +1,5 @@
 package zio.config
 
-import java.io.{ File, PrintWriter }
 import java.util.Properties
 
 import ConfigDescriptor._
@@ -28,35 +27,9 @@ object DocsSpec
               "username"
             ))(TestCase1.CaseClass3.apply, TestCase1.CaseClass3.unapply)
 
-          /*
-          val caseClass4 =
-            (string("x").from(source1.orElse(source2)) |@| string(
-              "y"
-            ))(TestCase1.CaseClass4.apply, TestCase1.CaseClass4.unapply)
-
-          val caseClass5 =
-            (string("x").from(source1.orElse(source2)) |@| string(
-              "y"
-            ))(TestCase1.CaseClass5.apply, TestCase1.CaseClass5.unapply)
-           */
-
           val either1 =
             (nested("aws1")(caseClass2))
               .orElseEither(nested("credentials")(caseClass3))
-
-          /*          val either2 =
-            (nested("aws2")(caseClass4))
-              .orElseEither(nested("credentials2")(caseClass5))*/
-
-          /*
-          val config: ConfigDescriptor[TestCase1.CaseClass1] =
-            (string("user") |@| either1 |@| either2 |@| list(
-              "locations"
-            )(string))(
-              TestCase1.CaseClass1.apply,
-              TestCase1.CaseClass1.unapply
-            )
-           */
 
           val config: ConfigDescriptor[TestCase1.CaseClass1] =
             (string("user") |@| either1)(
@@ -64,15 +37,14 @@ object DocsSpec
               TestCase1.CaseClass1.unapply
             )
 
-          val result = generateDocs(config from ConfigSource.fromMap(Map.empty, source = "system environment"))
+          val finalSource =
+            ConfigSource.fromMap(Map.empty, source = "system environment")
 
-          val writer = new PrintWriter(new File("config.md"))
+          val result =
+            generateDocs(config from finalSource).toTable.asMarkdownContent
 
-          writer.write(result.toTable.asMarkdownContent)
-          writer.close()
-
-          assert(Some(result))(
-            equalTo(None: Option[ConfigDocs])
+          assert(result)(
+            equalTo(DocsSpecUtils.expected)
           )
         }
       )
@@ -86,7 +58,40 @@ object DocsSpecUtils {
     )
     case class CaseClass2(a: String, b: String)
     case class CaseClass3(c: String, d: String)
-    case class CaseClass4(c: String, d: String)
-    case class CaseClass5(c: String, d: String)
   }
+
+  val expected =
+    s"""
+       |## Configuration Details
+       |
+       |
+       ||FieldName    |Format             |Description         |Sources           |
+       ||---          |---                |---                 |---               |
+       ||[root](#root)|[any-one-of](#root)|                    |                  |
+       ||user         |primitive          |value of type string|system environment|
+       |
+       |### root
+       |
+       ||FieldName                       |Format                     |Description|Sources|
+       ||---                             |---                        |---        |---    |
+       ||[credentials](#root.credentials)|[all-of](#root.credentials)|           |       |
+       ||[aws1](#root.aws1)              |[all-of](#root.aws1)       |           |       |
+       |
+       |### root.credentials
+       |
+       ||FieldName|Format   |Description         |Sources                                          |
+       ||---      |---      |---                 |---                                              |
+       ||username |primitive|value of type string|system environment                               |
+       ||token_id |primitive|value of type string|docker env, system properties, system environment|
+       |
+       |### root.aws1
+       |
+       ||FieldName   |Format   |Description         |Sources           |
+       ||---         |---      |---                 |---               |
+       ||account_name|primitive|value of type string|system environment|
+       ||region      |primitive|value of type string|system environment|
+       |
+       |
+       |""".stripMargin
+
 }

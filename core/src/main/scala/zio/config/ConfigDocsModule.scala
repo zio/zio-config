@@ -6,17 +6,24 @@ trait ConfigDocsModule extends WriteModule {
   import Table._
 
   sealed trait ConfigDocs { self =>
+
+    /**
+     * Convert ConfigDocs to `Table`, which is a light-weight and flattened, yet
+     * recursive structure, that can then be easily turned into human readable formats such as markdown, table, html etc
+     */
     def toTable: Table = {
-      def go(docs: ConfigDocs, previousPaths: Set[FieldName]): Table =
+      def go(docs: ConfigDocs, previousPaths: List[FieldName]): Table =
         docs match {
           case ConfigDocs.Leaf(sources, descriptions, _) =>
             TableRow(previousPaths, Some(Table.Format.Primitive), descriptions, None, sources.map(_.name)).liftToTable
 
           case ConfigDocs.Nested(path, docs) =>
-            go(docs, (previousPaths.toList :+ Table.FieldName.Key(path)).toSet)
+            go(docs, (previousPaths :+ Table.FieldName.Key(path)))
 
           case ConfigDocs.Zip(left, right) =>
-            if (previousPaths != Set(FieldName.Root))
+            if (previousPaths == List(FieldName.Root))
+              go(left, previousPaths) ++ go(right, previousPaths)
+            else
               TableRow(
                 previousPaths,
                 Some(Format.AllOf),
@@ -24,8 +31,6 @@ trait ConfigDocsModule extends WriteModule {
                 Some((go(left, previousPaths) ++ go(right, previousPaths)).copy(parentPaths = previousPaths)),
                 Set.empty
               ).liftToTable
-            else
-              go(left, previousPaths) ++ go(right, previousPaths)
 
           case ConfigDocs.OrElse(leftDocs, rightDocs) =>
             TableRow(
@@ -40,53 +45,39 @@ trait ConfigDocsModule extends WriteModule {
             ).liftToTable
 
           case ConfigDocs.Sequence(schemaDocs, _) =>
-            go(schemaDocs, previousPaths).setFormat(Format.List)
+            go(schemaDocs, previousPaths).setFormatGlobally(Format.List)
 
           case ConfigDocs.DynamicMap(schemaDocs, _) =>
-            go(schemaDocs, previousPaths).setFormat(Format.Map)
+            go(schemaDocs, previousPaths).setFormatGlobally(Format.Map)
         }
 
-      go(self, Set(FieldName.Root))
-
+      go(self, List(FieldName.Root))
     }
   }
 
   object ConfigDocs {
+    case class Leaf(sources: Set[ConfigSourceName], descriptions: List[String], value: Option[V] = None)
+        extends ConfigDocs
 
-    case class Leaf(
-      sources: Set[ConfigSourceName],
-      descriptions: List[String],
-      value: Option[V] = None
-    ) extends ConfigDocs
     case class Nested(path: K, docs: ConfigDocs)                                          extends ConfigDocs
     case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
     case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
     case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
-    case class DynamicMap(
-      schemaDocs: ConfigDocs,
-      valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs]
-    ) extends ConfigDocs
+    case class DynamicMap(schemaDocs: ConfigDocs, valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs])
+        extends ConfigDocs
 
   }
 
-  import Table.TableRow
-  import Table.Format
+  /**
+   * @param parentPaths: A table can be associated with a path towards it, which becomes its identity
+   * @param rows: A table consist of multiple rows, where each row is a field and it's details.
+   */
+  case class Table(parentPaths: List[FieldName], rows: List[TableRow]) { self =>
+    def setFormatGlobally(format: Format): Table =
+      Table(parentPaths, rows.map(_.copy(format = Some(format))))
 
-  case class Label(index: Int, name: Option[FieldName]) {
-    def asString(implicit S: K =:= String): String = name match {
-      case Some(value) => getString(index.toString, value.asString)
-      case None        => index.toString
-    }
-
-    private def getString(index: String, name: String): String =
-      List(index, name).mkString("_")
-  }
-
-  case class Table(parentPaths: Set[FieldName], rows: List[TableRow]) { self =>
-    def setFormat(format: Format): Table = Table(parentPaths, rows.map(_.copy(format = Some(format))))
-
-    def ++(table: Table): Table =
-      Table(parentPaths, rows ++ table.rows)
+    def ++(that: Table): Table =
+      Table(parentPaths, rows ++ that.rows)
 
     def asMarkdownContent(implicit S: K =:= String): String = {
       def go(table: Table): List[String] = {
@@ -99,121 +90,100 @@ trait ConfigDocsModule extends WriteModule {
           )
 
         val (contents, nestedTables): (List[List[String]], List[Table]) = {
-          def getString[A](option: Set[A], size: Int)(f: A => String): String =
-            padToEmpty(option.map(f).mkString("."), size)
-
-          def getLastFieldName(fieldNames: Set[FieldName]): String =
-            fieldNames.lastOption.fold("")(_.asString)
-
           table.rows.foldLeft((List.empty[List[String]], List.empty[Table])) {
-            case ((contentList, nestedTableList), row) => {
+            case ((contentList, nestedTableList), row) =>
               val (name, format) = row.nested match {
                 case Some(nestedTable) =>
-                  (
-                    s"[${getLastFieldName(row.previousPaths)}](#${nestedTable.parentPaths.map(_.asString).mkString(".")})", {
-                      val nameOfFormat = getString(row.format.toList.toSet, 0)(_.asString)
-                      s"[${nameOfFormat}](#${nestedTable.parentPaths.map(_.asString).mkString(".")})"
-
-                    }
-                  )
+                  getLink(
+                    getLastFieldName(row.previousPaths),
+                    nestedTable.parentPaths.map(_.asString).mkString(".")
+                  ) -> getLink(row.format.fold("")(_.asString), nestedTable.parentPaths.map(_.asString).mkString("."))
 
                 case None =>
-                  (
-                    getLastFieldName(row.previousPaths),
-                    row.format.fold("")(format => format.asString)
-                  )
+                  (getLastFieldName(row.previousPaths), row.format.fold("")(_.asString))
               }
-              (
-                List(
-                  name,
-                  format,
-                  row.description.mkString(", "),
-                  row.sources.mkString(", ")
-                )
-                  :: contentList,
-                row.nested.toList ++ nestedTableList
-              )
-            }
+              (List(name, format, row.description.mkString(", "), row.sources.mkString(", ")) :: contentList) ->
+                (row.nested.toList ++ nestedTableList)
+
           }
         }
 
-        type Size  = Int
-        type Index = Int
+        val contentsString: List[String] = {
+          val indexAndSize = getSizeOfIndices(headingColumns :: contents)
 
-        def sizes: Map[Index, Size] =
-          (headingColumns :: contents).foldLeft(Map.empty: Map[Index, Size])(
-            (map, row) =>
-              addMapsForSizes(map, row.zipWithIndex.map({ case (string, index) => (index, string.length) }).toMap)
-          )
-
-        def addMapsForSizes(accumulated: Map[Index, Size], current: Map[Index, Size]): Map[Index, Size] = {
-          println("the input is " + accumulated)
-          println("the existing is " + current)
-
-          current.foldLeft(Map.empty: Map[Index, Size])({
-            case (k, v) =>
-              accumulated.get(v._1) match {
-                case Some(size) => k.updated(v._1, Math.max(v._2, size))
-                case None       => k.+((v._1, v._2))
-              }
-          })
-        }
-
-        val headingRow: String =
-          mkStringAndWrapWith(headingColumns.zipWithIndex.map({
-            case (string, index) => padToEmpty(string, sizes.getOrElse(index, 0))
-          }), "|")
-
-        println(sizes.size)
-
-        val secondRow2: String =
-          mkStringAndWrapWith(sizes.toList.map({ case (_, size) => padToChar("-", size, '-') }), "|")
-
-        val contentsString: Seq[String] =
-          contents.map(
+          (headingColumns :: List.fill(indexAndSize.size)("---") :: contents).map(
             list =>
               mkStringAndWrapWith(list.zipWithIndex.map({
-                case (string, index) => padToEmpty(string, sizes.getOrElse(index, 0))
+                case (string, index) =>
+                  padToEmpty(string, indexAndSize.getOrElse(index, 0))
               }), "|")
           )
+        }
 
-        (List(headingRow, secondRow2) ++ contentsString).mkString("\n") :: nestedTables.flatMap(
-          table => s"### ${table.parentPaths.map(_.asString).mkString(".")}" +: go(table)
+        contentsString.mkString(System.lineSeparator()) :: nestedTables.flatMap(
+          table =>
+            mkStringAndWrapWith(List(s"### ${table.parentPaths.map(_.asString).mkString(".")}"), System.lineSeparator()) :: go(
+              table
+            )
         )
       }
 
-      s"## Configuration Details" ++ "\n \n" ++ go(self).mkString("\n\n")
+      mkStringAndWrapWith(
+        List(s"## Configuration Details", System.lineSeparator()) ++ (go(self) :+ System.lineSeparator()),
+        System.lineSeparator()
+      )
     }
 
-    def padToEmpty(str: String, size: Int): String = {
-      val maxSize = Math.max(str.length, size)
-      str.padTo(maxSize, ' ')
+    private def padToEmpty(string: String, size: Int): String = {
+      val maxSize = Math.max(string.length, size)
+      string.padTo(maxSize, ' ')
     }
 
-    def padToChar(str: String, size: Int, char: Char): String = {
-      val maxSize = Math.max(str.length, size)
-      str.padTo(maxSize, char)
-    }
-
-    def wrapWith(input: String, str: String): String =
+    private def wrapWith(input: String, str: String): String =
       str ++ input ++ str
 
-    def mkStringAndWrapWith(input: List[String], str: String): String =
+    private def mkStringAndWrapWith(input: List[String], str: String): String =
       wrapWith(input.mkString(str), str)
+
+    private def getLastFieldName(fieldNames: List[FieldName])(implicit S: K =:= String): String =
+      fieldNames.lastOption.fold("")(_.asString)
+
+    private def getLink(name: String, link: String): String =
+      s"[${name}](#${link})"
+
+    type Size  = Int
+    type Index = Int
+
+    def getSizeOfIndices(input: List[List[String]]): Map[Index, Size] = {
+      def mergeMapWithMaxSize(accumulated: Map[Index, Size], current: Map[Index, Size]): Map[Index, Size] =
+        current.foldLeft(Map.empty: Map[Index, Size])({
+          case (k, v) =>
+            accumulated.get(v._1) match {
+              case Some(size) => k.updated(v._1, Math.max(v._2, size))
+              case None       => k.+((v._1, v._2))
+            }
+        })
+
+      input.foldLeft(Map.empty: Map[Index, Size])(
+        (map, row) =>
+          mergeMapWithMaxSize(map, row.zipWithIndex.map({ case (string, index) => (index, string.length) }).toMap)
+      )
+    }
 
   }
 
   object Table {
 
     case class TableRow(
-      previousPaths: Set[FieldName],
+      previousPaths: List[FieldName],
       format: Option[Format],
       description: List[String],
       nested: Option[Table],
       sources: Set[String]
     ) {
+      // A single row can be turned to a table
       def liftToTable =
-        Table(Set(FieldName.Root), List(this))
+        Table(List(FieldName.Root), List(this))
     }
 
     sealed trait Format { self =>
@@ -229,29 +199,25 @@ trait ConfigDocsModule extends WriteModule {
     }
 
     object Format {
-
       case object List      extends Format
       case object Map       extends Format
       case object Primitive extends Format
       case object Nested    extends Format
       case object AnyOneOf  extends Format
       case object AllOf     extends Format
-
     }
 
     sealed trait FieldName {
       def asString(implicit S: K =:= String): String =
         this match {
-          case FieldName.Key(k)   => S.apply(k)
-          case FieldName.AnyOneOf => ""
-          case FieldName.Root     => "root"
+          case FieldName.Key(k) => S.apply(k)
+          case FieldName.Root   => "root"
         }
     }
 
     object FieldName {
       case object Root     extends FieldName
       case class Key(k: K) extends FieldName
-      case object AnyOneOf extends FieldName
     }
   }
 
