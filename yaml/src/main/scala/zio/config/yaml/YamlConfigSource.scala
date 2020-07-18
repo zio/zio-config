@@ -6,7 +6,7 @@ import java.lang.{ Boolean => JBoolean, Float => JFloat, Integer => JInteger }
 import java.{ util => ju }
 
 import org.snakeyaml.engine.v2.api.{ Load, LoadSettings }
-import zio.blocking.{ Blocking, effectBlockingInterrupt }
+import zio.blocking.{ effectBlockingInterrupt, Blocking }
 import zio.config.{ ConfigSource, LeafForSequence, PropertyTree }
 import zio.{ RIO, Task }
 
@@ -28,9 +28,15 @@ object YamlConfigSource {
         )
     }
 
+  /**
+   * Creates a configuration source from a YAML file at the specified path.
+   */
   def fromPath(path: Path): RIO[Blocking, ConfigSource] =
     fromFile(path.toFile)
 
+  /**
+   * Creates a configuration source from a YAML file.
+   */
   def fromFile(file: File): RIO[Blocking, ConfigSource] =
     effectBlockingInterrupt {
       ConfigSource.fromPropertyTree(
@@ -42,6 +48,9 @@ object YamlConfigSource {
       )
     }
 
+  /**
+   * Creates a configuration source from a YAML string.
+   */
   def fromString(yamlString: String, sourceName: String = "yaml"): Task[ConfigSource] =
     Task {
       ConfigSource.fromPropertyTree(
