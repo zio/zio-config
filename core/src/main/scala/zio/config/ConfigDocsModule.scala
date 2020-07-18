@@ -89,85 +89,7 @@ trait ConfigDocsModule extends WriteModule {
       Table(parentPaths, rows ++ table.rows)
 
     def asMarkdownContent(implicit S: K =:= String): String = {
-      def getHeadingLabels[A](label: A): String =
-        s"[${label}](#${label})"
-
-      def getMaxSize(list: List[Int]): Int =
-        if (list.isEmpty) 10 else Math.max(10, list.max)
-
-      def sizesOfNamesBasedOnFormat(table: Table): List[Int] =
-        table.rows.map(
-          row =>
-            row.format match {
-              case Some(format) =>
-                format match {
-                  case Format.List      => row.previousPaths.map(_.asString).mkString(".").length
-                  case Format.Map       => row.previousPaths.map(_.asString).mkString(".").length
-                  case Format.Primitive => row.previousPaths.map(_.asString).mkString(".").length
-                  case Format.AllOf =>
-                    row.nested match {
-                      case Some(_) => 30
-                      case None    => row.previousPaths.map(_.asString).mkString(".").length
-                    }
-                  case Format.Nested =>
-                    row.nested match {
-                      case Some(_) => 30
-                      case None    => row.previousPaths.map(_.asString).mkString(".").length
-                    }
-                  case Format.AnyOneOf =>
-                    row.nested match {
-                      case Some(_) => 30
-                      case None    => row.previousPaths.map(_.asString).mkString(".").length
-                    }
-                }
-
-              case None => row.previousPaths.map(_.asString).mkString(".").length
-            }
-        )
-
-      def sizesOfFormats(table: Table): List[Int] =
-        table.rows.flatMap(
-          table =>
-            table.format match {
-              case Some(value) =>
-                value match {
-                  case Table.Format.Nested =>
-                    table.format.map(format => getHeadingLabels(format.asString).length).toList
-                  case Table.Format.AnyOneOf =>
-                    table.format.map(format => getHeadingLabels(format.asString).length).toList
-                  case Table.Format.AllOf =>
-                    table.format.map(format => getHeadingLabels(format.asString).length).toList
-                  case Table.Format.List =>
-                    table.format.map(_.asString.length).toList
-                  case Table.Format.Map =>
-                    table.format.map(_.asString.length).toList
-                  case Table.Format.Primitive =>
-                    table.format.map(_.asString.length).toList
-                }
-              case None =>
-                table.format.map(format => format.asString.length).toList
-            }
-        )
-
-      def getSizesOfDescriptions(table: Table): List[Int] =
-        table.rows.flatMap(_.description.map(_.length))
-
-      def getSizesOfSources(table: Table): List[Int] =
-        table.rows.flatMap(_.sources.map(_.length))
-
       def go(table: Table): List[String] = {
-        val maxNameLength: Int =
-          getMaxSize(sizesOfNamesBasedOnFormat(table))
-
-        val maxFormatLength =
-          getMaxSize(sizesOfFormats(table))
-
-        val maxDescriptionLength: Int =
-          getMaxSize(getSizesOfDescriptions(table))
-
-        val maxSourcesLength: Int =
-          getMaxSize(getSizesOfSources(table))
-
         val headingColumns =
           List(
             "FieldName",
@@ -176,74 +98,86 @@ trait ConfigDocsModule extends WriteModule {
             "Sources"
           )
 
-        val headingSizes =
-          List(
-            maxNameLength,
-            maxFormatLength,
-            maxDescriptionLength,
-            maxSourcesLength
-          )
-
-        val heading: String =
-          mkStringAndWrapWith(
-            headingColumns
-              .zip(headingSizes)
-              .map({
-                case (name, int) => padToEmpty(name, int)
-              }),
-            "|"
-          )
-
-        val secondRow: String =
-          mkStringAndWrapWith(headingSizes.map(padToEmpty("----------", _)), "|")
-
-        val (contents, nestedTables): (List[String], List[Table]) = {
+        val (contents, nestedTables): (List[List[String]], List[Table]) = {
           def getString[A](option: Set[A], size: Int)(f: A => String): String =
             padToEmpty(option.map(f).mkString("."), size)
 
-          def getLastFieldName(fieldNames: Set[FieldName]): String = {
-            val s = fieldNames.lastOption.fold("")(_.asString)
-            println(s)
-            s
-          }
+          def getLastFieldName(fieldNames: Set[FieldName]): String =
+            fieldNames.lastOption.fold("")(_.asString)
 
-          table.rows.foldLeft((List.empty[String], List.empty[Table])) {
+          table.rows.foldLeft((List.empty[List[String]], List.empty[Table])) {
             case ((contentList, nestedTableList), row) => {
               val (name, format) = row.nested match {
                 case Some(nestedTable) =>
                   (
                     s"[${getLastFieldName(row.previousPaths)}](#${nestedTable.parentPaths.map(_.asString).mkString(".")})", {
                       val nameOfFormat = getString(row.format.toList.toSet, 0)(_.asString)
-                      padToEmpty(
-                        s"[${nameOfFormat}](#${nestedTable.parentPaths.map(_.asString).mkString(".")})",
-                        maxFormatLength
-                      )
+                      s"[${nameOfFormat}](#${nestedTable.parentPaths.map(_.asString).mkString(".")})"
+
                     }
                   )
 
                 case None =>
                   (
                     getLastFieldName(row.previousPaths),
-                    getString(row.format.toList.toSet, maxFormatLength)(_.asString)
+                    row.format.fold("")(format => format.asString)
                   )
               }
               (
-                mkStringAndWrapWith(
-                  List(
-                    name,
-                    format,
-                    padToEmpty(row.description.mkString(", "), maxDescriptionLength),
-                    padToEmpty(row.sources.mkString(", "), maxSourcesLength)
-                  ),
-                  "|"
-                ) :: contentList,
+                List(
+                  name,
+                  format,
+                  row.description.mkString(", "),
+                  row.sources.mkString(", ")
+                )
+                  :: contentList,
                 row.nested.toList ++ nestedTableList
               )
             }
           }
         }
 
-        (List(heading, secondRow) ++ contents).mkString("\n") :: nestedTables.flatMap(
+        type Size  = Int
+        type Index = Int
+
+        def sizes: Map[Index, Size] =
+          (headingColumns :: contents).foldLeft(Map.empty: Map[Index, Size])(
+            (map, row) =>
+              addMapsForSizes(map, row.zipWithIndex.map({ case (string, index) => (index, string.length) }).toMap)
+          )
+
+        def addMapsForSizes(accumulated: Map[Index, Size], current: Map[Index, Size]): Map[Index, Size] = {
+          println("the input is " + accumulated)
+          println("the existing is " + current)
+
+          current.foldLeft(Map.empty: Map[Index, Size])({
+            case (k, v) =>
+              accumulated.get(v._1) match {
+                case Some(size) => k.updated(v._1, Math.max(v._2, size))
+                case None       => k.+((v._1, v._2))
+              }
+          })
+        }
+
+        val headingRow: String =
+          mkStringAndWrapWith(headingColumns.zipWithIndex.map({
+            case (string, index) => padToEmpty(string, sizes.getOrElse(index, 0))
+          }), "|")
+
+        println(sizes.size)
+
+        val secondRow2: String =
+          mkStringAndWrapWith(sizes.toList.map({ case (_, size) => padToChar("-", size, '-') }), "|")
+
+        val contentsString: Seq[String] =
+          contents.map(
+            list =>
+              mkStringAndWrapWith(list.zipWithIndex.map({
+                case (string, index) => padToEmpty(string, sizes.getOrElse(index, 0))
+              }), "|")
+          )
+
+        (List(headingRow, secondRow2) ++ contentsString).mkString("\n") :: nestedTables.flatMap(
           table => s"### ${table.parentPaths.map(_.asString).mkString(".")}" +: go(table)
         )
       }
@@ -254,6 +188,11 @@ trait ConfigDocsModule extends WriteModule {
     def padToEmpty(str: String, size: Int): String = {
       val maxSize = Math.max(str.length, size)
       str.padTo(maxSize, ' ')
+    }
+
+    def padToChar(str: String, size: Int, char: Char): String = {
+      val maxSize = Math.max(str.length, size)
+      str.padTo(maxSize, char)
     }
 
     def wrapWith(input: String, str: String): String =
