@@ -7,46 +7,46 @@ trait ConfigDocsModule extends WriteModule {
 
   sealed trait ConfigDocs { self =>
     def toTable: Table = {
-      def go(docs: ConfigDocs, previousPath: Set[FieldName]): Table =
+      def go(docs: ConfigDocs, previousPaths: Set[FieldName]): Table =
         docs match {
           case ConfigDocs.Leaf(sources, descriptions, _) =>
-            TableRow(previousPath, Some(Table.Format.Primitive), descriptions, None, sources.map(_.name)).liftToTable
+            TableRow(previousPaths, Some(Table.Format.Primitive), descriptions, None, sources.map(_.name)).liftToTable
 
           case ConfigDocs.Nested(path, docs) =>
-            go(docs, (previousPath.toList :+ Table.FieldName.Key(path)).toSet)
+            go(docs, (previousPaths.toList :+ Table.FieldName.Key(path)).toSet)
 
           case ConfigDocs.Zip(left, right) =>
-            if (previousPath != Set(FieldName.Root))
+            if (previousPaths != Set(FieldName.Root))
               TableRow(
-                previousPath,
+                previousPaths,
                 Some(Format.AllOf),
                 Nil,
-                Some((go(left, previousPath) ++ go(right, previousPath)).copy(parentPath = previousPath)),
+                Some((go(left, previousPaths) ++ go(right, previousPaths)).copy(parentPaths = previousPaths)),
                 Set.empty
               ).liftToTable
             else
-              go(left, previousPath) ++ go(right, previousPath)
+              go(left, previousPaths) ++ go(right, previousPaths)
 
           case ConfigDocs.OrElse(leftDocs, rightDocs) =>
             TableRow(
-              previousPath,
+              previousPaths,
               Some(Format.AnyOneOf),
               Nil,
               Some(
-                (go(leftDocs, previousPath) ++ go(rightDocs, previousPath))
-                  .copy(parentPath = previousPath)
+                (go(leftDocs, previousPaths) ++ go(rightDocs, previousPaths))
+                  .copy(parentPaths = previousPaths)
               ),
               Set.empty
             ).liftToTable
 
           case ConfigDocs.Sequence(schemaDocs, _) =>
-            go(schemaDocs, previousPath).setFormat(Format.List)
+            go(schemaDocs, previousPaths).setFormat(Format.List)
 
           case ConfigDocs.DynamicMap(schemaDocs, _) =>
-            go(schemaDocs, previousPath).setFormat(Format.Map)
+            go(schemaDocs, previousPaths).setFormat(Format.Map)
         }
 
-      go(self, Set.empty)
+      go(self, Set(FieldName.Root))
 
     }
   }
@@ -82,14 +82,11 @@ trait ConfigDocsModule extends WriteModule {
       List(index, name).mkString("_")
   }
 
-  case class Table(index: Int, parentPath: Set[FieldName], rows: List[TableRow]) { self =>
-    def setFormat(format: Format): Table = Table(index, parentPath, rows.map(_.copy(format = Some(format))))
+  case class Table(parentPaths: Set[FieldName], rows: List[TableRow]) { self =>
+    def setFormat(format: Format): Table = Table(parentPaths, rows.map(_.copy(format = Some(format))))
 
-    def ++(table: Table): Table = {
-      val newLabel = index + 1
-
-      Table(newLabel, parentPath, rows ++ table.rows)
-    }
+    def ++(table: Table): Table =
+      Table(parentPaths, rows ++ table.rows)
 
     def asMarkdownContent(implicit S: K =:= String): String = {
       def getHeadingLabels[A](label: A): String =
@@ -104,27 +101,27 @@ trait ConfigDocsModule extends WriteModule {
             row.format match {
               case Some(format) =>
                 format match {
-                  case Format.List      => row.name.map(_.asString).mkString(".").length
-                  case Format.Map       => row.name.map(_.asString).mkString(".").length
-                  case Format.Primitive => row.name.map(_.asString).mkString(".").length
+                  case Format.List      => row.previousPaths.map(_.asString).mkString(".").length
+                  case Format.Map       => row.previousPaths.map(_.asString).mkString(".").length
+                  case Format.Primitive => row.previousPaths.map(_.asString).mkString(".").length
                   case Format.AllOf =>
                     row.nested match {
                       case Some(_) => 30
-                      case None    => row.name.map(_.asString).mkString(".").length
+                      case None    => row.previousPaths.map(_.asString).mkString(".").length
                     }
                   case Format.Nested =>
                     row.nested match {
                       case Some(_) => 30
-                      case None    => row.name.map(_.asString).mkString(".").length
+                      case None    => row.previousPaths.map(_.asString).mkString(".").length
                     }
                   case Format.AnyOneOf =>
                     row.nested match {
                       case Some(_) => 30
-                      case None    => row.name.map(_.asString).mkString(".").length
+                      case None    => row.previousPaths.map(_.asString).mkString(".").length
                     }
                 }
 
-              case None => row.name.map(_.asString).mkString(".").length
+              case None => row.previousPaths.map(_.asString).mkString(".").length
             }
         )
 
@@ -204,37 +201,21 @@ trait ConfigDocsModule extends WriteModule {
           def getString[A](option: Set[A], size: Int)(f: A => String): String =
             padToEmpty(option.map(f).mkString("."), size)
 
+          def getLastFieldName(fieldNames: Set[FieldName]): String = {
+            val s = fieldNames.lastOption.fold("")(_.asString)
+            println(s)
+            s
+          }
+
           table.rows.foldLeft((List.empty[String], List.empty[Table])) {
             case ((contentList, nestedTableList), row) => {
-              println(row)
-
-              /**
-               * TableRow(
-               * Some(AnyOneOf),
-               * Some(AnyOneOf),
-               * List(),
-               * Some(
-               * Table(1,None,List(
-               * TableRow(Some(Key(aws1)),Some(AllOf),List(),Some(
-               * Table(1,Some(Key(aws1)),List(
-               * TableRow(Some(Key(region)),Some(Primitive), List(value of type string),None,Set(system environment)),
-               * TableRow(Some(Key(account_name)),Some(Primitive),List(value of type string),None,Set(system environment))
-               * ))),Set()
-               * ),
-               * TableRow(Some(Key(credentials)),Some(AllOf),List(),Some(
-               * Table(1,Some(Key(credentials)),List(
-               * TableRow(Some(Key(token_id)),Some(Primitive),List(value of type string),None,Set(docker env, system properties, system environment)),
-               * TableRow(Some(Key(username)),Some(Primitive),List(value of type string),None,Set(system environment))))),Set())))
-               * ),Set()
-               * )
-               */
               val (name, format) = row.nested match {
                 case Some(nestedTable) =>
                   (
-                    s"[${row.name.map(_.asString).mkString(".")}](#${nestedTable.parentPath.map(_.asString).mkString(".")})", {
+                    s"[${getLastFieldName(row.previousPaths)}](#${nestedTable.parentPaths.map(_.asString).mkString(".")})", {
                       val nameOfFormat = getString(row.format.toList.toSet, 0)(_.asString)
                       padToEmpty(
-                        s"[${nameOfFormat}](#${nestedTable.parentPath.map(_.asString).mkString(".")})",
+                        s"[${nameOfFormat}](#${nestedTable.parentPaths.map(_.asString).mkString(".")})",
                         maxFormatLength
                       )
                     }
@@ -242,7 +223,7 @@ trait ConfigDocsModule extends WriteModule {
 
                 case None =>
                   (
-                    row.name.map(_.asString).mkString("."),
+                    getLastFieldName(row.previousPaths),
                     getString(row.format.toList.toSet, maxFormatLength)(_.asString)
                   )
               }
@@ -263,7 +244,7 @@ trait ConfigDocsModule extends WriteModule {
         }
 
         (List(heading, secondRow) ++ contents).mkString("\n") :: nestedTables.flatMap(
-          table => table.parentPath.toList.map(t => s"### ${table.index}_${t.asString}") ++ go(table)
+          table => s"### ${table.parentPaths.map(_.asString).mkString(".")}" +: go(table)
         )
       }
 
@@ -286,14 +267,14 @@ trait ConfigDocsModule extends WriteModule {
   object Table {
 
     case class TableRow(
-      name: Set[FieldName],
+      previousPaths: Set[FieldName],
       format: Option[Format],
       description: List[String],
       nested: Option[Table],
       sources: Set[String]
     ) {
       def liftToTable =
-        Table(0, Set(FieldName.Root), List(this))
+        Table(Set(FieldName.Root), List(this))
     }
 
     sealed trait Format { self =>
