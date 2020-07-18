@@ -2,7 +2,7 @@ package zio.config.yaml
 
 import java.io.{ File, FileInputStream }
 import java.nio.file.Path
-import java.lang.{ Boolean => JBoolean, Float => JFloat, Integer => JInteger }
+import java.lang.{ Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong }
 import java.{ util => ju }
 
 import org.snakeyaml.engine.v2.api.{ Load, LoadSettings }
@@ -17,7 +17,9 @@ object YamlConfigSource {
     data match {
       case null        => PropertyTree.empty
       case t: JInteger => PropertyTree.Leaf(t.toString)
+      case t: JLong    => PropertyTree.Leaf(t.toString)
       case t: JFloat   => PropertyTree.Leaf(t.toString)
+      case t: JDouble  => PropertyTree.Leaf(t.toString)
       case t: String   => PropertyTree.Leaf(t)
       case t: JBoolean => PropertyTree.Leaf(t.toString)
       case t: ju.List[_] =>
