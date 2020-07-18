@@ -204,9 +204,9 @@ lazy val zioConfigYaml =
   module("zio-config-yaml", "yaml")
     .settings(
       libraryDependencies ++= Seq(
-        "org.snakeyaml"     %  "snakeyaml-engine"    % "2.1",
-        "dev.zio"      %% "zio-test"     % zioVersion % Test,
-        "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
+        "org.snakeyaml" %  "snakeyaml-engine" % "2.1",
+        "dev.zio"       %% "zio-test"         % zioVersion % Test,
+        "dev.zio"       %% "zio-test-sbt"     % zioVersion % Test
       ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
