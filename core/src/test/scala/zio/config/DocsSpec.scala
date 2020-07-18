@@ -65,10 +65,10 @@ object DocsSpecUtils {
        |## Configuration Details
        |
        |
-       ||FieldName    |Format             |Description         |Sources           |
-       ||---          |---                |---                 |---               |
-       ||[root](#root)|[any-one-of](#root)|                    |                  |
-       ||user         |primitive          |value of type string|system environment|
+       ||FieldName|Format             |Description         |Sources           |
+       ||---      |---                |---                 |---               |
+       ||         |[any-one-of](#root)|                    |                  |
+       ||user     |primitive          |value of type string|system environment|
        |
        |### root
        |
@@ -90,8 +90,6 @@ object DocsSpecUtils {
        ||---         |---      |---                 |---               |
        ||account_name|primitive|value of type string|system environment|
        ||region      |primitive|value of type string|system environment|
-       |
-       |
        |""".stripMargin
 
 }

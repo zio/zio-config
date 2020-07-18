@@ -94,10 +94,17 @@ trait ConfigDocsModule extends WriteModule {
             case ((contentList, nestedTableList), row) =>
               val (name, format) = row.nested match {
                 case Some(nestedTable) =>
-                  getLink(
-                    getLastFieldName(row.previousPaths),
+                  val lastFieldName = getLastFieldName(row.previousPaths)
+                  (if (lastFieldName.isEmpty)
+                     ""
+                   else
+                     getLink(
+                       lastFieldName,
+                       nestedTable.parentPaths.map(_.asString).mkString(".")
+                     )) -> getLink(
+                    row.format.fold("")(_.asString),
                     nestedTable.parentPaths.map(_.asString).mkString(".")
-                  ) -> getLink(row.format.fold("")(_.asString), nestedTable.parentPaths.map(_.asString).mkString("."))
+                  )
 
                 case None =>
                   (getLastFieldName(row.previousPaths), row.format.fold("")(_.asString))
@@ -131,7 +138,7 @@ trait ConfigDocsModule extends WriteModule {
           )
       }
 
-      mkStringAndWrapWith(s"## Configuration Details" :: go(self), System.lineSeparator())
+      mkStringAndWrapWith(s"## Configuration Details" :: (System.lineSeparator() :: go(self)), System.lineSeparator())
     }
 
     private def padToEmpty(string: String, size: Int): String = {
@@ -146,7 +153,7 @@ trait ConfigDocsModule extends WriteModule {
       wrapWith(input.mkString(str), str)
 
     private def getLastFieldName(fieldNames: List[FieldName])(implicit S: K =:= String): String =
-      fieldNames.lastOption.fold("")(_.asString)
+      fieldNames.lastOption.fold("")(last => if (last == FieldName.Root) "" else last.asString)
 
     private def getLink(name: String, link: String): String =
       s"[${name}](#${link})"

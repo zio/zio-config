@@ -54,19 +54,3 @@ object ChangeKeys extends App with EitherImpureOps {
       descriptor[MyConfig].mapKey(camelToSnake) from (TypesafeConfigSource.fromHoconString(snakeCaseConfig).loadOrThrow)
     )
 }
-
-abstract class ZIOConfigApp[Config](
-  val appName: String
-)(implicit config: zio.config.magnolia.DeriveConfigDescriptor.Descriptor[Config]) {
-  val appConfig = read(config from ConfigSource.fromProperties({
-    val prop = new Properties()
-    prop.put("s", "vaalue")
-    prop
-  }))
-}
-
-object Hello extends App {
-  case class MyConf(s: String)
-
-  println(new ZIOConfigApp[MyConf]("appname") {}.appConfig)
-}
