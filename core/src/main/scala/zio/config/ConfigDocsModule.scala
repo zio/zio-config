@@ -161,7 +161,7 @@ trait ConfigDocsModule extends WriteModule {
     type Size  = Int
     type Index = Int
 
-    def getSizeOfIndices(input: List[List[String]]): Map[Index, Size] = {
+    private def getSizeOfIndices(input: List[List[String]]): Map[Index, Size] = {
       def mergeMapWithMaxSize(accumulated: Map[Index, Size], current: Map[Index, Size]): Map[Index, Size] =
         current.foldLeft(Map.empty: Map[Index, Size])({
           case (k, v) =>
@@ -176,7 +176,6 @@ trait ConfigDocsModule extends WriteModule {
           mergeMapWithMaxSize(map, row.zipWithIndex.map({ case (string, index) => (index, string.length) }).toMap)
       )
     }
-
   }
 
   object Table {
