@@ -5,61 +5,63 @@ trait ConfigDocsModule extends WriteModule {
   import ConfigDescriptorAdt._
   import Table._
 
-  sealed trait ConfigDocs {
-    self =>
-    def toTable(previousPath: Option[FieldName]): Table = self match {
-      case ConfigDocs.Leaf(sources, descriptions, _) =>
-        TableRow(previousPath, Some(Table.Format.Primitive), descriptions, None, sources.map(_.name))
-          .toTable(None)
+  sealed trait ConfigDocs { self =>
+    def toTable: Table = {
+      def go(docs: ConfigDocs, previousPath: Set[FieldName]): Table =
+        docs match {
+          case ConfigDocs.Leaf(sources, descriptions, _) =>
+            TableRow(previousPath, Some(Table.Format.Primitive), descriptions, None, sources.map(_.name)).liftToTable
 
-      case ConfigDocs.Nested(path, docs) =>
-        docs.toTable(Some(Table.FieldName.Raw(path)))
+          case ConfigDocs.Nested(path, docs) =>
+            go(docs, (previousPath.toList :+ Table.FieldName.Key(path)).toSet)
 
-      case ConfigDocs.Zip(left, right) =>
-        previousPath match {
-          case Some(value) =>
+          case ConfigDocs.Zip(left, right) =>
+            if (previousPath != Set(FieldName.Root))
+              TableRow(
+                previousPath,
+                Some(Format.AllOf),
+                Nil,
+                Some((go(left, previousPath) ++ go(right, previousPath)).copy(parentPath = previousPath)),
+                Set.empty
+              ).liftToTable
+            else
+              go(left, previousPath) ++ go(right, previousPath)
+
+          case ConfigDocs.OrElse(leftDocs, rightDocs) =>
             TableRow(
-              Some(value),
-              Some(Format.Nested),
+              previousPath,
+              Some(Format.AnyOneOf),
               Nil,
-              Some((left.toTable(None) ++ right.toTable(None)).copy(label = previousPath)),
+              Some(
+                (go(leftDocs, previousPath) ++ go(rightDocs, previousPath))
+                  .copy(parentPath = previousPath)
+              ),
               Set.empty
-            ).toTable(None)
+            ).liftToTable
 
-          case None =>
-            left.toTable(None) ++ right.toTable(None)
+          case ConfigDocs.Sequence(schemaDocs, _) =>
+            go(schemaDocs, previousPath).setFormat(Format.List)
+
+          case ConfigDocs.DynamicMap(schemaDocs, _) =>
+            go(schemaDocs, previousPath).setFormat(Format.Map)
         }
 
-      case ConfigDocs.OrElse(leftDocs, rightDocs) =>
-        TableRow(
-          Some(FieldName.AnyOneOf),
-          Some(Format.AnyOneOf),
-          Nil,
-          Some(leftDocs.toTable(previousPath) ++ rightDocs.toTable(previousPath)),
-          Set.empty
-        ).toTable(Some(FieldName.AnyOneOf))
+      go(self, Set.empty)
 
-      case ConfigDocs.Sequence(schemaDocs, _) =>
-        schemaDocs.toTable(previousPath).setFormat(Format.List)
-
-      case ConfigDocs.DynamicMap(schemaDocs, _) =>
-        schemaDocs.toTable(previousPath).setFormat(Format.Map)
     }
   }
 
   object ConfigDocs {
 
-    case class Leaf(sources: Set[ConfigSourceName], descriptions: List[String], value: Option[V] = None)
-        extends ConfigDocs
-
-    case class Nested(path: K, docs: ConfigDocs) extends ConfigDocs
-
-    case class Zip(left: ConfigDocs, right: ConfigDocs) extends ConfigDocs
-
-    case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs) extends ConfigDocs
-
+    case class Leaf(
+      sources: Set[ConfigSourceName],
+      descriptions: List[String],
+      value: Option[V] = None
+    ) extends ConfigDocs
+    case class Nested(path: K, docs: ConfigDocs)                                          extends ConfigDocs
+    case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
+    case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
     case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
-
     case class DynamicMap(
       schemaDocs: ConfigDocs,
       valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs]
@@ -70,179 +72,266 @@ trait ConfigDocsModule extends WriteModule {
   import Table.TableRow
   import Table.Format
 
-  case class Table(label: Option[FieldName], list: List[TableRow]) {
-    self =>
-    def setName(name: FieldName): Table = Table(label, list.map(_.copy(name = Some(name))))
+  case class Label(index: Int, name: Option[FieldName]) {
+    def asString(implicit S: K =:= String): String = name match {
+      case Some(value) => getString(index.toString, value.asString)
+      case None        => index.toString
+    }
 
-    def setFormat(format: Format): Table = Table(label, list.map(_.copy(format = Some(format))))
+    private def getString(index: String, name: String): String =
+      List(index, name).mkString("_")
+  }
 
-    def ++(table: Table): Table =
-      Table(label, list ++ table.list)
+  case class Table(index: Int, parentPath: Set[FieldName], rows: List[TableRow]) { self =>
+    def setFormat(format: Format): Table = Table(index, parentPath, rows.map(_.copy(format = Some(format))))
 
-    def asMarkdownContent: String = {
+    def ++(table: Table): Table = {
+      val newLabel = index + 1
+
+      Table(newLabel, parentPath, rows ++ table.rows)
+    }
+
+    def asMarkdownContent(implicit S: K =:= String): String = {
       def getHeadingLabels[A](label: A): String =
         s"[${label}](#${label})"
 
-      def size(list: List[Int]): Int =
-        if (list.isEmpty) 0 else Math.max(10, list.max)
+      def getMaxSize(list: List[Int]): Int =
+        if (list.isEmpty) 10 else Math.max(10, list.max)
 
-      def go(table: Table): List[String] = {
-        val maxNameLength: Int = Math.max(
-          10,
-          size(
-            table.list.flatMap(
-              table =>
-                table.nested match {
-                  case Some(value) =>
-                    value.label
-                      .map(
-                        t =>
-                          table.name
-                            .fold(getHeadingLabels(t).length)(
-                              name => Math.max(getHeadingLabels(t).length, name.toString.length)
-                            )
-                      )
-                      .toList
-                  case None => table.name.map(_.toString.length).toList
+      def sizesOfNamesBasedOnFormat(table: Table): List[Int] =
+        table.rows.map(
+          row =>
+            row.format match {
+              case Some(format) =>
+                format match {
+                  case Format.List      => row.name.map(_.asString).mkString(".").length
+                  case Format.Map       => row.name.map(_.asString).mkString(".").length
+                  case Format.Primitive => row.name.map(_.asString).mkString(".").length
+                  case Format.AllOf =>
+                    row.nested match {
+                      case Some(_) => 30
+                      case None    => row.name.map(_.asString).mkString(".").length
+                    }
+                  case Format.Nested =>
+                    row.nested match {
+                      case Some(_) => 30
+                      case None    => row.name.map(_.asString).mkString(".").length
+                    }
+                  case Format.AnyOneOf =>
+                    row.nested match {
+                      case Some(_) => 30
+                      case None    => row.name.map(_.asString).mkString(".").length
+                    }
                 }
-            )
-          )
+
+              case None => row.name.map(_.asString).mkString(".").length
+            }
         )
 
-        val maxFormatLength =
-          size(
-            table.list.flatMap(
-              table =>
-                table.format match {
-                  case Some(value) =>
-                    value match {
-                      case Table.Format.List =>
-                        table.format.map(format => format.toString.length).toList
-                      case Table.Format.Map =>
-                        table.format.map(format => format.toString.length).toList
-                      case Table.Format.Primitive =>
-                        table.format.map(format => format.toString.length).toList
-                      case Table.Format.Nested =>
-                        table.format.map(format => getHeadingLabels(format.toString).length).toList
-                      case Table.Format.AnyOneOf =>
-                        table.format.map(format => getHeadingLabels(format.toString).length).toList
-                    }
-                  case None =>
-                    table.format.map(format => format.toString.length).toList
+      def sizesOfFormats(table: Table): List[Int] =
+        table.rows.flatMap(
+          table =>
+            table.format match {
+              case Some(value) =>
+                value match {
+                  case Table.Format.Nested =>
+                    table.format.map(format => getHeadingLabels(format.asString).length).toList
+                  case Table.Format.AnyOneOf =>
+                    table.format.map(format => getHeadingLabels(format.asString).length).toList
+                  case Table.Format.AllOf =>
+                    table.format.map(format => getHeadingLabels(format.asString).length).toList
+                  case Table.Format.List =>
+                    table.format.map(_.asString.length).toList
+                  case Table.Format.Map =>
+                    table.format.map(_.asString.length).toList
+                  case Table.Format.Primitive =>
+                    table.format.map(_.asString.length).toList
                 }
-            )
-          )
+              case None =>
+                table.format.map(format => format.asString.length).toList
+            }
+        )
+
+      def getSizesOfDescriptions(table: Table): List[Int] =
+        table.rows.flatMap(_.description.map(_.length))
+
+      def getSizesOfSources(table: Table): List[Int] =
+        table.rows.flatMap(_.sources.map(_.length))
+
+      def go(table: Table): List[String] = {
+        val maxNameLength: Int =
+          getMaxSize(sizesOfNamesBasedOnFormat(table))
+
+        val maxFormatLength =
+          getMaxSize(sizesOfFormats(table))
 
         val maxDescriptionLength: Int =
-          size(table.list.flatMap(_.description.map(_.toString.length)))
+          getMaxSize(getSizesOfDescriptions(table))
 
         val maxSourcesLength: Int =
-          size(table.list.flatMap(_.sources.map(_.toString.length)))
+          getMaxSize(getSizesOfSources(table))
+
+        val headingColumns =
+          List(
+            "FieldName",
+            "Format",
+            "Description",
+            "Sources"
+          )
+
+        val headingSizes =
+          List(
+            maxNameLength,
+            maxFormatLength,
+            maxDescriptionLength,
+            maxSourcesLength
+          )
 
         val heading: String =
-          " | " ++
-            List(
-              "FieldName".padTo(maxNameLength, ' '),
-              "Format".padTo(maxFormatLength, ' '),
-              "Description".padTo(maxDescriptionLength, ' '),
-              "Sources".padTo(maxSourcesLength, ' ')
-            ).mkString(" | ") ++ " | "
+          mkStringAndWrapWith(
+            headingColumns
+              .zip(headingSizes)
+              .map({
+                case (name, int) => padToEmpty(name, int)
+              }),
+            "|"
+          )
 
         val secondRow: String =
-          " | " ++ List(maxNameLength, maxFormatLength, maxDescriptionLength, maxSourcesLength)
-            .map(
-              length => "----------".padTo(length, ' ')
-            )
-            .mkString(" | ") + " | "
+          mkStringAndWrapWith(headingSizes.map(padToEmpty("----------", _)), "|")
 
         val (contents, nestedTables): (List[String], List[Table]) = {
-          table.list.foldLeft((List.empty[String], List.empty[Table])) {
-            case ((contentList, tableList), t) => {
+          def getString[A](option: Set[A], size: Int)(f: A => String): String =
+            padToEmpty(option.map(f).mkString("."), size)
+
+          table.rows.foldLeft((List.empty[String], List.empty[Table])) {
+            case ((contentList, nestedTableList), row) => {
+              println(row)
+
+              /**
+               * TableRow(
+               * Some(AnyOneOf),
+               * Some(AnyOneOf),
+               * List(),
+               * Some(
+               * Table(1,None,List(
+               * TableRow(Some(Key(aws1)),Some(AllOf),List(),Some(
+               * Table(1,Some(Key(aws1)),List(
+               * TableRow(Some(Key(region)),Some(Primitive), List(value of type string),None,Set(system environment)),
+               * TableRow(Some(Key(account_name)),Some(Primitive),List(value of type string),None,Set(system environment))
+               * ))),Set()
+               * ),
+               * TableRow(Some(Key(credentials)),Some(AllOf),List(),Some(
+               * Table(1,Some(Key(credentials)),List(
+               * TableRow(Some(Key(token_id)),Some(Primitive),List(value of type string),None,Set(docker env, system properties, system environment)),
+               * TableRow(Some(Key(username)),Some(Primitive),List(value of type string),None,Set(system environment))))),Set())))
+               * ),Set()
+               * )
+               */
+              val (name, format) = row.nested match {
+                case Some(nestedTable) =>
+                  (
+                    s"[${row.name.map(_.asString).mkString(".")}](#${nestedTable.parentPath.map(_.asString).mkString(".")})", {
+                      val nameOfFormat = getString(row.format.toList.toSet, 0)(_.asString)
+                      padToEmpty(
+                        s"[${nameOfFormat}](#${nestedTable.parentPath.map(_.asString).mkString(".")})",
+                        maxFormatLength
+                      )
+                    }
+                  )
+
+                case None =>
+                  (
+                    row.name.map(_.asString).mkString("."),
+                    getString(row.format.toList.toSet, maxFormatLength)(_.asString)
+                  )
+              }
               (
-                " | " ++ {
-
-                  val (name, format) = t.nested match {
-                    case Some(value) =>
-                      value.label match {
-                        case Some(value) =>
-                          (
-                            getString(Some(s"[${value}](#${value})"), maxNameLength),
-                            getString(Some(getHeadingLabels(Format.Nested.toString)), maxFormatLength)
-                          )
-                        case None =>
-                          (getString(t.name, maxNameLength), getString(t.format.map(_.toString), maxFormatLength))
-                      }
-
-                    case None =>
-                      (getString(t.name, maxNameLength), getString(t.format.map(_.toString), maxFormatLength))
-                  }
-
+                mkStringAndWrapWith(
                   List(
                     name,
                     format,
-                    t.description.mkString(", ").padTo(maxDescriptionLength, ' '),
-                    t.sources.mkString(", ").padTo(maxSourcesLength, ' ')
-                  ).mkString(" | ")
-
-                } + " | " :: contentList,
-                t.nested.toList ++ tableList
+                    padToEmpty(row.description.mkString(", "), maxDescriptionLength),
+                    padToEmpty(row.sources.mkString(", "), maxSourcesLength)
+                  ),
+                  "|"
+                ) :: contentList,
+                row.nested.toList ++ nestedTableList
               )
             }
           }
         }
 
         (List(heading, secondRow) ++ contents).mkString("\n") :: nestedTables.flatMap(
-          t => t.label.toList.map(t => s"### ${t}") ++ go(t)
+          table => table.parentPath.toList.map(t => s"### ${table.index}_${t.asString}") ++ go(table)
         )
       }
 
       s"## Configuration Details" ++ "\n \n" ++ go(self).mkString("\n\n")
     }
 
-    def getString[A](option: Option[A], size: Int): String =
-      option.map(t => t.toString.padTo(Math.max(t.toString.length, size), ' ')).getOrElse(" ".padTo(size, ' '))
+    def padToEmpty(str: String, size: Int): String = {
+      val maxSize = Math.max(str.length, size)
+      str.padTo(maxSize, ' ')
+    }
+
+    def wrapWith(input: String, str: String): String =
+      str ++ input ++ str
+
+    def mkStringAndWrapWith(input: List[String], str: String): String =
+      wrapWith(input.mkString(str), str)
 
   }
 
   object Table {
 
     case class TableRow(
-      name: Option[FieldName],
+      name: Set[FieldName],
       format: Option[Format],
       description: List[String],
       nested: Option[Table],
       sources: Set[String]
     ) {
-      def toTable(label: Option[FieldName]) =
-        Table(label, List(this))
+      def liftToTable =
+        Table(0, Set(FieldName.Root), List(this))
     }
 
-    sealed trait Format
+    sealed trait Format { self =>
+      def asString: String =
+        self match {
+          case Format.List      => "list"
+          case Format.Map       => "map"
+          case Format.Primitive => "primitive"
+          case Format.Nested    => "nested"
+          case Format.AnyOneOf  => "any-one-of"
+          case Format.AllOf     => "all-of"
+        }
+    }
 
     object Format {
 
-      case object List extends Format
-
-      case object Map extends Format
-
+      case object List      extends Format
+      case object Map       extends Format
       case object Primitive extends Format
-
-      case object Nested extends Format
-
-      case object AnyOneOf extends Format
+      case object Nested    extends Format
+      case object AnyOneOf  extends Format
+      case object AllOf     extends Format
 
     }
 
-    abstract sealed class FieldName(val name: String) {
-      override def toString: String = this match {
-        case FieldName.Raw(k)   => k.toString
-        case FieldName.AnyOneOf => "Not Applicable"
-      }
+    sealed trait FieldName {
+      def asString(implicit S: K =:= String): String =
+        this match {
+          case FieldName.Key(k)   => S.apply(k)
+          case FieldName.AnyOneOf => ""
+          case FieldName.Root     => "root"
+        }
     }
 
     object FieldName {
-      case class Raw[K](k: K) extends FieldName(k.toString)
-      case object AnyOneOf    extends FieldName("any-one-of")
+      case object Root     extends FieldName
+      case class Key(k: K) extends FieldName
+      case object AnyOneOf extends FieldName
     }
   }
 
