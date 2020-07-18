@@ -1,7 +1,5 @@
 package zio.config.examples.magnolia
 
-import java.util.Properties
-
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.typesafe.TypesafeConfigSource
