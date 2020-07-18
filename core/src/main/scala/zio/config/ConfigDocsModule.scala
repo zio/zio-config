@@ -89,7 +89,7 @@ trait ConfigDocsModule extends WriteModule {
             "Sources"
           )
 
-        val (contents, nestedTables): (List[List[String]], List[Table]) = {
+        val (contents, nestedTables): (List[List[String]], List[Table]) =
           table.rows.foldLeft((List.empty[List[String]], List.empty[Table])) {
             case ((contentList, nestedTableList), row) =>
               val (name, format) = row.nested match {
@@ -102,11 +102,10 @@ trait ConfigDocsModule extends WriteModule {
                 case None =>
                   (getLastFieldName(row.previousPaths), row.format.fold("")(_.asString))
               }
+
               (List(name, format, row.description.mkString(", "), row.sources.mkString(", ")) :: contentList) ->
                 (row.nested.toList ++ nestedTableList)
-
           }
-        }
 
         val contentsString: List[String] = {
           val indexAndSize = getSizeOfIndices(headingColumns :: contents)
