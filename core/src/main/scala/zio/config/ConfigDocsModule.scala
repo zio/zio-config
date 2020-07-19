@@ -80,61 +80,55 @@ trait ConfigDocsModule extends WriteModule {
       Table(parentPaths, rows ++ that.rows)
 
     def asMarkdownContent(implicit S: K =:= String): String = {
-      def go(table: Table): List[String] = {
-        val headingColumns =
-          List(
-            "FieldName",
-            "Format",
-            "Description",
-            "Sources"
-          )
+      val headingColumns =
+        List(
+          "FieldName",
+          "Format",
+          "Description",
+          "Sources"
+        )
 
+      def go(table: Table): List[String] = {
         val (contents, nestedTables): (List[List[String]], List[Table]) =
           table.rows.foldLeft((List.empty[List[String]], List.empty[Table])) {
             case ((contentList, nestedTableList), row) =>
+              val lastFieldName = getLastFieldName(row.previousPaths)
+              val formatString  = row.format.map(_.asString).getOrElse("")
+
               val (name, format) = row.nested match {
                 case Some(nestedTable) =>
-                  val lastFieldName = getLastFieldName(row.previousPaths)
-                  (if (lastFieldName.isEmpty)
-                     ""
-                   else
-                     getLink(
-                       lastFieldName,
-                       nestedTable.parentPaths.map(_.asString).mkString(".")
-                     )) -> getLink(
-                    row.format.fold("")(_.asString),
-                    nestedTable.parentPaths.map(_.asString).mkString(".")
-                  )
+                  val parentPathString = getPathString(nestedTable.parentPaths)
+                  val getLinkFn        = getLink(_, parentPathString)
+
+                  getLinkFn(lastFieldName) -> getLinkFn(format)
 
                 case None =>
-                  (getLastFieldName(row.previousPaths), row.format.fold("")(_.asString))
+                  lastFieldName -> formatString
               }
 
               (List(name, format, row.description.mkString(", "), row.sources.mkString(", ")) :: contentList) ->
                 (row.nested.toList ++ nestedTableList)
           }
 
-        val contentsString: List[String] = {
+        val contentList: List[String] = {
           val indexAndSize = getSizeOfIndices(headingColumns :: contents)
 
           (headingColumns :: List.fill(indexAndSize.size)("---") :: contents).map(
-            list =>
-              mkStringAndWrapWith(list.zipWithIndex.map({
+            fieldValues =>
+              mkStringAndWrapWith(fieldValues.zipWithIndex.map {
                 case (string, index) =>
                   padToEmpty(string, indexAndSize.getOrElse(index, 0))
-              }), "|")
+              }, "|")
           )
         }
 
-        contentsString.mkString(System.lineSeparator()) ::
+        contentList.mkString(System.lineSeparator()) ::
           nestedTables.flatMap(
             table =>
               mkStringAndWrapWith(
-                List(s"### ${table.parentPaths.map(_.asString).mkString(".")}"),
+                List(s"### ${getPathString(table.parentPaths)}"),
                 System.lineSeparator()
-              ) :: go(
-                table
-              )
+              ) :: go(table)
           )
       }
 
@@ -146,6 +140,9 @@ trait ConfigDocsModule extends WriteModule {
       string.padTo(maxSize, ' ')
     }
 
+    private def getPathString(paths: List[FieldName])(implicit S: K =:= String) =
+      paths.map(_.asString).mkString(".")
+
     private def wrapWith(input: String, str: String): String =
       str ++ input ++ str
 
@@ -156,7 +153,7 @@ trait ConfigDocsModule extends WriteModule {
       fieldNames.lastOption.fold("")(last => if (last == FieldName.Root) "" else last.asString)
 
     private def getLink(name: String, link: String): String =
-      s"[${name}](#${link})"
+      if (name.isEmpty || link.isEmpty) "" else s"[${name}](#${link})"
 
     type Size  = Int
     type Index = Int
