@@ -42,9 +42,9 @@ Take a look at the magnolia examples in `zio-config`. One of them is provided he
 #### AutoDerivation
 ```scala
   // Setting up imports
+
+  import zio.config._, zio.config.typesafe._
   import zio.config.magnolia.DeriveConfigDescriptor._
-  import zio.config.typesafe.TypesafeConfigSource
-  import zio.config.read
 
   import X._
 ```

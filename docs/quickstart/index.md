@@ -49,10 +49,8 @@ We must fetch the configuration from the environment to a case class (product) i
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config.config
-import zio.config.ConfigDescriptor, ConfigDescriptor._
-import zio.config.ConfigSource, ConfigSource._
-import zio.config.Config
+
+import zio.config._, ConfigDescriptor._, ConfigSource._
 
 ```
 

@@ -263,15 +263,6 @@ To generate the documentation of the config, call `generateDocs`.
    |port      |primitive|value of type int, South details, asdf   |constant|
    |connection|primitive|value of type string, South details, asdf|constant|
    
-   
-#### More detail
-
-`ConfigDocs.Zip(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
-`ConfigDocs.Nested`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
-the type of the value before it gets parsed.
-
-We will see more better representation of the documentation in the immediate future versions of zio-config.
-
 
 ## Report on the config
 
