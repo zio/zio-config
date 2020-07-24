@@ -241,7 +241,8 @@ To generate the documentation of the config, call `generateDocs`.
    */  
 ```
 
-`markdown` will be rendered to markdown format, yielding
+In the above `markdown` is a standard markdown format string, rendered as:
+
 
    |FieldName             |Format                 |Description               |Sources |
    |---                   |---                    |---                       |---     |
