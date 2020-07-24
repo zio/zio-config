@@ -98,7 +98,7 @@ trait ConfigDocsModule extends WriteModule {
               val (name, format) = row.nested match {
                 case Some(nestedTable) =>
                   val parentPathString = getPathString(nestedTable.parentPaths, index, Some(subIndex))
-                  val getLinkFn        = getLink(_, parentPathString)
+                  val getLinkFn        = (s: String) => getLink(s, parentPathString)
 
                   getLinkFn(lastFieldName) -> getLinkFn(formatString)
 

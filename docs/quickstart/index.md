@@ -160,7 +160,7 @@ val betterConfig =
     string("DB_URL") ?? "url of database"
    )(MyConfig.apply, MyConfig.unapply)
 
-generateDocs(betterConfig).toTable.asMarkdown
+generateDocs(betterConfig).toTable.asMarkdownContent
 // Custom documentation along with auto generated docs
 ```
 

@@ -216,6 +216,9 @@ To generate the documentation of the config, call `generateDocs`.
   val markdown =
      generatedDocs.toTable.asMarkdownContent
 
+ // produces the following markdown
+
+  /*
     |FieldName             |Format                 |Description               |Sources |
     |---                   |---                    |---                       |---     |
     |appName               |primitive              |value of type string, asdf|constant|
@@ -234,7 +237,8 @@ To generate the documentation of the config, call `generateDocs`.
     |FieldName |Format   |Description                              |Sources |
     |---       |---      |---                                      |---     |
     |port      |primitive|value of type int, South details, asdf   |constant|
-    |connection|primitive|value of type string, South details, asdf|constant|  
+    |connection|primitive|value of type string, South details, asdf|constant|
+   */  
 ```
 
 `markdown` will be rendered to markdown format, yielding
@@ -261,6 +265,7 @@ To generate the documentation of the config, call `generateDocs`.
    
    
 #### More detail
+
 `ConfigDocs.Zip(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
 `ConfigDocs.Nested`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
 the type of the value before it gets parsed.
