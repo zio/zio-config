@@ -100,7 +100,7 @@ trait ConfigDocsModule extends WriteModule {
                   val parentPathString = getPathString(nestedTable.parentPaths)
                   val getLinkFn        = getLink(_, parentPathString)
 
-                  getLinkFn(lastFieldName) -> getLinkFn(format)
+                  getLinkFn(lastFieldName) -> getLinkFn(formatString)
 
                 case None =>
                   lastFieldName -> formatString

@@ -22,22 +22,23 @@ object DocsSpec
           val source2 =
             ConfigSource.fromProperties(new Properties(), "system properties")
 
-          val caseClass3 =
-            (string("token_id").from(source1.orElse(source2)) |@| string(
-              "username"
-            ))(TestCase1.CaseClass3.apply, TestCase1.CaseClass3.unapply)
+          val tokenAndUsername =
+            (string("token_id").from(source1.orElse(source2)) |@| string("username"))(
+              TestCase1.CaseClass3.apply,
+              TestCase1.CaseClass3.unapply
+            )
 
-          val caseClass4 =
+          val azureConfig =
             nested("azure") {
               (string("a") |@| string("b"))(TestCase1.CaseClass4.apply, TestCase1.CaseClass4.unapply)
             }
 
-          val either1 =
+          val awsConfig =
             (nested("aws")(caseClass2))
-              .orElseEither(nested("credentials")(caseClass3))
+              .orElseEither(nested("credentials")(tokenAndUsername))
 
           val config: ConfigDescriptor[TestCase1.CaseClass1] =
-            (string("user") |@| either1 |@| caseClass4)(
+            (string("user") |@| awsConfig |@| azureConfig)(
               TestCase1.CaseClass1.apply,
               TestCase1.CaseClass1.unapply
             )
@@ -45,7 +46,7 @@ object DocsSpec
           val finalSource =
             ConfigSource.fromMap(Map.empty, source = "system environment")
 
-          val result =
+          val result: String =
             generateDocs(config from finalSource).toTable.asMarkdownContent
 
           assert(result)(
