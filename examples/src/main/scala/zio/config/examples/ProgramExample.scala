@@ -4,8 +4,6 @@ import zio.blocking.Blocking
 import zio.config._
 import ConfigDescriptor._
 import zio.config.examples.aliases._
-import zio.config.config
-import zio.config.Config
 import zio.console.Console
 import zio.{ console, App, ExitCode, Has, ZEnv, ZIO, ZLayer }
 

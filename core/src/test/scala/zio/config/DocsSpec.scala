@@ -73,34 +73,34 @@ object DocsSpecUtils {
        |## Configuration Details
        |
        |
-       ||FieldName           |Format               |Description         |Sources           |
-       ||---                 |---                  |---                 |---               |
-       ||[azure](#root.azure)|[all-of](#root.azure)|                    |                  |
-       ||                    |[any-one-of](#root)  |                    |                  |
-       ||user                |primitive            |value of type string|system environment|
+       ||FieldName             |Format                 |Description         |Sources           |
+       ||---                   |---                    |---                 |---               |
+       ||[azure](#root.azure_2)|[all-of](#root.azure_2)|                    |                  |
+       ||                      |[any-one-of](#root_1)  |                    |                  |
+       ||user                  |primitive              |value of type string|system environment|
        |
-       |### root.azure
+       |### root.azure_2
        |
        ||FieldName|Format   |Description         |Sources           |
        ||---      |---      |---                 |---               |
        ||b        |primitive|value of type string|system environment|
        ||a        |primitive|value of type string|system environment|
        |
-       |### root
+       |### root_1
        |
-       ||FieldName                       |Format                     |Description|Sources|
-       ||---                             |---                        |---        |---    |
-       ||[credentials](#root.credentials)|[all-of](#root.credentials)|           |       |
-       ||[aws](#root.aws)                |[all-of](#root.aws)        |           |       |
+       ||FieldName                           |Format                         |Description|Sources|
+       ||---                                 |---                            |---        |---    |
+       ||[credentials](#root.credentials_1_1)|[all-of](#root.credentials_1_1)|           |       |
+       ||[aws](#root.aws_1_0)                |[all-of](#root.aws_1_0)        |           |       |
        |
-       |### root.credentials
+       |### root.credentials_1_1
        |
        ||FieldName|Format   |Description         |Sources                                          |
        ||---      |---      |---                 |---                                              |
        ||username |primitive|value of type string|system environment                               |
        ||token_id |primitive|value of type string|docker env, system properties, system environment|
        |
-       |### root.aws
+       |### root.aws_1_0
        |
        ||FieldName   |Format   |Description         |Sources           |
        ||---         |---      |---                 |---               |

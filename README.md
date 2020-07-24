@@ -37,3 +37,4 @@ Try out _ZIO Config_ quickly in [Scastie](https://scastie.scala-lang.org/afsalth
 [Link-Scaladex-page]: https://index.scala-lang.org/zio/zio-config/zio-config "Scaladex"
 [Link-SonatypeReleases]: https://oss.sonatype.org/content/repositories/releases/dev/zio/zio-config_2.12/ "Sonatype Releases"
 [Link-Twitter]: https://twitter.com/zioscala
+

@@ -1,6 +1,5 @@
 package zio.config.examples
 
-import zio.config.ConfigSource
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.PropertyTree.Leaf
 import zio.config.PropertyTree

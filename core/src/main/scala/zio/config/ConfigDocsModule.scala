@@ -88,16 +88,16 @@ trait ConfigDocsModule extends WriteModule {
           "Sources"
         )
 
-      def go(table: Table): List[String] = {
-        val (contents, nestedTables): (List[List[String]], List[Table]) =
-          table.rows.foldLeft((List.empty[List[String]], List.empty[Table])) {
-            case ((contentList, nestedTableList), row) =>
+      def go(table: Table, index: Option[Int]): List[String] = {
+        val (contents, nestedTables): (List[List[String]], List[(Table, Int)]) =
+          table.rows.zipWithIndex.foldLeft((List.empty[List[String]], List.empty[(Table, Int)])) {
+            case ((contentList, nestedTableList), (row, subIndex)) =>
               val lastFieldName = getLastFieldName(row.previousPaths)
               val formatString  = row.format.map(_.asString).getOrElse("")
 
               val (name, format) = row.nested match {
                 case Some(nestedTable) =>
-                  val parentPathString = getPathString(nestedTable.parentPaths)
+                  val parentPathString = getPathString(nestedTable.parentPaths, index, Some(subIndex))
                   val getLinkFn        = getLink(_, parentPathString)
 
                   getLinkFn(lastFieldName) -> getLinkFn(formatString)
@@ -107,7 +107,7 @@ trait ConfigDocsModule extends WriteModule {
               }
 
               (List(name, format, row.description.mkString(", "), row.sources.mkString(", ")) :: contentList) ->
-                (row.nested.toList ++ nestedTableList)
+                (row.nested.map((_, subIndex)).toList ++ nestedTableList)
           }
 
         val contentList: List[String] = {
@@ -126,13 +126,16 @@ trait ConfigDocsModule extends WriteModule {
           nestedTables.flatMap(
             table =>
               mkStringAndWrapWith(
-                List(s"### ${getPathString(table.parentPaths)}"),
+                List(s"### ${getPathString(table._1.parentPaths, index, Some(table._2))}"),
                 System.lineSeparator()
-              ) :: go(table)
+              ) :: go(table._1, Some(table._2))
           )
       }
 
-      mkStringAndWrapWith(s"## Configuration Details" :: (System.lineSeparator() :: go(self)), System.lineSeparator())
+      mkStringAndWrapWith(
+        s"## Configuration Details" :: (System.lineSeparator() :: go(self, None)),
+        System.lineSeparator()
+      )
     }
 
     private def padToEmpty(string: String, size: Int): String = {
@@ -140,8 +143,13 @@ trait ConfigDocsModule extends WriteModule {
       string.padTo(maxSize, ' ')
     }
 
-    private def getPathString(paths: List[FieldName])(implicit S: K =:= String) =
-      paths.map(_.asString).mkString(".")
+    private def getPathString(paths: List[FieldName], parentIndex: Option[Int], subIndex: Option[Int])(
+      implicit S: K =:= String
+    ): String = {
+      val optString: Option[Int] => String = _.fold("")("_" + _)
+
+      paths.map(_.asString).mkString(".") + optString(parentIndex) + optString(subIndex)
+    }
 
     private def wrapWith(input: String, str: String): String =
       str ++ input ++ str
