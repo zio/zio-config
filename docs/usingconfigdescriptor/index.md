@@ -1,6 +1,6 @@
 ---
 id: configdescriptorusage_index
-title:  "Using ConfigDescriptor"
+title:  "Using ConfigDescriptor for Read, Write, Document and Report"
 ---
 
 ## Using Config Descriptor

@@ -1,10 +1,10 @@
 ---
 id: configdescriptor_index
-title:  "Creation of ConfigDescriptor"
+title:  "Manual creation of ConfigDescriptor"
 ---
 
 Config Descriptor is the core of your configuration management. You can write a description by hand,
-or rely on zio-config-magnolia that can automatically generate the description for you, based on the case classes (pr sealed traits)
+or rely on zio-config-magnolia of zio-config-shapeless that can automatically generate the description for you, based on the case classes (or sealed traits)
 that represents your config.
 
 ```scala mdoc:silent

@@ -133,7 +133,7 @@ lazy val zioConfigRefined =
         ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
-    .dependsOn(zioConfig % "compile->compile;test->test")
+    .dependsOn(zioConfig % "compile->compile;test->test", zioConfigMagnolia % "compile->compile;test->test")
 
 lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module")
 

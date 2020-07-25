@@ -4,7 +4,6 @@ import zio.config._, ConfigDescriptorAdt._
 import zio.config.PropertyTree
 import zio.config.PropertyTree.Leaf
 import zio.config.PropertyTree.Record
-import zio.config.ConfigSource
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.test.Assertion._
 import zio.test._
@@ -71,7 +70,9 @@ object DerivationTest extends DefaultRunnableSpec {
       // IntelliJ will hide this, however it is required
       import customDerivation._
 
-      assert(collectPath(customDerivation.descriptor[SealedTrait]))(equalTo("St" :: "className" :: "otherName" :: Nil))
+      assert(collectPath(customDerivation.getDescriptor[SealedTrait].desc))(
+        equalTo("St" :: "className" :: "otherName" :: Nil)
+      )
     },
     test("support default value") {
       @describe("class desc")
@@ -115,7 +116,6 @@ object DerivationTest extends DefaultRunnableSpec {
       assert(res)(isRight(anything))
     },
     test("support lists non-recursive") {
-      import NonRecursiveDerivation.descriptor
       import NonRecursiveListHelper._
 
       def loop(depth: Int): PropertyTree[String, String] =
@@ -129,10 +129,10 @@ object DerivationTest extends DefaultRunnableSpec {
       assert(res)(isRight(anything))
     },
     test("support nested lists non-recursive") {
-      import NonRecursiveDerivation.{ descriptor, Descriptor }
+      import NonRecursiveDerivation.{ getDescriptor, Descriptor }
 
       case class A(a: List[String])
-      implicit val cA: Descriptor[A] = descriptor[A]
+      implicit val cA: Descriptor[A] = getDescriptor[A]
       val _                          = cA
       case class B(a: List[List[List[List[List[List[List[List[List[List[A]]]]]]]]]])
 
@@ -164,16 +164,16 @@ object DerivationTest extends DefaultRunnableSpec {
 }
 
 object NonRecursiveListHelper {
-  import NonRecursiveDerivation.{ descriptor, Descriptor }
+  import NonRecursiveDerivation.{ getDescriptor, Descriptor }
 
   case class A1(a: List[String])
-  implicit val cA1: Descriptor[A1] = descriptor[A1]
+  implicit val cA1: Descriptor[A1] = getDescriptor[A1]
   case class A2(a: List[A1])
-  implicit val cA2: Descriptor[A2] = descriptor[A2]
+  implicit val cA2: Descriptor[A2] = getDescriptor[A2]
   case class A3(a: List[A2])
-  implicit val cA3: Descriptor[A3] = descriptor[A3]
+  implicit val cA3: Descriptor[A3] = getDescriptor[A3]
   case class A4(a: List[A3])
-  implicit val cA4: Descriptor[A4] = descriptor[A4]
+  implicit val cA4: Descriptor[A4] = getDescriptor[A4]
   case class A5(a: List[A4])
 
 }

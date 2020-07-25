@@ -65,10 +65,49 @@ trait DeriveConfigDescriptor {
 
   case class ClassDescriptor[T](desc: ConfigDescriptor[T], name: String, isObject: Boolean)
 
-  case class Descriptor[T](desc: ConfigDescriptor[T])
+  case class Descriptor[T](configDescriptor: ConfigDescriptor[T]) {
+    final def ??(description: String): Descriptor[T] =
+      describe(description)
+
+    def default(value: T): Descriptor[T] =
+      Descriptor(configDescriptor.default(value))
+
+    def describe(description: String): Descriptor[T] =
+      Descriptor(configDescriptor.describe(description))
+
+    def from(that: ConfigSource): Descriptor[T] =
+      Descriptor(configDescriptor.from(that))
+
+    def transform[B](f: T => B, g: B => T): Descriptor[B] =
+      xmap(f, g)
+
+    def transformEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
+      xmapEither(f, g)
+
+    def transformEitherLeft[B](f: T => Either[String, B], g: B => T): Descriptor[B] =
+      Descriptor(configDescriptor.transformEitherLeft(f, g))
+
+    def transformEitherLeft[E, B](f: T => Either[E, B])(g: B => T)(h: E => String): Descriptor[B] =
+      Descriptor(configDescriptor.transformEitherLeft[E, B](f)(g)(h))
+
+    def transformEitherRight[E, B](f: T => B, g: B => Either[String, T]): Descriptor[B] =
+      Descriptor(configDescriptor.transformEitherRight(f, g))
+
+    def transformEitherRight[E, B](f: T => B)(g: B => Either[E, T])(h: E => String): Descriptor[B] =
+      Descriptor(configDescriptor.transformEitherRight[E, B](f)(g)(h))
+
+    def xmap[B](f: T => B, g: B => T): Descriptor[B] =
+      Descriptor(configDescriptor.xmap(f, g))
+
+    def xmapEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
+      Descriptor(configDescriptor.xmapEither(f, g))
+
+    def xmapEither[E, B](f: T => Either[E, B])(g: B => Either[E, T])(h: E => String): Descriptor[B] =
+      Descriptor(configDescriptor.xmapEither[E, B](f)(g)(h))
+  }
 
   object Descriptor {
-    implicit def toConfigDescriptor[T](ev: Descriptor[T]): ConfigDescriptor[T] = ev.desc
+    def apply[A](implicit ev: Descriptor[A]): Descriptor[A] = ev
   }
 
   protected def stringDesc: ConfigDescriptor[String]                   = string
@@ -116,19 +155,19 @@ trait DeriveConfigDescriptor {
   implicit val implicitJavaFilePathDesc: Descriptor[java.nio.file.Path] = Descriptor(javaFilePathDesc)
 
   implicit def implicitListDesc[A: Descriptor]: Descriptor[List[A]] =
-    Descriptor(listDesc(implicitly[Descriptor[A]].desc))
+    Descriptor(listDesc(implicitly[Descriptor[A]].configDescriptor))
 
   implicit def implicitSetDesc[A: Descriptor]: Descriptor[Set[A]] =
-    Descriptor(setDesc(implicitly[Descriptor[A]].desc))
+    Descriptor(setDesc(implicitly[Descriptor[A]].configDescriptor))
 
   implicit def implicitMapDesc[A: Descriptor]: Descriptor[Map[String, A]] =
-    Descriptor(mapDesc(implicitly[Descriptor[A]].desc))
+    Descriptor(mapDesc(implicitly[Descriptor[A]].configDescriptor))
 
   implicit def implicitEitherDesc[A: Descriptor, B: Descriptor]: Descriptor[Either[A, B]] =
-    Descriptor(eitherDesc(implicitly[Descriptor[A]].desc, implicitly[Descriptor[B]].desc))
+    Descriptor(eitherDesc(implicitly[Descriptor[A]].configDescriptor, implicitly[Descriptor[B]].configDescriptor))
 
   implicit def implicitOptionDesc[A: Descriptor]: Descriptor[Option[A]] =
-    Descriptor(optionDesc(implicitly[Descriptor[A]].desc))
+    Descriptor(optionDesc(implicitly[Descriptor[A]].configDescriptor))
 
   protected def listDesc[A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]]       = list(desc)
   protected def setDesc[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Set[A]]         = set(desc)
@@ -154,7 +193,7 @@ trait DeriveConfigDescriptor {
       description: Option[describe]
     ) = {
       val name         = manualName.map(_.name).getOrElse(mapFieldName(fieldName))
-      val withDefaults = defaultValue.fold(desc.desc)(desc.default(_))
+      val withDefaults = defaultValue.fold(desc.configDescriptor)(desc.configDescriptor.default(_))
       val described    = description.map(_.describe).toSeq.foldLeft(withDefaults)(_ ?? _)
       nested(name)(described)
     }
