@@ -455,6 +455,6 @@ val complexSource = ConfigSource.fromCommandLineArgs(
   Some('.'),
   Some(',')
 )
-val appConfig = descriptor[AppConfig] from complexSource
+val appConfig = read(descriptor[AppConfig] from complexSource)
 
 ```
