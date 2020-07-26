@@ -7,7 +7,7 @@ import java.util.UUID
 
 import magnolia._
 import zio.config._
-import zio.config.derivation.{ DerivationUtils, NeedsDerive }
+import zio.config.derivation.{ DerivationUtils }
 import zio.config.derivation.DerivationUtils._
 import zio.duration.Duration
 
@@ -34,27 +34,11 @@ import scala.language.experimental.macros
  *
  * Please find more (complex) examples in the examples module in zio-config
  */
-object DeriveConfigDescriptor extends DeriveConfigDescriptor {
-  def mapClassName(name: String): String = toSnakeCase(name)
-  def mapFieldName(name: String): String = name
-
-  val wrapSealedTraitClasses: Boolean = true
-  val wrapSealedTraits: Boolean       = false
-
-  /**
-   * By default this method is not implicit to allow custom non-recursive derivation
-   * */
-  override implicit def getDescriptor[T: NeedsDerive]: Descriptor[T] = macro DescriptorMacro.gen[T]
-
-  def descriptor[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
-    config.desc
-}
-
 /**
  * Non-recursive derivation
  *
  * */
-object NonRecursiveDerivation extends DeriveConfigDescriptor {
+object DeriveConfigDescriptor extends DeriveConfigDescriptor {
   def mapClassName(name: String): String = toSnakeCase(name)
   def mapFieldName(name: String): String = name
 
@@ -267,5 +251,8 @@ trait DeriveConfigDescriptor { self =>
   /**
    * By default this method is not implicit to allow custom non-recursive derivation
    * */
-  def getDescriptor[T: NeedsDerive]: Descriptor[T] = macro DescriptorMacro.gen[T]
+  implicit def getDescriptor[T]: Descriptor[T] = macro Magnolia.gen[T]
+
+  def descriptor[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
+    config.desc
 }

@@ -43,10 +43,6 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       case class Outer(list: List[Inner])
 
-      implicit val cInner: Descriptor[Inner] = getDescriptor[Inner]
-
-      val _ = cInner
-
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
       val res = write(OverrideDerivationTestEnv.getDescriptor[Outer].desc, cfg)
@@ -92,10 +88,6 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
       case class Outer(list: List[Inner])
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
-
-      implicit val cInner: Descriptor[Inner] = getDescriptor[Inner]
-
-      val _ = cInner
 
       val res = write(getDescriptor[Outer].desc.mapKey(zio.config.camelToSnake), cfg)
 

@@ -85,7 +85,11 @@ val myConfigTupled: ConfigDescriptor[(String, Int, String)] =
 ## Fully automated Config Description
 
 If you don't like describing your configuration manually, and rely on the names of the parameter in the case class (or sealed trait),
-there is a separate module called `zio-config-magnolia`.
+there is a separate module called `zio-config-magnolia`. 
+
+Note:  `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects. 
+It will be deprecated once we find users have moved on from scala 2.11. 
+
 
 ```scala mdoc:silent
 

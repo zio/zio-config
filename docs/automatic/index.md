@@ -11,6 +11,8 @@ This is much easier/intuitive unlike many existing implementations.
 
 Take a look at the magnolia examples in `zio-config`. One of them is provided here for quick access.
 
+Note:  `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects. 
+It will be deprecated once we find users have moved on from scala 2.11. 
 
 ### Example
 
@@ -135,6 +137,16 @@ The fieldNames remain as it is as you can see. You can override this one as well
 They can be easily changed using `mapKey`. Note that, fieldName is not equal to className. So the `DetailsWrapped`
 in Scala code has to be `details_wrapped` in HOCON even after the below code.
 
+If you want custom names for your fields, use `name` annotation.
+
+```
+  import zio.config.derivation.name
+
+  @name("detailsWrapped")
+  case class  DetailsWrapped(detail: Detail) extends X
+
+```
+
 ```scala
 import zio.config._
 
@@ -161,11 +173,29 @@ case class DbUrl(value: String)
 
 ```
 
-This will be equivalent to specifying:
 
-```
+This will be equivalent to the manual configuration of:
+
+```scala
    (string("region") |@| string("dburl").transform(DbUrl, _.value))(Aws.apply, Aws.unapply) ?? "This config is about aws"
 ```
+
+You could provide `describe` annotation at field level
+
+Example:
+
+```scala
+case class Aws(@describe("AWS region") region: String, dburl: DbUrl)
+```
+
+This will be equivalent to the manual configuration of:
+
+
+```scala
+   (string("region") ?? "AWS region" |@| string("dburl").transform(DbUrl, _.value))(Aws.apply, Aws.unapply) ?? "This config is about aws"
+```
+
+
 
 ### Custom ConfigDescription
 

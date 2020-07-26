@@ -16,6 +16,10 @@ import scala.concurrent.duration.{ Duration => ScalaDuration }
 import scala.reflect.ClassTag
 
 /**
+ *
+ * `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects.
+ * It will be deprecated once we find users have moved on from scala 2.11.
+ *
  * DeriveConfigDescriptor.descriptor[Config] gives an automatic ConfigDescriptor for the case class Config recursively
  *
  * DeriveConfigDescriptor.descriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
@@ -45,7 +49,8 @@ object DeriveConfigDescriptor extends DeriveConfigDescriptor {
   /**
    * By default this method is not implicit to allow custom non-recursive derivation
    * */
-  override implicit def descriptor[T: NeedsDerive: ClassDescriptor]: Descriptor[T] = super.descriptor[T]
+  override implicit def getDescriptor[T: NeedsDerive: ClassDescriptor]: Descriptor[T] = super.getDescriptor[T]
+  implicit def descriptor[T: Descriptor]: ConfigDescriptor[T]                         = Descriptor[T].configDescriptor
 }
 
 /**
@@ -110,49 +115,27 @@ trait DeriveConfigDescriptor {
     def apply[A](implicit ev: Descriptor[A]): Descriptor[A] = ev
   }
 
-  protected def stringDesc: ConfigDescriptor[String]                   = string
-  protected def booleanDesc: ConfigDescriptor[Boolean]                 = boolean
-  protected def byteDesc: ConfigDescriptor[Byte]                       = byte
-  protected def shortDesc: ConfigDescriptor[Short]                     = short
-  protected def intDesc: ConfigDescriptor[Int]                         = int
-  protected def longDesc: ConfigDescriptor[Long]                       = long
-  protected def bigIntDesc: ConfigDescriptor[BigInt]                   = bigInt
-  protected def floatDesc: ConfigDescriptor[Float]                     = float
-  protected def doubleDesc: ConfigDescriptor[Double]                   = double
-  protected def bigDecimalDesc: ConfigDescriptor[BigDecimal]           = bigDecimal
-  protected def uriDesc: ConfigDescriptor[URI]                         = uri
-  protected def urlDesc: ConfigDescriptor[URL]                         = url
-  protected def scalaDurationDesc: ConfigDescriptor[ScalaDuration]     = duration
-  protected def durationDesc: ConfigDescriptor[Duration]               = zioDuration
-  protected def uuidDesc: ConfigDescriptor[UUID]                       = uuid
-  protected def localDateDesc: ConfigDescriptor[LocalDate]             = localDate
-  protected def localTimeDesc: ConfigDescriptor[LocalTime]             = localTime
-  protected def localDateTimeDesc: ConfigDescriptor[LocalDateTime]     = localDateTime
-  protected def instantDesc: ConfigDescriptor[Instant]                 = instant
-  protected def fileDesc: ConfigDescriptor[File]                       = file
-  protected def javaFilePathDesc: ConfigDescriptor[java.nio.file.Path] = javaFilePath
-
-  implicit val implicitStringDesc: Descriptor[String]                   = Descriptor(stringDesc)
-  implicit val implicitBooleanDesc: Descriptor[Boolean]                 = Descriptor(booleanDesc)
-  implicit val implicitByteDesc: Descriptor[Byte]                       = Descriptor(byteDesc)
-  implicit val implicitShortDesc: Descriptor[Short]                     = Descriptor(shortDesc)
-  implicit val implicitIntDesc: Descriptor[Int]                         = Descriptor(intDesc)
-  implicit val implicitLongDesc: Descriptor[Long]                       = Descriptor(longDesc)
-  implicit val implicitBigIntDesc: Descriptor[BigInt]                   = Descriptor(bigIntDesc)
-  implicit val implicitFloatDesc: Descriptor[Float]                     = Descriptor(floatDesc)
-  implicit val implicitDoubleDesc: Descriptor[Double]                   = Descriptor(doubleDesc)
-  implicit val implicitBigDecimalDesc: Descriptor[BigDecimal]           = Descriptor(bigDecimalDesc)
-  implicit val implicitUriDesc: Descriptor[URI]                         = Descriptor(uriDesc)
-  implicit val implicitUrlDesc: Descriptor[URL]                         = Descriptor(urlDesc)
-  implicit val implicitScalaDurationDesc: Descriptor[ScalaDuration]     = Descriptor(scalaDurationDesc)
-  implicit val implicitDurationDesc: Descriptor[Duration]               = Descriptor(durationDesc)
-  implicit val implicitUUIDDesc: Descriptor[UUID]                       = Descriptor(uuidDesc)
-  implicit val implicitLocalDateDesc: Descriptor[LocalDate]             = Descriptor(localDateDesc)
-  implicit val implicitLocalTimeDesc: Descriptor[LocalTime]             = Descriptor(localTimeDesc)
-  implicit val implicitLocalDateTimeDesc: Descriptor[LocalDateTime]     = Descriptor(localDateTimeDesc)
-  implicit val implicitInstantDesc: Descriptor[Instant]                 = Descriptor(instantDesc)
-  implicit val implicitFileDesc: Descriptor[File]                       = Descriptor(fileDesc)
-  implicit val implicitJavaFilePathDesc: Descriptor[java.nio.file.Path] = Descriptor(javaFilePathDesc)
+  implicit val implicitStringDesc: Descriptor[String]                   = Descriptor(string)
+  implicit val implicitBooleanDesc: Descriptor[Boolean]                 = Descriptor(boolean)
+  implicit val implicitByteDesc: Descriptor[Byte]                       = Descriptor(byte)
+  implicit val implicitShortDesc: Descriptor[Short]                     = Descriptor(short)
+  implicit val implicitIntDesc: Descriptor[Int]                         = Descriptor(int)
+  implicit val implicitLongDesc: Descriptor[Long]                       = Descriptor(long)
+  implicit val implicitBigIntDesc: Descriptor[BigInt]                   = Descriptor(bigInt)
+  implicit val implicitFloatDesc: Descriptor[Float]                     = Descriptor(float)
+  implicit val implicitDoubleDesc: Descriptor[Double]                   = Descriptor(double)
+  implicit val implicitBigDecimalDesc: Descriptor[BigDecimal]           = Descriptor(bigDecimal)
+  implicit val implicitUriDesc: Descriptor[URI]                         = Descriptor(uri)
+  implicit val implicitUrlDesc: Descriptor[URL]                         = Descriptor(url)
+  implicit val implicitScalaDurationDesc: Descriptor[ScalaDuration]     = Descriptor(duration)
+  implicit val implicitDurationDesc: Descriptor[Duration]               = Descriptor(zioDuration)
+  implicit val implicitUUIDDesc: Descriptor[UUID]                       = Descriptor(uuid)
+  implicit val implicitLocalDateDesc: Descriptor[LocalDate]             = Descriptor(localDate)
+  implicit val implicitLocalTimeDesc: Descriptor[LocalTime]             = Descriptor(localTime)
+  implicit val implicitLocalDateTimeDesc: Descriptor[LocalDateTime]     = Descriptor(localDateTime)
+  implicit val implicitInstantDesc: Descriptor[Instant]                 = Descriptor(instant)
+  implicit val implicitFileDesc: Descriptor[File]                       = Descriptor(file)
+  implicit val implicitJavaFilePathDesc: Descriptor[java.nio.file.Path] = Descriptor(javaFilePath)
 
   implicit def implicitListDesc[A: Descriptor]: Descriptor[List[A]] =
     Descriptor(listDesc(implicitly[Descriptor[A]].configDescriptor))
@@ -346,6 +329,6 @@ trait DeriveConfigDescriptor {
     if (wrapSealedTraits) nested(label)(desc)
     else desc
 
-  def descriptor[T: NeedsDerive: ClassDescriptor]: Descriptor[T] = Descriptor(implicitly[ClassDescriptor[T]].desc)
-  def apply[T: NeedsDerive: ClassDescriptor]: Descriptor[T]      = descriptor[T]
+  def getDescriptor[T: NeedsDerive: ClassDescriptor]: Descriptor[T] = Descriptor(implicitly[ClassDescriptor[T]].desc)
+  def apply[T: NeedsDerive: ClassDescriptor]: Descriptor[T]         = getDescriptor[T]
 }
