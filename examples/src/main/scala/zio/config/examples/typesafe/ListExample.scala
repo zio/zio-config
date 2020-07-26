@@ -3,7 +3,6 @@ package zio.config.examples.typesafe
 import com.typesafe.config.ConfigRenderOptions
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.magnolia.name
 import zio.config.typesafe.TypesafeConfigSource
 
 object ListExample extends App with EitherImpureOps {
@@ -419,38 +418,5 @@ object ListExample extends App with EitherImpureOps {
         )
       )
   )
-
-}
-
-object R extends App {
-
-  case class A(l: List[String])
-  case class B(a: List[List[List[List[A]]]])
-
-  val str =
-    s"""
-       |  a : [[[[{l: [a, b, c]}]]]]
-       |
-       |
-       |""".stripMargin
-
-  println(descriptor[List[String]])
-  println(TypesafeConfigSource.fromHoconString(str).flatMap(s => read(descriptor[B] from s)))
-
-  sealed trait Z
-
-  @name("ZZZZZ")
-  case class Z1() extends Z
-
-  case class Config(z: Z)
-
-  val str2 =
-    s"""
-       | z : ZZZZZ
-       |
-       |
-       |""".stripMargin
-
-  println(TypesafeConfigSource.fromHoconString(str2).flatMap(s => read(descriptor[Config] from s)))
 
 }
