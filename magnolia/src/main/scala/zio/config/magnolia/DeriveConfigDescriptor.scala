@@ -7,7 +7,7 @@ import java.util.UUID
 
 import magnolia._
 import zio.config._
-import zio.config.derivation.{ DerivationUtils }
+import zio.config.derivation.DerivationUtils
 import zio.config.derivation.DerivationUtils._
 import zio.duration.Duration
 
@@ -34,10 +34,6 @@ import scala.language.experimental.macros
  *
  * Please find more (complex) examples in the examples module in zio-config
  */
-/**
- * Non-recursive derivation
- *
- * */
 object DeriveConfigDescriptor extends DeriveConfigDescriptor {
   def mapClassName(name: String): String = toSnakeCase(name)
   def mapFieldName(name: String): String = name
@@ -47,6 +43,269 @@ object DeriveConfigDescriptor extends DeriveConfigDescriptor {
 }
 
 trait DeriveConfigDescriptor { self =>
+
+  /**
+   *
+   * Strategy to how to name the class names in the actual config (if they are used in the config)
+   *
+   * Example:
+   *
+   *  {{{
+   *    sealed trait Credentials
+   *
+   *    object Credentials {
+   *      final case class UsernamePassword(username: String, password: String) extends Credentials
+   *      final case class Token(username: String, tokenId: String) extends Credentials.
+   *    }
+   *
+   *    final case class MyConfig(auth: Credentials)
+   *  }}}
+   *
+   *  If the source is HOCON and {{{ def mapClassName(name: String): String = toSnakeCase(name) }}}, then descriptor[MyConfig] can read:
+   *
+   *   {{{
+   *     auth : {
+   *       username_password : {
+   *          username : xyz
+   *          password : abc
+   *
+   *       }
+   *     }
+   *   }}}
+   *
+   *   If snake_case is not your choice and need to change to something else (example: kebabCase),
+   *   there are 2 alternative solutions,
+   *
+   *   {{{
+   *    sealed trait Credentials
+   *
+   *    @name("username-password")
+   *    case class UsernamePassword(username: String, password: String) extends Credentials
+   *
+   *    @name("token")
+   *    case class Token(username: String, tokenId: String) extends Credentials.
+   *   }}}
+   *
+   *   With the above structure, if the source is HOCON, descriptor[Credentials] can read:
+   *
+   *   {{{
+   *     auth : {
+   *       username-password : {
+   *          username : xyz
+   *          password : abc
+   *       }
+   *     }
+   *   }}}
+   *
+   *   If you need the kebabCase to be applied for all the sealed-traits in your entire app,
+   *   then the second, and the best solution is to do the following:
+   *
+   *   {{{
+   *     import zio.config._
+   *
+   *     val customDerivation = new DeriveConfigDescriptor {
+   *         def mapClassName(name: String): String = camelToKebab(name)
+   *         def mapFieldName(name: String): String = name
+   *
+   *         val wrapSealedTraitClasses: Boolean = true
+   *         val wrapSealedTraits: Boolean       = false
+   *     }
+   *
+   *     // Usage:
+   *     customDerivation.descriptor[MyConfig]
+   *
+   *   }}}
+   *
+   *   If the source is HOCON, then {{{ customDerivation.descriptor[MyConfig] }}} can read:
+   *
+   *   {{{
+   *     auth : {
+   *       username-password : {
+   *          username : xyz
+   *          password : abc
+   *       }
+   *     }
+   *   }}}
+   */
+  def mapClassName(name: String): String
+
+  /**
+   *
+   *  trategy to how to name the class names in the actual config (if they are used in the config)
+   *
+   * Now assume that you need the fieldnames and classnames to be UPPERCASE in the config, and not camelCase,
+   * then you could do the following
+   *
+   *   {{{
+   *      val customDerivation = new DeriveConfigDescriptor {
+   *        def mapClassName(name: String): String = name.toUpperCase
+   *        def mapFieldName(name: String): String = name.toUpperCase
+   *
+   *        val wrapSealedTraitClasses: Boolean = true
+   *        val wrapSealedTraits: Boolean       = false
+   *      }
+   *
+   *      // Usage:
+   *      customDerivation.descriptor[MyConfig]
+   *   }}}
+   *
+   *  Given,
+   *
+   *  {{{
+   *    sealed trait Credentials
+   *
+   *    object Credentials {
+   *      final case class UsernamePassword(username: String, password: String) extends Credentials
+   *      final case class Token(username: String, tokenId: String) extends Credentials.
+   *    }
+   *
+   *    final case class MyConfig(auth: Credentials)
+   *  }}}
+   *
+   *  If the source is HOCON, then {{{ customDerivation.descriptor[MyConfig] }}} can read:
+   *
+   *   {{{
+   *       AUTH : {
+   *         USERNAMEPASSWORD : {
+   *            USERNAME : xyz
+   *            PASSWORD : abc
+   *         }
+   *       }
+   *   }}}
+   */
+  def mapFieldName(name: String): String
+
+  /**
+   *
+   *  Strategy to deal with the use of classnames in the config.
+   *
+   *  Now say, you need to skip the use of classnames in the config, then the following is the solution:
+   *
+   *   {{{
+   *      import zio.config._
+   *
+   *      val customDerivation = new DeriveConfigDescriptor {
+   *        def mapClassName(name: String): String = camelToKebab(name)
+   *        def mapFieldName(name: String): String = camelToKebab(name)
+   *
+   *        val wrapSealedTraitClasses: Boolean = false
+   *        val wrapSealedTraits: Boolean       = false
+   *     }
+   *   }}}
+   *
+   *  Given,
+   *
+   *  {{{
+   *    sealed trait Credentials
+   *
+   *    object Credentials {
+   *      final case class UsernamePassword(username: String, password: String) extends Credentials
+   *      final case class Token(username: String, tokenId: String) extends Credentials.
+   *    }
+   *
+   *    final case class MyConfig(auth: Credentials)
+   *  }}}
+   *
+   *  If the source is HOCON, then {{{ customDerivation.descriptor[MyConfig] }}} can read:
+   *
+   *   {{{
+   *     auth : {
+   *       username : xyz
+   *       password : abc
+   *     }
+   *   }}}
+   *
+   *   However, we don't recommend you doing it.
+   */
+  def wrapSealedTraitClasses: Boolean
+
+  /**
+   *
+   * Strategy to deal with the use of sealed-trait name in the config.
+   *
+   * Another customisation you would need is to make use of the name of the sealed trait itself,
+   * along with the names of the subclasses:
+   *
+   * Example:
+   *
+   *   {{{
+   *     sealed trait ACredentials
+   *
+   *     object KinesisConfig {
+   *       final case class UsernamePassword(username: String, password: String)
+   *     }
+   *
+   *     sealed trait BCredentials
+   *
+   *     object BCredentials {
+   *       final case class UsernamePassword(username: String, password: String)
+   *     }
+   *
+   *   final case class MyConfig(credentials: Either[ACredentials, BCredentials]
+   *
+   *   }}}
+   *
+   *  Given ,
+   *
+   *   {{{
+   *
+   *     import zio.config._
+   *
+   *     val myDefaultDerivation = new DeriveConfigDescriptor {
+   *       def mapClassName(name: String): String = camelToSnakeCase(name)
+   *       def mapFieldName(name: String): String = name
+   *       val wrapSealedTraitClasses: Boolean = true
+   *       val wrapSealedTraits: Boolean       = false
+   *    }
+   *
+   *   }}}
+   *
+   *  If the source is HOCON, then {{{ myDefaultDerivation.descriptor[MyConfig] }}} can read:
+   *
+   *  {{{
+   *     credentials: {
+   *        username-password : {
+   *           username : xyz
+   *           password: xyz
+   *
+   *        }
+   *     }
+   *   }}}
+   *
+   *  The issue with this config design is that it is ambiguous that whether username-password represents `ACredentials`
+   *  or `BCredentials`.
+   *
+   *  The way to solve this problem is by setting wrapSealedTraits to true
+   *
+   *  Given,
+   *
+   *  {{{
+   *     import zio.config._
+   *
+   *     val betterDerivation = new DeriveConfigDescriptor {
+   *       def mapClassName(name: String): String = camelToSnakeCase(name)
+   *       def mapFieldName(name: String): String = name
+   *       val wrapSealedTraitClasses: Boolean = true
+   *       val wrapSealedTraits: Boolean       = true
+   *    }
+   *  }}}
+   *
+   *   If the source is HOCON, then {{{ betterDerivation.descriptor[MyConfig] }}} can read:
+   *
+   *   {{{
+   *     credentials: {
+   *       a-credentials {
+   *          username-password : {
+   *             username : xyz
+   *             password: xyz
+   *          }
+   *        }
+   *     }
+   *   }}}
+   *
+   */
+  def wrapSealedTraits: Boolean
+
   import zio.config.ConfigDescriptor._
 
   implicit val implicitStringDesc: Descriptor[String]                   = Descriptor(string)
@@ -149,19 +408,19 @@ trait DeriveConfigDescriptor { self =>
 
   object Descriptor {
     def apply[A](implicit ev: Descriptor[A]): Descriptor[A] = ev
+
+    sealed trait ClassNameStrategy
+
+    object ClassNameStrategy {
+      final case object WrapClassName         extends ClassNameStrategy
+      final case object IgnoreClassName       extends ClassNameStrategy
+      final case object ClassNameWithInConfig extends ClassNameStrategy
+    }
   }
 
   type Typeclass[T] = Descriptor[T]
 
   def toSnakeCase(name: String): String = DerivationUtils.toSnakeCase(name)
-
-  def mapClassName(name: String): String
-
-  def mapFieldName(name: String): String
-
-  def wrapSealedTraitClasses: Boolean
-
-  def wrapSealedTraits: Boolean
 
   final def wrapSealedTrait[T](
     label: String,
@@ -231,7 +490,7 @@ trait DeriveConfigDescriptor { self =>
 
     val desc =
       sealedTrait.subtypes.map { subtype =>
-        val typeclass = subtype.typeclass
+        val typeclass: Descriptor[subtype.SType] = subtype.typeclass
         val desc =
           if (typeclass.isObject || !wrapSealedTraitClasses) typeclass.desc
           else nested(nameToLabel(subtype.typeName.full))(typeclass.desc)
