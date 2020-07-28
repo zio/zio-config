@@ -1,10 +1,10 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Using ConfigDescriptor · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Using Config Descriptor"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Using ConfigDescriptor · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="## Using Config Descriptor"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Using ConfigDescriptor for Read, Write, Document and Report · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="## Using Config Descriptor"/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Using ConfigDescriptor for Read, Write, Document and Report · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="## Using Config Descriptor"/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100,"cornerOffset":100}
           )
         });
-        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-config/docs/quickstart/quickstart_index" target="_self">Documentation</a></li><li class=""><a href="https://www.github.com/zio/zio-config" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>ZIO-CONFIG</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">ZIO-CONFIG</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-config/docs/quickstart/quickstart_index">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/configdescriptor/configdescriptor_index">Creation of ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/automatic/automatic_index">Automatic Derivation of Config</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/sources/sources_index">Sources</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index">Using ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/refined/refined_index">Automatic Validations</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/design/design_index">Design Principles</a></li></ul></div></div></section></div><script>
+        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-config/docs/quickstart/quickstart_index" target="_self">Documentation</a></li><li class=""><a href="https://www.github.com/zio/zio-config" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>ZIO-CONFIG</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">ZIO-CONFIG</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-config/docs/quickstart/quickstart_index">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/configdescriptor/configdescriptor_index">Manual creation of ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/automatic/automatic_index">Automatic Derivation of ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/sources/sources_index">Read from various Sources</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index">Using ConfigDescriptor for Read, Write, Document and Report</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/refined/refined_index">Automatic Validations</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/design/design_index">Design Principles</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -60,7 +60,7 @@
                 };
               }
             });
-        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Using ConfigDescriptor</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="using-config-descriptor"></a><a href="#using-config-descriptor" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Using Config Descriptor</h2>
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Using ConfigDescriptor for Read, Write, Document and Report</h1></header><article><div><span><h2><a class="anchor" aria-hidden="true" id="using-config-descriptor"></a><a href="#using-config-descriptor" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Using Config Descriptor</h2>
 <p>Given a single <a href="/zio-config/docs/configdescriptor/configdescriptor_index">ConfigDescriptor</a> we can use it to:</p>
 <ol>
 <li>Get Readers that can read config from various sources</li>
@@ -71,8 +71,7 @@
 <h2><a class="anchor" aria-hidden="true" id="reader-from-config-descriptor"></a><a href="#reader-from-config-descriptor" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Reader from Config Descriptor</h2>
 <p>You should be familiar with reading config from various sources, given a  config descriptor.</p>
 <pre><code class="hljs css language-scala mdoc:silent"><span class="hljs-keyword">import</span> zio.<span class="hljs-type">IO</span>
-<span class="hljs-keyword">import</span> zio.config._, <span class="hljs-type">ConfigDescriptor</span>._, <span class="hljs-type">PropertyTree</span>._
-<span class="hljs-keyword">import</span> zio.config.<span class="hljs-type">ConfigDocs</span>.{<span class="hljs-type">Leaf</span> =&gt; _, _}
+<span class="hljs-keyword">import</span> zio.config._, <span class="hljs-type">ConfigDescriptor</span>._, <span class="hljs-type">PropertyTree</span>._, <span class="hljs-type">ConfigDocs</span>.{<span class="hljs-type">Leaf</span> =&gt; _, _}
 
 </code></pre>
 <pre><code class="hljs css language-scala mdoc:silent">
@@ -224,35 +223,67 @@ written.toJson
 <p>To generate the documentation of the config, call <code>generateDocs</code>.</p>
 <pre><code class="hljs css language-scala mdoc:silent"> <span class="hljs-keyword">import</span> zio.config.<span class="hljs-type">ConfigDocs</span>
 
- generateDocs(appConfig)
+ <span class="hljs-keyword">val</span> generatedDocs = generateDocs(appConfig)
 
-  <span class="hljs-comment">// yields the result `ConfigDocs[String, String]`:</span>
+ <span class="hljs-comment">// as markdown </span>
+  <span class="hljs-keyword">val</span> markdown =
+     generatedDocs.toTable.asMarkdownContent
 
- <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
-   <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
-     <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
-       <span class="hljs-string">"south"</span>,
-       <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
-         <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>))),
-         <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>)))
-       )
-     ),
-     <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
-       <span class="hljs-string">"east"</span>,
-       <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
-         <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"connection"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>))),
-         <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"port"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>)))
-       )
-     )
-   ),
-   <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>)))
- )
+ <span class="hljs-comment">// produces the following markdown</span>
+
+  <span class="hljs-comment">/*
+    |FieldName             |Format                 |Description               |Sources |
+    |---                   |---                    |---                       |---     |
+    |appName               |primitive              |value of type string, asdf|constant|
+    |[east](#root.east_1)  |[all-of](#root.east_1) |                          |        |
+    |[south](#root.south_0)|[all-of](#root.south_0)|                          |        |
+    
+    ### root.east_1
+    
+    |FieldName |Format   |Description                             |Sources |
+    |---       |---      |---                                     |---     |
+    |port      |primitive|value of type int, East details, asdf   |constant|
+    |connection|primitive|value of type string, East details, asdf|constant|
+    
+    ### root.south_0
+    
+    |FieldName |Format   |Description                              |Sources |
+    |---       |---      |---                                      |---     |
+    |port      |primitive|value of type int, South details, asdf   |constant|
+    |connection|primitive|value of type string, South details, asdf|constant|
+   */</span>  
 </code></pre>
-<h4><a class="anchor" aria-hidden="true" id="more-detail"></a><a href="#more-detail" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>More detail</h4>
-<p><code>ConfigDocs.Zip(left, right)</code> means the <code>left</code> and <code>right</code> should exist in the config. For the same reason we have
-<code>ConfigDocs.Nested</code>, <code>Or</code> etc, that are nodes of <code>ConfigDocs[K,V]</code>. <code>K</code> means, the value of <code>key</code> and <code>V</code> is
-the type of the value before it gets parsed.</p>
-<p>We will see more better representation of the documentation in the immediate future versions of zio-config.</p>
+<p>In the above <code>markdown</code> is a standard markdown format string, rendered as:</p>
+<table>
+<thead>
+<tr><th>FieldName</th><th>Format</th><th>Description</th><th>Sources</th></tr>
+</thead>
+<tbody>
+<tr><td>appName</td><td>primitive</td><td>value of type string, asdf</td><td>constant</td></tr>
+<tr><td><a href="#root.east_1">east</a></td><td><a href="#root.east_1">all-of</a></td><td></td><td></td></tr>
+<tr><td><a href="#root.south_0">south</a></td><td><a href="#root.south_0">all-of</a></td><td></td><td></td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="rooteast_1"></a><a href="#rooteast_1" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>root.east_1</h3>
+<table>
+<thead>
+<tr><th>FieldName</th><th>Format</th><th>Description</th><th>Sources</th></tr>
+</thead>
+<tbody>
+<tr><td>port</td><td>primitive</td><td>value of type int, East details, asdf</td><td>constant</td></tr>
+<tr><td>connection</td><td>primitive</td><td>value of type string, East details, asdf</td><td>constant</td></tr>
+</tbody>
+</table>
+<h3><a class="anchor" aria-hidden="true" id="rootsouth_0"></a><a href="#rootsouth_0" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>root.south_0</h3>
+<table>
+<thead>
+<tr><th>FieldName</th><th>Format</th><th>Description</th><th>Sources</th></tr>
+</thead>
+<tbody>
+<tr><td>port</td><td>primitive</td><td>value of type int, South details, asdf</td><td>constant</td></tr>
+<tr><td>connection</td><td>primitive</td><td>value of type string, South details, asdf</td><td>constant</td></tr>
+</tbody>
+</table>
 <h2><a class="anchor" aria-hidden="true" id="report-on-the-config"></a><a href="#report-on-the-config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Report on the config</h2>
 <p>Calling <code>generateDocs</code> can give some documentation (man page).
 But most often, we need these docs to act as a report that holds the value of the actual config parameter
@@ -297,4 +328,4 @@ along with the rest of the details.</p>
 )
 </code></pre>
 <p>Pretty print will be coming soon!</p>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 4/25/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/sources/sources_index"><span class="arrow-prev">← </span><span>Sources</span></a><a class="docs-next button" href="/zio-config/docs/refined/refined_index"><span>Automatic Validations</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#using-config-descriptor">Using Config Descriptor</a></li><li><a href="#reader-from-config-descriptor">Reader from Config Descriptor</a></li><li><a href="#writer-from-config-descriptor">Writer from config descriptor</a></li><li><a href="#document-the-config">Document the config</a></li><li><a href="#report-on-the-config">Report on the config</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 7/28/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/sources/sources_index"><span class="arrow-prev">← </span><span>Read from various Sources</span></a><a class="docs-next button" href="/zio-config/docs/refined/refined_index"><span>Automatic Validations</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#using-config-descriptor">Using Config Descriptor</a></li><li><a href="#reader-from-config-descriptor">Reader from Config Descriptor</a></li><li><a href="#writer-from-config-descriptor">Writer from config descriptor</a></li><li><a href="#document-the-config">Document the config</a><ul class="toc-headings"><li><a href="#rooteast_1">root.east_1</a></li><li><a href="#rootsouth_0">root.south_0</a></li></ul></li><li><a href="#report-on-the-config">Report on the config</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>

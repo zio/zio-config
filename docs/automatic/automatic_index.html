@@ -1,10 +1,10 @@
-<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Automatic Derivation of Config · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config."/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Automatic Derivation of Config · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config."/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
+<!DOCTYPE html><html lang="en"><head><meta charSet="utf-8"/><meta http-equiv="X-UA-Compatible" content="IE=edge"/><title>Automatic Derivation of ConfigDescriptor · ZIO Config</title><meta name="viewport" content="width=device-width"/><meta name="generator" content="Docusaurus"/><meta name="description" content="By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config."/><meta name="docsearch:language" content="en"/><meta property="og:title" content="Automatic Derivation of ConfigDescriptor · ZIO Config"/><meta property="og:type" content="website"/><meta property="og:url" content="https://zio.github.io/zio-config/"/><meta property="og:description" content="By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config."/><meta name="twitter:card" content="summary"/><link rel="shortcut icon" href="/zio-config/img/favicon.png"/><link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/default.min.css"/><script type="text/javascript" src="https://buttons.github.io/buttons.js"></script><script src="https://unpkg.com/vanilla-back-to-top@7.1.14/dist/vanilla-back-to-top.min.js"></script><script>
         document.addEventListener('DOMContentLoaded', function() {
           addBackToTop(
             {"zIndex":100,"cornerOffset":100}
           )
         });
-        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-config/docs/quickstart/quickstart_index" target="_self">Documentation</a></li><li class=""><a href="https://www.github.com/zio/zio-config" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>ZIO-CONFIG</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">ZIO-CONFIG</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-config/docs/quickstart/quickstart_index">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/configdescriptor/configdescriptor_index">Creation of ConfigDescriptor</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/automatic/automatic_index">Automatic Derivation of Config</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/sources/sources_index">Sources</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index">Using ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/refined/refined_index">Automatic Validations</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/design/design_index">Design Principles</a></li></ul></div></div></section></div><script>
+        </script><script src="/zio-config/js/scrollSpy.js"></script><link rel="stylesheet" href="/zio-config/css/main.css"/><script src="/zio-config/js/codetabs.js"></script></head><body class="sideNavVisible separateOnPageNav"><div class="fixedHeaderContainer"><div class="headerWrapper wrapper"><header><a href="/zio-config/"><img class="logo" src="/zio-config/img/navbar_brand2x.png" alt="ZIO Config"/><h2 class="headerTitleWithLogo">ZIO Config</h2></a><div class="navigationWrapper navigationSlider"><nav class="slidingNav"><ul class="nav-site nav-site-internal"><li class="siteNavGroupActive"><a href="/zio-config/docs/quickstart/quickstart_index" target="_self">Documentation</a></li><li class=""><a href="https://www.github.com/zio/zio-config" target="_self">GitHub</a></li></ul></nav></div></header></div></div><div class="navPusher"><div class="docMainWrapper wrapper"><div class="docsNavContainer" id="docsNav"><nav class="toc"><div class="toggleNav"><section class="navWrapper wrapper"><div class="navBreadcrumb wrapper"><div class="navToggle" id="navToggler"><div class="hamburger-menu"><div class="line1"></div><div class="line2"></div><div class="line3"></div></div></div><h2><i>›</i><span>ZIO-CONFIG</span></h2><div class="tocToggler" id="tocToggler"><i class="icon-toc"></i></div></div><div class="navGroups"><div class="navGroup"><h3 class="navGroupCategoryTitle">ZIO-CONFIG</h3><ul class=""><li class="navListItem"><a class="navItem" href="/zio-config/docs/quickstart/quickstart_index">Quick Start</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/configdescriptor/configdescriptor_index">Manual creation of ConfigDescriptor</a></li><li class="navListItem navListItemActive"><a class="navItem" href="/zio-config/docs/automatic/automatic_index">Automatic Derivation of ConfigDescriptor</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/sources/sources_index">Read from various Sources</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index">Using ConfigDescriptor for Read, Write, Document and Report</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/refined/refined_index">Automatic Validations</a></li><li class="navListItem"><a class="navItem" href="/zio-config/docs/design/design_index">Design Principles</a></li></ul></div></div></section></div><script>
             var coll = document.getElementsByClassName('collapsible');
             var checkActiveCategory = true;
             for (var i = 0; i < coll.length; i++) {
@@ -60,11 +60,13 @@
                 };
               }
             });
-        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Automatic Derivation of Config</h1></header><article><div><span><p>By bringing in <code>zio-config-magnolia</code> we  avoid all the boilerplate required to define the config.
+        </script></nav></div><div class="container mainContainer docsContainer"><div class="wrapper"><div class="post"><header class="postHeader"><h1 id="__docusaurus" class="postHeaderTitle">Automatic Derivation of ConfigDescriptor</h1></header><article><div><span><p>By bringing in <code>zio-config-magnolia</code> we  avoid all the boilerplate required to define the config.
 With a single import, <code>ConfigDescriptor</code> is automatically derived.</p>
 <p>Also, we will get to see the Hocon config for coproducts is devoid of any extra tagging to satisfy the library.
 This is much easier/intuitive unlike many existing implementations.</p>
 <p>Take a look at the magnolia examples in <code>zio-config</code>. One of them is provided here for quick access.</p>
+<p>Note:  <code>zio-config-shapeless</code> is an alternative to <code>zio-config-magnolia</code> to support scala 2.11 projects.
+It will be deprecated once we find users have moved on from scala 2.11.</p>
 <h3><a class="anchor" aria-hidden="true" id="example"></a><a href="#example" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Example</h3>
 <h4><a class="anchor" aria-hidden="true" id="config"></a><a href="#config" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Config</h4>
 <pre><code class="hljs css language-scala">
@@ -91,9 +93,9 @@ This is much easier/intuitive unlike many existing implementations.</p>
 </code></pre>
 <h4><a class="anchor" aria-hidden="true" id="autoderivation"></a><a href="#autoderivation" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>AutoDerivation</h4>
 <pre><code class="hljs css language-scala">  <span class="hljs-comment">// Setting up imports</span>
+
+  <span class="hljs-keyword">import</span> zio.config._, zio.config.typesafe._
   <span class="hljs-keyword">import</span> zio.config.magnolia.<span class="hljs-type">DeriveConfigDescriptor</span>._
-  <span class="hljs-keyword">import</span> zio.config.typesafe.<span class="hljs-type">TypesafeConfigSource</span>
-  <span class="hljs-keyword">import</span> zio.config.read
 
   <span class="hljs-keyword">import</span> <span class="hljs-type">X</span>._
 </code></pre>
@@ -167,9 +169,16 @@ This is overridable.</p>
 <p>The fieldNames remain as it is as you can see. You can override this one as well.
 They can be easily changed using <code>mapKey</code>. Note that, fieldName is not equal to className. So the <code>DetailsWrapped</code>
 in Scala code has to be <code>details_wrapped</code> in HOCON even after the below code.</p>
+<p>If you want custom names for your fields, use <code>name</code> annotation.</p>
+<pre><code class="hljs">  <span class="hljs-keyword">import</span> zio.config.derivation.name
+
+  <span class="hljs-meta">@name</span>(<span class="hljs-string">"detailsWrapped"</span>)
+  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span>  <span class="hljs-title">DetailsWrapped</span>(<span class="hljs-params">detail: <span class="hljs-type">Detail</span></span>) <span class="hljs-keyword">extends</span> <span class="hljs-title">X</span></span>
+
+</code></pre>
 <pre><code class="hljs css language-scala"><span class="hljs-keyword">import</span> zio.config._
 
-descriptor[<span class="hljs-type">MyConfig</span>].mapKey(camelToKebab)
+descriptor[<span class="hljs-type">MyConfig</span>].mapKey(toKebabCase)
 
 </code></pre>
 <p>With the above change<code>firstName</code> and <code>lastName</code> in the above HOCON example can be <code>first-name</code> and <code>last-name</code>
@@ -186,8 +195,15 @@ This is a bit involving, and more documentations will be provided soon.</p>
 <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">DbUrl</span>(<span class="hljs-params">value: <span class="hljs-type">String</span></span>)</span>
 
 </code></pre>
-<p>This will be equivalent to specifying:</p>
-<pre><code class="hljs">   <span class="hljs-built_in">(string</span>(<span class="hljs-string">"region"</span>) |@|<span class="hljs-built_in"> string</span>(<span class="hljs-string">"dburl"</span>).xmap(DbUrl, <span class="hljs-number">_</span>.<span class="hljs-keyword">value</span>))(Aws<span class="hljs-built_in">.apply</span>, Aws.unapply) ?? <span class="hljs-string">"This config is about aws"</span>
+<p>This will be equivalent to the manual configuration of:</p>
+<pre><code class="hljs css language-scala">   (string(<span class="hljs-string">"region"</span>) |@| string(<span class="hljs-string">"dburl"</span>).transform(<span class="hljs-type">DbUrl</span>, _.value))(<span class="hljs-type">Aws</span>.apply, <span class="hljs-type">Aws</span>.unapply) ?? <span class="hljs-string">"This config is about aws"</span>
+</code></pre>
+<p>You could provide <code>describe</code> annotation at field level</p>
+<p>Example:</p>
+<pre><code class="hljs css language-scala"><span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Aws</span>(<span class="hljs-params">@describe("<span class="hljs-type">AWS</span> region"</span>) <span class="hljs-title">region</span></span>: <span class="hljs-type">String</span>, dburl: <span class="hljs-type">DbUrl</span>)
+</code></pre>
+<p>This will be equivalent to the manual configuration of:</p>
+<pre><code class="hljs css language-scala">   (string(<span class="hljs-string">"region"</span>) ?? <span class="hljs-string">"AWS region"</span> |@| string(<span class="hljs-string">"dburl"</span>).transform(<span class="hljs-type">DbUrl</span>, _.value))(<span class="hljs-type">Aws</span>.apply, <span class="hljs-type">Aws</span>.unapply) ?? <span class="hljs-string">"This config is about aws"</span>
 </code></pre>
 <h3><a class="anchor" aria-hidden="true" id="custom-configdescription"></a><a href="#custom-configdescription" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Custom ConfigDescription</h3>
 <p>Every field in a case class should have an instance of <code>Descriptor</code> in order for the automatic derivation to work.
@@ -208,7 +224,7 @@ Assume that, <code>AwsRegion</code> is a type that comes from AWS SDK.</p>
 <pre><code class="hljs"> <span class="hljs-keyword">import</span> zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
 
  <span class="hljs-keyword">implicit</span> val awsRegionDescriptor: Descriptor[Aws.Region] =
-   Descriptor[String].xmap(string =&gt; AwsRegion.from(string), _.toString)
+   Descriptor[String].transform(string =&gt; AwsRegion.from(string), _.toString)
 
 </code></pre>
 <p>Now <code>descriptor[Execution]</code> compiles.</p>
@@ -218,16 +234,15 @@ The answer is, zio-config provides with all the functions that you need to handl
 <pre><code class="hljs"> import zio.config.magnolia.<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">DeriveConfigDescriptor</span>.</span>{<span class="hljs-module"><span class="hljs-identifier">Descriptor</span>,</span> descriptor}</span>
 
   implicit <span class="hljs-keyword">val</span> descriptorO: Descriptor<span class="hljs-literal">[Z<span class="hljs-identifier">onedDateTime</span>]</span> =
-    Descriptor<span class="hljs-literal">[S<span class="hljs-identifier">tring</span>]</span>
-      .xmap<span class="hljs-constructor">EitherELeftPartial(<span class="hljs-params">x</span> =&gt; Try (ZonedDateTime.<span class="hljs-params">parse</span>(<span class="hljs-params">x</span>)</span>).toEither)(<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">_</span>.</span></span>toString)(<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">_</span>.</span></span>getMessage)
+    Descriptor<span class="hljs-literal">[S<span class="hljs-identifier">tring</span>]</span>.transform<span class="hljs-constructor">EitherLeft(<span class="hljs-params">x</span> =&gt; Try (ZonedDateTime.<span class="hljs-params">parse</span>(<span class="hljs-params">x</span>)</span>).toEither)(<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">_</span>.</span></span>toString)(<span class="hljs-module-access"><span class="hljs-module"><span class="hljs-identifier">_</span>.</span></span>getMessage)
 </code></pre>
-<p>What is xmapEitherLeftPartial ? Parsing a String to ZonedDateTime can fail, but converting it back to a string
-won't fail. Logically, these are respectively the first 2 functions that we passed to xmapEitherELeftPartial. The third
+<p>What is transformEitherLeft ? Parsing a String to ZonedDateTime can fail, but converting it back to a string
+won't fail. Logically, these are respectively the first 2 functions that we passed to transformEitherLeft. The third
 parameter talks about how to covert the error type E, which in this case is Throwable, to a proper string which is then required
 for zio-config to report back to the user what's going on.</p>
 <p>PS: We recommend not to use <code>throwable.getMessage</code>. Provide more descriptive error message.</p>
-<p>You can also rely on <code>xmapEitherE</code> if both <code>to</code> and <code>fro</code> can fail. This is the most commonly used combinator in zio-config.
-Similarly if the error type is already String, then you can use <code>xmapEither</code> and avoid having to tell the API, how to convert
+<p>You can also rely on <code>transformEither</code> if both <code>to</code> and <code>fro</code> can fail. This is the most commonly used combinator in zio-config.
+Similarly if the error type is already String, then you can use <code>transformEither</code> and avoid having to tell the API, how to convert
 <code>E</code> to <code>String</code>. We have already seen these types.</p>
 <h3><a class="anchor" aria-hidden="true" id="please-give-descriptions-wherever-possible-for-a-better-experience"></a><a href="#please-give-descriptions-wherever-possible-for-a-better-experience" aria-hidden="true" class="hash-link"><svg class="hash-link-icon" aria-hidden="true" height="16" version="1.1" viewBox="0 0 16 16" width="16"><path fill-rule="evenodd" d="M4 9h1v1H4c-1.5 0-3-1.69-3-3.5S2.55 3 4 3h4c1.45 0 3 1.69 3 3.5 0 1.41-.91 2.72-2 3.25V8.59c.58-.45 1-1.27 1-2.09C10 5.22 8.98 4 8 4H4c-.98 0-2 1.22-2 2.5S3 9 4 9zm9-3h-1v1h1c1 0 2 1.22 2 2.5S13.98 12 13 12H9c-.98 0-2-1.22-2-2.5 0-.83.42-1.64 1-2.09V6.25c-1.09.53-2 1.84-2 3.25C6 11.31 7.55 13 9 13h4c1.45 0 3-1.69 3-3.5S14.5 6 13 6z"></path></svg></a>Please give descriptions wherever possible for a better experience</h3>
 <p>Giving descriptions is going to be helpful. While all the built-in types have documentations, it is better we give
@@ -236,8 +251,7 @@ some description to custom types as well. For example:</p>
 
 
   <span class="hljs-keyword">implicit</span> val awsRegionDescriptor: Descriptor[Aws.Region] =
-    Descriptor[String]
-      .xmap(string =&gt; AwsRegion.from(string), _.toString) ?? <span class="hljs-string">"value of type AWS.Region"</span>
+    Descriptor[String].transform(string =&gt; AwsRegion.from(string), _.toString) ?? <span class="hljs-string">"value of type AWS.Region"</span>
 </code></pre>
 <p>This way, when there is an error due to MissingValue, we get an error message (don't forget to use prettyPrint)
 that describes about the config parameter. For example, see the <code>Details</code> corresponding to the first
@@ -262,7 +276,7 @@ that describes about the config parameter. For example, see the <code>Details</c
 <span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">MyAwsRegion</span> </span>{
   <span class="hljs-keyword">implicit</span> <span class="hljs-keyword">val</span> awsRegionDescriptor: <span class="hljs-type">Descriptor</span>[<span class="hljs-type">MyAwsRegion</span>] =
     <span class="hljs-type">Descriptor</span>[<span class="hljs-type">String</span>]
-      .xmap(
+      .transform(
         string =&gt; <span class="hljs-type">MyAwsRegion</span>(<span class="hljs-type">AwsRegion</span>.from(string)), 
         _.value.toString
       ) ?? <span class="hljs-string">"value of type AWS.Region"</span>
@@ -276,4 +290,4 @@ Please find the example in <code>magnolia</code> package in examples module.</p>
 <p>Please find the examples in ChangeKeys.scala in magnolia module to find how to manipulate
 keys in an automatic derivation such as being able to specify keys as camelCase, kebabCase or snakeCase in
 the source config.</p>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 6/22/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Creation of ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/sources/sources_index"><span>Sources</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 7/28/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/configdescriptor/configdescriptor_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Manual creation of ConfigDescriptor</span></a><a class="docs-next button" href="/zio-config/docs/sources/sources_index"><span>Read from various Sources</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
