@@ -6,47 +6,104 @@ import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 
 import magnolia._
-import zio.config._
-import zio.config.derivation.DerivationUtils
 import zio.config.derivation.DerivationUtils._
 import zio.duration.Duration
 
 import scala.concurrent.duration.{ Duration => ScalaDuration }
 import scala.language.experimental.macros
-
-/**
- * DeriveConfigDescriptor.descriptor[Config] gives an automatic ConfigDescriptor for the case class Config recursively
- *
- * DeriveConfigDescriptor.descriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
- *
- * {{{
- *
- *    // Given
- *    final case class Config(username: String, age: Int)
- *
- *    // should work with no additional code
- *    val description = descriptor[Config]
- *
- *    val config = Config.fromSystemEnv(description)
- *
- * }}}
- *
- *
- * Please find more (complex) examples in the examples module in zio-config
- */
-object DeriveConfigDescriptor extends DeriveConfigDescriptor {
-  def mapClassName(name: String): String = toSnakeCase(name)
-  def mapFieldName(name: String): String = name
-
-  val wrapSealedTraitClasses: Boolean = true
-  val wrapSealedTraits: Boolean       = false
-}
+import zio.config._
 
 trait DeriveConfigDescriptor { self =>
+  case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
+    final def ??(description: String): Descriptor[T] =
+      describe(description)
+
+    def default(value: T): Descriptor[T] =
+      Descriptor(desc.default(value))
+
+    def describe(description: String): Descriptor[T] =
+      Descriptor(desc.describe(description))
+
+    def from(that: ConfigSource): Descriptor[T] =
+      Descriptor(desc.from(that))
+
+    def transform[B](f: T => B, g: B => T): Descriptor[B] =
+      xmap(f, g)
+
+    def transformEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
+      xmapEither(f, g)
+
+    def transformEitherLeft[B](f: T => Either[String, B], g: B => T): Descriptor[B] =
+      Descriptor(desc.transformEitherLeft(f, g))
+
+    def transformEitherLeft[E, B](f: T => Either[E, B])(g: B => T)(h: E => String): Descriptor[B] =
+      Descriptor(desc.transformEitherLeft[E, B](f)(g)(h))
+
+    def transformEitherRight[E, B](f: T => B, g: B => Either[String, T]): Descriptor[B] =
+      Descriptor(desc.transformEitherRight(f, g))
+
+    def transformEitherRight[E, B](f: T => B)(g: B => Either[E, T])(h: E => String): Descriptor[B] =
+      Descriptor(desc.transformEitherRight[E, B](f)(g)(h))
+
+    def xmap[B](f: T => B, g: B => T): Descriptor[B] =
+      Descriptor(desc.xmap(f, g))
+
+    def xmapEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
+      Descriptor(desc.xmapEither(f, g))
+
+    def xmapEither[E, B](f: T => Either[E, B])(g: B => Either[E, T])(h: E => String): Descriptor[B] =
+      Descriptor(desc.xmapEither[E, B](f)(g)(h))
+  }
+
+  object Descriptor {
+    def apply[A](implicit ev: Descriptor[A]): Descriptor[A] = ev
+
+    sealed trait SealedTraitSubClassNameStrategy {
+      def &&(
+        sealedTraitNameStrategy: SealedTraitNameStrategy
+      ): SealedTraitStrategy =
+        SealedTraitStrategy(this, sealedTraitNameStrategy)
+    }
+
+    object SealedTraitSubClassNameStrategy {
+      case object WrapSubClassName                    extends SealedTraitSubClassNameStrategy
+      case object IgnoreSubClassName                  extends SealedTraitSubClassNameStrategy
+      case class LabelSubClassName(fieldName: String) extends SealedTraitSubClassNameStrategy
+    }
+
+    sealed trait SealedTraitNameStrategy {
+      def &&(
+        subClassNameStrategy: SealedTraitSubClassNameStrategy
+      ): SealedTraitStrategy =
+        SealedTraitStrategy(subClassNameStrategy, this)
+    }
+
+    object SealedTraitNameStrategy {
+      case object WrapSealedTraitName   extends SealedTraitNameStrategy
+      case object IgnoreSealedTraitName extends SealedTraitNameStrategy
+    }
+
+    case class SealedTraitStrategy(
+      subClass: SealedTraitSubClassNameStrategy,
+      parentClass: SealedTraitNameStrategy
+    )
+
+    object SealedTraitStrategy {
+      import SealedTraitNameStrategy._
+      import SealedTraitSubClassNameStrategy._
+
+      def wrapSealedTraitName: SealedTraitNameStrategy   = WrapSealedTraitName
+      def ignoreSealedTraitName: SealedTraitNameStrategy = IgnoreSealedTraitName
+
+      def wrapSubClassName: SealedTraitSubClassNameStrategy                     = WrapSubClassName
+      def ignoreSubClassName: SealedTraitSubClassNameStrategy                   = IgnoreSubClassName
+      def labelSubClassName(fieldName: String): SealedTraitSubClassNameStrategy = LabelSubClassName(fieldName)
+    }
+  }
 
   /**
    *
-   * Strategy to how to name the class names in the actual config (if they are used in the config)
+   * Strategy on how to name the class names in the actual config (if they are used in the config)
    *
    * Example:
    *
@@ -61,54 +118,13 @@ trait DeriveConfigDescriptor { self =>
    *    final case class MyConfig(auth: Credentials)
    *  }}}
    *
-   *  If the source is HOCON and {{{ def mapClassName(name: String): String = toSnakeCase(name) }}}, then descriptor[MyConfig] can read:
-   *
-   *   {{{
-   *     auth : {
-   *       username_password : {
-   *          username : xyz
-   *          password : abc
-   *
-   *       }
-   *     }
-   *   }}}
-   *
-   *   If snake_case is not your choice and need to change to something else (example: kebabCase),
-   *   there are 2 alternative solutions,
-   *
-   *   {{{
-   *    sealed trait Credentials
-   *
-   *    @name("username-password")
-   *    case class UsernamePassword(username: String, password: String) extends Credentials
-   *
-   *    @name("token")
-   *    case class Token(username: String, tokenId: String) extends Credentials.
-   *   }}}
-   *
-   *   With the above structure, if the source is HOCON, descriptor[Credentials] can read:
-   *
-   *   {{{
-   *     auth : {
-   *       username-password : {
-   *          username : xyz
-   *          password : abc
-   *       }
-   *     }
-   *   }}}
-   *
-   *   If you need the kebabCase to be applied for all the sealed-traits in your entire app,
-   *   then the second, and the best solution is to do the following:
+   *  Given:
    *
    *   {{{
    *     import zio.config._
    *
    *     val customDerivation = new DeriveConfigDescriptor {
-   *         def mapClassName(name: String): String = camelToKebab(name)
-   *         def mapFieldName(name: String): String = name
-   *
-   *         val wrapSealedTraitClasses: Boolean = true
-   *         val wrapSealedTraits: Boolean       = false
+   *         override def mapClassName(name: String): String = camelToKebab(name)
    *     }
    *
    *     // Usage:
@@ -116,7 +132,34 @@ trait DeriveConfigDescriptor { self =>
    *
    *   }}}
    *
-   *   If the source is HOCON, then {{{ customDerivation.descriptor[MyConfig] }}} can read:
+   *  If the source is HOCON, then {{{ customDerivation.descriptor[MyConfig] }}} can read:
+   *
+   *   {{{
+   *     auth : {
+   *       username-password : {
+   *          username : xyz
+   *          password : abc
+   *
+   *       }
+   *     }
+   *
+   *   }}}
+   *
+   *   Alternative solution:
+   *
+   *   {{{
+   *
+   *    sealed trait Credentials
+   *
+   *    @name("username-password")
+   *    case class UsernamePassword(username: String, password: String) extends Credentials
+   *
+   *    @name("token")
+   *    case class Token(username: String, tokenId: String) extends Credentials.
+   *
+   *   }}}
+   *
+   *   With the above structure, if the source is HOCON, the default {{{ descriptor[Credentials] }}} can read:
    *
    *   {{{
    *     auth : {
@@ -126,23 +169,19 @@ trait DeriveConfigDescriptor { self =>
    *       }
    *     }
    *   }}}
+   *
+   *   The latter solution is more specific to each sealed traits.
    */
-  def mapClassName(name: String): String
+  def mapClassName(name: String): String =
+    camelToSnake(name)
 
   /**
    *
-   *  trategy to how to name the class names in the actual config (if they are used in the config)
-   *
-   * Now assume that you need the fieldnames and classnames to be UPPERCASE in the config, and not camelCase,
-   * then you could do the following
+   *  Strategy on how to name the field names in the actual config
    *
    *   {{{
    *      val customDerivation = new DeriveConfigDescriptor {
-   *        def mapClassName(name: String): String = name.toUpperCase
-   *        def mapFieldName(name: String): String = name.toUpperCase
-   *
-   *        val wrapSealedTraitClasses: Boolean = true
-   *        val wrapSealedTraits: Boolean       = false
+   *        override def mapFieldName(name: String): String = name.toUpperCase
    *      }
    *
    *      // Usage:
@@ -165,32 +204,32 @@ trait DeriveConfigDescriptor { self =>
    *  If the source is HOCON, then {{{ customDerivation.descriptor[MyConfig] }}} can read:
    *
    *   {{{
-   *       AUTH : {
-   *         USERNAMEPASSWORD : {
+   *       auth : {
+   *         username_password : {
    *            USERNAME : xyz
    *            PASSWORD : abc
    *         }
    *       }
    *   }}}
    */
-  def mapFieldName(name: String): String
+  def mapFieldName(name: String): String =
+    name
 
   /**
+   *  Strategy to deal with sealed traits specifically.
    *
-   *  Strategy to deal with the use of classnames in the config.
+   *  Keep a note that the class names and field names are `kebab` case in these examples.
    *
-   *  Now say, you need to skip the use of classnames in the config, then the following is the solution:
+   *  Suppose need to skip the use of class-names (both subclass names and name of the sealed trait in the source config),
+   *  then we need the following custom derivation:
    *
    *   {{{
-   *      import zio.config._
+   *      import Descriptor.SealedTraitStrategy._
    *
    *      val customDerivation = new DeriveConfigDescriptor {
-   *        def mapClassName(name: String): String = camelToKebab(name)
-   *        def mapFieldName(name: String): String = camelToKebab(name)
-   *
-   *        val wrapSealedTraitClasses: Boolean = false
-   *        val wrapSealedTraits: Boolean       = false
-   *     }
+   *         override def sealedTraitStrategy: Descriptor.SealedTraitStrategy =
+   *          ignoreSubClassName && ignoreSealedTraitName
+   *      }
    *   }}}
    *
    *  Given,
@@ -216,22 +255,39 @@ trait DeriveConfigDescriptor { self =>
    *   }}}
    *
    *   However, we don't recommend you doing it.
-   */
-  def wrapSealedTraitClasses: Boolean
-
-  /**
    *
-   * Strategy to deal with the use of sealed-trait name in the config.
+   *   Another option is to be able to read config such as :
    *
-   * Another customisation you would need is to make use of the name of the sealed trait itself,
-   * along with the names of the subclasses:
+   *   {{{
+   *
+   *     auth : {
+   *       type     : username-password
+   *       username : xyz
+   *       password : abc
+   *     }
+   *
+   *   }}}
+   *
+   *   In order to read the above config, we need a custom descriptor as below:
+   *
+   *   {{{
+   *      import zio.config._
+   *
+   *      val customDerivation = new DeriveConfigDescriptor {
+   *        override def sealedTraitStrategy: Descriptor.SealedTraitStrategy =
+   *          labelSubClassName("type") && ignoreSealedTraitName
+   *     }
+   *   }}}
+   *
+   *
+   * Sometimes, we have situation where we can't ignore sealedTraitName in the config.
    *
    * Example:
    *
    *   {{{
    *     sealed trait ACredentials
    *
-   *     object KinesisConfig {
+   *     object ACredentials {
    *       final case class UsernamePassword(username: String, password: String)
    *     }
    *
@@ -241,30 +297,16 @@ trait DeriveConfigDescriptor { self =>
    *       final case class UsernamePassword(username: String, password: String)
    *     }
    *
-   *   final case class MyConfig(credentials: Either[ACredentials, BCredentials]
+   *   final case class MyConfig(auth: Either[ACredentials, BCredentials]
    *
    *   }}}
    *
-   *  Given ,
-   *
-   *   {{{
-   *
-   *     import zio.config._
-   *
-   *     val myDefaultDerivation = new DeriveConfigDescriptor {
-   *       def mapClassName(name: String): String = camelToSnakeCase(name)
-   *       def mapFieldName(name: String): String = name
-   *       val wrapSealedTraitClasses: Boolean = true
-   *       val wrapSealedTraits: Boolean       = false
-   *    }
-   *
-   *   }}}
-   *
-   *  If the source is HOCON, then {{{ myDefaultDerivation.descriptor[MyConfig] }}} can read:
+   *   With the default strategy which is {{ wrapClassName && ignoreSealedTraitName }},
+   *   and given the source is HOCON, then {{{ descriptor[MyConfig] }}} can read:
    *
    *  {{{
-   *     credentials: {
-   *        username-password : {
+   *     auth: {
+   *        username_password : {
    *           username : xyz
    *           password: xyz
    *
@@ -272,10 +314,10 @@ trait DeriveConfigDescriptor { self =>
    *     }
    *   }}}
    *
-   *  The issue with this config design is that it is ambiguous that whether username-password represents `ACredentials`
+   *  The issue with this config design is that it is ambiguous that whether username_password represents `ACredentials`
    *  or `BCredentials`.
    *
-   *  The way to solve this problem is by setting wrapSealedTraits to true
+   *  The way to solve this problem is by specifying {{{ wrapSealedTraitName }}}
    *
    *  Given,
    *
@@ -283,10 +325,8 @@ trait DeriveConfigDescriptor { self =>
    *     import zio.config._
    *
    *     val betterDerivation = new DeriveConfigDescriptor {
-   *       def mapClassName(name: String): String = camelToSnakeCase(name)
-   *       def mapFieldName(name: String): String = name
-   *       val wrapSealedTraitClasses: Boolean = true
-   *       val wrapSealedTraits: Boolean       = true
+   *        override def sealedTraitStrategy: Descriptor.SealedTraitStrategy =
+   *          wrapSubClassName && wrapSealedTraitName
    *    }
    *  }}}
    *
@@ -304,7 +344,10 @@ trait DeriveConfigDescriptor { self =>
    *   }}}
    *
    */
-  def wrapSealedTraits: Boolean
+  import Descriptor.SealedTraitStrategy, SealedTraitStrategy._
+
+  def sealedTraitStrategy: SealedTraitStrategy =
+    wrapSubClassName && ignoreSealedTraitName
 
   import zio.config.ConfigDescriptor._
 
@@ -365,69 +408,19 @@ trait DeriveConfigDescriptor { self =>
   protected def optionDesc[A](configDesc: ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
     configDesc.optional
 
-  case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
-    final def ??(description: String): Descriptor[T] =
-      describe(description)
-
-    def default(value: T): Descriptor[T] =
-      Descriptor(desc.default(value))
-
-    def describe(description: String): Descriptor[T] =
-      Descriptor(desc.describe(description))
-
-    def from(that: ConfigSource): Descriptor[T] =
-      Descriptor(desc.from(that))
-
-    def transform[B](f: T => B, g: B => T): Descriptor[B] =
-      xmap(f, g)
-
-    def transformEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
-      xmapEither(f, g)
-
-    def transformEitherLeft[B](f: T => Either[String, B], g: B => T): Descriptor[B] =
-      Descriptor(desc.transformEitherLeft(f, g))
-
-    def transformEitherLeft[E, B](f: T => Either[E, B])(g: B => T)(h: E => String): Descriptor[B] =
-      Descriptor(desc.transformEitherLeft[E, B](f)(g)(h))
-
-    def transformEitherRight[E, B](f: T => B, g: B => Either[String, T]): Descriptor[B] =
-      Descriptor(desc.transformEitherRight(f, g))
-
-    def transformEitherRight[E, B](f: T => B)(g: B => Either[E, T])(h: E => String): Descriptor[B] =
-      Descriptor(desc.transformEitherRight[E, B](f)(g)(h))
-
-    def xmap[B](f: T => B, g: B => T): Descriptor[B] =
-      Descriptor(desc.xmap(f, g))
-
-    def xmapEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
-      Descriptor(desc.xmapEither(f, g))
-
-    def xmapEither[E, B](f: T => Either[E, B])(g: B => Either[E, T])(h: E => String): Descriptor[B] =
-      Descriptor(desc.xmapEither[E, B](f)(g)(h))
-  }
-
-  object Descriptor {
-    def apply[A](implicit ev: Descriptor[A]): Descriptor[A] = ev
-
-    sealed trait ClassNameStrategy
-
-    object ClassNameStrategy {
-      final case object WrapClassName         extends ClassNameStrategy
-      final case object IgnoreClassName       extends ClassNameStrategy
-      final case object ClassNameWithInConfig extends ClassNameStrategy
-    }
-  }
-
   type Typeclass[T] = Descriptor[T]
-
-  def toSnakeCase(name: String): String = DerivationUtils.toSnakeCase(name)
 
   final def wrapSealedTrait[T](
     label: String,
     desc: ConfigDescriptor[T]
   ): ConfigDescriptor[T] =
-    if (wrapSealedTraits) nested(label)(desc)
-    else desc
+    sealedTraitStrategy.parentClass match {
+      case Descriptor.SealedTraitNameStrategy.WrapSealedTraitName =>
+        nested(label)(desc)
+
+      case Descriptor.SealedTraitNameStrategy.IgnoreSealedTraitName =>
+        desc
+    }
 
   final def prepareClassName(annotations: Seq[Any], name: String): String =
     annotations.collectFirst { case d: name => d.name }.getOrElse(mapClassName(name))
@@ -440,7 +433,8 @@ trait DeriveConfigDescriptor { self =>
     val ccName       = prepareClassName(caseClass.annotations, caseClass.typeName.short)
 
     val res =
-      if (caseClass.isObject) constant[T](ccName, caseClass.construct(_ => ???))
+      if (caseClass.isObject)
+        constant[T](ccName, caseClass.construct(_ => ???))
       else
         caseClass.parameters.toList match {
           case Nil =>
@@ -491,9 +485,31 @@ trait DeriveConfigDescriptor { self =>
     val desc =
       sealedTrait.subtypes.map { subtype =>
         val typeclass: Descriptor[subtype.SType] = subtype.typeclass
-        val desc =
-          if (typeclass.isObject || !wrapSealedTraitClasses) typeclass.desc
-          else nested(nameToLabel(subtype.typeName.full))(typeclass.desc)
+
+        val subClassName =
+          nameToLabel(subtype.typeName.full)
+
+        val desc = sealedTraitStrategy.subClass match {
+          case Descriptor.SealedTraitSubClassNameStrategy.IgnoreSubClassName =>
+            typeclass.desc
+
+          case Descriptor.SealedTraitSubClassNameStrategy.WrapSubClassName if typeclass.isObject =>
+            typeclass.desc
+
+          case Descriptor.SealedTraitSubClassNameStrategy.WrapSubClassName =>
+            nested(subClassName)(typeclass.desc)
+
+          case Descriptor.SealedTraitSubClassNameStrategy.LabelSubClassName(_) if typeclass.isObject =>
+            typeclass.desc
+
+          case Descriptor.SealedTraitSubClassNameStrategy.LabelSubClassName(fieldName) =>
+            (string(fieldName) ?? s"Expecting a constant string ${subClassName}" |@| typeclass.desc).tupled
+              .xmapEither({
+                case (name, sub) =>
+                  if (subClassName == name) Right(sub)
+                  else Left(s"The type specified ${name} is not equal to the obtained config ${subtype.typeName.full}")
+              })(b => Right((subClassName, b)): Either[String, (String, subtype.SType)])(identity)
+        }
 
         wrapSealedTrait(prepareClassName(sealedTrait.annotations, sealedTrait.typeName.short), desc).xmapEither[T](
           st => Right(st),
@@ -507,11 +523,10 @@ trait DeriveConfigDescriptor { self =>
     Descriptor(desc)
   }
 
-  /**
-   * By default this method is not implicit to allow custom non-recursive derivation
-   * */
   implicit def getDescriptor[T]: Descriptor[T] = macro Magnolia.gen[T]
 
   def descriptor[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
     config.desc
 }
+
+object DeriveConfigDescriptor extends DeriveConfigDescriptor

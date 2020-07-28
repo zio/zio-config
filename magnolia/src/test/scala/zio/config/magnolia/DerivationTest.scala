@@ -42,10 +42,10 @@ object DerivationTest extends DefaultRunnableSpec {
     test("support name annotation") {
 
       val customDerivation = new DeriveConfigDescriptor {
-        override def mapClassName(name: String): String = name
-        override def mapFieldName(name: String): String = name
-        override def wrapSealedTraitClasses: Boolean    = true
-        override def wrapSealedTraits: Boolean          = true
+        import Descriptor.SealedTraitStrategy._
+        override def mapClassName(name: String): String                  = name
+        override def mapFieldName(name: String): String                  = name
+        override def sealedTraitStrategy: Descriptor.SealedTraitStrategy = wrapSealedTraitName && wrapSubClassName
       }
 
       @name("St")

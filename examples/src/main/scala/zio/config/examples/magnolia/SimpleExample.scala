@@ -23,8 +23,8 @@ object MyConfig {
   case class Token(value: String)    extends Credentials
 
   sealed trait Price
-  case class INR(value: Int)      extends Price
-  case class AUD(dollars: Double) extends Price
+  case class Inr(value: Int)      extends Price
+  case class Aud(dollars: Double) extends Price
 
   @describe("This config is about aws")
   final case class Aws(region: String, credentials: Credentials)
@@ -52,9 +52,11 @@ object AutomaticConfigDescriptor extends App {
 
   private val config = read(automaticConfig from source)
 
+  println(config)
+
   assert(
     config ==
-      Right(MyConfig(Aws("us-east", Token("token")), INR(1000), DbUrl("some url"), 10, Some(3.14), Left(30.0), 12, 14))
+      Right(MyConfig(Aws("us-east", Token("token")), Inr(1000), DbUrl("some url"), 10, Some(3.14), Left(30.0), 12, 14))
   )
 
 }
