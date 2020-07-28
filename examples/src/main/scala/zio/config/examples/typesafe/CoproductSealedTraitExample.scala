@@ -4,7 +4,7 @@ import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
 import zio.config.read
 
-object CoproductSdsdsealedTraitExample extends App with EitherImpureOps {
+object CoproductSealedTraitExample extends App with EitherImpureOps {
 
   sealed trait X
 
@@ -74,8 +74,6 @@ object CoproductSdsdsealedTraitExample extends App with EitherImpureOps {
            |""".stripMargin
       )
       .loadOrThrow
-
-  println(read(descriptor[Config] from aHoconSource))
 
   assert(read(descriptor[Config] from aHoconSource) == Right(Config(A)))
   assert(read(descriptor[Config] from bHoconSource) == Right(Config(B)))

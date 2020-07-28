@@ -301,7 +301,7 @@ trait DeriveConfigDescriptor { self =>
    *
    *   }}}
    *
-   *   With the default strategy which is {{ wrapClassName && ignoreSealedTraitName }},
+   *   With the default strategy which is {{ wrapSubClassName && ignoreSealedTraitName }},
    *   and given the source is HOCON, then {{{ descriptor[MyConfig] }}} can read:
    *
    *  {{{

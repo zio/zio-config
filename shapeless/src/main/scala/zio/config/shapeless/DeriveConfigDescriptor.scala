@@ -9,7 +9,7 @@ import shapeless._
 import shapeless.labelled._
 import zio.config._
 import zio.config.derivation.DerivationUtils.constant
-import zio.config.derivation.{ DerivationUtils, NeedsDerive }
+import zio.config.derivation.NeedsDerive
 import zio.duration.Duration
 
 import scala.concurrent.duration.{ Duration => ScalaDuration }
