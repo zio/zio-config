@@ -373,7 +373,7 @@ object ListExample extends App with EitherImpureOps {
     TypesafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow
 
   val zioConfigWithKeysInKebabResult =
-    read(descriptor[ExportDetails].mapKey(camelToKebab) from kebabConfigSource)
+    read(descriptor[ExportDetails].mapKey(toKebabCase) from kebabConfigSource)
 
   assert(
     zioConfigWithKeysInKebabResult ==

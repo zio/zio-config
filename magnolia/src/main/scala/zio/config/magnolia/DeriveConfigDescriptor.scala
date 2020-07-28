@@ -173,7 +173,7 @@ trait DeriveConfigDescriptor { self =>
    *   The latter solution is more specific to each sealed traits.
    */
   def mapClassName(name: String): String =
-    camelToSnake(name)
+    toSnakeCase(name)
 
   /**
    *

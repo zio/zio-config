@@ -150,7 +150,7 @@ If you want custom names for your fields, use `name` annotation.
 ```scala
 import zio.config._
 
-descriptor[MyConfig].mapKey(camelToKebab)
+descriptor[MyConfig].mapKey(toKebabCase)
 
 ```
 

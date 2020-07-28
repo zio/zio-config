@@ -27,10 +27,10 @@ private[config] trait KeyConversionFunctions {
     loop(input.codePoints().iterator().asScala.map(x => x: Int).toList, Nil, Nil, beginning = true)
   }
 
-  val camelToKebab: String => String =
+  val toKebabCase: String => String =
     camelToDelimiter(_, "-")
 
-  val camelToSnake: String => String =
+  val toSnakeCase: String => String =
     camelToDelimiter(_, "_")
 
   def addPrefix(prefix: String): String => String =

@@ -58,7 +58,7 @@ object DeriveConfigDescriptor extends DeriveConfigDescriptor {
  *
  * */
 object NonRecursiveDerivation extends DeriveConfigDescriptor {
-  def mapClassName(name: String): String = toSnakeCase(name)
+  def mapClassName(name: String): String = zio.config.toSnakeCase(name)
   def mapFieldName(name: String): String = name
 
   val wrapSealedTraitClasses: Boolean = true
@@ -311,8 +311,6 @@ trait DeriveConfigDescriptor {
     val desc = cs().map(mapCase(_)).reduce(_.orElse(_))
     ClassDescriptor(desc, typeName(), isObject = false)
   }
-
-  def toSnakeCase(name: String): String = DerivationUtils.toSnakeCase(name)
 
   def mapClassName(name: String): String
 
