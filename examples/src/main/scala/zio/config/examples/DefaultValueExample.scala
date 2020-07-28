@@ -1,9 +1,6 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
-import zio.config.ConfigDocs._
-import zio.config.ConfigSource, ConfigSource._
-import zio.config.ConfigDocs
+import zio.config._, ConfigDescriptor._, ConfigDocs._, ConfigSource._
 
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])

@@ -57,6 +57,8 @@ object Cfg extends App with EitherImpureOps {
       |fieldName = a
       |""".stripMargin
 
+  println(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2).loadOrThrow))
+
   assert(
     read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2).loadOrThrow) == Right(Cfg(A))
   )

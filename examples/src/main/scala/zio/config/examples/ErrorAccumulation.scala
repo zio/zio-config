@@ -1,8 +1,6 @@
 package zio.config.examples
 
-import zio.config._
-import zio.config.ConfigDescriptor._
-import zio.config.ReadError._
+import zio.config._, ConfigDescriptor._, ReadError._
 
 object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)

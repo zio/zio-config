@@ -1,7 +1,6 @@
 package zio.config.examples
 
-import zio.config.ConfigDescriptor._
-import zio.config._
+import zio.config._, ConfigDescriptor._
 
 object EitherExample extends App {
   final case class Ldap(value: String)  extends AnyVal
