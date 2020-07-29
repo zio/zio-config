@@ -18,6 +18,10 @@ jdk_8: &jdk_8
 jdk_11: &jdk_11
   JDK_VERSION: 11
 
+unit_test_env: &unit_test_env
+  SYSTEMPROPERTIESTEST_SIZE: 100
+  SYSTEMPROPERTIESTEST_DESCRIPTION: ABC
+
 machine_resource: &machine_resource
   resource_class: medium
 
@@ -131,9 +135,6 @@ testJVM: &testJVM
     - checkout
     - <<: *load_cache
     - <<: *install_jdk
-    environment:
-          SYSTEMPROPERTIESTEST_SIZE: 100
-          SYSTEMPROPERTIESTEST_DESCRIPTION: ABC
     - run:
         name: Run tests
         command: ./sbt ++${SCALA_VERSION}! ${ROOT_PROJECT}/test
@@ -211,6 +212,7 @@ jobs:
     environment:
       - <<: *scala_211
       - <<: *jdk_8
+      - <<: *unit_test_env
 
   test_212_jdk8_jvm:
     <<: *testJVM
@@ -219,6 +221,7 @@ jobs:
     environment:
       - <<: *scala_212
       - <<: *jdk_8
+      - <<: *unit_test_env
 
   test_213_jdk8_jvm:
     <<: *testJVM
@@ -227,6 +230,7 @@ jobs:
     environment:
       - <<: *scala_213
       - <<: *jdk_8
+      - <<: *unit_test_env
 
   test_212_jdk11_jvm:
     <<: *testJVM
@@ -235,6 +239,7 @@ jobs:
     environment:
       - <<: *scala_212
       - <<: *jdk_11
+      - <<: *unit_test_env
 
   release:
     <<: *release
