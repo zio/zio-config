@@ -2,17 +2,15 @@ package zio.config
 
 import java.{ util => ju }
 
-import zio.UIO
+import zio.{ IO, Task, UIO, ZIO }
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 import zio.config.PropertyTree.{ unflatten, Leaf, Record, Sequence }
-import zio.ZIO
 import java.io.FileInputStream
 import java.io.File
 
 import These._
-import zio.Task
 
 trait ConfigSourceModule extends KeyValueModule {
 
@@ -346,7 +344,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         leafForSequence
       )
 
-    def fromSystemEnv: UIO[ConfigSource] =
+    def fromSystemEnv: IO[ReadError[String], ConfigSource] =
       fromSystemEnv(None, None)
 
     /**
@@ -376,12 +374,17 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid
-    ): UIO[ConfigSource] =
-      UIO
-        .effectTotal(sys.env)
-        .map(
-          map => fromMap(map, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
-        )
+    ): IO[ReadError[String], ConfigSource] = {
+      val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
+      if (keyDelimiter.forall(validDelimiters.contains)) {
+        IO.effectTotal(sys.env)
+          .map(
+            systemEnvMap => fromMap(systemEnvMap, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
+          )
+      } else {
+        IO.fail(ReadError.SourceError[String](s"Invalid system key delimiter: ${keyDelimiter.get}"))
+      }
+    }
 
     def fromSystemProperties: UIO[ConfigSource] =
       fromSystemProperties(None, None)

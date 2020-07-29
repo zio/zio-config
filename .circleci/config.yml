@@ -131,6 +131,9 @@ testJVM: &testJVM
     - checkout
     - <<: *load_cache
     - <<: *install_jdk
+    environment:
+          SYSTEMPROPERTIESTEST_SIZE: 100
+          SYSTEMPROPERTIESTEST_DESCRIPTION: ABC
     - run:
         name: Run tests
         command: ./sbt ++${SCALA_VERSION}! ${ROOT_PROJECT}/test

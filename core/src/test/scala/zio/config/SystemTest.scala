@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.ZIO
+import zio.{ UIO, ZIO }
 import zio.config.ConfigDescriptor._
 import zio.random.Random
 import zio.test.Assertion._
@@ -21,6 +21,30 @@ object SystemTest extends DefaultRunnableSpec {
 
           assertM(result.either)(isRight(equalTo(config)))
         }
+      },
+      testM("from system environment") {
+        val config       = SomeConfig(100, "ABC")
+        val keyDelimiter = '_'
+        val result =
+          ZIO.environment.provideLayer(Config.fromSystemEnv(SomeConfig.descriptor, Some(keyDelimiter))).map(_.get)
+
+        assertM(result.either)(isRight(equalTo(config)))
+      },
+      testM("invalid system environment delimiter") {
+        val keyDelimiter = '.'
+        val result =
+          ZIO.environment.provideLayer(Config.fromSystemEnv(SomeConfig.descriptor, Some(keyDelimiter))).map(_.get)
+
+        assertM(result.either)(
+          isLeft(
+            equalTo(
+              ReadError.SourceError[String](
+                message = s"Invalid system key delimiter: $keyDelimiter",
+                annotations = Set.empty
+              )
+            )
+          )
+        )
       }
     )
 
@@ -39,14 +63,15 @@ object SystemTest extends DefaultRunnableSpec {
       desc <- Gen.anyString
     } yield SomeConfig(size, desc)
 
-  def genDelimiter: Gen[Random, Char] = Gen.elements('.', '_', '-', ':')
+  def genDelimiter: Gen[Random, Char]       = Gen.elements('.', '_', '-', ':')
+  def genSystemDelimiter: Gen[Random, Char] = Gen.elements('_')
 
-  def setSystemProperties(config: SomeConfig, delimiter: Char) = ZIO.succeed {
+  def setSystemProperties(config: SomeConfig, delimiter: Char): UIO[String] = ZIO.succeed {
     java.lang.System.setProperty(s"SYSTEMPROPERTIESTEST${delimiter}SIZE", config.size.toString)
     java.lang.System.setProperty(s"SYSTEMPROPERTIESTEST${delimiter}DESCRIPTION", config.description)
   }
 
-  def clearSystemProperties(delimiter: Char) = ZIO.succeed {
+  def clearSystemProperties(delimiter: Char): UIO[String] = ZIO.succeed {
     java.lang.System.clearProperty(s"SYSTEMPROPERTIESTEST${delimiter}SIZE")
     java.lang.System.clearProperty(s"SYSTEMPROPERTIESTEST${delimiter}DESCRIPTION")
   }
