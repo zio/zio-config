@@ -1,7 +1,6 @@
 package zio.config.shapeless
 
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.config.ConfigSource
 import zio.test.Assertion._
 import zio.test._
 import zio.config._
@@ -29,13 +28,13 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       case class Cfg(fieldName: String)
 
-      val res = write(descriptor[Cfg], Cfg("a"))
+      val res = write(getDescriptor[Cfg].configDescriptor, Cfg("a"))
 
       assert(res)(isRight(equalTo(Record(Map("prefix_field_name" -> Leaf("a")))))) &&
       assert(
         res
           .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
-          .flatMap(v => read(descriptor[Cfg] from v))
+          .flatMap(v => read(getDescriptor[Cfg].configDescriptor from v))
       )(
         isRight(equalTo(Cfg("a")))
       )
@@ -51,13 +50,13 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       case class Outer(list: List[Inner])
 
-      implicit val cInner: Descriptor[Inner] = descriptor[Inner]
+      implicit val cInner: Descriptor[Inner] = getDescriptor[Inner]
 
       val _ = cInner
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(OverrideDerivationTestEnv.descriptor[Outer], cfg)
+      val res = write(OverrideDerivationTestEnv.getDescriptor[Outer].configDescriptor, cfg)
 
       val expected = Record(
         Map(
@@ -76,7 +75,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
       assert(
         res
           .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
-          .flatMap(v => read(descriptor[Outer] from v))
+          .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
       )(
         isRight(equalTo(cfg))
       )
@@ -94,11 +93,11 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      implicit val cInner: Descriptor[Inner] = descriptor[Inner]
+      implicit val cInner: Descriptor[Inner] = getDescriptor[Inner]
 
       val _ = cInner
 
-      val res = write(descriptor[Outer], cfg)
+      val res = write(getDescriptor[Outer].configDescriptor, cfg)
 
       val expected = Record(
         Map(
@@ -117,7 +116,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
       assert(
         res
           .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
-          .flatMap(v => read(descriptor[Outer] from v))
+          .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
       )(
         isRight(equalTo(cfg))
       )

@@ -1,7 +1,6 @@
 package zio.config.examples
 
-import zio.config.Config
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 import zio.console.Console
 import zio.{ config, console, App, ExitCode, ZEnv, ZIO, ZLayer }
 

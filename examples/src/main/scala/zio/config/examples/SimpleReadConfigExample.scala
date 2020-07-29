@@ -1,10 +1,7 @@
 package zio.config.examples
 
-import zio.config._
-import ConfigDescriptor._
-import zio.console.Console
-import zio.config.Config
-import zio.config.config
+import zio.config._, ConfigDescriptor._
+import zio.console._
 import zio.{ App, ExitCode, ZEnv, ZIO }
 
 case class Prod(ldap: String, port: Int, dburl: Option[String])

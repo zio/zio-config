@@ -1,8 +1,6 @@
 package zio.config.examples
 
 import zio.config._, ConfigDescriptor._
-import zio.config.ConfigSource
-import zio.config.singleton
 
 // see Stackoverflow: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
 object CoproductExample extends App {

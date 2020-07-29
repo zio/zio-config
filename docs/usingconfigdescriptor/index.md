@@ -1,6 +1,6 @@
 ---
 id: configdescriptorusage_index
-title:  "Using ConfigDescriptor"
+title:  "Using ConfigDescriptor for Read, Write, Document and Report"
 ---
 
 ## Using Config Descriptor
@@ -19,8 +19,7 @@ You should be familiar with reading config from various sources, given a  config
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config._, ConfigDescriptor._, PropertyTree._
-import zio.config.ConfigDocs.{Leaf => _, _}
+import zio.config._, ConfigDescriptor._, PropertyTree._, ConfigDocs.{Leaf => _, _}
 
 ```
 
@@ -211,38 +210,60 @@ To generate the documentation of the config, call `generateDocs`.
 ```scala mdoc:silent
  import zio.config.ConfigDocs
 
- generateDocs(appConfig)
+ val generatedDocs = generateDocs(appConfig)
 
-  // yields the result `ConfigDocs[String, String]`:
+ // as markdown 
+  val markdown =
+     generatedDocs.toTable.asMarkdownContent
 
- ConfigDocs.Zip(
-   ConfigDocs.Zip(
-     ConfigDocs.Nested(
-       "south",
-       ConfigDocs.Zip(
-         ConfigDocs.Nested("connection", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string", "South details"))),
-         ConfigDocs.Nested("port", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type int", "South details")))
-       )
-     ),
-     ConfigDocs.Nested(
-       "east",
-       ConfigDocs.Zip(
-         ConfigDocs.Nested("connection", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string", "East details"))),
-         ConfigDocs.Nested("port", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type int", "East details")))
-       )
-     )
-   ),
-   ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string")))
- )
+ // produces the following markdown
+
+  /*
+    |FieldName             |Format                 |Description               |Sources |
+    |---                   |---                    |---                       |---     |
+    |appName               |primitive              |value of type string, asdf|constant|
+    |[east](#root.east_1)  |[all-of](#root.east_1) |                          |        |
+    |[south](#root.south_0)|[all-of](#root.south_0)|                          |        |
+    
+    ### root.east_1
+    
+    |FieldName |Format   |Description                             |Sources |
+    |---       |---      |---                                     |---     |
+    |port      |primitive|value of type int, East details, asdf   |constant|
+    |connection|primitive|value of type string, East details, asdf|constant|
+    
+    ### root.south_0
+    
+    |FieldName |Format   |Description                              |Sources |
+    |---       |---      |---                                      |---     |
+    |port      |primitive|value of type int, South details, asdf   |constant|
+    |connection|primitive|value of type string, South details, asdf|constant|
+   */  
 ```
 
-#### More detail
-`ConfigDocs.Zip(left, right)` means the `left` and `right` should exist in the config. For the same reason we have
-`ConfigDocs.Nested`, `Or` etc, that are nodes of `ConfigDocs[K,V]`. `K` means, the value of `key` and `V` is
-the type of the value before it gets parsed.
+In the above `markdown` is a standard markdown format string, rendered as:
 
-We will see more better representation of the documentation in the immediate future versions of zio-config.
 
+   |FieldName             |Format                 |Description               |Sources |
+   |---                   |---                    |---                       |---     |
+   |appName               |primitive              |value of type string, asdf|constant|
+   |[east](#root.east_1)  |[all-of](#root.east_1) |                          |        |
+   |[south](#root.south_0)|[all-of](#root.south_0)|                          |        |
+   
+   ### root.east_1
+   
+   |FieldName |Format   |Description                             |Sources |
+   |---       |---      |---                                     |---     |
+   |port      |primitive|value of type int, East details, asdf   |constant|
+   |connection|primitive|value of type string, East details, asdf|constant|
+   
+   ### root.south_0
+   
+   |FieldName |Format   |Description                              |Sources |
+   |---       |---      |---                                      |---     |
+   |port      |primitive|value of type int, South details, asdf   |constant|
+   |connection|primitive|value of type string, South details, asdf|constant|
+   
 
 ## Report on the config
 

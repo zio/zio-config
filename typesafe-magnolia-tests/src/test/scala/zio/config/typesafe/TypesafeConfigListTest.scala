@@ -139,7 +139,7 @@ object TypesafeConfigListTest extends DefaultRunnableSpec {
 
       val zioConfigWithKeysInKebabResult = TypesafeConfigSource
         .fromHoconString(kebabCaseConfig)
-        .fold(v => Left(v), s => read(descriptor[ExportDetails].mapKey(camelToKebab) from s))
+        .fold(v => Left(v), s => read(descriptor[ExportDetails].mapKey(toKebabCase) from s))
 
       val expectedResult = Right(
         ExportDetails(

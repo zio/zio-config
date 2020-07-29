@@ -99,36 +99,42 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       loop(self)
     }
 
+    final def transform[B](to: A => B, from: B => A): ConfigDescriptor[B] =
+      self.xmapEither(a => Right(to(a)), b => Right(from(b)))
+
+    final def transformEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[B] =
+      self.xmapEither(f, g)
+
+    final def transformEitherLeft[B](f: A => Either[String, B], g: B => A): ConfigDescriptor[B] =
+      self.transformEitherLeft(f)(g)(identity)
+
+    final def transformEitherLeft[E, B](f: A => Either[E, B])(g: B => A)(h: E => String): ConfigDescriptor[B] =
+      self.xmapEither[E, B](f)(b => Right(g(b)))(h)
+
+    final def transformEitherRight[B](f: A => B, g: B => Either[String, A]): ConfigDescriptor[B] =
+      self.transformEitherRight(f)(g)(identity)
+
+    final def transformEitherRight[E, B](f: A => B)(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
+      self.xmapEither[E, B](t => Right(f(t)))(g)(h)
+
     final def xmap[B](to: A => B, from: B => A): ConfigDescriptor[B] =
       self.xmapEither(a => Right(to(a)), b => Right(from(b)))
 
     final def xmapEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[B] =
       XmapEither(self, f, g)
 
-    def xmapEither2[B, C](
-      that: ConfigDescriptor[B]
-    )(f: (A, B) => Either[String, C], g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
-      (self |@| that)
-        .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
-        .xmapEither({ case (a, b) => f(a, b) }, g)
-
-    def xmapEitherE[E, B](f: A => Either[E, B])(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
+    final def xmapEither[E, B](f: A => Either[E, B])(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
       self.xmapEither[B](
         (a: A) => ((f(a): Either[E, B]).swap: Either[B, E]).map(h).swap,
         (b: B) => ((g(b): Either[E, A]).swap: Either[A, E]).map(h).swap
       )
 
-    def xmapEitherELeftPartial[E, B](f: A => Either[E, B])(g: B => A)(h: E => String): ConfigDescriptor[B] =
-      self.xmapEitherE[E, B](f)(b => Right(g(b)))(h)
-
-    def xmapEitherERightPartial[E, B](f: A => B)(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
-      self.xmapEitherE[E, B](t => Right(f(t)))(g)(h)
-
-    def xmapEitherLeftPartial[B](f: A => Either[String, B], g: B => A): ConfigDescriptor[B] =
-      xmapEitherELeftPartial(f)(g)(identity)
-
-    def xmapEitherRightPartial[B](f: A => B, g: B => Either[String, A]): ConfigDescriptor[B] =
-      xmapEitherERightPartial(f)(g)(identity)
+    final def xmapEither2[B, C](
+      that: ConfigDescriptor[B]
+    )(f: (A, B) => Either[String, C], g: C => Either[String, (A, B)]): ConfigDescriptor[C] =
+      (self |@| that)
+        .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
+        .xmapEither({ case (a, b) => f(a, b) }, g)
 
     final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
       Zip(self, that)
