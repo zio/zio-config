@@ -1,7 +1,6 @@
 package zio.config.examples.commandline
 
 import zio.config._, ConfigDescriptor._
-import zio.config.ConfigSource
 
 object ComplexExample extends App {
   val argss =

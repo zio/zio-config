@@ -1,10 +1,6 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
-import zio.config.ConfigDocs._
-import zio.config.ConfigSource
-import zio.config.PropertyTree
-import zio.config.ConfigDocs
+import zio.config._, ConfigDescriptor._, ConfigDocs._
 
 object ReadWriteReportExample extends App {
 

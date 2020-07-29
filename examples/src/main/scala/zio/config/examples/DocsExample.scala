@@ -1,7 +1,6 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
-import zio.config.ConfigDocs, ConfigDocs._
+import zio.config._, ConfigDescriptor._, ConfigDocs._
 
 object DocsExample extends App {
 
@@ -11,8 +10,25 @@ object DocsExample extends App {
     (int("PORT") ?? "Example: 8088" |@|
       string("URL").optional ?? "Example: abc.com")(Database.apply, Database.unapply) ?? "Database related"
 
+  val docs =
+    generateDocs(config)
+
+  val markdown =
+    docs.toTable.asMarkdownContent
+
+  println(markdown)
+
+  /*
+     ## Configuration Details
+
+
+     |FieldName|Format   |Description                                                             |Sources|
+     |---      |---      |---                                                                     |---    |
+     |URL      |primitive|value of type string, optional value, Example: abc.com, Database related|       |
+     |PORT     |primitive|value of type int, Example: 8088, Database related                      |       |
+   */
   assert(
-    generateDocs(config) ==
+    docs ==
       ConfigDocs.Zip(
         ConfigDocs.Nested(
           "PORT",

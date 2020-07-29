@@ -6,7 +6,6 @@ import eu.timepit.refined.collection.{ NonEmpty, Size }
 import eu.timepit.refined.numeric.{ Greater, GreaterEqual }
 import zio.config.refined._
 import zio.config._, ConfigDescriptor._
-import zio.config.ConfigSource
 
 object RefinedReadConfig extends App {
   case class RefinedProd(

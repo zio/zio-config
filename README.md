@@ -18,6 +18,8 @@ Using a single definition of configuration requirements, which can be derived au
 
 Please find more details in the [website](https://zio.github.io/zio-config/).
 
+If you are only interested in automatic derviation of configuration, find the details [here](https://zio.github.io/zio-config/docs/automatic/automatic_index).
+
 Jump to [examples](examples/src/main/scala/zio/config/examples) to see various usecases. Hop over to the [Discord](https://discord.gg/2ccFBr4) #zio-config channel to chat with developers and other users.
 
 Try out _ZIO Config_ quickly in [Scastie](https://scastie.scala-lang.org/afsalthaj/3ALODWLJQbWmFxqBJ2MYWA/90), which comes pre-loaded with an example. We try to make sure the scastie-buildsettings are updated with latest version of _ZIO Config_.
@@ -35,3 +37,4 @@ Try out _ZIO Config_ quickly in [Scastie](https://scastie.scala-lang.org/afsalth
 [Link-Scaladex-page]: https://index.scala-lang.org/zio/zio-config/zio-config "Scaladex"
 [Link-SonatypeReleases]: https://oss.sonatype.org/content/repositories/releases/dev/zio/zio-config_2.12/ "Sonatype Releases"
 [Link-Twitter]: https://twitter.com/zioscala
+

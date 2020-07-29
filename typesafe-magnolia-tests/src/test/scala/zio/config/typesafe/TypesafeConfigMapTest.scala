@@ -1,6 +1,6 @@
 package zio.config.typesafe
 
-import zio.config.{ BaseSpec, ConfigSource }
+import zio.config.{ BaseSpec }
 import zio.config._, ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test._

@@ -1,6 +1,6 @@
 ---
 id: sources_index
-title:  "Sources"
+title:  "Read from various Sources"
 ---
 
 zio-config supports various sources ranging from an in-memory Map, to environment variables, through to a HOCON file.
@@ -455,6 +455,6 @@ val complexSource = ConfigSource.fromCommandLineArgs(
   Some('.'),
   Some(',')
 )
-val appConfig = descriptor[AppConfig] from complexSource
+val appConfig = read(descriptor[AppConfig] from complexSource)
 
 ```
