@@ -31,6 +31,6 @@ object TypesafeConfig {
     Config.fromConfigDescriptorM(
       ZIO
         .fromEither(TypesafeConfigSource.fromTypesafeConfig(conf))
-        .bimap(error => ReadError.SourceError(message = error), configDescriptor from _)
+        .map(configDescriptor from _)
     )
 }
