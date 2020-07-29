@@ -1,6 +1,6 @@
 ---
 id: sources_index
-title:  "Sources"
+title:  "Read from various Sources"
 ---
 
 zio-config supports various sources ranging from an in-memory Map, to environment variables, through to a HOCON file.

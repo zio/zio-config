@@ -48,7 +48,7 @@ object CustomDerivations extends App {
   // globally for the automatic derivation to work.
   implicit val descriptorOfZonedDateTime: Descriptor[ZonedDateTime] =
     Descriptor[String]
-      .xmapEitherELeftPartial(
+      .transformEitherLeft(
         x => Try(ZonedDateTime.parse(x)).toEither
       )(_.toString)(_.getMessage) ?? "time in zoned date time"
 

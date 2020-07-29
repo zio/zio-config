@@ -42,6 +42,10 @@ trait ConfigSourceModule extends KeyValueModule {
       def leafForSequence: LeafForSequence              = isLeafValidSequence
     }
 
+  /**
+   * To specify if a singleton leaf should be considered
+   * as a valid sequence or not.
+   */
   sealed trait LeafForSequence
 
   object LeafForSequence {

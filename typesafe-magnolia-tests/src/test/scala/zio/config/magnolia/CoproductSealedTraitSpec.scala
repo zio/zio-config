@@ -2,7 +2,7 @@ package zio.config.magnolia
 
 import zio.config.PropertyTree._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.{ ConfigSource, _ }
+import zio.config._
 import zio.test.Assertion._
 import zio.test._
 

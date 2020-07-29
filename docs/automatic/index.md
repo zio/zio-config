@@ -1,6 +1,6 @@
 ---
 id: automatic_index
-title:  "Automatic Derivation of Config"
+title:  "Automatic Derivation of ConfigDescriptor"
 ---
 
 By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config.
@@ -11,6 +11,8 @@ This is much easier/intuitive unlike many existing implementations.
 
 Take a look at the magnolia examples in `zio-config`. One of them is provided here for quick access.
 
+Note:  `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects. 
+It will be deprecated once we find users have moved on from scala 2.11. 
 
 ### Example
 
@@ -42,9 +44,9 @@ Take a look at the magnolia examples in `zio-config`. One of them is provided he
 #### AutoDerivation
 ```scala
   // Setting up imports
+
+  import zio.config._, zio.config.typesafe._
   import zio.config.magnolia.DeriveConfigDescriptor._
-  import zio.config.typesafe.TypesafeConfigSource
-  import zio.config.read
 
   import X._
 ```
@@ -135,10 +137,20 @@ The fieldNames remain as it is as you can see. You can override this one as well
 They can be easily changed using `mapKey`. Note that, fieldName is not equal to className. So the `DetailsWrapped`
 in Scala code has to be `details_wrapped` in HOCON even after the below code.
 
+If you want custom names for your fields, use `name` annotation.
+
+```
+  import zio.config.derivation.name
+
+  @name("detailsWrapped")
+  case class  DetailsWrapped(detail: Detail) extends X
+
+```
+
 ```scala
 import zio.config._
 
-descriptor[MyConfig].mapKey(camelToKebab)
+descriptor[MyConfig].mapKey(toKebabCase)
 
 ```
 
@@ -161,11 +173,29 @@ case class DbUrl(value: String)
 
 ```
 
-This will be equivalent to specifying:
 
+This will be equivalent to the manual configuration of:
+
+```scala
+   (string("region") |@| string("dburl").transform(DbUrl, _.value))(Aws.apply, Aws.unapply) ?? "This config is about aws"
 ```
-   (string("region") |@| string("dburl").xmap(DbUrl, _.value))(Aws.apply, Aws.unapply) ?? "This config is about aws"
+
+You could provide `describe` annotation at field level
+
+Example:
+
+```scala
+case class Aws(@describe("AWS region") region: String, dburl: DbUrl)
 ```
+
+This will be equivalent to the manual configuration of:
+
+
+```scala
+   (string("region") ?? "AWS region" |@| string("dburl").transform(DbUrl, _.value))(Aws.apply, Aws.unapply) ?? "This config is about aws"
+```
+
+
 
 ### Custom ConfigDescription
 
@@ -197,7 +227,7 @@ In order to provide implicit instances, following choices are there
  import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
 
  implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
-   Descriptor[String].xmap(string => AwsRegion.from(string), _.toString)
+   Descriptor[String].transform(string => AwsRegion.from(string), _.toString)
 
 ```
 
@@ -212,19 +242,18 @@ The answer is, zio-config provides with all the functions that you need to handl
  import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
 
   implicit val descriptorO: Descriptor[ZonedDateTime] =
-    Descriptor[String]
-      .xmapEitherELeftPartial(x => Try (ZonedDateTime.parse(x)).toEither)(_.toString)(_.getMessage)
+    Descriptor[String].transformEitherLeft(x => Try (ZonedDateTime.parse(x)).toEither)(_.toString)(_.getMessage)
 ```
 
-What is xmapEitherLeftPartial ? Parsing a String to ZonedDateTime can fail, but converting it back to a string
-won't fail. Logically, these are respectively the first 2 functions that we passed to xmapEitherELeftPartial. The third
+What is transformEitherLeft ? Parsing a String to ZonedDateTime can fail, but converting it back to a string
+won't fail. Logically, these are respectively the first 2 functions that we passed to transformEitherLeft. The third
 parameter talks about how to covert the error type E, which in this case is Throwable, to a proper string which is then required
 for zio-config to report back to the user what's going on.
 
 PS: We recommend not to use `throwable.getMessage`. Provide more descriptive error message.
 
-You can also rely on `xmapEitherE` if both `to` and `fro` can fail. This is the most commonly used combinator in zio-config.
-Similarly if the error type is already String, then you can use `xmapEither` and avoid having to tell the API, how to convert
+You can also rely on `transformEither` if both `to` and `fro` can fail. This is the most commonly used combinator in zio-config.
+Similarly if the error type is already String, then you can use `transformEither` and avoid having to tell the API, how to convert
 `E` to `String`. We have already seen these types.
 
 ### Please give descriptions wherever possible for a better experience
@@ -238,8 +267,7 @@ some description to custom types as well. For example:
 
 
   implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
-    Descriptor[String]
-      .xmap(string => AwsRegion.from(string), _.toString) ?? "value of type AWS.Region"
+    Descriptor[String].transform(string => AwsRegion.from(string), _.toString) ?? "value of type AWS.Region"
 ```
 
 This way, when there is an error due to MissingValue, we get an error message (don't forget to use prettyPrint)
@@ -271,7 +299,7 @@ final case clas MyAwsRegion(value: AwsRegion)
 object MyAwsRegion {
   implicit val awsRegionDescriptor: Descriptor[MyAwsRegion] =
     Descriptor[String]
-      .xmap(
+      .transform(
         string => MyAwsRegion(AwsRegion.from(string)), 
         _.value.toString
       ) ?? "value of type AWS.Region"
