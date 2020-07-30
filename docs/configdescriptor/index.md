@@ -77,8 +77,10 @@ To read a config, means it has to perform some effects, and for that reason, it 
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
-val result: Layer[ReadError[String], zio.config.ZConfig[MyConfig]] =
-  ZConfig.fromSystemEnv(myConfig) // That's system environment
+val sysEnvLayer    = SystemModule.live
+
+// That's system environment
+val result: Layer[ReadError[String], zio.config.ZConfig[MyConfig]] = sysEnvLayer >>> ZConfig.fromSystemEnv(myConfig)
 ```
 
 Another way of doing this is:

@@ -18,10 +18,6 @@ jdk_8: &jdk_8
 jdk_11: &jdk_11
   JDK_VERSION: 11
 
-unit_test_env: &unit_test_env
-  SYSTEMPROPERTIESTEST_SIZE: 100
-  SYSTEMPROPERTIESTEST_DESCRIPTION: ABC
-
 machine_resource: &machine_resource
   resource_class: medium
 
@@ -212,7 +208,6 @@ jobs:
     environment:
       - <<: *scala_211
       - <<: *jdk_8
-      - <<: *unit_test_env
 
   test_212_jdk8_jvm:
     <<: *testJVM
@@ -221,7 +216,6 @@ jobs:
     environment:
       - <<: *scala_212
       - <<: *jdk_8
-      - <<: *unit_test_env
 
   test_213_jdk8_jvm:
     <<: *testJVM
@@ -230,7 +224,6 @@ jobs:
     environment:
       - <<: *scala_213
       - <<: *jdk_8
-      - <<: *unit_test_env
 
   test_212_jdk11_jvm:
     <<: *testJVM
@@ -239,7 +232,6 @@ jobs:
     environment:
       - <<: *scala_212
       - <<: *jdk_11
-      - <<: *unit_test_env
 
   release:
     <<: *release

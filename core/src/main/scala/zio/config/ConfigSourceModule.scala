@@ -11,6 +11,7 @@ import java.io.FileInputStream
 import java.io.File
 
 import These._
+import zio.config.SystemModule.SystemModule
 
 trait ConfigSourceModule extends KeyValueModule {
 
@@ -348,7 +349,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         leafForSequence
       )
 
-    def fromSystemEnv: IO[ReadError[String], ConfigSource] =
+    def fromSystemEnv: ZIO[SystemModule, ReadError[String], ConfigSource] =
       fromSystemEnv(None, None)
 
     /**
@@ -378,12 +379,16 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid
-    ): IO[ReadError[String], ConfigSource] = {
+    ): ZIO[SystemModule, ReadError[String], ConfigSource] = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
+
       if (keyDelimiter.forall(validDelimiters.contains)) {
-        IO.effectTotal(sys.env)
-          .map(
-            systemEnvMap => fromMap(systemEnvMap, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
+        ZIO
+          .accessM[SystemModule](_.get.getEnvironment)
+          .bimap(
+            error =>
+              ReadError.SourceError[String](s"Error while getting system environment variables: ${error.getMessage}"),
+            fromMap(_, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
           )
       } else {
         IO.fail(ReadError.SourceError[String](s"Invalid system key delimiter: ${keyDelimiter.get}"))
