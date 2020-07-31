@@ -56,7 +56,7 @@ Alternatively you can follow below snippet,  yielding Config[MyConfig], which yo
 
 ```scala mdoc:silent
 
-Config.fromMap(Map(), myConfig)
+ZConfig.fromMap(Map(), myConfig)
 // yielding Config[MyConfig], which is a service of config that you can use as ZIO environments.
 
 
@@ -89,7 +89,7 @@ Alternatively you can follow below snippet, yielding Config[MyConfig], which you
 
 ```scala mdoc:silent
 
-Config.fromMultiMap(Map(), myConfig, "constant")
+ZConfig.fromMultiMap(Map(), myConfig, "constant")
 // yielding Config[MyConfig], which is a service of config that you can use as ZIO environments.
 
 ```
@@ -183,7 +183,7 @@ val javaPropertiesSourceWithList =
 
 ```scala mdoc:silent
 
-Config.fromPropertiesFile("filepath", myConfig)
+ZConfig.fromPropertiesFile("filepath", myConfig)
 
 // yielding Config[MyConfig] which you provide to
 // functions with zio environment as Config[MyConfig]

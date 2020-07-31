@@ -15,7 +15,7 @@ object SystemTest extends DefaultRunnableSpec {
         checkM(genSomeConfig, genDelimiter) { (config, delimiter) =>
           val result = for {
             _ <- setSystemProperties(config, delimiter)
-            p <- ZIO.environment.provideLayer(Config.fromSystemProperties(SomeConfig.descriptor, Some(delimiter)))
+            p <- ZIO.environment.provideLayer(ZConfig.fromSystemProperties(SomeConfig.descriptor, Some(delimiter)))
             _ <- clearSystemProperties(delimiter)
           } yield p.get
 
@@ -26,14 +26,14 @@ object SystemTest extends DefaultRunnableSpec {
         val config       = SomeConfig(100, "ABC")
         val keyDelimiter = '_'
         val result =
-          ZIO.environment.provideLayer(Config.fromSystemEnv(SomeConfig.descriptor, Some(keyDelimiter))).map(_.get)
+          ZIO.environment.provideLayer(ZConfig.fromSystemEnv(SomeConfig.descriptor, Some(keyDelimiter))).map(_.get)
 
         assertM(result.either)(isRight(equalTo(config)))
       },
       testM("invalid system environment delimiter") {
         val keyDelimiter = '.'
         val result =
-          ZIO.environment.provideLayer(Config.fromSystemEnv(SomeConfig.descriptor, Some(keyDelimiter))).map(_.get)
+          ZIO.environment.provideLayer(ZConfig.fromSystemEnv(SomeConfig.descriptor, Some(keyDelimiter))).map(_.get)
 
         assertM(result.either)(
           isLeft(

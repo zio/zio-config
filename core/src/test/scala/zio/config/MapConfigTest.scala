@@ -25,8 +25,8 @@ object MapConfigTest extends DefaultRunnableSpec {
       }
     )
 
-  def fromMap(args: Map[String, String]): ZIO[Any, ReadError[String], Config[AppConfig]] =
-    ZIO.environment.provideLayer(Config.fromMap(args, descriptor, "WTL", Some('_'), None))
+  def fromMap(args: Map[String, String]): ZIO[Any, ReadError[String], ZConfig[AppConfig]] =
+    ZIO.environment.provideLayer(ZConfig.fromMap(args, descriptor, "WTL", Some('_'), None))
 
   def toMap[A](
     descriptor: ConfigDescriptor[A],

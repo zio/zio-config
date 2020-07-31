@@ -77,8 +77,8 @@ To read a config, means it has to perform some effects, and for that reason, it 
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
-val result: Layer[ReadError[String], zio.config.Config[MyConfig]] =
-  Config.fromSystemEnv(myConfig) // That's system environment
+val result: Layer[ReadError[String], zio.config.ZConfig[MyConfig]] =
+  ZConfig.fromSystemEnv(myConfig) // That's system environment
 ```
 
 Another way of doing this is:
@@ -280,7 +280,7 @@ We can apply the `Either` logic at a much more global level, as in, give me eith
 case class Dev(userName: String, password: String)
 case class Prod(token: String, code: Int)
 
-type Config = Either[Prod, Dev]
+type ZConfig = Either[Prod, Dev]
 
 val dev = (string("USERNAME") |@| string("PASSWORD"))(Dev.apply, Dev.unapply)
 val prod = (string("TOKEN") |@| int("CODE"))(Prod.apply, Prod.unapply)
@@ -361,7 +361,7 @@ any other configuration parsing libraries that deal with file formats such as HO
       "appName"          -> "myApp"
     )
 
-  Config.fromMap(constantMap, appConfig)
+  ZConfig.fromMap(constantMap, appConfig)
 ```
 
 Note that, you can write this back as well. This is discussed in write section
