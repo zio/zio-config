@@ -11,7 +11,7 @@ object Prod {
     (string("LDAP") |@| int("PORT") |@|
       string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
-  val myAppLogic: ZIO[Config[Prod], Throwable, (String, Option[String])] =
+  val myAppLogic: ZIO[ZConfig[Prod], Throwable, (String, Option[String])] =
     for {
       prod <- config[Prod]
     } yield (prod.ldap, prod.dburl)
@@ -22,7 +22,7 @@ object ReadConfig extends App {
   override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
     for {
       console <- ZIO.environment[Console].map(_.get)
-      configLayer = Config.fromMap(
+      configLayer = ZConfig.fromMap(
         Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"),
         Prod.prodConfig,
         "constant"

@@ -57,8 +57,8 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
       }
     )
 
-  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Config[AppConfig]] =
-    ZIO.environment.provideLayer(Config.fromCommandLineArgs(args, descriptor, Some('_'), None))
+  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], ZConfig[AppConfig]] =
+    ZIO.environment.provideLayer(ZConfig.fromCommandLineArgs(args, descriptor, Some('_'), None))
 
   def toSeparateArgs[A](
     descriptor: ConfigDescriptor[A],

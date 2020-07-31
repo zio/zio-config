@@ -35,7 +35,7 @@ object CommandLineListAccumulationTest extends DefaultRunnableSpec {
       .map(i => s"--ints=$i")
       .toList
 
-  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Config[SomeConfig]] =
-    ZIO.environment.provideLayer(Config.fromCommandLineArgs(args, SomeConfig.descriptor, None, None))
+  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], ZConfig[SomeConfig]] =
+    ZIO.environment.provideLayer(ZConfig.fromCommandLineArgs(args, SomeConfig.descriptor, None, None))
 
 }

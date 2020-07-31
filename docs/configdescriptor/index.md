@@ -280,7 +280,7 @@ We can apply the `Either` logic at a much more global level, as in, give me eith
 case class Dev(userName: String, password: String)
 case class Prod(token: String, code: Int)
 
-type Config = Either[Prod, Dev]
+type ZConfig = Either[Prod, Dev]
 
 val dev = (string("USERNAME") |@| string("PASSWORD"))(Dev.apply, Dev.unapply)
 val prod = (string("TOKEN") |@| int("CODE"))(Prod.apply, Prod.unapply)
