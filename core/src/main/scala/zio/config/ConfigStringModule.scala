@@ -6,7 +6,6 @@ import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 import java.util.Properties
 
-import zio.config.SystemModule.SystemModule
 import zio.{ Layer, Tag }
 import zio.system.System
 import zio.{ ZIO, ZLayer }
@@ -384,7 +383,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): ZLayer[SystemModule, ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], ZConfig[A]] =
       fromConfigDescriptorM(ConfigSource.fromSystemEnv(keyDelimiter, valueDelimiter).map(configDescriptor from _))
 
     /**

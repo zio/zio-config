@@ -3,7 +3,7 @@ package zio.config
 import zio.config.ConfigDescriptor._
 import zio.random.Random
 import zio.test.Assertion._
-import zio.test.environment.TestEnvironment
+import zio.test.environment.{ TestEnvironment, TestSystem }
 import zio.test.{ DefaultRunnableSpec, _ }
 import zio.{ UIO, ZIO }
 
@@ -47,9 +47,10 @@ object SystemTest extends DefaultRunnableSpec {
         )
       }
     )
+  import zio.test.environment.TestSystem._
 
   private def fromSystemEnvResult(keyDelimiter: Char, sysEnv: Map[String, String] = Map.empty) = {
-    val sysEnvLayer    = SystemModule.test(sysEnv)
+    val sysEnvLayer    = TestSystem.live(Data(envs = sysEnv))
     val configEnvLayer = sysEnvLayer >>> ZConfig.fromSystemEnv(SomeConfig.descriptor, Some(keyDelimiter))
 
     ZIO.environment.provideLayer(configEnvLayer).map(_.get)

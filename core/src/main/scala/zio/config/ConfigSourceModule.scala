@@ -3,6 +3,7 @@ package zio.config
 import java.{ util => ju }
 
 import zio.{ IO, Task, UIO, ZIO }
+import zio.system.System
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
@@ -11,7 +12,6 @@ import java.io.FileInputStream
 import java.io.File
 
 import These._
-import zio.config.SystemModule.SystemModule
 
 trait ConfigSourceModule extends KeyValueModule {
 
@@ -349,7 +349,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         leafForSequence
       )
 
-    def fromSystemEnv: ZIO[SystemModule, ReadError[String], ConfigSource] =
+    def fromSystemEnv: ZIO[System, ReadError[String], ConfigSource] =
       fromSystemEnv(None, None)
 
     /**
@@ -379,12 +379,12 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid
-    ): ZIO[SystemModule, ReadError[String], ConfigSource] = {
+    ): ZIO[System, ReadError[String], ConfigSource] = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
 
       if (keyDelimiter.forall(validDelimiters.contains)) {
         ZIO
-          .accessM[SystemModule](_.get.getEnvironment)
+          .accessM[System](_.get.envs)
           .bimap(
             error =>
               ReadError.SourceError[String](s"Error while getting system environment variables: ${error.getMessage}"),
