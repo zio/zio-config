@@ -18,7 +18,10 @@ object SystemModule {
       override def getProperties: Task[Properties]           = Task.effect(java.lang.System.getProperties)
     })
 
-  def test(envMap: Map[String, String] = Map.empty, propMap: Map[String, String] = Map.empty): ULayer[Config[Service]] =
+  def test(
+    envMap: Map[String, String] = Map.empty,
+    propMap: Map[String, String] = Map.empty
+  ): ULayer[ZConfig[Service]] =
     ZLayer.succeed(new Service {
       override def getEnvironment: Task[Map[String, String]] = Task.effectTotal(envMap)
       override def getProperties: Task[Properties] = Task.effectTotal {
@@ -29,8 +32,5 @@ object SystemModule {
         prop
       }
     })
-
-  def getEnvironment: ZIO[SystemModule, Throwable, Map[String, String]] =
-    ZIO.accessM(_.get.getEnvironment)
 
 }
