@@ -353,6 +353,19 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       fromSystemEnv(None, None)
 
     /**
+     *
+     * For users that dont want to use layers in their application
+     * This method provides live system environment layer
+     *
+     */
+    def fromSystemEnvLive(
+      keyDelimiter: Option[Char],
+      valueDelimiter: Option[Char],
+      leafForSequence: LeafForSequence = LeafForSequence.Valid
+    ): IO[ReadError[String], ConfigSource] =
+      fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence).provideLayer(System.live)
+
+    /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
      * Consider providing valueDelimiter if you need any value to be a list
      *
