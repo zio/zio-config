@@ -55,7 +55,7 @@ addCommandAlias(
 addCommandAlias("compileAll", "; ++2.11.12; root2-11/compile; ++2.12.11; root2-12/compile; ++2.13.2!; root2-13/compile")
 addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.11; root2-12/test; ++2.13.2!; root2-13/test")
 
-lazy val zioVersion       = "1.0.0-RC21-2"
+lazy val zioVersion       = "1.0.0"
 lazy val magnoliaVersion  = "0.16.0"
 lazy val refinedVersion   = "0.9.14"
 lazy val shapelessVersion = "2.4.0-M1"
