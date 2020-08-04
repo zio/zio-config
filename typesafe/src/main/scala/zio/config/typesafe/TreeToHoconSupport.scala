@@ -16,7 +16,7 @@ private[typesafe] trait TreeToHoconSupport {
   def loopAny(tree: PropertyTree[String, String], key: Option[String]): com.typesafe.config.ConfigObject =
     tree match {
       case leaf @ Leaf(_)     => loopLeaf(key, leaf)
-      case record @ Record(_) => loopRecord(record)
+      case record @ Record(_) => loopRecord(key, record)
       case PropertyTree.Empty => loopEmpty(key)
       case seqq @ Sequence(_) => loopSequence(key, seqq)
     }
@@ -33,14 +33,16 @@ private[typesafe] trait TreeToHoconSupport {
       )
       .root()
 
-  def loopRecord(tree: Record[String, String]): ConfigObject =
-    tree.value.toList.foldLeft(ConfigFactory.empty().root()) {
+  def loopRecord(key: Option[String], tree: Record[String, String]): ConfigObject = {
+    val inner = tree.value.toList.foldLeft(ConfigFactory.empty().root()) {
       case (acc, (k, tree)) =>
         val newObject =
           loopAny(tree, Some(k))
 
         acc.withValue(k, newObject.getOrDefault(k, newObject))
     }
+    key.fold(inner)(path => inner.atPath(path).root())
+  }
 
   def loopSequence(key: Option[String], tree: Sequence[String, String]): ConfigObject =
     key match {
