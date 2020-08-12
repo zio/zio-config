@@ -6,57 +6,131 @@ trait ConfigDocsModule extends WriteModule {
   import Table._
 
   sealed trait ConfigDocs { self =>
+    private def is[A](f: PartialFunction[ConfigDocs, A])(orElse: A): A =
+      f.applyOrElse(self, (_: ConfigDocs) => orElse)
 
     /**
      * Convert ConfigDocs to `Table`, which is a light-weight and flattened, yet
      * recursive structure, that can then be easily turned into human readable formats such as markdown, table, html etc
      */
     def toTable: Table = {
-      def go(docs: ConfigDocs, previousPaths: List[FieldName]): Table =
+      def go(
+        docs: ConfigDocs,
+        previousPaths: List[FieldName],
+        previousNode: Option[ConfigDocs],
+        descriptionsUsedAlready: Option[FieldName]
+      ): Table = {
+        def handleNested(left: ConfigDocs, right: ConfigDocs, c: ConfigDocs, f: ConfigDocs => Boolean, format: Format) =
+          if (previousPaths == List(FieldName.Root) || previousNode.exists(f)) {
+            go(left, previousPaths, Some(c), descriptionsUsedAlready) ++
+              go(right, previousPaths, Some(c), descriptionsUsedAlready)
+          } else {
+            val tableWithAllDescriptions =
+              (go(left, previousPaths, Some(c), descriptionsUsedAlready) ++
+                go(right, previousPaths, Some(c), descriptionsUsedAlready))
+
+            val parentDoc =
+              if (previousNode.exists(_.is { case ConfigDocs.Nested(_, _) => true }(false)))
+                previousPaths.lastOption match {
+                  case Some(value) =>
+                    ConfigDocs
+                      .findByPath(
+                        tableWithAllDescriptions.rows.flatMap(_.description),
+                        value
+                      )
+                      .distinct
+                  case None => Nil
+                }
+              else Nil
+
+            val tableWithRemovedDescriptions =
+              (go(left, previousPaths, Some(c), previousPaths.lastOption) ++
+                go(right, previousPaths, Some(c), previousPaths.lastOption))
+                .copy(parentPaths = previousPaths)
+
+            TableRow(previousPaths, Some(format), parentDoc, Some(tableWithRemovedDescriptions), Set.empty).liftToTable
+          }
+
         docs match {
           case ConfigDocs.Leaf(sources, descriptions, _) =>
-            TableRow(previousPaths, Some(Table.Format.Primitive), descriptions, None, sources.map(_.name)).liftToTable
+            val bla =
+              descriptionsUsedAlready match {
+                case Some(value) =>
+                  descriptions.filter({
+                    case ConfigDocs.Raw(_)                                              => true
+                    case ConfigDocs.NestedDesc(path, _) if FieldName.Key(path) == value => false
+                    case ConfigDocs.NestedDesc(_, _)                                    => true
+                  })
+                case None => descriptions
+              }
 
-          case ConfigDocs.Nested(path, docs) =>
-            go(docs, (previousPaths :+ Table.FieldName.Key(path)))
+            TableRow(previousPaths, Some(Table.Format.Primitive), bla, None, sources.map(_.name)).liftToTable
 
-          case ConfigDocs.Zip(left, right) =>
-            if (previousPaths == List(FieldName.Root))
-              go(left, previousPaths) ++ go(right, previousPaths)
-            else
-              TableRow(
-                previousPaths,
-                Some(Format.AllOf),
-                Nil,
-                Some((go(left, previousPaths) ++ go(right, previousPaths)).copy(parentPaths = previousPaths)),
-                Set.empty
-              ).liftToTable
+          case c @ ConfigDocs.Nested(path, docs) =>
+            val newPath =
+              if (previousPaths.lastOption.contains(Table.FieldName.Key(path))) {
+                FieldName.Blank
+              } else {
+                Table.FieldName.Key(path)
+              }
 
-          case ConfigDocs.OrElse(leftDocs, rightDocs) =>
-            TableRow(
-              previousPaths,
-              Some(Format.AnyOneOf),
-              Nil,
-              Some(
-                (go(leftDocs, previousPaths) ++ go(rightDocs, previousPaths))
-                  .copy(parentPaths = previousPaths)
-              ),
-              Set.empty
-            ).liftToTable
+            go(
+              docs,
+              (previousPaths :+ newPath),
+              Some(c),
+              descriptionsUsedAlready = descriptionsUsedAlready
+            )
 
-          case ConfigDocs.Sequence(schemaDocs, _) =>
-            go(schemaDocs, previousPaths).setFormatGlobally(Format.List)
+          case c @ ConfigDocs.Zip(left, right) =>
+            handleNested(left, right, c, _.is { case ConfigDocs.Zip(_, _) => true }(false), Format.AllOf)
 
-          case ConfigDocs.DynamicMap(schemaDocs, _) =>
-            go(schemaDocs, previousPaths).setFormatGlobally(Format.Map)
+          case c @ ConfigDocs.OrElse(left, right) =>
+            handleNested(left, right, c, _.is { case ConfigDocs.OrElse(_, _) => true }(false), Format.AnyOneOf)
+
+          case c @ ConfigDocs.Sequence(schemaDocs, _) =>
+            go(schemaDocs, previousPaths, Some(c), descriptionsUsedAlready)
+              .setFormatGlobally(Format.List)
+
+          case c @ ConfigDocs.DynamicMap(schemaDocs, _) =>
+            go(schemaDocs, previousPaths, Some(c), descriptionsUsedAlready)
+              .setFormatGlobally(Format.Map)
         }
+      }
 
-      go(self, List(FieldName.Root))
+      go(self, List(FieldName.Root), None, None)
     }
   }
 
   object ConfigDocs {
-    case class Leaf(sources: Set[ConfigSourceName], descriptions: List[String], value: Option[V] = None)
+    sealed trait Description {
+      override def toString: String =
+        this match {
+          case ConfigDocs.Raw(value)                  => value
+          case ConfigDocs.NestedDesc(_, descriptions) => descriptions.toString
+        }
+    }
+
+    case class Raw(value: String)                             extends Description
+    case class NestedDesc(path: K, descriptions: Description) extends Description
+
+    def nestedDes(path: K, description: Description): Description =
+      NestedDesc(path, description)
+
+    def raw(value: String): Description =
+      Raw(value)
+
+    def findByPath(description: List[Description], path: FieldName): List[Description] =
+      description
+        .flatMap(
+          desc =>
+            desc match {
+              case ConfigDocs.Raw(_)                                             => Nil
+              case ConfigDocs.NestedDesc(p, value) if (FieldName.Key(p) == path) => List(value)
+              case ConfigDocs.NestedDesc(_, _)                                   => Nil
+            }
+        )
+
+    case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None)
         extends ConfigDocs
 
     case class Nested(path: K, docs: ConfigDocs)                                          extends ConfigDocs
@@ -161,7 +235,10 @@ trait ConfigDocsModule extends WriteModule {
       fieldNames.lastOption.fold("")(last => if (last == FieldName.Root) "" else last.asString)
 
     private def getLink(name: String, link: String): String =
-      if (name.isEmpty || link.isEmpty) "" else s"[${name}](#${link})"
+      if (name.isEmpty || link.isEmpty) "" else s"[${name}](#${getMarkdownLinkString(link)})"
+
+    private def getMarkdownLinkString(s: String) =
+      s.replace(".", "").toLowerCase
 
     type Size  = Int
     type Index = Int
@@ -188,7 +265,7 @@ trait ConfigDocsModule extends WriteModule {
     case class TableRow(
       previousPaths: List[FieldName],
       format: Option[Format],
-      description: List[String],
+      description: List[ConfigDocs.Description],
       nested: Option[Table],
       sources: Set[String]
     ) {
@@ -223,12 +300,14 @@ trait ConfigDocsModule extends WriteModule {
         this match {
           case FieldName.Key(k) => S.apply(k)
           case FieldName.Root   => "root"
+          case FieldName.Blank  => ""
         }
     }
 
     object FieldName {
       case object Root     extends FieldName
       case class Key(k: K) extends FieldName
+      case object Blank    extends FieldName
     }
   }
 
@@ -242,59 +321,65 @@ trait ConfigDocsModule extends WriteModule {
   final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
     def loop[B](
       sources: Set[ConfigSourceName],
-      descriptions: List[String],
+      descriptions: List[ConfigDocs.Description],
       config: ConfigDescriptor[B],
-      latestPath: Option[K]
+      latestPath: Option[K],
+      isNested: Boolean
     ): ConfigDocs =
       config match {
         case Source(source, _) =>
           DocsLeaf((source.names ++ sources), descriptions, None)
 
         case Default(c, _) =>
-          loop(sources, descriptions, c, latestPath)
+          loop(sources, descriptions, c, latestPath, isNested = false)
 
         case cd: DynamicMap[_] =>
           ConfigDocs.DynamicMap(
-            loop((cd.source.names ++ sources), descriptions, cd.config, None)
+            loop((cd.source.names ++ sources), descriptions, cd.config, None, isNested = false)
           )
 
         case Optional(c) =>
-          loop(sources, descriptions, c, latestPath)
+          loop(sources, descriptions, c, latestPath, isNested = false)
 
         case Sequence(source, c) =>
           ConfigDocs.Sequence(
-            loop((source.names ++ sources), descriptions, c, latestPath)
+            loop((source.names ++ sources), descriptions, c, latestPath, isNested = false)
           )
 
         case Describe(c, desc) =>
-          loop(sources, desc :: descriptions, c, latestPath)
+          val descri: ConfigDocs.Description =
+            if (isNested)
+              latestPath.fold(ConfigDocs.raw(desc))(path => ConfigDocs.nestedDes(path, ConfigDocs.raw(desc)))
+            else ConfigDocs.raw(desc)
+
+          loop(sources, descri :: descriptions, c, latestPath, isNested)
 
         case Nested(path, c) =>
-          ConfigDocs.Nested(path, loop(sources, descriptions, c, Some(path)))
+          ConfigDocs.Nested(path, loop(sources, descriptions, c, Some(path), isNested = true))
 
         case XmapEither(c, _, _) =>
-          loop(sources, descriptions, c, latestPath)
+          loop(sources, descriptions, c, latestPath, isNested = false)
 
         case Zip(left, right) =>
           ConfigDocs.Zip(
-            loop(sources, descriptions, left, latestPath),
-            loop(sources, descriptions, right, latestPath)
+            loop(sources, descriptions, left, latestPath, isNested = false),
+            loop(sources, descriptions, right, latestPath, isNested = false)
           )
 
         case OrElseEither(left, right) =>
           ConfigDocs.OrElse(
-            loop(sources, descriptions, left, latestPath),
-            loop(sources, descriptions, right, latestPath)
+            loop(sources, descriptions, left, latestPath, isNested = false),
+            loop(sources, descriptions, right, latestPath, isNested = false)
           )
 
         case OrElse(left, right) =>
           ConfigDocs.OrElse(
-            loop(sources, descriptions, left, latestPath),
-            loop(sources, descriptions, right, latestPath)
+            loop(sources, descriptions, left, latestPath, isNested = false),
+            loop(sources, descriptions, right, latestPath, isNested = false)
           )
       }
 
-    loop(Set.empty, Nil, config, None)
+    loop(Set.empty, Nil, config, None, isNested = false)
   }
 
   /**

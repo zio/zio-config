@@ -3,6 +3,7 @@ package zio.config
 import java.util.Properties
 
 import ConfigDescriptor._
+import zio.config.DocsSpecUtils.TestCase1.{ CaseClass5, CaseClass6 }
 import zio.config.DocsSpecUtils._
 import zio.test.Assertion._
 import zio.test._
@@ -37,8 +38,15 @@ object DocsSpec
             (nested("aws")(caseClass2))
               .orElseEither(nested("credentials")(tokenAndUsername))
 
+          val caseClass5Config =
+            nested("caseClass5")((string("f") |@| string("g"))(CaseClass5.apply, CaseClass5.unapply))
+
+          val caseClass6Config =
+            nested("caseClass6")((string("h") |@| string("i"))(CaseClass6.apply, CaseClass6.unapply))
+
           val config: ConfigDescriptor[TestCase1.CaseClass1] =
-            (string("user") |@| awsConfig |@| azureConfig)(
+            (string("user") |@| awsConfig |@| azureConfig |@| caseClass5Config.optional |@| caseClass6Config
+              .default(CaseClass6("", "")))(
               TestCase1.CaseClass1.apply,
               TestCase1.CaseClass1.unapply
             )
@@ -61,11 +69,15 @@ object DocsSpecUtils {
     case class CaseClass1(
       a: String,
       b: Either[CaseClass2, CaseClass3],
-      c: CaseClass4
+      c: CaseClass4,
+      d: Option[CaseClass5],
+      e: CaseClass6
     )
     case class CaseClass2(a: String, b: String)
     case class CaseClass3(c: String, d: String)
     case class CaseClass4(c: String, d: String)
+    case class CaseClass5(e: String, f: String)
+    case class CaseClass6(f: String, g: String)
   }
 
   val expected =

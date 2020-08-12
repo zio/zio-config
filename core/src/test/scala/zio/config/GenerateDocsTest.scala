@@ -1,3 +1,4 @@
+/*
 package zio.config
 
 import zio.config.ConfigDescriptor._
@@ -218,3 +219,4 @@ object GenerateDocsTestUtils {
       value <- genAppConfig
     } yield GenerateDocsParams(keys, value)
 }
+*/
