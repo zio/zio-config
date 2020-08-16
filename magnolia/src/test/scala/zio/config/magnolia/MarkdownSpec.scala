@@ -300,8 +300,8 @@ object MarkdownSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName    |Format             |Description|Sources|
-           ||---          |---               |---        |---    |
+           ||FieldName  |Format              |Description|Sources|
+           ||---        |---                 |---        |---    |
            ||[a](#roota)|[any-one-of](#roota)|           |       |
            |
            |### root.a
@@ -331,7 +331,7 @@ object MarkdownSpec extends DefaultRunnableSpec {
            ||---      |---                |---        |---    |
            ||         |[any-one-of](#root)|           |       |
            |
-           |### root_0
+           |### root
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
@@ -355,17 +355,17 @@ object MarkdownSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName|Format              |Description|Sources|
-           ||---      |---                 |---        |---    |
-           ||         |[any-one-of](#roota)|           |       |
+           ||FieldName  |Format              |Description|Sources|
+           ||---        |---                 |---        |---    |
+           ||[a](#roota)|[any-one-of](#roota)|           |       |
            |
            |### root.a
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||a        |primitive|value of type double|       |
-           ||a        |primitive|value of type int   |       |
-           ||a        |primitive|value of type string|       |
+           ||         |primitive|value of type double|       |
+           ||         |primitive|value of type int   |       |
+           ||         |primitive|value of type string|       |
            |""".stripMargin
 
       assert(result)(equalTo(expectedMarkdown))
@@ -373,10 +373,13 @@ object MarkdownSpec extends DefaultRunnableSpec {
     test("Markdown works a single key that can be multiple types zipped with same") {
       import zio.config._, ConfigDescriptor._
 
-      val config =
+      val config1 =
         nested("a")(string.orElseEither(int).orElseEither(double))
 
-      val result = generateDocs(config.zip(config)).toTable.asMarkdown
+      val config2 =
+        nested("b")(string.orElseEither(int).orElseEither(double))
+
+      val result = generateDocs(config1.zip(config2)).toTable.asMarkdown
 
       val expectedMarkdown =
         s"""

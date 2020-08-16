@@ -26,7 +26,7 @@ trait ConfigDocsModule extends WriteModule {
           isNode: ConfigDocs => Boolean,
           format: Format
         ): Table =
-          if ((previousPaths == List(FieldName.Root) && !isNode(currentNode)) || previousNode.exists(isNode)) {
+          if (previousNode.exists(isNode)) {
             go(left, previousPaths, Some(currentNode), descriptionsUsedAlready) ++
               go(right, previousPaths, Some(currentNode), descriptionsUsedAlready)
           } else {
@@ -185,7 +185,7 @@ trait ConfigDocsModule extends WriteModule {
     }
 
     /**
-     * {{{ asMarkdow }}} Converts Table to a Github Flavoured Markdown (GFM), that is tested to be working
+     * {{{ asMarkdown }}} Converts Table to a Github Flavoured Markdown (GFM), that is tested to be working
      * with Gitlab and Github rendering of Markdown files.
      * Github has strong semantics (unlike bit-bucket) in rendering standard markdown format
      * handling duplicate headings.
@@ -246,9 +246,9 @@ trait ConfigDocsModule extends WriteModule {
           List[(Table, Heading)],
           Map[Heading, Int]
         ) =
-          table.rows.zipWithIndex
-            .foldLeft((List.empty[List[String]], List.empty[(Table, Heading)], usedHeadings)) {
-              case ((contentList, nestedTableList, usedHeadings), (row, subIndex)) =>
+          table.rows
+            .foldRight((List.empty[List[String]], List.empty[(Table, Heading)], usedHeadings)) {
+              case (row, (contentList, nestedTableList, usedHeadings)) =>
                 val lastFieldName  = getLastFieldName(row.previousPaths)
                 val formatString   = row.format.map(_.asString).getOrElse("")
                 val heading        = Heading.mk(row.previousPaths)
@@ -265,7 +265,7 @@ trait ConfigDocsModule extends WriteModule {
 
                 (
                   List(name, format, row.description.mkString(", "), row.sources.mkString(", ")) :: contentList,
-                  (row.nested.map(table => (table, heading)).toList ++ nestedTableList),
+                  row.nested.map(table => (table, heading)).toList ++ nestedTableList,
                   updatedHeading
                 )
             }
