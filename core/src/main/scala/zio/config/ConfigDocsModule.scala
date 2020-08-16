@@ -1,7 +1,6 @@
 package zio.config
 
 trait ConfigDocsModule extends WriteModule {
-
   import ConfigDescriptorAdt._
   import Table._
 
@@ -9,28 +8,44 @@ trait ConfigDocsModule extends WriteModule {
     private def is[A](f: PartialFunction[ConfigDocs, A])(orElse: A): A =
       f.applyOrElse(self, (_: ConfigDocs) => orElse)
 
+    private def hasNested: Boolean = self match {
+      case ConfigDocs.Leaf(sources, descriptions, value) => false
+      case ConfigDocs.Nested(_, _)                       => true
+      case ConfigDocs.Zip(left, right)                   => left.hasNested || right.hasNested
+      case ConfigDocs.OrElse(leftDocs, rightDocs)        => leftDocs.hasNested || rightDocs.hasNested
+      case ConfigDocs.Sequence(schemaDocs, valueDocs)    => false
+      case ConfigDocs.DynamicMap(schemaDocs, valueDocs)  => false
+    }
+
     /**
      * Convert ConfigDocs to `Table`, which is a light-weight and flattened, yet
      * recursive structure, that can then be easily turned into human readable formats such as markdown, table, html etc
      */
-    def toTable: Table = {
+    def toTable(implicit M: K =:= String): Table = {
+
       def go(
         docs: ConfigDocs,
         previousPaths: List[FieldName],
         previousNode: Option[ConfigDocs],
         descriptionsUsedAlready: Option[FieldName]
       ): Table = {
-        def handleNested(left: ConfigDocs, right: ConfigDocs, c: ConfigDocs, f: ConfigDocs => Boolean, format: Format) =
-          if (previousPaths == List(FieldName.Root) || previousNode.exists(f)) {
-            go(left, previousPaths, Some(c), descriptionsUsedAlready) ++
-              go(right, previousPaths, Some(c), descriptionsUsedAlready)
+        def handleNested(
+          left: ConfigDocs,
+          right: ConfigDocs,
+          currentNode: ConfigDocs,
+          isNode: ConfigDocs => Boolean,
+          format: Format
+        ) =
+          if ((previousPaths == List(FieldName.Root) && !isNode(currentNode)) || previousNode.exists(isNode)) {
+            go(left, previousPaths, Some(currentNode), descriptionsUsedAlready) ++
+              go(right, previousPaths, Some(currentNode), descriptionsUsedAlready)
           } else {
             val tableWithAllDescriptions =
-              (go(left, previousPaths, Some(c), descriptionsUsedAlready) ++
-                go(right, previousPaths, Some(c), descriptionsUsedAlready))
+              (go(left, previousPaths, Some(currentNode), descriptionsUsedAlready) ++
+                go(right, previousPaths, Some(currentNode), descriptionsUsedAlready))
 
             val parentDoc =
-              if (previousNode.exists(_.is { case ConfigDocs.Nested(_, _) => true }(false)))
+              if (previousNode.exists(_.is { case ConfigDocs.Nested(_, _) => true }(false))) {
                 previousPaths.lastOption match {
                   case Some(value) =>
                     ConfigDocs
@@ -41,14 +56,28 @@ trait ConfigDocsModule extends WriteModule {
                       .distinct
                   case None => Nil
                 }
-              else Nil
+              } else {
+                Nil
+              }
 
-            val tableWithRemovedDescriptions =
-              (go(left, previousPaths, Some(c), previousPaths.lastOption) ++
-                go(right, previousPaths, Some(c), previousPaths.lastOption))
-                .copy(parentPaths = previousPaths)
+            // If left has nested in it, then the parent has to have key in it.
+            // or if right has nested in it, then the parent has to have key in it.
+            // And if parent has key in it, then remove the key from the non nested.
+            // If both left and right are nested, happy to keep the parent key as it is.
 
-            TableRow(previousPaths, Some(format), parentDoc, Some(tableWithRemovedDescriptions), Set.empty).liftToTable
+            val leftSide =
+              go(left, Nil, Some(currentNode), previousPaths.lastOption)
+
+            val rightSide =
+              go(right, Nil, Some(currentNode), previousPaths.lastOption)
+
+            TableRow(
+              previousPaths,
+              Some(format),
+              parentDoc,
+              Some((leftSide ++ rightSide)),
+              Set.empty
+            ).liftToTable
           }
 
         docs match {
@@ -67,19 +96,32 @@ trait ConfigDocsModule extends WriteModule {
             TableRow(previousPaths, Some(Table.Format.Primitive), bla, None, sources.map(_.name)).liftToTable
 
           case c @ ConfigDocs.Nested(path, docs) =>
-            val newPath =
-              if (previousPaths.lastOption.contains(Table.FieldName.Key(path))) {
-                FieldName.Blank
-              } else {
-                Table.FieldName.Key(path)
-              }
+            val result =
+              go(
+                docs,
+                previousPaths :+ Table.FieldName.Key(path),
+                Some(c),
+                descriptionsUsedAlready = descriptionsUsedAlready
+              )
 
-            go(
-              docs,
-              (previousPaths :+ newPath),
-              Some(c),
-              descriptionsUsedAlready = descriptionsUsedAlready
-            )
+            val resultPath =
+              if (result.parentPaths == previousPaths :+ Table.FieldName.Key(path)) Nil
+              else
+                previousPaths :+ Table.FieldName.Key(path)
+
+            // Peak ahead, and only if the next one is nested, keep nesting
+            if (docs.is {
+                  case ConfigDocs.Nested(_, _) => true
+                }(false)) {
+              TableRow(
+                previousPaths :+ Table.FieldName.Key(path),
+                Some(Table.Format.Nested),
+                Nil,
+                Some(result.copy(parentPaths = resultPath)),
+                Set.empty
+              ).liftToTable
+            } else
+              result
 
           case c @ ConfigDocs.Zip(left, right) =>
             handleNested(left, right, c, _.is { case ConfigDocs.Zip(_, _) => true }(false), Format.AllOf)
@@ -277,22 +319,24 @@ trait ConfigDocsModule extends WriteModule {
     sealed trait Format { self =>
       def asString: String =
         self match {
-          case Format.List      => "list"
-          case Format.Map       => "map"
-          case Format.Primitive => "primitive"
-          case Format.Nested    => "nested"
-          case Format.AnyOneOf  => "any-one-of"
-          case Format.AllOf     => "all-of"
+          case Format.List                 => "list"
+          case Format.Map                  => "map"
+          case Format.Primitive            => "primitive"
+          case Format.Nested               => "nested"
+          case Format.AnyOneOf             => "any-one-of"
+          case Format.AllOf                => "all-of"
+          case Format.Of(format1, format2) => format1.asString + " >>> " + format2.asString
         }
     }
 
     object Format {
-      case object List      extends Format
-      case object Map       extends Format
-      case object Primitive extends Format
-      case object Nested    extends Format
-      case object AnyOneOf  extends Format
-      case object AllOf     extends Format
+      case object List                               extends Format
+      case object Map                                extends Format
+      case object Primitive                          extends Format
+      case object Nested                             extends Format
+      case object AnyOneOf                           extends Format
+      case object AllOf                              extends Format
+      case class Of(format: Format, format2: Format) extends Format
     }
 
     sealed trait FieldName {
