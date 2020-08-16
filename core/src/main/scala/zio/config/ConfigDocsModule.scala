@@ -222,7 +222,7 @@ trait ConfigDocsModule extends WriteModule {
         )
 
       def updateHeadingAndIndex(heading: Heading, map: Map[Heading, Int]): Map[Heading, Int] = {
-        val index = map.getOrElse(heading, 0)
+        val index = map.get(heading).map(index => index + 1).getOrElse(0)
         map.updated(heading, index)
       }
 
