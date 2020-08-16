@@ -33,7 +33,7 @@ object DocsSpec extends DefaultRunnableSpec {
         roleArn: Option[String]
       )
 
-      final case class Downstream(details: Either[S32, S3])
+      final case class Downstream(`type`: String, details: Either[S32, S3])
       final case class PatternFileNamingPolicy(pattern: String, dateFormat: String = "yyyyMMdd'T'HHmmss")
 
       final case class S3(
@@ -97,7 +97,7 @@ object DocsSpec extends DefaultRunnableSpec {
       //  println(generateDocs(hello2).toTable.asMarkdownContent)
       //println("*************************************")
 
-      println(generateDocs(descriptor[Downstream]).toTable.asMarkdownContent)
+      println(generateDocs(descriptor[RawConfig]).toTable.asMarkdown)
       //println(generateDocs(hello2).toTable.asMarkdownContent)
 
       // If left has nested in it, then the parent has to have key in it.
@@ -113,7 +113,7 @@ object DocsSpec extends DefaultRunnableSpec {
       val config = nested("a")(int.orElseEither(string))
 
       val result   = generateDocs(config).toTable
-      val markdown = result.asMarkdownContent
+      val markdown = result.asMarkdown
 
       val expectedMarkdown =
         s"""
@@ -134,7 +134,6 @@ object DocsSpec extends DefaultRunnableSpec {
 
       val expectedTable =
         Table(
-          List(Root),
           List(
             TableRow(
               List(),
@@ -142,7 +141,6 @@ object DocsSpec extends DefaultRunnableSpec {
               List(),
               Some(
                 Table(
-                  List(Root, Key("a")),
                   List(
                     TableRow(
                       List(Root, Key("a")),
@@ -173,7 +171,7 @@ object DocsSpec extends DefaultRunnableSpec {
 
       val config = nested("a")(nested("b")(int).orElseEither(string))
 
-      val result = generateDocs(config).toTable.asMarkdownContent
+      val result = generateDocs(config).toTable.asMarkdown
 
       val expectedMarkdown =
         s"""
@@ -199,7 +197,7 @@ object DocsSpec extends DefaultRunnableSpec {
 
       val config = nested("a")(int.orElseEither(nested("b")(string)))
 
-      val result = generateDocs(config).toTable.asMarkdownContent
+      val result = generateDocs(config).toTable.asMarkdown
 
       val expectedMarkdown =
         s"""
@@ -225,7 +223,7 @@ object DocsSpec extends DefaultRunnableSpec {
 
       val config = nested("a")(nested("b")(int).orElseEither(nested("c")(string)))
 
-      val result = generateDocs(config).toTable.asMarkdownContent
+      val result = generateDocs(config).toTable.asMarkdown
 
       val expectedMarkdown =
         s"""
@@ -251,7 +249,7 @@ object DocsSpec extends DefaultRunnableSpec {
 
       val config = nested("a")(nested("b")(int).orElseEither(nested("c")(string).orElseEither(nested("d")(int))))
 
-      val result = generateDocs(config).toTable.asMarkdownContent
+      val result = generateDocs(config).toTable.asMarkdown
 
       val expectedMarkdown =
         s"""
@@ -278,7 +276,7 @@ object DocsSpec extends DefaultRunnableSpec {
 
       val config = nested("a")(string).orElseEither(nested("b")(int).orElseEither(double))
 
-      val result = generateDocs(config).toTable.asMarkdownContent
+      val result = generateDocs(config).toTable.asMarkdown
 
       val expectedMarkdown =
         s"""
@@ -306,7 +304,7 @@ object DocsSpec extends DefaultRunnableSpec {
       val config =
         nested("a")(string.orElseEither(int).orElseEither(double))
 
-      val result = generateDocs(config).toTable.asMarkdownContent
+      val result = generateDocs(config).toTable.asMarkdown
 
       val expectedMarkdown =
         s"""
@@ -334,7 +332,7 @@ object DocsSpec extends DefaultRunnableSpec {
       val config =
         nested("a")(string.orElseEither(int).orElseEither(double))
 
-      val result = generateDocs(config.zip(config)).toTable.asMarkdownContent
+      val result = generateDocs(config.zip(config)).toTable.asMarkdown
 
       val expectedMarkdown =
         s"""
@@ -377,7 +375,7 @@ object DocsSpec extends DefaultRunnableSpec {
       val config =
         nested("a")(string.orElseEither(nested("b")(int).orElseEither(double).orElseEither(long)))
 
-      val result = generateDocs(config).toTable.asMarkdownContent
+      val result = generateDocs(config).toTable.asMarkdown
 
       val expectedMarkdown =
         s"""
@@ -419,13 +417,13 @@ object DocsSpec extends DefaultRunnableSpec {
 
 object Hi extends App {
   val config =
-    nested("d")(
-      nested("a")(
-        (int("b") |@| string("h").orElseEither((string("k") |@| string("k1") |@| string("k2")).tupled)).tupled
+    nested("a")(
+      nested("b")(
+        (int("c") |@| string("d").orElseEither((string("e") |@| string("f") |@| string("g")).tupled)).tupled
       )
     )
 
-  val result = generateDocs(config).toTable.asMarkdownContent
+  val result = generateDocs(config).toTable.asMarkdown
 
   println(result)
 }

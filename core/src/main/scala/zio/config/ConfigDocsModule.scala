@@ -8,21 +8,11 @@ trait ConfigDocsModule extends WriteModule {
     private def is[A](f: PartialFunction[ConfigDocs, A])(orElse: A): A =
       f.applyOrElse(self, (_: ConfigDocs) => orElse)
 
-    private def hasNested: Boolean = self match {
-      case ConfigDocs.Leaf(sources, descriptions, value) => false
-      case ConfigDocs.Nested(_, _)                       => true
-      case ConfigDocs.Zip(left, right)                   => left.hasNested || right.hasNested
-      case ConfigDocs.OrElse(leftDocs, rightDocs)        => leftDocs.hasNested || rightDocs.hasNested
-      case ConfigDocs.Sequence(schemaDocs, valueDocs)    => false
-      case ConfigDocs.DynamicMap(schemaDocs, valueDocs)  => false
-    }
-
     /**
      * Convert ConfigDocs to `Table`, which is a light-weight and flattened, yet
      * recursive structure, that can then be easily turned into human readable formats such as markdown, table, html etc
      */
-    def toTable(implicit M: K =:= String): Table = {
-
+    def toTable: Table = {
       def go(
         docs: ConfigDocs,
         previousPaths: List[FieldName],
@@ -35,7 +25,7 @@ trait ConfigDocsModule extends WriteModule {
           currentNode: ConfigDocs,
           isNode: ConfigDocs => Boolean,
           format: Format
-        ) =
+        ): Table =
           if ((previousPaths == List(FieldName.Root) && !isNode(currentNode)) || previousNode.exists(isNode)) {
             go(left, previousPaths, Some(currentNode), descriptionsUsedAlready) ++
               go(right, previousPaths, Some(currentNode), descriptionsUsedAlready)
@@ -60,11 +50,6 @@ trait ConfigDocsModule extends WriteModule {
                 Nil
               }
 
-            // If left has nested in it, then the parent has to have key in it.
-            // or if right has nested in it, then the parent has to have key in it.
-            // And if parent has key in it, then remove the key from the non nested.
-            // If both left and right are nested, happy to keep the parent key as it is.
-
             val leftSide =
               go(left, Nil, Some(currentNode), previousPaths.lastOption)
 
@@ -77,7 +62,7 @@ trait ConfigDocsModule extends WriteModule {
               parentDoc,
               Some((leftSide ++ rightSide)),
               Set.empty
-            ).liftToTable
+            ).asTable
           }
 
         docs match {
@@ -86,14 +71,14 @@ trait ConfigDocsModule extends WriteModule {
               descriptionsUsedAlready match {
                 case Some(value) =>
                   descriptions.filter({
-                    case ConfigDocs.Raw(_)                                              => true
                     case ConfigDocs.NestedDesc(path, _) if FieldName.Key(path) == value => false
                     case ConfigDocs.NestedDesc(_, _)                                    => true
+                    case ConfigDocs.Raw(_)                                              => true
                   })
                 case None => descriptions
               }
 
-            TableRow(previousPaths, Some(Table.Format.Primitive), bla, None, sources.map(_.name)).liftToTable
+            TableRow(previousPaths, Some(Table.Format.Primitive), bla, None, sources.map(_.name)).asTable
 
           case c @ ConfigDocs.Nested(path, docs) =>
             val result =
@@ -104,12 +89,9 @@ trait ConfigDocsModule extends WriteModule {
                 descriptionsUsedAlready = descriptionsUsedAlready
               )
 
-            val resultPath =
-              if (result.parentPaths == previousPaths :+ Table.FieldName.Key(path)) Nil
-              else
-                previousPaths :+ Table.FieldName.Key(path)
-
-            // Peak ahead, and only if the next one is nested, keep nesting
+            // Peak ahead and see if it continues to do nesting.
+            // For example: nested("a")(string) isn't treated as nested.
+            // However a is nested if config is nested("a")(nested("b")(string))
             if (docs.is {
                   case ConfigDocs.Nested(_, _) => true
                 }(false)) {
@@ -117,9 +99,9 @@ trait ConfigDocsModule extends WriteModule {
                 previousPaths :+ Table.FieldName.Key(path),
                 Some(Table.Format.Nested),
                 Nil,
-                Some(result.copy(parentPaths = resultPath)),
+                Some(result),
                 Set.empty
-              ).liftToTable
+              ).asTable
             } else
               result
 
@@ -185,17 +167,52 @@ trait ConfigDocsModule extends WriteModule {
   }
 
   /**
-   * @param parentPaths: A table can be associated with a path towards it, which becomes its identity
    * @param rows: A table consist of multiple rows, where each row is a field and it's details.
    */
-  case class Table(parentPaths: List[FieldName], rows: List[TableRow]) { self =>
+  case class Table(rows: List[TableRow]) { self =>
     def setFormatGlobally(format: Format): Table =
-      Table(parentPaths, rows.map(_.copy(format = Some(format))))
+      Table(rows.map(_.copy(format = Some(format))))
 
     def ++(that: Table): Table =
-      Table(parentPaths, rows ++ that.rows)
+      Table(rows ++ that.rows)
 
-    def asMarkdownContent(implicit S: K =:= String): String = {
+    abstract sealed case class Heading(path: List[FieldName])
+
+    object Heading {
+      def mk(list: List[FieldName]): Heading =
+        if (list.isEmpty) new Heading(List(FieldName.Root)) {}
+        else new Heading(list)                              {}
+    }
+
+    /**
+     * {{{ asMarkdow }}} Converts Table to a Github Flavoured Markdown (GFM), that is tested to be working
+     * with Gitlab and Github rendering of Markdown files.
+     * Github has strong semantics (unlike bit-bucket) in rendering standard markdown format
+     * handling duplicate headings.
+     *
+     * For example:
+     *
+     * {{{
+     *
+     * }}}
+     *
+     * If the config is complicated (say a big set of nested case classes (product) and sealed-trait (coproduct)),
+     * then, instead of squashing all the information into a single table
+     * (because that will become nested markdown making it hard to read and focus on to a specific config parameter),
+     * we make use of the link in markdown to link to the next heading having the details of the specific set of config parameters.
+     * Links are used when config is nested, or value of a config parameter involves product (Zip) or coproduct (OrElse) of multiple keys
+     *
+     * Reference: https://docs.gitlab.com/ee/user/markdown.html#header-ids-and-links
+     *
+     * All text is converted to lowercase.
+     * All non-word text (such as punctuation or HTML) is removed.
+     * All spaces are converted to hyphens.
+     * Two or more hyphens in a row are converted to one.
+     * If a header with the same ID has already been generated, a unique incrementing number is appended, starting at 1.
+     *
+     * @param S: The key has to be string to produce a markdown
+     */
+    def asMarkdown(implicit S: K =:= String): String = {
       val headingColumns =
         List(
           "FieldName",
@@ -204,27 +221,54 @@ trait ConfigDocsModule extends WriteModule {
           "Sources"
         )
 
-      def go(table: Table, index: Option[Int]): List[String] = {
-        val (contents, nestedTables): (List[List[String]], List[(Table, Int)]) =
-          table.rows.zipWithIndex.foldLeft((List.empty[List[String]], List.empty[(Table, Int)])) {
-            case ((contentList, nestedTableList), (row, subIndex)) =>
-              val lastFieldName = getLastFieldName(row.previousPaths)
-              val formatString  = row.format.map(_.asString).getOrElse("")
+      def updateHeadingAndIndex(heading: Heading, map: Map[Heading, Int]): Map[Heading, Int] = {
+        val index = map.getOrElse(heading, 0)
+        map.updated(heading, index)
+      }
 
-              val (name, format) = row.nested match {
-                case Some(nestedTable) =>
-                  val parentPathString = getPathString(nestedTable.parentPaths, index, Some(subIndex))
-                  val getLinkFn        = (s: String) => getLink(s, parentPathString)
+      def getLink(name: String, heading: Heading, usedHeadings: Map[Heading, Int])(implicit S: K =:= String): String = {
+        val index = usedHeadings.getOrElse(heading, 0)
+        if (name.isEmpty || heading.path.isEmpty) ""
+        else {
+          val headingStr = heading.path.map(_.asString).mkString.toLowerCase
+          s"[${name}](#${if (index == 0) headingStr else s"${headingStr}-${index}"})"
+        }
+      }
 
-                  getLinkFn(lastFieldName) -> getLinkFn(formatString)
+      def convertHeadingToString(paths: List[FieldName])(
+        implicit S: K =:= String
+      ): String =
+        paths.map(_.asString).mkString(".")
 
-                case None =>
-                  lastFieldName -> formatString
-              }
+      def go(table: Table, usedHeadings: Map[Heading, Int]): List[String] = {
+        val (contents, nestedTables, updatedUsedHeadings): (
+          List[List[String]],
+          List[(Table, Heading)],
+          Map[Heading, Int]
+        ) =
+          table.rows.zipWithIndex
+            .foldLeft((List.empty[List[String]], List.empty[(Table, Heading)], usedHeadings)) {
+              case ((contentList, nestedTableList, usedHeadings), (row, subIndex)) =>
+                val lastFieldName  = getLastFieldName(row.previousPaths)
+                val formatString   = row.format.map(_.asString).getOrElse("")
+                val heading        = Heading.mk(row.previousPaths)
+                val updatedHeading = updateHeadingAndIndex(heading, usedHeadings)
 
-              (List(name, format, row.description.mkString(", "), row.sources.mkString(", ")) :: contentList) ->
-                (row.nested.map((_, subIndex)).toList ++ nestedTableList)
-          }
+                val (name, format) = row.nested match {
+                  case Some(_) =>
+                    val getLinkFn = (s: String) => getLink(s, heading, updatedHeading)
+                    getLinkFn(lastFieldName) -> getLinkFn(formatString)
+
+                  case None =>
+                    lastFieldName -> formatString
+                }
+
+                (
+                  List(name, format, row.description.mkString(", "), row.sources.mkString(", ")) :: contentList,
+                  (row.nested.map(table => (table, heading)).toList ++ nestedTableList),
+                  updatedHeading
+                )
+            }
 
         val contentList: List[String] = {
           val indexAndSize = getSizeOfIndices(headingColumns :: contents)
@@ -242,14 +286,14 @@ trait ConfigDocsModule extends WriteModule {
           nestedTables.flatMap(
             table =>
               mkStringAndWrapWith(
-                List(s"### ${getPathString(table._1.parentPaths, index, Some(table._2))}"),
+                List(s"### ${convertHeadingToString(table._2.path)}"),
                 System.lineSeparator()
-              ) :: go(table._1, Some(table._2))
+              ) :: go(table._1, updatedUsedHeadings)
           )
       }
 
       mkStringAndWrapWith(
-        s"## Configuration Details" :: (System.lineSeparator() :: go(self, None)),
+        s"## Configuration Details" :: (System.lineSeparator() :: go(self, Map.empty)),
         System.lineSeparator()
       )
     }
@@ -257,14 +301,6 @@ trait ConfigDocsModule extends WriteModule {
     private def padToEmpty(string: String, size: Int): String = {
       val maxSize = Math.max(string.length, size)
       string.padTo(maxSize, ' ')
-    }
-
-    private def getPathString(paths: List[FieldName], parentIndex: Option[Int], subIndex: Option[Int])(
-      implicit S: K =:= String
-    ): String = {
-      val optString: Option[Int] => String = _.fold("")("_" + _)
-
-      paths.map(_.asString).mkString(".") + optString(parentIndex) + optString(subIndex)
     }
 
     private def wrapWith(input: String, str: String): String =
@@ -275,12 +311,6 @@ trait ConfigDocsModule extends WriteModule {
 
     private def getLastFieldName(fieldNames: List[FieldName])(implicit S: K =:= String): String =
       fieldNames.lastOption.fold("")(last => if (last == FieldName.Root) "" else last.asString)
-
-    private def getLink(name: String, link: String): String =
-      if (name.isEmpty || link.isEmpty) "" else s"[${name}](#${getMarkdownLinkString(link)})"
-
-    private def getMarkdownLinkString(s: String) =
-      s.replace(".", "").toLowerCase
 
     type Size  = Int
     type Index = Int
@@ -304,6 +334,9 @@ trait ConfigDocsModule extends WriteModule {
 
   object Table {
 
+    def singletonTable(tableRow: TableRow) =
+      Table(List(tableRow))
+
     case class TableRow(
       previousPaths: List[FieldName],
       format: Option[Format],
@@ -312,8 +345,8 @@ trait ConfigDocsModule extends WriteModule {
       sources: Set[String]
     ) {
       // A single row can be turned to a table
-      def liftToTable =
-        Table(List(FieldName.Root), List(this))
+      def asTable: Table =
+        singletonTable(this)
     }
 
     sealed trait Format { self =>

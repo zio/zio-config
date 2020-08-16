@@ -14,7 +14,7 @@ object DocsExample extends App {
     generateDocs(config)
 
   val markdown =
-    docs.toTable.asMarkdownContent
+    docs.toTable.asMarkdown
 
   println(markdown)
 
