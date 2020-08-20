@@ -55,7 +55,7 @@ object DocsSpec
             ConfigSource.fromMap(Map.empty, source = "system environment")
 
           val result: String =
-            generateDocs(config from finalSource).toTable.asMarkdown
+            generateDocs(config from finalSource).toTable.asGithubFlavouredMarkdown
 
           assert(result)(
             equalTo(DocsSpecUtils.expected)

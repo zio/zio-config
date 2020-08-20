@@ -121,7 +121,7 @@ trait ConfigDocsModule extends WriteModule {
         }
       }
 
-      go(self, List(FieldName.Root), None, None)
+      go(self, Nil, None, None)
     }
   }
 
@@ -134,8 +134,8 @@ trait ConfigDocsModule extends WriteModule {
         }
     }
 
-    case class Raw(value: String)                             extends Description
-    case class NestedDesc(path: K, descriptions: Description) extends Description
+    case class Raw(value: String)                            extends Description
+    case class NestedDesc(path: K, description: Description) extends Description
 
     def nestedDes(path: K, description: Description): Description =
       NestedDesc(path, description)
@@ -176,43 +176,15 @@ trait ConfigDocsModule extends WriteModule {
     def ++(that: Table): Table =
       Table(rows ++ that.rows)
 
-    abstract sealed case class Heading(path: List[FieldName])
+    def asGithubFlavouredMarkdown(implicit S: K =:= String): String =
+      asMarkdown(Table.githubFlavoured)
 
-    object Heading {
-      def mk(list: List[FieldName]): Heading =
-        if (list.isEmpty) new Heading(List(FieldName.Root)) {}
-        else new Heading(list)                              {}
-    }
+    def asConfluenceMarkdown(baseUrl: Option[String])(implicit S: K =:= String): String =
+      asMarkdown(Table.confluenceFlavoured(baseUrl))
 
-    /**
-     * {{{ asMarkdown }}} Converts Table to a Github Flavoured Markdown (GFM), that is tested to be working
-     * with Gitlab and Github rendering of Markdown files.
-     * Github has strong semantics (unlike bit-bucket) in rendering standard markdown format
-     * handling duplicate headings.
-     *
-     * For example:
-     *
-     * {{{
-     *
-     * }}}
-     *
-     * If the config is complicated (say a big set of nested case classes (product) and sealed-trait (coproduct)),
-     * then, instead of squashing all the information into a single table
-     * (because that will become nested markdown making it hard to read and focus on to a specific config parameter),
-     * we make use of the link in markdown to link to the next heading having the details of the specific set of config parameters.
-     * Links are used when config is nested, or value of a config parameter involves product (Zip) or coproduct (OrElse) of multiple keys
-     *
-     * Reference: https://docs.gitlab.com/ee/user/markdown.html#header-ids-and-links
-     *
-     * All text is converted to lowercase.
-     * All non-word text (such as punctuation or HTML) is removed.
-     * All spaces are converted to hyphens.
-     * Two or more hyphens in a row are converted to one.
-     * If a header with the same ID has already been generated, a unique incrementing number is appended, starting at 1.
-     *
-     * @param S: The key has to be string to produce a markdown
-     */
-    def asMarkdown(implicit S: K =:= String): String = {
+    def asMarkdown(
+      getLink: (Heading, Int, Either[FieldName, Format]) => Link
+    )(implicit S: K =:= String): String = {
       val headingColumns =
         List(
           "FieldName",
@@ -226,18 +198,22 @@ trait ConfigDocsModule extends WriteModule {
         map.updated(heading, index)
       }
 
-      def getLink(name: String, heading: Heading, usedHeadings: Map[Heading, Int])(implicit S: K =:= String): String = {
+      def getLinkIfNonEmpty(
+        name: Either[FieldName, Format],
+        heading: Heading,
+        usedHeadings: Map[Heading, Int]
+      ): Link = {
         val index = usedHeadings.getOrElse(heading, 0)
-        if (name.isEmpty || heading.path.isEmpty) ""
+
+        val nameStr = name.fold(_.asString, _.asString)
+
+        if (nameStr.isEmpty || heading.path.isEmpty) Link.blank
         else {
-          val headingStr = heading.path.map(_.asString).mkString.toLowerCase
-          s"[${name}](#${if (index == 0) headingStr else s"${headingStr}-${index}"})"
+          getLink(heading, index, name)
         }
       }
 
-      def convertHeadingToString(paths: List[FieldName])(
-        implicit S: K =:= String
-      ): String =
+      def convertHeadingToString(paths: List[FieldName]): String =
         paths.map(_.asString).mkString(".")
 
       def go(table: Table, usedHeadings: Map[Heading, Int]): List[String] = {
@@ -249,22 +225,23 @@ trait ConfigDocsModule extends WriteModule {
           table.rows
             .foldRight((List.empty[List[String]], List.empty[(Table, Heading)], usedHeadings)) {
               case (row, (contentList, nestedTableList, usedHeadings)) =>
-                val lastFieldName  = getLastFieldName(row.previousPaths)
-                val formatString   = row.format.map(_.asString).getOrElse("")
-                val heading        = Heading.mk(row.previousPaths)
-                val updatedHeading = updateHeadingAndIndex(heading, usedHeadings)
+                val lastFieldName = row.previousPaths.lastOption.getOrElse(FieldName.Blank)
+
+                val formatOrNotApplicable = row.format.getOrElse(Format.NotApplicable)
+                val heading               = Heading.mk(row.previousPaths)
+                val updatedHeading        = updateHeadingAndIndex(heading, usedHeadings)
 
                 val (name, format) = row.nested match {
                   case Some(_) =>
-                    val getLinkFn = (s: String) => getLink(s, heading, updatedHeading)
-                    getLinkFn(lastFieldName) -> getLinkFn(formatString)
+                    val getLinkFn = (s: Either[FieldName, Format]) => getLinkIfNonEmpty(s, heading, updatedHeading)
+                    getLinkFn(Left(lastFieldName)) -> getLinkFn(Right(formatOrNotApplicable))
 
                   case None =>
-                    lastFieldName -> formatString
+                    Link.rawString(lastFieldName.asString) -> Link.rawString(formatOrNotApplicable.asString)
                 }
 
                 (
-                  List(name, format, row.description.mkString(", "), row.sources.mkString(", ")) :: contentList,
+                  List(name.value, format.value, row.description.mkString(", "), row.sources.mkString(", ")) :: contentList,
                   row.nested.map(table => (table, heading)).toList ++ nestedTableList,
                   updatedHeading
                 )
@@ -309,9 +286,6 @@ trait ConfigDocsModule extends WriteModule {
     private def mkStringAndWrapWith(input: List[String], str: String): String =
       wrapWith(input.mkString(str), str)
 
-    private def getLastFieldName(fieldNames: List[FieldName])(implicit S: K =:= String): String =
-      fieldNames.lastOption.fold("")(last => if (last == FieldName.Root) "" else last.asString)
-
     type Size  = Int
     type Index = Int
 
@@ -333,6 +307,55 @@ trait ConfigDocsModule extends WriteModule {
   }
 
   object Table {
+
+    abstract sealed case class Heading(path: List[FieldName])
+
+    object Heading {
+      def mk(list: List[FieldName]): Heading =
+        if (list.isEmpty) new Heading(List(FieldName.Blank)) {}
+        else new Heading(list)                               {}
+    }
+
+    abstract sealed case class Link(value: String)
+
+    object Link {
+
+      def blank: Link = new Link("") {}
+
+      def rawString(s: String): Link =
+        new Link(s) {}
+
+      def githubLink(name: String, link: String): Link =
+        new Link(s"[${name}](${link})") {}
+
+      def confluenceLink(name: String, link: String): Link =
+        new Link(s"[${name}|${link}]") {}
+
+    }
+
+    // GFM
+    def githubFlavoured(implicit S: K =:= String): (Heading, Int, Either[FieldName, Format]) => Link =
+      (heading, index, fieldNameOrFormat) => {
+        val headingStr = heading.path.map(_.asString).mkString.toLowerCase.replace(".", "").replace(" ", "")
+
+        val name = fieldNameOrFormat.fold(_.asString, _.asString)
+
+        if (index == 0) Link.githubLink(name, headingStr) else Link.githubLink(name, s"${headingStr}-${index}")
+      }
+
+    // Confluence markdown
+    def confluenceFlavoured(
+      baseLink: Option[String]
+    )(implicit S: K =:= String): (Heading, Int, Either[FieldName, Format]) => Link =
+      (heading, _, fieldName) => {
+        val headingStr = heading.path.map(_.asString).mkString.replace(".", "").replace(" ", "")
+
+        val name = fieldName.fold(_.asString, _.asString)
+
+        baseLink.fold(Link.confluenceLink(name, headingStr))(
+          baseLink => Link.confluenceLink(name, s"${baseLink}-${headingStr}")
+        )
+      }
 
     def singletonTable(tableRow: TableRow) =
       Table(List(tableRow))
@@ -358,6 +381,7 @@ trait ConfigDocsModule extends WriteModule {
           case Format.Nested               => "nested"
           case Format.AnyOneOf             => "any-one-of"
           case Format.AllOf                => "all-of"
+          case Format.NotApplicable        => ""
           case Format.Of(format1, format2) => format1.asString + " >>> " + format2.asString
         }
     }
@@ -369,6 +393,7 @@ trait ConfigDocsModule extends WriteModule {
       case object Nested                             extends Format
       case object AnyOneOf                           extends Format
       case object AllOf                              extends Format
+      case object NotApplicable                      extends Format
       case class Of(format: Format, format2: Format) extends Format
     }
 
@@ -376,13 +401,11 @@ trait ConfigDocsModule extends WriteModule {
       def asString(implicit S: K =:= String): String =
         this match {
           case FieldName.Key(k) => S.apply(k)
-          case FieldName.Root   => "root"
-          case FieldName.Blank  => ""
+          case FieldName.Blank  => "Details of fields"
         }
     }
 
     object FieldName {
-      case object Root     extends FieldName
       case class Key(k: K) extends FieldName
       case object Blank    extends FieldName
     }
@@ -507,7 +530,8 @@ trait ConfigDocsModule extends WriteModule {
               tree.getPath(keys) match {
                 case PropertyTree.Sequence(value) if value.nonEmpty =>
                   ConfigDocs.Sequence(schema, value.map(t => loop(t, schema, List.empty)))
-                case _ => ConfigDocs.Sequence(schema, loop(tree, schema, keys) :: values)
+                case _ =>
+                  ConfigDocs.Sequence(schema, loop(tree, schema, keys) :: values)
               }
           }
 
