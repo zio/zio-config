@@ -84,102 +84,102 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName                        |Format                   |Description|Sources|
-           ||---                              |---                      |---        |---    |
-           ||[tableDetails](#roottabledetails)|[list](#tabledetails)|           |       |
+           ||FieldName                   |Format              |Description|Sources|
+           ||---                         |---                 |---        |---    |
+           ||[tableDetails](tabledetails)|[list](tabledetails)|           |       |
            |
            |### tableDetails
            |
-           ||FieldName                            |Format                     |Description                                                                                      |Sources|
-           ||---                                  |---                        |---                                                                                              |---    |
-           ||featureBucket                        |primitive                  |value of type string                                                                             |       |
-           ||table                                |primitive                  |value of type string                                                                             |       |
-           ||[partitionScheme](#partitionscheme)  |[all-of](#partitionscheme) |optional value                                                                                   |       |
-           ||partitionString                      |primitive                  |value of type string, optional value, Example: as_at_date=2019-10-11/minor_version=1/run_time=123|       |
-           ||numberOfPartitions                   |primitive                  |value of type int, optional value                                                                |       |
-           ||[transformOptions](#transformoptions)|[all-of](#transformoptions)|optional value                                                                                   |       |
-           ||blockSizeMb                          |primitive                  |value of type int, optional value                                                                |       |
-           ||[destination](#destination)          |[all-of](#destination)     |                                                                                                 |       |
-           ||database                             |primitive                  |value of type string, optional value                                                             |       |
-           |
-           |### partitionScheme
-           |
-           ||FieldName    |Format   |Description                         |Sources|
-           ||---          |---      |---                                 |---    |
-           ||dateFormat   |primitive|value of type string                |       |
-           ||hasVersion   |primitive|value of type boolean               |       |
-           ||hasRunDate   |primitive|value of type boolean               |       |
-           ||partitionName|primitive|value of type string, optional value|       |
-           |
-           |### transformOptions
-           |
-           ||FieldName             |Format   |Description                         |Sources|
-           ||---                   |---      |---                                 |---    |
-           ||filter                |primitive|value of type string, optional value|       |
-           ||maskedColumns         |list     |value of type string, optional value|       |
-           ||header                |primitive|value of type boolean               |       |
-           ||separator             |primitive|value of type string                |       |
-           ||compression           |primitive|value of type string, optional value|       |
-           ||dateFormat            |primitive|value of type string, optional value|       |
-           ||timestampFormat       |primitive|value of type string, optional value|       |
-           ||quoteAll              |primitive|value of type boolean               |       |
-           ||emptyValue            |primitive|value of type string, optional value|       |
-           ||nullValue             |primitive|value of type string, optional value|       |
-           ||intermediateS3BasePath|primitive|value of type string                |       |
-           ||columns               |list     |value of type string                |       |
+           ||FieldName                           |Format                    |Description                                                                                      |Sources|
+           ||---                                 |---                       |---                                                                                              |---    |
+           ||database                            |primitive                 |value of type string, optional value                                                             |       |
+           ||[destination](destination)          |[all-of](destination)     |                                                                                                 |       |
+           ||blockSizeMb                         |primitive                 |value of type int, optional value                                                                |       |
+           ||[transformOptions](transformoptions)|[all-of](transformoptions)|optional value                                                                                   |       |
+           ||numberOfPartitions                  |primitive                 |value of type int, optional value                                                                |       |
+           ||partitionString                     |primitive                 |value of type string, optional value, Example: as_at_date=2019-10-11/minor_version=1/run_time=123|       |
+           ||[partitionScheme](partitionscheme)  |[all-of](partitionscheme) |optional value                                                                                   |       |
+           ||table                               |primitive                 |value of type string                                                                             |       |
+           ||featureBucket                       |primitive                 |value of type string                                                                             |       |
            |
            |### destination
            |
-           ||FieldName                              |Format                      |Description                         |Sources|
-           ||---                                    |---                         |---                                 |---    |
-           ||[dataFileNaming](#datafilenaming)      |[all-of](#datafilenaming)   |optional value                      |       |
-           ||[eotFileNaming](#eotfilenaming)        |[all-of](#eotfilenaming)    |optional value                      |       |
-           ||[controlFileNaming](#controlfilenaming)|[all-of](#controlfilenaming)|optional value                      |       |
-           ||rename                                 |map                         |value of type string, optional value|       |
-           ||roleArn                                |primitive                   |value of type string, optional value|       |
-           ||[downstream](#downstream)              |[all-of](#downstream)       |                                    |       |
+           ||FieldName                             |Format                     |Description                         |Sources|
+           ||---                                   |---                        |---                                 |---    |
+           ||[downstream](downstream)              |[all-of](downstream)       |                                    |       |
+           ||roleArn                               |primitive                  |value of type string, optional value|       |
+           ||rename                                |map                        |value of type string, optional value|       |
+           ||[controlFileNaming](controlfilenaming)|[all-of](controlfilenaming)|optional value                      |       |
+           ||[eotFileNaming](eotfilenaming)        |[all-of](eotfilenaming)    |optional value                      |       |
+           ||[dataFileNaming](datafilenaming)      |[all-of](datafilenaming)   |optional value                      |       |
            |
-           |### dataFileNaming
+           |### downstream
            |
-           ||FieldName |Format   |Description                                           |Sources|
-           ||---       |---      |---                                                   |---    |
-           ||dateFormat|primitive|value of type string, default value: yyyyMMdd'T'HHmmss|       |
-           ||pattern   |primitive|value of type string                                  |       |
+           ||FieldName         |Format               |Description         |Sources|
+           ||---               |---                  |---                 |---    |
+           ||type              |primitive            |value of type string|       |
+           ||[details](details)|[any-one-of](details)|                    |       |
            |
-           |### eotFileNaming
+           |### details
            |
-           ||FieldName |Format   |Description                                           |Sources|
-           ||---       |---      |---                                                   |---    |
-           ||dateFormat|primitive|value of type string, default value: yyyyMMdd'T'HHmmss|       |
-           ||pattern   |primitive|value of type string                                  |       |
+           ||FieldName|Format                     |Description         |Sources|
+           ||---      |---                        |---                 |---    |
+           ||         |[all-of](fielddescriptions)|                    |       |
+           ||d        |primitive                  |value of type string|       |
+           |
+           |### Field Descriptions
+           |
+           ||FieldName|Format   |Description         |Sources|
+           ||---      |---      |---                 |---    |
+           ||c        |primitive|value of type string|       |
+           ||e        |primitive|value of type string|       |
            |
            |### controlFileNaming
            |
            ||FieldName |Format   |Description                                           |Sources|
            ||---       |---      |---                                                   |---    |
-           ||dateFormat|primitive|value of type string, default value: yyyyMMdd'T'HHmmss|       |
            ||pattern   |primitive|value of type string                                  |       |
+           ||dateFormat|primitive|value of type string, default value: yyyyMMdd'T'HHmmss|       |
            |
-           |### downstream
+           |### eotFileNaming
            |
-           ||FieldName          |Format                |Description         |Sources|
-           ||---                |---                   |---                 |---    |
-           ||[details](#details)|[any-one-of](#details)|                    |       |
-           ||type               |primitive             |value of type string|       |
+           ||FieldName |Format   |Description                                           |Sources|
+           ||---       |---      |---                                                   |---    |
+           ||pattern   |primitive|value of type string                                  |       |
+           ||dateFormat|primitive|value of type string, default value: yyyyMMdd'T'HHmmss|       |
            |
-           |### details
+           |### dataFileNaming
            |
-           ||FieldName|Format         |Description         |Sources|
-           ||---      |---            |---                 |---    |
-           ||d        |primitive      |value of type string|       |
-           ||         |[all-of](#root)|                    |       |
+           ||FieldName |Format   |Description                                           |Sources|
+           ||---       |---      |---                                                   |---    |
+           ||pattern   |primitive|value of type string                                  |       |
+           ||dateFormat|primitive|value of type string, default value: yyyyMMdd'T'HHmmss|       |
            |
-           |### root
+           |### transformOptions
            |
-           ||FieldName|Format   |Description         |Sources|
-           ||---      |---      |---                 |---    |
-           ||e        |primitive|value of type string|       |
-           ||c        |primitive|value of type string|       |
+           ||FieldName             |Format   |Description                         |Sources|
+           ||---                   |---      |---                                 |---    |
+           ||columns               |list     |value of type string                |       |
+           ||intermediateS3BasePath|primitive|value of type string                |       |
+           ||nullValue             |primitive|value of type string, optional value|       |
+           ||emptyValue            |primitive|value of type string, optional value|       |
+           ||quoteAll              |primitive|value of type boolean               |       |
+           ||timestampFormat       |primitive|value of type string, optional value|       |
+           ||dateFormat            |primitive|value of type string, optional value|       |
+           ||compression           |primitive|value of type string, optional value|       |
+           ||separator             |primitive|value of type string                |       |
+           ||header                |primitive|value of type boolean               |       |
+           ||maskedColumns         |list     |value of type string, optional value|       |
+           ||filter                |primitive|value of type string, optional value|       |
+           |
+           |### partitionScheme
+           |
+           ||FieldName    |Format   |Description                         |Sources|
+           ||---          |---      |---                                 |---    |
+           ||partitionName|primitive|value of type string, optional value|       |
+           ||hasRunDate   |primitive|value of type boolean               |       |
+           ||hasVersion   |primitive|value of type boolean               |       |
+           ||dateFormat   |primitive|value of type string                |       |
            |""".stripMargin
 
       val markdown = generateDocs(descriptor[RawConfig]).toTable.asGithubFlavouredMarkdown
@@ -196,16 +196,16 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName  |Format          |Description|Sources|
-           ||---        |---             |---        |---    |
-           ||[a](#roota)|[any-one-of](#a)|           |       |
+           ||FieldName|Format         |Description|Sources|
+           ||---      |---            |---        |---    |
+           ||[a](a)   |[any-one-of](a)|           |       |
            |
            |### a
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||         |primitive|value of type string|       |
            ||         |primitive|value of type int   |       |
+           ||         |primitive|value of type string|       |
            |""".stripMargin
 
       assert(markdown)(equalTo(expectedMarkdown)) && assert(markdown)(equalTo(expectedMarkdown))
@@ -222,16 +222,16 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName  |Format          |Description|Sources|
-           ||---        |---             |---        |---    |
-           ||[a](#roota)|[any-one-of](#a)|           |       |
+           ||FieldName|Format         |Description|Sources|
+           ||---      |---            |---        |---    |
+           ||[a](a)   |[any-one-of](a)|           |       |
            |
            |### a
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||         |primitive|value of type string|       |
            ||b        |primitive|value of type int   |       |
+           ||         |primitive|value of type string|       |
            |""".stripMargin
 
       assert(result)(equalTo(expectedMarkdown))
@@ -248,16 +248,16 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName  |Format          |Description|Sources|
-           ||---        |---             |---        |---    |
-           ||[a](#roota)|[any-one-of](#a)|           |       |
+           ||FieldName|Format         |Description|Sources|
+           ||---      |---            |---        |---    |
+           ||[a](a)   |[any-one-of](a)|           |       |
            |
            |### a
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||b        |primitive|value of type string|       |
            ||         |primitive|value of type int   |       |
+           ||b        |primitive|value of type string|       |
            |""".stripMargin
 
       assert(result)(equalTo(expectedMarkdown))
@@ -274,16 +274,16 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName  |Format          |Description|Sources|
-           ||---        |---             |---        |---    |
-           ||[a](#roota)|[any-one-of](#a)|           |       |
+           ||FieldName|Format         |Description|Sources|
+           ||---      |---            |---        |---    |
+           ||[a](a)   |[any-one-of](a)|           |       |
            |
            |### a
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||c        |primitive|value of type string|       |
            ||b        |primitive|value of type int   |       |
+           ||c        |primitive|value of type string|       |
            |""".stripMargin
 
       assert(result)(equalTo(expectedMarkdown))
@@ -300,17 +300,17 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName  |Format          |Description|Sources|
-           ||---        |---             |---        |---    |
-           ||[a](#roota)|[any-one-of](#a)|           |       |
+           ||FieldName|Format         |Description|Sources|
+           ||---      |---            |---        |---    |
+           ||[a](a)   |[any-one-of](a)|           |       |
            |
-           |### root.a
+           |### a
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||d        |primitive|value of type int   |       |
-           ||c        |primitive|value of type string|       |
            ||b        |primitive|value of type int   |       |
+           ||c        |primitive|value of type string|       |
+           ||d        |primitive|value of type int   |       |
            |""".stripMargin
 
       assert(result)(equalTo(expectedMarkdown))
@@ -327,22 +327,22 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName|Format             |Description|Sources|
-           ||---      |---                |---        |---    |
-           ||         |[any-one-of](#root)|           |       |
+           ||FieldName|Format                         |Description|Sources|
+           ||---      |---                            |---        |---    |
+           ||         |[any-one-of](fielddescriptions)|           |       |
            |
-           |### root
+           |### Field Descriptions
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||         |primitive|value of type double|       |
-           ||b        |primitive|value of type int   |       |
            ||a        |primitive|value of type string|       |
+           ||b        |primitive|value of type int   |       |
+           ||         |primitive|value of type double|       |
            |""".stripMargin
 
       assert(result)(equalTo(expectedMarkdown))
     },
-    test("Markdown works a single key that can be multiple types") {
+    test("Markdown works for a single key that can be more than 2 types") {
       import zio.config._, ConfigDescriptor._
 
       val config =
@@ -355,22 +355,22 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName  |Format              |Description|Sources|
-           ||---        |---                 |---        |---    |
-           ||[a](#roota)|[any-one-of](#roota)|           |       |
+           ||FieldName|Format         |Description|Sources|
+           ||---      |---            |---        |---    |
+           ||[a](a)   |[any-one-of](a)|           |       |
            |
-           |### root.a
+           |### a
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||         |primitive|value of type double|       |
-           ||         |primitive|value of type int   |       |
            ||         |primitive|value of type string|       |
+           ||         |primitive|value of type int   |       |
+           ||         |primitive|value of type double|       |
            |""".stripMargin
 
       assert(result)(equalTo(expectedMarkdown))
     },
-    test("Markdown works a single key that can be multiple types zipped with same") {
+    test("Markdown works for a single key that can be multiple types zipped with same config") {
       import zio.config._, ConfigDescriptor._
 
       val config1 =
@@ -386,37 +386,37 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
+           ||FieldName|Format                     |Description|Sources|
+           ||---      |---                        |---        |---    |
+           ||         |[all-of](fielddescriptions)|           |       |
+           |
+           |### Field Descriptions
+           |
            ||FieldName|Format         |Description|Sources|
            ||---      |---            |---        |---    |
-           ||         |[all-of](#root)|           |       |
+           ||[a](a)   |[any-one-of](a)|           |       |
+           ||[b](b)   |[any-one-of](b)|           |       |
            |
-           |### root_0
-           |
-           ||FieldName|Format                |Description|Sources|
-           ||---      |---                   |---        |---    |
-           ||         |[any-one-of](#roota)  |           |       |
-           ||         |[any-one-of](#roota-1)|           |       |
-           |
-           |### root.a_0_1
+           |### a
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||a        |primitive|value of type double|       |
-           ||a        |primitive|value of type int   |       |
-           ||a        |primitive|value of type string|       |
+           ||         |primitive|value of type string|       |
+           ||         |primitive|value of type int   |       |
+           ||         |primitive|value of type double|       |
            |
-           |### root.a_0_0
+           |### b
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||a        |primitive|value of type double|       |
-           ||a        |primitive|value of type int   |       |
-           ||a        |primitive|value of type string|       |
+           ||         |primitive|value of type string|       |
+           ||         |primitive|value of type int   |       |
+           ||         |primitive|value of type double|       |
            |""".stripMargin
 
       assert(result)(equalTo(expectedMarkdown))
     },
-    test("Markdown works when there a parent key with a few childs not having key") {
+    test("Markdown works when there is a  parent key with a few children not having key") {
       import zio.config._, ConfigDescriptor._
 
       val config =
@@ -433,37 +433,37 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |## Configuration Details
            |
            |
-           ||FieldName  |Format          |Description|Sources|
-           ||---        |---             |---        |---    |
-           ||[a](#roota)|[nested](#roota)|           |       |
+           ||FieldName|Format     |Description|Sources|
+           ||---      |---        |---        |---    |
+           ||[a](a)   |[nested](a)|           |       |
            |
-           |### root.a
+           |### a
            |
-           ||FieldName   |Format           |Description|Sources|
-           ||---         |---              |---        |---    |
-           ||[b](#rootab)|[all-of](#rootab)|           |       |
+           ||FieldName|Format      |Description|Sources|
+           ||---      |---         |---        |---    |
+           ||[b](ab)  |[all-of](ab)|           |       |
            |
-           |### root.a.b
+           |### a.b
            |
-           ||FieldName|Format             |Description      |Sources|
-           ||---      |---                |---              |---    |
-           ||         |[any-one-of](#root)|                 |       |
-           ||c        |primitive          |value of type int|       |
+           ||FieldName|Format                         |Description      |Sources|
+           ||---      |---                            |---              |---    |
+           ||c        |primitive                      |value of type int|       |
+           ||         |[any-one-of](fielddescriptions)|                 |       |
            |
-           |### root
+           |### Field Descriptions
            |
-           ||FieldName|Format           |Description         |Sources|
-           ||---      |---              |---                 |---    |
-           ||         |[all-of](#root-1)|                    |       |
-           ||d        |primitive        |value of type string|       |
+           ||FieldName|Format                       |Description         |Sources|
+           ||---      |---                          |---                 |---    |
+           ||d        |primitive                    |value of type string|       |
+           ||         |[all-of](fielddescriptions-1)|                    |       |
            |
-           |### root
+           |### Field Descriptions
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||g        |primitive|value of type string|       |
-           ||f        |primitive|value of type string|       |
            ||e        |primitive|value of type string|       |
+           ||f        |primitive|value of type string|       |
+           ||g        |primitive|value of type string|       |
            |""".stripMargin
 
       assert(result)(equalTo(expectedMarkdown))

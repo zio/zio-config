@@ -85,21 +85,21 @@ object DocsSpecUtils {
        |## Configuration Details
        |
        |
-       ||FieldName|Format           |Description|Sources|
-       ||---      |---              |---        |---    |
-       ||         |[all-of](details)|           |       |
+       ||FieldName|Format                     |Description|Sources|
+       ||---      |---                        |---        |---    |
+       ||         |[all-of](fielddescriptions)|           |       |
        |
-       |### Details
+       |### Field Descriptions
        |
-       ||FieldName     |Format                 |Description         |Sources           |
-       ||---           |---                    |---                 |---               |
-       ||user          |primitive              |value of type string|system environment|
-       ||              |[any-one-of](details-1)|                    |                  |
-       ||[azure](azure)|[all-of](azure)        |                    |                  |
-       ||[db1](db1)    |[all-of](db1)          |                    |                  |
-       ||[db2](db2)    |[all-of](db2)          |                    |                  |
+       ||FieldName     |Format                           |Description         |Sources           |
+       ||---           |---                              |---                 |---               |
+       ||user          |primitive                        |value of type string|system environment|
+       ||              |[any-one-of](fielddescriptions-1)|                    |                  |
+       ||[azure](azure)|[all-of](azure)                  |                    |                  |
+       ||[db1](db1)    |[all-of](db1)                    |                    |                  |
+       ||[db2](db2)    |[all-of](db2)                    |                    |                  |
        |
-       |### Details
+       |### Field Descriptions
        |
        ||FieldName                 |Format               |Description|Sources|
        ||---                       |---                  |---        |---    |

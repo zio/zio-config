@@ -199,7 +199,7 @@ trait ConfigDocsModule extends WriteModule {
       }
 
       def convertHeadingToString(paths: List[FieldName]): String =
-        paths.map(_.asString(Some("Details"))).mkString(".")
+        paths.map(_.asString(Some("Field Descriptions"))).mkString(".")
 
       def go(table: Table, usedHeadings: Map[Heading, Int]): List[String] = {
         val (contents, nestedTables, updatedUsedHeadings): (
@@ -335,9 +335,14 @@ trait ConfigDocsModule extends WriteModule {
     def githubFlavoured(implicit S: K =:= String): (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, index, fieldNameOrFormat) => {
         val headingStr =
-          heading.path.map(_.asString(Some("Details"))).mkString.toLowerCase.replace(".", "").replace(" ", "")
+          heading.path
+            .map(_.asString(Some("Field Descriptions")))
+            .mkString
+            .toLowerCase
+            .replace(".", "")
+            .replace(" ", "")
 
-        val name = fieldNameOrFormat.fold(_.asString(Some("Details")), _.asString)
+        val name = fieldNameOrFormat.fold(_.asString(Some("Field Descriptions")), _.asString)
 
         if (index == 0) Link.githubLink(name, headingStr) else Link.githubLink(name, s"${headingStr}-${index}")
       }
@@ -347,9 +352,10 @@ trait ConfigDocsModule extends WriteModule {
       baseLink: Option[String]
     )(implicit S: K =:= String): (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, _, fieldName) => {
-        val headingStr = heading.path.map(_.asString(Some("Details"))).mkString.replace(".", "").replace(" ", "")
+        val headingStr =
+          heading.path.map(_.asString(Some("Field Descriptions"))).mkString.replace(".", "").replace(" ", "")
 
-        val name = fieldName.fold(_.asString(Some("Details")), _.asString)
+        val name = fieldName.fold(_.asString(Some("Field Descriptions")), _.asString)
 
         baseLink.fold(Link.confluenceLink(name, headingStr))(
           baseLink => Link.confluenceLink(name, s"${baseLink}-${headingStr}")

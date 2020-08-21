@@ -219,4 +219,4 @@ object GenerateDocsTestUtils {
       value <- genAppConfig
     } yield GenerateDocsParams(keys, value)
 }
-*/
+ */

@@ -214,25 +214,25 @@ To generate the documentation of the config, call `generateDocs`.
 
  // as markdown 
   val markdown =
-     generatedDocs.toTable.asMarkdownContent
+     generatedDocs.toTable.asGithubFlavouredMarkdown
 
  // produces the following markdown
 
   /*
-    |FieldName             |Format                 |Description               |Sources |
-    |---                   |---                    |---                       |---     |
-    |appName               |primitive              |value of type string, asdf|constant|
-    |[east](#root.east_1)  |[all-of](#root.east_1) |                          |        |
-    |[south](#root.south_0)|[all-of](#root.south_0)|                          |        |
+    |FieldName      |Format          |Description               |Sources |
+    |---            |---             |---                       |---     |
+    |appName        |primitive       |value of type string, asdf|constant|
+    |[east](#east)  |[all-of](#east) |                          |        |
+    |[south](#south)|[all-of](#south)|                          |        |
     
-    ### root.east_1
+    ### east
     
     |FieldName |Format   |Description                             |Sources |
     |---       |---      |---                                     |---     |
     |port      |primitive|value of type int, East details, asdf   |constant|
     |connection|primitive|value of type string, East details, asdf|constant|
     
-    ### root.south_0
+    ### south
     
     |FieldName |Format   |Description                              |Sources |
     |---       |---      |---                                      |---     |
