@@ -39,10 +39,10 @@ object DocsSpec
               .orElseEither(nested("credentials")(tokenAndUsername))
 
           val caseClass5Config =
-            nested("caseClass5")((string("f") |@| string("g"))(CaseClass5.apply, CaseClass5.unapply))
+            nested("db1")((string("f") |@| string("g"))(CaseClass5.apply, CaseClass5.unapply))
 
           val caseClass6Config =
-            nested("caseClass6")((string("h") |@| string("i"))(CaseClass6.apply, CaseClass6.unapply))
+            nested("db2")((string("h") |@| string("i"))(CaseClass6.apply, CaseClass6.unapply))
 
           val config: ConfigDescriptor[TestCase1.CaseClass1] =
             (string("user") |@| awsConfig |@| azureConfig |@| caseClass5Config.optional |@| caseClass6Config
@@ -85,39 +85,60 @@ object DocsSpecUtils {
        |## Configuration Details
        |
        |
-       ||FieldName             |Format                 |Description         |Sources           |
-       ||---                   |---                    |---                 |---               |
-       ||[azure](#root.azure_2)|[all-of](#root.azure_2)|                    |                  |
-       ||                      |[any-one-of](#root_1)  |                    |                  |
-       ||user                  |primitive              |value of type string|system environment|
+       ||FieldName|Format           |Description|Sources|
+       ||---      |---              |---        |---    |
+       ||         |[all-of](details)|           |       |
        |
-       |### root.azure_2
+       |### Details
        |
-       ||FieldName|Format   |Description         |Sources           |
-       ||---      |---      |---                 |---               |
-       ||b        |primitive|value of type string|system environment|
-       ||a        |primitive|value of type string|system environment|
+       ||FieldName     |Format                 |Description         |Sources           |
+       ||---           |---                    |---                 |---               |
+       ||user          |primitive              |value of type string|system environment|
+       ||              |[any-one-of](details-1)|                    |                  |
+       ||[azure](azure)|[all-of](azure)        |                    |                  |
+       ||[db1](db1)    |[all-of](db1)          |                    |                  |
+       ||[db2](db2)    |[all-of](db2)          |                    |                  |
        |
-       |### root_1
+       |### Details
        |
-       ||FieldName                           |Format                         |Description|Sources|
-       ||---                                 |---                            |---        |---    |
-       ||[credentials](#root.credentials_1_1)|[all-of](#root.credentials_1_1)|           |       |
-       ||[aws](#root.aws_1_0)                |[all-of](#root.aws_1_0)        |           |       |
+       ||FieldName                 |Format               |Description|Sources|
+       ||---                       |---                  |---        |---    |
+       ||[aws](aws)                |[all-of](aws)        |           |       |
+       ||[credentials](credentials)|[all-of](credentials)|           |       |
        |
-       |### root.credentials_1_1
-       |
-       ||FieldName|Format   |Description         |Sources                                          |
-       ||---      |---      |---                 |---                                              |
-       ||username |primitive|value of type string|system environment                               |
-       ||token_id |primitive|value of type string|docker env, system properties, system environment|
-       |
-       |### root.aws_1_0
+       |### aws
        |
        ||FieldName   |Format   |Description         |Sources           |
        ||---         |---      |---                 |---               |
-       ||account_name|primitive|value of type string|system environment|
        ||region      |primitive|value of type string|system environment|
+       ||account_name|primitive|value of type string|system environment|
+       |
+       |### credentials
+       |
+       ||FieldName|Format   |Description         |Sources                                          |
+       ||---      |---      |---                 |---                                              |
+       ||token_id |primitive|value of type string|docker env, system properties, system environment|
+       ||username |primitive|value of type string|system environment                               |
+       |
+       |### azure
+       |
+       ||FieldName|Format   |Description         |Sources           |
+       ||---      |---      |---                 |---               |
+       ||a        |primitive|value of type string|system environment|
+       ||b        |primitive|value of type string|system environment|
+       |
+       |### db1
+       |
+       ||FieldName|Format   |Description                         |Sources           |
+       ||---      |---      |---                                 |---               |
+       ||f        |primitive|value of type string, optional value|system environment|
+       ||g        |primitive|value of type string, optional value|system environment|
+       |
+       |### db2
+       |
+       ||FieldName|Format   |Description                                       |Sources           |
+       ||---      |---      |---                                               |---               |
+       ||h        |primitive|value of type string, default value: CaseClass6(,)|system environment|
+       ||i        |primitive|value of type string, default value: CaseClass6(,)|system environment|
        |""".stripMargin
-
 }

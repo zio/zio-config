@@ -127,10 +127,10 @@ trait ConfigDocsModule extends WriteModule {
 
   object ConfigDocs {
     sealed trait Description {
-      override def toString: String =
+      def asString: String =
         this match {
-          case ConfigDocs.Raw(value)                  => value
-          case ConfigDocs.NestedDesc(_, descriptions) => descriptions.toString
+          case ConfigDocs.Raw(value)                 => value
+          case ConfigDocs.NestedDesc(_, description) => description.asString
         }
     }
 
@@ -198,23 +198,8 @@ trait ConfigDocsModule extends WriteModule {
         map.updated(heading, index)
       }
 
-      def getLinkIfNonEmpty(
-        name: Either[FieldName, Format],
-        heading: Heading,
-        usedHeadings: Map[Heading, Int]
-      ): Link = {
-        val index = usedHeadings.getOrElse(heading, 0)
-
-        val nameStr = name.fold(_.asString, _.asString)
-
-        if (nameStr.isEmpty || heading.path.isEmpty) Link.blank
-        else {
-          getLink(heading, index, name)
-        }
-      }
-
       def convertHeadingToString(paths: List[FieldName]): String =
-        paths.map(_.asString).mkString(".")
+        paths.map(_.asString(Some("Details"))).mkString(".")
 
       def go(table: Table, usedHeadings: Map[Heading, Int]): List[String] = {
         val (contents, nestedTables, updatedUsedHeadings): (
@@ -233,15 +218,28 @@ trait ConfigDocsModule extends WriteModule {
 
                 val (name, format) = row.nested match {
                   case Some(_) =>
-                    val getLinkFn = (s: Either[FieldName, Format]) => getLinkIfNonEmpty(s, heading, updatedHeading)
-                    getLinkFn(Left(lastFieldName)) -> getLinkFn(Right(formatOrNotApplicable))
+                    val getLinkFn =
+                      (s: Either[FieldName, Format]) => getLink(heading, updatedHeading.getOrElse(heading, 0), s)
+
+                    val nameWithLink =
+                      lastFieldName match {
+                        case FieldName.Key(_) => getLinkFn(Left(lastFieldName))
+                        case FieldName.Blank  => Link.rawString(lastFieldName.asString(None))
+                      }
+
+                    nameWithLink -> getLinkFn(Right(formatOrNotApplicable))
 
                   case None =>
-                    Link.rawString(lastFieldName.asString) -> Link.rawString(formatOrNotApplicable.asString)
+                    Link.rawString(lastFieldName.asString(None)) -> Link.rawString(formatOrNotApplicable.asString)
                 }
 
                 (
-                  List(name.value, format.value, row.description.mkString(", "), row.sources.mkString(", ")) :: contentList,
+                  List(
+                    name.value,
+                    format.value,
+                    row.description.map(_.asString).mkString(", "),
+                    row.sources.mkString(", ")
+                  ) :: contentList,
                   row.nested.map(table => (table, heading)).toList ++ nestedTableList,
                   updatedHeading
                 )
@@ -336,9 +334,10 @@ trait ConfigDocsModule extends WriteModule {
     // GFM
     def githubFlavoured(implicit S: K =:= String): (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, index, fieldNameOrFormat) => {
-        val headingStr = heading.path.map(_.asString).mkString.toLowerCase.replace(".", "").replace(" ", "")
+        val headingStr =
+          heading.path.map(_.asString(Some("Details"))).mkString.toLowerCase.replace(".", "").replace(" ", "")
 
-        val name = fieldNameOrFormat.fold(_.asString, _.asString)
+        val name = fieldNameOrFormat.fold(_.asString(Some("Details")), _.asString)
 
         if (index == 0) Link.githubLink(name, headingStr) else Link.githubLink(name, s"${headingStr}-${index}")
       }
@@ -348,9 +347,9 @@ trait ConfigDocsModule extends WriteModule {
       baseLink: Option[String]
     )(implicit S: K =:= String): (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, _, fieldName) => {
-        val headingStr = heading.path.map(_.asString).mkString.replace(".", "").replace(" ", "")
+        val headingStr = heading.path.map(_.asString(Some("Details"))).mkString.replace(".", "").replace(" ", "")
 
-        val name = fieldName.fold(_.asString, _.asString)
+        val name = fieldName.fold(_.asString(Some("Details")), _.asString)
 
         baseLink.fold(Link.confluenceLink(name, headingStr))(
           baseLink => Link.confluenceLink(name, s"${baseLink}-${headingStr}")
@@ -375,33 +374,31 @@ trait ConfigDocsModule extends WriteModule {
     sealed trait Format { self =>
       def asString: String =
         self match {
-          case Format.List                 => "list"
-          case Format.Map                  => "map"
-          case Format.Primitive            => "primitive"
-          case Format.Nested               => "nested"
-          case Format.AnyOneOf             => "any-one-of"
-          case Format.AllOf                => "all-of"
-          case Format.NotApplicable        => ""
-          case Format.Of(format1, format2) => format1.asString + " >>> " + format2.asString
+          case Format.List          => "list"
+          case Format.Map           => "map"
+          case Format.Primitive     => "primitive"
+          case Format.Nested        => "nested"
+          case Format.AnyOneOf      => "any-one-of"
+          case Format.AllOf         => "all-of"
+          case Format.NotApplicable => ""
         }
     }
 
     object Format {
-      case object List                               extends Format
-      case object Map                                extends Format
-      case object Primitive                          extends Format
-      case object Nested                             extends Format
-      case object AnyOneOf                           extends Format
-      case object AllOf                              extends Format
-      case object NotApplicable                      extends Format
-      case class Of(format: Format, format2: Format) extends Format
+      case object List          extends Format
+      case object Map           extends Format
+      case object Primitive     extends Format
+      case object Nested        extends Format
+      case object AnyOneOf      extends Format
+      case object AllOf         extends Format
+      case object NotApplicable extends Format
     }
 
     sealed trait FieldName {
-      def asString(implicit S: K =:= String): String =
+      def asString(forBlank: Option[String])(implicit S: K =:= String): String =
         this match {
           case FieldName.Key(k) => S.apply(k)
-          case FieldName.Blank  => "Details of fields"
+          case FieldName.Blank  => forBlank.getOrElse("")
         }
     }
 
