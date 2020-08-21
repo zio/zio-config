@@ -34,6 +34,7 @@ trait ConfigDocsModule extends WriteModule {
               (go(left, previousPaths, Some(currentNode), descriptionsUsedAlready) ++
                 go(right, previousPaths, Some(currentNode), descriptionsUsedAlready))
 
+            // Look backwards and see if previous node is nested, if so remove the already used descriptions
             val parentDoc =
               if (previousNode.exists(_.is { case ConfigDocs.Nested(_, _) => true }(false))) {
                 previousPaths.lastOption match {
@@ -67,7 +68,7 @@ trait ConfigDocsModule extends WriteModule {
 
         docs match {
           case ConfigDocs.Leaf(sources, descriptions, _) =>
-            val bla =
+            val desc =
               descriptionsUsedAlready match {
                 case Some(value) =>
                   descriptions.filter({
@@ -78,7 +79,7 @@ trait ConfigDocsModule extends WriteModule {
                 case None => descriptions
               }
 
-            TableRow(previousPaths, Some(Table.Format.Primitive), bla, None, sources.map(_.name)).asTable
+            TableRow(previousPaths, Some(Table.Format.Primitive), desc, None, sources.map(_.name)).asTable
 
           case c @ ConfigDocs.Nested(path, docs) =>
             val result =
