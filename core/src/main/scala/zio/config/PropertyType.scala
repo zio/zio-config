@@ -6,6 +6,7 @@ import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 
 import zio.config.PropertyType.PropertyReadError
+import zio.duration._
 
 import scala.concurrent.duration.Duration
 import scala.util.{ Failure, Success, Try }
