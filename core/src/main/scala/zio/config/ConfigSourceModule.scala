@@ -3,6 +3,7 @@ package zio.config
 import java.{ util => ju }
 
 import zio.{ IO, Task, UIO, ZIO }
+import zio.system.System
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
@@ -348,8 +349,21 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         leafForSequence
       )
 
-    def fromSystemEnv: IO[ReadError[String], ConfigSource] =
+    def fromSystemEnv: ZIO[System, ReadError[String], ConfigSource] =
       fromSystemEnv(None, None)
+
+    /**
+     *
+     * For users that dont want to use layers in their application
+     * This method provides live system environment layer
+     *
+     */
+    def fromSystemEnvLive(
+      keyDelimiter: Option[Char],
+      valueDelimiter: Option[Char],
+      leafForSequence: LeafForSequence = LeafForSequence.Valid
+    ): IO[ReadError[String], ConfigSource] =
+      fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence).provideLayer(System.live)
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -378,12 +392,16 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid
-    ): IO[ReadError[String], ConfigSource] = {
+    ): ZIO[System, ReadError[String], ConfigSource] = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
+
       if (keyDelimiter.forall(validDelimiters.contains)) {
-        IO.effectTotal(sys.env)
-          .map(
-            systemEnvMap => fromMap(systemEnvMap, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
+        ZIO
+          .accessM[System](_.get.envs)
+          .bimap(
+            error =>
+              ReadError.SourceError[String](s"Error while getting system environment variables: ${error.getMessage}"),
+            fromMap(_, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
           )
       } else {
         IO.fail(ReadError.SourceError[String](s"Invalid system key delimiter: ${keyDelimiter.get}"))

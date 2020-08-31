@@ -1,6 +1,10 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._, ConfigDocs._, ConfigSource._
+import zio.config._
+import zio.system.System
+import ConfigDescriptor._
+import ConfigDocs._
+import ConfigSource._
 
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
@@ -12,7 +16,9 @@ object DefaultValueExample extends App {
       PgmConfig.unapply
     )
 
-  val pgmConfig = ConfigSource.fromSystemEnv.map(source => conf from source)
+  val pgmConfig = ConfigSource.fromSystemEnv
+    .map(source => conf from source)
+    .provideLayer(System.live)
 
   val runtime = zio.Runtime.default
 
