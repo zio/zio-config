@@ -14,6 +14,7 @@ object DocsSpec
         test(
           "Generate docs for simple config"
         ) {
+
           val caseClass2 =
             (string("region") |@| string("account_name"))(TestCase1.CaseClass2.apply, TestCase1.CaseClass2.unapply)
 

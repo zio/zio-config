@@ -430,65 +430,62 @@ trait ConfigDocsModule extends WriteModule {
       sources: Set[ConfigSourceName],
       descriptions: List[ConfigDocs.Description],
       config: ConfigDescriptor[B],
-      latestPath: Option[K],
-      isNested: Boolean
+      latestPath: Option[K]
     ): ConfigDocs =
       config match {
         case Source(source, _) =>
           DocsLeaf((source.names ++ sources), descriptions, None)
 
         case Default(c, _) =>
-          loop(sources, descriptions, c, latestPath, isNested = false)
+          loop(sources, descriptions, c, None)
 
         case cd: DynamicMap[_] =>
           ConfigDocs.DynamicMap(
-            loop((cd.source.names ++ sources), descriptions, cd.config, None, isNested = false)
+            loop((cd.source.names ++ sources), descriptions, cd.config, None)
           )
 
         case Optional(c) =>
-          loop(sources, descriptions, c, latestPath, isNested = false)
+          loop(sources, descriptions, c, None)
 
         case Sequence(source, c) =>
           ConfigDocs.Sequence(
-            loop((source.names ++ sources), descriptions, c, latestPath, isNested = false)
+            loop((source.names ++ sources), descriptions, c, None)
           )
 
         case Describe(c, desc) =>
           val descri: ConfigDocs.Description =
-            if (isNested)
-              latestPath.fold(ConfigDocs.Description.raw(desc))(
-                path => ConfigDocs.Description.nestedDes(path, ConfigDocs.Description.raw(desc))
-              )
-            else ConfigDocs.Description.raw(desc)
+            latestPath.fold(ConfigDocs.Description.raw(desc))(
+              path => ConfigDocs.Description.nestedDes(path, ConfigDocs.Description.raw(desc))
+            )
 
-          loop(sources, descri :: descriptions, c, latestPath, isNested)
+          loop(sources, descri :: descriptions, c, latestPath)
 
         case Nested(path, c) =>
-          ConfigDocs.Nested(path, loop(sources, descriptions, c, Some(path), isNested = true))
+          ConfigDocs.Nested(path, loop(sources, descriptions, c, Some(path)))
 
         case XmapEither(c, _, _) =>
-          loop(sources, descriptions, c, latestPath, isNested = false)
+          loop(sources, descriptions, c, None)
 
         case Zip(left, right) =>
           ConfigDocs.Zip(
-            loop(sources, descriptions, left, latestPath, isNested = false),
-            loop(sources, descriptions, right, latestPath, isNested = false)
+            loop(sources, descriptions, left, None),
+            loop(sources, descriptions, right, None)
           )
 
         case OrElseEither(left, right) =>
           ConfigDocs.OrElse(
-            loop(sources, descriptions, left, latestPath, isNested = false),
-            loop(sources, descriptions, right, latestPath, isNested = false)
+            loop(sources, descriptions, left, None),
+            loop(sources, descriptions, right, None)
           )
 
         case OrElse(left, right) =>
           ConfigDocs.OrElse(
-            loop(sources, descriptions, left, latestPath, isNested = false),
-            loop(sources, descriptions, right, latestPath, isNested = false)
+            loop(sources, descriptions, left, None),
+            loop(sources, descriptions, right, None)
           )
       }
 
-    loop(Set.empty, Nil, config, None, isNested = false)
+    loop(Set.empty, Nil, config, None)
   }
 
   /**
