@@ -81,7 +81,7 @@ object Application {
 
   val logProgramConfig: ZIO[Console with ZConfig[ProgramConfig], Nothing, Unit] =
     for {
-      r <- config[ProgramConfig]
+      r <- getConfig[ProgramConfig]
       _ <- zio.console.putStrLn(s"Executing with parameters ${r.inputPath} and ${r.outputPath} without sparkSession")
     } yield ()
 
@@ -94,7 +94,7 @@ object Application {
 
   val processData: ZIO[SparkEnv with ZConfig[ProgramConfig] with Console, Throwable, Unit] =
     for {
-      conf  <- config[ProgramConfig]
+      conf  <- getConfig[ProgramConfig]
       spark <- ZIO.access[SparkEnv](_.get.sparkEnv)
       _     <- zio.console.putStrLn(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark.version}")
     } yield ()

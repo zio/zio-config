@@ -13,7 +13,7 @@ object Prod {
 
   val myAppLogic: ZIO[ZConfig[Prod], Throwable, (String, Option[String])] =
     for {
-      prod <- config[Prod]
+      prod <- getConfig[Prod]
     } yield (prod.ldap, prod.dburl)
 }
 

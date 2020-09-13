@@ -40,7 +40,7 @@ object SimpleExample {
 
   val printConfigs: ZIO[Console with ZConfig[ApplicationConfig], Nothing, Unit] =
     for {
-      appConfig <- config.config[ApplicationConfig]
+      appConfig <- getConfig.config[ApplicationConfig]
       _         <- console.putStrLn(appConfig.bridgeIp)
       _         <- console.putStrLn(appConfig.userName)
     } yield ()
