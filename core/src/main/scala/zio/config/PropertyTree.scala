@@ -5,13 +5,6 @@ import scala.annotation.tailrec
 
 sealed trait PropertyTree[+K, +V] { self =>
   import PropertyTree._
-  final def ++[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): PropertyTree[K1, V1] =
-    (self, that) match {
-      case (Sequence(l), Sequence(r)) => Sequence(l ++ r)
-      case (l, Sequence(r))           => Sequence(l :: r)
-      case (Sequence(l), r)           => Sequence(l ::: List(r))
-      case (l, r)                     => Sequence(l :: r :: Nil)
-    }
 
   final def flatten[K1 >: K, V1 >: V]: Map[Vector[K1], ::[V1]] = {
     def go(key: Vector[K1], propertyTree: PropertyTree[K1, V], acc: Map[Vector[K1], ::[V1]]): Map[Vector[K1], ::[V1]] =

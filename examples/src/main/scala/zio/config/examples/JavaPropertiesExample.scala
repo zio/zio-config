@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.config._, ConfigDescriptor._
 import zio.console.Console
-import zio.{ config, console, App, ExitCode, ZEnv, ZIO, ZLayer }
+import zio.{ console, App, ExitCode, ZEnv, ZIO, ZLayer }
 
 /**
  * An example of an entire application that uses java properties
@@ -40,7 +40,7 @@ object SimpleExample {
 
   val printConfigs: ZIO[Console with ZConfig[ApplicationConfig], Nothing, Unit] =
     for {
-      appConfig <- config.config[ApplicationConfig]
+      appConfig <- getConfig[ApplicationConfig]
       _         <- console.putStrLn(appConfig.bridgeIp)
       _         <- console.putStrLn(appConfig.userName)
     } yield ()

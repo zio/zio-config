@@ -4,9 +4,9 @@ import java.io.File
 import java.net.{ URI, URL }
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
+import java.util.concurrent.TimeUnit
 
 import zio.config.PropertyType.PropertyReadError
-import zio.duration._
 
 import scala.concurrent.duration.Duration
 import scala.util.{ Failure, Success, Try }
@@ -103,7 +103,7 @@ object PropertyType {
   case object ZioDurationType extends PropertyType[String, zio.duration.Duration] {
     def read(value: String): Either[PropertyReadError[String], zio.duration.Duration] =
       attempt(zio.duration.Duration.fromScala(Duration.apply(value)), _ => PropertyReadError(value, "duration"))
-    def write(value: zio.duration.Duration): String = value.render
+    def write(value: zio.duration.Duration): String = Duration.apply(value.getSeconds, TimeUnit.SECONDS).toString()
   }
 
   case object LocalDateType extends PropertyType[String, LocalDate] {

@@ -162,7 +162,7 @@ val betterConfig =
     string("DB_URL") ?? "url of database"
    )(MyConfig.apply, MyConfig.unapply)
 
-generateDocs(betterConfig).toTable.asMarkdownContent
+generateDocs(betterConfig).toTable.asGithubFlavouredMarkdown
 // Custom documentation along with auto generated docs
 ```
 
@@ -255,7 +255,7 @@ val configuration =
 
 val finalExecution: ZIO[ZConfig[ApplicationConfig] with Console, Nothing, Unit] =
   for {
-    appConfig <- config[ApplicationConfig]
+    appConfig <- getConfig[ApplicationConfig]
     _         <- putStrLn(appConfig.bridgeIp)
     _         <- putStrLn(appConfig.userName)
   } yield ()

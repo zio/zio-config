@@ -16,7 +16,6 @@ final case class AnnotatedRead[+A](value: A, annotations: Set[AnnotatedRead.Anno
 
 object AnnotatedRead {
   sealed trait Annotation
-
   object Annotation {
     case object NonDefaultValue extends Annotation
   }

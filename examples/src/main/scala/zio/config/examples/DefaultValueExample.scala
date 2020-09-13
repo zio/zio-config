@@ -1,10 +1,6 @@
 package zio.config.examples
 
-import zio.config._
-import zio.system.System
-import ConfigDescriptor._
-import ConfigDocs._
-import ConfigSource._
+import zio.config._, ConfigDescriptor._
 
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
@@ -16,9 +12,7 @@ object DefaultValueExample extends App {
       PgmConfig.unapply
     )
 
-  val pgmConfig = ConfigSource.fromSystemEnv
-    .map(source => conf from source)
-    .provideLayer(System.live)
+  val pgmConfig = ConfigSource.fromSystemEnv.map(source => conf from source)
 
   val runtime = zio.Runtime.default
 
@@ -32,65 +26,28 @@ object DefaultValueExample extends App {
   assert(result == Right(PgmConfig("xyz", Right(1))))
 
   assert(
-    generateDocs(confEx) ==
-      ConfigDocs.Zip(
-        ConfigDocs.Nested(
-          "HELLO",
-          Leaf(
-            Set(ConfigSourceName(ConfigSource.SystemEnvironment)),
-            List("value of type string", "default value: xyz")
-          )
-        ),
-        ConfigDocs.OrElse(
-          ConfigDocs.Nested(
-            "SOMETHING",
-            Leaf(
-              Set(ConfigSourceName(ConfigSource.SystemEnvironment)),
-              List("value of type string")
-            )
-          ),
-          ConfigDocs.Nested(
-            "PORT",
-            Leaf(
-              Set(ConfigSourceName(ConfigSource.SystemEnvironment)),
-              List("value of type int", "default value: 1")
-            )
-          )
-        )
-      )
-  )
-
-  assert(
-    generateReport(confEx, expected) ==
-      Right(
-        ConfigDocs.Zip(
-          ConfigDocs.Nested(
-            "HELLO",
-            Leaf(
-              Set(ConfigSourceName(SystemEnvironment)),
-              List("value of type string", "default value: xyz"),
-              Some("xyz")
-            )
-          ),
-          ConfigDocs.OrElse(
-            ConfigDocs.Nested(
-              "SOMETHING",
-              Leaf(
-                Set(ConfigSourceName(SystemEnvironment)),
-                List("value of type string"),
-                None
-              )
-            ),
-            ConfigDocs.Nested(
-              "PORT",
-              ConfigDocs.Leaf(
-                Set(ConfigSourceName(SystemEnvironment)),
-                List("value of type int", "default value: 1"),
-                Some("1")
-              )
-            )
-          )
-        )
-      )
+    generateDocs(confEx).toTable.asGithubFlavouredMarkdown ==
+      s"""
+         |## Configuration Details
+         |
+         |
+         ||FieldName|Format                     |Description|Sources|
+         ||---      |---                        |---        |---    |
+         ||         |[all-of](fielddescriptions)|           |       |
+         |
+         |### Field Descriptions
+         |
+         ||FieldName|Format                           |Description                             |Sources           |
+         ||---      |---                              |---                                     |---               |
+         ||HELLO    |primitive                        |value of type string, default value: xyz|system environment|
+         ||         |[any-one-of](fielddescriptions-1)|                                        |                  |
+         |
+         |### Field Descriptions
+         |
+         ||FieldName|Format   |Description                        |Sources           |
+         ||---      |---      |---                                |---               |
+         ||SOMETHING|primitive|value of type string               |system environment|
+         ||PORT     |primitive|value of type int, default value: 1|system environment|
+         |""".stripMargin
   )
 }

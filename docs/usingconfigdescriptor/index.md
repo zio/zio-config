@@ -214,25 +214,25 @@ To generate the documentation of the config, call `generateDocs`.
 
  // as markdown 
   val markdown =
-     generatedDocs.toTable.asMarkdownContent
+     generatedDocs.toTable.asGithubFlavouredMarkdown
 
  // produces the following markdown
 
   /*
-    |FieldName             |Format                 |Description               |Sources |
-    |---                   |---                    |---                       |---     |
-    |appName               |primitive              |value of type string, asdf|constant|
-    |[east](#root.east_1)  |[all-of](#root.east_1) |                          |        |
-    |[south](#root.south_0)|[all-of](#root.south_0)|                          |        |
+    |FieldName      |Format          |Description               |Sources |
+    |---            |---             |---                       |---     |
+    |appName        |primitive       |value of type string, asdf|constant|
+    |[east](#east)  |[all-of](#east) |                          |        |
+    |[south](#south)|[all-of](#south)|                          |        |
     
-    ### root.east_1
+    ### east
     
     |FieldName |Format   |Description                             |Sources |
     |---       |---      |---                                     |---     |
     |port      |primitive|value of type int, East details, asdf   |constant|
     |connection|primitive|value of type string, East details, asdf|constant|
     
-    ### root.south_0
+    ### south
     
     |FieldName |Format   |Description                              |Sources |
     |---       |---      |---                                      |---     |
@@ -286,11 +286,11 @@ Right(
         ConfigDocs.Zip(
           ConfigDocs.Nested(
             "connection",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string", "South details"), Some("abc.com"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string"), Description(None, "South details")), Some("abc.com"))
           ),
           ConfigDocs.Nested(
             "port",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type int", "South details"), Some("8111"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type int"), Description(None, "South details")), Some("8111"))
           )
         )
       ),
@@ -299,16 +299,16 @@ Right(
         ConfigDocs.Zip(
           ConfigDocs.Nested(
             "connection",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string", "East details"), Some("xyz.com"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string"), Description(None, "East details")), Some("xyz.com"))
           ),
           ConfigDocs.Nested(
             "port",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type int", "East details"), Some("8888"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type int"), Description(None, "East details")), Some("8888"))
           )
         )
       )
     ),
-    ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string"), Some("myApp")))
+    ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string")), Some("myApp")))
   )
 )
 ```
