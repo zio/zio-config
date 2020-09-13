@@ -6,21 +6,31 @@ import zio.test._
 import zio.config._, ConfigDescriptor._
 
 object MarkdownDocSpec extends DefaultRunnableSpec {
+  sealed trait Cloud
+
+  object Cloud {
+    case object Aws                                           extends Cloud
+    case object Azure                                         extends Cloud
+    case class Gcp(@name("DOMAIN") domain: String, e: String) extends Cloud
+
+  }
+
   val spec = suite("Markdown Spec")(
     test("asGithubFlavouredMarkdown works for a complex config") {
 
-      final case class RawConfig(tableDetails: List[RawTableConfig2])
+      final case class RawConfig(tableDetails: List[RawTableConfig])
 
-      final case class RawTableConfig2(
+      final case class RawTableConfig(
         database: Option[String],
         featureBucket: String,
         table: String,
-        partitionScheme: Option[PartitionScheme],
+        @describe("partition scheme of s3 paths") partitionScheme: Option[PartitionScheme],
         @describe("Example: as_at_date=2019-10-11/minor_version=1/run_time=123") partitionString: Option[String],
         numberOfPartitions: Option[Int],
         transformOptions: Option[TransformOptions],
         blockSizeMb: Option[Int],
-        destination: Destination
+        destination: Destination,
+        cloud: Cloud
       )
 
       final case class Destination(
@@ -40,7 +50,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
       )
 
       final case class S32(
-        c: String,
+        d: String,
         e: String
       )
 
@@ -93,14 +103,30 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            ||FieldName                           |Format                    |Description                                                                                      |Sources|
            ||---                                 |---                       |---                                                                                              |---    |
            ||database                            |primitive                 |value of type string, optional value                                                             |       |
+           ||[cloud](cloud)                      |[any-one-of](cloud)       |                                                                                                 |       |
            ||[destination](destination)          |[all-of](destination)     |                                                                                                 |       |
            ||blockSizeMb                         |primitive                 |value of type int, optional value                                                                |       |
            ||[transformOptions](transformoptions)|[all-of](transformoptions)|optional value                                                                                   |       |
            ||numberOfPartitions                  |primitive                 |value of type int, optional value                                                                |       |
            ||partitionString                     |primitive                 |value of type string, optional value, Example: as_at_date=2019-10-11/minor_version=1/run_time=123|       |
-           ||[partitionScheme](partitionscheme)  |[all-of](partitionscheme) |optional value                                                                                   |       |
+           ||[partitionScheme](partitionscheme)  |[all-of](partitionscheme) |optional value, partition scheme of s3 paths                                                     |       |
            ||table                               |primitive                 |value of type string                                                                             |       |
            ||featureBucket                       |primitive                 |value of type string                                                                             |       |
+           |
+           |### cloud
+           |
+           ||FieldName |Format       |Description            |Sources|
+           ||---       |---          |---                    |---    |
+           ||          |primitive    |constant string 'aws'  |       |
+           ||          |primitive    |constant string 'azure'|       |
+           ||[gcp](gcp)|[all-of](gcp)|                       |       |
+           |
+           |### gcp
+           |
+           ||FieldName|Format   |Description         |Sources|
+           ||---      |---      |---                 |---    |
+           ||DOMAIN   |primitive|value of type string|       |
+           ||e        |primitive|value of type string|       |
            |
            |### destination
            |
@@ -131,7 +157,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
-           ||c        |primitive|value of type string|       |
+           ||d        |primitive|value of type string|       |
            ||e        |primitive|value of type string|       |
            |
            |### controlFileNaming

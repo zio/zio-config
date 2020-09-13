@@ -286,11 +286,11 @@ Right(
         ConfigDocs.Zip(
           ConfigDocs.Nested(
             "connection",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string", "South details"), Some("abc.com"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string"), Description(None, "South details")), Some("abc.com"))
           ),
           ConfigDocs.Nested(
             "port",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type int", "South details"), Some("8111"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type int"), Description(None, "South details")), Some("8111"))
           )
         )
       ),
@@ -299,16 +299,16 @@ Right(
         ConfigDocs.Zip(
           ConfigDocs.Nested(
             "connection",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string", "East details"), Some("xyz.com"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string"), Description(None, "East details")), Some("xyz.com"))
           ),
           ConfigDocs.Nested(
             "port",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type int", "East details"), Some("8888"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type int"), Description(None, "East details")), Some("8888"))
           )
         )
       )
     ),
-    ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List("value of type string"), Some("myApp")))
+    ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string")), Some("myApp")))
   )
 )
 ```

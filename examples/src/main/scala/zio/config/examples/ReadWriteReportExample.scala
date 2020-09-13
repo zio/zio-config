@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._, ConfigDocs._
+import zio.config._, ConfigDescriptor._
 
 object ReadWriteReportExample extends App {
 
@@ -70,150 +70,45 @@ object ReadWriteReportExample extends App {
   )
 
   assert(
-    generateDocs(config) ==
-      ConfigDocs.OrElse(
-        ConfigDocs.Zip(
-          ConfigDocs.Zip(
-            ConfigDocs.Zip(
-              ConfigDocs.Nested(
-                "usr",
-                Leaf(
-                  Set(ConfigSourceName("constant")),
-                  List("value of type string", "Example: some-user", "Prod Config")
-                )
-              ),
-              ConfigDocs.Nested(
-                "pwd",
-                Leaf(
-                  Set(ConfigSourceName("constant")),
-                  List("value of type string", "optional value", "sec", "Prod Config")
-                )
-              )
-            ),
-            ConfigDocs.Nested(
-              "jhi",
-              Leaf(
-                Set(ConfigSourceName("constant")),
-                List("value of type string", "optional value", "Ex: ghi", "Prod Config")
-              )
-            )
-          ),
-          ConfigDocs.Zip(
-            ConfigDocs.Nested(
-              "xyz",
-              Leaf(
-                Set(ConfigSourceName("constant")),
-                List("value of type string", "optional value", "Ex: ha", "Prod Config")
-              )
-            ),
-            ConfigDocs.OrElse(
-              ConfigDocs.Nested(
-                "abc",
-                Leaf(
-                  Set(ConfigSourceName("constant")),
-                  List("value of type int", "optional value", "Ex: ha", "Prod Config")
-                )
-              ),
-              ConfigDocs.Nested(
-                "def",
-                Leaf(
-                  Set(ConfigSourceName("constant")),
-                  List("value of type string", "optional value", "Ex: ha", "Prod Config")
-                )
-              )
-            )
-          )
-        ),
-        ConfigDocs.Zip(
-          ConfigDocs.Nested(
-            "auth_token",
-            Leaf(Set(ConfigSourceName("constant")), List("value of type string", "Prod Config"))
-          ),
-          ConfigDocs.Nested(
-            "clientid",
-            Leaf(Set(ConfigSourceName("constant")), List("value of type string", "Prod Config"))
-          )
-        )
-      )
-  )
-
-  assert(
-    generateReport(config, expected) ==
-      Right(
-        ConfigDocs.OrElse(
-          ConfigDocs.Zip(
-            ConfigDocs.Zip(
-              ConfigDocs.Zip(
-                ConfigDocs.Nested(
-                  "usr",
-                  Leaf(
-                    Set(ConfigSourceName("constant")),
-                    List("value of type string", "Example: some-user", "Prod Config"),
-                    Some("v1")
-                  )
-                ),
-                ConfigDocs.Nested(
-                  "pwd",
-                  Leaf(
-                    Set(ConfigSourceName("constant")),
-                    List("value of type string", "optional value", "sec", "Prod Config"),
-                    Some("v2")
-                  )
-                )
-              ),
-              ConfigDocs.Nested(
-                "jhi",
-                Leaf(
-                  Set(ConfigSourceName("constant")),
-                  List("value of type string", "optional value", "Ex: ghi", "Prod Config")
-                )
-              )
-            ),
-            ConfigDocs.Zip(
-              ConfigDocs.Nested(
-                "xyz",
-                Leaf(
-                  Set(ConfigSourceName("constant")),
-                  List("value of type string", "optional value", "Ex: ha", "Prod Config"),
-                  Some("v3")
-                )
-              ),
-              ConfigDocs.OrElse(
-                ConfigDocs.Nested(
-                  "abc",
-                  Leaf(
-                    Set(ConfigSourceName("constant")),
-                    List("value of type int", "optional value", "Ex: ha", "Prod Config"),
-                    Some("1")
-                  )
-                ),
-                ConfigDocs.Nested(
-                  "def",
-                  Leaf(
-                    Set(ConfigSourceName("constant")),
-                    List("value of type string", "optional value", "Ex: ha", "Prod Config")
-                  )
-                )
-              )
-            )
-          ),
-          ConfigDocs.Zip(
-            ConfigDocs.Nested(
-              "auth_token",
-              Leaf(
-                Set(ConfigSourceName("constant")),
-                List("value of type string", "Prod Config")
-              )
-            ),
-            ConfigDocs.Nested(
-              "clientid",
-              Leaf(
-                Set(ConfigSourceName("constant")),
-                List("value of type string", "Prod Config")
-              )
-            )
-          )
-        )
-      )
+    generateDocs(config).toTable.asGithubFlavouredMarkdown ==
+      s"""
+         |## Configuration Details
+         |
+         |
+         ||FieldName|Format                         |Description|Sources|
+         ||---      |---                            |---        |---    |
+         ||         |[any-one-of](fielddescriptions)|           |       |
+         |
+         |### Field Descriptions
+         |
+         ||FieldName|Format                       |Description|Sources|
+         ||---      |---                          |---        |---    |
+         ||         |[all-of](fielddescriptions-2)|           |       |
+         ||         |[all-of](fielddescriptions-1)|           |       |
+         |
+         |### Field Descriptions
+         |
+         ||FieldName|Format                           |Description                                               |Sources |
+         ||---      |---                              |---                                                       |---     |
+         ||usr      |primitive                        |value of type string, Example: some-user, Prod Config     |constant|
+         ||pwd      |primitive                        |value of type string, optional value, sec, Prod Config    |constant|
+         ||jhi      |primitive                        |value of type string, optional value, Ex: ghi, Prod Config|constant|
+         ||xyz      |primitive                        |value of type string, optional value, Ex: ha, Prod Config |constant|
+         ||         |[any-one-of](fielddescriptions-3)|                                                          |        |
+         |
+         |### Field Descriptions
+         |
+         ||FieldName|Format   |Description                                              |Sources |
+         ||---      |---      |---                                                      |---     |
+         ||abc      |primitive|value of type int, optional value, Ex: ha, Prod Config   |constant|
+         ||def      |primitive|value of type string, optional value, Ex: ha, Prod Config|constant|
+         |
+         |### Field Descriptions
+         |
+         ||FieldName |Format   |Description                      |Sources |
+         ||---       |---      |---                              |---     |
+         ||auth_token|primitive|value of type string, Prod Config|constant|
+         ||clientid  |primitive|value of type string, Prod Config|constant|
+         |""".stripMargin
   )
 }

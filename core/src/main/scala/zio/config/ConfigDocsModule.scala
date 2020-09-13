@@ -72,9 +72,9 @@ trait ConfigDocsModule extends WriteModule {
               descriptionsUsedAlready match {
                 case Some(value) =>
                   descriptions.filter({
-                    case ConfigDocs.Description.NestedDesc(path, _) if FieldName.Key(path) == value => false
-                    case ConfigDocs.Description.NestedDesc(_, _)                                    => true
-                    case ConfigDocs.Description.Raw(_)                                              => true
+                    case ConfigDocs.Description(path, _) if path.map(FieldName.Key) == Some(value) =>
+                      false
+                    case ConfigDocs.Description(_, _) => true
                   })
                 case None => descriptions
               }
@@ -127,34 +127,15 @@ trait ConfigDocsModule extends WriteModule {
   }
 
   object ConfigDocs {
-    sealed trait Description {
-      def asString: String =
-        this match {
-          case ConfigDocs.Description.Raw(value)                 => value
-          case ConfigDocs.Description.NestedDesc(_, description) => description.asString
-        }
-    }
-
-    object Description {
-      case class Raw(value: String)                            extends Description
-      case class NestedDesc(path: K, description: Description) extends Description
-
-      def nestedDes(path: K, description: Description): Description =
-        NestedDesc(path, description)
-
-      def raw(value: String): Description =
-        Raw(value)
-
-    }
+    case class Description(path: Option[K], description: String)
 
     def findByPath(description: List[Description], path: FieldName): List[Description] =
       description
         .flatMap(
           desc =>
             desc match {
-              case ConfigDocs.Description.Raw(_)                                             => Nil
-              case ConfigDocs.Description.NestedDesc(p, value) if (FieldName.Key(p) == path) => List(value)
-              case ConfigDocs.Description.NestedDesc(_, _)                                   => Nil
+              case a @ ConfigDocs.Description(p, _) if (p.map(FieldName.Key)) == Some(path) => List(a)
+              case ConfigDocs.Description(_, _)                                             => Nil
             }
         )
 
@@ -241,7 +222,7 @@ trait ConfigDocsModule extends WriteModule {
                   List(
                     name.value,
                     format.value,
-                    row.description.map(_.asString).mkString(", "),
+                    row.description.map(_.description).mkString(", "),
                     row.sources.mkString(", ")
                   ) :: contentList,
                   row.nested.map(table => (table, heading)).toList ++ nestedTableList,
@@ -454,9 +435,7 @@ trait ConfigDocsModule extends WriteModule {
 
         case Describe(c, desc) =>
           val descri: ConfigDocs.Description =
-            latestPath.fold(ConfigDocs.Description.raw(desc))(
-              path => ConfigDocs.Description.nestedDes(path, ConfigDocs.Description.raw(desc))
-            )
+            ConfigDocs.Description(latestPath, desc)
 
           loop(sources, descri :: descriptions, c, latestPath)
 

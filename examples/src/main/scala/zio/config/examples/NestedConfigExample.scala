@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._, ConfigDocs._
+import zio.config._, ConfigDescriptor._
 import zio.config.examples.typesafe.EitherImpureOps
 
 object NestedConfigExample extends App with EitherImpureOps {
@@ -98,99 +98,38 @@ object NestedConfigExample extends App with EitherImpureOps {
    *  }}}
    */
   // Details Both Report of the nested configurations.
-  assert(
-    generateDocs(appConfig) ==
-      ConfigDocs.Zip(
-        ConfigDocs.Zip(
-          ConfigDocs.Nested(
-            "south",
-            ConfigDocs.Zip(
-              ConfigDocs.Nested(
-                "connection",
-                Leaf((Set.empty), List("value of type string", "South details"))
-              ),
-              ConfigDocs.Nested(
-                "port",
-                Leaf((Set.empty), List("value of type int", "South details"))
-              )
-            )
-          ),
-          ConfigDocs.Nested(
-            "east",
-            ConfigDocs.Zip(
-              ConfigDocs.Nested(
-                "connection",
-                Leaf((Set.empty), List("value of type string", "East details"))
-              ),
-              ConfigDocs.Nested(
-                "port",
-                Leaf((Set.empty), List("value of type int", "East details"))
-              )
-            )
-          )
-        ),
-        ConfigDocs
-          .Nested("appName", Leaf((Set.empty), List("value of type string")))
-      )
-  )
 
-  // Details with a peek at each value as well
   assert(
-    generateReport(
-      appConfig,
-      AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")
-    ) ==
-      Right(
-        ConfigDocs.Zip(
-          ConfigDocs.Zip(
-            ConfigDocs.Nested(
-              "south",
-              ConfigDocs.Zip(
-                ConfigDocs.Nested(
-                  "connection",
-                  Leaf(
-                    (Set.empty),
-                    List("value of type string", "South details"),
-                    Some("abc.com")
-                  )
-                ),
-                ConfigDocs.Nested(
-                  "port",
-                  Leaf(
-                    (Set.empty),
-                    List("value of type int", "South details"),
-                    Some("8111")
-                  )
-                )
-              )
-            ),
-            ConfigDocs.Nested(
-              "east",
-              ConfigDocs.Zip(
-                ConfigDocs.Nested(
-                  "connection",
-                  Leaf(
-                    (Set.empty),
-                    List("value of type string", "East details"),
-                    Some("xyz.com")
-                  )
-                ),
-                ConfigDocs.Nested(
-                  "port",
-                  Leaf(
-                    (Set.empty),
-                    List("value of type int", "East details"),
-                    Some("8888")
-                  )
-                )
-              )
-            )
-          ),
-          ConfigDocs.Nested(
-            "appName",
-            Leaf((Set.empty), List("value of type string"), Some("myApp"))
-          )
-        )
-      )
+    generateDocs(appConfig from source).toTable.asGithubFlavouredMarkdown ==
+      s"""
+         |## Configuration Details
+         |
+         |
+         ||FieldName|Format                     |Description|Sources|
+         ||---      |---                        |---        |---    |
+         ||         |[all-of](fielddescriptions)|           |       |
+         |
+         |### Field Descriptions
+         |
+         ||FieldName     |Format         |Description         |Sources |
+         ||---           |---            |---                 |---     |
+         ||[south](south)|[all-of](south)|                    |        |
+         ||[east](east)  |[all-of](east) |                    |        |
+         ||appName       |primitive      |value of type string|constant|
+         |
+         |### south
+         |
+         ||FieldName |Format   |Description                        |Sources |
+         ||---       |---      |---                                |---     |
+         ||connection|primitive|value of type string, South details|constant|
+         ||port      |primitive|value of type int, South details   |constant|
+         |
+         |### east
+         |
+         ||FieldName |Format   |Description                       |Sources |
+         ||---       |---      |---                               |---     |
+         ||connection|primitive|value of type string, East details|constant|
+         ||port      |primitive|value of type int, East details   |constant|
+         |""".stripMargin
   )
 }
