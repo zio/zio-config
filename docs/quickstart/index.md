@@ -125,7 +125,7 @@ read(myConfig from source)
 
 // Alternatively, you can rely on `Config.from..` pattern to get ZLayers.
 val result =
-  Config.fromMap(map, myConfig)
+  ZConfig.fromMap(map, myConfig)
 
 // Layer[ReadError[String], Config[A]]  
 
@@ -253,14 +253,14 @@ case class ApplicationConfig(bridgeIp: String, userName: String)
 val configuration =
   (string("bridgeIp") |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
 
-val finalExecution: ZIO[Config[ApplicationConfig] with Console, Nothing, Unit] =
+val finalExecution: ZIO[ZConfig[ApplicationConfig] with Console, Nothing, Unit] =
   for {
     appConfig <- config[ApplicationConfig]
     _         <- putStrLn(appConfig.bridgeIp)
     _         <- putStrLn(appConfig.userName)
   } yield ()
 
-val configLayer = Config.fromPropertiesFile("file-location", configuration)
+val configLayer = ZConfig.fromPropertiesFile("file-location", configuration)
 
 // Main App
 val pgm = finalExecution.provideLayer(configLayer ++ Console.live)

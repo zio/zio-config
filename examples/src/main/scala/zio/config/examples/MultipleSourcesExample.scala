@@ -1,6 +1,8 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
+import zio.system.System
+import ConfigDescriptor._
 
 object MultipleSourcesExample extends App {
 
@@ -12,7 +14,8 @@ object MultipleSourcesExample extends App {
   // Assume they are different sources (env, property file, HOCON / database (in future))
   private val source1 = ConfigSource.fromMap(Map("LDAP" -> "jolap"), "constant")
   private val source2 = runtime.unsafeRun(ConfigSource.fromSystemProperties)
-  private val source3 = runtime.unsafeRun(ConfigSource.fromSystemEnv)
+
+  private val source3 = runtime.unsafeRun(ConfigSource.fromSystemEnv.provideLayer(System.live))
   private val source4 = ConfigSource.fromMap(Map("PORT" -> "1999"), "constant")
   private val source5 = ConfigSource.fromMap(Map("DB_URL" -> "newyork.com"), "constant")
 

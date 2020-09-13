@@ -203,6 +203,51 @@ object TypesafeConfigReadWriteTest
           assert((readWrittenHocon, readWrittenProperty, readComplexSource))(
             equalTo((readComplexSource, expectedResult, expectedResult))
           )
+        },
+        test(
+          "duplicate keys source: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
+        ) {
+          final case class A(metadata: List[B])
+
+          final case class B(metadata: List[C])
+
+          final case class C(c: String, metadata: String)
+
+          val cDescription: ConfigDescriptor[C] = (string("c") |@| string("metadata"))((c, m) => C(c, m), C.unapply)
+          val bDescription: ConfigDescriptor[B] = list("metadata")(cDescription)(B.apply, B.unapply)
+          val aDescription: ConfigDescriptor[A] = list("metadata")(bDescription)(A.apply, A.unapply)
+
+          val success = A(List(B(List(C(c = "abc", metadata = "xyz")))))
+
+          val duplicateKeysHocon =
+            s"""
+               | metadata: [
+               |   {
+               |     metadata: [
+               |       {
+               |         "c": "abc",
+               |         "metadata": "xyz"
+               |       }
+               |     ]
+               |   }
+               | ]
+               |""".stripMargin
+
+          val duplicateKeysSource: ConfigSource = TypesafeConfigSource.fromHoconString(duplicateKeysHocon).loadOrThrow
+
+          val readSource = read(aDescription from duplicateKeysSource)
+
+          val written =
+            write(aDescription, readSource.loadOrThrow).loadOrThrow.toHocon.render()
+
+          val readWrittenHocon =
+            read(aDescription from TypesafeConfigSource.fromHoconString(written).loadOrThrow).loadOrThrow
+
+          assert((readSource, readWrittenHocon))(
+            equalTo(
+              (Right(success), success)
+            )
+          )
         }
       )
     )

@@ -5,6 +5,7 @@ import java.net.{ URI, URL }
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 import java.util.Properties
+
 import zio.{ Layer, Tag }
 import zio.system.System
 import zio.{ ZIO, ZLayer }
@@ -183,7 +184,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
    * In the above example, the results returned an UIO because of the existence of ConfigSource` corresponding to `sys.env`.
    *
    */
-  object Config {
+  object ZConfig {
 
     /**
      * EXPERIMENTAL
@@ -227,7 +228,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Config[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter)
       )
@@ -259,7 +260,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Config[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
       fromConfigDescriptor(configDescriptor from ConfigSource.fromMap(map, source, keyDelimiter, valueDelimiter))
 
     /**
@@ -286,7 +287,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       source: String,
       keyDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Config[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
       fromConfigDescriptor(configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter))
 
     /**
@@ -316,7 +317,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       source: String,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Config[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromProperties(properties, source, keyDelimiter, valueDelimiter)
       )
@@ -348,7 +349,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[Throwable, Config[A]] =
+    )(implicit tag: Tag[A]): Layer[Throwable, ZConfig[A]] =
       fromConfigDescriptorM(
         ConfigSource
           .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter)
@@ -382,7 +383,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Config[A]] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], ZConfig[A]] =
       fromConfigDescriptorM(ConfigSource.fromSystemEnv(keyDelimiter, valueDelimiter).map(configDescriptor from _))
 
     /**
@@ -411,19 +412,19 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Config[A]] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], ZConfig[A]] =
       fromConfigDescriptorM(
         ConfigSource.fromSystemProperties(keyDelimiter, valueDelimiter).map(configDescriptor from _)
       )
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
-    )(implicit tag: Tag[A]): Layer[ReadError[K], Config[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[K], ZConfig[A]] =
       ZLayer.fromEffect(ZIO.fromEither(read(configDescriptor)))
 
     private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
       configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
-    )(implicit tag: Tag[A]): ZLayer[R, E, Config[A]] =
+    )(implicit tag: Tag[A]): ZLayer[R, E, ZConfig[A]] =
       ZLayer.fromEffect(
         configDescriptor.flatMap(
           descriptor => ZIO.fromEither(read(descriptor))

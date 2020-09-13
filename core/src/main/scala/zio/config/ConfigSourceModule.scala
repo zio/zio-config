@@ -2,17 +2,16 @@ package zio.config
 
 import java.{ util => ju }
 
-import zio.UIO
+import zio.{ IO, Task, UIO, ZIO }
+import zio.system.System
 
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 import zio.config.PropertyTree.{ unflatten, Leaf, Record, Sequence }
-import zio.ZIO
 import java.io.FileInputStream
 import java.io.File
 
 import These._
-import zio.Task
 
 trait ConfigSourceModule extends KeyValueModule {
 
@@ -350,8 +349,21 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         leafForSequence
       )
 
-    def fromSystemEnv: UIO[ConfigSource] =
+    def fromSystemEnv: ZIO[System, ReadError[String], ConfigSource] =
       fromSystemEnv(None, None)
+
+    /**
+     *
+     * For users that dont want to use layers in their application
+     * This method provides live system environment layer
+     *
+     */
+    def fromSystemEnvLive(
+      keyDelimiter: Option[Char],
+      valueDelimiter: Option[Char],
+      leafForSequence: LeafForSequence = LeafForSequence.Valid
+    ): IO[ReadError[String], ConfigSource] =
+      fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence).provideLayer(System.live)
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -380,12 +392,21 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid
-    ): UIO[ConfigSource] =
-      UIO
-        .effectTotal(sys.env)
-        .map(
-          map => fromMap(map, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
-        )
+    ): ZIO[System, ReadError[String], ConfigSource] = {
+      val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
+
+      if (keyDelimiter.forall(validDelimiters.contains)) {
+        ZIO
+          .accessM[System](_.get.envs)
+          .bimap(
+            error =>
+              ReadError.SourceError[String](s"Error while getting system environment variables: ${error.getMessage}"),
+            fromMap(_, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
+          )
+      } else {
+        IO.fail(ReadError.SourceError[String](s"Invalid system key delimiter: ${keyDelimiter.get}"))
+      }
+    }
 
     def fromSystemProperties: UIO[ConfigSource] =
       fromSystemProperties(None, None)

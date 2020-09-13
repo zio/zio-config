@@ -12,21 +12,23 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
 
   final def nonPrettyPrintedString: String = self match {
     case ReadError.MissingValue(path, message, annotations) =>
-      s"MissingValue(${path}, ${message}, ${annotations})"
+      s"MissingValue($path, $message, $annotations)"
+    case ReadError.SourceError(message, annotations) =>
+      s"SourceError($message, $annotations)"
     case ReadError.FormatError(path, message, detail, annotations) =>
-      s"FormatError(${path}, ${message}, ${detail}, ${annotations})"
+      s"FormatError($path, $message, $detail, $annotations)"
     case ReadError.ConversionError(path, message, annotations) =>
-      s"ConversionError(${path}, ${message}, ${annotations}"
+      s"ConversionError($path, $message, $annotations"
     case ReadError.OrErrors(list, annotations) =>
-      s"OrErrors(${list.map(_.nonPrettyPrintedString)}, ${annotations})"
+      s"OrErrors(${list.map(_.nonPrettyPrintedString)}, $annotations)"
     case ReadError.ZipErrors(list, annotations) =>
-      s"ZipErrors(${list.map(_.nonPrettyPrintedString)}, ${annotations})"
+      s"ZipErrors(${list.map(_.nonPrettyPrintedString)}, $annotations)"
     case ReadError.ListErrors(list, annotations) =>
-      s"ListErrors(${list.map(_.nonPrettyPrintedString)}, ${annotations})"
+      s"ListErrors(${list.map(_.nonPrettyPrintedString)}, $annotations)"
     case ReadError.MapErrors(list, annotations) =>
-      s"MapErrors(${list.map(_.nonPrettyPrintedString)}, ${annotations})"
+      s"MapErrors(${list.map(_.nonPrettyPrintedString)}, $annotations)"
     case ReadError.Irrecoverable(list, annotations) =>
-      s"Irrecoverable(${list.map(_.nonPrettyPrintedString)}, ${annotations})"
+      s"Irrecoverable(${list.map(_.nonPrettyPrintedString)}, $annotations)"
   }
 
   final def prettyPrint(keyDelimiter: Char = '.'): String = {
@@ -106,9 +108,17 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
         )
       )
 
+    def renderSourceError[A](err: ReadError.SourceError[A]): Sequential =
+      Sequential(
+        List(
+          Failure(s"SourceError: ${err.message}" :: Nil)
+        )
+      )
+
     def readErrorToSequential[A](readError: ReadError[A]): Sequential =
       readError match {
         case r: ReadError.MissingValue[A]    => renderMissingValue(r)
+        case r: ReadError.SourceError[A]     => renderSourceError(r)
         case r: ReadError.FormatError[A]     => renderFormatError(r)
         case r: ReadError.ConversionError[A] => renderConversionError(r)
         case t: ReadError.OrErrors[A]        => Sequential(linearSegments(t))
@@ -151,6 +161,7 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
   def size: Int =
     self match {
       case ReadError.MissingValue(_, _, _)    => 1
+      case ReadError.SourceError(_, _)        => 1
       case ReadError.FormatError(_, _, _, _)  => 1
       case ReadError.ConversionError(_, _, _) => 1
       case ReadError.OrErrors(list, _)        => list.map(_.size).sum
@@ -199,4 +210,9 @@ object ReadError {
       extends ReadError[A]
 
   final case class MapErrors[A](list: List[ReadError[A]], annotations: Set[Annotation] = Set.empty) extends ReadError[A]
+
+  final case class SourceError[A](
+    message: String,
+    annotations: Set[Annotation] = Set.empty
+  ) extends ReadError[A]
 }

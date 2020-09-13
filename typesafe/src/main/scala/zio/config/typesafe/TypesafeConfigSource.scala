@@ -12,7 +12,7 @@ import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 
 object TypesafeConfigSource {
-  def fromDefaultLoader: Either[String, ConfigSource] =
+  def fromDefaultLoader: Either[ReadError[String], ConfigSource] =
     fromTypesafeConfig(ConfigFactory.load.resolve)
 
   def fromHoconFile[A](
@@ -22,26 +22,26 @@ object TypesafeConfigSource {
       .flatMap(typesafeConfig => {
         ZIO
           .fromEither(fromTypesafeConfig(typesafeConfig))
-          .mapError(str => new RuntimeException(str))
+          .mapError(str => new RuntimeException(str.nonPrettyPrintedString))
       })
 
   def fromHoconString(
     input: String
-  ): Either[String, zio.config.ConfigSource] =
+  ): Either[ReadError[String], zio.config.ConfigSource] =
     fromTypesafeConfig(
       ConfigFactory.parseString(input).resolve
     )
 
   def fromTypesafeConfig(
     input: => com.typesafe.config.Config
-  ): Either[String, ConfigSource] =
+  ): Either[ReadError[String], ConfigSource] =
     Try {
       input
     } match {
-      case Failure(exception) => Left(exception.getMessage)
+      case Failure(exception) => Left(ReadError.SourceError(message = exception.getMessage))
       case Success(value) =>
         getPropertyTree(value) match {
-          case Left(value)  => Left(value)
+          case Left(value)  => Left(ReadError.SourceError(message = value))
           case Right(value) => Right(ConfigSource.fromPropertyTree(value, "hocon", LeafForSequence.Invalid))
         }
     }
