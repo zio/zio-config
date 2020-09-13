@@ -227,25 +227,25 @@ written.toJson
 
  <span class="hljs-comment">// as markdown </span>
   <span class="hljs-keyword">val</span> markdown =
-     generatedDocs.toTable.asMarkdownContent
+     generatedDocs.toTable.asGithubFlavouredMarkdown
 
  <span class="hljs-comment">// produces the following markdown</span>
 
   <span class="hljs-comment">/*
-    |FieldName             |Format                 |Description               |Sources |
-    |---                   |---                    |---                       |---     |
-    |appName               |primitive              |value of type string, asdf|constant|
-    |[east](#root.east_1)  |[all-of](#root.east_1) |                          |        |
-    |[south](#root.south_0)|[all-of](#root.south_0)|                          |        |
+    |FieldName      |Format          |Description               |Sources |
+    |---            |---             |---                       |---     |
+    |appName        |primitive       |value of type string, asdf|constant|
+    |[east](#east)  |[all-of](#east) |                          |        |
+    |[south](#south)|[all-of](#south)|                          |        |
     
-    ### root.east_1
+    ### east
     
     |FieldName |Format   |Description                             |Sources |
     |---       |---      |---                                     |---     |
     |port      |primitive|value of type int, East details, asdf   |constant|
     |connection|primitive|value of type string, East details, asdf|constant|
     
-    ### root.south_0
+    ### south
     
     |FieldName |Format   |Description                              |Sources |
     |---       |---      |---                                      |---     |
@@ -301,11 +301,11 @@ along with the rest of the details.</p>
         <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
           <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
             <span class="hljs-string">"connection"</span>,
-            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"South details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"abc.com"</span>))
+            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-type">Description</span>(<span class="hljs-type">None</span>, <span class="hljs-string">"value of type string"</span>), <span class="hljs-type">Description</span>(<span class="hljs-type">None</span>, <span class="hljs-string">"South details"</span>)), <span class="hljs-type">Some</span>(<span class="hljs-string">"abc.com"</span>))
           ),
           <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
             <span class="hljs-string">"port"</span>,
-            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"South details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"8111"</span>))
+            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-type">Description</span>(<span class="hljs-type">None</span>, <span class="hljs-string">"value of type int"</span>), <span class="hljs-type">Description</span>(<span class="hljs-type">None</span>, <span class="hljs-string">"South details"</span>)), <span class="hljs-type">Some</span>(<span class="hljs-string">"8111"</span>))
           )
         )
       ),
@@ -314,18 +314,18 @@ along with the rest of the details.</p>
         <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Zip</span>(
           <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
             <span class="hljs-string">"connection"</span>,
-            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>, <span class="hljs-string">"East details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"xyz.com"</span>))
+            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-type">Description</span>(<span class="hljs-type">None</span>, <span class="hljs-string">"value of type string"</span>), <span class="hljs-type">Description</span>(<span class="hljs-type">None</span>, <span class="hljs-string">"East details"</span>)), <span class="hljs-type">Some</span>(<span class="hljs-string">"xyz.com"</span>))
           ),
           <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(
             <span class="hljs-string">"port"</span>,
-            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type int"</span>, <span class="hljs-string">"East details"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"8888"</span>))
+            <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-type">Description</span>(<span class="hljs-type">None</span>, <span class="hljs-string">"value of type int"</span>), <span class="hljs-type">Description</span>(<span class="hljs-type">None</span>, <span class="hljs-string">"East details"</span>)), <span class="hljs-type">Some</span>(<span class="hljs-string">"8888"</span>))
           )
         )
       )
     ),
-    <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-string">"value of type string"</span>), <span class="hljs-type">Some</span>(<span class="hljs-string">"myApp"</span>)))
+    <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Nested</span>(<span class="hljs-string">"appName"</span>, <span class="hljs-type">ConfigDocs</span>.<span class="hljs-type">Leaf</span>(<span class="hljs-type">Set</span>(<span class="hljs-type">ConfigSourceName</span>(<span class="hljs-string">"constant"</span>)), <span class="hljs-type">List</span>(<span class="hljs-type">Description</span>(<span class="hljs-type">None</span>, <span class="hljs-string">"value of type string"</span>)), <span class="hljs-type">Some</span>(<span class="hljs-string">"myApp"</span>)))
   )
 )
 </code></pre>
 <p>Pretty print will be coming soon!</p>
-</span></div></article></div><div class="docLastUpdate"><em>Last updated on 7/28/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/sources/sources_index"><span class="arrow-prev">← </span><span>Read from various Sources</span></a><a class="docs-next button" href="/zio-config/docs/refined/refined_index"><span>Automatic Validations</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#using-config-descriptor">Using Config Descriptor</a></li><li><a href="#reader-from-config-descriptor">Reader from Config Descriptor</a></li><li><a href="#writer-from-config-descriptor">Writer from config descriptor</a></li><li><a href="#document-the-config">Document the config</a><ul class="toc-headings"><li><a href="#rooteast_1">root.east_1</a></li><li><a href="#rootsouth_0">root.south_0</a></li></ul></li><li><a href="#report-on-the-config">Report on the config</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
+</span></div></article></div><div class="docLastUpdate"><em>Last updated on 9/13/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/sources/sources_index"><span class="arrow-prev">← </span><span>Read from various Sources</span></a><a class="docs-next button" href="/zio-config/docs/refined/refined_index"><span>Automatic Validations</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"><ul class="toc-headings"><li><a href="#using-config-descriptor">Using Config Descriptor</a></li><li><a href="#reader-from-config-descriptor">Reader from Config Descriptor</a></li><li><a href="#writer-from-config-descriptor">Writer from config descriptor</a></li><li><a href="#document-the-config">Document the config</a><ul class="toc-headings"><li><a href="#rooteast_1">root.east_1</a></li><li><a href="#rootsouth_0">root.south_0</a></li></ul></li><li><a href="#report-on-the-config">Report on the config</a></li></ul></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
