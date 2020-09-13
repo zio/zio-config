@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.config._, ConfigDescriptor._
 import zio.console.Console
-import zio.{ config, console, App, ExitCode, ZEnv, ZIO, ZLayer }
+import zio.{ console, App, ExitCode, ZEnv, ZIO, ZLayer }
 
 /**
  * An example of an entire application that uses java properties
