@@ -54,6 +54,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         case Source(source, propertyType) => Source(source, propertyType)
         case DynamicMap(source, conf)     => DynamicMap(source, loop(conf))
         case Nested(path, conf)           => Nested(f(path), loop(conf))
+        case NestedRec(path, conf)        => NestedRec(f(path), () => loop(conf()))
         case Optional(config)             => Optional(loop(config))
         case Sequence(source, conf)       => Sequence(source, loop(conf))
         case Describe(config, message)    => Describe(loop(config), message)
@@ -86,6 +87,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         case Source(source, propertyType) => Source(f(source), propertyType)
         case DynamicMap(source, conf)     => DynamicMap(f(source), loop(conf))
         case Nested(path, conf)           => Nested(path, loop(conf))
+        case NestedRec(path, conf)        => NestedRec(path, () => loop(conf()))
         case Optional(config)             => Optional(loop(config))
         case Sequence(source, conf)       => Sequence(f(source), loop(conf))
         case Describe(config, message)    => Describe(loop(config), message)
@@ -186,6 +188,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def nested[A](path: K)(desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(path, desc)
 
+    def nestedRec[A](path: K)(desc: () => ConfigDescriptor[A]): ConfigDescriptor[A] =
+      NestedRec(path, desc)
+
     def sequence[A](
       head: ConfigDescriptor[A],
       tail: ConfigDescriptor[A]*
@@ -221,6 +226,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[Map[K, A]]
 
     case class Nested[A](path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
+
+    case class NestedRec[A](path: K, config: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
     case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 

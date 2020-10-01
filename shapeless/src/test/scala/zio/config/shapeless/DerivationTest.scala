@@ -22,6 +22,7 @@ object DerivationTest extends DefaultRunnableSpec {
         case DynamicMap(_, config)     => collectDescriptions(config, path)
         case Describe(config, message) => (path, message) :: collectDescriptions(config, path)
         case Nested(path, config)      => collectDescriptions(config, Some(path))
+        case NestedRec(path, config)   => collectDescriptions(config(), Some(path))
         case Optional(config)          => collectDescriptions(config, path)
         case OrElse(left, right) =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
@@ -57,6 +58,7 @@ object DerivationTest extends DefaultRunnableSpec {
         case Describe(config, _)       => collectPath(config)
         case DynamicMap(_, config)     => collectPath(config)
         case Nested(path, config)      => path :: collectPath(config)
+        case NestedRec(path, config)   => path :: collectPath(config())
         case Optional(config)          => collectPath(config)
         case OrElse(left, right)       => collectPath(left) ::: collectPath(right)
         case OrElseEither(left, right) => collectPath(left) ::: collectPath(right)
@@ -85,6 +87,7 @@ object DerivationTest extends DefaultRunnableSpec {
         case Describe(config, _)   => collectDefault(config, path)
         case DynamicMap(_, config) => collectDefault(config, path)
         case Nested(path, config)  => collectDefault(config, Some(path))
+        case NestedRec(path, config)=>collectDefault(config(), Some(path))
         case Optional(config)      => collectDefault(config, path)
         case OrElse(left, right)   => collectDefault(left, path) ::: collectDefault(right, path)
         case OrElseEither(left, right) =>

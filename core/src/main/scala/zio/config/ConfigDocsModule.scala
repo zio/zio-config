@@ -442,6 +442,9 @@ trait ConfigDocsModule extends WriteModule {
         case Nested(path, c) =>
           ConfigDocs.Nested(path, loop(sources, descriptions, c, Some(path)))
 
+        case NestedRec(path, c) =>
+          ConfigDocs.Nested(path, loop(sources, descriptions, c(), Some(path))) // TODO
+
         case XmapEither(c, _, _) =>
           loop(sources, descriptions, c, None)
 

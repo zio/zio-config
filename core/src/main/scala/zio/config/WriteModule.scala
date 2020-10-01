@@ -24,6 +24,12 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
             case Left(v)     => Left(v)
           }
 
+        case NestedRec(parent, c) =>
+          go(c(), b) match {
+            case Right(prop) => Right(PropertyTree.Record(Map(parent -> prop)))
+            case Left(v)     => Left(v)
+          }
+
         case Optional(c) =>
           b.fold(
             Right(PropertyTree.empty): Either[String, PropertyTree[K, V]]
