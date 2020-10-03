@@ -418,52 +418,49 @@ trait ConfigDocsModule extends WriteModule {
           DocsLeaf((source.names ++ sources), descriptions, None)
 
         case Default(c, _) =>
-          loop(sources, descriptions, c, None)
+          loop(sources, descriptions, c.get(), None)
 
         case cd: DynamicMap[_] =>
           ConfigDocs.DynamicMap(
-            loop((cd.source.names ++ sources), descriptions, cd.config, None)
+            loop((cd.source.names ++ sources), descriptions, cd.config.get(), None)
           )
 
         case Optional(c) =>
-          loop(sources, descriptions, c, None)
+          loop(sources, descriptions, c.get(), None)
 
         case Sequence(source, c) =>
           ConfigDocs.Sequence(
-            loop((source.names ++ sources), descriptions, c, None)
+            loop((source.names ++ sources), descriptions, c.get(), None)
           )
 
         case Describe(c, desc) =>
           val descri: ConfigDocs.Description =
             ConfigDocs.Description(latestPath, desc)
 
-          loop(sources, descri :: descriptions, c, latestPath)
+          loop(sources, descri :: descriptions, c.get(), latestPath)
 
-        case Nested(path, c) =>
-          ConfigDocs.Nested(path, loop(sources, descriptions, c, Some(path)))
-
-        case NestedRec(path, c) =>
-          ConfigDocs.Nested(path, loop(sources, descriptions, c(), Some(path))) // TODO
+        case Nested(source, path, c) =>
+          ConfigDocs.Nested(path, loop(source.names ++ sources, descriptions, c.get(), Some(path)))
 
         case XmapEither(c, _, _) =>
-          loop(sources, descriptions, c, None)
+          loop(sources, descriptions, c.get(), None)
 
         case Zip(left, right) =>
           ConfigDocs.Zip(
-            loop(sources, descriptions, left, None),
-            loop(sources, descriptions, right, None)
+            loop(sources, descriptions, left.get(), None),
+            loop(sources, descriptions, right.get(), None)
           )
 
         case OrElseEither(left, right) =>
           ConfigDocs.OrElse(
-            loop(sources, descriptions, left, None),
-            loop(sources, descriptions, right, None)
+            loop(sources, descriptions, left.get(), None),
+            loop(sources, descriptions, right.get(), None)
           )
 
         case OrElse(left, right) =>
           ConfigDocs.OrElse(
-            loop(sources, descriptions, left, None),
-            loop(sources, descriptions, right, None)
+            loop(sources, descriptions, left.get(), None),
+            loop(sources, descriptions, right.get(), None)
           )
       }
 

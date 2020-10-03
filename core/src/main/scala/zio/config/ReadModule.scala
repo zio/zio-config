@@ -20,16 +20,29 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         )
       )
 
+    def loopNested[B](
+      path: List[Step[K]],
+      keys: List[K],
+      cfg: Nested[B],
+      descriptions: List[String]
+    ): Res[B] =
+      cfg.source.getConfigValue(keys.reverse) match {
+        case PropertyTree.Record(value) =>
+          loopAny(Step.Key(cfg.path) :: path, cfg.path :: keys, cfg.config.get(), descriptions)
+        case PropertyTree.Leaf(value)     => formatError(path, "Leaf", "Record", descriptions)
+        case PropertyTree.Empty           => Left(ReadError.MissingValue(path.reverse, descriptions))
+        case PropertyTree.Sequence(value) => formatError(path, "Sequence", "Record", descriptions)
+      }
+
     def loopOptional[B](
       path: List[Step[K]],
       keys: List[K],
       cfg: Optional[B],
-      descriptions: List[String],
-      failFast: Boolean
+      descriptions: List[String]
     ): Res[Option[B]] =
-      loopAny(path, keys, cfg.config, descriptions, failFast) match {
+      loopAny(path, keys, cfg.config.get(), descriptions) match {
         case Left(error) =>
-          handleDefaultValues(error, cfg.config, None)
+          handleDefaultValues(error, cfg.config.get(), None)
 
         case Right(value) =>
           Right(AnnotatedRead(Some(value.value), Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations))
@@ -39,12 +52,11 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: Default[B],
-      descriptions: List[String],
-      failFast: Boolean
+      descriptions: List[String]
     ): Res[B] =
-      loopAny(path, keys, cfg.config, descriptions, failFast) match {
+      loopAny(path, keys, cfg.config.get(), descriptions) match {
         case Left(error) =>
-          handleDefaultValues(error, cfg.config, cfg.default)
+          handleDefaultValues(error, cfg.config.get(), cfg.default)
 
         case Right(value) =>
           Right(AnnotatedRead(value.value, Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations))
@@ -54,13 +66,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: OrElse[B],
-      descriptions: List[String],
-      failFast: Boolean
+      descriptions: List[String]
     ): Res[B] =
-      loopAny(path, keys, cfg.left, descriptions, failFast) match {
+      loopAny(path, keys, cfg.left.get(), descriptions) match {
         case a @ Right(_) => a
         case Left(leftError) =>
-          loopAny(path, keys, cfg.right, descriptions, failFast) match {
+          loopAny(path, keys, cfg.right.get(), descriptions) match {
             case a @ Right(_) => a
             case Left(rightError) =>
               Left(ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations))
@@ -71,15 +82,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: OrElseEither[B, C],
-      descriptions: List[String],
-      failFast: Boolean
+      descriptions: List[String]
     ): Res[Either[B, C]] =
-      loopAny(path, keys, cfg.left, descriptions, failFast) match {
+      loopAny(path, keys, cfg.left.get(), descriptions) match {
         case Right(value) =>
           Right(value.map(Left(_)))
 
         case Left(leftError) =>
-          loopAny(path, keys, cfg.right, descriptions, failFast) match {
+          loopAny(path, keys, cfg.right.get(), descriptions) match {
             case Right(rightValue) =>
               Right(rightValue.map(Right(_)))
 
@@ -113,45 +123,29 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: Zip[B, C],
-      descriptions: List[String],
-      failFast: Boolean
+      descriptions: List[String]
     ): Res[(B, C)] =
-      if (failFast) {
-        loopAny(path, keys, cfg.left, descriptions, failFast = false) match {
-          case Left(error1) =>
-            Left(ZipErrors(error1 :: Nil, error1.annotations))
-          case Right(leftV) =>
-            loopAny(path, keys, cfg.right, descriptions, failFast = false) match {
-              case Left(error2) =>
-                Left(ZipErrors(error2 :: Nil, error2.annotations ++ leftV.annotations))
-              case Right(rightV) =>
-                Right(leftV.zip(rightV))
-            }
-        }
-      } else {
-        (loopAny(path, keys, cfg.left, descriptions, failFast), loopAny(path, keys, cfg.right, descriptions, failFast)) match {
-          case (Right(leftV), Right(rightV)) =>
-            Right(leftV.zip(rightV))
+      (loopAny(path, keys, cfg.left.get(), descriptions), loopAny(path, keys, cfg.right.get(), descriptions)) match {
+        case (Right(leftV), Right(rightV)) =>
+          Right(leftV.zip(rightV))
 
-          case (Left(error1), Left(error2)) =>
-            Left(ZipErrors(error1 :: error2 :: Nil, error1.annotations ++ error2.annotations))
+        case (Left(error1), Left(error2)) =>
+          Left(ZipErrors(error1 :: error2 :: Nil, error1.annotations ++ error2.annotations))
 
-          case (Left(error), Right(annotated)) =>
-            Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
+        case (Left(error), Right(annotated)) =>
+          Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
 
-          case (Right(annotated), Left(error)) =>
-            Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
-        }
+        case (Right(annotated), Left(error)) =>
+          Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
       }
 
     def loopXmapEither[B, C](
       path: List[Step[K]],
       keys: List[K],
       cfg: XmapEither[B, C],
-      descriptions: List[String],
-      failFast: Boolean
+      descriptions: List[String]
     ): Res[C] =
-      loopAny(path, keys, cfg.config, descriptions, failFast) match {
+      loopAny(path, keys, cfg.config.get(), descriptions) match {
         case Left(error) => Left(error)
         case Right(a) =>
           a.mapError(cfg.f).swap.map(message => ReadError.ConversionError(path.reverse, message, a.annotations)).swap
@@ -161,8 +155,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: DynamicMap[B],
-      descriptions: List[String],
-      failFast: Boolean
+      descriptions: List[String]
     ): Res[Map[K, B]] =
       cfg.source.getConfigValue(keys.reverse) match {
         case PropertyTree.Leaf(_)     => formatError(path, "Leaf", "Record", descriptions)
@@ -173,7 +166,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               val source: ConfigSource =
                 getConfigSource(cfg.source.names, tree.getPath, cfg.source.leafForSequence)
 
-              (k, loopAny(Step.Key(k) :: path, Nil, cfg.config.updateSource(_ => source), descriptions, failFast))
+              (k, loopAny(Step.Key(k) :: path, Nil, cfg.config.get().updateSource(_ => source), descriptions))
           }
 
           seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap).swap
@@ -188,8 +181,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: Sequence[B],
-      descriptions: List[String],
-      failFast: Boolean
+      descriptions: List[String]
     ): Res[List[B]] = {
       def fromTrees(values: List[PropertyTree[K, V]]) = {
         val list = values.zipWithIndex.map {
@@ -199,9 +191,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
             loopAny(
               Step.Index(idx) :: path,
               Nil,
-              cfg.config.updateSource(_ => source),
-              descriptions,
-              failFast
+              cfg.config.get().updateSource(_ => source),
+              descriptions
             )
         }
 
@@ -228,26 +219,23 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       config: ConfigDescriptor[B],
-      descriptions: List[String],
-      failFast: Boolean
+      descriptions: List[String]
     ): Res[B] =
       config match {
-        case c @ Default(_, _)        => loopDefault(path, keys, c, descriptions, failFast)
-        case c @ Describe(_, message) => loopAny(path, keys, c.config, descriptions :+ message, failFast)
-        case c @ DynamicMap(_, _)     => loopMap(path, keys, c, descriptions, failFast)
-        case c @ Nested(_, _)         => loopAny(Step.Key(c.path) :: path, c.path :: keys, c.config, descriptions, failFast)
-        case c @ NestedRec(_, _) =>
-          loopAny(Step.Key(c.path) :: path, c.path :: keys, c.config(), descriptions, failFast = true)
-        case c @ Optional(_)         => loopOptional(path, keys, c, descriptions, failFast)
-        case c @ OrElse(_, _)        => loopOrElse(path, keys, c, descriptions, failFast)
-        case c @ OrElseEither(_, _)  => loopOrElseEither(path, keys, c, descriptions, failFast)
-        case c @ Source(_, _)        => loopSource(path, keys, c, descriptions)
-        case c @ Zip(_, _)           => loopZip(path, keys, c, descriptions, failFast)
-        case c @ XmapEither(_, _, _) => loopXmapEither(path, keys, c, descriptions, failFast)
-        case c @ Sequence(_, _)      => loopSequence(path, keys, c, descriptions, failFast)
+        case c @ Default(_, _)        => loopDefault(path, keys, c, descriptions)
+        case c @ Describe(_, message) => loopAny(path, keys, c.config.get(), descriptions :+ message)
+        case c @ DynamicMap(_, _)     => loopMap(path, keys, c, descriptions)
+        case c @ Nested(_, _, _)      => loopNested(path, keys, c, descriptions)
+        case c @ Optional(_)          => loopOptional(path, keys, c, descriptions)
+        case c @ OrElse(_, _)         => loopOrElse(path, keys, c, descriptions)
+        case c @ OrElseEither(_, _)   => loopOrElseEither(path, keys, c, descriptions)
+        case c @ Source(_, _)         => loopSource(path, keys, c, descriptions)
+        case c @ Zip(_, _)            => loopZip(path, keys, c, descriptions)
+        case c @ XmapEither(_, _, _)  => loopXmapEither(path, keys, c, descriptions)
+        case c @ Sequence(_, _)       => loopSequence(path, keys, c, descriptions)
       }
 
-    loopAny(Nil, Nil, configuration, Nil, false).map(_.value)
+    loopAny(Nil, Nil, configuration, Nil).map(_.value)
   }
 
   def foldReadError[B](
@@ -306,15 +294,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   final def requiredZipAndOrFields[A](config: ConfigDescriptor[A]): Int = {
     def loop[B](count: List[K], config: ConfigDescriptor[B]): Int =
       config match {
-        case ConfigDescriptorAdt.Zip(left, right)        => loop(count, left) + loop(count, right)
-        case ConfigDescriptorAdt.XmapEither(cfg, _, _)   => loop(count, cfg)
-        case ConfigDescriptorAdt.Describe(cfg, _)        => loop(count, cfg)
-        case ConfigDescriptorAdt.Nested(_, next)         => loop(count, next)
-        case ConfigDescriptorAdt.NestedRec(_, next)      => loop(count, next())
+        case ConfigDescriptorAdt.Zip(left, right)        => loop(count, left.get()) + loop(count, right.get())
+        case ConfigDescriptorAdt.XmapEither(cfg, _, _)   => loop(count, cfg.get())
+        case ConfigDescriptorAdt.Describe(cfg, _)        => loop(count, cfg.get())
+        case ConfigDescriptorAdt.Nested(_, _, next)      => loop(count, next.get())
         case ConfigDescriptorAdt.Source(_, _)            => 1
         case ConfigDescriptorAdt.Optional(_)             => 0
-        case ConfigDescriptorAdt.OrElse(cfg, cfg2)       => loop(count, cfg) + loop(count, cfg2)
-        case ConfigDescriptorAdt.OrElseEither(cfg, cfg2) => loop(count, cfg) + loop(count, cfg2)
+        case ConfigDescriptorAdt.OrElse(cfg, cfg2)       => loop(count, cfg.get()) + loop(count, cfg2.get())
+        case ConfigDescriptorAdt.OrElseEither(cfg, cfg2) => loop(count, cfg.get()) + loop(count, cfg2.get())
         case ConfigDescriptorAdt.Default(_, _)           => 0
         case ConfigDescriptorAdt.Sequence(_, _)          => 1
         case ConfigDescriptorAdt.DynamicMap(_, _)        => 1
