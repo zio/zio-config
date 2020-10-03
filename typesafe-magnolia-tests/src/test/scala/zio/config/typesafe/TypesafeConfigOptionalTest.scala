@@ -1,7 +1,7 @@
 package zio.config.typesafe
 
 import zio.config.ReadError.Step.Key
-import zio.config.{BaseSpec, ReadError, read}
+import zio.config.{ read, BaseSpec, ReadError }
 import zio.test._
 import zio.test.Assertion._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
@@ -780,7 +780,7 @@ object TypesafeConfigOptionalTest
               Left(
                 List(
                   MissingValue(List(Key("a"), Key("c")), List("optional value")),
-                  MissingValue(List(Key("a"), Key("a")), List("optional value")),
+                  MissingValue(List(Key("a"), Key("a")), List("optional value"))
                 )
               )
             )
@@ -821,7 +821,7 @@ object TypesafeConfigOptionalTest
                     List("optional value", "optional value", "value of type string")
                   ),
                   MissingValue(List(Key("a"), Key("c")), List("optional value")),
-                  MissingValue(List(Key("a"), Key("a")), List("optional value")),
+                  MissingValue(List(Key("a"), Key("a")), List("optional value"))
                 )
               )
             )
