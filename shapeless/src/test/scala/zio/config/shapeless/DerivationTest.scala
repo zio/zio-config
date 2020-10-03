@@ -83,13 +83,13 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], Any)] = desc match {
-        case Default(config, v)    => (path -> v) :: collectDefault(config, path)
-        case Describe(config, _)   => collectDefault(config, path)
-        case DynamicMap(_, config) => collectDefault(config, path)
-        case Nested(path, config)  => collectDefault(config, Some(path))
-        case NestedRec(path, config)=>collectDefault(config(), Some(path))
-        case Optional(config)      => collectDefault(config, path)
-        case OrElse(left, right)   => collectDefault(left, path) ::: collectDefault(right, path)
+        case Default(config, v)      => (path -> v) :: collectDefault(config, path)
+        case Describe(config, _)     => collectDefault(config, path)
+        case DynamicMap(_, config)   => collectDefault(config, path)
+        case Nested(path, config)    => collectDefault(config, Some(path))
+        case NestedRec(path, config) => collectDefault(config(), Some(path))
+        case Optional(config)        => collectDefault(config, path)
+        case OrElse(left, right)     => collectDefault(left, path) ::: collectDefault(right, path)
         case OrElseEither(left, right) =>
           collectDefault(left, path) ::: collectDefault(right, path)
         case Sequence(_, config)      => collectDefault(config, path)

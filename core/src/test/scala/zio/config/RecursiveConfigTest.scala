@@ -44,10 +44,9 @@ object RecursiveConfigTestUtils {
 
   case class Data(rows: Row)
 
-  case class Row(id: Int,
-                 nested: Option[Data])
+  case class Row(id: Int, nested: Option[Data])
 
-  lazy val row: ConfigDescriptor[Row] =  (int("id") |@| data.optional)(Row.apply, Row.unapply)
+  lazy val row: ConfigDescriptor[Row]   = (int("id") |@| data.optional)(Row.apply, Row.unapply)
   lazy val data: ConfigDescriptor[Data] = nestedRec("rows")(() => row)(Data.apply, Data.unapply)
 
   val testSource: ConfigSource = ConfigSource.fromPropertyTree(
@@ -58,12 +57,12 @@ object RecursiveConfigTestUtils {
             "id" -> PropertyTree.Leaf("1"),
             "rows" -> PropertyTree.Record(
               Map(
-                "id" -> PropertyTree.Leaf("2"),
-                )
+                "id" -> PropertyTree.Leaf("2")
               )
             )
           )
         )
+      )
     ),
     "tree",
     LeafForSequence.Valid
