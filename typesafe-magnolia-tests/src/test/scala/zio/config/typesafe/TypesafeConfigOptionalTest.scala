@@ -1,7 +1,7 @@
 package zio.config.typesafe
 
 import zio.config.ReadError.Step.Key
-import zio.config.{ read, BaseSpec, ReadError }
+import zio.config.{BaseSpec, ReadError, read}
 import zio.test._
 import zio.test.Assertion._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
@@ -421,8 +421,9 @@ object TypesafeConfigOptionalTest
                |       }
                |""".stripMargin
 
+          val d = descriptor[TestCase1.CaseClass1]
           val result =
-            read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
+            read(d from getSource(validConfig))
 
           assert(result)(
             equalTo(
@@ -747,10 +748,7 @@ object TypesafeConfigOptionalTest
             equalTo(
               Left(
                 List(
-                  MissingValue(List(Key("a"), Key("c"), Key("b2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("b1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a1")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c")), List("optional value")),
                   MissingValue(List(Key("a"), Key("a"), Key("b2")), List("optional value", "value of type string")),
                   MissingValue(List(Key("a"), Key("a"), Key("a2")), List("optional value", "value of type string")),
                   MissingValue(List(Key("a"), Key("a"), Key("b1")), List("optional value", "value of type string"))
@@ -782,14 +780,8 @@ object TypesafeConfigOptionalTest
             equalTo(
               Left(
                 List(
-                  MissingValue(List(Key("a"), Key("c"), Key("b2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("b1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("b2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("a2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("b1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("a1")), List("optional value", "value of type string"))
+                  MissingValue(List(Key("a"), Key("c")), List("optional value")),
+                  MissingValue(List(Key("a"), Key("a")), List("optional value")),
                 )
               )
             )
@@ -829,14 +821,8 @@ object TypesafeConfigOptionalTest
                     List(Key("a"), Key("b"), Key("b1")),
                     List("optional value", "optional value", "value of type string")
                   ),
-                  MissingValue(List(Key("a"), Key("c"), Key("b2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("b1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("b2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("a2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("b1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("a1")), List("optional value", "value of type string"))
+                  MissingValue(List(Key("a"), Key("c")), List("optional value")),
+                  MissingValue(List(Key("a"), Key("a")), List("optional value")),
                 )
               )
             )

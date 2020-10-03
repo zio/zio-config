@@ -218,7 +218,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       LazyConfigDescriptor(() => f(get()))
   }
 
-  private final def thunk[A](config: => ConfigDescriptor[A]): LazyConfigDescriptor[A] =
+  final def thunk[A](config: => ConfigDescriptor[A]): LazyConfigDescriptor[A] =
     LazyConfigDescriptor(() => config)
 
   object ConfigDescriptorAdt {

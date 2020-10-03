@@ -25,12 +25,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       keys: List[K],
       cfg: Nested[B],
       descriptions: List[String]
-    ): Res[B] =
-      cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse, descriptions))
+    ): Res[B] = {
+      val updatedKeys = cfg.path :: keys
+      val updatedPath = Step.Key(cfg.path) :: path
+      cfg.source.getConfigValue(updatedKeys.reverse) match {
+        case PropertyTree.Empty =>
+          // TODO: look ahead for descriptions
+          Left(ReadError.MissingValue(updatedPath.reverse, descriptions))
         case _ =>
-          loopAny(Step.Key(cfg.path) :: path, cfg.path :: keys, cfg.config.get(), descriptions)
+          loopAny(updatedPath, updatedKeys, cfg.config.get(), descriptions)
       }
+    }
 
     def loopOptional[B](
       path: List[Step[K]],
@@ -267,6 +272,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case ReadError.Irrecoverable(_, _)   => false
       }(_ && _, true)
 
+    // TODO: this is broken because of stopping at invalid nesting
     val baseConditionForFallBack =
       hasOnlyMissingValuesAndZeroIrrecoverable && sizeOfZipAndOrErrors(error) == requiredZipAndOrFields(config)
 
