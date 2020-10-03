@@ -421,9 +421,8 @@ object TypesafeConfigOptionalTest
                |       }
                |""".stripMargin
 
-          val d = descriptor[TestCase1.CaseClass1]
           val result =
-            read(d from getSource(validConfig))
+            read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
           assert(result)(
             equalTo(

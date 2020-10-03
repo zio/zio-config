@@ -415,7 +415,9 @@ trait DeriveConfigDescriptor { self =>
    * This is used to move the Optional and Describe out of the nesting, so a missing record is accepted as None
    */
   // TODO: unwrapping the descriptions will not be necessary if ReadModule loopNested looks ahead
-  protected def unwrapFromOptional[A](configDesc: ConfigDescriptor[A]): (ConfigDescriptor[Any], Boolean, List[String]) = {
+  protected def unwrapFromOptional[A](
+    configDesc: ConfigDescriptor[A]
+  ): (ConfigDescriptor[Any], Boolean, List[String]) = {
     import zio.config.ConfigDescriptorAdt._
     configDesc match {
       case Default(config, default) =>
@@ -477,7 +479,7 @@ trait DeriveConfigDescriptor { self =>
 
               val paramName = prepareFieldName(param.annotations, param.label)
 
-              val raw                      = param.typeclass.desc
+              val raw                                         = param.typeclass.desc
               val (unwrapped, wasOptional, innerDescriptions) = unwrapFromOptional(raw)
 
               val withDefaults = param.default.fold(unwrapped)(unwrapped.default(_))
