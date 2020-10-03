@@ -27,11 +27,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String]
     ): Res[B] =
       cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Record(_) =>
+        case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse, descriptions))
+        case _ =>
           loopAny(Step.Key(cfg.path) :: path, cfg.path :: keys, cfg.config.get(), descriptions)
-        case PropertyTree.Leaf(_)     => formatError(path, "Leaf", "Record", descriptions)
-        case PropertyTree.Empty       => Left(ReadError.MissingValue(path.reverse, descriptions))
-        case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Record", descriptions)
       }
 
     def loopOptional[B](
