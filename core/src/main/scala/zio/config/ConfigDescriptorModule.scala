@@ -221,6 +221,52 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   final def thunk[A](config: => ConfigDescriptor[A]): LazyConfigDescriptor[A] =
     LazyConfigDescriptor(() => config)
 
+  def dump[A](config: ConfigDescriptor[A]): String = {
+    val builder = new StringBuilder
+
+    def go[A](config: ConfigDescriptor[A], prefix: String): Unit = {
+      config match {
+        case Default(config, default) =>
+          builder.append(s"${prefix}Default($default}\n")
+          go(config.get(), prefix + "  ")
+        case Describe(config, message) =>
+          builder.append(s"${prefix}Describe($message}\n")
+          go(config.get(), prefix + "  ")
+        case DynamicMap(_, config) =>
+          builder.append(s"${prefix}DynamicMap\n")
+          go(config.get(), prefix + "  ")
+        case Nested(_, path, config) =>
+          builder.append(s"${prefix}Nested($path)\n")
+          go(config.get(), prefix + "  ")
+        case Optional(config) =>
+          builder.append(s"${prefix}Optional\n")
+          go(config.get(), prefix + "  ")
+        case OrElse(left, right) =>
+          builder.append(s"${prefix}OrElse\n")
+          go(left.get(), prefix + "  ")
+          go(right.get(), prefix + "  ")
+        case OrElseEither(left, right) =>
+          builder.append(s"${prefix}OrElseEither\n")
+          go(left.get(), prefix + "  ")
+          go(right.get(), prefix + "  ")
+        case Sequence(_, config) =>
+          builder.append(s"${prefix}Sequence\n")
+          go(config.get(), prefix + "  ")
+        case Source(_, propertyType) =>
+          builder.append(s"${prefix}Source($propertyType)\n")
+          ()
+        case Zip(left, right) =>
+          builder.append(s"${prefix}Zip\n")
+          go(left.get(), prefix + "  ")
+          go(right.get(), prefix + "  ")
+        case XmapEither(config, _, _) =>
+          go(config.get(), prefix)
+      }
+    }
+    go(config, "")
+    builder.toString()
+  }
+
   object ConfigDescriptorAdt {
     case class Default[A](config: LazyConfigDescriptor[A], default: A) extends ConfigDescriptor[A]
 

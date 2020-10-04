@@ -20,6 +20,20 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         )
       )
 
+    def lookAheadForDescriptions[C](cfg: ConfigDescriptor[C], result: List[String]): List[String] =
+      cfg match {
+        case Default(config, _) =>
+          lookAheadForDescriptions(config.get(), result)
+        case Describe(config, message) =>
+          lookAheadForDescriptions(config.get(), message :: result)
+        case Optional(config) =>
+          lookAheadForDescriptions(config.get(), result)
+        case XmapEither(config, _, _) =>
+          lookAheadForDescriptions(config.get(), result)
+        case _ =>
+          result.reverse
+      }
+
     def loopNested[B](
       path: List[Step[K]],
       keys: List[K],
@@ -28,10 +42,11 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[B] = {
       val updatedKeys = cfg.path :: keys
       val updatedPath = Step.Key(cfg.path) :: path
+
       cfg.source.getConfigValue(updatedKeys.reverse) match {
         case PropertyTree.Empty =>
-          // TODO: look ahead for descriptions
-          Left(ReadError.MissingValue(updatedPath.reverse, descriptions))
+          val innerDescriptions = lookAheadForDescriptions(cfg.config.get(), List.empty)
+          Left(ReadError.MissingValue(updatedPath.reverse, descriptions ++ innerDescriptions))
         case _ =>
           loopAny(updatedPath, updatedKeys, cfg.config.get(), descriptions)
       }

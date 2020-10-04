@@ -409,30 +409,29 @@ trait DeriveConfigDescriptor { self =>
     configDesc.optional
 
   /**
-   * Peel the Describe(Default(Optional( layers, remove the Optional and its 'Describe' parent
-   * if any, and remove and collect all the other Describe nodes.
+   * Peel the Describe(Default(Optional( layers and remove the Describe(Optional
+   * created by 'implicitOptionDesc'
    *
-   * This is used to move the Optional and Describe out of the nesting, so a missing record is accepted as None
+   * This is used to move the Optional out of the nesting, so a missing record is accepted as None
    */
-  // TODO: unwrapping the descriptions will not be necessary if ReadModule loopNested looks ahead
   protected def unwrapFromOptional[A](
     configDesc: ConfigDescriptor[A]
-  ): (ConfigDescriptor[Any], Boolean, List[String]) = {
+  ): (ConfigDescriptor[Any], Boolean) = {
     import zio.config.ConfigDescriptorAdt._
     configDesc match {
       case Default(config, default) =>
-        val (inner, opt, descriptions) = unwrapFromOptional(config.get())
-        (Default(thunk(inner), default), opt, descriptions)
+        val (inner, opt) = unwrapFromOptional(config.get())
+        (Default(thunk(inner), default), opt)
       case Describe(config, message) =>
         config.get() match {
           case Optional(config) =>
-            (config.get(), true, List.empty)
+            (config.get(), true)
           case _ =>
-            val (inner, opt, descriptions) = unwrapFromOptional(config.get())
-            (Describe(thunk(inner), message), opt, message :: descriptions)
+            val (inner, opt) = unwrapFromOptional(config.get())
+            (Describe(thunk(inner), message), opt)
         }
       case _ =>
-        (configDesc.asInstanceOf[ConfigDescriptor[Any]], false, List.empty)
+        (configDesc.asInstanceOf[ConfigDescriptor[Any]], false)
     }
   }
 
@@ -479,18 +478,17 @@ trait DeriveConfigDescriptor { self =>
 
               val paramName = prepareFieldName(param.annotations, param.label)
 
-              val raw                                         = param.typeclass.desc
-              val (unwrapped, wasOptional, innerDescriptions) = unwrapFromOptional(raw)
+              val raw                      = param.typeclass.desc
+              val (unwrapped, wasOptional) = unwrapFromOptional(raw)
 
               val withDefaults = param.default.fold(unwrapped)(unwrapped.default(_))
+              val described    = descriptions.foldLeft(withDefaults)(_ ?? _)
 
-              val withNesting = if (wasOptional) {
-                nested(paramName)(withDefaults).optional.asInstanceOf[ConfigDescriptor[Any]]
+              if (wasOptional) {
+                nested(paramName)(described).optional.asInstanceOf[ConfigDescriptor[Any]]
               } else {
-                nested(paramName)(withDefaults)
+                nested(paramName)(described)
               }
-
-              (descriptions ++ innerDescriptions).foldLeft(withNesting)(_ ?? _)
             }
 
             collectAll(makeDescriptor(head), tail.map(makeDescriptor): _*).xmap[T](
