@@ -19,7 +19,6 @@ object AutomaticConfigTest
         testM("automatic derivation spec") {
           checkM(genEnvironment) {
             environment =>
-
               val source =
                 ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
 

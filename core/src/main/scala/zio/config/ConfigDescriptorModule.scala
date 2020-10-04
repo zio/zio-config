@@ -224,7 +224,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   def dump[A](config: ConfigDescriptor[A]): String = {
     val builder = new StringBuilder
 
-    def go[A](config: ConfigDescriptor[A], prefix: String): Unit = {
+    def go[A](config: ConfigDescriptor[A], prefix: String): Unit =
       config match {
         case Default(config, default) =>
           builder.append(s"${prefix}Default($default}\n")
@@ -262,7 +262,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         case XmapEither(config, _, _) =>
           go(config.get(), prefix)
       }
-    }
     go(config, "")
     builder.toString()
   }

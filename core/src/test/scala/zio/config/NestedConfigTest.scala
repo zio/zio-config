@@ -25,7 +25,9 @@ object NestedConfigTest
         },
         testM("nested with default") {
           val config = string("x").default("y")
-          val r = ZIO.fromEither(read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid)))
+          val r = ZIO.fromEither(
+            read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid))
+          )
 
           assertM(r)(equalTo("y"))
         }
