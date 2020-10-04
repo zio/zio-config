@@ -287,7 +287,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case ReadError.Irrecoverable(_, _)   => false
       }(_ && _, true)
 
-    // TODO: this is broken because of stopping at invalid nesting
     val baseConditionForFallBack =
       hasOnlyMissingValuesAndZeroIrrecoverable && sizeOfZipAndOrErrors(error) == requiredZipAndOrFields(config)
 
