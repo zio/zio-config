@@ -14,6 +14,9 @@ object RecursiveConfigTest
         },
         test("read mutual recursive") {
           assert(read(data from testSource))(isRight(equalTo(recursiveValue)))
+        },
+        test("write simple") {
+          assert(write(simpleRec, simpleRecursiveValue))(isRight(equalTo(simpleTestTree)))
         }
       )
     )
@@ -25,17 +28,18 @@ object RecursiveConfigTestUtils {
   lazy val simpleRec: ConfigDescriptor[SimpleRec] =
     (int("id") |@| nested("nested")(simpleRec).optional)(SimpleRec.apply, SimpleRec.unapply)
 
-  val simpleTestSource: ConfigSource = ConfigSource.fromPropertyTree(
-    PropertyTree.Record(
-      Map(
-        "id" -> PropertyTree.Leaf("1"),
-        "nested" -> PropertyTree.Record(
-          Map(
-            "id" -> PropertyTree.Leaf("2")
-          )
+  val simpleTestTree: PropertyTree[String, String] = PropertyTree.Record(
+    Map(
+      "id" -> PropertyTree.Leaf("1"),
+      "nested" -> PropertyTree.Record(
+        Map(
+          "id" -> PropertyTree.Leaf("2")
         )
       )
-    ),
+    )
+  )
+  val simpleTestSource: ConfigSource = ConfigSource.fromPropertyTree(
+    simpleTestTree,
     "tree",
     LeafForSequence.Valid
   )

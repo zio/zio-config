@@ -458,7 +458,7 @@ trait DeriveConfigDescriptor { self =>
               } else {
                 nested(paramName)(unwrapped)
               }
-              val described    = descriptions.foldLeft(withNesting)(_ ?? _)
+              val described = descriptions.foldLeft(withNesting)(_ ?? _)
               param.default.fold(described)(described.default(_))
             }
 
