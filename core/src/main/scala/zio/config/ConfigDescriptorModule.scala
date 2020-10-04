@@ -168,7 +168,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     def listOrSingleton[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       list(path)(desc) orElse (
-        desc.xmapEither[List[A]](
+        nested(path)(desc).xmapEither[List[A]](
           value => Right(List(value)),
           _.headOption match {
             case Some(value) => Right(value)

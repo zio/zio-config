@@ -155,6 +155,40 @@ object ListAndOptionalTest
             (list("branches")(branchConfigDesc).optional)(AppConfig.apply, AppConfig.unapply)
 
           assert(read(appConfigDesc from src))(isLeft(anything))
+        },
+        testM("listOrSingleton on list input") {
+          val src =
+            ConfigSource.fromPropertyTree(
+              Record(
+                Map(
+                  "list" -> PropertyTree.Sequence[String, String](
+                    List(PropertyTree.Leaf("x"), PropertyTree.Leaf("y"))
+                  )
+                )
+              ),
+              "src",
+              LeafForSequence.Valid
+            )
+
+          val config   = listOrSingleton("list")(string)
+          val actual   = ZIO.fromEither(read(config from src))
+          val expected = List("x", "y")
+
+          assertM(actual)(equalTo(expected))
+        },
+        testM("listOrSingleton on singleton input") {
+          val src =
+            ConfigSource.fromPropertyTree(
+              Record(Map("list" -> PropertyTree.Leaf("x"))),
+              "src",
+              LeafForSequence.Invalid // Note that with LeafForSequence.Valid, this is accepted as a list (not the 'orElse singleton')
+            )
+
+          val config   = listOrSingleton("list")(string)
+          val actual   = ZIO.fromEither(read(config from src))
+          val expected = List("x")
+
+          assertM(actual)(equalTo(expected))
         }
       )
     )
