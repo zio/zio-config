@@ -96,7 +96,7 @@ object DerivationTest extends DefaultRunnableSpec {
         case XmapEither(config, _, _) => collectDefault(config.get(), path)
       }
 
-      assert(collectDefault(descriptor[Cfg], None))(equalTo((Some("fname"), "defaultV") :: Nil))
+      assert(collectDefault(descriptor[Cfg], None))(equalTo((None, "defaultV") :: Nil))
     },
     test("support lists recursive") {
       case class A1(a: List[String])

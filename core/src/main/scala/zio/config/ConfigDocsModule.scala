@@ -36,7 +36,7 @@ trait ConfigDocsModule extends WriteModule {
 
             // Look backwards and see if previous node is nested, if so remove the already used descriptions
             val parentDoc =
-              if (previousNode.exists(_.is { case ConfigDocs.Nested(_, _) => true }(false))) {
+              if (previousNode.exists(_.is { case ConfigDocs.Nested(_, _, _) => true }(false))) {
                 previousPaths.lastOption match {
                   case Some(value) =>
                     ConfigDocs
@@ -81,7 +81,7 @@ trait ConfigDocsModule extends WriteModule {
 
             TableRow(previousPaths, Some(Table.Format.Primitive), desc, None, sources.map(_.name)).asTable
 
-          case c @ ConfigDocs.Nested(path, docs) =>
+          case c @ ConfigDocs.Nested(path, docs, descriptions) =>
             val result =
               go(
                 docs,
@@ -94,17 +94,17 @@ trait ConfigDocsModule extends WriteModule {
             // For example: nested("a")(string) isn't treated as nested.
             // However a is nested if config is nested("a")(nested("b")(string))
             if (docs.is {
-                  case ConfigDocs.Nested(_, _) => true
+                  case ConfigDocs.Nested(_, _, _) => true
                 }(false)) {
               TableRow(
                 previousPaths :+ Table.FieldName.Key(path),
                 Some(Table.Format.Nested),
-                Nil,
+                descriptions,
                 Some(result),
                 Set.empty
               ).asTable
             } else
-              result
+              result.copy(rows = result.rows.map(row => row.copy(description = row.description ++ descriptions)))
 
           case c @ ConfigDocs.Zip(left, right) =>
             handleNested(left, right, c, _.is { case ConfigDocs.Zip(_, _) => true }(false), Format.AllOf)
@@ -142,7 +142,7 @@ trait ConfigDocsModule extends WriteModule {
     case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None)
         extends ConfigDocs
 
-    case class Nested(path: K, docs: ConfigDocs)                                          extends ConfigDocs
+    case class Nested(path: K, docs: ConfigDocs, descriptions: List[Description])         extends ConfigDocs
     case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
     case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
     case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
@@ -440,7 +440,7 @@ trait ConfigDocsModule extends WriteModule {
           loop(sources, descri :: descriptions, c.get(), latestPath)
 
         case Nested(source, path, c) =>
-          ConfigDocs.Nested(path, loop(source.names ++ sources, descriptions, c.get(), Some(path)))
+          ConfigDocs.Nested(path, loop(source.names ++ sources, List.empty, c.get(), Some(path)), descriptions)
 
         case XmapEither(c, _, _) =>
           loop(sources, descriptions, c.get(), None)
@@ -493,8 +493,8 @@ trait ConfigDocsModule extends WriteModule {
 
             case a: DocsLeaf => a
 
-            case ConfigDocs.Nested(path, docs) =>
-              ConfigDocs.Nested(path, loop(tree, docs, keys :+ path))
+            case ConfigDocs.Nested(path, docs, descriptions) =>
+              ConfigDocs.Nested(path, loop(tree, docs, keys :+ path), descriptions)
 
             case ConfigDocs.Zip(left, right) =>
               ConfigDocs.Zip(loop(tree, left, keys), loop(tree, right, keys))

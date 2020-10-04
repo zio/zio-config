@@ -7,6 +7,48 @@ import zio.test._
 object GenerateDocsTest
     extends BaseSpec(
       suite("Generate docs")(
+        test("optional nested") {
+          val inner = (int("a") |@| int("b")).tupled
+          val outer = nested("c")(inner).optional
+
+          val doc   = generateDocs(outer)
+          val table = doc.toTable
+
+          assert(table)(
+            equalTo(
+              Table(
+                List(
+                  Table.TableRow(
+                    List(Table.FieldName.Key("c")),
+                    Some(Table.Format.AllOf),
+                    List(ConfigDocs.Description(None, "optional value")),
+                    Some(
+                      Table(
+                        List(
+                          Table.TableRow(
+                            List(Table.FieldName.Key("a")),
+                            Some(Table.Format.Primitive),
+                            List(ConfigDocs.Description(Some("a"), "value of type int")),
+                            None,
+                            Set.empty
+                          ),
+                          Table.TableRow(
+                            List(Table.FieldName.Key("b")),
+                            Some(Table.Format.Primitive),
+                            List(ConfigDocs.Description(Some("b"), "value of type int")),
+                            None,
+                            Set.empty
+                          )
+                        )
+                      )
+                    ),
+                    Set.empty
+                  )
+                )
+              )
+            )
+          )
+        },
         test("generate docs") {
           val expected =
             s"""

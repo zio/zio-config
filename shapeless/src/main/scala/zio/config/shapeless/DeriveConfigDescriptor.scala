@@ -177,13 +177,13 @@ trait DeriveConfigDescriptor {
     ): ConfigDescriptor[V] = {
       val name                     = manualName.map(_.name).getOrElse(mapFieldName(fieldName))
       val (unwrapped, wasOptional) = unwrapFromOptional(desc.configDescriptor)
-      val described                = description.map(_.describe).toSeq.foldLeft(unwrapped)(_ ?? _)
       val withNesting = if (wasOptional) {
-        nested(name)(described).optional.asInstanceOf[ConfigDescriptor[V]]
+        nested(name)(unwrapped).optional.asInstanceOf[ConfigDescriptor[V]]
       } else {
-        nested(name)(described).asInstanceOf[ConfigDescriptor[V]]
+        nested(name)(unwrapped).asInstanceOf[ConfigDescriptor[V]]
       }
-      defaultValue.fold(withNesting)(withNesting.default(_))
+      val described = description.map(_.describe).toSeq.foldLeft(withNesting)(_ ?? _)
+      defaultValue.fold(described)(described.default(_))
     }
 
     implicit def caseHNil[K <: Symbol, V, N, Ds, Df](
