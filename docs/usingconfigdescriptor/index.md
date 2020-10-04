@@ -286,29 +286,35 @@ Right(
         ConfigDocs.Zip(
           ConfigDocs.Nested(
             "connection",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string"), Description(None, "South details")), Some("abc.com"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string"), Description(None, "South details")), Some("abc.com")),
+            Nil
           ),
           ConfigDocs.Nested(
             "port",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type int"), Description(None, "South details")), Some("8111"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type int"), Description(None, "South details")), Some("8111")),
+            Nil
           )
-        )
+        ),
+        Nil
       ),
       ConfigDocs.Nested(
         "east",
         ConfigDocs.Zip(
           ConfigDocs.Nested(
             "connection",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string"), Description(None, "East details")), Some("xyz.com"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string"), Description(None, "East details")), Some("xyz.com")),
+            Nil
           ),
           ConfigDocs.Nested(
             "port",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type int"), Description(None, "East details")), Some("8888"))
+            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type int"), Description(None, "East details")), Some("8888")),
+            Nil
           )
-        )
+        ),
+        Nil
       )
     ),
-    ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string")), Some("myApp")))
+    ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string")), Some("myApp")), Nil)
   )
 )
 ```
