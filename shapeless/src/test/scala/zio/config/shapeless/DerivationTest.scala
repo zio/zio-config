@@ -36,7 +36,7 @@ object DerivationTest extends DefaultRunnableSpec {
 
       assert(collectDescriptions(DeriveConfigDescriptor.descriptor[Cfg], None))(
         contains((None: Option[String]) -> "class desc") &&
-          contains(Some("fname")        -> "field desc")
+          contains(None                 -> "field desc")
       )
     },
     test("support name annotation") {
