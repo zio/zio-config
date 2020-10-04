@@ -17,6 +17,42 @@ object RecursiveConfigTest
         },
         test("write simple") {
           assert(write(simpleRec, simpleRecursiveValue))(isRight(equalTo(simpleTestTree)))
+        },
+        test("documentation") {
+          assert(generateDocs(simpleRec).toTable)(
+            equalTo(
+              Table(
+                List(
+                  Table.TableRow(
+                    Nil,
+                    Some(Table.Format.AllOf),
+                    Nil,
+                    Some(
+                      Table(
+                        List(
+                          Table.TableRow(
+                            List(Table.FieldName.Key("id")),
+                            Some(Table.Format.Primitive),
+                            List(ConfigDocs.Description(Some("id"), "value of type int")),
+                            None,
+                            Set()
+                          ),
+                          Table.TableRow(
+                            List(Table.FieldName.Key("nested")),
+                            Some(Table.Format.Recursion),
+                            List(ConfigDocs.Description(None, "optional value")),
+                            None,
+                            Set()
+                          )
+                        )
+                      )
+                    ),
+                    Set()
+                  )
+                )
+              )
+            )
+          )
         }
       )
     )

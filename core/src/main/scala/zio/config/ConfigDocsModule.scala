@@ -80,6 +80,8 @@ trait ConfigDocsModule extends WriteModule {
               }
 
             TableRow(previousPaths, Some(Table.Format.Primitive), desc, None, sources.map(_.name)).asTable
+          case ConfigDocs.Recursion(sources) =>
+            TableRow(previousPaths, Some(Table.Format.Recursion), List.empty, None, sources.map(_.name)).asTable
 
           case c @ ConfigDocs.Nested(path, docs, descriptions) =>
             val result =
@@ -141,7 +143,7 @@ trait ConfigDocsModule extends WriteModule {
 
     case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None)
         extends ConfigDocs
-
+    case class Recursion(sources: Set[ConfigSourceName])                                  extends ConfigDocs
     case class Nested(path: K, docs: ConfigDocs, descriptions: List[Description])         extends ConfigDocs
     case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
     case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
@@ -371,6 +373,7 @@ trait ConfigDocsModule extends WriteModule {
           case Format.Nested        => "nested"
           case Format.AnyOneOf      => "any-one-of"
           case Format.AllOf         => "all-of"
+          case Format.Recursion     => "recursion"
           case Format.NotApplicable => ""
         }
     }
@@ -383,6 +386,7 @@ trait ConfigDocsModule extends WriteModule {
       case object AnyOneOf      extends Format
       case object AllOf         extends Format
       case object NotApplicable extends Format
+      case object Recursion     extends Format
     }
 
     sealed trait FieldName {
@@ -407,64 +411,87 @@ trait ConfigDocsModule extends WriteModule {
    * from various sources.
    */
   final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
+    def loopTo[B](
+      sources: Set[ConfigSourceName],
+      descriptions: List[ConfigDocs.Description],
+      config: ConfigDescriptor[B],
+      latestPath: Option[K],
+      alreadySeen: Set[ConfigDescriptor[_]]
+    ): ConfigDocs =
+      loop(sources, descriptions, config, latestPath, alreadySeen + config)
+
     def loop[B](
       sources: Set[ConfigSourceName],
       descriptions: List[ConfigDocs.Description],
       config: ConfigDescriptor[B],
-      latestPath: Option[K]
+      latestPath: Option[K],
+      alreadySeen: Set[ConfigDescriptor[_]]
     ): ConfigDocs =
       config match {
         case Source(source, _) =>
           DocsLeaf((source.names ++ sources), descriptions, None)
 
         case Default(c, _) =>
-          loop(sources, descriptions, c.get(), None)
+          loopTo(sources, descriptions, c.get(), None, alreadySeen)
 
         case cd: DynamicMap[_] =>
           ConfigDocs.DynamicMap(
-            loop((cd.source.names ++ sources), descriptions, cd.config.get(), None)
+            loopTo((cd.source.names ++ sources), descriptions, cd.config.get(), None, alreadySeen)
           )
 
         case Optional(c) =>
-          loop(sources, descriptions, c.get(), None)
+          loopTo(sources, descriptions, c.get(), None, alreadySeen)
 
         case Sequence(source, c) =>
           ConfigDocs.Sequence(
-            loop((source.names ++ sources), descriptions, c.get(), None)
+            loopTo((source.names ++ sources), descriptions, c.get(), None, alreadySeen)
           )
 
         case Describe(c, desc) =>
           val descri: ConfigDocs.Description =
             ConfigDocs.Description(latestPath, desc)
 
-          loop(sources, descri :: descriptions, c.get(), latestPath)
+          loopTo(sources, descri :: descriptions, c.get(), latestPath, alreadySeen)
 
         case Nested(source, path, c) =>
-          ConfigDocs.Nested(path, loop(source.names ++ sources, List.empty, c.get(), Some(path)), descriptions)
+          val inner = c.get()
+          if (alreadySeen.contains(inner)) {
+            ConfigDocs.Nested(
+              path,
+              ConfigDocs.Recursion(source.names ++ sources),
+              descriptions
+            )
+          } else {
+            ConfigDocs.Nested(
+              path,
+              loopTo(source.names ++ sources, List.empty, inner, Some(path), alreadySeen),
+              descriptions
+            )
+          }
 
         case XmapEither(c, _, _) =>
-          loop(sources, descriptions, c.get(), None)
+          loopTo(sources, descriptions, c.get(), None, alreadySeen)
 
         case Zip(left, right) =>
           ConfigDocs.Zip(
-            loop(sources, descriptions, left.get(), None),
-            loop(sources, descriptions, right.get(), None)
+            loopTo(sources, descriptions, left.get(), None, alreadySeen),
+            loopTo(sources, descriptions, right.get(), None, alreadySeen)
           )
 
         case OrElseEither(left, right) =>
           ConfigDocs.OrElse(
-            loop(sources, descriptions, left.get(), None),
-            loop(sources, descriptions, right.get(), None)
+            loopTo(sources, descriptions, left.get(), None, alreadySeen),
+            loopTo(sources, descriptions, right.get(), None, alreadySeen)
           )
 
         case OrElse(left, right) =>
           ConfigDocs.OrElse(
-            loop(sources, descriptions, left.get(), None),
-            loop(sources, descriptions, right.get(), None)
+            loopTo(sources, descriptions, left.get(), None, alreadySeen),
+            loopTo(sources, descriptions, right.get(), None, alreadySeen)
           )
       }
 
-    loop(Set.empty, Nil, config, None)
+    loopTo(Set.empty, Nil, config, None, Set.empty)
   }
 
   /**
@@ -492,6 +519,8 @@ trait ConfigDocsModule extends WriteModule {
               }
 
             case a: DocsLeaf => a
+
+            case a: ConfigDocs.Recursion => a
 
             case ConfigDocs.Nested(path, docs, descriptions) =>
               ConfigDocs.Nested(path, loop(tree, docs, keys :+ path), descriptions)
