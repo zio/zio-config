@@ -94,6 +94,16 @@ object ReadWriteRoundtripTest
 
             assertM(p2)(equalTo(p))
           }
+        },
+        testM("empty sequence zipped with optional nested") {
+          val config = (list("a")(string) |@| nested("b")(string).optional).tupled
+          val data = (Nil, None)
+          val data2= for {
+            written <- ZIO.fromEither(write(config, data))
+            reread <- ZIO.fromEither(read(config from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)))
+          }  yield reread
+
+          assertM(data2)(equalTo(data))
         }
       )
     )
