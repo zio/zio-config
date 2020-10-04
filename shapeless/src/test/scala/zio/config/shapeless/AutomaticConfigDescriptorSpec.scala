@@ -19,7 +19,6 @@ object AutomaticConfigTest
         testM("automatic derivation spec") {
           checkM(genEnvironment) {
             environment =>
-              val configDesc = descriptor[MyConfig]
 
               val source =
                 ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
@@ -151,4 +150,6 @@ object AutomaticConfigTestUtils {
 
   val genLocalTimeString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
+
+  val configDesc = descriptor[MyConfig]
 }

@@ -8,7 +8,7 @@ import java.util.UUID
 import shapeless._
 import shapeless.labelled._
 import zio.config._
-import zio.config.derivation.DerivationUtils.constant
+import zio.config.derivation.DerivationUtils.{ constant, unwrapFromOptional }
 import zio.config.derivation.NeedsDerive
 import zio.duration.Duration
 
@@ -174,11 +174,16 @@ trait DeriveConfigDescriptor {
       fieldName: String,
       defaultValue: Option[V],
       description: Option[describe]
-    ) = {
-      val name         = manualName.map(_.name).getOrElse(mapFieldName(fieldName))
-      val withDefaults = defaultValue.fold(desc.configDescriptor)(desc.configDescriptor.default(_))
-      val described    = description.map(_.describe).toSeq.foldLeft(withDefaults)(_ ?? _)
-      nested(name)(described)
+    ): ConfigDescriptor[V] = {
+      val name                     = manualName.map(_.name).getOrElse(mapFieldName(fieldName))
+      val (unwrapped, wasOptional) = unwrapFromOptional(desc.configDescriptor)
+      val described                = description.map(_.describe).toSeq.foldLeft(unwrapped)(_ ?? _)
+      val withNesting = if (wasOptional) {
+        nested(name)(described).optional.asInstanceOf[ConfigDescriptor[V]]
+      } else {
+        nested(name)(described).asInstanceOf[ConfigDescriptor[V]]
+      }
+      defaultValue.fold(withNesting)(withNesting.default(_))
     }
 
     implicit def caseHNil[K <: Symbol, V, N, Ds, Df](
