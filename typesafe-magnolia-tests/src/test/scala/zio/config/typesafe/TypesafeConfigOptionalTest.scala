@@ -487,26 +487,6 @@ object TypesafeConfigOptionalTest
           )
         },
         test(
-          "Absence of an optional product and a required field within another optional product returns none"
-        ) {
-          val validConfig =
-            s"""
-               |      detail: {
-               |         a : 10
-               |         b : {}
-               |       }
-               |""".stripMargin
-
-          val result =
-            read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
-
-          assert(result)(
-            equalTo(
-              Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", None))))
-            )
-          )
-        },
-        test(
           "Absence of a required field and presence of an optional product within another optional product returns failure"
         ) {
           val validConfig =
