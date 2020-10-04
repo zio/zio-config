@@ -453,15 +453,13 @@ trait DeriveConfigDescriptor { self =>
 
               val raw                      = param.typeclass.desc
               val (unwrapped, wasOptional) = unwrapFromOptional(raw)
-
-              val withDefaults = param.default.fold(unwrapped)(unwrapped.default(_))
-              val described    = descriptions.foldLeft(withDefaults)(_ ?? _)
-
-              if (wasOptional) {
+              val described    = descriptions.foldLeft(unwrapped)(_ ?? _)
+              val withNesting = if (wasOptional) {
                 nested(paramName)(described).optional.asInstanceOf[ConfigDescriptor[Any]]
               } else {
                 nested(paramName)(described)
               }
+              param.default.fold(withNesting)(withNesting.default(_))
             }
 
             collectAll(makeDescriptor(head), tail.map(makeDescriptor): _*).xmap[T](
