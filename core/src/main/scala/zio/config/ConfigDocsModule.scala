@@ -13,6 +13,23 @@ trait ConfigDocsModule extends WriteModule {
      * recursive structure, that can then be easily turned into human readable formats such as markdown, table, html etc
      */
     def toTable: Table = {
+      def filterDescriptions(
+        descriptionsUsedAlready: Option[Table.FieldName],
+        descriptions: List[ConfigDocs.Description]
+      ) = {
+        val desc =
+          descriptionsUsedAlready match {
+            case Some(value) =>
+              descriptions.filter({
+                case ConfigDocs.Description(path, _) if path.map(FieldName.Key) == Some(value) =>
+                  false
+                case ConfigDocs.Description(_, _) => true
+              })
+            case None => descriptions
+          }
+        desc
+      }
+
       def go(
         docs: ConfigDocs,
         previousPaths: List[FieldName],
@@ -68,22 +85,14 @@ trait ConfigDocsModule extends WriteModule {
 
         docs match {
           case ConfigDocs.Leaf(sources, descriptions, _) =>
-            val desc =
-              descriptionsUsedAlready match {
-                case Some(value) =>
-                  descriptions.filter({
-                    case ConfigDocs.Description(path, _) if path.map(FieldName.Key) == Some(value) =>
-                      false
-                    case ConfigDocs.Description(_, _) => true
-                  })
-                case None => descriptions
-              }
+            val desc = filterDescriptions(descriptionsUsedAlready, descriptions)
 
             TableRow(previousPaths, Some(Table.Format.Primitive), desc, None, sources.map(_.name)).asTable
           case ConfigDocs.Recursion(sources) =>
             TableRow(previousPaths, Some(Table.Format.Recursion), List.empty, None, sources.map(_.name)).asTable
 
           case c @ ConfigDocs.Nested(path, docs, descriptions) =>
+            val descs = filterDescriptions(descriptionsUsedAlready, descriptions)
             val result =
               go(
                 docs,
@@ -101,12 +110,12 @@ trait ConfigDocsModule extends WriteModule {
               TableRow(
                 previousPaths :+ Table.FieldName.Key(path),
                 Some(Table.Format.Nested),
-                descriptions,
+                descs,
                 Some(result),
                 Set.empty
               ).asTable
             } else
-              result.copy(rows = result.rows.map(row => row.copy(description = row.description ++ descriptions)))
+              result.copy(rows = result.rows.map(row => row.copy(description = row.description ++ descs)))
 
           case c @ ConfigDocs.Zip(left, right) =>
             handleNested(left, right, c, _.is { case ConfigDocs.Zip(_, _) => true }(false), Format.AllOf)
