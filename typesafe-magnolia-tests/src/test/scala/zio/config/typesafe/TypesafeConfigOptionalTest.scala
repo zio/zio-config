@@ -487,26 +487,6 @@ object TypesafeConfigOptionalTest
           )
         },
         test(
-          "Absence of an optional product and a required field within another optional product returns none"
-        ) {
-          val validConfig =
-            s"""
-               |      detail: {
-               |         a : 10
-               |         b : {}
-               |       }
-               |""".stripMargin
-
-          val result =
-            read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
-
-          assert(result)(
-            equalTo(
-              Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", None))))
-            )
-          )
-        },
-        test(
           "Absence of a required field and presence of an optional product within another optional product returns failure"
         ) {
           val validConfig =
@@ -747,10 +727,7 @@ object TypesafeConfigOptionalTest
             equalTo(
               Left(
                 List(
-                  MissingValue(List(Key("a"), Key("c"), Key("b2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("b1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a1")), List("optional value", "value of type string")),
+                  MissingValue(List(Key("a"), Key("c")), List("optional value")),
                   MissingValue(List(Key("a"), Key("a"), Key("b2")), List("optional value", "value of type string")),
                   MissingValue(List(Key("a"), Key("a"), Key("a2")), List("optional value", "value of type string")),
                   MissingValue(List(Key("a"), Key("a"), Key("b1")), List("optional value", "value of type string"))
@@ -782,14 +759,8 @@ object TypesafeConfigOptionalTest
             equalTo(
               Left(
                 List(
-                  MissingValue(List(Key("a"), Key("c"), Key("b2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("b1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("b2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("a2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("b1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("a1")), List("optional value", "value of type string"))
+                  MissingValue(List(Key("a"), Key("c")), List("optional value")),
+                  MissingValue(List(Key("a"), Key("a")), List("optional value"))
                 )
               )
             )
@@ -829,14 +800,8 @@ object TypesafeConfigOptionalTest
                     List(Key("a"), Key("b"), Key("b1")),
                     List("optional value", "optional value", "value of type string")
                   ),
-                  MissingValue(List(Key("a"), Key("c"), Key("b2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("b1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("c"), Key("a1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("b2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("a2")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("b1")), List("optional value", "value of type string")),
-                  MissingValue(List(Key("a"), Key("a"), Key("a1")), List("optional value", "value of type string"))
+                  MissingValue(List(Key("a"), Key("c")), List("optional value")),
+                  MissingValue(List(Key("a"), Key("a")), List("optional value"))
                 )
               )
             )

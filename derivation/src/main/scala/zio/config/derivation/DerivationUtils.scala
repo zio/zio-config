@@ -15,4 +15,31 @@ object DerivationUtils {
 
   def constant[T](label: String, value: T): ConfigDescriptor[T] =
     constantString(label)(_ => value, p => Some(p).filter(_ == value).map(_ => label))
+
+  /**
+   * Peel the Describe(Default(Optional( layers and remove the Describe(Optional
+   * created by 'implicitOptionDesc'
+   *
+   * This is used to move the Optional out of the nesting, so a missing record is accepted as None
+   */
+  def unwrapFromOptional[A](
+    configDesc: ConfigDescriptor[A]
+  ): (ConfigDescriptor[Any], Boolean) = {
+    import zio.config.ConfigDescriptorAdt._
+    configDesc match {
+      case Default(config, default) =>
+        val (inner, opt) = unwrapFromOptional(config.get())
+        (Default(thunk(inner), default), opt)
+      case Describe(config, message) =>
+        config.get() match {
+          case Optional(config) =>
+            (config.get(), true)
+          case _ =>
+            val (inner, opt) = unwrapFromOptional(config.get())
+            (Describe(thunk(inner), message), opt)
+        }
+      case _ =>
+        (configDesc.asInstanceOf[ConfigDescriptor[Any]], false)
+    }
+  }
 }

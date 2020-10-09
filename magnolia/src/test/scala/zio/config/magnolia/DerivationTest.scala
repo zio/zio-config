@@ -18,25 +18,25 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], String)] = desc match {
-        case Default(config, _)        => collectDescriptions(config, path)
-        case DynamicMap(_, config)     => collectDescriptions(config, path)
-        case Describe(config, message) => (path, message) :: collectDescriptions(config, path)
-        case Nested(path, config)      => collectDescriptions(config, Some(path))
-        case Optional(config)          => collectDescriptions(config, path)
+        case Default(config, _)        => collectDescriptions(config.get(), path)
+        case DynamicMap(_, config)     => collectDescriptions(config.get(), path)
+        case Describe(config, message) => (path, message) :: collectDescriptions(config.get(), path)
+        case Nested(_, path, config)   => collectDescriptions(config.get(), Some(path))
+        case Optional(config)          => collectDescriptions(config.get(), path)
         case OrElse(left, right) =>
-          collectDescriptions(left, path) ::: collectDescriptions(right, path)
+          collectDescriptions(left.get(), path) ::: collectDescriptions(right.get(), path)
         case OrElseEither(left, right) =>
-          collectDescriptions(left, path) ::: collectDescriptions(right, path)
-        case Sequence(_, config) => collectDescriptions(config, path)
+          collectDescriptions(left.get(), path) ::: collectDescriptions(right.get(), path)
+        case Sequence(_, config) => collectDescriptions(config.get(), path)
         case Source(_, _)        => Nil
         case Zip(left, right) =>
-          collectDescriptions(left, path) ::: collectDescriptions(right, path)
-        case XmapEither(config, _, _) => collectDescriptions(config, path)
+          collectDescriptions(left.get(), path) ::: collectDescriptions(right.get(), path)
+        case XmapEither(config, _, _) => collectDescriptions(config.get(), path)
       }
 
       assert(collectDescriptions(descriptor[Cfg], None))(
         contains((None: Option[String]) -> "class desc") &&
-          contains(Some("fname")        -> "field desc")
+          contains(None                 -> "field desc")
       )
     },
     test("support name annotation") {
@@ -54,17 +54,17 @@ object DerivationTest extends DefaultRunnableSpec {
       case class Cfg(@name("otherName") fname: String) extends SealedTrait
 
       def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
-        case Default(config, _)        => collectPath(config)
-        case Describe(config, _)       => collectPath(config)
-        case DynamicMap(_, config)     => collectPath(config)
-        case Nested(path, config)      => path :: collectPath(config)
-        case Optional(config)          => collectPath(config)
-        case OrElse(left, right)       => collectPath(left) ::: collectPath(right)
-        case OrElseEither(left, right) => collectPath(left) ::: collectPath(right)
-        case Sequence(_, config)       => collectPath(config)
+        case Default(config, _)        => collectPath(config.get())
+        case Describe(config, _)       => collectPath(config.get())
+        case DynamicMap(_, config)     => collectPath(config.get())
+        case Nested(_, path, config)   => path :: collectPath(config.get())
+        case Optional(config)          => collectPath(config.get())
+        case OrElse(left, right)       => collectPath(left.get()) ::: collectPath(right.get())
+        case OrElseEither(left, right) => collectPath(left.get()) ::: collectPath(right.get())
+        case Sequence(_, config)       => collectPath(config.get())
         case Source(_, _)              => Nil
-        case Zip(left, right)          => collectPath(left) ::: collectPath(right)
-        case XmapEither(config, _, _)  => collectPath(config)
+        case Zip(left, right)          => collectPath(left.get()) ::: collectPath(right.get())
+        case XmapEither(config, _, _)  => collectPath(config.get())
       }
 
       // IntelliJ will hide this, however it is required
@@ -82,21 +82,21 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], Any)] = desc match {
-        case Default(config, v)    => (path -> v) :: collectDefault(config, path)
-        case Describe(config, _)   => collectDefault(config, path)
-        case DynamicMap(_, config) => collectDefault(config, path)
-        case Nested(path, config)  => collectDefault(config, Some(path))
-        case Optional(config)      => collectDefault(config, path)
-        case OrElse(left, right)   => collectDefault(left, path) ::: collectDefault(right, path)
+        case Default(config, v)      => (path -> v) :: collectDefault(config.get(), path)
+        case Describe(config, _)     => collectDefault(config.get(), path)
+        case DynamicMap(_, config)   => collectDefault(config.get(), path)
+        case Nested(_, path, config) => collectDefault(config.get(), Some(path))
+        case Optional(config)        => collectDefault(config.get(), path)
+        case OrElse(left, right)     => collectDefault(left.get(), path) ::: collectDefault(right.get(), path)
         case OrElseEither(left, right) =>
-          collectDefault(left, path) ::: collectDefault(right, path)
-        case Sequence(_, config)      => collectDefault(config, path)
+          collectDefault(left.get(), path) ::: collectDefault(right.get(), path)
+        case Sequence(_, config)      => collectDefault(config.get(), path)
         case Source(_, _)             => Nil
-        case Zip(left, right)         => collectDefault(left, path) ::: collectDefault(right, path)
-        case XmapEither(config, _, _) => collectDefault(config, path)
+        case Zip(left, right)         => collectDefault(left.get(), path) ::: collectDefault(right.get(), path)
+        case XmapEither(config, _, _) => collectDefault(config.get(), path)
       }
 
-      assert(collectDefault(descriptor[Cfg], None))(equalTo((Some("fname"), "defaultV") :: Nil))
+      assert(collectDefault(descriptor[Cfg], None))(equalTo((None, "defaultV") :: Nil))
     },
     test("support lists recursive") {
       case class A1(a: List[String])

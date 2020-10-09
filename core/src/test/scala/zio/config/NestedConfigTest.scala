@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.NestedConfigTestUtils._
 import zio.config.helpers._
@@ -21,6 +22,14 @@ object NestedConfigTest
               isRight(equalTo(toMultiMap(p.map)))
             )
           }
+        },
+        testM("nested with default") {
+          val config = string("x").default("y")
+          val r = ZIO.fromEither(
+            read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid))
+          )
+
+          assertM(r)(equalTo("y"))
         }
       )
     )

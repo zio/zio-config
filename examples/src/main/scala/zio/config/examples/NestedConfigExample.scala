@@ -113,23 +113,23 @@ object NestedConfigExample extends App with EitherImpureOps {
          |
          ||FieldName     |Format         |Description         |Sources |
          ||---           |---            |---                 |---     |
-         ||[south](south)|[all-of](south)|                    |        |
-         ||[east](east)  |[all-of](east) |                    |        |
+         ||[south](south)|[all-of](south)|South details       |        |
+         ||[east](east)  |[all-of](east) |East details        |        |
          ||appName       |primitive      |value of type string|constant|
          |
          |### south
          |
-         ||FieldName |Format   |Description                        |Sources |
-         ||---       |---      |---                                |---     |
-         ||connection|primitive|value of type string, South details|constant|
-         ||port      |primitive|value of type int, South details   |constant|
+         ||FieldName |Format   |Description         |Sources |
+         ||---       |---      |---                 |---     |
+         ||connection|primitive|value of type string|constant|
+         ||port      |primitive|value of type int   |constant|
          |
          |### east
          |
-         ||FieldName |Format   |Description                       |Sources |
-         ||---       |---      |---                               |---     |
-         ||connection|primitive|value of type string, East details|constant|
-         ||port      |primitive|value of type int, East details   |constant|
+         ||FieldName |Format   |Description         |Sources |
+         ||---       |---      |---                 |---     |
+         ||connection|primitive|value of type string|constant|
+         ||port      |primitive|value of type int   |constant|
          |""".stripMargin
   )
 }

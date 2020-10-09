@@ -62,7 +62,7 @@ sealed trait PropertyTree[+K, +V] { self =>
   final def isEmpty: Boolean = self match {
     case Empty           => true
     case Leaf(_)         => false
-    case Record(value)   => value.values.forall(_.isEmpty)
+    case Record(value)   => value.values.isEmpty
     case Sequence(value) => value.forall(_.isEmpty)
   }
 
