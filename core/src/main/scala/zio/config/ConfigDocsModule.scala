@@ -441,29 +441,29 @@ trait ConfigDocsModule extends WriteModule {
           DocsLeaf((source.names ++ sources), descriptions, None)
 
         case Default(c, _) =>
-          loopTo(sources, descriptions, c.get(), None, alreadySeen)
+          loopTo(sources, descriptions, c.value, None, alreadySeen)
 
         case cd: DynamicMap[_] =>
           ConfigDocs.DynamicMap(
-            loopTo((cd.source.names ++ sources), descriptions, cd.config.get(), None, alreadySeen)
+            loopTo((cd.source.names ++ sources), descriptions, cd.config.value, None, alreadySeen)
           )
 
         case Optional(c) =>
-          loopTo(sources, descriptions, c.get(), None, alreadySeen)
+          loopTo(sources, descriptions, c.value, None, alreadySeen)
 
         case Sequence(source, c) =>
           ConfigDocs.Sequence(
-            loopTo((source.names ++ sources), descriptions, c.get(), None, alreadySeen)
+            loopTo((source.names ++ sources), descriptions, c.value, None, alreadySeen)
           )
 
         case Describe(c, desc) =>
           val descri: ConfigDocs.Description =
             ConfigDocs.Description(latestPath, desc)
 
-          loopTo(sources, descri :: descriptions, c.get(), latestPath, alreadySeen)
+          loopTo(sources, descri :: descriptions, c.value, latestPath, alreadySeen)
 
         case Nested(source, path, c) =>
-          val inner = c.get()
+          val inner = c.value
           if (alreadySeen.contains(inner)) {
             ConfigDocs.Nested(
               path,
@@ -479,24 +479,24 @@ trait ConfigDocsModule extends WriteModule {
           }
 
         case XmapEither(c, _, _) =>
-          loopTo(sources, descriptions, c.get(), None, alreadySeen)
+          loopTo(sources, descriptions, c.value, None, alreadySeen)
 
         case Zip(left, right) =>
           ConfigDocs.Zip(
-            loopTo(sources, descriptions, left.get(), None, alreadySeen),
-            loopTo(sources, descriptions, right.get(), None, alreadySeen)
+            loopTo(sources, descriptions, left.value, None, alreadySeen),
+            loopTo(sources, descriptions, right.value, None, alreadySeen)
           )
 
         case OrElseEither(left, right) =>
           ConfigDocs.OrElse(
-            loopTo(sources, descriptions, left.get(), None, alreadySeen),
-            loopTo(sources, descriptions, right.get(), None, alreadySeen)
+            loopTo(sources, descriptions, left.value, None, alreadySeen),
+            loopTo(sources, descriptions, right.value, None, alreadySeen)
           )
 
         case OrElse(left, right) =>
           ConfigDocs.OrElse(
-            loopTo(sources, descriptions, left.get(), None, alreadySeen),
-            loopTo(sources, descriptions, right.get(), None, alreadySeen)
+            loopTo(sources, descriptions, left.value, None, alreadySeen),
+            loopTo(sources, descriptions, right.value, None, alreadySeen)
           )
       }
 

@@ -12,14 +12,14 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
           Right(PropertyTree.Leaf(propertyType.write(b)))
 
         case Describe(c, _) =>
-          go(c.get(), b)
+          go(c.value, b)
 
         case cd: DynamicMap[a] =>
-          val bs = (b: Map[K, a]).toList.map(t => (t._1 -> go(cd.config.get(), t._2)))
+          val bs = (b: Map[K, a]).toList.map(t => (t._1 -> go(cd.config.value, t._2)))
           seqMap(bs.toMap).map(t => Record(t))
 
         case Nested(_, parent, c) =>
-          go(c.get(), b) match {
+          go(c.value, b) match {
             case Right(prop) => Right(PropertyTree.Record(Map(parent -> prop)))
             case Left(v)     => Left(v)
           }
@@ -27,19 +27,19 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
         case Optional(c) =>
           b.fold(
             Right(PropertyTree.empty): Either[String, PropertyTree[K, V]]
-          )(go(c.get(), _))
+          )(go(c.value, _))
 
         case cd: Sequence[a] =>
-          val bs = (b: List[a]).map(go(cd.config.get(), _))
+          val bs = (b: List[a]).map(go(cd.config.value, _))
           seqEither[String, PropertyTree[K, V]](bs).map(PropertyTree.Sequence(_))
 
         case Default(c, _) =>
-          go(c.get(), b)
+          go(c.value, b)
 
         case XmapEither(c, _, to) => {
           to(b) match {
             case Right(before) =>
-              go(c.get(), before)
+              go(c.value, before)
             case Left(e) =>
               Left(e)
           }
@@ -47,26 +47,26 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
 
         case OrElseEither(left, right) => {
           b.fold(
-            aa => go(left.get(), aa),
-            b => go(right.get(), b)
+            aa => go(left.value, aa),
+            b => go(right.value, b)
           )
         }
 
         case OrElse(left, right) =>
-          go(left.get(), b) match {
+          go(left.value, b) match {
             case Right(a) =>
               Right(a)
 
             case Left(_) =>
-              go(right.get(), b)
+              go(right.value, b)
 
           }
 
         case cd: Zip[a, b] =>
           val tuple: (a, b) = b
 
-          val leftResult  = go(cd.left.get(), tuple._1)
-          val rightResult = go(cd.right.get(), tuple._2)
+          val leftResult  = go(cd.left.value, tuple._1)
+          val rightResult = go(cd.right.value, tuple._2)
 
           for {
             left   <- leftResult

@@ -28,14 +28,14 @@ object DerivationUtils {
     import zio.config.ConfigDescriptorAdt._
     configDesc match {
       case Default(config, default) =>
-        val (inner, opt) = unwrapFromOptional(config.get())
+        val (inner, opt) = unwrapFromOptional(config.value)
         (Default(thunk(inner), default), opt)
       case Describe(config, message) =>
-        config.get() match {
+        config.value match {
           case Optional(config) =>
-            (config.get(), true)
+            (config.value, true)
           case _ =>
-            val (inner, opt) = unwrapFromOptional(config.get())
+            val (inner, opt) = unwrapFromOptional(config.value)
             (Describe(thunk(inner), message), opt)
         }
       case _ =>

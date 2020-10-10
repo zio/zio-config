@@ -213,7 +213,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
   }
 
-  case class LazyConfigDescriptor[A](get: () => ConfigDescriptor[A]) {
+  case class LazyConfigDescriptor[A](private val get: () => ConfigDescriptor[A]) {
+    def value: ConfigDescriptor[A] = get()
     def map[B](f: ConfigDescriptor[A] => ConfigDescriptor[B]): LazyConfigDescriptor[B] =
       LazyConfigDescriptor(() => f(get()))
   }
@@ -228,39 +229,39 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       config match {
         case Default(config, default) =>
           builder.append(s"${prefix}Default($default}\n")
-          go(config.get(), prefix + "  ")
+          go(config.value, prefix + "  ")
         case Describe(config, message) =>
           builder.append(s"${prefix}Describe($message}\n")
-          go(config.get(), prefix + "  ")
+          go(config.value, prefix + "  ")
         case DynamicMap(_, config) =>
           builder.append(s"${prefix}DynamicMap\n")
-          go(config.get(), prefix + "  ")
+          go(config.value, prefix + "  ")
         case Nested(_, path, config) =>
           builder.append(s"${prefix}Nested($path)\n")
-          go(config.get(), prefix + "  ")
+          go(config.value, prefix + "  ")
         case Optional(config) =>
           builder.append(s"${prefix}Optional\n")
-          go(config.get(), prefix + "  ")
+          go(config.value, prefix + "  ")
         case OrElse(left, right) =>
           builder.append(s"${prefix}OrElse\n")
-          go(left.get(), prefix + "  ")
-          go(right.get(), prefix + "  ")
+          go(left.value, prefix + "  ")
+          go(right.value, prefix + "  ")
         case OrElseEither(left, right) =>
           builder.append(s"${prefix}OrElseEither\n")
-          go(left.get(), prefix + "  ")
-          go(right.get(), prefix + "  ")
+          go(left.value, prefix + "  ")
+          go(right.value, prefix + "  ")
         case Sequence(_, config) =>
           builder.append(s"${prefix}Sequence\n")
-          go(config.get(), prefix + "  ")
+          go(config.value, prefix + "  ")
         case Source(_, propertyType) =>
           builder.append(s"${prefix}Source($propertyType)\n")
           ()
         case Zip(left, right) =>
           builder.append(s"${prefix}Zip\n")
-          go(left.get(), prefix + "  ")
-          go(right.get(), prefix + "  ")
+          go(left.value, prefix + "  ")
+          go(right.value, prefix + "  ")
         case XmapEither(config, _, _) =>
-          go(config.get(), prefix)
+          go(config.value, prefix)
       }
     go(config, "")
     builder.toString()
