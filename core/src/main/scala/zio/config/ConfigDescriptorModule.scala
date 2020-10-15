@@ -17,18 +17,21 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def ??(description: String): ConfigDescriptor[A] =
       describe(description)
 
-    final def |@|[B](that: => ConfigDescriptor[B]): ProductBuilder[ConfigDescriptor, A, B] =
-      new ProductBuilder[ConfigDescriptor, A, B] {
+    final def |@|[B](that: => ConfigDescriptor[B]): ProductBuilder[LazyConfigDescriptor, ConfigDescriptor, A, B] =
+      new ProductBuilder[LazyConfigDescriptor, ConfigDescriptor, A, B] {
 
-        override def zip[X, Y]: (ConfigDescriptor[X], ConfigDescriptor[Y]) => ConfigDescriptor[(X, Y)] =
-          (a, b) => a.zip(b)
+        override def zip[X, Y]: (LazyConfigDescriptor[X], LazyConfigDescriptor[Y]) => LazyConfigDescriptor[(X, Y)] =
+          (a, b) => thunk(a.value.zip(b.value))
 
         override def xmapEither[X, Y]
-          : (ConfigDescriptor[X], X => Either[String, Y], Y => Either[String, X]) => ConfigDescriptor[Y] =
-          (a, b, c) => a.xmapEither(b, c)
+          : (LazyConfigDescriptor[X], X => Either[String, Y], Y => Either[String, X]) => LazyConfigDescriptor[Y] =
+          (a, b, c) => thunk(a.value.xmapEither(b, c))
 
-        override val a: ConfigDescriptor[A] = self
-        override val b: ConfigDescriptor[B] = that
+        override def pack[X](x: => ConfigDescriptor[X]): LazyConfigDescriptor[X] = thunk(x)
+        override def unpack[X](x: LazyConfigDescriptor[X]): ConfigDescriptor[X]  = x.value
+
+        override val a: LazyConfigDescriptor[A] = thunk(self)
+        override val b: LazyConfigDescriptor[B] = thunk(that)
       }
 
     final def <>(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
@@ -148,6 +151,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[List[A]] =
       sequence(head, tail: _*)({ case (a, t) => a :: t }, l => l.headOption.map(h => (h, l.tail)))
 
+    def lazyCollectAll[A](head: LazyConfigDescriptor[A], tail: LazyConfigDescriptor[A]*): ConfigDescriptor[List[A]] =
+      lazySequence(head, tail: _*)({ case (a, t) => a :: t }, l => l.headOption.map(h => (h, l.tail)))
+
     def head[A](desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
       desc.orElse(
         list(desc)
@@ -190,11 +196,14 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       head: => ConfigDescriptor[A],
       tail: ConfigDescriptor[A]*
     ): ConfigDescriptor[(A, List[A])] =
+      lazySequence(thunk(head), tail.map(a => thunk(a)): _*)
+
+    def lazySequence[A](head: LazyConfigDescriptor[A], tail: LazyConfigDescriptor[A]*): ConfigDescriptor[(A, List[A])] =
       tail.reverse.foldLeft[ConfigDescriptor[(A, List[A])]](
-        head.xmap((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
+        head.value.xmap((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
       )(
-        (b: ConfigDescriptor[(A, List[A])], a: ConfigDescriptor[A]) =>
-          b.xmapEither2(a)(
+        (b: ConfigDescriptor[(A, List[A])], a: LazyConfigDescriptor[A]) =>
+          b.xmapEither2(a.value)(
             { case ((first, tail), a)    => Right((first, a :: tail)) }, {
               case (_, Nil)              => Left("Invalid list length")
               case (first, head :: tail) => Right(((first, tail), head))

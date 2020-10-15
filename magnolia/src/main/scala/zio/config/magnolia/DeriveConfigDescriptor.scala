@@ -462,7 +462,7 @@ trait DeriveConfigDescriptor { self =>
               param.default.fold(described)(described.default(_))
             }
 
-            collectAll(makeDescriptor(head), tail.map(makeDescriptor): _*).xmap[T](
+            lazyCollectAll(thunk(makeDescriptor(head)), tail.map(a => thunk(makeDescriptor(a))): _*).xmap[T](
               l => caseClass.rawConstruct(l),
               t => caseClass.parameters.map(_.dereference(t)).toList
             )

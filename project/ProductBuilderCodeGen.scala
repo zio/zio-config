@@ -17,11 +17,11 @@ object ProductBuilderCodeGen {
       .toList ++
       List.fill(count - 2)("}")
 
-  val allLettersExceptF = "abcdeghijklmnopqrstuvwxyz"
+  val allLettersExceptFG = "abcdehijklmnopqrstuvwxyz"
 
   private def productBuilderCode(n: Int): List[String] = {
     def letter(i: Int) =
-      allLettersExceptF(i).toString
+      allLettersExceptFG(i).toString
 
     val l0  = letter(n + 0) // eg "d"
     val L0  = l0.toUpperCase
@@ -48,20 +48,20 @@ object ProductBuilderCodeGen {
          |  sealed abstract class ProductBuilder[$L0] {
          |    val $l0: F[$L0]
          |    
-         |    def apply[$L1](ff: ($cL0) => $L1, gg: $L1 => Option[($cL0)]): F[$L1] =
-         |      ($zipped)
+         |    def apply[$L1](ff: ($cL0) => $L1, gg: $L1 => Option[($cL0)]): G[$L1] =
+         |      unpack(($zipped)
          |        .xmapEither[$L1] (
          |          { case $cll0Tupled => Right(ff($cll0)) },
          |          liftWrite($l1 => gg($l1).map { case ($cll0) => $cll0Tupled })
-         |        )
+         |        ))
          |        
          |    def tupled = apply[($cL0)](($cL0WithTypes) => ($cL0Lower), t => Some(($cLoDerefernce)))
          |        """.stripMargin
     val part2 =
       s"""
-         |    def |@|[$L1]($ll1: F[$L1]): ProductBuilder[$L1] =
+         |    def |@|[$L1]($ll1: => G[$L1]): ProductBuilder[$L1] =
          |      new ProductBuilder[$L1] {
-         |        val $l1: F[$L1] = $ll1
+         |        val $l1: F[$L1] = pack($ll1)
          |      }""".stripMargin
 
     if (n == count - 1) List(part1) else List(part1, part2)

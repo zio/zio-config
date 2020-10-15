@@ -128,6 +128,29 @@ object DerivationTest extends DefaultRunnableSpec {
       val res = read(descriptor[B] from src)
 
       assert(res)(isRight(anything))
+    },
+    test("support recursive structures") {
+      case class SimpleRec(id: Int, nested: Option[SimpleRec])
+
+      val desc = descriptor[SimpleRec]
+      val simpleTestTree: PropertyTree[String, String] = PropertyTree.Record(
+        Map(
+          "id" -> PropertyTree.Leaf("1"),
+          "nested" -> PropertyTree.Record(
+            Map(
+              "id" -> PropertyTree.Leaf("2")
+            )
+          )
+        )
+      )
+      val simpleTestSource: ConfigSource = ConfigSource.fromPropertyTree(
+        simpleTestTree,
+        "tree",
+        LeafForSequence.Valid
+      )
+
+      val simpleRecursiveValue: SimpleRec = SimpleRec(1, Some(SimpleRec(2, None)))
+      assert(read(desc from simpleTestSource))(isRight(equalTo(simpleRecursiveValue)))
     }
   )
 }
