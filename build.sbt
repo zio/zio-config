@@ -193,7 +193,7 @@ lazy val zioConfigTypesafe =
   module("zio-config-typesafe", "typesafe")
     .settings(
       libraryDependencies ++= Seq(
-        "com.typesafe" % "config"        % "1.4.0",
+        "com.typesafe" % "config"        % "1.4.1",
         "dev.zio"      %% "zio-test"     % zioVersion % Test,
         "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
       ),
@@ -218,7 +218,7 @@ lazy val zioConfigTypesafeMagnoliaTests =
     .settings(
       skip in publish := true,
       libraryDependencies ++= Seq(
-        "com.typesafe" % "config"        % "1.4.0",
+        "com.typesafe" % "config"        % "1.4.1",
         "dev.zio"      %% "zio-test"     % zioVersion % Test,
         "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
       ),
