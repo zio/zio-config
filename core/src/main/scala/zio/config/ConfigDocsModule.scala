@@ -475,7 +475,17 @@ trait ConfigDocsModule extends WriteModule {
     }
 
     /**
+      * Format is further used in `Table` which is used for config documentation. Format helps the readers of the documentation understand the details of the format
+      * of each paths that forms their application config.
       *
+      *  Example: A format can be `List`, `Map`, `Primitive`, or it can even be even more complex such as `AllOf` or `AnyOneOf`.
+      *  If `Format` of paths `K` is `AllOf`, it implies that there are more distinct paths under the paths `K`, and user need to satisfy (i.e, provide them in the source)
+      *  all of the paths under `K`.
+      *
+      *  If `Format` of paths `K` is `AnyOneOf`, it implies there are more distinct paths under the paths `K`, then user need to satisfy (i.e, provide them in the source)
+      *  any one of the paths under `K`.
+      *
+      * If `Format` of oaths `K` is `Recursion` then that means there is a repetition of same path structure under the paths `K`
       */
     sealed trait Format { self =>
       def asString: String =
@@ -522,6 +532,16 @@ trait ConfigDocsModule extends WriteModule {
     * Generate documentation based on the `ConfigDescriptor`, where a
     * `ConfigDescriptor` is a structure representing the logic to fetch the application config
     * from various sources.
+    *
+    * Once we generat the docs, this can be converted to a light weight `Table` structure which is much more easier to be converted
+    * to markdown or json formats.
+    *
+    * Example :
+    * {{{
+    *   val configDescriptor: ConfigDescriptor[MyAppConfig] = ???
+    *
+    *   generatedDocs(configDescriptor).toTable.asGithubFlavouredMarkdown
+    * }}}
     */
   final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
     def loopTo[B](sources: Set[ConfigSourceName],
