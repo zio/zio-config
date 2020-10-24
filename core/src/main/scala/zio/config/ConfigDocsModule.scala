@@ -5,28 +5,29 @@ trait ConfigDocsModule extends WriteModule {
   import Table._
 
   /**
-    * `ConfigDocs` holds the descriptions and details of a `ConfigDescriptor`
-    * which can be used to produce documentation.
-    */
+   * `ConfigDocs` holds the descriptions and details of a `ConfigDescriptor`
+   * which can be used to produce documentation.
+   */
   sealed trait ConfigDocs { self =>
     private def is[A](f: PartialFunction[ConfigDocs, A])(orElse: A): A =
       f.applyOrElse(self, (_: ConfigDocs) => orElse)
 
     /**
-      * Convert a {{{ ConfigDocs }}} to a {{{ Table }}}.
-      *
-      * A Table is a recursive structure that is more easier to be interpreted as Json or Markdown than trying
-      * to convert `ConfigDocs` to a readable format.
-      */
+     * Convert a {{{ ConfigDocs }}} to a {{{ Table }}}.
+     *
+     * A Table is a recursive structure that is more easier to be interpreted as Json or Markdown than trying
+     * to convert `ConfigDocs` to a readable format.
+     */
     def toTable: Table = {
-      def filterDescriptions(descriptionsUsedAlready: Option[Table.FieldName],
-                             descriptions: List[ConfigDocs.Description]) = {
+      def filterDescriptions(
+        descriptionsUsedAlready: Option[Table.FieldName],
+        descriptions: List[ConfigDocs.Description]
+      ) = {
         val desc =
           descriptionsUsedAlready match {
             case Some(value) =>
               descriptions.filter({
-                case ConfigDocs.Description(path, _)
-                    if path.map(FieldName.Key) == Some(value) =>
+                case ConfigDocs.Description(path, _) if path.map(FieldName.Key) == Some(value) =>
                   false
                 case ConfigDocs.Description(_, _) => true
               })
@@ -35,15 +36,19 @@ trait ConfigDocsModule extends WriteModule {
         desc
       }
 
-      def go(docs: ConfigDocs,
-             previousPaths: List[FieldName],
-             previousNode: Option[ConfigDocs],
-             descriptionsUsedAlready: Option[FieldName]): Table = {
-        def handleNested(left: ConfigDocs,
-                         right: ConfigDocs,
-                         currentNode: ConfigDocs,
-                         isNode: ConfigDocs => Boolean,
-                         format: Format): Table =
+      def go(
+        docs: ConfigDocs,
+        previousPaths: List[FieldName],
+        previousNode: Option[ConfigDocs],
+        descriptionsUsedAlready: Option[FieldName]
+      ): Table = {
+        def handleNested(
+          left: ConfigDocs,
+          right: ConfigDocs,
+          currentNode: ConfigDocs,
+          isNode: ConfigDocs => Boolean,
+          format: Format
+        ): Table =
           if (previousNode.exists(isNode)) {
             go(left, previousPaths, Some(currentNode), descriptionsUsedAlready) ++
               go(
@@ -178,48 +183,36 @@ trait ConfigDocsModule extends WriteModule {
   object ConfigDocs {
     case class Description(path: Option[K], description: String)
 
-    def findByPath(description: List[Description],
-                   path: FieldName): List[Description] =
+    def findByPath(description: List[Description], path: FieldName): List[Description] =
       description
         .flatMap(
           desc =>
             desc match {
-              case a @ ConfigDocs.Description(p, _)
-                  if (p.map(FieldName.Key)) == Some(path) =>
+              case a @ ConfigDocs.Description(p, _) if (p.map(FieldName.Key)) == Some(path) =>
                 List(a)
               case ConfigDocs.Description(_, _) => Nil
-          }
+            }
         )
 
-    case class Leaf(sources: Set[ConfigSourceName],
-                    descriptions: List[Description],
-                    value: Option[V] = None)
+    case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None)
         extends ConfigDocs
-    case class Recursion(sources: Set[ConfigSourceName]) extends ConfigDocs
-    case class Nested(path: K,
-                      docs: ConfigDocs,
-                      descriptions: List[Description])
-        extends ConfigDocs
-    case class Zip(left: ConfigDocs, right: ConfigDocs) extends ConfigDocs
-    case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)
-        extends ConfigDocs
-    case class Sequence(schemaDocs: ConfigDocs,
-                        valueDocs: List[ConfigDocs] = List.empty)
-        extends ConfigDocs
-    case class DynamicMap(schemaDocs: ConfigDocs,
-                          valueDocs: Map[K, ConfigDocs] =
-                            Map.empty[K, ConfigDocs])
+    case class Recursion(sources: Set[ConfigSourceName])                                  extends ConfigDocs
+    case class Nested(path: K, docs: ConfigDocs, descriptions: List[Description])         extends ConfigDocs
+    case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
+    case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
+    case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
+    case class DynamicMap(schemaDocs: ConfigDocs, valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs])
         extends ConfigDocs
 
   }
 
   /**
-    * A Table is a recursive structure that is more easier to be interpreted as Json or Markdown than trying
-    * to convert `ConfigDocs` to a readable format.
-    *
-    * @param rows: A table consist of multiple `TableRow`s where each `TableRow` holds the information about
-    *            the config path.
-    */
+   * A Table is a recursive structure that is more easier to be interpreted as Json or Markdown than trying
+   * to convert `ConfigDocs` to a readable format.
+   *
+   * @param rows: A table consist of multiple `TableRow`s where each `TableRow` holds the information about
+   *            the config path.
+   */
   case class Table(rows: List[TableRow]) { self =>
     def setFormatGlobally(format: Format): Table =
       Table(rows.map(_.copy(format = Some(format))))
@@ -241,8 +234,7 @@ trait ConfigDocsModule extends WriteModule {
       val headingColumns =
         List("FieldName", "Format", "Description", "Sources")
 
-      def updateHeadingAndIndex(heading: Heading,
-                                map: Map[Heading, Int]): Map[Heading, Int] = {
+      def updateHeadingAndIndex(heading: Heading, map: Map[Heading, Int]): Map[Heading, Int] = {
         val index = map.get(heading).map(index => index + 1).getOrElse(0)
         map.updated(heading, index)
       }
@@ -251,11 +243,13 @@ trait ConfigDocsModule extends WriteModule {
         paths.map(_.asString(Some("Field Descriptions"))).mkString(".")
 
       def go(table: Table, usedHeadings: Map[Heading, Int]): List[String] = {
-        val (contents, nestedTables, updatedUsedHeadings): (List[List[String]],
-                                                            List[
-                                                              (Table, Heading)
-                                                            ],
-                                                            Map[Heading, Int]) =
+        val (contents, nestedTables, updatedUsedHeadings): (
+          List[List[String]],
+          List[
+            (Table, Heading)
+          ],
+          Map[Heading, Int]
+        ) =
           table.rows
             .foldRight(
               (
@@ -282,7 +276,7 @@ trait ConfigDocsModule extends WriteModule {
                           heading,
                           updatedHeading.getOrElse(heading, 0),
                           s
-                      )
+                        )
 
                     val nameWithLink =
                       lastFieldName match {
@@ -327,12 +321,12 @@ trait ConfigDocsModule extends WriteModule {
 
         contentList.mkString(System.lineSeparator()) ::
           nestedTables.flatMap(
-          table =>
-            mkStringAndWrapWith(
-              List(s"### ${convertHeadingToString(table._2.path)}"),
-              System.lineSeparator()
-            ) :: go(table._1, updatedUsedHeadings)
-        )
+            table =>
+              mkStringAndWrapWith(
+                List(s"### ${convertHeadingToString(table._2.path)}"),
+                System.lineSeparator()
+              ) :: go(table._1, updatedUsedHeadings)
+          )
       }
 
       mkStringAndWrapWith(
@@ -353,14 +347,13 @@ trait ConfigDocsModule extends WriteModule {
     private def mkStringAndWrapWith(input: List[String], str: String): String =
       wrapWith(input.mkString(str), str)
 
-    type Size = Int
+    type Size  = Int
     type Index = Int
 
     private def getSizeOfIndices(
       input: List[List[String]]
     ): Map[Index, Size] = {
-      def mergeMapWithMaxSize(accumulated: Map[Index, Size],
-                              current: Map[Index, Size]): Map[Index, Size] =
+      def mergeMapWithMaxSize(accumulated: Map[Index, Size], current: Map[Index, Size]): Map[Index, Size] =
         current.foldLeft(Map.empty: Map[Index, Size])({
           case (k, v) =>
             accumulated.get(v._1) match {
@@ -376,7 +369,7 @@ trait ConfigDocsModule extends WriteModule {
             row.zipWithIndex
               .map({ case (string, index) => (index, string.length) })
               .toMap
-        )
+          )
       )
     }
   }
@@ -387,7 +380,8 @@ trait ConfigDocsModule extends WriteModule {
 
     object Heading {
       def mk(list: List[FieldName]): Heading =
-        if (list.isEmpty) new Heading(List(FieldName.Blank)) {} else
+        if (list.isEmpty) new Heading(List(FieldName.Blank)) {}
+        else
           new Heading(list) {}
     }
 
@@ -454,39 +448,41 @@ trait ConfigDocsModule extends WriteModule {
       Table(List(tableRow))
 
     /**
-      * A `TableRow` represents each row in a `Table` which is an intermediate light-weight structure produced from `ConfigDocs`.
-      * `Table` is more easier to be converted to formats such as Json, markdown or any custom format fo your choice.
-      *
-      * @param paths : Each config key is basically a list of paths representing its hierarchy. Example: "aws.ec2.instance.type" where list of paths is
-      *              List("aws", "ec2", "instance", "type")
-      * @param format : The format of value of key (paths). Example: it can be a Primitive type (String, Int etc), or it can be complex structures as such as List or Map.
-      * @param description : Description (zio-config in-built or user-provided) of the key (paths).
-      * @param nested : A `TableRow` can be pointed to a nested table that has the details of all the child paths that are under `paths`. Hence `TableRow` is a recursive structure.
-      * @param sources: All the sources from which `paths` can be retrieved.
-      */
-    case class TableRow(paths: List[FieldName],
-                        format: Option[Format],
-                        description: List[ConfigDocs.Description],
-                        nested: Option[Table],
-                        sources: Set[String]) {
+     * A `TableRow` represents each row in a `Table` which is an intermediate light-weight structure produced from `ConfigDocs`.
+     * `Table` is more easier to be converted to formats such as Json, markdown or any custom format fo your choice.
+     *
+     * @param paths : Each config key is basically a list of paths representing its hierarchy. Example: "aws.ec2.instance.type" where list of paths is
+     *              List("aws", "ec2", "instance", "type")
+     * @param format : The format of value of key (paths). Example: it can be a Primitive type (String, Int etc), or it can be complex structures as such as List or Map.
+     * @param description : Description (zio-config in-built or user-provided) of the key (paths).
+     * @param nested : A `TableRow` can be pointed to a nested table that has the details of all the child paths that are under `paths`. Hence `TableRow` is a recursive structure.
+     * @param sources: All the sources from which `paths` can be retrieved.
+     */
+    case class TableRow(
+      paths: List[FieldName],
+      format: Option[Format],
+      description: List[ConfigDocs.Description],
+      nested: Option[Table],
+      sources: Set[String]
+    ) {
       // A single row can be turned to a table
       def asTable: Table =
         singletonTable(this)
     }
 
     /**
-      * Format is further used in `Table` which is used for config documentation. Format helps the readers of the documentation understand the details of the format
-      * of each paths that forms their application config.
-      *
-      *  Example: A format can be `List`, `Map`, `Primitive`, or it can even be even more complex such as `AllOf` or `AnyOneOf`.
-      *  If `Format` of paths `K` is `AllOf`, it implies that there are more distinct paths under the paths `K`, and user need to satisfy (i.e, provide them in the source)
-      *  all of the paths under `K`.
-      *
-      *  If `Format` of paths `K` is `AnyOneOf`, it implies there are more distinct paths under the paths `K`, then user need to satisfy (i.e, provide them in the source)
-      *  any one of the paths under `K`.
-      *
-      * If `Format` of oaths `K` is `Recursion` then that means there is a repetition of same path structure under the paths `K`
-      */
+     * Format is further used in `Table` which is used for config documentation. Format helps the readers of the documentation understand the details of the format
+     * of each paths that forms their application config.
+     *
+     *  Example: A format can be `List`, `Map`, `Primitive`, or it can even be even more complex such as `AllOf` or `AnyOneOf`.
+     *  If `Format` of paths `K` is `AllOf`, it implies that there are more distinct paths under the paths `K`, and user need to satisfy (i.e, provide them in the source)
+     *  all of the paths under `K`.
+     *
+     *  If `Format` of paths `K` is `AnyOneOf`, it implies there are more distinct paths under the paths `K`, then user need to satisfy (i.e, provide them in the source)
+     *  any one of the paths under `K`.
+     *
+     * If `Format` of oaths `K` is `Recursion` then that means there is a repetition of same path structure under the paths `K`
+     */
     sealed trait Format { self =>
       def asString: String =
         self match {
@@ -502,14 +498,14 @@ trait ConfigDocsModule extends WriteModule {
     }
 
     object Format {
-      case object List extends Format
-      case object Map extends Format
-      case object Primitive extends Format
-      case object Nested extends Format
-      case object AnyOneOf extends Format
-      case object AllOf extends Format
+      case object List          extends Format
+      case object Map           extends Format
+      case object Primitive     extends Format
+      case object Nested        extends Format
+      case object AnyOneOf      extends Format
+      case object AllOf         extends Format
       case object NotApplicable extends Format
-      case object Recursion extends Format
+      case object Recursion     extends Format
     }
 
     sealed trait FieldName {
@@ -522,40 +518,44 @@ trait ConfigDocsModule extends WriteModule {
 
     object FieldName {
       case class Key(k: K) extends FieldName
-      case object Blank extends FieldName
+      case object Blank    extends FieldName
     }
   }
 
-  import ConfigDocs.{DynamicMap => DocsMap, Leaf => DocsLeaf}
+  import ConfigDocs.{ DynamicMap => DocsMap, Leaf => DocsLeaf }
 
   /**
-    * Generate documentation based on the `ConfigDescriptor`, where a
-    * `ConfigDescriptor` is a structure representing the logic to fetch the application config
-    * from various sources.
-    *
-    * Once we generat the docs, this can be converted to a light weight `Table` structure which is much more easier to be converted
-    * to markdown or json formats.
-    *
-    * Example :
-    * {{{
-    *   val configDescriptor: ConfigDescriptor[MyAppConfig] = ???
-    *
-    *   generatedDocs(configDescriptor).toTable.asGithubFlavouredMarkdown
-    * }}}
-    */
+   * Generate documentation based on the `ConfigDescriptor`, where a
+   * `ConfigDescriptor` is a structure representing the logic to fetch the application config
+   * from various sources.
+   *
+   * Once we generat the docs, this can be converted to a light weight `Table` structure which is much more easier to be converted
+   * to markdown or json formats.
+   *
+   * Example :
+   * {{{
+   *   val configDescriptor: ConfigDescriptor[MyAppConfig] = ???
+   *
+   *   generatedDocs(configDescriptor).toTable.asGithubFlavouredMarkdown
+   * }}}
+   */
   final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
-    def loopTo[B](sources: Set[ConfigSourceName],
-                  descriptions: List[ConfigDocs.Description],
-                  config: ConfigDescriptor[B],
-                  latestPath: Option[K],
-                  alreadySeen: Set[ConfigDescriptor[_]]): ConfigDocs =
+    def loopTo[B](
+      sources: Set[ConfigSourceName],
+      descriptions: List[ConfigDocs.Description],
+      config: ConfigDescriptor[B],
+      latestPath: Option[K],
+      alreadySeen: Set[ConfigDescriptor[_]]
+    ): ConfigDocs =
       loop(sources, descriptions, config, latestPath, alreadySeen + config)
 
-    def loop[B](sources: Set[ConfigSourceName],
-                descriptions: List[ConfigDocs.Description],
-                config: ConfigDescriptor[B],
-                latestPath: Option[K],
-                alreadySeen: Set[ConfigDescriptor[_]]): ConfigDocs =
+    def loop[B](
+      sources: Set[ConfigSourceName],
+      descriptions: List[ConfigDocs.Description],
+      config: ConfigDescriptor[B],
+      latestPath: Option[K],
+      alreadySeen: Set[ConfigDescriptor[_]]
+    ): ConfigDocs =
       config match {
         case Source(source, _) =>
           DocsLeaf((source.names ++ sources), descriptions, None)
@@ -648,17 +648,14 @@ trait ConfigDocsModule extends WriteModule {
   }
 
   /**
-    * Generate a report based on the `ConfigDescriptor` and an `A`, where a
-    * `ConfigDescriptor` represents the logic to fetch the application config
-    * from various sources, and `A` represents the actual config value that was retrieved.
-    */
-  def generateReport[A](config: ConfigDescriptor[A],
-                        value: A): Either[String, ConfigDocs] =
+   * Generate a report based on the `ConfigDescriptor` and an `A`, where a
+   * `ConfigDescriptor` represents the logic to fetch the application config
+   * from various sources, and `A` represents the actual config value that was retrieved.
+   */
+  def generateReport[A](config: ConfigDescriptor[A], value: A): Either[String, ConfigDocs] =
     write[A](config, value)
       .map(tree => {
-        def loop(tree: PropertyTree[K, V],
-                 schemaDocs: ConfigDocs,
-                 keys: List[K]): ConfigDocs =
+        def loop(tree: PropertyTree[K, V], schemaDocs: ConfigDocs, keys: List[K]): ConfigDocs =
           schemaDocs match {
             case DocsLeaf(sources, descriptions, None) =>
               // Feed value when it hits leaf
