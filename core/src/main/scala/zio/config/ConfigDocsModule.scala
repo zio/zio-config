@@ -220,9 +220,21 @@ trait ConfigDocsModule extends WriteModule {
     def ++(that: Table): Table =
       Table(rows ++ that.rows)
 
+    /**
+     * Create a Github flavored markdown string from Table.
+     * This can be used to render markdowns in Github, Gitlab etc
+     */
     def asGithubFlavouredMarkdown(implicit S: K =:= String): String =
       asMarkdown(Table.githubFlavoured)
 
+    /**
+     * Create a Confluence flavored markdown string from Table.
+     * This can be used if you are planning to render this markdown in Atlassian's Confluence pages.
+     *
+     * @param baseUrl: Every heading in a markdown rendered through Atlassian's Confluence page needs to have a baseUrl.
+     *               This can be the baseUrl of the confluence page in which markdown is rendered.
+     *               The heading in markdown will be the keys of your application config.
+     */
     def asConfluenceMarkdown(
       baseUrl: Option[String]
     )(implicit S: K =:= String): String =
@@ -402,7 +414,16 @@ trait ConfigDocsModule extends WriteModule {
 
     }
 
-    // GFM
+    /**
+     * Internal function that represents the creation of a github flavoured markdown. The implementation can be used as reference for users
+     * who would like to produce a different style markdown rendering by specifying
+     * how to create `Link` given a `Heading`, `Int` representing the index of the key (or paths) and `Either[FieldName, Format]`.
+     *
+     * The index exists because it represents the index of a heading (which is the individual key of paths) in markdown. This is usually zero for all headings unless
+     * there are duplicate headings in the markdown. There is a possibility of duplicate headings in the markdown, if for instance,
+     * given a path `x.y` and `k.y`, the heading `y` can appear twice in the markdown file with indices as 0 and 1. Depending on the flavour of markdown (Example: Github, Confluence)
+     * we have different ways to produce links towards those headings. In this case, we employ the strategy used by Github.
+     */
     def githubFlavoured(
       implicit S: K =:= String
     ): (Heading, Int, Either[FieldName, Format]) => Link =
@@ -529,7 +550,7 @@ trait ConfigDocsModule extends WriteModule {
    * `ConfigDescriptor` is a structure representing the logic to fetch the application config
    * from various sources.
    *
-   * Once we generat the docs, this can be converted to a light weight `Table` structure which is much more easier to be converted
+   * Once we generate the docs, this can be converted to a light weight `Table` structure which is much more easier to be converted
    * to markdown or json formats.
    *
    * Example :
