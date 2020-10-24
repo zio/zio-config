@@ -56,7 +56,7 @@ addCommandAlias("compileAll", "; ++2.11.12; root2-11/compile; ++2.12.11; root2-1
 addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.11; root2-12/test; ++2.13.2!; root2-13/test")
 
 lazy val zioVersion       = "1.0.3"
-lazy val magnoliaVersion  = "0.16.0"
+lazy val magnoliaVersion  = "0.17.0"
 lazy val refinedVersion   = "0.9.14"
 lazy val shapelessVersion = "2.4.0-M1"
 
@@ -193,7 +193,7 @@ lazy val zioConfigTypesafe =
   module("zio-config-typesafe", "typesafe")
     .settings(
       libraryDependencies ++= Seq(
-        "com.typesafe" % "config"        % "1.4.0",
+        "com.typesafe" % "config"        % "1.4.1",
         "dev.zio"      %% "zio-test"     % zioVersion % Test,
         "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
       ),
@@ -218,7 +218,7 @@ lazy val zioConfigTypesafeMagnoliaTests =
     .settings(
       skip in publish := true,
       libraryDependencies ++= Seq(
-        "com.typesafe" % "config"        % "1.4.0",
+        "com.typesafe" % "config"        % "1.4.1",
         "dev.zio"      %% "zio-test"     % zioVersion % Test,
         "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
       ),
