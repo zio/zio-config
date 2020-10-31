@@ -8,26 +8,37 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   sealed trait ConfigDescriptor[A] { self =>
 
     /**
-     * Given `A` and `B` `apply` is used to convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
+     * Given `A` and `B` the below `apply` function is used to convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
      *
-     *  It is important to note that while we can retrieve B directly from A, there is no guarantee that reverse relationship exists. i.e, B => A.
-     *  Instead the reverse relationship is `B => Option[A]`. This is why the arguments of this function are `app: A => B` and `unapp: B => Option[A]`
+     * It is important to note that while we can retrieve B directly from A,
+     * there is no guarantee that reverse relationship exists. i.e, B => A.
+     * Instead the reverse relationship is `B => Option[A]`.
+     * This is why the arguments of this function are `app: A => B` and `unapp: B => Option[A]`
      *
-     *  Why ?
+     * Why ?
      *
-     *  Let's define a simple `ConfigDescriptor`, that talks about retrieving a `String` configuration (example: PORT).
+     * Let's define a simple `ConfigDescriptor`, that talks about retrieving a `String` configuration (example: PORT).
      *
      *  {{{
      *    val port: ConfigDescriptor[Int] = int("PORT")
      *     // NOTE: We are not attaching a real source here, because a config descriptor can exist without a source
      *  }}}
      *
-     *  Later you decided to convert the type of `Port` from `Int` to `String` for a variety of reasons in your application.
-     *  In this case. In this case, `A => B` is `Int => String` which will always work.
-     *  However, the reverse relationship (which is used to retrieve the original type from its transformed representation) is `String => Int`, which
-     *  is not a total function. i.e, Not all elements of set `String` can be converted to `Int`. Example: "Australia" cannot be converted to `Int`.
-     *  Hence we can do `s => Try(s.toInt).toOption` to mark the possibility of errors. Also note that, you can make use of `transformEither` which is
-     *  a much more powerful method to convert from one type to the other keeping the error information.
+     * Later you decided to convert the type of `Port` from `Int` to `String`
+     * for a variety of reasons in your application.
+     *
+     * In this case. In this case, `A => B` is `Int => String` which will always work.
+     *
+     * However, the reverse relationship (which is used to retrieve
+     * the original type from its transformed representation) is `String => Int`, which
+     * is not a total function. i.e, Not all elements of set `String` can be converted to `Int`.
+     * Example: "Australia" cannot be converted to `Int`.
+     *
+     * Hence we can do `s => Try(s.toInt).toOption` to mark the possibility of errors.
+     * This is a function of the type: `B => Option[A]`.
+     *
+     * Also note that, you can make use of `transformEither` instead of `apply` which is a much more powerful method to
+     * convert from one type to the other keeping the error information without falling back to `Option`.
      *
      *  {{{
      *
@@ -36,14 +47,15 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  }}}
      *
-     *   With the above information you can both read a port from a source and convert to a string, and write the stringified port back to a source representation.
+     *   With the above information you can both read a port from a source and convert to a string,
+     *   and write the stringified port back to a source representation.
      *
      *  READ:
      *
      *  {{{
      *
      *    import zio.config._
-     *    val configSource: ConfigSource = ??? // Example: a constant scala map, a system environment, a hocon source, property file etc
+     *    val configSource: ConfigSource = ConfigSource.fromMap(Map.empty)
      *
      *    // Read
      *    val configResult: Either[ReadError[String], String] = read(portString from configSource)
@@ -60,10 +72,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *     import zio.config.typesafe._ // as toJson is available only through zio-config-typesafe module
      *
      *     val writtenBack: Either[String, PropertyTree[String, String]] = write(portString, "8888")
-     *      val jsonRepr: Either[String, String] = writtenBack.map(_.toJson) // { "port" : "8888" }
-     *      val mapRepr: Either[String, Map[String, String]] = writtenBack.map(_.flattenString()) // Map("port" -> "8888")
-     *      ...
      *
+     *     val jsonRepr: Either[String, String] = writtenBack.map(_.toJson) // { "port" : "8888" }
+     *     val mapRepr: Either[String, Map[String, String]] = writtenBack.map(_.flattenString()) // Map("port" -> "8888")
      *  }}}
      */
     def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[B] =
@@ -97,7 +108,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *     }
      *  }}}
      *
-     *   Later on you descided to annotate each one of them with extra documentation, which is later seen in error messages if config retrieval
+     *   Later on you decided to annotate each one of them with extra documentation, which is later seen in error messages if config retrieval
      *   is a failure, and it's also used while documenting your configuration using `ConfigDocsModule`
      *
      *  {{{
@@ -248,9 +259,82 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def default(value: A): ConfigDescriptor[A] =
       Default(thunk(self), value) ?? s"default value: $value"
 
+    /**
+     * `describe` function allows us to inject additional documentation to the configuration parameters.
+     *
+     * Example:
+     *
+     *  {{{ val port = int("PORT") ?? "database port" }}}
+     *
+     * A more detailed example:
+     *
+     * Here is a program that describes (or a ConfigDescriptor that represents) reading a `USERNAME` which is a String and `PORT` which is an Int,
+     * and load it to a case class `Config`
+     *
+     *  {{{
+     *     final case class Config(userName: String, port: Int)
+     *
+     *     object Config {
+     *        val dbConfig: ConfigDescriptor[Config] =
+     *           (string("USERNAME") |@| int("PORT"))(Config.apply, Config.unapply)
+     *     }
+     *  }}}
+     *
+     *   Later on you decided to annotate each one of them with extra documentation, which is later seen in error messages if config retrieval
+     *   is a failure, and it's also used while documenting your configuration using `ConfigDocsModule`
+     *
+     *  {{{
+     *    val dbConfigWithDoc: ConfigDescriptor[Config] =
+     *       (string("USERNAME") ?? "db username" |@| int("PORT") ?? "db port")(Config.apply, Config.unapply)
+     *  }}}
+     *
+     *  If you try and read this config from an empty source, it emits an error message with the details you provided.
+     *
+     *   {{{
+     *     import zio.config._, ConfigDescriptor._
+     *
+     *     println(
+     *        read(Config.databaseConfig from ConfigSource.fromMap(Map.empty))
+     *      )
+     *   }}}
+     *
+     *  returns:
+     *
+     *  {{{
+     *   ╥
+     *   ╠══╦══╗
+     *   ║  ║  ║
+     *   ║  ║  ╠─MissingValue
+     *   ║  ║  ║ path: PORT
+     *   ║  ║  ║ Details: db port, value of type int
+     *   ║  ║  ▼
+     *   ║  ║
+     *   ║  ╠─MissingValue
+     *   ║  ║ path: USERNAME
+     *   ║  ║ Details: db username, value of type string
+     *   ║  ▼
+     *   ▼
+     *
+     *  }}}
+     *
+     *  Or, you can also use a common documentation for an entire set of config parameters.
+     *
+     *  {{{
+     *    val detailedConfigDescriptor: ConfigDescriptor[Config] =
+     *      configDescriptor ?? "Configuration related to database"
+     *  }}}
+     *
+     */
     final def describe(description: String): ConfigDescriptor[A] =
       Describe(thunk(self), description)
 
+    /**
+     * Attach a source to the `ConfigDescriptor`.
+     *
+     * Example: {{{ string("PORT") from ConfigSource.fromMap(Map.empty) }}}
+     *
+     * Details:
+     */
     final def from(that: ConfigSource): ConfigDescriptor[A] =
       self.updateSource(_.orElse(that))
 
@@ -276,9 +360,160 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       loop(self)
     }
 
+    /**
+     * `optional` function allows us to tag a configuration parameter as optional. It implies, even if it's missing configuration will be a success.
+     *
+     * Example:
+     *
+     *  {{{ val port: ConfigDescriptor[Option[Int]] = int("PORT").optional }}}
+     *
+     * A more detailed example:
+     *
+     * Here is a program that describes (or a ConfigDescriptor that represents) reading a `USERNAME` which is a String and `PORT` which is an Int,
+     * and load it to a case class `Config`
+     *
+     *  {{{
+     *     final case class Config(userName: String, port: Option[Int])
+     *
+     *     object Config {
+     *        val dbConfig: ConfigDescriptor[Config] =
+     *           (string("USERNAME") |@| int("PORT").optional)(Config.apply, Config.unapply)
+     *     }
+     *  }}}
+     *
+     *
+     *   The fact that it is an optional in error messages if config retrieval
+     *   is a failure, and it's also used while documenting your configuration using `ConfigDocsModule`
+     *
+     *  {{{
+     *    val dbConfigWithDoc: ConfigDescriptor[Config] =
+     *       (string("USERNAME") ?? "db username" |@| int("PORT") ?? "db port")(Config.apply, Config.unapply)
+     *  }}}
+     *
+     *  If you try and read this config from an empty source, it emits an error message with the details you provided.
+     *
+     *   {{{
+     *     import zio.config._, ConfigDescriptor._
+     *
+     *     val source = ConfigSource.fromMap(Map("USERNAME" -> "af"))
+     *
+     *     println(
+     *        read(Config.databaseConfig from source)
+     *      )
+     *   }}}
+     *
+     *  returns:
+     *
+     *  {{{
+     *     Config("af", None)
+     *  }}}
+     *
+     *  Similarly,
+     *
+     *  {{{
+     *    val source = ConfigSource.fromMap(Map("USERNAME" -> "af", "PORT" -> "8888"))
+     *
+     *    println(
+     *      read(Config.databaseConfig from source)
+     *    )
+     *
+     *  }}}
+     *
+     *  returns:
+     *
+     *  {{{
+     *    Config("af", Some(8888))
+     *  }}}
+     *
+     *  However, if you have given `PORT`, but it's not an integer, then it fails giving you the error details. It will also
+     *  specify the fact that the parameter is an optional parameter, giving you an indication that you can either fix the parameter,
+     *  or you can completely skip this parameter.
+     *
+     *  Example:
+     *
+     *   {{{
+     *     import zio.config._, ConfigDescriptor._
+     *
+     *     val source = ConfigSource.fromMap(Map("USERNAME" -> "af", "PORT" -> "abc"))
+     *
+     *     println(
+     *        read(Config.databaseConfig from source)
+     *      )
+     *   }}}
+     *
+     *   returns:
+     *
+     *  {{{
+     *
+     *   ╥
+     *   ╠══╗
+     *   ║  ║
+     *   ║  ╠─FormatError
+     *   ║  ║ cause: Provided value is abc, expecting the type int
+     *   ║  ║ path: PORT
+     *   ║  ▼
+     *   ▼
+     *
+     *  }}}
+     *
+     *  Another interesting behaviour, but we often forget about optional parameters is when there is
+     *  a presence of a part of the set of the config parameters
+     *  representing a product, where the product itself is optional.
+     *
+     *  Example:
+     *
+     *  {{{
+     *    final case class DbConfig(port: Int, host: String)
+     *
+     *    object DbConfig {
+     *      val dbConfig: ConfigDescriptor[Option[DbConfig]] =
+     *        (int("PORT") |@| string("HOST"))(DbConfig.apply, DbConfig.unapply).optional
+     *    }
+     *
+     *  }}}
+     *
+     *  In this case if "PORT" is present in the source, but "HOST" is absent, then config retrieval will be a failure and not `None`.
+     *  Similarly, if "HOST" is present but "PORT" is absent, the config retrieval will be a failure and not `None`.
+     *
+     *  If both of the parameters are absent in the source, then the config retrieval will be a success and the output will be
+     *  `None`. If both of them is present, then output will be `Some(DbConfig(..))`
+     */
     final def optional: ConfigDescriptor[Option[A]] =
       Optional(thunk(self)) ?? "optional value"
 
+    /**
+     * `orElse` is used to represent fall-back logic when we describe config retrievals.
+     *
+     * Example:
+     *
+     *   {{{
+     *     val config: ConfigDescriptor[String] = string("token") <> string("password")
+     *   }}}
+     *
+     * This is a description that represents the following:
+     * Try to retrieve the value of a parameter called "token", or else try to retrieve the value of parameter called "password"
+     *
+     * We know `ConfigDescriptor` is a program that describes the retrieval of a set of configuration parameters.
+     * In the below example, we can either depend on a configuration called `password` or a `token` both being of the same type, in this case, a String.
+     *
+     *   Example:
+     *
+     * {{{
+     *
+     *   final case class Config(tokenOrPassword: String, port: Int)
+     *
+     *   object Config {
+     *     val databaseConfig: ConfigDescriptor[Config] =
+     *       (string("token") <> string("password")  |@| int("PORT"))(Config.apply, Config.unapply)
+     *   }
+     *
+     * }}}
+     *
+     * Note: `orElse` is different from `orElseEither`.
+     *
+     * While `orElse` fall back to parameter which is of the same type of the original config parameter,
+     * `orElseEither` can fall back to a different type giving us `Either[A, B]`.
+     */
     final def orElse(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       OrElse(thunk(self), thunk(that))
 
