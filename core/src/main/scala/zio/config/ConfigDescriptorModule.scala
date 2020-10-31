@@ -248,9 +248,114 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def <>(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       self orElse that
 
+    /**
+     * `<*>` is an alias to function `zip`.
+     * This is used to represent retrieving the config as a tuple.
+     *
+     * Example:
+     *
+     *  {{{
+     *
+     *    val config: ConfigDescriptor[(String, Int)] = string("URL") <*> int("PORT")
+     *
+     *  }}}
+     *
+     * This is a description that represents the following:
+     * Retrieve values of URL and PORT which are String and Int respectively, and return a tuple.
+     *
+     * The above description is equivalent to
+     *
+     *  {{{
+     *
+     *    val config2: ConfigDescriptor[(String, Int)] = (string("URL") |@| int("PORT")).tupled
+     *
+     *  }}}
+     *
+     *  Using `|@|` over `<>` avoids nested tuples.
+     *
+     */
     final def <*>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
       self zip that
 
+    /**
+     * `<+>` is an alias to function `orElseEither`.
+     * This is used to represent fall-back logic when we describe config retrievals. Unlike `orElse`, the
+     * the fall-back config parameter can have a different type in `orElseEither`.
+     *
+     * Example:
+     *
+     *   {{{
+     *
+     *     val config: ConfigDescriptor[Either[Int, String]] = int("MONTH") <+> string("MONTH")
+     *
+     *   }}}
+     *
+     * This is a description that represents the following:
+     * Try to retrieve the value of a MONTH as an `Int`, and if there is a format error, try and retrieve it as a `String`.
+     *
+     * Detail:
+     *
+     * We know `ConfigDescriptor` is a program that describes the retrieval of a set of configuration parameters.
+     * In the below example, we can either depend on a configuration called `password`
+     * or a `token` both being of the same type, in this case, a String.
+     *
+     *   Example:
+     *
+     *   Given:
+     *
+     *  {{{
+     *
+     *    final case class BasicAuth(username: String, password: String)
+     *    final case class OAuth(clientId: String, secret: String)
+     *
+     *    val basicAuth: ConfigDescriptor[BasicAuth] =
+     *      (string("USERNAME") |@| string("PASSWORD"))(BasicAuth.apply, BasicAuth.unapply)
+     *
+     *    val oAuth: ConfigDescriptor[OAuth] =
+     *      (string("CLIENT_ID") |@| string("SECRET"))(OAuth.apply, OAuth.unapply)
+     *
+     *    val myConfig: ConfigDescriptor[Either[BasicAuth, OAuth]] =
+     *      basicAuth <+> oAuth
+     *
+     *  }}}
+     *
+     *  then,
+     *
+     *  {{{
+     *
+     *     val source = ConfigSource.fromMap(Map("USERNAME" -> "abc", "PASSWORD" -> "cde")
+     *
+     *     read(myConfig from source)
+     *
+     *  }}}
+     *
+     *  returns:
+     *
+     *  {{{
+     *
+     *    Left(BasicAuth("abc", "def")
+     *
+     *  }}}
+     *
+     *  Similarly,
+     *
+     *  {{{
+     *
+     *     val source = ConfigSource.fromMap(Map("CLIENT_ID" -> "xyz", "SECRET" -> "afg==")
+     *
+     *     read(myConfig from source)
+     *
+     *  }}}
+     *
+     *  returns:
+     *
+     *  {{{
+     *
+     *    Right(OAuth("xyz", "afg==")
+     *
+     *  }}}
+     *
+     */
     final def <+>[B](
       that: => ConfigDescriptor[B]
     ): ConfigDescriptor[Either[A, B]] =
@@ -513,15 +618,156 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * While `orElse` fall back to parameter which is of the same type of the original config parameter,
      * `orElseEither` can fall back to a different type giving us `Either[A, B]`.
+     *
+     * `orElse` will be useful in retrieving configuration that are represented as coproducted (sealed trait). However,
+     * it may become fairly verbose, such that usage `zio-config-magnolia` to derive the config automatically, will become a reasonable
+     * alternative.
      */
     final def orElse(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       OrElse(thunk(self), thunk(that))
 
+    /**
+     * `orElseEither` is used to represent fall-back logic when we describe config retrievals. Unlike `orElse`,
+     * the fall-back config parameter can have a different type in `orElseEither`.
+     *
+     * Example:
+     *
+     *   {{{
+     *
+     *     val config: ConfigDescriptor[Either[Int, String]] = int("MONTH") <+> string("MONTH")
+     *
+     *   }}}
+     *
+     * This is a description that represents the following:
+     * Try to retrieve the value of a MONTH as an `Int`, and if there is a format error, try and retrieve it as a `String`.
+     *
+     * Detail:
+     *
+     * We know `ConfigDescriptor` is a program that describes the retrieval of a set of configuration parameters.
+     * In the below example, we can either depend on a configuration called `password`
+     * or a `token` both being of the same type, in this case, a String.
+     *
+     *   Example:
+     *
+     *   Given:
+     *
+     *  {{{
+     *
+     *    final case class BasicAuth(username: String, password: String)
+     *    final case class OAuth(clientId: String, secret: String)
+     *
+     *    val basicAuth: ConfigDescriptor[BasicAuth] =
+     *      (string("USERNAME") |@| string("PASSWORD"))(BasicAuth.apply, BasicAuth.unapply)
+     *
+     *    val oAuth: ConfigDescriptor[OAuth] =
+     *      (string("CLIENT_ID") |@| string("SECRET"))(OAuth.apply, OAuth.unapply)
+     *
+     *    val myConfig: ConfigDescriptor[Either[BasicAuth, OAuth]] =
+     *      basicAuth <+> oAuth
+     *
+     *  }}}
+     *
+     *  then,
+     *
+     *  {{{
+     *
+     *     val source = ConfigSource.fromMap(Map("USERNAME" -> "abc", "PASSWORD" -> "cde")
+     *
+     *     read(myConfig from source)
+     *
+     *  }}}
+     *
+     *  returns:
+     *
+     *  {{{
+     *
+     *    Left(BasicAuth("abc", "def")
+     *
+     *  }}}
+     *
+     *  Similarly,
+     *
+     *  {{{
+     *
+     *     val source = ConfigSource.fromMap(Map("CLIENT_ID" -> "xyz", "SECRET" -> "afg==")
+     *
+     *     read(myConfig from source)
+     *
+     *  }}}
+     *
+     *  returns:
+     *
+     *  {{{
+     *
+     *    Right(OAuth("xyz", "afg==")
+     *
+     *  }}}
+     *
+     */
     final def orElseEither[B](
       that: => ConfigDescriptor[B]
     ): ConfigDescriptor[Either[A, B]] =
       OrElseEither(thunk(self), thunk(that))
 
+    /**
+     * Untag all sources associated with a `ConfigDescriptor`.
+     *
+     *  As we know `ConfigDescriptor` represents a program that describes the retrieval of config parameters.
+     *  In fact, the same program can be used to write back the config in various shapes.
+     *
+     *  Either case, a `ConfigDescriptor` can exist without a `Source` attached.
+     *
+     *  Example:
+     *
+     *  {{{
+     *    val stringConfig: ConfigDescriptor[String] = string("USERNAME")
+     *  }}}
+     *
+     *  Later on we can read the config by attaching a source.
+     *
+     *  {{{
+     *
+     *    val result = read(stringConfig from ConfigSource.fromMap(Map.empty))
+     *
+     *  }}}
+     *
+     *  However, you can attach a source to the configDescriptor at an earlier stage.
+     *
+     *  For example:
+     *
+     *  {{{
+     *
+     *    val stringConfig: ConfigDescriptor[String] =
+     *      string("USERNAME") from ConfigSource.fromMap(Map.empty)
+     *
+     *  }}}
+     *
+     *  Later on, you can simply read it using:
+     *
+     *  {{{
+     *     val result = read(stringConfig)
+     *  }}}
+     *
+     *  Using `unsourced`, you can now untag the source from `stringConfig`.
+     *
+     *  {{{
+     *
+     *    val stringConfigNoSource: ConfigDescriptor[String] =
+     *      stringConfig.unsourced
+     *  }}}
+     *
+     *  This can be useful in test cases where you want to remove a source and attach a different source.
+     *
+     *  Example:
+     *
+     *  {{{
+     *
+     *     val testSource: ConfigSource = ConfigSource.fromMap(Map(..))
+     *
+     *     val result = stringConfig.unsourced from testSource
+     *
+     *  }}}
+     */
     final def unsourced: ConfigDescriptor[A] =
       self.updateSource(_ => ConfigSourceFunctions.empty)
 
