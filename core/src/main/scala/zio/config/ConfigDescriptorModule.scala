@@ -771,6 +771,25 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def unsourced: ConfigDescriptor[A] =
       self.updateSource(_ => ConfigSourceFunctions.empty)
 
+    /**
+     * `updateSource` can update the source of an existing `ConfigDescriptor`
+     *
+     * Example:
+     *
+     *   {{{
+     *
+     *      val configSource1 = ConfigSource.fromMap(Map.empty)
+     *      val configSource2 = ConfigSource.fromMap(Map("USERNAME" -> "abc"))
+     *
+     *      val config = string("USERNAME") from configSource1
+     *
+     *      val updatedConfig = config updateSource (_ orElse configSource2)
+     *
+     *   }}}
+     *
+     * In the above example, we update the existing ConfigDescriptor to try another ConfigSource called configSource2,
+     * if it fails to retrieve the value of USERNAME from configSource1.
+     */
     final def updateSource(
       f: ConfigSource => ConfigSource
     ): ConfigDescriptor[A] = {
@@ -795,14 +814,88 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       loop(self)
     }
 
+    /**
+     * Given `A` and `B`, `f: A => B`, and `g: B => A`, then
+     * `transform` allows us to transform a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
+     *
+     *
+     * Example :
+     *  `transform` is useful especially when you define newtypes.
+     *
+     *  {{{
+     *    final case class Port(port: Int) extends AnyVal
+     *
+     *    val config: ConfigDescriptor[Port] =
+     *      int("PORT").transform[Port](Port.apply, _.int)
+     *  }}}
+     *
+     *  While `to: A => B` (in this case, `Int => Port`) is used to read to a `Port` case class,
+     *  `from: B => A` (which is, `Port => Int`) is used when we want to write `Port` directly to a source representation.
+     *
+     *  Example:
+     *
+     *  {{{
+     *
+     *     import zio.config.typesafe._ // as toJson is available only through zio-config-typesafe module
+     *
+     *     val writtenBack: Either[String, PropertyTree[String, String]] = write(config, Port(8888))
+     *
+     *     val jsonRepr: Either[String, String] = writtenBack.map(_.toJson) // { "port" : "8888" }
+     *     val mapRepr: Either[String, Map[String, String]] = writtenBack.map(_.flattenString()) // Map("port" -> "8888")
+     *  }}}
+     */
     final def transform[B](to: A => B, from: B => A): ConfigDescriptor[B] =
       self.xmapEither(a => Right(to(a)), b => Right(from(b)))
 
+    /**
+     * `transformEither` is an alias to `xmapEither`.
+     * Given `A` and `B`, `transformEither` function is used to convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
+     *
+     * It is important to note that both `to` and `fro` is fallible, allowing us to represent
+     * almost all possible relationships.
+     *
+     * Example:
+     *
+     * Let's define a simple `ConfigDescriptor`, that talks about retrieving a `S3Path` ( a bucket and prefix in AWS s3).
+     * Given you want to retrieve an S3Path from ConfigSource. Given a string, converting it to S3Path can fail, and even converting
+     * S3Path to a String can fail as well.
+     *
+     *  {{{
+     *    import java.time.DateTimeFormatter
+     *    import java.time.LocalDate
+     *
+     *    final case class S3Path(bucket: String , prefix: String, partition: LocalDate) {
+     *      def convertToString(partitionPattern: String): Either[String, String] =
+     *        Try { DateTimeFormatter.ofPattern(partitionPattern).format(partition) }.toEither
+     *          .map(dateStr => s"\${bucket}/\${prefix}/\${dateStr}").swap.map(_.getMessage).swap
+     *    }
+     *
+     *    object S3Path {
+     *      def fromStr(s3Path: String): Either[String, S3Path] = {
+     *        val splitted = s3Path.split("/").toList
+     *
+     *        if (splitted.size > 3)
+     *          Left("Invalid s3 path")
+     *        else
+     *          for {
+     *             bucket <- splitted.headOption.toRight("Empty s3 path")
+     *             prefix <- splitted.lift(1).toRight("Invalid prefix, or empty prefix in s3 path")
+     *             partition <- splitted.lift(2).toRight("Empty partition").flatMap(dateStr => LocalDate.parse(dateStr))
+     *          } yield S3Path(bucket, prefix, partition)
+     *      }
+     *    }
+     *
+     *    val s3PathConfig: ConfigDescriptor[S3Path] =
+     *      string("S3_PATH").transformEither[S3Path](S3Path.fromStr, _.convertToString("yyyy-MM-dd"))
+     *
+     *  }}}
+     *
+     */
     final def transformEither[B](
-      f: A => Either[String, B],
-      g: B => Either[String, A]
+      to: A => Either[String, B],
+      from: B => Either[String, A]
     ): ConfigDescriptor[B] =
-      self.xmapEither(f, g)
+      self.xmapEither(to, from)
 
     final def transformEitherLeft[B](f: A => Either[String, B], g: B => A): ConfigDescriptor[B] =
       self.transformEitherLeft(f)(g)(identity)
@@ -823,9 +916,84 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     )(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
       self.xmapEither[E, B](t => Right(f(t)))(g)(h)
 
+    /**
+     * `xmap` is an alias to `transform`.
+     *
+     * Given `A` and `B`, `f: A => B`, and `g: B => A`, then
+     * `transform` allows us to transform a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
+     *
+     *
+     * Example :
+     *  `transform` is useful especially when you define newtypes.
+     *
+     *  {{{
+     *    final case class Port(port: Int) extends AnyVal
+     *
+     *    val config: ConfigDescriptor[Port] =
+     *      int("PORT").transform[Port](Port.apply, _.int)
+     *  }}}
+     *
+     *  While `to: A => B` (in this case, `Int => Port`) is used to read to a `Port` case class,
+     *  `from: B => A` (which is, `Port => Int`) is used when we want to write `Port` directly to a source representation.
+     *
+     *  Example:
+     *
+     *  {{{
+     *
+     *     import zio.config.typesafe._ // as toJson is available only through zio-config-typesafe module
+     *
+     *     val writtenBack: Either[String, PropertyTree[String, String]] = write(config, Port(8888))
+     *
+     *     val jsonRepr: Either[String, String] = writtenBack.map(_.toJson) // { "port" : "8888" }
+     *     val mapRepr: Either[String, Map[String, String]] = writtenBack.map(_.flattenString()) // Map("port" -> "8888")
+     *  }}}
+     */
     final def xmap[B](to: A => B, from: B => A): ConfigDescriptor[B] =
       self.xmapEither(a => Right(to(a)), b => Right(from(b)))
 
+    /**
+     * Given `A` and `B`, `xmapEither` function is used to convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
+     *
+     * It is important to note that both `to` and `fro` is fallible, allowing us to represent
+     * almost all possible relationships.
+     *
+     * Example:
+     *
+     * Let's define a simple `ConfigDescriptor`, that talks about retrieving a `S3Path` ( a bucket and prefix in AWS s3).
+     * Given you want to retrieve an S3Path from ConfigSource. Given a string, converting it to S3Path can fail, and even converting
+     * S3Path to a String can fail as well.
+     *
+     *  {{{
+     *    import java.time.DateTimeFormatter
+     *    import java.time.LocalDate
+     *
+     *    final case class S3Path(bucket: String , prefix: String, partition: LocalDate) {
+     *      def convertToString(partitionPattern: String): Either[String, String] =
+     *        Try { DateTimeFormatter.ofPattern(partitionPattern).format(partition) }.toEither
+     *          .map(dateStr => s"\${bucket}/\${prefix}/\${dateStr}").swap.map(_.getMessage).swap
+     *    }
+     *
+     *    object S3Path {
+     *      def fromStr(s3Path: String): Either[String, S3Path] = {
+     *        val splitted = s3Path.split("/").toList
+     *
+     *        if (splitted.size > 3)
+     *          Left("Invalid s3 path")
+     *        else
+     *          for {
+     *             bucket <- splitted.headOption.toRight("Empty s3 path")
+     *             prefix <- splitted.lift(1).toRight("Invalid prefix, or empty prefix in s3 path")
+     *             partition <- splitted.lift(2).toRight("Empty partition").flatMap(dateStr => LocalDate.parse(dateStr))
+     *          } yield S3Path(bucket, prefix, partition)
+     *      }
+     *    }
+     *
+     *    val s3PathConfig: ConfigDescriptor[S3Path] =
+     *      string("S3_PATH").xmapEither[S3Path](S3Path.fromStr, _.convertToString("yyyy-MM-dd"))
+     *
+     *  }}}
+     *
+     */
     final def xmapEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[B] =
       XmapEither(thunk(self), f, g)
 
@@ -845,6 +1013,31 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
         .xmapEither({ case (a, b) => f(a, b) }, g)
 
+    /**
+     * `zip` is used to represent retrieving the config as a tuple.
+     *
+     * Example:
+     *
+     *  {{{
+     *
+     *    val config: ConfigDescriptor[(String, Int)] = string("URL") <*> int("PORT")
+     *
+     *  }}}
+     *
+     * This is a description that represents the following:
+     * Retrieve values of URL and PORT which are String and Int respectively, and return a tuple.
+     *
+     * The above description is equivalent to
+     *
+     *  {{{
+     *
+     *    val config2: ConfigDescriptor[(String, Int)] = (string("URL") |@| int("PORT")).tupled
+     *
+     *  }}}
+     *
+     *  Using `|@|` over `<>` avoids nested tuples.
+     *
+     */
     final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
       Zip(thunk(self), thunk(that))
   }
