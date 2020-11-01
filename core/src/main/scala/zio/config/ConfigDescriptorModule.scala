@@ -8,20 +8,23 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   sealed trait ConfigDescriptor[A] { self =>
 
     /**
-     * Given `A` and `B` the below `apply` function is used to convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
+     * Given `A` and `B` the below `apply` function is used to
+     * convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
      *
-     * It is important to note that while we can retrieve B directly from A,
+     * While we can retrieve B directly from A,
      * there is no guarantee that reverse relationship exists. i.e, B => A.
+     *
      * Instead the reverse relationship is `B => Option[A]`.
-     * This is why the arguments of this function are `app: A => B` and `unapp: B => Option[A]`
+     * This is why the arguments of this function are `app: A => B`
+     * and `unapp: B => Option[A]`
      *
-     * Why ?
-     *
-     * Let's define a simple `ConfigDescriptor`, that talks about retrieving a `String` configuration (example: PORT).
+     * Let's define a simple `ConfigDescriptor`,
+     * that talks about retrieving a `String` configuration (example: PORT).
      *
      *  {{{
      *    val port: ConfigDescriptor[Int] = int("PORT")
-     *     // NOTE: We are not attaching a real source here, because a config descriptor can exist without a source
+     *     // NOTE: We are not attaching a real source here,
+     *     // because a config descriptor can exist without a source
      *  }}}
      *
      * Later you decided to convert the type of `Port` from `Int` to `String`
@@ -30,15 +33,19 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * In this case. In this case, `A => B` is `Int => String` which will always work.
      *
      * However, the reverse relationship (which is used to retrieve
-     * the original type from its transformed representation) is `String => Int`, which
-     * is not a total function. i.e, Not all elements of set `String` can be converted to `Int`.
-     * Example: "Australia" cannot be converted to `Int`.
+     * the original type from its transformed representation) is `String => Int` is
+     * not a total function, unless it was `String => Either[error, Int]`.
+     *
+     * That is, Not all elements of set `String` can be converted to `Int`.
+     * Example: A string "abc" cannot be converted to `Int`.
      *
      * Hence we can do `s => Try(s.toInt).toOption` to mark the possibility of errors.
      * This is a function of the type: `B => Option[A]`.
      *
-     * Also note that, you can make use of `transformEither` instead of `apply` which is a much more powerful method to
-     * convert from one type to the other keeping the error information without falling back to `Option`.
+     * Also note that, you can make use of `transformEither`
+     * instead of `apply` which is a much more powerful method to
+     * convert from one type to the other keeping the error information
+     * without falling back to `Option`.
      *
      *  {{{
      *
@@ -47,7 +54,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  }}}
      *
-     *   With the above information you can both read a port from a source and convert to a string,
+     *   With the above information you can read a port from a source and convert to a string,
      *   and write the stringified port back to a source representation.
      *
      *  READ:
@@ -64,17 +71,24 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  WRITE:
      *
-     *  Now given a stringified port "8888", you can also write it back to the source safely (i.e, guaranteed that the read will work) because
-     *  the it runs through `(s: String) => Try(s.toInt).toOption` and verify it is a real port that can be converted to `Int`.
+     *  Now given a stringified port "8888", you can also write it
+     *  back to the source safely (i.e, guaranteed that the read will work) because
+     *  the it runs through `(s: String) => Try(s.toInt).toOption`
+     *  and verify it is a real port that can be converted to `Int`.
      *
      *  {{{
      *
-     *     import zio.config.typesafe._ // as toJson is available only through zio-config-typesafe module
+     *     import zio.config.typesafe._
+     *      // as toJson is available only through zio-config-typesafe module
      *
-     *     val writtenBack: Either[String, PropertyTree[String, String]] = write(portString, "8888")
+     *     val writtenBack: Either[String, PropertyTree[String, String]] =
+     *       write(portString, "8888")
      *
-     *     val jsonRepr: Either[String, String] = writtenBack.map(_.toJson) // { "port" : "8888" }
-     *     val mapRepr: Either[String, Map[String, String]] = writtenBack.map(_.flattenString()) // Map("port" -> "8888")
+     *     val jsonRepr: Either[String, String] =
+     *       writtenBack.map(_.toJson) // { "port" : "8888" }
+     *
+     *     val mapRepr: Either[String, Map[String, String]] =
+     *       writtenBack.map(_.flattenString()) // Map("port" -> "8888")
      *  }}}
      */
     def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[B] =
@@ -88,7 +102,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       )
 
     /**
-     * `??` is an alias to `describe` which allows us to inject additional documentation to the configuration parameters.
+     * `??` is an alias to `describe` which allows us to inject additional
+     * documentation to the configuration parameters.
      *
      * Example:
      *
@@ -96,7 +111,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * A more detailed example:
      *
-     * Here is a program that describes (or a ConfigDescriptor that represents) reading a `USERNAME` which is a String and `PORT` which is an Int,
+     * Here is a program that describes (or a ConfigDescriptor that represents)
+     * reading a `USERNAME` which is a String and `PORT` which is an Int,
      * and load it to a case class `Config`
      *
      *  {{{
@@ -108,15 +124,20 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *     }
      *  }}}
      *
-     *   Later on you decided to annotate each one of them with extra documentation, which is later seen in error messages if config retrieval
-     *   is a failure, and it's also used while documenting your configuration using `ConfigDocsModule`
+     *   Later on you decided to annotate each one of them with extra documentation,
+     *   which is later seen in error messages if config retrieval
+     *   is a failure, and it's also used while documenting your configuration
+     *   using `ConfigDocsModule`
      *
      *  {{{
      *    val dbConfigWithDoc: ConfigDescriptor[Config] =
-     *       (string("USERNAME") ?? "db username" |@| int("PORT") ?? "db port")(Config.apply, Config.unapply)
+     *       (string("USERNAME") ?? "db username" |@|
+     *          int("PORT") ?? "db port"
+     *         )(Config.apply, Config.unapply)
      *  }}}
      *
-     *  If you try and read this config from an empty source, it emits an error message with the details you provided.
+     *  If you try and read this config from an empty source,
+     *  it emits an error message with the details you provided.
      *
      *   {{{
      *     import zio.config._, ConfigDescriptor._
@@ -157,8 +178,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       describe(description)
 
     /**
-     * |@| is a ConfigDescriptor builder. We know `ConfigDescriptor` is a program that describes the retrieval of a set of configuration
-     *  parameters.
+     * |@| is a ConfigDescriptor builder. We know `ConfigDescriptor`
+     * is a program that describes the retrieval of a set of configuration parameters.
      *
      *  Below given is a `ConfigDescriptor` that describes the retrieval of a single config.
      *
@@ -166,7 +187,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    val port: ConfigDescriptor[String] = string("PORT")
      *  }}}
      *
-     *  However, in order to retrieve multiple configuration parameters, we can make use of `|@|`.
+     *  However, in order to retrieve multiple configuration parameters,
+     *  we can make use of `|@|`.
      *
      *  Example:
      *
@@ -227,10 +249,14 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   }}}
      *
      * This is a description that represents the following:
-     * Try to retrieve the value of a parameter called "token", or else try to retrieve the value of parameter called "password"
+     * Try to retrieve the value of a parameter called "token",
+     * or else try to retrieve the value of parameter called "password"
      *
-     * We know `ConfigDescriptor` is a program that describes the retrieval of a set of configuration parameters.
-     * In the below example, we can either depend on a configuration called `password` or a `token` both being of the same type, in this case, a String.
+     * We know `ConfigDescriptor` is a program that describes the retrieval
+     * of a set of configuration parameters.
+     *
+     * In the below example, we can either depend on a configuration called
+     * `password` or a `token` both being of the same type, in this case, a String.
      *
      *   Example:
      *
@@ -466,7 +492,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     }
 
     /**
-     * `optional` function allows us to tag a configuration parameter as optional. It implies, even if it's missing configuration will be a success.
+     * `optional` function allows us to tag a configuration parameter as optional.
+     * It implies, even if it's missing configuration will be a success.
      *
      * Example:
      *
@@ -474,7 +501,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * A more detailed example:
      *
-     * Here is a program that describes (or a ConfigDescriptor that represents) reading a `USERNAME` which is a String and `PORT` which is an Int,
+     * Here is a program that describes (or a ConfigDescriptor that represents) reading a `USERNAME`
+     * which is a String and `PORT` which is an Int,
      * and load it to a case class `Config`
      *
      *  {{{
@@ -495,7 +523,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *       (string("USERNAME") ?? "db username" |@| int("PORT") ?? "db port")(Config.apply, Config.unapply)
      *  }}}
      *
-     *  If you try and read this config from an empty source, it emits an error message with the details you provided.
      *
      *   {{{
      *     import zio.config._, ConfigDescriptor._
@@ -530,8 +557,12 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    Config("af", Some(8888))
      *  }}}
      *
-     *  However, if you have given `PORT`, but it's not an integer, then it fails giving you the error details. It will also
-     *  specify the fact that the parameter is an optional parameter, giving you an indication that you can either fix the parameter,
+     *  However, if you have given `PORT`, but it's not an integer,
+     *  then it fails giving you the error details.
+     *
+     *  Within the error message, it will also specify the fact
+     *  that the parameter is an optional parameter,
+     *  giving you an indication that you can either fix the parameter,
      *  or you can completely skip this parameter.
      *
      *  Example:
@@ -577,10 +608,13 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  }}}
      *
-     *  In this case if "PORT" is present in the source, but "HOST" is absent, then config retrieval will be a failure and not `None`.
-     *  Similarly, if "HOST" is present but "PORT" is absent, the config retrieval will be a failure and not `None`.
+     *  In this case if "PORT" is present in the source, but "HOST" is absent,
+     *  then config retrieval will be a failure and not `None`.
+     *  Similarly, if "HOST" is present but "PORT" is absent,
+     *  the config retrieval will be a failure and not `None`.
      *
-     *  If both of the parameters are absent in the source, then the config retrieval will be a success and the output will be
+     *  If both of the parameters are absent in the source, then the
+     *  config retrieval will be a success and the output will be
      *  `None`. If both of them is present, then output will be `Some(DbConfig(..))`
      */
     final def optional: ConfigDescriptor[Option[A]] =
@@ -903,18 +937,18 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def transformEitherLeft[E, B](
       f: A => Either[E, B]
     )(g: B => A)(h: E => String): ConfigDescriptor[B] =
-      self.xmapEither[E, B](f)(b => Right(g(b)))(h)
+      self.xmapEitherE[E, B](f)(b => Right(g(b)))(h)
 
     final def transformEitherRight[B](
       f: A => B,
       g: B => Either[String, A]
     ): ConfigDescriptor[B] =
-      self.transformEitherRight(f)(g)(identity)
+      self.transformEitherRightE(f)(g)(identity)
 
-    final def transformEitherRight[E, B](
+    final def transformEitherRightE[E, B](
       f: A => B
     )(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
-      self.xmapEither[E, B](t => Right(f(t)))(g)(h)
+      self.xmapEitherE[E, B](t => Right(f(t)))(g)(h)
 
     /**
      * `xmap` is an alias to `transform`.
@@ -967,6 +1001,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    import java.time.DateTimeFormatter
      *    import java.time.LocalDate
      *
+     *     // We prefer important structures like S3Path in your application to be a well defined structure
+     *     // Usage of abstract sealed case class is to disallow direct creation of `S3Path` from anywhere else other
+     *     // than its companion object. This is not anything specific to zio-config.
+     *
      *    final case class S3Path(bucket: String , prefix: String, partition: LocalDate) {
      *      def convertToString(partitionPattern: String): Either[String, String] =
      *        Try { DateTimeFormatter.ofPattern(partitionPattern).format(partition) }.toEither
@@ -983,7 +1021,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          for {
      *             bucket <- splitted.headOption.toRight("Empty s3 path")
      *             prefix <- splitted.lift(1).toRight("Invalid prefix, or empty prefix in s3 path")
-     *             partition <- splitted.lift(2).toRight("Empty partition").flatMap(dateStr => LocalDate.parse(dateStr))
+     *             date <- splitted.lift(2).toRight("Empty partition")
+     *              partition <- Try(LocalDate.parse(date)).toEither
      *          } yield S3Path(bucket, prefix, partition)
      *      }
      *    }
@@ -997,21 +1036,106 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def xmapEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[B] =
       XmapEither(thunk(self), f, g)
 
-    final def xmapEither[E, B](
-      f: A => Either[E, B]
-    )(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
+    /**
+     * Given `A` and `B`, `xmapEitherE` function is used to
+     * convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
+     *
+     * It is important to note that both `to` and `fro` is fallible,
+     * allowing us to represent almost all possible relationships.
+     *
+     * `xmapEitherE` is a more generalised form of `xmapEither`.
+     *
+     * Unlike `xmapEither`, the errors doesn't need to be a `String` when using
+     * `xmapEitherE` as long as there is a way to convert `E` to `String` (`show`).
+     *
+     * The reason behind existence of `show` (a `String` representation of `E`)
+     * is because of the following:
+     *   All the errors need to be printed out to the user (console/log)
+     *   during failed configuration retrievals, or during documentation.
+     *
+     * Unlike `xmapEither`, `xmapEitherE` is curried to make better use of Scala's type inference.
+     *
+     * Example:
+     *
+     * Let's define a simple `ConfigDescriptor`, that talks about retrieving
+     * a `S3Path` ( a bucket and prefix followed by a partition director in AWS s3)
+     * from (any) ConfigSource.
+     *
+     * Given a string at the source, converting it to S3Path can fail,
+     * and even converting S3Path to a String can fail as well.
+     *
+     *  {{{
+     *    import java.time.DateTimeFormatter
+     *    import java.time.LocalDate
+     *
+     *    // We prefer important structures like S3Path in your application
+     *    // to be a well defined structure
+     *
+     *    // Usage of `abstract sealed case class` is to disallow
+     *    // direct creation of `S3Path` from anywhere else other
+     *    // than its companion object. This is not anything specific to zio-config.
+     *
+     *    abstract sealed case class S3Path(bucket: String , prefix: String, partition: LocalDate) {
+     *      def convertToString(partitionPattern: String): Either[Throwable, String] =
+     *        Try { DateTimeFormatter.ofPattern(partitionPattern).format(partition) }.toEither
+     *          .map(dateStr => s"\${bucket}/\${prefix}/\${dateStr}")
+     *    }
+     *
+     *    object S3Path {
+     *      def fromStr(s3Path: String): Either[Throwable, S3Path] = {
+     *        val splitted = s3Path.split("/").toList
+     *
+     *        if (splitted.size > 3)
+     *          Left(new RuntimeException("Invalid s3 path"))
+     *        else
+     *         for {
+     *           bucket <- splitted.headOption.toRight(new RuntimeException("Empty s3 path"))
+     *           prefix <- splitted.lift(1).toRight(new RuntimeException("Invalid prefix, or empty prefix in s3 path"))
+     *           date <- splitted.lift(2).toRight(new RuntimeException("Empty partition"))
+     *           partition <- Try(LocalDate.parse(date)).toEither
+     *         } yield new S3Path(bucket, prefix, partition){}
+     *      }
+     *    }
+     *
+     *    val s3PathConfig: ConfigDescriptor[S3Path] =
+     *      string("S3_PATH").xmapEitherE[Throwable S3Path](S3Path.fromStr)(_.convertToString("yyyy-MM-dd"))(_.getMessage)
+     *
+     *  }}}
+     */
+    final def xmapEitherE[E, B](
+      to: A => Either[E, B]
+    )(from: B => Either[E, A])(show: E => String): ConfigDescriptor[B] =
       self.xmapEither[B](
-        (a: A) => ((f(a): Either[E, B]).swap: Either[B, E]).map(h).swap,
-        (b: B) => ((g(b): Either[E, A]).swap: Either[A, E]).map(h).swap
+        (a: A) => ((to(a): Either[E, B]).swap: Either[B, E]).map(show).swap,
+        (b: B) => ((from(b): Either[E, A]).swap: Either[A, E]).map(show).swap
       )
 
+    /**
+     * `xmapEither2` is similar to `xmapEither` but the function
+     * is mostly used as an internal implementation
+     * in zio-config. For the same reason, users hardly need `xmapEither2`.
+     * Instead take a look at `xmapEither` (or `transformEither`).
+     *
+     * `xmapEither2` deals with retrieving two configurations represented
+     * by `ConfigDescriptor[A]` and `ConfigDescriptor[B]`,
+     * and corresponding `to` and `from` functions converting a tuple `(A, B)` to C` and it's
+     * reverse direction, to finally form a `ConfigDescriptor[C]`.
+     *
+     * Those who are familiar with `Applicative` in Functional programming,
+     * `xmapEither2` almost takes the form of `Applicative`:
+     * `F[A] => F[B] => (A, B) => C => F[C]`.
+     *
+     * Implementation detail:
+     * This is used to implement sequence` (`traverse`)
+     * behaviour of `ConfigDescriptor[A]`
+     */
     final def xmapEither2[B, C](that: => ConfigDescriptor[B])(
-      f: (A, B) => Either[String, C],
-      g: C => Either[String, (A, B)]
+      to: (A, B) => Either[String, C],
+      from: C => Either[String, (A, B)]
     ): ConfigDescriptor[C] =
       (self |@| that)
         .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
-        .xmapEither({ case (a, b) => f(a, b) }, g)
+        .xmapEither({ case (a, b) => to(a, b) }, from)
 
     /**
      * `zip` is used to represent retrieving the config as a tuple.

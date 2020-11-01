@@ -43,7 +43,7 @@ trait DeriveConfigDescriptor { self =>
       Descriptor(desc.transformEitherRight(f, g))
 
     def transformEitherRight[E, B](f: T => B)(g: B => Either[E, T])(h: E => String): Descriptor[B] =
-      Descriptor(desc.transformEitherRight[E, B](f)(g)(h))
+      Descriptor(desc.transformEitherRightE[E, B](f)(g)(h))
 
     def xmap[B](f: T => B, g: B => T): Descriptor[B] =
       Descriptor(desc.xmap(f, g))
@@ -52,7 +52,7 @@ trait DeriveConfigDescriptor { self =>
       Descriptor(desc.xmapEither(f, g))
 
     def xmapEither[E, B](f: T => Either[E, B])(g: B => Either[E, T])(h: E => String): Descriptor[B] =
-      Descriptor(desc.xmapEither[E, B](f)(g)(h))
+      Descriptor(desc.xmapEitherE[E, B](f)(g)(h))
   }
 
   object Descriptor {
@@ -506,7 +506,7 @@ trait DeriveConfigDescriptor { self =>
 
           case Descriptor.SealedTraitSubClassNameStrategy.LabelSubClassName(fieldName) =>
             (string(fieldName) ?? s"Expecting a constant string ${subClassName}" |@| typeclass.desc).tupled
-              .xmapEither({
+                                                                                                    .xmapEitherE({
                 case (name, sub) =>
                   if (subClassName == name) Right(sub)
                   else Left(s"The type specified ${name} is not equal to the obtained config ${subtype.typeName.full}")

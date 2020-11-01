@@ -99,7 +99,7 @@ trait DeriveConfigDescriptor {
       Descriptor(configDescriptor.transformEitherRight(f, g))
 
     def transformEitherRight[E, B](f: T => B)(g: B => Either[E, T])(h: E => String): Descriptor[B] =
-      Descriptor(configDescriptor.transformEitherRight[E, B](f)(g)(h))
+      Descriptor(configDescriptor.transformEitherRightE[E, B](f)(g)(h))
 
     def xmap[B](f: T => B, g: B => T): Descriptor[B] =
       Descriptor(configDescriptor.xmap(f, g))
@@ -108,7 +108,7 @@ trait DeriveConfigDescriptor {
       Descriptor(configDescriptor.xmapEither(f, g))
 
     def xmapEither[E, B](f: T => Either[E, B])(g: B => Either[E, T])(h: E => String): Descriptor[B] =
-      Descriptor(configDescriptor.xmapEither[E, B](f)(g)(h))
+      Descriptor(configDescriptor.xmapEitherE[E, B](f)(g)(h))
   }
 
   object Descriptor {
