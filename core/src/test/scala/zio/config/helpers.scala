@@ -21,7 +21,12 @@ object helpers {
 
   def genNonEmptyString(length: Int): Gen[Random, String] = genSymbol(1, length)
 
-  def genDuration(length: Int): Gen[Random, String] = genNumber(1, length).map(days => s"$days day")
+  def genDuration(length: Int): Gen[Random, String] = Gen.oneOf(
+    genNumber(0, length).map(days => s"$days day"),
+    genNumber(0, length).map(seconds => s"$seconds seconds"),
+    genNumber(0, length).map(ms => s"$ms ms"),
+    genNumber(0, length).map(ns => s"$ns ns")
+  )
 
   val genId: Gen[Random, Id] = genSymbol(1, 5).map(Id)
 
