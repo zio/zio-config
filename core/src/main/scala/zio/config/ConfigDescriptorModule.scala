@@ -1168,12 +1168,97 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
   trait ConfigDescriptorFunctions {
 
+    /**
+     * `collectAll` is an alias to `sequence`. In Functional Programming terms,
+     * it is a Traverse implementation for ConfigDescriptor.
+     * In other words, it allows us to convert a `List` of `ConfigDescriptor[A]`
+     * to `ConfigDescriptor[List[A]]`.
+     *
+     * Example:
+     *
+     * {{{
+     *   final case class Variables(variable1: Int, variable2: Option[Int])
+     *
+     *   object CollectAllExample extends App with EitherImpureOps {
+     *     val listOfConfig: List[ConfigDescriptor[Variables]] =
+     *       List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
+     *         .map(
+     *           group =>
+     *             (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
+     *         )
+     *
+     *     val configOfList: ConfigDescriptor[List[Variables]] =
+     *       collectAll(listOfConfig.head, listOfConfig.tail: _*)
+     *
+     *     val map =
+     *       Map(
+     *         "GROUP1_VARIABLE1" -> "1",
+     *         "GROUP1_VARIABLE2" -> "2",
+     *         "GROUP2_VARIABLE1" -> "3",
+     *         "GROUP2_VARIABLE2" -> "4",
+     *         "GROUP3_VARIABLE1" -> "5",
+     *         "GROUP3_VARIABLE2" -> "6",
+     *         "GROUP4_VARIABLE1" -> "7"
+     *       )
+     *
+     *     // loadOrThrow here is only for the purpose of example
+     *     val result: List[Variables] = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
+     *
+     *     val written: PropertyTree[String, String] = write(configOfList, result).loadOrThrow
+     *
+     *     assert(
+     *       result == List(Variables(1, Some(2)), Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))
+     *     )
+     * }}}
+     */
     def collectAll[A](head: ConfigDescriptor[A], tail: ConfigDescriptor[A]*): ConfigDescriptor[List[A]] =
       sequence(head, tail: _*)(
         { case (a, t) => a :: t },
         l => l.headOption.map(h => (h, l.tail))
       )
 
+    /**
+     * `lazyCollectAll` is a lazy version to `sequence` helping out zio-config
+     * in handling recursive config structures. However, for the most import,
+     * users need to interact with only sequence and collectAll. In Functional Programming terms,
+     *
+     * Example:
+     *
+     * {{{
+     *   final case class Variables(variable1: Int, variable2: Option[Int])
+     *
+     *   object CollectAllExample extends App with EitherImpureOps {
+     *     val listOfConfig: List[LazyConfigDescriptor[Variables]] =
+     *       List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
+     *         .map(
+     *           group =>
+     *             thunk(int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply))
+     *         )
+     *
+     *     val configOfList: ConfigDescriptor[List[Variables]] =
+     *       lazyCollectAll(listOfConfig.head, listOfConfig.tail: _*)
+     *
+     *     val map =
+     *       Map(
+     *         "GROUP1_VARIABLE1" -> "1",
+     *         "GROUP1_VARIABLE2" -> "2",
+     *         "GROUP2_VARIABLE1" -> "3",
+     *         "GROUP2_VARIABLE2" -> "4",
+     *         "GROUP3_VARIABLE1" -> "5",
+     *         "GROUP3_VARIABLE2" -> "6",
+     *         "GROUP4_VARIABLE1" -> "7"
+     *       )
+     *
+     *     // loadOrThrow here is only for the purpose of example
+     *     val result: List[Variables] = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
+     *
+     *     val written: PropertyTree[String, String] = write(configOfList, result).loadOrThrow
+     *
+     *     assert(
+     *       result == List(Variables(1, Some(2)), Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))
+     *     )
+     * }}}
+     */
     def lazyCollectAll[A](
       head: LazyConfigDescriptor[A],
       tail: LazyConfigDescriptor[A]*
@@ -1183,6 +1268,26 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         l => l.headOption.map(h => (h, l.tail))
       )
 
+    /**
+     *  `head` describes getting the head of a possible list value
+     *
+     *  Example:
+     *
+     *  {{{
+     *     final case class Config(userName: String, port: Option[Int])
+     *
+     *   object Config {
+     *     val source =
+     *       ConfigSource.fromMap(Map("USERNAME" -> "af,sa", "PORT" -> "1"), valueDelimiter = Some(','))
+     *     val databaseConfig: ConfigDescriptor[Config] =
+     *       (head(string("USERNAME")) |@| int("PORT").optional)(Config.apply, Config.unapply)
+     *   }
+     *
+     *   read(Config.databaseConfig from Config.source)
+     *
+     *   // returns Config("af", 1)
+     *  }}}
+     */
     def head[A](desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
       desc.orElse(
         list(desc)
@@ -1193,6 +1298,26 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           )
       )
 
+    /**
+     *  `head` describes getting the head of a possible list value
+     *
+     *  Example:
+     *
+     *  {{{
+     *     final case class Config(userName: String, port: Option[Int])
+     *
+     *   object Config {
+     *     val source =
+     *       ConfigSource.fromMap(Map("USERNAME" -> "af,sa", "PORT" -> "1"), valueDelimiter = Some(','))
+     *     val databaseConfig: ConfigDescriptor[Config] =
+     *       (head("USERNAME")(string) |@| int("PORT").optional)(Config.apply, Config.unapply)
+     *   }
+     *
+     *   read(Config.databaseConfig from Config.source)
+     *
+     *   // returns Config("af", 1)
+     *  }}}
+     */
     def head[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       nested(path)(head(desc))
 
@@ -1229,6 +1354,13 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def nested[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(ConfigSourceFunctions.empty, path, thunk(desc))
 
+    /**
+     *
+     * @param head
+     * @param tail
+     * @tparam A
+     * @return
+     */
     def sequence[A](
       head: => ConfigDescriptor[A],
       tail: ConfigDescriptor[A]*
