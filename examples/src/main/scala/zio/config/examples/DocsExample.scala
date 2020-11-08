@@ -1,12 +1,7 @@
 package zio.config.examples
 
-import java.time.format.DateTimeFormatter
-
 import zio.config._
 import ConfigDescriptor._
-import zio.config.typesafe.TypesafeConfigSource
-
-import scala.util.Try
 
 object DocsExample extends App {
 
