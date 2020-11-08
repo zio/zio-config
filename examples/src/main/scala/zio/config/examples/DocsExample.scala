@@ -1,6 +1,12 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import java.time.format.DateTimeFormatter
+
+import zio.config._
+import ConfigDescriptor._
+import zio.config.typesafe.TypesafeConfigSource
+
+import scala.util.Try
 
 object DocsExample extends App {
 
@@ -9,7 +15,10 @@ object DocsExample extends App {
   val config =
     nested("database") {
       (int("PORT") ?? "Example: 8088" |@|
-        string("URL").optional ?? "Example: abc.com")(Database.apply, Database.unapply) ?? "Database related"
+        string("URL").optional ?? "Example: abc.com")(
+        Database.apply,
+        Database.unapply
+      ) ?? "Database related"
     }
 
   val docs =

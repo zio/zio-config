@@ -1321,14 +1321,160 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def head[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       nested(path)(head(desc))
 
+    /**
+     *  `list(confgDescriptor)` represents just a list variant of configuration extraction.
+     *
+     *  For example, we know `val config = string("USERNAME") from source`
+     *  represents a program that says, there exists a key called
+     *  "USERNAME" (in some ConfigSource called source)
+     *  with a value that is of the type `String`.
+     *
+     *  `list(config)` would then imply, there exists a list of `USERNAME -> value` pair.
+     *
+     *  Given below is a complete example:
+     *
+     *  {{{
+     *    val json =
+     *       s"""
+     *          | xyz : [
+     *          |   {
+     *          |     "USERNAME" : "value1"
+     *          |   },
+     *          |
+     *          |   {
+     *          |     "USERNAME" : "value2"
+     *          |   }
+     *          | ]
+     *          |""".stripMargin
+     *
+     *     val getSource: Either[ReadError[String], ConfigSource] =
+     *       TypesafeConfigSource.fromHoconString(json)
+     *
+     *     val config = string("USERNAME")
+     *
+     *     // Within the key "xyz", we have a list of key-value pair, where key is always "USERNAME"
+     *     // NOTE: In HOCON, there is always a need of key (in this case, xyz) at parent level.
+     *
+     *     val listConfig = nested("xyz")(list(config))
+     *
+     *     val userNames: Either[ReadError[String], List[String]] =
+     *       getSource.flatMap(source => read(listConfig from source))
+     *
+     *     println(userNames)
+     *  }}}
+     *
+     *  returns
+     *
+     *  {{{
+     *
+     *    Right(List(value1, value2))
+     *
+     *  }}}
+     *
+     *  NOTE:
+     *
+     *  `nested("xyz")(list(string("USERNAME"))` is same as `list("xyz")(string("USERNAME"))`
+     */
     def list[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       Sequence(ConfigSourceFunctions.empty, thunk(desc))
 
+    /**
+     *  `list("xyz")(confgDescriptor)` represents just a list variant of configDescriptor within the key `xyz`.
+     *  Note that, `nested("xyz")(list(configDescriptor))` is same as `list("xyz")(configDescriptor)`.
+     *
+     *  For example: `list("key")(string)` implies value of `key` is of the type `List[String]`
+     *
+     *  Here is a more detailed example.
+     *
+     *  We know `val config = string("USERNAME") from source`
+     *  represents a program that says, there exists a key called
+     *  "USERNAME" (in some ConfigSource called source)
+     *  with a value that is of the type `String`.
+     *
+     *  `list("xyz")(config)` would then imply, there exists a list of `USERNAME -> value` pair within the key "xyz".
+     *
+     *  {{{
+     *    val json =
+     *       s"""
+     *          | xyz : [
+     *          |   {
+     *          |     "USERNAME" : "value1"
+     *          |   },
+     *          |
+     *          |   {
+     *          |     "USERNAME" : "value2"
+     *          |   }
+     *          | ]
+     *          |""".stripMargin
+     *
+     *     val getSource: Either[ReadError[String], ConfigSource] =
+     *       TypesafeConfigSource.fromHoconString(json)
+     *
+     *     val config = string("USERNAME")
+     *
+     *     // Within the key "xyz", we have a list of key-value pair, where key is always "USERNAME"
+     *     // NOTE: In HOCON, there is always a need of key (in this case, xyz) at parent level.
+     *
+     *     val listConfig = list("xyz")(config)
+     *
+     *     val userNames: Either[ReadError[String], List[String]] =
+     *       getSource.flatMap(source => read(listConfig from source))
+     *
+     *     println(userNames)
+     *  }}}
+     *
+     *  returns
+     *
+     *  {{{
+     *
+     *    Right(List(value1, value2))
+     *
+     *  }}}
+     */
     def list[A](
       path: K
     )(desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       nested(path)(list(desc))
 
+    /**
+     *  `listOrSingleton` is a flexible version of `list`. This means, even if the value is not of the type `List`
+     *  it considers the value a singleton and returns `List(singleValue)`
+     *
+     *  We `list("xyz")(confgDescriptor)` represents just a list variant of configDescriptor within the key `xyz`.
+     *  That is `list("key")(string)` implies value of `key` is of the type `List[String]`
+     *
+     *  However if the value of `key` was not a list, but instead a simple string, and if we are using `listOrSingleton`
+     *  it will be considered as a `List`.
+     *
+     *  Here is a more detailed example.
+     *
+     *  {{{
+     *      val json =
+     *       s"""
+     *          | USERNAME : {
+     *          |     "USERNAME" : "abc"
+     *          |   }
+     *          |""".stripMargin
+     *
+     *     val getSource: Either[ReadError[String], ConfigSource] =
+     *       TypesafeConfigSource.fromHoconString(json)
+     *
+     *     val config = string("USERNAME")
+     *
+     *     val usernames: Either[ReadError[String], List[String]] =
+     *       getSource.flatMap(
+     *         source => read(listOrSingleton("configs")(config) from source)
+     *       )
+     *  }}}
+     *
+     *  returns
+     *
+     *  {{{
+     *
+     *    Right(List(value1))
+     *
+     *  }}}
+     */
     def listOrSingleton[A](
       path: K
     )(desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
@@ -1354,13 +1500,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def nested[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(ConfigSourceFunctions.empty, path, thunk(desc))
 
-    /**
-     *
-     * @param head
-     * @param tail
-     * @tparam A
-     * @return
-     */
     def sequence[A](
       head: => ConfigDescriptor[A],
       tail: ConfigDescriptor[A]*
