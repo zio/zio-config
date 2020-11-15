@@ -22,29 +22,21 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  {{{
      *    val port: ConfigDescriptor[Int] = int("PORT")
-     *     // NOTE: We are not attaching a real source here,
-     *     // because a config descriptor can exist without a source
      *  }}}
      *
-     * Later you decided to convert the type of `Port` from `Int` to `String`
-     * for a variety of reasons in your application.
+     * Later you decided to convert the type of from `Int` to `String` (for some reason)
      *
-     * In this case. In this case, `A => B` is `Int => String` which will always work.
+     * In this case. In this case, A => B` is `Int => String` which will always work.
      *
      * However, the reverse relationship (which is used to retrieve
-     * the original type from its transformed representation) is `String => Int` is
-     * not a total function, unless it was `String => Either[error, Int]`.
+     * the original type from its transformed representation) which is `String => Int` is no more a
+     * total function, unless it was `String => Either[error, Int]` or `String => Option[Int]`.
      *
      * That is, Not all elements of set `String` can be converted to `Int`.
-     * Example: A string "abc" cannot be converted to `Int`.
      *
-     * Hence we can do `s => Try(s.toInt).toOption` to mark the possibility of errors.
+     * To overcome this, we can do `s => Try(s.toInt).toOption` to mark the possibility of errors.
      * This is a function of the type: `B => Option[A]`.
      *
-     * Also note that, you can make use of `transformEither`
-     * instead of `apply` which is a much more powerful method to
-     * convert from one type to the other keeping the error information
-     * without falling back to `Option`.
      *
      *  {{{
      *
@@ -1313,7 +1305,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     Lazy(() => config0)
   }
-  
+
   private[config] object ConfigDescriptorAdt {
     sealed case class Default[A](config: ConfigDescriptor[A], default: A) extends ConfigDescriptor[A]
 
