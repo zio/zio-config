@@ -29,14 +29,14 @@ object DerivationUtils {
     configDesc match {
       case Default(config, default) =>
         val (inner, opt) = unwrapFromOptional(config.value)
-        (Default(thunk(inner), default), opt)
+        (Default(lazyDesc(inner), default), opt)
       case Describe(config, message) =>
         config.value match {
           case Optional(config) =>
             (config.value, true)
           case _ =>
             val (inner, opt) = unwrapFromOptional(config.value)
-            (Describe(thunk(inner), message), opt)
+            (Describe(lazyDesc(inner), message), opt)
         }
       case _ =>
         (configDesc.asInstanceOf[ConfigDescriptor[Any]], false)
