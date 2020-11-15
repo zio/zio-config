@@ -422,7 +422,7 @@ trait ConfigDocsModule extends WriteModule {
   final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
     def lookAhead(desc: LazyConfigDescriptor[_]): ConfigDescriptor[_] =
       desc.value match {
-        case XmapEither(config, f, g) => lookAhead(config)
+        case XmapEither(config, _, _) => lookAhead(config)
         case d: ConfigDescriptor[_]   => d
       }
 
