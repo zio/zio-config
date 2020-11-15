@@ -3,9 +3,9 @@ package zio.config.yaml
 import java.io.File
 import java.nio.file.Path
 
-import zio.{Has, Tag, ZLayer}
+import zio.{ Has, Tag, ZLayer }
 import zio.blocking.Blocking
-import zio.config.{ConfigDescriptor, ZConfig}
+import zio.config.{ ConfigDescriptor, ZConfig }
 
 object YamlConfig {
 

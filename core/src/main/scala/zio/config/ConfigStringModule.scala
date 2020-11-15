@@ -6,9 +6,8 @@ import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 import java.util.Properties
 
-import zio.{ Layer, Tag }
+import zio.{ Has, Layer, Tag, ZIO, ZLayer }
 import zio.system.System
-import zio.{ ZIO, ZLayer }
 
 import scala.concurrent.duration.Duration
 
@@ -18,109 +17,110 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     import ConfigDescriptorAdt._
 
     val bigDecimal: ConfigDescriptor[BigDecimal] =
-      Source(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal"
+      thunk(thunk(Source(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal"))
 
     def bigDecimal(path: String): ConfigDescriptor[BigDecimal] = nested(path)(bigDecimal)
 
     val bigInt: ConfigDescriptor[BigInt] =
-      Source(ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint"
+      thunk(Source(ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint")
 
     def bigInt(path: String): ConfigDescriptor[BigInt] = nested(path)(bigInt)
 
     val boolean: ConfigDescriptor[Boolean] =
-      Source(ConfigSource.empty, PropertyType.BooleanType) ?? "value of type boolean"
+      thunk(Source(ConfigSource.empty, PropertyType.BooleanType) ?? "value of type boolean")
 
     def boolean(path: String): ConfigDescriptor[Boolean] = nested(path)(boolean)
 
     val byte: ConfigDescriptor[Byte] =
-      Source(ConfigSource.empty, PropertyType.ByteType) ?? "value of type byte"
+      thunk(Source(ConfigSource.empty, PropertyType.ByteType) ?? "value of type byte")
 
     def byte(path: String): ConfigDescriptor[Byte] = nested(path)(byte)
 
     val double: ConfigDescriptor[Double] =
-      Source(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double"
+      thunk(Source(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double")
 
     def double(path: String): ConfigDescriptor[Double] = nested(path)(double)
 
     val duration: ConfigDescriptor[Duration] =
-      Source(ConfigSource.empty, PropertyType.DurationType) ?? "value of type duration"
+      thunk(Source(ConfigSource.empty, PropertyType.DurationType) ?? "value of type duration")
 
     def duration(path: String): ConfigDescriptor[Duration] = nested(path)(duration)
 
     val file: ConfigDescriptor[File] =
-      Source(ConfigSource.empty, PropertyType.FileType) ?? "value of type file"
+      thunk(Source(ConfigSource.empty, PropertyType.FileType) ?? "value of type file")
 
     def file(path: String): ConfigDescriptor[File] = nested(path)(file)
 
     val float: ConfigDescriptor[Float] =
-      Source(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
+      thunk(Source(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float")
 
     def float(path: String): ConfigDescriptor[Float] = nested(path)(float)
 
     val instant: ConfigDescriptor[Instant] =
-      Source(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant"
+      thunk(Source(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant")
 
     def instant(path: String): ConfigDescriptor[Instant] = nested(path)(instant)
 
     val int: ConfigDescriptor[Int] =
-      Source(ConfigSource.empty, PropertyType.IntType) ?? "value of type int"
+      thunk(Source(ConfigSource.empty, PropertyType.IntType) ?? "value of type int")
 
     def int(path: String): ConfigDescriptor[Int] = nested(path)(int)
 
     val localDate: ConfigDescriptor[LocalDate] =
-      Source(ConfigSource.empty, PropertyType.LocalDateType) ?? "value of type localdate"
+      thunk(Source(ConfigSource.empty, PropertyType.LocalDateType) ?? "value of type localdate")
 
     def localDate(path: String): ConfigDescriptor[LocalDate] = nested(path)(localDate)
 
     val localDateTime: ConfigDescriptor[LocalDateTime] =
-      Source(ConfigSource.empty, PropertyType.LocalDateTimeType) ?? "value of type localdatetime"
+      thunk(Source(ConfigSource.empty, PropertyType.LocalDateTimeType) ?? "value of type localdatetime")
 
     def localDateTime(path: String): ConfigDescriptor[LocalDateTime] = nested(path)(localDateTime)
 
     val localTime: ConfigDescriptor[LocalTime] =
-      Source(ConfigSource.empty, PropertyType.LocalTimeType) ?? "value of type localtime"
+      thunk(Source(ConfigSource.empty, PropertyType.LocalTimeType) ?? "value of type localtime")
 
     def localTime(path: String): ConfigDescriptor[LocalTime] = nested(path)(localTime)
 
     val long: ConfigDescriptor[Long] =
-      Source(ConfigSource.empty, PropertyType.LongType) ?? "value of type long"
+      thunk(Source(ConfigSource.empty, PropertyType.LongType) ?? "value of type long")
 
     def long(path: String): ConfigDescriptor[Long] = nested(path)(long)
 
     val short: ConfigDescriptor[Short] =
-      Source(ConfigSource.empty, PropertyType.ShortType) ?? "value of type short"
+      thunk(Source(ConfigSource.empty, PropertyType.ShortType) ?? "value of type short")
 
     def short(path: String): ConfigDescriptor[Short] = nested(path)(short)
 
     val string: ConfigDescriptor[String] =
-      Source(ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
+      thunk(Source(ConfigSource.empty, PropertyType.StringType) ?? "value of type string")
 
     def string(path: String): ConfigDescriptor[String] = nested(path)(string)
 
     val uri: ConfigDescriptor[URI] =
-      Source(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
+      thunk(Source(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri")
 
     def uri(path: String): ConfigDescriptor[URI] = nested(path)(uri)
 
     val uuid: ConfigDescriptor[UUID] =
-      Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
+      thunk(Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid")
 
     def uuid(path: String): ConfigDescriptor[UUID] = nested(path)(uuid)
 
     val url: ConfigDescriptor[URL] =
-      Source(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL"
+      thunk(Source(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL")
 
     def url(path: String): ConfigDescriptor[URL] = nested(path)(url)
 
     val zioDuration: ConfigDescriptor[zio.duration.Duration] =
-      Source(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
+      thunk(Source(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration")
 
     def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
 
     val javaFilePath: ConfigDescriptor[java.nio.file.Path] =
-      Source(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path"
+      thunk(Source(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path")
 
-    def javaFilePath(path: String): ConfigDescriptor[java.nio.file.Path] = nested(path)(javaFilePath)
+    def javaFilePath(path: String): ConfigDescriptor[java.nio.file.Path] =
+      thunk(nested(path)(javaFilePath))
   }
 
   /**
@@ -228,7 +228,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter)
       )
@@ -260,7 +260,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(configDescriptor from ConfigSource.fromMap(map, source, keyDelimiter, valueDelimiter))
 
     /**
@@ -287,7 +287,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       source: String,
       keyDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter))
 
     /**
@@ -317,7 +317,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       source: String,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromProperties(properties, source, keyDelimiter, valueDelimiter)
       )
@@ -349,7 +349,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[Throwable, ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[Throwable, Has[A]] =
       fromConfigDescriptorM(
         ConfigSource
           .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter)
@@ -383,7 +383,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
       fromConfigDescriptorM(ConfigSource.fromSystemEnv(keyDelimiter, valueDelimiter).map(configDescriptor from _))
 
     /**
@@ -412,19 +412,19 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
       fromConfigDescriptorM(
         ConfigSource.fromSystemProperties(keyDelimiter, valueDelimiter).map(configDescriptor from _)
       )
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
-    )(implicit tag: Tag[A]): Layer[ReadError[K], ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[K], Has[A]] =
       ZLayer.fromEffect(ZIO.fromEither(read(configDescriptor)))
 
     private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
       configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
-    )(implicit tag: Tag[A]): ZLayer[R, E, ZConfig[A]] =
+    )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
       ZLayer.fromEffect(
         configDescriptor.flatMap(
           descriptor => ZIO.fromEither(read(descriptor))

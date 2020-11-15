@@ -237,7 +237,6 @@ trait ConfigDocsModule extends WriteModule {
     def toGithubFlavouredMarkdown(implicit S: K =:= String): String =
       toMarkdown(Table.githubFlavoured)
 
-
     def toMarkdown(
       getLink: (Heading, Int, Either[FieldName, Format]) => Link
     )(implicit S: K =:= String): String = {

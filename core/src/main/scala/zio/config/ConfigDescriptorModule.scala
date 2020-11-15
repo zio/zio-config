@@ -6,6 +6,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   import ConfigDescriptorAdt._
 
   sealed trait ConfigDescriptor[A] { self =>
+
     /**
      * Given `A` and `B` the below `apply` function is used to
      * convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
@@ -474,12 +475,12 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case DynamicMap(source, conf)     => DynamicMap(source, conf.map(loop))
           case Nested(source, path, conf) =>
             Nested(source, f(path), conf.map(loop))
-          case Optional(conf)           => Optional(conf.map(loop))
-          case Sequence(source, conf)   => Sequence(source, conf.map(loop))
-          case Describe(conf, message)  => Describe(conf.map(loop), message)
-          case Default(value, value2)   => Default(value.map(loop), value2)
+          case Optional(conf)                => Optional(conf.map(loop))
+          case Sequence(source, conf)        => Sequence(source, conf.map(loop))
+          case Describe(conf, message)       => Describe(conf.map(loop), message)
+          case Default(value, value2)        => Default(value.map(loop), value2)
           case TransformOrFail(config, f, g) => XmapEither(config.map(loop), f, g)
-          case Zip(conf1, conf2)        => Zip(conf1.map(loop), conf2.map(loop))
+          case Zip(conf1, conf2)             => Zip(conf1.map(loop), conf2.map(loop))
           case OrElseEither(value1, value2) =>
             OrElseEither(value1.map(loop), value2.map(loop))
           case OrElse(value1, value2) =>
@@ -827,17 +828,17 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[A] = {
       def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
         config match {
-          case Lazy(thunk) => Lazy(() => loop(thunk()))
+          case Lazy(thunk)                  => Lazy(() => loop(thunk()))
           case Source(source, propertyType) => Source(f(source), propertyType)
           case DynamicMap(source, conf)     => DynamicMap(f(source), loop(conf))
           case Nested(source, path, conf) =>
             Nested(f(source), path, loop(conf))
-          case Optional(conf)          => Optional(loop(conf))
-          case Sequence(source, conf)  => Sequence(f(source), loop(conf))
-          case Describe(conf, message) => Describe(loop(conf), message)
-          case Default(value, value2)  => Default(loop(value), value2)
-          case TransformOrFail(conf, f, g)  => TransformOrFail(loop(conf), f, g)
-          case Zip(conf1, conf2)       => Zip(loop(conf1), loop(conf2))
+          case Optional(conf)              => Optional(loop(conf))
+          case Sequence(source, conf)      => Sequence(f(source), loop(conf))
+          case Describe(conf, message)     => Describe(loop(conf), message)
+          case Default(value, value2)      => Default(loop(value), value2)
+          case TransformOrFail(conf, f, g) => TransformOrFail(loop(conf), f, g)
+          case Zip(conf1, conf2)           => Zip(loop(conf1), loop(conf2))
           case OrElseEither(value1, value2) =>
             OrElseEither(loop(value1), loop(value2))
           case OrElse(value1, value2) =>
@@ -1040,21 +1041,24 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *     )
      * }}}
      */
-    def collectAll[A](head: => ConfigDescriptor[A], tail: (=> ConfigDescriptor[A])*): ConfigDescriptor[List[A]] =
-      tail.map(thunk(_)).reverse.foldLeft[ConfigDescriptor[(A, List[A])]](
-        thunk(head).transform((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
-      )(
-        (b: ConfigDescriptor[(A, List[A])], a: ConfigDescriptor[A]) =>
-          b.zipWith(a)({
-            case ((first, tail), a) => Right((first, a :: tail))
-          }, {
-            case (_, Nil)              => Left("Invalid list length")
-            case (first, head :: tail) => Right(((first, tail), head))
-          })
-      )(
-        { case (a, t) => a :: t },
-        l => l.headOption.map(h => (h, l.tail))
-      )
+    def collectAll[A](head: => ConfigDescriptor[A], tail: ConfigDescriptor[A]*): ConfigDescriptor[List[A]] =
+      tail
+        .map(thunk(_))
+        .reverse
+        .foldLeft[ConfigDescriptor[(A, List[A])]](
+          thunk(head).transform((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
+        )(
+          (b: ConfigDescriptor[(A, List[A])], a: ConfigDescriptor[A]) =>
+            b.zipWith(a)({
+              case ((first, tail), a) => Right((first, a :: tail))
+            }, {
+              case (_, Nil)              => Left("Invalid list length")
+              case (first, head :: tail) => Right(((first, tail), head))
+            })
+        )(
+          { case (a, t) => a :: t },
+          l => l.headOption.map(h => (h, l.tail))
+        )
 
     /**
      *  `head` describes getting the head of a possible list value
@@ -1302,17 +1306,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
   }
 
-  // TODO; Move elsewhere
-  sealed case class Lazy[A](
-    private val get: () => ConfigDescriptor[A]
-  ) extends ConfigDescriptor[A] {
-    def value: ConfigDescriptor[A] = get()
-    def map[B](
-      f: ConfigDescriptor[A] => ConfigDescriptor[B]
-    ): Lazy[B] =
-      Lazy(() => f(get()))
-  }
-
   final def thunk[A](config: => ConfigDescriptor[A]): ConfigDescriptor[A] = {
     lazy val config0 = config
 
@@ -1365,21 +1358,22 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   }
 
   private[config] object ConfigDescriptorAdt {
-    sealed case class LazyConfigDescriptor[A](
+    sealed case class Lazy[A](
       private val get: () => ConfigDescriptor[A]
     ) extends ConfigDescriptor[A] {
       def value: ConfigDescriptor[A] = get()
       def map[B](
         f: ConfigDescriptor[A] => ConfigDescriptor[B]
-      ): LazyConfigDescriptor[B] =
-        LazyConfigDescriptor(() => f(get()))
+      ): Lazy[B] =
+        Lazy(() => f(get()))
     }
 
     sealed case class Default[A](config: ConfigDescriptor[A], default: A) extends ConfigDescriptor[A]
 
     sealed case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-    sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[Map[K, A]]
+    sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A])
+        extends ConfigDescriptor[Map[K, A]]
 
     sealed case class Nested[A](source: ConfigSource, path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
@@ -1396,8 +1390,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class Zip[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B]) extends ConfigDescriptor[(A, B)]
 
-    sealed case class TransformOrFail[A, B](config: ConfigDescriptor[A], f: A => Either[String, B], g: B => Either[String, A])
-        extends ConfigDescriptor[B]
+    sealed case class TransformOrFail[A, B](
+      config: ConfigDescriptor[A],
+      f: A => Either[String, B],
+      g: B => Either[String, A]
+    ) extends ConfigDescriptor[B]
   }
 
 }

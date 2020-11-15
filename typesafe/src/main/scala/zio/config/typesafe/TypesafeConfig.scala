@@ -3,8 +3,8 @@ package zio.config.typesafe
 import java.io.File
 
 import com.typesafe.config.ConfigFactory
-import zio.config.{ConfigDescriptor, ReadError, ZConfig}
-import zio.{Has, Layer, Tag, ZIO}
+import zio.config.{ ConfigDescriptor, ReadError, ZConfig }
+import zio.{ Has, Layer, Tag, ZIO }
 
 object TypesafeConfig {
   def fromDefaultLoader[A](

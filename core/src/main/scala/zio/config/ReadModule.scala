@@ -240,17 +240,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String]
     ): Res[B] =
       config match {
-        case c @ Default(_, _)        => loopDefault(path, keys, c, descriptions)
-        case c @ Describe(_, message) => loopAny(path, keys, c.config.value, descriptions :+ message)
-        case c @ DynamicMap(_, _)     => loopMap(path, keys, c, descriptions)
-        case c @ Nested(_, _, _)      => loopNested(path, keys, c, descriptions)
-        case c @ Optional(_)          => loopOptional(path, keys, c, descriptions)
-        case c @ OrElse(_, _)         => loopOrElse(path, keys, c, descriptions)
-        case c @ OrElseEither(_, _)   => loopOrElseEither(path, keys, c, descriptions)
-        case c @ Source(_, _)         => loopSource(path, keys, c, descriptions)
-        case c @ Zip(_, _)            => loopZip(path, keys, c, descriptions)
-        case c @ TransformOrFail(_, _, _)  => loopXmapEither(path, keys, c, descriptions)
-        case c @ Sequence(_, _)       => loopSequence(path, keys, c, descriptions)
+        case c @ Default(_, _)            => loopDefault(path, keys, c, descriptions)
+        case c @ Describe(_, message)     => loopAny(path, keys, c.config.value, descriptions :+ message)
+        case c @ DynamicMap(_, _)         => loopMap(path, keys, c, descriptions)
+        case c @ Nested(_, _, _)          => loopNested(path, keys, c, descriptions)
+        case c @ Optional(_)              => loopOptional(path, keys, c, descriptions)
+        case c @ OrElse(_, _)             => loopOrElse(path, keys, c, descriptions)
+        case c @ OrElseEither(_, _)       => loopOrElseEither(path, keys, c, descriptions)
+        case c @ Source(_, _)             => loopSource(path, keys, c, descriptions)
+        case c @ Zip(_, _)                => loopZip(path, keys, c, descriptions)
+        case c @ TransformOrFail(_, _, _) => loopXmapEither(path, keys, c, descriptions)
+        case c @ Sequence(_, _)           => loopSequence(path, keys, c, descriptions)
       }
 
     loopAny(Nil, Nil, configuration, Nil).map(_.value)
@@ -331,17 +331,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loop[B](count: List[K], config: ConfigDescriptor[B]): Int =
       config match {
-        case ConfigDescriptorAdt.Zip(_, _)             => countZipSize(config)
+        case ConfigDescriptorAdt.Zip(_, _)                  => countZipSize(config)
         case ConfigDescriptorAdt.TransformOrFail(cfg, _, _) => loop(count, cfg.value)
-        case ConfigDescriptorAdt.Describe(cfg, _)      => loop(count, cfg.value)
-        case ConfigDescriptorAdt.Nested(_, _, next)    => loop(count, next.value)
-        case ConfigDescriptorAdt.Source(_, _)          => 1
-        case ConfigDescriptorAdt.Optional(_)           => 0
-        case ConfigDescriptorAdt.OrElse(_, _)          => countOrElseSize(config)
-        case ConfigDescriptorAdt.OrElseEither(_, _)    => countOrElseEitherSize(config)
-        case ConfigDescriptorAdt.Default(_, _)         => 0
-        case ConfigDescriptorAdt.Sequence(_, _)        => 1
-        case ConfigDescriptorAdt.DynamicMap(_, _)      => 1
+        case ConfigDescriptorAdt.Describe(cfg, _)           => loop(count, cfg.value)
+        case ConfigDescriptorAdt.Nested(_, _, next)         => loop(count, next.value)
+        case ConfigDescriptorAdt.Source(_, _)               => 1
+        case ConfigDescriptorAdt.Optional(_)                => 0
+        case ConfigDescriptorAdt.OrElse(_, _)               => countOrElseSize(config)
+        case ConfigDescriptorAdt.OrElseEither(_, _)         => countOrElseEitherSize(config)
+        case ConfigDescriptorAdt.Default(_, _)              => 0
+        case ConfigDescriptorAdt.Sequence(_, _)             => 1
+        case ConfigDescriptorAdt.DynamicMap(_, _)           => 1
       }
 
     loop(Nil, config)
