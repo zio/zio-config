@@ -6,7 +6,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   import ConfigDescriptorAdt._
 
   sealed trait ConfigDescriptor[A] { self =>
-
     /**
      * Given `A` and `B` the below `apply` function is used to
      * convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.

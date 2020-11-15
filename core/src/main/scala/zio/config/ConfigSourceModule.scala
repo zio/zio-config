@@ -34,6 +34,9 @@ trait ConfigSourceModule extends KeyValueModule {
       )
 
     def <>(that: => ConfigSource): ConfigSource = self orElse that
+
+    def convertKeys(f: K => K): ConfigSource =
+      getConfigSource(names, l => getConfigValue(l.map(f)), leafForSequence)
   }
 
   protected def getConfigSource(

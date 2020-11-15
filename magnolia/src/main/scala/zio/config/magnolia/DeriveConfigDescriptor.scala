@@ -238,6 +238,7 @@ trait DeriveConfigDescriptor { self =>
      *
      * `descriptor[MyConfig]` works only if all the types that forms `MyConfig` has an instance of `Descriptor`.
      * For almost all the important types, zio-config-magnolia already provides implicit instances for `Descriptor`.
+     *
      * However, say you have a type ZonedDateTime, for which zio-config hasn't provided instance of `Descriptor`, then it will fail to compile.
      * {{{
      *      case class MyConfig(x: ZonedDateTime)
