@@ -19,6 +19,10 @@ trait ConfigSourceModule extends KeyValueModule {
 
   trait ConfigSource { self =>
     def names: Set[ConfigSourceName]
+    // Pass a list of K and Set of Hint
+    // sealed trait StructureHint
+    // case object IsSequence extends StructureHint
+    // ...
     def getConfigValue: List[K] => PropertyTree[K, V]
     def leafForSequence: LeafForSequence
 
@@ -35,6 +39,7 @@ trait ConfigSourceModule extends KeyValueModule {
   protected def getConfigSource(
     sourceNames: Set[ConfigSourceName],
     getTree: List[K] => PropertyTree[K, V],
+    // FIXME: May be move to specific sources
     isLeafValidSequence: LeafForSequence
   ): ConfigSource =
     new ConfigSource { self =>

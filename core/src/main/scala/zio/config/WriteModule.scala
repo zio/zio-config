@@ -36,7 +36,7 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
         case Default(c, _) =>
           go(c.value, b)
 
-        case XmapEither(c, _, to) => {
+        case TransformOrFail(c, _, to) => {
           to(b) match {
             case Right(before) =>
               go(c.value, before)

@@ -28,7 +28,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           lookAheadForDescriptions(config.value, message :: result)
         case Optional(config) =>
           lookAheadForDescriptions(config.value, result)
-        case XmapEither(config, _, _) =>
+        case TransformOrFail(config, _, _) =>
           lookAheadForDescriptions(config.value, result)
         case _ =>
           result.reverse
@@ -160,7 +160,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     def loopXmapEither[B, C](
       path: List[Step[K]],
       keys: List[K],
-      cfg: XmapEither[B, C],
+      cfg: TransformOrFail[B, C],
       descriptions: List[String]
     ): Res[C] =
       loopAny(path, keys, cfg.config.value, descriptions) match {
@@ -249,14 +249,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case c @ OrElseEither(_, _)   => loopOrElseEither(path, keys, c, descriptions)
         case c @ Source(_, _)         => loopSource(path, keys, c, descriptions)
         case c @ Zip(_, _)            => loopZip(path, keys, c, descriptions)
-        case c @ XmapEither(_, _, _)  => loopXmapEither(path, keys, c, descriptions)
+        case c @ TransformOrFail(_, _, _)  => loopXmapEither(path, keys, c, descriptions)
         case c @ Sequence(_, _)       => loopSequence(path, keys, c, descriptions)
       }
 
     loopAny(Nil, Nil, configuration, Nil).map(_.value)
   }
 
-  def foldReadError[B](
+  private[config] def foldReadError[B](
     error: ReadError[K]
   )(alternative: B)(f: PartialFunction[ReadError[K], B])(g: (B, B) => B, zero: B): B = {
     def go(list: List[ReadError[K]]): B =
@@ -275,7 +275,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     }
   }
 
-  def handleDefaultValues[A, B](
+  private[config] def handleDefaultValues[A, B](
     error: ReadError[K],
     config: ConfigDescriptor[A],
     default: B
@@ -306,7 +306,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     }
   }
 
-  def parseErrorMessage(given: String, expectedType: String) =
+  private[config] def parseErrorMessage(given: String, expectedType: String) =
     s"Provided value is ${given.toString}, expecting the type ${expectedType}"
 
   final def requiredZipAndOrFields[A](config: ConfigDescriptor[A]): Int = {
@@ -332,7 +332,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     def loop[B](count: List[K], config: ConfigDescriptor[B]): Int =
       config match {
         case ConfigDescriptorAdt.Zip(_, _)             => countZipSize(config)
-        case ConfigDescriptorAdt.XmapEither(cfg, _, _) => loop(count, cfg.value)
+        case ConfigDescriptorAdt.TransformOrFail(cfg, _, _) => loop(count, cfg.value)
         case ConfigDescriptorAdt.Describe(cfg, _)      => loop(count, cfg.value)
         case ConfigDescriptorAdt.Nested(_, _, next)    => loop(count, next.value)
         case ConfigDescriptorAdt.Source(_, _)          => 1

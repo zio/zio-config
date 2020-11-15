@@ -168,11 +168,11 @@ trait ConfigDocsModule extends WriteModule {
 
           case c @ ConfigDocs.Sequence(schemaDocs, _) =>
             go(schemaDocs, previousPaths, Some(c), descriptionsUsedAlready)
-              .setFormatGlobally(Format.List)
+              .withFormat(Format.List)
 
           case c @ ConfigDocs.DynamicMap(schemaDocs, _) =>
             go(schemaDocs, previousPaths, Some(c), descriptionsUsedAlready)
-              .setFormatGlobally(Format.Map)
+              .withFormat(Format.Map)
         }
       }
 
@@ -180,8 +180,8 @@ trait ConfigDocsModule extends WriteModule {
     }
   }
 
-  object ConfigDocs {
-    case class Description(path: Option[K], description: String)
+  private[config] object ConfigDocs {
+    sealed case class Description(path: Option[K], description: String)
 
     def findByPath(description: List[Description], path: FieldName): List[Description] =
       description
@@ -194,14 +194,14 @@ trait ConfigDocsModule extends WriteModule {
             }
         )
 
-    case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None)
+    sealed case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None)
         extends ConfigDocs
-    case class Recursion(sources: Set[ConfigSourceName])                                  extends ConfigDocs
-    case class Nested(path: K, docs: ConfigDocs, descriptions: List[Description])         extends ConfigDocs
-    case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
-    case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
-    case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
-    case class DynamicMap(schemaDocs: ConfigDocs, valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs])
+    sealed case class Recursion(sources: Set[ConfigSourceName])                                  extends ConfigDocs
+    sealed case class Nested(path: K, docs: ConfigDocs, descriptions: List[Description])         extends ConfigDocs
+    sealed case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
+    sealed case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
+    sealed case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
+    sealed case class DynamicMap(schemaDocs: ConfigDocs, valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs])
         extends ConfigDocs
 
   }
@@ -213,19 +213,9 @@ trait ConfigDocsModule extends WriteModule {
    * @param rows: A table consist of multiple `TableRow`s where each `TableRow` holds the information about
    *            the config path.
    */
-  case class Table(rows: List[TableRow]) { self =>
-    def setFormatGlobally(format: Format): Table =
-      Table(rows.map(_.copy(format = Some(format))))
-
+  sealed case class Table(rows: List[TableRow]) { self =>
     def ++(that: Table): Table =
       Table(rows ++ that.rows)
-
-    /**
-     * Create a Github flavored markdown string from Table.
-     * This can be used to render markdowns in Github, Gitlab etc
-     */
-    def asGithubFlavouredMarkdown(implicit S: K =:= String): String =
-      asMarkdown(Table.githubFlavoured)
 
     /**
      * Create a Confluence flavored markdown string from Table.
@@ -235,12 +225,20 @@ trait ConfigDocsModule extends WriteModule {
      *               This can be the baseUrl of the confluence page in which markdown is rendered.
      *               The heading in markdown will be the keys of your application config.
      */
-    def asConfluenceMarkdown(
+    def toConfluenceMarkdown(
       baseUrl: Option[String]
-    )(implicit S: K =:= String): String =
-      asMarkdown(Table.confluenceFlavoured(baseUrl))
+    )(implicit S: K <:< String): String =
+      toMarkdown(Table.confluenceFlavoured(baseUrl))
 
-    def asMarkdown(
+    /**
+     * Create a Github flavored markdown string from Table.
+     * This can be used to render markdowns in Github, Gitlab etc
+     */
+    def toGithubFlavouredMarkdown(implicit S: K =:= String): String =
+      toMarkdown(Table.githubFlavoured)
+
+
+    def toMarkdown(
       getLink: (Heading, Int, Either[FieldName, Format]) => Link
     )(implicit S: K =:= String): String = {
       val headingColumns =
@@ -347,6 +345,9 @@ trait ConfigDocsModule extends WriteModule {
         System.lineSeparator()
       )
     }
+
+    def withFormat(format: Format): Table =
+      Table(rows.map(_.copy(format = Some(format))))
 
     private def padToEmpty(string: String, size: Int): String = {
       val maxSize = Math.max(string.length, size)
@@ -643,7 +644,7 @@ trait ConfigDocsModule extends WriteModule {
             )
           }
 
-        case XmapEither(c, _, _) =>
+        case TransformOrFail(c, _, _) =>
           loopTo(sources, descriptions, c.value, None, alreadySeen)
 
         case Zip(left, right) =>

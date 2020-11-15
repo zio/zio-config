@@ -62,7 +62,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
           ConfigDescriptor.list {
             (ConfigDescriptor.nested("A")(ConfigDescriptor.string("a")(A.apply, A.unapply)) orElseEither
               ConfigDescriptor.nested("B")(ConfigDescriptor.boolean("b")(B.apply, B.unapply)))
-              .xmap(_.merge, (_: Sum) match {
+              .transform(_.merge, (_: Sum) match {
                 case a: A => Left(a)
                 case b: B => Right(b)
               })

@@ -12,7 +12,7 @@ import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 
 object TypesafeConfigSource {
-  def fromDefaultLoader: Either[ReadError[String], ConfigSource] =
+  def unsafeDefaultLoader: Either[ReadError[String], ConfigSource] =
     fromTypesafeConfig(ConfigFactory.load.resolve)
 
   def fromHoconFile[A](

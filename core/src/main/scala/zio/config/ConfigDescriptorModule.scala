@@ -14,9 +14,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * While we can retrieve B directly from A,
      * there is no guarantee that reverse relationship exists. i.e, B => A.
      *
-     * Instead the reverse relationship is `B => Option[A]`.
-     * This is why the arguments of this function are `app: A => B`
-     * and `unapp: B => Option[A]`
+     * Instead the reverse relationship is `B => Option[A]`. `apply` is a "convenient" version of
+     * `transformOrFail`, and is mainly used to `apply` and `unapply` case-classes from elements.
      *
      * Let's define a simple `ConfigDescriptor`,
      * that talks about retrieving a `String` configuration (example: PORT).
@@ -92,7 +91,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  }}}
      */
     def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[B] =
-      XmapEither(
+      TransformOrFail(
         thunk(this),
         (a: A) => Right[String, B](app(a)),
         unapp(_)
@@ -217,25 +216,25 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      */
     final def |@|[B](
       that: => ConfigDescriptor[B]
-    ): ProductBuilder[LazyConfigDescriptor, ConfigDescriptor, A, B] =
-      new ProductBuilder[LazyConfigDescriptor, ConfigDescriptor, A, B] {
+    ): ProductBuilder[ConfigDescriptor, ConfigDescriptor, A, B] =
+      new ProductBuilder[ConfigDescriptor, ConfigDescriptor, A, B] {
 
-        override def zip[X, Y]: (LazyConfigDescriptor[X], LazyConfigDescriptor[Y]) => LazyConfigDescriptor[(X, Y)] =
-          (a, b) => thunk(a.value.zip(b.value))
+        override def zip[X, Y]: (ConfigDescriptor[X], ConfigDescriptor[Y]) => ConfigDescriptor[(X, Y)] =
+          (a, b) => thunk(a.zip(b))
 
         override def xmapEither[X, Y]
-          : (LazyConfigDescriptor[X], X => Either[String, Y], Y => Either[String, X]) => LazyConfigDescriptor[Y] =
-          (a, b, c) => thunk(a.value.xmapEither(b, c))
+          : (ConfigDescriptor[X], X => Either[String, Y], Y => Either[String, X]) => ConfigDescriptor[Y] =
+          (a, b, c) => thunk(a.transformOrFail(b, c))
 
         override def pack[X](
           x: => ConfigDescriptor[X]
-        ): LazyConfigDescriptor[X] = thunk(x)
+        ): ConfigDescriptor[X] = thunk(x)
         override def unpack[X](
-          x: LazyConfigDescriptor[X]
-        ): ConfigDescriptor[X] = x.value
+          x: ConfigDescriptor[X]
+        ): ConfigDescriptor[X] = x
 
-        override val a: LazyConfigDescriptor[A] = thunk(self)
-        override val b: LazyConfigDescriptor[B] = thunk(that)
+        override val a: ConfigDescriptor[A] = thunk(self)
+        override val b: ConfigDescriptor[B] = thunk(that)
       }
 
     /**
@@ -480,7 +479,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Sequence(source, conf)   => Sequence(source, conf.map(loop))
           case Describe(conf, message)  => Describe(conf.map(loop), message)
           case Default(value, value2)   => Default(value.map(loop), value2)
-          case XmapEither(config, f, g) => XmapEither(config.map(loop), f, g)
+          case TransformOrFail(config, f, g) => XmapEither(config.map(loop), f, g)
           case Zip(conf1, conf2)        => Zip(conf1.map(loop), conf2.map(loop))
           case OrElseEither(value1, value2) =>
             OrElseEither(value1.map(loop), value2.map(loop))
@@ -829,20 +828,21 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[A] = {
       def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
         config match {
+          case Lazy(thunk) => Lazy(() => loop(thunk()))
           case Source(source, propertyType) => Source(f(source), propertyType)
-          case DynamicMap(source, conf)     => DynamicMap(f(source), conf.map(loop))
+          case DynamicMap(source, conf)     => DynamicMap(f(source), loop(conf))
           case Nested(source, path, conf) =>
-            Nested(f(source), path, conf.map(loop))
-          case Optional(conf)          => Optional(conf.map(loop))
-          case Sequence(source, conf)  => Sequence(f(source), conf.map(loop))
-          case Describe(conf, message) => Describe(conf.map(loop), message)
-          case Default(value, value2)  => Default(value.map(loop), value2)
-          case XmapEither(conf, f, g)  => XmapEither(conf.map(loop), f, g)
-          case Zip(conf1, conf2)       => Zip(conf1.map(loop), conf2.map(loop))
+            Nested(f(source), path, loop(conf))
+          case Optional(conf)          => Optional(loop(conf))
+          case Sequence(source, conf)  => Sequence(f(source), loop(conf))
+          case Describe(conf, message) => Describe(loop(conf), message)
+          case Default(value, value2)  => Default(loop(value), value2)
+          case TransformOrFail(conf, f, g)  => TransformOrFail(loop(conf), f, g)
+          case Zip(conf1, conf2)       => Zip(loop(conf1), loop(conf2))
           case OrElseEither(value1, value2) =>
-            OrElseEither(value1.map(loop), value2.map(loop))
+            OrElseEither(loop(value1), loop(value2))
           case OrElse(value1, value2) =>
-            OrElse(value1.map(loop), value2.map(loop))
+            OrElse(loop(value1), loop(value2))
         }
 
       loop(self)
@@ -879,7 +879,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  }}}
      */
     final def transform[B](to: A => B, from: B => A): ConfigDescriptor[B] =
-      self.xmapEither(a => Right(to(a)), b => Right(from(b)))
+      self.transformOrFail(a => Right(to(a)), b => Right(from(b)))
 
     /**
      * `transformEither` is an alias to `xmapEither`.
@@ -925,217 +925,20 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  }}}
      *
      */
-    final def transformEither[B](
+    final def transformOrFail[B](
       to: A => Either[String, B],
       from: B => Either[String, A]
     ): ConfigDescriptor[B] =
-      self.xmapEither(to, from)
+      TransformOrFail(thunk(self), to, from)
 
-    final def transformEitherLeft[B](f: A => Either[String, B], g: B => A): ConfigDescriptor[B] =
-      self.transformEitherLeft(f)(g)(identity)
+    final def transformOrFailLeft[B](f: A => Either[String, B], g: B => A): ConfigDescriptor[B] =
+      self.transformOrFail(f, b => Right(g(b)))
 
-    final def transformEitherLeft[E, B](
-      f: A => Either[E, B]
-    )(g: B => A)(h: E => String): ConfigDescriptor[B] =
-      self.xmapEitherE[E, B](f)(b => Right(g(b)))(h)
-
-    final def transformEitherRight[B](
+    final def transformOrFailRight[B](
       f: A => B,
       g: B => Either[String, A]
     ): ConfigDescriptor[B] =
-      self.transformEitherRightE(f)(g)(identity)
-
-    final def transformEitherRightE[E, B](
-      f: A => B
-    )(g: B => Either[E, A])(h: E => String): ConfigDescriptor[B] =
-      self.xmapEitherE[E, B](t => Right(f(t)))(g)(h)
-
-    /**
-     * `xmap` is an alias to `transform`.
-     *
-     * Given `A` and `B`, `f: A => B`, and `g: B => A`, then
-     * `transform` allows us to transform a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
-     *
-     *
-     * Example :
-     *  `transform` is useful especially when you define newtypes.
-     *
-     *  {{{
-     *    final case class Port(port: Int) extends AnyVal
-     *
-     *    val config: ConfigDescriptor[Port] =
-     *      int("PORT").transform[Port](Port.apply, _.int)
-     *  }}}
-     *
-     *  While `to: A => B` (in this case, `Int => Port`) is used to read to a `Port` case class,
-     *  `from: B => A` (which is, `Port => Int`) is used when we want to write `Port` directly to a source representation.
-     *
-     *  Example:
-     *
-     *  {{{
-     *
-     *     import zio.config.typesafe._ // as toJson is available only through zio-config-typesafe module
-     *
-     *     val writtenBack: Either[String, PropertyTree[String, String]] = write(config, Port(8888))
-     *
-     *     val jsonRepr: Either[String, String] = writtenBack.map(_.toJson) // { "port" : "8888" }
-     *     val mapRepr: Either[String, Map[String, String]] = writtenBack.map(_.flattenString()) // Map("port" -> "8888")
-     *  }}}
-     */
-    final def xmap[B](to: A => B, from: B => A): ConfigDescriptor[B] =
-      self.xmapEither(a => Right(to(a)), b => Right(from(b)))
-
-    /**
-     * Given `A` and `B`, `xmapEither` function is used to convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
-     *
-     * It is important to note that both `to` and `fro` is fallible, allowing us to represent
-     * almost all possible relationships.
-     *
-     * Example:
-     *
-     * Let's define a simple `ConfigDescriptor`, that talks about retrieving a `S3Path` ( a bucket and prefix in AWS s3).
-     * Given you want to retrieve an S3Path from ConfigSource. Given a string, converting it to S3Path can fail, and even converting
-     * S3Path to a String can fail as well.
-     *
-     *  {{{
-     *    import java.time.DateTimeFormatter
-     *    import java.time.LocalDate
-     *
-     *     // We prefer important structures like S3Path in your application to be a well defined structure
-     *     // Usage of abstract sealed case class is to disallow direct creation of `S3Path` from anywhere else other
-     *     // than its companion object. This is not anything specific to zio-config.
-     *
-     *    final case class S3Path(bucket: String , prefix: String, partition: LocalDate) {
-     *      def convertToString(partitionPattern: String): Either[String, String] =
-     *        Try { DateTimeFormatter.ofPattern(partitionPattern).format(partition) }.toEither
-     *          .map(dateStr => s"\${bucket}/\${prefix}/\${dateStr}").swap.map(_.getMessage).swap
-     *    }
-     *
-     *    object S3Path {
-     *      def fromStr(s3Path: String): Either[String, S3Path] = {
-     *        val splitted = s3Path.split("/").toList
-     *
-     *        if (splitted.size > 3)
-     *          Left("Invalid s3 path")
-     *        else
-     *          for {
-     *             bucket <- splitted.headOption.toRight("Empty s3 path")
-     *             prefix <- splitted.lift(1).toRight("Invalid prefix, or empty prefix in s3 path")
-     *             date <- splitted.lift(2).toRight("Empty partition")
-     *              partition <- Try(LocalDate.parse(date)).toEither
-     *          } yield S3Path(bucket, prefix, partition)
-     *      }
-     *    }
-     *
-     *    val s3PathConfig: ConfigDescriptor[S3Path] =
-     *      string("S3_PATH").xmapEither[S3Path](S3Path.fromStr, _.convertToString("yyyy-MM-dd"))
-     *
-     *  }}}
-     *
-     */
-    final def xmapEither[B](f: A => Either[String, B], g: B => Either[String, A]): ConfigDescriptor[B] =
-      XmapEither(thunk(self), f, g)
-
-    /**
-     * Given `A` and `B`, `xmapEitherE` function is used to
-     * convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
-     *
-     * It is important to note that both `to` and `fro` is fallible,
-     * allowing us to represent almost all possible relationships.
-     *
-     * `xmapEitherE` is a more generalised form of `xmapEither`.
-     *
-     * Unlike `xmapEither`, the errors doesn't need to be a `String` when using
-     * `xmapEitherE` as long as there is a way to convert `E` to `String` (`show`).
-     *
-     * The reason behind existence of `show` (a `String` representation of `E`)
-     * is because of the following:
-     *   All the errors need to be printed out to the user (console/log)
-     *   during failed configuration retrievals, or during documentation.
-     *
-     * Unlike `xmapEither`, `xmapEitherE` is curried to make better use of Scala's type inference.
-     *
-     * Example:
-     *
-     * Let's define a simple `ConfigDescriptor`, that talks about retrieving
-     * a `S3Path` ( a bucket and prefix followed by a partition director in AWS s3)
-     * from (any) ConfigSource.
-     *
-     * Given a string at the source, converting it to S3Path can fail,
-     * and even converting S3Path to a String can fail as well.
-     *
-     *  {{{
-     *    import java.time.DateTimeFormatter
-     *    import java.time.LocalDate
-     *
-     *    // We prefer important structures like S3Path in your application
-     *    // to be a well defined structure
-     *
-     *    // Usage of `abstract sealed case class` is to disallow
-     *    // direct creation of `S3Path` from anywhere else other
-     *    // than its companion object. This is not anything specific to zio-config.
-     *
-     *    abstract sealed case class S3Path(bucket: String , prefix: String, partition: LocalDate) {
-     *      def convertToString(partitionPattern: String): Either[Throwable, String] =
-     *        Try { DateTimeFormatter.ofPattern(partitionPattern).format(partition) }.toEither
-     *          .map(dateStr => s"\${bucket}/\${prefix}/\${dateStr}")
-     *    }
-     *
-     *    object S3Path {
-     *      def fromStr(s3Path: String): Either[Throwable, S3Path] = {
-     *        val splitted = s3Path.split("/").toList
-     *
-     *        if (splitted.size > 3)
-     *          Left(new RuntimeException("Invalid s3 path"))
-     *        else
-     *         for {
-     *           bucket <- splitted.headOption.toRight(new RuntimeException("Empty s3 path"))
-     *           prefix <- splitted.lift(1).toRight(new RuntimeException("Invalid prefix, or empty prefix in s3 path"))
-     *           date <- splitted.lift(2).toRight(new RuntimeException("Empty partition"))
-     *           partition <- Try(LocalDate.parse(date)).toEither
-     *         } yield new S3Path(bucket, prefix, partition){}
-     *      }
-     *    }
-     *
-     *    val s3PathConfig: ConfigDescriptor[S3Path] =
-     *      string("S3_PATH").xmapEitherE[Throwable S3Path](S3Path.fromStr)(_.convertToString("yyyy-MM-dd"))(_.getMessage)
-     *
-     *  }}}
-     */
-    final def xmapEitherE[E, B](
-      to: A => Either[E, B]
-    )(from: B => Either[E, A])(show: E => String): ConfigDescriptor[B] =
-      self.xmapEither[B](
-        (a: A) => ((to(a): Either[E, B]).swap: Either[B, E]).map(show).swap,
-        (b: B) => ((from(b): Either[E, A]).swap: Either[A, E]).map(show).swap
-      )
-
-    /**
-     * `xmapEither2` is similar to `xmapEither` but the function
-     * is mostly used as an internal implementation
-     * in zio-config. For the same reason, users hardly need `xmapEither2`.
-     * Instead take a look at `xmapEither` (or `transformEither`).
-     *
-     * `xmapEither2` deals with retrieving two configurations represented
-     * by `ConfigDescriptor[A]` and `ConfigDescriptor[B]`,
-     * and corresponding `to` and `from` functions converting a tuple `(A, B)` to C` and it's
-     * reverse direction, to finally form a `ConfigDescriptor[C]`.
-     *
-     * Those who are familiar with `Applicative` in Functional programming,
-     * `xmapEither2` almost takes the form of `Applicative`:
-     * `F[A] => F[B] => (A, B) => C => F[C]`.
-     *
-     * Implementation detail:
-     * This is used to implement sequence` (`traverse`)
-     * behaviour of `ConfigDescriptor[A]`
-     */
-    final def xmapEither2[B, C](that: => ConfigDescriptor[B])(
-      to: (A, B) => Either[String, C],
-      from: C => Either[String, (A, B)]
-    ): ConfigDescriptor[C] =
-      (self |@| that)
-        .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
-        .xmapEither({ case (a, b) => to(a, b) }, from)
+      self.transformOrFail(t => Right(f(t)), (g))
 
     /**
      * `zip` is used to represent retrieving the config as a tuple.
@@ -1164,6 +967,33 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      */
     final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
       Zip(thunk(self), thunk(that))
+
+    /**
+     * `zipWith` is similar to `xmapEither` but the function
+     * is mostly used as an internal implementation
+     * in zio-config. For the same reason, users hardly need `zipWith`.
+     * Instead take a look at `xmapEither` (or `transformEither`).
+     *
+     * `xmapEither2` deals with retrieving two configurations represented
+     * by `ConfigDescriptor[A]` and `ConfigDescriptor[B]`,
+     * and corresponding `to` and `from` functions converting a tuple `(A, B)` to C` and it's
+     * reverse direction, to finally form a `ConfigDescriptor[C]`.
+     *
+     * Those who are familiar with `Applicative` in Functional programming,
+     * `xmapEither2` almost takes the form of `Applicative`:
+     * `F[A] => F[B] => (A, B) => C => F[C]`.
+     *
+     * Implementation detail:
+     * This is used to implement sequence` (`traverse`)
+     * behaviour of `ConfigDescriptor[A]`
+     */
+    final def zipWith[B, C](that: => ConfigDescriptor[B])(
+      to: (A, B) => Either[String, C],
+      from: C => Either[String, (A, B)]
+    ): ConfigDescriptor[C] =
+      (self |@| that)
+        .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
+        .transformOrFail({ case (a, b) => to(a, b) }, from)
   }
 
   trait ConfigDescriptorFunctions {
@@ -1211,59 +1041,18 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *     )
      * }}}
      */
-    def collectAll[A](head: ConfigDescriptor[A], tail: ConfigDescriptor[A]*): ConfigDescriptor[List[A]] =
-      sequence(head, tail: _*)(
-        { case (a, t) => a :: t },
-        l => l.headOption.map(h => (h, l.tail))
-      )
-
-    /**
-     * `lazyCollectAll` is a lazy version to `sequence` helping out zio-config
-     * in handling recursive config structures. However, for the most import,
-     * users need to interact with only sequence and collectAll. In Functional Programming terms,
-     *
-     * Example:
-     *
-     * {{{
-     *   final case class Variables(variable1: Int, variable2: Option[Int])
-     *
-     *   object CollectAllExample extends App with EitherImpureOps {
-     *     val listOfConfig: List[LazyConfigDescriptor[Variables]] =
-     *       List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
-     *         .map(
-     *           group =>
-     *             thunk(int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply))
-     *         )
-     *
-     *     val configOfList: ConfigDescriptor[List[Variables]] =
-     *       lazyCollectAll(listOfConfig.head, listOfConfig.tail: _*)
-     *
-     *     val map =
-     *       Map(
-     *         "GROUP1_VARIABLE1" -> "1",
-     *         "GROUP1_VARIABLE2" -> "2",
-     *         "GROUP2_VARIABLE1" -> "3",
-     *         "GROUP2_VARIABLE2" -> "4",
-     *         "GROUP3_VARIABLE1" -> "5",
-     *         "GROUP3_VARIABLE2" -> "6",
-     *         "GROUP4_VARIABLE1" -> "7"
-     *       )
-     *
-     *     // loadOrThrow here is only for the purpose of example
-     *     val result: List[Variables] = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
-     *
-     *     val written: PropertyTree[String, String] = write(configOfList, result).loadOrThrow
-     *
-     *     assert(
-     *       result == List(Variables(1, Some(2)), Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))
-     *     )
-     * }}}
-     */
-    def lazyCollectAll[A](
-      head: LazyConfigDescriptor[A],
-      tail: LazyConfigDescriptor[A]*
-    ): ConfigDescriptor[List[A]] =
-      lazySequence(head, tail: _*)(
+    def collectAll[A](head: => ConfigDescriptor[A], tail: (=> ConfigDescriptor[A])*): ConfigDescriptor[List[A]] =
+      tail.map(thunk(_)).reverse.foldLeft[ConfigDescriptor[(A, List[A])]](
+        thunk(head).transform((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
+      )(
+        (b: ConfigDescriptor[(A, List[A])], a: ConfigDescriptor[A]) =>
+          b.zipWith(a)({
+            case ((first, tail), a) => Right((first, a :: tail))
+          }, {
+            case (_, Nil)              => Left("Invalid list length")
+            case (first, head :: tail) => Right(((first, tail), head))
+          })
+      )(
         { case (a, t) => a :: t },
         l => l.headOption.map(h => (h, l.tail))
       )
@@ -1291,7 +1080,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def head[A](desc: ConfigDescriptor[A]): ConfigDescriptor[A] =
       desc.orElse(
         list(desc)
-          .xmapEither[A](
+          .transformOrFail[A](
             _.headOption
               .fold[Either[String, A]](Left("Element is missing"))(Right(_)),
             v => Right(v :: Nil)
@@ -1480,7 +1269,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     )(desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       list(path)(desc) orElse (
         nested(path)(desc)
-          .xmapEither[List[A]](
+          .transformOrFail[List[A]](
             value => Right(List(value)),
             _.headOption match {
               case Some(value) => Right(value)
@@ -1500,30 +1289,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def nested[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(ConfigSourceFunctions.empty, path, thunk(desc))
 
-    def sequence[A](
-      head: => ConfigDescriptor[A],
-      tail: ConfigDescriptor[A]*
-    ): ConfigDescriptor[(A, List[A])] =
-      lazySequence(thunk(head), tail.map(a => thunk(a)): _*)
-
-    def lazySequence[A](
-      head: LazyConfigDescriptor[A],
-      tail: LazyConfigDescriptor[A]*
-    ): ConfigDescriptor[(A, List[A])] =
-      tail.reverse.foldLeft[ConfigDescriptor[(A, List[A])]](
-        head.value.xmap((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
-      )(
-        (b: ConfigDescriptor[(A, List[A])], a: LazyConfigDescriptor[A]) =>
-          b.xmapEither2(a.value)({
-            case ((first, tail), a) => Right((first, a :: tail))
-          }, {
-            case (_, Nil)              => Left("Invalid list length")
-            case (first, head :: tail) => Right(((first, tail), head))
-          })
-      )
-
     def set[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
-      list(desc).xmapEither(distinctListToSet, s => Right(s.toList))
+      list(desc).transformOrFail(distinctListToSet, s => Right(s.toList))
 
     def set[A](
       path: K
@@ -1536,18 +1303,22 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
   }
 
-  case class LazyConfigDescriptor[A](
+  // TODO; Move elsewhere
+  sealed case class Lazy[A](
     private val get: () => ConfigDescriptor[A]
-  ) {
+  ) extends ConfigDescriptor[A] {
     def value: ConfigDescriptor[A] = get()
     def map[B](
       f: ConfigDescriptor[A] => ConfigDescriptor[B]
-    ): LazyConfigDescriptor[B] =
-      LazyConfigDescriptor(() => f(get()))
+    ): Lazy[B] =
+      Lazy(() => f(get()))
   }
 
-  final def thunk[A](config: => ConfigDescriptor[A]): LazyConfigDescriptor[A] =
-    LazyConfigDescriptor(() => config)
+  final def thunk[A](config: => ConfigDescriptor[A]): ConfigDescriptor[A] = {
+    lazy val config0 = config
+
+    Lazy(() => config0)
+  }
 
   def dump[A](config: ConfigDescriptor[A]): String = {
     val builder = new StringBuilder
@@ -1556,67 +1327,77 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       config match {
         case Default(config, default) =>
           builder.append(s"${prefix}Default($default}\n")
-          go(config.value, prefix + "  ")
+          go(config, prefix + "  ")
         case Describe(config, message) =>
           builder.append(s"${prefix}Describe($message}\n")
-          go(config.value, prefix + "  ")
+          go(config, prefix + "  ")
         case DynamicMap(_, config) =>
           builder.append(s"${prefix}DynamicMap\n")
-          go(config.value, prefix + "  ")
+          go(config, prefix + "  ")
         case Nested(_, path, config) =>
           builder.append(s"${prefix}Nested($path)\n")
-          go(config.value, prefix + "  ")
+          go(config, prefix + "  ")
         case Optional(config) =>
           builder.append(s"${prefix}Optional\n")
-          go(config.value, prefix + "  ")
+          go(config, prefix + "  ")
         case OrElse(left, right) =>
           builder.append(s"${prefix}OrElse\n")
-          go(left.value, prefix + "  ")
-          go(right.value, prefix + "  ")
+          go(left, prefix + "  ")
+          go(right, prefix + "  ")
         case OrElseEither(left, right) =>
           builder.append(s"${prefix}OrElseEither\n")
-          go(left.value, prefix + "  ")
-          go(right.value, prefix + "  ")
+          go(left, prefix + "  ")
+          go(right, prefix + "  ")
         case Sequence(_, config) =>
           builder.append(s"${prefix}Sequence\n")
-          go(config.value, prefix + "  ")
+          go(config, prefix + "  ")
         case Source(_, propertyType) =>
           builder.append(s"${prefix}Source($propertyType)\n")
           ()
         case Zip(left, right) =>
           builder.append(s"${prefix}Zip\n")
-          go(left.value, prefix + "  ")
-          go(right.value, prefix + "  ")
-        case XmapEither(config, _, _) =>
-          go(config.value, prefix)
+          go(left, prefix + "  ")
+          go(right, prefix + "  ")
+        case TransformOrFail(config, _, _) =>
+          go(config, prefix)
       }
     go(config, "")
     builder.toString()
   }
 
-  object ConfigDescriptorAdt {
-    case class Default[A](config: LazyConfigDescriptor[A], default: A) extends ConfigDescriptor[A]
+  private[config] object ConfigDescriptorAdt {
+    sealed case class LazyConfigDescriptor[A](
+      private val get: () => ConfigDescriptor[A]
+    ) extends ConfigDescriptor[A] {
+      def value: ConfigDescriptor[A] = get()
+      def map[B](
+        f: ConfigDescriptor[A] => ConfigDescriptor[B]
+      ): LazyConfigDescriptor[B] =
+        LazyConfigDescriptor(() => f(get()))
+    }
 
-    case class Describe[A](config: LazyConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
+    sealed case class Default[A](config: ConfigDescriptor[A], default: A) extends ConfigDescriptor[A]
 
-    case class DynamicMap[A](source: ConfigSource, config: LazyConfigDescriptor[A]) extends ConfigDescriptor[Map[K, A]]
+    sealed case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-    case class Nested[A](source: ConfigSource, path: K, config: LazyConfigDescriptor[A]) extends ConfigDescriptor[A]
+    sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[Map[K, A]]
 
-    case class Optional[A](config: LazyConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
+    sealed case class Nested[A](source: ConfigSource, path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
-    case class OrElse[A](left: LazyConfigDescriptor[A], right: LazyConfigDescriptor[A]) extends ConfigDescriptor[A]
+    sealed case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
-    case class OrElseEither[A, B](left: LazyConfigDescriptor[A], right: LazyConfigDescriptor[B])
+    sealed case class OrElse[A](left: ConfigDescriptor[A], right: ConfigDescriptor[A]) extends ConfigDescriptor[A]
+
+    sealed case class OrElseEither[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
         extends ConfigDescriptor[Either[A, B]]
 
-    case class Sequence[A](source: ConfigSource, config: LazyConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
+    sealed case class Sequence[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
 
-    case class Source[A](source: ConfigSource, propertyType: PropertyType[V, A]) extends ConfigDescriptor[A]
+    sealed case class Source[A](source: ConfigSource, propertyType: PropertyType[V, A]) extends ConfigDescriptor[A]
 
-    case class Zip[A, B](left: LazyConfigDescriptor[A], right: LazyConfigDescriptor[B]) extends ConfigDescriptor[(A, B)]
+    sealed case class Zip[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B]) extends ConfigDescriptor[(A, B)]
 
-    case class XmapEither[A, B](config: LazyConfigDescriptor[A], f: A => Either[String, B], g: B => Either[String, A])
+    sealed case class TransformOrFail[A, B](config: ConfigDescriptor[A], f: A => Either[String, B], g: B => Either[String, A])
         extends ConfigDescriptor[B]
   }
 

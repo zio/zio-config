@@ -13,6 +13,39 @@ import zio.config.examples.typesafe.EitherImpureOps
 final case class Variables(variable1: Int, variable2: Option[Int])
 
 object CollectAllExample extends App with EitherImpureOps {
+
+  // ABC_DEF => abcDef, there might be existing impls in many places
+  def kebabCase(s: String): String = ???
+
+  val envSourceButWithUpperKeys = ConfigSource.fromSystemEnv.map(
+    source => new ConfigSource {
+      override def names: Set[_root_.zio.config.ConfigSourceName] = source.names
+
+      override def getConfigValue: List[String] => PropertyTree[String, String] = {
+        (list: List[String]) => source.getConfigValue(list.map(kebabCase))
+      }
+
+      override def leafForSequence: _root_.zio.config.LeafForSequence = source.leafForSequence
+    }
+  )
+
+
+  val live: ZLayer[zio.system.System, ReadError[String], Config] =
+    ZLayer.fromEffect {
+      for {
+        envSource <- ConfigSource.fromSystemEnv(keyDelimiter = '_'.some, valueDelimiter = ','.some)
+        conf <- IO.fromEither {
+          for {
+            typesafeSource <- TypesafeConfigSource.fromDefaultLoader
+            parsedConf <- read(descriptor[AppConfig] from(envSourceButWithUpperKeys <> typesafeSource))
+          } yield new Service {
+            override def appConfig: AppConfig = parsedConf
+          }
+        }
+      } yield conf
+    }
+
+
   val listOfConfig: List[ConfigDescriptor[Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
       .map(

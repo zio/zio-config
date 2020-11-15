@@ -3,16 +3,16 @@ package zio.config.yaml
 import java.io.File
 import java.nio.file.Path
 
-import zio.{ Tag, ZLayer }
+import zio.{Has, Tag, ZLayer}
 import zio.blocking.Blocking
-import zio.config.{ ConfigDescriptor, ZConfig }
+import zio.config.{ConfigDescriptor, ZConfig}
 
 object YamlConfig {
 
   /**
    * Creates a configuration layer described by the descriptor from a YAML string.
    */
-  def fromString[A: Tag](yamlString: String, descriptor: ConfigDescriptor[A]): ZLayer[Any, Throwable, ZConfig[A]] =
+  def fromString[A: Tag](yamlString: String, descriptor: ConfigDescriptor[A]): ZLayer[Any, Throwable, Has[A]] =
     ZConfig.fromConfigDescriptorM(
       YamlConfigSource.fromString(yamlString).map(descriptor from _)
     )

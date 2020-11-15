@@ -33,6 +33,7 @@ private[config] trait KeyConversionFunctions {
   val toSnakeCase: String => String =
     camelToDelimiter(_, "_")
 
+  //FIXME: Change names
   def addPrefix(prefix: String): String => String =
     s => s"${prefix}${s}"
 

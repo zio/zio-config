@@ -90,22 +90,22 @@ trait DeriveConfigDescriptor {
       xmapEither(f, g)
 
     def transformEitherLeft[B](f: T => Either[String, B], g: B => T): Descriptor[B] =
-      Descriptor(configDescriptor.transformEitherLeft(f, g))
+      Descriptor(configDescriptor.transformOrFailLeft(f, g))
 
     def transformEitherLeft[E, B](f: T => Either[E, B])(g: B => T)(h: E => String): Descriptor[B] =
       Descriptor(configDescriptor.transformEitherLeft[E, B](f)(g)(h))
 
     def transformEitherRight[E, B](f: T => B, g: B => Either[String, T]): Descriptor[B] =
-      Descriptor(configDescriptor.transformEitherRight(f, g))
+      Descriptor(configDescriptor.transformOrFailRight(f, g))
 
     def transformEitherRight[E, B](f: T => B)(g: B => Either[E, T])(h: E => String): Descriptor[B] =
       Descriptor(configDescriptor.transformEitherRightE[E, B](f)(g)(h))
 
     def xmap[B](f: T => B, g: B => T): Descriptor[B] =
-      Descriptor(configDescriptor.xmap(f, g))
+      Descriptor(configDescriptor.transform(f, g))
 
     def xmapEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
-      Descriptor(configDescriptor.xmapEither(f, g))
+      Descriptor(configDescriptor.transformOrFail(f, g))
 
     def xmapEither[E, B](f: T => Either[E, B])(g: B => Either[E, T])(h: E => String): Descriptor[B] =
       Descriptor(configDescriptor.xmapEitherE[E, B](f)(g)(h))
@@ -201,7 +201,7 @@ trait DeriveConfigDescriptor {
           defaultValue = evDf(defaults.head),
           description = evDs(descs.head)
         )
-        fieldDesc.xmap(field[K](_) :: HNil, _.head)
+        fieldDesc.transform(field[K](_) :: HNil, _.head)
       }
 
     implicit def caseHCons[K <: Symbol, V, T <: HList, N, Ds, Df, TN <: HList, TDs <: HList, TDf <: HList](
@@ -262,7 +262,7 @@ trait DeriveConfigDescriptor {
   ): ClassDescriptor[T] = {
     val ccName = optName().map(_.name).getOrElse(mapClassName(typeName()))
 
-    val desc = collectFields(names(), descs(), defaults()).xmap(gen.from, gen.to)
+    val desc = collectFields(names(), descs(), defaults()).transform(gen.from, gen.to)
 
     ClassDescriptor(optDesc().map(_.describe).fold(desc)(desc ?? _), ccName, isObject = false)
   }
@@ -306,7 +306,7 @@ trait DeriveConfigDescriptor {
         if (sc.desc.isObject || !wrapSealedTraitClasses) sc.desc.desc
         else nested(sc.desc.name)(sc.desc.desc)
 
-      wrapSealedTrait(optName().map(_.name).getOrElse(mapClassName(typeName())), desc).xmapEither[T](
+      wrapSealedTrait(optName().map(_.name).getOrElse(mapClassName(typeName())), desc).transformOrFail[T](
         st => Right(st.asInstanceOf[T]),
         t => sc.cast(t).map(Right(_)).getOrElse(Left(s"Expected ${sc.desc.name}, but got ${t.getClass.getName}"))
       )

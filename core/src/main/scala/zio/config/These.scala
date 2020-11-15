@@ -2,6 +2,7 @@ package zio.config
 
 import These._
 
+// FIXME: Move to ConfigSource Module, where it is s
 private[config] sealed trait These[+A, +B] { self =>
   def fold[C](
     f: (A, B) => C,
@@ -14,7 +15,7 @@ private[config] sealed trait These[+A, +B] { self =>
   }
 }
 
-object These {
+private[config] object These {
   final case class Both[A, B](left: A, right: B) extends These[A, B]
   final case class This[A](left: A)              extends These[A, Nothing]
   final case class That[B](right: B)             extends These[Nothing, B]

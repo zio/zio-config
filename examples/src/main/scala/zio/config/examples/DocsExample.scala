@@ -20,7 +20,7 @@ object DocsExample extends App {
     generateDocs(config)
 
   val markdown =
-    docs.toTable.asGithubFlavouredMarkdown
+    docs.toTable.toGithubFlavouredMarkdown
 
   assert(
     markdown ==
@@ -42,7 +42,7 @@ object DocsExample extends App {
   )
 
   val confluenceMarkdown =
-    docs.toTable.asConfluenceMarkdown(None)
+    docs.toTable.toConfluenceMarkdown(None)
 
   assert(
     confluenceMarkdown ==

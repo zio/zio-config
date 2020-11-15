@@ -31,7 +31,7 @@ object DerivationTest extends DefaultRunnableSpec {
         case Source(_, _)        => Nil
         case Zip(left, right) =>
           collectDescriptions(left.value, path) ::: collectDescriptions(right.value, path)
-        case XmapEither(config, _, _) => collectDescriptions(config.value, path)
+        case TransformOrFail(config, _, _) => collectDescriptions(config.value, path)
       }
 
       assert(collectDescriptions(DeriveConfigDescriptor.descriptor[Cfg], None))(
@@ -63,7 +63,7 @@ object DerivationTest extends DefaultRunnableSpec {
         case Sequence(_, config)       => collectPath(config.value)
         case Source(_, _)              => Nil
         case Zip(left, right)          => collectPath(left.value) ::: collectPath(right.value)
-        case XmapEither(config, _, _)  => collectPath(config.value)
+        case TransformOrFail(config, _, _)  => collectPath(config.value)
       }
 
       // IntelliJ will hide this, however it is required
@@ -92,7 +92,7 @@ object DerivationTest extends DefaultRunnableSpec {
         case Sequence(_, config)      => collectDefault(config.value, path)
         case Source(_, _)             => Nil
         case Zip(left, right)         => collectDefault(left.value, path) ::: collectDefault(right.value, path)
-        case XmapEither(config, _, _) => collectDefault(config.value, path)
+        case TransformOrFail(config, _, _) => collectDefault(config.value, path)
       }
 
       assert(collectDefault(DeriveConfigDescriptor.descriptor[Cfg], None))(equalTo((None, "defaultV") :: Nil))

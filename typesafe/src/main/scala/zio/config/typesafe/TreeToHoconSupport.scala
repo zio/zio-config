@@ -7,7 +7,13 @@ import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 
+// ConfigSource.fromMap...
+// TypesafeConfigSource.fromHoconString..
+
+// Config.fromMap(map, configDesc)
+// TypesafeConfig.fromHoconString(hoconString, congigDesc)
 private[typesafe] trait TreeToHoconSupport {
+  // Make everything private
   def propertyTreeToTypesafeConfig(
     tree: PropertyTree[String, String]
   ): com.typesafe.config.ConfigObject =
