@@ -17,7 +17,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     import ConfigDescriptorAdt._
 
     val bigDecimal: ConfigDescriptor[BigDecimal] =
-      thunk(thunk(Source(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal"))
+      thunk(Source(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal")
 
     def bigDecimal(path: String): ConfigDescriptor[BigDecimal] = nested(path)(bigDecimal)
 
