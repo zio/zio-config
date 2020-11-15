@@ -1110,18 +1110,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       nested(path)(head(desc))
 
     /**
-     * lazyDesc suspends the computation of config until the very end,
-     * enabling retrieval of recursive config structures without blowing up memory.
-     */
-    final def lazyDesc[A](
-      config: => ConfigDescriptor[A]
-    ): ConfigDescriptor[A] = {
-      lazy val config0 = config
-
-      Lazy(() => config0)
-    }
-
-    /**
      *  `list(confgDescriptor)` represents just a list variant of configuration extraction.
      *
      *  For example, we know `val config = string("USERNAME") from source`
@@ -1314,51 +1302,18 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
   }
 
-  def dump[A](config: ConfigDescriptor[A]): String = {
-    val builder = new StringBuilder
+  /**
+   * lazyDesc suspends the computation of config until the very end,
+   * enabling retrieval of recursive config structures without blowing up memory.
+   */
+  final def lazyDesc[A](
+    config: => ConfigDescriptor[A]
+  ): ConfigDescriptor[A] = {
+    lazy val config0 = config
 
-    def go[A](config: ConfigDescriptor[A], prefix: String): Unit =
-      config match {
-        case Default(config, default) =>
-          builder.append(s"${prefix}Default($default}\n")
-          go(config, prefix + "  ")
-        case Describe(config, message) =>
-          builder.append(s"${prefix}Describe($message}\n")
-          go(config, prefix + "  ")
-        case DynamicMap(_, config) =>
-          builder.append(s"${prefix}DynamicMap\n")
-          go(config, prefix + "  ")
-        case Nested(_, path, config) =>
-          builder.append(s"${prefix}Nested($path)\n")
-          go(config, prefix + "  ")
-        case Optional(config) =>
-          builder.append(s"${prefix}Optional\n")
-          go(config, prefix + "  ")
-        case OrElse(left, right) =>
-          builder.append(s"${prefix}OrElse\n")
-          go(left, prefix + "  ")
-          go(right, prefix + "  ")
-        case OrElseEither(left, right) =>
-          builder.append(s"${prefix}OrElseEither\n")
-          go(left, prefix + "  ")
-          go(right, prefix + "  ")
-        case Sequence(_, config) =>
-          builder.append(s"${prefix}Sequence\n")
-          go(config, prefix + "  ")
-        case Source(_, propertyType) =>
-          builder.append(s"${prefix}Source($propertyType)\n")
-          ()
-        case Zip(left, right) =>
-          builder.append(s"${prefix}Zip\n")
-          go(left, prefix + "  ")
-          go(right, prefix + "  ")
-        case TransformOrFail(config, _, _) =>
-          go(config, prefix)
-      }
-    go(config, "")
-    builder.toString()
+    Lazy(() => config0)
   }
-
+  
   private[config] object ConfigDescriptorAdt {
     sealed case class Default[A](config: ConfigDescriptor[A], default: A) extends ConfigDescriptor[A]
 
