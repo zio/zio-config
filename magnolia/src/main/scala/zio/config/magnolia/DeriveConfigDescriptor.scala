@@ -736,12 +736,13 @@ trait DeriveConfigDescriptor { self =>
 
   /**
    * descriptor[A] allows the user to automatically derive `ConfigDescriptor` instead
-   * of using the ConfigDescriptor dsl explicitly (manual implementation).
-   * While manual can be verbose, it is highly recommended to use manual for simple configurations
-   * and rely on automatic derivation when the config is complex with relatively larger number of parameter,
-   * constantly changing configuration (config driven apps) or it has lots of coproducts and products with nested structures.
+   * of using the ConfigDescriptor dsl explicitly (i.e, manual implementation).
+   * While manual implementation can be verbose, it is a recommended to use it when it comes to simple configurations.
    *
-   * Below given is a small example to show the usage `descriptor[A]`.
+   * On the other hand, automatic derivation can become handly when the config is complex with relatively larger number of parameters,
+   * or when it is constantly changing during the software lifecycle, or it's just complex structure with nested products and coproducts.
+   *
+   * Below given is a small example to show the usage of `descriptor[A]`.
    *
    * Example :
    *
