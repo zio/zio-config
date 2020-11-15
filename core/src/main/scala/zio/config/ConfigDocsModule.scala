@@ -420,6 +420,12 @@ trait ConfigDocsModule extends WriteModule {
    * from various sources.
    */
   final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
+    def lookAhead(desc: LazyConfigDescriptor[_]): ConfigDescriptor[_] =
+      desc.value match {
+        case XmapEither(config, f, g) => lookAhead(config)
+        case d: ConfigDescriptor[_]   => d
+      }
+
     def loopTo[B](
       sources: Set[ConfigSourceName],
       descriptions: List[ConfigDocs.Description],
@@ -463,7 +469,7 @@ trait ConfigDocsModule extends WriteModule {
           loopTo(sources, descri :: descriptions, c.value, latestPath, alreadySeen)
 
         case Nested(source, path, c) =>
-          val inner = c.value
+          val inner = lookAhead(c)
           if (alreadySeen.contains(inner)) {
             ConfigDocs.Nested(
               path,
