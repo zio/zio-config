@@ -15,8 +15,9 @@ import zio.config._
 
 trait DeriveConfigDescriptor { self =>
   case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
+
     /**
-    * To add documentation while defining an instance of Descriptor.
+     * To add documentation while defining an instance of Descriptor.
      *
      * To give an overview of what `Descriptor`:
      *
@@ -708,11 +709,15 @@ trait DeriveConfigDescriptor { self =>
 
           case Descriptor.SealedTraitSubClassNameStrategy.LabelSubClassName(fieldName) =>
             (string(fieldName) ?? s"Expecting a constant string ${subClassName}" |@| typeclass.desc).tupled
-                                                                                                    .transformOrFail({
-                case (name, sub) =>
-                  if (subClassName == name) Right(sub)
-                  else Left(s"The type specified ${name} is not equal to the obtained config ${subtype.typeName.full}")
-              }, b => Right((subClassName, b)): Either[String, (String, subtype.SType)])
+              .transformOrFail(
+                {
+                  case (name, sub) =>
+                    if (subClassName == name) Right(sub)
+                    else
+                      Left(s"The type specified ${name} is not equal to the obtained config ${subtype.typeName.full}")
+                },
+                b => Right((subClassName, b)): Either[String, (String, subtype.SType)]
+              )
         }
 
         wrapSealedTrait(prepareClassName(sealedTrait.annotations, sealedTrait.typeName.short), desc).transformOrFail[T](
@@ -730,7 +735,7 @@ trait DeriveConfigDescriptor { self =>
   implicit def getDescriptor[T]: Descriptor[T] = macro Magnolia.gen[T]
 
   /**
-  * descriptor[A] allows the user to automatically derive `ConfigDescriptor` instead
+   * descriptor[A] allows the user to automatically derive `ConfigDescriptor` instead
    * of using the ConfigDescriptor dsl explicitly (manual implementation).
    * While manual can be verbose, it is highly recommended to use manual for simple configurations
    * and rely on automatic derivation when the config is complex with relatively larger number of parameter,

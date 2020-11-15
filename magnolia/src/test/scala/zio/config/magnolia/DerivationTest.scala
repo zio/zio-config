@@ -54,17 +54,17 @@ object DerivationTest extends DefaultRunnableSpec {
       case class Cfg(@name("otherName") fname: String) extends SealedTrait
 
       def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
-        case Default(config, _)        => collectPath(config.value)
-        case Describe(config, _)       => collectPath(config.value)
-        case DynamicMap(_, config)     => collectPath(config.value)
-        case Nested(_, path, config)   => path :: collectPath(config.value)
-        case Optional(config)          => collectPath(config.value)
-        case OrElse(left, right)       => collectPath(left.value) ::: collectPath(right.value)
-        case OrElseEither(left, right) => collectPath(left.value) ::: collectPath(right.value)
-        case Sequence(_, config)       => collectPath(config.value)
-        case Source(_, _)              => Nil
-        case Zip(left, right)          => collectPath(left.value) ::: collectPath(right.value)
-        case TransformOrFail(config, _, _)  => collectPath(config.value)
+        case Default(config, _)            => collectPath(config.value)
+        case Describe(config, _)           => collectPath(config.value)
+        case DynamicMap(_, config)         => collectPath(config.value)
+        case Nested(_, path, config)       => path :: collectPath(config.value)
+        case Optional(config)              => collectPath(config.value)
+        case OrElse(left, right)           => collectPath(left.value) ::: collectPath(right.value)
+        case OrElseEither(left, right)     => collectPath(left.value) ::: collectPath(right.value)
+        case Sequence(_, config)           => collectPath(config.value)
+        case Source(_, _)                  => Nil
+        case Zip(left, right)              => collectPath(left.value) ::: collectPath(right.value)
+        case TransformOrFail(config, _, _) => collectPath(config.value)
       }
 
       // IntelliJ will hide this, however it is required
@@ -90,9 +90,9 @@ object DerivationTest extends DefaultRunnableSpec {
         case OrElse(left, right)     => collectDefault(left.value, path) ::: collectDefault(right.value, path)
         case OrElseEither(left, right) =>
           collectDefault(left.value, path) ::: collectDefault(right.value, path)
-        case Sequence(_, config)      => collectDefault(config.value, path)
-        case Source(_, _)             => Nil
-        case Zip(left, right)         => collectDefault(left.value, path) ::: collectDefault(right.value, path)
+        case Sequence(_, config)           => collectDefault(config.value, path)
+        case Source(_, _)                  => Nil
+        case Zip(left, right)              => collectDefault(left.value, path) ::: collectDefault(right.value, path)
         case TransformOrFail(config, _, _) => collectDefault(config.value, path)
       }
 
