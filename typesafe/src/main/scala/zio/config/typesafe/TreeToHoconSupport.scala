@@ -29,9 +29,7 @@ private[typesafe] trait TreeToHoconSupport {
   def loopLeaf(key: Option[String], tree: Leaf[String]): ConfigObject =
     key
       .fold(ConfigFactory.empty())(
-        last => {
-          ConfigFactory.empty().withValue(s""" "${last}" """, ConfigValueFactory.fromAnyRef(tree.value))
-        }
+        last => ConfigFactory.empty().withValue(s""" "${last}" """, ConfigValueFactory.fromAnyRef(tree.value))
       )
       .root()
 
