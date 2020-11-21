@@ -18,32 +18,28 @@ package object syntax {
      *
      * {{{
      *
-     * import zio._
-     * import zio.config._, typesafe._, syntax._, magnolia.DeriveConfigDescriptor
+     *  import zio._
+     *  import zio.config._, typesafe._, syntax._, magnolia.DeriveConfigDescriptor
      *
-     * trait Endpoint
-     * trait Repository
+     *  trait Endpoint
+     *  trait Repository
      *
-     * case class AppConfig(api: ApiConfig, db: DbConfig)
-     * case class DbConfig (url: String,    driver: String)
-     * case class ApiConfig(host: String,   port: Int)
+     *  case class AppConfig(api: ApiConfig, db: DbConfig)
+     *  case class DbConfig (url: String,    driver: String)
+     *  case class ApiConfig(host: String,   port: Int)
      *
-     * val configDescription = DeriveConfigDescriptor.descriptor[AppConfig]
+     *  val configDescription = DeriveConfigDescriptor.descriptor[AppConfig]
      *
-     * // components have only required dependencies
-     * val endpoint: ZLayer[Has[ApiConfig], Nothing, Has[Endpoint]]    = ZLayer.fromService(_ => new Endpoint {})
-     * val repository: ZLayer[Has[DbConfig], Nothing, Has[Repository]] = ZLayer.fromService(_ => new Repository {})
+     *  // components have only required dependencies
+     *  val endpoint: ZLayer[Has[ApiConfig], Nothing, Has[Endpoint]]    = ZLayer.fromService(_ => new Endpoint {})
+     *  val repository: ZLayer[Has[DbConfig], Nothing, Has[Repository]] = ZLayer.fromService(_ => new Repository {})
      *
-     * val cfg = TypesafeConfig.fromDefaultLoader(configDescription)
+     *  val cfg = TypesafeConfig.fromDefaultLoader(configDescription)
      *
-     * cfg.narrow(_.api) >>> endpoint // narrowing down to a proper config subtree
-     * cfg.narrow(_.db) >>> repository
+     *  cfg.narrow(_.api) >>> endpoint // narrowing down to a proper config subtree
+     *  cfg.narrow(_.db) >>> repository
+     *
      * }}}
-     *
-     * @param f
-     * @param T
-     * @tparam B
-     * @return
      */
     def narrow[B: Tag](f: A => B)(implicit T: Tag[A]): ZLayer[R, E, Has[B]] =
       self.map(a => Has(f(a.get)))

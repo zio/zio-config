@@ -55,26 +55,26 @@ object RefinedReadWriteRoundtripTestUtils {
     pwd: Refined[String, Trimmed And NonEmpty]
   )
 
-  def longList(n: Int): ::[ConfigDescriptor[Long]] = {
+  def longList(n: Int): ::[ConfigDescriptor[Refined[Long, Greater[W.`2`.T]]]] = {
     val list =
       (1 to n).toList
-        .map(group => long(s"GROUP${group}_LONGVAL"))
+        .map(group => refined[Long, Greater[W.`2`.T]](s"GROUP${group}_LONGVAL"))
 
     ::(list.head, list.tail)
   }
 
-  def longs(n: Int): ConfigDescriptor[List[Long]] = {
+  def longs(n: Int): ConfigDescriptor[List[Refined[Long, Greater[W.`2`.T]]]] = {
     val ll = longList(n)
     collectAll(ll.head, ll.tail: _*)
   }
 
   def prodConfig(n: Int): ConfigDescriptor[RefinedProd] =
     (
-      nonEmpty(string("LDAP")) |@|
-        greaterEqual[W.`1024`.T](int("PORT")) |@|
-        nonEmpty(string("DB_URL")).optional |@|
-        size[Greater[W.`2`.T]](longs(n)) |@|
-        and[Trimmed, NonEmpty](string("PWD"))
+      refined[String, NonEmpty]("LDAP") |@|
+        refined[Int,GreaterEqual[W.`1024`.T]]("PORT") |@|
+        refined[String, NonEmpty]("DB_URL").optional |@|
+        longs(n) |@|
+        refined[String, And[Trimmed, NonEmpty]]("PWD")
     )(
       RefinedProd.apply,
       RefinedProd.unapply
