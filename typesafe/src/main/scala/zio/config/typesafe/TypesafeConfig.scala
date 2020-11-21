@@ -7,23 +7,83 @@ import zio.config.{ ConfigDescriptor, ReadError, ZConfig }
 import zio.{ Has, Layer, Tag, ZIO }
 
 object TypesafeConfig {
+
+  /**
+   * Retrieve your config from a given file in resource classpath, that is following HOCON format.
+   * A simple key value file with the name sufficed by `.properties` will work.
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *     TypesafeConfig.fromDefaultLoader(descriptor[MyConfig])
+   * }}}
+   */
   def fromDefaultLoader[A](
     configDescriptor: ConfigDescriptor[A]
   )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
     fromTypesafeConfig(ConfigFactory.load.resolve, configDescriptor)
 
-  def fromHoconFile[A](
-    file: File,
-    configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+  /**
+   * Retrieve your config from a HOCON file
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *     TypesafeConfig.fromHoconFile(new File("/path/to/xyz.hocon"), descriptor[MyConfig])
+   * }}}
+   */
+  def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(
+    implicit tag: Tag[A]
+  ): Layer[ReadError[String], Has[A]] =
     fromTypesafeConfig(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
-  def fromHoconString[A](
-    str: String,
-    configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+  /**
+   * Retrieve a config from `typesafe-config` from a given Hocon File.
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *     TypesafeConfig.fromHoconFile(new File("/path/to/xyz.hocon"), descriptor[MyConfig])
+   * }}}
+   */
+  def fromHoconString[A](str: String, configDescriptor: ConfigDescriptor[A])(
+    implicit tag: Tag[A]
+  ): Layer[ReadError[String], Has[A]] =
     fromTypesafeConfig(ConfigFactory.parseString(str).resolve, configDescriptor)
 
+  /**
+   * Retrieve a config from `com.typesafe.config.Config`
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *     TypesafeConfig.fromHoconFile(ConfigFactory.load.resolve, descriptor[MyConfig])
+   * }}}
+   */
   def fromTypesafeConfig[A](
     conf: => com.typesafe.config.Config,
     configDescriptor: ConfigDescriptor[A]
