@@ -3,7 +3,7 @@ package zio.config.typesafe
 import java.io.File
 
 import com.typesafe.config.ConfigFactory
-import zio.config.{ ConfigDescriptor, ReadError, ZConfig }
+import zio.config._
 import zio.{ Has, Layer, Tag, ZIO }
 
 object TypesafeConfig {

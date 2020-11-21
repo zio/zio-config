@@ -6,8 +6,6 @@ import java.lang.{ Boolean => JBoolean }
 import com.typesafe.config._
 import zio.config.PropertyTree.{ Leaf, _ }
 import zio.config.{ ConfigSource, _ }
-import zio.{ IO, Task, ZIO }
-
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 import scala.util.{ Failure, Success, Try }
@@ -45,12 +43,17 @@ object TypesafeConfigSource {
    *     configSource.flatMap(source => ZIO.fromEither(read(descriptor[MyConfig] from source))
    * }}}
    */
-  def fromHoconFile[A](file: File): Task[ConfigSource] =
-    IO.effect(ConfigFactory.parseFile(file).resolve)
+  def fromHoconFile[A](file: File): Either[ReadError[String], ConfigSource] =
+    Try(ConfigFactory.parseFile(file).resolve).toEither.swap
+      .map(
+        r =>
+          ReadError.SourceError(
+            s"Unable to get a form a valid config-source from hocon file. ${r}"
+          ): ReadError[String]
+      )
+      .swap
       .flatMap(typesafeConfig => {
-        ZIO
-          .fromEither(fromTypesafeConfig(typesafeConfig))
-          .mapError(str => new RuntimeException(str.nonPrettyPrintedString))
+        fromTypesafeConfig(typesafeConfig)
       })
 
   /**
@@ -76,9 +79,7 @@ object TypesafeConfigSource {
    *     configSource.flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromHoconString(
-    input: String
-  ): Either[ReadError[String], zio.config.ConfigSource] =
+  def fromHoconString(input: String): Either[ReadError[String], ConfigSource] =
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
 
   /**

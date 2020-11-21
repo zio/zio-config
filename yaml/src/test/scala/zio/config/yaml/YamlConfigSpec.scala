@@ -8,7 +8,7 @@ import zio.config.ConfigDescriptor
 object YamlConfigSpec extends DefaultRunnableSpec {
   val spec = suite("YamlConfig")(
     testM("Read a complex structure") {
-      val result = YamlConfigSource.fromString(
+      val result = YamlConfigSource.fromYamlString(
         """
           |top:
           |  child:

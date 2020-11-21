@@ -6,11 +6,10 @@ import java.lang.{ Boolean => JBoolean, Double => JDouble, Float => JFloat, Inte
 import java.{ util => ju }
 
 import org.snakeyaml.engine.v2.api.{ Load, LoadSettings }
-import zio.blocking.{ effectBlockingInterrupt, Blocking }
-import zio.config.{ ConfigSource, LeafForSequence, PropertyTree }
-import zio.{ RIO, Task }
+import zio.config.{ ConfigSource, LeafForSequence, PropertyTree, ReadError }
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 object YamlConfigSource {
   private[yaml] def convertYaml(data: AnyRef): PropertyTree[String, String] =
@@ -23,38 +22,89 @@ object YamlConfigSource {
       case t: String   => PropertyTree.Leaf(t)
       case t: JBoolean => PropertyTree.Leaf(t.toString)
       case t: ju.List[_] =>
-        PropertyTree.Sequence(t.asInstanceOf[ju.List[AnyRef]].asScala.toList.map(convertYaml))
+        PropertyTree.Sequence(
+          t.asInstanceOf[ju.List[AnyRef]].asScala.toList.map(convertYaml)
+        )
       case t: ju.Map[_, _] =>
         PropertyTree.Record(
-          t.asInstanceOf[ju.Map[String, AnyRef]].asScala.mapValues(convertYaml).toMap
+          t.asInstanceOf[ju.Map[String, AnyRef]]
+            .asScala
+            .mapValues(convertYaml)
+            .toMap
         )
     }
 
   /**
-   * Creates a configuration source from a YAML file at the specified path.
+   * Retrieve a `ConfigSource` from yaml path.
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Either[ReadError[String], MyConfig] =
+   *     YamlConfigSource.fromYamlPath(Path.of("/path/to/file.yaml"))
+   *       .flatMap(source => read(descriptor[MyConfig] from source)))
+   * }}}
    */
-  def fromPath(path: Path): RIO[Blocking, ConfigSource] =
-    fromFile(path.toFile)
+  def fromYamlPath(path: Path): Either[ReadError[String], ConfigSource] =
+    fromYamlFile(path.toFile)
 
   /**
-   * Creates a configuration source from a YAML file.
+   * Retrieve a `ConfigSource` from yaml path.
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Either[ReadError[String], MyConfig] =
+   *     YamlConfigSource.fromYamlFile(new File("/path/to/file.yaml"))
+   *       .flatMap(source => read(descriptor[MyConfig] from source)))
+   * }}}
    */
-  def fromFile(file: File): RIO[Blocking, ConfigSource] =
-    effectBlockingInterrupt {
+  def fromYamlFile(file: File): Either[ReadError[String], ConfigSource] =
+    Try {
       ConfigSource.fromPropertyTree(
         convertYaml(
-          new Load(LoadSettings.builder().build()).loadFromInputStream(new FileInputStream(file))
+          new Load(LoadSettings.builder().build())
+            .loadFromInputStream(new FileInputStream(file))
         ),
         file.getAbsolutePath,
         LeafForSequence.Invalid
       )
-    }
+    }.toEither.swap
+      .map(
+        throwable =>
+          ReadError.SourceError(
+            message = s"Failed to retrieve a valid from the yaml source. ${throwable.getMessage}"
+          )
+      )
+      .swap
 
   /**
-   * Creates a configuration source from a YAML string.
+   * Retrieve a `ConfigSource` from yaml path.
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   val yamlString = ???
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Either[ReadError[String], MyConfig] =
+   *     YamlConfigSource.fromYamlString(yamlString))
+   *       .flatMap(source => read(descriptor[MyConfig] from source)))
+   * }}}
    */
-  def fromString(yamlString: String, sourceName: String = "yaml"): Task[ConfigSource] =
-    Task {
+  def fromYamlString(
+    yamlString: String,
+    sourceName: String = "yaml"
+  ): Either[ReadError[String], ConfigSource] =
+    Try {
       ConfigSource.fromPropertyTree(
         convertYaml(
           new Load(LoadSettings.builder().build()).loadFromString(yamlString)
@@ -62,5 +112,12 @@ object YamlConfigSource {
         sourceName,
         LeafForSequence.Invalid
       )
-    }
+    }.toEither.swap
+      .map(
+        throwable =>
+          ReadError.SourceError(
+            message = s"Failed to retrieve a valid from the yaml source. ${throwable.getMessage}"
+          )
+      )
+      .swap
 }
