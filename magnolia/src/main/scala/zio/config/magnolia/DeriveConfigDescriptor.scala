@@ -709,7 +709,7 @@ trait DeriveConfigDescriptor { self =>
 
           case Descriptor.SealedTraitSubClassNameStrategy.LabelSubClassName(fieldName) =>
             (string(fieldName) ?? s"Expecting a constant string ${subClassName}" |@| typeclass.desc).tupled
-              .transformOrFail(
+              .transformOrFail[subtype.SType](
                 {
                   case (name, sub) =>
                     if (subClassName == name) Right(sub)

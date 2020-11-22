@@ -1,6 +1,9 @@
 package zio.config.derivation
 
 import zio.config._
+import zio.config.ConfigDescriptorAdt._
+
+import scala.annotation.tailrec
 
 object DerivationUtils {
   case class ConstantString(value: String) extends PropertyType[String, String] {
@@ -17,29 +20,39 @@ object DerivationUtils {
     constantString(label)(_ => value, p => Some(p).filter(_ == value).map(_ => label))
 
   /**
+   * FIXME: Investigate why this logic, and see if we can avoid
    * Peel the Describe(Default(Optional( layers and remove the Describe(Optional
    * created by 'implicitOptionDesc'
    *
    * This is used to move the Optional out of the nesting, so a missing record is accepted as None
    */
-  def unwrapFromOptional[A](
+  private[config] def unwrapFromOptional[A](
     configDesc: ConfigDescriptor[A]
-  ): (ConfigDescriptor[Any], Boolean) = {
-    import zio.config.ConfigDescriptorAdt._
+  ): (ConfigDescriptor[Any], Boolean) =
     configDesc match {
+      case Lazy(thunk) => unwrapFromOptional(thunk())
       case Default(config, default) =>
         val (inner, opt) = unwrapFromOptional(config)
         (Default(lazyDesc(inner), default), opt)
       case Describe(config, message) =>
-        config match {
-          case Optional(config) =>
-            (config, true)
-          case _ =>
-            val (inner, opt) = unwrapFromOptional(config)
-            (Describe(lazyDesc(inner), message), opt)
-        }
+        unwrapThunk(config, message)
       case _ =>
         (configDesc.asInstanceOf[ConfigDescriptor[Any]], false)
     }
-  }
+
+  // Kept to make tests work with unwrapFromOptional logic.
+  @tailrec
+  private[config] def unwrapThunk[A](
+    config: ConfigDescriptor[A],
+    message: String
+  ): (ConfigDescriptor[Any], Boolean) =
+    config match {
+      case Lazy(thunk) => unwrapThunk(thunk(), message)
+      case Optional(config) =>
+        (config, true)
+      case _ =>
+        val (inner, opt) = unwrapFromOptional(config)
+        (Describe(lazyDesc(inner), message), opt)
+
+    }
 }

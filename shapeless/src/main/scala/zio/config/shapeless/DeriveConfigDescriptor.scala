@@ -40,7 +40,7 @@ import scala.reflect.ClassTag
  * Please find more (complex) examples in the examples module in zio-config
  */
 object DeriveConfigDescriptor extends DeriveConfigDescriptor {
-  def mapClassName(name: String): String = toSnakeCase(name)
+  def mapClassName(name: String): String = name
   def mapFieldName(name: String): String = name
 
   val wrapSealedTraitClasses: Boolean = true
