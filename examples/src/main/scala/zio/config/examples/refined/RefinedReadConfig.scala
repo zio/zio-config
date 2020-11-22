@@ -12,7 +12,7 @@ object RefinedReadConfig extends App {
   case class RefinedProd(
     ldap: Refined[String, NonEmpty],
     port: Refined[Int, GreaterEqual[W.`1024`.T]],
-    dburl: Option[Refined[String, NonEmpty]],
+    dbUrl: Option[Refined[String, NonEmpty]],
     longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
   )
 
@@ -21,19 +21,31 @@ object RefinedReadConfig extends App {
       refine[String, NonEmpty]("LDAP") |@|
         refine[Int, GreaterEqual[W.`1024`.T]](int("PORT")) |@|
         refine[String, NonEmpty]("DB_URL").optional |@|
-        refine[List[Long], Size[Greater[W.`2`.T]]](list("LONGVALS")(long))
+        refine[List[Long], Size[Greater[W.`2`.T]]](list("LONGS")(long))
     )(
       RefinedProd.apply,
       RefinedProd.unapply
     )
   val configMultiMap =
     Map(
-      "LDAP"     -> ::("ldap", Nil),
-      "PORT"     -> ::("1999", Nil),
-      "DB_URL"   -> ::("ddd", Nil),
-      "LONGVALS" -> ::("1234", List("2345", "3456"))
+      "LDAP"   -> ::("ldap", Nil),
+      "PORT"   -> ::("1999", Nil),
+      "DB_URL" -> ::("ddd", Nil),
+      "LONGS"  -> ::("1234", List("2345", "3456"))
     )
 
   read(prodConfig.from(ConfigSource.fromMultiMap(configMultiMap)))
   // Right(RefinedProd(ldap,1999,Some(ddd),List(1234, 2345, 3456)))
+
+  // you can also derive the descriptor automatically
+
+  import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+
+  val prodConfigAutomatic =
+    read(
+      descriptor[RefinedProd].mapKey(toSnakeCase).mapKey(_.toUpperCase) from ConfigSource.fromMultiMap(configMultiMap)
+    )
+
+  // Right(RefinedProd(ldap,1999,Some(ddd),List(1234, 2345, 3456)))
+
 }
