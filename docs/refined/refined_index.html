@@ -92,5 +92,38 @@ Take a look at the below example</p>
  <span class="hljs-keyword">val</span> databaseList: <span class="hljs-type">ConfigDescriptor</span>[<span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">MyConfig</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]]]] =
    refine[<span class="hljs-type">List</span>[<span class="hljs-type">MyConfig</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`<span class="hljs-number">2</span>`.<span class="hljs-type">T</span>]]](configs)
 </code></pre>
-<p>Check out sample usage of <code>zio-config-refined</code> in <code>examples</code> module of the project.</p>
+<p>You can also use auto derivations with refined.</p>
+<pre><code class="hljs css language-scala mdoc:silent">
+<span class="hljs-keyword">import</span> eu.timepit.refined.<span class="hljs-type">W</span>
+<span class="hljs-keyword">import</span> eu.timepit.refined.api.<span class="hljs-type">Refined</span>
+<span class="hljs-keyword">import</span> eu.timepit.refined.collection.{ <span class="hljs-type">NonEmpty</span>, <span class="hljs-type">Size</span> }
+<span class="hljs-keyword">import</span> zio.config.refined._
+<span class="hljs-keyword">import</span> zio.config._
+<span class="hljs-keyword">import</span> <span class="hljs-type">ConfigDescriptor</span>._
+<span class="hljs-keyword">import</span> zio.config.magnolia.<span class="hljs-type">DeriveConfigDescriptor</span>.descriptor
+
+<span class="hljs-class"><span class="hljs-keyword">object</span> <span class="hljs-title">RefinedReadConfig</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">App</span> </span>{
+  <span class="hljs-keyword">case</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">RefinedProd</span>(<span class="hljs-params">
+    ldap: <span class="hljs-type">Refined</span>[<span class="hljs-type">String</span>, <span class="hljs-type">NonEmpty</span>],
+    port: <span class="hljs-type">Refined</span>[<span class="hljs-type">Int</span>, <span class="hljs-type">GreaterEqual</span>[<span class="hljs-type">W</span>.`1024`.<span class="hljs-type">T</span>]],
+    dbUrl: <span class="hljs-type">Option</span>[<span class="hljs-type">Refined</span>[<span class="hljs-type">String</span>, <span class="hljs-type">NonEmpty</span>]],
+    longs: <span class="hljs-type">Refined</span>[<span class="hljs-type">List</span>[<span class="hljs-type">Long</span>], <span class="hljs-type">Size</span>[<span class="hljs-type">Greater</span>[<span class="hljs-type">W</span>.`2`.<span class="hljs-type">T</span>]]]
+  </span>)</span>
+
+  <span class="hljs-keyword">val</span> configMultiMap =
+    <span class="hljs-type">Map</span>(
+      <span class="hljs-string">"LDAP"</span>     -&gt; ::(<span class="hljs-string">"ldap"</span>, <span class="hljs-type">Nil</span>),
+      <span class="hljs-string">"PORT"</span>     -&gt; ::(<span class="hljs-string">"1999"</span>, <span class="hljs-type">Nil</span>),
+      <span class="hljs-string">"DBURL"</span>   -&gt; ::(<span class="hljs-string">"ddd"</span>, <span class="hljs-type">Nil</span>),
+      <span class="hljs-string">"LONGS"</span> -&gt; ::(<span class="hljs-string">"1234"</span>, <span class="hljs-type">List</span>(<span class="hljs-string">"2345"</span>, <span class="hljs-string">"3456"</span>))
+    )
+
+  <span class="hljs-keyword">val</span> result =
+    read(descriptor[<span class="hljs-type">RefinedProd</span>].mapKey(_.toUpperCase) from <span class="hljs-type">ConfigSource</span>.fromMultiMap(configMultiMap))
+
+  <span class="hljs-comment">// Right(RefinedProd(ldap,1999,Some(ddd),List(1234, 2345, 3456)))</span>
+}
+
+
+</code></pre>
 </span></div></article></div><div class="docLastUpdate"><em>Last updated on 11/22/2020 by Afsal Thaj</em></div><div class="docs-prevnext"><a class="docs-prev button" href="/zio-config/docs/usingconfigdescriptor/configdescriptorusage_index"><span class="arrow-prev">← </span><span class="function-name-prevnext">Using ConfigDescriptor for Read, Write, Document and Report</span></a><a class="docs-next button" href="/zio-config/docs/design/design_index"><span>Design Principles</span><span class="arrow-next"> →</span></a></div></div></div><nav class="onPageNav"></nav></div><footer class="nav-footer" id="footer"><section class="sitemap"><a href="/zio-config/" class="nav-home"><img src="/zio-config/img/sidebar_brand2x.png" alt="ZIO Config"/></a><div><h5>GitHub</h5><a class="github-button" href="https://github.com/zio/zio-config" data-icon="octicon-star" data-count-href="/zio/zio-config/stargazers" data-show-count="true" data-count-aria-label="# stargazers on GitHub" aria-label="Star this project on GitHub">Star</a></div><div><h5>Chat with us on Discord</h5><a href="https://discord.gg/2ccFBr4"><img src="img/discord.png" width="120" alt="discord"/></a></div><div><h5>Additional resources</h5><a href="https://zio.dev">ZIO Homepage</a><a href="https://javadoc.io/doc/dev.zio/zio-config_2.12/latest/index.html">Scaladoc</a></div></section><section class="copyright">Copyright © 2020 ZIO Maintainers</section></footer></div></body></html>
