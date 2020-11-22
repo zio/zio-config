@@ -1,10 +1,10 @@
 package zio.config
 
-import zio.ZIO
+import zio.{Has, ZIO}
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
-import zio.test.{ DefaultRunnableSpec, _ }
+import zio.test.{DefaultRunnableSpec, _}
 
 object ArgsListAccumulationTest extends DefaultRunnableSpec {
 
@@ -35,7 +35,7 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
       .map(i => s"--ints=$i")
       .toList
 
-  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], ZConfig[SomeConfig]] =
+  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Has[SomeConfig]] =
     ZIO.environment.provideLayer(ZConfig.fromCommandLineArgs(args, SomeConfig.descriptor, None, None))
 
 }

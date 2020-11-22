@@ -332,6 +332,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loop[B](count: List[K], config: ConfigDescriptor[B]): Int =
       config match {
+        case ConfigDescriptorAdt.Lazy(thunk)                => loop(count, thunk())
         case ConfigDescriptorAdt.Zip(_, _)                  => countZipSize(config)
         case ConfigDescriptorAdt.TransformOrFail(cfg, _, _) => loop(count, cfg)
         case ConfigDescriptorAdt.Describe(cfg, _)           => loop(count, cfg)

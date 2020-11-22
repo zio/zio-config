@@ -1,12 +1,12 @@
 package zio.config
 
-import zio.config.ReadError.{ ConversionError, Step }
+import zio.config.ReadError.{ConversionError, Step}
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
-import zio.config.testsupport.MapConfigTestSupport.{ genAppConfig, stringNWithInjector, AppConfig }
+import zio.config.testsupport.MapConfigTestSupport.{AppConfig, genAppConfig, stringNWithInjector}
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
-import zio.test.{ DefaultRunnableSpec, _ }
-import zio.{ IO, ZIO }
+import zio.test.{DefaultRunnableSpec, _}
+import zio.{Has, IO, ZIO}
 
 object CommandLineSourceTest extends DefaultRunnableSpec {
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
@@ -57,7 +57,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
       }
     )
 
-  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], ZConfig[AppConfig]] =
+  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Has[AppConfig]] =
     ZIO.environment.provideLayer(ZConfig.fromCommandLineArgs(args, descriptor, Some('_'), None))
 
   def toSeparateArgs[A](

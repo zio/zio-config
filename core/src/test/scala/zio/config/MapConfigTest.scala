@@ -1,11 +1,10 @@
 package zio.config
 
-import zio.config.ReadError.{ ConversionError, Step }
-import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
+import ReadError._, testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.test.Assertion._
 import zio.test._
 import zio.test.environment.TestEnvironment
-import zio.{ IO, ZIO }
+import zio.{Has, IO, ZIO}
 
 object MapConfigTest extends DefaultRunnableSpec {
   import zio.config.testsupport.MapConfigTestSupport._
@@ -25,7 +24,7 @@ object MapConfigTest extends DefaultRunnableSpec {
       }
     )
 
-  def fromMap(args: Map[String, String]): ZIO[Any, ReadError[String], ZConfig[AppConfig]] =
+  def fromMap(args: Map[String, String]): ZIO[Any, ReadError[String], Has[AppConfig]] =
     ZIO.environment.provideLayer(ZConfig.fromMap(args, descriptor, "WTL", Some('_'), None))
 
   def toMap[A](
