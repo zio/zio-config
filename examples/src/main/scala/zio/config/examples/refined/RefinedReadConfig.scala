@@ -5,7 +5,8 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.{ NonEmpty, Size }
 import eu.timepit.refined.numeric.{ Greater, GreaterEqual }
 import zio.config.refined._
-import zio.config._, ConfigDescriptor._
+import zio.config._
+import ConfigDescriptor._
 
 object RefinedReadConfig extends App {
   case class RefinedProd(
@@ -17,10 +18,10 @@ object RefinedReadConfig extends App {
 
   def prodConfig =
     (
-      nonEmpty(string("LDAP")) |@|
-        greaterEqual[W.`1024`.T](int("PORT")) |@|
-        nonEmpty(string("DB_URL")).optional |@|
-        size[Greater[W.`2`.T]](list("LONGVALS")(long))
+      refine[String, NonEmpty]("LDAP") |@|
+        refine[Int, GreaterEqual[W.`1024`.T]](int("PORT")) |@|
+        refine[String, NonEmpty]("DB_URL").optional |@|
+        refine[List[Long], Size[Greater[W.`2`.T]]](list("LONGVALS")(long))
     )(
       RefinedProd.apply,
       RefinedProd.unapply
