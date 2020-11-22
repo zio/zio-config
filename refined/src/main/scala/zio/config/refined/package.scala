@@ -7,8 +7,9 @@ import zio.config.ConfigDescriptor.nested
 package object refined {
 
   /**
-   * Support to retrieve `refined` type from a given path
-   * given an implicit defintion of zio.config.magnolia.DeriveConfigDescriptor.Descriptor
+   * `refine` allows us to retrieve a `refined` type from a given path.
+   *
+   * Example:
    *
    * {{{
    *   import eu.timepit.refined.string._
@@ -28,7 +29,7 @@ package object refined {
       )
 
   /**
-   * Support to retrieve `refined` types from an existing ConfigDescriptor
+   * refine allows to retrieve a `refined` type given an existing `ConfigDescriptor`
    *
    * Example:
    *
