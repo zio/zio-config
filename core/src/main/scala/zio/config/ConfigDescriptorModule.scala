@@ -26,7 +26,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * Later you decided to convert the type of from `Int` to `String` (for some reason)
      *
-     * In this case. In this case, A => B` is `Int => String` which will always work.
+     * In this case. In this case, `A => B` is `Int => String` which will always work.
      *
      * However, the reverse relationship (which is used to retrieve
      * the original type from its transformed representation) which is `String => Int` is no more a
@@ -460,21 +460,22 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def mapKey(f: K => K): ConfigDescriptor[A] = {
       def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
         config match {
+          case Lazy(thunk)                  => Lazy(() => loop(thunk()))
           case Source(source, propertyType) => Source(source, propertyType)
-          case DynamicMap(source, conf)     => DynamicMap(source, conf.map(loop))
+          case DynamicMap(source, conf)     => DynamicMap(source, loop(conf))
           case Nested(source, path, conf) =>
-            Nested(source, f(path), conf.map(loop))
-          case Optional(conf)          => Optional(conf.map(loop))
-          case Sequence(source, conf)  => Sequence(source, conf.map(loop))
-          case Describe(conf, message) => Describe(conf.map(loop), message)
-          case Default(value, value2)  => Default(value.map(loop), value2)
-          case TransformOrFail(config, f, g) =>
-            XmapEither(config.map(loop), f, g)
-          case Zip(conf1, conf2) => Zip(conf1.map(loop), conf2.map(loop))
-          case OrElseEither(value1, value2) =>
-            OrElseEither(value1.map(loop), value2.map(loop))
+            Nested(source, f(path), loop(conf))
+          case Optional(conf)          => Optional(loop(conf))
+          case Sequence(source, conf)  => Sequence(source, loop(conf))
+          case Describe(conf, message) => Describe(loop(conf), message)
+          case Default(conf, value)  => Default(loop(conf), value)
+          case TransformOrFail(conf, f, g) =>
+            TransformOrFail(loop(conf), f, g)
+          case Zip(conf1, conf2) => Zip(loop(conf1), loop(conf2))
+          case OrElseEither(conf1, conf2) =>
+            OrElseEither(loop(conf1), loop(conf2))
           case OrElse(value1, value2) =>
-            OrElse(value1.map(loop), value2.map(loop))
+            OrElse(loop(value1), loop(value2))
         }
 
       loop(self)
