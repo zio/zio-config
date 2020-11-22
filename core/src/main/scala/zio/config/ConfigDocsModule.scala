@@ -234,12 +234,12 @@ trait ConfigDocsModule extends WriteModule {
      * Create a Github flavored markdown string from Table.
      * This can be used to render markdowns in Github, Gitlab etc
      */
-    def toGithubFlavouredMarkdown(implicit S:K <:< String): String =
+    def toGithubFlavouredMarkdown(implicit S: K <:< String): String =
       toMarkdown(Table.githubFlavoured)
 
     def toMarkdown(
       getLink: (Heading, Int, Either[FieldName, Format]) => Link
-    )(implicit S:K <:< String): String = {
+    )(implicit S: K <:< String): String = {
       val headingColumns =
         List("FieldName", "Format", "Description", "Sources")
 
@@ -425,7 +425,7 @@ trait ConfigDocsModule extends WriteModule {
      * we have different ways to produce links towards those headings. In this case, we employ the strategy used by Github.
      */
     def githubFlavoured(
-      implicit S:K <:< String
+      implicit S: K <:< String
     ): (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, index, fieldNameOrFormat) => {
         val headingStr =
@@ -530,7 +530,7 @@ trait ConfigDocsModule extends WriteModule {
     }
 
     sealed trait FieldName {
-      def asString(forBlank: Option[String])(implicit S:K <:< String): String =
+      def asString(forBlank: Option[String])(implicit S: K <:< String): String =
         this match {
           case FieldName.Key(k) => S.apply(k)
           case FieldName.Blank  => forBlank.getOrElse("")

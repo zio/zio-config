@@ -468,7 +468,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Optional(conf)          => Optional(loop(conf))
           case Sequence(source, conf)  => Sequence(source, loop(conf))
           case Describe(conf, message) => Describe(loop(conf), message)
-          case Default(conf, value)  => Default(loop(conf), value)
+          case Default(conf, value)    => Default(loop(conf), value)
           case TransformOrFail(conf, f, g) =>
             TransformOrFail(loop(conf), f, g)
           case Zip(conf1, conf2) => Zip(loop(conf1), loop(conf2))

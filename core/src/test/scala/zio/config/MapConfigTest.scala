@@ -4,7 +4,7 @@ import ReadError._, testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.test.Assertion._
 import zio.test._
 import zio.test.environment.TestEnvironment
-import zio.{Has, IO, ZIO}
+import zio.{ Has, IO, ZIO }
 
 object MapConfigTest extends DefaultRunnableSpec {
   import zio.config.testsupport.MapConfigTestSupport._

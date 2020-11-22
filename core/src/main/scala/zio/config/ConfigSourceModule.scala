@@ -516,7 +516,6 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         final case class That[B](right: B)             extends These[Nothing, B]
       }
 
-
       object KeyValue {
         def mk(s: String): Option[KeyValue] =
           splitAtFirstOccurence(s, "=") match {

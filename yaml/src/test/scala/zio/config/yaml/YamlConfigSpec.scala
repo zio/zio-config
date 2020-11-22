@@ -7,7 +7,7 @@ import zio.config.ConfigDescriptor
 
 object YamlConfigSpec extends DefaultRunnableSpec {
   val spec = suite("YamlConfig")(
-    testM("Read a complex structure") {
+    test("Read a complex structure") {
       val result = YamlConfigSource.fromYamlString(
         """
           |top:
@@ -45,10 +45,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
           )
         )
 
-      result
-        .map(_.getConfigValue(List()))
-        .run
-        .map(assert(_)(succeeds(equalTo(expected))))
+      assert(result.map(_.getConfigValue(List())))(equalTo(Right(expected)))
     },
     testM("Read a complex structure into a sealed trait") {
       case class Child(sum: List[Sum])

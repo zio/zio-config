@@ -257,6 +257,6 @@ object TypesafeConfigSource {
       case tree if pf.isDefinedAt(tree) => pf(tree) :: Nil
       case _                            => Nil
     }.foldLeft(List.empty[A]) {
-        case (accLeft, left) => (accLeft ++ left)
-      }
+      case (accLeft, left) => (accLeft ++ left)
+    }
 }

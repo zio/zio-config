@@ -1,10 +1,10 @@
 package zio.config
 
-import zio.{Has, ZIO}
-import zio.config.ConfigDescriptor.{int, list}
+import zio.{ Has, ZIO }
+import zio.config.ConfigDescriptor.{ int, list }
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
-import zio.test.{DefaultRunnableSpec, _}
+import zio.test.{ DefaultRunnableSpec, _ }
 
 object CommandLineListAccumulationTest extends DefaultRunnableSpec {
 

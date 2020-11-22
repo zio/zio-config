@@ -80,7 +80,7 @@ object YamlConfigSource {
         throwable =>
           ReadError.SourceError(
             message = s"Failed to retrieve a valid from the yaml source. ${throwable.getMessage}"
-          )
+          ): ReadError[String]
       )
       .swap
 
@@ -117,7 +117,7 @@ object YamlConfigSource {
         throwable =>
           ReadError.SourceError(
             message = s"Failed to retrieve a valid from the yaml source. ${throwable.getMessage}"
-          )
+          ): ReadError[String]
       )
       .swap
 }

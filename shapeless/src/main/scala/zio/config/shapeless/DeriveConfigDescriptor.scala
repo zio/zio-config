@@ -80,35 +80,23 @@ trait DeriveConfigDescriptor {
     def describe(description: String): Descriptor[T] =
       Descriptor(configDescriptor.describe(description))
 
+    def optional: Descriptor[Option[T]] =
+      Descriptor(configDescriptor.optional)
+
     def from(that: ConfigSource): Descriptor[T] =
       Descriptor(configDescriptor.from(that))
 
     def transform[B](f: T => B, g: B => T): Descriptor[B] =
-      xmap(f, g)
-
-    def transformEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
-      xmapEither(f, g)
-
-    def transformEitherLeft[B](f: T => Either[String, B], g: B => T): Descriptor[B] =
-      Descriptor(configDescriptor.transformOrFailLeft(f, g))
-
-    def transformEitherLeft[E, B](f: T => Either[E, B])(g: B => T)(h: E => String): Descriptor[B] =
-      Descriptor(configDescriptor.transformEitherLeft[E, B](f)(g)(h))
-
-    def transformEitherRight[E, B](f: T => B, g: B => Either[String, T]): Descriptor[B] =
-      Descriptor(configDescriptor.transformOrFailRight(f, g))
-
-    def transformEitherRight[E, B](f: T => B)(g: B => Either[E, T])(h: E => String): Descriptor[B] =
-      Descriptor(configDescriptor.transformEitherRightE[E, B](f)(g)(h))
-
-    def xmap[B](f: T => B, g: B => T): Descriptor[B] =
       Descriptor(configDescriptor.transform(f, g))
 
-    def xmapEither[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
-      Descriptor(configDescriptor.transformOrFail(f, g))
+    def transformOrFail[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
+      Descriptor(configDescriptor.transformOrFail[B](f, g))
 
-    def xmapEither[E, B](f: T => Either[E, B])(g: B => Either[E, T])(h: E => String): Descriptor[B] =
-      Descriptor(configDescriptor.xmapEitherE[E, B](f)(g)(h))
+    def transformOrFailLeft[B](f: T => Either[String, B], g: B => T): Descriptor[B] =
+      Descriptor(configDescriptor.transformOrFailLeft(f, g))
+
+    def transformOrFailRight[E, B](f: T => B, g: B => Either[String, T]): Descriptor[B] =
+      Descriptor(configDescriptor.transformOrFailRight(f, g))
   }
 
   object Descriptor {

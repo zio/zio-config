@@ -22,6 +22,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def lookAheadForDescriptions[C](cfg: ConfigDescriptor[C], result: List[String]): List[String] =
       cfg match {
+        case Lazy(thunk) =>
+          lookAheadForDescriptions(thunk(), result)
         case Default(config, _) =>
           lookAheadForDescriptions(config, result)
         case Describe(config, message) =>
