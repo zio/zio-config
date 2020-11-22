@@ -42,5 +42,39 @@ Take a look at the below example
    refine[List[MyConfig], Size[Greater[W.`2`.T]]](configs)
 ```
 
+You can also use auto derivations with refined.
 
-Check out sample usage of `zio-config-refined` in `examples` module of the project.
+```scala mdoc:silent
+
+import eu.timepit.refined.W
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.collection.{ NonEmpty, Size }
+import zio.config.refined._
+import zio.config._
+import ConfigDescriptor._
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+
+object RefinedReadConfig extends App {
+  case class RefinedProd(
+    ldap: Refined[String, NonEmpty],
+    port: Refined[Int, GreaterEqual[W.`1024`.T]],
+    dbUrl: Option[Refined[String, NonEmpty]],
+    longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
+  )
+
+  val configMultiMap =
+    Map(
+      "LDAP"     -> ::("ldap", Nil),
+      "PORT"     -> ::("1999", Nil),
+      "DBURL"   -> ::("ddd", Nil),
+      "LONGS" -> ::("1234", List("2345", "3456"))
+    )
+
+  val result =
+    read(descriptor[RefinedProd].mapKey(_.toUpperCase) from ConfigSource.fromMultiMap(configMultiMap))
+
+  // Right(RefinedProd(ldap,1999,Some(ddd),List(1234, 2345, 3456)))
+}
+
+
+```
