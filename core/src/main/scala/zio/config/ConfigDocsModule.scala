@@ -627,11 +627,7 @@ trait ConfigDocsModule extends WriteModule {
         case Nested(source, path, c) =>
           val inner = c
           if (alreadySeen.contains(inner)) {
-            ConfigDocs.Nested(
-              path,
-              ConfigDocs.Recursion(source.names ++ sources),
-              descriptions
-            )
+            ConfigDocs.Recursion(source.names ++ sources)
           } else {
             ConfigDocs.Nested(
               path,

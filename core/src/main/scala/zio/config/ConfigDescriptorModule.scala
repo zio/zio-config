@@ -1315,11 +1315,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A])
         extends ConfigDescriptor[Map[K, A]]
 
-    sealed case class Lazy[A](private val get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A] {
-      def value: ConfigDescriptor[A] = get()
-      def map[B](f: ConfigDescriptor[A] => ConfigDescriptor[B]): Lazy[B] =
-        Lazy(() => f(get()))
-    }
+    sealed case class Lazy[A](private val get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
     sealed case class Nested[A](source: ConfigSource, path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
