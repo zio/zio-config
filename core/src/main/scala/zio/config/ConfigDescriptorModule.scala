@@ -32,7 +32,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * the original type from its transformed representation) which is `String => Int` is no more a
      * total function, unless it was `String => Either[error, Int]` or `String => Option[Int]`.
      *
-     * That is, Not all elements of set `String` can be converted to `Int`.
+     * That is, not all elements of set `String` can be converted to `Int`.
      *
      * To overcome this, we can do `s => Try(s.toInt).toOption` to mark the possibility of errors.
      * This is a function of the type: `B => Option[A]`.
@@ -60,17 +60,17 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  }}}
      *
-     *  WRITE:
+     *  Write back the config:
      *
      *  Now given a stringified port "8888", you can also write it
-     *  back to the source safely (i.e, guaranteed that the read will work) because
-     *  the it runs through `(s: String) => Try(s.toInt).toOption`
-     *  and verify it is a real port that can be converted to `Int`.
+     *  back to the source safely. It is safe write, and it is guaranteed that we can
+     *  read back this config successfully. This is because, during writing back, it
+     *  ensures that it is a real port that can be converted to `Int`.
      *
      *  {{{
      *
      *     import zio.config.typesafe._
-     *      // as toJson is available only through zio-config-typesafe module
+     *      // NOTE: toJson is available only through zio-config-typesafe module (import zio.config.typesafe._)
      *
      *     val writtenBack: Either[String, PropertyTree[String, String]] =
      *       write(portString, "8888")
@@ -80,6 +80,14 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *     val mapRepr: Either[String, Map[String, String]] =
      *       writtenBack.map(_.flattenString()) // Map("port" -> "8888")
+     *
+     *      // And even this will work
+     *      import zio.config.typesafe._
+     *
+     *      val port: Int = 8080
+     *      port.toJson(portString)
+     *
+     *      // { "port" : "8080"  }
      *  }}}
      */
     def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[B] =
@@ -375,6 +383,61 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[Either[A, B]] =
       self orElseEither that
 
+    /**
+     * `default` function allows us to inject default values to existing config
+     *
+     * Example:
+     *
+     *  {{{ val port = int("PORT").default(8080) }}}
+     *
+     * A more detailed example:
+     *
+     * Here is a program that describes (or a ConfigDescriptor that represents) reading a `USERNAME` which is a String and `PORT` which is an Int,
+     * and load it to a case class `Config`
+     *
+     *  {{{
+     *     final case class Config(userName: String, port: Int)
+     *
+     *     object Config {
+     *        val dbConfig: ConfigDescriptor[Config] =
+     *           (string("USERNAME") |@| int("PORT").default(8080))(Config.apply, Config.unapply)
+     *     }
+     *  }}}
+     *
+     *  In the above case, if username is missing, then it prints out an error, however if PORT is missing, it falls back to 8080.
+     *
+     *  In fact you can give a default to an entire config
+     *
+     *  For example:
+     *
+     *  {{{
+     *     final case class Config(userName: String, port: Int)
+     *
+     *    object Config {
+     *       val dbConfig: ConfigDescriptor[Config] =
+     *          (string("USERNAME") |@| int("PORT"))(Config.apply, Config.unapply).default(Config("jon", 8080))
+     *    }
+     *
+     *  }}}
+     *
+     *  Sometimes this can be used along with automatic derivation supported through zio-config-magnolia.
+     *
+     *  {{{
+     *
+     *     import zio.config.magnolia._, zio.config._, ConfigDescriptor._
+     *
+     *     final case class Config(userName: String, port: Int)
+     *
+     *     object Config {
+     *       val dbConfig: ConfigDescriptor[Config] =
+     *         descriptor[Config].default(Config("jon", 8080))
+     *     }
+     *
+     *     // This is a typical example where we mix auto derivation with manual definitions.
+     *
+     *  }}}
+     *
+     */
     final def default(value: A): ConfigDescriptor[A] =
       Default(lazyDesc(self), value) ?? s"default value: $value"
 
@@ -387,7 +450,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * A more detailed example:
      *
-     * Here is a program that describes (or a ConfigDescriptor that represents) reading a `USERNAME` which is a String and `PORT` which is an Int,
+     * Here is a program that describes (or a ConfigDescriptor that represents) reading a `USERNAME` which is a String and a `PORT` which is an Int,
      * and load it to a case class `Config`
      *
      *  {{{
