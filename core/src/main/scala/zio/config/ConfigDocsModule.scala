@@ -567,8 +567,12 @@ trait ConfigDocsModule extends WriteModule {
       config: ConfigDescriptor[B],
       latestPath: Option[K],
       alreadySeen: Set[ConfigDescriptor[_]]
-    ): ConfigDocs =
-      loop(sources, descriptions, config, latestPath, alreadySeen + config)
+    ): ConfigDocs = {
+      config match {
+        case Lazy(get) => loop(sources, descriptions, get(), latestPath, alreadySeen + config)
+        case _ => loop(sources, descriptions, config, latestPath, alreadySeen + config)
+      }
+    }
 
     def loop[B](
       sources: Set[ConfigSourceName],
@@ -579,7 +583,7 @@ trait ConfigDocsModule extends WriteModule {
     ): ConfigDocs =
       config match {
         case Lazy(thunk) =>
-          loopTo(sources, descriptions, thunk(), latestPath, alreadySeen)
+          loopTo(sources, descriptions, thunk(), None, alreadySeen)
 
         case Source(source, _) =>
           DocsLeaf((source.names ++ sources), descriptions, None)
@@ -627,7 +631,11 @@ trait ConfigDocsModule extends WriteModule {
         case Nested(source, path, c) =>
           val inner = c
           if (alreadySeen.contains(inner)) {
-            ConfigDocs.Recursion(source.names ++ sources)
+            ConfigDocs.Nested(
+              path,
+              ConfigDocs.Recursion(source.names ++ sources),
+              descriptions
+            )
           } else {
             ConfigDocs.Nested(
               path,

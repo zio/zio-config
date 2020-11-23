@@ -16,14 +16,120 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
   object ConfigDescriptor extends ConfigDescriptorFunctions {
     import ConfigDescriptorAdt._
 
+    /**
+    * A config descriptor that describes retrieving a big-decimal.
+     *
+     * Note that there is no path associated with it. However, an example can give you more idea on what's going on.
+     *
+     * {{{
+     *    
+     *     val valueConfig: ConfigDescriptor[Either[BigDecimal, String]] = bigDecimal.orElseEither(string)
+     *
+     *     // Describes fetching a map that is under the path "key-values" where the value of each can be either a BigDecimal or
+     *     // if it's not try to fetch it as a String. An example source config
+     *
+     *     val sourceString =
+     *       """
+     *           {
+     *               key-values : {
+     *                  key1 : "usa"
+     *                  key2 : "111111111111"
+     *                  key3 : "australia"
+     *               }
+     *            }
+     *        """
+     *
+     *     val hoconSource = TypesafeConfigSource.fromHoconString(sourceString)
+     *
+     *     val mapConfig = map("key-values")(valueConfig)
+     *
+     *     val getMapConfig: ConfigDescriptor[Map[String, Either[BigDecimal, String]] =
+     *        hoconSource.flatMap(source => read(mapConfig from source)
+     *
+     * }}}
+     *
+     */
     val bigDecimal: ConfigDescriptor[BigDecimal] =
       lazyDesc(Source(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal")
 
+    /**
+     * A config descriptor that describes retrieving a big-decimal from a given path.
+     *
+     * Note that there is no path associated with it. However, an example can give you more idea on what's going on.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "COST" : 111111111
+     *      )
+     *
+     *     val config = bigDecimal("COST")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(111111111)
+     *
+     * }}}
+     *
+     */
     def bigDecimal(path: String): ConfigDescriptor[BigDecimal] = nested(path)(bigDecimal)
 
+    /**
+     * A config descriptor that describes retrieving a BigInt.
+     *
+     * Note that there is no path associated with it. However, an example can give you more idea on what's going on.
+     *
+     * {{{
+     *
+     *     val valueConfig: ConfigDescriptor[Either[BigInt, String]] = bigInt.orElseEither(string)
+     *
+     *     // Describes fetching a map that is under the path "key-values" where the value of each can be either a BigDecimal or
+     *     // if it's not try to fetch it as a String. An example source config
+     *
+     *     val sourceString =
+     *       """
+     *           {
+     *               key-values : {
+     *                  key1 : "usa"
+     *                  key2 : "111111111111"
+     *                  key3 : "australia"
+     *               }
+     *            }
+     *        """
+     *
+     *     val hoconSource = TypesafeConfigSource.fromHoconString(sourceString)
+     *
+     *     val mapConfig = map("key-values")(valueConfig)
+     *
+     *     val getMapConfig: ConfigDescriptor[Map[String, Either[BigInt, String]] =
+     *        hoconSource.flatMap(source => read(mapConfig from source)
+     *
+     * }}}
+     *
+     */
     val bigInt: ConfigDescriptor[BigInt] =
       lazyDesc(Source(ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint")
 
+    /**
+     * A config descriptor that describes retrieving a BigInt from a given path.
+     *
+     * Note that there is no path associated with it. However, an example can give you more idea on what's going on.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "COST" : 111111111
+     *      )
+     *
+     *     val config = bigInt("COST")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(111111111)
+     *
+     * }}}
+     *
+     */
     def bigInt(path: String): ConfigDescriptor[BigInt] = nested(path)(bigInt)
 
     val boolean: ConfigDescriptor[Boolean] =
