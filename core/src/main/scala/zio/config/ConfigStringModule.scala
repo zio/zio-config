@@ -17,7 +17,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     import ConfigDescriptorAdt._
 
     /**
-    * A config descriptor that describes retrieving a big-decimal.
+     * A config descriptor that describes retrieving a big-decimal.
      *
      * Note that there is no path associated with it. However, an example can give you more idea on what's going on.
      *

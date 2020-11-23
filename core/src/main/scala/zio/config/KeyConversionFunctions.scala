@@ -4,6 +4,15 @@ import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 
 private[config] trait KeyConversionFunctions {
+
+  /**
+   * Convert camelCase to any delimited string.
+   * Example:
+   *
+   * {{{
+   *   camelToDelimiter("abcDef", "-") === abc-def
+   * }}}
+   */
   def camelToDelimiter(input: String, delimiter: String): String = {
     def addToAcc(acc: List[String], current: List[Int]) = {
       def currentWord = current.reverse.flatMap(i => Character.toChars(i)).mkString.toLowerCase
@@ -27,16 +36,29 @@ private[config] trait KeyConversionFunctions {
     loop(input.codePoints().iterator().asScala.map(x => x: Int).toList, Nil, Nil, beginning = true)
   }
 
+  /**
+   * Convert a camelCase key to kebab-case
+   * val s = abcDef
+   * toKebabCase(s) === abc-def
+   */
   val toKebabCase: String => String =
     camelToDelimiter(_, "-")
 
+  /**
+   * Convert a camelCase key to snake_case
+   */
   val toSnakeCase: String => String =
     camelToDelimiter(_, "_")
 
-  //FIXME: Change names
-  def addPrefix(prefix: String): String => String =
+  /**
+   * Add a prefix to an existing key
+   */
+  def addPrefixToKey(prefix: String): String => String =
     s => s"${prefix}${s}"
 
-  def postFix(string: String): String => String =
+  /**
+   * Add a post fix to an existing key
+   */
+  def addPostFixToKey(string: String): String => String =
     s => s"${s}${string}"
 }

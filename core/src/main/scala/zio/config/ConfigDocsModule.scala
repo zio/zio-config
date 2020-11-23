@@ -1,5 +1,7 @@
 package zio.config
 
+import scala.annotation.tailrec
+
 trait ConfigDocsModule extends WriteModule {
   import ConfigDescriptorAdt._
   import Table._
@@ -75,7 +77,7 @@ trait ConfigDocsModule extends WriteModule {
             // Look backwards and see if previous node is nested, if so remove the already used descriptions
             val parentDoc =
               if (previousNode.exists(
-                    _.is { case ConfigDocs.Nested(_, _, _) => true }(false)
+                    r => r.is { case ConfigDocs.Nested(_, _, _) => true }(false)
                   )) {
                 previousPaths.lastOption match {
                   case Some(value) =>
@@ -567,12 +569,8 @@ trait ConfigDocsModule extends WriteModule {
       config: ConfigDescriptor[B],
       latestPath: Option[K],
       alreadySeen: Set[ConfigDescriptor[_]]
-    ): ConfigDocs = {
-      config match {
-        case Lazy(get) => loop(sources, descriptions, get(), latestPath, alreadySeen + config)
-        case _ => loop(sources, descriptions, config, latestPath, alreadySeen + config)
-      }
-    }
+    ): ConfigDocs =
+      loop(sources, descriptions, config, latestPath, alreadySeen + config)
 
     def loop[B](
       sources: Set[ConfigSourceName],
@@ -580,10 +578,18 @@ trait ConfigDocsModule extends WriteModule {
       config: ConfigDescriptor[B],
       latestPath: Option[K],
       alreadySeen: Set[ConfigDescriptor[_]]
-    ): ConfigDocs =
+    ): ConfigDocs = {
+      // FIXME: Not really sure. This was more of a TDD making sure tests run.
+      // FIXME: Some work is in progress with ConfigDocs in https://github.com/zio/zio-config/pull/441
+      @tailrec
+      def getLazy(c: ConfigDescriptor[B]): ConfigDescriptor[B] = c match {
+        case Lazy(value) => getLazy(value())
+        case _           => c
+      }
+
       config match {
         case Lazy(thunk) =>
-          loopTo(sources, descriptions, thunk(), None, alreadySeen)
+          loopTo(sources, descriptions, thunk(), latestPath, alreadySeen)
 
         case Source(source, _) =>
           DocsLeaf((source.names ++ sources), descriptions, None)
@@ -629,7 +635,8 @@ trait ConfigDocsModule extends WriteModule {
           )
 
         case Nested(source, path, c) =>
-          val inner = c
+          val inner = getLazy(c)
+
           if (alreadySeen.contains(inner)) {
             ConfigDocs.Nested(
               path,
@@ -671,6 +678,7 @@ trait ConfigDocsModule extends WriteModule {
             loopTo(sources, descriptions, right, None, alreadySeen)
           )
       }
+    }
 
     loopTo(Set.empty, Nil, config, None, Set.empty)
   }
