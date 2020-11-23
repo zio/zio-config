@@ -138,10 +138,10 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "IS_TRUE" : true
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = bigInt("IS_TRUE")
      *     val result = read(config from mapSource)
      *
      *     // Right(111111111)
@@ -161,13 +161,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "KEY" : 11
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = bigInt("KEY")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(11)
      *
      * }}}
      *
@@ -184,13 +184,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "COST" : 11.11
      *      )
      *
      *     val config = bigInt("COST")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(11.11)
      *
      * }}}
      *
