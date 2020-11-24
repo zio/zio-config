@@ -513,13 +513,108 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     /**
      * Attach a source to the `ConfigDescriptor`.
      *
-     * Example: {{{ string("PORT") from ConfigSource.fromMap(Map.empty) }}}
+     * Example: {{{ val config = string("PORT") from ConfigSource.fromMap(Map.empty) }}}
      *
-     * Details:
+     * `config` is a description that says there is a key called `PORT` in constant map source.
+     * You can use the description to read the config
+     *
+     * {{{
+     *
+     *   val either: Either[ReadError[String], String] = read(config)
+     *
+     * }}}
+     *
+     * You can also tag a source per config field, or one global source to an entire config.
+     *
+     * {{{
+     *    final case class Config(userName: String, port: Int)
+     *    object Config {
+     *       val dbConfig: ConfigDescriptor[Config] =
+     *          (string("USERNAME") |@| int("PORT"))(Config.apply, Config.unapply)
+     *    }
+     * }}}
+     *
+     * In the above example, `dbConfig` is not associated with any source. By default the source will be empty.
+     *
+     * To attach a config (especially during a read operation) is as easy as:
+     *
+     * {{{
+     *   read(dbConfig from ConfigSource.fromMap(Map("USERNAME" -> "afs", "PORT" -> "8080"))
+     *   // Right(Config("afs", 8080))
+     * }}}
+     *
+     * Obviously, source can be attached independently.
+     *
+     * {{{
+     *
+     *   val configSource1: ConfigSource = ???
+     *   val configSource2: ConfigSource = ???
+     *
+     *   val dbConfig =
+     *     (string("USERNAME") from configSource1 |@| int("PORT"))(Config.apply, Config.unapply) from configSource2
+     * }}}
+     *
+     * In the above case `read(dbConfig)` implies, zio-config tries to fetch `USERNAME` from configSource1, and if it
+     * fails (i.e, missing value) it goes and try with the global config which is `configSource2`.
+     * PORT will be fetched from configSource2.
+     *
+     * You can also try various sources for each field.
+     *
+     * {{{
+     *
+     *   val configSource1: ConfigSource = ??? // Example: ConfigSource.fromMap(...)
+     *   val configSource2: ConfigSource = ??? // Example: ConfigSource.fromTypesafeConfig(...)
+     *
+     *   val dbConfig =
+     *     (string("USERNAME") from configSource1.orElse(configSource2) |@|
+     *       int("PORT") from configSource2.orElse(configSource1))(Config.apply, Config.unapply) from configSource2
+     * }}}
+     *
+     *
      */
     final def from(that: ConfigSource): ConfigDescriptor[A] =
       self.updateSource(_.orElse(that))
 
+    /**
+    *
+     * mapKey allows user to convert the keys in a ConfigDescriptor.
+     *
+     * Example:
+     *
+     * Consider you have a config that looks like this
+     *
+     * {{{
+     *
+     *   case class Config(url: String, port: Int)
+     *
+     *   object Config {
+     *
+     *      val config = (string("dbUrl") |@| int("dbPort"))(Config.apply, Config.unapply)
+     *   }
+     *
+     *  val source = Map(
+     *     "DB_URL" -> "abc.com",
+     *     "DB_PORT" -> "9090"
+     *  )
+     *
+     *  read(Config.config from ConfigSource.fromMap(source))
+     *  // will fail since the source doesn't have the keys dbUrl and dbPort, but it has only DB_URL and DB_PORT
+     *
+     * }}}
+     *
+     * The above config retrieval fails since the keys dbUrl and dbPOrt exist, but it has only DB_URL and DB_PORT.
+     * In this situation, instead of rewriting the config we can do
+     *
+     *
+     * {{{
+     *
+     *   import zio.config._, ConfigDescriptor._
+     *
+     *   read(Config.config.mapKey(key => toSnakeCase(key).toUpperCase) from ConfigSource.fromMap(source))
+     *   // Right(Config("abc.com", 9090))
+     *
+     * }}}
+     */
     def mapKey(f: K => K): ConfigDescriptor[A] = {
       def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
         config match {
@@ -1333,8 +1428,66 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           )
         )
 
+    /**
+     *  `map("xyz")(confgDescriptor)` represents retrieving a map (of key value pairs) that exists within the key "xyz".
+     *
+     *  For example: `map("key")(int)` implies there is a Map of key-value under key `key` and the type of values of the Map is Int. The
+     *  key of Map will always be of the type String in this case.
+     *
+     *  {{{
+     *
+     *  }}}
+     *
+     *  Here is a more detailed example.
+     *
+     *  We know `val config = string("USERNAME") from source`
+     *  represents a program that says, there exists a key called
+     *  "USERNAME" (in some ConfigSource called source)
+     *  with a value that is of the type `String`.
+     *
+     *  `list("xyz")(config)` would then imply, there exists a list of `USERNAME -> value` pair within the key "xyz".
+     *
+     *  {{{
+     *    val json =
+     *       s"""
+     *          | xyz : [
+     *          |   {
+     *          |     "USERNAME" : "value1"
+     *          |   },
+     *          |
+     *          |   {
+     *          |     "USERNAME" : "value2"
+     *          |   }
+     *          | ]
+     *          |""".stripMargin
+     *
+     *     val getSource: Either[ReadError[String], ConfigSource] =
+     *       TypesafeConfigSource.fromHoconString(json)
+     *
+     *     val config = string("USERNAME")
+     *
+     *     // Within the key "xyz", we have a list of key-value pair, where key is always "USERNAME"
+     *     // NOTE: In HOCON, there is always a need of key (in this case, xyz) at parent level.
+     *
+     *     val listConfig = list("xyz")(config)
+     *
+     *     val userNames: Either[ReadError[String], List[String]] =
+     *       getSource.flatMap(source => read(listConfig from source))
+     *
+     *     println(userNames)
+     *  }}}
+     *
+     *  returns
+     *
+     *  {{{
+     *
+     *    Right(List(value1, value2))
+     *
+     *  }}}
+     */
     def map[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
       DynamicMap(ConfigSourceFunctions.empty, lazyDesc(desc))
+
 
     def map[A](
       path: K
@@ -1400,6 +1553,17 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       f: A => Either[String, B],
       g: B => Either[String, A]
     ) extends ConfigDescriptor[B]
+
+    final def lazyDesc[A](
+      config: => ConfigDescriptor[A]
+    ): ConfigDescriptor[A] = {
+      lazy val config0 = config
+
+      Lazy(() => config0)
+    }
+
+    final def default[A](config: => ConfigDescriptor[A], default: A): ConfigDescriptor[A] =
+      Default(lazyDesc(config), default)
   }
 
 }
