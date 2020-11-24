@@ -576,7 +576,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       self.updateSource(_.orElse(that))
 
     /**
-    *
+     *
      * mapKey allows user to convert the keys in a ConfigDescriptor.
      *
      * Example:
@@ -1429,52 +1429,195 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         )
 
     /**
-     *  `map("xyz")(confgDescriptor)` represents retrieving a map (of key value pairs) that exists within the key "xyz".
+     * Retrieve a `Map`given an existing `ConfigDescriptor`.
      *
-     *  For example: `map("key")(int)` implies there is a Map of key-value under key `key` and the type of values of the Map is Int. The
-     *  key of Map will always be of the type String in this case.
+     * `map(configDescriptor)` is similar to `map(path)(configDescriptor)` except
+     * that there is no `path` associated with it. For the same reason, you would need
+     * the second version given below:  `def map[A](path: K)(desc: => ConfigDescriptor[A])
+     *
+     * Before we try to understand the semantics of `map(configDescriptor)`, let's understand the
+     * semantics of `map(path)(configDescriptor)`; a function with the same name given below,
+     * but it takes a path as well.
+     *
+     *  `map("xyz")(confgDescriptor)` represents retrieving a map (of key value pairs) that exists within the key "xyz"
+     *
+     *  Let's explain this in detail with an example: int("URL") implies there exists a value of the type string under the key "URL"
+     *  On similar lines, map("URL")(int) implies there exists a value of the type `Map` under the key `URL` and the type of the
+     *  value of each key in the map is of the type Int.
+     *
+     *  Sidee note: Obviously, for complex types such as Map,
+     *  you can also rely on zio-config-magnolia that allows you to retrieve
+     *  any value of the type Map[String, A] for all type A,
+     *  that has an instance of `Description` (refer zio-config-magnolia api docs)
      *
      *  {{{
      *
+     *    val config = map("xyz")(int)
+     *
+     *    val sourceOrFailed: Either[ReadError[String], ConfigSource] =
+     *      TypesafeConfigSource.fromHoconString(
+     *        "xyz" : {
+     *           "key1" : "1"
+     *           "key2" : "2"
+     *           "key3" : "3"
+     *         }
+     *      )
+     *
+     *    // Forming a TypesafeConfigSource from string returned an Either (being able to capture errors) because
+     *    // the HOCON string can be an invalid string.
+     *
+     *    val result =  sourceOrFailed.flatMap(source => read(config from source))
+     *    // Right(Map("key1" -> 1, "key2" -> 2, "key3" -> 3))
      *  }}}
      *
+     *  We explained `map` using TypesafeConfigSource. However, for zio-config source doesn't really matter.
+     *  For example, lets try to fetch a map from a flattened scala Map.
+     *
+     *  {{{
+     *     val source = ConfigSource.fromMap(
+     *        Map(
+     *          "xyz_key1" -> "1",
+     *          "xyz_key2" -> "2",
+     *          "xyz_key3" -> "3"
+     *        ), keyDelimiter = Some('_')
+     *     )
+     *
+     *    val config = read(config from source)
+     *    // Right( Map("key1" -> 1, "key2" -> 2, "key3" -> 3))
+     *
+     *  }}}
+     *
+     *
+     * Now what does it mean if we say ` val config = map(int("id")) ` instead of `val config = map("id")(int)`
+     *
+     * The difference is `map("id")(int)` implies there exists a map within the key `id`, whose values of are of the type `Int`
+     * On the other hand `map(int("id"))` implies there exists a map hose value is of the type  {"id" : "Int"}
+     *
+     *
+     * Example:
+     *  {{{
+     *
+     *   val mapConfig = map(int("id"))
+     *
+     *   // This means there exists a Map whose value is of the type {"String" : "Int"}.
+     *
+     *   val sourceOrFailure: Either[ReadError[String], TypesafeConfigSource] = TypesafeConfigSource.fromHoconString(
+     *     s"""
+     *      "abc" : {
+     *       "key1" : { "id" :  "2" },
+     *       "key2" : { "id" : "3" }
+     *     }
+     *
+     *      """"
+     *    )
+     *
+     *   val result = sourceOrFailure.flatMap(s => read(nested("abc")(map(int("id"))) from s))
+     *   // Right(Map("key1" -> 1, "key2" -> 2))
+     *
+     *  }}}
+     *
+     * This is really useful when the config source consist of a map but you need to fetch the value of the keys
+     * in the map from an nested key within itself. In this example it is "id".
+
+     */
+    def map[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
+      DynamicMap(ConfigSourceFunctions.empty, lazyDesc(desc))
+
+    /**
+     *  `map("xyz")(confgDescriptor)` represents retrieving a map (of key value pairs) that exists within the key "xyz"
+     *
+     *  Let's explain this in detail with an example: int("URL") implies there exists a value of the type string under the key "URL"
+     *  On similar lines, map("URL")(int) implies there exists a value of the type `Map` under the key `URL` and the type of the
+     *  value of each key in the map is of the type Int.
+     *
+     *  Sidee note: Obviously, for complex types such as Map,
+     *  you can also rely on zio-config-magnolia that allows you to retrieve
+     *  any value of the type Map[String, A] for all type A,
+     *  that has an instance of `Description` (refer zio-config-magnolia api docs)
+     *
+     *  {{{
+     *
+     *    val config = map("xyz")(int)
+     *
+     *    val sourceOrFailed: Either[ReadError[String], ConfigSource] =
+     *      TypesafeConfigSource.fromHoconString(
+     *        "xyz" : {
+     *           "key1" : "1"
+     *           "key2" : "2"
+     *           "key3" : "3"
+     *         }
+     *      )
+     *
+     *    // Forming a TypesafeConfigSource from string returned an Either (being able to capture errors) because
+     *    // the HOCON string can be an invalid string.
+     *
+     *    val result =  sourceOrFailed.flatMap(source => read(config from source))
+     *    // Right(Map("key1" -> 1, "key2" -> 2, "key3" -> 3))
+     *  }}}
+     *
+     *  We explained `map` using TypesafeConfigSource. However, for zio-config source doesn't really matter.
+     *  For example, lets try to fetch a map from a flattened scala Map.
+     *
+     *  {{{
+     *     val source = ConfigSource.fromMap(
+     *        Map(
+     *          "xyz_key1" -> "1",
+     *          "xyz_key2" -> "2",
+     *          "xyz_key3" -> "3"
+     *        ), keyDelimiter = Some('_')
+     *     )
+     *
+     *    val config = read(config from source)
+     *    // Right( Map("key1" -> 1, "key2" -> 2, "key3" -> 3))
+     *
+     *  }}}
+     */
+    def map[A](
+      path: K
+    )(desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
+      nested(path)(map(desc))
+
+    /**
+     * nested allows us to retrieve a config from a path `K`, where `K` is typically `String`.
+     *
+     * Example :
+     *
+     * {{{
+     *    val config = nested("key")(string)
+     *    val mapSource = ConfigSource.fromMap(
+     *       "key" : "value"
+     *    )
+     *
+     *    val result = read(config from mapSource)
+     *    // Right("value")
+     * }}}
+     *
+     * Note that `string("key")` is same as that of `nested("key")(string)`
+     */
+    def nested[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
+      Nested(ConfigSourceFunctions.empty, path, lazyDesc(desc))
+
+    /**
+     *  `set("xyz")(confgDescriptor)` represents just a set variant of configDescriptor within the key `xyz`.
+     *  Note that, `nested("xyz")(set(configDescriptor))` is same as `set("xyz")(configDescriptor)`.
+     *
+     *  For example: `set("key")(string)` implies value of `key` is of the type `Set[String]`
+     *
      *  Here is a more detailed example.
-     *
-     *  We know `val config = string("USERNAME") from source`
-     *  represents a program that says, there exists a key called
-     *  "USERNAME" (in some ConfigSource called source)
-     *  with a value that is of the type `String`.
-     *
-     *  `list("xyz")(config)` would then imply, there exists a list of `USERNAME -> value` pair within the key "xyz".
+
+     *  `list("xyz")(string)` would then imply, there exists a set of type String under "xyz"
      *
      *  {{{
      *    val json =
      *       s"""
-     *          | xyz : [
-     *          |   {
-     *          |     "USERNAME" : "value1"
-     *          |   },
-     *          |
-     *          |   {
-     *          |     "USERNAME" : "value2"
-     *          |   }
-     *          | ]
+     *          | xyz : ["a", "b"]
      *          |""".stripMargin
      *
-     *     val getSource: Either[ReadError[String], ConfigSource] =
-     *       TypesafeConfigSource.fromHoconString(json)
+     *    val sourceOrFailure: Either[ReadError[String], TypesafeConfigSource] =
+     *     TypesafeConfigSource.fromHoconString(json)
      *
-     *     val config = string("USERNAME")
+     *   sourceOrFailure.flatMap(source => read(set("xyz")(string) from source))
      *
-     *     // Within the key "xyz", we have a list of key-value pair, where key is always "USERNAME"
-     *     // NOTE: In HOCON, there is always a need of key (in this case, xyz) at parent level.
-     *
-     *     val listConfig = list("xyz")(config)
-     *
-     *     val userNames: Either[ReadError[String], List[String]] =
-     *       getSource.flatMap(source => read(listConfig from source))
-     *
-     *     println(userNames)
      *  }}}
      *
      *  returns
@@ -1485,42 +1628,49 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  }}}
      */
-    def map[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(ConfigSourceFunctions.empty, lazyDesc(desc))
-
-
-    def map[A](
-      path: K
-    )(desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      nested(path)(map(desc))
-
-    def nested[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      Nested(ConfigSourceFunctions.empty, path, lazyDesc(desc))
-
     def set[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
       list(desc).transformOrFail(distinctListToSet, s => Right(s.toList))
 
+    /**
+     *  `set("xyz")(confgDescriptor)` represents just a set variant of configDescriptor within the key `xyz`.
+     *  Note that, `nested("xyz")(set(configDescriptor))` is same as `set("xyz")(configDescriptor)`.
+     *
+     *  For example: `set("key")(string)` implies value of `key` is of the type `Set[String]`
+     *
+     *  Here is a more detailed example.
+     *
+     *  `list("xyz")(string)` would then imply, there exists a set of type String under "xyz"
+     *
+     *  {{{
+     *    val json =
+     *       s"""
+     *          | xyz : ["a", "b"]
+     *          |""".stripMargin
+     *
+     *    val sourceOrFailure: Either[ReadError[String], TypesafeConfigSource] =
+     *     TypesafeConfigSource.fromHoconString(json)
+     *
+     *   sourceOrFailure.flatMap(source => read(set("xyz")(string) from source))
+     *
+     *  }}}
+     *
+     *  returns
+     *
+     *  {{{
+     *
+     *    Right(List(value1, value2))
+     *
+     *  }}}
+     */
     def set[A](
       path: K
     )(desc: => ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
       nested(path)(set(desc))
 
-    private def distinctListToSet[A](list: List[A]): Either[String, Set[A]] =
+    private[config] def distinctListToSet[A](list: List[A]): Either[String, Set[A]] =
       if (list.size == list.distinct.size) Right(list.toSet)
       else Left("Duplicated values found")
 
-  }
-
-  /**
-   * lazyDesc suspends the computation of config until the very end,
-   * enabling retrieval of recursive config structures without blowing up memory.
-   */
-  final def lazyDesc[A](
-    config: => ConfigDescriptor[A]
-  ): ConfigDescriptor[A] = {
-    lazy val config0 = config
-
-    Lazy(() => config0)
   }
 
   private[config] object ConfigDescriptorAdt {
@@ -1554,6 +1704,15 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       g: B => Either[String, A]
     ) extends ConfigDescriptor[B]
 
+    final def default[A](config: => ConfigDescriptor[A], default: A): ConfigDescriptor[A] =
+      Default(lazyDesc(config), default)
+
+    final def describe[A](config: => ConfigDescriptor[A], message: String): ConfigDescriptor[A] =
+      Describe(lazyDesc(config), message)
+
+    final def dynamicMap[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
+      DynamicMap(source, lazyDesc(config))
+
     final def lazyDesc[A](
       config: => ConfigDescriptor[A]
     ): ConfigDescriptor[A] = {
@@ -1562,8 +1721,26 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       Lazy(() => config0)
     }
 
-    final def default[A](config: => ConfigDescriptor[A], default: A): ConfigDescriptor[A] =
-      Default(lazyDesc(config), default)
+    final def nested[A](source: ConfigSource, path: K, config: ConfigDescriptor[A]): ConfigDescriptor[A] =
+      Nested(source, path, lazyDesc(config))
+
+    final def orElse[A](left: ConfigDescriptor[A], right: ConfigDescriptor[A]): ConfigDescriptor[A] =
+      OrElse(lazyDesc(left), lazyDesc(right))
+
+    final def orElseEither[A, B](
+      left: ConfigDescriptor[A],
+      right: ConfigDescriptor[B]
+    ): ConfigDescriptor[Either[A, B]] =
+      OrElseEither(lazyDesc(left), lazyDesc(right))
+
+    final def sequence[A](source: ConfigSource, config: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
+      Sequence(source, lazyDesc(config))
+
+    final def source[A](source: ConfigSource, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
+      Source(source, propertyType)
+
+    final def zip[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
+      Zip(lazyDesc(left), lazyDesc(right))
   }
 
 }

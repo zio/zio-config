@@ -50,7 +50,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      */
     val bigDecimal: ConfigDescriptor[BigDecimal] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal")
+      source(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal"
 
     /**
      * A config descriptor that describes retrieving a big-decimal from a given path.
@@ -106,7 +106,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      */
     val bigInt: ConfigDescriptor[BigInt] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint")
+      source(ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint"
 
     /**
      * A config descriptor that describes retrieving a BigInt from a given path.
@@ -129,7 +129,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def bigInt(path: String): ConfigDescriptor[BigInt] = nested(path)(bigInt)
 
     val boolean: ConfigDescriptor[Boolean] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.BooleanType) ?? "value of type boolean")
+      source(ConfigSource.empty, PropertyType.BooleanType) ?? "value of type boolean"
 
     /**
      * A config descriptor that describes retrieving a Boolean from a given path.
@@ -152,7 +152,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def boolean(path: String): ConfigDescriptor[Boolean] = nested(path)(boolean)
 
     val byte: ConfigDescriptor[Byte] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.ByteType) ?? "value of type byte")
+      source(ConfigSource.empty, PropertyType.ByteType) ?? "value of type byte"
 
     /**
      * A config descriptor that describes retrieving a Byte from a given path.
@@ -175,7 +175,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def byte(path: String): ConfigDescriptor[Byte] = nested(path)(byte)
 
     val double: ConfigDescriptor[Double] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double")
+      source(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double"
 
     /**
      * A config descriptor that describes retrieving a Double from a given path.
@@ -198,7 +198,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def double(path: String): ConfigDescriptor[Double] = nested(path)(double)
 
     val duration: ConfigDescriptor[Duration] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.DurationType) ?? "value of type duration")
+      source(ConfigSource.empty, PropertyType.DurationType) ?? "value of type duration"
 
     /**
      * A config descriptor that describes retrieving a duration from a given path.
@@ -221,7 +221,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def duration(path: String): ConfigDescriptor[Duration] = nested(path)(duration)
 
     val file: ConfigDescriptor[File] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.FileType) ?? "value of type file")
+      source(ConfigSource.empty, PropertyType.FileType) ?? "value of type file"
 
     /**
      * A config descriptor that describes retrieving a file from a given path.
@@ -244,7 +244,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def file(path: String): ConfigDescriptor[File] = nested(path)(file)
 
     val float: ConfigDescriptor[Float] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float")
+      source(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
 
     /**
      * A config descriptor that describes retrieving a Float from a given path.
@@ -267,7 +267,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def float(path: String): ConfigDescriptor[Float] = nested(path)(float)
 
     val instant: ConfigDescriptor[Instant] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant")
+      source(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant"
 
     /**
      * A config descriptor that describes retrieving a Instant from a given path.
@@ -290,7 +290,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def instant(path: String): ConfigDescriptor[Instant] = nested(path)(instant)
 
     val int: ConfigDescriptor[Int] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.IntType) ?? "value of type int")
+      source(ConfigSource.empty, PropertyType.IntType) ?? "value of type int"
 
     /**
      * A config descriptor that describes retrieving a Int from a given path.
@@ -313,7 +313,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def int(path: String): ConfigDescriptor[Int] = nested(path)(int)
 
     val localDate: ConfigDescriptor[LocalDate] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.LocalDateType) ?? "value of type localdate")
+      source(ConfigSource.empty, PropertyType.LocalDateType) ?? "value of type localdate"
 
     /**
      * A config descriptor that describes retrieving a LocalDate from a given path.
@@ -336,7 +336,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def localDate(path: String): ConfigDescriptor[LocalDate] = nested(path)(localDate)
 
     val localDateTime: ConfigDescriptor[LocalDateTime] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.LocalDateTimeType) ?? "value of type localdatetime")
+      source(ConfigSource.empty, PropertyType.LocalDateTimeType) ?? "value of type localdatetime"
 
     /**
      * A config descriptor that describes retrieving a LocalDateTime from a given path.
@@ -359,7 +359,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def localDateTime(path: String): ConfigDescriptor[LocalDateTime] = nested(path)(localDateTime)
 
     val localTime: ConfigDescriptor[LocalTime] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.LocalTimeType) ?? "value of type localtime")
+      source(ConfigSource.empty, PropertyType.LocalTimeType) ?? "value of type localtime"
 
     /**
      * A config descriptor that describes retrieving a LocalTime from a given path.
@@ -382,7 +382,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def localTime(path: String): ConfigDescriptor[LocalTime] = nested(path)(localTime)
 
     val long: ConfigDescriptor[Long] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.LongType) ?? "value of type long")
+      source(ConfigSource.empty, PropertyType.LongType) ?? "value of type long"
 
     /**
      * A config descriptor that describes retrieving a Long from a given path.
@@ -405,7 +405,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def long(path: String): ConfigDescriptor[Long] = nested(path)(long)
 
     val short: ConfigDescriptor[Short] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.ShortType) ?? "value of type short")
+      source(ConfigSource.empty, PropertyType.ShortType) ?? "value of type short"
 
     /**
      * A config descriptor that describes retrieving a Short from a given path.
@@ -428,7 +428,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def short(path: String): ConfigDescriptor[Short] = nested(path)(short)
 
     val string: ConfigDescriptor[String] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.StringType) ?? "value of type string")
+      source(ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
 
     /**
      * A config descriptor that describes retrieving a String from a given path.
@@ -451,7 +451,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def string(path: String): ConfigDescriptor[String] = nested(path)(string)
 
     val uri: ConfigDescriptor[URI] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri")
+      source(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
 
     /**
      * A config descriptor that describes retrieving a Uri from a given path.
@@ -474,7 +474,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def uri(path: String): ConfigDescriptor[URI] = nested(path)(uri)
 
     val uuid: ConfigDescriptor[UUID] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid")
+      source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
 
     /**
      * A config descriptor that describes retrieving a Uuid from a given path.
@@ -497,7 +497,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def uuid(path: String): ConfigDescriptor[UUID] = nested(path)(uuid)
 
     val url: ConfigDescriptor[URL] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL")
+      source(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL"
 
     /**
      * A config descriptor that describes retrieving a Url from a given path.
@@ -520,7 +520,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def url(path: String): ConfigDescriptor[URL] = nested(path)(url)
 
     val zioDuration: ConfigDescriptor[zio.duration.Duration] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration")
+      source(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
 
     /**
      * A config descriptor that describes retrieving a zioDuration from a given path.
@@ -543,7 +543,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
 
     val javaFilePath: ConfigDescriptor[java.nio.file.Path] =
-      lazyDesc(Source(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path")
+      source(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path"
 
     /**
      * A config descriptor that describes retrieving a javaFilePath from a given path.
