@@ -1,6 +1,7 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
+import ConfigDescriptor._
 
 object DocsExample extends App {
 
@@ -9,14 +10,17 @@ object DocsExample extends App {
   val config =
     nested("database") {
       (int("PORT") ?? "Example: 8088" |@|
-        string("URL").optional ?? "Example: abc.com")(Database.apply, Database.unapply) ?? "Database related"
+        string("URL").optional ?? "Example: abc.com")(
+        Database.apply,
+        Database.unapply
+      ) ?? "Database related"
     }
 
   val docs =
     generateDocs(config)
 
   val markdown =
-    docs.toTable.asGithubFlavouredMarkdown
+    docs.toTable.toGithubFlavouredMarkdown
 
   assert(
     markdown ==
@@ -38,7 +42,7 @@ object DocsExample extends App {
   )
 
   val confluenceMarkdown =
-    docs.toTable.asConfluenceMarkdown(None)
+    docs.toTable.toConfluenceMarkdown(None)
 
   assert(
     confluenceMarkdown ==

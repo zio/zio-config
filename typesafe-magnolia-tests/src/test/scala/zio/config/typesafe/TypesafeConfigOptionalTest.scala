@@ -4,7 +4,7 @@ import zio.config.ReadError.Step.Key
 import zio.config.{ read, BaseSpec, ReadError }
 import zio.test._
 import zio.test.Assertion._
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.magnolia._
 import zio.config.typesafe.OptionalSpecUtils._
 import ReadError._
 import zio.config.foldReadError

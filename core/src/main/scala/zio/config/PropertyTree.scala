@@ -210,14 +210,16 @@ sealed trait PropertyTree[+K, +V] { self =>
 }
 
 object PropertyTree {
+  def apply(v: V): PropertyTree[Nothing, V] =
+    Leaf(v)
 
-  final case class Leaf[V](value: V) extends PropertyTree[Nothing, V]
+  private[config] final case class Leaf[V](value: V) extends PropertyTree[Nothing, V]
 
-  final case class Record[K, V](value: Map[K, PropertyTree[K, V]]) extends PropertyTree[K, V]
+  private[config] final case class Record[K, V](value: Map[K, PropertyTree[K, V]]) extends PropertyTree[K, V]
 
-  case object Empty extends PropertyTree[Nothing, Nothing]
+  private[config] case object Empty extends PropertyTree[Nothing, Nothing]
 
-  final case class Sequence[K, V](value: List[PropertyTree[K, V]]) extends PropertyTree[K, V]
+  private[config] final case class Sequence[K, V](value: List[PropertyTree[K, V]]) extends PropertyTree[K, V]
 
   val empty: PropertyTree[Nothing, Nothing] = Empty
 
@@ -251,6 +253,7 @@ object PropertyTree {
       )
     )
 
+  // FIXME alphabetic order
   def unflatten[K, V](key: List[K], value: ::[V]): PropertyTree[K, V] =
     unflatten(key, Sequence(value.map(Leaf(_))))
 
