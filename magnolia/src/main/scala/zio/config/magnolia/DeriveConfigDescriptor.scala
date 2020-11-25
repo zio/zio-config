@@ -229,8 +229,8 @@ trait DeriveConfigDescriptor { self =>
      *    descriptor[MyConfig] // now works
      * }}}
      */
-    def transformOrFailLeft[B](f: T => Either[String, B], g: B => T): Descriptor[B] =
-      Descriptor(desc.transformOrFailLeft(f, g))
+    def transformOrFailLeft[B](f: T => Either[String, B])(g: B => T): Descriptor[B] =
+      Descriptor(desc.transformOrFailLeft(f)(g))
 
     /**
      * `transformOrFailRight` allows us to define instance of `Descriptor`
@@ -665,7 +665,10 @@ trait DeriveConfigDescriptor { self =>
               param.default.fold(described)(described.default(_))
             }
 
-            collectAll(lazyDesc(makeDescriptor(head)), tail.map(a => lazyDesc(makeDescriptor(a))): _*).transform[T](
+            collectAll(
+              ConfigDescriptorAdt.lazyDesc(makeDescriptor(head)),
+              tail.map(a => ConfigDescriptorAdt.lazyDesc(makeDescriptor(a))): _*
+            ).transform[T](
               l => caseClass.rawConstruct(l),
               t => caseClass.parameters.map(_.dereference(t)).toList
             )

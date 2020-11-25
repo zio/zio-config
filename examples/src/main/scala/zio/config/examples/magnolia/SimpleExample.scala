@@ -38,13 +38,13 @@ object AutomaticConfigDescriptor extends App {
     ConfigSource.fromMap(
       Map(
         "aws.region"                  -> "us-east",
-        "aws.credentials.token.value" -> "token",
+        "aws.credentials.Token.value" -> "token",
         "port"                        -> "10",
         "default"                     -> "12",
         "dburl.value"                 -> "some url",
         "amount"                      -> "3.14",
         "quanity"                     -> "30.0",
-        "price.inr.value"             -> "1000",
+        "price.Inr.value"             -> "1000",
         "anotherDefault"              -> "14"
       ),
       keyDelimiter = Some('.')

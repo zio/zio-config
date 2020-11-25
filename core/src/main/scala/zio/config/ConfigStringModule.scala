@@ -141,10 +141,10 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *         "IS_TRUE" : true
      *      )
      *
-     *     val config = bigInt("IS_TRUE")
+     *     val config = boolean("IS_TRUE")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(true)
      *
      * }}}
      *
@@ -164,7 +164,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *         "KEY" : 11
      *      )
      *
-     *     val config = bigInt("KEY")
+     *     val config = byte("KEY")
      *     val result = read(config from mapSource)
      *
      *     // Right(11)
@@ -187,7 +187,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *         "COST" : 11.11
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = double("COST")
      *     val result = read(config from mapSource)
      *
      *     // Right(11.11)
@@ -207,13 +207,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "DURATION" : "3 seconds"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = duration("DURATION")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(3 seconds)
      *
      * }}}
      *
@@ -230,13 +230,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "FILE_PATH" : "/user/file.txt"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = file("FILE_PATH")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(/user/file.txt)
      *
      * }}}
      *
@@ -253,13 +253,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "COST" : 1.2
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = float("COST")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(1.2f)
      *
      * }}}
      *
@@ -276,13 +276,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "TIME" : 2020-11-24T23:21:33.034557Z
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = instant("TIME")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right( 2020-11-24T23:21:33.034557Z)
      *
      * }}}
      *
@@ -299,13 +299,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "COST" : 10
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = int("COST")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(10)
      *
      * }}}
      *
@@ -322,13 +322,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "date" : "2020-01-01"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = localDate("date")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(2020-01-01)
      *
      * }}}
      *
@@ -345,13 +345,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "time" : "2020-11-25T10:26:32.482299"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = localDateTime("time")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(2020-11-25T10:26:32.482299)
      *
      * }}}
      *
@@ -368,13 +368,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "LOCAL_TIME" : "10:29:02.278213"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = localTime("LOCAL_TIME")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(10:29:02.278213)
      *
      * }}}
      *
@@ -394,7 +394,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *         "COST" : 111111111
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = long("COST")
      *     val result = read(config from mapSource)
      *
      *     // Right(111111111)
@@ -414,13 +414,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "ID" : "1"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = short("ID")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(1)
      *
      * }}}
      *
@@ -437,13 +437,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "COUNTRY" : "Australia"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = string("COUNTRY")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(Australia)
      *
      * }}}
      *
@@ -460,13 +460,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "URI" : "www.bla.com"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = uri("URI")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(www.bla.com)
      *
      * }}}
      *
@@ -483,13 +483,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "ID" : "a0f25f26-95b3-4124-8f7f-67fb04f714b7"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = uuid("ID")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(a0f25f26-95b3-4124-8f7f-67fb04f714b7)
      *
      * }}}
      *
@@ -506,7 +506,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "URL" : "www.bla.com"
      *      )
      *
      *     val config = bigInt("COST")
@@ -529,13 +529,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "DURATION" : "3 seconds"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = zioDuration("DURATION")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(PT3S)
      *
      * }}}
      *
@@ -552,13 +552,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val mapSource =
      *      ConfigSource.fromMap(
-     *         "COST" : 111111111
+     *         "FILE_PATH" : "/Users/abc/xyz.txt"
      *      )
      *
-     *     val config = bigInt("COST")
+     *     val config = javaFilePath("COST")
      *     val result = read(config from mapSource)
      *
-     *     // Right(111111111)
+     *     // Right(/Users/abc/xyz.txt)
      *
      * }}}
      *

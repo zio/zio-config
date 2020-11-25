@@ -16,7 +16,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
   }
 
   val spec = suite("Markdown Spec")(
-    test("asGithubFlavouredMarkdown works for a complex config") {
+    test("toGithubFlavouredMarkdown works for a complex config") {
 
       final case class RawConfig(tableDetails: List[RawTableConfig])
 
@@ -212,7 +212,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
 
       assert(markdown)(equalTo(expectedMarkdown))
     },
-    test("asGithubFlavouredMarkdown works for nested config with inner orElseEither gives correct table") {
+    test("toGithubFlavouredMarkdown works for nested config with inner orElseEither gives correct table") {
       val config = nested("a")(int.orElseEither(string))
 
       val markdown = generateDocs(config).toTable.toGithubFlavouredMarkdown

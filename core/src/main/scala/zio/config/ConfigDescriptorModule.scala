@@ -91,8 +91,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  }}}
      */
     def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[B] =
-      TransformOrFail(
-        lazyDesc(this),
+      ConfigDescriptorAdt.transformOrFail(
+        this,
         (a: A) => Right[String, B](app(a)),
         unapp(_)
           .fold[Either[String, A]](
@@ -439,7 +439,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      */
     final def default(value: A): ConfigDescriptor[A] =
-      Default(lazyDesc(self), value) ?? s"default value: $value"
+      ConfigDescriptorAdt.default(self, value) ?? s"default value: $value"
 
     /**
      * `describe` function allows us to inject additional documentation to the configuration parameters.
@@ -508,7 +508,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      */
     final def describe(description: String): ConfigDescriptor[A] =
-      Describe(lazyDesc(self), description)
+      ConfigDescriptorAdt.describe(self, description)
 
     /**
      * Attach a source to the `ConfigDescriptor`.
@@ -766,7 +766,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  `None`. If both of them is present, then output will be `Some(DbConfig(..))`
      */
     final def optional: ConfigDescriptor[Option[A]] =
-      Optional(lazyDesc(self)) ?? "optional value"
+      ConfigDescriptorAdt.optional(self) ?? "optional value"
 
     /**
      * `orElse` is used to represent fall-back logic when we describe config retrievals.
@@ -806,7 +806,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * alternative.
      */
     final def orElse(that: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      OrElse(lazyDesc(self), lazyDesc(that))
+      ConfigDescriptorAdt.orElse(self, that)
 
     /**
      * `orElseEither` is used to represent fall-back logic when we describe config retrievals. Unlike `orElse`,
@@ -889,7 +889,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def orElseEither[B](
       that: => ConfigDescriptor[B]
     ): ConfigDescriptor[Either[A, B]] =
-      OrElseEither(lazyDesc(self), lazyDesc(that))
+      ConfigDescriptorAdt.orElseEither(self, that)
 
     /**
      * Untag all sources associated with a `ConfigDescriptor`.
@@ -1031,8 +1031,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       self.transformOrFail(a => Right(to(a)), b => Right(from(b)))
 
     /**
-     * `transformEither` is an alias to `xmapEither`.
-     * Given `A` and `B`, `transformEither` function is used to convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
+     * Given `A` and `B`, `transformOrFail` function is used to convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
      *
      * It is important to note that both `to` and `fro` is fallible, allowing us to represent
      * almost all possible relationships.
@@ -1078,9 +1077,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       to: A => Either[String, B],
       from: B => Either[String, A]
     ): ConfigDescriptor[B] =
-      TransformOrFail(lazyDesc(self), to, from)
+      ConfigDescriptorAdt.transformOrFail(self, to, from)
 
-    final def transformOrFailLeft[B](f: A => Either[String, B], g: B => A): ConfigDescriptor[B] =
+    final def transformOrFailLeft[B](f: A => Either[String, B])(g: B => A): ConfigDescriptor[B] =
       self.transformOrFail(f, b => Right(g(b)))
 
     final def transformOrFailRight[B](
@@ -1115,7 +1114,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      */
     final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
-      Zip(lazyDesc(self), lazyDesc(that))
+      ConfigDescriptorAdt.zip(self, that)
 
     /**
      * `zipWith` is similar to `xmapEither` but the function
@@ -1315,7 +1314,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  `nested("xyz")(list(string("USERNAME"))` is same as `list("xyz")(string("USERNAME"))`
      */
     def list[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      Sequence(ConfigSourceFunctions.empty, lazyDesc(desc))
+      ConfigDescriptorAdt.sequence(ConfigSourceFunctions.empty, desc)
 
     /**
      *  `list("xyz")(confgDescriptor)` represents just a list variant of configDescriptor within the key `xyz`.
@@ -1521,7 +1520,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
      */
     def map[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(ConfigSourceFunctions.empty, lazyDesc(desc))
+      ConfigDescriptorAdt.dynamicMap(ConfigSourceFunctions.empty, desc)
 
     /**
      *  `map("xyz")(confgDescriptor)` represents retrieving a map (of key value pairs) that exists within the key "xyz"
@@ -1595,7 +1594,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * Note that `string("key")` is same as that of `nested("key")(string)`
      */
     def nested[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      Nested(ConfigSourceFunctions.empty, path, lazyDesc(desc))
+      ConfigDescriptorAdt.nested(ConfigSourceFunctions.empty, path, desc)
 
     /**
      *  `set("xyz")(confgDescriptor)` represents just a set variant of configDescriptor within the key `xyz`.
@@ -1721,26 +1720,36 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       Lazy(() => config0)
     }
 
-    final def nested[A](source: ConfigSource, path: K, config: ConfigDescriptor[A]): ConfigDescriptor[A] =
+    final def nested[A](source: ConfigSource, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(source, path, lazyDesc(config))
 
-    final def orElse[A](left: ConfigDescriptor[A], right: ConfigDescriptor[A]): ConfigDescriptor[A] =
+    final def optional[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
+      Optional(lazyDesc(config))
+
+    final def orElse[A](left: => ConfigDescriptor[A], right: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       OrElse(lazyDesc(left), lazyDesc(right))
 
     final def orElseEither[A, B](
-      left: ConfigDescriptor[A],
-      right: ConfigDescriptor[B]
+      left: => ConfigDescriptor[A],
+      right: => ConfigDescriptor[B]
     ): ConfigDescriptor[Either[A, B]] =
       OrElseEither(lazyDesc(left), lazyDesc(right))
 
-    final def sequence[A](source: ConfigSource, config: ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
+    final def sequence[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       Sequence(source, lazyDesc(config))
 
     final def source[A](source: ConfigSource, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
       Source(source, propertyType)
 
-    final def zip[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
+    final def zip[A, B](left: => ConfigDescriptor[A], right: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
       Zip(lazyDesc(left), lazyDesc(right))
+
+    final def transformOrFail[A, B](
+      config: => ConfigDescriptor[A],
+      f: A => Either[String, B],
+      g: B => Either[String, A]
+    ) =
+      TransformOrFail(lazyDesc(config), f, g)
   }
 
 }

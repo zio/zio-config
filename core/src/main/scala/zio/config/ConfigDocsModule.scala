@@ -559,7 +559,7 @@ trait ConfigDocsModule extends WriteModule {
    * {{{
    *   val configDescriptor: ConfigDescriptor[MyAppConfig] = ???
    *
-   *   generatedDocs(configDescriptor).toTable.asGithubFlavouredMarkdown
+   *   generatedDocs(configDescriptor).toTable.toGithubFlavouredMarkdown
    * }}}
    */
   final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
