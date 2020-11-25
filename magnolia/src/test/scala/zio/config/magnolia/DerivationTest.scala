@@ -18,7 +18,7 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], String)] = desc match {
-        case Lazy(thunk) => collectDescriptions(thunk(), path)
+        case Lazy(thunk)               => collectDescriptions(thunk(), path)
         case Default(config, _)        => collectDescriptions(config, path)
         case DynamicMap(_, config)     => collectDescriptions(config, path)
         case Describe(config, message) => (path, message) :: collectDescriptions(config, path)
@@ -55,7 +55,7 @@ object DerivationTest extends DefaultRunnableSpec {
       case class Cfg(@name("otherName") fname: String) extends SealedTrait
 
       def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
-        case Lazy(thunk) => collectPath(thunk())
+        case Lazy(thunk)                   => collectPath(thunk())
         case Default(config, _)            => collectPath(config)
         case Describe(config, _)           => collectPath(config)
         case DynamicMap(_, config)         => collectPath(config)
@@ -84,7 +84,7 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], Any)] = desc match {
-        case Lazy(thunk) => collectDefault(thunk(), path)
+        case Lazy(thunk)             => collectDefault(thunk(), path)
         case Default(config, v)      => (path -> v) :: collectDefault(config, path)
         case Describe(config, _)     => collectDefault(config, path)
         case DynamicMap(_, config)   => collectDefault(config, path)
