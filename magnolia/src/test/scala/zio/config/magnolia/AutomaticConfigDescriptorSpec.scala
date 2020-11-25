@@ -5,7 +5,6 @@ import java.util.UUID
 
 import zio.config._
 import zio.config.BaseSpec
-import zio.config.magnolia._
 import AutomaticConfigTestUtils._
 import zio.ZIO
 import zio.random.Random

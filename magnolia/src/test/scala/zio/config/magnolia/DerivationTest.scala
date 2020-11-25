@@ -4,7 +4,6 @@ import zio.config._, ConfigDescriptorAdt._
 import zio.config.PropertyTree
 import zio.config.PropertyTree.Leaf
 import zio.config.PropertyTree.Record
-import zio.config.magnolia._
 import zio.test.Assertion._
 import zio.test._
 
