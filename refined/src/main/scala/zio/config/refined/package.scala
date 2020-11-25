@@ -7,6 +7,15 @@ import zio.config.ConfigDescriptor.nested
 package object refined {
 
   /**
+   * Automatically derive instances of Descriptor for any refined types
+   */
+  implicit def deriveRefinedDescriptor[A, P](
+    implicit desc: Descriptor[A],
+    validate: Validate[A, P]
+  ): Descriptor[Refined[A, P]] =
+    Descriptor(refine[A, P](desc.desc))
+
+  /**
    * `refine` allows us to retrieve a `refined` type from a given path.
    *
    * Example:
