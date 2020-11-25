@@ -132,7 +132,8 @@ lazy val zioConfigRefined =
           "dev.zio" %% "zio-test"     % zioVersion % Test,
           "dev.zio" %% "zio-test-sbt" % zioVersion % Test
         ),
-      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+      scalacOptions += "-P:silencer:lineContentFilters=import VersionSpecificSupport\\._"
     )
     .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
 
@@ -144,7 +145,6 @@ lazy val examples = module("zio-config-examples", "examples")
     fork := true,
     magnoliaDependencies,
     refinedDependencies,
-    libraryDependencies += "com.github.pureconfig" %% "pureconfig" % "0.12.3",
     runAllExamples :=
       Def
         .taskDyn({
@@ -197,7 +197,8 @@ lazy val zioConfigTypesafe =
         "dev.zio"      %% "zio-test"     % zioVersion % Test,
         "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
       ),
-      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+      scalacOptions += "-P:silencer:lineContentFilters=import VersionSpecificSupport\\._"
     )
     .dependsOn(zioConfig % "compile->compile;test->test")
 
@@ -209,7 +210,8 @@ lazy val zioConfigYaml =
         "dev.zio"       %% "zio-test"        % zioVersion % Test,
         "dev.zio"       %% "zio-test-sbt"    % zioVersion % Test
       ),
-      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
+      scalacOptions += "-P:silencer:lineContentFilters=import VersionSpecificSupport\\._"
     )
     .dependsOn(zioConfig % "compile->compile;test->test")
 

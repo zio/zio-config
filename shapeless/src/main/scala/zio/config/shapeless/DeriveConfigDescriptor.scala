@@ -92,8 +92,8 @@ trait DeriveConfigDescriptor {
     def transformOrFail[B](f: T => Either[String, B], g: B => Either[String, T]): Descriptor[B] =
       Descriptor(configDescriptor.transformOrFail[B](f, g))
 
-    def transformOrFailLeft[B](f: T => Either[String, B], g: B => T): Descriptor[B] =
-      Descriptor(configDescriptor.transformOrFailLeft(f, g))
+    def transformOrFailLeft[B](f: T => Either[String, B])(g: B => T): Descriptor[B] =
+      Descriptor(configDescriptor.transformOrFailLeft(f)(g))
 
     def transformOrFailRight[E, B](f: T => B, g: B => Either[String, T]): Descriptor[B] =
       Descriptor(configDescriptor.transformOrFailRight(f, g))

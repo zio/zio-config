@@ -6,10 +6,10 @@ import java.lang.{ Boolean => JBoolean, Double => JDouble, Float => JFloat, Inte
 import java.{ util => ju }
 
 import org.snakeyaml.engine.v2.api.{ Load, LoadSettings }
-import zio.config.{ ConfigSource, LeafForSequence, PropertyTree, ReadError }
-
+import zio.config._
 import scala.collection.JavaConverters._
 import scala.util.Try
+import VersionSpecificSupport._
 
 object YamlConfigSource {
   private[yaml] def convertYaml(data: AnyRef): PropertyTree[String, String] =

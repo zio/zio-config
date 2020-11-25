@@ -19,58 +19,6 @@ object RecursiveConfigTest
           assert(write(simpleRec, simpleRecursiveValue))(isRight(equalTo(simpleTestTree)))
         },
         test("documentation") {
-          println(generateDocs(simpleRec).toTable)
-
-          Table(
-            List(
-              Table.TableRow(
-                List(),
-                Some(Table.Format.AllOf),
-                List(),
-                Some(
-                  Table(
-                    List(
-                      Table.TableRow(
-                        List(Table.FieldName.Key("id")),
-                        Some(Table.Format.Primitive),
-                        List(ConfigDocs.Description(Some("id"), "value of type int")),
-                        None,
-                        Set()
-                      ),
-                      Table.TableRow(
-                        List(Table.FieldName.Key("nested")),
-                        Some(Table.Format.AllOf),
-                        List(ConfigDocs.Description(None, "optional value")),
-                        Some(
-                          Table(
-                            List(
-                              Table.TableRow(
-                                List(Table.FieldName.Key("id")),
-                                Some(Table.Format.Primitive),
-                                List(ConfigDocs.Description(Some("id"), "value of type int")),
-                                None,
-                                Set()
-                              ),
-                              Table.TableRow(
-                                List(Table.FieldName.Key("nested")),
-                                Some(Table.Format.Recursion),
-                                List(ConfigDocs.Description(None, "optional value")),
-                                None,
-                                Set()
-                              )
-                            )
-                          )
-                        ),
-                        Set()
-                      )
-                    )
-                  )
-                ),
-                Set()
-              )
-            )
-          )
-
           assert(generateDocs(simpleRec).toTable)(
             equalTo(
               Table(

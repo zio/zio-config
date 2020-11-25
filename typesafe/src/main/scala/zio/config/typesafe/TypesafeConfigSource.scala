@@ -2,13 +2,13 @@ package zio.config.typesafe
 
 import java.io.File
 import java.lang.{ Boolean => JBoolean }
-
 import com.typesafe.config._
 import zio.config.PropertyTree.{ Leaf, _ }
 import zio.config.{ ConfigSource, _ }
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 import scala.util.{ Failure, Success, Try }
+import VersionSpecificSupport._
 
 object TypesafeConfigSource {
 
