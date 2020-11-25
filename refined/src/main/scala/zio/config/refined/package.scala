@@ -32,7 +32,7 @@ package object refined {
     validate: Validate[A, P]
   ): ConfigDescriptor[Refined[A, P]] =
     nested(path)(desc.desc)
-      .xmapEither[Refined[A, P]](
+      .transformOrFail[Refined[A, P]](
         RefType.applyRef[Refined[A, P]](_),
         rf => Right(rf.value)
       )
@@ -59,7 +59,7 @@ package object refined {
     desc: ConfigDescriptor[A]
   )(implicit validate: Validate[A, P]): ConfigDescriptor[Refined[A, P]] =
     desc
-      .xmapEither[Refined[A, P]](
+      .transformOrFail[Refined[A, P]](
         RefType.applyRef[Refined[A, P]](_),
         rf => Right(rf.value)
       )

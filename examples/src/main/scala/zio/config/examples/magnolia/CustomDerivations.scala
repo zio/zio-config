@@ -20,7 +20,7 @@ object CustomDerivations extends App {
     // and finds out an instance for S3Path as it is a simple case class.
     implicit val descriptorOfS3Path: Descriptor[S3Path] =
       Descriptor[String]
-        .xmapEither(
+        .transformOrFail(
           s => validateS3Path(s).toRight(s"Invalid s3 path: ${s}"),
           value => validateS3Path(value.s).map(_.s).toRight("Cannot write. Invalid S3 path.")
         )
@@ -48,9 +48,7 @@ object CustomDerivations extends App {
   // globally for the automatic derivation to work.
   implicit val descriptorOfZonedDateTime: Descriptor[ZonedDateTime] =
     Descriptor[String]
-      .transformEitherLeft(
-        x => Try(ZonedDateTime.parse(x)).toEither
-      )(_.toString)(_.getMessage) ?? "time in zoned date time"
+      .transformOrFailLeft(x => Try(ZonedDateTime.parse(x)).toEither.swap.map(_.getMessage).swap)(_.toString) ?? "time in zoned date time"
 
   val appConfigDesc =
     descriptor[AppConfig]

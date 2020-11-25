@@ -67,21 +67,21 @@ It will be deprecated once we find users have moved on from scala 2.11.
 
   val aHoconSource =
     TypesafeConfigSource
-      .fromHoconString("x = a")
+      .fromHoconString("x = A")
       .loadOrThrow
 ```
 
 ```scala
   val bHoconSource =
     TypesafeConfigSource
-      .fromHoconString("x = b")
+      .fromHoconString("x = B")
       .loadOrThrow
 ```
 
 ```scala
   val cHoconSource =
     TypesafeConfigSource
-      .fromHoconString("x = c")
+      .fromHoconString("x = C")
       .loadOrThrow
 ```
 
@@ -91,7 +91,7 @@ It will be deprecated once we find users have moved on from scala 2.11.
       .fromHoconString(
         s"""
            | x {
-           |   details_wrapped {
+           |   DetailsWrapped {
            |    detail  {
            |      firstName : ff
            |      lastName  : ll
@@ -125,17 +125,12 @@ It will be deprecated once we find users have moved on from scala 2.11.
 
 ```
 
+To know more about various semantics of `descriptor`, please refer to the api docs.
+
 **NOTE**
 
-By default the class names in the sealed trait terms will be mapped to their names converted
-to snake_case in the config. 
 
-For example `details_wrapped` in the above HOCON string corresponds to `DetailsWrapped` which is the name of the case class in Scala code.
-This is overridable. 
-
-The fieldNames remain as it is as you can see. You can override this one as well.
-They can be easily changed using `mapKey`. Note that, fieldName is not equal to className. So the `DetailsWrapped`
-in Scala code has to be `details_wrapped` in HOCON even after the below code.
+The fieldNames and classnames remain the same as that of case-classes and sealed-traits.
 
 If you want custom names for your fields, use `name` annotation.
 
@@ -242,19 +237,15 @@ The answer is, zio-config provides with all the functions that you need to handl
  import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
 
   implicit val descriptorO: Descriptor[ZonedDateTime] =
-    Descriptor[String].transformEitherLeft(x => Try (ZonedDateTime.parse(x)).toEither)(_.toString)(_.getMessage)
+    Descriptor[String].transformOrFailLeft(x => Try (ZonedDateTime.parse(x)).toEither.swap.map(_.getMessage).swap)(_.toString)
 ```
 
-What is transformEitherLeft ? Parsing a String to ZonedDateTime can fail, but converting it back to a string
-won't fail. Logically, these are respectively the first 2 functions that we passed to transformEitherLeft. The third
-parameter talks about how to covert the error type E, which in this case is Throwable, to a proper string which is then required
-for zio-config to report back to the user what's going on.
+What is transformOrFailLeft ? Parsing a String to ZonedDateTime can fail, but converting it back to a string
+won't fail. Logically, these are respectively the first 2 functions that we passed to transformEitherLeft. 
 
 PS: We recommend not to use `throwable.getMessage`. Provide more descriptive error message.
 
-You can also rely on `transformEither` if both `to` and `fro` can fail. This is the most commonly used combinator in zio-config.
-Similarly if the error type is already String, then you can use `transformEither` and avoid having to tell the API, how to convert
-`E` to `String`. We have already seen these types.
+You can also rely on `transformOrfail` if both `to` and `fro` can fail. 
 
 ### Please give descriptions wherever possible for a better experience
 

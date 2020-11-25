@@ -26,7 +26,7 @@ object DefaultValueExample extends App {
   assert(result == Right(PgmConfig("xyz", Right(1))))
 
   assert(
-    generateDocs(confEx).toTable.asGithubFlavouredMarkdown ==
+    generateDocs(confEx).toTable.toGithubFlavouredMarkdown ==
       s"""
          |## Configuration Details
          |

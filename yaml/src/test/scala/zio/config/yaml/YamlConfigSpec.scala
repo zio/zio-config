@@ -7,8 +7,8 @@ import zio.config.ConfigDescriptor
 
 object YamlConfigSpec extends DefaultRunnableSpec {
   val spec = suite("YamlConfig")(
-    testM("Read a complex structure") {
-      val result = YamlConfigSource.fromString(
+    test("Read a complex structure") {
+      val result = YamlConfigSource.fromYamlString(
         """
           |top:
           |  child:
@@ -45,10 +45,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
           )
         )
 
-      result
-        .map(_.getConfigValue(List()))
-        .run
-        .map(assert(_)(succeeds(equalTo(expected))))
+      assert(result.map(_.getConfigValue(List())))(equalTo(Right(expected)))
     },
     testM("Read a complex structure into a sealed trait") {
       case class Child(sum: List[Sum])
@@ -62,7 +59,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
           ConfigDescriptor.list {
             (ConfigDescriptor.nested("A")(ConfigDescriptor.string("a")(A.apply, A.unapply)) orElseEither
               ConfigDescriptor.nested("B")(ConfigDescriptor.boolean("b")(B.apply, B.unapply)))
-              .xmap(_.merge, (_: Sum) match {
+              .transform(_.merge, (_: Sum) match {
                 case a: A => Left(a)
                 case b: B => Right(b)
               })

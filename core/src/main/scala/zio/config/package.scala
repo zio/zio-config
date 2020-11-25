@@ -38,12 +38,4 @@ package object config extends KeyConversionFunctions with ConfigStringModule {
         case (Right(bs), (Right(b), _))   => Right(b :: bs)
       }
       .map(_.reverse)
-
-  private[config] final def foreach[R, E, A, B](in: ::[A])(f: A => ZIO[R, E, B]): ZIO[R, E, ::[B]] = {
-    val reversed = in.reverse
-
-    reversed.tail.foldLeft[ZIO[R, E, ::[B]]](f(reversed.head).map(singleton)) { (io, a) =>
-      f(a).zipWith(io)((b, bs) => ::(b, bs))
-    }
-  }
 }

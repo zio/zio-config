@@ -1,8 +1,6 @@
 package zio.config.typesafe
 
-import zio.config.ConfigDescriptor.{ int, nested, string }
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.read
+import zio.config._, magnolia._, ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test.{ DefaultRunnableSpec, suite, test, _ }
 

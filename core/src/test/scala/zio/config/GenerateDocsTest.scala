@@ -82,7 +82,7 @@ object GenerateDocsTest
                ||URL      |primitive|value of type string, Example: abc.com|       |
                |""".stripMargin
 
-          assert(generateDocs(GenerateDocsTestUtils.descriptor).toTable.asGithubFlavouredMarkdown)(equalTo(expected))
+          assert(generateDocs(GenerateDocsTestUtils.descriptor).toTable.toGithubFlavouredMarkdown)(equalTo(expected))
         }
       )
     )

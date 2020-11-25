@@ -19,7 +19,7 @@ You should be familiar with reading config from various sources, given a  config
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config._, ConfigDescriptor._, PropertyTree._, ConfigDocs.{Leaf => _, _}
+import zio.config._, ConfigDescriptor._, PropertyTree._
 
 ```
 
@@ -94,10 +94,17 @@ import zio.Runtime
 
 ```scala mdoc:silent
 
+import zio.config.PropertyTree._
+
 val written: PropertyTree[String, String] = 
   write(appConfig, awsConfigResult).getOrThrow
 
-// yields
+
+```
+
+yield 
+
+```scala
 
   Record(
     Map(
@@ -105,7 +112,7 @@ val written: PropertyTree[String, String] =
       "east"    -> Record(Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))),
       "appName" -> Leaf("myApp")
     )
-  )  
+  ) 
 
 ```
 
@@ -214,7 +221,7 @@ To generate the documentation of the config, call `generateDocs`.
 
  // as markdown 
   val markdown =
-     generatedDocs.toTable.asGithubFlavouredMarkdown
+     generatedDocs.toTable.toGithubFlavouredMarkdown
 
  // produces the following markdown
 
@@ -276,47 +283,8 @@ along with the rest of the details.
 
  generateReport(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
 
-// yields the result:
+// yields a report
 
-Right(
-  ConfigDocs.Zip(
-    ConfigDocs.Zip(
-      ConfigDocs.Nested(
-        "south",
-        ConfigDocs.Zip(
-          ConfigDocs.Nested(
-            "connection",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string"), Description(None, "South details")), Some("abc.com")),
-            Nil
-          ),
-          ConfigDocs.Nested(
-            "port",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type int"), Description(None, "South details")), Some("8111")),
-            Nil
-          )
-        ),
-        Nil
-      ),
-      ConfigDocs.Nested(
-        "east",
-        ConfigDocs.Zip(
-          ConfigDocs.Nested(
-            "connection",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string"), Description(None, "East details")), Some("xyz.com")),
-            Nil
-          ),
-          ConfigDocs.Nested(
-            "port",
-            ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type int"), Description(None, "East details")), Some("8888")),
-            Nil
-          )
-        ),
-        Nil
-      )
-    ),
-    ConfigDocs.Nested("appName", ConfigDocs.Leaf(Set(ConfigSourceName("constant")), List(Description(None, "value of type string")), Some("myApp")), Nil)
-  )
-)
 ```
 
 Pretty print will be coming soon!

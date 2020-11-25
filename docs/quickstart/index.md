@@ -17,7 +17,7 @@ libraryDependencies += "dev.zio" %% "zio-config" % <version>
 
 ```
 
-##### Optional Dependency with magnolia module
+##### Optional Dependency with magnolia module (Auto derivation)
 
 ```scala
 
@@ -25,7 +25,7 @@ libraryDependencies += "dev.zio" %% "zio-config-magnolia" % <version>
 
 ```
 
-##### Optional Dependency with refined module
+##### Optional Dependency with refined module (Integration with refined library)
 
 ```scala
 
@@ -34,11 +34,20 @@ libraryDependencies += "dev.zio" %% "zio-config-refined" % <version>
 ```
 
 
-##### Optional Dependency with typesafe module
+##### Optional Dependency with typesafe module (HOCON/Json source)
 
 ```scala
 
 libraryDependencies += "dev.zio" %% "zio-config-typesafe" % <version>
+
+```
+
+
+##### Optional Dependency with yaml module (Yaml source)
+
+```scala
+
+libraryDependencies += "dev.zio" %% "zio-config-yaml" % <version>
 
 ```
 
@@ -162,7 +171,7 @@ val betterConfig =
     string("DB_URL") ?? "url of database"
    )(MyConfig.apply, MyConfig.unapply)
 
-generateDocs(betterConfig).toTable.asGithubFlavouredMarkdown
+generateDocs(betterConfig).toTable.toGithubFlavouredMarkdown
 // Custom documentation along with auto generated docs
 ```
 
@@ -245,7 +254,7 @@ This will tell you how to consider configuration as just a part of `Environment`
 
 ```scala mdoc:silent
 
-import zio.{ ZIO, ZLayer }
+import zio.{ ZIO, ZLayer, Has }
 import zio.console._
 
 case class ApplicationConfig(bridgeIp: String, userName: String)
@@ -253,7 +262,7 @@ case class ApplicationConfig(bridgeIp: String, userName: String)
 val configuration =
   (string("bridgeIp") |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
 
-val finalExecution: ZIO[ZConfig[ApplicationConfig] with Console, Nothing, Unit] =
+val finalExecution: ZIO[Has[ApplicationConfig] with Console, Nothing, Unit] =
   for {
     appConfig <- getConfig[ApplicationConfig]
     _         <- putStrLn(appConfig.bridgeIp)

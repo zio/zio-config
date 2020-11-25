@@ -109,12 +109,12 @@ object AutomaticConfigTestUtils {
       partialMyConfig = Map(
         "aws.region" -> aws.region,
         aws.security match {
-          case Password(password) => "aws.security.password.value" -> password
-          case Token(token)       => "aws.security.token.value"    -> token
+          case Password(password) => "aws.security.Password.value" -> password
+          case Token(token)       => "aws.security.Token.value"    -> token
         },
         price match {
-          case Description(description) => "cost.description.value" -> description
-          case Currency(dollars)        => "cost.currency.value"    -> dollars.toString
+          case Description(description) => "cost.Description.value" -> description
+          case Currency(dollars)        => "cost.Currency.value"    -> dollars.toString
         },
         "dburl.dburl"  -> dbUrl.dburl,
         "port"         -> port.toString,
