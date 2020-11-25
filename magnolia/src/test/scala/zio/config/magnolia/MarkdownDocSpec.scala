@@ -1,6 +1,5 @@
 package zio.config.magnolia
 
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.test.Assertion._
 import zio.test._
 import zio.config._, ConfigDescriptor._
@@ -117,11 +116,11 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |
            ||FieldName |Format       |Description            |Sources|
            ||---       |---          |---                    |---    |
-           ||          |primitive    |constant string 'aws'  |       |
-           ||          |primitive    |constant string 'azure'|       |
-           ||[gcp](gcp)|[all-of](gcp)|                       |       |
+           ||          |primitive    |constant string 'Aws'  |       |
+           ||          |primitive    |constant string 'Azure'|       |
+           ||[Gcp](gcp)|[all-of](gcp)|                       |       |
            |
-           |### gcp
+           |### Gcp
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |

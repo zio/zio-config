@@ -17,7 +17,7 @@ libraryDependencies += "dev.zio" %% "zio-config" % <version>
 
 ```
 
-##### Optional Dependency with magnolia module
+##### Optional Dependency with magnolia module (Auto derivation)
 
 ```scala
 
@@ -25,7 +25,7 @@ libraryDependencies += "dev.zio" %% "zio-config-magnolia" % <version>
 
 ```
 
-##### Optional Dependency with refined module
+##### Optional Dependency with refined module (Integration with refined library)
 
 ```scala
 
@@ -34,11 +34,20 @@ libraryDependencies += "dev.zio" %% "zio-config-refined" % <version>
 ```
 
 
-##### Optional Dependency with typesafe module
+##### Optional Dependency with typesafe module (HOCON/Json source)
 
 ```scala
 
 libraryDependencies += "dev.zio" %% "zio-config-typesafe" % <version>
+
+```
+
+
+##### Optional Dependency with yaml module (Yaml source)
+
+```scala
+
+libraryDependencies += "dev.zio" %% "zio-config-yaml" % <version>
 
 ```
 

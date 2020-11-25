@@ -9,8 +9,9 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
 
   sealed trait X
 
-  case object A                extends X
-  case object B                extends X
+  case object A extends X
+  case object B extends X
+  @name("c")
   case object C                extends X
   case class D(detail: Detail) extends X
   case class E(detail: Detail) extends X
@@ -22,7 +23,7 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
   val spec = suite("MagnoliaConfig")(test("descriptor of coproduct sealed trait") {
     assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "A"))))(equalTo(Right(Config(A)))) &&
     assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "B"))))(equalTo(Right(Config(B)))) &&
-    assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "C"))))(equalTo(Right(Config(C)))) &&
+    assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Right(Config(C)))) &&
     assert(
       read(
         descriptor[Config] from ConfigSource.fromMap(
@@ -76,6 +77,6 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
     ) &&
     assert(write(descriptor[Config], Config(A)))(equalTo(Right(Record(Map("x" -> Leaf("A")))))) &&
     assert(write(descriptor[Config], Config(B)))(equalTo(Right(Record(Map("x" -> Leaf("B")))))) &&
-    assert(write(descriptor[Config], Config(C)))(equalTo(Right(Record(Map("x" -> Leaf("C"))))))
+    assert(write(descriptor[Config], Config(C)))(equalTo(Right(Record(Map("x" -> Leaf("c"))))))
   })
 }
