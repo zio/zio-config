@@ -92,7 +92,7 @@ It will be deprecated once we find users have moved on from scala 2.11.
         s"""
            | x {
            |   DetailsWrapped {
-           |    Detail  {
+           |    detail  {
            |      firstName : ff
            |      lastName  : ll
            |      region {

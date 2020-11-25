@@ -48,8 +48,7 @@ object CustomDerivations extends App {
   // globally for the automatic derivation to work.
   implicit val descriptorOfZonedDateTime: Descriptor[ZonedDateTime] =
     Descriptor[String]
-      .transformOrFailLeft(
-        x => Try(ZonedDateTime.parse(x)).toEither.swap.map(_.getMessage).swap)(_.toString) ?? "time in zoned date time"
+      .transformOrFailLeft(x => Try(ZonedDateTime.parse(x)).toEither.swap.map(_.getMessage).swap)(_.toString) ?? "time in zoned date time"
 
   val appConfigDesc =
     descriptor[AppConfig]
