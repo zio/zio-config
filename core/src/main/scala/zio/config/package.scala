@@ -1,6 +1,11 @@
 package zio
 
 package object config extends KeyConversionFunctions with ConfigStringModule {
+  implicit class MapOps[A](a: => A) {
+    def toMap(config: ConfigDescriptor[A], keyDelimiter: String = "."): Either[String, Map[String, ::[String]]] =
+      write(config, a).map(_.flattenString(keyDelimiter))
+  }
+
   private[config] def concat[A](l: ::[A], r: ::[A]): ::[A] =
     ::(l.head, l.tail ++ r)
 
