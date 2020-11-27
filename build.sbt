@@ -206,7 +206,7 @@ lazy val zioConfigYaml =
   module("zio-config-yaml", "yaml")
     .settings(
       libraryDependencies ++= Seq(
-        "org.snakeyaml" % "snakeyaml-engine" % "2.2",
+        "org.snakeyaml" % "snakeyaml-engine" % "2.2.1",
         "dev.zio"       %% "zio-test"        % zioVersion % Test,
         "dev.zio"       %% "zio-test-sbt"    % zioVersion % Test
       ),
