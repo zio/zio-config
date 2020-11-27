@@ -1244,9 +1244,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   val config = descriptor[D]
      * }}}
      */
-    def enum[D] = new PartiallyAppliedEnumType[D]
+    def enum[D] = new PartiallyAppliedEnum[D]
 
-    class PartiallyAppliedEnumType[D] {
+    class PartiallyAppliedEnum[D] {
       def apply[X <: D](
         desc1: ConfigDescriptor[X]
       )(implicit tag: ClassTag[X]): ConfigDescriptor[D] =
