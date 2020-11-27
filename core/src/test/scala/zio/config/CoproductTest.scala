@@ -105,7 +105,8 @@ object CoproductTestUtils {
     val iConfig: ConfigDescriptor[I] =
       double("i")(I.apply, I.unapply)
 
-    val config = nested("z")(enum[Z](aConfig, bConfig, cConfig, dConfig, eConfig, fConfig, gConfig, hConfig, iConfig))
+    val config =
+      nested("z")(enumeration[Z](aConfig, bConfig, cConfig, dConfig, eConfig, fConfig, gConfig, hConfig, iConfig))
 
     case class A(a: String)           extends Z
     case object B                     extends Z

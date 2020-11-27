@@ -26,7 +26,7 @@ object CoproductExample extends App {
   val dConfig = string("dance")(D.apply, D.unapply)
 
   val danceConfig =
-    enum[Dance](aConfig, bConfig, cConfig, dConfig)
+    enumeration[Dance](aConfig, bConfig, cConfig, dConfig)
 
   val aSource = zio.config.ConfigSource.fromMap(
     Map("any.name" -> "chris"),

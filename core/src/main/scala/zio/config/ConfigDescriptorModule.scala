@@ -1208,7 +1208,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         )({ case (a, t) => a :: t }, l => l.headOption.map(h => (h, l.tail)))
 
     /**
-     * enum allows user to up-cast all the subtypes to its super type defined by `D`.
+     * enumeration allows user to up-cast all the subtypes to its super type defined by `D`.
      * This is mainly useful in defining `coproducts` (`sealed trait`)
      *
      * Example:
@@ -1220,20 +1220,25 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   case class C(c: Double) extends D
      *
      *   val config: ConfigDescriptor[D] =
-     *     enum[D](
+     *     enumeration[D](
      *       string("a")(A.Apply, A.unapply),
      *       int("b")(B.apply, B.unapply),
      *       double("c")(C.apply, C.unapply)
      *     )
      * }}}
      *
-     * Currently enum supports to a maximum of 9 terms
+     * Currently enumeration supports to a maximum of 9 terms. If you have more terms, use `orElse`
+     * to combine the terms.
+     *
+     * {{{
+     *    enumeration[D](a, b, c, d, e, f, g, h) orElse enumeration[D](i, j, k)
+     * }}}
      *
      * NOTE:
      *
      * Use zio-config-magnolia for better compile time safety when it comes to `sealed trait`,
      * as it has strong compile time behaviour and makes sure all subtypes are being handled.
-     * On the other hand, `enum` doesn't complain at compile time if you forgot
+     * On the other hand, `enumeration` doesn't complain at compile time if you forgot
      * to pass the config descriptor of any of the subtype.
      *
      * Example:
@@ -1244,9 +1249,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   val config = descriptor[D]
      * }}}
      */
-    def enum[D] = new PartiallyAppliedEnum[D]
+    def enumeration[D] = new PartiallyAppliedEnumeration[D]
 
-    class PartiallyAppliedEnum[D] {
+    class PartiallyAppliedEnumeration[D] {
       def apply[X <: D](
         desc1: ConfigDescriptor[X]
       )(implicit tag: ClassTag[X]): ConfigDescriptor[D] =
@@ -1260,7 +1265,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
                   s"""
                   "Cannot write the config back because instance type doesn't match.
                   This can also happen if ConfigDescriptor is not aware of a particular subtype.
-                  Make sure all subtypes (or the type being written back) has been passed to enum while creating ConfigDescriptor.
+                  Make sure all subtypes (or the type being written back) has been passed to enumeration while creating ConfigDescriptor.
                   Or use auto derivation in zio-config-magnolia for better static/compile-time safety if its a sealed-trait"
                   """
                 )
