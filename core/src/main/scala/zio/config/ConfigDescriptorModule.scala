@@ -1,6 +1,7 @@
 package zio.config
 
 import VersionSpecificSupport._
+import scala.reflect.ClassTag
 
 trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   import ConfigDescriptorAdt._
@@ -1205,6 +1206,182 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
               case (first, head :: tail) => Right(((first, tail), head))
             })
         )({ case (a, t) => a :: t }, l => l.headOption.map(h => (h, l.tail)))
+
+    /**
+     * enumeration allows user to up-cast all the subtypes to its super type defined by `D`.
+     * This is mainly useful in defining `coproducts` (`sealed trait`)
+     *
+     * Example:
+     * {{{
+     *   sealed trait D
+     *
+     *   case class A(a: String) extends D
+     *   case class B(b: Int) extends D
+     *   case class C(c: Double) extends D
+     *
+     *   val config: ConfigDescriptor[D] =
+     *     enumeration[D](
+     *       string("a")(A.Apply, A.unapply),
+     *       int("b")(B.apply, B.unapply),
+     *       double("c")(C.apply, C.unapply)
+     *     )
+     * }}}
+     *
+     * Currently enumeration supports to a maximum of 9 terms. If you have more terms, use `orElse`
+     * to combine the terms.
+     *
+     * {{{
+     *    enumeration[D](a, b, c, d, e, f, g, h) orElse enumeration[D](i, j, k)
+     * }}}
+     *
+     * NOTE:
+     *
+     * Use zio-config-magnolia for better compile time safety when it comes to `sealed trait`,
+     * as it has strong compile time behaviour and makes sure all subtypes are being handled.
+     * On the other hand, `enumeration` doesn't complain at compile time if you forgot
+     * to pass the config descriptor of any of the subtype.
+     *
+     * Example:
+     *
+     * {{{
+     *   import zio.config.magnolia._
+     *
+     *   val config = descriptor[D]
+     * }}}
+     */
+    def enumeration[D] = new PartiallyAppliedEnumeration[D]
+
+    class PartiallyAppliedEnumeration[D] {
+      def apply[X <: D](
+        desc1: ConfigDescriptor[X]
+      )(implicit tag: ClassTag[X]): ConfigDescriptor[D] =
+        desc1.transformOrFail(
+          (a: X) => Right(a: D),
+          (d: D) =>
+            d match {
+              case a: X => Right(a)
+              case _ =>
+                Left(
+                  s"""
+                  "Cannot write the config back because instance type doesn't match.
+                  This can also happen if ConfigDescriptor is not aware of a particular subtype.
+                  Make sure all subtypes (or the type being written back) has been passed to enumeration while creating ConfigDescriptor.
+                  Or use auto derivation in zio-config-magnolia for better static/compile-time safety if its a sealed-trait"
+                  """
+                )
+            }
+        )
+
+      def apply[A <: D: ClassTag, B <: D: ClassTag](
+        desc1: ConfigDescriptor[A],
+        desc2: ConfigDescriptor[B]
+      ): ConfigDescriptor[D] =
+        apply(desc1) orElse apply(desc2)
+
+      def apply[A <: D: ClassTag, B <: D: ClassTag, C <: D: ClassTag](
+        desc1: ConfigDescriptor[A],
+        desc2: ConfigDescriptor[B],
+        desc3: ConfigDescriptor[C]
+      ): ConfigDescriptor[D] =
+        apply(desc1, desc2).orElse(apply[C](desc3))
+
+      def apply[A <: D: ClassTag, B <: D: ClassTag, C <: D: ClassTag, E <: D: ClassTag](
+        desc1: ConfigDescriptor[A],
+        desc2: ConfigDescriptor[B],
+        desc3: ConfigDescriptor[C],
+        desc4: ConfigDescriptor[E]
+      ): ConfigDescriptor[D] =
+        apply(desc1, desc2, desc3) orElse apply[E](desc4)
+
+      def apply[A <: D: ClassTag, B <: D: ClassTag, C <: D: ClassTag, E <: D: ClassTag, F <: D: ClassTag](
+        desc1: ConfigDescriptor[A],
+        desc2: ConfigDescriptor[B],
+        desc3: ConfigDescriptor[C],
+        desc4: ConfigDescriptor[E],
+        desc5: ConfigDescriptor[F]
+      ): ConfigDescriptor[D] =
+        apply(desc1, desc2, desc3, desc4) orElse apply(desc5)
+
+      def apply[
+        A <: D: ClassTag,
+        B <: D: ClassTag,
+        C <: D: ClassTag,
+        E <: D: ClassTag,
+        F <: D: ClassTag,
+        G <: D: ClassTag
+      ](
+        desc1: ConfigDescriptor[A],
+        desc2: ConfigDescriptor[B],
+        desc3: ConfigDescriptor[C],
+        desc4: ConfigDescriptor[E],
+        desc5: ConfigDescriptor[F],
+        desc6: ConfigDescriptor[G]
+      ): ConfigDescriptor[D] =
+        apply(desc1, desc2, desc3, desc4, desc5) orElse apply(desc6)
+
+      def apply[
+        A <: D: ClassTag,
+        B <: D: ClassTag,
+        C <: D: ClassTag,
+        E <: D: ClassTag,
+        F <: D: ClassTag,
+        G <: D: ClassTag,
+        H <: D: ClassTag
+      ](
+        desc1: ConfigDescriptor[A],
+        desc2: ConfigDescriptor[B],
+        desc3: ConfigDescriptor[C],
+        desc4: ConfigDescriptor[E],
+        desc5: ConfigDescriptor[F],
+        desc6: ConfigDescriptor[G],
+        desc7: ConfigDescriptor[H]
+      ): ConfigDescriptor[D] =
+        apply(desc1, desc2, desc3, desc4, desc5, desc6) orElse apply(desc7)
+
+      def apply[
+        A <: D: ClassTag,
+        B <: D: ClassTag,
+        C <: D: ClassTag,
+        E <: D: ClassTag,
+        F <: D: ClassTag,
+        G <: D: ClassTag,
+        H <: D: ClassTag,
+        I <: D: ClassTag
+      ](
+        desc1: ConfigDescriptor[A],
+        desc2: ConfigDescriptor[B],
+        desc3: ConfigDescriptor[C],
+        desc4: ConfigDescriptor[E],
+        desc5: ConfigDescriptor[F],
+        desc6: ConfigDescriptor[G],
+        desc7: ConfigDescriptor[H],
+        desc8: ConfigDescriptor[I]
+      ): ConfigDescriptor[D] =
+        apply(desc1, desc2, desc3, desc4, desc5, desc6, desc7) orElse apply(desc8)
+
+      def apply[
+        A <: D: ClassTag,
+        B <: D: ClassTag,
+        C <: D: ClassTag,
+        E <: D: ClassTag,
+        F <: D: ClassTag,
+        G <: D: ClassTag,
+        H <: D: ClassTag,
+        I <: D: ClassTag,
+        J <: D: ClassTag
+      ](
+        desc1: ConfigDescriptor[A],
+        desc2: ConfigDescriptor[B],
+        desc3: ConfigDescriptor[C],
+        desc4: ConfigDescriptor[E],
+        desc5: ConfigDescriptor[F],
+        desc6: ConfigDescriptor[G],
+        desc7: ConfigDescriptor[H],
+        desc8: ConfigDescriptor[I],
+        desc9: ConfigDescriptor[J]
+      ): ConfigDescriptor[D] =
+        apply(desc1, desc2, desc3, desc4, desc5, desc6, desc7, desc8) orElse apply(desc9)
+    }
 
     /**
      *  `head` describes getting the head of a possible list value
