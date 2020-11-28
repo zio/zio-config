@@ -65,7 +65,7 @@ trait GenerateConfig {
     size: Int = 0
   ): ZStream[zio.random.Random with zio.test.Sized with zio.clock.Clock, String, PropertyTree[String, String]] =
     DeriveGen[A].sample
-      .repeat(recurs(Math.max(size, size - 1)))
+      .repeat(recurs(Math.max(0, size - 1)))
       .flatMap(r => ZStream.fromEffect(ZIO.fromEither(write(config, r.value))))
 
   /**
