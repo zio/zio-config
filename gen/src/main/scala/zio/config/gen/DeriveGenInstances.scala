@@ -144,5 +144,4 @@ trait DeriveGenInstances {
       override def derive: Gen[zio.random.Random with zio.test.Sized, zio.duration.Duration] =
         Gen.anyFiniteDuration
     }
-
 }
