@@ -55,10 +55,20 @@ trait GenerateConfig {
    *       )
    *  }}}
    *
-   *  Note that this is all based on the ConfigDescriptor and randomness is not quarantied.
-   *  For instance, in the above example, it is not guaranteed that second PropertyTree will have
-   *  a region value of `usEast2`. Please give appropriate `size` value and emit as many `PropertyTree`
-   *  until all the required scenarios are covered.
+   * Note that this is based on ConfigDescriptor and not a direct view of a case class/sealed-trait.
+   * This is why you get almost a valid Json. If your entire config is statically represented (meaning,
+   * no custom transformation especially using transformOrFail or transform, with maximised usage of sealed traits instead of
+   * values that are known only at runtime), then the correctness increases in the
+   * emitted value. This is because zio-config would know the behaviour of your Config better, if most of its parts
+   * are statically represented.
+   *
+   * That said, we are yet to support refined types, and might fail to generate values
+   * because of absence of `DeriveGen`  instance for `Refined[A, B]`.
+   * However, providing explicit DeriveGen instances in program is a solution.
+   *
+   * Also note that the uniqueness in emitted random values is not guaranteed. For this reason you can give
+   * appropriate `size` value and emit as many `PropertyTree`
+   * until all the required scenarios are covered.
    */
   def generateConfig[A: DeriveGen](
     config: ConfigDescriptor[A],
@@ -257,6 +267,7 @@ trait GenerateConfig {
    *
    *
    * }}}
+   *
    * Note that this is based on ConfigDescriptor and not a direct Json/HOCON view of a case class/sealed-trait.
    * This is why you get almost a valid Json. If your entire config is statically represented (meaning,
    * no custom transformation especially using transformOrFail or transform, with maximised usage of sealed traits instead of
