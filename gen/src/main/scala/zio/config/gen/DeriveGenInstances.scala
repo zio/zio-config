@@ -89,7 +89,7 @@ trait DeriveGenInstances {
         Gen
           .int(5, 25)
           .flatMap(
-            prev => Gen.localDateTime(LocalDateTime.now().minusHours(10), LocalDateTime.now()).map(_.toLocalDate())
+            prev => Gen.localDateTime(LocalDateTime.now().minusHours(prev), LocalDateTime.now()).map(_.toLocalDate())
           )
     }
 
