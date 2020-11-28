@@ -103,7 +103,7 @@ trait GenerateConfig {
    *   final case class MyConfig(region: Region, database: Database)
    *
    *   val result =
-   *     generateConfigJson(descriptor[MyConfig], 1).unsafeRunChunk
+   *     generateConfigHoconString(descriptor[MyConfig], 1).unsafeRunChunk
    *
    *   println(result)
    *
@@ -222,7 +222,7 @@ trait GenerateConfig {
     generateConfig(config, size).map(_.toJson)
 
   /**
-   * Generate an almost valid configuration in HOCON format
+   * Generate an almost valid configuration in Map format
    * given a `ConfigDescriptor[A]` and `DeriveGen[A]`.
    *
    * Note that `DeriveGen[A]` is going to be available only
@@ -246,7 +246,7 @@ trait GenerateConfig {
    *   final case class MyConfig(region: Region, database: Database)
    *
    *   val result =
-   *     generateConfigJson(descriptor[MyConfig], 1).unsafeRunChunk
+   *     generateConfigMap(descriptor[MyConfig], 1).unsafeRunChunk
    *
    *   println(result)
    *
