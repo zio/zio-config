@@ -166,6 +166,16 @@ lazy val examples = module("zio-config-examples", "examples")
 lazy val zioConfigDerivation = module("zio-config-derivation", "derivation")
   .dependsOn(zioConfig)
 
+lazy val zioConfigGen = module("zio-config-gen", "gen")
+  .settings(
+    magnoliaDependencies,
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio-test-magnolia" % zioVersion,
+      "org.scalatest" %% "scalatest" % "3.2.3" % Test
+    ),
+  )
+  .dependsOn(zioConfigTypesafe, zioConfigMagnolia)
+
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
     magnoliaDependencies,
