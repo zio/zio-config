@@ -27,16 +27,20 @@ object RandomConfigGenerationComplexExample extends App {
         versionInfoMap.transformOrFail[VersionInfo](
           descMap =>
             descMap.headOption match {
-              case Some((k, v)) => v match {
-                case Left(value) => Right(VersionInfo(k, VersionStrategy.Number(value)))
-                case Right(value) if value == "latest" =>Right(VersionInfo(k, VersionStrategy.Latest))
-                case Right(_) => Left("The value of a version can be either latest or a version number of the type Int")
-              }
+              case Some((k, v)) =>
+                v match {
+                  case Left(value)                       => Right(VersionInfo(k, VersionStrategy.Number(value)))
+                  case Right(value) if value == "latest" => Right(VersionInfo(k, VersionStrategy.Latest))
+                  case Right(_) =>
+                    Left("The value of a version can be either latest or a version number of the type Int")
+                }
               case None => Left("Empty version info")
-            }, verionInfo => verionInfo.strategy match {
-            case VersionStrategy.Latest => Right(Map(verionInfo.key -> Right("latest")))
-            case VersionStrategy.Number(n) => Right(Map(verionInfo.key -> Left(n)))
-          }
+            },
+          verionInfo =>
+            verionInfo.strategy match {
+              case VersionStrategy.Latest    => Right(Map(verionInfo.key -> Right("latest")))
+              case VersionStrategy.Number(n) => Right(Map(verionInfo.key -> Left(n)))
+            }
         )
       )
     }
@@ -53,22 +57,22 @@ object RandomConfigGenerationComplexExample extends App {
   println(generateConfigJson(descriptor[MyConfig]).unsafeRunChunk)
 
   /**
-  * yields:
-   *
-   * {{{
-   *   Chunk({
-   *     "database" : {
-   *         "host" : "http://def",
-   *         "port" : "9793"
-   *     },
-   *     "inputDir" : "CZ4ckWoJKXfgMzq42rUU",
-   *     "versionInfo" : {
-   *         "versionInfo" : {
-   *             "peMV1u1GOX1HcpRYNFx" : "latest"
-   *         }
-   *     }
-   * }
-   * )
-   * }}}
-   */
+ * yields:
+ *
+ * {{{
+ *   Chunk({
+ *     "database" : {
+ *         "host" : "http://def",
+ *         "port" : "9793"
+ *     },
+ *     "inputDir" : "CZ4ckWoJKXfgMzq42rUU",
+ *     "versionInfo" : {
+ *         "versionInfo" : {
+ *             "peMV1u1GOX1HcpRYNFx" : "latest"
+ *         }
+ *     }
+ * }
+ * )
+ * }}}
+ */
 }

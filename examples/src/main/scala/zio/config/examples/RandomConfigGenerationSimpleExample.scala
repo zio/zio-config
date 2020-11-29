@@ -1,9 +1,18 @@
 package zio.config.examples
 
-import zio.config.derivation.name
-import zio.config.magnolia._, zio.config.gen._
+import zio.config.magnolia.{ name, _ }
+import zio.config.gen._
 
 object RandomConfigGenerationSimpleExample extends App {
+  sealed trait Cloud
+
+  object Cloud {
+    case object Aws                                           extends Cloud
+    case object Azure                                         extends Cloud
+    case class Gcp(@name("DOMAIN") domain: String, e: String) extends Cloud
+
+  }
+
   sealed trait Region
 
   @name("ap-southeast-2")
@@ -14,7 +23,7 @@ object RandomConfigGenerationSimpleExample extends App {
 
   final case class MyConfig(username: String, region: Region)
 
-  println(generateConfigJson(descriptor[MyConfig]).unsafeRunChunk)
+  println(generateConfigJson(descriptor[MyConfig], 10).unsafeRunChunk)
 
   // yields for example
 

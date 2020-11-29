@@ -259,5 +259,5 @@ lazy val docs = project
     refinedDependencies,
     libraryDependencies += "dev.zio" %% "zio" % zioVersion
   )
-  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigTypesafe, zioConfigRefined)
+  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigTypesafe, zioConfigRefined, zioConfigGen)
   .enablePlugins(MdocPlugin, DocusaurusPlugin)

@@ -1,7 +1,8 @@
 package zio.config.gen
 
 import zio.test.magnolia.DeriveGen
-import zio.test.Gen
+import zio.test.{ Gen, Sized }
+
 import scala.concurrent.duration.Duration
 import java.io.File
 import java.time.Instant
@@ -10,6 +11,8 @@ import java.time.LocalDate
 import java.net.URI
 import java.util.UUID
 import java.net.URL
+
+import zio.random.Random
 
 /**
  * DeriveGenInstances gives instance for DeriveGen for all the types
@@ -83,6 +86,11 @@ trait DeriveGenInstances {
         DeriveGen[File].map(_.toPath())
     }
 
+  implicit def deriveGenList[A: DeriveGen]: DeriveGen[List[A]] = new DeriveGen[List[A]] {
+    override def derive: Gen[Random with Sized, List[A]] =
+      Gen.int(1, 6).flatMap(n => Gen.listOfN(n)(DeriveGen[A]))
+  }
+
   implicit def deriveGenLocalDate: DeriveGen[LocalDate] =
     new DeriveGen[LocalDate] {
       override def derive: Gen[zio.random.Random with zio.test.Sized, LocalDate] =
@@ -99,6 +107,11 @@ trait DeriveGenInstances {
       override def derive: Gen[zio.random.Random with zio.test.Sized, Long] =
         Gen.long(10000, 999999999)
     }
+
+  implicit def deriveGenMap[A: DeriveGen, B: DeriveGen]: DeriveGen[Map[A, B]] = new DeriveGen[Map[A, B]] {
+    override def derive: Gen[Random with Sized, Map[A, B]] =
+      Gen.int(1, 6).flatMap(n => Gen.mapOfN(n)(DeriveGen[A], DeriveGen[B]))
+  }
 
   implicit def deriveGenShort: DeriveGen[Short] =
     new DeriveGen[Short] {

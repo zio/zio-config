@@ -223,7 +223,7 @@ object RandomConfigGenerationSimpleExample extends App {
   @name("us-east")
   case object UsEast extends Region
 
-  final case class UsernameRegion(username: String, region: Region)
+  case class UsernameRegion(username: String, region: Region)
 
   println(generateConfigJson(descriptor[UsernameRegion]).unsafeRunChunk)
 
