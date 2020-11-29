@@ -15,16 +15,13 @@ object RandomConfigGenerationComplexExample extends App {
   final case class VersionInfo(key: String, strategy: VersionStrategy)
 
   object VersionInfo {
-    val versionInfoMap: ConfigDescriptor[Map[String, Either[Int, String]]] =
-      map("versionInfo")(int.orElseEither(string))
-
     // A custom config descriptor for VersionInfo.
     // If we were offloading this task to zio-config-magnolia, then user need to feed in a verbose
     // config to satisfy VersionInfo, such as `versionInfo: { key :.. strategy: { number : ... }}`
     // instead of a simple `versionInfo : { version : 1 }`
     implicit val descriptorOfVersionInfo: Descriptor[VersionInfo] = {
       Descriptor(
-        versionInfoMap.transformOrFail[VersionInfo](
+        map(int.orElseEither(string)).transformOrFail[VersionInfo](
           descMap =>
             descMap.headOption match {
               case Some((k, v)) =>
@@ -60,19 +57,17 @@ object RandomConfigGenerationComplexExample extends App {
  * yields:
  *
  * {{{
- *   Chunk({
+
+ *    Chunk({
  *     "database" : {
- *         "host" : "http://def",
- *         "port" : "9793"
+ *         "host" : "http://abc",
+ *         "port" : "5502"
  *     },
- *     "inputDir" : "CZ4ckWoJKXfgMzq42rUU",
+ *     "inputDir" : "5Vf0GTG",
  *     "versionInfo" : {
- *         "versionInfo" : {
- *             "peMV1u1GOX1HcpRYNFx" : "latest"
- *         }
+ *         "QK8mNc5eciBlH" : "latest"
  *     }
  * }
- * )
  * }}}
  */
 }
