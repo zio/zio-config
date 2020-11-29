@@ -582,9 +582,9 @@ trait ConfigDocsModule extends WriteModule {
       @tailrec
       def lookAhead(desc: ConfigDescriptor[_]): ConfigDescriptor[_] =
         desc match {
-          case Lazy(value) => lookAhead(value())
+          case Lazy(value)                   => lookAhead(value())
           case TransformOrFail(config, _, _) => lookAhead(config)
-          case d: ConfigDescriptor[_] => d
+          case d: ConfigDescriptor[_]        => d
         }
 
       config match {
