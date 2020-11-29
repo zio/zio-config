@@ -132,7 +132,7 @@ trait DeriveGenInstances {
           .flatMap(
             r =>
               Gen
-                .oneOf(Gen.const("http"), Gen.const("https"), Gen.const("file"))
+                .oneOf(Gen.const("http"), Gen.const("https"))
                 .map(
                   prefix => new URL(s"${prefix}://${r}")
                 )
