@@ -25,44 +25,8 @@ object CoproductExample extends App {
   val cConfig = boolean("can")(C.apply, C.unapply)
   val dConfig = string("dance")(D.apply, D.unapply)
 
-  val aConfigAsDance: ConfigDescriptor[Dance] =
-    aConfig.transformOrFail(
-      (a: A) => Right(a: Dance),
-      (_: Dance) match {
-        case a: A => Right(a)
-        case _    => Left("unable to write back")
-      }
-    )
-
-  val bConfigAsDance: ConfigDescriptor[Dance] =
-    bConfig.transformOrFail(
-      (a: B) => Right(a: Dance),
-      (_: Dance) match {
-        case a: B => Right(a)
-        case _    => Left("unsable to write back")
-      }
-    )
-
-  val cConfigAsDance: ConfigDescriptor[Dance] =
-    cConfig.transformOrFail(
-      (a: C) => Right(a: Dance),
-      (_: Dance) match {
-        case a: C => Right(a)
-        case _    => Left("unsable to write back")
-      }
-    )
-
-  val dConfigAsDance: ConfigDescriptor[Dance] =
-    dConfig.transformOrFail(
-      (a: D) => Right(a: Dance),
-      (_: Dance) match {
-        case a: D => Right(a)
-        case _    => Left("unsable to write back")
-      }
-    )
-
   val danceConfig =
-    aConfigAsDance.orElse(bConfigAsDance).orElse(cConfigAsDance).orElse(dConfigAsDance)
+    enumeration[Dance](aConfig, bConfig, cConfig, dConfig)
 
   val aSource = zio.config.ConfigSource.fromMap(
     Map("any.name" -> "chris"),
@@ -120,6 +84,8 @@ object CoproductExample extends App {
       readC == Right(c) &&
       readD == Right(d)
   )
+
+  write(danceConfig, d).map(_.flattenString())
 
   val writeA =
     write(danceConfig, a).map(_.flattenString())
