@@ -4,7 +4,7 @@ import zio.config._
 import ConfigDescriptor._
 import zio.config.magnolia.DeriveConfigDescriptor.Descriptor
 
-object RandomConfigGenerationExample extends App {
+object RandomConfigGenerationComplexExample extends App {
   sealed trait VersionStrategy
 
   object VersionStrategy {
