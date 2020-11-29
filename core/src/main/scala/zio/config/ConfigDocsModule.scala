@@ -579,13 +579,17 @@ trait ConfigDocsModule extends WriteModule {
       latestPath: Option[K],
       alreadySeen: Set[ConfigDescriptor[_]]
     ): ConfigDocs = {
-      // FIXME: Not really sure. This was more of a TDD making sure tests run.
-      // FIXME: Some work is in progress with ConfigDocs in https://github.com/zio/zio-config/pull/441
       @tailrec
-      def getLazy(c: ConfigDescriptor[B]): ConfigDescriptor[B] = c match {
-        case Lazy(value) => getLazy(value())
-        case _           => c
-      }
+      def lookAhead(desc: ConfigDescriptor[_]): ConfigDescriptor[_] =
+        if (!alreadySeen.contains(desc)) {
+          desc match {
+            case Lazy(value)                   => lookAhead(value())
+            case TransformOrFail(config, _, _) => lookAhead(config)
+            case _                             => desc
+          }
+        } else {
+          desc
+        }
 
       config match {
         case Lazy(thunk) =>
@@ -635,7 +639,7 @@ trait ConfigDocsModule extends WriteModule {
           )
 
         case Nested(source, path, c) =>
-          val inner = getLazy(c)
+          val inner = lookAhead(c)
 
           if (alreadySeen.contains(inner)) {
             ConfigDocs.Nested(
