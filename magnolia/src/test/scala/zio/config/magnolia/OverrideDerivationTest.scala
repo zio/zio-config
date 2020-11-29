@@ -90,16 +90,16 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(getDescriptor[Outer].desc.mapKey(zio.config.toSnakeCase), cfg)
+      val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
 
       val expected = Record(
         Map(
           "list" -> Sequence(
             List(
-              Record(Map("inner" -> Leaf("other_object"))),
-              Record(Map("inner" -> Leaf("obj1_name"))),
-              Record(Map("inner" -> Record(Map("class_with_value" -> Record(Map("value" -> Leaf("a"))))))),
-              Record(Map("inner" -> Record(Map("class_with_data" -> Record(Map("data" -> Leaf("b")))))))
+              Record(Map("Inner" -> Leaf("OtherOBJECT"))),
+              Record(Map("Inner" -> Leaf("Obj1Name"))),
+              Record(Map("Inner" -> Record(Map("ClassWithValue" -> Record(Map("value" -> Leaf("a"))))))),
+              Record(Map("Inner" -> Record(Map("ClassWithData" -> Record(Map("data" -> Leaf("b")))))))
             )
           )
         )
@@ -109,7 +109,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
       assert(
         res
           .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
-          .flatMap(v => read(wrappedSealedHierarchy.getDescriptor[Outer].desc.mapKey(zio.config.toSnakeCase) from v))
+          .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
       )(
         isRight(equalTo(cfg))
       )
@@ -134,16 +134,16 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(getDescriptor[Outer].desc.mapKey(zio.config.toSnakeCase), cfg)
+      val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
 
       val expected = Record(
         Map(
           "list" -> Sequence(
             List(
-              Leaf("other_object"),
-              Leaf("obj1_name"),
-              Record(Map("value" -> Leaf("a"), "type" -> Leaf("class_with_value"))),
-              Record(Map("data"  -> Leaf("b"), "type" -> Leaf("class_with_data")))
+              Leaf("OtherOBJECT"),
+              Leaf("Obj1Name"),
+              Record(Map("value" -> Leaf("a"), "type" -> Leaf("ClassWithValue"))),
+              Record(Map("data"  -> Leaf("b"), "type" -> Leaf("ClassWithData")))
             )
           )
         )
@@ -152,7 +152,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
       assert(
         res
           .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
-          .flatMap(v => read(wrappedSealedHierarchy.getDescriptor[Outer].desc.mapKey(zio.config.toSnakeCase) from v))
+          .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
       )(
         isRight(equalTo(cfg))
       )
@@ -177,22 +177,22 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(getDescriptor[Outer].desc.mapKey(zio.config.toSnakeCase), cfg)
+      val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
 
       val expected = Record(
         Map(
           "list" -> Sequence(
             List(
-              Record(Map("inner" -> Leaf("other_object"))),
-              Record(Map("inner" -> Leaf("obj1_name"))),
+              Record(Map("Inner" -> Leaf("OtherOBJECT"))),
+              Record(Map("Inner" -> Leaf("Obj1Name"))),
               Record(
                 Map(
-                  "inner" -> Record(Map("value" -> Leaf("a"), "type" -> Leaf("class_with_value")))
+                  "Inner" -> Record(Map("value" -> Leaf("a"), "type" -> Leaf("ClassWithValue")))
                 )
               ),
               Record(
                 Map(
-                  "inner" -> Record(Map("data" -> Leaf("b"), "type" -> Leaf("class_with_data")))
+                  "Inner" -> Record(Map("data" -> Leaf("b"), "type" -> Leaf("ClassWithData")))
                 )
               )
             )
@@ -203,7 +203,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
       assert(
         res
           .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
-          .flatMap(v => read(wrappedSealedHierarchy.getDescriptor[Outer].desc.mapKey(zio.config.toSnakeCase) from v))
+          .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
       )(
         isRight(equalTo(cfg))
       )

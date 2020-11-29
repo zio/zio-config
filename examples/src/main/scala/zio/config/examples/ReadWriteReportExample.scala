@@ -70,7 +70,7 @@ object ReadWriteReportExample extends App {
   )
 
   assert(
-    generateDocs(config).toTable.asGithubFlavouredMarkdown ==
+    generateDocs(config).toTable.toGithubFlavouredMarkdown ==
       s"""
          |## Configuration Details
          |

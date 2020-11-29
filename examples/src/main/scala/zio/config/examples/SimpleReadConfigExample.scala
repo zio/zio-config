@@ -1,8 +1,9 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
+import ConfigDescriptor._
 import zio.console._
-import zio.{ App, ExitCode, ZEnv, ZIO }
+import zio.{ App, ExitCode, Has, ZEnv, ZIO }
 
 case class Prod(ldap: String, port: Int, dburl: Option[String])
 
@@ -11,7 +12,7 @@ object Prod {
     (string("LDAP") |@| int("PORT") |@|
       string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
-  val myAppLogic: ZIO[ZConfig[Prod], Throwable, (String, Option[String])] =
+  val myAppLogic: ZIO[Has[Prod], Throwable, (String, Option[String])] =
     for {
       prod <- getConfig[Prod]
     } yield (prod.ldap, prod.dburl)

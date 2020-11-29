@@ -3,31 +3,68 @@ package zio.config.yaml
 import java.io.File
 import java.nio.file.Path
 
-import zio.{ Tag, ZLayer }
-import zio.blocking.Blocking
-import zio.config.{ ConfigDescriptor, ZConfig }
+import zio.{ Has, Layer, Tag, ZIO }
+import zio.config._
 
 object YamlConfig {
 
   /**
-   * Creates a configuration layer described by the descriptor from a YAML string.
+   * Retrieve a config from a Yaml string
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   val yamlString = ???
+   *
+   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *     YamlConfig.fromString(yamlString, descriptor[MyConfig])
+   * }}}
    */
-  def fromString[A: Tag](yamlString: String, descriptor: ConfigDescriptor[A]): ZLayer[Any, Throwable, ZConfig[A]] =
+  def fromString[A: Tag](yamlString: String, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], Has[A]] =
     ZConfig.fromConfigDescriptorM(
-      YamlConfigSource.fromString(yamlString).map(descriptor from _)
+      ZIO.fromEither(YamlConfigSource.fromYamlString(yamlString).map(descriptor from _))
     )
 
   /**
-   * Creates a configuration layer described by the descriptor from a YAML file at the specified path.
+   * Retrieve a config from a Yaml path
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *     YamlConfig.fromPath(Path.of("/path/to/file.yml"), descriptor[MyConfig])
+   * }}}
    */
-  def fromPath[A: Tag](path: Path, descriptor: ConfigDescriptor[A]): ZLayer[Blocking, Throwable, ZConfig[A]] =
+  def fromPath[A: Tag](path: Path, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], Has[A]] =
     fromFile(path.toFile, descriptor)
 
   /**
-   * Creates a configuration layer described by the descriptor from a YAML file.
+   * Retrieve a config from a Yaml file
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *     YamlConfig.fromPath(new File("/path/to/file.yml"), descriptor[MyConfig])
+   * }}}
    */
-  def fromFile[A: Tag](file: File, descriptor: ConfigDescriptor[A]): ZLayer[Blocking, Throwable, ZConfig[A]] =
+  def fromFile[A: Tag](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], Has[A]] =
     ZConfig.fromConfigDescriptorM(
-      YamlConfigSource.fromFile(file).map(descriptor from _)
+      ZIO.fromEither(YamlConfigSource.fromYamlFile(file).map(descriptor from _))
     )
 }

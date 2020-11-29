@@ -5,7 +5,6 @@ import zio.test.Assertion._
 import RecursiveConfigTestUtils._
 
 import zio.config.ConfigDescriptor._
-import zio.config._
 
 object RecursiveConfigTest
     extends BaseSpec(
@@ -174,7 +173,7 @@ object RecursiveConfigTestUtils {
   case class Add(items: List[Expr]) extends Expr
 
   def expr: ConfigDescriptor[Expr] = {
-    val lit: ConfigDescriptor[Expr] = int.xmapEither(
+    val lit: ConfigDescriptor[Expr] = int.transformOrFail(
       n => Right(Lit(n)), {
         case Lit(n) => Right(n)
         case _      => Left(s"Not Lit")
@@ -194,6 +193,9 @@ object RecursiveConfigTestUtils {
     lit <> add
   }
 
-  val exprValue  = Add(List(Lit(1), Add(List(Add(List(Lit(2), Lit(3))), Lit(4))), Lit(5)))
-  val exprSource = ConfigSource.fromPropertyTree(write(expr, exprValue).toOption.get, "test", LeafForSequence.Invalid)
+  val exprValue = Add(List(Lit(1), Add(List(Add(List(Lit(2), Lit(3))), Lit(4))), Lit(5)))
+  val exprSource = ConfigSource.fromPropertyTree(write(expr, exprValue) match {
+    case Left(value)  => ???
+    case Right(value) => value
+  }, "test", LeafForSequence.Invalid)
 }

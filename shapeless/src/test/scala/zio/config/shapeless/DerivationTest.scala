@@ -18,20 +18,21 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], String)] = desc match {
-        case Default(config, _)        => collectDescriptions(config.value, path)
-        case DynamicMap(_, config)     => collectDescriptions(config.value, path)
-        case Describe(config, message) => (path, message) :: collectDescriptions(config.value, path)
-        case Nested(_, path, config)   => collectDescriptions(config.value, Some(path))
-        case Optional(config)          => collectDescriptions(config.value, path)
+        case Lazy(thunk)               => collectDescriptions(thunk(), path)
+        case Default(config, _)        => collectDescriptions(config, path)
+        case DynamicMap(_, config)     => collectDescriptions(config, path)
+        case Describe(config, message) => (path, message) :: collectDescriptions(config, path)
+        case Nested(_, path, config)   => collectDescriptions(config, Some(path))
+        case Optional(config)          => collectDescriptions(config, path)
         case OrElse(left, right) =>
-          collectDescriptions(left.value, path) ::: collectDescriptions(right.value, path)
+          collectDescriptions(left, path) ::: collectDescriptions(right, path)
         case OrElseEither(left, right) =>
-          collectDescriptions(left.value, path) ::: collectDescriptions(right.value, path)
-        case Sequence(_, config) => collectDescriptions(config.value, path)
+          collectDescriptions(left, path) ::: collectDescriptions(right, path)
+        case Sequence(_, config) => collectDescriptions(config, path)
         case Source(_, _)        => Nil
         case Zip(left, right) =>
-          collectDescriptions(left.value, path) ::: collectDescriptions(right.value, path)
-        case XmapEither(config, _, _) => collectDescriptions(config.value, path)
+          collectDescriptions(left, path) ::: collectDescriptions(right, path)
+        case TransformOrFail(config, _, _) => collectDescriptions(config, path)
       }
 
       assert(collectDescriptions(DeriveConfigDescriptor.descriptor[Cfg], None))(
@@ -53,17 +54,18 @@ object DerivationTest extends DefaultRunnableSpec {
       case class Cfg(@name("otherName") fname: String) extends St
 
       def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
-        case Default(config, _)        => collectPath(config.value)
-        case Describe(config, _)       => collectPath(config.value)
-        case DynamicMap(_, config)     => collectPath(config.value)
-        case Nested(_, path, config)   => path :: collectPath(config.value)
-        case Optional(config)          => collectPath(config.value)
-        case OrElse(left, right)       => collectPath(left.value) ::: collectPath(right.value)
-        case OrElseEither(left, right) => collectPath(left.value) ::: collectPath(right.value)
-        case Sequence(_, config)       => collectPath(config.value)
-        case Source(_, _)              => Nil
-        case Zip(left, right)          => collectPath(left.value) ::: collectPath(right.value)
-        case XmapEither(config, _, _)  => collectPath(config.value)
+        case Lazy(thunk)                   => collectPath(thunk())
+        case Default(config, _)            => collectPath(config)
+        case Describe(config, _)           => collectPath(config)
+        case DynamicMap(_, config)         => collectPath(config)
+        case Nested(_, path, config)       => path :: collectPath(config)
+        case Optional(config)              => collectPath(config)
+        case OrElse(left, right)           => collectPath(left) ::: collectPath(right)
+        case OrElseEither(left, right)     => collectPath(left) ::: collectPath(right)
+        case Sequence(_, config)           => collectPath(config)
+        case Source(_, _)                  => Nil
+        case Zip(left, right)              => collectPath(left) ::: collectPath(right)
+        case TransformOrFail(config, _, _) => collectPath(config)
       }
 
       // IntelliJ will hide this, however it is required
@@ -81,18 +83,19 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], Any)] = desc match {
-        case Default(config, v)      => (path -> v) :: collectDefault(config.value, path)
-        case Describe(config, _)     => collectDefault(config.value, path)
-        case DynamicMap(_, config)   => collectDefault(config.value, path)
-        case Nested(_, path, config) => collectDefault(config.value, Some(path))
-        case Optional(config)        => collectDefault(config.value, path)
-        case OrElse(left, right)     => collectDefault(left.value, path) ::: collectDefault(right.value, path)
+        case Lazy(thunk)             => collectDefault(thunk(), path)
+        case Default(config, v)      => (path -> v) :: collectDefault(config, path)
+        case Describe(config, _)     => collectDefault(config, path)
+        case DynamicMap(_, config)   => collectDefault(config, path)
+        case Nested(_, path, config) => collectDefault(config, Some(path))
+        case Optional(config)        => collectDefault(config, path)
+        case OrElse(left, right)     => collectDefault(left, path) ::: collectDefault(right, path)
         case OrElseEither(left, right) =>
-          collectDefault(left.value, path) ::: collectDefault(right.value, path)
-        case Sequence(_, config)      => collectDefault(config.value, path)
-        case Source(_, _)             => Nil
-        case Zip(left, right)         => collectDefault(left.value, path) ::: collectDefault(right.value, path)
-        case XmapEither(config, _, _) => collectDefault(config.value, path)
+          collectDefault(left, path) ::: collectDefault(right, path)
+        case Sequence(_, config)           => collectDefault(config, path)
+        case Source(_, _)                  => Nil
+        case Zip(left, right)              => collectDefault(left, path) ::: collectDefault(right, path)
+        case TransformOrFail(config, _, _) => collectDefault(config, path)
       }
 
       assert(collectDefault(DeriveConfigDescriptor.descriptor[Cfg], None))(equalTo((None, "defaultV") :: Nil))
