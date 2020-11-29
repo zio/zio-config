@@ -111,7 +111,7 @@ object RecursiveConfigTest
               )
             )
           )
-        }
+        } @@ TestAspect.exceptScala211
       )
     )
 
@@ -195,7 +195,7 @@ object RecursiveConfigTestUtils {
 
   val exprValue = Add(List(Lit(1), Add(List(Add(List(Lit(2), Lit(3))), Lit(4))), Lit(5)))
   val exprSource = ConfigSource.fromPropertyTree(write(expr, exprValue) match {
-    case Left(value)  => ???
+    case Left(_)      => ???
     case Right(value) => value
   }, "test", LeafForSequence.Invalid)
 }

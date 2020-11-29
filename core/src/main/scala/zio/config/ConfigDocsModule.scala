@@ -581,10 +581,14 @@ trait ConfigDocsModule extends WriteModule {
     ): ConfigDocs = {
       @tailrec
       def lookAhead(desc: ConfigDescriptor[_]): ConfigDescriptor[_] =
-        desc match {
-          case Lazy(value)                   => lookAhead(value())
-          case TransformOrFail(config, _, _) => lookAhead(config)
-          case d: ConfigDescriptor[_]        => d
+        if (!alreadySeen.contains(desc)) {
+          desc match {
+            case Lazy(value)                   => lookAhead(value())
+            case TransformOrFail(config, _, _) => lookAhead(config)
+            case _                             => desc
+          }
+        } else {
+          desc
         }
 
       config match {
@@ -636,6 +640,7 @@ trait ConfigDocsModule extends WriteModule {
 
         case Nested(source, path, c) =>
           val inner = lookAhead(c)
+
           if (alreadySeen.contains(inner)) {
             ConfigDocs.Nested(
               path,
