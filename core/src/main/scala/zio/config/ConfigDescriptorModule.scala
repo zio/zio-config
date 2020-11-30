@@ -1892,11 +1892,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     final def lazyDesc[A](
       config: => ConfigDescriptor[A]
-    ): ConfigDescriptor[A] = {
-      lazy val config0 = config
-
-      Lazy(() => config0)
-    }
+    ): ConfigDescriptor[A] =
+      Lazy(() => config)
 
     final def nestedDesc[A](source: ConfigSource, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(source, path, lazyDesc(config))
