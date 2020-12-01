@@ -51,6 +51,14 @@ libraryDependencies += "dev.zio" %% "zio-config-yaml" % <version>
 
 ```
 
+##### Optional Dependency for a random generation of a config
+
+```scala
+
+libraryDependencies += "dev.zio" %% "zio-config-gen" % <version>
+
+```
+
 ## Describe the config by hand
 
 We must fetch the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
@@ -195,6 +203,39 @@ More details in [here](../configdescriptor/index.md).
 ```scala mdoc:silent
 generateReport(myConfig, MyConfig("xyz", 8888, "postgres"))
 // Generates documentation showing value of each parameter
+
+```
+
+#### Generate a random config
+
+```scala mdoc:silent
+
+import zio.config.derivation.name
+import zio.config.magnolia._, zio.config.gen._
+
+object RandomConfigGenerationSimpleExample extends App {
+  sealed trait Region
+
+  @name("ap-southeast-2")
+  case object ApSouthEast2 extends Region
+
+  @name("us-east")
+  case object UsEast extends Region
+
+  case class DetailsConfig(username: String, region: Region)
+
+  println(generateConfigJson(descriptor[DetailsConfig]).unsafeRunChunk)
+
+  // yields for example
+
+  // Chunk(
+  //   {
+  //    "region" : "ap-southeast-2",
+  //     "username" : "eU2KlfATwYZ5s0Y"
+  //   }
+  // )
+}
+
 
 ```
 ### Accumulating all errors
