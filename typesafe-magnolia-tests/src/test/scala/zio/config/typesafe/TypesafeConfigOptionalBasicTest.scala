@@ -3,7 +3,6 @@ package zio.config.typesafe
 import zio.test.Assertion._
 import zio.test._
 import zio.config._
-import typesafe._
 import magnolia._
 import zio.config.ReadError.Step.Key
 import zio.config.ReadError.{ Irrecoverable, MissingValue, ZipErrors }
