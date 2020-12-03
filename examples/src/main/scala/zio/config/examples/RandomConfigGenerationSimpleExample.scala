@@ -23,7 +23,7 @@ object RandomConfigGenerationSimpleExample extends App {
 
   final case class MyConfig(username: String, region: Region)
 
-  println(generateConfigJson(descriptor[MyConfig], 10).unsafeRunChunk)
+  println(generateConfigJson(descriptor[MyConfig], 1).unsafeRunChunk)
 
   // yields for example
 
