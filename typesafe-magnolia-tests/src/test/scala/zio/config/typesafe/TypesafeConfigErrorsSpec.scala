@@ -79,8 +79,6 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
         }
       val nestedConfigAutomaticExpect3 = Right(AwsConfig(Account("us-east", "jon"), None))
 
-      println(requiredZipAndOrFields(descriptor[AwsConfig]))
-
       assert(nestedConfigAutomaticResult1)(equalTo(nestedConfigAutomaticExpect1)) &&
       assert(nestedConfigAutomaticResult2)(equalTo(nestedConfigAutomaticExpect2)) &&
       assert(nestedConfigAutomaticResult3)(equalTo(nestedConfigAutomaticExpect3))
