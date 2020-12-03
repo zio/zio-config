@@ -44,14 +44,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[B] = {
       val updatedKeys = cfg.path :: keys
       val updatedPath = Step.Key(cfg.path) :: path
-
-      cfg.source.getConfigValue(updatedKeys.reverse) match {
-        case PropertyTree.Empty =>
-          val innerDescriptions = lookAheadForDescriptions(cfg.config, List.empty)
-          Left(ReadError.MissingValue(updatedPath.reverse, descriptions ++ innerDescriptions))
-        case _ =>
-          loopAny(updatedPath, updatedKeys, cfg.config, descriptions)
-      }
+      loopAny(updatedPath, updatedKeys, cfg.config, descriptions)
     }
 
     def loopOptional[B](
@@ -313,36 +306,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     s"Provided value is ${given.toString}, expecting the type ${expectedType}"
 
   final def requiredZipAndOrFields[A](config: ConfigDescriptor[A]): Int = {
-    def countZipSize[A](config: ConfigDescriptor[A]): Int =
-      config match {
-        case ConfigDescriptorAdt.Zip(left, right) =>
-          countZipSize(left) + countZipSize(right)
-        case _ => 1
-      }
-    def countOrElseSize[A](config: ConfigDescriptor[A]): Int =
-      config match {
-        case ConfigDescriptorAdt.OrElse(left, right) =>
-          countOrElseSize(left) + countOrElseSize(right)
-        case _ => 1
-      }
-    def countOrElseEitherSize[A](config: ConfigDescriptor[A]): Int =
-      config match {
-        case ConfigDescriptorAdt.OrElseEither(left, right) =>
-          countOrElseEitherSize(left) + countOrElseEitherSize(right)
-        case _ => 1
-      }
-
     def loop[B](count: List[K], config: ConfigDescriptor[B]): Int =
       config match {
         case ConfigDescriptorAdt.Lazy(thunk)                => loop(count, thunk())
-        case ConfigDescriptorAdt.Zip(_, _)                  => countZipSize(config)
+        case ConfigDescriptorAdt.Zip(left, right)           => loop(count, left) + loop(count, right)
         case ConfigDescriptorAdt.TransformOrFail(cfg, _, _) => loop(count, cfg)
         case ConfigDescriptorAdt.Describe(cfg, _)           => loop(count, cfg)
         case ConfigDescriptorAdt.Nested(_, _, next)         => loop(count, next)
         case ConfigDescriptorAdt.Source(_, _)               => 1
         case ConfigDescriptorAdt.Optional(_)                => 0
-        case ConfigDescriptorAdt.OrElse(_, _)               => countOrElseSize(config)
-        case ConfigDescriptorAdt.OrElseEither(_, _)         => countOrElseEitherSize(config)
+        case ConfigDescriptorAdt.OrElse(left, right)        => loop(count, left) + loop(count, right)
+        case ConfigDescriptorAdt.OrElseEither(left, right)  => loop(count, left) + loop(count, right)
         case ConfigDescriptorAdt.Default(_, _)              => 0
         case ConfigDescriptorAdt.Sequence(_, _)             => 1
         case ConfigDescriptorAdt.DynamicMap(_, _)           => 1
