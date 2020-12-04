@@ -39,7 +39,7 @@ Take a look at the below example
 
  // A list of database configs, such that size should be greater than 2.
  val databaseList: ConfigDescriptor[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
-   refine[List[MyConfig], Size[Greater[W.`2`.T]]](configs)
+   refine[Size[Greater[W.`2`.T]]](configs)
 ```
 
 You can also use auto derivations with refined.

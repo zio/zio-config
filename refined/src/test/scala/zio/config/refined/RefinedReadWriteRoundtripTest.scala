@@ -73,7 +73,7 @@ object RefinedReadWriteRoundtripTestUtils {
       refine[String, NonEmpty]("LDAP") |@|
         refine[Int, GreaterEqual[W.`1024`.T]]("PORT") |@|
         refine[String, NonEmpty]("DB_URL").optional |@|
-        refine[List[Long], Size[Greater[W.`2`.T]]](longs(n)) |@|
+        refine[Size[Greater[W.`2`.T]]](longs(n)) |@|
         refine[String, And[Trimmed, NonEmpty]]("PWD")
     )(
       RefinedProd.apply,

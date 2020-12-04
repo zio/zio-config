@@ -98,9 +98,8 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
         val accountConfig =
           (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
         val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
-        (nested("account")(accountConfig) |@| nested("database")(databaseConfig)
-          .orElseEither(string("database"))
-          .optional)(
+        (nested("account")(accountConfig) |@|
+          (nested("database")(databaseConfig).orElseEither(string("database"))).optional)(
           AwsConfig.apply,
           AwsConfig.unapply
         )

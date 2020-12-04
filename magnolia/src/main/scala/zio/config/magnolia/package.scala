@@ -2,6 +2,8 @@ package zio.config
 
 package object magnolia {
   type Descriptor[A] = DeriveConfigDescriptor.Descriptor[A]
+  def getDescriptor[A](desc: ConfigDescriptor[A]): Descriptor[A] =
+    DeriveConfigDescriptor.Descriptor[A](desc)
 
   /**
    * descriptor[A] allows the user to automatically derive `ConfigDescriptor` instead

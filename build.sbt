@@ -79,6 +79,7 @@ lazy val refinedDependencies =
 lazy val scala211projects =
   Seq[ProjectReference](zioConfig, zioConfigTypesafe, zioConfigShapeless, zioConfigDerivation, zioConfigYaml)
 lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
+  zioConfigGen,
   zioConfigRefined,
   zioConfigMagnolia,
   examples,
@@ -161,10 +162,20 @@ lazy val examples = module("zio-config-examples", "examples")
         })
         .value
   )
-  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe)
+  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigGen)
 
 lazy val zioConfigDerivation = module("zio-config-derivation", "derivation")
   .dependsOn(zioConfig)
+
+lazy val zioConfigGen = module("zio-config-gen", "gen")
+  .settings(
+    magnoliaDependencies,
+    libraryDependencies ++= Seq(
+      "dev.zio"       %% "zio-test-magnolia" % zioVersion,
+      "org.scalatest" %% "scalatest"         % "3.2.3" % Test
+    )
+  )
+  .dependsOn(zioConfigTypesafe, zioConfigMagnolia)
 
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
@@ -248,5 +259,5 @@ lazy val docs = project
     refinedDependencies,
     libraryDependencies += "dev.zio" %% "zio" % zioVersion
   )
-  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigTypesafe, zioConfigRefined)
+  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigTypesafe, zioConfigRefined, zioConfigGen)
   .enablePlugins(MdocPlugin, DocusaurusPlugin)
