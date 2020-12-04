@@ -19,9 +19,9 @@ object RefinedReadConfig extends App {
   def prodConfig =
     (
       refine[String, NonEmpty]("LDAP") |@|
-        refine[Int, GreaterEqual[W.`1024`.T]](int("PORT")) |@|
+        refine[GreaterEqual[W.`1024`.T]](int("PORT")) |@|
         refine[String, NonEmpty]("DB_URL").optional |@|
-        refine[List[Long], Size[Greater[W.`2`.T]]](list("LONGS")(long))
+        refine[Size[Greater[W.`2`.T]]](list("LONGS")(long))
     )(
       RefinedProd.apply,
       RefinedProd.unapply
