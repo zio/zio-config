@@ -31,6 +31,7 @@ case class ServiceConfigurationLoader[A](
       sysConf <- IO.succeed(
                   ConfigSource.fromMap(
                     Map(
+                      // Prefix added only for system env
                       "SERVICENAME_SCHEMAREGISTRYURL" -> "schemaregistry:system_env"
                     )
                   )
@@ -40,10 +41,9 @@ case class ServiceConfigurationLoader[A](
         Map[String => String, ConfigSource](
           ((r: String) => r)                                     -> cmdConf,
           ((r: String) => r.toLowerCase())                       -> cmdConf,
-          ((r: String) => addPrefixToKey(prefix)(r).toUpperCase) -> sysConf,
           ((r: String) => r.toLowerCase())                       -> sysConf,
-          ((r: String) => r)                                     -> ressConf,
-          ((r: String) => r.toLowerCase)                         -> ressConf
+          ((r: String) => addPrefixToKey(prefix)(r).toUpperCase) -> sysConf,
+          ((r: String) => r)                                     -> ressConf
         )
       }
 
@@ -59,37 +59,6 @@ object ServiceConfigurationLoader {
   val CommandLineKeyDelimiter = '.'
   val EnvVarKeyDelimiter      = '_'
   val EnvVarValueDelimiter    = ','
-}
-
-trait ZioConfigExtension {
-  implicit class SourceConfigOps[A](config: ConfigDescriptor[A]) {
-    import ConfigDescriptorAdt._
-
-    def updateSourceForEachKey(f: Map[String => String, ConfigSource]) =
-      f.foldRight(config) { (b, a) =>
-        def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
-          config match {
-            case Lazy(thunk)                             => Lazy(() => loop(thunk()))
-            case existing @ Source(source, propertyType) => Source(b._2, propertyType)
-            case DynamicMap(source, conf)                => DynamicMap(source, loop(conf))
-            case exiting @ Nested(source, path, conf) =>
-              exiting orElse Nested(source, b._1(path), loop(conf)) orElse Nested(b._2, b._1(path), loop(conf))
-            case Optional(conf)          => Optional(loop(conf))
-            case Sequence(source, conf)  => Sequence(source, loop(conf))
-            case Describe(conf, message) => Describe(loop(conf), message)
-            case Default(conf, value)    => Default(loop(conf), value)
-            case TransformOrFail(conf, f, g) =>
-              TransformOrFail(loop(conf), f, g)
-            case Zip(conf1, conf2) => Zip(loop(conf1), loop(conf2))
-            case OrElseEither(conf1, conf2) =>
-              OrElseEither(loop(conf1), loop(conf2))
-            case OrElse(value1, value2) =>
-              OrElse(loop(value1), loop(value2))
-          }
-
-        loop(a)
-      }
-  }
 }
 
 /**
@@ -114,7 +83,7 @@ object Run {
         .loadConfiguration("serviceName_", List("--bootstrapservers", "bootstrap:commandline"))
 
     println(runtime.unsafeRun(r))
-    // KafkaConfig(bootstrap:commandline,this_is_from_system_env,from hocon source)
+    // KafkaConfig(bootstrap:commandline,schemaregistry:system_env,from hocon source)
 
   }
 }
