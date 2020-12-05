@@ -6,7 +6,7 @@ trait ZioConfigExtension {
   implicit class SourceConfigOps[A](config: ConfigDescriptor[A]) {
     import ConfigDescriptorAdt._
 
-    def updateSourceForEachKey(f: Map[String => String, ConfigSource]) =
+    def updateSourceForEachKey(f: List[(String => String, ConfigSource)]) =
       f.foldRight(config) { (b, a) =>
         def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
           config match {

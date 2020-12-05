@@ -36,18 +36,20 @@ case class ServiceConfigurationLoader[A](
                     )
                   )
                 )
-      ressConf <-  IO.fromEither(TypesafeConfigSource.fromTypesafeConfig(ConfigFactory.defaultApplication()))
-      rule: Map[String => String, ConfigSource] = {
-        Map[String => String, ConfigSource](
+      ressConf <- IO.fromEither(TypesafeConfigSource.fromTypesafeConfig(ConfigFactory.defaultApplication()))
+      rules = {
+        List(
           ((r: String) => r)                                     -> cmdConf,
           ((r: String) => r.toLowerCase())                       -> cmdConf,
           ((r: String) => r.toLowerCase())                       -> sysConf,
           ((r: String) => addPrefixToKey(prefix)(r).toUpperCase) -> sysConf,
-          ((r: String) => r)                                     -> ressConf
+          ((r: String) => r)                                     -> ressConf,
+          ((r: String) => r.toLowerCase())                       -> ressConf
         )
+
       }
 
-      updatedSchema = configSchema.updateSourceForEachKey(rule)
+      updatedSchema = configSchema.updateSourceForEachKey(rules)
 
     } yield updatedSchema
 
