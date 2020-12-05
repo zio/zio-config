@@ -12,7 +12,6 @@ import java.io.FileInputStream
 import java.io.File
 
 trait ConfigSourceModule extends KeyValueModule {
-
   case class ConfigSourceName(name: String)
 
   trait ConfigSource { self =>

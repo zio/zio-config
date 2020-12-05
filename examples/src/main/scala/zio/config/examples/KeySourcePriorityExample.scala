@@ -1,13 +1,12 @@
 package zio.config.examples
 
 import com.typesafe.config._
-import zio.config.typesafe._
 import zio.{ IO }
-import zio.config._
 
+import zio.config._, typesafe._
 case class ServiceConfigurationLoader[A](
   schema: zio.config.ConfigDescriptor[A]
-) extends ZioConfigExtension {
+) {
 
   def loadConfiguration(
     prefix: String,
@@ -32,24 +31,23 @@ case class ServiceConfigurationLoader[A](
                   ConfigSource.fromMap(
                     Map(
                       // Prefix added only for system env
-                      "SERVICENAME_SCHEMAREGISTRYURL" -> "schemaregistry:system_env"
+                      "SERVICENAME_SCHEMAREGISTRYURL" -> "schemaregistry:system_env",
+                      "SERVICENAME_serialization"     -> "serdes:system_env"
                     )
                   )
                 )
+
+      // application.conf in resource folder
       ressConf <- IO.fromEither(TypesafeConfigSource.fromTypesafeConfig(ConfigFactory.defaultApplication()))
-      rules = {
-        List(
-          ((r: String) => r)                                     -> cmdConf,
-          ((r: String) => r.toLowerCase())                       -> cmdConf,
-          ((r: String) => r.toLowerCase())                       -> sysConf,
-          ((r: String) => addPrefixToKey(prefix)(r).toUpperCase) -> sysConf,
-          ((r: String) => r)                                     -> ressConf,
-          ((r: String) => r.toLowerCase())                       -> ressConf
-        )
 
-      }
+      sourceSpec = cmdConf <>
+        cmdConf.convertKeys(_.toLowerCase()) <>
+        sysConf.convertKeys(key => addPrefixToKey(prefix.toUpperCase())(key.toLowerCase())) <>
+        sysConf.convertKeys(r => addPrefixToKey(prefix)(r).toUpperCase) <>
+        ressConf <>
+        ressConf.convertKeys(_.toLowerCase())
 
-      updatedSchema = configSchema.updateSourceForEachKey(rules)
+      updatedSchema = configSchema.updateSource(_ => sourceSpec)
 
     } yield updatedSchema
 
@@ -71,16 +69,18 @@ trait ServiceParameters {
 case class KafkaConfig(
   bootstrapServers: String,
   schemaRegistryUrl: String,
+  serialization: String,
   performCleanUp: String
 )
 
-object Run {
+object KeySourcePriorityExample {
   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+
   def main(args: Array[String]): Unit = {
     val runtime = zio.Runtime.default
     val r =
       ServiceConfigurationLoader(descriptor[KafkaConfig])
-        .loadConfiguration("serviceName_", List("--bootstrapservers", "bootstrap:commandline"))
+        .loadConfiguration("serviceName_", List("--bootstrapServers", "bootstrap:commandline"))
 
     println(runtime.unsafeRun(r))
     // KafkaConfig(bootstrap:commandline,schemaregistry:system_env,from hocon source)
