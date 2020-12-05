@@ -3,7 +3,8 @@ package zio.config.examples
 import com.typesafe.config._
 import zio.{ IO }
 
-import zio.config._, typesafe._
+import zio.config._
+import zio.config.typesafe.TypesafeConfigSource
 case class ServiceConfigurationLoader[A](
   schema: zio.config.ConfigDescriptor[A]
 ) {
