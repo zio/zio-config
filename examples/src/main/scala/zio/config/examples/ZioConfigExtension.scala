@@ -3,7 +3,7 @@ package zio.config.examples
 import zio.config._
 
 trait ZioConfigExtension {
-  // Not tested. Should be part of ConfigDescriptorModule, and it isn't tested extensively. Just ran a couple of scenarios.
+  // Should be part of ConfigDescriptorModule, and it isn't tested extensively. Just ran a couple of scenarios.
 
   implicit class SourceConfigOps[A](config: ConfigDescriptor[A]) {
     import ConfigDescriptorAdt._
