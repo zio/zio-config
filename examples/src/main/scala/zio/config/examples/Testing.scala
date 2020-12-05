@@ -36,7 +36,7 @@ case class ServiceConfigurationLoader[A](
                     )
                   )
                 )
-      ressConf <- configFromResources
+      ressConf <-  IO.fromEither(TypesafeConfigSource.fromTypesafeConfig(ConfigFactory.defaultApplication()))
       rule: Map[String => String, ConfigSource] = {
         Map[String => String, ConfigSource](
           ((r: String) => r)                                     -> cmdConf,
@@ -51,8 +51,6 @@ case class ServiceConfigurationLoader[A](
 
     } yield updatedSchema
 
-  private def configFromResources: IO[ReadError[String], ConfigSource] =
-    IO.fromEither(TypesafeConfigSource.fromTypesafeConfig(ConfigFactory.defaultApplication()))
 }
 
 object ServiceConfigurationLoader {
