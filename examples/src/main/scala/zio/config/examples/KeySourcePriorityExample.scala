@@ -5,13 +5,14 @@ import zio.{ IO }
 
 import zio.config._
 import zio.config.typesafe.TypesafeConfigSource
-case class ServiceConfigurationLoader[A](
-  schema: zio.config.ConfigDescriptor[A]
-) {
+import zio.ExitCode
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 
-  def loadConfiguration(
+object ConfigLoader {
+  def apply[A](
     prefix: String,
-    args: List[String]
+    args: List[String],
+    schema: ConfigDescriptor[A]
   ): IO[ReadError[String], A] =
     for {
       config        <- getConfigProgram(prefix, args, schema)
@@ -25,7 +26,7 @@ case class ServiceConfigurationLoader[A](
   ): IO[ReadError[String], ConfigDescriptor[A]] =
     for {
       cmdConf <- IO.succeed(
-                  ConfigSource.fromCommandLineArgs(args, Some(ServiceConfigurationLoader.CommandLineKeyDelimiter))
+                  ConfigSource.fromCommandLineArgs(args, Some('.'))
                 )
       // for demonstration: this should be ur sysEnv
       sysConf <- IO.succeed(
@@ -51,40 +52,27 @@ case class ServiceConfigurationLoader[A](
       updatedSchema = configSchema.updateSource(_ => sourceSpec)
 
     } yield updatedSchema
-
 }
 
-object ServiceConfigurationLoader {
-  val CommandLineKeyDelimiter = '.'
-  val EnvVarKeyDelimiter      = '_'
-  val EnvVarValueDelimiter    = ','
+object KafkaApplication {
+  final case class KafkaConfig(
+    bootstrapServers: String,
+    schemaRegistryUrl: String,
+    serialization: String,
+    performCleanUp: String
+  )
 }
 
-/**
- *  Base parameter trait to extends by every services.
- */
-trait ServiceParameters {
-  val serviceName: String
-  val kafka: KafkaConfig
-}
-case class KafkaConfig(
-  bootstrapServers: String,
-  schemaRegistryUrl: String,
-  serialization: String,
-  performCleanUp: String
-)
+object KeySourcePriorityExample extends zio.App {
+  override def run(args: List[String]): zio.URIO[zio.ZEnv, ExitCode] = {
+    val pgm =
+      ConfigLoader(
+        "serviceName_",
+        List("--bootstrapServers", "bootstrap:commandline"),
+        descriptor[KafkaApplication.KafkaConfig]
+      )
 
-object KeySourcePriorityExample {
-  import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-
-  def main(args: Array[String]): Unit = {
-    val runtime = zio.Runtime.default
-    val r =
-      ServiceConfigurationLoader(descriptor[KafkaConfig])
-        .loadConfiguration("serviceName_", List("--bootstrapServers", "bootstrap:commandline"))
-
-    println(runtime.unsafeRun(r))
+    pgm.flatMap(r => zio.console.putStrLn(r.toString)).exitCode
     // KafkaConfig(bootstrap:commandline,schemaregistry:system_env,from hocon source)
-
   }
 }
