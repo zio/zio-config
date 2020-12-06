@@ -4,7 +4,7 @@ import zio.config._
 import zio.system.System
 import ConfigDescriptor._
 
-object MultipleSourcesExample extends App {
+object MultipleSourcesSimpleExample extends App {
 
   final case class MyConfig(ldap: String, port: Int, dburl: Option[String])
 

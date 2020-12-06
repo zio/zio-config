@@ -63,7 +63,7 @@ object KafkaApplication {
   )
 }
 
-object KeySourcePriorityExample extends zio.App {
+object MultipleSourcesComplexExample extends zio.App {
   override def run(args: List[String]): zio.URIO[zio.ZEnv, ExitCode] = {
     val pgm =
       ConfigLoader(
