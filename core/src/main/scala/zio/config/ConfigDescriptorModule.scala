@@ -1847,7 +1847,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     private[config] def distinctListToSet[A](list: List[A]): Either[String, Set[A]] =
       if (list.size == list.distinct.size) Right(list.toSet)
       else Left("Duplicated values found")
-
   }
 
   private[config] object ConfigDescriptorAdt {
@@ -1926,5 +1925,4 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ) =
       TransformOrFail(lazyDesc(config), f, g)
   }
-
 }
