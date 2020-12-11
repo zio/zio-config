@@ -1,7 +1,7 @@
 package zio.config
 
-import java.io.File
-import java.net.{ URI, URL }
+//import java.io.File
+import java.net.URI
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset }
 import java.util.UUID
 
@@ -127,6 +127,7 @@ object PropertyTypeTest
           genValid = genInstant.map(_.toString),
           parse = Instant.parse(_)
         ),
+        /*
         testM(s"valid FileType string roundtrip") {
           check(Gen.anyString)(assertValidRoundtrip(FileType, new File(_)))
         },
@@ -139,6 +140,7 @@ object PropertyTypeTest
         testM("valid JavaFilePathType string roundtrip") {
           check(Gen.anyString)(assertValidRoundtrip(JavaFilePathType, java.nio.file.Paths.get(_)))
         }
+         */
       )
     )
 

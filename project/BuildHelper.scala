@@ -1,9 +1,10 @@
 import sbt._
 import Keys._
-
 import explicitdeps.ExplicitDepsPlugin.autoImport._
 import sbtbuildinfo._
 import BuildInfoKeys._
+import sbtcrossproject.CrossProject
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
 
 object BuildHelper {
 
@@ -73,10 +74,9 @@ object BuildHelper {
       case _ => Seq.empty
     }
 
-  def stdSettings(prjName: String) = Seq(
-    name := s"$prjName",
+  def stdSettings = Seq(
     scalacOptions := stdOptions,
-    crossScalaVersions := Seq("2.13.2", "2.12.11", "2.11.12"),
+    crossScalaVersions := Seq("2.13.4", "2.12.11", "2.11.12"),
     scalaVersion in ThisBuild := crossScalaVersions.value.head,
     scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
     libraryDependencies ++= compileOnlyDeps ++ testDeps ++ Seq(
@@ -88,4 +88,18 @@ object BuildHelper {
     autoAPIMappings := true,
     unusedCompileDependenciesFilter -= moduleFilter("org.scala-js", "scalajs-library")
   )
+  implicit class RichCrossProject(project: CrossProject) {
+    def withCrossProjectDefaults: CrossProject =
+      project.settings(stdSettings).settings(
+        // Workaround for https://github.com/portable-scala/sbt-crossproject/issues/74
+        Seq(Compile, Test).flatMap(inConfig(_) {
+          unmanagedResourceDirectories ++= {
+            unmanagedSourceDirectories.value
+              .map(src => (src / ".." / "resources").getCanonicalFile)
+              .filterNot(unmanagedResourceDirectories.value.contains)
+              .distinct
+          }
+        }),
+      )
+  }
 }

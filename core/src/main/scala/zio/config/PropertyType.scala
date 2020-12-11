@@ -1,7 +1,7 @@
 package zio.config
 
-import java.io.File
-import java.net.{ URI, URL }
+//import java.io.File
+import java.net.URI
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 
@@ -129,12 +129,14 @@ object PropertyType {
     def write(value: Instant): String = value.toString
   }
 
+  /*
   case object FileType extends PropertyType[String, File] {
     def read(value: String): Either[PropertyReadError[String], File] =
       attempt(new File(value), _ => PropertyReadError(value, "file"))
 
     def write(value: File): String = value.toString
   }
+
 
   case object UrlType extends PropertyType[String, URL] {
     def read(value: String): Either[PropertyReadError[String], URL] =
@@ -149,6 +151,7 @@ object PropertyType {
 
     def write(value: java.nio.file.Path): String = value.toString
   }
+   */
 
   private def attempt[A, E](a: => A, f: Throwable => E): Either[E, A] =
     Try(a) match {
