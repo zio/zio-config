@@ -100,7 +100,7 @@ object NestedConfigExample extends App with EitherImpureOps {
   // Details Both Report of the nested configurations.
 
   assert(
-    generateDocs(appConfig from source).toTable.asGithubFlavouredMarkdown ==
+    generateDocs(appConfig from source).toTable.toGithubFlavouredMarkdown ==
       s"""
          |## Configuration Details
          |

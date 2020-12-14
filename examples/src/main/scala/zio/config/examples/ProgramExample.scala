@@ -79,7 +79,7 @@ object SparkEnv {
 // The core application
 object Application {
 
-  val logProgramConfig: ZIO[Console with ZConfig[ProgramConfig], Nothing, Unit] =
+  val logProgramConfig: ZIO[Console with Has[ProgramConfig], Nothing, Unit] =
     for {
       r <- getConfig[ProgramConfig]
       _ <- zio.console.putStrLn(s"Executing with parameters ${r.inputPath} and ${r.outputPath} without sparkSession")
@@ -92,14 +92,14 @@ object Application {
       _       <- zio.console.putStrLn(s"Executed something with spark ${session.version}: $result")
     } yield ()
 
-  val processData: ZIO[SparkEnv with ZConfig[ProgramConfig] with Console, Throwable, Unit] =
+  val processData: ZIO[SparkEnv with Has[ProgramConfig] with Console, Throwable, Unit] =
     for {
       conf  <- getConfig[ProgramConfig]
       spark <- ZIO.access[SparkEnv](_.get.sparkEnv)
       _     <- zio.console.putStrLn(s"Executing ${conf.inputPath} and ${conf.outputPath} using ${spark.version}")
     } yield ()
 
-  val execute: ZIO[SparkEnv with ZConfig[ProgramConfig] with Console with Blocking, Throwable, Unit] =
+  val execute: ZIO[SparkEnv with Has[ProgramConfig] with Console with Blocking, Throwable, Unit] =
     for {
       _ <- logProgramConfig
       _ <- runSparkJob

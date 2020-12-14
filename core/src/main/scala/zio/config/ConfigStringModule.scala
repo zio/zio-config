@@ -6,9 +6,8 @@ import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 import java.util.Properties
 
-import zio.{ Layer, Tag }
+import zio.{ Has, Layer, Tag, ZIO, ZLayer }
 import zio.system.System
-import zio.{ ZIO, ZLayer }
 
 import scala.concurrent.duration.Duration
 
@@ -17,110 +16,555 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
   object ConfigDescriptor extends ConfigDescriptorFunctions {
     import ConfigDescriptorAdt._
 
+    /**
+     * A config descriptor that describes retrieving a big-decimal.
+     *
+     * Note that there is no path associated with it. However, an example can give you more idea on what's going on.
+     *
+     * {{{
+     *
+     *     val valueConfig: ConfigDescriptor[Either[BigDecimal, String]] = bigDecimal.orElseEither(string)
+     *
+     *     // Describes fetching a map that is under the path "key-values" where the value of each can be either a BigDecimal or
+     *     // if it's not try to fetch it as a String. An example source config
+     *
+     *     val sourceString =
+     *       """
+     *           {
+     *               key-values : {
+     *                  key1 : "usa"
+     *                  key2 : "111111111111"
+     *                  key3 : "australia"
+     *               }
+     *            }
+     *        """
+     *
+     *     val hoconSource = TypesafeConfigSource.fromHoconString(sourceString)
+     *
+     *     val mapConfig = map("key-values")(valueConfig)
+     *
+     *     val getMapConfig: ConfigDescriptor[Map[String, Either[BigDecimal, String]] =
+     *        hoconSource.flatMap(source => read(mapConfig from source)
+     *
+     * }}}
+     *
+     */
     val bigDecimal: ConfigDescriptor[BigDecimal] =
-      Source(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal"
+      sourceDesc(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal"
 
+    /**
+     * A config descriptor that describes retrieving a big-decimal from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "COST" : 111111111
+     *      )
+     *
+     *     val config = bigDecimal("COST")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(111111111)
+     *
+     * }}}
+     *
+     */
     def bigDecimal(path: String): ConfigDescriptor[BigDecimal] = nested(path)(bigDecimal)
 
+    /**
+     * A config descriptor that describes retrieving a BigInt.
+     *
+     * Note that there is no path associated with it. However, an example can give you more idea on what's going on.
+     *
+     * {{{
+     *
+     *     val valueConfig: ConfigDescriptor[Either[BigInt, String]] = bigInt.orElseEither(string)
+     *
+     *     // Describes fetching a map that is under the path "key-values" where the value of each can be either a BigDecimal or
+     *     // if it's not try to fetch it as a String. An example source config
+     *
+     *     val sourceString =
+     *       """
+     *           {
+     *               key-values : {
+     *                  key1 : "usa"
+     *                  key2 : "111111111111"
+     *                  key3 : "australia"
+     *               }
+     *            }
+     *        """
+     *
+     *     val hoconSource = TypesafeConfigSource.fromHoconString(sourceString)
+     *
+     *     val mapConfig = map("key-values")(valueConfig)
+     *
+     *     val getMapConfig: ConfigDescriptor[Map[String, Either[BigInt, String]] =
+     *        hoconSource.flatMap(source => read(mapConfig from source)
+     *
+     * }}}
+     *
+     */
     val bigInt: ConfigDescriptor[BigInt] =
-      Source(ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint"
+      sourceDesc(ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint"
 
+    /**
+     * A config descriptor that describes retrieving a BigInt from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "COST" : 111111111
+     *      )
+     *
+     *     val config = bigInt("COST")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(111111111)
+     *
+     * }}}
+     *
+     */
     def bigInt(path: String): ConfigDescriptor[BigInt] = nested(path)(bigInt)
 
     val boolean: ConfigDescriptor[Boolean] =
-      Source(ConfigSource.empty, PropertyType.BooleanType) ?? "value of type boolean"
+      sourceDesc(ConfigSource.empty, PropertyType.BooleanType) ?? "value of type boolean"
 
+    /**
+     * A config descriptor that describes retrieving a Boolean from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "IS_TRUE" : true
+     *      )
+     *
+     *     val config = boolean("IS_TRUE")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(true)
+     *
+     * }}}
+     *
+     */
     def boolean(path: String): ConfigDescriptor[Boolean] = nested(path)(boolean)
 
     val byte: ConfigDescriptor[Byte] =
-      Source(ConfigSource.empty, PropertyType.ByteType) ?? "value of type byte"
+      sourceDesc(ConfigSource.empty, PropertyType.ByteType) ?? "value of type byte"
 
+    /**
+     * A config descriptor that describes retrieving a Byte from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "KEY" : 11
+     *      )
+     *
+     *     val config = byte("KEY")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(11)
+     *
+     * }}}
+     *
+     */
     def byte(path: String): ConfigDescriptor[Byte] = nested(path)(byte)
 
     val double: ConfigDescriptor[Double] =
-      Source(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double"
+      sourceDesc(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double"
 
+    /**
+     * A config descriptor that describes retrieving a Double from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "COST" : 11.11
+     *      )
+     *
+     *     val config = double("COST")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(11.11)
+     *
+     * }}}
+     *
+     */
     def double(path: String): ConfigDescriptor[Double] = nested(path)(double)
 
     val duration: ConfigDescriptor[Duration] =
-      Source(ConfigSource.empty, PropertyType.DurationType) ?? "value of type duration"
+      sourceDesc(ConfigSource.empty, PropertyType.DurationType) ?? "value of type duration"
 
+    /**
+     * A config descriptor that describes retrieving a duration from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "DURATION" : "3 seconds"
+     *      )
+     *
+     *     val config = duration("DURATION")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(3 seconds)
+     *
+     * }}}
+     *
+     */
     def duration(path: String): ConfigDescriptor[Duration] = nested(path)(duration)
 
     val file: ConfigDescriptor[File] =
-      Source(ConfigSource.empty, PropertyType.FileType) ?? "value of type file"
+      sourceDesc(ConfigSource.empty, PropertyType.FileType) ?? "value of type file"
 
+    /**
+     * A config descriptor that describes retrieving a file from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "FILE_PATH" : "/user/file.txt"
+     *      )
+     *
+     *     val config = file("FILE_PATH")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(/user/file.txt)
+     *
+     * }}}
+     *
+     */
     def file(path: String): ConfigDescriptor[File] = nested(path)(file)
 
     val float: ConfigDescriptor[Float] =
-      Source(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
+      sourceDesc(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
 
+    /**
+     * A config descriptor that describes retrieving a Float from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "COST" : 1.2
+     *      )
+     *
+     *     val config = float("COST")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(1.2f)
+     *
+     * }}}
+     *
+     */
     def float(path: String): ConfigDescriptor[Float] = nested(path)(float)
 
     val instant: ConfigDescriptor[Instant] =
-      Source(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant"
+      sourceDesc(ConfigSource.empty, PropertyType.InstantType) ?? "value of type instant"
 
+    /**
+     * A config descriptor that describes retrieving a Instant from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "TIME" : 2020-11-24T23:21:33.034557Z
+     *      )
+     *
+     *     val config = instant("TIME")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right( 2020-11-24T23:21:33.034557Z)
+     *
+     * }}}
+     *
+     */
     def instant(path: String): ConfigDescriptor[Instant] = nested(path)(instant)
 
     val int: ConfigDescriptor[Int] =
-      Source(ConfigSource.empty, PropertyType.IntType) ?? "value of type int"
+      sourceDesc(ConfigSource.empty, PropertyType.IntType) ?? "value of type int"
 
+    /**
+     * A config descriptor that describes retrieving a Int from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "COST" : 10
+     *      )
+     *
+     *     val config = int("COST")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(10)
+     *
+     * }}}
+     *
+     */
     def int(path: String): ConfigDescriptor[Int] = nested(path)(int)
 
     val localDate: ConfigDescriptor[LocalDate] =
-      Source(ConfigSource.empty, PropertyType.LocalDateType) ?? "value of type localdate"
+      sourceDesc(ConfigSource.empty, PropertyType.LocalDateType) ?? "value of type localdate"
 
+    /**
+     * A config descriptor that describes retrieving a LocalDate from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "date" : "2020-01-01"
+     *      )
+     *
+     *     val config = localDate("date")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(2020-01-01)
+     *
+     * }}}
+     *
+     */
     def localDate(path: String): ConfigDescriptor[LocalDate] = nested(path)(localDate)
 
     val localDateTime: ConfigDescriptor[LocalDateTime] =
-      Source(ConfigSource.empty, PropertyType.LocalDateTimeType) ?? "value of type localdatetime"
+      sourceDesc(ConfigSource.empty, PropertyType.LocalDateTimeType) ?? "value of type localdatetime"
 
+    /**
+     * A config descriptor that describes retrieving a LocalDateTime from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "time" : "2020-11-25T10:26:32.482299"
+     *      )
+     *
+     *     val config = localDateTime("time")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(2020-11-25T10:26:32.482299)
+     *
+     * }}}
+     *
+     */
     def localDateTime(path: String): ConfigDescriptor[LocalDateTime] = nested(path)(localDateTime)
 
     val localTime: ConfigDescriptor[LocalTime] =
-      Source(ConfigSource.empty, PropertyType.LocalTimeType) ?? "value of type localtime"
+      sourceDesc(ConfigSource.empty, PropertyType.LocalTimeType) ?? "value of type localtime"
 
+    /**
+     * A config descriptor that describes retrieving a LocalTime from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "LOCAL_TIME" : "10:29:02.278213"
+     *      )
+     *
+     *     val config = localTime("LOCAL_TIME")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(10:29:02.278213)
+     *
+     * }}}
+     *
+     */
     def localTime(path: String): ConfigDescriptor[LocalTime] = nested(path)(localTime)
 
     val long: ConfigDescriptor[Long] =
-      Source(ConfigSource.empty, PropertyType.LongType) ?? "value of type long"
+      sourceDesc(ConfigSource.empty, PropertyType.LongType) ?? "value of type long"
 
+    /**
+     * A config descriptor that describes retrieving a Long from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "COST" : 111111111
+     *      )
+     *
+     *     val config = long("COST")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(111111111)
+     *
+     * }}}
+     *
+     */
     def long(path: String): ConfigDescriptor[Long] = nested(path)(long)
 
     val short: ConfigDescriptor[Short] =
-      Source(ConfigSource.empty, PropertyType.ShortType) ?? "value of type short"
+      sourceDesc(ConfigSource.empty, PropertyType.ShortType) ?? "value of type short"
 
+    /**
+     * A config descriptor that describes retrieving a Short from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "ID" : "1"
+     *      )
+     *
+     *     val config = short("ID")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(1)
+     *
+     * }}}
+     *
+     */
     def short(path: String): ConfigDescriptor[Short] = nested(path)(short)
 
     val string: ConfigDescriptor[String] =
-      Source(ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
+      sourceDesc(ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
 
+    /**
+     * A config descriptor that describes retrieving a String from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "COUNTRY" : "Australia"
+     *      )
+     *
+     *     val config = string("COUNTRY")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(Australia)
+     *
+     * }}}
+     *
+     */
     def string(path: String): ConfigDescriptor[String] = nested(path)(string)
 
     val uri: ConfigDescriptor[URI] =
-      Source(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
+      sourceDesc(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
 
+    /**
+     * A config descriptor that describes retrieving a Uri from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "URI" : "www.bla.com"
+     *      )
+     *
+     *     val config = uri("URI")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(www.bla.com)
+     *
+     * }}}
+     *
+     */
     def uri(path: String): ConfigDescriptor[URI] = nested(path)(uri)
 
     val uuid: ConfigDescriptor[UUID] =
-      Source(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
+      sourceDesc(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
 
+    /**
+     * A config descriptor that describes retrieving a Uuid from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "ID" : "a0f25f26-95b3-4124-8f7f-67fb04f714b7"
+     *      )
+     *
+     *     val config = uuid("ID")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(a0f25f26-95b3-4124-8f7f-67fb04f714b7)
+     *
+     * }}}
+     *
+     */
     def uuid(path: String): ConfigDescriptor[UUID] = nested(path)(uuid)
 
     val url: ConfigDescriptor[URL] =
-      Source(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL"
+      sourceDesc(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL"
 
+    /**
+     * A config descriptor that describes retrieving a Url from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "URL" : "www.bla.com"
+     *      )
+     *
+     *     val config = bigInt("COST")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(111111111)
+     *
+     * }}}
+     *
+     */
     def url(path: String): ConfigDescriptor[URL] = nested(path)(url)
 
     val zioDuration: ConfigDescriptor[zio.duration.Duration] =
-      Source(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
+      sourceDesc(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
 
+    /**
+     * A config descriptor that describes retrieving a zioDuration from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "DURATION" : "3 seconds"
+     *      )
+     *
+     *     val config = zioDuration("DURATION")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(PT3S)
+     *
+     * }}}
+     *
+     */
     def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
 
     val javaFilePath: ConfigDescriptor[java.nio.file.Path] =
-      Source(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path"
+      sourceDesc(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path"
 
-    def javaFilePath(path: String): ConfigDescriptor[java.nio.file.Path] = nested(path)(javaFilePath)
+    /**
+     * A config descriptor that describes retrieving a javaFilePath from a given path.
+     *
+     * {{{
+     *
+     *     val mapSource =
+     *      ConfigSource.fromMap(
+     *         "FILE_PATH" : "/Users/abc/xyz.txt"
+     *      )
+     *
+     *     val config = javaFilePath("COST")
+     *     val result = read(config from mapSource)
+     *
+     *     // Right(/Users/abc/xyz.txt)
+     *
+     * }}}
+     *
+     */
+    def javaFilePath(path: String): ConfigDescriptor[java.nio.file.Path] =
+      lazyDesc(nested(path)(javaFilePath))
   }
 
   /**
@@ -228,7 +672,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter)
       )
@@ -260,7 +704,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(configDescriptor from ConfigSource.fromMap(map, source, keyDelimiter, valueDelimiter))
 
     /**
@@ -287,7 +731,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       source: String,
       keyDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter))
 
     /**
@@ -317,7 +761,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       source: String,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromProperties(properties, source, keyDelimiter, valueDelimiter)
       )
@@ -349,7 +793,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[Throwable, ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[Throwable, Has[A]] =
       fromConfigDescriptorM(
         ConfigSource
           .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter)
@@ -383,7 +827,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
       fromConfigDescriptorM(ConfigSource.fromSystemEnv(keyDelimiter, valueDelimiter).map(configDescriptor from _))
 
     /**
@@ -412,19 +856,19 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], ZConfig[A]] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
       fromConfigDescriptorM(
         ConfigSource.fromSystemProperties(keyDelimiter, valueDelimiter).map(configDescriptor from _)
       )
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
-    )(implicit tag: Tag[A]): Layer[ReadError[K], ZConfig[A]] =
+    )(implicit tag: Tag[A]): Layer[ReadError[K], Has[A]] =
       ZLayer.fromEffect(ZIO.fromEither(read(configDescriptor)))
 
     private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
       configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
-    )(implicit tag: Tag[A]): ZLayer[R, E, ZConfig[A]] =
+    )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
       ZLayer.fromEffect(
         configDescriptor.flatMap(
           descriptor => ZIO.fromEither(read(descriptor))

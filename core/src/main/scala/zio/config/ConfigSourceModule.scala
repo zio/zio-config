@@ -11,14 +11,15 @@ import zio.config.PropertyTree.{ unflatten, Leaf, Record, Sequence }
 import java.io.FileInputStream
 import java.io.File
 
-import These._
-
 trait ConfigSourceModule extends KeyValueModule {
-
   case class ConfigSourceName(name: String)
 
   trait ConfigSource { self =>
     def names: Set[ConfigSourceName]
+    // Pass a list of K and Set of Hint
+    // sealed trait StructureHint
+    // case object IsSequence extends StructureHint
+    // ...
     def getConfigValue: List[K] => PropertyTree[K, V]
     def leafForSequence: LeafForSequence
 
@@ -30,11 +31,15 @@ trait ConfigSourceModule extends KeyValueModule {
       )
 
     def <>(that: => ConfigSource): ConfigSource = self orElse that
+
+    def convertKeys(f: K => K): ConfigSource =
+      getConfigSource(names, l => getConfigValue(l.map(f)), leafForSequence)
   }
 
   protected def getConfigSource(
     sourceNames: Set[ConfigSourceName],
     getTree: List[K] => PropertyTree[K, V],
+    // FIXME: May be move to specific sources
     isLeafValidSequence: LeafForSequence
   ): ConfigSource =
     new ConfigSource { self =>
@@ -489,6 +494,26 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       case class Value(value: String)
 
       type KeyValue = These[Key, Value]
+
+      import These._
+
+      sealed trait These[+A, +B] { self =>
+        def fold[C](
+          f: (A, B) => C,
+          g: A => C,
+          h: B => C
+        ): C = self match {
+          case This(left)        => g(left)
+          case That(right)       => h(right)
+          case Both(left, right) => f(left, right)
+        }
+      }
+
+      object These {
+        final case class Both[A, B](left: A, right: B) extends These[A, B]
+        final case class This[A](left: A)              extends These[A, Nothing]
+        final case class That[B](right: B)             extends These[Nothing, B]
+      }
 
       object KeyValue {
         def mk(s: String): Option[KeyValue] =

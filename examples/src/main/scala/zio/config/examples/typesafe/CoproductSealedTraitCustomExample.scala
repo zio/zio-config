@@ -39,7 +39,7 @@ object CoproductSealedTraitCustomExample extends App with EitherImpureOps {
     TypesafeConfigSource
       .fromHoconString(
         s"""
-           |x = a
+           |x = A
            |""".stripMargin
       )
       .loadOrThrow
@@ -48,7 +48,7 @@ object CoproductSealedTraitCustomExample extends App with EitherImpureOps {
     TypesafeConfigSource
       .fromHoconString(
         s"""
-           |x = b
+           |x = B
            |
            |""".stripMargin
       )
@@ -58,7 +58,7 @@ object CoproductSealedTraitCustomExample extends App with EitherImpureOps {
     TypesafeConfigSource
       .fromHoconString(
         s"""
-           |x = c
+           |x = C
            |""".stripMargin
       )
       .loadOrThrow
@@ -68,7 +68,7 @@ object CoproductSealedTraitCustomExample extends App with EitherImpureOps {
       .fromHoconString(
         s"""
            | x : { 
-           |  type = d
+           |  type = D
            |  detail : {
            |    firstName : ff
            |    lastName  : ll

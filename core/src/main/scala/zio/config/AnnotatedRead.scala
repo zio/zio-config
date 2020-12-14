@@ -1,6 +1,6 @@
 package zio.config
 
-final case class AnnotatedRead[+A](value: A, annotations: Set[AnnotatedRead.Annotation]) { self =>
+private[config] final case class AnnotatedRead[+A](value: A, annotations: Set[AnnotatedRead.Annotation]) { self =>
   def map[B](f: A => B): AnnotatedRead[B] =
     AnnotatedRead(f(value), annotations)
 

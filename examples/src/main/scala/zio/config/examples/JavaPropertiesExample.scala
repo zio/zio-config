@@ -1,8 +1,9 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
+import ConfigDescriptor._
 import zio.console.Console
-import zio.{ console, App, ExitCode, ZEnv, ZIO, ZLayer }
+import zio.{ console, App, ExitCode, Has, ZEnv, ZIO, ZLayer }
 
 /**
  * An example of an entire application that uses java properties
@@ -38,14 +39,14 @@ object JavaPropertiesExample extends App {
 // The core application functions
 object SimpleExample {
 
-  val printConfigs: ZIO[Console with ZConfig[ApplicationConfig], Nothing, Unit] =
+  val printConfigs: ZIO[Console with Has[ApplicationConfig], Nothing, Unit] =
     for {
       appConfig <- getConfig[ApplicationConfig]
       _         <- console.putStrLn(appConfig.bridgeIp)
       _         <- console.putStrLn(appConfig.userName)
     } yield ()
 
-  val finalExecution: ZIO[Console with ZConfig[ApplicationConfig], Nothing, Unit] =
+  val finalExecution: ZIO[Console with Has[ApplicationConfig], Nothing, Unit] =
     for {
       _ <- printConfigs
       _ <- console.putStrLn(s"processing data......")

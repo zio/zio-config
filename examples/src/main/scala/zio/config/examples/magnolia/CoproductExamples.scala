@@ -31,9 +31,9 @@ object Cfg extends App with EitherImpureOps {
 
   val s1 =
     """
-      |cfg{
+      |cfg {
       | fieldName {
-      |   c {
+      |   C {
       |     value = b
       |     g {
       |       l = hi
@@ -54,10 +54,8 @@ object Cfg extends App with EitherImpureOps {
 
   val s2 =
     """
-      |fieldName = a
+      |fieldName = A
       |""".stripMargin
-
-  println(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2).loadOrThrow))
 
   assert(
     read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2).loadOrThrow) == Right(Cfg(A))
@@ -65,7 +63,7 @@ object Cfg extends App with EitherImpureOps {
 
   val s3 =
     """
-      |fieldName = b
+      |fieldName = B
       |""".stripMargin
 
   assert(
@@ -75,9 +73,9 @@ object Cfg extends App with EitherImpureOps {
   val s4 =
     """
       |fieldName {
-      |  d {
+      |  D {
       |   value {
-      |       z {
+      |       Z {
       |         a = 1
       |       }
       |     }
@@ -92,7 +90,7 @@ object Cfg extends App with EitherImpureOps {
   val s5 =
     """
       |fieldName {
-      |    e {
+      |    E {
       |      a = 1
       |      b = 2
       |    }
@@ -106,10 +104,10 @@ object Cfg extends App with EitherImpureOps {
   val s6 =
     """
       |fieldName {
-      |    f {
+      |    F {
       |      a = 1
       |      c {
-      |          z {
+      |          Z {
       |            a = 2
       |          }
       |      }
@@ -126,11 +124,11 @@ object Cfg extends App with EitherImpureOps {
   val s7 =
     """
       |fieldName {
-      |    f {
+      |    F {
       |      a = 1
       |      b = 2
       |      c {
-      |          z {
+      |          Z {
       |            a = 2
       |          }
       |      }

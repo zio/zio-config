@@ -70,11 +70,11 @@ object RefinedReadWriteRoundtripTestUtils {
 
   def prodConfig(n: Int): ConfigDescriptor[RefinedProd] =
     (
-      nonEmpty(string("LDAP")) |@|
-        greaterEqual[W.`1024`.T](int("PORT")) |@|
-        nonEmpty(string("DB_URL")).optional |@|
-        size[Greater[W.`2`.T]](longs(n)) |@|
-        and[Trimmed, NonEmpty](string("PWD"))
+      refine[String, NonEmpty]("LDAP") |@|
+        refine[Int, GreaterEqual[W.`1024`.T]]("PORT") |@|
+        refine[String, NonEmpty]("DB_URL").optional |@|
+        refine[Size[Greater[W.`2`.T]]](longs(n)) |@|
+        refine[String, And[Trimmed, NonEmpty]]("PWD")
     )(
       RefinedProd.apply,
       RefinedProd.unapply

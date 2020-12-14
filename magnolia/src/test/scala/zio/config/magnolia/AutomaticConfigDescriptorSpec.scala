@@ -5,7 +5,6 @@ import java.util.UUID
 
 import zio.config._
 import zio.config.BaseSpec
-import zio.config.magnolia.DeriveConfigDescriptor._
 import AutomaticConfigTestUtils._
 import zio.ZIO
 import zio.random.Random
@@ -111,12 +110,12 @@ object AutomaticConfigTestUtils {
       partialMyConfig = Map(
         "aws.region" -> aws.region,
         aws.security match {
-          case Password(password) => "aws.security.password.value" -> password
-          case Token(token)       => "aws.security.token.value"    -> token
+          case Password(password) => "aws.security.Password.value" -> password
+          case Token(token)       => "aws.security.Token.value"    -> token
         },
         price match {
-          case Description(description) => "cost.description.value" -> description
-          case Currency(dollars)        => "cost.currency.value"    -> dollars.toString
+          case Description(description) => "cost.Description.value" -> description
+          case Currency(dollars)        => "cost.Currency.value"    -> dollars.toString
         },
         "dburl.value"  -> dbUrl.value,
         "port"         -> port.toString,

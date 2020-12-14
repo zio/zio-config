@@ -8,6 +8,7 @@ import zio.config.ReadError.Step.Key
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
+import VersionSpecificSupport._
 
 import scala.concurrent.duration.Duration
 
@@ -24,6 +25,20 @@ object CoproductTest
             assert(readRight(p))(
               isRight(equalTo(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid)))))
             )
+          }
+        },
+        testM("round trip of enum works") {
+          check(genSealedTraitParams) { sourceMap =>
+            val source     = ConfigSource.fromMap(sourceMap, keyDelimiter = Some('.'))
+            val readResult = read(Z.config from source)
+            val writeResult = readResult.swap
+              .map(_.prettyPrint())
+              .swap
+              .flatMap(
+                r => r.toMap(Z.config).map(_.mapValues(_.mkString).toMap)
+              )
+
+            assert(writeResult)(equalTo(Right[String, Map[String, String]](sourceMap)))
           }
         },
         testM("should accumulate all errors") {
@@ -59,6 +74,51 @@ object CoproductTest
     )
 
 object CoproductTestUtils {
+
+  sealed trait Z
+
+  object Z {
+
+    val aConfig: ConfigDescriptor[A] = string("a")(A.apply, A.unapply)
+
+    val bConfig: ConfigDescriptor[B.type] =
+      string.transformOrFail(a => if (a == "b") Right(B) else Left("Can only be b"), _ => Right("b"))
+
+    val cConfig: ConfigDescriptor[C] =
+      (int("c1") |@| string("c2"))(C.apply, C.unapply)
+
+    val dConfig: ConfigDescriptor[D] =
+      int("d")(D.apply, D.unapply)
+
+    val eConfig: ConfigDescriptor[E] =
+      double("e")(E.apply, E.unapply)
+
+    val fConfig: ConfigDescriptor[F.type] =
+      string.transformOrFail(a => if (a == "f") Right(F) else Left("Can only be b"), _ => Right("f"))
+
+    val gConfig: ConfigDescriptor[G.type] =
+      string.transformOrFail(a => if (a == "g") Right(G) else Left("Can only be b"), _ => Right("g"))
+
+    val hConfig: ConfigDescriptor[H.type] =
+      string.transformOrFail(a => if (a == "h") Right(H) else Left("Can only be b"), _ => Right("h"))
+
+    val iConfig: ConfigDescriptor[I] =
+      double("i")(I.apply, I.unapply)
+
+    val config =
+      nested("z")(enumeration[Z](aConfig, bConfig, cConfig, dConfig, eConfig, fConfig, gConfig, hConfig, iConfig))
+
+    case class A(a: String)           extends Z
+    case object B                     extends Z
+    case class C(c1: Int, c2: String) extends Z
+    case class D(d: Int)              extends Z
+    case class E(e: Double)           extends Z
+    case object F                     extends Z
+    case object G                     extends Z
+    case object H                     extends Z
+    case class I(i: Double)           extends Z
+  }
+
   final case class Ldap(value: String) extends AnyVal
   final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
   final case class PasswordAuth(user: String, count: Int, factor: Float, codeValid: Duration)
@@ -77,6 +137,29 @@ object CoproductTestUtils {
     kCodeValid: String,
     vCodeValid: String
   )
+
+  val genSealedTraitParams =
+    for {
+      s1     <- Gen.alphaNumericStringBounded(1, 10)
+      s2     <- Gen.alphaNumericStringBounded(1, 10)
+      int1   <- Gen.int(0, 100)
+      int2   <- Gen.int(0, 100)
+      double <- Gen.double(0, 100)
+      result <- Gen.oneOf(
+                 Gen.const(Map("z.a" -> s1)),
+                 // hardcoded b because the value needs to be "b" for case-object B
+                 Gen.const(Map("z"    -> "b")),
+                 Gen.const(Map("z.c1" -> int1.toString, "z.c2" -> s2)),
+                 Gen.const(Map("z.d"  -> int2.toString)),
+                 Gen.const(Map("z.e"  -> double.toString)),
+                 // hardcoded values because the value needs to be "f", "g", and "h" for case-object F, G, and H respectively
+                 Gen.const(Map("z"   -> "f")),
+                 Gen.const(Map("z"   -> "g")),
+                 Gen.const(Map("z"   -> "h")),
+                 Gen.const(Map("z.i" -> double.toString))
+               )
+
+    } yield result
 
   val genTestParams: Gen[Random, TestParams] =
     for {

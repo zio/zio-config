@@ -1,8 +1,6 @@
 package zio.config.typesafe
 
-import zio.config.ConfigDescriptor.{ int, nested, string }
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.read
+import zio.config._, magnolia._, ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test.{ DefaultRunnableSpec, suite, test, _ }
 
@@ -100,9 +98,8 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
         val accountConfig =
           (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
         val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
-        (nested("account")(accountConfig) |@| nested("database")(databaseConfig)
-          .orElseEither(string("database"))
-          .optional)(
+        (nested("account")(accountConfig) |@|
+          (nested("database")(databaseConfig).orElseEither(string("database"))).optional)(
           AwsConfig.apply,
           AwsConfig.unapply
         )

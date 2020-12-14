@@ -1,6 +1,5 @@
 package zio.config.magnolia
 
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.test.Assertion._
 import zio.test._
 import zio.config._, ConfigDescriptor._
@@ -16,7 +15,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
   }
 
   val spec = suite("Markdown Spec")(
-    test("asGithubFlavouredMarkdown works for a complex config") {
+    test("toGithubFlavouredMarkdown works for a complex config") {
 
       final case class RawConfig(tableDetails: List[RawTableConfig])
 
@@ -117,11 +116,11 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            |
            ||FieldName |Format       |Description            |Sources|
            ||---       |---          |---                    |---    |
-           ||          |primitive    |constant string 'aws'  |       |
-           ||          |primitive    |constant string 'azure'|       |
-           ||[gcp](gcp)|[all-of](gcp)|                       |       |
+           ||          |primitive    |constant string 'Aws'  |       |
+           ||          |primitive    |constant string 'Azure'|       |
+           ||[Gcp](gcp)|[all-of](gcp)|                       |       |
            |
-           |### gcp
+           |### Gcp
            |
            ||FieldName|Format   |Description         |Sources|
            ||---      |---      |---                 |---    |
@@ -208,14 +207,14 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
            ||dateFormat   |primitive|value of type string                |       |
            |""".stripMargin
 
-      val markdown = generateDocs(descriptor[RawConfig]).toTable.asGithubFlavouredMarkdown
+      val markdown = generateDocs(descriptor[RawConfig]).toTable.toGithubFlavouredMarkdown
 
       assert(markdown)(equalTo(expectedMarkdown))
     },
-    test("asGithubFlavouredMarkdown works for nested config with inner orElseEither gives correct table") {
+    test("toGithubFlavouredMarkdown works for nested config with inner orElseEither gives correct table") {
       val config = nested("a")(int.orElseEither(string))
 
-      val markdown = generateDocs(config).toTable.asGithubFlavouredMarkdown
+      val markdown = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
       val expectedMarkdown =
         s"""
@@ -241,7 +240,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
 
       val config = nested("a")(nested("b")(int).orElseEither(string))
 
-      val result = generateDocs(config).toTable.asGithubFlavouredMarkdown
+      val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
       val expectedMarkdown =
         s"""
@@ -267,7 +266,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
 
       val config = nested("a")(int.orElseEither(nested("b")(string)))
 
-      val result = generateDocs(config).toTable.asGithubFlavouredMarkdown
+      val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
       val expectedMarkdown =
         s"""
@@ -293,7 +292,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
 
       val config = nested("a")(nested("b")(int).orElseEither(nested("c")(string)))
 
-      val result = generateDocs(config).toTable.asGithubFlavouredMarkdown
+      val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
       val expectedMarkdown =
         s"""
@@ -319,7 +318,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
 
       val config = nested("a")(nested("b")(int).orElseEither(nested("c")(string).orElseEither(nested("d")(int))))
 
-      val result = generateDocs(config).toTable.asGithubFlavouredMarkdown
+      val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
       val expectedMarkdown =
         s"""
@@ -346,7 +345,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
 
       val config = nested("a")(string).orElseEither(nested("b")(int).orElseEither(double))
 
-      val result = generateDocs(config).toTable.asGithubFlavouredMarkdown
+      val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
       val expectedMarkdown =
         s"""
@@ -374,7 +373,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
       val config =
         nested("a")(string.orElseEither(int).orElseEither(double))
 
-      val result = generateDocs(config).toTable.asGithubFlavouredMarkdown
+      val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
       val expectedMarkdown =
         s"""
@@ -405,7 +404,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
       val config2 =
         nested("b")(string.orElseEither(int).orElseEither(double))
 
-      val result = generateDocs(config1.zip(config2)).toTable.asGithubFlavouredMarkdown
+      val result = generateDocs(config1.zip(config2)).toTable.toGithubFlavouredMarkdown
 
       val expectedMarkdown =
         s"""
@@ -452,7 +451,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
           )
         )
 
-      val result = generateDocs(config).toTable.asGithubFlavouredMarkdown
+      val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
       val expectedMarkdown =
         s"""
