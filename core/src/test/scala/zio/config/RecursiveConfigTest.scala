@@ -1,28 +1,30 @@
 //FIXME Make Recursion work without losing the view of errors
-/*
+
 package zio.config
 
 import zio.test._
 import zio.test.Assertion._
 import RecursiveConfigTestUtils._
+import zio.test.TestAspect.ignore
 
-import zio.config.ConfigDescriptor._
+import zio.config.ConfigDescriptor._, ConfigDescriptorAdt._
 
 object RecursiveConfigTest
     extends BaseSpec(
       suite("RecursiveConfigTest")(
         test("read simple") {
+          // FIXME: The logic works, more work required in cleaning up the logic.
           assert(read(simpleRec from simpleTestSource))(isRight(equalTo(simpleRecursiveValue)))
         },
         test("read mutual recursive") {
           assert(read(data from testSource))(isRight(equalTo(recursiveValue)))
-        },
+        } @@ ignore,
         test("read expression tree") {
           assert(read(expr from exprSource))(isRight(equalTo(exprValue)))
-        },
+        } @@ ignore,
         test("write simple") {
           assert(write(simpleRec, simpleRecursiveValue))(isRight(equalTo(simpleTestTree)))
-        },
+        } @@ ignore,
         test("documentation") {
           assert(generateDocs(simpleRec).toTable)(
             equalTo(
@@ -58,7 +60,7 @@ object RecursiveConfigTest
               )
             )
           )
-        },
+        } @@ ignore,
         test("documentation of expression tree") {
           assert(generateDocs(expr).toTable)(
             equalTo(
@@ -113,7 +115,7 @@ object RecursiveConfigTest
               )
             )
           )
-        } @@ TestAspect.exceptScala211
+        } @@ ignore @@ TestAspect.exceptScala211
       )
     )
 
@@ -121,7 +123,7 @@ object RecursiveConfigTestUtils {
 
   case class SimpleRec(id: Int, nested: Option[SimpleRec])
 
-  lazy val simpleRec: ConfigDescriptor[SimpleRec] =
+  val simpleRec: ConfigDescriptor[SimpleRec] =
     (int("id") |@| nested("nested")(simpleRec).optional)(SimpleRec.apply, SimpleRec.unapply)
 
   val simpleTestTree: PropertyTree[String, String] = PropertyTree.Record(
@@ -201,4 +203,3 @@ object RecursiveConfigTestUtils {
     case Right(value) => value
   }, "test", LeafForSequence.Invalid)
 }
- */

@@ -998,6 +998,41 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       loop(self)
     }
 
+    lazy val sources: Set[ConfigSource] = {
+      val map = scala.collection.mutable.Map[ConfigDescriptor[_], () => Set[ConfigSource]]()
+
+      def loop(
+        configDescriptor: ConfigDescriptor[_]
+      ): () => Set[ConfigSource] =
+        configDescriptor match {
+          case Lazy(thunk) =>
+            val thunkEv = thunk()
+            map
+              .get(thunkEv)
+              .fold({
+                val result = loop(thunkEv)
+                map.update(thunkEv, result)
+                result
+              })(identity)
+          case Source(source, propertyType) => () => Set(source)
+          case DynamicMap(source, conf)     => () => Set(source) ++ loop(conf)()
+          case Nested(source, path, conf) =>
+            () => Set(source) ++ loop(conf)()
+          case Optional(conf)              => () => loop(conf)()
+          case Sequence(source, conf)      => () => Set(source) ++ loop(conf)()
+          case Describe(conf, message)     => () => loop(conf)()
+          case Default(conf, value2)       => () => loop(conf)()
+          case TransformOrFail(conf, f, g) => () => loop(conf)()
+          case Zip(conf1, conf2)           => () => loop(conf1)() ++ loop(conf2)()
+          case OrElseEither(conf1, conf2) =>
+            () => loop(conf1)() ++ loop(conf2)()
+          case OrElse(conf1, conf2) =>
+            () => loop(conf1)() ++ loop(conf2)()
+        }
+      loop(self)()
+
+    }
+
     /**
      * Given `A` and `B`, `f: A => B`, and `g: B => A`, then
      * `transform` allows us to transform a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
@@ -1857,7 +1892,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A])
         extends ConfigDescriptor[Map[K, A]]
 
-    sealed case class Lazy[A](private val get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
+    sealed case class Lazy[A](get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
     sealed case class Nested[A](source: ConfigSource, path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
@@ -1880,49 +1915,77 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       g: B => Either[String, A]
     ) extends ConfigDescriptor[B]
 
-    final def defaultDesc[A](config: => ConfigDescriptor[A], default: A): ConfigDescriptor[A] =
-      Default(lazyDesc(config), default)
+    final def defaultDesc[A](config: => ConfigDescriptor[A], default: A): ConfigDescriptor[A] = {
+      lazy val config0 = config
+      Default(lazyDesc(config0), default)
+    }
 
-    final def describeDesc[A](config: => ConfigDescriptor[A], message: String): ConfigDescriptor[A] =
-      Describe(lazyDesc(config), message)
+    final def describeDesc[A](config: => ConfigDescriptor[A], message: String): ConfigDescriptor[A] = {
+      lazy val config0 = config
+      Describe(lazyDesc(config0), message)
+    }
 
-    final def dynamicMapDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(source, lazyDesc(config))
+    final def dynamicMapDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] = {
+      lazy val config0 = config
+      DynamicMap(source, lazyDesc(config0))
+    }
 
     final def lazyDesc[A](
       config: => ConfigDescriptor[A]
-    ): ConfigDescriptor[A] =
-      Lazy(() => config)
+    ): ConfigDescriptor[A] = {
+      lazy val config0 = config
 
-    final def nestedDesc[A](source: ConfigSource, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      Nested(source, path, lazyDesc(config))
+      Lazy(() => config0)
+    }
 
-    final def optionalDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
-      Optional(lazyDesc(config))
+    final def nestedDesc[A](source: ConfigSource, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] = {
+      lazy val config0 = config
+      Nested(source, path, lazyDesc(config0))
+    }
 
-    final def orElseDesc[A](left: => ConfigDescriptor[A], right: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      OrElse(lazyDesc(left), lazyDesc(right))
+    final def optionalDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Option[A]] = {
+      lazy val config0 = config
+      Optional(lazyDesc(config0))
+    }
+
+    final def orElseDesc[A](left: => ConfigDescriptor[A], right: => ConfigDescriptor[A]): ConfigDescriptor[A] = {
+      lazy val config0 = left
+      lazy val config1 = right
+      OrElse(lazyDesc(config0), lazyDesc(config1))
+    }
 
     final def orElseEitherDesc[A, B](
       left: => ConfigDescriptor[A],
       right: => ConfigDescriptor[B]
-    ): ConfigDescriptor[Either[A, B]] =
-      OrElseEither(lazyDesc(left), lazyDesc(right))
+    ): ConfigDescriptor[Either[A, B]] = {
+      lazy val config0 = left
+      lazy val config1 = right
+      OrElseEither(lazyDesc(config0), lazyDesc(config1))
+    }
 
-    final def sequenceDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      Sequence(source, lazyDesc(config))
+    final def sequenceDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] = {
+      lazy val config0 = config
+      Sequence(source, lazyDesc(config0))
+    }
 
     final def sourceDesc[A](source: ConfigSource, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
       Source(source, propertyType)
 
-    final def zipDesc[A, B](left: => ConfigDescriptor[A], right: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
-      Zip(lazyDesc(left), lazyDesc(right))
+    final def zipDesc[A, B](left: => ConfigDescriptor[A], right: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] = {
+      lazy val config0 = left
+      lazy val config1 = right
+
+      Zip(lazyDesc(config0), lazyDesc(config1))
+    }
 
     final def transformOrFailDesc[A, B](
       config: => ConfigDescriptor[A],
       f: A => Either[String, B],
       g: B => Either[String, A]
-    ) =
-      TransformOrFail(lazyDesc(config), f, g)
+    ) = {
+      lazy val config0 = config
+
+      TransformOrFail(lazyDesc(config0), f, g)
+    }
   }
 }

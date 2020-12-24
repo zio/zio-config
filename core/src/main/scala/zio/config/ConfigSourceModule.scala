@@ -20,7 +20,7 @@ trait ConfigSourceModule extends KeyValueModule {
     // sealed trait StructureHint
     // case object IsSequence extends StructureHint
     // ...
-    def getConfigValue: List[K] => PropertyTree[K, V]
+    def getConfigValue(keys: List[K]): PropertyTree[K, V]
     def leafForSequence: LeafForSequence
 
     def orElse(that: => ConfigSource): ConfigSource =
@@ -43,9 +43,9 @@ trait ConfigSourceModule extends KeyValueModule {
     isLeafValidSequence: LeafForSequence
   ): ConfigSource =
     new ConfigSource { self =>
-      def names: Set[ConfigSourceName]                  = sourceNames
-      def getConfigValue: List[K] => PropertyTree[K, V] = getTree
-      def leafForSequence: LeafForSequence              = isLeafValidSequence
+      def names: Set[ConfigSourceName]                      = sourceNames
+      def getConfigValue(keys: List[K]): PropertyTree[K, V] = getTree(keys)
+      def leafForSequence: LeafForSequence                  = isLeafValidSequence
     }
 
   /**
