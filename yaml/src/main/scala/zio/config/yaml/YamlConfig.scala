@@ -60,7 +60,7 @@ object YamlConfig {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Layer[ReadError[String], Has[MyConfig]] =
-   *     YamlConfig.fromPath(new File("/path/to/file.yml"), descriptor[MyConfig])
+   *     YamlConfig.fromFile(new File("/path/to/file.yml"), descriptor[MyConfig])
    * }}}
    */
   def fromFile[A: Tag](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], Has[A]] =

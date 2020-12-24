@@ -141,23 +141,33 @@ testJVM: &testJVM
 
 release: &release
   steps:
-      - checkout
-      - run:
-          name: Fetch git tags
-          command: git fetch --tags
-      - <<: *load_cache
-      - run: 
-          name: Write sonatype credentials
-          command: echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USER}\", \"${SONATYPE_PASSWORD}\")" > ~/.sbt/1.0/sonatype.sbt
-      - run:
-          name: Write PGP public key
-          command: echo -n "${PGP_PUBLIC}" | base64 -d > /tmp/public.asc
-      - run:
-          name: Write PGP secret key
-          command: echo -n "${PGP_SECRET}" | base64 -d > /tmp/secret.asc
-      - run:
-          name: Release artifacts
-          command: ./sbt clean sonatypeBundleClean ++2.11.12 root2-11/publishSigned ++2.12.11 root2-12/publishSigned ++2.13.2! root2-13/publishSigned sonatypeBundleRelease
+    - checkout
+    - run:
+        name: Fetch git tags
+        command: git fetch --tags
+    - <<: *load_cache
+    - run:
+        name: Write sonatype credentials
+        command: echo "credentials += Credentials(\"Sonatype Nexus Repository Manager\", \"oss.sonatype.org\", \"${SONATYPE_USER}\", \"${SONATYPE_PASSWORD}\")" > ~/.sbt/1.0/sonatype.sbt
+    - run:
+        name: Write PGP public key
+        command: echo -n "${PGP_PUBLIC}" | base64 -di > /tmp/public.asc
+    - run:
+        name: Write PGP secret key
+        command: echo -n "${PGP_SECRET}" | base64 -di > /tmp/secret.asc
+    - run:
+        name: Release artifacts
+        command: |
+          mkdir -p $HOME/bin
+          sudo apt-get update && sudo apt-get -y install gnupg2
+          echo pinentry-mode loopback >> ~/.gnupg/gpg.conf
+          echo allow-loopback-pinentry >> ~/.gnupg/gpg-agent.conf
+          chmod 600 ~/.gnupg/*
+          ln -s /usr/bin/gpg2 $HOME/bin/gpg
+          $HOME/bin/gpg --version
+          echo RELOADAGENT | gpg-connect-agent
+          echo $PGP_SECRET | base64 -di | gpg2 --import --no-tty --batch --yes
+          PATH=$HOME/bin:$PATH ./sbt clean sonatypeBundleClean ++2.11.12 root2-11/publishSigned ++2.12.11 root2-12/publishSigned ++2.13.2! root2-13/publishSigned sonatypeBundleRelease
 
 microsite: &microsite
   steps:
