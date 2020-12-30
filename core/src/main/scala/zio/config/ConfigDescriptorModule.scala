@@ -972,7 +972,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def updateSource(
       f: ConfigSource => ConfigSource
     ): ConfigDescriptor[A] = {
-      // FIXME: Avoid vars here (Temporary as I hit GADTs quite a bit)
+      // FIXME:
       // Logic to ensure any already-updated sources is reused.
       // This is to ensure the behaviour of recursive structure are kept as it is (i.e, identity stability)
       // while updating sources on ConfigDescriptor nodes.
@@ -1030,39 +1030,73 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       loop(self)
     }
 
-    lazy val sources: Set[ConfigSource] = {
-      val map = scala.collection.mutable.Map[ConfigDescriptor[_], () => Set[ConfigSource]]()
+    lazy val sources = {
+      var summary: List[ConfigDescriptor[_]] = Nil
 
-      def loop(
-        configDescriptor: ConfigDescriptor[_]
-      ): () => Set[ConfigSource] =
-        configDescriptor match {
-          case Lazy(thunk) =>
-            val thunkEv = thunk()
-            map
-              .get(thunkEv)
-              .fold({
-                val result = loop(thunkEv)
-                map.update(thunkEv, result)
-                result
-              })(identity)
-          case Source(source, propertyType) => () => Set(source)
-          case DynamicMap(source, conf)     => () => Set(source) ++ loop(conf)()
-          case Nested(source, path, conf) =>
-            () => Set(source) ++ loop(conf)()
-          case Optional(conf)              => () => loop(conf)()
-          case Sequence(source, conf)      => () => Set(source) ++ loop(conf)()
-          case Describe(conf, message)     => () => loop(conf)()
-          case Default(conf, value2)       => () => loop(conf)()
-          case TransformOrFail(conf, f, g) => () => loop(conf)()
-          case Zip(conf1, conf2)           => () => loop(conf1)() ++ loop(conf2)()
-          case OrElseEither(conf1, conf2) =>
-            () => loop(conf1)() ++ loop(conf2)()
-          case OrElse(conf1, conf2) =>
-            () => loop(conf1)() ++ loop(conf2)()
+      def getSources(cfg: ConfigDescriptor[_], set: Set[ConfigSource]): Set[ConfigSource] = {
+        def runGetSources(config: ConfigDescriptor[_], sourceOfConfig: Option[ConfigSource]): Set[ConfigSource] =
+          if (summary.contains(config)) {
+            set
+          } else {
+            summary = config :: summary
+            getSources(config, sourceOfConfig.fold(set)(source => Set(source) ++ set))
+          }
+
+        def runGetSourcesForBoth(left: ConfigDescriptor[_], right: ConfigDescriptor[_]): Set[ConfigSource] =
+          (summary.contains(left), summary.contains(right)) match {
+            case (true, true) => set
+            case (true, false) =>
+              summary = right :: summary
+              getSources(right, set)
+            case (false, true) =>
+              summary = left :: summary
+              getSources(left, set)
+
+            case (false, false) =>
+              summary = left :: right :: summary
+              getSources(left, set) ++ getSources(right, set)
+          }
+
+        cfg match {
+          case Default(config, default) =>
+            runGetSources(config, None)
+
+          case Describe(config, message) =>
+            runGetSources(config, None)
+
+          case DynamicMap(source, config) =>
+            runGetSources(config, None)
+
+          case Sequence(source, config) =>
+            runGetSources(config, Some(source))
+
+          case Lazy(get) =>
+            runGetSources(get(), None)
+
+          case Nested(source, path, config) =>
+            runGetSources(config, Some(source))
+
+          case Optional(config) =>
+            runGetSources(config, None)
+
+          case OrElse(left, right) =>
+            runGetSourcesForBoth(left, right)
+
+          case OrElseEither(left, right) =>
+            runGetSourcesForBoth(left, right)
+
+          case Source(source, propertyType) =>
+            set ++ Set(source)
+
+          case TransformOrFail(config, f, g) =>
+            runGetSources(config, None)
+
+          case Zip(left, right) =>
+            runGetSourcesForBoth(left, right)
         }
-      loop(self)()
+      }
 
+      getSources(self, Set.empty)
     }
 
     /**

@@ -5,8 +5,7 @@ package zio.config
 import zio.test._
 import zio.test.Assertion._
 import RecursiveConfigTestUtils._
-
-import zio.config.ConfigDescriptor._
+import zio.config.ConfigDescriptor._, ConfigDescriptorAdt._
 
 object RecursiveConfigTest
     extends BaseSpec(
@@ -14,6 +13,14 @@ object RecursiveConfigTest
         test("read simple") {
           // FIXME:The logic works, more work required in cleaning up the logic.
           assert(read(simpleRec from simpleTestSource))(isRight(equalTo(simpleRecursiveValue)))
+        },
+        test("read simple reversed") {
+          // FIXME:The logic works, more work required in cleaning up the logic.
+          assert(read(simpleRecReversed from simpleTestSource))(isRight(equalTo(simpleRecursiveReversedValue)))
+        },
+        test("read simple reversed multiple") {
+          // FIXME:The logic works, more work required in cleaning up the logic.
+          assert(read(simpleRecMultiple from simpleTestSource))(isRight(equalTo(simpleRecursiveMultiple)))
         },
         test("read mutual recursive") {
           assert(read(data from testSource))(isRight(equalTo(recursiveValue)))
@@ -135,13 +142,29 @@ object RecursiveConfigTestUtils {
       )
     )
   )
+
   val simpleTestSource: ConfigSource = ConfigSource.fromPropertyTree(
     simpleTestTree,
     "tree",
     LeafForSequence.Valid
   )
 
-  val simpleRecursiveValue: SimpleRec = SimpleRec(1, Some(SimpleRec(2, None)))
+  case class SimpleRecReversed(nested: Option[SimpleRecReversed], id: Int)
+
+  val simpleRecReversed: ConfigDescriptor[SimpleRecReversed] =
+    (nested("nested")(simpleRecReversed).optional |@| int("id"))(SimpleRecReversed.apply, SimpleRecReversed.unapply)
+
+  case class SimpleRecMultiple(nested: Option[SimpleRecMultiple], id: Int, nested2: Option[SimpleRecMultiple])
+
+  val simpleRecMultiple: ConfigDescriptor[SimpleRecMultiple] =
+    (nested("nested")(simpleRecMultiple).optional |@| int("id") |@| nested("nested2")(simpleRecMultiple).optional)(
+      SimpleRecMultiple.apply,
+      SimpleRecMultiple.unapply
+    )
+
+  val simpleRecursiveValue: SimpleRec                 = SimpleRec(1, Some(SimpleRec(2, None)))
+  val simpleRecursiveReversedValue: SimpleRecReversed = SimpleRecReversed(Some(SimpleRecReversed(None, 2)), 1)
+  val simpleRecursiveMultiple: SimpleRecMultiple      = SimpleRecMultiple(Some(SimpleRecMultiple(None, 2, None)), 1, None)
 
   case class Data(rows: Row)
 

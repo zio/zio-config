@@ -125,31 +125,20 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       keys: List[K],
       cfg: Zip[B, C],
       descriptions: List[String]
-    ): Res[(B, C)] = {
-      val leftComputation =
-        loopAny(path, keys, cfg.left, descriptions)
+    ): Res[(B, C)] =
+      (loopAny(path, keys, cfg.left, descriptions), loopAny(path, keys, cfg.right, descriptions)) match {
+        case (Right(leftV), Right(rightV)) =>
+          Right(leftV.zip(rightV))
 
-      // FIXME: This is a silly assumption that recursion happens only at the right side of a product
-      // only to check if identity of instances works or not.
-      // In this case, the right side config already exists in program summary, even before it call `loopAny(cfg.right)`
-      if (leftComputation.isLeft && programSummary.contains(cfg.right)) {
-        Left(ReadError.MissingValue(path, descriptions, Set(AnnotatedRead.Annotation.Recursive)))
-      } else {
-        (leftComputation, loopAny(path, keys, cfg.right, descriptions)) match {
-          case (Right(leftV), Right(rightV)) =>
-            Right(leftV.zip(rightV))
+        case (Left(error1), Left(error2)) =>
+          Left(ZipErrors(error1 :: error2 :: Nil, error1.annotations ++ error2.annotations))
 
-          case (Left(error1), Left(error2)) =>
-            Left(ZipErrors(error1 :: error2 :: Nil, error1.annotations ++ error2.annotations))
+        case (Left(error), Right(annotated)) =>
+          Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
 
-          case (Left(error), Right(annotated)) =>
-            Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
-
-          case (Right(annotated), Left(error)) =>
-            Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
-        }
+        case (Right(annotated), Left(error)) =>
+          Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
       }
-    }
 
     def loopXmapEither[B, C](
       path: List[Step[K]],
@@ -240,33 +229,71 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       keys: List[K],
       config: ConfigDescriptor[B],
       descriptions: List[String]
-    ): Res[B] = {
-      programSummary = programSummary ++ List(config)
+    ): Res[B] =
+      // FIXME: Distinguish between re-use of structures vs recursive structures.
+      // If not distinguished, we miss out deep errors in the error report when config has same products/co-products repeated (than a recursion).
+      // However, this is not a major roadblock, as we keep deep error-reports in all other cases.
 
-      config match {
-        case c @ Lazy(thunk) =>
-          loopAny(path, keys, thunk(), descriptions)
-        case c @ Default(_, _) => loopDefault(path, keys, c, descriptions)
-        case c @ Describe(_, message) =>
-          loopAny(path, keys, c.config, descriptions :+ message)
-        case c @ DynamicMap(_, _) => loopMap(path, keys, c, descriptions)
-        case c @ Nested(_, _, _) =>
-          loopNested(path, keys, c, descriptions)
-        case c @ Optional(config) =>
-          loopOptional(path, keys, c, descriptions)
+      // FIXME: Remove following comments
+      //
+      // Why program-summary?: An early exit should be only for recursive values (`programSummary.contains(config)`)
+      // Such that if configuration isn't recursive, we report all errors at deeper levels.
+      //
+      // Example:
+      // Without a program summary, for a non-recursive structure, we get the following error structure:
+      //  {{{
+      //    MissingValue
+      //     path: a.a
+      //     Details: optional value
+      //  }}}
+      //
+      // With program summary, for a non-recursive structure, we get the following error structure
+      //
+      // {{{
+      //   MissingValue
+      //     path: a.a.b2
+      //     Details: optional value, value of type string
+      //   MissingValue
+      //     path: a.a.a2
+      //     Details: optional value, value of type string
+      // }}}
+      //
+      if (isEmptyConfigSource(config, keys.reverse) && programSummary.contains(config)) {
+        Left(ReadError.MissingValue(path.reverse, descriptions, Set(AnnotatedRead.Annotation.Recursive)))
+      } else {
+        programSummary = programSummary ++ List(config)
+        config match {
+          case c @ Lazy(thunk) =>
+            loopAny(path, keys, thunk(), descriptions)
+          case c @ Default(_, _) => loopDefault(path, keys, c, descriptions)
+          case c @ Describe(_, message) =>
+            loopAny(path, keys, c.config, descriptions :+ message)
+          case c @ DynamicMap(_, _) => loopMap(path, keys, c, descriptions)
+          case c @ Nested(_, _, _) =>
+            loopNested(path, keys, c, descriptions)
+          case c @ Optional(config) =>
+            loopOptional(path, keys, c, descriptions)
 
-        case c @ OrElse(_, _)       => loopOrElse(path, keys, c, descriptions)
-        case c @ OrElseEither(_, _) => loopOrElseEither(path, keys, c, descriptions)
-        case c @ Source(_, _)       => loopSource(path, keys, c, descriptions)
-        case c @ Zip(_, _) =>
-          loopZip(path, keys, c, descriptions)
-        case c @ TransformOrFail(_, _, _) => loopXmapEither(path, keys, c, descriptions)
-        case c @ Sequence(_, _)           => loopSequence(path, keys, c, descriptions)
+          case c @ OrElse(_, _)       => loopOrElse(path, keys, c, descriptions)
+          case c @ OrElseEither(_, _) => loopOrElseEither(path, keys, c, descriptions)
+          case c @ Source(_, _)       => loopSource(path, keys, c, descriptions)
+          case c @ Zip(_, _) =>
+            loopZip(path, keys, c, descriptions)
+          case c @ TransformOrFail(_, _, _) => loopXmapEither(path, keys, c, descriptions)
+          case c @ Sequence(_, _)           => loopSequence(path, keys, c, descriptions)
+        }
       }
-    }
 
     loopAny(Nil, Nil, configuration, Nil).map(_.value)
 
+  }
+
+  private[config] def isEmptyConfigSource[A](
+    config: ConfigDescriptor[A],
+    keys: List[K]
+  ): Boolean = {
+    val sourceTrees = config.sources.map(_.getConfigValue(keys))
+    sourceTrees.isEmpty || sourceTrees.forall(_.isEmpty)
   }
 
   private[config] def foldReadError[B](
