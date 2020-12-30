@@ -5,26 +5,25 @@ package zio.config
 import zio.test._
 import zio.test.Assertion._
 import RecursiveConfigTestUtils._
-import zio.test.TestAspect.ignore
 
-import zio.config.ConfigDescriptor._, ConfigDescriptorAdt._
+import zio.config.ConfigDescriptor._
 
 object RecursiveConfigTest
     extends BaseSpec(
       suite("RecursiveConfigTest")(
         test("read simple") {
-          // FIXME: The logic works, more work required in cleaning up the logic.
+          // FIXME:The logic works, more work required in cleaning up the logic.
           assert(read(simpleRec from simpleTestSource))(isRight(equalTo(simpleRecursiveValue)))
         },
         test("read mutual recursive") {
           assert(read(data from testSource))(isRight(equalTo(recursiveValue)))
-        } @@ ignore,
+        },
         test("read expression tree") {
           assert(read(expr from exprSource))(isRight(equalTo(exprValue)))
-        } @@ ignore,
+        },
         test("write simple") {
           assert(write(simpleRec, simpleRecursiveValue))(isRight(equalTo(simpleTestTree)))
-        } @@ ignore,
+        },
         test("documentation") {
           assert(generateDocs(simpleRec).toTable)(
             equalTo(
@@ -60,7 +59,7 @@ object RecursiveConfigTest
               )
             )
           )
-        } @@ ignore,
+        },
         test("documentation of expression tree") {
           assert(generateDocs(expr).toTable)(
             equalTo(
@@ -115,7 +114,7 @@ object RecursiveConfigTest
               )
             )
           )
-        } @@ ignore @@ TestAspect.exceptScala211
+        } @@ TestAspect.exceptScala211
       )
     )
 

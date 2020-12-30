@@ -27,22 +27,20 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: Nested[B],
-      descriptions: List[String],
-      accompaniedComputationFailed: Boolean
+      descriptions: List[String]
     ): Res[B] = {
       val updatedKeys = cfg.path :: keys
       val updatedPath = Step.Key(cfg.path) :: path
-      loopAny(updatedPath, updatedKeys, cfg.config, descriptions, accompaniedComputationFailed)
+      loopAny(updatedPath, updatedKeys, cfg.config, descriptions)
     }
 
     def loopOptional[B](
       path: List[Step[K]],
       keys: List[K],
       cfg: Optional[B],
-      descriptions: List[String],
-      accompaniedComputationFailed: Boolean
+      descriptions: List[String]
     ): Res[Option[B]] =
-      loopAny(path, keys, cfg.config, descriptions, accompaniedComputationFailed) match {
+      loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) =>
           handleDefaultValues(error, cfg.config, None)
 
@@ -54,10 +52,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: Default[B],
-      descriptions: List[String],
-      accompaniedComputationFailed: Boolean
+      descriptions: List[String]
     ): Res[B] =
-      loopAny(path, keys, cfg.config, descriptions, accompaniedComputationFailed) match {
+      loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) =>
           handleDefaultValues(error, cfg.config, cfg.default)
 
@@ -69,13 +66,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: OrElse[B],
-      descriptions: List[String],
-      accompaniedComputationFailed: Boolean
+      descriptions: List[String]
     ): Res[B] =
-      loopAny(path, keys, cfg.left, descriptions, accompaniedComputationFailed) match {
+      loopAny(path, keys, cfg.left, descriptions) match {
         case a @ Right(_) => a
         case Left(leftError) =>
-          loopAny(path, keys, cfg.right, descriptions, accompaniedComputationFailed) match {
+          loopAny(path, keys, cfg.right, descriptions) match {
             case a @ Right(_) => a
             case Left(rightError) =>
               Left(ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations))
@@ -86,15 +82,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: OrElseEither[B, C],
-      descriptions: List[String],
-      accompaniedComputationFailed: Boolean
+      descriptions: List[String]
     ): Res[Either[B, C]] =
-      loopAny(path, keys, cfg.left, descriptions, accompaniedComputationFailed) match {
+      loopAny(path, keys, cfg.left, descriptions) match {
         case Right(value) =>
           Right(value.map(Left(_)))
 
         case Left(leftError) =>
-          loopAny(path, keys, cfg.right, descriptions, accompaniedComputationFailed) match {
+          loopAny(path, keys, cfg.right, descriptions) match {
             case Right(rightValue) =>
               Right(rightValue.map(Right(_)))
 
@@ -120,7 +115,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                   )
                 )
               )
-            case Right(parsed) => Right(AnnotatedRead(parsed, Set.empty))
+            case Right(parsed) =>
+              Right(AnnotatedRead(parsed, Set.empty))
           }
       }
 
@@ -128,26 +124,30 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: Zip[B, C],
-      descriptions: List[String],
-      accompaniedComputationFailed: Boolean
+      descriptions: List[String]
     ): Res[(B, C)] = {
-      // FIXME: Fix this strong assumption that recursion happens only at the right side of a case class
-      // Only to check if identity works or not
       val leftComputation =
-        loopAny(path, keys, cfg.left, descriptions, accompaniedComputationFailed)
+        loopAny(path, keys, cfg.left, descriptions)
 
-      (leftComputation, loopAny(path, keys, cfg.right, descriptions, leftComputation.isLeft)) match {
-        case (Right(leftV), Right(rightV)) =>
-          Right(leftV.zip(rightV))
+      // FIXME: This is a silly assumption that recursion happens only at the right side of a product
+      // only to check if identity of instances works or not.
+      // In this case, the right side config already exists in program summary, even before it call `loopAny(cfg.right)`
+      if (leftComputation.isLeft && programSummary.contains(cfg.right)) {
+        Left(ReadError.MissingValue(path, descriptions, Set(AnnotatedRead.Annotation.Recursive)))
+      } else {
+        (leftComputation, loopAny(path, keys, cfg.right, descriptions)) match {
+          case (Right(leftV), Right(rightV)) =>
+            Right(leftV.zip(rightV))
 
-        case (Left(error1), Left(error2)) =>
-          Left(ZipErrors(error1 :: error2 :: Nil, error1.annotations ++ error2.annotations))
+          case (Left(error1), Left(error2)) =>
+            Left(ZipErrors(error1 :: error2 :: Nil, error1.annotations ++ error2.annotations))
 
-        case (Left(error), Right(annotated)) =>
-          Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
+          case (Left(error), Right(annotated)) =>
+            Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
 
-        case (Right(annotated), Left(error)) =>
-          Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
+          case (Right(annotated), Left(error)) =>
+            Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
+        }
       }
     }
 
@@ -155,10 +155,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: TransformOrFail[B, C],
-      descriptions: List[String],
-      accompaniedComputationFailed: Boolean
+      descriptions: List[String]
     ): Res[C] =
-      loopAny(path, keys, cfg.config, descriptions, accompaniedComputationFailed) match {
+      loopAny(path, keys, cfg.config, descriptions) match {
         case Left(error) => Left(error)
         case Right(a) =>
           a.mapError(cfg.f).swap.map(message => ReadError.ConversionError(path.reverse, message, a.annotations)).swap
@@ -168,8 +167,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: DynamicMap[B],
-      descriptions: List[String],
-      accompaniedComputationFailed: Boolean
+      descriptions: List[String]
     ): Res[Map[K, B]] =
       cfg.source.getConfigValue(keys.reverse) match {
         case PropertyTree.Leaf(_)     => formatError(path, "Leaf", "Record", descriptions)
@@ -186,8 +184,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                   Step.Key(k) :: path,
                   Nil,
                   cfg.config.updateSource(_ => source),
-                  descriptions,
-                  accompaniedComputationFailed
+                  descriptions
                 )
               )
           }
@@ -204,8 +201,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       cfg: Sequence[B],
-      descriptions: List[String],
-      accompaniedComputationFailed: Boolean
+      descriptions: List[String]
     ): Res[List[B]] = {
       def fromTrees(values: List[PropertyTree[K, V]]) = {
         val list = values.zipWithIndex.map {
@@ -216,8 +212,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
               Step.Index(idx) :: path,
               Nil,
               cfg.config.updateSource(_ => source),
-              descriptions,
-              accompaniedComputationFailed
+              descriptions
             )
         }
 
@@ -244,33 +239,34 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       keys: List[K],
       config: ConfigDescriptor[B],
-      descriptions: List[String],
-      accompaniedComputationFailed: Boolean
+      descriptions: List[String]
     ): Res[B] = {
-      programSummary = config :: programSummary
+      programSummary = programSummary ++ List(config)
+
       config match {
-        case Lazy(thunk)       => loopAny(path, keys, thunk(), descriptions, accompaniedComputationFailed)
-        case c @ Default(_, _) => loopDefault(path, keys, c, descriptions, accompaniedComputationFailed)
+        case c @ Lazy(thunk) =>
+          loopAny(path, keys, thunk(), descriptions)
+        case c @ Default(_, _) => loopDefault(path, keys, c, descriptions)
         case c @ Describe(_, message) =>
-          loopAny(path, keys, c.config, descriptions :+ message, accompaniedComputationFailed)
-        case c @ DynamicMap(_, _) => loopMap(path, keys, c, descriptions, accompaniedComputationFailed)
-        case c @ Nested(_, _, _)  => loopNested(path, keys, c, descriptions, accompaniedComputationFailed)
-        case c @ Optional(_)      =>
-          // FIXME: Temporary logic to check if identity can help us short circuit recursive trees
-          if (programSummary.exists(_.equals(c)) && accompaniedComputationFailed)
-            Right(AnnotatedRead(None, Set.empty))
-          else
-            loopOptional(path, keys, c, descriptions, accompaniedComputationFailed)
-        case c @ OrElse(_, _)             => loopOrElse(path, keys, c, descriptions, accompaniedComputationFailed)
-        case c @ OrElseEither(_, _)       => loopOrElseEither(path, keys, c, descriptions, accompaniedComputationFailed)
-        case c @ Source(_, _)             => loopSource(path, keys, c, descriptions)
-        case c @ Zip(_, _)                => loopZip(path, keys, c, descriptions, accompaniedComputationFailed)
-        case c @ TransformOrFail(_, _, _) => loopXmapEither(path, keys, c, descriptions, accompaniedComputationFailed)
-        case c @ Sequence(_, _)           => loopSequence(path, keys, c, descriptions, accompaniedComputationFailed)
+          loopAny(path, keys, c.config, descriptions :+ message)
+        case c @ DynamicMap(_, _) => loopMap(path, keys, c, descriptions)
+        case c @ Nested(_, _, _) =>
+          loopNested(path, keys, c, descriptions)
+        case c @ Optional(config) =>
+          loopOptional(path, keys, c, descriptions)
+
+        case c @ OrElse(_, _)       => loopOrElse(path, keys, c, descriptions)
+        case c @ OrElseEither(_, _) => loopOrElseEither(path, keys, c, descriptions)
+        case c @ Source(_, _)       => loopSource(path, keys, c, descriptions)
+        case c @ Zip(_, _) =>
+          loopZip(path, keys, c, descriptions)
+        case c @ TransformOrFail(_, _, _) => loopXmapEither(path, keys, c, descriptions)
+        case c @ Sequence(_, _)           => loopSequence(path, keys, c, descriptions)
       }
     }
 
-    loopAny(Nil, Nil, configuration, Nil, false).map(_.value)
+    loopAny(Nil, Nil, configuration, Nil).map(_.value)
+
   }
 
   private[config] def foldReadError[B](
@@ -311,7 +307,11 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       !annotations.contains(AnnotatedRead.Annotation.NonDefaultValue)
 
     error match {
+      case MissingValue(_, _, annotations) if annotations.forall(_ == AnnotatedRead.Annotation.Recursive) =>
+        Right(AnnotatedRead(default, annotations))
+
       case MissingValue(_, _, annotations) => Right(AnnotatedRead(default, annotations))
+
       case ReadError.ZipErrors(_, annotations) if baseConditionForFallBack && hasZeroNonDefaultValues(annotations) =>
         Right(AnnotatedRead(default, annotations))
 

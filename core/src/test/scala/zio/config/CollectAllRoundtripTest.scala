@@ -65,7 +65,7 @@ object SequenceRoundtripTestUtils {
     for {
       optId1 <- Gen.option(genId)
       id2    <- genId
-      n      <- Gen.oneOf(Gen.const(1), Gen.const(10), Gen.const(100))
+      n      <- Gen.oneOf(Gen.const(1), Gen.const(10))
     } yield rangeMap(n, IdentityDetails(optId1, id2))
 
   val generateGroupMap: Gen[Random, Map[String, String]] =
