@@ -972,8 +972,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def updateSource(
       f: ConfigSource => ConfigSource
     ): ConfigDescriptor[A] = {
-      //println("inside the conf")
-      //println(self)
+      // FIXME: Avoid vars here (Temporary as I hit GADTs quite a bit)
+      // Logic to ensure any already-updated sources is reused.
+      // This is to ensure the behaviour of recursive structure are kept as it is (i.e, identity stability)
+      // while updating sources on ConfigDescriptor nodes.
       var summary: Map[ConfigDescriptor[_], ConfigDescriptor[_]] = Map()
 
       def loop[B](
