@@ -22,7 +22,7 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
       val expected = Record(Map("a" -> Record(Map("b" -> Leaf("s"), "c" -> Sequence(Nil)))))
 
       assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
-    } @@ ignore,
+    },
     test("Read mixed list") {
       val res =
         TypesafeConfigSource.fromHoconString(
@@ -37,7 +37,7 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
       val expected = Record(Map("list" -> Sequence(List(Leaf("a"), Record(Map("b" -> Leaf("c")))))))
 
       assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
-    } @@ ignore,
+    },
     test("Read a complex hocon structure successfully") {
 
       assert(readComplexSource)(equalTo(expectedResult))
