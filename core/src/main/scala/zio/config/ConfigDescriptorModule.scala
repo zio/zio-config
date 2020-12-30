@@ -613,9 +613,21 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * }}}
      */
     def mapKey(f: K => K): ConfigDescriptor[A] = {
+      var summary: Map[ConfigDescriptor[_], ConfigDescriptor[_]] = Map()
+
       def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
         config match {
-          case Lazy(thunk)                  => Lazy(() => loop(thunk()))
+          case c @ Lazy(thunk) =>
+            val res = thunk()
+
+            summary.get(c) match {
+              case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
+              case None =>
+                val result = Lazy(() => loop(res))
+                summary = summary.updated(c, result)
+                result
+            }
+
           case Source(source, propertyType) => Source(source, propertyType)
           case DynamicMap(source, conf)     => DynamicMap(source, loop(conf))
           case Nested(source, path, conf) =>
@@ -984,10 +996,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         config match {
           case c @ Lazy(thunk) =>
             val res = thunk()
-            summary.keys.find(_ == c) match {
-              case Some(value) =>
-                summary(c).asInstanceOf[ConfigDescriptor[B]]
 
+            summary.get(c) match {
+              case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
               case None =>
                 val result = Lazy(() => loop(res))
                 summary = summary.updated(c, result)

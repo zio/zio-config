@@ -293,7 +293,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     keys: List[K]
   ): Boolean = {
     val sourceTrees = config.sources.map(_.getConfigValue(keys))
-    sourceTrees.isEmpty || sourceTrees.forall(_.isEmpty)
+    sourceTrees.forall(_ == PropertyTree.empty)
   }
 
   private[config] def foldReadError[B](

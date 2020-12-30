@@ -4,6 +4,7 @@ import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config.typesafe.TypesafeConfigTestSupport._
 import zio.test.Assertion._
 import zio.test._
+import zio.test.TestAspect._
 
 object TypesafeConfigSpec extends DefaultRunnableSpec {
   val spec = suite("TypesafeConfig")(
@@ -21,7 +22,7 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
       val expected = Record(Map("a" -> Record(Map("b" -> Leaf("s"), "c" -> Sequence(Nil)))))
 
       assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
-    },
+    } @@ ignore,
     test("Read mixed list") {
       val res =
         TypesafeConfigSource.fromHoconString(
@@ -36,7 +37,7 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
       val expected = Record(Map("list" -> Sequence(List(Leaf("a"), Record(Map("b" -> Leaf("c")))))))
 
       assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
-    },
+    } @@ ignore,
     test("Read a complex hocon structure successfully") {
 
       assert(readComplexSource)(equalTo(expectedResult))

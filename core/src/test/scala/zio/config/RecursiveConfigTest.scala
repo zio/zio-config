@@ -22,6 +22,12 @@ object RecursiveConfigTest
           // FIXME:The logic works, more work required in cleaning up the logic.
           assert(read(simpleRecMultiple from simpleTestSource))(isRight(equalTo(simpleRecursiveMultiple)))
         },
+        test("read simple with updated key") {
+          // FIXME:The logic works, more work required in cleaning up the logic.
+          assert(read(simpleRecMultiple.mapKey(_.toUpperCase()) from simpleTestSource.convertKeys(_.toLowerCase())))(
+            isRight(equalTo(simpleRecursiveMultiple))
+          )
+        },
         test("read mutual recursive") {
           assert(read(data from testSource))(isRight(equalTo(recursiveValue)))
         },
