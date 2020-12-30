@@ -1044,70 +1044,73 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     lazy val sources = {
       var summary: List[ConfigDescriptor[_]] = Nil
 
-      def getSources(cfg: ConfigDescriptor[_], set: Set[ConfigSource]): Set[ConfigSource] = {
-        def runGetSources(config: ConfigDescriptor[_], sourceOfConfig: Option[ConfigSource]): Set[ConfigSource] =
+      def loop(cfg: ConfigDescriptor[_], set: Set[ConfigSource]): Set[ConfigSource] = {
+        def runLoop(config: ConfigDescriptor[_], sourceOfConfig: Option[ConfigSource]): Set[ConfigSource] =
           if (summary.contains(config)) {
             set
           } else {
             summary = config :: summary
-            getSources(config, sourceOfConfig.fold(set)(source => Set(source) ++ set))
+            loop(config, sourceOfConfig.fold(set)(source => Set(source) ++ set))
           }
 
-        def runGetSourcesForBoth(left: ConfigDescriptor[_], right: ConfigDescriptor[_]): Set[ConfigSource] =
+        def runLoopForBoth(left: ConfigDescriptor[_], right: ConfigDescriptor[_]): Set[ConfigSource] =
           (summary.contains(left), summary.contains(right)) match {
-            case (true, true) => set
+            case (true, true) => 
+              set
+            
             case (true, false) =>
               summary = right :: summary
-              getSources(right, set)
+              loop(right, set)
+
             case (false, true) =>
               summary = left :: summary
-              getSources(left, set)
+              loop(left, set)
 
             case (false, false) =>
               summary = left :: right :: summary
-              getSources(left, set) ++ getSources(right, set)
+              loop(left, set) ++ loop(right, set)
           }
 
         cfg match {
           case Default(config, default) =>
-            runGetSources(config, None)
+            runLoop(config, None)
 
           case Describe(config, message) =>
-            runGetSources(config, None)
+            runLoop(config, None)
 
           case DynamicMap(source, config) =>
-            runGetSources(config, None)
+            runLoop(config, None)
 
           case Sequence(source, config) =>
-            runGetSources(config, Some(source))
+            runLoop(config, Some(source))
 
           case Lazy(get) =>
-            runGetSources(get(), None)
+            runLoop(get(), None)
 
           case Nested(source, path, config) =>
-            runGetSources(config, Some(source))
+            runLoop(config, Some(source))
 
           case Optional(config) =>
-            runGetSources(config, None)
+            runLoop(config, None)
 
           case OrElse(left, right) =>
-            runGetSourcesForBoth(left, right)
+            runLoopForBoth(left, right)
 
           case OrElseEither(left, right) =>
-            runGetSourcesForBoth(left, right)
+            runLoopForBoth(left, right)
 
           case Source(source, propertyType) =>
             set ++ Set(source)
 
           case TransformOrFail(config, f, g) =>
-            runGetSources(config, None)
+            runLoop(config, None)
 
           case Zip(left, right) =>
-            runGetSourcesForBoth(left, right)
+            runLoopForBoth(left, right)
         }
       }
 
-      getSources(self, Set.empty)
+      loop(self, Set.empty)
     }
 
     /**

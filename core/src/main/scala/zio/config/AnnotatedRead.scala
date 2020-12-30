@@ -18,6 +18,5 @@ object AnnotatedRead {
   sealed trait Annotation
   object Annotation {
     case object NonDefaultValue extends Annotation
-    case object Recursive       extends Annotation
   }
 }

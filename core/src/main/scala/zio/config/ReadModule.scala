@@ -259,13 +259,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       // }}}
       //
       if (isEmptyConfigSource(config, keys.reverse) && programSummary.contains(config)) {
-        Left(ReadError.MissingValue(path.reverse, descriptions, Set(AnnotatedRead.Annotation.Recursive)))
+        Left(ReadError.MissingValue(path.reverse, descriptions))
       } else {
         programSummary = programSummary ++ List(config)
         config match {
           case c @ Lazy(thunk) =>
             loopAny(path, keys, thunk(), descriptions)
-          case c @ Default(_, _) => loopDefault(path, keys, c, descriptions)
+          case c @ Default(_, _) =>
+            loopDefault(path, keys, c, descriptions)
           case c @ Describe(_, message) =>
             loopAny(path, keys, c.config, descriptions :+ message)
           case c @ DynamicMap(_, _) => loopMap(path, keys, c, descriptions)
@@ -273,14 +274,18 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
             loopNested(path, keys, c, descriptions)
           case c @ Optional(config) =>
             loopOptional(path, keys, c, descriptions)
-
-          case c @ OrElse(_, _)       => loopOrElse(path, keys, c, descriptions)
-          case c @ OrElseEither(_, _) => loopOrElseEither(path, keys, c, descriptions)
-          case c @ Source(_, _)       => loopSource(path, keys, c, descriptions)
+          case c @ OrElse(_, _) =>
+            loopOrElse(path, keys, c, descriptions)
+          case c @ OrElseEither(_, _) =>
+            loopOrElseEither(path, keys, c, descriptions)
+          case c @ Source(_, _) =>
+            loopSource(path, keys, c, descriptions)
           case c @ Zip(_, _) =>
             loopZip(path, keys, c, descriptions)
-          case c @ TransformOrFail(_, _, _) => loopXmapEither(path, keys, c, descriptions)
-          case c @ Sequence(_, _)           => loopSequence(path, keys, c, descriptions)
+          case c @ TransformOrFail(_, _, _) =>
+            loopXmapEither(path, keys, c, descriptions)
+          case c @ Sequence(_, _) =>
+            loopSequence(path, keys, c, descriptions)
         }
       }
 
@@ -334,9 +339,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       !annotations.contains(AnnotatedRead.Annotation.NonDefaultValue)
 
     error match {
-      case MissingValue(_, _, annotations) if annotations.forall(_ == AnnotatedRead.Annotation.Recursive) =>
-        Right(AnnotatedRead(default, annotations))
-
       case MissingValue(_, _, annotations) => Right(AnnotatedRead(default, annotations))
 
       case ReadError.ZipErrors(_, annotations) if baseConditionForFallBack && hasZeroNonDefaultValues(annotations) =>

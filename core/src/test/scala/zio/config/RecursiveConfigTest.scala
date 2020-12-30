@@ -5,7 +5,7 @@ package zio.config
 import zio.test._
 import zio.test.Assertion._
 import RecursiveConfigTestUtils._
-import zio.config.ConfigDescriptor._, ConfigDescriptorAdt._
+import zio.config.ConfigDescriptor._
 
 object RecursiveConfigTest
     extends BaseSpec(

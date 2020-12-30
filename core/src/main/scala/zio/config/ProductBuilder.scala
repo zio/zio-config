@@ -42,7 +42,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
     def |@|[D](dd: => F[D]): ProductBuilder[D] =
       new ProductBuilder[D] {
-        lazy val d: F[D] = dd
+        val d: F[D] = dd
       }
 
     sealed abstract class ProductBuilder[D] {
@@ -59,7 +59,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
       def |@|[E](ee: => F[E]): ProductBuilder[E] =
         new ProductBuilder[E] {
-          lazy val e: F[E] = ee
+          val e: F[E] = ee
         }
 
       sealed abstract class ProductBuilder[E] {
@@ -76,7 +76,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
         def |@|[H](hh: => F[H]): ProductBuilder[H] =
           new ProductBuilder[H] {
-            lazy val h: F[H] = hh
+            val h: F[H] = hh
           }
 
         sealed abstract class ProductBuilder[H] {
@@ -93,7 +93,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
           def |@|[I](ii: => F[I]): ProductBuilder[I] =
             new ProductBuilder[I] {
-              lazy val i: F[I] = ii
+              val i: F[I] = ii
             }
 
           sealed abstract class ProductBuilder[I] {
@@ -110,7 +110,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
             def |@|[J](jj: => F[J]): ProductBuilder[J] =
               new ProductBuilder[J] {
-                lazy val j: F[J] = jj
+                val j: F[J] = jj
               }
 
             sealed abstract class ProductBuilder[J] {
@@ -127,7 +127,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
               def |@|[K](kk: => F[K]): ProductBuilder[K] =
                 new ProductBuilder[K] {
-                  lazy val k: F[K] = kk
+                  val k: F[K] = kk
                 }
 
               sealed abstract class ProductBuilder[K] {
@@ -144,7 +144,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                 def |@|[L](ll: => F[L]): ProductBuilder[L] =
                   new ProductBuilder[L] {
-                    lazy val l: F[L] = ll
+                    val l: F[L] = ll
                   }
 
                 sealed abstract class ProductBuilder[L] {
@@ -161,7 +161,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                   def |@|[M](mm: => F[M]): ProductBuilder[M] =
                     new ProductBuilder[M] {
-                      lazy val m: F[M] = mm
+                      val m: F[M] = mm
                     }
 
                   sealed abstract class ProductBuilder[M] {
@@ -178,7 +178,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                     def |@|[N](nn: => F[N]): ProductBuilder[N] =
                       new ProductBuilder[N] {
-                        lazy val n: F[N] = nn
+                        val n: F[N] = nn
                       }
 
                     sealed abstract class ProductBuilder[N] {
@@ -199,7 +199,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                       def |@|[O](oo: => F[O]): ProductBuilder[O] =
                         new ProductBuilder[O] {
-                          lazy val o: F[O] = oo
+                          val o: F[O] = oo
                         }
 
                       sealed abstract class ProductBuilder[O] {
@@ -220,7 +220,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                         def |@|[P](pp: => F[P]): ProductBuilder[P] =
                           new ProductBuilder[P] {
-                            lazy val p: F[P] = pp
+                            val p: F[P] = pp
                           }
 
                         sealed abstract class ProductBuilder[P] {
@@ -241,7 +241,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                           def |@|[Q](qq: => F[Q]): ProductBuilder[Q] =
                             new ProductBuilder[Q] {
-                              lazy val q: F[Q] = qq
+                              val q: F[Q] = qq
                             }
 
                           sealed abstract class ProductBuilder[Q] {
@@ -262,7 +262,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                             def |@|[R](rr: => F[R]): ProductBuilder[R] =
                               new ProductBuilder[R] {
-                                lazy val r: F[R] = rr
+                                val r: F[R] = rr
                               }
 
                             sealed abstract class ProductBuilder[R] {
@@ -283,7 +283,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                               def |@|[S](ss: => F[S]): ProductBuilder[S] =
                                 new ProductBuilder[S] {
-                                  lazy val s: F[S] = ss
+                                  val s: F[S] = ss
                                 }
 
                               sealed abstract class ProductBuilder[S] {
@@ -304,7 +304,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                                 def |@|[T](tt: => F[T]): ProductBuilder[T] =
                                   new ProductBuilder[T] {
-                                    lazy val t: F[T] = tt
+                                    val t: F[T] = tt
                                   }
 
                                 sealed abstract class ProductBuilder[T] {
@@ -325,7 +325,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                                   def |@|[U](uu: => F[U]): ProductBuilder[U] =
                                     new ProductBuilder[U] {
-                                      lazy val u: F[U] = uu
+                                      val u: F[U] = uu
                                     }
 
                                   sealed abstract class ProductBuilder[U] {
@@ -346,7 +346,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                                     def |@|[V](vv: => F[V]): ProductBuilder[V] =
                                       new ProductBuilder[V] {
-                                        lazy val v: F[V] = vv
+                                        val v: F[V] = vv
                                       }
 
                                     sealed abstract class ProductBuilder[V] {
@@ -367,7 +367,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                                       def |@|[W](ww: => F[W]): ProductBuilder[W] =
                                         new ProductBuilder[W] {
-                                          lazy val w: F[W] = ww
+                                          val w: F[W] = ww
                                         }
 
                                       sealed abstract class ProductBuilder[W] {
@@ -388,7 +388,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
 
                                         def |@|[X](xx: => F[X]): ProductBuilder[X] =
                                           new ProductBuilder[X] {
-                                            lazy val x: F[X] = xx
+                                            val x: F[X] = xx
                                           }
 
                                         sealed abstract class ProductBuilder[X] {
