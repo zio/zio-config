@@ -125,7 +125,7 @@ It will be deprecated once we find users have moved on from scala 2.11.
 
 ```
 
-To know more about various semantics of `descriptor`, please refer to the api docs.
+To know more about various semantics of `descriptor`, please refer to the [api docs](https://javadoc.io/static/dev.zio/zio-config-magnolia_2.13/1.0.0-RC31-1/zio/config/magnolia/index.html#descriptor[A](implicitconfig:zio.config.magnolia.package.Descriptor[A]):zio.config.ConfigDescriptor[A]).
 
 **NOTE**
 
