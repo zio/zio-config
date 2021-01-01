@@ -1,0 +1,3 @@
+package zio.config.typesafe
+
+object TypesafeConfigSource extends BaseTypesafeConfigSource

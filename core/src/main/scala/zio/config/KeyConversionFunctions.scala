@@ -1,7 +1,6 @@
 package zio.config
 
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
 
 private[config] trait KeyConversionFunctions {
 
@@ -13,6 +12,20 @@ private[config] trait KeyConversionFunctions {
    *   camelToDelimiter("abcDef", "-") === abc-def
    * }}}
    */
+  /*
+  def camelToDelimiter(input: String, delimiter: String): String = {
+    @tailrec
+    def go(accDone: List[Char], acc: List[Char]): List[Char] = acc match {
+      case Nil => accDone
+      case a :: b :: c :: tail if a.isUpper && b.isUpper && c.isLower => go(accDone ++ List(a) ++ delimiter.toList ++ List(b, c), tail)
+      case a :: b :: tail if a.isLower && b.isUpper => go(accDone ++ (a :: delimiter.toList) ++ List(b), tail)
+      case a :: tail => go(accDone :+ a, tail)
+    }
+    input.codePointAt()
+
+    go(Nil, input.toList).mkString.toLowerCase
+  }
+  */
   def camelToDelimiter(input: String, delimiter: String): String = {
     def addToAcc(acc: List[String], current: List[Int]) = {
       def currentWord = current.reverse.flatMap(i => Character.toChars(i)).mkString.toLowerCase
@@ -33,7 +46,8 @@ private[config] trait KeyConversionFunctions {
           loop(tail, acc, head :: current, beginning = false)
       }
 
-    loop(input.codePoints().iterator().asScala.map(x => x: Int).toList, Nil, Nil, beginning = true)
+    val codePoints = (0 to input.length).map(input.codePointAt).toList
+    loop(codePoints, Nil, Nil, beginning = true)
   }
 
   /**

@@ -1,7 +1,7 @@
 package zio.config
 
-import java.io.File
-import java.net.{ URI, URL }
+//import java.io.File
+import java.net.URI
 import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 import java.util.Properties
@@ -220,8 +220,8 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      */
     def duration(path: String): ConfigDescriptor[Duration] = nested(path)(duration)
 
-    val file: ConfigDescriptor[File] =
-      sourceDesc(ConfigSource.empty, PropertyType.FileType) ?? "value of type file"
+    //val file: ConfigDescriptor[File] =
+    //  sourceDesc(ConfigSource.empty, PropertyType.FileType) ?? "value of type file"
 
     /**
      * A config descriptor that describes retrieving a file from a given path.
@@ -241,7 +241,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * }}}
      *
      */
-    def file(path: String): ConfigDescriptor[File] = nested(path)(file)
+    //def file(path: String): ConfigDescriptor[File] = nested(path)(file)
 
     val float: ConfigDescriptor[Float] =
       sourceDesc(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
@@ -496,8 +496,8 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      */
     def uuid(path: String): ConfigDescriptor[UUID] = nested(path)(uuid)
 
-    val url: ConfigDescriptor[URL] =
-      sourceDesc(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL"
+    //val url: ConfigDescriptor[URL] =
+    //  sourceDesc(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL"
 
     /**
      * A config descriptor that describes retrieving a Url from a given path.
@@ -517,7 +517,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * }}}
      *
      */
-    def url(path: String): ConfigDescriptor[URL] = nested(path)(url)
+    //def url(path: String): ConfigDescriptor[URL] = nested(path)(url)
 
     val zioDuration: ConfigDescriptor[zio.duration.Duration] =
       sourceDesc(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
@@ -542,8 +542,8 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      */
     def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
 
-    val javaFilePath: ConfigDescriptor[java.nio.file.Path] =
-      sourceDesc(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path"
+    //val javaFilePath: ConfigDescriptor[java.nio.file.Path] =
+    //  sourceDesc(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path"
 
     /**
      * A config descriptor that describes retrieving a javaFilePath from a given path.
@@ -563,8 +563,8 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * }}}
      *
      */
-    def javaFilePath(path: String): ConfigDescriptor[java.nio.file.Path] =
-      lazyDesc(nested(path)(javaFilePath))
+    //def javaFilePath(path: String): ConfigDescriptor[java.nio.file.Path] =
+    //  lazyDesc(nested(path)(javaFilePath))
   }
 
   /**
