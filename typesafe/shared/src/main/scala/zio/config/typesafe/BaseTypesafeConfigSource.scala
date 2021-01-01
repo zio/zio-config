@@ -1,6 +1,5 @@
 package zio.config.typesafe
 
-import java.io.File
 import java.lang.{ Boolean => JBoolean }
 import com.typesafe.config._
 import zio.config.PropertyTree.{ Leaf, _ }
@@ -10,7 +9,7 @@ import scala.collection.immutable.Nil
 import scala.util.{ Failure, Success, Try }
 import VersionSpecificSupport._
 
-object TypesafeConfigSource {
+trait BaseTypesafeConfigSource {
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` from a given file in resource classpath.
@@ -29,34 +28,6 @@ object TypesafeConfigSource {
   def unsafeDefaultLoader: Either[ReadError[String], ConfigSource] =
     fromTypesafeConfig(ConfigFactory.load.resolve)
 
-  /**
-   * Retrieve a `ConfigSource` from `typesafe-config` from a given config file
-   *
-   * A complete example usage:
-   *
-   * {{{
-   *   val configSource = TypesafeConfigSource.fromHoconFile(new File("/path/to/xyz.hocon"))
-   *
-   *   case class MyConfig(port: Int, url: String)
-   *
-   *   val result: Task[MyConfig] =
-   *     configSource.flatMap(source => ZIO.fromEither(read(descriptor[MyConfig] from source))
-   * }}}
-   */
-  /*
-  def fromHoconFile[A](file: File): Either[ReadError[String], ConfigSource] =
-    Try(ConfigFactory.parseFile(file).resolve).toEither.swap
-      .map(
-        r =>
-          ReadError.SourceError(
-            s"Unable to get a form a valid config-source from hocon file. ${r}"
-          ): ReadError[String]
-      )
-      .swap
-      .flatMap(typesafeConfig => {
-        fromTypesafeConfig(typesafeConfig)
-      })
-   */
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` HOCON string.
@@ -193,7 +164,7 @@ object TypesafeConfigSource {
         .root()
     }
 
-  def loopLeaf(key: Option[String], tree: Leaf[String]): ConfigObject =
+  private def loopLeaf(key: Option[String], tree: Leaf[String]): ConfigObject =
     key
       .fold(ConfigFactory.empty())(
         last =>
@@ -206,7 +177,7 @@ object TypesafeConfigSource {
       )
       .root()
 
-  def loopRecord(key: Option[String], tree: Record[String, String]): ConfigObject = {
+  private def loopRecord(key: Option[String], tree: Record[String, String]): ConfigObject = {
     val inner = tree.value.toList.foldLeft(ConfigFactory.empty().root()) {
       case (acc, (k, tree)) =>
         val newObject =
@@ -217,7 +188,7 @@ object TypesafeConfigSource {
     key.fold(inner)(key => inner.atKey(key).root())
   }
 
-  def loopSequence(key: Option[String], tree: Sequence[String, String]): ConfigObject =
+  private def loopSequence(key: Option[String], tree: Sequence[String, String]): ConfigObject =
     key match {
       case Some(key) =>
         val leaves = partitionWith(tree.value) {

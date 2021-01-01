@@ -221,7 +221,8 @@ lazy val zioConfigTypesafe =
       .withoutSuffixFor(JVMPlatform)
       .crossType(CrossType.Full)
       .in(file("typesafe"))
-  ).jsConfigure(_.enablePlugins(ShoconPlugin))
+  )
+    .jsConfigure(_.enablePlugins(ShoconPlugin))
     .settings(
       name := "zio-config-typesafe",
       libraryDependencies ++= Seq(

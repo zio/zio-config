@@ -99,7 +99,7 @@ object BuildHelper {
               .filterNot(unmanagedResourceDirectories.value.contains)
               .distinct
           }
-        }),
+        })
       )
   }
 }
