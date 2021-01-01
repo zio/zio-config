@@ -43,6 +43,7 @@ object TypesafeConfigSource {
    *     configSource.flatMap(source => ZIO.fromEither(read(descriptor[MyConfig] from source))
    * }}}
    */
+  /*
   def fromHoconFile[A](file: File): Either[ReadError[String], ConfigSource] =
     Try(ConfigFactory.parseFile(file).resolve).toEither.swap
       .map(
@@ -55,6 +56,7 @@ object TypesafeConfigSource {
       .flatMap(typesafeConfig => {
         fromTypesafeConfig(typesafeConfig)
       })
+   */
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` HOCON string.

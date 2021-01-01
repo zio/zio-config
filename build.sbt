@@ -236,7 +236,7 @@ lazy val zioConfigShocon =
       .in(file("typesafe"))
   ).enablePlugins(ShoconPlugin)
     .settings(
-      name := "zio-config-typesafe",
+      name := "zio-config-shocon",
       libraryDependencies ++= Seq(
         "org.akka-js" %%% "shocon"       % "1.0.0",
         "dev.zio"     %%% "zio-test"     % zioVersion % Test,

@@ -44,11 +44,12 @@ object TypesafeConfig {
    *     TypesafeConfig.fromHoconFile(new File("/path/to/xyz.hocon"), descriptor[MyConfig])
    * }}}
    */
+  /*
   def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(
     implicit tag: Tag[A]
   ): Layer[ReadError[String], Has[A]] =
     fromTypesafeConfig(ConfigFactory.parseFile(file).resolve, configDescriptor)
-
+   */
   /**
    * Retrieve a config from `typesafe-config` from a given Hocon File.
    *
