@@ -78,7 +78,7 @@ lazy val refinedDependencies =
   }
 
 lazy val scala211projects =
-  Seq[ProjectReference](zioConfig.jvm, zioConfigTypesafe, zioConfigShapeless, zioConfigDerivation, zioConfigYaml)
+  Seq[ProjectReference](zioConfig.jvm, zioConfigTypesafe.jvm, zioConfigShapeless, zioConfigDerivation, zioConfigYaml)
 lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
   zioConfigGen,
   zioConfigRefined,
@@ -177,7 +177,7 @@ lazy val examples = module("zio-config-examples", "examples")
         })
         .value
   )
-  .dependsOn(zioConfig.jvm, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigGen)
+  .dependsOn(zioConfig.jvm, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe.jvm, zioConfigGen)
 
 lazy val zioConfigDerivation = module("zio-config-derivation", "derivation")
   .dependsOn(zioConfig.jvm)
@@ -190,7 +190,7 @@ lazy val zioConfigGen = module("zio-config-gen", "gen")
       "org.scalatest" %% "scalatest"         % "3.2.3" % Test
     )
   )
-  .dependsOn(zioConfigTypesafe, zioConfigMagnolia)
+  .dependsOn(zioConfigTypesafe.jvm, zioConfigMagnolia)
 
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
@@ -216,35 +216,31 @@ lazy val zioConfigShapeless = module("zio-config-shapeless", "shapeless")
   .dependsOn(zioConfig.jvm % "compile->compile;test->test", zioConfigDerivation)
 
 lazy val zioConfigTypesafe =
-  module("zio-config-typesafe", "typesafe")
+  applyCrossProjectDefaults(
+    crossProject(JVMPlatform, JSPlatform)
+      .withoutSuffixFor(JVMPlatform)
+      .crossType(CrossType.Full)
+      .in(file("typesafe"))
+  ).jsConfigure(_.enablePlugins(ShoconPlugin))
     .settings(
+      name := "zio-config-typesafe",
       libraryDependencies ++= Seq(
-        "com.typesafe" % "config"        % "1.4.1",
-        "dev.zio"      %% "zio-test"     % zioVersion % Test,
-        "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
+        "dev.zio" %%% "zio-test"     % zioVersion % Test,
+        "dev.zio" %%% "zio-test-sbt" % zioVersion % Test
       ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
       scalacOptions += "-P:silencer:lineContentFilters=import VersionSpecificSupport\\._"
     )
-    .dependsOn(zioConfig.jvm % "compile->compile;test->test")
-
-lazy val zioConfigShocon =
-  applyCrossProjectDefaults(
-    crossProject(JVMPlatform, JSPlatform)
-      .withoutSuffixFor(JVMPlatform)
-      .crossType(CrossType.Pure)
-      .in(file("typesafe"))
-  ).enablePlugins(ShoconPlugin)
-    .settings(
-      name := "zio-config-shocon",
+    .jvmSettings(
       libraryDependencies ++= Seq(
-        "org.akka-js" %%% "shocon"       % "1.0.0",
-        "dev.zio"     %%% "zio-test"     % zioVersion % Test,
-        "dev.zio"     %%% "zio-test-sbt" % zioVersion % Test
+        "com.typesafe" % "config" % "1.4.1"
+      )
+    )
+    .jsSettings(
+      libraryDependencies ++= Seq(
+        "org.akka-js" %%% "shocon" % "1.0.0"
       ),
-      compile in Compile := (compile in Compile).dependsOn(shoconConcat).value,
-      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
-      scalacOptions += "-P:silencer:lineContentFilters=import VersionSpecificSupport\\._"
+      compile in Compile := (compile in Compile).dependsOn(shoconConcat).value
     )
     .dependsOn(zioConfig % "compile->compile;test->test")
 lazy val zioConfigYaml =
@@ -271,7 +267,7 @@ lazy val zioConfigTypesafeMagnoliaTests =
       ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
-    .dependsOn(zioConfig.jvm % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia)
+    .dependsOn(zioConfig.jvm % "compile->compile;test->test", zioConfigTypesafe.jvm, zioConfigMagnolia)
 
 def module(moduleName: String, fileName: String): Project =
   Project(moduleName, file(fileName))
@@ -311,5 +307,5 @@ lazy val docs = project
     refinedDependencies,
     libraryDependencies += "dev.zio" %% "zio" % zioVersion
   )
-  .dependsOn(zioConfig.jvm, zioConfigMagnolia, zioConfigTypesafe, zioConfigRefined, zioConfigGen)
+  .dependsOn(zioConfig.jvm, zioConfigMagnolia, zioConfigTypesafe.jvm, zioConfigRefined, zioConfigGen)
   .enablePlugins(MdocPlugin, DocusaurusPlugin)
