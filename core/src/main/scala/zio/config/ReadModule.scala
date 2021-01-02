@@ -242,10 +242,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      // FIXME: Distinguish between re-use of structures vs recursive structures.
-      // If not distinguished, we miss out deep errors in the error report when config has same products/co-products repeated (than a recursion).
-      // However, this is not a major roadblock, as we keep deep error-reports in all other cases.
-
       // FIXME: Remove following comments
       //
       // Why program-summary?: An early exit should be only for recursive values (`programSummary.contains(config)`)
@@ -270,31 +266,43 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       //     Details: optional value, value of type string
       // }}}
       //
-      if (isEmptyConfigSource(config, keys.reverse) && programSummary.contains(config)) {
+      if (programSummary.contains(config) && isEmptyConfigSource(config, keys.reverse)) {
         Left(ReadError.MissingValue(path.reverse, descriptions))
       } else {
         config match {
           case c @ Lazy(thunk) =>
             loopAny(path, keys, thunk(), descriptions, c :: programSummary)
+
           case c @ Default(_, _) =>
             loopDefault(path, keys, c, descriptions, c :: programSummary)
+
           case c @ Describe(_, message) =>
             loopAny(path, keys, c.config, descriptions :+ message, c :: programSummary)
-          case c @ DynamicMap(_, _) => loopMap(path, keys, c, descriptions, c :: programSummary)
+
+          case c @ DynamicMap(_, _) =>
+            loopMap(path, keys, c, descriptions, c :: programSummary)
+
           case c @ Nested(_, _, _) =>
             loopNested(path, keys, c, descriptions, c :: programSummary)
+
           case c @ Optional(config) =>
             loopOptional(path, keys, c, descriptions, c :: programSummary)
+
           case c @ OrElse(_, _) =>
             loopOrElse(path, keys, c, descriptions, c :: programSummary)
+
           case c @ OrElseEither(_, _) =>
             loopOrElseEither(path, keys, c, descriptions, c :: programSummary)
+
           case c @ Source(_, _) =>
             loopSource(path, keys, c, descriptions)
+
           case c @ Zip(_, _) =>
             loopZip(path, keys, c, descriptions, c :: programSummary)
+
           case c @ TransformOrFail(_, _, _) =>
             loopXmapEither(path, keys, c, descriptions, c :: programSummary)
+
           case c @ Sequence(_, _) =>
             loopSequence(path, keys, c, descriptions, c :: programSummary)
         }

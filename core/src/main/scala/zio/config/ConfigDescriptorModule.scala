@@ -569,7 +569,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *
      */
-    final def from(that: => ConfigSource): ConfigDescriptor[A] =
+    final def from(that: ConfigSource): ConfigDescriptor[A] =
       self.updateSource(_.orElse(that))
 
     /**
@@ -1055,9 +1055,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
         def runLoopForBoth(left: ConfigDescriptor[_], right: ConfigDescriptor[_]): Set[ConfigSource] =
           (summary.contains(left), summary.contains(right)) match {
-            case (true, true) => 
+            case (true, true) =>
               set
-            
+
             case (true, false) =>
               summary = right :: summary
               loop(right, set)
@@ -1306,9 +1306,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * }}}
      */
     def collectAll[A](head: => ConfigDescriptor[A], tail: ConfigDescriptor[A]*): ConfigDescriptor[List[A]] =
-      tail
+      tail.reverse
         .map(lazyDesc(_))
-        .reverse
         .foldLeft[ConfigDescriptor[(A, List[A])]](
           lazyDesc(head)
             .transform((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
@@ -2009,7 +2008,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[A] =
       Lazy(() => config)
 
-    final def nestedDesc[A](source: => ConfigSource, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
+    final def nestedDesc[A](source: ConfigSource, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(source, path, lazyDesc(config))
 
     final def optionalDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
@@ -2027,7 +2026,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def sequenceDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       Sequence(source, lazyDesc(config))
 
-    final def sourceDesc[A](source: => ConfigSource, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
+    final def sourceDesc[A](source: ConfigSource, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
       Source(source, propertyType)
 
     final def zipDesc[A, B](left: => ConfigDescriptor[A], right: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
@@ -2037,7 +2036,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       config: => ConfigDescriptor[A],
       f: A => Either[String, B],
       g: B => Either[String, A]
-    ) =
+    ): ConfigDescriptor[B] =
       TransformOrFail(lazyDesc(config), f, g)
   }
 }
