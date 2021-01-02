@@ -59,8 +59,12 @@ object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSuppor
 
       assert(result)(isRight(equalTo(SimpleRec(1, Left(SimpleRec(2, Right(3)))))))
     },
+
     test("Read recursive typesafe config with map") {
-      case class SimpleRec(id: Int, s: Map[String, SimpleRec])
+      type ProfessorId = Int
+      type StudentId = String
+
+      case class Professor(id: ProfessorId, s: Map[StudentId, Professor])
 
       val res =
         s"""
@@ -84,14 +88,14 @@ object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSuppor
            |}
            |""".stripMargin
 
-      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res).loadOrThrow)
+      val result = read(descriptor[Professor] from TypesafeConfigSource.fromHoconString(res).loadOrThrow)
 
       assert(result)(
         isRight(
           equalTo(
-            SimpleRec(
+            Professor(
               1,
-              Map("12" -> SimpleRec(33, Map("13" -> SimpleRec(44, Map.empty))), "11" -> SimpleRec(22, Map.empty))
+              Map("12" -> Professor(33, Map("13" -> Professor(44, Map.empty))), "11" -> Professor(22, Map.empty))
             )
           )
         )
