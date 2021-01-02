@@ -59,10 +59,9 @@ object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSuppor
 
       assert(result)(isRight(equalTo(SimpleRec(1, Left(SimpleRec(2, Right(3)))))))
     },
-
     test("Read recursive typesafe config with map") {
       type ProfessorId = Int
-      type StudentId = String
+      type StudentId   = String
 
       case class Professor(id: ProfessorId, s: Map[StudentId, Professor])
 
