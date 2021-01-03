@@ -379,4 +379,5 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       case ReadError.FormatError(_, _, _, _)  => 1
       case ReadError.ConversionError(_, _, _) => 1
     }(_ + _, 0)
+
 }

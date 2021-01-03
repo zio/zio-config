@@ -30,23 +30,17 @@ object CollectAllRoundtripTest
 
               val config = collectAll(consOfConfig.head, consOfConfig.tail: _*)
 
-              //println(config)
-
               val readAndWrite =
                 for {
-                  result <- ZIO.fromEither(read(config from ConfigSource.fromMap(inputSource)))
-                  //_      = println("is this getting printed out")
-                  //written <- ZIO.fromEither(write(config, result))
-                } yield result
+                  result  <- ZIO.fromEither(read(config from ConfigSource.fromMap(inputSource)))
+                  written <- ZIO.fromEither(write(config, result))
+                } yield written
 
-              val zi = zio.Runtime.default
-              zi.unsafeRun(readAndWrite)
+              val actual = readAndWrite
+                .map(_.flattenString())
+                .fold(_ => Nil, _.toList.sortBy(_._1))
 
-              // val actual = readAndWrite
-              //   .map(_.flattenString())
-              //   .fold(_ => Nil, _.toList.sortBy(_._1))
-
-              assertM(ZIO.effect(1))(equalTo(1))
+              assertM(actual)(equalTo(inputSource.toList.sortBy(_._1).map({ case (k, v) => (k, singleton(v)) })))
           }
         }
       )

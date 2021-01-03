@@ -4,7 +4,6 @@ import zio.test._
 import zio.test.Assertion._
 import RecursiveConfigTestUtils._
 import zio.config.ConfigDescriptor._
-import zio.test.TestAspect.ignore
 
 object RecursiveConfigTest
     extends BaseSpec(
@@ -137,7 +136,7 @@ object RecursiveConfigTest
               )
             )
           )
-        } @@ ignore @@ TestAspect.exceptScala211
+        } @@ TestAspect.exceptScala211
       )
     )
 
