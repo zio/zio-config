@@ -1,7 +1,9 @@
 package zio.config
 
 import VersionSpecificSupport._
+
 import scala.reflect.ClassTag
+import scala.collection.mutable.{ ListBuffer, Map => MutableMap }
 
 trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   import ConfigDescriptorAdt._
@@ -9,14 +11,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   sealed trait ConfigDescriptor[A] { self =>
 
     /**
-     * Given `A` and `B` the below `apply` function is used to
-     * convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
-     *
-     * While we can retrieve B directly from A,
-     * there is no guarantee that reverse relationship exists. i.e, B => A.
-     *
-     * Instead the reverse relationship is `B => Option[A]`. `apply` is a "convenient" version of
+     * `apply` is a "convenient" version of
      * `transformOrFail`, and is mainly used to `apply` and `unapply` case-classes from elements.
+     *
+     * Given `A` and `B` the  `apply` can be used to
+     * convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
      *
      * Let's define a simple `ConfigDescriptor`,
      * that talks about retrieving a `String` configuration (example: PORT).
@@ -25,13 +24,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    val port: ConfigDescriptor[Int] = int("PORT")
      *  }}}
      *
-     * Later you decided to convert the type of from `Int` to `String` (for some reason)
+     * For some reason, if we decide to convert `Int` to `String,
+     * `A => B` becomes `Int => String` and that will always work.
      *
-     * In this case. In this case, `A => B` is `Int => String` which will always work.
-     *
-     * However, the reverse relationship (which is used to retrieve
-     * the original type from its transformed representation) which is `String => Int` is no more a
-     * total function, unless it was `String => Either[error, Int]` or `String => Option[Int]`.
+     * However, the reverse relationship which is `String => Int` is no more a
+     * total function, unless it is represented as `String => Either[error, Int]` or `String => Option[Int]`.
      *
      * That is, not all elements of set `String` can be converted to `Int`.
      *
@@ -613,18 +610,19 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * }}}
      */
     def mapKey(f: K => K): ConfigDescriptor[A] = {
-      var summary: Map[ConfigDescriptor[_], ConfigDescriptor[_]] = Map()
+      val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
+        MutableMap()
 
       def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
         config match {
           case c @ Lazy(thunk) =>
             val res = thunk()
 
-            summary.get(c) match {
+            descriptors.get(c) match {
               case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
               case None =>
                 val result = Lazy(() => loop(res))
-                summary = summary.updated(c, result)
+                descriptors.update(c, result)
                 result
             }
 
@@ -984,11 +982,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def updateSource(
       f: ConfigSource => ConfigSource
     ): ConfigDescriptor[A] = {
-      // FIXME:
-      // Logic to ensure any already-updated sources is reused.
-      // This is to ensure the behaviour of recursive structure are kept as it is (i.e, identity stability)
-      // while updating sources on ConfigDescriptor nodes.
-      var summary: Map[ConfigDescriptor[_], ConfigDescriptor[_]] = Map()
+      val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
+        MutableMap()
 
       def loop[B](
         config: ConfigDescriptor[B]
@@ -997,11 +992,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case c @ Lazy(thunk) =>
             val res = thunk()
 
-            summary.get(c) match {
+            descriptors.get(c) match {
               case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
               case None =>
                 val result = Lazy(() => loop(res))
-                summary = summary.updated(c, result)
+                descriptors.update(c, result)
                 result
             }
 
@@ -1011,24 +1006,24 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case DynamicMap(source, conf) =>
             DynamicMap(f(source), loop(conf))
 
-          case c @ Nested(source, path, conf) =>
+          case Nested(source, path, conf) =>
             Nested(f(source), path, loop(conf))
 
-          case c @ Optional(conf) =>
+          case Optional(conf) =>
             Optional(loop(conf))
 
-          case c @ Sequence(source, conf) =>
+          case Sequence(source, conf) =>
             Sequence(f(source), loop(conf))
 
-          case c @ Describe(conf, message) =>
+          case Describe(conf, message) =>
             Describe(loop(conf), message)
-          case c @ Default(conf, b) =>
+          case Default(conf, b) =>
             Default(loop(conf), b)
 
-          case c @ TransformOrFail(conf, f, g) =>
+          case TransformOrFail(conf, f, g) =>
             TransformOrFail(loop(conf), f, g)
 
-          case c @ Zip(left, right) =>
+          case Zip(left, right) =>
             Zip(loop(left), loop(right))
 
           case OrElseEither(left, right) =>
@@ -1041,44 +1036,48 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       loop(self)
     }
 
-    lazy val sources = {
-      var summary: List[ConfigDescriptor[_]] = Nil
+    /**
+     * Fetch all the sources associated with a ConfigDescriptor.
+     */
+    lazy val sources: Set[ConfigSource] = {
+      val sourceUpdatedConfigDescriptors: ListBuffer[ConfigDescriptor[_]] =
+        ListBuffer()
 
       def loop(cfg: ConfigDescriptor[_], set: Set[ConfigSource]): Set[ConfigSource] = {
         def runLoop(config: ConfigDescriptor[_], sourceOfConfig: Option[ConfigSource]): Set[ConfigSource] =
-          if (summary.contains(config)) {
+          if (sourceUpdatedConfigDescriptors.contains(config)) {
             set
           } else {
-            summary = config :: summary
+            sourceUpdatedConfigDescriptors += config
             loop(config, sourceOfConfig.fold(set)(source => Set(source) ++ set))
           }
 
         def runLoopForBoth(left: ConfigDescriptor[_], right: ConfigDescriptor[_]): Set[ConfigSource] =
-          (summary.contains(left), summary.contains(right)) match {
+          (sourceUpdatedConfigDescriptors.contains(left), sourceUpdatedConfigDescriptors.contains(right)) match {
             case (true, true) =>
               set
 
             case (true, false) =>
-              summary = right :: summary
+              sourceUpdatedConfigDescriptors += right
               loop(right, set)
 
             case (false, true) =>
-              summary = left :: summary
+              sourceUpdatedConfigDescriptors += left
               loop(left, set)
 
             case (false, false) =>
-              summary = left :: right :: summary
+              sourceUpdatedConfigDescriptors ++= ListBuffer(left, right)
               loop(left, set) ++ loop(right, set)
           }
 
         cfg match {
-          case Default(config, default) =>
+          case Default(config, _) =>
             runLoop(config, None)
 
-          case Describe(config, message) =>
+          case Describe(config, _) =>
             runLoop(config, None)
 
-          case DynamicMap(source, config) =>
+          case DynamicMap(_, config) =>
             runLoop(config, None)
 
           case Sequence(source, config) =>
@@ -1087,7 +1086,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Lazy(get) =>
             runLoop(get(), None)
 
-          case Nested(source, path, config) =>
+          case Nested(source, _, config) =>
             runLoop(config, Some(source))
 
           case Optional(config) =>
@@ -1099,10 +1098,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case OrElseEither(left, right) =>
             runLoopForBoth(left, right)
 
-          case Source(source, propertyType) =>
+          case Source(source, _) =>
             set ++ Set(source)
 
-          case TransformOrFail(config, f, g) =>
+          case TransformOrFail(config, _, _) =>
             runLoop(config, None)
 
           case Zip(left, right) =>

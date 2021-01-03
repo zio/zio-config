@@ -252,6 +252,51 @@ val testConfig =
 
 ```
 
+## Combining various effectful sources
+
+There are various ways you can interact with zio-config when dealing with multiple sources.
+Below given is a naive example, that will help you get a gist of how to get config values from various
+sources, especially when some of the sources returns ZIO.
+
+```scala mdoc:silent
+import java.io.File
+
+import zio.{ExitCode, URIO, ZIO, system}
+import zio.config._
+import zio.config.typesafe._
+import zio.console.{Console, putStrLn}
+
+/**
+ * One of the ways you can summon various sources especially
+ * when some of the `fromSource` functions return ZIO.
+ */
+object CombineSourcesExample extends zio.App {
+  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
+    application.either.flatMap(r => putStrLn(s"Result: ${r}")).exitCode
+
+  final case class Config(username: String , password: String)
+
+  val getDesc: ZIO[system.System, ReadError[String], ConfigDescriptor[Config]] =
+    for {
+      hoconFile <- ZIO.fromEither(TypesafeConfigSource.fromHoconFile(new File("/invalid/path")))
+      constant  <- ZIO.fromEither(TypesafeConfigSource.fromHoconString(s""))
+      env       <- ConfigSource.fromSystemEnv
+      sysProp   <- ConfigSource.fromSystemProperties
+      source    = hoconFile <> constant <> env <> sysProp
+    } yield (descriptor[Config] from source)
+
+  val application: ZIO[Console with system.System, String, Unit] =
+    for {
+      desc        <- getDesc.mapError(_.prettyPrint())
+      configValue <- ZIO.fromEither(read(desc)).mapError(_.prettyPrint())
+      string      <- ZIO.fromEither(configValue.toJson(desc))
+      _ <- putStrLn(string)
+    } yield ()
+}
+
+```
+
+
 ## Either Types (orElseEither)
 
 For instance, if we are ok accepting either a token or username, then our target type should be `Either[String, String]`.

@@ -285,7 +285,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           case c @ Nested(_, _, _) =>
             loopNested(path, keys, c, descriptions, c :: programSummary)
 
-          case c @ Optional(config) =>
+          case c @ Optional(_) =>
             loopOptional(path, keys, c, descriptions, c :: programSummary)
 
           case c @ OrElse(_, _) =>
