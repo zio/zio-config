@@ -1,5 +1,6 @@
 package zio.config.typesafe
 
+import zio.{ Has, ZIO }
 import zio.config.PropertyTree.{ Leaf, Record, Sequence }
 import zio.config.typesafe.TypesafeConfigTestSupport._
 import zio.test.Assertion._
@@ -39,6 +40,14 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
     },
     test("Read a complex hocon structure successfully") {
       assert(readComplexSource)(equalTo(expectedResult))
+    },
+    testM("Read a complex hocon structure produced by effect successfully") {
+      assertM(
+        TypesafeConfig
+          .fromHoconStringM(ZIO.succeed(hocon), complexDescription)
+          .build
+          .useNow
+      )(equalTo(Has(expectedResult)))
     }
   )
 }
