@@ -242,30 +242,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      // FIXME: Remove following comments
-      //
-      // Why program-summary?: An early exit should be only for recursive values (`programSummary.contains(config)`)
-      // Such that if configuration isn't recursive, we report all errors at deeper levels.
-      //
-      // Example:
-      // Without a program summary, for a non-recursive structure, we get the following error structure:
-      //  {{{
-      //    MissingValue
-      //     path: a.a
-      //     Details: optional value
-      //  }}}
-      //
-      // With program summary, for a non-recursive structure, we get the following error structure
-      //
-      // {{{
-      //   MissingValue
-      //     path: a.a.b2
-      //     Details: optional value, value of type string
-      //   MissingValue
-      //     path: a.a.a2
-      //     Details: optional value, value of type string
-      // }}}
-      //
       if (programSummary.contains(config) && isEmptyConfigSource(config, keys.reverse)) {
         Left(ReadError.MissingValue(path.reverse, descriptions))
       } else {
