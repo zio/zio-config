@@ -119,6 +119,7 @@ val myConfigAutomatic = descriptor[MyConfig]
 
 `myConfig` and `myConfigAutomatic` are same description, and is of the same type. 
 
+Refer to API docs for more explanations on [descriptor](https://javadoc.io/static/dev.zio/zio-config-magnolia_2.13/1.0.0-RC31-1/zio/config/magnolia/index.html#descriptor[A](implicitconfig:zio.config.magnolia.package.Descriptor[A]):zio.config.ConfigDescriptor[A])
 More examples on automatic derivation is in examples module of [zio-config](https://github.com/zio/zio-config)
 
 ## Read config from various sources
