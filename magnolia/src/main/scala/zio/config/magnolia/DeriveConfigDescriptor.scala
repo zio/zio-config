@@ -738,12 +738,13 @@ trait DeriveConfigDescriptor { self =>
   implicit def getDescriptor[T]: Descriptor[T] = macro Magnolia.gen[T]
 
   /**
-   * descriptor[A] allows the user to automatically derive `ConfigDescriptor` instead
-   * of using the ConfigDescriptor dsl explicitly (i.e, manual implementation).
-   * While manual implementation can be verbose, it is a recommended to use it when it comes to simple configurations.
+   * descriptor[A] allows us to automatically derive `ConfigDescriptor` instead
+   * of using the ConfigDescriptor dsl explicitly (i.e, manually defining configdescriptor).
+   * While manual definitions can be verbose, it is preferred when it comes to simple configurations.
    *
    * On the other hand, automatic derivation can become handly when the config is complex with relatively larger number of parameters,
    * or when it is constantly changing during the software lifecycle, or it's just complex structure with nested products and coproducts.
+   * Also, when building configuration driven apps, most probably we might end up mixing manual and automatic together.
    *
    * Below given is a small example to show the usage of `descriptor[A]`.
    *
@@ -902,7 +903,7 @@ trait DeriveConfigDescriptor { self =>
    *   }
    * }}}
    *
-   * If the source is HOCON, then {{{ betterDerivation.descriptor[MyConfig] }}} can read:
+   * If the source is HOCON, then {{{ customDerivation.descriptor[MyConfig] }}} can read:
    *
    *
    *  {{{

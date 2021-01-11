@@ -170,7 +170,7 @@ package object magnolia {
    *   }
    * }}}
    *
-   * If the source is HOCON, then {{{ betterDerivation.descriptor[MyConfig] }}} can read:
+   * If the source is HOCON, then {{{ customDerivation.descriptor[MyConfig] }}} can read:
    *
    *
    *  {{{

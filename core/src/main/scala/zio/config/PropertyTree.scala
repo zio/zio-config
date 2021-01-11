@@ -134,6 +134,8 @@ sealed trait PropertyTree[+K, +V] { self =>
       case (l, r)                         => l :: r :: Nil
     }
 
+  final def nonEmpty: Boolean = !isEmpty
+
   final def reduceInner[V1 >: V](f: (V1, V1) => V1): PropertyTree[K, V1] = {
     def pruneEmpty[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
       list.collect {
