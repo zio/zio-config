@@ -16,13 +16,25 @@ trait ConfigSourceModule extends KeyValueModule {
 
   trait ConfigSource { self =>
     def names: Set[ConfigSourceName]
-    // Pass a list of K and Set of Hint
-    // sealed trait StructureHint
-    // case object IsSequence extends StructureHint
-    // ...
-    def getConfigValue: List[K] => PropertyTree[K, V]
+    def getConfigValue(keys: List[K]): PropertyTree[K, V]
     def leafForSequence: LeafForSequence
 
+    /**
+     * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
+     *
+     * For example:
+     *
+     * Given three configSources, `configSource1`, `configSource2` and `configSource3`, such that
+     * configSource1 and configSource2 will only have `id` and `configSource3` act as a global fall-back source.
+     *
+     * The following config tries to fetch `Id` from configSource1, and if fails, it tries `configSource2`,
+     * and if both fails it gets from `configSource3`. `Age` will be fetched only from `configSource3`.
+     *
+     * {{{
+     *   val config = (string("Id") from (configSource1 orElse configSource2) |@| int("Age"))(Person.apply, Person.unapply)
+     *   read(config from configSource3)
+     * }}}
+     */
     def orElse(that: => ConfigSource): ConfigSource =
       getConfigSource(
         self.names ++ that.names,
@@ -30,8 +42,49 @@ trait ConfigSourceModule extends KeyValueModule {
         that.leafForSequence
       )
 
+    /**
+     * `<>` is an alias to `orElse`.
+     * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
+     *
+     * For example:
+     *
+     * Given three configSources, `configSource1`, `configSource2` and `configSource3`, such that
+     * configSource1 and configSource2 will only have `id` and `configSource3` act as a global fall-back source.
+     *
+     * The following config tries to fetch `Id` from configSource1, and if fails, it tries `configSource2`,
+     * and if both fails it gets from `configSource3`. `Age` will be fetched only from `configSource3`.
+     *
+     * {{{
+     *   val config = (string("Id") from (configSource1 orElse configSource2) |@| int("Age"))(Person.apply, Person.unapply)
+     *   read(config from configSource3)
+     * }}}
+     */
     def <>(that: => ConfigSource): ConfigSource = self orElse that
 
+    /**
+     * Convert the keys before it is queried from ConfigSource.
+     *
+     * For example:
+     *
+     * Given two configSources, `configSource1` and `configSource2`, such that
+     * configSource1 can have uppercase ID and lowercase age,
+     * and configSource2 can have lowercase ID and uppercase age.
+     *
+     * The following solution will not help here, as you would imagine.
+     * `config.mapKeys(_.toUpperCase) from configSource1 orElse config.mapKeys(_.toLowerCase) from configSource2)`
+     *
+     * A correct solution here would be the following, indicating the fact `configSources` act differently for
+     * different fields.
+     *
+     * {{{
+     *
+     *   val idSource = configSource1.convertKeys(_.toUpperCase) <> configSource2.convertKeys(_.toLowerCase)
+     *   val ageSource = configSource1.convertKeys(_.toLowerCase) <> configSource2.convertKeys(_.toUpperCase)
+     *
+     *   val config = (string("Id") from idSource |@| int("Age") from ageSource)(Person.apply, Person.unapply)
+     *   read(config)
+     * }}}
+     */
     def convertKeys(f: K => K): ConfigSource =
       getConfigSource(names, l => getConfigValue(l.map(f)), leafForSequence)
   }
@@ -43,9 +96,9 @@ trait ConfigSourceModule extends KeyValueModule {
     isLeafValidSequence: LeafForSequence
   ): ConfigSource =
     new ConfigSource { self =>
-      def names: Set[ConfigSourceName]                  = sourceNames
-      def getConfigValue: List[K] => PropertyTree[K, V] = getTree
-      def leafForSequence: LeafForSequence              = isLeafValidSequence
+      def names: Set[ConfigSourceName]                      = sourceNames
+      def getConfigValue(keys: List[K]): PropertyTree[K, V] = getTree(keys)
+      def leafForSequence: LeafForSequence                  = isLeafValidSequence
     }
 
   /**

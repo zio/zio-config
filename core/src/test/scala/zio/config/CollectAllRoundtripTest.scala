@@ -30,7 +30,7 @@ object CollectAllRoundtripTest
 
               val config = collectAll(consOfConfig.head, consOfConfig.tail: _*)
 
-              val readAndWrite: ZIO[Any, Any, PropertyTree[String, String]] =
+              val readAndWrite =
                 for {
                   result  <- ZIO.fromEither(read(config from ConfigSource.fromMap(inputSource)))
                   written <- ZIO.fromEither(write(config, result))

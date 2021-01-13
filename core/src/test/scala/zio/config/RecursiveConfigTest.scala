@@ -1,18 +1,41 @@
-//FIXME Make Recursion work without losing the view of errors
-/*
 package zio.config
 
 import zio.test._
 import zio.test.Assertion._
 import RecursiveConfigTestUtils._
-
 import zio.config.ConfigDescriptor._
 
 object RecursiveConfigTest
     extends BaseSpec(
       suite("RecursiveConfigTest")(
         test("read simple") {
-          assert(read(simpleRec from simpleTestSource))(isRight(equalTo(simpleRecursiveValue)))
+          assert(read(SimpleRec.config from SimpleRec.source))(isRight(equalTo(SimpleRec.expected)))
+        },
+        test("read simple list") {
+          assert(read(SimpleListRec.config from SimpleListRec.source))(isRight(equalTo(SimpleListRec.expected)))
+        },
+        test("read simple either") {
+          assert(read(SimpleEitherRec.config from SimpleEitherRec.source))(isRight(equalTo(SimpleEitherRec.expected)))
+        },
+        test("read simple reversed") {
+          assert(read(SimpleRecReversed.config from SimpleRecReversed.source))(
+            isRight(equalTo(SimpleRecReversed.expected))
+          )
+        },
+        test("read simple reversed multiple") {
+          assert(read(SimpleRecMultiple.config from SimpleRecMultiple.source))(
+            isRight(equalTo(SimpleRecMultiple.expected))
+          )
+        },
+        test("read simple with updated key") {
+          assert(
+            read(
+              SimpleRecMultiple.config.mapKey(_.toUpperCase()) from SimpleRecMultiple.source
+                .convertKeys(_.toLowerCase())
+            )
+          )(
+            isRight(equalTo(SimpleRecMultiple.expected))
+          )
         },
         test("read mutual recursive") {
           assert(read(data from testSource))(isRight(equalTo(recursiveValue)))
@@ -21,10 +44,10 @@ object RecursiveConfigTest
           assert(read(expr from exprSource))(isRight(equalTo(exprValue)))
         },
         test("write simple") {
-          assert(write(simpleRec, simpleRecursiveValue))(isRight(equalTo(simpleTestTree)))
+          assert(write(SimpleRec.config, SimpleRec.expected))(isRight(equalTo(SimpleRec.tree)))
         },
         test("documentation") {
-          assert(generateDocs(simpleRec).toTable)(
+          assert(generateDocs(SimpleRec.config).toTable)(
             equalTo(
               Table(
                 List(
@@ -121,26 +144,158 @@ object RecursiveConfigTestUtils {
 
   case class SimpleRec(id: Int, nested: Option[SimpleRec])
 
-  lazy val simpleRec: ConfigDescriptor[SimpleRec] =
-    (int("id") |@| nested("nested")(simpleRec).optional)(SimpleRec.apply, SimpleRec.unapply)
+  object SimpleRec {
+    val config: ConfigDescriptor[SimpleRec] =
+      (int("id") |@| nested("nested")(config).optional)(SimpleRec.apply, SimpleRec.unapply)
 
-  val simpleTestTree: PropertyTree[String, String] = PropertyTree.Record(
-    Map(
-      "id" -> PropertyTree.Leaf("1"),
-      "nested" -> PropertyTree.Record(
-        Map(
-          "id" -> PropertyTree.Leaf("2")
+    val tree: PropertyTree[String, String] = PropertyTree.Record(
+      Map(
+        "id" -> PropertyTree.Leaf("1"),
+        "nested" -> PropertyTree.Record(
+          Map(
+            "id" -> PropertyTree.Leaf("2")
+          )
         )
       )
     )
-  )
-  val simpleTestSource: ConfigSource = ConfigSource.fromPropertyTree(
-    simpleTestTree,
-    "tree",
-    LeafForSequence.Valid
-  )
 
-  val simpleRecursiveValue: SimpleRec = SimpleRec(1, Some(SimpleRec(2, None)))
+    val expected: SimpleRec =
+      SimpleRec(1, Some(SimpleRec(2, None)))
+
+    val source: ConfigSource =
+      ConfigSource.fromPropertyTree(
+        tree,
+        "tree",
+        LeafForSequence.Valid
+      )
+
+  }
+
+  case class SimpleListRec(id: Int, nested: List[SimpleListRec])
+
+  object SimpleListRec {
+    val config: ConfigDescriptor[SimpleListRec] =
+      (int("id") |@| list("nested")(config))(SimpleListRec.apply, SimpleListRec.unapply)
+
+    val tree: PropertyTree[String, String] =
+      PropertyTree.Record(
+        Map(
+          "id" -> PropertyTree.Leaf("1"),
+          "nested" -> PropertyTree.Sequence(
+            List(
+              PropertyTree.Record(
+                Map(
+                  "id"     -> PropertyTree.Leaf("2"),
+                  "nested" -> PropertyTree.Sequence(Nil)
+                )
+              )
+            )
+          )
+        )
+      )
+
+    val expected: SimpleListRec = SimpleListRec(1, List(SimpleListRec(2, Nil)))
+
+    val source: ConfigSource =
+      ConfigSource.fromPropertyTree(
+        tree,
+        "tree",
+        LeafForSequence.Invalid
+      )
+
+  }
+  case class SimpleEitherRec(id: Int, nested: Either[SimpleEitherRec, Int])
+
+  object SimpleEitherRec {
+    val config: ConfigDescriptor[SimpleEitherRec] =
+      (int("id") |@| (nested("nested")(config))
+        .orElseEither(int("termination")))(SimpleEitherRec.apply, SimpleEitherRec.unapply)
+
+    val tree: PropertyTree[String, String] = PropertyTree.Record(
+      Map(
+        "id" -> PropertyTree.Leaf("1"),
+        "nested" -> PropertyTree.Record(
+          Map(
+            "id" -> PropertyTree.Leaf("2"),
+            "nested" -> PropertyTree.Record(
+              Map(
+                "id"          -> PropertyTree.Leaf("3"),
+                "termination" -> PropertyTree.Leaf("1")
+              )
+            )
+          )
+        )
+      )
+    )
+
+    val expected: SimpleEitherRec =
+      SimpleEitherRec(1, Left(SimpleEitherRec(2, Left(SimpleEitherRec(3, Right(1))))))
+
+    val source: ConfigSource =
+      ConfigSource.fromPropertyTree(
+        tree,
+        "tree",
+        LeafForSequence.Invalid
+      )
+  }
+
+  case class SimpleRecReversed(nested: Option[SimpleRecReversed], id: Int)
+
+  object SimpleRecReversed {
+    val config: ConfigDescriptor[SimpleRecReversed] =
+      (nested("nested")(config).optional |@| int("id"))(SimpleRecReversed.apply, SimpleRecReversed.unapply)
+
+    val tree: PropertyTree[String, String] = PropertyTree.Record(
+      Map(
+        "id" -> PropertyTree.Leaf("1"),
+        "nested" -> PropertyTree.Record(
+          Map(
+            "id" -> PropertyTree.Leaf("2")
+          )
+        )
+      )
+    )
+
+    val expected: SimpleRecReversed = SimpleRecReversed(Some(SimpleRecReversed(None, 2)), 1)
+
+    val source: ConfigSource =
+      ConfigSource.fromPropertyTree(
+        tree,
+        "tree",
+        LeafForSequence.Valid
+      )
+
+  }
+
+  case class SimpleRecMultiple(nested: Option[SimpleRecMultiple], id: Int, nested2: Option[SimpleRecMultiple])
+
+  object SimpleRecMultiple {
+    val config: ConfigDescriptor[SimpleRecMultiple] =
+      (nested("nested")(config).optional |@| int("id") |@| nested("nested2")(config).optional)(
+        SimpleRecMultiple.apply,
+        SimpleRecMultiple.unapply
+      )
+
+    val tree: PropertyTree[String, String] = PropertyTree.Record(
+      Map(
+        "id" -> PropertyTree.Leaf("1"),
+        "nested" -> PropertyTree.Record(
+          Map(
+            "id" -> PropertyTree.Leaf("2")
+          )
+        )
+      )
+    )
+
+    val source: ConfigSource =
+      ConfigSource.fromPropertyTree(
+        tree,
+        "tree",
+        LeafForSequence.Valid
+      )
+
+    val expected: SimpleRecMultiple = SimpleRecMultiple(Some(SimpleRecMultiple(None, 2, None)), 1, None)
+  }
 
   case class Data(rows: Row)
 
@@ -201,4 +356,3 @@ object RecursiveConfigTestUtils {
     case Right(value) => value
   }, "test", LeafForSequence.Invalid)
 }
- */
