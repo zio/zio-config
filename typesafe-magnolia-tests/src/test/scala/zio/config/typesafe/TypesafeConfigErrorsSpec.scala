@@ -2,7 +2,7 @@ package zio.config.typesafe
 
 import zio.config._, magnolia._, ConfigDescriptor._
 import zio.test.Assertion._
-import zio.test.{ DefaultRunnableSpec, suite, _ }
+import zio.test.{ DefaultRunnableSpec, _ }
 
 object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
   final case class Account(region: String, accountId: String)

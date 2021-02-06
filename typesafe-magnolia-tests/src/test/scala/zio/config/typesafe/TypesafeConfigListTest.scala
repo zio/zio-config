@@ -2,7 +2,7 @@ package zio.config.typesafe
 
 import zio.config._, magnolia._
 import zio.test.Assertion._
-import zio.test.{ DefaultRunnableSpec, suite, _ }
+import zio.test.{ DefaultRunnableSpec, _ }
 
 object TypesafeConfigListTest extends DefaultRunnableSpec {
 
