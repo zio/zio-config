@@ -2,7 +2,7 @@ package zio.config.typesafe
 
 import zio.config._, magnolia._, ConfigDescriptor._
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
-import zio.test.{ suite, DefaultRunnableSpec }
+import zio.test.{ DefaultRunnableSpec }
 import zio.test.Assertion._
 import zio.test._
 
