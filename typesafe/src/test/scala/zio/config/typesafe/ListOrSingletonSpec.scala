@@ -4,7 +4,7 @@ import zio.ZIO
 import zio.config.read
 import zio.config.ConfigDescriptor._
 import zio.test.environment.TestEnvironment
-import zio.test.{ assertM, suite, testM, DefaultRunnableSpec, ZSpec }
+import zio.test.{ assertM, DefaultRunnableSpec, ZSpec }
 import zio.test.Assertion._
 
 object ListOrSingletonSpec extends DefaultRunnableSpec {

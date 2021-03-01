@@ -5,7 +5,7 @@ import zio.config.read
 import zio.config.typesafe.EmployeeDetails._
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 import zio.test.Assertion._
-import zio.test.{ DefaultRunnableSpec, suite, _ }
+import zio.test.{ DefaultRunnableSpec, _ }
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
