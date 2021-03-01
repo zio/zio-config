@@ -1,18 +1,9 @@
 package zio.config.examples.typesafe
 
-import zio.config.magnolia.DeriveConfigDescriptor
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config._, typesafe._
 
-object CoproductSealedTraitCustomExample extends App with EitherImpureOps {
-  import zio.config.typesafe.TypesafeConfigSource
-  import zio.config.read
-
-  val typeLabelledCustomDescriptor = new DeriveConfigDescriptor {
-    import Descriptor.SealedTraitStrategy._
-
-    override def sealedTraitStrategy: Descriptor.SealedTraitStrategy =
-      ignoreSealedTraitName && labelSubClassName("type")
-  }
-
+object TypesafeConfigSealedTrait extends App with EitherImpureOps {
   sealed trait X
 
   object X {
@@ -49,7 +40,6 @@ object CoproductSealedTraitCustomExample extends App with EitherImpureOps {
       .fromHoconString(
         s"""
            |x = B
-           |
            |""".stripMargin
       )
       .loadOrThrow
@@ -67,9 +57,9 @@ object CoproductSealedTraitCustomExample extends App with EitherImpureOps {
     TypesafeConfigSource
       .fromHoconString(
         s"""
-           | x : { 
-           |  type = D
-           |  detail : {
+           |x {
+           |  D {
+           |  detail  {
            |    firstName : ff
            |    lastName  : ll
            |    region {
@@ -77,19 +67,17 @@ object CoproductSealedTraitCustomExample extends App with EitherImpureOps {
            |      suburb : strath
            |    }
            |  }
-           | } 
+           | }
+           |}
            |""".stripMargin
       )
       .loadOrThrow
 
-  import typeLabelledCustomDescriptor._
-
-  assert(read(typeLabelledCustomDescriptor.descriptor[Config] from aHoconSource) == Right(Config(A)))
-  assert(read(typeLabelledCustomDescriptor.descriptor[Config] from bHoconSource) == Right(Config(B)))
-  assert(read(typeLabelledCustomDescriptor.descriptor[Config] from cHoconSource) == Right(Config(C)))
-
+  assert(read(descriptor[Config] from aHoconSource) == Right(Config(A)))
+  assert(read(descriptor[Config] from bHoconSource) == Right(Config(B)))
+  assert(read(descriptor[Config] from cHoconSource) == Right(Config(C)))
   assert(
-    read(typeLabelledCustomDescriptor.descriptor[Config] from dHoconSource) == Right(
+    read(descriptor[Config] from dHoconSource) == Right(
       Config(D(Detail("ff", "ll", Region("strath", "syd"))))
     )
   )
