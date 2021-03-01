@@ -3,15 +3,15 @@ package zio.config.examples.typesafe
 import zio.config.magnolia.{ DeriveConfigDescriptor, Descriptor }
 import Descriptor.SealedTraitStrategy._
 import zio.config.magnolia.Descriptor.SealedTraitStrategy
+import zio.config.typesafe.TypesafeConfigSource
+import zio.config.read
 
 object PureConfigInterop extends App with EitherImpureOps {
-  import zio.config.typesafe.TypesafeConfigSource
-  import zio.config.read
-
-  val typeLabelledCustomDescriptor = new DeriveConfigDescriptor {
-    override def sealedTraitStrategy: SealedTraitStrategy =
-      ignoreSealedTraitName && labelSubClassName("type")
-  }
+  val customConfigDescriptor: DeriveConfigDescriptor =
+    new DeriveConfigDescriptor {
+      override def sealedTraitStrategy: SealedTraitStrategy =
+        ignoreSealedTraitName && labelSubClassName("type")
+    }
 
   sealed trait X
 
@@ -82,14 +82,14 @@ object PureConfigInterop extends App with EitherImpureOps {
       )
       .loadOrThrow
 
-  import typeLabelledCustomDescriptor._
+  import customConfigDescriptor._
 
-  assert(read(typeLabelledCustomDescriptor.descriptor[Config] from aHoconSource) == Right(Config(A)))
-  assert(read(typeLabelledCustomDescriptor.descriptor[Config] from bHoconSource) == Right(Config(B)))
-  assert(read(typeLabelledCustomDescriptor.descriptor[Config] from cHoconSource) == Right(Config(C)))
+  assert(read(customConfigDescriptor.descriptor[Config] from aHoconSource) == Right(Config(A)))
+  assert(read(customConfigDescriptor.descriptor[Config] from bHoconSource) == Right(Config(B)))
+  assert(read(customConfigDescriptor.descriptor[Config] from cHoconSource) == Right(Config(C)))
 
   assert(
-    read(typeLabelledCustomDescriptor.descriptor[Config] from dHoconSource) == Right(
+    read(customConfigDescriptor.descriptor[Config] from dHoconSource) == Right(
       Config(D(Detail("ff", "ll", Region("strath", "syd"))))
     )
   )
