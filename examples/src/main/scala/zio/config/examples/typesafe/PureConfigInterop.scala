@@ -1,6 +1,6 @@
 package zio.config.examples.typesafe
 
-import zio.config.magnolia.{DeriveConfigDescriptor, Descriptor}
+import zio.config.magnolia.{ DeriveConfigDescriptor, Descriptor }
 import Descriptor.SealedTraitStrategy._
 import zio.config.magnolia.Descriptor.SealedTraitStrategy
 
