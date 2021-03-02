@@ -5,7 +5,7 @@ import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.typesafe.TypesafeConfigSource
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 
-object ChangeKeys extends App with EitherImpureOps {
+object AutoDerivationCustomKeys extends App with EitherImpureOps {
   final case class MyConfig(accountId: String, awsRegion: String)
 
   import zio.config.magnolia.DeriveConfigDescriptor.Descriptor

@@ -3,7 +3,7 @@ package zio.config.examples.commandline
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config._, ConfigDescriptor._
 
-object SimpleExample extends App {
+object CommandLineSimple extends App {
   val cmdLineArgs =
     "--key1 value1 --key2 value2"
 

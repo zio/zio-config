@@ -3,7 +3,7 @@ package zio.config.examples.typesafe
 import zio.config._, zio.config.typesafe._, ConfigDescriptor._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 
-object TypesafeConfigErrorsExample extends App {
+object TypesafeConfigErrors extends App {
   // A nested example with type safe config, and usage of magnolia
   final case class Account(region: String, accountId: String)
   final case class Database(port: Int, url: String)
