@@ -1,15 +1,15 @@
 package zio.config.magnolia
 
 import java.io.File
-import java.net.{URI, URL}
-import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import java.net.{ URI, URL }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 
 import magnolia._
 import zio.config.derivation.DerivationUtils._
 import zio.duration.Duration
 
-import scala.concurrent.duration.{Duration => ScalaDuration}
+import scala.concurrent.duration.{ Duration => ScalaDuration }
 import scala.language.experimental.macros
 import zio.config._
 
