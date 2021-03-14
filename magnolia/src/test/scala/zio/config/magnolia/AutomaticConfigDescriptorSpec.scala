@@ -13,7 +13,9 @@ import zio.config.helpers._
 import zio.test.Assertion._
 
 object AutomaticConfigTest
-    extends BaseSpec(
+    extends BaseSpec {
+
+      val spec = 
       suite("magnolia spec")(
         testM("automatic derivation spec") {
           checkM(genEnvironment) {
@@ -45,7 +47,7 @@ object AutomaticConfigTest
           }
         }
       )
-    )
+      }
 
 object AutomaticConfigTestUtils {
   sealed trait Credentials

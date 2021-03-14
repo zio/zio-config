@@ -17,7 +17,9 @@ import zio.test._
 import zio.config.LeafForSequence
 
 object RefinedReadWriteRoundtripTest
-    extends BaseSpec(
+    extends BaseSpec {
+
+      val spec = 
       suite("Refined support")(
         testM("Refined config roundtrip") {
           checkM(genRefinedProd) { p =>
@@ -43,7 +45,7 @@ object RefinedReadWriteRoundtripTest
           }
         }
       )
-    )
+      }
 
 object RefinedReadWriteRoundtripTestUtils {
 
