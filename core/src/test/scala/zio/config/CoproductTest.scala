@@ -12,66 +12,67 @@ import VersionSpecificSupport._
 
 import scala.concurrent.duration.Duration
 
-object CoproductTest
-    extends BaseSpec(
-      suite("Coproduct support")(
-        testM("left element satisfied") {
-          check(genTestParams) { p =>
-            assert(readLeft(p))(isRight(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
-          }
-        },
-        testM("right element satisfied") {
-          check(genTestParams) { p =>
-            assert(readRight(p))(
-              isRight(equalTo(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid)))))
-            )
-          }
-        },
-        testM("round trip of enum works") {
-          check(genSealedTraitParams) { sourceMap =>
-            val source     = ConfigSource.fromMap(sourceMap, keyDelimiter = Some('.'))
-            val readResult = read(Z.config from source)
-            val writeResult = readResult.swap
-              .map(_.prettyPrint())
-              .swap
-              .flatMap(
-                r => r.toMap(Z.config).map(_.mapValues(_.mkString).toMap)
-              )
+object CoproductTest extends BaseSpec {
 
-            assert(writeResult)(equalTo(Right[String, Map[String, String]](sourceMap)))
-          }
-        },
-        testM("should accumulate all errors") {
-          check(genTestParams) { p =>
-            val expected: ReadError[String] =
-              OrErrors(
-                List(
-                  ZipErrors(List(MissingValue(List(Key(p.kLdap)), List("value of type string"))), Set()),
-                  ZipErrors(
-                    List(
-                      ZipErrors(
-                        List(
-                          FormatError(
-                            List(Key(p.kFactor)),
-                            "Provided value is notafloat, expecting the type float"
-                          )
+  val spec =
+    suite("Coproduct support")(
+      testM("left element satisfied") {
+        check(genTestParams) { p =>
+          assert(readLeft(p))(isRight(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
+        }
+      },
+      testM("right element satisfied") {
+        check(genTestParams) { p =>
+          assert(readRight(p))(
+            isRight(equalTo(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid)))))
+          )
+        }
+      },
+      testM("round trip of enum works") {
+        check(genSealedTraitParams) { sourceMap =>
+          val source     = ConfigSource.fromMap(sourceMap, keyDelimiter = Some('.'))
+          val readResult = read(Z.config from source)
+          val writeResult = readResult.swap
+            .map(_.prettyPrint())
+            .swap
+            .flatMap(
+              r => r.toMap(Z.config).map(_.mapValues(_.mkString).toMap)
+            )
+
+          assert(writeResult)(equalTo(Right[String, Map[String, String]](sourceMap)))
+        }
+      },
+      testM("should accumulate all errors") {
+        check(genTestParams) { p =>
+          val expected: ReadError[String] =
+            OrErrors(
+              List(
+                ZipErrors(List(MissingValue(List(Key(p.kLdap)), List("value of type string"))), Set()),
+                ZipErrors(
+                  List(
+                    ZipErrors(
+                      List(
+                        FormatError(
+                          List(Key(p.kFactor)),
+                          "Provided value is notafloat, expecting the type float"
                         )
                       )
                     )
                   )
                 )
               )
+            )
 
-            assert(readWithErrors(p))(isLeft(equalTo(expected)))
-          }
-        },
-        testM("left and right both populated should choose left") {
-          check(genTestParams) { p =>
-            assert(readChooseLeftFromBoth(p))(isRight(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
-          }
+          assert(readWithErrors(p))(isLeft(equalTo(expected)))
         }
-      )
+      },
+      testM("left and right both populated should choose left") {
+        check(genTestParams) { p =>
+          assert(readChooseLeftFromBoth(p))(isRight(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
+        }
+      }
     )
+}
 
 object CoproductTestUtils {
 

@@ -16,7 +16,9 @@ object SystemTest extends DefaultRunnableSpec {
         checkM(genSomeConfig, genDelimiter) { (config, delimiter) =>
           val result = for {
             _ <- setSystemProperties(config, delimiter)
-            p <- ZIO.environment[Has[SomeConfig]].provideLayer(ZConfig.fromSystemProperties(SomeConfig.descriptor, Some(delimiter)))
+            p <- ZIO
+                  .environment[Has[SomeConfig]]
+                  .provideLayer(ZConfig.fromSystemProperties(SomeConfig.descriptor, Some(delimiter)))
             _ <- clearSystemProperties(delimiter)
           } yield p.get
 

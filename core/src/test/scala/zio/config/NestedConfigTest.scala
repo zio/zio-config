@@ -8,31 +8,32 @@ import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
 
-object NestedConfigTest
-    extends BaseSpec(
-      suite("Nested config")(
-        testM("read") {
-          check(genNestedConfigParams) { p =>
-            assert(read(p.config.from(p.source)))(isRight(equalTo(p.value)))
-          }
-        },
-        testM("write") {
-          check(genNestedConfigParams) { p =>
-            assert(write(p.config, p.value).map(_.flattenString()))(
-              isRight(equalTo(toMultiMap(p.map)))
-            )
-          }
-        },
-        testM("nested with default") {
-          val config = string("x").default("y")
-          val r = ZIO.fromEither(
-            read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid))
-          )
+object NestedConfigTest extends BaseSpec {
 
-          assertM(r)(equalTo("y"))
+  val spec =
+    suite("Nested config")(
+      testM("read") {
+        check(genNestedConfigParams) { p =>
+          assert(read(p.config.from(p.source)))(isRight(equalTo(p.value)))
         }
-      )
+      },
+      testM("write") {
+        check(genNestedConfigParams) { p =>
+          assert(write(p.config, p.value).map(_.flattenString()))(
+            isRight(equalTo(toMultiMap(p.map)))
+          )
+        }
+      },
+      testM("nested with default") {
+        val config = string("x").default("y")
+        val r = ZIO.fromEither(
+          read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid))
+        )
+
+        assertM(r)(equalTo("y"))
+      }
     )
+}
 
 object NestedConfigTestUtils {
   final case class Credentials(user: String, password: String)
@@ -71,7 +72,8 @@ object NestedConfigTestUtils {
       val dbConnection = (string("host") |@| int("port")).to[DbConnection]
 
       val database =
-        (string("dburl").to[DbUrl]
+        (string("dburl")
+          .to[DbUrl]
           .orElseEither(nested("connection")(dbConnection)) |@|
           nested("credentials")(credentials).optional).to[Database]
 

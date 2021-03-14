@@ -5,140 +5,141 @@ import zio.test.Assertion._
 import RecursiveConfigTestUtils._
 import zio.config.ConfigDescriptor._
 
-object RecursiveConfigTest
-    extends BaseSpec(
-      suite("RecursiveConfigTest")(
-        test("read simple") {
-          assert(read(SimpleRec.config from SimpleRec.source))(isRight(equalTo(SimpleRec.expected)))
-        },
-        test("read simple list") {
-          assert(read(SimpleListRec.config from SimpleListRec.source))(isRight(equalTo(SimpleListRec.expected)))
-        },
-        test("read simple either") {
-          assert(read(SimpleEitherRec.config from SimpleEitherRec.source))(isRight(equalTo(SimpleEitherRec.expected)))
-        },
-        test("read simple reversed") {
-          assert(read(SimpleRecReversed.config from SimpleRecReversed.source))(
-            isRight(equalTo(SimpleRecReversed.expected))
+object RecursiveConfigTest extends BaseSpec {
+
+  val spec =
+    suite("RecursiveConfigTest")(
+      test("read simple") {
+        assert(read(SimpleRec.config from SimpleRec.source))(isRight(equalTo(SimpleRec.expected)))
+      },
+      test("read simple list") {
+        assert(read(SimpleListRec.config from SimpleListRec.source))(isRight(equalTo(SimpleListRec.expected)))
+      },
+      test("read simple either") {
+        assert(read(SimpleEitherRec.config from SimpleEitherRec.source))(isRight(equalTo(SimpleEitherRec.expected)))
+      },
+      test("read simple reversed") {
+        assert(read(SimpleRecReversed.config from SimpleRecReversed.source))(
+          isRight(equalTo(SimpleRecReversed.expected))
+        )
+      },
+      test("read simple reversed multiple") {
+        assert(read(SimpleRecMultiple.config from SimpleRecMultiple.source))(
+          isRight(equalTo(SimpleRecMultiple.expected))
+        )
+      },
+      test("read simple with updated key") {
+        assert(
+          read(
+            SimpleRecMultiple.config.mapKey(_.toUpperCase()) from SimpleRecMultiple.source
+              .convertKeys(_.toLowerCase())
           )
-        },
-        test("read simple reversed multiple") {
-          assert(read(SimpleRecMultiple.config from SimpleRecMultiple.source))(
-            isRight(equalTo(SimpleRecMultiple.expected))
-          )
-        },
-        test("read simple with updated key") {
-          assert(
-            read(
-              SimpleRecMultiple.config.mapKey(_.toUpperCase()) from SimpleRecMultiple.source
-                .convertKeys(_.toLowerCase())
-            )
-          )(
-            isRight(equalTo(SimpleRecMultiple.expected))
-          )
-        },
-        test("read mutual recursive") {
-          assert(read(data from testSource))(isRight(equalTo(recursiveValue)))
-        },
-        test("read expression tree") {
-          assert(read(expr from exprSource))(isRight(equalTo(exprValue)))
-        },
-        test("write simple") {
-          assert(write(SimpleRec.config, SimpleRec.expected))(isRight(equalTo(SimpleRec.tree)))
-        },
-        test("documentation") {
-          assert(generateDocs(SimpleRec.config).toTable)(
-            equalTo(
-              Table(
-                List(
-                  Table.TableRow(
-                    Nil,
-                    Some(Table.Format.AllOf),
-                    Nil,
-                    Some(
-                      Table(
-                        List(
-                          Table.TableRow(
-                            List(Table.FieldName.Key("id")),
-                            Some(Table.Format.Primitive),
-                            List(ConfigDocs.Description(Some("id"), "value of type int")),
-                            None,
-                            Set()
-                          ),
-                          Table.TableRow(
-                            List(Table.FieldName.Key("nested")),
-                            Some(Table.Format.Recursion),
-                            List(ConfigDocs.Description(None, "optional value")),
-                            None,
-                            Set()
-                          )
+        )(
+          isRight(equalTo(SimpleRecMultiple.expected))
+        )
+      },
+      test("read mutual recursive") {
+        assert(read(data from testSource))(isRight(equalTo(recursiveValue)))
+      },
+      test("read expression tree") {
+        assert(read(expr from exprSource))(isRight(equalTo(exprValue)))
+      },
+      test("write simple") {
+        assert(write(SimpleRec.config, SimpleRec.expected))(isRight(equalTo(SimpleRec.tree)))
+      },
+      test("documentation") {
+        assert(generateDocs(SimpleRec.config).toTable)(
+          equalTo(
+            Table(
+              List(
+                Table.TableRow(
+                  Nil,
+                  Some(Table.Format.AllOf),
+                  Nil,
+                  Some(
+                    Table(
+                      List(
+                        Table.TableRow(
+                          List(Table.FieldName.Key("id")),
+                          Some(Table.Format.Primitive),
+                          List(ConfigDocs.Description(Some("id"), "value of type int")),
+                          None,
+                          Set()
+                        ),
+                        Table.TableRow(
+                          List(Table.FieldName.Key("nested")),
+                          Some(Table.Format.Recursion),
+                          List(ConfigDocs.Description(None, "optional value")),
+                          None,
+                          Set()
                         )
                       )
-                    ),
-                    Set()
-                  )
+                    )
+                  ),
+                  Set()
                 )
               )
             )
           )
-        },
-        test("documentation of expression tree") {
-          assert(generateDocs(expr).toTable)(
-            equalTo(
-              Table(
-                List(
-                  Table.TableRow(
-                    List(),
-                    Some(Table.Format.AnyOneOf),
-                    List(),
-                    Some(
-                      Table(
-                        List(
-                          Table.TableRow(
-                            List(),
-                            Some(Table.Format.Primitive),
-                            List(ConfigDocs.Description(None, "value of type int")),
-                            None,
-                            Set()
-                          ),
-                          Table.TableRow(
-                            List(Table.FieldName.Key("add")),
-                            Some(Table.Format.List),
-                            List(),
-                            Some(
-                              Table(
-                                List(
-                                  Table.TableRow(
-                                    List(),
-                                    Some(Table.Format.Primitive),
-                                    List(ConfigDocs.Description(None, "value of type int")),
-                                    None,
-                                    Set()
-                                  ),
-                                  Table.TableRow(
-                                    List(Table.FieldName.Key("add")),
-                                    Some(Table.Format.Recursion),
-                                    List(),
-                                    None,
-                                    Set()
-                                  )
+        )
+      },
+      test("documentation of expression tree") {
+        assert(generateDocs(expr).toTable)(
+          equalTo(
+            Table(
+              List(
+                Table.TableRow(
+                  List(),
+                  Some(Table.Format.AnyOneOf),
+                  List(),
+                  Some(
+                    Table(
+                      List(
+                        Table.TableRow(
+                          List(),
+                          Some(Table.Format.Primitive),
+                          List(ConfigDocs.Description(None, "value of type int")),
+                          None,
+                          Set()
+                        ),
+                        Table.TableRow(
+                          List(Table.FieldName.Key("add")),
+                          Some(Table.Format.List),
+                          List(),
+                          Some(
+                            Table(
+                              List(
+                                Table.TableRow(
+                                  List(),
+                                  Some(Table.Format.Primitive),
+                                  List(ConfigDocs.Description(None, "value of type int")),
+                                  None,
+                                  Set()
+                                ),
+                                Table.TableRow(
+                                  List(Table.FieldName.Key("add")),
+                                  Some(Table.Format.Recursion),
+                                  List(),
+                                  None,
+                                  Set()
                                 )
                               )
-                            ),
-                            Set()
-                          )
+                            )
+                          ),
+                          Set()
                         )
                       )
-                    ),
-                    Set()
-                  )
+                    )
+                  ),
+                  Set()
                 )
               )
             )
           )
-        } @@ TestAspect.exceptScala211
-      )
+        )
+      } @@ TestAspect.exceptScala211
     )
+}
 
 object RecursiveConfigTestUtils {
 

@@ -7,38 +7,39 @@ import zio.config.EitherReciprocityTestUtils._
 import zio.test._
 import zio.test.Assertion._
 
-object EitherReciprocityTest
-    extends BaseSpec(
-      suite("Either reciprocity")(
-        testM("coproduct should yield the same config representation on both sides of Either") {
-          checkM(genNestedConfig) {
-            p =>
-              val lr =
-                for {
-                  writtenLeft <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
-                  rereadLeft <- ZIO.fromEither(
-                                 read(
-                                   cCoproductConfig from ConfigSource
-                                     .fromPropertyTree(writtenLeft, "test", LeafForSequence.Valid)
-                                 )
-                               )
-                  writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
-                  rereadRight <- ZIO.fromEither(
-                                  read(
-                                    cCoproductConfig from ConfigSource
-                                      .fromPropertyTree(writtenRight, "test", LeafForSequence.Valid)
-                                  )
-                                )
-                } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
-                  case (Left(pl), Right(pr)) => Some(pl -> pr)
-                  case _                     => None
-                }
+object EitherReciprocityTest extends BaseSpec {
 
-              assertM(lr)(isSome(equalTo(p -> p)))
-          }
+  val spec =
+    suite("Either reciprocity")(
+      testM("coproduct should yield the same config representation on both sides of Either") {
+        checkM(genNestedConfig) {
+          p =>
+            val lr =
+              for {
+                writtenLeft <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
+                rereadLeft <- ZIO.fromEither(
+                               read(
+                                 cCoproductConfig from ConfigSource
+                                   .fromPropertyTree(writtenLeft, "test", LeafForSequence.Valid)
+                               )
+                             )
+                writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
+                rereadRight <- ZIO.fromEither(
+                                read(
+                                  cCoproductConfig from ConfigSource
+                                    .fromPropertyTree(writtenRight, "test", LeafForSequence.Valid)
+                                )
+                              )
+              } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
+                case (Left(pl), Right(pr)) => Some(pl -> pr)
+                case _                     => None
+              }
+
+            assertM(lr)(isSome(equalTo(p -> p)))
         }
-      )
+      }
     )
+}
 
 object EitherReciprocityTestUtils {
   final case class EnterpriseAuth(id: Id, dburl: DbUrl)

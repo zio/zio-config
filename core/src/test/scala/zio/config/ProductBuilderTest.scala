@@ -7,7 +7,9 @@ import zio.test._
 import zio.test.Assertion._
 
 object ProductBuilderTest
-    extends BaseSpec(
+    extends BaseSpec {
+
+      val spec = 
       suite("ProductBuilder")(
         testM("combine 22 for case class") {
           checkM(genS22) { p =>
@@ -45,7 +47,7 @@ object ProductBuilderTest
           }
         }
       )
-    )
+      }
 
 object ProductBuilderTestUtils {
   final case class S22(s0: Int,

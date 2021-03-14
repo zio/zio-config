@@ -8,43 +8,43 @@ import zio.random.Random
 import zio.test._
 import zio.test.Assertion._
 
-object CollectAllRoundtripTest
-    extends BaseSpec(
-      suite("ConfigDescriptor.collectAll")(
-        testM("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
-          checkM(generateListOfGroups) {
-            groups =>
-              val cId: String => ConfigDescriptor[Id] = string(_).to[Id]
+object CollectAllRoundtripTest extends BaseSpec {
 
-              // List is nonempty
-              val consOfConfig = {
-                val configs = groups.map(
-                  group =>
-                    (cId(group.id1Key).optional |@| cId(group.id2Key)).to[IdentityDetails]
-                )
-                ::(configs.head, configs.tail)
-              }
+  val spec =
+    suite("ConfigDescriptor.collectAll")(
+      testM("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
+        checkM(generateListOfGroups) {
+          groups =>
+            val cId: String => ConfigDescriptor[Id] = string(_).to[Id]
 
-              val inputSource: Map[String, String] =
-                groups.flatMap(_.toMap.toList).toMap
+            // List is nonempty
+            val consOfConfig = {
+              val configs = groups.map(
+                group => (cId(group.id1Key).optional |@| cId(group.id2Key)).to[IdentityDetails]
+              )
+              ::(configs.head, configs.tail)
+            }
 
-              val config = collectAll(consOfConfig.head, consOfConfig.tail: _*)
+            val inputSource: Map[String, String] =
+              groups.flatMap(_.toMap.toList).toMap
 
-              val readAndWrite =
-                for {
-                  result  <- ZIO.fromEither(read(config from ConfigSource.fromMap(inputSource)))
-                  written <- ZIO.fromEither(write(config, result))
-                } yield written
+            val config = collectAll(consOfConfig.head, consOfConfig.tail: _*)
 
-              val actual = readAndWrite
-                .map(_.flattenString())
-                .fold(_ => Nil, _.toList.sortBy(_._1))
+            val readAndWrite =
+              for {
+                result  <- ZIO.fromEither(read(config from ConfigSource.fromMap(inputSource)))
+                written <- ZIO.fromEither(write(config, result))
+              } yield written
 
-              assertM(actual)(equalTo(inputSource.toList.sortBy(_._1).map({ case (k, v) => (k, singleton(v)) })))
-          }
+            val actual = readAndWrite
+              .map(_.flattenString())
+              .fold(_ => Nil, _.toList.sortBy(_._1))
+
+            assertM(actual)(equalTo(inputSource.toList.sortBy(_._1).map({ case (k, v) => (k, singleton(v)) })))
         }
-      )
+      }
     )
+}
 
 object SequenceRoundtripTestUtils {
   final case class IdentityDetails(id1: Option[Id], id2: Id)
