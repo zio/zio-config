@@ -98,6 +98,12 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           )(Right(_))
       )
 
+    def to[B <: Product](implicit conv: TupleConversion[B, A]): ConfigDescriptor[B] =
+      self.transform(
+        conv.from,
+        conv.to
+      )
+
     /**
      * `??` is an alias to `describe` which allows us to inject additional
      * documentation to the configuration parameters.

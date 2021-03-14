@@ -13,7 +13,7 @@ object ListsCornerCasesTest
         test("read empty list") {
           case class Cfg(a: String, b: List[String])
 
-          val cCfg = (string("a") |@| list("b")(string))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| list("b")(string)).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -28,7 +28,7 @@ object ListsCornerCasesTest
         test("read nested lists") {
           case class Cfg(a: String, b: List[List[String]])
 
-          val cCfg = (string("a") |@| list("b")(list(string)))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| list("b")(list(string))).to[Cfg]
 
           val res =
             read(
@@ -47,7 +47,7 @@ object ListsCornerCasesTest
           case class Cfg(a: String, b: Option[List[String]])
 
           val cCfg =
-            (string("a") |@| list("b")(string).optional)(Cfg, Cfg.unapply)
+            (string("a") |@| list("b")(string).optional).to[Cfg]
 
           val res =
             read(
@@ -61,7 +61,7 @@ object ListsCornerCasesTest
           case class Cfg(a: String, b: Option[List[String]])
 
           val cCfg =
-            (string("a") |@| list("b")(string).optional)(Cfg, Cfg.unapply)
+            (string("a") |@| list("b")(string).optional).to[Cfg]
 
           val res =
             read(
@@ -78,7 +78,7 @@ object ListsCornerCasesTest
           case class Cfg(a: String, b: List[String])
 
           val cCfg = (string("a") |@| list("b")(string)
-            .default("x" :: Nil))(Cfg, Cfg.unapply)
+            .default("x" :: Nil)).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
@@ -90,7 +90,7 @@ object ListsCornerCasesTest
           case class Cfg(a: String, b: List[String])
 
           val cCfg = (string("a") |@| list("b")(string)
-            .default("x" :: Nil))(Cfg, Cfg.unapply)
+            .default("x" :: Nil)).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -107,7 +107,7 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| nested("b")(
             list(string).orElseEither(string)
-          ))(Cfg, Cfg.unapply)
+          )).to[Cfg]
 
           val res =
             read(
@@ -127,7 +127,7 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| nested("b")(
             string.orElseEither(list(string))
-          ))(Cfg, Cfg.unapply)
+          )).to[Cfg]
 
           val res =
             read(
@@ -147,7 +147,7 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| nested("b")(
             string.orElseEither(list(string))
-          ))(Cfg, Cfg.unapply)
+          )).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource
@@ -161,7 +161,7 @@ object ListsCornerCasesTest
 
           val cCfg = (string("a") |@| nested("b")(
             list(string).orElseEither(string)
-          ))(Cfg, Cfg.unapply)
+          )).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource
@@ -173,7 +173,7 @@ object ListsCornerCasesTest
         test("read list as scalar") {
           case class Cfg(a: String, b: String)
 
-          val cCfg = (string("a") |@| head("b")(string))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| head("b")(string)).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -193,10 +193,7 @@ object ListsCornerCasesTest
         test("read single key objects in nested lists") {
           case class Cfg(a: String, b: List[List[String]])
 
-          val cCfg = (string("a") |@| list("b")(list(string("c"))))(
-            Cfg,
-            Cfg.unapply
-          )
+          val cCfg = (string("a") |@| list("b")(list(string("c")))).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -230,7 +227,7 @@ object ListsCornerCasesTest
           case class Cfg(a: String, b: List[String])
 
           val cCfg =
-            (string("a") |@| nested("b")(list(string)))(Cfg, Cfg.unapply)
+            (string("a") |@| nested("b")(list(string))).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -247,12 +244,12 @@ object ListsCornerCasesTest
             )
           )
 
-          assert(res)(isLeft(hasField("size", _.size, equalTo(2))))
+          assert(res)(isLeft(hasField[ReadError[String], Int]("size", _.size, equalTo(2))))
         },
         test("accumulates all errors") {
           case class Cfg(a: List[Boolean], b: List[Int])
 
-          val cCfg = (nested("a")(list(boolean)) |@| nested("b")(list(int)))(Cfg, Cfg.unapply)
+          val cCfg = (nested("a")(list(boolean)) |@| nested("b")(list(int))).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(

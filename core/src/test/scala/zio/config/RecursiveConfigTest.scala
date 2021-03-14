@@ -146,7 +146,7 @@ object RecursiveConfigTestUtils {
 
   object SimpleRec {
     val config: ConfigDescriptor[SimpleRec] =
-      (int("id") |@| nested("nested")(config).optional)(SimpleRec.apply, SimpleRec.unapply)
+      (int("id") |@| nested("nested")(config).optional).to[SimpleRec]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
@@ -175,7 +175,7 @@ object RecursiveConfigTestUtils {
 
   object SimpleListRec {
     val config: ConfigDescriptor[SimpleListRec] =
-      (int("id") |@| list("nested")(config))(SimpleListRec.apply, SimpleListRec.unapply)
+      (int("id") |@| list("nested")(config)).to[SimpleListRec]
 
     val tree: PropertyTree[String, String] =
       PropertyTree.Record(
@@ -209,7 +209,7 @@ object RecursiveConfigTestUtils {
   object SimpleEitherRec {
     val config: ConfigDescriptor[SimpleEitherRec] =
       (int("id") |@| (nested("nested")(config))
-        .orElseEither(int("termination")))(SimpleEitherRec.apply, SimpleEitherRec.unapply)
+        .orElseEither(int("termination"))).to[SimpleEitherRec]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
@@ -243,7 +243,7 @@ object RecursiveConfigTestUtils {
 
   object SimpleRecReversed {
     val config: ConfigDescriptor[SimpleRecReversed] =
-      (nested("nested")(config).optional |@| int("id"))(SimpleRecReversed.apply, SimpleRecReversed.unapply)
+      (nested("nested")(config).optional |@| int("id")).to[SimpleRecReversed]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
@@ -271,10 +271,7 @@ object RecursiveConfigTestUtils {
 
   object SimpleRecMultiple {
     val config: ConfigDescriptor[SimpleRecMultiple] =
-      (nested("nested")(config).optional |@| int("id") |@| nested("nested2")(config).optional)(
-        SimpleRecMultiple.apply,
-        SimpleRecMultiple.unapply
-      )
+      (nested("nested")(config).optional |@| int("id") |@| nested("nested2")(config).optional).to[SimpleRecMultiple]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
@@ -301,8 +298,8 @@ object RecursiveConfigTestUtils {
 
   case class Row(id: Int, nested: Option[Data])
 
-  lazy val row: ConfigDescriptor[Row]   = (int("id") |@| data.optional)(Row.apply, Row.unapply)
-  lazy val data: ConfigDescriptor[Data] = nested("rows")(row)(Data.apply, Data.unapply)
+  lazy val row: ConfigDescriptor[Row]   = (int("id") |@| data.optional).to[Row]
+  lazy val data: ConfigDescriptor[Data] = nested("rows")(row).to[Data]
 
   val testSource: ConfigSource = ConfigSource.fromPropertyTree(
     PropertyTree.Record(

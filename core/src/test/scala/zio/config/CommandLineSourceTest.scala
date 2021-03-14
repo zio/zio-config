@@ -68,7 +68,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
       .bimap(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
-          propertyTree.flatten.toList.flatMap { t: (Vector[String], ::[String]) =>
+          propertyTree.flatten.toList.flatMap { (t: (Vector[String], ::[String])) =>
             List(s"--${t._1.mkString("_")}", t._2.mkString)
           }
       )
@@ -78,7 +78,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
       .bimap(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
-          propertyTree.flatten.toList.flatMap { t: (Vector[String], ::[String]) =>
+          propertyTree.flatten.toList.flatMap { (t: (Vector[String], ::[String])) =>
             List(s"-${t._1.mkString("_")}=${t._2.mkString}")
           }
       )
@@ -91,7 +91,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
       .bimap(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
-          propertyTree.flatten.toList.flatMap { t: (Vector[String], ::[String]) =>
+          propertyTree.flatten.toList.flatMap { (t: (Vector[String], ::[String])) =>
             List(s"--${t._1.mkString("_")}=${t._2.mkString}") ++
               List(s"--${t._1.mkString("_")}=${t._2.mkString}") // repeated with different value (should be ignored)
           }

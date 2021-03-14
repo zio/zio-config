@@ -79,19 +79,19 @@ object CoproductTestUtils {
 
   object Z {
 
-    val aConfig: ConfigDescriptor[A] = string("a")(A.apply, A.unapply)
+    val aConfig: ConfigDescriptor[A] = string("a").to[A]
 
     val bConfig: ConfigDescriptor[B.type] =
       string.transformOrFail(a => if (a == "b") Right(B) else Left("Can only be b"), _ => Right("b"))
 
     val cConfig: ConfigDescriptor[C] =
-      (int("c1") |@| string("c2"))(C.apply, C.unapply)
+      (int("c1") |@| string("c2")).to[C]
 
     val dConfig: ConfigDescriptor[D] =
-      int("d")(D.apply, D.unapply)
+      int("d").to[D]
 
     val eConfig: ConfigDescriptor[E] =
-      double("e")(E.apply, E.unapply)
+      double("e").to[E]
 
     val fConfig: ConfigDescriptor[F.type] =
       string.transformOrFail(a => if (a == "f") Right(F) else Left("Can only be b"), _ => Right("f"))
@@ -103,7 +103,7 @@ object CoproductTestUtils {
       string.transformOrFail(a => if (a == "h") Right(H) else Left("Can only be b"), _ => Right("h"))
 
     val iConfig: ConfigDescriptor[I] =
-      double("i")(I.apply, I.unapply)
+      double("i").to[I]
 
     val config =
       nested("z")(enumeration[Z](aConfig, bConfig, cConfig, dConfig, eConfig, fConfig, gConfig, hConfig, iConfig))
@@ -119,7 +119,7 @@ object CoproductTestUtils {
     case class I(i: Double)           extends Z
   }
 
-  final case class Ldap(value: String) extends AnyVal
+  final case class Ldap(value: String)
   final case class EnterpriseAuth(ldap: Ldap, dburl: DbUrl)
   final case class PasswordAuth(user: String, count: Int, factor: Float, codeValid: Duration)
 
@@ -194,16 +194,10 @@ object CoproductTestUtils {
 
   def readLeft(p: TestParams): Either[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
-      (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
-        EnterpriseAuth.apply,
-        EnterpriseAuth.unapply
-      )
+      (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid))(
-        PasswordAuth.apply,
-        PasswordAuth.unapply
-      )
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid)).to[PasswordAuth]
 
     val authConfig = enterprise.orElseEither(password)
 
@@ -214,16 +208,10 @@ object CoproductTestUtils {
 
   def readRight(p: TestParams) = {
     val enterprise =
-      (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
-        EnterpriseAuth.apply,
-        EnterpriseAuth.unapply
-      )
+      (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid))(
-        PasswordAuth.apply,
-        PasswordAuth.unapply
-      )
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid)).to[PasswordAuth]
 
     val authConfig = enterprise.orElseEither(password)
 
@@ -244,16 +232,10 @@ object CoproductTestUtils {
     p: TestParams
   ): Either[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
-      (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
-        EnterpriseAuth.apply,
-        EnterpriseAuth.unapply
-      )
+      (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid))(
-        PasswordAuth.apply,
-        PasswordAuth.unapply
-      )
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid)).to[PasswordAuth]
 
     val authConfig = enterprise.orElseEither(password)
 
@@ -273,16 +255,10 @@ object CoproductTestUtils {
 
   def readChooseLeftFromBoth(p: TestParams) = {
     val enterprise =
-      (string(p.kLdap)(Ldap.apply, Ldap.unapply) |@| string(p.kDbUrl)(DbUrl.apply, DbUrl.unapply))(
-        EnterpriseAuth.apply,
-        EnterpriseAuth.unapply
-      )
+      (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid))(
-        PasswordAuth.apply,
-        PasswordAuth.unapply
-      )
+      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid)).to[PasswordAuth]
 
     val authConfig = enterprise.orElseEither(password)
 

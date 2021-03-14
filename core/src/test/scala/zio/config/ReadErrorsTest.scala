@@ -32,7 +32,7 @@ object ReadErrorsTestUtils {
       s3 <- Gen.anyString
     } yield ReadError.FormatError(List(Step.Key(s1)), parseErrorMessage(s2, s3))
 
-  private val genReadError =
+  private val genReadError: Gen[Random with Sized, ReadError[String]] =
     Gen.oneOf(Gen.const(ReadError.MissingValue(List(Step.Key("somekey")))), genFormatError)
 
   val genReadErrors: Gen[Random with Sized, List[ReadError[String]]] = {

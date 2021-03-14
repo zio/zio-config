@@ -29,7 +29,7 @@ trait ConfigDocsModule extends WriteModule {
           descriptionsUsedAlready match {
             case Some(value) =>
               descriptions.filter({
-                case ConfigDocs.Description(path, _) if path.map(FieldName.Key) == Some(value) =>
+                case ConfigDocs.Description(path, _) if path.map(FieldName.Key.apply) == Some(value) =>
                   false
                 case ConfigDocs.Description(_, _) => true
               })
@@ -190,7 +190,7 @@ trait ConfigDocsModule extends WriteModule {
         .flatMap(
           desc =>
             desc match {
-              case a @ ConfigDocs.Description(p, _) if (p.map(FieldName.Key)) == Some(path) =>
+              case a @ ConfigDocs.Description(p, _) if (p.map(FieldName.Key.apply)) == Some(path) =>
                 List(a)
               case ConfigDocs.Description(_, _) => Nil
             }

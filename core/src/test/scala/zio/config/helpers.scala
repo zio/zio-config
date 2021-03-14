@@ -5,8 +5,8 @@ import zio.test.Assertion.assertion
 import zio.test.{ Assertion, Gen }
 
 object helpers {
-  final case class Id(value: String)    extends AnyVal
-  final case class DbUrl(value: String) extends AnyVal
+  final case class Id(value: String)
+  final case class DbUrl(value: String)
 
   def genSymbol(min: Int, max: Int): Gen[Random, String] =
     for {
@@ -28,9 +28,9 @@ object helpers {
     genNumber(0, length).map(ns => s"$ns ns")
   )
 
-  val genId: Gen[Random, Id] = genSymbol(1, 5).map(Id)
+  val genId: Gen[Random, Id] = genSymbol(1, 5).map(Id.apply)
 
-  val genDbUrl: Gen[Random, DbUrl] = genNonEmptyString(20).map(DbUrl)
+  val genDbUrl: Gen[Random, DbUrl] = genNonEmptyString(20).map(DbUrl.apply)
 
   def isErrors[A](assertion: Assertion[ReadError[String]]): Assertion[Either[ReadError[String], A]] =
     Assertion.assertionRec("isErrors")(Assertion.Render.param(assertion))(assertion) {

@@ -4,11 +4,17 @@ import Keys._
 import explicitdeps.ExplicitDepsPlugin.autoImport._
 import sbtbuildinfo._
 import BuildInfoKeys._
-
+import dotty.tools.sbtplugin.DottyPlugin.autoImport._
 object BuildHelper {
 
-  val testDeps        = Seq("org.scalacheck"  %% "scalacheck"   % "1.15.1" % Test)
-  val compileOnlyDeps = Seq("com.github.ghik" %% "silencer-lib" % "1.7.1"  % Provided cross CrossVersion.full)
+  val Scala211 = "2.11.12"
+  val Scala212 = "2.12.11"
+  val Scala213 = "2.13.2"
+  val Scala3   = "3.0.0-RC1"
+
+  val SilencerVersion = "1.7.3"
+
+  val testDeps = Seq("org.scalacheck" %% "scalacheck" % "1.15.3" % Test)
 
   private val stdOptions = Seq(
     "-deprecation",
@@ -73,19 +79,72 @@ object BuildHelper {
       case _ => Seq.empty
     }
 
+  val silencerOptions =
+    Seq(
+      scalacOptions ++= {
+        if (isDotty.value) {
+          Seq.empty
+        } else {
+          Seq("-P:silencer:lineContentFilters=import VersionSpecificSupport\\._")
+        }
+      }
+    )
+
   def stdSettings(prjName: String) = Seq(
     name := s"$prjName",
     scalacOptions := stdOptions,
-    crossScalaVersions := Seq("2.13.2", "2.12.11", "2.11.12"),
+    crossScalaVersions := Seq(Scala213, Scala212, Scala211),
     scalaVersion in ThisBuild := crossScalaVersions.value.head,
     scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
-    libraryDependencies ++= compileOnlyDeps ++ testDeps ++ Seq(
-      compilerPlugin("org.typelevel"   %% "kind-projector"  % "0.10.3"),
-      compilerPlugin("com.github.ghik" %% "silencer-plugin" % "1.7.1" cross CrossVersion.full)
-    ),
+    libraryDependencies ++= testDeps,
+    libraryDependencies ++= {
+      if (isDotty.value)
+        Seq(
+          ("com.github.ghik" % s"silencer-lib_$Scala213" % SilencerVersion % Provided)
+            .withDottyCompat(scalaVersion.value)
+        )
+      else
+        Seq(
+          compilerPlugin("org.typelevel" %% "kind-projector" % "0.10.3"),
+          "com.github.ghik" % "silencer-lib" % SilencerVersion % Provided cross CrossVersion.full,
+          compilerPlugin("com.github.ghik" % "silencer-plugin" % SilencerVersion cross CrossVersion.full)
+        )
+    },
     parallelExecution in Test := true,
     incOptions ~= (_.withLogRecompileOnMacro(false)),
     autoAPIMappings := true,
     unusedCompileDependenciesFilter -= moduleFilter("org.scala-js", "scalajs-library")
+  )
+
+  val scala3Settings = Seq(
+    crossScalaVersions += Scala3,
+    scalacOptions ++= {
+      if (isDotty.value)
+        Seq("-noindent")
+      else
+        Seq()
+    },
+    scalacOptions --= {
+      if (isDotty.value)
+        Seq("-Xfatal-warnings")
+      else
+        Seq()
+    },
+    sources in (Compile, doc) := {
+      val old = (Compile / doc / sources).value
+      if (isDotty.value) {
+        Nil
+      } else {
+        old
+      }
+    },
+    parallelExecution in Test := {
+      val old = (Test / parallelExecution).value
+      if (isDotty.value) {
+        false
+      } else {
+        old
+      }
+    }
   )
 }

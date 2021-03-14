@@ -11,7 +11,7 @@ object MapTest
         test("map(b)(string(y)) returns the value of y from the values inside map within b.") {
           case class Cfg(a: String, b: Map[String, String])
 
-          val cCfg = (string("a") |@| map("b")(string("c")))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| map("b")(string("c"))).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource
@@ -29,7 +29,7 @@ object MapTest
         test("map(string(y)) returns the value of y amongst the values of the map as a string.") {
           case class Cfg(a: String, b: Map[String, String])
 
-          val cCfg = (string("a") |@| map("b")(string("c")))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| map("b")(string("c"))).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource
@@ -45,7 +45,7 @@ object MapTest
         test("map(string(y)) returns the value of y from the value of the map.") {
           case class Cfg(a: String, b: Map[String, List[String]])
 
-          val cCfg = (string("a") |@| map("b")(list(string("c"))))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| map("b")(list(string("c")))).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource
@@ -63,7 +63,7 @@ object MapTest
         test("list of delimited values from Map.") {
           case class Cfg(a: String, b: List[String])
 
-          val cCfg = (string("a") |@| list("b")(string))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| list("b")(string)).to[Cfg]
 
           // also for ConfigSource.fromSystemEnv
           val res = read(
@@ -84,7 +84,7 @@ object MapTest
         test("read empty map") {
           case class Cfg(a: String, b: Map[String, String])
 
-          val cCfg = (string("a") |@| map("b")(string))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| map("b")(string)).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -99,7 +99,7 @@ object MapTest
         test("read nested maps") {
           case class Cfg(a: String, b: Map[String, Map[String, List[String]]])
 
-          val cCfg = (string("a") |@| map("b")(map(list(string))))(Cfg, Cfg.unapply)
+          val cCfg = (string("a") |@| map("b")(map(list(string)))).to[Cfg]
 
           val res =
             read(
@@ -118,7 +118,7 @@ object MapTest
           case class Cfg(b: Option[Map[String, String]])
 
           val cCfg =
-            map("b")(string).optional(Cfg, Cfg.unapply)
+            map("b")(string).optional.to[Cfg]
 
           val res =
             read(
@@ -132,7 +132,7 @@ object MapTest
           case class Cfg(a: String, b: Option[Map[String, String]])
 
           val cCfg =
-            (string("a") |@| map("b")(string).optional)(Cfg, Cfg.unapply)
+            (string("a") |@| map("b")(string).optional).to[Cfg]
 
           val res =
             read(
@@ -149,7 +149,7 @@ object MapTest
           case class Cfg(a: String, b: Map[String, String])
 
           val cCfg = (string("a") |@| map("b")(string)
-            .default(Map("x" -> "y", "z" -> "a")))(Cfg, Cfg.unapply)
+            .default(Map("x" -> "y", "z" -> "a"))).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
@@ -161,7 +161,7 @@ object MapTest
           case class Cfg(a: String, b: Map[String, String])
 
           val cCfg = (string("a") |@| map("b")(string)
-            .default(Map("x" -> "y")))(Cfg, Cfg.unapply)
+            .default(Map("x" -> "y"))).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource.fromPropertyTree(
@@ -178,7 +178,7 @@ object MapTest
 
           val cCfg = (string("a") |@| nested("b")(
             map(string).orElseEither(string)
-          ))(Cfg, Cfg.unapply)
+          )).to[Cfg]
 
           val res =
             read(
@@ -198,7 +198,7 @@ object MapTest
 
           val cCfg = (string("a") |@| nested("b")(
             string.orElseEither(map(string))
-          ))(Cfg, Cfg.unapply)
+          )).to[Cfg]
 
           val res =
             read(
@@ -218,7 +218,7 @@ object MapTest
 
           val cCfg = (string("a") |@| nested("b")(
             string.orElseEither(map(string))
-          ))(Cfg, Cfg.unapply)
+          )).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource
@@ -232,7 +232,7 @@ object MapTest
 
           val cCfg = (string("a") |@| nested("b")(
             map(string).orElseEither(string)
-          ))(Cfg, Cfg.unapply)
+          )).to[Cfg]
 
           val res = read(
             cCfg from ConfigSource

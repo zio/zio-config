@@ -27,8 +27,8 @@ object ProductBuilderTest
         },
         testM("combine 22 for tupled") {
           checkM(genS22) { p =>
-            val tuple =
-              S22.unapply(p).get
+            val conv = implicitly[TupleConversion[S22, (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)]]
+            val tuple = conv.to(p)
 
             val p2 =
               for {
@@ -95,10 +95,7 @@ object ProductBuilderTestUtils {
   private val cId21 = int(s"kId21")
 
   val cS22 =
-    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21)(
-      S22.apply,
-      S22.unapply
-    )
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21).to[S22]
 
   val cS22Tupled =
     (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21).tupled

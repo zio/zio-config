@@ -54,7 +54,7 @@ object NestedConfigTestUtils {
 
   val genDb: Gen[Random, Database] =
     for {
-      connection  <- Gen.either(genNonEmptyString(20).map(DbUrl), genDbConnection)
+      connection  <- Gen.either(genNonEmptyString(20).map(DbUrl.apply), genDbConnection)
       credentials <- Gen.option(genCredentials)
     } yield Database(connection, credentials)
 
@@ -67,15 +67,15 @@ object NestedConfigTestUtils {
   final case class TestParams(value: AppConfig) {
 
     val config: ConfigDescriptor[AppConfig] = {
-      val credentials  = (string("user") |@| string("password"))(Credentials.apply, Credentials.unapply)
-      val dbConnection = (string("host") |@| int("port"))(DbConnection.apply, DbConnection.unapply)
+      val credentials  = (string("user") |@| string("password")).to[Credentials]
+      val dbConnection = (string("host") |@| int("port")).to[DbConnection]
 
       val database =
-        (string("dburl")(DbUrl.apply, DbUrl.unapply)
+        (string("dburl").to[DbUrl]
           .orElseEither(nested("connection")(dbConnection)) |@|
-          nested("credentials")(credentials).optional)(Database.apply, Database.unapply)
+          nested("credentials")(credentials).optional).to[Database]
 
-      (nested("database")(database) |@| double("pricing"))(AppConfig, AppConfig.unapply)
+      (nested("database")(database) |@| double("pricing")).to[AppConfig]
     }
 
     val map =
@@ -103,5 +103,5 @@ object NestedConfigTestUtils {
   }
 
   val genNestedConfigParams: Gen[Random, TestParams] =
-    genAppConfig.map(TestParams)
+    genAppConfig.map(TestParams.apply)
 }

@@ -39,7 +39,7 @@ object MapConfigTest extends DefaultRunnableSpec {
       .map(tuples => Map(tuples: _*))
 
   def propertyTreeArgs(propertyTree: PropertyTree[String, String]): List[(String, String)] =
-    propertyTree.flatten.toList.map { t: (Vector[String], ::[String]) =>
+    propertyTree.flatten.toList.map { (t: (Vector[String], ::[String])) =>
       (s"${t._1.mkString("_")}", s"${t._2.mkString}")
     }
 

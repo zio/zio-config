@@ -22,6 +22,12 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
   def apply[C](f: (A, B) => C, g: C => Option[(A, B)]): F[C] =
     a.zip(b).xmapEither({ case (aa, bb) => Right(f(aa, bb)) }, liftWrite(g))
 
+  def to[C](implicit conv: TupleConversion[C, (A, B)]): F[C] =
+    a.zip(b).xmapEither(
+      { case (aa, bb) => Right(conv.from((aa, bb) ))},
+      liftWrite(c => Some(conv.to(c)))
+    )
+
   def |@|[C](cc: => F[C]): ProductBuilder[C] = new ProductBuilder[C] {
     val c: F[C] = cc
   }
@@ -36,6 +42,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
         .xmapEither[D](
           { case ((aa, bb), cc) => Right(ff(aa, bb, cc)) },
           liftWrite(d => gg(d).map { case (aa, bb, cc) => ((aa, bb), cc) })
+        )
+
+    def to[D](implicit conv: TupleConversion[D, (A, B, C)]): F[D] =
+      (a zip b zip c)
+        .xmapEither[D](
+          { case ((aa, bb), cc) => Right(conv.from((aa, bb, cc))) },
+          liftWrite(d => { val (aa, bb, cc) = conv.to(d); Some(((aa, bb), cc)) })
         )
 
     def tupled = apply[(A, B, C)]((a: A, b: B, c: C) => (a, b, c), t => Some((t._1, t._2, t._3)))
@@ -55,6 +68,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
             liftWrite(e => gg(e).map { case (aa, bb, cc, dd) => (((aa, bb), cc), dd) })
           )
 
+      def to[E](implicit conv: TupleConversion[E, (A, B, C, D)]): F[E] =
+        (a zip b zip c zip d)
+          .xmapEither[E](
+            { case (((aa, bb), cc), dd) => Right(conv.from((aa, bb, cc, dd))) },
+            liftWrite(e => { val (aa, bb, cc, dd) = conv.to(e); Some((((aa, bb), cc), dd)) })
+          )
+
       def tupled = apply[(A, B, C, D)]((a: A, b: B, c: C, d: D) => (a, b, c, d), t => Some((t._1, t._2, t._3, t._4)))
 
       def |@|[E](ee: => F[E]): ProductBuilder[E] =
@@ -70,6 +90,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
             .xmapEither[H](
               { case ((((aa, bb), cc), dd), ee) => Right(ff(aa, bb, cc, dd, ee)) },
               liftWrite(h => gg(h).map { case (aa, bb, cc, dd, ee) => ((((aa, bb), cc), dd), ee) })
+            )
+
+        def to[H](implicit conv: TupleConversion[H, (A, B, C, D, E)]): F[H] =
+          (a zip b zip c zip d zip e)
+            .xmapEither[H](
+              { case ((((aa, bb), cc), dd), ee) => Right(conv.from((aa, bb, cc, dd, ee))) },
+              liftWrite(h => { val (aa, bb, cc, dd, ee) = conv.to(h); Some(((((aa, bb), cc), dd), ee)) })
             )
 
         def tupled = apply[(A, B, C, D, E)]((a: A, b: B, c: C, d: D, e: E) => (a, b, c, d, e), t => Some((t._1, t._2, t._3, t._4, t._5)))
@@ -89,6 +116,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                 liftWrite(i => gg(i).map { case (aa, bb, cc, dd, ee, hh) => (((((aa, bb), cc), dd), ee), hh) })
               )
 
+          def to[I](implicit conv: TupleConversion[I, (A, B, C, D, E, H)]): F[I] =
+            (a zip b zip c zip d zip e zip h)
+              .xmapEither[I](
+                { case (((((aa, bb), cc), dd), ee), hh) => Right(conv.from((aa, bb, cc, dd, ee, hh))) },
+                liftWrite(i => { val (aa, bb, cc, dd, ee, hh) = conv.to(i); Some((((((aa, bb), cc), dd), ee), hh)) })
+              )
+
           def tupled = apply[(A, B, C, D, E, H)]((a: A, b: B, c: C, d: D, e: E, h: H) => (a, b, c, d, e, h), t => Some((t._1, t._2, t._3, t._4, t._5, t._6)))
 
           def |@|[I](ii: => F[I]): ProductBuilder[I] =
@@ -104,6 +138,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                 .xmapEither[J](
                   { case ((((((aa, bb), cc), dd), ee), hh), ii) => Right(ff(aa, bb, cc, dd, ee, hh, ii)) },
                   liftWrite(j => gg(j).map { case (aa, bb, cc, dd, ee, hh, ii) => ((((((aa, bb), cc), dd), ee), hh), ii) })
+                )
+
+            def to[J](implicit conv: TupleConversion[J, (A, B, C, D, E, H, I)]): F[J] =
+              (a zip b zip c zip d zip e zip h zip i)
+                .xmapEither[J](
+                  { case ((((((aa, bb), cc), dd), ee), hh), ii) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii))) },
+                  liftWrite(j => { val (aa, bb, cc, dd, ee, hh, ii) = conv.to(j); Some(((((((aa, bb), cc), dd), ee), hh), ii)) })
                 )
 
             def tupled = apply[(A, B, C, D, E, H, I)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I) => (a, b, c, d, e, h, i), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7)))
@@ -123,6 +164,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                     liftWrite(k => gg(k).map { case (aa, bb, cc, dd, ee, hh, ii, jj) => (((((((aa, bb), cc), dd), ee), hh), ii), jj) })
                   )
 
+              def to[K](implicit conv: TupleConversion[K, (A, B, C, D, E, H, I, J)]): F[K] =
+                (a zip b zip c zip d zip e zip h zip i zip j)
+                  .xmapEither[K](
+                    { case (((((((aa, bb), cc), dd), ee), hh), ii), jj) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj))) },
+                    liftWrite(k => { val (aa, bb, cc, dd, ee, hh, ii, jj) = conv.to(k); Some((((((((aa, bb), cc), dd), ee), hh), ii), jj)) })
+                  )
+
               def tupled = apply[(A, B, C, D, E, H, I, J)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J) => (a, b, c, d, e, h, i, j), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8)))
 
               def |@|[K](kk: => F[K]): ProductBuilder[K] =
@@ -138,6 +186,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                     .xmapEither[L](
                       { case ((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk) => Right(ff(aa, bb, cc, dd, ee, hh, ii, jj, kk)) },
                       liftWrite(l => gg(l).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk) => ((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk) })
+                    )
+
+                def to[L](implicit conv: TupleConversion[L, (A, B, C, D, E, H, I, J, K)]): F[L] =
+                  (a zip b zip c zip d zip e zip h zip i zip j zip k)
+                    .xmapEither[L](
+                      { case ((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk))) },
+                      liftWrite(l => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk) = conv.to(l); Some(((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk)) })
                     )
 
                 def tupled = apply[(A, B, C, D, E, H, I, J, K)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K) => (a, b, c, d, e, h, i, j, k), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9)))
@@ -157,6 +212,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                         liftWrite(m => gg(m).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll) => (((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll) })
                       )
 
+                  def to[M](implicit conv: TupleConversion[M, (A, B, C, D, E, H, I, J, K, L)]): F[M] =
+                    (a zip b zip c zip d zip e zip h zip i zip j zip k zip l)
+                      .xmapEither[M](
+                        { case (((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll))) },
+                        liftWrite(m => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll) = conv.to(m); Some((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll)) })
+                      )
+
                   def tupled = apply[(A, B, C, D, E, H, I, J, K, L)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L) => (a, b, c, d, e, h, i, j, k, l), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10)))
 
                   def |@|[M](mm: => F[M]): ProductBuilder[M] =
@@ -174,6 +236,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                           liftWrite(n => gg(n).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm) => ((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm) })
                         )
 
+                    def to[N](implicit conv: TupleConversion[N, (A, B, C, D, E, H, I, J, K, L, M)]): F[N] =
+                      (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m)
+                        .xmapEither[N](
+                          { case ((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm))) },
+                          liftWrite(n => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm) = conv.to(n); Some(((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm)) })
+                        )
+
                     def tupled = apply[(A, B, C, D, E, H, I, J, K, L, M)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M) => (a, b, c, d, e, h, i, j, k, l, m), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11)))
 
                     def |@|[N](nn: => F[N]): ProductBuilder[N] =
@@ -189,6 +258,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                           .xmapEither[O](
                             { case (((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn) => Right(ff(aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn)) },
                             liftWrite(o => gg(o).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn) => (((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn) })
+                          )
+
+                      def to[O](implicit conv: TupleConversion[O, (A, B, C, D, E, H, I, J, K, L, M, N)]): F[O] =
+                        (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n)
+                          .xmapEither[O](
+                            { case (((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn))) },
+                            liftWrite(o => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn) = conv.to(o); Some((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn)) })
                           )
 
                       def tupled =
@@ -212,6 +288,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                               liftWrite(p => gg(p).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo) => ((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo) })
                             )
 
+                        def to[P](implicit conv: TupleConversion[P, (A, B, C, D, E, H, I, J, K, L, M, N, O)]): F[P] =
+                          (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n zip o)
+                            .xmapEither[P](
+                              { case ((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo))) },
+                              liftWrite(p => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo) = conv.to(p); Some(((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo)) })
+                            )
+
                         def tupled =
                           apply[(A, B, C, D, E, H, I, J, K, L, M, N, O)](
                             (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O) => (a, b, c, d, e, h, i, j, k, l, m, n, o),
@@ -231,6 +314,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                               .xmapEither[Q](
                                 { case (((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp) => Right(ff(aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp)) },
                                 liftWrite(q => gg(q).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp) => (((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp) })
+                              )
+
+                          def to[Q](implicit conv: TupleConversion[Q, (A, B, C, D, E, H, I, J, K, L, M, N, O, P)]): F[Q] =
+                            (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n zip o zip p)
+                              .xmapEither[Q](
+                                { case (((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp))) },
+                                liftWrite(q => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp) = conv.to(q); Some((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp)) })
                               )
 
                           def tupled =
@@ -254,6 +344,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                   liftWrite(r => gg(r).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq) => ((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq) })
                                 )
 
+                            def to[R](implicit conv: TupleConversion[R, (A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q)]): F[R] =
+                              (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n zip o zip p zip q)
+                                .xmapEither[R](
+                                  { case ((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq))) },
+                                  liftWrite(r => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq) = conv.to(r); Some(((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq)) })
+                                )
+
                             def tupled =
                               apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q)](
                                 (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q),
@@ -273,6 +370,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                   .xmapEither[S](
                                     { case (((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr) => Right(ff(aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr)) },
                                     liftWrite(s => gg(s).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr) => (((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr) })
+                                  )
+
+                              def to[S](implicit conv: TupleConversion[S, (A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R)]): F[S] =
+                                (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n zip o zip p zip q zip r)
+                                  .xmapEither[S](
+                                    { case (((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr))) },
+                                    liftWrite(s => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr) = conv.to(s); Some((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr)) })
                                   )
 
                               def tupled =
@@ -296,6 +400,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                       liftWrite(t => gg(t).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss) => ((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss) })
                                     )
 
+                                def to[T](implicit conv: TupleConversion[T, (A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S)]): F[T] =
+                                  (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n zip o zip p zip q zip r zip s)
+                                    .xmapEither[T](
+                                      { case ((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss))) },
+                                      liftWrite(t => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss) = conv.to(t); Some(((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss)) })
+                                    )
+
                                 def tupled =
                                   apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S)](
                                     (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q, r: R, s: S) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q, r, s),
@@ -315,6 +426,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                       .xmapEither[U](
                                         { case (((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt) => Right(ff(aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt)) },
                                         liftWrite(u => gg(u).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt) => (((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt) })
+                                      )
+
+                                  def to[U](implicit conv: TupleConversion[U, (A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T)]): F[U] =
+                                    (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n zip o zip p zip q zip r zip s zip t)
+                                      .xmapEither[U](
+                                        { case (((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt))) },
+                                        liftWrite(u => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt) = conv.to(u); Some((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt)) })
                                       )
 
                                   def tupled =
@@ -338,6 +456,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                           liftWrite(v => gg(v).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu) => ((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu) })
                                         )
 
+                                    def to[V](implicit conv: TupleConversion[V, (A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)]): F[V] =
+                                      (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n zip o zip p zip q zip r zip s zip t zip u)
+                                        .xmapEither[V](
+                                          { case ((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu))) },
+                                          liftWrite(v => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu) = conv.to(v); Some(((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu)) })
+                                        )
+
                                     def tupled =
                                       apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)](
                                         (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q, r: R, s: S, t: T, u: U) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q, r, s, t, u),
@@ -357,6 +482,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                           .xmapEither[W](
                                             { case (((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv) => Right(ff(aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv)) },
                                             liftWrite(w => gg(w).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv) => (((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv) })
+                                          )
+
+                                      def to[W](implicit conv: TupleConversion[W, (A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)]): F[W] =
+                                        (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n zip o zip p zip q zip r zip s zip t zip u zip v)
+                                          .xmapEither[W](
+                                            { case (((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv))) },
+                                            liftWrite(w => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv) = conv.to(w); Some((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv)) })
                                           )
 
                                       def tupled =
@@ -380,6 +512,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                               liftWrite(x => gg(x).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv, ww) => ((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv), ww) })
                                             )
 
+                                        def to[X](implicit conv: TupleConversion[X, (A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W)]): F[X] =
+                                          (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n zip o zip p zip q zip r zip s zip t zip u zip v zip w)
+                                            .xmapEither[X](
+                                              { case ((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv), ww) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv, ww))) },
+                                              liftWrite(x => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv, ww) = conv.to(x); Some(((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv), ww)) })
+                                            )
+
                                         def tupled =
                                           apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W)](
                                             (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q, r: R, s: S, t: T, u: U, v: V, w: W) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w),
@@ -399,6 +538,13 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                               .xmapEither[Y](
                                                 { case (((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv), ww), xx) => Right(ff(aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv, ww, xx)) },
                                                 liftWrite(y => gg(y).map { case (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv, ww, xx) => (((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv), ww), xx) })
+                                              )
+
+                                          def to[Y](implicit conv: TupleConversion[Y, (A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X)]): F[Y] =
+                                            (a zip b zip c zip d zip e zip h zip i zip j zip k zip l zip m zip n zip o zip p zip q zip r zip s zip t zip u zip v zip w zip x)
+                                              .xmapEither[Y](
+                                                { case (((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv), ww), xx) => Right(conv.from((aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv, ww, xx))) },
+                                                liftWrite(y => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv, ww, xx) = conv.to(y); Some((((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv), ww), xx)) })
                                               )
 
                                           def tupled =

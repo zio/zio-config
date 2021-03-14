@@ -142,20 +142,20 @@ object ReadWriteRoundtripTestUtils {
     } yield SingleField(count)
 
   val genCoproductConfig: Gen[Random, CoproductConfig] =
-    Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
+    Gen.either(genDataItem, genNestedConfig).map(CoproductConfig.apply)
 
-  val cId             = string("kId")(Id.apply, Id.unapply)
-  val cId2            = string("kId2")(Id.apply, Id.unapply)
-  val cDataItem       = (cId2.optional |@| int("kDiCount"))(DataItem.apply, DataItem.unapply)
-  val cDbUrl          = string("kDbUrl")(DbUrl.apply, DbUrl.unapply)
-  val cEnterpriseAuth = (cId |@| cDbUrl)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
+  val cId             = string("kId").to[Id]
+  val cId2            = string("kId2").to[Id]
+  val cDataItem       = (cId2.optional |@| int("kDiCount")).to[DataItem]
+  val cDbUrl          = string("kDbUrl").to[DbUrl]
+  val cEnterpriseAuth = (cId |@| cDbUrl).to[EnterpriseAuth]
 
   val cNestedConfig =
-    (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedPath.apply, NestedPath.unapply)
+    (cEnterpriseAuth |@| int("kCount") |@| float("kFactor")).to[NestedPath]
 
   val cSingleField: ConfigDescriptor[SingleField] =
-    int("kCount")(SingleField.apply, SingleField.unapply)
+    int("kCount").to[SingleField]
 
   val cCoproductConfig =
-    (cDataItem.orElseEither(cNestedConfig))(CoproductConfig.apply, CoproductConfig.unapply)
+    (cDataItem.orElseEither(cNestedConfig)).to[CoproductConfig]
 }

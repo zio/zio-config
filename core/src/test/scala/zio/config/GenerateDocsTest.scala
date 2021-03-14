@@ -93,21 +93,12 @@ object GenerateDocsTestUtils {
   final case class AppConfig(secret: Option[String], credentials: Credentials, database: Database)
 
   def descriptor: ConfigDescriptor[AppConfig] = {
-    val credentials = (string("USERNAME") ?? "Example: ZioUser" |@| string("PASSWORD") ?? "Example: ZioPass")(
-      Credentials.apply,
-      Credentials.unapply
-    ) ?? "Credentials"
+    val credentials = (string("USERNAME") ?? "Example: ZioUser" |@| string("PASSWORD") ?? "Example: ZioPass").to[Credentials] ?? "Credentials"
 
-    val database = (int("PORT") ?? "Example: 8088" |@| string("URL") ?? "Example: abc.com")(
-      Database.apply,
-      Database.unapply
-    ) ?? "Database"
+    val database = (int("PORT") ?? "Example: 8088" |@| string("URL") ?? "Example: abc.com").to[Database] ?? "Database"
 
     (string("SECRET").optional ?? "Application secret" |@| nested("CREDENTIALS")(credentials) |@| nested(
       "DATABASE"
-    )(database))(
-      AppConfig.apply,
-      AppConfig.unapply
-    )
+    )(database)).to[AppConfig]
   }
 }

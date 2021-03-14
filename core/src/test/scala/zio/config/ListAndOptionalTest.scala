@@ -149,10 +149,10 @@ object ListAndOptionalTest
             (
               patternDesc |@|
                 tagDesc
-            )(Branch.apply, Branch.unapply)
+            ).to[Branch]
 
           val appConfigDesc =
-            (list("branches")(branchConfigDesc).optional)(AppConfig.apply, AppConfig.unapply)
+            (list("branches")(branchConfigDesc).optional).to[AppConfig]
 
           assert(read(appConfigDesc from src))(isLeft(anything))
         },
@@ -199,19 +199,19 @@ object ListAndOptionalTestUtils {
   val genOverallConfig =
     Gen.option(genId).map(t => OverallConfig(t.map(t => Option(Option(t)))))
 
-  private def id(path: String) = string(path)(Id.apply, Id.unapply)
+  private def id(path: String) = string(path).to[Id]
 
   private val cId = id("kId")
 
   val cOverallConfig =
-    cId.optional.optional.optional(OverallConfig.apply, OverallConfig.unapply)
+    cId.optional.optional.optional.to[OverallConfig]
 
   final case class Opt3Config(a: Id, b: Option[Id], c: Option[Id])
   final case class ListConfig(list: List[Opt3Config])
 
-  val cOpt3Config = (id("a") |@| id("b").optional |@| id("c").optional)(Opt3Config, Opt3Config.unapply)
+  val cOpt3Config = (id("a") |@| id("b").optional |@| id("c").optional).to[Opt3Config]
 
-  val cListConfig = list("list")(cOpt3Config)(ListConfig, ListConfig.unapply)
+  val cListConfig = list("list")(cOpt3Config).to[ListConfig]
 
   val genOpt3Config = for {
     a <- genId
@@ -219,5 +219,5 @@ object ListAndOptionalTestUtils {
     c <- Gen.option(genId)
   } yield Opt3Config(a, b, c)
 
-  val genListConfig = Gen.listOf(genOpt3Config).map(ListConfig)
+  val genListConfig = Gen.listOf(genOpt3Config).map(ListConfig.apply)
 }
