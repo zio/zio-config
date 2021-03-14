@@ -50,7 +50,7 @@ object TupleConversion {
           params.indices.map { idx =>
             val accessor = TermName(s"_${idx + 1}")
             q"b.$accessor"
-          }          
+          }
 
         q"""new _root_.zio.config.TupleConversion[$prodTpe, $tup] {
                 override def to(a: $prodTpe): $tup =
@@ -78,8 +78,9 @@ object TupleConversion {
   }
 }
 trait ImplicitTupleConversion {
-    implicit def autoTupleConversion[Prod <: Product, Tup]: TupleConversion[Prod, Tup] =
-        macro TupleConversion.genTupleConversion[Prod, Tup]
+  implicit def autoTupleConversion[Prod <: Product, Tup]: TupleConversion[Prod, Tup] =
+    macro TupleConversion.genTupleConversion[Prod, Tup]
 
-    def autoTupleConversion1[Prod, A](implicit ev: TupleConversion[Prod, Tuple1[A]]): TupleConversion[Prod, A] = ??? // defined here so it can be used in explicit imports when cross-compiling
+  def autoTupleConversion1[Prod, A](implicit ev: TupleConversion[Prod, Tuple1[A]]): TupleConversion[Prod, A] =
+    ??? // defined here so it can be used in explicit imports when cross-compiling
 }
