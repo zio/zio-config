@@ -466,6 +466,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       }
     }
 
+    @deprecated("Consider using fromSystemProps, which uses zio.system.System to load the properties", since = "1.0.2")
     def fromSystemProperties: UIO[ConfigSource] =
       fromSystemProperties(None, None)
 
@@ -490,6 +491,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
+    @deprecated("Consider using fromSystemProps, which uses zio.System to load the properties", since = "1.0.2")
     def fromSystemProperties(
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
@@ -504,6 +506,42 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         valueDelimiter = valueDelimiter,
         leafForSequence = leafForSequence
       )
+
+    def fromSystemProps: ZIO[System, ReadError[String], ConfigSource] =
+      fromSystemProps(None, None)
+
+    /**
+     * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
+     * Consider providing valueDelimiter if you need any value to be a list
+     *
+     * Example:
+     *
+     * Given:
+     *
+     * {{{
+     *    vars in sys.props  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
+     *    keyDelimiter     = Some('.')
+     *    valueDelimiter   = Some(',')
+     * }}}
+     *
+     * then, the following works:
+     *
+     * {{{
+     *    final case class kafkaConfig(server: String, serde: String)
+     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     * }}}
+     */
+    def fromSystemProps(
+      keyDelimiter: Option[Char],
+      valueDelimiter: Option[Char],
+      leafForSequence: LeafForSequence = LeafForSequence.Valid
+    ): ZIO[System, ReadError[String], ConfigSource] =
+      ZIO
+        .accessM[System](_.get.properties)
+        .bimap(
+          error => ReadError.SourceError[String](s"Error while getting system properties: ${error.getMessage}"),
+          fromMap(_, SystemProperties, keyDelimiter, valueDelimiter, leafForSequence)
+        )
 
     private def fromMapInternal[A](map: Map[String, A])(
       f: A => ::[String],
