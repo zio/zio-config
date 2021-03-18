@@ -55,16 +55,18 @@ object YamlConfigSpec extends DefaultRunnableSpec {
       case class B(b: Boolean) extends Sum
 
       val descriptor =
-        ConfigDescriptor.nested("sum") {
-          ConfigDescriptor.list {
-            (ConfigDescriptor.nested("A")(ConfigDescriptor.string("a")(A.apply, A.unapply)) orElseEither
-              ConfigDescriptor.nested("B")(ConfigDescriptor.boolean("b")(B.apply, B.unapply)))
-              .transform(_.merge, (_: Sum) match {
-                case a: A => Left(a)
-                case b: B => Right(b)
-              })
+        ConfigDescriptor
+          .nested("sum") {
+            ConfigDescriptor.list {
+              (ConfigDescriptor.nested("A")(ConfigDescriptor.string("a").to[A]) orElseEither
+                ConfigDescriptor.nested("B")(ConfigDescriptor.boolean("b").to[B]))
+                .transform(_.merge, (_: Sum) match {
+                  case a: A => Left(a)
+                  case b: B => Right(b)
+                })
+            }
           }
-        }(Child.apply, Child.unapply)
+          .to[Child]
 
       val result =
         YamlConfig.fromString(
