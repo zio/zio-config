@@ -84,7 +84,9 @@ object RecursiveConfigTest extends BaseSpec {
         )
       },
       test("documentation of expression tree") {
-        assert(generateDocs(expr).toTable)(
+        val docs  = generateDocs(expr)
+        val table = docs.toTable
+        assert(table)(
           equalTo(
             Table(
               List(
@@ -104,28 +106,9 @@ object RecursiveConfigTest extends BaseSpec {
                         ),
                         Table.TableRow(
                           List(Table.FieldName.Key("add")),
-                          Some(Table.Format.List),
+                          Some(Table.Format.RecursionList),
                           List(),
-                          Some(
-                            Table(
-                              List(
-                                Table.TableRow(
-                                  List(),
-                                  Some(Table.Format.Primitive),
-                                  List(ConfigDocs.Description(None, "value of type int")),
-                                  None,
-                                  Set()
-                                ),
-                                Table.TableRow(
-                                  List(Table.FieldName.Key("add")),
-                                  Some(Table.Format.Recursion),
-                                  List(),
-                                  None,
-                                  Set()
-                                )
-                              )
-                            )
-                          ),
+                          None,
                           Set()
                         )
                       )
@@ -327,7 +310,7 @@ object RecursiveConfigTestUtils {
   case class Lit(n: Int)            extends Expr
   case class Add(items: List[Expr]) extends Expr
 
-  def expr: ConfigDescriptor[Expr] = {
+  lazy val expr: ConfigDescriptor[Expr] = {
     val lit: ConfigDescriptor[Expr] = int.transformOrFail(
       n => Right(Lit(n)), {
         case Lit(n) => Right(n)

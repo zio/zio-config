@@ -169,8 +169,10 @@ trait ConfigDocsModule extends WriteModule {
             }(false), Format.AnyOneOf)
 
           case c @ ConfigDocs.Sequence(schemaDocs, _) =>
-            go(schemaDocs, previousPaths, Some(c), descriptionsUsedAlready)
-              .withFormat(Format.List)
+            go(schemaDocs, previousPaths, Some(c), descriptionsUsedAlready).mapFormat {
+              case Some(Format.Recursion) => Format.RecursionList
+              case _                      => Format.List
+            }
 
           case c @ ConfigDocs.DynamicMap(schemaDocs, _) =>
             go(schemaDocs, previousPaths, Some(c), descriptionsUsedAlready)
@@ -347,8 +349,11 @@ trait ConfigDocsModule extends WriteModule {
       )
     }
 
+    def mapFormat(f: Option[Format] => Format): Table =
+      Table(rows.map(row => row.copy(format = Some(f(row.format)))))
+
     def withFormat(format: Format): Table =
-      Table(rows.map(_.copy(format = Some(format))))
+      mapFormat(_ => format)
 
     private def padToEmpty(string: String, size: Int): String = {
       val maxSize = Math.max(string.length, size)
@@ -516,6 +521,7 @@ trait ConfigDocsModule extends WriteModule {
           case Format.AnyOneOf      => "any-one-of"
           case Format.AllOf         => "all-of"
           case Format.Recursion     => "recursion"
+          case Format.RecursionList => "list of recursion"
           case Format.NotApplicable => ""
         }
     }
@@ -529,6 +535,7 @@ trait ConfigDocsModule extends WriteModule {
       case object AllOf         extends Format
       case object NotApplicable extends Format
       case object Recursion     extends Format
+      case object RecursionList extends Format
     }
 
     sealed trait FieldName {
@@ -570,7 +577,11 @@ trait ConfigDocsModule extends WriteModule {
       latestPath: Option[K],
       alreadySeen: Set[ConfigDescriptor[_]]
     ): ConfigDocs =
-      loop(sources, descriptions, config, latestPath, alreadySeen + config)
+      if (alreadySeen.contains(config)) {
+        ConfigDocs.Recursion(sources)
+      } else {
+        loop(sources, descriptions, config, latestPath, alreadySeen + config)
+      }
 
     def loop[B](
       sources: Set[ConfigSourceName],
@@ -578,19 +589,7 @@ trait ConfigDocsModule extends WriteModule {
       config: ConfigDescriptor[B],
       latestPath: Option[K],
       alreadySeen: Set[ConfigDescriptor[_]]
-    ): ConfigDocs = {
-      @tailrec
-      def lookAhead(desc: ConfigDescriptor[_]): ConfigDescriptor[_] =
-        if (!alreadySeen.contains(desc)) {
-          desc match {
-            case Lazy(value)                   => lookAhead(value())
-            case TransformOrFail(config, _, _) => lookAhead(config)
-            case _                             => desc
-          }
-        } else {
-          desc
-        }
-
+    ): ConfigDocs =
       config match {
         case Lazy(thunk) =>
           loopTo(sources, descriptions, thunk(), latestPath, alreadySeen)
@@ -639,27 +638,17 @@ trait ConfigDocsModule extends WriteModule {
           )
 
         case Nested(source, path, c) =>
-          val inner = lookAhead(c)
-
-          if (alreadySeen.contains(inner)) {
-            ConfigDocs.Nested(
-              path,
-              ConfigDocs.Recursion(source.names ++ sources),
-              descriptions
-            )
-          } else {
-            ConfigDocs.Nested(
-              path,
-              loopTo(
-                source.names ++ sources,
-                List.empty,
-                inner,
-                Some(path),
-                alreadySeen
-              ),
-              descriptions
-            )
-          }
+          ConfigDocs.Nested(
+            path,
+            loopTo(
+              source.names ++ sources,
+              List.empty,
+              c,
+              Some(path),
+              alreadySeen
+            ),
+            descriptions
+          )
 
         case TransformOrFail(c, _, _) =>
           loopTo(sources, descriptions, c, None, alreadySeen)
@@ -682,7 +671,6 @@ trait ConfigDocsModule extends WriteModule {
             loopTo(sources, descriptions, right, None, alreadySeen)
           )
       }
-    }
 
     loopTo(Set.empty, Nil, config, None, Set.empty)
   }
