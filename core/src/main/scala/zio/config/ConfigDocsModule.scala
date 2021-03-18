@@ -1,7 +1,5 @@
 package zio.config
 
-import scala.annotation.tailrec
-
 trait ConfigDocsModule extends WriteModule {
   import ConfigDescriptorAdt._
   import Table._
