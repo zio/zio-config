@@ -12,42 +12,41 @@ import zio.test._
 import zio.config.helpers._
 import zio.test.Assertion._
 
-object AutomaticConfigTest
-    extends BaseSpec {
+object AutomaticConfigTest extends BaseSpec {
 
-      val spec = 
-      suite("magnolia spec")(
-        testM("automatic derivation spec") {
-          checkM(genEnvironment) {
-            environment =>
-              val configDesc = descriptor[MyConfig]
+  val spec =
+    suite("magnolia spec")(
+      testM("automatic derivation spec") {
+        checkM(genEnvironment) {
+          environment =>
+            val configDesc = descriptor[MyConfig]
 
-              val source =
-                ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
+            val source =
+              ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
 
-              val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
-                for {
-                  result  <- ZIO.fromEither(read(configDesc from source))
-                  written <- ZIO.effectTotal(write(configDesc, result))
-                } yield written
+            val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
+              for {
+                result  <- ZIO.fromEither(read(configDesc from source))
+                written <- ZIO.effectTotal(write(configDesc, result))
+              } yield written
 
-              val defaultValue   = environment.getOrElse("default", "1")
-              val anotherDefault = environment.getOrElse("anotherDefault", "true")
+            val defaultValue   = environment.getOrElse("default", "1")
+            val anotherDefault = environment.getOrElse("anotherDefault", "true")
 
-              val updatedEnv =
-                environment
-                  .updated("default", defaultValue)
-                  .updated("anotherDefault", anotherDefault)
+            val updatedEnv =
+              environment
+                .updated("default", defaultValue)
+                .updated("anotherDefault", anotherDefault)
 
-              val actual = readAndWrite
-                .map(_.map(_.flattenString()))
-                .map(_.fold(_ => Nil, fromMultiMap(_).toList.sortBy(_._1)))
+            val actual = readAndWrite
+              .map(_.map(_.flattenString()))
+              .map(_.fold(_ => Nil, fromMultiMap(_).toList.sortBy(_._1)))
 
-              assertM(actual)(equalTo(updatedEnv.toList.sortBy(_._1)))
-          }
+            assertM(actual)(equalTo(updatedEnv.toList.sortBy(_._1)))
         }
-      )
       }
+    )
+}
 
 object AutomaticConfigTestUtils {
   sealed trait Credentials
