@@ -8,7 +8,7 @@ import dotty.tools.sbtplugin.DottyPlugin.autoImport._
 object BuildHelper {
 
   val Scala211 = "2.11.12"
-  val Scala212 = "2.12.11"
+  val Scala212 = "2.12.13"
   val Scala213 = "2.13.2"
   val Scala3   = "3.0.0-RC1"
 
