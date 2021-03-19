@@ -4,7 +4,6 @@ import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset }
 import java.util.UUID
 
 import zio.config._
-import zio.config.{ BaseSpec, ConfigSource, PropertyTree }
 import zio.config.shapeless.DeriveConfigDescriptor._
 import AutomaticConfigTestUtils._
 import zio.ZIO

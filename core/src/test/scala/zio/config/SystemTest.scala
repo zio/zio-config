@@ -5,7 +5,7 @@ import zio.random.Random
 import zio.test.Assertion._
 import zio.test.environment.{ TestEnvironment, TestSystem }
 import zio.test.{ DefaultRunnableSpec, _ }
-import zio.{ UIO, ZIO }
+import zio.ZIO
 import zio.Has
 
 object SystemTest extends DefaultRunnableSpec {

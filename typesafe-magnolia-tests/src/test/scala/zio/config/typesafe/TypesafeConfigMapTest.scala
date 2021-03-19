@@ -8,7 +8,9 @@ import TypesafeConfigMapSpecUtils._
 import TypesafeConfigTestSupport._
 
 object TypesafeConfigMapSpec
-    extends BaseSpec(
+    extends BaseSpec {
+
+  override def spec =
       suite("Map Typesafe Integration")(
         test("read typesafe config") {
           val result =
@@ -77,7 +79,7 @@ object TypesafeConfigMapSpec
           )
         }
       )
-    )
+}
 
 object TypesafeConfigMapSpecUtils {
   private val hocon =

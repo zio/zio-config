@@ -14,7 +14,12 @@ object BuildHelper {
 
   val SilencerVersion = "1.7.3"
 
-  val testDeps = Seq("org.scalacheck" %% "scalacheck" % "1.15.3" % Test)
+  def testDeps(scalaVersion: String) = 
+    if (scalaVersion == Scala211) {
+      Seq("org.scalacheck" %% "scalacheck" % "1.15.2" % Test)
+    } else {
+      Seq("org.scalacheck" %% "scalacheck" % "1.15.3" % Test)
+    }
 
   private val stdOptions = Seq(
     "-deprecation",
@@ -96,7 +101,7 @@ object BuildHelper {
     crossScalaVersions := Seq(Scala213, Scala212, Scala211),
     scalaVersion in ThisBuild := crossScalaVersions.value.head,
     scalacOptions := stdOptions ++ extraOptions(scalaVersion.value),
-    libraryDependencies ++= testDeps,
+    libraryDependencies ++= testDeps(scalaVersion.value),
     libraryDependencies ++= {
       if (isDotty.value)
         Seq(

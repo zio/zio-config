@@ -9,7 +9,7 @@ import zio.config.typesafe.OptionalSpecUtils._
 import ReadError._
 import zio.config.foldReadError
 
-object TypesafeConfigOptionalTest extends {
+object TypesafeConfigOptionalTest extends BaseSpec {
 
   val spec =
     suite("partial products fail instead of returning none")(

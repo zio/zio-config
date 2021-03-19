@@ -10,7 +10,9 @@ import zio.test._
 import zio.config.helpers
 
 object NumericSupportTest
-    extends BaseSpec(
+    extends BaseSpec {
+
+    override val spec =
       suite("Refined Numeric support")(
         testM("Refined config Less roundtrip") {
           checkM(Gen.int(1, 9).map(s => Refined.unsafeApply[Int, Less[W.`10`.T]](s))) { p =>
@@ -151,4 +153,4 @@ object NumericSupportTest
           }
         }
       )
-    )
+}

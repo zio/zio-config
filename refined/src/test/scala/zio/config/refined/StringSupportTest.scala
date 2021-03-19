@@ -13,7 +13,9 @@ import zio.config._
 import zio.test._
 
 object StringSupportTest
-    extends BaseSpec(
+    extends BaseSpec {
+
+    override val spec =
       suite("Refined String support")(
         testM("Refined config IPv4 roundtrip") {
           checkM(Gen.listOfN(4)(Gen.int(0, 255)).map(s => Refined.unsafeApply[String, IPv4](s.mkString(".")))) { p =>
@@ -331,4 +333,4 @@ object StringSupportTest
           }
         }
       )
-    )
+}
