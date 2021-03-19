@@ -7,78 +7,77 @@ import zio.test._
 import TypesafeConfigMapSpecUtils._
 import TypesafeConfigTestSupport._
 
-object TypesafeConfigMapSpec
-    extends BaseSpec {
+object TypesafeConfigMapSpec extends BaseSpec {
 
   override def spec =
-      suite("Map Typesafe Integration")(
-        test("read typesafe config") {
-          val result =
-            read(sssDescription from source)
+    suite("Map Typesafe Integration")(
+      test("read typesafe config") {
+        val result =
+          read(sssDescription from source)
 
-          assert(result)(
-            isRight(equalTo(sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a"))))
-          )
+        assert(result)(
+          isRight(equalTo(sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a"))))
+        )
 
-        },
-        test("read nested typesafe config map using map") {
-          val source = TypesafeConfigSource.fromHoconString(hocon2).loadOrThrow
-          val result = read(
-            nested("result")(map(sssDescription))(
-              TypesafeConfigMapSpecUtils.Nested.apply,
-              TypesafeConfigMapSpecUtils.Nested.unapply
-            ) from source
-          )
+      },
+      test("read nested typesafe config map using map") {
+        val source = TypesafeConfigSource.fromHoconString(hocon2).loadOrThrow
+        val result = read(
+          nested("result")(map(sssDescription))(
+            TypesafeConfigMapSpecUtils.Nested.apply,
+            TypesafeConfigMapSpecUtils.Nested.unapply
+          ) from source
+        )
 
-          val expected =
-            sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a"))
+        val expected =
+          sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a"))
 
-          assert(result)(
-            isRight(equalTo(TypesafeConfigMapSpecUtils.Nested(Map("dynamic1" -> expected, "dynamic2" -> expected))))
-          )
-        },
-        test("map fetch the value of k when given map(string(k))") {
-          val hocon3 =
-            s"""
-               |k : {
-               |  s : {
-               |     dynamicKey : { y : z }
-               |  }
-               |}
-               |
-               |y : z
-               |""".stripMargin
+        assert(result)(
+          isRight(equalTo(TypesafeConfigMapSpecUtils.Nested(Map("dynamic1" -> expected, "dynamic2" -> expected))))
+        )
+      },
+      test("map fetch the value of k when given map(string(k))") {
+        val hocon3 =
+          s"""
+             |k : {
+             |  s : {
+             |     dynamicKey : { y : z }
+             |  }
+             |}
+             |
+             |y : z
+             |""".stripMargin
 
-          case class Cfg(map: Map[String, String], y: String)
+        case class Cfg(map: Map[String, String], y: String)
 
-          val desc = (nested("k") { map("s")(string("y")) } |@| string("y"))(Cfg.apply, Cfg.unapply)
+        val desc = (nested("k") { map("s")(string("y")) } |@| string("y"))(Cfg.apply, Cfg.unapply)
 
-          val result = read(desc from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow)
+        val result = read(desc from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow)
 
-          assert(result)(isRight(equalTo(Cfg(Map("dynamicKey" -> "z"), "z"))))
-        },
-        test("map(string(y)) takes the value of y as a string and returns the map") {
-          val hocon4 =
-            s"""
-               |k : {
-               |  dynamicKey : {
-               |     y : z
-               |  }
-               |  dynamicKey2 : {
-               |     y : z2
-               |     z : k
-               |  }
-               |
-               |}
-               |""".stripMargin
+        assert(result)(isRight(equalTo(Cfg(Map("dynamicKey" -> "z"), "z"))))
+      },
+      test("map(string(y)) takes the value of y as a string and returns the map") {
+        val hocon4 =
+          s"""
+             |k : {
+             |  dynamicKey : {
+             |     y : z
+             |  }
+             |  dynamicKey2 : {
+             |     y : z2
+             |     z : k
+             |  }
+             |
+             |}
+             |""".stripMargin
 
-          val xx2 = nested("k") { map(string("y")) }
+        val xx2 = nested("k") { map(string("y")) }
 
-          assert(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow))(
-            isRight(equalTo(Map("dynamicKey" -> "z", "dynamicKey2" -> "z2")))
-          )
-        }
-      )
+        assert(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow))(
+          isRight(equalTo(Map("dynamicKey" -> "z", "dynamicKey2" -> "z2")))
+        )
+      }
+    )
 }
 
 object TypesafeConfigMapSpecUtils {
