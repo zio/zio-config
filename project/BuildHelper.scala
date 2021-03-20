@@ -129,12 +129,6 @@ object BuildHelper {
       else
         Seq()
     },
-    scalacOptions --= {
-      if (isDotty.value)
-        Seq("-Xfatal-warnings")
-      else
-        Seq()
-    },
     sources in (Compile, doc) := {
       val old = (Compile / doc / sources).value
       if (isDotty.value) {

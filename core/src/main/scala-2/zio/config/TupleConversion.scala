@@ -7,6 +7,7 @@ trait TupleConversion[A, B] {
   def to(a: A): B
   def from(b: B): A
 }
+
 object TupleConversion {
   def apply[Prod, Tup]: TupleConversion[Prod, Tup] = macro genTupleConversion[Prod, Tup]
 
