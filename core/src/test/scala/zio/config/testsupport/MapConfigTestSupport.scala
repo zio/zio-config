@@ -1,5 +1,6 @@
 package zio.config.testsupport
 
+import zio.config._
 import zio.config.ConfigDescriptor, ConfigDescriptor._
 import zio.random.Random
 import zio.test.Gen.alphaNumericChar
@@ -40,10 +41,7 @@ object MapConfigTestSupport {
     object AwsConfig {
       val description: ConfigDescriptor[AwsConfig] =
         head("aws")(
-          (head("key")(string) |@| head("secret")(string) |@| KinesisConfig.description)(
-            AwsConfig.apply,
-            AwsConfig.unapply
-          )
+          (head("key")(string) |@| head("secret")(string) |@| KinesisConfig.description).to[AwsConfig]
         )
     }
 
@@ -51,22 +49,19 @@ object MapConfigTestSupport {
 
     object KinesisConfig {
       val description =
-        (head("kinesis")(head("inputtopic")(string))(KinesisConfig.apply, KinesisConfig.unapply))
+        (head("kinesis")(head("inputtopic")(string)).to[KinesisConfig])
     }
 
     final case class PubSubConfig(outputTopic: String)
 
     object PubSubConfig {
       val description =
-        head("ps")(head("outputtopic")(string)(PubSubConfig.apply, PubSubConfig.unapply))
+        head("ps")(head("outputtopic")(string).to[PubSubConfig])
     }
 
     val descriptor: ConfigDescriptor[AppConfig] =
       head("SystemF")(
-        (AwsConfig.description |@| AppConfig.PubSubConfig.description |@| JobConfig.descriptor)(
-          AppConfig.apply,
-          AppConfig.unapply
-        )
+        (AwsConfig.description |@| AppConfig.PubSubConfig.description |@| JobConfig.descriptor).to[AppConfig]
       )
   }
 
@@ -87,7 +82,7 @@ object MapConfigTestSupport {
           head("region")(string) |@|
           head("zone")(string) |@|
           head("subnet")(string) |@|
-          head("gcptemplocation")(string))(DataflowConfig.apply, DataflowConfig.unapply)
+          head("gcptemplocation")(string)).to[DataflowConfig]
       )
   }
 
@@ -101,7 +96,7 @@ object MapConfigTestSupport {
   object JobConfig {
     val descriptor: ConfigDescriptor[JobConfig] =
       head("job")(
-        (DataflowConfig.descriptor.optional |@| head("supervise")(boolean))(JobConfig.apply, JobConfig.unapply)
+        (DataflowConfig.descriptor.optional |@| head("supervise")(boolean)).to[JobConfig]
       )
   }
 

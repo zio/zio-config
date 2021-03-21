@@ -14,133 +14,134 @@ import zio.test.environment.TestEnvironment
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
-object PropertyTypeTest
-    extends BaseSpec(
-      suite("PropertyType")(
-        testM("StringType roundtrip") {
-          // any string is a valid string i guess
-          check(Gen.anyString)(
-            assertValidRoundtrip(StringType, parse = identity)
-          )
-        },
-        propertyTypeRoundtripSuite(
-          typeInfo = "Boolean",
-          propType = BooleanType,
-          genValid = genValidBooleanStrings,
-          parse = input =>
-            input.toLowerCase match {
-              case "true" | "on" | "1"   => true
-              case "false" | "off" | "0" => false
-              case _                     => throw new IllegalArgumentException(s"For input string: '$input'")
-            }
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "Byte",
-          propType = ByteType,
-          genValid = genPadLeadingZeros(Gen.anyByte),
-          parse = _.toByte
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "Short",
-          propType = ShortType,
-          genValid = genPadLeadingZeros(Gen.anyShort),
-          parse = _.toShort
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "Int",
-          propType = IntType,
-          genValid = genPadLeadingZeros(Gen.anyInt),
-          parse = _.toInt
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "Long",
-          propType = LongType,
-          genValid = genPadLeadingZeros(Gen.anyLong),
-          parse = _.toLong
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "BigInt",
-          propType = BigIntType,
-          genValid = genValidBigIntString,
-          parse = BigInt(_)
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "Float",
-          propType = FloatType,
-          genValid = genPadLeadingZeros(Gen.anyFloat),
-          parse = _.toFloat
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "Double",
-          propType = DoubleType,
-          genValid = genPadLeadingZeros(Gen.double(Double.MinValue, Double.MaxValue)),
-          parse = _.toDouble
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "BigDecimal",
-          propType = BigDecimalType,
-          genValid = genValidBigDecimalString,
-          parse = BigDecimal(_)
-        ),
-        testM(s"valid URI string roundtrip") {
-          check(Gen.anyString)(assertValidRoundtrip(UriType, new URI(_)))
-        },
-        propertyTypeRoundtripSuite(
-          typeInfo = "Duration",
-          propType = DurationType,
-          genValid = Gen.sized(helpers.genDuration),
-          parse = Duration(_)
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "UUID",
-          propType = UuidType,
-          genValid = Gen.anyUUID.map(_.toString),
-          parse = UUID.fromString(_)
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "Duration",
-          propType = ZioDurationType,
-          genValid = Gen.sized(helpers.genDuration),
-          parse = s => zio.duration.Duration.fromScala(Duration(s))
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "LocalDate",
-          propType = LocalDateType,
-          genValid = genLocalDateString,
-          parse = LocalDate.parse(_)
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "LocalDateTime",
-          propType = LocalDateTimeType,
-          genValid = genLocalDateTimeString,
-          parse = LocalDateTime.parse(_)
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "LocalTime",
-          propType = LocalTimeType,
-          genValid = genLocalTimeString,
-          parse = LocalTime.parse(_)
-        ),
-        propertyTypeRoundtripSuite(
-          typeInfo = "Instant",
-          propType = InstantType,
-          genValid = genInstant.map(_.toString),
-          parse = Instant.parse(_)
-        ),
-        testM(s"valid FileType string roundtrip") {
-          check(Gen.anyString)(assertValidRoundtrip(FileType, new File(_)))
-        },
-        propertyTypeRoundtripSuite(
-          typeInfo = "URL",
-          propType = UrlType,
-          genValid = genValidUrlString,
-          parse = new URL(_)
-        ),
-        testM("valid JavaFilePathType string roundtrip") {
-          check(Gen.anyString)(assertValidRoundtrip(JavaFilePathType, java.nio.file.Paths.get(_)))
-        }
-      )
+object PropertyTypeTest extends BaseSpec {
+
+  val spec =
+    suite("PropertyType")(
+      testM("StringType roundtrip") {
+        // any string is a valid string i guess
+        check(Gen.anyString)(
+          assertValidRoundtrip(StringType, parse = identity)
+        )
+      },
+      propertyTypeRoundtripSuite(
+        typeInfo = "Boolean",
+        propType = BooleanType,
+        genValid = genValidBooleanStrings,
+        parse = input =>
+          input.toLowerCase match {
+            case "true" | "on" | "1"   => true
+            case "false" | "off" | "0" => false
+            case _                     => throw new IllegalArgumentException(s"For input string: '$input'")
+          }
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "Byte",
+        propType = ByteType,
+        genValid = genPadLeadingZeros(Gen.anyByte),
+        parse = _.toByte
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "Short",
+        propType = ShortType,
+        genValid = genPadLeadingZeros(Gen.anyShort),
+        parse = _.toShort
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "Int",
+        propType = IntType,
+        genValid = genPadLeadingZeros(Gen.anyInt),
+        parse = _.toInt
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "Long",
+        propType = LongType,
+        genValid = genPadLeadingZeros(Gen.anyLong),
+        parse = _.toLong
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "BigInt",
+        propType = BigIntType,
+        genValid = genValidBigIntString,
+        parse = BigInt(_)
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "Float",
+        propType = FloatType,
+        genValid = genPadLeadingZeros(Gen.anyFloat),
+        parse = _.toFloat
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "Double",
+        propType = DoubleType,
+        genValid = genPadLeadingZeros(Gen.double(Double.MinValue, Double.MaxValue)),
+        parse = _.toDouble
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "BigDecimal",
+        propType = BigDecimalType,
+        genValid = genValidBigDecimalString,
+        parse = BigDecimal(_)
+      ),
+      testM(s"valid URI string roundtrip") {
+        check(Gen.anyString)(assertValidRoundtrip(UriType, new URI(_)))
+      },
+      propertyTypeRoundtripSuite(
+        typeInfo = "Duration",
+        propType = DurationType,
+        genValid = Gen.sized(helpers.genDuration),
+        parse = Duration(_)
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "UUID",
+        propType = UuidType,
+        genValid = Gen.anyUUID.map(_.toString),
+        parse = UUID.fromString(_)
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "Duration",
+        propType = ZioDurationType,
+        genValid = Gen.sized(helpers.genDuration),
+        parse = s => zio.duration.Duration.fromScala(Duration(s))
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "LocalDate",
+        propType = LocalDateType,
+        genValid = genLocalDateString,
+        parse = LocalDate.parse(_)
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "LocalDateTime",
+        propType = LocalDateTimeType,
+        genValid = genLocalDateTimeString,
+        parse = LocalDateTime.parse(_)
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "LocalTime",
+        propType = LocalTimeType,
+        genValid = genLocalTimeString,
+        parse = LocalTime.parse(_)
+      ),
+      propertyTypeRoundtripSuite(
+        typeInfo = "Instant",
+        propType = InstantType,
+        genValid = genInstant.map(_.toString),
+        parse = Instant.parse(_)
+      ),
+      testM(s"valid FileType string roundtrip") {
+        check(Gen.anyString)(assertValidRoundtrip(FileType, new File(_)))
+      },
+      propertyTypeRoundtripSuite(
+        typeInfo = "URL",
+        propType = UrlType,
+        genValid = genValidUrlString,
+        parse = new URL(_)
+      ),
+      testM("valid JavaFilePathType string roundtrip") {
+        check(Gen.anyString)(assertValidRoundtrip(JavaFilePathType, java.nio.file.Paths.get(_)))
+      }
     )
+}
 
 object PropertyTypeTestUtils {
 

@@ -4,7 +4,7 @@ import zio.config._, ConfigDescriptor._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 
-object TypesafeConfigSimpleExample extends App with EitherImpureOps {
+object TypesafeConfigSimple extends App with EitherImpureOps {
   // A nested example with type safe config, and usage of magnolia
   final case class Details(name: String, age: Int)
 

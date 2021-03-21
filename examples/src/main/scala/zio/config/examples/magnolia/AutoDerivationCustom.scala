@@ -3,11 +3,11 @@ package zio.config.examples.magnolia
 import java.time.{ LocalDate, ZonedDateTime }
 import scala.util.Try
 import zio.config._
-import zio.config.magnolia.DeriveConfigDescriptor._
+import zio.config.magnolia._
 
 import zio.config.typesafe._
 
-object CustomDerivations extends App {
+object AutoDerivationCustom extends App {
   case class AppConfig(jobName: String, details: Option[Detail], s3Path: S3Path)
 
   case class Detail(containerId: String, executionTime: Either[ZonedDateTime, LocalDate])

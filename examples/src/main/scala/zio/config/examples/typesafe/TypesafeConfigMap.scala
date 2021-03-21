@@ -5,7 +5,7 @@ import zio.config.typesafe.TypesafeConfigSource
 import zio.config.{ read, write }
 import zio.config.ConfigDescriptor._, zio.config.typesafe._
 
-object MapExample extends App with EitherImpureOps {
+object TypesafeConfigMap extends App with EitherImpureOps {
   final case class A(m1: Map[String, List[Int]], l1: List[Int], l2: List[Int], m2: Map[String, B])
 
   object A {

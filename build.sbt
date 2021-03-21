@@ -55,9 +55,9 @@ addCommandAlias(
 addCommandAlias("compileAll", "; ++2.11.12; root2-11/compile; ++2.12.11; root2-12/compile; ++2.13.2!; root2-13/compile")
 addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.11; root2-12/test; ++2.13.2!; root2-13/test")
 
-lazy val zioVersion       = "1.0.4-2"
+lazy val zioVersion       = "1.0.5"
 lazy val magnoliaVersion  = "0.17.0"
-lazy val refinedVersion   = "0.9.14"
+lazy val refinedVersion   = "0.9.21"
 lazy val shapelessVersion = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
@@ -87,6 +87,9 @@ lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
 )
 lazy val scala213projects = scala212projects
 
+lazy val scala3projects =
+  Seq[ProjectReference](zioConfig, zioConfigTypesafe, zioConfigYaml, zioConfigDerivation)
+
 lazy val root =
   project
     .in(file("."))
@@ -111,18 +114,29 @@ lazy val `root2-13` =
     .settings(skip in publish := true)
     .aggregate(scala213projects: _*)
 
+lazy val `root3` =
+  project
+    .in(file("3"))
+    .settings(skip in publish := true)
+    .aggregate(scala3projects: _*)
+
 lazy val zioConfig =
   module("zio-config", "core")
     .enablePlugins(BuildInfoPlugin)
     .settings(buildInfoSettings)
+    .settings(scala3Settings)
     .settings(
       libraryDependencies ++= Seq(
         "dev.zio" %% "zio-test"     % zioVersion % Test,
         "dev.zio" %% "zio-test-sbt" % zioVersion % Test
       ),
+      libraryDependencies ++= {
+        if (isDotty.value) Seq.empty
+        else Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+      },
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
-      scalacOptions += "-P:silencer:lineContentFilters=import VersionSpecificSupport\\._"
     )
+    .settings(silencerOptions)
 
 lazy val zioConfigRefined =
   module("zio-config-refined", "refined")
@@ -133,9 +147,9 @@ lazy val zioConfigRefined =
           "dev.zio" %% "zio-test"     % zioVersion % Test,
           "dev.zio" %% "zio-test-sbt" % zioVersion % Test
         ),
-      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
-      scalacOptions += "-P:silencer:lineContentFilters=import VersionSpecificSupport\\._"
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
     )
+    .settings(silencerOptions)
     .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
 
 lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module")
@@ -165,6 +179,7 @@ lazy val examples = module("zio-config-examples", "examples")
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigGen)
 
 lazy val zioConfigDerivation = module("zio-config-derivation", "derivation")
+  .settings(scala3Settings)
   .dependsOn(zioConfig)
 
 lazy val zioConfigGen = module("zio-config-gen", "gen")
@@ -208,9 +223,10 @@ lazy val zioConfigTypesafe =
         "dev.zio"      %% "zio-test"     % zioVersion % Test,
         "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
       ),
-      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
-      scalacOptions += "-P:silencer:lineContentFilters=import VersionSpecificSupport\\._"
+      testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),      
     )
+    .settings(silencerOptions)
+    .settings(scala3Settings)
     .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigYaml =
@@ -222,8 +238,9 @@ lazy val zioConfigYaml =
         "dev.zio"       %% "zio-test-sbt"    % zioVersion % Test
       ),
       testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework")),
-      scalacOptions += "-P:silencer:lineContentFilters=import VersionSpecificSupport\\._"
     )
+    .settings(silencerOptions)
+    .settings(scala3Settings)
     .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigTypesafeMagnoliaTests =

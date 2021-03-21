@@ -8,107 +8,108 @@ import zio.random.Random
 import zio.test._
 import zio.test.Assertion._
 
-object ReadWriteRoundtripTest
-    extends BaseSpec(
-      suite("Coproduct support")(
-        testM("newtype 1 roundtrip") {
-          checkM(genId) { p =>
-            val p2 =
-              for {
-                written <- ZIO.fromEither(write(cId, p))
-                reread <- ZIO.fromEither(
-                           read(cId from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                         )
-              } yield reread
+object ReadWriteRoundtripTest extends BaseSpec {
 
-            assertM(p2)(equalTo(p))
-          }
-        },
-        testM("newtype 2 roundtrip") {
-          checkM(genDbUrl) { p =>
-            val p2 =
-              for {
-                written <- ZIO.fromEither(write(cDbUrl, p))
-                reread <- ZIO.fromEither(
-                           read(cDbUrl from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                         )
-              } yield reread
+  val spec =
+    suite("Coproduct support")(
+      testM("newtype 1 roundtrip") {
+        checkM(genId) { p =>
+          val p2 =
+            for {
+              written <- ZIO.fromEither(write(cId, p))
+              reread <- ZIO.fromEither(
+                         read(cId from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                       )
+            } yield reread
 
-            assertM(p2)(equalTo(p))
-          }
-        },
-        testM("case class 1 roundtrip") {
-          checkM(genEnterpriseAuth) { p =>
-            val p2 =
-              for {
-                written <- ZIO.fromEither(write(cEnterpriseAuth, p))
-                reread <- ZIO.fromEither(
-                           read(
-                             cEnterpriseAuth from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
-                           )
-                         )
-              } yield reread
-
-            assertM(p2)(equalTo(p))
-          }
-        },
-        testM("nested case class roundtrip") {
-          checkM(genNestedConfig) { p =>
-            val p2 =
-              for {
-                written <- ZIO.fromEither(write(cNestedConfig, p))
-                reread <- ZIO.fromEither(
-                           read(
-                             cNestedConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
-                           )
-                         )
-              } yield reread
-
-            assertM(p2)(equalTo(p))
-          }
-        },
-        testM("single field case class roundtrip") {
-          checkM(genSingleField) { p =>
-            val p2 =
-              for {
-                written <- ZIO.fromEither(write(cSingleField, p))
-                reread <- ZIO.fromEither(
-                           read(cSingleField from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                         )
-              } yield reread
-
-            assertM(p2)(equalTo(p))
-          }
-        },
-        testM("coproduct roundtrip") {
-          checkM(genCoproductConfig) { p =>
-            val p2 =
-              for {
-                written <- ZIO.fromEither(write(cCoproductConfig, p))
-                reread <- ZIO.fromEither(
-                           read(
-                             cCoproductConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
-                           )
-                         )
-              } yield reread
-
-            assertM(p2)(equalTo(p))
-          }
-        },
-        testM("empty sequence zipped with optional nested") {
-          val config = (list("a")(string) |@| nested("b")(string).optional).tupled
-          val data   = (Nil, None)
-          val data2 = for {
-            written <- ZIO.fromEither(write(config, data))
-            reread <- ZIO.fromEither(
-                       read(config from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                     )
-          } yield reread
-
-          assertM(data2)(equalTo(data))
+          assertM(p2)(equalTo(p))
         }
-      )
+      },
+      testM("newtype 2 roundtrip") {
+        checkM(genDbUrl) { p =>
+          val p2 =
+            for {
+              written <- ZIO.fromEither(write(cDbUrl, p))
+              reread <- ZIO.fromEither(
+                         read(cDbUrl from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                       )
+            } yield reread
+
+          assertM(p2)(equalTo(p))
+        }
+      },
+      testM("case class 1 roundtrip") {
+        checkM(genEnterpriseAuth) { p =>
+          val p2 =
+            for {
+              written <- ZIO.fromEither(write(cEnterpriseAuth, p))
+              reread <- ZIO.fromEither(
+                         read(
+                           cEnterpriseAuth from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                         )
+                       )
+            } yield reread
+
+          assertM(p2)(equalTo(p))
+        }
+      },
+      testM("nested case class roundtrip") {
+        checkM(genNestedConfig) { p =>
+          val p2 =
+            for {
+              written <- ZIO.fromEither(write(cNestedConfig, p))
+              reread <- ZIO.fromEither(
+                         read(
+                           cNestedConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                         )
+                       )
+            } yield reread
+
+          assertM(p2)(equalTo(p))
+        }
+      },
+      testM("single field case class roundtrip") {
+        checkM(genSingleField) { p =>
+          val p2 =
+            for {
+              written <- ZIO.fromEither(write(cSingleField, p))
+              reread <- ZIO.fromEither(
+                         read(cSingleField from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                       )
+            } yield reread
+
+          assertM(p2)(equalTo(p))
+        }
+      },
+      testM("coproduct roundtrip") {
+        checkM(genCoproductConfig) { p =>
+          val p2 =
+            for {
+              written <- ZIO.fromEither(write(cCoproductConfig, p))
+              reread <- ZIO.fromEither(
+                         read(
+                           cCoproductConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                         )
+                       )
+            } yield reread
+
+          assertM(p2)(equalTo(p))
+        }
+      },
+      testM("empty sequence zipped with optional nested") {
+        val config = (list("a")(string) |@| nested("b")(string).optional).tupled
+        val data   = (Nil, None)
+        val data2 = for {
+          written <- ZIO.fromEither(write(config, data))
+          reread <- ZIO.fromEither(
+                     read(config from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                   )
+        } yield reread
+
+        assertM(data2)(equalTo(data))
+      }
     )
+}
 
 object ReadWriteRoundtripTestUtils {
   final case class CoproductConfig(coproduct: Either[DataItem, NestedPath])
@@ -142,20 +143,20 @@ object ReadWriteRoundtripTestUtils {
     } yield SingleField(count)
 
   val genCoproductConfig: Gen[Random, CoproductConfig] =
-    Gen.either(genDataItem, genNestedConfig).map(CoproductConfig)
+    Gen.either(genDataItem, genNestedConfig).map(CoproductConfig.apply)
 
-  val cId             = string("kId")(Id.apply, Id.unapply)
-  val cId2            = string("kId2")(Id.apply, Id.unapply)
-  val cDataItem       = (cId2.optional |@| int("kDiCount"))(DataItem.apply, DataItem.unapply)
-  val cDbUrl          = string("kDbUrl")(DbUrl.apply, DbUrl.unapply)
-  val cEnterpriseAuth = (cId |@| cDbUrl)(EnterpriseAuth.apply, EnterpriseAuth.unapply)
+  val cId             = string("kId").to[Id]
+  val cId2            = string("kId2").to[Id]
+  val cDataItem       = (cId2.optional |@| int("kDiCount")).to[DataItem]
+  val cDbUrl          = string("kDbUrl").to[DbUrl]
+  val cEnterpriseAuth = (cId |@| cDbUrl).to[EnterpriseAuth]
 
   val cNestedConfig =
-    (cEnterpriseAuth |@| int("kCount") |@| float("kFactor"))(NestedPath.apply, NestedPath.unapply)
+    (cEnterpriseAuth |@| int("kCount") |@| float("kFactor")).to[NestedPath]
 
   val cSingleField: ConfigDescriptor[SingleField] =
-    int("kCount")(SingleField.apply, SingleField.unapply)
+    int("kCount").to[SingleField]
 
   val cCoproductConfig =
-    (cDataItem.orElseEither(cNestedConfig))(CoproductConfig.apply, CoproductConfig.unapply)
+    (cDataItem.orElseEither(cNestedConfig)).to[CoproductConfig]
 }

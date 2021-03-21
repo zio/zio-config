@@ -8,31 +8,32 @@ import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
 
-object NestedConfigTest
-    extends BaseSpec(
-      suite("Nested config")(
-        testM("read") {
-          check(genNestedConfigParams) { p =>
-            assert(read(p.config.from(p.source)))(isRight(equalTo(p.value)))
-          }
-        },
-        testM("write") {
-          check(genNestedConfigParams) { p =>
-            assert(write(p.config, p.value).map(_.flattenString()))(
-              isRight(equalTo(toMultiMap(p.map)))
-            )
-          }
-        },
-        testM("nested with default") {
-          val config = string("x").default("y")
-          val r = ZIO.fromEither(
-            read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid))
-          )
+object NestedConfigTest extends BaseSpec {
 
-          assertM(r)(equalTo("y"))
+  val spec =
+    suite("Nested config")(
+      testM("read") {
+        check(genNestedConfigParams) { p =>
+          assert(read(p.config.from(p.source)))(isRight(equalTo(p.value)))
         }
-      )
+      },
+      testM("write") {
+        check(genNestedConfigParams) { p =>
+          assert(write(p.config, p.value).map(_.flattenString()))(
+            isRight(equalTo(toMultiMap(p.map)))
+          )
+        }
+      },
+      testM("nested with default") {
+        val config = string("x").default("y")
+        val r = ZIO.fromEither(
+          read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid))
+        )
+
+        assertM(r)(equalTo("y"))
+      }
     )
+}
 
 object NestedConfigTestUtils {
   final case class Credentials(user: String, password: String)
@@ -54,7 +55,7 @@ object NestedConfigTestUtils {
 
   val genDb: Gen[Random, Database] =
     for {
-      connection  <- Gen.either(genNonEmptyString(20).map(DbUrl), genDbConnection)
+      connection  <- Gen.either(genNonEmptyString(20).map(DbUrl.apply), genDbConnection)
       credentials <- Gen.option(genCredentials)
     } yield Database(connection, credentials)
 
@@ -67,15 +68,16 @@ object NestedConfigTestUtils {
   final case class TestParams(value: AppConfig) {
 
     val config: ConfigDescriptor[AppConfig] = {
-      val credentials  = (string("user") |@| string("password"))(Credentials.apply, Credentials.unapply)
-      val dbConnection = (string("host") |@| int("port"))(DbConnection.apply, DbConnection.unapply)
+      val credentials  = (string("user") |@| string("password")).to[Credentials]
+      val dbConnection = (string("host") |@| int("port")).to[DbConnection]
 
       val database =
-        (string("dburl")(DbUrl.apply, DbUrl.unapply)
+        (string("dburl")
+          .to[DbUrl]
           .orElseEither(nested("connection")(dbConnection)) |@|
-          nested("credentials")(credentials).optional)(Database.apply, Database.unapply)
+          nested("credentials")(credentials).optional).to[Database]
 
-      (nested("database")(database) |@| double("pricing"))(AppConfig, AppConfig.unapply)
+      (nested("database")(database) |@| double("pricing")).to[AppConfig]
     }
 
     val map =
@@ -103,5 +105,5 @@ object NestedConfigTestUtils {
   }
 
   val genNestedConfigParams: Gen[Random, TestParams] =
-    genAppConfig.map(TestParams)
+    genAppConfig.map(TestParams.apply)
 }

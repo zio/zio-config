@@ -1,9 +1,8 @@
 package zio.config
 
 package object magnolia {
-  type Descriptor[A] = DeriveConfigDescriptor.Descriptor[A]
   def getDescriptor[A](desc: ConfigDescriptor[A]): Descriptor[A] =
-    DeriveConfigDescriptor.Descriptor[A](desc)
+    Descriptor[A](desc)
 
   /**
    * descriptor[A] allows the user to automatically derive `ConfigDescriptor` instead
@@ -182,7 +181,8 @@ package object magnolia {
    *  }}}
    *
    */
-  def descriptor[A](implicit config: Descriptor[A]): ConfigDescriptor[A] = DeriveConfigDescriptor.descriptor[A]
+  def descriptor[A](implicit config: Descriptor[A]): ConfigDescriptor[A] =
+    DeriveConfigDescriptor.descriptor[A]
 
   type describe = derivation.describe
   val describe: derivation.describe.type = derivation.describe

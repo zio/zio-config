@@ -6,23 +6,24 @@ import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
 
-object ReadErrorsTest
-    extends BaseSpec(
-      suite("ReadErrors/NEL")(
-        testM("concat") {
-          check(genReadErrors, genReadErrors) { (l1, l2) =>
-            val actual =
-              concat(::(l1.head, l1.tail), ::(l2.head, l2.tail))
-            assert(actual)(equalTo(l1 ++ l2))
-          }
-        },
-        testM("prettyPrint of complex ReadError full text") {
-          check(Gen.const(complexErrorsForPrettyPrint), Gen.const(complexErrorsPrettyPrint)) { (error, prettyPrint) =>
-            assert(error.prettyPrint())(equalTo(prettyPrint))
-          }
+object ReadErrorsTest extends BaseSpec {
+
+  val spec =
+    suite("ReadErrors/NEL")(
+      testM("concat") {
+        check(genReadErrors, genReadErrors) { (l1, l2) =>
+          val actual =
+            concat(::(l1.head, l1.tail), ::(l2.head, l2.tail))
+          assert(actual)(equalTo(l1 ++ l2))
         }
-      )
+      },
+      testM("prettyPrint of complex ReadError full text") {
+        check(Gen.const(complexErrorsForPrettyPrint), Gen.const(complexErrorsPrettyPrint)) { (error, prettyPrint) =>
+          assert(error.prettyPrint())(equalTo(prettyPrint))
+        }
+      }
     )
+}
 
 object ReadErrorsTestUtils {
   private val genFormatError =
@@ -32,7 +33,7 @@ object ReadErrorsTestUtils {
       s3 <- Gen.anyString
     } yield ReadError.FormatError(List(Step.Key(s1)), parseErrorMessage(s2, s3))
 
-  private val genReadError =
+  private val genReadError: Gen[Random with Sized, ReadError[String]] =
     Gen.oneOf(Gen.const(ReadError.MissingValue(List(Step.Key("somekey")))), genFormatError)
 
   val genReadErrors: Gen[Random with Sized, List[ReadError[String]]] = {

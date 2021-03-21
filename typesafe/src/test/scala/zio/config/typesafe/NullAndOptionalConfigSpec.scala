@@ -26,17 +26,11 @@ object EmployeeDetails {
           string("confidence")
             .orElse(string("confidences"))
             .orElse(string("confs"))
-        ))(
-      Employee.apply,
-      Employee.unapply
-    )
+        )).to[Employee]
 
   val employeeDetails =
     nested("details") {
-      (nested("employees")(list(employee)) |@| int("accountId"))(
-        EmployeeDetails.apply,
-        EmployeeDetails.unapply
-      )
+      (nested("employees")(list(employee)) |@| int("accountId")).to[EmployeeDetails]
     }
 }
 
