@@ -9,13 +9,13 @@ trait TupleConversion[A, B] {
 }
 
 object TupleConversion {
-  def apply[Prod, Tup]: TupleConversion[Prod, Tup] = macro genTupleConversion[Prod, Tup]
+  def apply[P, T]: TupleConversion[P, T] = macro genTupleConversion[P, T]
 
-  def genTupleConversion[Prod: c.WeakTypeTag, Tup: c.WeakTypeTag](
+  def genTupleConversion[P: c.WeakTypeTag, T: c.WeakTypeTag](
     c: whitebox.Context
-  ): c.Expr[TupleConversion[Prod, Tup]] = {
+  ): c.Expr[TupleConversion[P, T]] = {
     import c.universe._
-    val prodTpe = c.weakTypeOf[Prod]
+    val prodTpe = c.weakTypeOf[P]
     if (!prodTpe.typeSymbol.isClass ||
         !prodTpe.typeSymbol.asClass.isCaseClass) {
       c.abort(c.enclosingPosition, s"Type ${prodTpe.typeSymbol} is not a case class")
@@ -79,9 +79,9 @@ object TupleConversion {
   }
 }
 trait ImplicitTupleConversion {
-  implicit def autoTupleConversion[Prod <: Product, Tup]: TupleConversion[Prod, Tup] =
-    macro TupleConversion.genTupleConversion[Prod, Tup]
+  implicit def autoTupleConversion[P <: Product, T]: TupleConversion[P, T] =
+    macro TupleConversion.genTupleConversion[P, T]
 
-  def autoTupleConversion1[Prod, A](implicit ev: TupleConversion[Prod, Tuple1[A]]): TupleConversion[Prod, A] =
+  def autoTupleConversion1[P, A](implicit ev: TupleConversion[P, Tuple1[A]]): TupleConversion[P, A] =
     ??? // defined here so it can be used in explicit imports when cross-compiling
 }
