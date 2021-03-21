@@ -1,6 +1,7 @@
 package zio
 
-package object config extends KeyConversionFunctions with ConfigStringModule {
+package object config extends KeyConversionFunctions with ConfigStringModule with ImplicitTupleConversion {
+
   implicit class MapOps[A](a: => A) {
     def toMap(config: ConfigDescriptor[A], keyDelimiter: String = "."): Either[String, Map[String, ::[String]]] =
       write(config, a).map(_.flattenString(keyDelimiter))

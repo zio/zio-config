@@ -16,34 +16,35 @@ import zio.test.Assertion._
 import zio.test._
 import zio.config.LeafForSequence
 
-object RefinedReadWriteRoundtripTest
-    extends BaseSpec(
-      suite("Refined support")(
-        testM("Refined config roundtrip") {
-          checkM(genRefinedProd) { p =>
-            val cfg = prodConfig(p.longs.value.size)
-            val p2 =
-              for {
-                written <- ZIO.fromEither(write(cfg, p))
-                reread <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
-              } yield reread
+object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-            assertM(p2)(equalTo(p))
-          }
-        },
-        testM("Refined config invalid") {
-          check(genRefinedProdInvalid) {
-            case (n, envMap) =>
-              val p2 =
-                read(prodConfig(n) from ConfigSource.fromMap(envMap))
+  val spec =
+    suite("Refined support")(
+      testM("Refined config roundtrip") {
+        checkM(genRefinedProd) { p =>
+          val cfg = prodConfig(p.longs.value.size)
+          val p2 =
+            for {
+              written <- ZIO.fromEither(write(cfg, p))
+              reread <- ZIO.fromEither(
+                         read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                       )
+            } yield reread
 
-              assert(p2)(helpers.isErrors(hasField("size", _.size, equalTo(5))))
-          }
+          assertM(p2)(equalTo(p))
         }
-      )
+      },
+      testM("Refined config invalid") {
+        check(genRefinedProdInvalid) {
+          case (n, envMap) =>
+            val p2 =
+              read(prodConfig(n) from ConfigSource.fromMap(envMap))
+
+            assert(p2)(helpers.isErrors(hasField("size", _.size, equalTo(5))))
+        }
+      }
     )
+}
 
 object RefinedReadWriteRoundtripTestUtils {
 

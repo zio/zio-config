@@ -6,6 +6,7 @@ import zio.test.Assertion._
 import zio.test.environment.{ TestEnvironment, TestSystem }
 import zio.test.{ DefaultRunnableSpec, _ }
 import zio.ZIO
+import zio.Has
 
 object SystemTest extends DefaultRunnableSpec {
 
@@ -15,7 +16,9 @@ object SystemTest extends DefaultRunnableSpec {
         checkM(genSomeConfig, genDelimiter) { (config, delimiter) =>
           val result = for {
             _ <- setSystemProperties(config, delimiter)
-            p <- ZIO.environment.provideLayer(ZConfig.fromSystemProperties(SomeConfig.descriptor, Some(delimiter)))
+            p <- ZIO
+                  .environment[Has[SomeConfig]]
+                  .provideLayer(ZConfig.fromSystemProperties(SomeConfig.descriptor, Some(delimiter)))
           } yield p.get
 
           assertM(result.either)(isRight(equalTo(config)))
@@ -52,7 +55,7 @@ object SystemTest extends DefaultRunnableSpec {
     val sysEnvLayer    = TestSystem.live(Data(envs = sysEnv))
     val configEnvLayer = sysEnvLayer >>> ZConfig.fromSystemEnv(SomeConfig.descriptor, Some(keyDelimiter))
 
-    ZIO.environment.provideLayer(configEnvLayer).map(_.get)
+    ZIO.environment[Has[SomeConfig]].provideLayer(configEnvLayer).map(_.get)
   }
 
   final case class SomeConfig(size: Int, description: String)
@@ -60,7 +63,7 @@ object SystemTest extends DefaultRunnableSpec {
   object SomeConfig {
     val descriptor: ConfigDescriptor[SomeConfig] =
       nested("SYSTEMPROPERTIESTEST")(
-        (int("SIZE") |@| string("DESCRIPTION"))(SomeConfig.apply, SomeConfig.unapply)
+        (int("SIZE") |@| string("DESCRIPTION")).to[SomeConfig]
       )
   }
 

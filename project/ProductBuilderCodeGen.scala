@@ -54,6 +54,13 @@ object ProductBuilderCodeGen {
          |          { case $cll0Tupled => Right(ff($cll0)) },
          |          liftWrite($l1 => gg($l1).map { case ($cll0) => $cll0Tupled })
          |        )
+         |
+         |    def to[$L1](implicit conv: TupleConversion[$L1, ($cL0)]): F[$L1] =
+         |      ($zipped)
+         |        .xmapEither[$L1] (
+         |          { case $cll0Tupled => Right(conv.from(($cll0))) },
+         |          liftWrite($l1 => { val ($cll0) = conv.to($l1); Some($cll0Tupled) })
+         |        )
          |        
          |    def tupled = apply[($cL0)](($cL0WithTypes) => ($cL0Lower), t => Some(($cLoDerefernce)))
          |        """.stripMargin
