@@ -9,7 +9,7 @@ scala_212: &scala_212
   ROOT_PROJECT: root2-12
 
 scala_213: &scala_213
-  SCALA_VERSION: 2.13.2
+  SCALA_VERSION: 2.13.5
   ROOT_PROJECT: root2-13
 
 jdk_8: &jdk_8
