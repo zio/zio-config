@@ -858,7 +858,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       valueDelimiter: Option[Char] = None
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
       fromConfigDescriptorM(
-        ConfigSource.fromSystemProperties(keyDelimiter, valueDelimiter).map(configDescriptor from _)
+        ConfigSource.fromSystemProps(keyDelimiter, valueDelimiter).map(configDescriptor from _)
       )
 
     private[config] def fromConfigDescriptor[A](

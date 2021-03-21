@@ -347,8 +347,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     }
   }
 
-  private[config] def parseErrorMessage(given: String, expectedType: String) =
-    s"Provided value is ${given.toString}, expecting the type ${expectedType}"
+  private[config] def parseErrorMessage(givenValue: String, expectedType: String) =
+    s"Provided value is ${givenValue.toString}, expecting the type ${expectedType}"
 
   final def requiredZipAndOrFields[A](config: ConfigDescriptor[A]): Int = {
     def loop[B](count: List[K], config: ConfigDescriptor[B]): Int =

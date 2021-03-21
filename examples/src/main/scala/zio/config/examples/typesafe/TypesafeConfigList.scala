@@ -5,7 +5,7 @@ import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
 
-object ListExample extends App with EitherImpureOps {
+object TypesafeConfigList extends App with EitherImpureOps {
   val configString =
     """
       |b = [

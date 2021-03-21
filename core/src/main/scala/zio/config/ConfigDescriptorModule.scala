@@ -99,6 +99,33 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       )
 
     /**
+     * Convert a `ConfigDescriptor[A]` to a config descriptor of a case class
+     *
+     * This works when `A` is a single value and `B` is a single parameter case class with
+     * the same type of parameter, or if `A` is an tuple and `B` is a case class with
+     * matching number of parameters and the same types.
+     *
+     * See the following example of reading a `USERNAME` which is a String and `PORT` which is an Int,
+     * and load it to a case class `Config`:
+     *
+     *  {{{
+     *     final case class Config(userName: String, port: Int)
+     *
+     *     object Config {
+     *        val dbConfig: ConfigDescriptor[Config] = (string("USERNAME") |@| int("PORT")).to[Config]
+     *     }
+     *  }}}
+     *
+     * Note that the alternative of passing `(Config.apply, Config.unapply)` to transform the config descriptor
+     * is not compatible with Scala 3.
+     */
+    def to[B <: Product](implicit conv: TupleConversion[B, A]): ConfigDescriptor[B] =
+      self.transform(
+        conv.from,
+        conv.to
+      )
+
+    /**
      * `??` is an alias to `describe` which allows us to inject additional
      * documentation to the configuration parameters.
      *

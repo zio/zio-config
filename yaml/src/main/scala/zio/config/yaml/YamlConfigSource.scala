@@ -32,6 +32,7 @@ object YamlConfigSource {
             .mapValues(convertYaml)
             .toMap
         )
+      case _ => throw new IllegalArgumentException("unexpected data type in convertYaml")
     }
 
   /**

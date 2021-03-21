@@ -5,7 +5,8 @@ import zio.random.Random
 import zio.test.Assertion._
 import zio.test.environment.{ TestEnvironment, TestSystem }
 import zio.test.{ DefaultRunnableSpec, _ }
-import zio.{ UIO, ZIO }
+import zio.ZIO
+import zio.Has
 
 object SystemTest extends DefaultRunnableSpec {
 
@@ -15,8 +16,9 @@ object SystemTest extends DefaultRunnableSpec {
         checkM(genSomeConfig, genDelimiter) { (config, delimiter) =>
           val result = for {
             _ <- setSystemProperties(config, delimiter)
-            p <- ZIO.environment.provideLayer(ZConfig.fromSystemProperties(SomeConfig.descriptor, Some(delimiter)))
-            _ <- clearSystemProperties(delimiter)
+            p <- ZIO
+                  .environment[Has[SomeConfig]]
+                  .provideLayer(ZConfig.fromSystemProperties(SomeConfig.descriptor, Some(delimiter)))
           } yield p.get
 
           assertM(result.either)(isRight(equalTo(config)))
@@ -53,7 +55,7 @@ object SystemTest extends DefaultRunnableSpec {
     val sysEnvLayer    = TestSystem.live(Data(envs = sysEnv))
     val configEnvLayer = sysEnvLayer >>> ZConfig.fromSystemEnv(SomeConfig.descriptor, Some(keyDelimiter))
 
-    ZIO.environment.provideLayer(configEnvLayer).map(_.get)
+    ZIO.environment[Has[SomeConfig]].provideLayer(configEnvLayer).map(_.get)
   }
 
   final case class SomeConfig(size: Int, description: String)
@@ -61,7 +63,7 @@ object SystemTest extends DefaultRunnableSpec {
   object SomeConfig {
     val descriptor: ConfigDescriptor[SomeConfig] =
       nested("SYSTEMPROPERTIESTEST")(
-        (int("SIZE") |@| string("DESCRIPTION"))(SomeConfig.apply, SomeConfig.unapply)
+        (int("SIZE") |@| string("DESCRIPTION")).to[SomeConfig]
       )
   }
 
@@ -74,14 +76,12 @@ object SystemTest extends DefaultRunnableSpec {
   def genDelimiter: Gen[Random, Char]       = Gen.elements('.', '_', '-', ':')
   def genSystemDelimiter: Gen[Random, Char] = Gen.elements('_')
 
-  def setSystemProperties(config: SomeConfig, delimiter: Char): UIO[String] = ZIO.succeed {
-    java.lang.System.setProperty(s"SYSTEMPROPERTIESTEST${delimiter}SIZE", config.size.toString)
-    java.lang.System.setProperty(s"SYSTEMPROPERTIESTEST${delimiter}DESCRIPTION", config.description)
-  }
-
-  def clearSystemProperties(delimiter: Char): UIO[String] = ZIO.succeed {
-    java.lang.System.clearProperty(s"SYSTEMPROPERTIESTEST${delimiter}SIZE")
-    java.lang.System.clearProperty(s"SYSTEMPROPERTIESTEST${delimiter}DESCRIPTION")
-  }
+  def setSystemProperties(config: SomeConfig, delimiter: Char) =
+    for {
+      _ <- TestSystem.putProperty(s"SYSTEMPROPERTIESTEST${delimiter}SIZE", config.size.toString)
+      _ <- TestSystem.putProperty(s"SYSTEMPROPERTIESTEST${delimiter}DESCRIPTION", config.description)
+    } yield {
+      ()
+    }
 
 }

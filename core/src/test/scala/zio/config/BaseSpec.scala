@@ -1,9 +1,9 @@
 package zio.config
 
 import zio.duration._
-import zio.test.{ DefaultRunnableSpec, TestAspect, TestAspectAtLeastR, ZSpec }
-import zio.test.environment.{ Live, TestEnvironment }
+import zio.test.{ DefaultRunnableSpec, TestAspect, TestAspectAtLeastR }
+import zio.test.environment.Live
 
-abstract class BaseSpec(override val spec: ZSpec[TestEnvironment, Any]) extends DefaultRunnableSpec {
+abstract class BaseSpec extends DefaultRunnableSpec {
   override def aspects: List[TestAspectAtLeastR[Live]] = List(TestAspect.timeout(60.seconds))
 }

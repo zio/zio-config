@@ -48,7 +48,7 @@ object DerivationUtils {
   ): (ConfigDescriptor[Any], Boolean) =
     config match {
       case Lazy(thunk) => unwrapThunk(thunk(), message)
-      case Optional(config) =>
+      case Optional(config: ConfigDescriptor[Any]) =>
         (config, true)
       case _ =>
         val (inner, opt) = unwrapFromOptional(config)

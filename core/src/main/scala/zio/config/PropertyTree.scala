@@ -51,8 +51,8 @@ sealed trait PropertyTree[+K, +V] { self =>
       case head :: next =>
         self match {
           case Empty | Leaf(_) | Sequence(_) => Empty
-          case Record(value) =>
-            value.get(head.asInstanceOf[K]) match {
+          case record: Record[K, V] =>
+            record.value.get(head.asInstanceOf[K]) match {
               case Some(value) => value.getPath(next)
               case None        => Empty
             }
