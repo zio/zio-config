@@ -57,7 +57,7 @@ addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.11; root2-12/test
 
 lazy val zioVersion       = "1.0.5"
 lazy val magnoliaVersion  = "0.17.0"
-lazy val refinedVersion   = "0.9.21"
+lazy val refinedVersion   = "0.9.23"
 lazy val shapelessVersion = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
