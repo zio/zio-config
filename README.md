@@ -2,7 +2,7 @@
 
 |  CI | Release | Issues | Scaladex | Discord | Twitter |
 | --- | --- | --- | --- | --- | --- |
-| [![Build Status][Badge-Circle]][Link-Circle] | [![Release Artifacts][Badge-SonatypeReleases]][Link-SonatypeReleases] | [![Average time to resolve an issue][Badge-IsItMaintained]][Link-IsItMaintained] | [![Badge-Scaladex-page]][Link-Scaladex-page] | [![Badge-Discord]][Link-Discord] | [![Badge-Twitter]][Link-Twitter] |
+| ![CI][Badge-CI] | [![Release Artifacts][Badge-SonatypeReleases]][Link-SonatypeReleases] | [![Average time to resolve an issue][Badge-IsItMaintained]][Link-IsItMaintained] | [![Badge-Scaladex-page]][Link-Scaladex-page] | [![Badge-Discord]][Link-Discord] | [![Badge-Twitter]][Link-Twitter] |
 
 A [ZIO](https://github.com/zio/zio)-based library for working with application configuration data.
 
@@ -24,14 +24,13 @@ Jump to [examples](examples/src/main/scala/zio/config/examples) to see various u
 
 Try out _ZIO Config_ quickly in [Scastie](https://scastie.scala-lang.org/IpEEuwoaSq2RemrKUXBGkw), which comes pre-loaded with an example. We try to make sure the scastie-buildsettings are updated with latest version of _ZIO Config_.
 
-[Badge-Circle]: https://circleci.com/gh/zio/zio-config.svg?style=svg "circleci"
+[Badge-CI]: https://github.com/zio/zio-config/workflows/CI/badge.svg "ci"
 [Badge-IsItMaintained]: http://isitmaintained.com/badge/resolution/zio/zio-config.svg "Average time to resolve an issue"
 [Badge-Discord]: https://img.shields.io/discord/629491597070827530?logo=discord "Chat on discord"
 [Badge-Scaladex-page]: https://index.scala-lang.org/zio/zio-config/zio-config/latest.svg "Scaladex"
 [Badge-SonatypeReleases]: https://img.shields.io/nexus/r/https/oss.sonatype.org/dev.zio/zio-config_2.12.svg "Sonatype Releases"
 [Badge-Twitter]: https://img.shields.io/twitter/follow/zioscala.svg?style=plastic&label=follow&logo=twitter
 
-[Link-Circle]: https://circleci.com/gh/zio/zio-config "circleci"
 [Link-IsItMaintained]: http://isitmaintained.com/project/zio/zio-config "Average time to resolve an issue"
 [Link-Discord]: https://discord.gg/2ccFBr4 "Discord"
 [Link-Scaladex-page]: https://index.scala-lang.org/zio/zio-config/zio-config "Scaladex"
