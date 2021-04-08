@@ -141,6 +141,7 @@ lazy val zioConfig =
 lazy val zioConfigRefined =
   module("zio-config-refined", "refined")
     .settings(
+      crossScalaVersions --= Seq(Scala211),
       refinedDependencies,
       libraryDependencies ++=
         Seq(
@@ -156,6 +157,7 @@ lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module
 
 lazy val examples = module("zio-config-examples", "examples")
   .settings(
+    crossScalaVersions --= Seq(Scala211),
     skip in publish := true,
     fork := true,
     magnoliaDependencies,
@@ -184,6 +186,7 @@ lazy val zioConfigDerivation = module("zio-config-derivation", "derivation")
 
 lazy val zioConfigGen = module("zio-config-gen", "gen")
   .settings(
+    crossScalaVersions --= Seq(Scala211),
     magnoliaDependencies,
     libraryDependencies ++= Seq(
       "dev.zio"       %% "zio-test-magnolia" % zioVersion,
@@ -194,6 +197,7 @@ lazy val zioConfigGen = module("zio-config-gen", "gen")
 
 lazy val zioConfigMagnolia = module("zio-config-magnolia", "magnolia")
   .settings(
+    crossScalaVersions --= Seq(Scala211),
     magnoliaDependencies,
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-test"     % zioVersion % Test,
@@ -246,6 +250,7 @@ lazy val zioConfigYaml =
 lazy val zioConfigTypesafeMagnoliaTests =
   module("zio-config-typesafe-magnolia-tests", "typesafe-magnolia-tests")
     .settings(
+      crossScalaVersions --= Seq(Scala211),
       skip in publish := true,
       libraryDependencies ++= Seq(
         "com.typesafe" % "config"        % "1.4.1",
