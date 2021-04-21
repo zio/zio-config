@@ -190,7 +190,7 @@ lazy val zioConfigGen = module("zio-config-gen", "gen")
     magnoliaDependencies,
     libraryDependencies ++= Seq(
       "dev.zio"       %% "zio-test-magnolia" % zioVersion,
-      "org.scalatest" %% "scalatest"         % "3.2.3" % Test
+      "org.scalatest" %% "scalatest"         % "3.2.8" % Test
     )
   )
   .dependsOn(zioConfigTypesafe, zioConfigMagnolia)
