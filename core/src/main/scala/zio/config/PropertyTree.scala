@@ -115,14 +115,17 @@ sealed trait PropertyTree[+K, +V] { self =>
    */
   final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): List[PropertyTree[K1, V1]] =
     (self, that) match {
-      case (Sequence(l), Sequence(r)) => singleton(Sequence(l ++ r))
+      // DEOPT: O(n) time/space complexity operation in "l ++ r"
+      case (Sequence(l), Sequence(r))           => singleton(Sequence(l ++ r))
       case (l: Record[K, V], r: Record[K1, V1]) =>
+        // DEOPT: O(n) time/space complexity operation in "l.value.keySet ++ r.value.keySet"
         (l.value.keySet ++ r.value.keySet)
           .foldLeft(List[Map[K1, PropertyTree[K1, V1]]](Map.empty)) {
             case (acc, k) =>
               (l.value.get(k.asInstanceOf[K]), r.value.get(k)) match {
-                case (None, None) => acc
+                case (None, None)       => acc
                 case (Some(l), Some(r)) =>
+                  // DEOPT: O(n^2) time/space complexity operation in "flatMap"
                   l.merge(r).map(tree => (k, tree)).flatMap(tuple => acc.map(map => map + tuple))
                 case (Some(l), None) => acc.map(map => map + (k -> l))
                 case (None, Some(r)) => acc.map(map => map + (k -> r))
