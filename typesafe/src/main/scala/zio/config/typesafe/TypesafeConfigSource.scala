@@ -8,7 +8,7 @@ import zio.config.{ ConfigSource, _ }
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 import scala.util.{ Failure, Success, Try }
-import VersionSpecificSupport._
+import zio._
 
 object TypesafeConfigSource {
 
@@ -28,6 +28,26 @@ object TypesafeConfigSource {
    */
   def unsafeDefaultLoader: Either[ReadError[String], ConfigSource] =
     fromTypesafeConfig(ConfigFactory.load.resolve)
+
+  /**
+   * Retrieve a `ConfigSource` from `typesafe-config` from a given file in resource classpath.
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: IO[ReadError[String], MyConfig] =
+   *     TypesafeConfigSource.fromDefaultLoader
+   *     .flatMap(source => ZIO.fromEither(read(descriptor[MyConfig] from source)))
+   * }}}
+   */
+  def fromDefaultLoader: IO[ReadError.SourceError, ConfigSource] =
+    ZIO
+      .effect(ConfigFactory.load.resolve)
+      .bimap(exception => ReadError.SourceError(exception.getMessage), fromConfig)
+      .absolve
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` from a given config file
@@ -123,6 +143,36 @@ object TypesafeConfigSource {
             )
         }
     }
+
+  /**
+   * Retrieve a `ConfigSource` from `typesafe-config` data type.
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   val hocon =
+   *     s"""
+   *       {
+   *          port : 8080
+   *          url  : abc.com
+   *       }
+   *
+   *     """
+   *   val typesafeConfig: com.typesafe.config.Config = ...
+   *   val configSource = TypesafeConfigSource.fromConfig(typesafeConfig)
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Either[ReadError[String], MyConfig] =
+   *     configSource.flatMap(source => read(descriptor[MyConfig] from source)))
+   * }}}
+   */
+  def fromConfig(input: com.typesafe.config.Config): Either[ReadError.SourceError, ConfigSource] =
+    getPropertyTree(input).fold(
+      error => Left(ReadError.SourceError(error)),
+      propertyTree => Right(ConfigSource.fromPropertyTree(propertyTree, "hocon", LeafForSequence.Invalid))
+    )
 
   /**
    * Get `PropertyTree` from a typesafe Config

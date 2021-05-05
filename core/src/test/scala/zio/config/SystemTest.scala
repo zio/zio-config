@@ -40,7 +40,7 @@ object SystemTest extends DefaultRunnableSpec {
         assertM(result.either)(
           isLeft(
             equalTo(
-              ReadError.SourceError[String](
+              ReadError.SourceError(
                 message = s"Invalid system key delimiter: $keyDelimiter",
                 annotations = Set.empty
               )
