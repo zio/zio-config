@@ -8,6 +8,7 @@ import zio.config.{ ConfigSource, _ }
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
 import scala.util.{ Failure, Success, Try }
+import VersionSpecificSupport._
 import zio._
 
 object TypesafeConfigSource {
