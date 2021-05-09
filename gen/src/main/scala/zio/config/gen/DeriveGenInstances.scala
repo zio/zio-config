@@ -1,18 +1,14 @@
 package zio.config.gen
 
-import zio.test.magnolia.DeriveGen
-import zio.test.{ Gen, Sized }
-
-import scala.concurrent.duration.Duration
-import java.io.File
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.LocalDate
-import java.net.URI
-import java.util.UUID
-import java.net.URL
-
 import zio.random.Random
+import zio.test.magnolia.DeriveGen
+import zio.test.{Gen, Sized}
+
+import java.io.File
+import java.net.{URI, URL}
+import java.time.{Instant, LocalDate, LocalDateTime}
+import java.util.UUID
+import scala.concurrent.duration.Duration
 
 /**
  * DeriveGenInstances gives instance for DeriveGen for all the types
@@ -69,9 +65,7 @@ trait DeriveGenInstances {
       override def derive: Gen[zio.random.Random with zio.test.Sized, Instant] =
         Gen
           .int(1000, 2000)
-          .flatMap(
-            prev => Gen.instant(Instant.now().minusSeconds(prev.toLong), Instant.now())
-          )
+          .flatMap(prev => Gen.instant(Instant.now().minusSeconds(prev.toLong), Instant.now()))
     }
 
   implicit def deriveGenInt: DeriveGen[Int] =
@@ -96,9 +90,8 @@ trait DeriveGenInstances {
       override def derive: Gen[zio.random.Random with zio.test.Sized, LocalDate] =
         Gen
           .int(5, 25)
-          .flatMap(
-            prev =>
-              Gen.localDateTime(LocalDateTime.now().minusHours(prev.toLong), LocalDateTime.now()).map(_.toLocalDate())
+          .flatMap(prev =>
+            Gen.localDateTime(LocalDateTime.now().minusHours(prev.toLong), LocalDateTime.now()).map(_.toLocalDate())
           )
     }
 
@@ -142,13 +135,10 @@ trait DeriveGenInstances {
       override def derive: Gen[zio.random.Random with zio.test.Sized, URL] =
         Gen
           .oneOf(Gen.const("abc"), Gen.const("def"))
-          .flatMap(
-            r =>
-              Gen
-                .oneOf(Gen.const("http"), Gen.const("https"))
-                .map(
-                  prefix => new URL(s"${prefix}://${r}")
-                )
+          .flatMap(r =>
+            Gen
+              .oneOf(Gen.const("http"), Gen.const("https"))
+              .map(prefix => new URL(s"${prefix}://${r}"))
           )
     }
 

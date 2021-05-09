@@ -1,10 +1,10 @@
 package zio.config.yaml
 
+import zio.config._
+import zio.{Has, Layer, Tag, ZIO}
+
 import java.io.File
 import java.nio.file.Path
-
-import zio.{ Has, Layer, Tag, ZIO }
-import zio.config._
 
 object YamlConfig {
 

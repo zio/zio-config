@@ -38,21 +38,19 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
         case Default(c, _) =>
           go(c, b)
 
-        case TransformOrFail(c, _, to) => {
+        case TransformOrFail(c, _, to) =>
           to(b) match {
             case Right(before) =>
               go(c, before)
-            case Left(e) =>
+            case Left(e)       =>
               Left(e)
           }
-        }
 
-        case OrElseEither(left, right) => {
+        case OrElseEither(left, right) =>
           b.fold(
             aa => go(left, aa),
             b => go(right, b)
           )
-        }
 
         case OrElse(left, right) =>
           go(left, b) match {
@@ -73,7 +71,7 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
           for {
             left   <- leftResult
             right  <- rightResult
-            merged = left.merge(right)
+            merged  = left.merge(right)
             result <- merged.headOption.toRight("Failed to write the config back to property tree, at zip node")
           } yield result
       }

@@ -1,10 +1,11 @@
 package zio.config.testsupport
 
-import zio.config._
-import zio.config.ConfigDescriptor, ConfigDescriptor._
+import zio.config.{ConfigDescriptor, _}
 import zio.random.Random
 import zio.test.Gen.alphaNumericChar
-import zio.test.{ Gen, Sized }
+import zio.test.{Gen, Sized}
+
+import ConfigDescriptor._
 
 object MapConfigTestSupport {
   def genAppConfig(stringGen: Gen[Random with Sized, String] = stringN(1, 15)): Gen[Random with Sized, AppConfig] =
@@ -48,14 +49,14 @@ object MapConfigTestSupport {
     final case class KinesisConfig(inputTopic: String)
 
     object KinesisConfig {
-      val description =
+      val description: ConfigDescriptor[KinesisConfig] =
         (head("kinesis")(head("inputtopic")(string)).to[KinesisConfig])
     }
 
     final case class PubSubConfig(outputTopic: String)
 
     object PubSubConfig {
-      val description =
+      val description: ConfigDescriptor[PubSubConfig] =
         head("ps")(head("outputtopic")(string).to[PubSubConfig])
     }
 

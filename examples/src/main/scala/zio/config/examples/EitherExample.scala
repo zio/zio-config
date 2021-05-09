@@ -1,6 +1,8 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
+
+import ConfigDescriptor._
 
 object EitherExample extends App {
   final case class Ldap(value: String)  extends AnyVal
@@ -9,37 +11,37 @@ object EitherExample extends App {
   case class Prod(ldap: Ldap, dburl: DbUrl)
   case class Dev(user: String, password: Int, dburl: Double)
 
-  val prod =
+  val prod: ConfigDescriptor[Prod] =
     (string("x1")(Ldap.apply, Ldap.unapply) |@| string("x2")(
       DbUrl.apply,
       DbUrl.unapply
     ))(Prod.apply, Prod.unapply)
 
-  val dev =
+  val dev: ConfigDescriptor[Dev] =
     (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
 
-  val prodOrDev =
+  val prodOrDev: ConfigDescriptor[Either[Prod, Dev]] =
     prod orElseEither dev
 
-  val validProd =
+  val validProd: Map[String, String] =
     Map("x1" -> "v1", "x2" -> "v2", "x3" -> "v3")
 
   // Obviously getting a constant map source doesn't need ZIO effect
-  val source: ConfigSource =
+  val source: ConfigSource           =
     ConfigSource.fromMap(validProd, "constant")
 
-  val validDev =
+  val validDev: Map[String, String] =
     Map("x3" -> "v3", "x4" -> "1", "x5" -> "2.0")
 
-  val anotherSource: ConfigSource =
+  val anotherSource: ConfigSource   =
     ConfigSource.fromMap(validDev)
 
   //assert(read(prodOrDev from anotherSource) == Right(Dev("v3", 1, 2.0)))
 
-  val parseErrorConfig =
+  val parseErrorConfig: Map[String, String] =
     Map("x2" -> "v2", "x3" -> "v3", "x4" -> "1", "x5" -> "notadouble")
 
-  val invalidSource =
+  val invalidSource: ConfigSource           =
     ConfigSource.fromMap(parseErrorConfig, "constant")
 
   println(
@@ -67,7 +69,7 @@ object EitherExample extends App {
   // In the above case, it means, fix either x1 or x5.
 
   // It chooses the left, Prod
-  val allConfigsExist =
+  val allConfigsExist: Map[String, String] =
     Map("x1" -> "v1", "x2" -> "v2", "x3" -> "v3", "x4" -> "1", "x5" -> "2.0")
 
   assert(

@@ -8,7 +8,7 @@ import zio.test._
 
 object ReadErrorsTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[Environment, Failure] =
     suite("ReadErrors/NEL")(
       testM("concat") {
         check(genReadErrors, genReadErrors) { (l1, l2) =>
@@ -43,10 +43,13 @@ object ReadErrorsTestUtils {
     } yield list
   }
 
-  val simpleMissingValue    = ReadError.MissingValue(List(Step.Key("k1"), Step.Key("k2"), Step.Index(1), Step.Key("k3")))
-  val simpleFormatError     = ReadError.FormatError(List(Step.Key("k1"), Step.Key("k2")), "Format error")
-  val simpleConversionError = ReadError.ConversionError(List(Step.Key("k1"), Step.Key("k2")), "Conversion error")
-  val complexErrorsForPrettyPrint = ReadError.ZipErrors(
+  val simpleMissingValue: ReadError.MissingValue[String]       =
+    ReadError.MissingValue(List(Step.Key("k1"), Step.Key("k2"), Step.Index(1), Step.Key("k3")))
+  val simpleFormatError: ReadError.FormatError[String]         =
+    ReadError.FormatError(List(Step.Key("k1"), Step.Key("k2")), "Format error")
+  val simpleConversionError: ReadError.ConversionError[String] =
+    ReadError.ConversionError(List(Step.Key("k1"), Step.Key("k2")), "Conversion error")
+  val complexErrorsForPrettyPrint: ReadError.ZipErrors[String] = ReadError.ZipErrors(
     List(
       simpleMissingValue,
       simpleFormatError,
@@ -64,7 +67,7 @@ object ReadErrorsTestUtils {
     )
   )
 
-  val complexErrorsPrettyPrint =
+  val complexErrorsPrettyPrint: String =
     """ReadError:
       |╥
       |╠══╦══╦══╦══╦══╦══╗

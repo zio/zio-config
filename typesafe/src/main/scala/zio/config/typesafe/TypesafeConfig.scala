@@ -1,10 +1,10 @@
 package zio.config.typesafe
 
-import java.io.File
-
 import com.typesafe.config.ConfigFactory
 import zio.config._
-import zio.{ Has, Layer, Tag, ZIO, ZLayer }
+import zio.{Has, Layer, Tag, ZIO, ZLayer}
+
+import java.io.File
 
 object TypesafeConfig {
 
@@ -44,8 +44,8 @@ object TypesafeConfig {
    *     TypesafeConfig.fromHoconFile(new File("/path/to/xyz.hocon"), descriptor[MyConfig])
    * }}}
    */
-  def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(
-    implicit tag: Tag[A]
+  def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(implicit
+    tag: Tag[A]
   ): Layer[ReadError[String], Has[A]] =
     fromTypesafeConfig(ConfigFactory.parseFile(file).resolve, configDescriptor)
 
@@ -92,8 +92,8 @@ object TypesafeConfig {
    *     TypesafeConfig.fromHoconString(configString, descriptor[MyConfig])
    * }}}
    */
-  def fromHoconString[A](str: String, configDescriptor: ConfigDescriptor[A])(
-    implicit tag: Tag[A]
+  def fromHoconString[A](str: String, configDescriptor: ConfigDescriptor[A])(implicit
+    tag: Tag[A]
   ): Layer[ReadError[String], Has[A]] =
     fromTypesafeConfig(ConfigFactory.parseString(str).resolve, configDescriptor)
 

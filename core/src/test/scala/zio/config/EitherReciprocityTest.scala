@@ -2,40 +2,40 @@ package zio.config
 
 import zio.ZIO
 import zio.config.ConfigDescriptor._
-import zio.config.helpers._
 import zio.config.EitherReciprocityTestUtils._
-import zio.test._
+import zio.config.helpers._
+import zio.random.Random
 import zio.test.Assertion._
+import zio.test._
 
 object EitherReciprocityTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[TestConfig with Random, TestFailure[Serializable], TestSuccess] =
     suite("Either reciprocity")(
       testM("coproduct should yield the same config representation on both sides of Either") {
-        checkM(genNestedConfig) {
-          p =>
-            val lr =
-              for {
-                writtenLeft <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
-                rereadLeft <- ZIO.fromEither(
-                               read(
-                                 cCoproductConfig from ConfigSource
-                                   .fromPropertyTree(writtenLeft, "test", LeafForSequence.Valid)
-                               )
-                             )
-                writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
-                rereadRight <- ZIO.fromEither(
+        checkM(genNestedConfig) { p =>
+          val lr =
+            for {
+              writtenLeft  <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
+              rereadLeft   <- ZIO.fromEither(
+                                read(
+                                  cCoproductConfig from ConfigSource
+                                    .fromPropertyTree(writtenLeft, "test", LeafForSequence.Valid)
+                                )
+                              )
+              writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
+              rereadRight  <- ZIO.fromEither(
                                 read(
                                   cCoproductConfig from ConfigSource
                                     .fromPropertyTree(writtenRight, "test", LeafForSequence.Valid)
                                 )
                               )
-              } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
-                case (Left(pl), Right(pr)) => Some(pl -> pr)
-                case _                     => None
-              }
+            } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
+              case (Left(pl), Right(pr)) => Some(pl -> pr)
+              case _                     => None
+            }
 
-            assertM(lr)(isSome(equalTo(p -> p)))
+          assertM(lr)(isSome(equalTo(p -> p)))
         }
       }
     )
@@ -52,7 +52,7 @@ object EitherReciprocityTestUtils {
       dburl <- genDbUrl
     } yield EnterpriseAuth(id, dburl)
 
-  val genNestedConfig =
+  val genNestedConfig: Gen[Random, NestedPath] =
     for {
       auth   <- genEnterpriseAuth
       count  <- Gen.anyInt
@@ -73,7 +73,7 @@ object EitherReciprocityTestUtils {
   private val cNestedConfigRight =
     (cEnterpriseAuthRight |@| int("krCount") |@| float("krFactor")).to[NestedPath]
 
-  val cCoproductConfig =
+  val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
     (cNestedConfigLeft.orElseEither(cNestedConfigRight)).to[CoproductConfig]
 
 }

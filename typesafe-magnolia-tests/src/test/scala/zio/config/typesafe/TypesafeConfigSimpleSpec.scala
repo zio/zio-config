@@ -1,10 +1,12 @@
 package zio.config.typesafe
 
-import zio.config._, magnolia._, ConfigDescriptor._
+import zio.config._
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
-import zio.test.{ DefaultRunnableSpec }
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{DefaultRunnableSpec, _}
+
+import magnolia._
+import ConfigDescriptor._
 
 object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
   final case class Details(name: String, age: Int)
@@ -15,7 +17,7 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
 
   final case class AwsDetails(accounts: List[Account], database: Database, users: List[Int])
 
-  val validHocon =
+  val validHocon: String =
     """
       |accounts = [
       |  {
@@ -46,24 +48,24 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
       |  url: postgres
       |}""".stripMargin
 
-  val spec = suite("TypesafeConfig")(
+  val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig")(
     test("A nested example with typesafe HOCON config") {
 
-      val details = (string("name") |@| int("age"))(Details.apply, Details.unapply)
-      val accountConfig =
+      val details          = (string("name") |@| int("age"))(Details.apply, Details.unapply)
+      val accountConfig    =
         (int("accountId").orElseEither(string("accountId")).optional |@| list("regions")(string) |@| nested("details")(
           details
         ).optional)(
           Account.apply,
           Account.unapply
         )
-      val databaseConfig = (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
+      val databaseConfig   = (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
       val awsDetailsConfig =
         (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig) |@| list("users")(int))(
           AwsDetails.apply,
           AwsDetails.unapply
         )
-      val listResult =
+      val listResult       =
         fromHoconString(validHocon) match {
           case Left(value)   => Left(value)
           case Right(source) => read(awsDetailsConfig from source)

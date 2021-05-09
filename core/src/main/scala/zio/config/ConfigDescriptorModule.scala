@@ -1,9 +1,9 @@
 package zio.config
 
-import VersionSpecificSupport._
-
+import scala.collection.mutable.{ListBuffer, Map => MutableMap}
 import scala.reflect.ClassTag
-import scala.collection.mutable.{ ListBuffer, Map => MutableMap }
+
+import VersionSpecificSupport._
 
 trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   import ConfigDescriptorAdt._
@@ -34,7 +34,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * To overcome this, we can do `s => Try(s.toInt).toOption` to mark the possibility of errors.
      * This is a function of the type: `B => Option[A]`.
-     *
      *
      *  {{{
      *
@@ -196,7 +195,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    val detailedConfigDescriptor: ConfigDescriptor[Config] =
      *      configDescriptor ?? "Configuration related to database"
      *  }}}
-     *
      */
     final def ??(description: String): ConfigDescriptor[A] =
       describe(description)
@@ -237,7 +235,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  {{{
      *    (string("USERNAME") |@| int("PORT")).apply((a, b) => Config.apply(a, b), Config.unapply)
      *  }}}
-     *
      */
     final def |@|[B](
       that: => ConfigDescriptor[B]
@@ -315,7 +312,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  }}}
      *
      *  Using `|@|` over `<>` avoids nested tuples.
-     *
      */
     final def <*>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
       self zip that
@@ -397,7 +393,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    Right(OAuth("xyz", "afg==")
      *
      *  }}}
-     *
      */
     final def <+>[B](
       that: => ConfigDescriptor[B]
@@ -457,7 +452,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *     // This is a typical example where we mix auto derivation with manual definitions.
      *
      *  }}}
-     *
      */
     final def default(value: A): ConfigDescriptor[A] =
       ConfigDescriptorAdt.defaultDesc(self, value) ?? s"default value: $value"
@@ -526,7 +520,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    val detailedConfigDescriptor: ConfigDescriptor[Config] =
      *      configDescriptor ?? "Configuration related to database"
      *  }}}
-     *
      */
     final def describe(description: String): ConfigDescriptor[A] =
       ConfigDescriptorAdt.describeDesc(self, description)
@@ -590,14 +583,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *     (string("USERNAME") from configSource1.orElse(configSource2) |@|
      *       int("PORT") from configSource2.orElse(configSource1))(Config.apply, Config.unapply) from configSource2
      * }}}
-     *
-     *
      */
     final def from(that: ConfigSource): ConfigDescriptor[A] =
       self.updateSource(_.orElse(that))
 
     /**
-     *
      * mapKey allows user to convert the keys in a ConfigDescriptor.
      *
      * Example:
@@ -626,7 +616,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * The above config retrieval fails since the keys dbUrl and dbPOrt exist, but it has only DB_URL and DB_PORT.
      * In this situation, instead of rewriting the config we can do
      *
-     *
      * {{{
      *
      *   import zio.config._, ConfigDescriptor._
@@ -647,7 +636,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
             descriptors.get(c) match {
               case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
-              case None =>
+              case None        =>
                 val result = Lazy(() => loop(res))
                 descriptors.update(c, result)
                 result
@@ -655,18 +644,18 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
           case Source(source, propertyType) => Source(source, propertyType)
           case DynamicMap(source, conf)     => DynamicMap(source, loop(conf))
-          case Nested(source, path, conf) =>
+          case Nested(source, path, conf)   =>
             Nested(source, f(path), loop(conf))
-          case Optional(conf)          => Optional(loop(conf))
-          case Sequence(source, conf)  => Sequence(source, loop(conf))
-          case Describe(conf, message) => Describe(loop(conf), message)
-          case Default(conf, value)    => Default(loop(conf), value)
-          case TransformOrFail(conf, f, g) =>
+          case Optional(conf)               => Optional(loop(conf))
+          case Sequence(source, conf)       => Sequence(source, loop(conf))
+          case Describe(conf, message)      => Describe(loop(conf), message)
+          case Default(conf, value)         => Default(loop(conf), value)
+          case TransformOrFail(conf, f, g)  =>
             TransformOrFail(loop(conf), f, g)
-          case Zip(conf1, conf2) => Zip(loop(conf1), loop(conf2))
-          case OrElseEither(conf1, conf2) =>
+          case Zip(conf1, conf2)            => Zip(loop(conf1), loop(conf2))
+          case OrElseEither(conf1, conf2)   =>
             OrElseEither(loop(conf1), loop(conf2))
-          case OrElse(value1, value2) =>
+          case OrElse(value1, value2)       =>
             OrElse(loop(value1), loop(value2))
         }
 
@@ -696,7 +685,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *     }
      *  }}}
      *
-     *
      *   The fact that it is an optional in error messages if config retrieval
      *   is a failure, and it's also used while documenting your configuration using `ConfigDocsModule`
      *
@@ -704,7 +692,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    val dbConfigWithDoc: ConfigDescriptor[Config] =
      *       (string("USERNAME") ?? "db username" |@| int("PORT") ?? "db port")(Config.apply, Config.unapply)
      *  }}}
-     *
      *
      *   {{{
      *     import zio.config._, ConfigDescriptor._
@@ -918,7 +905,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    Right(OAuth("xyz", "afg==")
      *
      *  }}}
-     *
      */
     final def orElseEither[B](
       that: => ConfigDescriptor[B]
@@ -1021,7 +1007,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
             descriptors.get(c) match {
               case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
-              case None =>
+              case None        =>
                 val result = Lazy(() => loop(res))
                 descriptors.update(c, result)
                 result
@@ -1044,7 +1030,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
           case Describe(conf, message) =>
             Describe(loop(conf), message)
-          case Default(conf, b) =>
+          case Default(conf, b)        =>
             Default(loop(conf), b)
 
           case TransformOrFail(conf, f, g) =>
@@ -1143,7 +1129,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * Given `A` and `B`, `f: A => B`, and `g: B => A`, then
      * `transform` allows us to transform a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
      *
-     *
      * Example :
      *  `transform` is useful especially when you define newtypes.
      *
@@ -1213,7 +1198,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *      string("S3_PATH").transformEither[S3Path](S3Path.fromStr, _.convertToString("yyyy-MM-dd"))
      *
      *  }}}
-     *
      */
     final def transformOrFail[B](
       to: A => Either[String, B],
@@ -1253,7 +1237,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  }}}
      *
      *  Using `|@|` over `<>` avoids nested tuples.
-     *
      */
     final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
       ConfigDescriptorAdt.zipDesc(self, that)
@@ -1337,14 +1320,16 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         .foldLeft[ConfigDescriptor[(A, List[A])]](
           lazyDesc(head)
             .transform((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
-        )(
-          (b: ConfigDescriptor[(A, List[A])], a: ConfigDescriptor[A]) =>
-            b.zipWith(a)({
-              case ((first, tail), a) => Right((first, a :: tail))
-            }, {
+        )((b: ConfigDescriptor[(A, List[A])], a: ConfigDescriptor[A]) =>
+          b.zipWith(a)(
+            { case ((first, tail), a) =>
+              Right((first, a :: tail))
+            },
+            {
               case (_, Nil)              => Left("Invalid list length")
               case (first, head :: tail) => Right(((first, tail), head))
-            })
+            }
+          )
         )({ case (a, t) => a :: t }, l => l.headOption.map(h => (h, l.tail)))
 
     /**
@@ -1389,7 +1374,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   val config = descriptor[D]
      * }}}
      */
-    def enumeration[D] = new PartiallyAppliedEnumeration[D]
+    def enumeration[D]                                                                                     = new PartiallyAppliedEnumeration[D]
 
     class PartiallyAppliedEnumeration[D] {
       def apply[X <: D](
@@ -1400,7 +1385,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           (d: D) =>
             d match {
               case a: X => Right(a)
-              case _ =>
+              case _    =>
                 Left(
                   s"""
                   "Cannot write the config back because instance type doesn't match.
@@ -1742,7 +1727,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
               case None        => Left("Cannot write an empty list back")
             }
           )
-        )
+      )
 
     /**
      * Retrieve a `Map`given an existing `ConfigDescriptor`.
@@ -1803,12 +1788,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  }}}
      *
-     *
      * Now what does it mean if we say ` val config = map(int("id")) ` instead of `val config = map("id")(int)`
      *
      * The difference is `map("id")(int)` implies there exists a map within the key `id`, whose values of are of the type `Int`
      * On the other hand `map(int("id"))` implies there exists a map hose value is of the type  {"id" : "Int"}
-     *
      *
      * Example:
      *  {{{
@@ -1834,7 +1817,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * This is really useful when the config source consist of a map but you need to fetch the value of the keys
      * in the map from an nested key within itself. In this example it is "id".
-
      */
     def map[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
       DynamicMap(ConfigSourceFunctions.empty, lazyDesc(desc))
@@ -1921,7 +1903,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  For example: `set("key")(string)` implies value of `key` is of the type `Set[String]`
      *
      *  Here is a more detailed example.
-
+     *
      *  `list("xyz")(string)` would then imply, there exists a set of type String under "xyz"
      *
      *  {{{

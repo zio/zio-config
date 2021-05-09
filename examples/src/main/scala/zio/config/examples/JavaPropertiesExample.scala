@@ -1,9 +1,10 @@
 package zio.config.examples
 
 import zio.config._
-import ConfigDescriptor._
 import zio.console.Console
-import zio.{ console, App, ExitCode, Has, ZEnv, ZIO, ZLayer }
+import zio.{App, ExitCode, Has, ZEnv, ZIO, ZLayer, console}
+
+import ConfigDescriptor._
 
 /**
  * An example of an entire application that uses java properties
@@ -11,7 +12,7 @@ import zio.{ console, App, ExitCode, Has, ZEnv, ZIO, ZLayer }
 final case class ApplicationConfig(bridgeIp: String, userName: String)
 
 object ApplicationConfig {
-  val configuration =
+  val configuration: ConfigDescriptor[ApplicationConfig] =
     ((string("bridgeIp")) |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
 }
 

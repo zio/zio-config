@@ -1,15 +1,13 @@
 package zio.config
 
-import java.{ util => ju }
-
-import zio.{ IO, Task, UIO, ZIO }
+import zio.config.PropertyTree.{Leaf, Record, Sequence, unflatten}
 import zio.system.System
+import zio.{IO, Task, UIO, ZIO}
 
+import java.io.{File, FileInputStream}
+import java.{util => ju}
 import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
-import zio.config.PropertyTree.{ unflatten, Leaf, Record, Sequence }
-import java.io.FileInputStream
-import java.io.File
 
 trait ConfigSourceModule extends KeyValueModule {
   case class ConfigSourceName(name: String)
@@ -120,8 +118,8 @@ trait ConfigSourceModule extends KeyValueModule {
       if (tree.isEmpty) PropertyTree.Empty
       else
         tree match {
-          case l @ Leaf(_) => l
-          case Record(value) =>
+          case l @ Leaf(_)        => l
+          case Record(value)      =>
             Record(value.filterNot { case (_, v) => v.isEmpty })
           case PropertyTree.Empty => PropertyTree.Empty
           case Sequence(value)    => Sequence(value.filterNot(_.isEmpty))
@@ -138,8 +136,8 @@ trait ConfigSourceModule extends KeyValueModule {
     protected def unwrapSingletonLists(
       tree: PropertyTree[K, V]
     ): PropertyTree[K, V] = tree match {
-      case l @ Leaf(_) => l
-      case Record(value) =>
+      case l @ Leaf(_)            => l
+      case Record(value)          =>
         Record(value.map { case (k, v) => k -> unwrapSingletonLists(v) })
       case PropertyTree.Empty     => PropertyTree.Empty
       case Sequence(value :: Nil) => unwrapSingletonLists(value)
@@ -152,7 +150,6 @@ trait ConfigSourceModule extends KeyValueModule {
       trees.map(unwrapSingletonLists(_))
 
     /**
-     *
      * To obtain a config source directly from a property tree.
      *
      * @param tree            : PropertyTree
@@ -194,7 +191,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
 
     /**
      * EXPERIMENTAL
-
+     *
      * Assumption. All keys should start with -
      *
      * This source supports almost all standard command-line patterns including nesting/sub-config, repetition/list etc
@@ -274,9 +271,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
     ): ConfigSource =
       fromMapInternal(constantMap)(
         x => {
-          val listOfValues = {
+          val listOfValues =
             valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
-          }
 
           ::(listOfValues.head, listOfValues.tail)
         },
@@ -391,14 +387,14 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
     ): Task[ConfigSource] =
       for {
         properties <- ZIO.bracket(
-                       ZIO.effect(new FileInputStream(new File(filePath)))
-                     )(r => ZIO.effectTotal(r.close()))(inputStream => {
-                       ZIO.effect {
-                         val properties = new java.util.Properties()
-                         properties.load(inputStream)
-                         properties
-                       }
-                     })
+                        ZIO.effect(new FileInputStream(new File(filePath)))
+                      )(r => ZIO.effectTotal(r.close())) { inputStream =>
+                        ZIO.effect {
+                          val properties = new java.util.Properties()
+                          properties.load(inputStream)
+                          properties
+                        }
+                      }
       } yield ConfigSource.fromProperties(
         properties,
         filePath,
@@ -411,10 +407,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       fromSystemEnv(None, None)
 
     /**
-     *
      * For users that dont want to use layers in their application
      * This method provides live system environment layer
-     *
      */
     def fromSystemEnvLive(
       keyDelimiter: Option[Char],
@@ -550,14 +544,14 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       leafForSequence: LeafForSequence
     ): ConfigSource =
       fromPropertyTrees(
-        unwrapSingletonLists(dropEmpty(unflatten(map.map(tuple => {
+        unwrapSingletonLists(dropEmpty(unflatten(map.map { tuple =>
           val vectorOfKeys = keyDelimiter match {
             case Some(keyDelimiter) =>
               tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
-            case None => Vector(tuple._1)
+            case None               => Vector(tuple._1)
           }
           vectorOfKeys -> f(tuple._2)
-        })))),
+        }))),
         source.name,
         leafForSequence
       )
@@ -571,8 +565,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         key: String,
         tree: PropertyTree[String, String]
       ): PropertyTree[String, String] =
-        keyDelimiter.fold(Record(Map(key -> tree)): PropertyTree[String, String])(
-          value => unflatten(key.split(value).toList, tree)
+        keyDelimiter.fold(Record(Map(key -> tree)): PropertyTree[String, String])(value =>
+          unflatten(key.split(value).toList, tree)
         )
 
       def toSeq[V](leaf: String): PropertyTree[String, String] =
@@ -614,7 +608,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
                 case Some(actualKey) => Some(Both(actualKey, Value(possibleValue)))
                 case None            => Some(That(Value(possibleValue)))
               }
-            case (None, Some(possibleValue)) =>
+            case (None, Some(possibleValue))              =>
               Some(That(Value(possibleValue)))
 
             case (Some(possibleKey), None) =>
@@ -664,12 +658,11 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
 
                   case (Both(l1, r1), This(l2)) =>
                     unFlattenWith(l1.value, toSeq(r1.value)) :: h3.headOption
-                      .fold(List.empty[PropertyTree[String, String]])(
-                        x =>
-                          loop(List(x))
-                            .map(tree => unFlattenWith(l2.value, tree)) ++ loop(
-                            h3.tail
-                          )
+                      .fold(List.empty[PropertyTree[String, String]])(x =>
+                        loop(List(x))
+                          .map(tree => unFlattenWith(l2.value, tree)) ++ loop(
+                          h3.tail
+                        )
                       )
 
                   case (Both(l1, r1), That(r2)) =>
@@ -685,8 +678,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
 
                   case (This(l1), This(l2)) =>
                     val keysAndTrees =
-                      h3.zipWithIndex.map {
-                        case (key, index) => (index, loop(List(key)))
+                      h3.zipWithIndex.map { case (key, index) =>
+                        (index, loop(List(key)))
                       }.find(_._2.nonEmpty)
 
                     keysAndTrees match {
@@ -695,12 +688,11 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
 
                         keys.fold(List.empty[PropertyTree[String, String]]) { nestedKeys =>
                           trees
-                            .map(
-                              tree =>
-                                unflatten(
-                                  l2.value :: nestedKeys.map(_.value),
-                                  tree
-                                )
+                            .map(tree =>
+                              unflatten(
+                                l2.value :: nestedKeys.map(_.value),
+                                tree
+                              )
                             )
                             .map(tree => unFlattenWith(l1.value, tree)) ++ loop(
                             h3.drop(index + 1)
@@ -722,16 +714,14 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
                     toSeq(r1.value) :: toSeq(r2.value) :: loop(h3)
 
                   case (That(r1), This(l2)) =>
-                    toSeq(r1.value) :: loop(h3).map(
-                      tree => unFlattenWith(l2.value, tree)
-                    )
+                    toSeq(r1.value) :: loop(h3).map(tree => unFlattenWith(l2.value, tree))
                 }
 
               case (Some(_), None) =>
                 loop(h1 :: h3)
               case (None, Some(_)) =>
                 loop(h2 :: h3)
-              case (None, None) =>
+              case (None, None)    =>
                 loop(h3)
             }
 
@@ -746,7 +736,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
 
               case None => Nil
             }
-          case Nil => Nil
+          case Nil       => Nil
         }
 
       unwrapSingletonLists(dropEmpty(PropertyTree.mergeAll(loop(args))))

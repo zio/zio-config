@@ -19,8 +19,8 @@ package object config extends KeyConversionFunctions with ConfigStringModule wit
     options.foldRight(Some(Nil): Option[List[A]])((a, b) => a.flatMap(aa => b.map(bb => aa :: bb)))
 
   private[config] def seqMap[K, A, B](map: Map[K, Either[A, B]]): Either[A, Map[K, B]] =
-    map.foldRight(Right(Map.empty[K, B]): Either[A, Map[K, B]])(
-      (a, b) => a._2.flatMap(aa => b.map(bb => bb.updated(a._1, aa)))
+    map.foldRight(Right(Map.empty[K, B]): Either[A, Map[K, B]])((a, b) =>
+      a._2.flatMap(aa => b.map(bb => bb.updated(a._1, aa)))
     )
 
   private[config] def seqMap2[K, E, B](

@@ -1,7 +1,9 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
+
+import ConfigDescriptor._
 
 object WriteExample extends App with EitherImpureOps {
 
@@ -10,13 +12,13 @@ object WriteExample extends App with EitherImpureOps {
   final case class B(c: Id, d: Id)
   final case class A(b: B, i: Int)
 
-  val description = {
+  val description: ConfigDescriptor[A] = {
     val bConfig = (int("c")(Id.apply, Id.unapply) |@| int("d")(Id.apply, Id.unapply))(B.apply, B.unapply)
 
     (bConfig |@| int("i"))(A.apply, A.unapply)
   }
 
-  val map =
+  val map: Map[String, String] =
     Map(
       "c" -> "1",
       "d" -> "2",
@@ -47,7 +49,7 @@ object WriteExample extends App with EitherImpureOps {
 
   assert(readFromTree == readFromSource)
 
-  val readFromMap =
+  val readFromMap: A =
     read(description from ConfigSource.fromMultiMap(written.flattenString(), "tree")).loadOrThrow
 
   assert(readFromMap == readFromSource)

@@ -29,7 +29,7 @@ object Cfg extends App with EitherImpureOps {
 
   import X._
 
-  val s1 =
+  val s1: String =
     """
       |cfg {
       | fieldName {
@@ -52,7 +52,7 @@ object Cfg extends App with EitherImpureOps {
     )
   )
 
-  val s2 =
+  val s2: String =
     """
       |fieldName = A
       |""".stripMargin
@@ -61,7 +61,7 @@ object Cfg extends App with EitherImpureOps {
     read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2).loadOrThrow) == Right(Cfg(A))
   )
 
-  val s3 =
+  val s3: String =
     """
       |fieldName = B
       |""".stripMargin
@@ -70,7 +70,7 @@ object Cfg extends App with EitherImpureOps {
     read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s3).loadOrThrow) == Right(Cfg(B))
   )
 
-  val s4 =
+  val s4: String =
     """
       |fieldName {
       |  D {
@@ -87,7 +87,7 @@ object Cfg extends App with EitherImpureOps {
     read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s4).loadOrThrow) == Right(Cfg(D(Z("1"))))
   )
 
-  val s5 =
+  val s5: String =
     """
       |fieldName {
       |    E {
@@ -101,7 +101,7 @@ object Cfg extends App with EitherImpureOps {
     read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s5).loadOrThrow) == Right(Cfg(E("1", 2)))
   )
 
-  val s6 =
+  val s6: String =
     """
       |fieldName {
       |    F {
@@ -121,7 +121,7 @@ object Cfg extends App with EitherImpureOps {
     )
   )
 
-  val s7 =
+  val s7: String =
     """
       |fieldName {
       |    F {

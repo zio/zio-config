@@ -24,12 +24,12 @@ private[config] trait KeyConversionFunctions {
     @tailrec
     def loop(chars: List[Int], acc: List[String], current: List[Int], beginning: Boolean): String =
       chars match {
-        case Nil => addToAcc(acc, current).reverse.mkString
-        case head :: tail if beginning =>
+        case Nil                                         => addToAcc(acc, current).reverse.mkString
+        case head :: tail if beginning                   =>
           loop(tail, acc, head :: current, Character.isUpperCase(head) || !Character.isLetter(head))
         case head :: tail if Character.isUpperCase(head) =>
           loop(tail, addToAcc(acc, current), head :: Nil, beginning = true)
-        case head :: tail =>
+        case head :: tail                                =>
           loop(tail, acc, head :: current, beginning = false)
       }
 

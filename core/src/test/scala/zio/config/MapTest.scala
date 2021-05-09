@@ -1,13 +1,13 @@
 package zio.config
 
 import zio.config.ConfigDescriptor._
-import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.test.Assertion.{ anything, equalTo, isLeft, isNone, isRight }
+import zio.config.PropertyTree.{Leaf, Record, Sequence}
+import zio.test.Assertion.{anything, equalTo, isLeft, isNone, isRight}
 import zio.test._
 
 object MapTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[Environment, Failure] =
     suite("MapCornerCasesTest")(
       test("map(b)(string(y)) returns the value of y from the values inside map within b.") {
         case class Cfg(a: String, b: Map[String, String])
@@ -152,7 +152,7 @@ object MapTest extends BaseSpec {
         val cCfg = (string("a") |@| map("b")(string)
           .default(Map("x" -> "y", "z" -> "a"))).to[Cfg]
 
-        val res = read(
+        val res  = read(
           cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
         )
 
@@ -164,7 +164,7 @@ object MapTest extends BaseSpec {
         val cCfg = (string("a") |@| map("b")(string)
           .default(Map("x" -> "y"))).to[Cfg]
 
-        val res = read(
+        val res  = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
             "tree",
@@ -243,7 +243,7 @@ object MapTest extends BaseSpec {
         assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
       },
       test("key doesn't exist in map") {
-        val src = ConfigSource.fromPropertyTree(
+        val src                                                     = ConfigSource.fromPropertyTree(
           PropertyTree.Record(Map("usr" -> PropertyTree.Leaf("v1"))),
           "src",
           LeafForSequence.Valid
@@ -252,7 +252,7 @@ object MapTest extends BaseSpec {
         assert(read(optional from src))(isLeft(anything))
       },
       test("when empty map") {
-        val src = ConfigSource.fromPropertyTree(
+        val src                                                     = ConfigSource.fromPropertyTree(
           PropertyTree.empty,
           "src",
           LeafForSequence.Valid

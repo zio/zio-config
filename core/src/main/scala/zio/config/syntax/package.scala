@@ -1,10 +1,10 @@
 package zio.config
 
-import zio.{ Has, Tag, ZLayer }
+import zio.{Has, Tag, ZLayer}
 
 package object syntax {
   final implicit class ZIOConfigNarrowOps[R, E, A](
-    val self: ZLayer[R, E, Has[A]]
+    private val self: ZLayer[R, E, Has[A]]
   ) extends AnyVal {
 
     /**

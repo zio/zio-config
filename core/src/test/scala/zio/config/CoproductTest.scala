@@ -1,20 +1,22 @@
 package zio.config
 
 import zio.config.ConfigDescriptor._
-import ReadError._
-import zio.config.helpers._
-import CoproductTestUtils._
 import zio.config.ReadError.Step.Key
+import zio.config.helpers._
+import zio.config.{CoproductTestUtils, ReadError}
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
-import VersionSpecificSupport._
 
 import scala.concurrent.duration.Duration
 
+import ReadError._
+import CoproductTestUtils._
+import VersionSpecificSupport._
+
 object CoproductTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[Environment, Failure] =
     suite("Coproduct support")(
       testM("left element satisfied") {
         check(genTestParams) { p =>
@@ -30,14 +32,12 @@ object CoproductTest extends BaseSpec {
       },
       testM("round trip of enum works") {
         check(genSealedTraitParams) { sourceMap =>
-          val source     = ConfigSource.fromMap(sourceMap, keyDelimiter = Some('.'))
-          val readResult = read(Z.config from source)
+          val source      = ConfigSource.fromMap(sourceMap, keyDelimiter = Some('.'))
+          val readResult  = read(Z.config from source)
           val writeResult = readResult.swap
             .map(_.prettyPrint())
             .swap
-            .flatMap(
-              r => r.toMap(Z.config).map(_.mapValues(_.mkString).toMap)
-            )
+            .flatMap(r => r.toMap(Z.config).map(_.mapValues(_.mkString).toMap))
 
           assert(writeResult)(equalTo(Right[String, Map[String, String]](sourceMap)))
         }
@@ -106,7 +106,7 @@ object CoproductTestUtils {
     val iConfig: ConfigDescriptor[I] =
       double("i").to[I]
 
-    val config =
+    val config: ConfigDescriptor[Z] =
       nested("z")(enumeration[Z](aConfig, bConfig, cConfig, dConfig, eConfig, fConfig, gConfig, hConfig, iConfig))
 
     case class A(a: String)           extends Z
@@ -139,7 +139,7 @@ object CoproductTestUtils {
     vCodeValid: String
   )
 
-  val genSealedTraitParams =
+  val genSealedTraitParams: Gen[Random with Sized, Map[String, String]] =
     for {
       s1     <- Gen.alphaNumericStringBounded(1, 10)
       s2     <- Gen.alphaNumericStringBounded(1, 10)
@@ -147,18 +147,18 @@ object CoproductTestUtils {
       int2   <- Gen.int(0, 100)
       double <- Gen.double(0, 100)
       result <- Gen.oneOf(
-                 Gen.const(Map("z.a" -> s1)),
-                 // hardcoded b because the value needs to be "b" for case-object B
-                 Gen.const(Map("z"    -> "b")),
-                 Gen.const(Map("z.c1" -> int1.toString, "z.c2" -> s2)),
-                 Gen.const(Map("z.d"  -> int2.toString)),
-                 Gen.const(Map("z.e"  -> double.toString)),
-                 // hardcoded values because the value needs to be "f", "g", and "h" for case-object F, G, and H respectively
-                 Gen.const(Map("z"   -> "f")),
-                 Gen.const(Map("z"   -> "g")),
-                 Gen.const(Map("z"   -> "h")),
-                 Gen.const(Map("z.i" -> double.toString))
-               )
+                  Gen.const(Map("z.a" -> s1)),
+                  // hardcoded b because the value needs to be "b" for case-object B
+                  Gen.const(Map("z" -> "b")),
+                  Gen.const(Map("z.c1" -> int1.toString, "z.c2" -> s2)),
+                  Gen.const(Map("z.d" -> int2.toString)),
+                  Gen.const(Map("z.e" -> double.toString)),
+                  // hardcoded values because the value needs to be "f", "g", and "h" for case-object F, G, and H respectively
+                  Gen.const(Map("z" -> "f")),
+                  Gen.const(Map("z" -> "g")),
+                  Gen.const(Map("z" -> "h")),
+                  Gen.const(Map("z.i" -> double.toString))
+                )
 
     } yield result
 
@@ -174,10 +174,9 @@ object CoproductTestUtils {
       vCount      <- Gen.anyInt
       kDbUrlLocal <- genSymbol(1, 20).filter(s => s != kLdap && s != kDbUrl && s != kUser && s != kCount)
       vDbUrlLocal <- Gen.anyFloat
-      kCValid <- genNonEmptyString(15).filter(
-                  s => s != kLdap && s != kDbUrl && s != kUser && s != kCount && s != kDbUrlLocal
-                )
-      vCValid <- genDuration(5)
+      kCValid     <-
+        genNonEmptyString(15).filter(s => s != kLdap && s != kDbUrl && s != kUser && s != kCount && s != kDbUrlLocal)
+      vCValid     <- genDuration(5)
     } yield TestParams(
       kLdap,
       vLdap,
@@ -207,7 +206,9 @@ object CoproductTestUtils {
     )
   }
 
-  def readRight(p: TestParams) = {
+  def readRight(
+    p: TestParams
+  ): Either[ReadError[String], Either[CoproductTestUtils.EnterpriseAuth, CoproductTestUtils.PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
@@ -254,7 +255,7 @@ object CoproductTestUtils {
     )
   }
 
-  def readChooseLeftFromBoth(p: TestParams) = {
+  def readChooseLeftFromBoth(p: TestParams): Either[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 

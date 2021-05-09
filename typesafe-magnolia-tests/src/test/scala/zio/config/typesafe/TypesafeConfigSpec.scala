@@ -1,13 +1,14 @@
 package zio.config.typesafe
 
-import zio.{ Has, ZIO }
-import zio.config.PropertyTree.{ Leaf, Record, Sequence }
+import zio.config.PropertyTree.{Leaf, Record, Sequence}
+import zio.config.ReadError
 import zio.config.typesafe.TypesafeConfigTestSupport._
 import zio.test.Assertion._
 import zio.test._
+import zio.{Has, ZIO}
 
 object TypesafeConfigSpec extends DefaultRunnableSpec {
-  val spec = suite("TypesafeConfig")(
+  val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig")(
     test("Read empty list") {
       val res =
         TypesafeConfigSource.fromHoconString(

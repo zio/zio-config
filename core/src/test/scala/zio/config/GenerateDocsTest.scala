@@ -6,7 +6,7 @@ import zio.test._
 
 object GenerateDocsTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[Environment, Failure] =
     suite("Generate docs")(
       test("optional nested") {
         val inner = (int("a") |@| int("b")).tupled

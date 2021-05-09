@@ -1,17 +1,20 @@
 package zio.config.typesafe
 
-import zio.config._, magnolia._, ConfigDescriptor._
+import zio.config._
 import zio.test.Assertion._
-import zio.test.{ DefaultRunnableSpec, _ }
+import zio.test.{DefaultRunnableSpec, _}
+
+import magnolia._
+import ConfigDescriptor._
 
 object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
   final case class Account(region: String, accountId: String)
   final case class Database(port: Int, url: String)
   final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
 
-  val configNestedAutomatic = descriptor[AwsConfig]
+  val configNestedAutomatic: ConfigDescriptor[AwsConfig] = descriptor[AwsConfig]
 
-  val hocconStringWithStringDb =
+  val hocconStringWithStringDb: String =
     s"""
     account {
         region : us-east
@@ -21,7 +24,7 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
     database = "hi"
     """
 
-  val hocconStringWithDb =
+  val hocconStringWithDb: String =
     s"""
     account {
         region : us-east
@@ -34,7 +37,7 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
     }
     """
 
-  val hocconStringWithNoDatabaseAtAll =
+  val hocconStringWithNoDatabaseAtAll: String =
     s"""
     account {
         region : us-east
@@ -43,7 +46,7 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
     """
 
   // Port is invalid
-  val hocconStringWithDbWithParseError =
+  val hocconStringWithDbWithParseError: String =
     s"""
     account {
         region : us-east
@@ -55,7 +58,7 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
     }
     """
 
-  val spec = suite("TypesafeConfig Error")(
+  val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig Error")(
     test("A variant error case with typesafe HOCON config and a magnolia description") {
       val nestedConfigAutomaticResult1 =
         TypesafeConfigSource.fromHoconString(hocconStringWithStringDb) match {
@@ -95,7 +98,7 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
     },
     test("A variant error case with typesafe HOCON config and a manual description") {
       val configNestedManual = {
-        val accountConfig =
+        val accountConfig  =
           (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
         val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
         (nested("account")(accountConfig) |@|
@@ -148,7 +151,7 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
           case Left(value)   => Left(value)
           case Right(source) => read(configWithHoconSubstitution from source)
         }
-      val expect = Right(DatabaseDetails(Details(8, "west"), Details(6, "east")))
+      val expect             = Right(DatabaseDetails(Details(8, "west"), Details(6, "east")))
 
       assert(substitutionResult)(equalTo(expect))
     }

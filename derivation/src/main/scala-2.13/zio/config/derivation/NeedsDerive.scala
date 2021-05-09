@@ -4,7 +4,7 @@ import scala.annotation.implicitAmbiguous
 
 /**
  * Preventing derivation for List, Option and Either.
- * */
+ */
 sealed trait NeedsDerive[+T]
 
 object NeedsDerive extends NeedsDerive[Nothing] {

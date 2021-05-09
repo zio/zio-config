@@ -1,15 +1,16 @@
 package zio.config.typesafe
 
-import zio.config.BaseSpec
-import zio.config._, ConfigDescriptor._
+import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test._
+
+import ConfigDescriptor._
 import TypesafeConfigMapSpecUtils._
 import TypesafeConfigTestSupport._
 
 object TypesafeConfigMapSpec extends BaseSpec {
 
-  override def spec =
+  override def spec: ZSpec[Environment, Failure] =
     suite("Map Typesafe Integration")(
       test("read typesafe config") {
         val result =
@@ -50,7 +51,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
 
         case class Cfg(map: Map[String, String], y: String)
 
-        val desc = (nested("k") { map("s")(string("y")) } |@| string("y"))(Cfg.apply, Cfg.unapply)
+        val desc = (nested("k")(map("s")(string("y"))) |@| string("y"))(Cfg.apply, Cfg.unapply)
 
         val result = read(desc from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow)
 
@@ -71,7 +72,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
              |}
              |""".stripMargin
 
-        val xx2 = nested("k") { map(string("y")) }
+        val xx2 = nested("k")(map(string("y")))
 
         assert(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow))(
           isRight(equalTo(Map("dynamicKey" -> "z", "dynamicKey2" -> "z2")))
@@ -115,7 +116,7 @@ object TypesafeConfigMapSpecUtils {
 
   final case class Nested(s: Map[String, sss])
 
-  val hocon2 =
+  val hocon2: String =
     s"""
        |result : {
        | dynamic1 : {

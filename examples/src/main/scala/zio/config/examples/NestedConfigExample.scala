@@ -1,23 +1,25 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
+
+import ConfigDescriptor._
 
 object NestedConfigExample extends App with EitherImpureOps {
 
   final case class Database(url: String, port: Int)
   final case class AwsConfig(c1: Database, c2: Database, c3: String)
 
-  val database =
+  val database: ConfigDescriptor[Database] =
     (string("connection") |@| int("port"))(Database.apply, Database.unapply)
 
-  val appConfig =
-    (nested("south") { database } ?? "South details" |@|
-      nested("east") { database } ?? "East details" |@|
+  val appConfig: ConfigDescriptor[AwsConfig] =
+    (nested("south")(database) ?? "South details" |@|
+      nested("east")(database) ?? "East details" |@|
       string("appName"))(AwsConfig, AwsConfig.unapply)
 
   // For simplicity in example, we use map source. Works with HOCON.
-  val source =
+  val source: ConfigSource =
     ConfigSource.fromMap(
       constantMap = Map(
         "south.connection" -> "abc.com",
@@ -31,7 +33,7 @@ object NestedConfigExample extends App with EitherImpureOps {
 
   val runtime = zio.Runtime.default
 
-  val readConfig =
+  val readConfig: AwsConfig =
     read(appConfig from source).loadOrThrow
 
   // Read
@@ -51,13 +53,13 @@ object NestedConfigExample extends App with EitherImpureOps {
     writtenResult ==
       PropertyTree.Record(
         Map(
-          "south" -> PropertyTree.Record(
+          "south"   -> PropertyTree.Record(
             Map(
               "connection" -> PropertyTree.Leaf("abc.com"),
               "port"       -> PropertyTree.Leaf("8111")
             )
           ),
-          "east" -> PropertyTree.Record(
+          "east"    -> PropertyTree.Record(
             Map(
               "connection" -> PropertyTree.Leaf("xyz.com"),
               "port"       -> PropertyTree.Leaf("8888")

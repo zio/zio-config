@@ -1,7 +1,7 @@
 package zio.config.derivation
 
-import zio.config._
 import zio.config.ConfigDescriptorAdt._
+import zio.config._
 
 import scala.annotation.tailrec
 
@@ -10,7 +10,7 @@ object DerivationUtils {
     def read(propertyValue: String): Either[PropertyType.PropertyReadError[String], String] =
       if (propertyValue == value) Right(value)
       else Left(PropertyType.PropertyReadError(propertyValue, s"constant string '$value'"))
-    def write(a: String): String = a
+    def write(a: String): String                                                            = a
   }
 
   def constantString(value: String): ConfigDescriptor[String] =
@@ -30,13 +30,13 @@ object DerivationUtils {
     configDesc: ConfigDescriptor[A]
   ): (ConfigDescriptor[Any], Boolean) =
     configDesc match {
-      case Lazy(thunk) => unwrapFromOptional(thunk())
-      case Default(config, default) =>
+      case Lazy(thunk)               => unwrapFromOptional(thunk())
+      case Default(config, default)  =>
         val (inner, opt) = unwrapFromOptional(config)
         (Default(lazyDesc(inner), default), opt)
       case Describe(config, message) =>
         unwrapThunk(config, message)
-      case _ =>
+      case _                         =>
         (configDesc.asInstanceOf[ConfigDescriptor[Any]], false)
     }
 
@@ -47,10 +47,10 @@ object DerivationUtils {
     message: String
   ): (ConfigDescriptor[Any], Boolean) =
     config match {
-      case Lazy(thunk) => unwrapThunk(thunk(), message)
+      case Lazy(thunk)                             => unwrapThunk(thunk(), message)
       case Optional(config: ConfigDescriptor[Any]) =>
         (config, true)
-      case _ =>
+      case _                                       =>
         val (inner, opt) = unwrapFromOptional(config)
         (Describe(lazyDesc(inner), message), opt)
 

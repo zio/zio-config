@@ -1,10 +1,12 @@
 package zio.config
 
-import ReadError._, testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.test.Assertion._
 import zio.test._
 import zio.test.environment.TestEnvironment
-import zio.{ Has, IO, ZIO }
+import zio.{Has, IO, ZIO}
+
+import ReadError._
+import testsupport.MapConfigTestSupport.AppConfig.descriptor
 
 object MapConfigTest extends DefaultRunnableSpec {
   import zio.config.testsupport.MapConfigTestSupport._

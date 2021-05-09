@@ -1,15 +1,15 @@
 package zio.config
 
 import zio.config.ConfigDescriptor._
-import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.config.ReadError.Step.{ Index, Key }
-import zio.config.ReadError.{ FormatError, ListErrors, ZipErrors }
+import zio.config.PropertyTree.{Leaf, Record, Sequence}
+import zio.config.ReadError.Step.{Index, Key}
+import zio.config.ReadError.{FormatError, ListErrors, ZipErrors}
 import zio.test.Assertion._
 import zio.test._
 
 object ListsCornerCasesTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[Environment, Failure] =
     suite("ListsCornerCasesTest")(
       test("read empty list") {
         case class Cfg(a: String, b: List[String])
@@ -206,7 +206,7 @@ object ListsCornerCasesTest extends BaseSpec {
                     Sequence(Nil) ::
                     Sequence(
                       Record(Map("c" -> Leaf("v2"))) :: Record(
-                        Map("c"      -> Leaf("v3"))
+                        Map("c" -> Leaf("v3"))
                       ) :: Nil
                     ) ::
                     Nil

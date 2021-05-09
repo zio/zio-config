@@ -1,10 +1,10 @@
 package zio.config
 
-import zio.{ Has, ZIO }
-import zio.config.ConfigDescriptor.{ int, list }
+import zio.config.ConfigDescriptor.{int, list}
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
-import zio.test.{ DefaultRunnableSpec, _ }
+import zio.test.{DefaultRunnableSpec, _}
+import zio.{Has, ZIO}
 
 object CommandLineListAccumulationTest extends DefaultRunnableSpec {
 
@@ -12,7 +12,7 @@ object CommandLineListAccumulationTest extends DefaultRunnableSpec {
     suite("Configuration of a list from multiple entries")(
       testM("Using single arg --key=value style") {
         checkM(Gen.int(1, 10)) { count =>
-          val args = renderArgs(count)
+          val args                                      = renderArgs(count)
           val p2: zio.IO[ReadError[String], SomeConfig] =
             fromArgs(args)
               .map(config => config.get)

@@ -1,14 +1,12 @@
 package zio.config
 
-import java.io.File
-import java.net.{ URI, URL }
-import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
-import java.util.UUID
-import java.util.Properties
-
-import zio.{ Has, Layer, Tag, ZIO, ZLayer }
 import zio.system.System
+import zio.{Has, Layer, Tag, ZIO, ZLayer}
 
+import java.io.File
+import java.net.{URI, URL}
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import java.util.{Properties, UUID}
 import scala.concurrent.duration.Duration
 
 trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
@@ -47,7 +45,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *        hoconSource.flatMap(source => read(mapConfig from source)
      *
      * }}}
-     *
      */
     val bigDecimal: ConfigDescriptor[BigDecimal] =
       sourceDesc(ConfigSource.empty, PropertyType.BigDecimalType) ?? "value of type bigdecimal"
@@ -68,7 +65,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(111111111)
      *
      * }}}
-     *
      */
     def bigDecimal(path: String): ConfigDescriptor[BigDecimal] = nested(path)(bigDecimal)
 
@@ -103,7 +99,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *        hoconSource.flatMap(source => read(mapConfig from source)
      *
      * }}}
-     *
      */
     val bigInt: ConfigDescriptor[BigInt] =
       sourceDesc(ConfigSource.empty, PropertyType.BigIntType) ?? "value of type bigint"
@@ -124,7 +119,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(111111111)
      *
      * }}}
-     *
      */
     def bigInt(path: String): ConfigDescriptor[BigInt] = nested(path)(bigInt)
 
@@ -147,7 +141,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(true)
      *
      * }}}
-     *
      */
     def boolean(path: String): ConfigDescriptor[Boolean] = nested(path)(boolean)
 
@@ -170,7 +163,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(11)
      *
      * }}}
-     *
      */
     def byte(path: String): ConfigDescriptor[Byte] = nested(path)(byte)
 
@@ -193,7 +185,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(11.11)
      *
      * }}}
-     *
      */
     def double(path: String): ConfigDescriptor[Double] = nested(path)(double)
 
@@ -216,7 +207,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(3 seconds)
      *
      * }}}
-     *
      */
     def duration(path: String): ConfigDescriptor[Duration] = nested(path)(duration)
 
@@ -239,7 +229,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(/user/file.txt)
      *
      * }}}
-     *
      */
     def file(path: String): ConfigDescriptor[File] = nested(path)(file)
 
@@ -262,7 +251,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(1.2f)
      *
      * }}}
-     *
      */
     def float(path: String): ConfigDescriptor[Float] = nested(path)(float)
 
@@ -285,7 +273,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right( 2020-11-24T23:21:33.034557Z)
      *
      * }}}
-     *
      */
     def instant(path: String): ConfigDescriptor[Instant] = nested(path)(instant)
 
@@ -308,7 +295,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(10)
      *
      * }}}
-     *
      */
     def int(path: String): ConfigDescriptor[Int] = nested(path)(int)
 
@@ -331,7 +317,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(2020-01-01)
      *
      * }}}
-     *
      */
     def localDate(path: String): ConfigDescriptor[LocalDate] = nested(path)(localDate)
 
@@ -354,7 +339,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(2020-11-25T10:26:32.482299)
      *
      * }}}
-     *
      */
     def localDateTime(path: String): ConfigDescriptor[LocalDateTime] = nested(path)(localDateTime)
 
@@ -377,7 +361,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(10:29:02.278213)
      *
      * }}}
-     *
      */
     def localTime(path: String): ConfigDescriptor[LocalTime] = nested(path)(localTime)
 
@@ -400,7 +383,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(111111111)
      *
      * }}}
-     *
      */
     def long(path: String): ConfigDescriptor[Long] = nested(path)(long)
 
@@ -423,7 +405,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(1)
      *
      * }}}
-     *
      */
     def short(path: String): ConfigDescriptor[Short] = nested(path)(short)
 
@@ -446,7 +427,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(Australia)
      *
      * }}}
-     *
      */
     def string(path: String): ConfigDescriptor[String] = nested(path)(string)
 
@@ -469,7 +449,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(www.bla.com)
      *
      * }}}
-     *
      */
     def uri(path: String): ConfigDescriptor[URI] = nested(path)(uri)
 
@@ -492,7 +471,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(a0f25f26-95b3-4124-8f7f-67fb04f714b7)
      *
      * }}}
-     *
      */
     def uuid(path: String): ConfigDescriptor[UUID] = nested(path)(uuid)
 
@@ -515,7 +493,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(111111111)
      *
      * }}}
-     *
      */
     def url(path: String): ConfigDescriptor[URL] = nested(path)(url)
 
@@ -538,7 +515,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(PT3S)
      *
      * }}}
-     *
      */
     def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
 
@@ -561,7 +537,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *     // Right(/Users/abc/xyz.txt)
      *
      * }}}
-     *
      */
     def javaFilePath(path: String): ConfigDescriptor[java.nio.file.Path] =
       lazyDesc(nested(path)(javaFilePath))
@@ -626,7 +601,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
    * }}}
    *
    * In the above example, the results returned an UIO because of the existence of ConfigSource` corresponding to `sys.env`.
-   *
    */
   object ZConfig {
 
@@ -786,7 +760,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
      */
     def fromPropertiesFile[A](
       filePath: String,
@@ -850,7 +823,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
      */
     def fromSystemProperties[K, V, A](
       configDescriptor: ConfigDescriptor[A],
@@ -870,9 +842,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
     )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
       ZLayer.fromEffect(
-        configDescriptor.flatMap(
-          descriptor => ZIO.fromEither(read(descriptor))
-        )
+        configDescriptor.flatMap(descriptor => ZIO.fromEither(read(descriptor)))
       )
   }
 

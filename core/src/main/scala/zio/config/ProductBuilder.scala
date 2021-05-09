@@ -16,7 +16,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
   val a: F[A]
   val b: F[B]
 
-  def tupled =
+  def tupled: F[(A, B)] =
     apply[(A, B)]((a: A, b: B) => (a, b), (t: (A, B)) => Some((t._1, t._2)))
 
   def apply[C](f: (A, B) => C, g: C => Option[(A, B)]): F[C] =
@@ -51,7 +51,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
           liftWrite(d => { val (aa, bb, cc) = conv.to(d); Some(((aa, bb), cc)) })
         )
 
-    def tupled = apply[(A, B, C)]((a: A, b: B, c: C) => (a, b, c), t => Some((t._1, t._2, t._3)))
+    def tupled: F[(A, B, C)] = apply[(A, B, C)]((a: A, b: B, c: C) => (a, b, c), t => Some((t._1, t._2, t._3)))
 
     def |@|[D](dd: => F[D]): ProductBuilder[D] =
       new ProductBuilder[D] {
@@ -75,7 +75,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
             liftWrite(e => { val (aa, bb, cc, dd) = conv.to(e); Some((((aa, bb), cc), dd)) })
           )
 
-      def tupled = apply[(A, B, C, D)]((a: A, b: B, c: C, d: D) => (a, b, c, d), t => Some((t._1, t._2, t._3, t._4)))
+      def tupled: F[(A, B, C, D)] = apply[(A, B, C, D)]((a: A, b: B, c: C, d: D) => (a, b, c, d), t => Some((t._1, t._2, t._3, t._4)))
 
       def |@|[E](ee: => F[E]): ProductBuilder[E] =
         new ProductBuilder[E] {
@@ -99,7 +99,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
               liftWrite(h => { val (aa, bb, cc, dd, ee) = conv.to(h); Some(((((aa, bb), cc), dd), ee)) })
             )
 
-        def tupled = apply[(A, B, C, D, E)]((a: A, b: B, c: C, d: D, e: E) => (a, b, c, d, e), t => Some((t._1, t._2, t._3, t._4, t._5)))
+        def tupled: F[(A, B, C, D, E)] = apply[(A, B, C, D, E)]((a: A, b: B, c: C, d: D, e: E) => (a, b, c, d, e), t => Some((t._1, t._2, t._3, t._4, t._5)))
 
         def |@|[H](hh: => F[H]): ProductBuilder[H] =
           new ProductBuilder[H] {
@@ -123,7 +123,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                 liftWrite(i => { val (aa, bb, cc, dd, ee, hh) = conv.to(i); Some((((((aa, bb), cc), dd), ee), hh)) })
               )
 
-          def tupled = apply[(A, B, C, D, E, H)]((a: A, b: B, c: C, d: D, e: E, h: H) => (a, b, c, d, e, h), t => Some((t._1, t._2, t._3, t._4, t._5, t._6)))
+          def tupled: F[(A, B, C, D, E, H)] = apply[(A, B, C, D, E, H)]((a: A, b: B, c: C, d: D, e: E, h: H) => (a, b, c, d, e, h), t => Some((t._1, t._2, t._3, t._4, t._5, t._6)))
 
           def |@|[I](ii: => F[I]): ProductBuilder[I] =
             new ProductBuilder[I] {
@@ -147,7 +147,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                   liftWrite(j => { val (aa, bb, cc, dd, ee, hh, ii) = conv.to(j); Some(((((((aa, bb), cc), dd), ee), hh), ii)) })
                 )
 
-            def tupled = apply[(A, B, C, D, E, H, I)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I) => (a, b, c, d, e, h, i), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7)))
+            def tupled: F[(A, B, C, D, E, H, I)] = apply[(A, B, C, D, E, H, I)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I) => (a, b, c, d, e, h, i), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7)))
 
             def |@|[J](jj: => F[J]): ProductBuilder[J] =
               new ProductBuilder[J] {
@@ -171,7 +171,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                     liftWrite(k => { val (aa, bb, cc, dd, ee, hh, ii, jj) = conv.to(k); Some((((((((aa, bb), cc), dd), ee), hh), ii), jj)) })
                   )
 
-              def tupled = apply[(A, B, C, D, E, H, I, J)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J) => (a, b, c, d, e, h, i, j), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8)))
+              def tupled: F[(A, B, C, D, E, H, I, J)] = apply[(A, B, C, D, E, H, I, J)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J) => (a, b, c, d, e, h, i, j), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8)))
 
               def |@|[K](kk: => F[K]): ProductBuilder[K] =
                 new ProductBuilder[K] {
@@ -195,7 +195,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                       liftWrite(l => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk) = conv.to(l); Some(((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk)) })
                     )
 
-                def tupled = apply[(A, B, C, D, E, H, I, J, K)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K) => (a, b, c, d, e, h, i, j, k), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9)))
+                def tupled: F[(A, B, C, D, E, H, I, J, K)] = apply[(A, B, C, D, E, H, I, J, K)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K) => (a, b, c, d, e, h, i, j, k), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9)))
 
                 def |@|[L](ll: => F[L]): ProductBuilder[L] =
                   new ProductBuilder[L] {
@@ -219,7 +219,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                         liftWrite(m => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll) = conv.to(m); Some((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll)) })
                       )
 
-                  def tupled = apply[(A, B, C, D, E, H, I, J, K, L)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L) => (a, b, c, d, e, h, i, j, k, l), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10)))
+                  def tupled: F[(A, B, C, D, E, H, I, J, K, L)] = apply[(A, B, C, D, E, H, I, J, K, L)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L) => (a, b, c, d, e, h, i, j, k, l), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10)))
 
                   def |@|[M](mm: => F[M]): ProductBuilder[M] =
                     new ProductBuilder[M] {
@@ -243,7 +243,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                           liftWrite(n => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm) = conv.to(n); Some(((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm)) })
                         )
 
-                    def tupled = apply[(A, B, C, D, E, H, I, J, K, L, M)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M) => (a, b, c, d, e, h, i, j, k, l, m), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11)))
+                    def tupled: F[(A, B, C, D, E, H, I, J, K, L, M)] = apply[(A, B, C, D, E, H, I, J, K, L, M)]((a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M) => (a, b, c, d, e, h, i, j, k, l, m), t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11)))
 
                     def |@|[N](nn: => F[N]): ProductBuilder[N] =
                       new ProductBuilder[N] {
@@ -267,7 +267,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                             liftWrite(o => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn) = conv.to(o); Some((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn)) })
                           )
 
-                      def tupled =
+                      def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N)] =
                         apply[(A, B, C, D, E, H, I, J, K, L, M, N)](
                           (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N) => (a, b, c, d, e, h, i, j, k, l, m, n),
                           t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12))
@@ -295,7 +295,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                               liftWrite(p => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo) = conv.to(p); Some(((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo)) })
                             )
 
-                        def tupled =
+                        def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N, O)] =
                           apply[(A, B, C, D, E, H, I, J, K, L, M, N, O)](
                             (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O) => (a, b, c, d, e, h, i, j, k, l, m, n, o),
                             t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._13))
@@ -323,7 +323,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                 liftWrite(q => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp) = conv.to(q); Some((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp)) })
                               )
 
-                          def tupled =
+                          def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N, O, P)] =
                             apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P)](
                               (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p),
                               t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._13, t._14))
@@ -351,7 +351,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                   liftWrite(r => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq) = conv.to(r); Some(((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq)) })
                                 )
 
-                            def tupled =
+                            def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q)] =
                               apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q)](
                                 (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q),
                                 t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._13, t._14, t._15))
@@ -379,7 +379,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                     liftWrite(s => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr) = conv.to(s); Some((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr)) })
                                   )
 
-                              def tupled =
+                              def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R)] =
                                 apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R)](
                                   (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q, r: R) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q, r),
                                   t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._13, t._14, t._15, t._16))
@@ -407,7 +407,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                       liftWrite(t => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss) = conv.to(t); Some(((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss)) })
                                     )
 
-                                def tupled =
+                                def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S)] =
                                   apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S)](
                                     (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q, r: R, s: S) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q, r, s),
                                     t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._13, t._14, t._15, t._16, t._17))
@@ -435,7 +435,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                         liftWrite(u => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt) = conv.to(u); Some((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt)) })
                                       )
 
-                                  def tupled =
+                                  def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T)] =
                                     apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T)](
                                       (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q, r: R, s: S, t: T) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q, r, s, t),
                                       t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._13, t._14, t._15, t._16, t._17, t._18))
@@ -463,7 +463,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                           liftWrite(v => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu) = conv.to(v); Some(((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu)) })
                                         )
 
-                                    def tupled =
+                                    def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)] =
                                       apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U)](
                                         (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q, r: R, s: S, t: T, u: U) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q, r, s, t, u),
                                         t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._13, t._14, t._15, t._16, t._17, t._18, t._19))
@@ -491,7 +491,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                             liftWrite(w => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv) = conv.to(w); Some((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv)) })
                                           )
 
-                                      def tupled =
+                                      def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)] =
                                         apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V)](
                                           (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q, r: R, s: S, t: T, u: U, v: V) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v),
                                           t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._13, t._14, t._15, t._16, t._17, t._18, t._19, t._20))
@@ -519,7 +519,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                               liftWrite(x => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv, ww) = conv.to(x); Some(((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv), ww)) })
                                             )
 
-                                        def tupled =
+                                        def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W)] =
                                           apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W)](
                                             (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q, r: R, s: S, t: T, u: U, v: V, w: W) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w),
                                             t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._13, t._14, t._15, t._16, t._17, t._18, t._19, t._20, t._21))
@@ -547,7 +547,7 @@ private[config] trait ProductBuilder[F[_], A, B] { self =>
                                                 liftWrite(y => { val (aa, bb, cc, dd, ee, hh, ii, jj, kk, ll, mm, nn, oo, pp, qq, rr, ss, tt, uu, vv, ww, xx) = conv.to(y); Some((((((((((((((((((((((aa, bb), cc), dd), ee), hh), ii), jj), kk), ll), mm), nn), oo), pp), qq), rr), ss), tt), uu), vv), ww), xx)) })
                                               )
 
-                                          def tupled =
+                                          def tupled: F[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X)] =
                                             apply[(A, B, C, D, E, H, I, J, K, L, M, N, O, P, Q, R, S, T, U, V, W, X)](
                                               (a: A, b: B, c: C, d: D, e: E, h: H, i: I, j: J, k: K, l: L, m: M, n: N, o: O, p: P, q: Q, r: R, s: S, t: T, u: U, v: V, w: W, x: X) => (a, b, c, d, e, h, i, j, k, l, m, n, o, p, q, r, s, t, u, v, w, x),
                                               t => Some((t._1, t._2, t._3, t._4, t._5, t._6, t._7, t._8, t._9, t._10, t._11, t._12, t._13, t._14, t._15, t._16, t._17, t._18, t._19, t._20, t._21, t._22))

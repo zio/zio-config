@@ -1,11 +1,11 @@
 package zio.config.examples.magnolia
 
-import java.time.{ LocalDate, ZonedDateTime }
-import scala.util.Try
 import zio.config._
 import zio.config.magnolia._
-
 import zio.config.typesafe._
+
+import java.time.{LocalDate, ZonedDateTime}
+import scala.util.Try
 
 object AutoDerivationCustom extends App {
   case class AppConfig(jobName: String, details: Option[Detail], s3Path: S3Path)
@@ -48,17 +48,19 @@ object AutoDerivationCustom extends App {
   // globally for the automatic derivation to work.
   implicit val descriptorOfZonedDateTime: Descriptor[ZonedDateTime] =
     Descriptor[String]
-      .transformOrFailLeft(x => Try(ZonedDateTime.parse(x)).toEither.swap.map(_.getMessage).swap)(_.toString) ?? "time in zoned date time"
+      .transformOrFailLeft(x => Try(ZonedDateTime.parse(x)).toEither.swap.map(_.getMessage).swap)(
+        _.toString
+      ) ?? "time in zoned date time"
 
-  val appConfigDesc =
+  val appConfigDesc: ConfigDescriptor[AppConfig] =
     descriptor[AppConfig]
 
-  val source = TypesafeConfigSource.fromHoconString(config) match {
+  val source: ConfigSource = TypesafeConfigSource.fromHoconString(config) match {
     case Right(a) => a
     case Left(_)  => throw new Exception("bad hocon string")
   }
 
-  val s = read(appConfigDesc from source)
+  val s: Either[ReadError[String], AppConfig] = read(appConfigDesc from source)
 
   assert(
     s == Right(

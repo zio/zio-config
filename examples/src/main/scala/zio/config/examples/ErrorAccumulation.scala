@@ -1,6 +1,9 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._, ReadError._
+import zio.config._
+
+import ConfigDescriptor._
+import ReadError._
 
 object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)
@@ -13,7 +16,7 @@ object ErrorAccumulation extends App {
 
   val runtime = zio.Runtime.default
 
-  val parsed =
+  val parsed: Either[ReadError[String], SampleConfig] =
     read(config from ConfigSource.fromMap(Map.empty))
 
   println(parsed.swap.map(_.prettyPrint()))
@@ -57,16 +60,16 @@ object ErrorAccumulation extends App {
       )
   )
 
-  val validSource =
+  val validSource: ConfigSource                         =
     ConfigSource.fromMap(Map("envvar" -> "1", "envvar2" -> "value"))
 
-  val validRes = read(config from validSource)
+  val validRes: Either[ReadError[String], SampleConfig] = read(config from validSource)
 
   assert(validRes == Right(SampleConfig(1, "value")))
 
-  val invalidSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
+  val invalidSource: ConfigSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
 
-  val result2 =
+  val result2: Either[ReadError[String], SampleConfig] =
     read(config from invalidSource)
 
   println(result2.swap.map(_.prettyPrint()))

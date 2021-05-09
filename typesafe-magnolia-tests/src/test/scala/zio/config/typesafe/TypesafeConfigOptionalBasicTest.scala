@@ -1,15 +1,16 @@
 package zio.config.typesafe
 
+import zio.config.ReadError.Step.Key
+import zio.config.ReadError.{Irrecoverable, MissingValue, ZipErrors}
+import zio.config._
 import zio.test.Assertion._
 import zio.test._
-import zio.config._
+
 import magnolia._
-import zio.config.ReadError.Step.Key
-import zio.config.ReadError.{ Irrecoverable, MissingValue, ZipErrors }
 
 // A basic test before the set of TypesafeConfigOptionalTest
 object TypesafeConfigOptionalBasicTest extends DefaultRunnableSpec with EitherSupport {
-  val spec = suite("Optional Spec")(
+  val spec: ZSpec[Environment, Failure] = suite("Optional Spec")(
     test("Fails if any one of the required fields is missing in an optional product") {
 
       final case class RawConfig(tableDetails: List[RawTableConfig])

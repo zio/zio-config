@@ -1,16 +1,17 @@
 package zio.config.typesafe
 
-import zio.config.{ BaseSpec }
-import zio.config._, ConfigDescriptor._
+import com.typesafe.config.ConfigRenderOptions
+import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test._
+
+import ConfigDescriptor._
 import TypesafeConfigReadWriteTestUtils._
-import com.typesafe.config.ConfigRenderOptions
 import TypesafeConfigTestSupport._
 
 object TypesafeConfigReadWriteTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[Environment, Failure] =
     suite("read-write roundtrip tests")(
       test(
         "Simple: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
@@ -30,7 +31,7 @@ object TypesafeConfigReadWriteTest extends BaseSpec {
         "Nested: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
       ) {
         val config =
-          nested("a") { string("b") }
+          nested("a")(string("b"))
 
         val readSource =
           read(config from TypesafeConfigSource.fromHoconString("a : { b = c }").loadOrThrow)
@@ -47,7 +48,7 @@ object TypesafeConfigReadWriteTest extends BaseSpec {
         "Nested List: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
       ) {
         val config =
-          nested("a") { list("b") { string } }
+          nested("a")(list("b")(string))
 
         val readSource =
           read(config from TypesafeConfigSource.fromHoconString("a : { b = [c, c] }").loadOrThrow)
@@ -64,7 +65,7 @@ object TypesafeConfigReadWriteTest extends BaseSpec {
         "Nested Empty List: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
       ) {
         val config =
-          nested("a") { list("b") { string } }
+          nested("a")(list("b")(string))
 
         val readSource =
           read(config from TypesafeConfigSource.fromHoconString("a : { b = [] }").loadOrThrow)
@@ -103,7 +104,7 @@ object TypesafeConfigReadWriteTest extends BaseSpec {
         val deConfig = nested("a") {
           nested("b") {
             nested("c") {
-              ((list("d") { string } |@| list("e") { int } |@| int("f") |@| list("g") { string }))(
+              ((list("d")(string) |@| list("e")(int) |@| int("f") |@| list("g")(string)))(
                 DEF.apply,
                 DEF.unapply
               )
@@ -163,7 +164,7 @@ object TypesafeConfigReadWriteTest extends BaseSpec {
         val innerResult =
           sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a"))
 
-        val expected =
+        val expected    =
           TypesafeConfigReadWriteTestUtils.Nested(Map("dynamic1" -> innerResult, "dynamic2" -> innerResult))
 
         assert((readWritten, readSource))(equalTo((readSource, Right(expected))))
@@ -196,7 +197,9 @@ object TypesafeConfigReadWriteTest extends BaseSpec {
           write(complexDescription, readComplexSource).loadOrThrow
 
         val readWrittenProperty =
-          read(complexDescription from ConfigSource.fromPropertyTree(writtenProperty, "tree", LeafForSequence.Valid)).loadOrThrow
+          read(
+            complexDescription from ConfigSource.fromPropertyTree(writtenProperty, "tree", LeafForSequence.Valid)
+          ).loadOrThrow
 
         val readWrittenHocon =
           read(complexDescription from TypesafeConfigSource.fromHoconString(writtenHocon).loadOrThrow).loadOrThrow

@@ -1,7 +1,7 @@
 package zio.config.examples.commandline
 
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config._
+import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 
 object CommandLineNested extends App {
   val cmdLineArgs =
@@ -10,7 +10,7 @@ object CommandLineNested extends App {
   /**
    * One way to produce nested behaviour is to provide keyDelimiter as given below
    */
-  val source =
+  val source: ConfigSource =
     ConfigSource.fromCommandLineArgs(cmdLineArgs.split(' ').toList, keyDelimiter = Some('.'))
 
   final case class SparkConf(key1: String, key2: String)
@@ -28,7 +28,7 @@ object CommandLineNested extends App {
   val cmdLineArgsAlternative =
     "--conf -key1=v1 --conf -key2=v2 --key3 v3"
 
-  val source2 =
+  val source2: ConfigSource =
     ConfigSource.fromCommandLineArgs(cmdLineArgsAlternative.split(' ').toList)
 
   assert(
@@ -49,7 +49,7 @@ object CommandLineNested extends App {
   val awsCmdLineArgs =
     "--aws.kinesis.input=v1 --aws.kinesis.output=v2  --aws.s3.input=v3 --aws.s3.output=v4 --user jo"
 
-  val source3 =
+  val source3: ConfigSource =
     ConfigSource.fromCommandLineArgs(awsCmdLineArgs.split(' ').toList, keyDelimiter = Some('.'))
 
   assert(
@@ -66,7 +66,7 @@ object CommandLineNested extends App {
   // same as "--aws --kinesis --input=v1 --aws --kinesis --output=v2  --aws --s3 --input=v3 --aws --s3 --output=v4 --user jo"
   // same as "--aws --kinesis --input v1 --aws --kinesis --output v2  --aws --s3 --input v3 --aws --s3 --output v4 --user jo"
 
-  val source4 =
+  val source4: ConfigSource =
     ConfigSource.fromCommandLineArgs(awsCmdLineArgs2.split(' ').toList, keyDelimiter = Some('.'))
 
   assert(

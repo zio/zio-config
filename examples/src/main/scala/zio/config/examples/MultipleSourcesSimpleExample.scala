@@ -2,6 +2,7 @@ package zio.config.examples
 
 import zio.config._
 import zio.system.System
+
 import ConfigDescriptor._
 
 object MultipleSourcesSimpleExample extends App {
@@ -29,15 +30,16 @@ object MultipleSourcesSimpleExample extends App {
       "constant"
     )
 
-  val myConfig =
+  val myConfig: ConfigDescriptor[MyConfig] =
     ((string("LDAP").from(source1.orElse(source3)) |@| int("PORT").from(source4)) |@|
       string("DB_URL").optional.from(source1.orElse(source5)))(MyConfig.apply, MyConfig.unapply)
 
   // Let's reset the whole source details in the original description
-  val myConfigWithReset = myConfig.unsourced.from(oneValidSource) // Equivalent to myConfig.fromNothing
+  val myConfigWithReset: ConfigDescriptor[MyConfig] =
+    myConfig.unsourced.from(oneValidSource) // Equivalent to myConfig.fromNothing
 
   // Have got a few more sources to be tried, on top of what's there already ?
-  val myConfigChangedSource = myConfig.updateSource(_.orElse(source2))
+  val myConfigChangedSource: ConfigDescriptor[MyConfig] = myConfig.updateSource(_.orElse(source2))
 
   //
 

@@ -1,15 +1,15 @@
 package zio.config
 
 import zio.config.ConfigDescriptor._
-import zio.config.PropertyTree.{ Leaf, Record, Sequence }
-import zio.config.ReadError.Step.{ Index, Key }
-import zio.config.ReadError.{ ConversionError, FormatError, ListErrors, MissingValue, ZipErrors }
+import zio.config.PropertyTree.{Leaf, Record, Sequence}
+import zio.config.ReadError.Step.{Index, Key}
+import zio.config.ReadError.{ConversionError, FormatError, ListErrors, MissingValue, ZipErrors}
 import zio.test.Assertion._
 import zio.test._
 
 object SetTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[Environment, Failure] =
     suite("SetsTest")(
       test("read empty set") {
         case class Cfg(a: String, b: Set[String])
@@ -258,7 +258,7 @@ object SetTest extends BaseSpec {
                   Sequence(Record(Map("c" -> Leaf("v1"))) :: Nil) ::
                     Sequence(
                       Record(Map("c" -> Leaf("v2"))) :: Record(Map("c" -> Leaf("v3"))) :: Record(
-                        Map("c"      -> Leaf("v2"))
+                        Map("c" -> Leaf("v2"))
                       ) :: Nil
                     ) ::
                     Nil
@@ -282,7 +282,7 @@ object SetTest extends BaseSpec {
         val cCfgA = (boolean("a1") |@| int("a2")).to[CfgA]
         val cCfg  = (nested("a")(set(cCfgA)) |@| nested("b")(set(int))).to[Cfg]
 
-        val res = read(
+        val res                         = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record[String, String](
               Map(
@@ -339,7 +339,7 @@ object SetTest extends BaseSpec {
         val cCfgA = (boolean("a1") |@| int("a2")).to[CfgA]
         val cCfg  = (nested("a")(set(cCfgA)) |@| nested("b")(set(int))).to[Cfg]
 
-        val res = read(
+        val res                         = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record[String, String](
               Map(

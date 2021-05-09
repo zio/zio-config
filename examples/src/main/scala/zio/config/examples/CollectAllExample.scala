@@ -1,7 +1,9 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
+
+import ConfigDescriptor._
 
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,
@@ -15,15 +17,14 @@ final case class Variables(variable1: Int, variable2: Option[Int])
 object CollectAllExample extends App with EitherImpureOps {
   val listOfConfig: List[ConfigDescriptor[Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
-      .map(
-        group =>
-          (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
+      .map(group =>
+        (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
       )
 
   val configOfList: ConfigDescriptor[List[Variables]] =
     collectAll(listOfConfig.head, listOfConfig.tail: _*)
 
-  val map =
+  val map: Map[String, String] =
     Map(
       "GROUP1_VARIABLE1" -> "1",
       "GROUP1_VARIABLE2" -> "2",

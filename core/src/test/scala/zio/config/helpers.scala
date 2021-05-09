@@ -2,7 +2,7 @@ package zio.config
 
 import zio.random.Random
 import zio.test.Assertion.assertion
-import zio.test.{ Assertion, Gen }
+import zio.test.{Assertion, Gen}
 
 object helpers {
   final case class Id(value: String)
@@ -46,7 +46,7 @@ object helpers {
       case Right(_)                      => false
     }
 
-  def toMultiMap[K, V](map: Map[K, V]): Map[K, ::[V]] =
+  def toMultiMap[K, V](map: Map[K, V]): Map[K, ::[V]]                                    =
     map.toList.map { case (k, v) => (k, singleton(v)) }.toMap
 
   def fromMultiMap[K, V](map: Map[K, ::[V]], appendString: String = ","): Map[K, String] =

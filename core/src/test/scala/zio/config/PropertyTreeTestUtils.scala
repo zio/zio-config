@@ -1,8 +1,8 @@
 package zio.config
 
-import zio.config.PropertyTree.{ Leaf, Record, Sequence }
+import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.random.Random
-import zio.test.{ Gen, Sized }
+import zio.test.{Gen, Sized}
 
 object PropertyTreeTestUtils {
   final case class PropertyTreeTestParams(
@@ -17,7 +17,7 @@ object PropertyTreeTestUtils {
     Gen.int(1, 20).flatMap(n => Gen.listOfN(n)(genLeaf))
 
   final case class Leaves[V](list: List[List[Leaf[V]]]) {
-    def map[V1](f: V => V1): Leaves[V1] = Leaves(list.map(_.map(t => Leaf(f(t.value)))))
+    def map[V1](f: V => V1): Leaves[V1]    = Leaves(list.map(_.map(t => Leaf(f(t.value)))))
     def sequenceInner: List[Leaf[List[V]]] =
       list.map { l =>
         Leaf(l.foldRight(List.empty[V]) { (a, acc) =>
@@ -39,31 +39,28 @@ object PropertyTreeTestUtils {
     for {
       leaves <- Leaves.genLeaves
       nested <- Gen.int(1, 3)
-      keys   = (1 to 3)
-      map = keys.toList.foldLeft(Map.empty[String, PropertyTree[String, String]]) { (acc, a) =>
-        acc.updated(a.toString, generateAtleastNLevelSequenceTree(nested, leaves.toSequences))
-      }
+      keys    = (1 to 3)
+      map     = keys.toList.foldLeft(Map.empty[String, PropertyTree[String, String]]) { (acc, a) =>
+                  acc.updated(a.toString, generateAtleastNLevelSequenceTree(nested, leaves.toSequences))
+                }
     } yield (Record(map), leaves, PropertyTreeTestParams(nested, keys.size))
 
   private[config] val nLevelSequenceWithRecordsEmpty
     : Gen[Random with Sized, (Record[String, String], PropertyTreeTestParams)] =
     for {
       nested <- Gen.int(1, 3)
-      keys   = (1 to 3)
-      map = keys.toList.foldLeft(Map.empty[String, PropertyTree[String, String]]) { (acc, a) =>
-        acc.updated(a.toString, generateAtleastNLevelSequenceTree(nested, List(PropertyTree.empty)))
-      }
+      keys    = (1 to 3)
+      map     = keys.toList.foldLeft(Map.empty[String, PropertyTree[String, String]]) { (acc, a) =>
+                  acc.updated(a.toString, generateAtleastNLevelSequenceTree(nested, List(PropertyTree.empty)))
+                }
     } yield (Record(map), PropertyTreeTestParams(nested, keys.size))
 
   private[config] val nLevelSequenceWithLeaves
     : Gen[Random with Sized, (PropertyTree[String, String], Leaves[String], Int)] =
-    Leaves.genLeaves.flatMap(
-      l =>
-        Gen
-          .int(1, 3)
-          .map(
-            n => (generateAtleastNLevelSequenceTree(n, l.toSequences), l, n)
-          )
+    Leaves.genLeaves.flatMap(l =>
+      Gen
+        .int(1, 3)
+        .map(n => (generateAtleastNLevelSequenceTree(n, l.toSequences), l, n))
     )
 
   private[config] def generateAtleastNLevelSequenceTree[A](

@@ -1,16 +1,16 @@
 package zio.config
 
-import eu.timepit.refined.api.{ RefType, Refined, Validate }
-import zio.config.magnolia.DeriveConfigDescriptor.Descriptor
+import eu.timepit.refined.api.{RefType, Refined, Validate}
 import zio.config.ConfigDescriptor.nested
+import zio.config.magnolia.DeriveConfigDescriptor.Descriptor
 
 package object refined {
 
   /**
    * Automatically derive instances of Descriptor for any refined types
    */
-  implicit def deriveRefinedDescriptor[A, P](
-    implicit desc: Descriptor[A],
+  implicit def deriveRefinedDescriptor[A, P](implicit
+    desc: Descriptor[A],
     validate: Validate[A, P]
   ): Descriptor[Refined[A, P]] =
     Descriptor(refine[P](desc.desc))
@@ -27,8 +27,8 @@ package object refined {
    *     refined[String, Uuid]("ID")
    * }}}
    */
-  def refine[A, P](path: String)(
-    implicit desc: Descriptor[A],
+  def refine[A, P](path: String)(implicit
+    desc: Descriptor[A],
     validate: Validate[A, P]
   ): ConfigDescriptor[Refined[A, P]] =
     nested(path)(desc.desc)

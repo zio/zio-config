@@ -1,13 +1,14 @@
 package zio.config.examples
 
 import zio.config._
+
 import ConfigDescriptor._
 
 object DocsExample extends App {
 
   final case class Database(port: Int, url: Option[String])
 
-  val config =
+  val config: ConfigDescriptor[Database] =
     nested("database") {
       (int("PORT") ?? "Example: 8088" |@|
         string("URL").optional ?? "Example: abc.com")(
@@ -16,7 +17,7 @@ object DocsExample extends App {
       ) ?? "Database related"
     }
 
-  val docs =
+  val docs: ConfigDocs =
     generateDocs(config)
 
   val markdown =
@@ -41,7 +42,7 @@ object DocsExample extends App {
          |""".stripMargin
   )
 
-  val confluenceMarkdown =
+  val confluenceMarkdown: String =
     docs.toTable.toConfluenceMarkdown(None)
 
   assert(

@@ -1,8 +1,9 @@
 package zio.config.examples
 
 import zio.config._
-import ConfigDescriptor._
 import zio.config.magnolia.DeriveConfigDescriptor.Descriptor
+
+import ConfigDescriptor._
 
 object RandomConfigGenerationComplexExample extends App {
   sealed trait VersionStrategy
@@ -19,7 +20,7 @@ object RandomConfigGenerationComplexExample extends App {
     // If we were offloading this task to zio-config-magnolia, then user need to feed in a verbose
     // config to satisfy VersionInfo, such as `versionInfo: { key :.. strategy: { number : ... }}`
     // instead of a simple `versionInfo : { version : 1 }`
-    implicit val descriptorOfVersionInfo: Descriptor[VersionInfo] = {
+    implicit val descriptorOfVersionInfo: Descriptor[VersionInfo] =
       Descriptor(
         map(int.orElseEither(string)).transformOrFail[VersionInfo](
           descMap =>
@@ -28,10 +29,10 @@ object RandomConfigGenerationComplexExample extends App {
                 v match {
                   case Left(value)                       => Right(VersionInfo(k, VersionStrategy.Number(value)))
                   case Right(value) if value == "latest" => Right(VersionInfo(k, VersionStrategy.Latest))
-                  case Right(_) =>
+                  case Right(_)                          =>
                     Left("The value of a version can be either latest or a version number of the type Int")
                 }
-              case None => Left("Empty version info")
+              case None         => Left("Empty version info")
             },
           verionInfo =>
             verionInfo.strategy match {
@@ -40,7 +41,6 @@ object RandomConfigGenerationComplexExample extends App {
             }
         )
       )
-    }
   }
 
   final case class Database(host: java.net.URL, port: Int)
@@ -54,20 +54,20 @@ object RandomConfigGenerationComplexExample extends App {
   println(generateConfigJson(descriptor[MyConfig]).unsafeRunChunk)
 
   /**
- * yields:
- *
- * {{{
-
- *    Chunk({
- *     "database" : {
- *         "host" : "http://abc",
- *         "port" : "5502"
- *     },
- *     "inputDir" : "5Vf0GTG",
- *     "versionInfo" : {
- *         "QK8mNc5eciBlH" : "latest"
- *     }
- * }
- * }}}
- */
+   * yields:
+   *
+   * {{{
+   *
+   *    Chunk({
+   *     "database" : {
+   *         "host" : "http://abc",
+   *         "port" : "5502"
+   *     },
+   *     "inputDir" : "5Vf0GTG",
+   *     "versionInfo" : {
+   *         "QK8mNc5eciBlH" : "latest"
+   *     }
+   * }
+   * }}}
+   */
 }

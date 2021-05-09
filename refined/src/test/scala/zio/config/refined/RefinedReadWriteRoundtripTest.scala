@@ -6,41 +6,40 @@ import eu.timepit.refined.boolean.And
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 import eu.timepit.refined.string.Trimmed
-import zio.ZIO
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
-import zio.config.{ helpers, read, write, BaseSpec, ConfigDescriptor, ConfigSource }
-import ConfigDescriptor._
+import zio.config.{BaseSpec, ConfigDescriptor, ConfigSource, LeafForSequence, helpers, read, write}
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.config.LeafForSequence
+import zio.{Has, ZIO}
+
+import ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[Serializable], TestSuccess] =
     suite("Refined support")(
       testM("Refined config roundtrip") {
         checkM(genRefinedProd) { p =>
           val cfg = prodConfig(p.longs.value.size)
-          val p2 =
+          val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread <- ZIO.fromEither(
-                         read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                       )
+              reread  <- ZIO.fromEither(
+                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                         )
             } yield reread
 
           assertM(p2)(equalTo(p))
         }
       },
       testM("Refined config invalid") {
-        check(genRefinedProdInvalid) {
-          case (n, envMap) =>
-            val p2 =
-              read(prodConfig(n) from ConfigSource.fromMap(envMap))
+        check(genRefinedProdInvalid) { case (n, envMap) =>
+          val p2 =
+            read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
-            assert(p2)(helpers.isErrors(hasField("size", _.size, equalTo(5))))
+          assert(p2)(helpers.isErrors(hasField("size", _.size, equalTo(5))))
         }
       }
     )
@@ -51,7 +50,9 @@ object RefinedReadWriteRoundtripTestUtils {
   case class RefinedProd(
     ldap: Refined[String, NonEmpty],
     port: Refined[Int, GreaterEqual[W.`1024`.T]],
-    dburl: Option[Refined[String, NonEmpty]], // Even if optional, if the predicate fails for a value that exist, we should fail it and report !
+    dburl: Option[
+      Refined[String, NonEmpty]
+    ], // Even if optional, if the predicate fails for a value that exist, we should fail it and report !
     longs: Refined[List[Long], Size[Greater[W.`2`.T]]],
     pwd: Refined[String, Trimmed And NonEmpty]
   )
@@ -113,9 +114,7 @@ object RefinedReadWriteRoundtripTestUtils {
         "COUNT"  -> n.toString,
         "PWD"    -> ""
       ) ++ longs
-        .foldRight[List[(String, String)]](Nil)(
-          (v, list) => s"GROUP${list.size + 1}_LONGVAL" -> v.toString :: list
-        )
+        .foldRight[List[(String, String)]](Nil)((v, list) => s"GROUP${list.size + 1}_LONGVAL" -> v.toString :: list)
     )
 
 }

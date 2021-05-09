@@ -1,15 +1,16 @@
 package zio.config
 
-import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.ProductBuilderTestUtils._
-import zio.test._
+import zio.random.Random
 import zio.test.Assertion._
+import zio.test._
+import zio.{Has, ZIO}
 
 object ProductBuilderTest
     extends BaseSpec {
 
-      val spec = 
+      val spec: Spec[Has[TestConfig.Service] with Has[Random.Service],TestFailure[Serializable],TestSuccess] = 
       suite("ProductBuilder")(
         testM("combine 22 for case class") {
           checkM(genS22) { p =>
@@ -96,13 +97,13 @@ object ProductBuilderTestUtils {
   private val cId20 = int(s"kId20")
   private val cId21 = int(s"kId21")
 
-  val cS22 =
+  val cS22: ConfigDescriptor[S22] =
     (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21).to[S22]
 
-  val cS22Tupled =
+  val cS22Tupled: ConfigDescriptor[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)] =
     (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21).tupled
 
-  val genS22 =
+  val genS22: Gen[Random,S22] =
     for {
       s0 <- Gen.anyInt
       s1 <- Gen.anyInt

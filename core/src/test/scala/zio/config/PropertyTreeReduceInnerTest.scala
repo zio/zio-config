@@ -1,13 +1,14 @@
 package zio.config
 
-import PropertyTreeTestUtils._
-import zio.test._
 import zio.test.Assertion._
+import zio.test._
+
+import PropertyTreeTestUtils._
 import PropertyTree._
 
 object PropertyTreeTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[Environment, Failure] =
     suite("PropertyTree.reduceInner")(
       testM("reduceInner goes any n level deep tree and reduce the last Sequence(leaves) ") {
         check(nLevelSequenceWithLeaves) { input =>

@@ -6,7 +6,7 @@ import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
 
 object TypesafeConfigList extends App with EitherImpureOps {
-  val configString =
+  val configString: String =
     """
       |b = [
       |  {
@@ -146,13 +146,13 @@ object TypesafeConfigList extends App with EitherImpureOps {
   final case class A(b: List[B], x: X, w: W)
 
   // Since we already have a string with us, we don't need Config Service (or ZIO)
-  val source =
+  val source: ConfigSource =
     TypesafeConfigSource.fromHoconString(configString).loadOrThrow // Don't use loadOrThrow. This is only for example
 
-  val zioConfigResult =
+  val zioConfigResult: Either[ReadError[String], A] =
     read(descriptor[A] from source)
 
-  val anoth =
+  val anoth: A =
     A(
       List(
         B(
@@ -173,7 +173,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
       W(X(Y("k")))
     )
 
-  val expectedResult =
+  val expectedResult: A =
     A(
       List(
         B(
@@ -228,17 +228,19 @@ object TypesafeConfigList extends App with EitherImpureOps {
   import zio.config.typesafe._
 
   // Being able to write back hocon
-  val written =
+  val written: String =
     write(descriptor[A], expectedResult).loadOrThrow.toHocon
       .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
 
-  val readWritten = read(descriptor[A] from TypesafeConfigSource.fromHoconString(written).loadOrThrow)
+  val readWritten: Either[ReadError[String], A] = read(
+    descriptor[A] from TypesafeConfigSource.fromHoconString(written).loadOrThrow
+  )
 
   assert(readWritten == zioConfigResult)
 
   assert(zioConfigResult == Right(expectedResult))
 
-  val kebabCaseConfig =
+  val kebabCaseConfig: String =
     """
       |export-details = [
       |  {
@@ -369,10 +371,10 @@ object TypesafeConfigList extends App with EitherImpureOps {
   final case class Port(va: String)
   final case class Database(port: Port)
 
-  val kebabConfigSource =
+  val kebabConfigSource: ConfigSource =
     TypesafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow
 
-  val zioConfigWithKeysInKebabResult =
+  val zioConfigWithKeysInKebabResult: Either[ReadError[String], ExportDetails] =
     read(descriptor[ExportDetails].mapKey(toKebabCase) from kebabConfigSource)
 
   assert(

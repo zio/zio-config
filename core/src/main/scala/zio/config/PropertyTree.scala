@@ -1,7 +1,7 @@
 package zio.config
 
-import scala.collection.immutable.Nil
 import scala.annotation.tailrec
+import scala.collection.immutable.Nil
 
 sealed trait PropertyTree[+K, +V] { self =>
   import PropertyTree._
@@ -11,13 +11,13 @@ sealed trait PropertyTree[+K, +V] { self =>
       propertyTree match {
         case Empty           => acc
         case Sequence(value) => value.foldLeft(acc)((acc, propertyTree) => go(key, propertyTree, acc))
-        case Leaf(v) =>
+        case Leaf(v)         =>
           acc
             .get(key)
-            .fold[Map[Vector[K1], ::[V1]]](acc.updated(key, ::(v, Nil)))(
-              value => acc.updated(key, ::(value.head, value.tail :+ v))
+            .fold[Map[Vector[K1], ::[V1]]](acc.updated(key, ::(v, Nil)))(value =>
+              acc.updated(key, ::(value.head, value.tail :+ v))
             )
-        case Record(value) => value.flatMap(t => go(key :+ t._1, t._2, acc))
+        case Record(value)   => value.flatMap(t => go(key :+ t._1, t._2, acc))
       }
 
     go(Vector.empty, self, Map.empty[Vector[K1], ::[V1]])
@@ -33,7 +33,7 @@ sealed trait PropertyTree[+K, +V] { self =>
 
   final def flattenKeyWith[K1 >: K, V1 >: V](f: K1 => String)(
     appendPath: String
-  ): Map[String, ::[V1]] =
+  ): Map[String, ::[V1]]                             =
     self.flatten[K1, V1].map({ case (key, value) => (key.map(f).mkString(appendPath), value) })
 
   final def flattenString[K1 >: K, V1 >: V](
@@ -47,11 +47,11 @@ sealed trait PropertyTree[+K, +V] { self =>
   @tailrec
   final def getPath[K1 >: K](k: List[K1]): PropertyTree[K1, V] =
     k match {
-      case Nil => self
+      case Nil          => self
       case head :: next =>
         self match {
           case Empty | Leaf(_) | Sequence(_) => Empty
-          case record: Record[K, V] =>
+          case record: Record[K, V]          =>
             record.value.get(head.asInstanceOf[K]) match {
               case Some(value) => value.getPath(next)
               case None        => Empty
@@ -76,22 +76,21 @@ sealed trait PropertyTree[+K, +V] { self =>
   final def mapEmpty[K1 >: K, V1 >: V](f: Vector[Either[Int, K1]] => PropertyTree[K1, V1]): PropertyTree[K1, V1] = {
     def loop(acc: Vector[Either[Int, K1]], tree: PropertyTree[K, V]): PropertyTree[K1, V1] =
       tree match {
-        case Leaf(value) => Leaf(value)
-        case Record(value) =>
+        case Leaf(value)        => Leaf(value)
+        case Record(value)      =>
           Record(
             value
-              .map(
-                a =>
-                  a._1.asInstanceOf[K1] -> loop(
-                    acc :+ Right(a._1.asInstanceOf[K1]),
-                    a._2.asInstanceOf[PropertyTree[K, V]]
-                  )
+              .map(a =>
+                a._1.asInstanceOf[K1] -> loop(
+                  acc :+ Right(a._1.asInstanceOf[K1]),
+                  a._2.asInstanceOf[PropertyTree[K, V]]
+                )
               )
           )
         case PropertyTree.Empty => f(acc)
-        case Sequence(value) =>
-          Sequence(value.zipWithIndex.map {
-            case (v, index) => loop(acc :+ Left(index), v)
+        case Sequence(value)    =>
+          Sequence(value.zipWithIndex.map { case (v, index) =>
+            loop(acc :+ Left(index), v)
           })
       }
 
@@ -115,23 +114,22 @@ sealed trait PropertyTree[+K, +V] { self =>
    */
   final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): List[PropertyTree[K1, V1]] =
     (self, that) match {
-      case (Sequence(l), Sequence(r)) => singleton(Sequence(l ++ r))
+      case (Sequence(l), Sequence(r))           => singleton(Sequence(l ++ r))
       case (l: Record[K, V], r: Record[K1, V1]) =>
         (l.value.keySet ++ r.value.keySet)
-          .foldLeft(List[Map[K1, PropertyTree[K1, V1]]](Map.empty)) {
-            case (acc, k) =>
-              (l.value.get(k.asInstanceOf[K]), r.value.get(k)) match {
-                case (None, None) => acc
-                case (Some(l), Some(r)) =>
-                  l.merge(r).map(tree => (k, tree)).flatMap(tuple => acc.map(map => map + tuple))
-                case (Some(l), None) => acc.map(map => map + (k -> l))
-                case (None, Some(r)) => acc.map(map => map + (k -> r))
-              }
+          .foldLeft(List[Map[K1, PropertyTree[K1, V1]]](Map.empty)) { case (acc, k) =>
+            (l.value.get(k.asInstanceOf[K]), r.value.get(k)) match {
+              case (None, None)       => acc
+              case (Some(l), Some(r)) =>
+                l.merge(r).map(tree => (k, tree)).flatMap(tuple => acc.map(map => map + tuple))
+              case (Some(l), None)    => acc.map(map => map + (k -> l))
+              case (None, Some(r))    => acc.map(map => map + (k -> r))
+            }
           }
           .map(v => PropertyTree.Record(v))
-      case (left, right) if left.isEmpty  => singleton(right)
-      case (left, right) if right.isEmpty => singleton(left)
-      case (l, r)                         => l :: r :: Nil
+      case (left, right) if left.isEmpty        => singleton(right)
+      case (left, right) if right.isEmpty       => singleton(left)
+      case (l, r)                               => l :: r :: Nil
     }
 
   final def nonEmpty: Boolean = !isEmpty
@@ -143,21 +141,21 @@ sealed trait PropertyTree[+K, +V] { self =>
       }
 
     self match {
-      case Empty       => Empty
-      case Leaf(value) => Leaf(value)
+      case Empty         => Empty
+      case Leaf(value)   => Leaf(value)
       case Record(value) =>
         Record(value.mapValues(_.reduceInner(f)).toMap)
 
       case Sequence(value) =>
-        val (vs0, rest0) = PropertyTree.partitionWith(value) {
-          case Leaf(value) => value
+        val (vs0, rest0) = PropertyTree.partitionWith(value) { case Leaf(value) =>
+          value
         }
 
         val (vs, rest) = (vs0, pruneEmpty(rest0))
 
         //Fixme what should happen if we have Sequence(Nil). We don't know whether or not we should do at this level, or at a deeper level, which we don't know
         (vs, rest) match {
-          case (Nil, _) =>
+          case (Nil, _)  =>
             Sequence(value.map(_.reduceInner(f)))
           case (vs, Nil) =>
             vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
@@ -180,18 +178,17 @@ sealed trait PropertyTree[+K, +V] { self =>
         Sequence(
           (ls ++ pad)
             .zip(rs ++ pad)
-            .map {
-              case (l, r) => l.zipWith(r)(f)
+            .map { case (l, r) =>
+              l.zipWith(r)(f)
             }
         )
 
       case (l: Record[K, V] @unchecked, r: Record[K, V2] @unchecked) =>
-        Record((l.value.keySet ++ r.value.keySet).foldLeft(Map.empty[K, PropertyTree[K, V3]]) {
-          case (map, key) =>
-            val v  = l.value.getOrElse(key.asInstanceOf[K], Empty)
-            val v2 = r.value.getOrElse(key.asInstanceOf[K], Empty)
+        Record((l.value.keySet ++ r.value.keySet).foldLeft(Map.empty[K, PropertyTree[K, V3]]) { case (map, key) =>
+          val v  = l.value.getOrElse(key.asInstanceOf[K], Empty)
+          val v2 = r.value.getOrElse(key.asInstanceOf[K], Empty)
 
-            map.updated(key, v.zipWith(v2)(f))
+          map.updated(key, v.zipWith(v2)(f))
         })
 
       case (Leaf(l), Leaf(r)) => Leaf(f(l, r))
@@ -232,27 +229,24 @@ object PropertyTree {
     map: Map[String, String],
     keyDelimiter: Option[Char],
     valueDelimiter: Option[Char]
-  ): List[PropertyTree[String, String]] =
+  ): List[PropertyTree[String, String]]                 =
     unflatten(
-      map.map(
-        tuple => {
-          val vectorOfKeys = keyDelimiter match {
-            case Some(keyDelimiter) => tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
-            case None               => Vector(tuple._1)
-          }
-          vectorOfKeys ->
-            (valueDelimiter.fold(List(tuple._2))(
-              delim =>
-                tuple._2
-                  .split(delim)
-                  .toList
-            ) match {
-              case h :: tail =>
-                ::(h, tail)
-              case Nil => singleton(tuple._2)
-            })
+      map.map { tuple =>
+        val vectorOfKeys = keyDelimiter match {
+          case Some(keyDelimiter) => tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
+          case None               => Vector(tuple._1)
         }
-      )
+        vectorOfKeys ->
+          (valueDelimiter.fold(List(tuple._2))(delim =>
+            tuple._2
+              .split(delim)
+              .toList
+          ) match {
+            case h :: tail =>
+              ::(h, tail)
+            case Nil       => singleton(tuple._2)
+          })
+      }
     )
 
   // FIXME alphabetic order
@@ -269,10 +263,10 @@ object PropertyTree {
     mergeAll(map.toList.map(tuple => unflatten(tuple._1.toList, tuple._2)))
 
   def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] = list.reverse match {
-    case Nil => Nil
+    case Nil          => Nil
     case head :: tail =>
-      tail.foldLeft(List(head)) {
-        case (acc, tree) => acc.flatMap(tree0 => tree.merge(tree0))
+      tail.foldLeft(List(head)) { case (acc, tree) =>
+        acc.flatMap(tree0 => tree.merge(tree0))
       }
   }
 
@@ -282,7 +276,7 @@ object PropertyTree {
     trees.map {
       case tree if pf.isDefinedAt(tree) => (pf(tree) :: Nil, Nil)
       case tree                         => (Nil, tree :: Nil)
-    }.foldLeft((List.empty[A], List.empty[PropertyTree[K, V]])) {
-      case ((accLeft, accRight), (left, right)) => (accLeft ++ left, accRight ++ right)
+    }.foldLeft((List.empty[A], List.empty[PropertyTree[K, V]])) { case ((accLeft, accRight), (left, right)) =>
+      (accLeft ++ left, accRight ++ right)
     }
 }

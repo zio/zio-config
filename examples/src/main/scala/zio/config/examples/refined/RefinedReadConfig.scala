@@ -2,10 +2,11 @@ package zio.config.examples.refined
 
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
-import eu.timepit.refined.collection.{ NonEmpty, Size }
-import eu.timepit.refined.numeric.{ Greater, GreaterEqual }
-import zio.config.refined._
+import eu.timepit.refined.collection.{NonEmpty, Size}
+import eu.timepit.refined.numeric.{Greater, GreaterEqual}
 import zio.config._
+import zio.config.refined._
+
 import ConfigDescriptor._
 
 object RefinedReadConfig extends App {
@@ -16,7 +17,7 @@ object RefinedReadConfig extends App {
     longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
   )
 
-  def prodConfig =
+  def prodConfig                              =
     (
       refine[String, NonEmpty]("LDAP") |@|
         refine[GreaterEqual[W.`1024`.T]](int("PORT")) |@|
@@ -26,7 +27,7 @@ object RefinedReadConfig extends App {
       RefinedProd.apply,
       RefinedProd.unapply
     )
-  val configMultiMap =
+  val configMultiMap: Map[String, ::[String]] =
     Map(
       "LDAP"   -> ::("ldap", Nil),
       "PORT"   -> ::("1999", Nil),

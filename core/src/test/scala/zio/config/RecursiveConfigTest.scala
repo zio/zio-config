@@ -1,13 +1,14 @@
 package zio.config
 
-import zio.test._
-import zio.test.Assertion._
-import RecursiveConfigTestUtils._
 import zio.config.ConfigDescriptor._
+import zio.test.Assertion._
+import zio.test._
+
+import RecursiveConfigTestUtils._
 
 object RecursiveConfigTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[Annotations, TestFailure[Any], TestSuccess] =
     suite("RecursiveConfigTest")(
       test("read simple") {
         assert(read(SimpleRec.config from SimpleRec.source))(isRight(equalTo(SimpleRec.expected)))
@@ -134,7 +135,7 @@ object RecursiveConfigTestUtils {
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
-        "id" -> PropertyTree.Leaf("1"),
+        "id"     -> PropertyTree.Leaf("1"),
         "nested" -> PropertyTree.Record(
           Map(
             "id" -> PropertyTree.Leaf("2")
@@ -164,7 +165,7 @@ object RecursiveConfigTestUtils {
     val tree: PropertyTree[String, String] =
       PropertyTree.Record(
         Map(
-          "id" -> PropertyTree.Leaf("1"),
+          "id"     -> PropertyTree.Leaf("1"),
           "nested" -> PropertyTree.Sequence(
             List(
               PropertyTree.Record(
@@ -197,10 +198,10 @@ object RecursiveConfigTestUtils {
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
-        "id" -> PropertyTree.Leaf("1"),
+        "id"     -> PropertyTree.Leaf("1"),
         "nested" -> PropertyTree.Record(
           Map(
-            "id" -> PropertyTree.Leaf("2"),
+            "id"     -> PropertyTree.Leaf("2"),
             "nested" -> PropertyTree.Record(
               Map(
                 "id"          -> PropertyTree.Leaf("3"),
@@ -231,7 +232,7 @@ object RecursiveConfigTestUtils {
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
-        "id" -> PropertyTree.Leaf("1"),
+        "id"     -> PropertyTree.Leaf("1"),
         "nested" -> PropertyTree.Record(
           Map(
             "id" -> PropertyTree.Leaf("2")
@@ -259,7 +260,7 @@ object RecursiveConfigTestUtils {
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
-        "id" -> PropertyTree.Leaf("1"),
+        "id"     -> PropertyTree.Leaf("1"),
         "nested" -> PropertyTree.Record(
           Map(
             "id" -> PropertyTree.Leaf("2")
@@ -290,7 +291,7 @@ object RecursiveConfigTestUtils {
       Map(
         "rows" -> PropertyTree.Record(
           Map(
-            "id" -> PropertyTree.Leaf("1"),
+            "id"   -> PropertyTree.Leaf("1"),
             "rows" -> PropertyTree.Record(
               Map(
                 "id" -> PropertyTree.Leaf("2")
@@ -312,7 +313,8 @@ object RecursiveConfigTestUtils {
 
   lazy val expr: ConfigDescriptor[Expr] = {
     val lit: ConfigDescriptor[Expr] = int.transformOrFail(
-      n => Right(Lit(n)), {
+      n => Right(Lit(n)),
+      {
         case Lit(n) => Right(n)
         case _      => Left(s"Not Lit")
       }
@@ -321,7 +323,8 @@ object RecursiveConfigTestUtils {
     val add: ConfigDescriptor[Expr] = nested("add")(
       list(expr)
         .apply(
-          lst => Add(lst), {
+          lst => Add(lst),
+          {
             case Add(items) => Some(items)
             case _          => None
           }
@@ -331,9 +334,13 @@ object RecursiveConfigTestUtils {
     lit <> add
   }
 
-  val exprValue = Add(List(Lit(1), Add(List(Add(List(Lit(2), Lit(3))), Lit(4))), Lit(5)))
-  val exprSource = ConfigSource.fromPropertyTree(write(expr, exprValue) match {
-    case Left(_)      => ???
-    case Right(value) => value
-  }, "test", LeafForSequence.Invalid)
+  val exprValue: Add           = Add(List(Lit(1), Add(List(Add(List(Lit(2), Lit(3))), Lit(4))), Lit(5)))
+  val exprSource: ConfigSource = ConfigSource.fromPropertyTree(
+    write(expr, exprValue) match {
+      case Left(_)      => ???
+      case Right(value) => value
+    },
+    "test",
+    LeafForSequence.Invalid
+  )
 }

@@ -1,14 +1,16 @@
 package zio.config.gen
 
-import zio.{ Chunk, ZIO }
-import zio.config._, typesafe._
+import zio.Schedule.recurs
+import zio.config._
 import zio.random.Random
 import zio.stream.ZStream
 import zio.test.Sized
 import zio.test.magnolia.DeriveGen
-import zio.Schedule.recurs
+import zio.{Chunk, ZIO}
 
 import scala.collection.Map
+
+import typesafe._
 
 trait GenerateConfig {
 
@@ -264,7 +266,6 @@ trait GenerateConfig {
    *    Map(
    *      region -> List(usEast),
    *      database.port -> List(4119), database.url -> List(file://abc)))
-   *
    *
    * }}}
    *

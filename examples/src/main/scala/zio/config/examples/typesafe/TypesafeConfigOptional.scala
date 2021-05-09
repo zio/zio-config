@@ -1,8 +1,10 @@
 package zio.config.examples.typesafe
 
+import zio.config._
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
+
 import EmployeeDetails._
-import zio.config._, ConfigDescriptor._
+import ConfigDescriptor._
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
@@ -45,7 +47,7 @@ object EmployeeDetails {
 
 object NullAndOptionalConfig extends App {
   // Take a look at state values, that can either exist, or be given a null
-  val hocconSourceList =
+  val hocconSourceList: Either[ReadError[String], ConfigSource] =
     fromHoconString(
       """
        details {
@@ -75,7 +77,7 @@ object NullAndOptionalConfig extends App {
        """
     )
 
-  val expectedResult =
+  val expectedResult: Right[Nothing, EmployeeDetails] =
     Right(
       EmployeeDetails(
         List(
@@ -88,7 +90,7 @@ object NullAndOptionalConfig extends App {
       )
     )
 
-  val result = hocconSourceList match {
+  val result: Either[ReadError[String], EmployeeDetails] = hocconSourceList match {
     case Left(value)   => Left(value)
     case Right(source) => read(employeeDetails from source)
   }

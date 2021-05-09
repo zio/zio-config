@@ -1,6 +1,7 @@
 package zio.config
 
 import zio.config.ReadError._
+
 import VersionSpecificSupport._
 
 private[config] trait ReadModule extends ConfigDescriptorModule {
@@ -70,10 +71,10 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
       loopAny(path, keys, cfg.left, descriptions, programSummary) match {
-        case a @ Right(_) => a
+        case a @ Right(_)    => a
         case Left(leftError) =>
           loopAny(path, keys, cfg.right, descriptions, programSummary) match {
-            case a @ Right(_) => a
+            case a @ Right(_)     => a
             case Left(rightError) =>
               Left(ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations))
           }
@@ -117,7 +118,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                   )
                 )
               )
-            case Right(parsed) =>
+            case Right(parsed)    =>
               Right(AnnotatedRead(parsed, Set.empty))
           }
       }
@@ -155,7 +156,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[C] =
       loopAny(path, keys, cfg.config, descriptions, programSummary) match {
         case Left(error) => Left(error)
-        case Right(a) =>
+        case Right(a)    =>
           a.mapError(cfg.f).swap.map(message => ReadError.ConversionError(path.reverse, message, a.annotations)).swap
       }
 
@@ -167,24 +168,23 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Map[K, B]] =
       cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Leaf(_)     => formatError(path, "Leaf", "Record", descriptions)
-        case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Record", descriptions)
+        case PropertyTree.Leaf(_)        => formatError(path, "Leaf", "Record", descriptions)
+        case PropertyTree.Sequence(_)    => formatError(path, "Sequence", "Record", descriptions)
         case PropertyTree.Record(values) =>
-          val result: List[(K, Res[B])] = values.toList.map {
-            case ((k, tree)) =>
-              val source: ConfigSource =
-                getConfigSource(cfg.source.names, tree.getPath, cfg.source.leafForSequence)
+          val result: List[(K, Res[B])] = values.toList.map { case ((k, tree)) =>
+            val source: ConfigSource =
+              getConfigSource(cfg.source.names, tree.getPath, cfg.source.leafForSequence)
 
-              (
-                k,
-                loopAny(
-                  Step.Key(k) :: path,
-                  Nil,
-                  cfg.config.updateSource(_ => source),
-                  descriptions,
-                  programSummary
-                )
+            (
+              k,
+              loopAny(
+                Step.Key(k) :: path,
+                Nil,
+                cfg.config.updateSource(_ => source),
+                descriptions,
+                programSummary
               )
+            )
           }
 
           seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap).swap
@@ -203,17 +203,16 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       programSummary: List[ConfigDescriptor[_]]
     ): Res[List[B]] = {
       def fromTrees(values: List[PropertyTree[K, V]]) = {
-        val list = values.zipWithIndex.map {
-          case (tree, idx) =>
-            val source =
-              getConfigSource(cfg.source.names, tree.getPath, cfg.source.leafForSequence)
-            loopAny(
-              Step.Index(idx) :: path,
-              Nil,
-              cfg.config.updateSource(_ => source),
-              descriptions,
-              programSummary
-            )
+        val list = values.zipWithIndex.map { case (tree, idx) =>
+          val source =
+            getConfigSource(cfg.source.names, tree.getPath, cfg.source.leafForSequence)
+          loopAny(
+            Step.Index(idx) :: path,
+            Nil,
+            cfg.config.updateSource(_ => source),
+            descriptions,
+            programSummary
+          )
         }
 
         seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list.map(res => res.map(_.value))).swap

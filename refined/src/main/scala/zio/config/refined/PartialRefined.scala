@@ -1,7 +1,7 @@
 package zio.config.refined
 
+import eu.timepit.refined.api.{RefType, Refined, Validate}
 import zio.config._
-import eu.timepit.refined.api.{ RefType, Refined, Validate }
 
 private[refined] class PartialRefined[P] {
   def apply[A](desc: ConfigDescriptor[A])(implicit validate: Validate[A, P]): ConfigDescriptor[Refined[A, P]] =

@@ -1,8 +1,10 @@
 package zio.config.examples.typesafe
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
+
+import ConfigDescriptor._
 
 object TypesafeConfigSimple extends App with EitherImpureOps {
   // A nested example with type safe config, and usage of magnolia
@@ -50,9 +52,9 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
 
     """
 
-  val details = (string("name") |@| int("age"))(Details.apply, Details.unapply)
+  val details: ConfigDescriptor[Details] = (string("name") |@| int("age"))(Details.apply, Details.unapply)
 
-  val accountConfig =
+  val accountConfig: ConfigDescriptor[Account] =
     (int("accountId").orElseEither(string("accountId")).optional |@| list(
       "regions"
     )(string) |@| nested("details")(details).optional)(
@@ -60,15 +62,15 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
       Account.unapply
     )
 
-  val databaseConfig =
+  val databaseConfig: ConfigDescriptor[Database] =
     (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
 
-  val awsDetailsConfig =
+  val awsDetailsConfig: ConfigDescriptor[AwsDetails] =
     (nested("accounts")(list(accountConfig)) |@| nested("database")(
       databaseConfig
     ) |@| list("users")(int))(AwsDetails.apply, AwsDetails.unapply)
 
-  val listResult =
+  val listResult: Either[ReadError[String], AwsDetails] =
     fromHoconString(validHocon) match {
       case Left(value)   => Left(value)
       case Right(source) => read(awsDetailsConfig from source)
@@ -96,9 +98,9 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
         )
       )
   )
-  val automaticAwsDetailsConfig = descriptor[AwsDetails]
+  val automaticAwsDetailsConfig: ConfigDescriptor[AwsDetails] = descriptor[AwsDetails]
 
-  val automaticResult =
+  val automaticResult: Either[ReadError[String], AwsDetails] =
     fromHoconString(validHocon) match {
       case Left(value)   => Left(value)
       case Right(source) => read(automaticAwsDetailsConfig from source)
@@ -177,5 +179,5 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     ║  ║ path: accounts[2].regions
     ║  ▼
     ▼
- */
+   */
 }

@@ -2,10 +2,11 @@ package zio.config.examples
 
 import zio.blocking.Blocking
 import zio.config._
-import ConfigDescriptor._
 import zio.config.examples.aliases._
 import zio.console.Console
-import zio.{ console, App, ExitCode, Has, ZEnv, ZIO, ZLayer }
+import zio.{App, ExitCode, Has, ZEnv, ZIO, ZLayer, console}
+
+import ConfigDescriptor._
 
 /**
  * The pattern is an inspiration from http://degoes.net/articles/zio-environment.

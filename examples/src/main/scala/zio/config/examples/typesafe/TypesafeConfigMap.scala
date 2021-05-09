@@ -1,9 +1,9 @@
 package zio.config.examples.typesafe
 
 import com.typesafe.config.ConfigRenderOptions
-import zio.config.typesafe.TypesafeConfigSource
-import zio.config.{ read, write }
-import zio.config.ConfigDescriptor._, zio.config.typesafe._
+import zio.config.ConfigDescriptor._
+import zio.config.typesafe.{TypesafeConfigSource, _}
+import zio.config.{ConfigDescriptor, read, write}
 
 object TypesafeConfigMap extends App with EitherImpureOps {
   final case class A(m1: Map[String, List[Int]], l1: List[Int], l2: List[Int], m2: Map[String, B])
@@ -27,7 +27,7 @@ object TypesafeConfigMap extends App with EitherImpureOps {
       (string("a1") |@| int("a2"))(C.apply, C.unapply)
   }
 
-  val hocon =
+  val hocon: String =
     s"""
        | m1: {
        |    m11  : [1, 2]
@@ -74,7 +74,7 @@ object TypesafeConfigMap extends App with EitherImpureOps {
   val source: zio.config.ConfigSource =
     TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
 
-  val readResult =
+  val readResult: A =
     read(A.config from source).loadOrThrow
 
   assert(
@@ -84,13 +84,13 @@ object TypesafeConfigMap extends App with EitherImpureOps {
         List(),
         List(1, 3, 3),
         Map(
-          "m21" -> B(Map("m212" -> C("a1v", 1), "m211" -> C("a1v", 2)), 1),
-          "m22" -> B(Map("m221" -> C("a1v", 1), "m222" -> C("a1v", 2)), 1)
+          "m21"   -> B(Map("m212" -> C("a1v", 1), "m211" -> C("a1v", 2)), 1),
+          "m22"   -> B(Map("m221" -> C("a1v", 1), "m222" -> C("a1v", 2)), 1)
         )
       )
   )
 
-  val invalidHocon =
+  val invalidHocon: String =
     s"""
        | m1: {
        |    m11  : [1, 2]
@@ -213,7 +213,7 @@ object TypesafeConfigMap extends App with EitherImpureOps {
    * }}}
    */
   // It picks the value corresponding to y in the value of the dynamic map inside s. This is much powerful
-  val hocon3 =
+  val hocon3: String =
     s"""
        |k : {
        |  s : {
@@ -222,18 +222,18 @@ object TypesafeConfigMap extends App with EitherImpureOps {
        |}
        |""".stripMargin
 
-  val xx = nested("k") { map("s")(string("y")) }
+  val xx: ConfigDescriptor[Map[String, String]] = nested("k")(map("s")(string("y")))
 
   assert(
     read(xx from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow) == Right(Map("dynamicMap" -> "z"))
   )
 
-  val hocon4 =
+  val hocon4: String =
     s"""
        |k : { dynamicMap : { y : z } }
        |""".stripMargin
 
-  val xx2 = nested("k") { map(string("y")) }
+  val xx2: zio.config.ConfigDescriptor[Map[String, String]] = nested("k")(map(string("y")))
 
   assert(
     read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow) == Right(Map("dynamicMap" -> "z"))

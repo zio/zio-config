@@ -1,17 +1,17 @@
 package zio.config.typesafe
 
 import zio.config.ReadError.Step.Key
-import zio.config.{ read, BaseSpec, ReadError }
-import zio.test._
-import zio.test.Assertion._
 import zio.config.magnolia._
 import zio.config.typesafe.OptionalSpecUtils._
+import zio.config.{BaseSpec, ReadError, foldReadError, read}
+import zio.test.Assertion._
+import zio.test._
+
 import ReadError._
-import zio.config.foldReadError
 
 object TypesafeConfigOptionalTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[Environment, Failure] =
     suite("partial products fail instead of returning none")(
       test(
         "Presence of one optional value in an optional product with required fields returns failures"
@@ -878,13 +878,13 @@ object OptionalSpecUtils {
   }
 
   final def getListOfMissingValueSteps(error: ReadError[String]): List[List[Step[String]]] =
-    foldReadError(error)(List.empty[List[Step[String]]]) {
-      case ReadError.MissingValue(steps, _, _) => List(steps)
+    foldReadError(error)(List.empty[List[Step[String]]]) { case ReadError.MissingValue(steps, _, _) =>
+      List(steps)
     }(_ ++ _, List.empty[List[Step[String]]])
 
   def checkIfOnlyMissingValues(error: ReadError[String]): Boolean =
-    foldReadError(error)(alternative = false) {
-      case ReadError.MissingValue(_, _, _) => true
+    foldReadError(error)(alternative = false) { case ReadError.MissingValue(_, _, _) =>
+      true
     }(_ && _, true)
 
   def fetchMissingValueAndFormatErrors(error: ReadError[String]): List[ReadError[String]] =

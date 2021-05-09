@@ -30,7 +30,6 @@ package object magnolia {
    *
    * However, say you have a type ZonedDateTime, for which zio-config hasn't provided instance of `Descriptor`, then it will fail to compile.
    *
-   *
    * {{{
    *      case class MyConfig(x: ZonedDateTime)
    * }}}
@@ -141,7 +140,6 @@ package object magnolia {
    *     }
    *   }}}
    *
-   *
    *   If the source is HOCON, then {{{ betterDerivation.descriptor[MyConfig] }}} can read:
    *
    *   {{{
@@ -154,7 +152,6 @@ package object magnolia {
    *         }
    *      }
    *   }}}
-   *
    *
    * Providing the name of the sealed traits is least commonly used. This is why the default derivation of sealed trait doesn't consider it.
    *
@@ -171,7 +168,6 @@ package object magnolia {
    *
    * If the source is HOCON, then {{{ customDerivation.descriptor[MyConfig] }}} can read:
    *
-   *
    *  {{{
    *     x: {
    *       type : B
@@ -179,7 +175,6 @@ package object magnolia {
    *       y : z
    *    }
    *  }}}
-   *
    */
   def descriptor[A](implicit config: Descriptor[A]): ConfigDescriptor[A] =
     DeriveConfigDescriptor.descriptor[A]

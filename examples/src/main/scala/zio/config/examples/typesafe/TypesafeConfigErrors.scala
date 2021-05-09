@@ -1,7 +1,10 @@
 package zio.config.examples.typesafe
 
-import zio.config._, zio.config.typesafe._, ConfigDescriptor._
+import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.typesafe._
+
+import ConfigDescriptor._
 
 object TypesafeConfigErrors extends App {
   // A nested example with type safe config, and usage of magnolia
@@ -9,10 +12,10 @@ object TypesafeConfigErrors extends App {
   final case class Database(port: Int, url: String)
   final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
 
-  val configNestedAutomatic =
+  val configNestedAutomatic: ConfigDescriptor[AwsConfig] =
     descriptor[AwsConfig]
 
-  val hocconStringWithStringDb =
+  val hocconStringWithStringDb: String =
     s"""
     account {
         region : us-east
@@ -22,7 +25,7 @@ object TypesafeConfigErrors extends App {
     database = "hi"
    """
 
-  val hocconStringWithDb =
+  val hocconStringWithDb: String =
     s"""
     account {
         region : us-east
@@ -35,7 +38,7 @@ object TypesafeConfigErrors extends App {
     }
    """
 
-  val hocconStringWithNoDatabaseAtAll =
+  val hocconStringWithNoDatabaseAtAll: String =
     s"""
     account {
         region : us-east
@@ -44,7 +47,7 @@ object TypesafeConfigErrors extends App {
    """
 
   // Port is invalid
-  val hocconStringWithDbWithParseError =
+  val hocconStringWithDbWithParseError: String =
     s"""
     account {
         region : us-east
@@ -56,19 +59,19 @@ object TypesafeConfigErrors extends App {
     }
    """
 
-  val nestedConfigAutomaticResult1 =
+  val nestedConfigAutomaticResult1: Either[ReadError[String], AwsConfig] =
     TypesafeConfigSource.fromHoconString(hocconStringWithStringDb) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedAutomatic from source)
     }
 
-  val nestedConfigAutomaticResult2 =
+  val nestedConfigAutomaticResult2: Either[ReadError[String], AwsConfig] =
     TypesafeConfigSource.fromHoconString(hocconStringWithDb) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedAutomatic from source)
     }
 
-  val nestedConfigAutomaticResult3 =
+  val nestedConfigAutomaticResult3: Either[ReadError[String], AwsConfig] =
     TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedAutomatic from source)
@@ -93,8 +96,8 @@ object TypesafeConfigErrors extends App {
     )
   )
 
-  val configNestedManual = {
-    val accountConfig =
+  val configNestedManual: ConfigDescriptor[AwsConfig] = {
+    val accountConfig  =
       (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
     val databaseConfig =
       (int("port") |@| string("url"))(Database.apply, Database.unapply)
@@ -103,19 +106,19 @@ object TypesafeConfigErrors extends App {
       .optional)(AwsConfig.apply, AwsConfig.unapply)
   }
 
-  val nestedConfigManualResult1 =
+  val nestedConfigManualResult1: Either[ReadError[String], AwsConfig] =
     TypesafeConfigSource.fromHoconString(hocconStringWithDb) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedManual from source)
     }
 
-  val nestedConfigManualResult2 =
+  val nestedConfigManualResult2: Either[ReadError[String], AwsConfig] =
     TypesafeConfigSource.fromHoconString(hocconStringWithStringDb) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedManual from source)
     }
 
-  val nestedConfigManualResult3 =
+  val nestedConfigManualResult3: Either[ReadError[String], AwsConfig] =
     TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configNestedManual from source)
@@ -151,9 +154,9 @@ object TypesafeConfigErrors extends App {
   final case class Details(clustersize: Int, name: String)
   final case class DatabaseDetails(datacenterwest: Details, datacentereast: Details)
 
-  val configWithHoconSubstitution = descriptor[DatabaseDetails]
+  val configWithHoconSubstitution: ConfigDescriptor[DatabaseDetails] = descriptor[DatabaseDetails]
 
-  val finalResult =
+  val finalResult: Either[ReadError[String], DatabaseDetails] =
     TypesafeConfigSource.fromHoconString(hoconStringWithSubstitution) match {
       case Left(value)   => Left(value)
       case Right(source) => read(configWithHoconSubstitution from source)

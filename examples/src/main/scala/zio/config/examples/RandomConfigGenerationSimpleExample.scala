@@ -1,7 +1,7 @@
 package zio.config.examples
 
-import zio.config.magnolia.{ name, _ }
 import zio.config.gen._
+import zio.config.magnolia.{name, _}
 
 object RandomConfigGenerationSimpleExample extends App {
   sealed trait Cloud

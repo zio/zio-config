@@ -1,12 +1,14 @@
 package zio.config.examples.commandline
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
+
+import ConfigDescriptor._
 
 object CommandLineComplex extends App {
   val argss =
     "--conf -database.username=1 --conf -database.password=hi --conf.database.url=jdbc://xyz --conf -num_execs=10 --vault.username=3 --vault.password=10 --vault.something=11 --users 1 --users 2 --region 111,112"
 
-  val source = ConfigSource.fromCommandLineArgs(
+  val source: ConfigSource = ConfigSource.fromCommandLineArgs(
     argss.split(' ').toList,
     Some('.'),
     Some(',')
@@ -15,7 +17,7 @@ object CommandLineComplex extends App {
   final case class UserPassword(k2: String, k3: String)
 
   object UserPassword {
-    val desc = (string("username") |@| string("password"))(
+    val desc: ConfigDescriptor[UserPassword] = (string("username") |@| string("password"))(
       UserPassword.apply,
       UserPassword.unapply
     )
@@ -24,7 +26,7 @@ object CommandLineComplex extends App {
   final case class DatabaseConfig(conf: UserPassword, url: String)
 
   object DatabaseConfig {
-    val desc = nested("database") {
+    val desc: ConfigDescriptor[DatabaseConfig] = nested("database") {
       (UserPassword.desc |@| string("url"))(
         DatabaseConfig.apply,
         DatabaseConfig.unapply
@@ -35,7 +37,7 @@ object CommandLineComplex extends App {
   final case class VaultConfig(userPassword: UserPassword)
 
   object VaultConfig {
-    val desc =
+    val desc: ConfigDescriptor[VaultConfig] =
       nested("vault") {
         UserPassword.desc
       }(VaultConfig.apply, VaultConfig.unapply)
@@ -44,7 +46,7 @@ object CommandLineComplex extends App {
   final case class SparkConfig(databaseConfig: DatabaseConfig, numberOfExecutors: Int)
 
   object SparkConfig {
-    val desc = (DatabaseConfig.desc |@| int("num_execs"))(
+    val desc: ConfigDescriptor[SparkConfig] = (DatabaseConfig.desc |@| int("num_execs"))(
       SparkConfig.apply,
       SparkConfig.unapply
     )
@@ -54,7 +56,7 @@ object CommandLineComplex extends App {
 
   object AppConfig {
     val desc: ConfigDescriptor[AppConfig] =
-      (nested("conf") { SparkConfig.desc } |@| VaultConfig.desc |@| list(
+      (nested("conf")(SparkConfig.desc) |@| VaultConfig.desc |@| list(
         "users"
       )(string) |@| list("region")(string))(AppConfig.apply, AppConfig.unapply)
   }

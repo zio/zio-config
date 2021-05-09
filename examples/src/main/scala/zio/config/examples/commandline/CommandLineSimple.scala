@@ -1,13 +1,15 @@
 package zio.config.examples.commandline
 
+import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config._, ConfigDescriptor._
+
+import ConfigDescriptor._
 
 object CommandLineSimple extends App {
   val cmdLineArgs =
     "--key1 value1 --key2 value2"
 
-  val source =
+  val source: ConfigSource =
     ConfigSource.fromCommandLineArgs(cmdLineArgs.split(' ').toList)
 
   final case class A(key1: String, key2: String)
@@ -28,7 +30,7 @@ object CommandLineSimple extends App {
   val cmdLineArgsWithEqualSeparator =
     "--key1=value1 --key2=value2"
 
-  val source2 = ConfigSource.fromCommandLineArgs(cmdLineArgsWithEqualSeparator.split(' ').toList)
+  val source2: ConfigSource = ConfigSource.fromCommandLineArgs(cmdLineArgsWithEqualSeparator.split(' ').toList)
 
   assert(
     read(descriptor[A] from source2) == Right(A("value1", "value2"))
@@ -40,7 +42,7 @@ object CommandLineSimple extends App {
   val cmdLineArgsWithEqualInValue =
     "--key1==1 --key2=value="
 
-  val source3 = ConfigSource.fromCommandLineArgs(cmdLineArgsWithEqualInValue.split(' ').toList)
+  val source3: ConfigSource = ConfigSource.fromCommandLineArgs(cmdLineArgsWithEqualInValue.split(' ').toList)
 
   assert {
     read(descriptor[A] from source3) == Right(

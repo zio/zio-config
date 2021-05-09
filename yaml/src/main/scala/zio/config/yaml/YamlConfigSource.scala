@@ -1,27 +1,28 @@
 package zio.config.yaml
 
-import java.io.{ File, FileInputStream }
-import java.nio.file.Path
-import java.lang.{ Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong }
-import java.{ util => ju }
-
-import org.snakeyaml.engine.v2.api.{ Load, LoadSettings }
+import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import zio.config._
+
+import java.io.{File, FileInputStream}
+import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
+import java.nio.file.Path
+import java.{util => ju}
 import scala.collection.JavaConverters._
 import scala.util.Try
+
 import VersionSpecificSupport._
 
 object YamlConfigSource {
   private[yaml] def convertYaml(data: AnyRef): PropertyTree[String, String] =
     data match {
-      case null        => PropertyTree.empty
-      case t: JInteger => PropertyTree.Leaf(t.toString)
-      case t: JLong    => PropertyTree.Leaf(t.toString)
-      case t: JFloat   => PropertyTree.Leaf(t.toString)
-      case t: JDouble  => PropertyTree.Leaf(t.toString)
-      case t: String   => PropertyTree.Leaf(t)
-      case t: JBoolean => PropertyTree.Leaf(t.toString)
-      case t: ju.List[_] =>
+      case null            => PropertyTree.empty
+      case t: JInteger     => PropertyTree.Leaf(t.toString)
+      case t: JLong        => PropertyTree.Leaf(t.toString)
+      case t: JFloat       => PropertyTree.Leaf(t.toString)
+      case t: JDouble      => PropertyTree.Leaf(t.toString)
+      case t: String       => PropertyTree.Leaf(t)
+      case t: JBoolean     => PropertyTree.Leaf(t.toString)
+      case t: ju.List[_]   =>
         PropertyTree.Sequence(
           t.asInstanceOf[ju.List[AnyRef]].asScala.toList.map(convertYaml)
         )
@@ -32,7 +33,7 @@ object YamlConfigSource {
             .mapValues(convertYaml)
             .toMap
         )
-      case _ => throw new IllegalArgumentException("unexpected data type in convertYaml")
+      case _               => throw new IllegalArgumentException("unexpected data type in convertYaml")
     }
 
   /**
@@ -77,11 +78,10 @@ object YamlConfigSource {
         LeafForSequence.Invalid
       )
     }.toEither.swap
-      .map(
-        throwable =>
-          ReadError.SourceError(
-            message = s"Failed to retrieve a valid from the yaml source. ${throwable.getMessage}"
-          ): ReadError[String]
+      .map(throwable =>
+        ReadError.SourceError(
+          message = s"Failed to retrieve a valid from the yaml source. ${throwable.getMessage}"
+        ): ReadError[String]
       )
       .swap
 
@@ -114,11 +114,10 @@ object YamlConfigSource {
         LeafForSequence.Invalid
       )
     }.toEither.swap
-      .map(
-        throwable =>
-          ReadError.SourceError(
-            message = s"Failed to retrieve a valid from the yaml source. ${throwable.getMessage}"
-          ): ReadError[String]
+      .map(throwable =>
+        ReadError.SourceError(
+          message = s"Failed to retrieve a valid from the yaml source. ${throwable.getMessage}"
+        ): ReadError[String]
       )
       .swap
 }

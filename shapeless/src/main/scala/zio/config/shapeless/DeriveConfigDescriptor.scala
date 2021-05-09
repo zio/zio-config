@@ -1,22 +1,20 @@
 package zio.config.shapeless
 
-import java.io.File
-import java.net.{ URI, URL }
-import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
-import java.util.UUID
-
 import shapeless._
 import shapeless.labelled._
 import zio.config._
-import zio.config.derivation.DerivationUtils.{ constant, unwrapFromOptional }
+import zio.config.derivation.DerivationUtils.{constant, unwrapFromOptional}
 import zio.config.derivation.NeedsDerive
 import zio.duration.Duration
 
-import scala.concurrent.duration.{ Duration => ScalaDuration }
+import java.io.File
+import java.net.{URI, URL}
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import java.util.UUID
+import scala.concurrent.duration.{Duration => ScalaDuration}
 import scala.reflect.ClassTag
 
 /**
- *
  * `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects.
  * It will be deprecated once we find users have moved on from scala 2.11.
  *
@@ -36,7 +34,6 @@ import scala.reflect.ClassTag
  *
  * }}}
  *
- *
  * Please find more (complex) examples in the examples module in zio-config
  */
 object DeriveConfigDescriptor extends DeriveConfigDescriptor {
@@ -48,15 +45,14 @@ object DeriveConfigDescriptor extends DeriveConfigDescriptor {
 
   /**
    * By default this method is not implicit to allow custom non-recursive derivation
-   * */
+   */
   override implicit def getDescriptor[T: NeedsDerive: ClassDescriptor]: Descriptor[T] = super.getDescriptor[T]
   implicit def descriptor[T: Descriptor]: ConfigDescriptor[T]                         = Descriptor[T].configDescriptor
 }
 
 /**
  * Non-recursive derivation
- *
- * */
+ */
 object NonRecursiveDerivation extends DeriveConfigDescriptor {
   def mapClassName(name: String): String = zio.config.toSnakeCase(name)
   def mapFieldName(name: String): String = name
@@ -165,17 +161,17 @@ trait DeriveConfigDescriptor {
     ): ConfigDescriptor[V] = {
       val name                     = manualName.map(_.name).getOrElse(mapFieldName(fieldName))
       val (unwrapped, wasOptional) = unwrapFromOptional(desc.configDescriptor)
-      val withNesting = if (wasOptional) {
+      val withNesting              = if (wasOptional) {
         nested(name)(unwrapped).optional.asInstanceOf[ConfigDescriptor[V]]
       } else {
         nested(name)(unwrapped).asInstanceOf[ConfigDescriptor[V]]
       }
-      val described = description.map(_.describe).toSeq.foldLeft(withNesting)(_ ?? _)
+      val described                = description.map(_.describe).toList.foldLeft(withNesting)(_ ?? _)
       defaultValue.fold(described)(described.default(_))
     }
 
-    implicit def caseHNil[K <: Symbol, V, N, Ds, Df](
-      implicit key: Witness.Aux[K],
+    implicit def caseHNil[K <: Symbol, V, N, Ds, Df](implicit
+      key: Witness.Aux[K],
       desc: Descriptor[V],
       evN: N <:< Option[name],
       evDs: Ds <:< Option[describe],
@@ -192,8 +188,8 @@ trait DeriveConfigDescriptor {
         fieldDesc.transform(field[K](_) :: HNil, _.head)
       }
 
-    implicit def caseHCons[K <: Symbol, V, T <: HList, N, Ds, Df, TN <: HList, TDs <: HList, TDf <: HList](
-      implicit key: Witness.Aux[K],
+    implicit def caseHCons[K <: Symbol, V, T <: HList, N, Ds, Df, TN <: HList, TDs <: HList, TDf <: HList](implicit
+      key: Witness.Aux[K],
       desc: Descriptor[V],
       evN: N <:< Option[name],
       evDs: Ds <:< Option[describe],
@@ -227,8 +223,8 @@ trait DeriveConfigDescriptor {
     implicit def caseSome[A, T](implicit an: Annotation[A, T]): OptAnnotation[A, T] = () => Some(an())
   }
 
-  implicit def objectDescriptor[T](
-    implicit gen: LabelledGeneric.Aux[T, HNil],
+  implicit def objectDescriptor[T](implicit
+    gen: LabelledGeneric.Aux[T, HNil],
     typeName: TypeName[T],
     optName: OptAnnotation[name, T],
     optDesc: OptAnnotation[describe, T]
@@ -238,8 +234,8 @@ trait DeriveConfigDescriptor {
     ClassDescriptor(optDesc().map(_.describe).fold(desc)(desc ?? _), ccName, isObject = true)
   }
 
-  implicit def classDescriptor[T, Repr <: HList, Names <: HList, Descs <: HList, Defaults <: HList](
-    implicit gen: LabelledGeneric.Aux[T, Repr],
+  implicit def classDescriptor[T, Repr <: HList, Names <: HList, Descs <: HList, Defaults <: HList](implicit
+    gen: LabelledGeneric.Aux[T, Repr],
     typeName: TypeName[T],
     optName: OptAnnotation[name, T],
     optDesc: OptAnnotation[describe, T],
@@ -266,23 +262,23 @@ trait DeriveConfigDescriptor {
 
   object CollectSum {
     implicit val caseCNil: CollectSum[CNil] = () => Nil
-    implicit def caseCCons[H, T <: Coproduct](
-      implicit desc0: ClassDescriptor[H],
+    implicit def caseCCons[H, T <: Coproduct](implicit
+      desc0: ClassDescriptor[H],
       ct: ClassTag[H],
       next: CollectSum[T]
-    ): CollectSum[H :+: T] =
+    ): CollectSum[H :+: T]                  =
       () =>
         new SumCase[H] {
           val desc: ClassDescriptor[H] = desc0
-          def cast(a: Any): Option[H] = a match {
+          def cast(a: Any): Option[H]  = a match {
             case h: H => Some(h)
             case _    => None
           }
         } :: next()
   }
 
-  implicit def sumDescriptor[T, Repr <: Coproduct](
-    implicit gen: Generic.Aux[T, Repr],
+  implicit def sumDescriptor[T, Repr <: Coproduct](implicit
+    gen: Generic.Aux[T, Repr],
     cs: CollectSum[Repr],
     typeName: TypeName[T],
     optName: OptAnnotation[name, T]

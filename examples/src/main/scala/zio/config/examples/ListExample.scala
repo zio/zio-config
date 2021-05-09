@@ -1,17 +1,17 @@
 package zio.config.examples
 
-import zio.config.examples.typesafe.EitherImpureOps
-import zio.config.PropertyTree.Leaf
-import zio.config.PropertyTree
 import zio.config.ConfigDescriptor._
-import zio.config._, zio.config.typesafe._
+import zio.config.PropertyTree.Leaf
+import zio.config.examples.typesafe.EitherImpureOps
+import zio.config.typesafe._
+import zio.config.{PropertyTree, _}
 
 // List works quite nicely if the source is typesafe HOCON. Refer typesafe examples
 object ListExample extends App with EitherImpureOps {
   final case class PgmConfig(a: String, b: List[String])
 
   // Fails if regions had only one element,
-  val map =
+  val map: Map[String, String] =
     Map(
       "xyz"     -> "something",
       "regions" -> "australia, canada, usa"
@@ -20,14 +20,14 @@ object ListExample extends App with EitherImpureOps {
   val config: ConfigDescriptor[PgmConfig] =
     (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
 
-  val mapSource =
+  val mapSource: ConfigSource =
     ConfigSource.fromMap(map, "constant", keyDelimiter = None, valueDelimiter = Some(','))
 
-  val resultFromMultiMap =
+  val resultFromMultiMap: Either[ReadError[String], PgmConfig] =
     read(config from mapSource)
 
   println(resultFromMultiMap)
-  val expected =
+  val expected: PgmConfig =
     PgmConfig("something", List("australia", "canada", "usa"))
 
   assert(
@@ -37,7 +37,7 @@ object ListExample extends App with EitherImpureOps {
       )
   )
 
-  val propertyTree =
+  val propertyTree: Either[String, PropertyTree[String, String]] =
     write(config, PgmConfig("something", List("australia", "canada", "usa")))
 
   assert(
@@ -67,6 +67,6 @@ object ListExample extends App with EitherImpureOps {
     ],
     "xyz" : "something"
   })
- */
+   */
 
 }

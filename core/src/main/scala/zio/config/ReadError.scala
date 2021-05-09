@@ -11,23 +11,23 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
     prettyPrint()
 
   final def nonPrettyPrintedString: String = self match {
-    case ReadError.MissingValue(path, message, annotations) =>
+    case ReadError.MissingValue(path, message, annotations)        =>
       s"MissingValue($path, $message, $annotations)"
-    case ReadError.SourceError(message, annotations) =>
+    case ReadError.SourceError(message, annotations)               =>
       s"SourceError($message, $annotations)"
     case ReadError.FormatError(path, message, detail, annotations) =>
       s"FormatError($path, $message, $detail, $annotations)"
-    case ReadError.ConversionError(path, message, annotations) =>
+    case ReadError.ConversionError(path, message, annotations)     =>
       s"ConversionError($path, $message, $annotations"
-    case ReadError.OrErrors(list, annotations) =>
+    case ReadError.OrErrors(list, annotations)                     =>
       s"OrErrors(${list.map(_.nonPrettyPrintedString)}, $annotations)"
-    case ReadError.ZipErrors(list, annotations) =>
+    case ReadError.ZipErrors(list, annotations)                    =>
       s"ZipErrors(${list.map(_.nonPrettyPrintedString)}, $annotations)"
-    case ReadError.ListErrors(list, annotations) =>
+    case ReadError.ListErrors(list, annotations)                   =>
       s"ListErrors(${list.map(_.nonPrettyPrintedString)}, $annotations)"
-    case ReadError.MapErrors(list, annotations) =>
+    case ReadError.MapErrors(list, annotations)                    =>
       s"MapErrors(${list.map(_.nonPrettyPrintedString)}, $annotations)"
-    case ReadError.Irrecoverable(list, annotations) =>
+    case ReadError.Irrecoverable(list, annotations)                =>
       s"Irrecoverable(${list.map(_.nonPrettyPrintedString)}, $annotations)"
   }
 
@@ -51,7 +51,7 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
 
     def prefixBlock(values: List[String], p1: String, p2: String): List[String] =
       values match {
-        case Nil => Nil
+        case Nil          => Nil
         case head :: tail =>
           (p1 + head) :: tail.map(p2 + _)
       }
@@ -79,7 +79,7 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
         err.detail match {
           case ::(head, next) =>
             List(Failure(strings :+ s"Details: ${(head :: next).mkString(", ")}"))
-          case Nil =>
+          case Nil            =>
             List(Failure(strings))
         }
       )
@@ -93,7 +93,7 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
         err.detail match {
           case ::(head, next) =>
             List(Failure(strings :+ s"Details: ${(head :: next).mkString(", ")}"))
-          case Nil =>
+          case Nil            =>
             List(Failure(strings))
         }
       )
@@ -130,14 +130,13 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
 
     def format(segment: Segment): List[String] =
       segment match {
-        case Failure(lines) =>
+        case Failure(lines)  =>
           prefixBlock(lines, "─", " ")
-        case Parallel(all) =>
+        case Parallel(all)   =>
           List(("══╦" * (all.size - 1)) + "══╗") ++
-            all.foldRight[List[String]](Nil) {
-              case (current, acc) =>
-                prefixBlock(acc, "  ║", "  ║") ++
-                  prefixBlock(format(current), "  ", "  ")
+            all.foldRight[List[String]](Nil) { case (current, acc) =>
+              prefixBlock(acc, "  ║", "  ║") ++
+                prefixBlock(format(current), "  ", "  ")
             }
         case Sequential(all) =>
           all.flatMap { segment =>

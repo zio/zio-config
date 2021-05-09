@@ -29,9 +29,9 @@ trait ConfigDocsModule extends WriteModule {
               descriptions.filter({
                 case ConfigDocs.Description(path, _) if path.map(FieldName.Key.apply) == Some(value) =>
                   false
-                case ConfigDocs.Description(_, _) => true
+                case ConfigDocs.Description(_, _)                                                    => true
               })
-            case None => descriptions
+            case None        => descriptions
           }
         desc
       }
@@ -74,9 +74,7 @@ trait ConfigDocsModule extends WriteModule {
 
             // Look backwards and see if previous node is nested, if so remove the already used descriptions
             val parentDoc =
-              if (previousNode.exists(
-                    r => r.is { case ConfigDocs.Nested(_, _, _) => true }(false)
-                  )) {
+              if (previousNode.exists(r => r.is { case ConfigDocs.Nested(_, _, _) => true }(false))) {
                 previousPaths.lastOption match {
                   case Some(value) =>
                     ConfigDocs
@@ -85,7 +83,7 @@ trait ConfigDocsModule extends WriteModule {
                         value
                       )
                       .distinct
-                  case None => Nil
+                  case None        => Nil
                 }
               } else {
                 Nil
@@ -117,7 +115,7 @@ trait ConfigDocsModule extends WriteModule {
               None,
               sources.map(_.name)
             ).asTable
-          case ConfigDocs.Recursion(sources) =>
+          case ConfigDocs.Recursion(sources)             =>
             TableRow(
               previousPaths,
               Some(Table.Format.Recursion),
@@ -127,7 +125,7 @@ trait ConfigDocsModule extends WriteModule {
             ).asTable
 
           case c @ ConfigDocs.Nested(path, docs, descriptions) =>
-            val descs =
+            val descs  =
               filterDescriptions(descriptionsUsedAlready, descriptions)
             val result =
               go(
@@ -140,9 +138,11 @@ trait ConfigDocsModule extends WriteModule {
             // Peak ahead and see if it continues to do nesting.
             // For example: nested("a")(string) isn't treated as nested.
             // However a is nested if config is nested("a")(nested("b")(string))
-            if (docs.is {
-                  case ConfigDocs.Nested(_, _, _) => true
-                }(false)) {
+            if (
+              docs.is { case ConfigDocs.Nested(_, _, _) =>
+                true
+              }(false)
+            ) {
               TableRow(
                 previousPaths :+ Table.FieldName.Key(path),
                 Some(Table.Format.Nested),
@@ -157,14 +157,26 @@ trait ConfigDocsModule extends WriteModule {
               )
 
           case c @ ConfigDocs.Zip(left, right) =>
-            handleNested(left, right, c, _.is {
-              case ConfigDocs.Zip(_, _) => true
-            }(false), Format.AllOf)
+            handleNested(
+              left,
+              right,
+              c,
+              _.is { case ConfigDocs.Zip(_, _) =>
+                true
+              }(false),
+              Format.AllOf
+            )
 
           case c @ ConfigDocs.OrElse(left, right) =>
-            handleNested(left, right, c, _.is {
-              case ConfigDocs.OrElse(_, _) => true
-            }(false), Format.AnyOneOf)
+            handleNested(
+              left,
+              right,
+              c,
+              _.is { case ConfigDocs.OrElse(_, _) =>
+                true
+              }(false),
+              Format.AnyOneOf
+            )
 
           case c @ ConfigDocs.Sequence(schemaDocs, _) =>
             go(schemaDocs, previousPaths, Some(c), descriptionsUsedAlready).mapFormat {
@@ -187,13 +199,12 @@ trait ConfigDocsModule extends WriteModule {
 
     def findByPath(description: List[Description], path: FieldName): List[Description] =
       description
-        .flatMap(
-          desc =>
-            desc match {
-              case a @ ConfigDocs.Description(p, _) if (p.map(FieldName.Key.apply)) == Some(path) =>
-                List(a)
-              case ConfigDocs.Description(_, _) => Nil
-            }
+        .flatMap(desc =>
+          desc match {
+            case a @ ConfigDocs.Description(p, _) if (p.map(FieldName.Key.apply)) == Some(path) =>
+              List(a)
+            case ConfigDocs.Description(_, _)                                                   => Nil
+          }
         )
 
     sealed case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None)
@@ -268,75 +279,74 @@ trait ConfigDocsModule extends WriteModule {
                 List.empty[(Table, Heading)],
                 usedHeadings
               )
-            ) {
-              case (row, (contentList, nestedTableList, usedHeadings)) =>
-                val lastFieldName =
-                  row.paths.lastOption.getOrElse(FieldName.Blank)
+            ) { case (row, (contentList, nestedTableList, usedHeadings)) =>
+              val lastFieldName =
+                row.paths.lastOption.getOrElse(FieldName.Blank)
 
-                val formatOrNotApplicable =
-                  row.format.getOrElse(Format.NotApplicable)
-                val heading = Heading.mk(row.paths)
-                val updatedHeading =
-                  updateHeadingAndIndex(heading, usedHeadings)
+              val formatOrNotApplicable =
+                row.format.getOrElse(Format.NotApplicable)
+              val heading               = Heading.mk(row.paths)
+              val updatedHeading        =
+                updateHeadingAndIndex(heading, usedHeadings)
 
-                val (name, format) = row.nested match {
-                  case Some(_) =>
-                    val getLinkFn =
-                      (s: Either[FieldName, Format]) =>
-                        getLink(
-                          heading,
-                          updatedHeading.getOrElse(heading, 0),
-                          s
-                        )
+              val (name, format) = row.nested match {
+                case Some(_) =>
+                  val getLinkFn =
+                    (s: Either[FieldName, Format]) =>
+                      getLink(
+                        heading,
+                        updatedHeading.getOrElse(heading, 0),
+                        s
+                      )
 
-                    val nameWithLink =
-                      lastFieldName match {
-                        case FieldName.Key(_) => getLinkFn(Left(lastFieldName))
-                        case FieldName.Blank =>
-                          Link.rawString(lastFieldName.asString(None))
-                      }
+                  val nameWithLink =
+                    lastFieldName match {
+                      case FieldName.Key(_) => getLinkFn(Left(lastFieldName))
+                      case FieldName.Blank  =>
+                        Link.rawString(lastFieldName.asString(None))
+                    }
 
-                    nameWithLink -> getLinkFn(Right(formatOrNotApplicable))
+                  nameWithLink -> getLinkFn(Right(formatOrNotApplicable))
 
-                  case None =>
-                    Link.rawString(lastFieldName.asString(None)) -> Link
-                      .rawString(formatOrNotApplicable.asString)
-                }
+                case None    =>
+                  Link.rawString(lastFieldName.asString(None)) -> Link
+                    .rawString(formatOrNotApplicable.asString)
+              }
 
-                (
-                  List(
-                    name.value,
-                    format.value,
-                    row.description.map(_.description).mkString(", "),
-                    row.sources.mkString(", ")
-                  ) :: contentList,
-                  row.nested
-                    .map(table => (table, heading))
-                    .toList ++ nestedTableList,
-                  updatedHeading
-                )
+              (
+                List(
+                  name.value,
+                  format.value,
+                  row.description.map(_.description).mkString(", "),
+                  row.sources.mkString(", ")
+                ) :: contentList,
+                row.nested
+                  .map(table => (table, heading))
+                  .toList ++ nestedTableList,
+                updatedHeading
+              )
             }
 
         val contentList: List[String] = {
           val indexAndSize = getSizeOfIndices(headingColumns :: contents)
 
           (headingColumns :: List.fill(indexAndSize.size)("---") :: contents)
-            .map(
-              fieldValues =>
-                mkStringAndWrapWith(fieldValues.zipWithIndex.map {
-                  case (string, index) =>
-                    padToEmpty(string, indexAndSize.getOrElse(index, 0))
-                }, "|")
+            .map(fieldValues =>
+              mkStringAndWrapWith(
+                fieldValues.zipWithIndex.map { case (string, index) =>
+                  padToEmpty(string, indexAndSize.getOrElse(index, 0))
+                },
+                "|"
+              )
             )
         }
 
         contentList.mkString(System.lineSeparator()) ::
-          nestedTables.flatMap(
-            table =>
-              mkStringAndWrapWith(
-                List(s"### ${convertHeadingToString(table._2.path)}"),
-                System.lineSeparator()
-              ) :: go(table._1, updatedUsedHeadings)
+          nestedTables.flatMap(table =>
+            mkStringAndWrapWith(
+              List(s"### ${convertHeadingToString(table._2.path)}"),
+              System.lineSeparator()
+            ) :: go(table._1, updatedUsedHeadings)
           )
       }
 
@@ -371,22 +381,20 @@ trait ConfigDocsModule extends WriteModule {
       input: List[List[String]]
     ): Map[Index, Size] = {
       def mergeMapWithMaxSize(accumulated: Map[Index, Size], current: Map[Index, Size]): Map[Index, Size] =
-        current.foldLeft(Map.empty: Map[Index, Size])({
-          case (k, v) =>
-            accumulated.get(v._1) match {
-              case Some(size) => k.updated(v._1, Math.max(v._2, size))
-              case None       => k.+((v._1, v._2))
-            }
+        current.foldLeft(Map.empty: Map[Index, Size])({ case (k, v) =>
+          accumulated.get(v._1) match {
+            case Some(size) => k.updated(v._1, Math.max(v._2, size))
+            case None       => k.+((v._1, v._2))
+          }
         })
 
-      input.foldLeft(Map.empty: Map[Index, Size])(
-        (map, row) =>
-          mergeMapWithMaxSize(
-            map,
-            row.zipWithIndex
-              .map({ case (string, index) => (index, string.length) })
-              .toMap
-          )
+      input.foldLeft(Map.empty: Map[Index, Size])((map, row) =>
+        mergeMapWithMaxSize(
+          map,
+          row.zipWithIndex
+            .map({ case (string, index) => (index, string.length) })
+            .toMap
+        )
       )
     }
   }
@@ -399,7 +407,7 @@ trait ConfigDocsModule extends WriteModule {
       def mk(list: List[FieldName]): Heading =
         if (list.isEmpty) new Heading(List(FieldName.Blank)) {}
         else
-          new Heading(list) {}
+          new Heading(list)                                  {}
     }
 
     abstract sealed case class Link(value: String)
@@ -408,10 +416,10 @@ trait ConfigDocsModule extends WriteModule {
 
       def blank: Link = new Link("") {}
 
-      def rawString(s: String): Link =
+      def rawString(s: String): Link                       =
         new Link(s) {}
 
-      def githubLink(name: String, link: String): Link =
+      def githubLink(name: String, link: String): Link     =
         new Link(s"[${name}](${link})") {}
 
       def confluenceLink(name: String, link: String): Link =
@@ -429,8 +437,8 @@ trait ConfigDocsModule extends WriteModule {
      * given a path `x.y` and `k.y`, the heading `y` can appear twice in the markdown file with indices as 0 and 1. Depending on the flavour of markdown (Example: Github, Confluence)
      * we have different ways to produce links towards those headings. In this case, we employ the strategy used by Github.
      */
-    def githubFlavoured(
-      implicit S: K <:< String
+    def githubFlavoured(implicit
+      S: K <:< String
     ): (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, index, fieldNameOrFormat) => {
         val headingStr =
@@ -451,8 +459,8 @@ trait ConfigDocsModule extends WriteModule {
       }
 
     // Confluence markdown
-    def confluenceFlavoured(baseLink: Option[String])(
-      implicit S: K <:< String
+    def confluenceFlavoured(baseLink: Option[String])(implicit
+      S: K <:< String
     ): (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, _, fieldName) => {
         val headingStr =
@@ -465,12 +473,12 @@ trait ConfigDocsModule extends WriteModule {
         val name =
           fieldName.fold(_.asString(Some("Field Descriptions")), _.asString)
 
-        baseLink.fold(Link.confluenceLink(name, headingStr))(
-          baseLink => Link.confluenceLink(name, s"${baseLink}-${headingStr}")
+        baseLink.fold(Link.confluenceLink(name, headingStr))(baseLink =>
+          Link.confluenceLink(name, s"${baseLink}-${headingStr}")
         )
       }
 
-    def singletonTable(tableRow: TableRow) =
+    def singletonTable(tableRow: TableRow): Table =
       Table(List(tableRow))
 
     /**
@@ -550,7 +558,7 @@ trait ConfigDocsModule extends WriteModule {
     }
   }
 
-  import ConfigDocs.{ DynamicMap => DocsMap, Leaf => DocsLeaf }
+  import ConfigDocs.{DynamicMap => DocsMap, Leaf => DocsLeaf}
 
   /**
    * Generate documentation based on the `ConfigDescriptor`, where a
@@ -679,58 +687,60 @@ trait ConfigDocsModule extends WriteModule {
    * from various sources, and `A` represents the actual config value that was retrieved.
    */
   def generateReport[A](config: ConfigDescriptor[A], value: A): Either[String, ConfigDocs] =
-    write[A](config, value)
-      .map(tree => {
-        def loop(tree: PropertyTree[K, V], schemaDocs: ConfigDocs, keys: List[K]): ConfigDocs =
-          schemaDocs match {
-            case DocsLeaf(sources, descriptions, None) =>
-              // Feed value when it hits leaf
-              tree.getPath(keys) match {
-                case PropertyTree.Leaf(value) =>
-                  DocsLeaf(sources, descriptions, Some(value))
-                case _ => DocsLeaf(sources, descriptions, None)
-              }
+    write[A](config, value).map { tree =>
+      def loop(tree: PropertyTree[K, V], schemaDocs: ConfigDocs, keys: List[K]): ConfigDocs =
+        schemaDocs match {
+          case DocsLeaf(sources, descriptions, None) =>
+            // Feed value when it hits leaf
+            tree.getPath(keys) match {
+              case PropertyTree.Leaf(value) =>
+                DocsLeaf(sources, descriptions, Some(value))
+              case _                        => DocsLeaf(sources, descriptions, None)
+            }
 
-            case a: DocsLeaf => a
+          case a: DocsLeaf => a
 
-            case a: ConfigDocs.Recursion => a
+          case a: ConfigDocs.Recursion => a
 
-            case ConfigDocs.Nested(path, docs, descriptions) =>
-              ConfigDocs
-                .Nested(path, loop(tree, docs, keys :+ path), descriptions)
+          case ConfigDocs.Nested(path, docs, descriptions) =>
+            ConfigDocs
+              .Nested(path, loop(tree, docs, keys :+ path), descriptions)
 
-            case ConfigDocs.Zip(left, right) =>
-              ConfigDocs.Zip(loop(tree, left, keys), loop(tree, right, keys))
+          case ConfigDocs.Zip(left, right) =>
+            ConfigDocs.Zip(loop(tree, left, keys), loop(tree, right, keys))
 
-            case ConfigDocs.OrElse(left, right) =>
-              ConfigDocs.OrElse(loop(tree, left, keys), loop(tree, right, keys))
+          case ConfigDocs.OrElse(left, right) =>
+            ConfigDocs.OrElse(loop(tree, left, keys), loop(tree, right, keys))
 
-            case cd: DocsMap =>
-              tree.getPath(keys) match {
-                case rec: PropertyTree.Record[K, V] =>
-                  DocsMap(cd.schemaDocs, rec.value.toList.map { keyTree =>
+          case cd: DocsMap =>
+            tree.getPath(keys) match {
+              case rec: PropertyTree.Record[K, V] =>
+                DocsMap(
+                  cd.schemaDocs,
+                  rec.value.toList.map { keyTree =>
                     keyTree._1 -> loop(keyTree._2, cd.schemaDocs, List.empty)
-                  }.toMap)
-                case v =>
-                  DocsMap(
-                    loop(v, cd.schemaDocs, keys),
-                    Map.empty[K, ConfigDocs]
-                  )
-              }
+                  }.toMap
+                )
+              case v                              =>
+                DocsMap(
+                  loop(v, cd.schemaDocs, keys),
+                  Map.empty[K, ConfigDocs]
+                )
+            }
 
-            case ConfigDocs.Sequence(schema, values) =>
-              tree.getPath(keys) match {
-                case PropertyTree.Sequence(value) if value.nonEmpty =>
-                  ConfigDocs.Sequence(
-                    schema,
-                    value.map(t => loop(t, schema, List.empty))
-                  )
-                case _ =>
-                  ConfigDocs
-                    .Sequence(schema, loop(tree, schema, keys) :: values)
-              }
-          }
+          case ConfigDocs.Sequence(schema, values) =>
+            tree.getPath(keys) match {
+              case PropertyTree.Sequence(value) if value.nonEmpty =>
+                ConfigDocs.Sequence(
+                  schema,
+                  value.map(t => loop(t, schema, List.empty))
+                )
+              case _                                              =>
+                ConfigDocs
+                  .Sequence(schema, loop(tree, schema, keys) :: values)
+            }
+        }
 
-        loop(tree, generateDocs(config), List.empty)
-      })
+      loop(tree, generateDocs(config), List.empty)
+    }
 }

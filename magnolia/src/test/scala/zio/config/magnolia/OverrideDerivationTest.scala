@@ -1,9 +1,9 @@
 package zio.config.magnolia
 
-import zio.config.PropertyTree.{ Leaf, Record, Sequence }
+import zio.config.PropertyTree.{Leaf, Record, Sequence}
+import zio.config._
 import zio.test.Assertion._
 import zio.test._
-import zio.config._
 
 object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
   import Descriptor.SealedTraitStrategy._
@@ -16,7 +16,7 @@ object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
 }
 
 object OverrideDerivationTest extends DefaultRunnableSpec {
-  val spec = suite("OverrideDerivationTest")(
+  val spec: ZSpec[Environment, Failure] = suite("OverrideDerivationTest")(
     test("simple config") {
       import OverrideDerivationTestEnv._
 
@@ -55,7 +55,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
               Leaf("other_object_suffix"),
               Leaf("obj1_name_suffix"),
               Record(Map("prefix_value" -> Leaf("a"))),
-              Record(Map("prefix_data"  -> Leaf("b")))
+              Record(Map("prefix_data" -> Leaf("b")))
             )
           )
         )
@@ -143,7 +143,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
               Leaf("OtherOBJECT"),
               Leaf("Obj1Name"),
               Record(Map("value" -> Leaf("a"), "type" -> Leaf("ClassWithValue"))),
-              Record(Map("data"  -> Leaf("b"), "type" -> Leaf("ClassWithData")))
+              Record(Map("data" -> Leaf("b"), "type" -> Leaf("ClassWithData")))
             )
           )
         )

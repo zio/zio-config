@@ -1,25 +1,25 @@
 package zio.config
 
-import zio.ZIO
 import zio.config.ConfigDescriptor._
-import zio.config.helpers._
 import zio.config.ReadWriteRoundtripTestUtils._
+import zio.config.helpers._
 import zio.random.Random
-import zio.test._
 import zio.test.Assertion._
+import zio.test._
+import zio.{Has, ZIO}
 
 object ReadWriteRoundtripTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[Serializable], TestSuccess] =
     suite("Coproduct support")(
       testM("newtype 1 roundtrip") {
         checkM(genId) { p =>
           val p2 =
             for {
               written <- ZIO.fromEither(write(cId, p))
-              reread <- ZIO.fromEither(
-                         read(cId from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                       )
+              reread  <- ZIO.fromEither(
+                           read(cId from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                         )
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -30,9 +30,9 @@ object ReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cDbUrl, p))
-              reread <- ZIO.fromEither(
-                         read(cDbUrl from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                       )
+              reread  <- ZIO.fromEither(
+                           read(cDbUrl from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                         )
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -43,11 +43,11 @@ object ReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cEnterpriseAuth, p))
-              reread <- ZIO.fromEither(
-                         read(
-                           cEnterpriseAuth from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+              reread  <- ZIO.fromEither(
+                           read(
+                             cEnterpriseAuth from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                           )
                          )
-                       )
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -58,11 +58,11 @@ object ReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cNestedConfig, p))
-              reread <- ZIO.fromEither(
-                         read(
-                           cNestedConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+              reread  <- ZIO.fromEither(
+                           read(
+                             cNestedConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                           )
                          )
-                       )
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -73,9 +73,9 @@ object ReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cSingleField, p))
-              reread <- ZIO.fromEither(
-                         read(cSingleField from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                       )
+              reread  <- ZIO.fromEither(
+                           read(cSingleField from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                         )
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -86,11 +86,11 @@ object ReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cCoproductConfig, p))
-              reread <- ZIO.fromEither(
-                         read(
-                           cCoproductConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+              reread  <- ZIO.fromEither(
+                           read(
+                             cCoproductConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                           )
                          )
-                       )
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -99,11 +99,11 @@ object ReadWriteRoundtripTest extends BaseSpec {
       testM("empty sequence zipped with optional nested") {
         val config = (list("a")(string) |@| nested("b")(string).optional).tupled
         val data   = (Nil, None)
-        val data2 = for {
+        val data2  = for {
           written <- ZIO.fromEither(write(config, data))
-          reread <- ZIO.fromEither(
-                     read(config from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                   )
+          reread  <- ZIO.fromEither(
+                       read(config from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                     )
         } yield reread
 
         assertM(data2)(equalTo(data))
@@ -145,18 +145,18 @@ object ReadWriteRoundtripTestUtils {
   val genCoproductConfig: Gen[Random, CoproductConfig] =
     Gen.either(genDataItem, genNestedConfig).map(CoproductConfig.apply)
 
-  val cId             = string("kId").to[Id]
-  val cId2            = string("kId2").to[Id]
-  val cDataItem       = (cId2.optional |@| int("kDiCount")).to[DataItem]
-  val cDbUrl          = string("kDbUrl").to[DbUrl]
-  val cEnterpriseAuth = (cId |@| cDbUrl).to[EnterpriseAuth]
+  val cId: ConfigDescriptor[Id]                         = string("kId").to[Id]
+  val cId2: ConfigDescriptor[Id]                        = string("kId2").to[Id]
+  val cDataItem: ConfigDescriptor[DataItem]             = (cId2.optional |@| int("kDiCount")).to[DataItem]
+  val cDbUrl: ConfigDescriptor[DbUrl]                   = string("kDbUrl").to[DbUrl]
+  val cEnterpriseAuth: ConfigDescriptor[EnterpriseAuth] = (cId |@| cDbUrl).to[EnterpriseAuth]
 
-  val cNestedConfig =
+  val cNestedConfig: ConfigDescriptor[NestedPath] =
     (cEnterpriseAuth |@| int("kCount") |@| float("kFactor")).to[NestedPath]
 
   val cSingleField: ConfigDescriptor[SingleField] =
     int("kCount").to[SingleField]
 
-  val cCoproductConfig =
+  val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
     (cDataItem.orElseEither(cNestedConfig)).to[CoproductConfig]
 }

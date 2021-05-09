@@ -1,22 +1,22 @@
 package zio.config
 
-import java.io.File
-import java.net.{ URI, URL }
-import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset }
-import java.util.UUID
-
 import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
 import zio.test.environment.TestEnvironment
+
+import java.io.File
+import java.net.{URI, URL}
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
+import java.util.UUID
 import scala.concurrent.duration.Duration
 import scala.util.Try
 
 object PropertyTypeTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[Environment, Failure] =
     suite("PropertyType")(
       testM("StringType roundtrip") {
         // any string is a valid string i guess
@@ -188,10 +188,9 @@ object PropertyTypeTestUtils {
     val combinations = Array.ofDim[String](max)
     for (i <- 0 until max) {
       val combination: Array[Char] = s_.toCharArray
-      for (j <- 0 until s_.length) {
+      for (j <- 0 until s_.length)
         if (((i >> j) & 1) == 1)
           combination(j) = (combination(j) - 32).toChar
-      }
       combinations(i) = combination.mkString
     }
     combinations.toList
@@ -237,10 +236,9 @@ object PropertyTypeTestUtils {
     listOf(const('0')).map(_.mkString)
 
   def genPadLeadingZeros[A: Numeric](gen: Gen[Random, A]): Gen[Random with Sized, String] =
-    (leadingZeros <*> gen.map(_.toString)).map {
-      case (zeros, num) =>
-        if (num.startsWith("-")) "-" + zeros + num.drop(1)
-        else zeros + num
+    (leadingZeros <*> gen.map(_.toString)).map { case (zeros, num) =>
+      if (num.startsWith("-")) "-" + zeros + num.drop(1)
+      else zeros + num
     }
 
   private val genWhole: Gen[Random with Sized, String] = oneOf(
@@ -272,31 +270,31 @@ object PropertyTypeTestUtils {
 
   private val genScheme: Gen[Random with Sized, String] = for {
     letter <- genAlphaChar.map(_.toString)
-    rest <- listOf(
-             weighted(
-               alphaNumericString      -> 36,
-               elements("+", ".", "-") -> 3
-             )
-           ).map(_.mkString)
+    rest   <- listOf(
+                weighted(
+                  alphaNumericString      -> 36,
+                  elements("+", ".", "-") -> 3
+                )
+              ).map(_.mkString)
   } yield letter + rest
 
   private val genAuth: Gen[Random with Sized, String] = genAppend(
     const("//"),
-    genAppend(genOptionalStr(alphaNumericString), const("@")), // userinfo
+    genAppend(genOptionalStr(alphaNumericString), const("@")),           // userinfo
     const("@"),
     Gen.weighted(alphaNumericString -> 26), // host
     genOptionalStr(genAppend(const(":"), int(0, 65535).map(_.toString))) // port
   )
 
-  private val genPath: Gen[Random with Sized, String] =
+  private val genPath: Gen[Random with Sized, String]  =
     listOf1(listOf1(alphaNumericChar).map(_.mkString)).map(_.mkString("/"))
 
   private val genAuthorityAndPath: Gen[Random with Sized, String] = {
     for {
       hasAuthority <- boolean
-      authAndPath <- if (hasAuthority) {
-                      genAppend(genAuth, const("/"), genPath)
-                    } else genPath
+      authAndPath  <- if (hasAuthority) {
+                        genAppend(genAuth, const("/"), genPath)
+                      } else genPath
     } yield authAndPath
   }
   private val genQuery: Gen[Random with Sized, String] = genAppend(

@@ -1,12 +1,12 @@
 package zio.config.examples
 
-import java.io.File
-
-import zio.{ system, App, ExitCode, URIO, ZIO }
 import zio.config._
 import zio.config.magnolia._
 import zio.config.typesafe._
-import zio.console.{ putStrLn, Console }
+import zio.console.{Console, putStrLn}
+import zio.{App, ExitCode, URIO, ZIO, system}
+
+import java.io.File
 
 /**
  * One of the ways you can summon various sources especially
@@ -26,7 +26,7 @@ object CombineSourcesExample extends App {
       constant  <- ZIO.fromEither(TypesafeConfigSource.fromHoconString(s""))
       env       <- ConfigSource.fromSystemEnv
       sysProp   <- ConfigSource.fromSystemProperties
-      source    = hoconFile <> constant <> env <> sysProp
+      source     = hoconFile <> constant <> env <> sysProp
     } yield (descriptor[Config] from source)
 
   val application: ZIO[Console with system.System, String, Unit] =

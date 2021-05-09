@@ -2,8 +2,8 @@ package zio.config.examples.magnolia
 
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
-import zio.config.typesafe.TypesafeConfigSource
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.typesafe.TypesafeConfigSource
 
 object AutoDerivationCustomKeys extends App with EitherImpureOps {
   final case class MyConfig(accountId: String, awsRegion: String)
@@ -13,7 +13,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
   final case class Region(value: String)
   Descriptor[String].transform[Region](Region, _.value)
 
-  val camelCaseConfig =
+  val camelCaseConfig: String =
     """
       |{
       |  awsRegion: us-east
@@ -22,14 +22,14 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       |""".stripMargin
 
   // Default behaviour, and hence no mapKey
-  val camelCaseResult =
+  val camelCaseResult: Either[ReadError[String], MyConfig] =
     read(
       descriptor[MyConfig] from (TypesafeConfigSource.fromHoconString(camelCaseConfig).loadOrThrow)
     )
 
   assert(camelCaseResult == Right(MyConfig("abcd", "us-east")))
 
-  val kebabCaseConfig =
+  val kebabCaseConfig: String =
     """
       |{
       |  aws-region: us-east
@@ -37,14 +37,14 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  val kebabCaseResult =
+  val kebabCaseResult: Either[ReadError[String], MyConfig] =
     read(
       descriptor[MyConfig].mapKey(toKebabCase) from (TypesafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow)
     )
 
   assert(kebabCaseResult == Right(MyConfig("abcd", "us-east")))
 
-  val snakeCaseConfig =
+  val snakeCaseConfig: String =
     """
       |{
       |  aws_region: us-east
@@ -52,7 +52,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  val snakeCaseResult =
+  val snakeCaseResult: Either[ReadError[String], MyConfig] =
     read(
       descriptor[MyConfig].mapKey(toSnakeCase) from (TypesafeConfigSource.fromHoconString(snakeCaseConfig).loadOrThrow)
     )

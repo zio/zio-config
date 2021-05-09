@@ -1,11 +1,12 @@
 package zio.config.typesafe
 
+import zio.config._
+import zio.config.magnolia.descriptor
 import zio.test.Assertion._
 import zio.test._
-import zio.config._, zio.config.magnolia.descriptor
 
 object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSupport {
-  val spec = suite("TypesafeConfigRecursiveAutomatic")(
+  val spec: ZSpec[Environment, Failure] = suite("TypesafeConfigRecursiveAutomatic")(
     test("Read recursive typesafe config with optional") {
       case class SimpleRec(id: Int, s: Option[SimpleRec])
 

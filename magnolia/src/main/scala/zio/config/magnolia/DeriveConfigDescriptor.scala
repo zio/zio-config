@@ -1,22 +1,20 @@
 package zio.config.magnolia
 
-import java.io.File
-import java.net.{ URI, URL }
-import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
-import java.util.UUID
-
 import magnolia._
+import zio.config._
 import zio.config.derivation.DerivationUtils._
 import zio.duration.Duration
 
-import scala.concurrent.duration.{ Duration => ScalaDuration }
+import java.io.File
+import java.net.{URI, URL}
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import java.util.UUID
+import scala.concurrent.duration.{Duration => ScalaDuration}
 import scala.language.experimental.macros
-import zio.config._
 
 trait DeriveConfigDescriptor { self =>
 
   /**
-   *
    * Strategy on how to name the class names in the source config (if they are used in the config)
    * By default, zio-config doesn't make assumptions that config keys or class names, especially when there is
    * sealed traits or case objects
@@ -92,7 +90,6 @@ trait DeriveConfigDescriptor { self =>
     name
 
   /**
-   *
    *  Strategy on how to name the field names in the actual config
    *
    *   {{{
@@ -133,7 +130,7 @@ trait DeriveConfigDescriptor { self =>
 
   /**
    *  Strategy to deal with sealed traits specifically.
-   **
+   * *
    *  Suppose need to skip the use of class-names (both subclass names and name of the sealed trait in the source config),
    *  then we need the following custom derivation:
    *
@@ -192,7 +189,6 @@ trait DeriveConfigDescriptor { self =>
    *          labelSubClassName("type") && ignoreSealedTraitName
    *     }
    *   }}}
-   *
    *
    * Sometimes, we have situation where we can't ignore sealedTraitName in the config.
    *
@@ -256,7 +252,6 @@ trait DeriveConfigDescriptor { self =>
    *        }
    *     }
    *   }}}
-   *
    */
   import Descriptor.SealedTraitStrategy, SealedTraitStrategy._
 
@@ -351,7 +346,7 @@ trait DeriveConfigDescriptor { self =>
         constant[T](ccName, caseClass.construct(_ => ???))
       else
         caseClass.parameters.toList match {
-          case Nil =>
+          case Nil          =>
             constantString(ccName).transform[T](
               _ => caseClass.construct(_ => ???),
               _ => ccName
@@ -367,12 +362,12 @@ trait DeriveConfigDescriptor { self =>
 
               val raw                      = param.typeclass.desc
               val (unwrapped, wasOptional) = unwrapFromOptional(raw)
-              val withNesting = if (wasOptional) {
+              val withNesting              = if (wasOptional) {
                 nested(paramName)(unwrapped).optional.asInstanceOf[ConfigDescriptor[Any]]
               } else {
                 nested(paramName)(unwrapped)
               }
-              val described = descriptions.foldLeft(withNesting)(_ ?? _)
+              val described                = descriptions.foldLeft(withNesting)(_ ?? _)
               param.default.fold(described)(described.default(_))
             }
 
@@ -396,7 +391,7 @@ trait DeriveConfigDescriptor { self =>
         .toSeq
         .flatMap {
           case (label, Seq((_, fullName))) => (fullName -> label) :: Nil
-          case (label, seq) =>
+          case (label, seq)                =>
             seq.zipWithIndex.map { case ((_, fullName), idx) => fullName -> s"${label}_$idx" }
         }
         .toMap
@@ -424,11 +419,10 @@ trait DeriveConfigDescriptor { self =>
           case Descriptor.SealedTraitSubClassNameStrategy.LabelSubClassName(fieldName) =>
             (string(fieldName) ?? s"Expecting a constant string ${subClassName}" |@| typeclass.desc).tupled
               .transformOrFail[subtype.SType](
-                {
-                  case (name, sub) =>
-                    if (subClassName == name) Right(sub)
-                    else
-                      Left(s"The type specified ${name} is not equal to the obtained config ${subtype.typeName.full}")
+                { case (name, sub) =>
+                  if (subClassName == name) Right(sub)
+                  else
+                    Left(s"The type specified ${name} is not equal to the obtained config ${subtype.typeName.full}")
                 },
                 b => Right((subClassName, b)): Either[String, (String, subtype.SType)]
               )
@@ -474,7 +468,6 @@ trait DeriveConfigDescriptor { self =>
    * For almost all the important types, zio-config-magnolia already provides implicit instances for `Descriptor`.
    *
    * However, say you have a type ZonedDateTime, for which zio-config hasn't provided instance of `Descriptor`, then it will fail to compile.
-   *
    *
    * {{{
    *      case class MyConfig(x: ZonedDateTime)
@@ -586,7 +579,6 @@ trait DeriveConfigDescriptor { self =>
    *     }
    *   }}}
    *
-   *
    *   If the source is HOCON, then {{{ betterDerivation.descriptor[MyConfig] }}} can read:
    *
    *   {{{
@@ -599,7 +591,6 @@ trait DeriveConfigDescriptor { self =>
    *         }
    *      }
    *   }}}
-   *
    *
    * Providing the name of the sealed traits is least commonly used. This is why the default derivation of sealed trait doesn't consider it.
    *
@@ -616,7 +607,6 @@ trait DeriveConfigDescriptor { self =>
    *
    * If the source is HOCON, then {{{ customDerivation.descriptor[MyConfig] }}} can read:
    *
-   *
    *  {{{
    *     x: {
    *       type : B
@@ -624,7 +614,6 @@ trait DeriveConfigDescriptor { self =>
    *       y : z
    *    }
    *  }}}
-   *
    */
   def descriptor[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
     config.desc

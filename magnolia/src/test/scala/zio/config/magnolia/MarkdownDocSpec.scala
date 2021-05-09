@@ -1,8 +1,10 @@
 package zio.config.magnolia
 
+import zio.config._
 import zio.test.Assertion._
 import zio.test._
-import zio.config._, ConfigDescriptor._
+
+import ConfigDescriptor._
 
 object MarkdownDocSpec extends DefaultRunnableSpec {
   sealed trait Cloud
@@ -14,7 +16,7 @@ object MarkdownDocSpec extends DefaultRunnableSpec {
 
   }
 
-  val spec = suite("Markdown Spec")(
+  val spec: ZSpec[Environment, Failure] = suite("Markdown Spec")(
     test("toGithubFlavouredMarkdown works for a complex config") {
 
       final case class RawConfig(tableDetails: List[RawTableConfig])

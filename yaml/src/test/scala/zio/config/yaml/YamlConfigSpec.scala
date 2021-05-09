@@ -1,14 +1,13 @@
 package zio.config.yaml
 
-import zio.test._
+import zio.config.{ConfigDescriptor, PropertyTree}
 import zio.test.Assertion._
-import zio.config.PropertyTree
-import zio.config.ConfigDescriptor
+import zio.test._
 
 object YamlConfigSpec extends DefaultRunnableSpec {
-  val spec = suite("YamlConfig")(
+  val spec: ZSpec[Environment, Failure] = suite("YamlConfig")(
     test("Read a complex structure") {
-      val result = YamlConfigSource.fromYamlString(
+      val result   = YamlConfigSource.fromYamlString(
         """
           |top:
           |  child:
@@ -33,7 +32,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
                     "s" -> PropertyTree.Leaf("str")
                   )
                 ),
-                "list" -> PropertyTree.Sequence(
+                "list"  -> PropertyTree.Sequence(
                   List(
                     PropertyTree.Record(Map("i" -> PropertyTree.Leaf("1"))),
                     PropertyTree.Record(Map("b" -> PropertyTree.Leaf("true"))),
@@ -60,15 +59,18 @@ object YamlConfigSpec extends DefaultRunnableSpec {
             ConfigDescriptor.list {
               (ConfigDescriptor.nested("A")(ConfigDescriptor.string("a").to[A]) orElseEither
                 ConfigDescriptor.nested("B")(ConfigDescriptor.boolean("b").to[B]))
-                .transform(_.merge, (_: Sum) match {
-                  case a: A => Left(a)
-                  case b: B => Right(b)
-                })
+                .transform(
+                  _.merge,
+                  (_: Sum) match {
+                    case a: A => Left(a)
+                    case b: B => Right(b)
+                  }
+                )
             }
           }
           .to[Child]
 
-      val result =
+      val result   =
         YamlConfig.fromString(
           """|sum:
              |- A:

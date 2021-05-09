@@ -1,46 +1,46 @@
 package zio.config.shapeless
 
-import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset }
+import zio.ZIO
+import zio.config._
+import zio.config.helpers._
+import zio.config.shapeless.DeriveConfigDescriptor._
+import zio.random.Random
+import zio.test.Assertion._
+import zio.test._
+
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
 
-import zio.config._
-import zio.config.shapeless.DeriveConfigDescriptor._
 import AutomaticConfigTestUtils._
-import zio.ZIO
-import zio.random.Random
-import zio.test._
-import zio.config.helpers._
-import zio.test.Assertion._
 
 object AutomaticConfigTest extends {
 
-  val spec =
+  val spec: Spec[TestConfig with Random with Sized, TestFailure[Any], TestSuccess] =
     suite("shapeless spec")(
       testM("automatic derivation spec") {
-        checkM(genEnvironment) {
-          environment =>
-            val source =
-              ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
+        checkM(genEnvironment) { environment =>
+          val source =
+            ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
 
-            val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
-              for {
-                result  <- ZIO.fromEither(read(configDesc from source))
-                written <- ZIO.effectTotal(write(configDesc, result))
-              } yield written
+          val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
+            for {
+              result  <- ZIO.fromEither(read(configDesc from source))
+              written <- ZIO.effectTotal(write(configDesc, result))
+            } yield written
 
-            val defaultValue   = environment.getOrElse("default", "1")
-            val anotherDefault = environment.getOrElse("anotherDefault", "true")
+          val defaultValue   = environment.getOrElse("default", "1")
+          val anotherDefault = environment.getOrElse("anotherDefault", "true")
 
-            val updatedEnv =
-              environment
-                .updated("default", defaultValue)
-                .updated("anotherDefault", anotherDefault)
+          val updatedEnv =
+            environment
+              .updated("default", defaultValue)
+              .updated("anotherDefault", anotherDefault)
 
-            val actual = readAndWrite
-              .map(_.map(_.flattenString()))
-              .map(_.fold(_ => Nil, fromMultiMap(_).toList.sortBy(_._1)))
+          val actual = readAndWrite
+            .map(_.map(_.flattenString()))
+            .map(_.fold(_ => Nil, fromMultiMap(_).toList.sortBy(_._1)))
 
-            assertM(actual)(equalTo(updatedEnv.toList.sortBy(_._1)))
+          assertM(actual)(equalTo(updatedEnv.toList.sortBy(_._1)))
         }
       }
     )
@@ -107,24 +107,24 @@ object AutomaticConfigTestUtils {
       lastVisited    <- genLocalDateTimeString
       id             <- Gen.anyUUID
       partialMyConfig = Map(
-        "aws.region" -> aws.region,
-        aws.security match {
-          case Password(password) => "aws.security.Password.value" -> password
-          case Token(token)       => "aws.security.Token.value"    -> token
-        },
-        price match {
-          case Description(description) => "cost.Description.value" -> description
-          case Currency(dollars)        => "cost.Currency.value"    -> dollars.toString
-        },
-        "dburl.dburl"  -> dbUrl.dburl,
-        "port"         -> port.toString,
-        "quantity"     -> quantity.fold(d => d.toString, s => s),
-        "descriptions" -> descriptions.mkString(","),
-        "created"      -> created,
-        "updated"      -> updated,
-        "lastVisited"  -> lastVisited,
-        "id"           -> id.toString
-      ) ++ amount.map(double => ("amount", double.toString)).toList
+                          "aws.region"   -> aws.region,
+                          aws.security match {
+                            case Password(password) => "aws.security.Password.value" -> password
+                            case Token(token)       => "aws.security.Token.value"    -> token
+                          },
+                          price match {
+                            case Description(description) => "cost.Description.value" -> description
+                            case Currency(dollars)        => "cost.Currency.value"    -> dollars.toString
+                          },
+                          "dburl.dburl"  -> dbUrl.dburl,
+                          "port"         -> port.toString,
+                          "quantity"     -> quantity.fold(d => d.toString, s => s),
+                          "descriptions" -> descriptions.mkString(","),
+                          "created"      -> created,
+                          "updated"      -> updated,
+                          "lastVisited"  -> lastVisited,
+                          "id"           -> id.toString
+                        ) ++ amount.map(double => ("amount", double.toString)).toList
     } yield (default, anotherDefault) match {
       case (Some(v1), Some(v2)) => partialMyConfig ++ List(("default", v1.toString), ("anotherDefault", v2.toString))
       case (Some(v1), None)     => partialMyConfig + (("default", v1.toString))
@@ -150,5 +150,5 @@ object AutomaticConfigTestUtils {
   val genLocalTimeString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
 
-  val configDesc = descriptor[MyConfig]
+  val configDesc: ConfigDescriptor[MyConfig] = descriptor[MyConfig]
 }

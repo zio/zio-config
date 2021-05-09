@@ -1,14 +1,14 @@
 package zio.config.magnolia
 
-import zio.config._, ConfigDescriptorAdt._
-import zio.config.PropertyTree
-import zio.config.PropertyTree.Leaf
-import zio.config.PropertyTree.Record
+import zio.config.PropertyTree.{Leaf, Record}
+import zio.config.{PropertyTree, _}
 import zio.test.Assertion._
 import zio.test._
 
+import ConfigDescriptorAdt._
+
 object DerivationTest extends DefaultRunnableSpec {
-  val spec = suite("DerivationTest")(
+  val spec: ZSpec[Environment, Failure] = suite("DerivationTest")(
     test("support describe annotation") {
       @describe("class desc")
       case class Cfg(@describe("field desc") fname: String)
@@ -17,19 +17,19 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], String)] = desc match {
-        case Lazy(thunk)               => collectDescriptions(thunk(), path)
-        case Default(config, _)        => collectDescriptions(config, path)
-        case DynamicMap(_, config)     => collectDescriptions(config, path)
-        case Describe(config, message) => (path, message) :: collectDescriptions(config, path)
-        case Nested(_, path, config)   => collectDescriptions(config, Some(path))
-        case Optional(config)          => collectDescriptions(config, path)
-        case OrElse(left, right) =>
+        case Lazy(thunk)                   => collectDescriptions(thunk(), path)
+        case Default(config, _)            => collectDescriptions(config, path)
+        case DynamicMap(_, config)         => collectDescriptions(config, path)
+        case Describe(config, message)     => (path, message) :: collectDescriptions(config, path)
+        case Nested(_, path, config)       => collectDescriptions(config, Some(path))
+        case Optional(config)              => collectDescriptions(config, path)
+        case OrElse(left, right)           =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
-        case OrElseEither(left, right) =>
+        case OrElseEither(left, right)     =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
-        case Sequence(_, config) => collectDescriptions(config, path)
-        case Source(_, _)        => Nil
-        case Zip(left, right) =>
+        case Sequence(_, config)           => collectDescriptions(config, path)
+        case Source(_, _)                  => Nil
+        case Zip(left, right)              =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
         case TransformOrFail(config, _, _) => collectDescriptions(config, path)
       }
@@ -83,14 +83,14 @@ object DerivationTest extends DefaultRunnableSpec {
         desc: ConfigDescriptor[T],
         path: Option[String]
       ): List[(Option[String], Any)] = desc match {
-        case Lazy(thunk)             => collectDefault(thunk(), path)
-        case Default(config, v)      => (path -> v) :: collectDefault(config, path)
-        case Describe(config, _)     => collectDefault(config, path)
-        case DynamicMap(_, config)   => collectDefault(config, path)
-        case Nested(_, path, config) => collectDefault(config, Some(path))
-        case Optional(config)        => collectDefault(config, path)
-        case OrElse(left, right)     => collectDefault(left, path) ::: collectDefault(right, path)
-        case OrElseEither(left, right) =>
+        case Lazy(thunk)                   => collectDefault(thunk(), path)
+        case Default(config, v)            => (path -> v) :: collectDefault(config, path)
+        case Describe(config, _)           => collectDefault(config, path)
+        case DynamicMap(_, config)         => collectDefault(config, path)
+        case Nested(_, path, config)       => collectDefault(config, Some(path))
+        case Optional(config)              => collectDefault(config, path)
+        case OrElse(left, right)           => collectDefault(left, path) ::: collectDefault(right, path)
+        case OrElseEither(left, right)     =>
           collectDefault(left, path) ::: collectDefault(right, path)
         case Sequence(_, config)           => collectDefault(config, path)
         case Source(_, _)                  => Nil
@@ -125,7 +125,7 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) PropertyTree.Sequence(List(loop(depth - 1)))
         else Record(Map("a" -> PropertyTree.Sequence(List(Leaf("s")))))
 
-      val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree", LeafForSequence.Valid)
+      val src                                            = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree", LeafForSequence.Valid)
 
       val res = read(descriptor[B] from src)
 

@@ -9,8 +9,8 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
 
   sealed trait X
 
-  case object A extends X
-  case object B extends X
+  case object A                extends X
+  case object B                extends X
   @name("c")
   case object C                extends X
   case class D(detail: Detail) extends X
@@ -20,7 +20,7 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
 
   case class Config(x: X)
 
-  val spec = suite("MagnoliaConfig")(test("descriptor of coproduct sealed trait") {
+  val spec: ZSpec[Environment, Failure] = suite("MagnoliaConfig")(test("descriptor of coproduct sealed trait") {
     assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "A"))))(equalTo(Right(Config(A)))) &&
     assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "B"))))(equalTo(Right(Config(B)))) &&
     assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Right(Config(C)))) &&

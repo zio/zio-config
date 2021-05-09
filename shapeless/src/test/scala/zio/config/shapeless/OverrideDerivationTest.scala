@@ -1,9 +1,9 @@
 package zio.config.shapeless
 
-import zio.config.PropertyTree.{ Leaf, Record, Sequence }
+import zio.config.PropertyTree.{Leaf, Record, Sequence}
+import zio.config._
 import zio.test.Assertion._
 import zio.test._
-import zio.config._
 
 object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
   override def mapClassName(name: String): String = toSnakeCase(name) + "_suffix"
@@ -22,7 +22,7 @@ object OverrideDerivationTestWithWrappedSealedTraitName extends DeriveConfigDesc
 }
 
 object OverrideDerivationTest extends DefaultRunnableSpec {
-  val spec = suite("OverrideDerivationTest")(
+  val spec: ZSpec[Environment, Failure] = suite("OverrideDerivationTest")(
     test("simple config") {
       import OverrideDerivationTestEnv._
 
@@ -65,7 +65,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
               Leaf("other_object_suffix"),
               Leaf("obj1_name_suffix"),
               Record(Map("prefix_value" -> Leaf("a"))),
-              Record(Map("prefix_data"  -> Leaf("b")))
+              Record(Map("prefix_data" -> Leaf("b")))
             )
           )
         )

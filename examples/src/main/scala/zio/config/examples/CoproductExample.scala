@@ -1,6 +1,8 @@
 package zio.config.examples
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
+
+import ConfigDescriptor._
 
 // see Stackoverflow: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
 object CoproductExample extends App {
@@ -14,39 +16,39 @@ object CoproductExample extends App {
   final case class Person(name: String, age: Option[Int])
   final case class Height(height: Long)
 
-  val personConfig =
+  val personConfig: ConfigDescriptor[Person] =
     (string("name") |@| int("age").optional)(Person.apply, Person.unapply)
 
-  val heightConfig =
+  val heightConfig: ConfigDescriptor[Height] =
     long("height")(Height.apply, Height.unapply)
 
-  val aConfig = nested("any")(personConfig)(A.apply, A.unapply)
-  val bConfig = nested("body")(heightConfig)(B.apply, B.unapply)
-  val cConfig = boolean("can")(C.apply, C.unapply)
-  val dConfig = string("dance")(D.apply, D.unapply)
+  val aConfig: ConfigDescriptor[A] = nested("any")(personConfig)(A.apply, A.unapply)
+  val bConfig: ConfigDescriptor[B] = nested("body")(heightConfig)(B.apply, B.unapply)
+  val cConfig: ConfigDescriptor[C] = boolean("can")(C.apply, C.unapply)
+  val dConfig: ConfigDescriptor[D] = string("dance")(D.apply, D.unapply)
 
-  val danceConfig =
+  val danceConfig: ConfigDescriptor[Dance] =
     enumeration[Dance](aConfig, bConfig, cConfig, dConfig)
 
-  val aSource = zio.config.ConfigSource.fromMap(
+  val aSource: ConfigSource = zio.config.ConfigSource.fromMap(
     Map("any.name" -> "chris"),
     "constant",
     Some('.')
   )
 
-  val bSource = ConfigSource.fromMap(
+  val bSource: ConfigSource = ConfigSource.fromMap(
     Map("body.height" -> "179"),
     "constant",
     Some('.')
   )
 
-  val cSource = ConfigSource.fromMap(
+  val cSource: ConfigSource = ConfigSource.fromMap(
     Map("can" -> "false"),
     "constant",
     Some('.')
   )
 
-  val dSource = ConfigSource.fromMap(
+  val dSource: ConfigSource = ConfigSource.fromMap(
     Map("dance" -> "I am Dancing !!"),
     "constant",
     Some('.')
@@ -54,28 +56,28 @@ object CoproductExample extends App {
 
   val runtime = zio.Runtime.default
 
-  def readA =
+  def readA: Either[ReadError[String], Dance] =
     read(danceConfig from aSource)
 
-  def readB =
+  def readB: Either[ReadError[String], Dance] =
     read(danceConfig from bSource)
 
-  def readC =
+  def readC: Either[ReadError[String], Dance] =
     read(danceConfig from cSource)
 
-  def readD =
+  def readD: Either[ReadError[String], Dance] =
     read(danceConfig from dSource)
 
-  val a =
+  val a: A =
     A(Person("chris", None))
 
-  val b =
+  val b: B =
     B(Height(179))
 
-  val c =
+  val c: C =
     C(false)
 
-  val d =
+  val d: D =
     D("I am Dancing !!")
 
   assert(
@@ -87,22 +89,22 @@ object CoproductExample extends App {
 
   write(danceConfig, d).map(_.flattenString())
 
-  val writeA =
+  val writeA: Either[String, Map[String, ::[String]]] =
     write(danceConfig, a).map(_.flattenString())
 
-  val writeB =
+  val writeB: Either[String, Map[String, ::[String]]] =
     write(danceConfig, b).map(_.flattenString())
 
-  val writeC =
+  val writeC: Either[String, Map[String, ::[String]]] =
     write(danceConfig, c).map(_.flattenString())
 
-  val writeD =
+  val writeD: Either[String, Map[String, ::[String]]] =
     write(danceConfig, d).map(_.flattenString())
 
   assert(
-    writeA == Right(Map("any.name"      -> singleton("chris"))) &&
+    writeA == Right(Map("any.name" -> singleton("chris"))) &&
       writeB == Right(Map("body.height" -> singleton("179"))) &&
-      writeC == Right(Map("can"         -> singleton("false"))) &&
-      writeD == Right(Map("dance"       -> singleton("I am Dancing !!")))
+      writeC == Right(Map("can" -> singleton("false"))) &&
+      writeD == Right(Map("dance" -> singleton("I am Dancing !!")))
   )
 }
