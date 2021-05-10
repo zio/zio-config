@@ -27,7 +27,7 @@ object ProductBuilderCodeGen {
     val L0  = l0.toUpperCase
     val l1  = letter(n + 1) // eg "e"
     val L1  = l1.toUpperCase
-    val ll1 = l1 + l1 // eg "ee"
+    val ll1 = l1 + l1       // eg "ee"
 
     val letters  = (0 to n).map(letter)
     val letters2 = letters.map(c => s"$c$c")
@@ -37,9 +37,9 @@ object ProductBuilderCodeGen {
     val cLoDerefernce = (0 to n).map(n => s"t._${n + 1}").mkString(", ")
     val cL0           = letters.mkString(", ").toUpperCase // eg "A, B, C, D"
     val cL0Lower      = cL0.toLowerCase
-    val cll0          = letters2.mkString(", ") // eg "aa, bb, cc, dd"
+    val cll0          = letters2.mkString(", ")            // eg "aa, bb, cc, dd"
     val zipped        = letters.mkString(" zip ")
-    val cll0Tupled = "(" * n + "aa, " + letters2
+    val cll0Tupled    = "(" * n + "aa, " + letters2
       .drop(1)
       .mkString("", "), ", ")") // eg "(((aa, bb), cc), dd)"
 
@@ -76,11 +76,8 @@ object ProductBuilderCodeGen {
 
   def readFile(filepath: File): List[String] = {
     val source = Source.fromFile(filepath.toString)
-    try {
-      source.getLines.toList
-    } finally {
-      source.close
-    }
+    try source.getLines.toList
+    finally source.close
   }
 
   def replaceFileSection(
