@@ -1,11 +1,14 @@
 package zio.config
 
+import com.github.ghik.silencer.silent
+
 import scala.annotation.tailrec
-import scala.collection.compat._
 import scala.collection.immutable.Nil
 
+@silent("Unused import")
 sealed trait PropertyTree[+K, +V] { self =>
   import PropertyTree._
+  import scala.collection.compat._
 
   final def flatten[K1 >: K, V1 >: V]: Map[Vector[K1], ::[V1]] = {
     def go(key: Vector[K1], propertyTree: PropertyTree[K1, V], acc: Map[Vector[K1], ::[V1]]): Map[Vector[K1], ::[V1]] =
