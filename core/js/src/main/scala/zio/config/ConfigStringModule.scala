@@ -9,7 +9,7 @@ import scala.concurrent.duration.Duration
 
 trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
 
-  object ConfigDescriptor extends ConfigDescriptorFunctions with ConfigDescriptorPlatformSpecific {
+  object ConfigDescriptor extends ConfigDescriptorFunctions {
     import ConfigDescriptorAdt._
 
     /**
