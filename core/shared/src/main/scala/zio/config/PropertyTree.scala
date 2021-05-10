@@ -1,6 +1,7 @@
 package zio.config
 
 import scala.annotation.tailrec
+import scala.collection.compat._
 import scala.collection.immutable.Nil
 
 sealed trait PropertyTree[+K, +V] { self =>
