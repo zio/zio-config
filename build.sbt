@@ -61,6 +61,14 @@ addCommandAlias(
   "testJVM",
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test"
 )
+addCommandAlias(
+  "testJVM211",
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
+)
+addCommandAlias(
+  "testDotty",
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
+)
 
 lazy val zioVersion       = "1.0.7"
 lazy val magnoliaVersion  = "0.17.0"
@@ -149,6 +157,9 @@ lazy val zioConfig    = crossProject(JVMPlatform)
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
 lazy val zioConfigJVM = zioConfig.jvm
+  .settings(
+    crossScalaVersions ++= Seq(ScalaDotty)
+  )
 
 lazy val zioConfigRefined    = crossProject(JVMPlatform)
   .in(file("refined"))
@@ -202,6 +213,9 @@ lazy val zioConfigDerivation    = crossProject(JVMPlatform)
   .settings(dottySettings)
   .dependsOn(zioConfig)
 lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm
+  .settings(
+    crossScalaVersions ++= Seq(ScalaDotty)
+  )
 
 lazy val zioConfigGen    = crossProject(JVMPlatform)
   .in(file("gen"))
@@ -261,6 +275,9 @@ lazy val zioConfigTypesafe    = crossProject(JVMPlatform)
   .settings(dottySettings)
   .dependsOn(zioConfig % "compile->compile;test->test")
 lazy val zioConfigTypesafeJVM = zioConfigTypesafe.jvm
+  .settings(
+    crossScalaVersions ++= Seq(ScalaDotty)
+  )
 
 lazy val zioConfigYaml    = crossProject(JVMPlatform)
   .in(file("yaml"))
@@ -276,6 +293,9 @@ lazy val zioConfigYaml    = crossProject(JVMPlatform)
   .settings(dottySettings)
   .dependsOn(zioConfig % "compile->compile;test->test")
 lazy val zioConfigYamlJVM = zioConfigYaml.jvm
+  .settings(
+    crossScalaVersions ++= Seq(ScalaDotty)
+  )
 
 lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .in(file("typesafe-magnolia-tests"))
