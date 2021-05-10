@@ -12,7 +12,7 @@ import zio.{Has, ZIO}
 object ListAndOptionalTest extends BaseSpec {
 
   val spec: Spec[Has[TestConfig.Service] with Has[Random.Service] with Has[Sized.Service], TestFailure[
-    Serializable
+    String
   ], TestSuccess] =
     suite("List and options")(
       testM("optional write") {
@@ -73,7 +73,7 @@ object ListAndOptionalTest extends BaseSpec {
             LeafForSequence.Valid
           )
 
-        val actual = ZIO.fromEither(read(cListConfig from src))
+        val actual = ZIO.fromEither(read(cListConfig from src)).mapError(_.getMessage)
 
         val expected = ListConfig(
           List(
@@ -96,7 +96,7 @@ object ListAndOptionalTest extends BaseSpec {
             LeafForSequence.Valid
           )
 
-        val actual = ZIO.fromEither(read(cListConfig from src))
+        val actual = ZIO.fromEither(read(cListConfig from src)).mapError(_.getMessage)
 
         val expected = ListConfig(Nil)
 
@@ -122,9 +122,11 @@ object ListAndOptionalTest extends BaseSpec {
       },
       testM("list write read") {
         checkM(genListConfig) { p =>
-          val actual = ZIO.fromEither(write(cListConfig, p).flatMap { tree =>
-            read(cListConfig from ConfigSource.fromPropertyTree(tree, "tree", LeafForSequence.Valid))
-          })
+          val actual = ZIO.fromEither(write(cListConfig, p)).flatMap { tree =>
+            ZIO
+              .fromEither(read(cListConfig from ConfigSource.fromPropertyTree(tree, "tree", LeafForSequence.Valid)))
+              .mapError(_.getMessage)
+          }
           assertM(actual)(equalTo(p))
         }
       },
@@ -175,7 +177,7 @@ object ListAndOptionalTest extends BaseSpec {
           )
 
         val config   = listOrSingleton("list")(string)
-        val actual   = ZIO.fromEither(read(config from src))
+        val actual   = ZIO.fromEither(read(config from src)).mapError(_.getMessage)
         val expected = List("x", "y")
 
         assertM(actual)(equalTo(expected))
@@ -189,7 +191,7 @@ object ListAndOptionalTest extends BaseSpec {
           )
 
         val config   = listOrSingleton("list")(string)
-        val actual   = ZIO.fromEither(read(config from src))
+        val actual   = ZIO.fromEither(read(config from src)).mapError(_.getMessage)
         val expected = List("x")
 
         assertM(actual)(equalTo(expected))

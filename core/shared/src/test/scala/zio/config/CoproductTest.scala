@@ -2,7 +2,6 @@ package zio.config
 
 import com.github.ghik.silencer.silent
 import zio.config.ConfigDescriptor._
-import zio.config.ReadError
 import zio.config.ReadError.Step.Key
 import zio.config.helpers._
 import zio.random.Random

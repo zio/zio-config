@@ -10,16 +10,18 @@ import zio.{Has, ZIO}
 
 object ReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[Serializable], TestSuccess] =
+  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[String], TestSuccess] =
     suite("Coproduct support")(
       testM("newtype 1 roundtrip") {
         checkM(genId) { p =>
           val p2 =
             for {
               written <- ZIO.fromEither(write(cId, p))
-              reread  <- ZIO.fromEither(
-                           read(cId from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                         )
+              reread  <- ZIO
+                           .fromEither(
+                             read(cId from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                           )
+                           .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -30,9 +32,11 @@ object ReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cDbUrl, p))
-              reread  <- ZIO.fromEither(
-                           read(cDbUrl from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                         )
+              reread  <- ZIO
+                           .fromEither(
+                             read(cDbUrl from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                           )
+                           .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -43,11 +47,13 @@ object ReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cEnterpriseAuth, p))
-              reread  <- ZIO.fromEither(
-                           read(
-                             cEnterpriseAuth from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+              reread  <- ZIO
+                           .fromEither(
+                             read(
+                               cEnterpriseAuth from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                             )
                            )
-                         )
+                           .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -58,11 +64,13 @@ object ReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cNestedConfig, p))
-              reread  <- ZIO.fromEither(
-                           read(
-                             cNestedConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+              reread  <- ZIO
+                           .fromEither(
+                             read(
+                               cNestedConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                             )
                            )
-                         )
+                           .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -73,9 +81,12 @@ object ReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cSingleField, p))
-              reread  <- ZIO.fromEither(
-                           read(cSingleField from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                         )
+              reread  <-
+                ZIO
+                  .fromEither(
+                    read(cSingleField from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                  )
+                  .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -86,11 +97,14 @@ object ReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cCoproductConfig, p))
-              reread  <- ZIO.fromEither(
-                           read(
-                             cCoproductConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
-                           )
-                         )
+              reread  <-
+                ZIO
+                  .fromEither(
+                    read(
+                      cCoproductConfig from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid)
+                    )
+                  )
+                  .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -101,9 +115,11 @@ object ReadWriteRoundtripTest extends BaseSpec {
         val data   = (Nil, None)
         val data2  = for {
           written <- ZIO.fromEither(write(config, data))
-          reread  <- ZIO.fromEither(
-                       read(config from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
-                     )
+          reread  <- ZIO
+                       .fromEither(
+                         read(config from ConfigSource.fromPropertyTree(written, "test", LeafForSequence.Valid))
+                       )
+                       .mapError(_.getMessage)
         } yield reread
 
         assertM(data2)(equalTo(data))

@@ -18,7 +18,7 @@ import ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[Serializable], TestSuccess] =
+  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[String], TestSuccess] =
     suite("Refined support")(
       testM("Refined config roundtrip") {
         checkM(genRefinedProd) { p =>
@@ -26,9 +26,11 @@ object RefinedReadWriteRoundtripTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <- ZIO
+                           .fromEither(
+                             read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
+                           )
+                           .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(p))

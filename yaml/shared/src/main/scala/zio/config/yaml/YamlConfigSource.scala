@@ -13,6 +13,7 @@ import scala.util.Try
 
 @silent("Unused import")
 object YamlConfigSource {
+  import scala.collection.compat._
   import VersionSpecificSupport._
 
   private[yaml] def convertYaml(data: AnyRef): PropertyTree[String, String] =

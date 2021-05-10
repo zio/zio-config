@@ -9,19 +9,21 @@ import zio.{Has, ZIO}
 
 object ProductBuilderTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[Serializable], TestSuccess] =
+  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[String], TestSuccess] =
     suite("ProductBuilder")(
       testM("combine 22 for case class") {
         checkM(genS22) { p =>
           val p2 =
             for {
               written <- ZIO.fromEither(write(cS22, p))
-              reread  <- ZIO.fromEither(
-                           read(
-                             cS22 from ConfigSource
-                               .fromMultiMap(written.flattenString("."), "test")
+              reread  <- ZIO
+                           .fromEither(
+                             read(
+                               cS22 from ConfigSource
+                                 .fromMultiMap(written.flattenString("."), "test")
+                             )
                            )
-                         )
+                           .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -61,12 +63,14 @@ object ProductBuilderTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cS22Tupled, tuple))
-              reread  <- ZIO.fromEither(
-                           read(
-                             cS22Tupled from ConfigSource
-                               .fromMultiMap(written.flattenString("."), "test")
+              reread  <- ZIO
+                           .fromEither(
+                             read(
+                               cS22Tupled from ConfigSource
+                                 .fromMultiMap(written.flattenString("."), "test")
+                             )
                            )
-                         )
+                           .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(tuple))

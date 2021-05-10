@@ -147,7 +147,6 @@ lazy val zioConfig    = crossProject(JVMPlatform)
   .settings(crossProjectSettings)
   .enablePlugins(BuildInfoPlugin)
   .settings(buildInfoSettings("zio.config"))
-  .settings(dottySettings)
   .settings(macroDefinitionSettings)
   .settings(
     libraryDependencies ++= Seq(
@@ -159,9 +158,7 @@ lazy val zioConfig    = crossProject(JVMPlatform)
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
 lazy val zioConfigJVM = zioConfig.jvm
-  .settings(
-    crossScalaVersions ++= Seq(ScalaDotty)
-  )
+  .settings(dottySettings)
 
 lazy val zioConfigRefined    = crossProject(JVMPlatform)
   .in(file("refined"))
@@ -215,12 +212,9 @@ lazy val zioConfigDerivation    = crossProject(JVMPlatform)
   .in(file("derivation"))
   .settings(stdSettings("zio-config-derivation"))
   .settings(crossProjectSettings)
-  .settings(dottySettings)
   .dependsOn(zioConfig)
 lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm
-  .settings(
-    crossScalaVersions ++= Seq(ScalaDotty)
-  )
+  .settings(dottySettings)
 
 lazy val zioConfigGen    = crossProject(JVMPlatform)
   .in(file("gen"))
@@ -281,12 +275,9 @@ lazy val zioConfigTypesafe    = crossProject(JVMPlatform)
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-  .settings(dottySettings)
   .dependsOn(zioConfig % "compile->compile;test->test")
 lazy val zioConfigTypesafeJVM = zioConfigTypesafe.jvm
-  .settings(
-    crossScalaVersions ++= Seq(ScalaDotty)
-  )
+  .settings(dottySettings)
 
 lazy val zioConfigYaml    = crossProject(JVMPlatform)
   .in(file("yaml"))
@@ -300,12 +291,9 @@ lazy val zioConfigYaml    = crossProject(JVMPlatform)
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-  .settings(dottySettings)
   .dependsOn(zioConfig % "compile->compile;test->test")
 lazy val zioConfigYamlJVM = zioConfigYaml.jvm
-  .settings(
-    crossScalaVersions ++= Seq(ScalaDotty)
-  )
+  .settings(dottySettings)
 
 lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .in(file("typesafe-magnolia-tests"))

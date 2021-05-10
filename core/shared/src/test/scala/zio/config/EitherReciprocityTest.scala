@@ -10,26 +10,30 @@ import zio.test._
 
 object EitherReciprocityTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Random, TestFailure[Serializable], TestSuccess] =
+  val spec: Spec[TestConfig with Random, TestFailure[String], TestSuccess] =
     suite("Either reciprocity")(
       testM("coproduct should yield the same config representation on both sides of Either") {
         checkM(genNestedConfig) { p =>
           val lr =
             for {
               writtenLeft  <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
-              rereadLeft   <- ZIO.fromEither(
-                                read(
-                                  cCoproductConfig from ConfigSource
-                                    .fromPropertyTree(writtenLeft, "test", LeafForSequence.Valid)
+              rereadLeft   <- ZIO
+                                .fromEither(
+                                  read(
+                                    cCoproductConfig from ConfigSource
+                                      .fromPropertyTree(writtenLeft, "test", LeafForSequence.Valid)
+                                  )
                                 )
-                              )
+                                .mapError(_.getMessage)
               writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
-              rereadRight  <- ZIO.fromEither(
-                                read(
-                                  cCoproductConfig from ConfigSource
-                                    .fromPropertyTree(writtenRight, "test", LeafForSequence.Valid)
+              rereadRight  <- ZIO
+                                .fromEither(
+                                  read(
+                                    cCoproductConfig from ConfigSource
+                                      .fromPropertyTree(writtenRight, "test", LeafForSequence.Valid)
+                                  )
                                 )
-                              )
+                                .mapError(_.getMessage)
             } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
               case (Left(pl), Right(pr)) => Some(pl -> pr)
               case _                     => None
