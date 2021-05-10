@@ -154,6 +154,11 @@ lazy val zioConfig    = crossProject(JVMPlatform)
       "dev.zio" %% "zio"          % zioVersion,
       "dev.zio" %% "zio-test"     % zioVersion % Test,
       "dev.zio" %% "zio-test-sbt" % zioVersion % Test
+    ) ++ (
+      if (scalaVersion.value == Scala211 || scalaVersion.value == Scala212)
+        List("org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3")
+      else
+        List()
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
