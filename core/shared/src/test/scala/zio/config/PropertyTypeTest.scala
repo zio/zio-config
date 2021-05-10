@@ -7,8 +7,6 @@ import zio.test.Assertion._
 import zio.test._
 import zio.test.environment.TestEnvironment
 
-import java.io.File
-import java.net.{URI, URL}
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
 import scala.concurrent.duration.Duration
@@ -83,9 +81,6 @@ object PropertyTypeTest extends BaseSpec {
         genValid = genValidBigDecimalString,
         parse = BigDecimal(_)
       ),
-      testM(s"valid URI string roundtrip") {
-        check(Gen.anyString)(assertValidRoundtrip(UriType, new URI(_)))
-      },
       propertyTypeRoundtripSuite(
         typeInfo = "Duration",
         propType = DurationType,
@@ -127,19 +122,7 @@ object PropertyTypeTest extends BaseSpec {
         propType = InstantType,
         genValid = genInstant.map(_.toString),
         parse = Instant.parse(_)
-      ),
-      testM(s"valid FileType string roundtrip") {
-        check(Gen.anyString)(assertValidRoundtrip(FileType, new File(_)))
-      },
-      propertyTypeRoundtripSuite(
-        typeInfo = "URL",
-        propType = UrlType,
-        genValid = genValidUrlString,
-        parse = new URL(_)
-      ),
-      testM("valid JavaFilePathType string roundtrip") {
-        check(Gen.anyString)(assertValidRoundtrip(JavaFilePathType, java.nio.file.Paths.get(_)))
-      }
+      )
     )
 }
 
