@@ -16,6 +16,7 @@ import CoproductTestUtils._
 
 @silent("Unused import")
 object CoproductTest extends BaseSpec {
+  import scala.collection.compat._
   import VersionSpecificSupport._
 
   val spec: ZSpec[Environment, Failure] =
