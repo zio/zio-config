@@ -2,14 +2,15 @@ package zio.config.typesafe
 
 import com.github.ghik.silencer.silent
 import com.typesafe.config._
-import zio.config.PropertyTree.{ Leaf, _ }
-import zio.config.{ ConfigSource, _ }
+import zio.config.PropertyTree._
+import zio.config._
+import zio.{IO, ZIO}
 
 import java.io.File
-import java.lang.{ Boolean => JBoolean }
+import java.lang.{Boolean => JBoolean}
 import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 @silent("Unused import")
 object TypesafeConfigSource {
@@ -68,11 +69,10 @@ object TypesafeConfigSource {
    */
   def fromHoconFile[A](file: File): Either[ReadError[String], ConfigSource] =
     Try(ConfigFactory.parseFile(file).resolve).toEither.swap
-      .map(
-        r =>
-          ReadError.SourceError(
-            s"Unable to get a form a valid config-source from hocon file. ${r}"
-          ): ReadError[String]
+      .map(r =>
+        ReadError.SourceError(
+          s"Unable to get a form a valid config-source from hocon file. ${r}"
+        ): ReadError[String]
       )
       .swap
       .flatMap { typesafeConfig =>
@@ -136,9 +136,9 @@ object TypesafeConfigSource {
     } match {
       case Failure(exception) =>
         Left(ReadError.SourceError(message = exception.getMessage))
-      case Success(value) =>
+      case Success(value)     =>
         getPropertyTree(value) match {
-          case Left(value) => Left(ReadError.SourceError(message = value))
+          case Left(value)  => Left(ReadError.SourceError(message = value))
           case Right(value) =>
             Right(
               ConfigSource
@@ -190,28 +190,27 @@ object TypesafeConfigSource {
     def loopList(values: List[ConfigValue]) = Sequence(values.map(loopAny))
 
     def loopConfig(config: ConfigObject) =
-      Record(config.asScala.toVector.map {
-        case (key, value) =>
-          key -> loopAny(value)
+      Record(config.asScala.toVector.map { case (key, value) =>
+        key -> loopAny(value)
       }.toMap)
 
     def loopAny(value: ConfigValue): PropertyTree[String, String] =
       value.valueType() match {
-        case ConfigValueType.OBJECT =>
+        case ConfigValueType.OBJECT  =>
           loopConfig(value.asInstanceOf[ConfigObject])
-        case ConfigValueType.LIST =>
+        case ConfigValueType.LIST    =>
           loopList(value.asInstanceOf[ConfigList].asScala.toList)
         case ConfigValueType.BOOLEAN =>
           loopBoolean(value.unwrapped().asInstanceOf[JBoolean])
-        case ConfigValueType.NUMBER =>
+        case ConfigValueType.NUMBER  =>
           loopNumber(value.unwrapped().asInstanceOf[Number])
-        case ConfigValueType.NULL => loopNull
-        case ConfigValueType.STRING =>
+        case ConfigValueType.NULL    => loopNull
+        case ConfigValueType.STRING  =>
           loopString(value.unwrapped().asInstanceOf[String])
       }
 
     Try(loopConfig(input.root())) match {
-      case Failure(t) =>
+      case Failure(t)     =>
         Left(
           "Unable to form the zio.config.PropertyTree from Hocon string." +
             " This may be due to the presence of explicit usage of nulls in hocon string. " +
@@ -247,24 +246,22 @@ object TypesafeConfigSource {
 
   def loopLeaf(key: Option[String], tree: Leaf[String]): ConfigObject =
     key
-      .fold(ConfigFactory.empty())(
-        last =>
-          ConfigFactory
-            .empty()
-            .withValue(
-              s""" "${last}" """,
-              ConfigValueFactory.fromAnyRef(tree.value)
-            )
+      .fold(ConfigFactory.empty())(last =>
+        ConfigFactory
+          .empty()
+          .withValue(
+            s""" "${last}" """,
+            ConfigValueFactory.fromAnyRef(tree.value)
+          )
       )
       .root()
 
   def loopRecord(key: Option[String], tree: Record[String, String]): ConfigObject = {
-    val inner = tree.value.toList.foldLeft(ConfigFactory.empty().root()) {
-      case (acc, (k, tree)) =>
-        val newObject =
-          loopAny(tree, Some(k))
+    val inner = tree.value.toList.foldLeft(ConfigFactory.empty().root()) { case (acc, (k, tree)) =>
+      val newObject =
+        loopAny(tree, Some(k))
 
-        acc.withValue(k, newObject.getOrDefault(k, newObject))
+      acc.withValue(k, newObject.getOrDefault(k, newObject))
     }
     key.fold(inner)(key => inner.atKey(key).root())
   }
@@ -272,9 +269,8 @@ object TypesafeConfigSource {
   def loopSequence(key: Option[String], tree: Sequence[String, String]): ConfigObject =
     key match {
       case Some(key) =>
-        val leaves = partitionWith(tree.value) {
-          case Leaf(value) =>
-            Leaf(value)
+        val leaves = partitionWith(tree.value) { case Leaf(value) =>
+          Leaf(value)
         }
 
         if (leaves.nonEmpty)
