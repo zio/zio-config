@@ -1,7 +1,6 @@
 package zio.config
 
 import scala.annotation.tailrec
-import scala.jdk.CollectionConverters._
 
 private[config] trait KeyConversionFunctions {
 
@@ -33,7 +32,7 @@ private[config] trait KeyConversionFunctions {
           loop(tail, acc, head :: current, beginning = false)
       }
 
-    loop(input.codePoints().iterator().asScala.map(x => x: Int).toList, Nil, Nil, beginning = true)
+    loop(input.map(_.toInt).toList, Nil, Nil, beginning = true)
   }
 
   /**

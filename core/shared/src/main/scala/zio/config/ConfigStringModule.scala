@@ -3,15 +3,13 @@ package zio.config
 import zio.system.System
 import zio.{Has, Layer, Tag, ZIO, ZLayer}
 
-import java.io.File
-import java.net.{URI, URL}
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.{Properties, UUID}
 import scala.concurrent.duration.Duration
 
 trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
 
-  object ConfigDescriptor extends ConfigDescriptorFunctions {
+  object ConfigDescriptor extends ConfigDescriptorFunctions with ConfigDescriptorPlatformSpecific {
     import ConfigDescriptorAdt._
 
     /**
@@ -209,28 +207,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * }}}
      */
     def duration(path: String): ConfigDescriptor[Duration] = nested(path)(duration)
-
-    val file: ConfigDescriptor[File] =
-      sourceDesc(ConfigSource.empty, PropertyType.FileType) ?? "value of type file"
-
-    /**
-     * A config descriptor that describes retrieving a file from a given path.
-     *
-     * {{{
-     *
-     *     val mapSource =
-     *      ConfigSource.fromMap(
-     *         "FILE_PATH" : "/user/file.txt"
-     *      )
-     *
-     *     val config = file("FILE_PATH")
-     *     val result = read(config from mapSource)
-     *
-     *     // Right(/user/file.txt)
-     *
-     * }}}
-     */
-    def file(path: String): ConfigDescriptor[File] = nested(path)(file)
 
     val float: ConfigDescriptor[Float] =
       sourceDesc(ConfigSource.empty, PropertyType.FloatType) ?? "value of type float"
@@ -430,28 +406,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      */
     def string(path: String): ConfigDescriptor[String] = nested(path)(string)
 
-    val uri: ConfigDescriptor[URI] =
-      sourceDesc(ConfigSource.empty, PropertyType.UriType) ?? "value of type uri"
-
-    /**
-     * A config descriptor that describes retrieving a Uri from a given path.
-     *
-     * {{{
-     *
-     *     val mapSource =
-     *      ConfigSource.fromMap(
-     *         "URI" : "www.bla.com"
-     *      )
-     *
-     *     val config = uri("URI")
-     *     val result = read(config from mapSource)
-     *
-     *     // Right(www.bla.com)
-     *
-     * }}}
-     */
-    def uri(path: String): ConfigDescriptor[URI] = nested(path)(uri)
-
     val uuid: ConfigDescriptor[UUID] =
       sourceDesc(ConfigSource.empty, PropertyType.UuidType) ?? "value of type uuid"
 
@@ -473,28 +427,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * }}}
      */
     def uuid(path: String): ConfigDescriptor[UUID] = nested(path)(uuid)
-
-    val url: ConfigDescriptor[URL] =
-      sourceDesc(ConfigSource.empty, PropertyType.UrlType) ?? "value of type URL"
-
-    /**
-     * A config descriptor that describes retrieving a Url from a given path.
-     *
-     * {{{
-     *
-     *     val mapSource =
-     *      ConfigSource.fromMap(
-     *         "URL" : "www.bla.com"
-     *      )
-     *
-     *     val config = bigInt("COST")
-     *     val result = read(config from mapSource)
-     *
-     *     // Right(111111111)
-     *
-     * }}}
-     */
-    def url(path: String): ConfigDescriptor[URL] = nested(path)(url)
 
     val zioDuration: ConfigDescriptor[zio.duration.Duration] =
       sourceDesc(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
@@ -518,28 +450,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      */
     def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
 
-    val javaFilePath: ConfigDescriptor[java.nio.file.Path] =
-      sourceDesc(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path"
-
-    /**
-     * A config descriptor that describes retrieving a javaFilePath from a given path.
-     *
-     * {{{
-     *
-     *     val mapSource =
-     *      ConfigSource.fromMap(
-     *         "FILE_PATH" : "/Users/abc/xyz.txt"
-     *      )
-     *
-     *     val config = javaFilePath("COST")
-     *     val result = read(config from mapSource)
-     *
-     *     // Right(/Users/abc/xyz.txt)
-     *
-     * }}}
-     */
-    def javaFilePath(path: String): ConfigDescriptor[java.nio.file.Path] =
-      lazyDesc(nested(path)(javaFilePath))
   }
 
   /**
