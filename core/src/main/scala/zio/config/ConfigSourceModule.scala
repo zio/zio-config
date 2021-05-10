@@ -6,8 +6,8 @@ import zio.{IO, Task, UIO, ZIO}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
-import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
+import scala.jdk.CollectionConverters._
 
 trait ConfigSourceModule extends KeyValueModule {
   case class ConfigSourceName(name: String)

@@ -1,10 +1,12 @@
 package zio.config
 
+import com.github.ghik.silencer.silent
 import zio.config.ReadError._
 
-import VersionSpecificSupport._
-
+@silent("Unused import")
 private[config] trait ReadModule extends ConfigDescriptorModule {
+  import VersionSpecificSupport._
+
   final def read[A](
     configuration: ConfigDescriptor[A]
   ): Either[ReadError[K], A] = {

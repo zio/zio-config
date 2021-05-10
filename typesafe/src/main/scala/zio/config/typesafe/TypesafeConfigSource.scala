@@ -1,18 +1,19 @@
 package zio.config.typesafe
 
+import com.github.ghik.silencer.silent
 import com.typesafe.config._
 import zio.config.PropertyTree.{Leaf, _}
 import zio.config.{ConfigSource, _}
 
 import java.io.File
 import java.lang.{Boolean => JBoolean}
-import scala.collection.JavaConverters._
 import scala.collection.immutable.Nil
+import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
-import VersionSpecificSupport._
-
+@silent("Unused import")
 object TypesafeConfigSource {
+  import VersionSpecificSupport._
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` from a given file in resource classpath.

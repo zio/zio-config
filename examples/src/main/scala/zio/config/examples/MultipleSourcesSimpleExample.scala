@@ -1,5 +1,6 @@
 package zio.config.examples
 
+import com.github.ghik.silencer.silent
 import zio.config._
 import zio.system.System
 
@@ -14,6 +15,7 @@ object MultipleSourcesSimpleExample extends App {
 
   // Assume they are different sources (env, property file, HOCON / database (in future))
   private val source1 = ConfigSource.fromMap(Map("LDAP" -> "jolap"), "constant")
+  @silent("deprecated")
   private val source2 = runtime.unsafeRun(ConfigSource.fromSystemProperties)
 
   private val source3 = runtime.unsafeRun(ConfigSource.fromSystemEnv.provideLayer(System.live))

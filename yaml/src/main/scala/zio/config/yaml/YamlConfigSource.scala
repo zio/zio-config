@@ -1,5 +1,6 @@
 package zio.config.yaml
 
+import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import zio.config._
 
@@ -7,12 +8,13 @@ import java.io.{File, FileInputStream}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
 import java.nio.file.Path
 import java.{util => ju}
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 import scala.util.Try
 
-import VersionSpecificSupport._
-
+@silent("Unused import")
 object YamlConfigSource {
+  import VersionSpecificSupport._
+
   private[yaml] def convertYaml(data: AnyRef): PropertyTree[String, String] =
     data match {
       case null            => PropertyTree.empty
@@ -28,10 +30,7 @@ object YamlConfigSource {
         )
       case t: ju.Map[_, _] =>
         PropertyTree.Record(
-          t.asInstanceOf[ju.Map[String, AnyRef]]
-            .asScala
-            .mapValues(convertYaml)
-            .toMap
+          t.asInstanceOf[ju.Map[String, AnyRef]].asScala.view.mapValues(convertYaml).toMap
         )
       case _               => throw new IllegalArgumentException("unexpected data type in convertYaml")
     }

@@ -1,9 +1,10 @@
 package zio.config
 
+import com.github.ghik.silencer.silent
 import zio.config.ConfigDescriptor._
+import zio.config.ReadError
 import zio.config.ReadError.Step.Key
 import zio.config.helpers._
-import zio.config.{CoproductTestUtils, ReadError}
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
@@ -12,9 +13,10 @@ import scala.concurrent.duration.Duration
 
 import ReadError._
 import CoproductTestUtils._
-import VersionSpecificSupport._
 
+@silent("Unused import")
 object CoproductTest extends BaseSpec {
+  import VersionSpecificSupport._
 
   val spec: ZSpec[Environment, Failure] =
     suite("Coproduct support")(
@@ -37,7 +39,7 @@ object CoproductTest extends BaseSpec {
           val writeResult = readResult.swap
             .map(_.prettyPrint())
             .swap
-            .flatMap(r => r.toMap(Z.config).map(_.mapValues(_.mkString).toMap))
+            .flatMap(r => r.toMap(Z.config).map(_.view.mapValues(_.mkString).toMap))
 
           assert(writeResult)(equalTo(Right[String, Map[String, String]](sourceMap)))
         }

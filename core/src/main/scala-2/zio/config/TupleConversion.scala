@@ -1,6 +1,5 @@
 package zio.config
 
-import scala.language.experimental.macros
 import scala.reflect.macros.whitebox
 
 trait TupleConversion[A, B] {

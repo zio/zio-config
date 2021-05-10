@@ -1,12 +1,14 @@
 package zio.config
 
+import com.github.ghik.silencer.silent
+
 import scala.collection.mutable.{ListBuffer, Map => MutableMap}
 import scala.reflect.ClassTag
 
-import VersionSpecificSupport._
-
+@silent("Unused import")
 trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   import ConfigDescriptorAdt._
+  import VersionSpecificSupport._
 
   sealed trait ConfigDescriptor[A] { self =>
 

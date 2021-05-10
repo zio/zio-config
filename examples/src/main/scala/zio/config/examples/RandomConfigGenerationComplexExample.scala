@@ -1,5 +1,6 @@
 package zio.config.examples
 
+import com.github.ghik.silencer.silent
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.Descriptor
 
@@ -20,6 +21,7 @@ object RandomConfigGenerationComplexExample extends App {
     // If we were offloading this task to zio-config-magnolia, then user need to feed in a verbose
     // config to satisfy VersionInfo, such as `versionInfo: { key :.. strategy: { number : ... }}`
     // instead of a simple `versionInfo : { version : 1 }`
+    @silent("deprecated")
     implicit val descriptorOfVersionInfo: Descriptor[VersionInfo] =
       Descriptor(
         map(int.orElseEither(string)).transformOrFail[VersionInfo](

@@ -144,7 +144,7 @@ sealed trait PropertyTree[+K, +V] { self =>
       case Empty         => Empty
       case Leaf(value)   => Leaf(value)
       case Record(value) =>
-        Record(value.mapValues(_.reduceInner(f)).toMap)
+        Record(value.view.mapValues(_.reduceInner(f)).toMap)
 
       case Sequence(value) =>
         val (vs0, rest0) = PropertyTree.partitionWith(value) { case Leaf(value) =>
@@ -198,9 +198,9 @@ sealed trait PropertyTree[+K, +V] { self =>
       case (l, Sequence(r)) =>
         Sequence(r.map(tree => l.zipWith(tree)(f)))
 
-      case (l, r: Record[K, V2] @unchecked) => Record(r.value.mapValues(v => l.zipWith(v)(f)).toMap)
+      case (l, r: Record[K, V2] @unchecked) => Record(r.value.view.mapValues(v => l.zipWith(v)(f)).toMap)
 
-      case (Record(l), r) => Record(l.mapValues(v => v.zipWith(r)(f)).toMap)
+      case (Record(l), r) => Record(l.view.mapValues(v => v.zipWith(r)(f)).toMap)
 
       case (Empty, _) => Empty
 

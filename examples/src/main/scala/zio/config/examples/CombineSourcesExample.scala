@@ -1,5 +1,6 @@
 package zio.config.examples
 
+import com.github.ghik.silencer.silent
 import zio.config._
 import zio.config.magnolia._
 import zio.config.typesafe._
@@ -20,6 +21,7 @@ object CombineSourcesExample extends App {
 
   final case class Config(username: String, password: String)
 
+  @silent("deprecated")
   val getConfig: ZIO[system.System, ReadError[String], _root_.zio.config.ConfigDescriptor[Config]] =
     for {
       hoconFile <- ZIO.fromEither(TypesafeConfigSource.fromHoconFile(new File("/invalid/path")))

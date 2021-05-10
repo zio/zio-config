@@ -1,7 +1,7 @@
 package zio.config
 
 import scala.annotation.tailrec
-import scala.collection.JavaConverters._
+import scala.jdk.CollectionConverters._
 
 private[config] trait KeyConversionFunctions {
 
