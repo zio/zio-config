@@ -144,6 +144,7 @@ lazy val `root3` =
 lazy val zioConfig    = crossProject(JVMPlatform)
   .in(file("core"))
   .settings(stdSettings("zio-config"))
+  .settings(crossProjectSettings)
   .enablePlugins(BuildInfoPlugin)
   .settings(buildInfoSettings("zio.config"))
   .settings(dottySettings)
@@ -164,6 +165,7 @@ lazy val zioConfigJVM = zioConfig.jvm
 lazy val zioConfigRefined    = crossProject(JVMPlatform)
   .in(file("refined"))
   .settings(stdSettings("zio-config-refined"))
+  .settings(crossProjectSettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     refinedDependencies,
@@ -182,6 +184,7 @@ lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module
 lazy val examples    = crossProject(JVMPlatform)
   .in(file("examples"))
   .settings(stdSettings("zio-config-examples"))
+  .settings(crossProjectSettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     publish / skip := true,
@@ -210,6 +213,7 @@ lazy val examplesJVM = examples.jvm
 lazy val zioConfigDerivation    = crossProject(JVMPlatform)
   .in(file("derivation"))
   .settings(stdSettings("zio-config-derivation"))
+  .settings(crossProjectSettings)
   .settings(dottySettings)
   .dependsOn(zioConfig)
 lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm
@@ -220,6 +224,7 @@ lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm
 lazy val zioConfigGen    = crossProject(JVMPlatform)
   .in(file("gen"))
   .settings(stdSettings("zio-config-gen"))
+  .settings(crossProjectSettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     magnoliaDependencies,
@@ -234,6 +239,7 @@ lazy val zioConfigGenJVM = zioConfigGen.jvm
 lazy val zioConfigMagnolia    = crossProject(JVMPlatform)
   .in(file("magnolia"))
   .settings(stdSettings("zio-config-magnolia"))
+  .settings(crossProjectSettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     magnoliaDependencies,
@@ -249,6 +255,7 @@ lazy val zioConfigMagnoliaJVM = zioConfigMagnolia.jvm
 lazy val zioConfigShapeless    = crossProject(JVMPlatform)
   .in(file("shapeless"))
   .settings(stdSettings("zio-config-shapeless"))
+  .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio"       %% "zio-test"      % zioVersion % Test,
@@ -264,6 +271,7 @@ lazy val zioConfigShapelessJVM = zioConfigShapeless.jvm
 lazy val zioConfigTypesafe    = crossProject(JVMPlatform)
   .in(file("typesafe"))
   .settings(stdSettings("zio-config-typesafe"))
+  .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe" % "config"       % "1.4.1",
@@ -282,6 +290,7 @@ lazy val zioConfigTypesafeJVM = zioConfigTypesafe.jvm
 lazy val zioConfigYaml    = crossProject(JVMPlatform)
   .in(file("yaml"))
   .settings(stdSettings("zio-config-yaml"))
+  .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
       "org.snakeyaml" % "snakeyaml-engine" % "2.2.1",
@@ -300,6 +309,7 @@ lazy val zioConfigYamlJVM = zioConfigYaml.jvm
 lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .in(file("typesafe-magnolia-tests"))
   .settings(stdSettings("zio-config-typesafe-magnolia-tests"))
+  .settings(crossProjectSettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     publish / skip := true,
@@ -322,7 +332,17 @@ lazy val docs = project
     scalacOptions -= "-Xfatal-warnings",
     magnoliaDependencies,
     refinedDependencies,
-    libraryDependencies += "dev.zio" %% "zio" % zioVersion
+    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
+      zioConfigJVM,
+      zioConfigMagnoliaJVM,
+      zioConfigTypesafeJVM,
+      zioConfigRefinedJVM,
+      zioConfigGenJVM
+    ),
+    ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
+    cleanFiles += (ScalaUnidoc / unidoc / target).value,
+    docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
+    docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value
   )
   .dependsOn(zioConfigJVM, zioConfigMagnoliaJVM, zioConfigTypesafeJVM, zioConfigRefinedJVM, zioConfigGenJVM)
-  .enablePlugins(MdocPlugin, DocusaurusPlugin)
+  .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
