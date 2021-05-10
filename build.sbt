@@ -29,8 +29,6 @@ inThisBuild(
   )
 )
 
-ThisBuild / publishTo := sonatypePublishToBundle.value
-
 lazy val createProductBuilder = taskKey[Unit]("Generate code for ProductBuilder.scala")
 
 createProductBuilder := {
@@ -58,12 +56,28 @@ addCommandAlias(
 addCommandAlias("compileAll", "; ++2.11.12; root2-11/compile; ++2.12.11; root2-12/compile; ++2.13.2!; root2-13/compile")
 addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.11; root2-12/test; ++2.13.2!; root2-13/test")
 addCommandAlias(
+  "testJS",
+  ";zioConfigJS/test"
+)
+addCommandAlias(
   "testJVM",
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test"
 )
 addCommandAlias(
+  "testNative",
+  ";zioConfigNative/compile"
+)
+addCommandAlias(
+  "testJS211",
+  ";zioConfigJS/test"
+)
+addCommandAlias(
   "testJVM211",
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
+)
+addCommandAlias(
+  "testNative211",
+  ";zioConfigNative/compile"
 )
 addCommandAlias(
   "testDotty",
@@ -93,7 +107,9 @@ lazy val refinedDependencies =
 
 lazy val scala211projects =
   Seq[ProjectReference](
+    zioConfigJS,
     zioConfigJVM,
+    zioConfigNative,
     zioConfigTypesafeJVM,
     zioConfigShapelessJVM,
     zioConfigDerivationJVM,
@@ -141,7 +157,7 @@ lazy val `root3` =
     .settings(publish / skip := true)
     .aggregate(scala3projects: _*)
 
-lazy val zioConfig    = crossProject(JVMPlatform)
+lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("core"))
   .settings(stdSettings("zio-config"))
   .settings(crossProjectSettings)
@@ -152,13 +168,18 @@ lazy val zioConfig    = crossProject(JVMPlatform)
     libraryDependencies ++= Seq(
       "dev.zio"                %% "zio"                     % zioVersion,
       "dev.zio"                %% "zio-test"                % zioVersion % Test,
-      "dev.zio"                %% "zio-test-sbt"            % zioVersion % Test,
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3"
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-lazy val zioConfigJVM = zioConfig.jvm
+
+lazy val zioConfigJS     = zioConfig.js
+  .settings(libraryDependencies += "dev.zio" %%% "zio-test-sbt" % zioVersion % Test)
+lazy val zioConfigJVM    = zioConfig.jvm
   .settings(dottySettings)
+  .settings(libraryDependencies += "dev.zio" %%% "zio-test-sbt" % zioVersion % Test)
+lazy val zioConfigNative = zioConfig.native
+  .settings(nativeSettings)
 
 lazy val zioConfigRefined    = crossProject(JVMPlatform)
   .in(file("refined"))
