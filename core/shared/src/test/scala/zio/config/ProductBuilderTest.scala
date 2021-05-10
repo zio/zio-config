@@ -7,83 +7,110 @@ import zio.test.Assertion._
 import zio.test._
 import zio.{Has, ZIO}
 
-object ProductBuilderTest
-    extends BaseSpec {
+object ProductBuilderTest extends BaseSpec {
 
-      val spec: Spec[Has[TestConfig.Service] with Has[Random.Service],TestFailure[Serializable],TestSuccess] = 
-      suite("ProductBuilder")(
-        testM("combine 22 for case class") {
-          checkM(genS22) { p =>
-            val p2 =
-              for {
-                written <- ZIO.fromEither(write(cS22, p))
-                reread <- ZIO.fromEither(
-                  read(
-                    cS22 from ConfigSource
-                      .fromMultiMap(written.flattenString("."), "test")
-                  )
-                )
-              } yield reread
+  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[Serializable], TestSuccess] =
+    suite("ProductBuilder")(
+      testM("combine 22 for case class") {
+        checkM(genS22) { p =>
+          val p2 =
+            for {
+              written <- ZIO.fromEither(write(cS22, p))
+              reread  <- ZIO.fromEither(
+                           read(
+                             cS22 from ConfigSource
+                               .fromMultiMap(written.flattenString("."), "test")
+                           )
+                         )
+            } yield reread
 
-            assertM(p2)(equalTo(p))
-          }
-        },
-        testM("combine 22 for tupled") {
-          checkM(genS22) { p =>
-            val conv = implicitly[TupleConversion[S22, (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)]]
-            val tuple = conv.to(p)
-
-            val p2 =
-              for {
-                written <- ZIO.fromEither(write(cS22Tupled, tuple))
-                reread <- ZIO.fromEither(
-                  read(
-                    cS22Tupled from ConfigSource
-                      .fromMultiMap(written.flattenString("."), "test")
-                  )
-                )
-              } yield reread
-
-            assertM(p2)(equalTo(tuple))
-          }
+          assertM(p2)(equalTo(p))
         }
-      )
+      },
+      testM("combine 22 for tupled") {
+        checkM(genS22) { p =>
+          val conv  = implicitly[TupleConversion[
+            S22,
+            (
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int,
+              Int
+            )
+          ]]
+          val tuple = conv.to(p)
+
+          val p2 =
+            for {
+              written <- ZIO.fromEither(write(cS22Tupled, tuple))
+              reread  <- ZIO.fromEither(
+                           read(
+                             cS22Tupled from ConfigSource
+                               .fromMultiMap(written.flattenString("."), "test")
+                           )
+                         )
+            } yield reread
+
+          assertM(p2)(equalTo(tuple))
+        }
       }
+    )
+}
 
 object ProductBuilderTestUtils {
-  final case class S22(s0: Int,
-                       s1: Int,
-                       s2: Int,
-                       s3: Int,
-                       s4: Int,
-                       s5: Int,
-                       s6: Int,
-                       s7: Int,
-                       s8: Int,
-                       s9: Int,
-                       s10: Int,
-                       s11: Int,
-                       s12: Int,
-                       s13: Int,
-                       s14: Int,
-                       s15: Int,
-                       s16: Int,
-                       s17: Int,
-                       s18: Int,
-                       s19: Int,
-                       s20: Int,
-                       s21: Int)
+  final case class S22(
+    s0: Int,
+    s1: Int,
+    s2: Int,
+    s3: Int,
+    s4: Int,
+    s5: Int,
+    s6: Int,
+    s7: Int,
+    s8: Int,
+    s9: Int,
+    s10: Int,
+    s11: Int,
+    s12: Int,
+    s13: Int,
+    s14: Int,
+    s15: Int,
+    s16: Int,
+    s17: Int,
+    s18: Int,
+    s19: Int,
+    s20: Int,
+    s21: Int
+  )
 
-  private val cId0 = int(s"kId0")
-  private val cId1 = int(s"kId1")
-  private val cId2 = int(s"kId2")
-  private val cId3 = int(s"kId3")
-  private val cId4 = int(s"kId4")
-  private val cId5 = int(s"kId5")
-  private val cId6 = int(s"kId6")
-  private val cId7 = int(s"kId7")
-  private val cId8 = int(s"kId8")
-  private val cId9 = int(s"kId9")
+  private val cId0  = int(s"kId0")
+  private val cId1  = int(s"kId1")
+  private val cId2  = int(s"kId2")
+  private val cId3  = int(s"kId3")
+  private val cId4  = int(s"kId4")
+  private val cId5  = int(s"kId5")
+  private val cId6  = int(s"kId6")
+  private val cId7  = int(s"kId7")
+  private val cId8  = int(s"kId8")
+  private val cId9  = int(s"kId9")
   private val cId10 = int(s"kId10")
   private val cId11 = int(s"kId11")
   private val cId12 = int(s"kId12")
@@ -98,23 +125,26 @@ object ProductBuilderTestUtils {
   private val cId21 = int(s"kId21")
 
   val cS22: ConfigDescriptor[S22] =
-    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21).to[S22]
+    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21)
+      .to[S22]
 
-  val cS22Tupled: ConfigDescriptor[(Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)] =
+  val cS22Tupled: ConfigDescriptor[
+    (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)
+  ] =
     (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21).tupled
 
-  val genS22: Gen[Random,S22] =
+  val genS22: Gen[Random, S22] =
     for {
-      s0 <- Gen.anyInt
-      s1 <- Gen.anyInt
-      s2 <- Gen.anyInt
-      s3 <- Gen.anyInt
-      s4 <- Gen.anyInt
-      s5 <- Gen.anyInt
-      s6 <- Gen.anyInt
-      s7 <- Gen.anyInt
-      s8 <- Gen.anyInt
-      s9 <- Gen.anyInt
+      s0  <- Gen.anyInt
+      s1  <- Gen.anyInt
+      s2  <- Gen.anyInt
+      s3  <- Gen.anyInt
+      s4  <- Gen.anyInt
+      s5  <- Gen.anyInt
+      s6  <- Gen.anyInt
+      s7  <- Gen.anyInt
+      s8  <- Gen.anyInt
+      s9  <- Gen.anyInt
       s10 <- Gen.anyInt
       s11 <- Gen.anyInt
       s12 <- Gen.anyInt
@@ -127,29 +157,28 @@ object ProductBuilderTestUtils {
       s19 <- Gen.anyInt
       s20 <- Gen.anyInt
       s21 <- Gen.anyInt
-    } yield
-      S22(
-        s0,
-        s1,
-        s2,
-        s3,
-        s4,
-        s5,
-        s6,
-        s7,
-        s8,
-        s9,
-        s10,
-        s11,
-        s12,
-        s13,
-        s14,
-        s15,
-        s16,
-        s17,
-        s18,
-        s19,
-        s20,
-        s21
-      )
+    } yield S22(
+      s0,
+      s1,
+      s2,
+      s3,
+      s4,
+      s5,
+      s6,
+      s7,
+      s8,
+      s9,
+      s10,
+      s11,
+      s12,
+      s13,
+      s14,
+      s15,
+      s16,
+      s17,
+      s18,
+      s19,
+      s20,
+      s21
+    )
 }
