@@ -33,7 +33,7 @@ const siteConfig = {
   // For no header links in the top nav bar -> headerLinks: [],
   headerLinks: [
     { doc: 'quickstart/quickstart_index', label: 'Documentation' },
-    { href: 'https://www.github.com/zio/zio-config', label: 'GitHub' }
+    { href: 'https://www.github.com/zio/zio-config', label: 'GitHub' },
     { href: 'api', label: 'API' },
   ],
 
