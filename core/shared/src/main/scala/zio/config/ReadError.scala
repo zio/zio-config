@@ -4,7 +4,7 @@ import zio.config.AnnotatedRead.Annotation
 
 import scala.util.control.NoStackTrace
 
-sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
+sealed trait ReadError[+A] extends Exception with NoStackTrace { self =>
   def annotations: Set[Annotation]
 
   override def getMessage: String =
@@ -40,7 +40,7 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
     final case class Parallel(all: List[Sequential]) extends Step
     final case class Failure(lines: List[String])    extends Step
 
-    def renderSteps[A](steps: List[ReadError.Step[A]]): String =
+    def renderSteps(steps: List[ReadError.Step[A]]): String =
       steps
         .foldLeft(new StringBuilder()) {
           case (r, ReadError.Step.Key(k))   => r.append(keyDelimiter).append(k.toString)
@@ -56,7 +56,7 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
           (p1 + head) :: tail.map(p2 + _)
       }
 
-    def parallelSegments[A](readError: ReadError[A]): List[Sequential] =
+    def parallelSegments(readError: ReadError[A]): List[Sequential] =
       readError match {
         case ReadError.ZipErrors(head :: tail, _)     => parallelSegments(head) ++ tail.flatMap(parallelSegments)
         case ReadError.ListErrors(head :: tail, _)    => parallelSegments(head) ++ tail.flatMap(parallelSegments)
@@ -65,13 +65,13 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
         case _                                        => List(readErrorToSequential(readError))
       }
 
-    def linearSegments[A](readError: ReadError[A]): List[Step] =
+    def linearSegments(readError: ReadError[A]): List[Step] =
       readError match {
         case ReadError.OrErrors(head :: tail, _) => linearSegments(head) ++ tail.flatMap(linearSegments)
         case _                                   => readErrorToSequential(readError).all
       }
 
-    def renderMissingValue[A](err: ReadError.MissingValue[A]): Sequential = {
+    def renderMissingValue(err: ReadError.MissingValue[A]): Sequential = {
       val strings =
         "MissingValue" :: s"path: ${renderSteps(err.path)}" :: Nil
 
@@ -85,7 +85,7 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
       )
     }
 
-    def renderFormatError[A](err: ReadError.FormatError[A]): Sequential = {
+    def renderFormatError(err: ReadError.FormatError[A]): Sequential = {
       val strings =
         "FormatError" :: s"cause: ${err.message}" :: s"path: ${renderSteps(err.path)}" :: Nil
 
@@ -99,7 +99,7 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
       )
     }
 
-    def renderConversionError[A](err: ReadError.ConversionError[A]): Sequential =
+    def renderConversionError(err: ReadError.ConversionError[A]): Sequential =
       Sequential(
         List(
           Failure(
@@ -108,17 +108,17 @@ sealed trait ReadError[A] extends Exception with NoStackTrace { self =>
         )
       )
 
-    def renderSourceError[A](err: ReadError.SourceError[A]): Sequential =
+    def renderSourceError(err: ReadError.SourceError): Sequential =
       Sequential(
         List(
           Failure(s"SourceError: ${err.message}" :: Nil)
         )
       )
 
-    def readErrorToSequential[A](readError: ReadError[A]): Sequential =
+    def readErrorToSequential(readError: ReadError[A]): Sequential =
       readError match {
         case r: ReadError.MissingValue[A]    => renderMissingValue(r)
-        case r: ReadError.SourceError[A]     => renderSourceError(r)
+        case r: ReadError.SourceError        => renderSourceError(r)
         case r: ReadError.FormatError[A]     => renderFormatError(r)
         case r: ReadError.ConversionError[A] => renderConversionError(r)
         case t: ReadError.OrErrors[A]        => Sequential(linearSegments(t))
@@ -210,8 +210,8 @@ object ReadError {
 
   final case class MapErrors[A](list: List[ReadError[A]], annotations: Set[Annotation] = Set.empty) extends ReadError[A]
 
-  final case class SourceError[A](
+  final case class SourceError(
     message: String,
     annotations: Set[Annotation] = Set.empty
-  ) extends ReadError[A]
+  ) extends ReadError[Nothing]
 }

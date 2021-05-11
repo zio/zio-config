@@ -451,12 +451,11 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         ZIO
           .accessM[System](_.get.envs)
           .bimap(
-            error =>
-              ReadError.SourceError[String](s"Error while getting system environment variables: ${error.getMessage}"),
+            error => ReadError.SourceError(s"Error while getting system environment variables: ${error.getMessage}"),
             fromMap(_, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
           )
       } else {
-        IO.fail(ReadError.SourceError[String](s"Invalid system key delimiter: ${keyDelimiter.get}"))
+        IO.fail(ReadError.SourceError(s"Invalid system key delimiter: ${keyDelimiter.get}"))
       }
     }
 
@@ -533,7 +532,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       ZIO
         .accessM[System](_.get.properties)
         .bimap(
-          error => ReadError.SourceError[String](s"Error while getting system properties: ${error.getMessage}"),
+          error => ReadError.SourceError(s"Error while getting system properties: ${error.getMessage}"),
           fromMap(_, SystemProperties, keyDelimiter, valueDelimiter, leafForSequence)
         )
 
