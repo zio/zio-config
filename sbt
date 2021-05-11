@@ -34,11 +34,11 @@
 
 set -o pipefail
 
-declare -r sbt_release_version="1.3.13"
-declare -r sbt_unreleased_version="1.4.0-M1"
+declare -r sbt_release_version="1.5.1"
+declare -r sbt_unreleased_version="1.5.1"
 
-declare -r latest_213="2.13.3"
-declare -r latest_212="2.12.12"
+declare -r latest_213="2.13.5"
+declare -r latest_212="2.12.13"
 declare -r latest_211="2.11.12"
 declare -r latest_210="2.10.7"
 declare -r latest_29="2.9.3"
@@ -48,7 +48,7 @@ declare -r buildProps="project/build.properties"
 
 declare -r sbt_launch_ivy_release_repo="https://repo.typesafe.com/typesafe/ivy-releases"
 declare -r sbt_launch_ivy_snapshot_repo="https://repo.scala-sbt.org/scalasbt/ivy-snapshots"
-declare -r sbt_launch_mvn_release_repo="https://repo.scala-sbt.org/scalasbt/maven-releases"
+declare -r sbt_launch_mvn_release_repo="https://repo1.maven.org/maven2"
 declare -r sbt_launch_mvn_snapshot_repo="https://repo.scala-sbt.org/scalasbt/maven-snapshots"
 
 declare -r default_jvm_opts_common="-Xms512m -Xss2m -XX:MaxInlineLevel=18"
@@ -247,11 +247,18 @@ java_version() {
   echo "$version"
 }
 
+is_apple_silicon() { [[ "$(uname -s)" == "Darwin" && "$(uname -m)" == "arm64" ]]; }
+
 # MaxPermSize critical on pre-8 JVMs but incurs noisy warning on 8+
 default_jvm_opts() {
   local -r v="$(java_version)"
   if [[ $v -ge 10 ]]; then
-    echo "$default_jvm_opts_common -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler"
+    if is_apple_silicon; then
+      # As of Dec 2020, JVM for Apple Silicon (M1) doesn't support JVMCI
+      echo "$default_jvm_opts_common"
+    else
+      echo "$default_jvm_opts_common -XX:+UnlockExperimentalVMOptions -XX:+UseJVMCICompiler"
+    fi
   elif [[ $v -ge 8 ]]; then
     echo "$default_jvm_opts_common"
   else
@@ -378,10 +385,12 @@ usage() {
   set_sbt_version
   cat <<EOM
 Usage: $script_name [options]
+
 Note that options which are passed along to sbt begin with -- whereas
 options to this runner use a single dash. Any sbt command can be scheduled
 to run first by prefixing the command with --, so --warn, --error and so on
 are not special.
+
   -h | -help         print this message
   -v                 verbose operation (this runner is chattier)
   -d, -w, -q         aliases for --debug, --warn, --error (q means quiet)
@@ -399,6 +408,7 @@ are not special.
   -batch             Disable interactive mode
   -prompt <expr>     Set the sbt prompt; in expr, 's' is the State and 'e' is Extracted
   -script <file>     Run the specified file as a scala script
+
   # sbt version (default: sbt.version from $buildProps if present, otherwise $sbt_release_version)
   -sbt-version <version>  use the specified version of sbt (default: $sbt_release_version)
   -sbt-force-latest       force the use of the latest release of sbt: $sbt_release_version
@@ -406,6 +416,7 @@ are not special.
   -sbt-jar      <path>    use the specified jar as the sbt launcher
   -sbt-launch-dir <path>  directory to hold sbt launchers (default: $sbt_launch_dir)
   -sbt-launch-repo <url>  repo url for downloading sbt launcher jar (default: $(url_base "$sbt_version"))
+
   # scala version (default: as chosen by sbt)
   -28                        use $latest_28
   -29                        use $latest_29
@@ -416,8 +427,10 @@ are not special.
   -scala-home <path>         use the scala build at the specified directory
   -scala-version <version>   use the specified version of scala
   -binary-version <version>  use the specified scala version when searching for dependencies
+
   # java version (default: java from PATH, currently $(java -version 2>&1 | grep version))
   -java-home <path>          alternate JAVA_HOME
+
   # passing options to the jvm - note it does NOT use JAVA_OPTS due to pollution
   # The default set is used if JVM_OPTS is unset and no -jvm-opts file is found
   <default>         $(default_jvm_opts)
@@ -427,12 +440,14 @@ are not special.
   -jvm-opts <path>  file containing jvm args (if not given, .jvmopts in project root is used if present)
   -Dkey=val         pass -Dkey=val directly to the jvm
   -J-X              pass option -X directly to the jvm (-J is stripped)
+
   # passing options to sbt, OR to this runner
   SBT_OPTS          environment variable holding either the sbt args directly, or
                     the reference to a file containing sbt args if given path is prepended by '@' (e.g. '@/etc/sbtopts')
                     Note: "@"-file is overridden by local '.sbtopts' or '-sbt-opts' argument.
   -sbt-opts <path>  file containing sbt args (if not given, .sbtopts in project root is used if present)
   -S-X              add -X to sbt's scalacOptions (-S is stripped)
+
   # passing options exclusively to this runner
   SBTX_OPTS         environment variable holding either the sbt-extras args directly, or
                     the reference to a file containing sbt-extras args if given path is prepended by '@' (e.g. '@/etc/sbtxopts')
@@ -463,7 +478,7 @@ process_args() {
       -trace)       require_arg integer "$1" "$2" && trace_level="$2" && shift 2 ;;
       -debug-inc)   addJava "-Dxsbt.inc.debug=true" && shift ;;
 
-      -no-colors)   addJava "-Dsbt.log.noformat=true" && shift ;;
+      -no-colors)   addJava "-Dsbt.log.noformat=true" && addJava "-Dsbt.color=false" && shift ;;
       -sbt-create)  sbt_create=true && shift ;;
       -sbt-dir)     require_arg path "$1" "$2" && sbt_dir="$2" && shift 2 ;;
       -sbt-boot)    require_arg path "$1" "$2" && addJava "-Dsbt.boot.directory=$2" && shift 2 ;;
@@ -585,6 +600,7 @@ fi
 $(pwd) doesn't appear to be an sbt project.
 If you want to start sbt anyway, run:
   $0 -sbt-create
+
 EOM
   exit 1
 }
