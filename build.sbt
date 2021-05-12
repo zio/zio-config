@@ -357,6 +357,7 @@ lazy val docs = project
     docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
     docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value
   )
+  .settings(macroDefinitionSettings)
   .dependsOn(
     zioConfigJVM,
     zioConfigTypesafeJVM,
