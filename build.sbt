@@ -344,15 +344,27 @@ lazy val docs = project
     refinedDependencies,
     ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
       zioConfigJVM,
-      zioConfigMagnoliaJVM,
       zioConfigTypesafeJVM,
+      zioConfigShapelessJVM,
+      zioConfigDerivationJVM,
+      zioConfigYamlJVM,
+      zioConfigGenJVM,
       zioConfigRefinedJVM,
-      zioConfigGenJVM
+      zioConfigMagnoliaJVM
     ),
     ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
     cleanFiles += (ScalaUnidoc / unidoc / target).value,
     docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
     docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value
   )
-  .dependsOn(zioConfigJVM, zioConfigMagnoliaJVM, zioConfigTypesafeJVM, zioConfigRefinedJVM, zioConfigGenJVM)
+  .dependsOn(
+    zioConfigJVM,
+    zioConfigTypesafeJVM,
+    zioConfigShapelessJVM,
+    zioConfigDerivationJVM,
+    zioConfigYamlJVM,
+    zioConfigGenJVM,
+    zioConfigRefinedJVM,
+    zioConfigMagnoliaJVM
+  )
   .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
