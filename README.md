@@ -1,8 +1,8 @@
 # ZIO Config
 
-|  CI | Release | Issues | Scaladex | Discord | Twitter |
-| --- | --- | --- | --- | --- | --- |
-| ![CI][Badge-CI] | [![Release Artifacts][Badge-SonatypeReleases]][Link-SonatypeReleases] | [![Average time to resolve an issue][Badge-IsItMaintained]][Link-IsItMaintained] | [![Badge-Scaladex-page]][Link-Scaladex-page] | [![Badge-Discord]][Link-Discord] | [![Badge-Twitter]][Link-Twitter] |
+| Project Stage |  CI | Release | Issues | Scaladex | Discord | Twitter |
+| --- | --- | --- | --- | --- | --- | --- |
+| [![Project stage][Badge-Stage]][Link-Stage-Page] | ![CI][Badge-CI] | [![Release Artifacts][Badge-SonatypeReleases]][Link-SonatypeReleases] | [![Average time to resolve an issue][Badge-IsItMaintained]][Link-IsItMaintained] | [![Badge-Scaladex-page]][Link-Scaladex-page] | [![Badge-Discord]][Link-Discord] | [![Badge-Twitter]][Link-Twitter] |
 
 A [ZIO](https://github.com/zio/zio)-based library for working with application configuration data.
 
@@ -30,10 +30,11 @@ Try out _ZIO Config_ quickly in [Scastie](https://scastie.scala-lang.org/IpEEuwo
 [Badge-Scaladex-page]: https://index.scala-lang.org/zio/zio-config/zio-config/latest.svg "Scaladex"
 [Badge-SonatypeReleases]: https://img.shields.io/nexus/r/https/oss.sonatype.org/dev.zio/zio-config_2.12.svg "Sonatype Releases"
 [Badge-Twitter]: https://img.shields.io/twitter/follow/zioscala.svg?style=plastic&label=follow&logo=twitter
+[Badge-Stage]: https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg
 
 [Link-IsItMaintained]: http://isitmaintained.com/project/zio/zio-config "Average time to resolve an issue"
 [Link-Discord]: https://discord.gg/2ccFBr4 "Discord"
 [Link-Scaladex-page]: https://index.scala-lang.org/zio/zio-config/zio-config "Scaladex"
 [Link-SonatypeReleases]: https://oss.sonatype.org/content/repositories/releases/dev/zio/zio-config_2.12/ "Sonatype Releases"
 [Link-Twitter]: https://twitter.com/zioscala
-
+[Link-Stage-Page]: https://github.com/zio/zio/wiki/Project-Stages
