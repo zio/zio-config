@@ -1,5 +1,4 @@
 import BuildHelper._
-import sbtcrossproject.CrossProject
 
 inThisBuild(
   List(
@@ -19,12 +18,6 @@ inThisBuild(
         "john@degoes.net",
         url("http://degoes.net")
       )
-    ),
-    pgpPassphrase := sys.env.get("PGP_PASSWORD").map(_.toArray),
-    pgpPublicRing := file("/tmp/public.asc"),
-    pgpSecretRing := file("/tmp/secret.asc"),
-    scmInfo := Some(
-      ScmInfo(url("https://github.com/zio/zio-config/"), "scm:git:git@github.com:zio/zio-config.git")
     )
   )
 )
@@ -166,9 +159,9 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(macroDefinitionSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio"                %% "zio"                     % zioVersion,
-      "dev.zio"                %% "zio-test"                % zioVersion % Test,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.4"
+      "dev.zio"                 %% "zio"                     % zioVersion,
+      ("org.scala-lang.modules" %% "scala-collection-compat" % "2.4.4").cross(CrossVersion.for3Use2_13),
+      "dev.zio"                 %% "zio-test"                % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
