@@ -1,5 +1,4 @@
 import BuildHelper._
-import sbtcrossproject.CrossProject
 
 inThisBuild(
   List(
@@ -19,12 +18,6 @@ inThisBuild(
         "john@degoes.net",
         url("http://degoes.net")
       )
-    ),
-    pgpPassphrase := sys.env.get("PGP_PASSWORD").map(_.toArray),
-    pgpPublicRing := file("/tmp/public.asc"),
-    pgpSecretRing := file("/tmp/secret.asc"),
-    scmInfo := Some(
-      ScmInfo(url("https://github.com/zio/zio-config/"), "scm:git:git@github.com:zio/zio-config.git")
     )
   )
 )
@@ -86,7 +79,7 @@ addCommandAlias(
 
 lazy val zioVersion       = "1.0.7"
 lazy val magnoliaVersion  = "0.17.0"
-lazy val refinedVersion   = "0.9.24"
+lazy val refinedVersion   = "0.9.25"
 lazy val shapelessVersion = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
@@ -166,9 +159,9 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(macroDefinitionSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio"                %% "zio"                     % zioVersion,
-      "dev.zio"                %% "zio-test"                % zioVersion % Test,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.4"
+      "dev.zio"                 %% "zio"                     % zioVersion,
+      ("org.scala-lang.modules" %% "scala-collection-compat" % "2.4.4").cross(CrossVersion.for3Use2_13),
+      "dev.zio"                 %% "zio-test"                % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
@@ -246,7 +239,7 @@ lazy val zioConfigGen    = crossProject(JVMPlatform)
     magnoliaDependencies,
     libraryDependencies ++= Seq(
       "dev.zio"       %% "zio-test-magnolia" % zioVersion,
-      "org.scalatest" %% "scalatest"         % "3.2.8" % Test
+      "org.scalatest" %% "scalatest"         % "3.2.9" % Test
     )
   )
   .dependsOn(zioConfigTypesafe, zioConfigMagnolia)
