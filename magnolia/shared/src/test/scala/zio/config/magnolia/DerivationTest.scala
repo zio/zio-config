@@ -109,15 +109,10 @@ object DerivationTest extends DefaultRunnableSpec {
           x <- a
         } yield x :: b
 
-      val cfgRes = cross(
-        ("className1" :: "className2" :: "Cfg" :: Nil),
-        ("otherName1" :: "otherName2" :: "fname" :: Nil)).flatten
+      val cfgRes =
+        cross(("className1" :: "className2" :: "Cfg" :: Nil), ("otherName1" :: "otherName2" :: "fname" :: Nil)).flatten
 
-      assert(collectPath(desc))(
-        equalTo(
-          cross(
-            ("St1" :: "St2" :: "SealedTrait" :: Nil),
-            cfgRes).flatten))
+      assert(collectPath(desc))(equalTo(cross(("St1" :: "St2" :: "SealedTrait" :: Nil), cfgRes).flatten))
     },
     test("support default value") {
       @describe("class desc")
