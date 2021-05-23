@@ -183,4 +183,6 @@ package object magnolia {
   val describe: derivation.describe.type = derivation.describe
   type name = derivation.name
   val name: derivation.name.type = derivation.name
+  type names = derivation.names
+  val names: derivation.names.type = derivation.names
 }
