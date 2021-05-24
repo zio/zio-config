@@ -4,6 +4,8 @@ import zio.config._
 import zio.console.Console
 import zio.{App, ExitCode, ZEnv, ZIO, ZLayer, console}
 
+import java.io.IOException
+import zio.Has
 import ConfigDescriptor._
 
 /**
@@ -42,14 +44,14 @@ object JavaPropertiesExample extends App {
 // The core application functions
 object SimpleExample {
 
-  val printConfigs =
+  val printConfigs: ZIO[Has[ApplicationConfig] with Console, IOException, Unit] =
     for {
       appConfig <- getConfig[ApplicationConfig]
       _         <- console.putStrLn(appConfig.bridgeIp)
       _         <- console.putStrLn(appConfig.userName)
     } yield ()
 
-  val finalExecution =
+  val finalExecution: ZIO[Has[ApplicationConfig] with Console, IOException, Unit] =
     for {
       _ <- printConfigs
       _ <- console.putStrLn(s"processing data......")
