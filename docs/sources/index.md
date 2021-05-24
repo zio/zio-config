@@ -493,7 +493,7 @@ object CombineSourcesExample extends zio.App {
       source    = hoconFile <> constant <> env <> sysProp
     } yield (descriptor[Config] from source)
 
-  val application: ZIO[Console with system.System, String, Unit] =
+  val application =
     for {
       desc        <- getDesc.mapError(_.prettyPrint())
       configValue <- ZIO.fromEither(read(desc)).mapError(_.prettyPrint())
