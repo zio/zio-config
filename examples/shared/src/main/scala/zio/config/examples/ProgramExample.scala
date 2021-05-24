@@ -8,11 +8,6 @@ import zio.{App, ExitCode, Has, ZEnv, ZIO, ZLayer, console}
 
 import ConfigDescriptor._
 
-/**
- * The pattern is an inspiration from http://degoes.net/articles/zio-environment.
- * We will see how using zio-config library gels well with this pattern.
- * The  functions of the `Application` are simply zio values with this pattern.
- */
 final case class ProgramConfig(inputPath: String, outputPath: String)
 
 object ProgramExample extends App {

@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.config._
 import zio.console._
-import zio.{App, ExitCode, Has, ZEnv, ZIO}
+import zio.{App, Has, ZIO}
 
 import ConfigDescriptor._
 
