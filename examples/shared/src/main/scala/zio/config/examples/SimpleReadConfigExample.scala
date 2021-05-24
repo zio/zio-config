@@ -21,7 +21,7 @@ object Prod {
 
 object ReadConfig extends App {
 
-  override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] =
+  override def run(args: List[String]) =
     for {
       console    <- ZIO.environment[Console].map(_.get)
       configLayer = ZConfig.fromMap(
@@ -32,8 +32,9 @@ object ReadConfig extends App {
       out        <- Prod.myAppLogic
                       .provideLayer(configLayer)
                       .foldM(
-                        failure => console.putStrLn(failure.toString).as(ExitCode.failure),
-                        _ => ZIO.succeed(ExitCode.success)
+                        failure => console.putStrLn(failure.toString),
+                        _ => console.putStrLn("Success")
                       )
+                      .exitCode
     } yield out
 }

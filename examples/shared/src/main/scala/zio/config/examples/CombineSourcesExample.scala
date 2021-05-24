@@ -4,7 +4,7 @@ import com.github.ghik.silencer.silent
 import zio.config._
 import zio.config.magnolia._
 import zio.config.typesafe._
-import zio.console.{Console, putStrLn}
+import zio.console.{putStrLn}
 import zio.{App, ExitCode, URIO, ZIO, system}
 
 import java.io.File
@@ -31,7 +31,7 @@ object CombineSourcesExample extends App {
       source     = hoconFile <> constant <> env <> sysProp
     } yield (descriptor[Config] from source)
 
-  val application: ZIO[Console with system.System, String, Unit] =
+  val application =
     for {
       desc        <- getConfig.mapError(_.prettyPrint())
       configValue <- ZIO.fromEither(read(desc)).mapError(_.prettyPrint())

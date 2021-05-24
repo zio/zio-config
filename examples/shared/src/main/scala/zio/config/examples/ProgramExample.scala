@@ -29,10 +29,12 @@ object ProgramExample extends App {
           SparkEnv.local("some-app")
       )
 
-    pgm.foldM(
-      fail => console.putStrLn(s"Failed $fail").as(ExitCode.failure),
-      _ => console.putStrLn(s"Succeeded").as(ExitCode.success)
-    )
+    pgm
+      .foldM(
+        fail => console.putStrLn(s"Failed $fail"),
+        _ => console.putStrLn(s"Succeeded")
+      )
+      .exitCode
   }
 }
 
@@ -80,7 +82,7 @@ object SparkEnv {
 // The core application
 object Application {
 
-  val logProgramConfig: ZIO[Console with Has[ProgramConfig], Nothing, Unit] =
+  val logProgramConfig =
     for {
       r <- getConfig[ProgramConfig]
       _ <- zio.console.putStrLn(s"Executing with parameters ${r.inputPath} and ${r.outputPath} without sparkSession")

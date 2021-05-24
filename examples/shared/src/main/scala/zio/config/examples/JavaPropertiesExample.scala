@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.config._
 import zio.console.Console
-import zio.{App, ExitCode, Has, ZEnv, ZIO, ZLayer, console}
+import zio.{App, ExitCode, ZEnv, ZIO, ZLayer, console}
 
 import ConfigDescriptor._
 
@@ -30,24 +30,26 @@ object JavaPropertiesExample extends App {
     val pgm =
       SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.requires[Console])
 
-    pgm.foldM(
-      throwable => console.putStr(throwable.getMessage).as(ExitCode.failure),
-      _ => console.putStrLn("hurray !! Application ran successfully..").as(ExitCode.success)
-    )
+    pgm
+      .foldM(
+        throwable => console.putStr(throwable.getMessage),
+        _ => console.putStrLn("hurray !! Application ran successfully..")
+      )
+      .exitCode
   }
 }
 
 // The core application functions
 object SimpleExample {
 
-  val printConfigs: ZIO[Console with Has[ApplicationConfig], Nothing, Unit] =
+  val printConfigs =
     for {
       appConfig <- getConfig[ApplicationConfig]
       _         <- console.putStrLn(appConfig.bridgeIp)
       _         <- console.putStrLn(appConfig.userName)
     } yield ()
 
-  val finalExecution: ZIO[Console with Has[ApplicationConfig], Nothing, Unit] =
+  val finalExecution =
     for {
       _ <- printConfigs
       _ <- console.putStrLn(s"processing data......")
