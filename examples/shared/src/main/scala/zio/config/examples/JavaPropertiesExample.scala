@@ -2,10 +2,10 @@ package zio.config.examples
 
 import zio.config._
 import zio.console.Console
-import zio.{App, ExitCode, ZEnv, ZIO, ZLayer, console}
+import zio.{App, ExitCode, Has, ZEnv, ZIO, ZLayer, console}
 
 import java.io.IOException
-import zio.Has
+
 import ConfigDescriptor._
 
 /**
