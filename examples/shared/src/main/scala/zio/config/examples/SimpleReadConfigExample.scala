@@ -2,11 +2,11 @@ package zio.config.examples
 
 import zio.config._
 import zio.console._
-import zio.{App, Has, ZIO}
+import zio.{App, Has, ZIO, URIO, ZEnv, ExitCode}
 
 import ConfigDescriptor._
 
-case class Prod(ldap: String, port: Int, dburl: Option[String])
+final case class Prod(ldap: String, port: Int, dburl: Option[String])
 
 object Prod {
   val prodConfig: ConfigDescriptor[Prod] =
@@ -21,7 +21,7 @@ object Prod {
 
 object ReadConfig extends App {
 
-  override def run(args: List[String]) =
+  override def run(args: List[String]): URIO[ZEnv, ExitCode] =
     for {
       console    <- ZIO.environment[Console].map(_.get)
       configLayer = ZConfig.fromMap(
