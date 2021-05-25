@@ -75,6 +75,45 @@ object DerivationTest extends DefaultRunnableSpec {
         equalTo("St" :: "className" :: "otherName" :: Nil)
       )
     },
+    test("support names annotation") {
+
+      val customDerivation = new DeriveConfigDescriptor {
+        import Descriptor.SealedTraitStrategy._
+        override def sealedTraitStrategy: Descriptor.SealedTraitStrategy = wrapSealedTraitName && wrapSubClassName
+      }
+
+      @names("St1", "St2")
+      sealed trait SealedTrait
+      @names("className1", "className2")
+      case class Cfg(@names("otherName1", "otherName2") fname: String) extends SealedTrait
+
+      val desc = customDerivation.getDescriptor[SealedTrait].desc
+
+      def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
+        case Lazy(thunk)                   => collectPath(thunk())
+        case Default(config, _)            => collectPath(config)
+        case Describe(config, _)           => collectPath(config)
+        case DynamicMap(_, config)         => collectPath(config)
+        case Nested(_, path, config)       => path :: collectPath(config)
+        case Optional(config)              => collectPath(config)
+        case OrElse(left, right)           => collectPath(left) ::: collectPath(right)
+        case OrElseEither(left, right)     => collectPath(left) ::: collectPath(right)
+        case Sequence(_, config)           => collectPath(config)
+        case Source(_, _)                  => Nil
+        case Zip(left, right)              => collectPath(left) ::: collectPath(right)
+        case TransformOrFail(config, _, _) => collectPath(config)
+      }
+
+      def cross[A](a: List[A], b: List[A]) =
+        for {
+          x <- a
+        } yield x :: b
+
+      val cfgRes =
+        cross(("className1" :: "className2" :: "Cfg" :: Nil), ("otherName1" :: "otherName2" :: "fname" :: Nil)).flatten
+
+      assert(collectPath(desc))(equalTo(cross(("St1" :: "St2" :: "SealedTrait" :: Nil), cfgRes).flatten))
+    },
     test("support default value") {
       @describe("class desc")
       case class Cfg(fname: String = "defaultV")

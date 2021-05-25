@@ -320,52 +320,76 @@ trait DeriveConfigDescriptor { self =>
   type Typeclass[T] = Descriptor[T]
 
   final def wrapSealedTrait[T](
-    label: String,
+    labels: Seq[String],
     desc: ConfigDescriptor[T]
   ): ConfigDescriptor[T] =
     sealedTraitStrategy.parentClass match {
       case Descriptor.SealedTraitNameStrategy.WrapSealedTraitName =>
-        nested(label)(desc)
+        val f = (name: String) => nested(name)(desc)
+        labels.tail.foldLeft(f(labels.head)) { case (acc, n) =>
+          acc orElse f(n)
+        }
 
       case Descriptor.SealedTraitNameStrategy.IgnoreSealedTraitName =>
         desc
     }
 
-  final def prepareClassName(annotations: Seq[Any], name: String): String =
+  final def prepareClassName(annotations: Seq[Any], name: String): String       =
     annotations.collectFirst { case d: name => d.name }.getOrElse(mapClassName(name))
 
-  final def prepareFieldName(annotations: Seq[Any], name: String): String =
+  final def prepareClassNames(annotations: Seq[Any], name: String): Seq[String] =
+    annotations.collectFirst { case d: names => d.names }.getOrElse(List[String]()) ++
+      List(annotations.collectFirst { case d: name => d.name }.getOrElse(mapClassName(name)))
+
+  final def prepareFieldName(annotations: Seq[Any], name: String): String       =
     annotations.collectFirst { case d: name => d.name }.getOrElse(mapFieldName(name))
+
+  final def prepareFieldNames(annotations: Seq[Any], name: String): Seq[String] =
+    annotations.collectFirst { case d: names => d.names }.getOrElse(List[String]()) ++
+      List(annotations.collectFirst { case d: name => d.name }.getOrElse(mapFieldName(name)))
 
   final def combine[T](caseClass: CaseClass[Descriptor, T]): Descriptor[T] = {
     val descriptions = caseClass.annotations.collect { case d: describe => d.describe }
-    val ccName       = prepareClassName(caseClass.annotations, caseClass.typeName.short)
+    val ccNames      = prepareClassNames(caseClass.annotations, caseClass.typeName.short)
 
     val res =
-      if (caseClass.isObject)
-        constant[T](ccName, caseClass.construct(_ => ???))
-      else
+      if (caseClass.isObject) {
+        val f = (name: String) => constant[T](name, caseClass.construct(_ => ???))
+        ccNames.tail.foldLeft(f(ccNames.head)) { case (acc, n) =>
+          acc orElse f(n)
+        }
+      } else
         caseClass.parameters.toList match {
           case Nil          =>
-            constantString(ccName).transform[T](
-              _ => caseClass.construct(_ => ???),
-              _ => ccName
-            )
+            val f = (name: String) =>
+              constantString(name).transform[T](
+                _ => caseClass.construct(_ => ???),
+                _ => name
+              )
+            ccNames.tail.foldLeft(f(ccNames.head)) { case (acc, n) =>
+              acc orElse f(n)
+            }
           case head :: tail =>
+            def makeNestedParam(name: String, unwrapped: ConfigDescriptor[Any], optional: Boolean) =
+              if (optional) {
+                nested(name)(unwrapped).optional.asInstanceOf[ConfigDescriptor[Any]]
+              } else {
+                nested(name)(unwrapped)
+              }
+
             def makeDescriptor(param: Param[Descriptor, T]): ConfigDescriptor[Any] = {
               val descriptions =
                 param.annotations
                   .filter(_.isInstanceOf[describe])
                   .map(_.asInstanceOf[describe].describe)
 
-              val paramName = prepareFieldName(param.annotations, param.label)
+              val paramNames = prepareFieldNames(param.annotations, param.label)
 
               val raw                      = param.typeclass.desc
               val (unwrapped, wasOptional) = unwrapFromOptional(raw)
-              val withNesting              = if (wasOptional) {
-                nested(paramName)(unwrapped).optional.asInstanceOf[ConfigDescriptor[Any]]
-              } else {
-                nested(paramName)(unwrapped)
+              val withNesting              = paramNames.tail.foldLeft(makeNestedParam(paramNames.head, unwrapped, wasOptional)) {
+                case (acc, name) =>
+                  acc orElse makeNestedParam(name, unwrapped, wasOptional)
               }
               val described                = descriptions.foldLeft(withNesting)(_ ?? _)
               param.default.fold(described)(described.default(_))
@@ -403,6 +427,9 @@ trait DeriveConfigDescriptor { self =>
         val subClassName =
           nameToLabel(subtype.typeName.full)
 
+        val subClassNames =
+          prepareClassNames(subtype.annotations, subClassName)
+
         val desc = sealedTraitStrategy.subClass match {
           case Descriptor.SealedTraitSubClassNameStrategy.IgnoreSubClassName =>
             typeclass.desc
@@ -411,7 +438,14 @@ trait DeriveConfigDescriptor { self =>
             typeclass.desc
 
           case Descriptor.SealedTraitSubClassNameStrategy.WrapSubClassName =>
-            nested(subClassName)(typeclass.desc)
+            val f = (name: String) => nested(name)(typeclass.desc)
+            if (subClassNames.length > 1) {
+              subClassNames.tail.foldLeft(f(subClassNames.head)) { case (acc, n) =>
+                acc orElse f(n)
+              }
+            } else {
+              nested(subClassName)(typeclass.desc)
+            }
 
           case Descriptor.SealedTraitSubClassNameStrategy.LabelSubClassName(_) if typeclass.isObject =>
             typeclass.desc
@@ -428,13 +462,14 @@ trait DeriveConfigDescriptor { self =>
               )
         }
 
-        wrapSealedTrait(prepareClassName(sealedTrait.annotations, sealedTrait.typeName.short), desc).transformOrFail[T](
-          st => Right(st),
-          t =>
-            subtype.cast
-              .andThen(Right(_))
-              .applyOrElse(t, (_: T) => Left(s"Expected ${subtype.typeName.full}, but got ${t.getClass.getName}"))
-        )
+        wrapSealedTrait(prepareClassNames(sealedTrait.annotations, sealedTrait.typeName.short), desc)
+          .transformOrFail[T](
+            st => Right(st),
+            t =>
+              subtype.cast
+                .andThen(Right(_))
+                .applyOrElse(t, (_: T) => Left(s"Expected ${subtype.typeName.full}, but got ${t.getClass.getName}"))
+          )
       }.reduce(_.orElse(_))
 
     Descriptor(desc)
