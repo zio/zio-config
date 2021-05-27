@@ -304,7 +304,7 @@ case class ApplicationConfig(bridgeIp: String, userName: String)
 val configuration =
   (string("bridgeIp") |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
 
-val finalExecution: ZIO[Has[ApplicationConfig] with Console, Nothing, Unit] =
+val finalExecution =
   for {
     appConfig <- getConfig[ApplicationConfig]
     _         <- putStrLn(appConfig.bridgeIp)

@@ -1,6 +1,6 @@
 package zio.config
 
-import scala.util.{ Failure, Success }
+import scala.util.{Failure, Success}
 
 private[config] object VersionSpecificSupport {
   implicit class RightBiasedEither[L, R](e: Either[L, R]) {
