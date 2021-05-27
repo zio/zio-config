@@ -267,9 +267,10 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     ): ConfigSource =
-      fromMapInternal(constantMap)(
+      fromMapInternal(constantMap.filter({ case (k, _) => filterKeys(k) }))(
         x => {
           val listOfValues =
             valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
@@ -306,9 +307,15 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       map: Map[String, ::[String]],
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     ): ConfigSource =
-      fromMapInternal(map)(identity, keyDelimiter, ConfigSourceName(source), leafForSequence)
+      fromMapInternal(map.filter({ case (k, _) => filterKeys(k) }))(
+        identity,
+        keyDelimiter,
+        ConfigSourceName(source),
+        leafForSequence
+      )
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -338,13 +345,14 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       source: String = "properties",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
       val mapString = property
         .stringPropertyNames()
         .asScala
         .foldLeft(Map.empty[String, String]) { (acc, a) =>
-          acc.updated(a, property.getProperty(a))
+          if (filterKeys(a)) acc.updated(a, property.getProperty(a)) else acc
         }
 
       mergeAll(
@@ -383,7 +391,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       filePath: String,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     ): Task[ConfigSource] =
       for {
         properties <- ZIO.bracket(
@@ -400,7 +409,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         filePath,
         keyDelimiter,
         valueDelimiter,
-        leafForSequence
+        leafForSequence,
+        filterKeys
       )
 
     def fromSystemEnv: ZIO[System, ReadError[String], ConfigSource] =
@@ -413,9 +423,10 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
     def fromSystemEnvLive(
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
-      leafForSequence: LeafForSequence = LeafForSequence.Valid
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     ): IO[ReadError[String], ConfigSource] =
-      fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence).provideLayer(System.live)
+      fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence, filterKeys).provideLayer(System.live)
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -438,18 +449,22 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      *
+     * With filterKeys, you can choose to filter only those keys that needs to be considered.
+     *
      * Note: The delimiter '.' for keys doesn't work in system environment.
      */
     def fromSystemEnv(
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
-      leafForSequence: LeafForSequence = LeafForSequence.Valid
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     ): ZIO[System, ReadError[String], ConfigSource] = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
 
       if (keyDelimiter.forall(validDelimiters.contains)) {
         ZIO
           .accessM[System](_.get.envs)
+          .map(_.filter({ case (k, _) => filterKeys(k) }))
           .bimap(
             error => ReadError.SourceError(s"Error while getting system environment variables: ${error.getMessage}"),
             fromMap(_, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
@@ -488,7 +503,8 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
     def fromSystemProperties(
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
-      leafForSequence: LeafForSequence = LeafForSequence.Valid
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     ): UIO[ConfigSource] =
       for {
         systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
@@ -527,10 +543,12 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
     def fromSystemProps(
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
-      leafForSequence: LeafForSequence = LeafForSequence.Valid
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     ): ZIO[System, ReadError[String], ConfigSource] =
       ZIO
         .accessM[System](_.get.properties)
+        .map(_.filter({ case (k, _) => filterKeys(k) }))
         .bimap(
           error => ReadError.SourceError(s"Error while getting system properties: ${error.getMessage}"),
           fromMap(_, SystemProperties, keyDelimiter, valueDelimiter, leafForSequence)

@@ -648,7 +648,11 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       valueDelimiter: Option[Char] = None
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
-        configDescriptor from ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter)
+        configDescriptor from ConfigSource.fromCommandLineArgs(
+          args,
+          keyDelimiter,
+          valueDelimiter
+        )
       )
 
     /**
@@ -677,9 +681,20 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None
+      valueDelimiter: Option[Char] = None,
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
-      fromConfigDescriptor(configDescriptor from ConfigSource.fromMap(map, source, keyDelimiter, valueDelimiter))
+      fromConfigDescriptor(
+        configDescriptor from ConfigSource.fromMap(
+          map,
+          source,
+          keyDelimiter,
+          valueDelimiter,
+          leafForSequence,
+          filterKeys
+        )
+      )
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -704,9 +719,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       map: Map[String, ::[String]],
       configDescriptor: ConfigDescriptor[A],
       source: String,
-      keyDelimiter: Option[Char] = None
+      keyDelimiter: Option[Char] = None,
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
-      fromConfigDescriptor(configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter))
+      fromConfigDescriptor(
+        configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, leafForSequence, filterKeys)
+      )
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -734,10 +753,19 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       source: String,
       keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None
+      valueDelimiter: Option[Char] = None,
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
-        configDescriptor from ConfigSource.fromProperties(properties, source, keyDelimiter, valueDelimiter)
+        configDescriptor from ConfigSource.fromProperties(
+          properties,
+          source,
+          keyDelimiter,
+          valueDelimiter,
+          leafForSequence,
+          filterKeys
+        )
       )
 
     /**
@@ -765,11 +793,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       filePath: String,
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None
+      valueDelimiter: Option[Char] = None,
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[Throwable, Has[A]] =
       fromConfigDescriptorM(
         ConfigSource
-          .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter)
+          .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
           .map(configDescriptor from _)
       )
 
@@ -799,9 +829,15 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     def fromSystemEnv[K, V, A](
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None
+      valueDelimiter: Option[Char] = None,
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      fromConfigDescriptorM(ConfigSource.fromSystemEnv(keyDelimiter, valueDelimiter).map(configDescriptor from _))
+      fromConfigDescriptorM(
+        ConfigSource
+          .fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
+          .map(configDescriptor from _)
+      )
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
