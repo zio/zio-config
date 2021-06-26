@@ -118,7 +118,13 @@ lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
 lazy val scala213projects = scala212projects
 
 lazy val scala3projects =
-  Seq[ProjectReference](zioConfigJVM, zioConfigTypesafeJVM, zioConfigYamlJVM, zioConfigDerivationJVM)
+  Seq[ProjectReference](
+    zioConfigJVM,
+    zioConfigTypesafeJVM,
+    zioConfigYamlJVM,
+    zioConfigDerivationJVM,
+    zioConfigMagnoliaJVM
+  )
 
 lazy val root =
   project
@@ -189,6 +195,7 @@ lazy val zioConfigRefined    = crossProject(JVMPlatform)
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
   .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
+
 lazy val zioConfigRefinedJVM = zioConfigRefined.jvm
 
 lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module")
@@ -222,15 +229,16 @@ lazy val examples    = crossProject(JVMPlatform)
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigGen)
 lazy val examplesJVM = examples.jvm
 
-lazy val zioConfigDerivation    = crossProject(JVMPlatform)
+lazy val zioConfigDerivation = crossProject(JVMPlatform)
   .in(file("derivation"))
   .settings(stdSettings("zio-config-derivation"))
   .settings(crossProjectSettings)
   .dependsOn(zioConfig)
+
 lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm
   .settings(dottySettings)
 
-lazy val zioConfigGen    = crossProject(JVMPlatform)
+lazy val zioConfigGen = crossProject(JVMPlatform)
   .in(file("gen"))
   .settings(stdSettings("zio-config-gen"))
   .settings(crossProjectSettings)
@@ -243,6 +251,7 @@ lazy val zioConfigGen    = crossProject(JVMPlatform)
     )
   )
   .dependsOn(zioConfigTypesafe, zioConfigMagnolia)
+
 lazy val zioConfigGenJVM = zioConfigGen.jvm
 
 lazy val zioConfigMagnolia    = crossProject(JVMPlatform)
