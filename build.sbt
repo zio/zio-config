@@ -84,7 +84,7 @@ lazy val shapelessVersion = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11") Seq.empty // Just to make IntelliJ happy
+    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
     else
       Seq(
         "com.propensive" %% "magnolia"      % magnoliaVersion,
@@ -249,9 +249,17 @@ lazy val zioConfigMagnolia    = crossProject(JVMPlatform)
   .in(file("magnolia"))
   .settings(stdSettings("zio-config-magnolia"))
   .settings(crossProjectSettings)
+  .settings(dottySettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     magnoliaDependencies,
+    scalacOptions ++= {
+      if (scalaVersion.value == ScalaDotty) {
+        Seq.empty
+      } else {
+        Seq("-language:experimental.macros")
+      }
+    },
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-test"     % zioVersion % Test,
       "dev.zio" %% "zio-test-sbt" % zioVersion % Test
@@ -259,6 +267,7 @@ lazy val zioConfigMagnolia    = crossProject(JVMPlatform)
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
+
 lazy val zioConfigMagnoliaJVM = zioConfigMagnolia.jvm
 
 lazy val zioConfigShapeless    = crossProject(JVMPlatform)
