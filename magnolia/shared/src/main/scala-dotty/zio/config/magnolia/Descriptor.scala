@@ -1,51 +1,132 @@
 package zio.config.magnolia
 
-import zio.config._
+import zio.config._, ConfigDescriptor._
+import zio.duration.Duration
+import zio.config.derivation.DerivationUtils
 
-case class Descriptor[T](desc: ConfigDescriptor[T])
+import java.io.File
+import java.net.{URI, URL}
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import java.util.UUID
+import scala.concurrent.duration.{Duration => ScalaDuration}
+import scala.deriving._
+import scala.compiletime.{erasedValue, summonInline, constValue}
+import scala.quoted
 
-object Descriptor extends DeriveConfigDescriptor {
-  def apply[A](implicit ev: Descriptor[A]): Descriptor[A] = ev
+final case class Descriptor[A](desc: ConfigDescriptor[A])
 
-  sealed trait SealedTraitSubClassNameStrategy {
-    def &&(
-      sealedTraitNameStrategy: SealedTraitNameStrategy
-    ): SealedTraitStrategy =
-      SealedTraitStrategy(this, sealedTraitNameStrategy)
-  }
+object Descriptor {
+  def apply[A](implicit ev: Descriptor[A]) =
+    ev.desc
 
-  object SealedTraitSubClassNameStrategy {
-    case object WrapSubClassName                    extends SealedTraitSubClassNameStrategy
-    case object IgnoreSubClassName                  extends SealedTraitSubClassNameStrategy
-    case class LabelSubClassName(fieldName: String) extends SealedTraitSubClassNameStrategy
-  }
+  lazy given Descriptor[String] = Descriptor(string)
+  lazy given Descriptor[Boolean] = Descriptor(boolean)
+  lazy given Descriptor[Byte] = Descriptor(byte)
+  lazy given Descriptor[Short] = Descriptor(short)
+  lazy given Descriptor[Int] = Descriptor(int)
+  lazy given Descriptor[Long] = Descriptor(long)
+  lazy given Descriptor[BigInt] = Descriptor(bigInt)
+  lazy given Descriptor[Float] = Descriptor(float)
+  lazy given Descriptor[Double] = Descriptor(double)
+  lazy given Descriptor[BigDecimal] = Descriptor(bigDecimal)
+  lazy given Descriptor[URI] = Descriptor(uri)
+  lazy given Descriptor[URL] = Descriptor(url)
+  lazy given Descriptor[ScalaDuration] = Descriptor(duration)
+  lazy given Descriptor[Duration] = Descriptor(zioDuration)
+  lazy given Descriptor[UUID] = Descriptor(uuid)
+  lazy given Descriptor[LocalDate] = Descriptor(localDate)
+  lazy given Descriptor[LocalTime] = Descriptor(localTime)
+  lazy given Descriptor[LocalDateTime] = Descriptor(localDateTime)
+  lazy given Descriptor[Instant] = Descriptor(instant)
+  lazy given Descriptor[File] = Descriptor(file)
+  lazy given Descriptor[java.nio.file.Path] = Descriptor(javaFilePath)
 
-  sealed trait SealedTraitNameStrategy {
-    def &&(
-      subClassNameStrategy: SealedTraitSubClassNameStrategy
-    ): SealedTraitStrategy =
-      SealedTraitStrategy(subClassNameStrategy, this)
-  }
+  given eitherDesc[A, B](using ev1: Descriptor[A], ev2: Descriptor[B]): Descriptor[Either[A, B]] =
+    Descriptor(ev1.desc.orElseEither(ev2.desc))
 
-  object SealedTraitNameStrategy {
-    case object WrapSealedTraitName   extends SealedTraitNameStrategy
-    case object IgnoreSealedTraitName extends SealedTraitNameStrategy
-  }
+  given optDesc[A: Descriptor]: Descriptor[Option[A]] =
+    Descriptor(Descriptor[A].optional)
 
-  case class SealedTraitStrategy(
-    subClass: SealedTraitSubClassNameStrategy,
-    parentClass: SealedTraitNameStrategy
-  )
+  given listDesc[A](using ev: Descriptor[A]): Descriptor[List[A]] =
+    Descriptor(list(ev.desc))
 
-  object SealedTraitStrategy {
-    import SealedTraitNameStrategy._
-    import SealedTraitSubClassNameStrategy._
+  given mapDesc[A](using ev: Descriptor[A]): Descriptor[Map[String, A]] =
+    Descriptor(map(ev.desc))
 
-    def wrapSealedTraitName: SealedTraitNameStrategy   = WrapSealedTraitName
-    def ignoreSealedTraitName: SealedTraitNameStrategy = IgnoreSealedTraitName
+  // FIXME: Splitting functions further resulted in odd scala3 errors with inlines
+  inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
+    inline m match
+      case s: Mirror.SumOf[T] =>
+        val desciptorsOfSubClasses =
+          summonDescriptorAll[m.MirroredElemTypes]
 
-    def wrapSubClassName: SealedTraitSubClassNameStrategy                     = WrapSubClassName
-    def ignoreSubClassName: SealedTraitSubClassNameStrategy                   = IgnoreSubClassName
-    def labelSubClassName(fieldName: String): SealedTraitSubClassNameStrategy = LabelSubClassName(fieldName)
-  }
+        val alternateNamesOfEnum: List[String] =
+          Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
+
+        val subClassNames =
+          labelsToList[m.MirroredElemLabels]
+
+        // FIXME: Write back based on type
+        val desc: Descriptor[T] =
+          mergeAllProducts(
+            subClassNames.zip(desciptorsOfSubClasses.map(_.asInstanceOf[Descriptor[Any]]))
+              .map { case(n, d) => Descriptor(nested(n)(d.desc.asInstanceOf[ConfigDescriptor[Any]])) }
+          )
+
+        if (alternateNamesOfEnum.nonEmpty) then
+          Descriptor(alternateNamesOfEnum.map(n => nested(n)(desc.desc.asInstanceOf[ConfigDescriptor[T]])).reduce(_ orElse _))
+        else desc
+
+      case a: Mirror.ProductOf[T] =>
+        val nameOfT =
+         constValue[m.MirroredLabel]
+
+        val descriptorsOfFields =
+          summonDescriptorAll[m.MirroredElemTypes]
+
+        val fieldNames =
+          labelsToList[m.MirroredElemLabels]
+
+        mergeAllFields(
+          descriptorsOfFields,
+          fieldNames,
+          List(nameOfT),
+          lst => a.fromProduct(Tuple.fromArray(lst.toArray[Any])),
+          t => t.asInstanceOf[Product].productIterator.toList
+        )
+
+    // FIXME: Write back based on product. Remove asInstanceOf
+   def mergeAllProducts[S, T](
+     allDescs: => List[Descriptor[Any]]
+   ): Descriptor[T] =
+     allDescs.reduce((a, b) => Descriptor(a.desc.orElse(b.desc))).asInstanceOf[Descriptor[T]]
+
+   def mergeAllFields[T](
+     allDescs: => List[Descriptor[_]],
+     fieldNames: => List[String],
+     namesOfClass: => List[String],
+     f: List[Any] => T,
+     g: T => List[Any],
+   ): Descriptor[T] =
+       if fieldNames.isEmpty then
+         val tryAllPaths = namesOfClass.map(n => DerivationUtils.constantString(n)).reduce(_ orElse _)
+         Descriptor(tryAllPaths.transform[T](_ => f(List.empty[Any]), _.toString))
+       else
+         val listOfDesc =
+           fieldNames.zip(allDescs).map({ case (a, b) => nested(a)(b.desc.asInstanceOf[ConfigDescriptor[Any]]) })
+
+         val descOfList =
+           collectAll(listOfDesc.head, listOfDesc.tail: _*)
+
+         Descriptor(descOfList.transform[T](f, g))
+
+  inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
+     inline erasedValue[T] match
+      case _ : EmptyTuple => Nil
+      case _: (t *: ts) => summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
+
+  inline def labelsToList[T <: Tuple]: List[String] =
+    inline erasedValue[T] match
+      case _: EmptyTuple => Nil
+      case _ : ( t *: ts) => constValue[t].toString :: labelsToList[ts]
 }

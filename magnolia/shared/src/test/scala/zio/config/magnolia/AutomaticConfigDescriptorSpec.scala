@@ -23,6 +23,9 @@ object AutomaticConfigTest extends BaseSpec {
           val source =
             ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
 
+          println(environment)
+          println(read(configDesc from source))
+
           val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
             for {
               result  <- ZIO.fromEither(read(configDesc from source))
@@ -58,7 +61,8 @@ object AutomaticConfigTestUtils {
 
   final case class Aws(region: String, security: Credentials)
 
-  final case class DbUrl(value: String) extends AnyVal
+  // Scala3 didn't like final case class DbUrl(value: String) extends AnyVal
+  final case class DbUrl(value: String)
 
   final case class MyConfig(
     aws: Aws,
@@ -100,8 +104,10 @@ object AutomaticConfigTestUtils {
       port           <- Gen.anyInt
       amount         <- Gen.option(Gen.long(1, 100))
       quantity       <- Gen.either(Gen.long(5, 10), genAlpha)
-      default        <- Gen.option(Gen.anyInt)
-      anotherDefault <- Gen.option(Gen.boolean)
+      default        <-
+        Gen.anyInt.map(Option(_)) // FIXME: Scala3 needs to handle default value. Replace with Gen.option(Gen.anyInt)
+      anotherDefault <-
+        Gen.boolean.map(Option(_)) // FIXME: Scala3 needs to handle default value. Replace with Gen.option(Gen.boolean)
       descriptions   <- Gen.int(1, 10).flatMap(n => Gen.listOfN(n)(genNonEmptyString(10)))
       created        <- genLocalDateString
       updated        <- genLocalTimeString

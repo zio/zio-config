@@ -233,6 +233,8 @@ lazy val zioConfigDerivation = crossProject(JVMPlatform)
   .in(file("derivation"))
   .settings(stdSettings("zio-config-derivation"))
   .settings(crossProjectSettings)
+  .settings(crossProjectSettings)
+  .settings(dottySettings)
   .dependsOn(zioConfig)
 
 lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm
