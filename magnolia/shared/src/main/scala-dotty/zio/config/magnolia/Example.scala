@@ -11,10 +11,10 @@ final case class B(
   d: List[C],
   e: Option[C],
   f: Either[C, E],
-  g: Option[E],
-  h: Option[E],
-  i: Option[P],
-  j: Option[P]
+  g: E,
+  h: E,
+  i: P,
+  j: P
 )
 
 final case class C()
@@ -33,7 +33,7 @@ enum P:
   @name("t")
   case T(u: String)
 
-
+  //Right(A(B(v1,C(),List(C(), C()),None,Right(G(v2)),None,Some(G(GValue)),None,Some(T(v3)))))
 object Example extends App :
   val source =
     ConfigSource.fromMap(
@@ -41,12 +41,12 @@ object Example extends App :
         "a.b" -> "v1",
         "a.c" -> "C",
         "a.d" -> "C, C",
-        "a.f.value" -> "v2",
+        "a.f.G.value" -> "v2",
         "a.g" -> "D",
         "a.h" -> "F",
-        "a.h.value" -> "GValue",
+        "a.h.G.value" -> "GValue",
         "a.i" -> "Q",
-        "a.j.u" -> "v3"
+        "a.j.T.u" -> "v3"
       ),
       keyDelimiter = Some('.'),
       valueDelimiter = Some(',')

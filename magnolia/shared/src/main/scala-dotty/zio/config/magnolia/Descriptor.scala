@@ -95,7 +95,6 @@ object Descriptor {
 
         lazy val subClassDescriptions =
           summonDescriptorForCoProduct[m.MirroredElemTypes]
-          // subClassNames.zip(summonDescriptorForCoProduct[m.MirroredElemTypes]).map({ case(n, d) => Descriptor(nested(n)(d.desc)) })
 
         // FIXME: Write back based on type
         val desc: Descriptor[T] =
