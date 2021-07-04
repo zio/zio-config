@@ -12,6 +12,7 @@ import scala.concurrent.duration.{Duration => ScalaDuration}
 import scala.deriving._
 import scala.compiletime.{erasedValue, summonInline, constValue}
 import scala.quoted
+import scala.util.Try
 
 final case class Descriptor[A](desc: ConfigDescriptor[A])
 
@@ -108,7 +109,7 @@ object Descriptor {
           labelsToList[m.MirroredElemLabels]
 
         mergeAllFields(
-          summonDescriptorForCoProduct[m.MirroredElemTypes],
+          summonDescriptorAll[m.MirroredElemTypes],
           fieldNames,
           List(nameOfT),
           lst => a.fromProduct(Tuple.fromArray(lst.toArray[Any])),
