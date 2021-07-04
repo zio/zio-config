@@ -64,8 +64,7 @@ object Descriptor {
       case _: EmptyTuple => Nil
       case _: (t *: ts) =>
         Descriptor[Any](
-          summonInline[Descriptor[t]]
-            .desc.transformOrFail[Any](
+          summonInline[Descriptor[t]].desc.transformOrFail[Any](
             a => Right(a.asInstanceOf[Any]): Either[String, Any],
             b => Try(b.asInstanceOf[t]).toEither.swap.map(_.toString).swap: Either[String, t]
           )
@@ -85,19 +84,22 @@ object Descriptor {
   inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
     inline m match
       case s: Mirror.SumOf[T] =>
+        val nameOfT =
+          constValue[m.MirroredLabel]
+
         val alternateNamesOfEnum: List[String] =
           Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
 
         val subClassNames =
           labelsToList[m.MirroredElemLabels]
 
-        val subClassDescriptions =
+        lazy val subClassDescriptions =
           summonDescriptorForCoProduct[m.MirroredElemTypes]
           // subClassNames.zip(summonDescriptorForCoProduct[m.MirroredElemTypes]).map({ case(n, d) => Descriptor(nested(n)(d.desc)) })
 
         // FIXME: Write back based on type
         val desc: Descriptor[T] =
-          Descriptor(subClassDescriptions.map(_.desc.asInstanceOf[ConfigDescriptor[T]]).reduce(_ orElse _))
+          mergeAllProducts(subClassDescriptions.map(_.asInstanceOf[Descriptor[T]]), subClassNames)
 
         desc
 
@@ -116,13 +118,15 @@ object Descriptor {
           t => t.asInstanceOf[Product].productIterator.toList
         )
 
-    // FIXME: Write back based on product. Remove asInstanceOf
-   inline def mergeAllProducts[T](
-     allDescs: => List[Descriptor[T]]
-   ): Descriptor[T] =
-     allDescs.reduce((a, b) => Descriptor(a.desc.orElse(b.desc)))
+    // FIXME: Write back based on product. Remove asInstanceOf \
+   def mergeAllProducts[T](
+     allDescs: => List[Descriptor[T]],
+     subClassNames: List[String]
+   ): Descriptor[T] = {
+     Descriptor(allDescs.zip(subClassNames).map({case (d, n) => nested(n)(d.desc)}).reduce(_ orElse _))
+   }
 
-   def mergeAllFields[T](
+  def mergeAllFields[T](
      allDescs: => List[Descriptor[_]],
      fieldNames: => List[String],
      namesOfClass: => List[String],
