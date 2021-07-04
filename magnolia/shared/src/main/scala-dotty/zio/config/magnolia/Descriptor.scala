@@ -96,11 +96,7 @@ object Descriptor {
         lazy val subClassDescriptions =
           summonDescriptorForCoProduct[m.MirroredElemTypes]
 
-        // FIXME: Write back based on type
-        val desc: Descriptor[T] =
-          mergeAllProducts(subClassDescriptions.map(_.asInstanceOf[Descriptor[T]]), subClassNames)
-
-        desc
+        mergeAllProducts(subClassDescriptions.map(_.asInstanceOf[Descriptor[T]]), subClassNames)
 
       case a: Mirror.ProductOf[T] =>
         val nameOfT =
