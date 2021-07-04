@@ -41,12 +41,12 @@ object Example extends App :
         "a.b" -> "v1",
         "a.c" -> "C",
         "a.d" -> "C, C",
-        "a.f.E.G.value" -> "v2",
-        "a.g.E" -> "D",
-        "a.h.E" -> "F",
-        "a.h" -> "Q",
+        "a.f.value" -> "v2",
+        "a.g" -> "D",
+        "a.h" -> "F",
+        "a.h.value" -> "GValue",
         "a.i" -> "Q",
-        "a.j.T.u" -> "v3"
+        "a.j.u" -> "v3"
       ),
       keyDelimiter = Some('.'),
       valueDelimiter = Some(',')
