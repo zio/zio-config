@@ -66,7 +66,7 @@ object Descriptor {
           summonInline[Descriptor[t]]
             .desc.transformOrFail[Any](
             a => Right(a.asInstanceOf[Any]): Either[String, Any],
-            b => Right(b.asInstanceOf[t]).swap.map(_.toString).swap: Either[String, t]
+            b => Try(b.asInstanceOf[t]).toEither.swap.map(_.toString).swap: Either[String, t]
           )
         ) :: summonDescriptorForCoProduct[ts]//).asInstanceOf[List[Descriptor[T]]]
 
