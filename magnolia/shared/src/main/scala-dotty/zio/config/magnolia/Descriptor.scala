@@ -17,11 +17,6 @@ import scala.util.Try
 final case class Descriptor[A](desc: ConfigDescriptor[A])
 
 object Descriptor {
-  type TupleMap[T <: Tuple, F[_]] <: Tuple = T match {
-    case EmptyTuple => EmptyTuple
-    case h *: t => F[h] *: TupleMap[t, F]
-  }
-
   def apply[A](implicit ev: Descriptor[A]) =
     ev.desc
 
@@ -68,7 +63,7 @@ object Descriptor {
             a => Right(a.asInstanceOf[Any]): Either[String, Any],
             b => Try(b.asInstanceOf[t]).toEither.swap.map(_.toString).swap: Either[String, t]
           )
-        ) :: summonDescriptorForCoProduct[ts]//).asInstanceOf[List[Descriptor[T]]]
+        ) :: summonDescriptorForCoProduct[ts]
 
   inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
     inline erasedValue[T] match
@@ -80,44 +75,49 @@ object Descriptor {
       case _: EmptyTuple => Nil
       case _ : ( t *: ts) => constValue[t].toString :: labelsToList[ts]
 
-  // FIXME: Splitting functions further resulted in odd scala3 errors with inlines
   inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
     inline m match
       case s: Mirror.SumOf[T] =>
-        val nameOfT =
-          constValue[m.MirroredLabel]
+        sum[T](using s)
 
-        val alternateNamesOfEnum: List[String] =
-          Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
+      case p: Mirror.ProductOf[T] =>
+        product[T](using p)
 
-        val subClassNames =
-          labelsToList[m.MirroredElemLabels]
+  inline def sum[T](using m: Mirror.SumOf[T]) =
+    val nameOfT =
+      constValue[m.MirroredLabel]
 
-        lazy val subClassDescriptions =
-          summonDescriptorForCoProduct[m.MirroredElemTypes]
+    val alternateNamesOfEnum: List[String] =
+      Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
 
-        mergeAllProducts(subClassDescriptions.map(_.asInstanceOf[Descriptor[T]]), subClassNames)
+    val subClassNames =
+      labelsToList[m.MirroredElemLabels]
 
-      case a: Mirror.ProductOf[T] =>
-        val nameOfT =
-         constValue[m.MirroredLabel]
+    val subClassDescriptions =
+      summonDescriptorForCoProduct[m.MirroredElemTypes]
 
-        val fieldNames =
-          labelsToList[m.MirroredElemLabels]
+    mergeAllProducts(subClassDescriptions.map(_.asInstanceOf[Descriptor[T]]), subClassNames)
 
-        mergeAllFields(
-          summonDescriptorAll[m.MirroredElemTypes],
-          fieldNames,
-          List(nameOfT),
-          lst => a.fromProduct(Tuple.fromArray(lst.toArray[Any])),
-          t => t.asInstanceOf[Product].productIterator.toList
-        )
+  def mergeAllProducts[T](
+    allDescs: => List[Descriptor[T]],
+    subClassNames: List[String]
+  ): Descriptor[T] =
+    Descriptor(allDescs.zip(subClassNames).map({case (d, n) => nested(n)(d.desc)}).reduce(_ orElse _))
 
-   def mergeAllProducts[T](
-     allDescs: => List[Descriptor[T]],
-     subClassNames: List[String]
-   ): Descriptor[T] =
-     Descriptor(allDescs.zip(subClassNames).map({case (d, n) => nested(n)(d.desc)}).reduce(_ orElse _))
+  inline def product[T](using m: Mirror.ProductOf[T]) =
+    val nameOfT =
+      constValue[m.MirroredLabel]
+
+    val fieldNames =
+      labelsToList[m.MirroredElemLabels]
+
+    mergeAllFields(
+      summonDescriptorAll[m.MirroredElemTypes],
+      fieldNames,
+      List(nameOfT),
+      lst => m.fromProduct(Tuple.fromArray(lst.toArray[Any])),
+      t => t.asInstanceOf[Product].productIterator.toList
+    )
 
   def mergeAllFields[T](
      allDescs: => List[Descriptor[_]],

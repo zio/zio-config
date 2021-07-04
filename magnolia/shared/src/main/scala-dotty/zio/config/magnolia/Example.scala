@@ -33,7 +33,6 @@ enum P:
   @name("t")
   case T(u: String)
 
-  //Right(A(B(v1,C(),List(C(), C()),None,Right(G(v2)),None,Some(G(GValue)),None,Some(T(v3)))))
 object Example extends App :
   val source =
     ConfigSource.fromMap(
