@@ -16,6 +16,11 @@ import scala.quoted
 final case class Descriptor[A](desc: ConfigDescriptor[A])
 
 object Descriptor {
+  type TupleMap[T <: Tuple, F[_]] <: Tuple = T match {
+    case EmptyTuple => EmptyTuple
+    case h *: t => F[h] *: TupleMap[t, F]
+  }
+
   def apply[A](implicit ev: Descriptor[A]) =
     ev.desc
 
@@ -53,42 +58,57 @@ object Descriptor {
   given mapDesc[A](using ev: Descriptor[A]): Descriptor[Map[String, A]] =
     Descriptor(map(ev.desc))
 
+  inline def summonDescriptorForCoProduct[T <: Tuple]: List[Descriptor[Any]] =
+    inline erasedValue[T] match
+      case _: EmptyTuple => Nil
+      case _: (t *: ts) =>
+        Descriptor[Any](
+          summonInline[Descriptor[t]]
+            .desc.transformOrFail[Any](
+            a => Right(a.asInstanceOf[Any]): Either[String, Any],
+            b => scala.util.Try(b.asInstanceOf[t]).toEither.swap.map(_.toString).swap: Either[String, t]
+          )
+        ) :: summonDescriptorForCoProduct[ts]//).asInstanceOf[List[Descriptor[T]]]
+
+  inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
+    inline erasedValue[T] match
+      case _ : EmptyTuple => Nil
+      case _: (t *: ts) => summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
+
+  inline def labelsToList[T <: Tuple]: List[String] =
+    inline erasedValue[T] match
+      case _: EmptyTuple => Nil
+      case _ : ( t *: ts) => constValue[t].toString :: labelsToList[ts]
+
   // FIXME: Splitting functions further resulted in odd scala3 errors with inlines
   inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
     inline m match
       case s: Mirror.SumOf[T] =>
-        val desciptorsOfSubClasses =
-          summonDescriptorAll[m.MirroredElemTypes]
-
         val alternateNamesOfEnum: List[String] =
           Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
 
         val subClassNames =
           labelsToList[m.MirroredElemLabels]
 
+        val subClassDescriptions =
+          summonDescriptorForCoProduct[m.MirroredElemTypes]
+          // subClassNames.zip(summonDescriptorForCoProduct[m.MirroredElemTypes]).map({ case(n, d) => Descriptor(nested(n)(d.desc)) })
+
         // FIXME: Write back based on type
         val desc: Descriptor[T] =
-          mergeAllProducts(
-            subClassNames.zip(desciptorsOfSubClasses.map(_.asInstanceOf[Descriptor[Any]]))
-              .map { case(n, d) => Descriptor(nested(n)(d.desc.asInstanceOf[ConfigDescriptor[Any]])) }
-          )
+          Descriptor(subClassDescriptions.map(_.desc.asInstanceOf[ConfigDescriptor[T]]).reduce(_ orElse _))
 
-        if (alternateNamesOfEnum.nonEmpty) then
-          Descriptor(alternateNamesOfEnum.map(n => nested(n)(desc.desc.asInstanceOf[ConfigDescriptor[T]])).reduce(_ orElse _))
-        else desc
+        desc
 
       case a: Mirror.ProductOf[T] =>
         val nameOfT =
          constValue[m.MirroredLabel]
 
-        val descriptorsOfFields =
-          summonDescriptorAll[m.MirroredElemTypes]
-
         val fieldNames =
           labelsToList[m.MirroredElemLabels]
 
         mergeAllFields(
-          descriptorsOfFields,
+          summonDescriptorForCoProduct[m.MirroredElemTypes],
           fieldNames,
           List(nameOfT),
           lst => a.fromProduct(Tuple.fromArray(lst.toArray[Any])),
@@ -96,10 +116,10 @@ object Descriptor {
         )
 
     // FIXME: Write back based on product. Remove asInstanceOf
-   def mergeAllProducts[S, T](
-     allDescs: => List[Descriptor[Any]]
+   inline def mergeAllProducts[T](
+     allDescs: => List[Descriptor[T]]
    ): Descriptor[T] =
-     allDescs.reduce((a, b) => Descriptor(a.desc.orElse(b.desc))).asInstanceOf[Descriptor[T]]
+     allDescs.reduce((a, b) => Descriptor(a.desc.orElse(b.desc)))
 
    def mergeAllFields[T](
      allDescs: => List[Descriptor[_]],
@@ -119,14 +139,4 @@ object Descriptor {
            collectAll(listOfDesc.head, listOfDesc.tail: _*)
 
          Descriptor(descOfList.transform[T](f, g))
-
-  inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
-     inline erasedValue[T] match
-      case _ : EmptyTuple => Nil
-      case _: (t *: ts) => summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
-
-  inline def labelsToList[T <: Tuple]: List[String] =
-    inline erasedValue[T] match
-      case _: EmptyTuple => Nil
-      case _ : ( t *: ts) => constValue[t].toString :: labelsToList[ts]
 }

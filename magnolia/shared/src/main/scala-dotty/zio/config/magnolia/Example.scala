@@ -11,10 +11,10 @@ final case class B(
   d: List[C],
   e: Option[C],
   f: Either[C, E],
-  g: E,
-  h: E,
-  i: P,
-  j: P
+  g: Option[E],
+  h: Option[E],
+  i: Option[P],
+  j: Option[P]
 )
 
 final case class C()
@@ -33,11 +33,6 @@ enum P:
   @name("t")
   case T(u: String)
 
-@label("type")
-enum V:
-  case X
-  case Y
-  case Z
 
 object Example extends App :
   val source =
@@ -51,15 +46,20 @@ object Example extends App :
         "a.h.E" -> "F",
         "a.h" -> "Q",
         "a.i" -> "Q",
-        "a.j.t.u" -> "v3"
+        "a.j.T.u" -> "v3"
       ),
       keyDelimiter = Some('.'),
       valueDelimiter = Some(',')
     )
 
-  val res = read(descriptor[A] from source)
+  val desc = descriptor[A]
+
+  val res = read(desc from source)
+  // Right(A(B(v1,C(),List(C(), C()),None,Right(G(v2)),Some(D),Some(F),None,None)))
 
   println(res)
+  val map = write(desc, res.getOrElse(throw new Exception())).map(_.flattenKeyAndValue(pathDelimiter = ".", valueDelimiter = ", ")).getOrElse(throw new Exception)
+   println(map)
   // Right(A(B(hi,C(),List(C(), C()),None,Right(F))))
 
 end Example
