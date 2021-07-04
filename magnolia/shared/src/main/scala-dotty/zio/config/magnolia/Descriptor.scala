@@ -60,8 +60,12 @@ object Descriptor {
       case _: (t *: ts) =>
         Descriptor[Any](
           summonInline[Descriptor[t]].desc.transformOrFail[Any](
-            a => Right(a.asInstanceOf[Any]): Either[String, Any],
-            b => Try(b.asInstanceOf[t]).toEither.swap.map(_.toString).swap: Either[String, t]
+            a => Right(a),
+            b => Try(castTo[t](b))
+              .toEither
+              .swap
+              .map(r => s"Failed to write ${b}. ${r}")
+              .swap
           )
         ) :: summonDescriptorForCoProduct[ts]
 
@@ -96,7 +100,10 @@ object Descriptor {
     val subClassDescriptions =
       summonDescriptorForCoProduct[m.MirroredElemTypes]
 
-    mergeAllProducts(subClassDescriptions.map(_.asInstanceOf[Descriptor[T]]), subClassNames)
+    mergeAllProducts(
+      subClassDescriptions.map(castTo[Descriptor[T]]),
+      subClassNames
+    )
 
   def mergeAllProducts[T](
     allDescs: => List[Descriptor[T]],
@@ -116,7 +123,7 @@ object Descriptor {
       fieldNames,
       List(nameOfT),
       lst => m.fromProduct(Tuple.fromArray(lst.toArray[Any])),
-      t => t.asInstanceOf[Product].productIterator.toList
+      castTo[Product](_).productIterator.toList
     )
 
   def mergeAllFields[T](
@@ -131,10 +138,13 @@ object Descriptor {
          Descriptor(tryAllPaths.transform[T](_ => f(List.empty[Any]), _.toString))
        else
          val listOfDesc =
-           fieldNames.zip(allDescs).map({ case (a, b) => nested(a)(b.desc.asInstanceOf[ConfigDescriptor[Any]]) })
+           fieldNames.zip(allDescs).map({ case (a, b) => nested(a)(castTo[ConfigDescriptor[Any]](b.desc)) })
 
          val descOfList =
            collectAll(listOfDesc.head, listOfDesc.tail: _*)
 
          Descriptor(descOfList.transform[T](f, g))
+
+  def castTo[T](a: Any): T =
+    a.asInstanceOf[T]
 }
