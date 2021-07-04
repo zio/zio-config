@@ -117,13 +117,11 @@ object Descriptor {
           t => t.asInstanceOf[Product].productIterator.toList
         )
 
-    // FIXME: Write back based on product. Remove asInstanceOf \
    def mergeAllProducts[T](
      allDescs: => List[Descriptor[T]],
      subClassNames: List[String]
-   ): Descriptor[T] = {
+   ): Descriptor[T] =
      Descriptor(allDescs.zip(subClassNames).map({case (d, n) => nested(n)(d.desc)}).reduce(_ orElse _))
-   }
 
   def mergeAllFields[T](
      allDescs: => List[Descriptor[_]],
