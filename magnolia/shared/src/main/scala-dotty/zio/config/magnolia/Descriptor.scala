@@ -13,16 +13,16 @@ import scala.deriving._
 import scala.compiletime.{erasedValue, summonInline, constValue, summonFrom, constValueTuple}
 import scala.quoted
 import scala.util.Try
+import Descriptor._
 
-final case class Descriptor[A](desc: ConfigDescriptor[A], keys: List[String] = Nil)
+final case class Descriptor[A](desc: ConfigDescriptor[A], keys: List[FieldName] = Nil)
 
 object Descriptor {
   def apply[A](implicit ev: Descriptor[A]) =
     ev.desc
 
-  final case class SubClassName(name: String, fields: List[String]){
-    def isObject = fields.isEmpty
-  }
+  final case class FieldName(names: List[String])
+  final case class SubClassName(names: List[String])
 
   lazy given Descriptor[String] = Descriptor(string)
   lazy given Descriptor[Boolean] = Descriptor(boolean)
@@ -141,7 +141,7 @@ object Descriptor {
       constValue[m.MirroredLabel]
 
     val fieldNames =
-      labelsToList[m.MirroredElemLabels]
+      labelsToList[m.MirroredElemLabels].map(name => FieldName(List(name)))
 
     mergeAllFields(
       summonDescriptorAll[m.MirroredElemTypes],
@@ -153,7 +153,7 @@ object Descriptor {
 
   def mergeAllFields[T](
      allDescs: => List[Descriptor[_]],
-     fieldNames: => List[String],
+     fieldNames: => List[FieldName],
      namesOfClass: => List[String],
      f: List[Any] => T,
      g: T => List[Any],
@@ -163,7 +163,9 @@ object Descriptor {
          Descriptor(tryAllPaths.transform[T](_ => f(List.empty[Any]), t => namesOfClass.headOption.getOrElse(t.toString)))
        else
          val listOfDesc =
-           fieldNames.zip(allDescs).map({ case (a, b) => nested(a)(castTo[ConfigDescriptor[Any]](b.desc)) })
+           fieldNames.zip(allDescs).map({ case (fieldName, desc) =>
+             fieldName.names.map(name => nested(name)(castTo[ConfigDescriptor[Any]](desc.desc))).reduce(_ orElse _)
+           })
 
          val descOfList =
            collectAll(listOfDesc.head, listOfDesc.tail: _*)
