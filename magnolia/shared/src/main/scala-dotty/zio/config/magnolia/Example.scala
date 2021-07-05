@@ -27,6 +27,8 @@ object E {
   case class G(value: String) extends E
 }
 
+// If a name is proved then the name of the sealed trait itself become part of the config
+@name("p")
 sealed trait P
 
 object P {
@@ -46,8 +48,8 @@ object Example extends App :
       "a.f.G.value" -> "v2",
       "a.g" -> "D",
       "a.h.G.value" -> "GValue",
-      "a.i" -> "Q",
-      "a.j.T.u" -> "v3"
+      "a.i.p" -> "Q",
+      "a.j.p.T.u" -> "v3"
     )
 
   val source =

@@ -14,9 +14,7 @@ import scala.compiletime.{erasedValue, summonInline, constValue, summonFrom, con
 import scala.quoted
 import scala.util.Try
 
-final case class Descriptor[A](desc: ConfigDescriptor[A], keys: List[String] = Nil) {
-  def isObject: Boolean = keys.isEmpty
-}
+final case class Descriptor[A](desc: ConfigDescriptor[A], keys: List[String] = Nil)
 
 object Descriptor {
   def apply[A](implicit ev: Descriptor[A]) =
@@ -99,7 +97,7 @@ object Descriptor {
     val nameOfT =
       constValue[m.MirroredLabel]
 
-    val alternateNamesOfEnum: List[String] =
+    val alternativeParentNames: List[String] =
       Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
 
     val subClassNames =
@@ -108,18 +106,35 @@ object Descriptor {
     val subClassDescriptions =
       summonDescriptorForCoProduct[m.MirroredElemTypes]
 
-    mergeAllProducts(
-      subClassDescriptions.map(castTo[Descriptor[T]]),
-      subClassNames
-    )
+    val desc =
+      mergeAllProducts(
+        subClassDescriptions.map(castTo[Descriptor[T]]),
+        subClassNames
+      )
+
+    tryAllParentPaths(alternativeParentNames, desc)
+
+  def tryAllParentPaths[T](
+    alternativeParentNames: List[String],
+    desc: Descriptor[T]
+  ) =
+    if alternativeParentNames.isEmpty then
+      desc
+    else
+      Descriptor(alternativeParentNames.map(n => nested(n)(desc.desc)).reduce(_ orElse _))
 
   def mergeAllProducts[T](
     allDescs: => List[Descriptor[T]],
     subClassNames: List[String]
   ): Descriptor[T] =
-    Descriptor(allDescs.zip(subClassNames).map({case (d, n) => {
-      if(d.isObject) d.desc else nested(n)(d.desc)
-    }}).reduce(_ orElse _))
+    Descriptor(
+      allDescs.zip(subClassNames)
+        .map({
+          case (d, n) => {
+            if(d.keys.isEmpty) d.desc else nested(n)(d.desc)
+          }
+        }).reduce(_ orElse _)
+    )
 
   inline def product[T](using m: Mirror.ProductOf[T]) =
     val nameOfT =
