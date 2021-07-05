@@ -22,7 +22,7 @@ object Descriptor {
     ev.desc
 
   final case class FieldName(names: List[String])
-  final case class SubClassName(names: List[String])
+  final case class SubClassName(originalName: String, alternativeNames: List[String])
   final case class ParentName(originalName: String, alternativeNames: List[String])
 
   lazy given Descriptor[String] = Descriptor(string)
@@ -105,7 +105,7 @@ object Descriptor {
       ParentName(originalName = nameOfT, alternativeNames = alternativeParentNames)
 
     val subClassNames =
-      labelsToList[m.MirroredElemLabels]
+      labelsToList[m.MirroredElemLabels].map(name => SubClassName(name, Nil))
 
     val subClassDescriptions =
       summonDescriptorForCoProduct[m.MirroredElemTypes]
@@ -129,13 +129,16 @@ object Descriptor {
 
   def mergeAllProducts[T](
     allDescs: => List[Descriptor[T]],
-    subClassNames: List[String]
+    subClassNames: List[SubClassName]
   ): Descriptor[T] =
     Descriptor(
       allDescs.zip(subClassNames)
         .map({
           case (d, n) => {
-            if(d.keys.isEmpty) d.desc else nested(n)(d.desc)
+            if(d.keys.isEmpty)
+              d.desc
+            else
+              (n.originalName :: n.alternativeNames).map(n => nested(n)(d.desc)).reduce(_ orElse _)
           }
         }).reduce(_ orElse _)
     )
