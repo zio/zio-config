@@ -18,8 +18,8 @@ object RecursiveExample extends App:
       "a.f.G.value" -> "v2",
       "a.g" -> "D",
       "a.h.G.value" -> "GValue",
-      "a.i" -> "Q",
-      "a.j.T.u" -> "v3"
+      "a.i.p" -> "Q",
+      "a.j.p.T.u" -> "v3"
     )
 
   val source =
@@ -35,3 +35,5 @@ object RecursiveExample extends App:
     RecursiveA(B(b = "v1",c = C(), d = List(C(), C()), e = None,f = Right(E.G("v2")), g = E.D, h = E.G("GValue"), i = P.Q, j = P.T("v3")), None)
 
   assert(result == Right(expected))
+
+end RecursiveExample
