@@ -4,11 +4,10 @@ import zio.config._, ConfigDescriptor._
 
 final case class RecursiveA(a: B, b: Option[RecursiveA])
 
-object RecursiveA {
+object RecursiveA:
   // A mix of automatic derivation + manual derivation
   val config: ConfigDescriptor[RecursiveA] =
     (nested("a")(descriptor[B]) |@| nested("b")(config).optional)(RecursiveA.apply, b => Some(b.a, b.b))
-}
 
 object RecursiveExample extends App:
   val sourceMap =
