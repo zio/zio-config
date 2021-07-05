@@ -27,7 +27,7 @@ object E {
   case class G(value: String) extends E
 }
 
-// If a name is proved then the name of the sealed trait itself become part of the config
+// If a name is provided then the name of the sealed trait itself become part of the config
 @name("p")
 sealed trait P
 
