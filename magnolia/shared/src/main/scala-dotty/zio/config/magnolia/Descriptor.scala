@@ -23,6 +23,7 @@ object Descriptor {
 
   final case class FieldName(names: List[String])
   final case class SubClassName(names: List[String])
+  final case class ParentName(originalName: String, alternativeNames: List[String])
 
   lazy given Descriptor[String] = Descriptor(string)
   lazy given Descriptor[Boolean] = Descriptor(boolean)
@@ -100,6 +101,9 @@ object Descriptor {
     val alternativeParentNames: List[String] =
       Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
 
+    val parentName =
+      ParentName(originalName = nameOfT, alternativeNames = alternativeParentNames)
+
     val subClassNames =
       labelsToList[m.MirroredElemLabels]
 
@@ -112,16 +116,16 @@ object Descriptor {
         subClassNames
       )
 
-    tryAllParentPaths(alternativeParentNames, desc)
+    tryAllParentPaths(parentName, desc)
 
   def tryAllParentPaths[T](
-    alternativeParentNames: List[String],
+    parentName: ParentName,
     desc: Descriptor[T]
   ) =
-    if alternativeParentNames.isEmpty then
+    if parentName.alternativeNames.isEmpty then
       desc
     else
-      Descriptor(alternativeParentNames.map(n => nested(n)(desc.desc)).reduce(_ orElse _))
+      Descriptor(parentName.alternativeNames.map(n => nested(n)(desc.desc)).reduce(_ orElse _))
 
   def mergeAllProducts[T](
     allDescs: => List[Descriptor[T]],

@@ -7,7 +7,7 @@ import zio.config._
  * to case class that has the same name as that of the constant value, with zero
  * number of fields in it.
  */
-case class Constant(value: String) extends PropertyType[String, String] {
+final case class Constant(value: String) extends PropertyType[String, String] {
   def read(propertyValue: String): Either[PropertyType.PropertyReadError[String], String] =
     if (propertyValue == value) Right(value)
     else Left(PropertyType.PropertyReadError(propertyValue, s"constant string '$value'"))
