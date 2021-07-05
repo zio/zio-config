@@ -86,6 +86,11 @@ object Descriptor {
       case _: EmptyTuple => Nil
       case _ : ( t *: ts) => constValue[t].toString :: labelsToList[ts]
 
+  inline def subClassNamesList[T <: Tuple]: List[SubClassName] =
+    inline erasedValue[T] match
+      case _: EmptyTuple => Nil
+      case _ : ( t *: ts) => SubClassName(constValue[t].toString, findAllAnnotatedNamesOf[t]) :: subClassNamesList[ts]
+
   inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
     inline m match
       case s: Mirror.SumOf[T] =>
@@ -99,13 +104,13 @@ object Descriptor {
       constValue[m.MirroredLabel]
 
     val alternativeParentNames: List[String] =
-      Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
+      findAllAnnotatedNamesOf[T]
 
-    val parentName =
+    val parentName: ParentName =
       ParentName(originalName = nameOfT, alternativeNames = alternativeParentNames)
 
-    val subClassNames =
-      labelsToList[m.MirroredElemLabels].map(name => SubClassName(name, Nil))
+    val subClassNames: List[SubClassName] =
+      subClassNamesList[m.MirroredElemLabels]
 
     val subClassDescriptions =
       summonDescriptorForCoProduct[m.MirroredElemTypes]
@@ -117,6 +122,9 @@ object Descriptor {
       )
 
     tryAllParentPaths(parentName, desc)
+
+  inline def findAllAnnotatedNamesOf[T] =
+    Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
 
   def tryAllParentPaths[T](
     parentName: ParentName,

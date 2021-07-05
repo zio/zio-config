@@ -35,6 +35,7 @@ object P {
   case object Q extends P
   case object R extends P
   case class S(z: String) extends P
+  @name("t")
   case class T(u: String) extends P
 }
 
