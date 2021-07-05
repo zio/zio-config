@@ -19,46 +19,56 @@ final case class B(
 
 final case class C()
 
-@name("E")
-enum E:
-  case D
-  case F
-  @name("G")
-  case G(value: String)
+sealed trait E
 
-enum P:
-  case Q
-  case R
-  case S(z: String)
-  @name("t")
-  case T(u: String)
+object E {
+  case object D extends E
+  case object F extends E
+  case class G(value: String) extends E
+}
 
+sealed trait P
+
+object P {
+  case object Q extends P
+  case object R extends P
+  case class S(z: String) extends P
+  case class T(u: String) extends P
+}
+
+  // Right(A(B(v1,C(),List(C(), C()),None,Right(G(v2)),D,G(GValue),Q,T(v3))))
 object Example extends App :
+  val sourceMap =
+    Map(
+      "a.b" -> "v1",
+      "a.c" -> "C",
+      "a.d" -> "C, C",
+      "a.f.G.value" -> "v2",
+      "a.g" -> "D",
+      "a.h.G.value" -> "GValue",
+      "a.i" -> "Q",
+      "a.j.T.u" -> "v3"
+    )
+
   val source =
     ConfigSource.fromMap(
-      Map(
-        "a.b" -> "v1",
-        "a.c" -> "C",
-        "a.d" -> "C, C",
-        "a.f.G.value" -> "v2",
-        "a.g" -> "D",
-        "a.h" -> "F",
-        "a.h.G.value" -> "GValue",
-        "a.i" -> "Q",
-        "a.j.T.u" -> "v3"
-      ),
+      sourceMap,
       keyDelimiter = Some('.'),
       valueDelimiter = Some(',')
     )
 
   val desc = descriptor[A]
 
-  val res = read(desc from source)
-  // Right(A(B(v1,C(),List(C(), C()),None,Right(G(v2)),Some(D),Some(F),None,None)))
+  val readResult = read(desc from source)
 
-  println(res)
-  val map = write(desc, res.getOrElse(throw new Exception())).map(_.flattenKeyAndValue(pathDelimiter = ".", valueDelimiter = ", ")).getOrElse(throw new Exception)
-   println(map)
-  // Right(A(B(hi,C(),List(C(), C()),None,Right(F))))
+  val expected =
+    A(B(b = "v1",c = C(), d = List(C(), C()), e = None,f = Right(E.G("v2")), g = E.D, h = E.G("GValue"), i = P.Q, j = P.T("v3")))
+
+  assert(readResult == Right(expected))
+
+  val writeResult =
+    write(desc, expected).map(_.flattenKeyAndValue(valueDelimiter = ", "))
+
+  assert(writeResult.map(_.toList.sortBy(_._1)) == Right(sourceMap.toList.sortBy(_._1)))
 
 end Example

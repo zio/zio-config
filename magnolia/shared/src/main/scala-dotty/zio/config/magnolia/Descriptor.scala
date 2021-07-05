@@ -10,15 +10,21 @@ import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
 import scala.deriving._
-import scala.compiletime.{erasedValue, summonInline, constValue}
+import scala.compiletime.{erasedValue, summonInline, constValue, summonFrom, constValueTuple}
 import scala.quoted
 import scala.util.Try
 
-final case class Descriptor[A](desc: ConfigDescriptor[A])
+final case class Descriptor[A](desc: ConfigDescriptor[A], keys: List[String] = Nil) {
+  def isObject: Boolean = keys.isEmpty
+}
 
 object Descriptor {
   def apply[A](implicit ev: Descriptor[A]) =
     ev.desc
+
+  final case class SubClassName(name: String, fields: List[String]){
+    def isObject = fields.isEmpty
+  }
 
   lazy given Descriptor[String] = Descriptor(string)
   lazy given Descriptor[Boolean] = Descriptor(boolean)
@@ -58,15 +64,17 @@ object Descriptor {
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
       case _: (t *: ts) =>
+        val desc = summonInline[Descriptor[t]]
         Descriptor[Any](
-          summonInline[Descriptor[t]].desc.transformOrFail[Any](
+          desc.desc.transformOrFail[Any](
             a => Right(a),
-            b => Try(castTo[t](b))
-              .toEither
-              .swap
-              .map(r => s"Failed to write ${b}. ${r}")
-              .swap
-          )
+            b =>
+              Try(castTo[t](b))
+                .toEither
+                .mapError(r =>
+                  s"Failed to write ${b}. ${r}. This happens when A gets casted to a wrong SubType (given A has multiple subtypes) during write."
+                )
+          ), desc.keys
         ) :: summonDescriptorForCoProduct[ts]
 
   inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
@@ -109,7 +117,9 @@ object Descriptor {
     allDescs: => List[Descriptor[T]],
     subClassNames: List[String]
   ): Descriptor[T] =
-    Descriptor(allDescs.zip(subClassNames).map({case (d, n) => nested(n)(d.desc)}).reduce(_ orElse _))
+    Descriptor(allDescs.zip(subClassNames).map({case (d, n) => {
+      if(d.isObject) d.desc else nested(n)(d.desc)
+    }}).reduce(_ orElse _))
 
   inline def product[T](using m: Mirror.ProductOf[T]) =
     val nameOfT =
@@ -135,7 +145,7 @@ object Descriptor {
    ): Descriptor[T] =
        if fieldNames.isEmpty then
          val tryAllPaths = namesOfClass.map(n => DerivationUtils.constantString(n)).reduce(_ orElse _)
-         Descriptor(tryAllPaths.transform[T](_ => f(List.empty[Any]), _.toString))
+         Descriptor(tryAllPaths.transform[T](_ => f(List.empty[Any]), t => namesOfClass.headOption.getOrElse(t.toString)))
        else
          val listOfDesc =
            fieldNames.zip(allDescs).map({ case (a, b) => nested(a)(castTo[ConfigDescriptor[Any]](b.desc)) })
@@ -143,8 +153,13 @@ object Descriptor {
          val descOfList =
            collectAll(listOfDesc.head, listOfDesc.tail: _*)
 
-         Descriptor(descOfList.transform[T](f, g))
+         Descriptor(descOfList.transform[T](f, g), fieldNames)
 
   def castTo[T](a: Any): T =
     a.asInstanceOf[T]
+
+  extension[E, A](e: Either[E, A]) {
+    def mapError(f: E => String) =
+      e.swap.map(f).swap
+  }
 }
