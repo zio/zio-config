@@ -76,7 +76,7 @@ object Descriptor {
                 .mapError(r =>
                   s"Failed to write ${b}. ${r}. This happens when A gets casted to a wrong SubType (given A has multiple subtypes) during write."
                 )
-          ), desc.keys
+          ), desc.metadata
         ) :: summonDescriptorForCoProduct[ts]
 
   inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
@@ -84,10 +84,11 @@ object Descriptor {
       case _ : EmptyTuple => Nil
       case _: (t *: ts) => summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
 
-  inline def labelsToList[T <: Tuple]: List[String] =
+  // FIXME: Return List[FieldName]
+  inline def fieldNameList[T <: Tuple]: List[String] =
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
-      case _ : ( t *: ts) => constValue[t].toString :: labelsToList[ts]
+      case _ : ( t *: ts) => constValue[t].toString :: fieldNameList[ts]
 
   inline def findAllAnnotatedNamesOf[T] =
     Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
@@ -139,14 +140,11 @@ object Descriptor {
     )
 
   inline def product[T](using m: Mirror.ProductOf[T]) =
-    val nameOfT =
-      constValue[m.MirroredLabel]
-
     val productName =
-      ProductName(nameOfT, findAllAnnotatedNamesOf[T])
+      ProductName(constValue[m.MirroredLabel], findAllAnnotatedNamesOf[T])
 
     val fieldNames =
-      labelsToList[m.MirroredElemLabels].map(name => FieldName(List(name)))
+      fieldNameList[m.MirroredElemLabels].map(name => FieldName(List(name)))
 
     mergeAllFields(
       summonDescriptorAll[m.MirroredElemTypes],
