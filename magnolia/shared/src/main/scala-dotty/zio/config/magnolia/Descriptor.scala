@@ -15,15 +15,18 @@ import scala.quoted
 import scala.util.Try
 import Descriptor._
 
-final case class Descriptor[A](desc: ConfigDescriptor[A], keys: List[FieldName] = Nil)
+final case class Descriptor[A](desc: ConfigDescriptor[A], keys: Option[(ProductName, List[FieldName])] = None)
 
 object Descriptor {
+  def apply[A](desc: ConfigDescriptor[A], productName: ProductName): Descriptor[A] =
+    Descriptor(desc,Some(productName -> Nil))
+
   def apply[A](implicit ev: Descriptor[A]) =
     ev.desc
 
   final case class FieldName(names: List[String])
-  final case class SubClassName(originalName: String, alternativeNames: List[String])
-  final case class ParentName(originalName: String, alternativeNames: List[String])
+  final case class ProductName(originalName: String, alternativeNames: List[String])
+  final case class CoproductName(originalName: String, alternativeNames: List[String])
 
   lazy given Descriptor[String] = Descriptor(string)
   lazy given Descriptor[Boolean] = Descriptor(boolean)
@@ -86,10 +89,8 @@ object Descriptor {
       case _: EmptyTuple => Nil
       case _ : ( t *: ts) => constValue[t].toString :: labelsToList[ts]
 
-  inline def subClassNamesList[T <: Tuple]: List[SubClassName] =
-    inline erasedValue[T] match
-      case _: EmptyTuple => Nil
-      case _ : ( t *: ts) => SubClassName(constValue[t].toString, findAllAnnotatedNamesOf[t]) :: subClassNamesList[ts]
+  inline def findAllAnnotatedNamesOf[T] =
+    Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
 
   inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
     inline m match
@@ -106,76 +107,71 @@ object Descriptor {
     val alternativeParentNames: List[String] =
       findAllAnnotatedNamesOf[T]
 
-    val parentName: ParentName =
-      ParentName(originalName = nameOfT, alternativeNames = alternativeParentNames)
-
-    val subClassNames: List[SubClassName] =
-      subClassNamesList[m.MirroredElemLabels]
+    val sealedTraitName: CoproductName =
+      CoproductName(originalName = nameOfT, alternativeNames = alternativeParentNames)
 
     val subClassDescriptions =
       summonDescriptorForCoProduct[m.MirroredElemTypes]
 
     val desc =
-      mergeAllProducts(
-        subClassDescriptions.map(castTo[Descriptor[T]]),
-        subClassNames
-      )
+      mergeAllProducts(subClassDescriptions.map(castTo[Descriptor[T]]))
 
-    tryAllParentPaths(parentName, desc)
-
-  inline def findAllAnnotatedNamesOf[T] =
-    Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
+    tryAllParentPaths(sealedTraitName, desc)
 
   def tryAllParentPaths[T](
-    parentName: ParentName,
+    coproductName: CoproductName,
     desc: Descriptor[T]
   ) =
-    if parentName.alternativeNames.isEmpty then
+    if coproductName.alternativeNames.isEmpty then
       desc
     else
-      Descriptor(parentName.alternativeNames.map(n => nested(n)(desc.desc)).reduce(_ orElse _))
+      Descriptor(coproductName.alternativeNames.map(n => nested(n)(desc.desc)).reduce(_ orElse _))
 
   def mergeAllProducts[T](
     allDescs: => List[Descriptor[T]],
-    subClassNames: List[SubClassName]
   ): Descriptor[T] =
     Descriptor(
-      allDescs.zip(subClassNames)
-        .map({
-          case (d, n) => {
-            if(d.keys.isEmpty)
-              d.desc
-            else
-              (n.originalName :: n.alternativeNames).map(n => nested(n)(d.desc)).reduce(_ orElse _)
+      allDescs
+        .map(desc =>
+          desc.keys match {
+            case Some((productName, fields))  if (fields.nonEmpty) =>
+              (productName.alternativeNames :+ productName.originalName)
+                .map(n => nested(n)(desc.desc)).reduce(_ orElse _)
+
+            case Some(_) => desc.desc
+            case None => desc.desc
           }
-        }).reduce(_ orElse _)
+        ).reduce(_ orElse _)
     )
 
   inline def product[T](using m: Mirror.ProductOf[T]) =
     val nameOfT =
       constValue[m.MirroredLabel]
 
+    val productName =
+      ProductName(nameOfT, findAllAnnotatedNamesOf[T])
+
     val fieldNames =
       labelsToList[m.MirroredElemLabels].map(name => FieldName(List(name)))
 
     mergeAllFields(
       summonDescriptorAll[m.MirroredElemTypes],
+      productName,
       fieldNames,
-      List(nameOfT),
       lst => m.fromProduct(Tuple.fromArray(lst.toArray[Any])),
       castTo[Product](_).productIterator.toList
     )
 
   def mergeAllFields[T](
-     allDescs: => List[Descriptor[_]],
-     fieldNames: => List[FieldName],
-     namesOfClass: => List[String],
-     f: List[Any] => T,
-     g: T => List[Any],
+    allDescs: => List[Descriptor[_]],
+    productName: ProductName,
+    fieldNames: => List[FieldName],
+    f: List[Any] => T,
+    g: T => List[Any],
    ): Descriptor[T] =
        if fieldNames.isEmpty then
-         val tryAllPaths = namesOfClass.map(n => DerivationUtils.constantString(n)).reduce(_ orElse _)
-         Descriptor(tryAllPaths.transform[T](_ => f(List.empty[Any]), t => namesOfClass.headOption.getOrElse(t.toString)))
+         val tryAllPaths = (productName.originalName :: productName.alternativeNames).map(n => DerivationUtils.constantString(n)).reduce(_ orElse _)
+         Descriptor(tryAllPaths.transform[T](_ => f(List.empty[Any]), t => productName.alternativeNames.headOption.getOrElse(productName.originalName)), productName)
        else
          val listOfDesc =
            fieldNames.zip(allDescs).map({ case (fieldName, desc) =>
@@ -185,7 +181,7 @@ object Descriptor {
          val descOfList =
            collectAll(listOfDesc.head, listOfDesc.tail: _*)
 
-         Descriptor(descOfList.transform[T](f, g), fieldNames)
+         Descriptor(descOfList.transform[T](f, g), Some(productName -> fieldNames))
 
   def castTo[T](a: Any): T =
     a.asInstanceOf[T]

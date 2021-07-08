@@ -50,7 +50,7 @@ object Example extends App :
       "a.g" -> "D",
       "a.h.G.value" -> "GValue",
       "a.i.p" -> "Q",
-      "a.j.p.T.u" -> "v3"
+      "a.j.p.t.u" -> "v3"
     )
 
   val source =
