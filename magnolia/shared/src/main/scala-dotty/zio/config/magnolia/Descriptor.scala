@@ -15,7 +15,7 @@ import scala.quoted
 import scala.util.Try
 import Descriptor._
 
-final case class Descriptor[A](desc: ConfigDescriptor[A], keys: Option[(ProductName, List[FieldName])] = None)
+final case class Descriptor[A](desc: ConfigDescriptor[A], metadata: Option[(ProductName, List[FieldName])] = None)
 
 object Descriptor {
   def apply[A](desc: ConfigDescriptor[A], productName: ProductName): Descriptor[A] =
@@ -127,7 +127,7 @@ object Descriptor {
     Descriptor(
       allDescs
         .map(desc =>
-          desc.keys match {
+          desc.metadata match {
             case Some((productName, fields))  if (fields.nonEmpty) =>
               (productName.alternativeNames :+ productName.originalName)
                 .map(n => nested(n)(desc.desc)).reduce(_ orElse _)
