@@ -101,14 +101,8 @@ object Descriptor {
         product[T](using p)
 
   inline def sum[T](using m: Mirror.SumOf[T]) =
-    val nameOfT =
-      constValue[m.MirroredLabel]
-
-    val alternativeParentNames: List[String] =
-      findAllAnnotatedNamesOf[T]
-
-    val sealedTraitName: CoproductName =
-      CoproductName(originalName = nameOfT, alternativeNames = alternativeParentNames)
+    val coproductName: CoproductName =
+      CoproductName(originalName = constValue[m.MirroredLabel], alternativeNames = findAllAnnotatedNamesOf[T])
 
     val subClassDescriptions =
       summonDescriptorForCoProduct[m.MirroredElemTypes]
@@ -116,7 +110,7 @@ object Descriptor {
     val desc =
       mergeAllProducts(subClassDescriptions.map(castTo[Descriptor[T]]))
 
-    tryAllParentPaths(sealedTraitName, desc)
+    tryAllParentPaths(coproductName, desc)
 
   def tryAllParentPaths[T](
     coproductName: CoproductName,
