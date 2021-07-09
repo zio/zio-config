@@ -3,12 +3,12 @@ package zio.config.magnolia
 import scala.quoted.*
 
 object Macros:
-  inline def nameAnnotations[T]: List[name] = ${anns[T, name]("zio.config.magnolia.name")}
-  inline def namesAnnotations[T]: List[names] = ${anns[T, names]("zio.config.magnolia.names")}
-  inline def describe[T]: List[describe] = ${anns[T, describe]("zio.config.magnolia.describe")}
-  inline def fieldNameAnnotations[T]: List[(String, List[name])] = ${fieldAnns[T, name]("zio.config.magnolia.name")}
-  inline def fieldNamesAnnotations[T]: List[(String, List[names])] = ${fieldAnns[T, names]("zio.config.magnolia.names")}
-  inline def fieldDescribeAnnotations[T]: List[(String, List[describe])] = ${fieldAnns[T, describe]("zio.config.magnolia.describe")}
+  inline def nameAnnotationsOfClass[T]: List[name] = ${anns[T, name]("zio.config.magnolia.name")}
+  inline def namesAnnotationsOfClass[T]: List[names] = ${anns[T, names]("zio.config.magnolia.names")}
+  inline def describeAnnotationsOfClass[T]: List[describe] = ${anns[T, describe]("zio.config.magnolia.describe")}
+  inline def nameAnnotationsOfAllFields[T]: List[(String, List[name])] = ${fieldAnns[T, name]("zio.config.magnolia.name")}
+  inline def namesAnnotationsOfAllFields[T]: List[(String, List[names])] = ${fieldAnns[T, names]("zio.config.magnolia.names")}
+  inline def describeAnnotationsOfAllFields[T]: List[(String, List[describe])] = ${fieldAnns[T, describe]("zio.config.magnolia.describe")}
 
   def anns[T: Type, A: Type](ownerName: String)(using Quotes): Expr[List[A]] = {
     import quotes.reflect.*

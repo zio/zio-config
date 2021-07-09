@@ -84,21 +84,20 @@ object Descriptor {
       case _ : EmptyTuple => Nil
       case _: (t *: ts) => summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
 
-  // FIXME: Return List[FieldName]
   inline def fieldNameList[T <: Tuple]: List[String] =
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
       case _ : ( t *: ts) => constValue[t].toString :: fieldNameList[ts]
 
   inline def findAllAnnotatedNamesOf[T] =
-    Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
+    Macros.nameAnnotationsOfClass[T].map(_.name) ++ Macros.namesAnnotationsOfClass[T].flatMap(_.names)
 
   inline def findAllFieldAnnotatedNamesOf[T] =
-    (Macros.fieldNameAnnotations[T].map({case(str, nmes) => (str, names.fromListOfName(nmes))})
-      ++ Macros.fieldNamesAnnotations[T].map({case(str, nmes) => (str, names.fromListOfNames(nmes))})).toMap
+    (Macros.nameAnnotationsOfAllFields[T].map({case(str, nmes) => (str, names.fromListOfName(nmes))})
+      ++ Macros.namesAnnotationsOfAllFields[T].map({case(str, nmes) => (str, names.fromListOfNames(nmes))})).toMap
 
   inline def findAllFieldeAnnotedDocumentationsOf[T]: Map[String, List[describe]] =
-    Macros.fieldDescribeAnnotations[T].toMap
+    Macros.describeAnnotationsOfAllFields[T].toMap
 
   inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
     inline m match
