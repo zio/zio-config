@@ -24,7 +24,7 @@ object Descriptor {
   def apply[A](implicit ev: Descriptor[A]) =
     ev.desc
 
-  final case class FieldName(names: List[String])
+  final case class FieldName(originalName: String, alternativeNames: List[String], descriptions: List[String])
   final case class ProductName(originalName: String, alternativeNames: List[String])
   final case class CoproductName(originalName: String, alternativeNames: List[String])
 
@@ -93,6 +93,13 @@ object Descriptor {
   inline def findAllAnnotatedNamesOf[T] =
     Macros.nameAnnotations[T].map(_.name) ++ Macros.namesAnnotations[T].flatMap(_.names)
 
+  inline def findAllFieldAnnotatedNamesOf[T] =
+    (Macros.fieldNameAnnotations[T].map({case(str, nmes) => (str, names.fromListOfName(nmes))})
+      ++ Macros.fieldNamesAnnotations[T].map({case(str, nmes) => (str, names.fromListOfNames(nmes))})).toMap
+
+  inline def findAllFieldeAnnotedDocumentationsOf[T]: Map[String, List[describe]] =
+    Macros.fieldDescribeAnnotations[T].toMap
+
   inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
     inline m match
       case s: Mirror.SumOf[T] =>
@@ -143,8 +150,21 @@ object Descriptor {
     val productName =
       ProductName(constValue[m.MirroredLabel], findAllAnnotatedNamesOf[T])
 
+    val originalFieldNames =
+      fieldNameList[m.MirroredElemLabels]
+
+    val fieldAnnotations =
+      findAllFieldAnnotatedNamesOf[T]
+
+    val documentations =
+      findAllFieldeAnnotedDocumentationsOf[T]
+
     val fieldNames =
-      fieldNameList[m.MirroredElemLabels].map(name => FieldName(List(name)))
+      originalFieldNames.foldRight(Nil: List[FieldName])((str, list) => {
+        val alternativeNames = fieldAnnotations.get(str).map(_.names).getOrElse(Nil)
+        val descriptions = documentations.get(str).map(_.map(_.describe)).getOrElse(Nil)
+        FieldName(str, alternativeNames.toList, descriptions) :: list
+      })
 
     mergeAllFields(
       summonDescriptorAll[m.MirroredElemTypes],
@@ -166,9 +186,11 @@ object Descriptor {
          Descriptor(tryAllPaths.transform[T](_ => f(List.empty[Any]), t => productName.alternativeNames.headOption.getOrElse(productName.originalName)), productName)
        else
          val listOfDesc =
-           fieldNames.zip(allDescs).map({ case (fieldName, desc) =>
-             fieldName.names.map(name => nested(name)(castTo[ConfigDescriptor[Any]](desc.desc))).reduce(_ orElse _)
-           })
+           fieldNames.zip(allDescs).map({ case (fieldName, desc) => {
+             val fieldDesc = (fieldName.originalName :: fieldName.alternativeNames)
+               .map(name => nested(name)(castTo[ConfigDescriptor[Any]](desc.desc))).reduce(_ orElse _)
+             fieldName.descriptions.foldRight(fieldDesc)((doc, desc) => desc ?? doc)
+           }})
 
          val descOfList =
            collectAll(listOfDesc.head, listOfDesc.tail: _*)

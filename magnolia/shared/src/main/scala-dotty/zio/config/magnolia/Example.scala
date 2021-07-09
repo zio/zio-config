@@ -34,7 +34,7 @@ sealed trait P
 object P {
   case object Q extends P
   case object R extends P
-  case class S(z: String) extends P
+  case class S(@name("zz") @describe("it is z") z: String) extends P
   @name("t")
   case class T(u: String) extends P
 }
@@ -73,5 +73,4 @@ object Example extends App :
     write(desc, expected).map(_.flattenKeyAndValue(valueDelimiter = ", "))
 
   assert(writeResult.map(_.toList.sortBy(_._1)) == Right(sourceMap.toList.sortBy(_._1)))
-
 end Example
