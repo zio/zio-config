@@ -166,7 +166,7 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio"                 %% "zio"                     % zioVersion,
-      ("org.scala-lang.modules" %% "scala-collection-compat" % "2.4.4").cross(CrossVersion.for3Use2_13),
+      ("org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0").cross(CrossVersion.for3Use2_13),
       "dev.zio"                 %% "zio-test"                % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
