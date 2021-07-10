@@ -117,16 +117,7 @@ object Descriptor {
     val desc =
       mergeAllProducts(subClassDescriptions.map(castTo[Descriptor[T]]))
 
-    tryAllParentPaths(coproductName, desc)
-
-  def tryAllParentPaths[T](
-    coproductName: CoproductName,
-    desc: Descriptor[T]
-  ) =
-    if coproductName.alternativeNames.isEmpty then
-      desc
-    else
-      Descriptor(coproductName.alternativeNames.map(n => nested(n)(desc.desc)).reduce(_ orElse _))
+    Descriptor(tryAllkeys(desc.desc, None, coproductName.alternativeNames))
 
   def mergeAllProducts[T](
     allDescs: => List[Descriptor[T]],
@@ -135,9 +126,8 @@ object Descriptor {
       allDescs
         .map(desc =>
           desc.metadata match {
-            case Some((productName, fields))  if (fields.nonEmpty) =>
-              (productName.alternativeNames :+ productName.originalName)
-                .map(n => nested(n)(desc.desc)).reduce(_ orElse _)
+            case Some((productName, fields)) if (fields.nonEmpty) =>
+              tryAllkeys(desc.desc, Some(productName.originalName), productName.alternativeNames)
 
             case Some(_) => desc.desc
             case None => desc.desc
@@ -181,13 +171,21 @@ object Descriptor {
     g: T => List[Any],
    ): Descriptor[T] =
        if fieldNames.isEmpty then
-         val tryAllPaths = (productName.originalName :: productName.alternativeNames).map(n => DerivationUtils.constantString(n)).reduce(_ orElse _)
-         Descriptor(tryAllPaths.transform[T](_ => f(List.empty[Any]), t => productName.alternativeNames.headOption.getOrElse(productName.originalName)), productName)
+         val tryAllPaths =
+           (productName.originalName :: productName.alternativeNames)
+             .map(n => DerivationUtils.constantString(n)).reduce(_ orElse _)
+
+         Descriptor(
+           tryAllPaths.transform[T](
+             _ => f(List.empty[Any]),
+             t => productName.alternativeNames.headOption.getOrElse(productName.originalName)), productName
+         )
        else
          val listOfDesc =
            fieldNames.zip(allDescs).map({ case (fieldName, desc) => {
-             val fieldDesc = (fieldName.originalName :: fieldName.alternativeNames)
-               .map(name => nested(name)(castTo[ConfigDescriptor[Any]](desc.desc))).reduce(_ orElse _)
+             val fieldDesc =
+               tryAllkeys(castTo[ConfigDescriptor[Any]](desc.desc), Some(fieldName.originalName), fieldName.alternativeNames)
+
              fieldName.descriptions.foldRight(fieldDesc)((doc, desc) => desc ?? doc)
            }})
 
@@ -195,6 +193,16 @@ object Descriptor {
            collectAll(listOfDesc.head, listOfDesc.tail: _*)
 
          Descriptor(descOfList.transform[T](f, g), Some(productName -> fieldNames))
+
+  def tryAllkeys[A](
+    desc: ConfigDescriptor[A],
+    originalKey: Option[String],
+    alternativeKeys: List[String]
+  ): ConfigDescriptor[A] =
+    if alternativeKeys.nonEmpty then
+      alternativeKeys.map(key => nested(key)(desc)).reduce(_ orElse _)
+    else
+      originalKey.fold(desc)(key => nested(key)(desc))
 
   def castTo[T](a: Any): T =
     a.asInstanceOf[T]

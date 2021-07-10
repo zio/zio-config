@@ -6,7 +6,7 @@ import zio.test._
 
 import ConfigDescriptor._
 
-object MarkdownDocSpec extends DefaultRunnableSpec {
+object MarkdownSpec extends DefaultRunnableSpec {
   sealed trait Cloud
 
   object Cloud {
