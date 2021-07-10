@@ -77,7 +77,7 @@ addCommandAlias(
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
 )
 
-lazy val zioVersion       = "1.0.8"
+lazy val zioVersion       = "1.0.9"
 lazy val magnoliaVersion  = "0.17.0"
 lazy val refinedVersion   = "0.9.26"
 lazy val shapelessVersion = "2.4.0-M1"
@@ -160,7 +160,7 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio"                 %% "zio"                     % zioVersion,
-      ("org.scala-lang.modules" %% "scala-collection-compat" % "2.4.4").cross(CrossVersion.for3Use2_13),
+      ("org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0").cross(CrossVersion.for3Use2_13),
       "dev.zio"                 %% "zio-test"                % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
