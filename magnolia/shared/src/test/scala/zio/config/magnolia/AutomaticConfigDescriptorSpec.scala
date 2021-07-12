@@ -58,7 +58,8 @@ object AutomaticConfigTestUtils {
 
   final case class Aws(region: String, security: Credentials)
 
-  final case class DbUrl(value: String) extends AnyVal
+  // Scala3 didn't like final case class DbUrl(value: String) extends AnyVal
+  final case class DbUrl(value: String)
 
   final case class MyConfig(
     aws: Aws,
@@ -76,15 +77,15 @@ object AutomaticConfigTestUtils {
     id: UUID
   )
 
-  private val genPriceDescription                = genNonEmptyString(5).map(Description)
-  private val genCurrency: Gen[Random, Currency] = Gen.double(10.0, 20.0).map(Currency)
+  private val genPriceDescription                = genNonEmptyString(5).map(Description.apply)
+  private val genCurrency: Gen[Random, Currency] = Gen.double(10.0, 20.0).map(Currency.apply)
   private val genPrice: Gen[Random, Price]       = Gen.oneOf(genPriceDescription, genCurrency)
 
-  private val genToken       = genNonEmptyString(5).map(Token)
-  private val genPassword    = genNonEmptyString(5).map(Password)
+  private val genToken       = genNonEmptyString(5).map(Token.apply)
+  private val genPassword    = genNonEmptyString(5).map(Password.apply)
   private val genCredentials = Gen.oneOf(genToken, genPassword)
 
-  private val genDbUrl = genNonEmptyString(5).map(DbUrl)
+  private val genDbUrl = genNonEmptyString(5).map(DbUrl.apply)
 
   private val genAws =
     for {
@@ -100,8 +101,10 @@ object AutomaticConfigTestUtils {
       port           <- Gen.anyInt
       amount         <- Gen.option(Gen.long(1, 100))
       quantity       <- Gen.either(Gen.long(5, 10), genAlpha)
-      default        <- Gen.option(Gen.anyInt)
-      anotherDefault <- Gen.option(Gen.boolean)
+      default        <-
+        Gen.anyInt.map(Option(_)) // FIXME: Scala3 needs to handle default value. Replace with Gen.option(Gen.anyInt)
+      anotherDefault <-
+        Gen.boolean.map(Option(_)) // FIXME: Scala3 needs to handle default value. Replace with Gen.option(Gen.boolean)
       descriptions   <- Gen.int(1, 10).flatMap(n => Gen.listOfN(n)(genNonEmptyString(10)))
       created        <- genLocalDateString
       updated        <- genLocalTimeString

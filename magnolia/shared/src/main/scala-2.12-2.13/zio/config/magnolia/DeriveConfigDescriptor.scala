@@ -10,7 +10,6 @@ import java.net.{URI, URL}
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
-import scala.language.experimental.macros
 
 trait DeriveConfigDescriptor { self =>
 
