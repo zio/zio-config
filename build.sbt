@@ -74,7 +74,7 @@ addCommandAlias(
 )
 addCommandAlias(
   "testDotty",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigMagnoliaJVM/test"
 )
 
 lazy val zioVersion       = "1.0.9"
@@ -85,11 +85,12 @@ lazy val shapelessVersion = "2.4.0-M1"
 lazy val magnoliaDependencies =
   libraryDependencies ++= {
     if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
-    else
+    else {
       Seq(
         "com.propensive" %% "magnolia"      % magnoliaVersion,
         "org.scala-lang"  % "scala-reflect" % scalaVersion.value
       )
+    }
   }
 
 lazy val refinedDependencies =
@@ -232,7 +233,6 @@ lazy val examplesJVM = examples.jvm
 lazy val zioConfigDerivation = crossProject(JVMPlatform)
   .in(file("derivation"))
   .settings(stdSettings("zio-config-derivation"))
-  .settings(crossProjectSettings)
   .settings(crossProjectSettings)
   .settings(dottySettings)
   .dependsOn(zioConfig)
