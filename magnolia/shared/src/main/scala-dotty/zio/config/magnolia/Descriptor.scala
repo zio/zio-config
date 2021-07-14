@@ -15,52 +15,61 @@ import scala.quoted
 import scala.util.Try
 import Descriptor._
 
-final case class Descriptor[A](desc: ConfigDescriptor[A], metadata: Option[(ProductName, List[FieldName])] = None)
+final case class Descriptor[A](desc: ConfigDescriptor[A], metadata: Option[Descriptor.Metadata])
 
 object Descriptor {
-  def apply[A](desc: ConfigDescriptor[A], productName: ProductName): Descriptor[A] =
-    Descriptor(desc,Some(productName -> Nil))
-
-  def apply[A](implicit ev: Descriptor[A]) =
+  def apply[A](implicit ev: Descriptor[A]): ConfigDescriptor[A] =
     ev.desc
 
-  final case class FieldName(originalName: String, alternativeNames: List[String], descriptions: List[String])
-  final case class ProductName(originalName: String, alternativeNames: List[String])
-  final case class CoproductName(originalName: String, alternativeNames: List[String])
+  def from[A](desc: ConfigDescriptor[A]) =
+    Descriptor(desc, None)
 
-  lazy given Descriptor[String] = Descriptor(string)
-  lazy given Descriptor[Boolean] = Descriptor(boolean)
-  lazy given Descriptor[Byte] = Descriptor(byte)
-  lazy given Descriptor[Short] = Descriptor(short)
-  lazy given Descriptor[Int] = Descriptor(int)
-  lazy given Descriptor[Long] = Descriptor(long)
-  lazy given Descriptor[BigInt] = Descriptor(bigInt)
-  lazy given Descriptor[Float] = Descriptor(float)
-  lazy given Descriptor[Double] = Descriptor(double)
-  lazy given Descriptor[BigDecimal] = Descriptor(bigDecimal)
-  lazy given Descriptor[URI] = Descriptor(uri)
-  lazy given Descriptor[URL] = Descriptor(url)
-  lazy given Descriptor[ScalaDuration] = Descriptor(duration)
-  lazy given Descriptor[Duration] = Descriptor(zioDuration)
-  lazy given Descriptor[UUID] = Descriptor(uuid)
-  lazy given Descriptor[LocalDate] = Descriptor(localDate)
-  lazy given Descriptor[LocalTime] = Descriptor(localTime)
-  lazy given Descriptor[LocalDateTime] = Descriptor(localDateTime)
-  lazy given Descriptor[Instant] = Descriptor(instant)
-  lazy given Descriptor[File] = Descriptor(file)
-  lazy given Descriptor[java.nio.file.Path] = Descriptor(javaFilePath)
+  sealed trait Metadata
+
+  object Metadata {
+    final case class Object(name: ProductName) extends Metadata
+    final case class Product(name: ProductName, fields: List[FieldName]) extends Metadata
+    final case class Coproduct(name: CoproductName, metadata: List[Metadata]) extends Metadata
+  }
+
+
+  final case class FieldName(originalName: String, alternativeNames: List[String], descriptions: List[String])
+  final case class ProductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
+  final case class CoproductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
+
+  lazy given Descriptor[String] = Descriptor.from(string)
+  lazy given Descriptor[Boolean] = Descriptor.from(boolean)
+  lazy given Descriptor[Byte] = Descriptor.from(byte)
+  lazy given Descriptor[Short] = Descriptor.from(short)
+  lazy given Descriptor[Int] = Descriptor.from(int)
+  lazy given Descriptor[Long] = Descriptor.from(long)
+  lazy given Descriptor[BigInt] = Descriptor.from(bigInt)
+  lazy given Descriptor[Float] = Descriptor.from(float)
+  lazy given Descriptor[Double] = Descriptor.from(double)
+  lazy given Descriptor[BigDecimal] = Descriptor.from(bigDecimal)
+  lazy given Descriptor[URI] = Descriptor.from(uri)
+  lazy given Descriptor[URL] = Descriptor.from(url)
+  lazy given Descriptor[ScalaDuration] = Descriptor.from(duration)
+  lazy given Descriptor[Duration] = Descriptor.from(zioDuration)
+  lazy given Descriptor[UUID] = Descriptor.from(uuid)
+  lazy given Descriptor[LocalDate] = Descriptor.from(localDate)
+  lazy given Descriptor[LocalTime] = Descriptor.from(localTime)
+  lazy given Descriptor[LocalDateTime] = Descriptor.from(localDateTime)
+  lazy given Descriptor[Instant] = Descriptor.from(instant)
+  lazy given Descriptor[File] = Descriptor.from(file)
+  lazy given Descriptor[java.nio.file.Path] = Descriptor.from(javaFilePath)
 
   given eitherDesc[A, B](using ev1: Descriptor[A], ev2: Descriptor[B]): Descriptor[Either[A, B]] =
-    Descriptor(ev1.desc.orElseEither(ev2.desc))
+    Descriptor.from(ev1.desc.orElseEither(ev2.desc))
 
   given optDesc[A: Descriptor]: Descriptor[Option[A]] =
-    Descriptor(Descriptor[A].optional)
+    Descriptor.from(Descriptor[A].optional)
 
   given listDesc[A](using ev: Descriptor[A]): Descriptor[List[A]] =
-    Descriptor(list(ev.desc))
+    Descriptor.from(list(ev.desc))
 
   given mapDesc[A](using ev: Descriptor[A]): Descriptor[Map[String, A]] =
-    Descriptor(map(ev.desc))
+    Descriptor.from(map(ev.desc))
 
   inline def summonDescriptorForCoProduct[T <: Tuple]: List[Descriptor[Any]] =
     inline erasedValue[T] match
@@ -89,15 +98,12 @@ object Descriptor {
       case _: EmptyTuple => Nil
       case _ : ( t *: ts) => constValue[t].toString :: fieldNameList[ts]
 
-  inline def findAllAnnotatedNamesOf[T] =
-    Macros.nameAnnotationsOfClass[T].map(_.name) ++ Macros.namesAnnotationsOfClass[T].flatMap(_.names)
+  inline def namesOf[T] =
+    Macros.nameOf[T].map(_.name) ++ Macros.namesOf[T].flatMap(_.names)
 
-  inline def findAllFieldAnnotatedNamesOf[T] =
-    (Macros.nameAnnotationsOfAllFields[T].map({case(str, nmes) => (str, names.fromListOfName(nmes))})
-      ++ Macros.namesAnnotationsOfAllFields[T].map({case(str, nmes) => (str, names.fromListOfNames(nmes))})).toMap
-
-  inline def findAllFieldeAnnotedDocumentationsOf[T]: Map[String, List[describe]] =
-    Macros.describeAnnotationsOfAllFields[T].toMap
+  inline def fieldNamesOf[T] =
+    (Macros.fieldNameOf[T].map({ case(str, nmes) => (str, names.fromListOfName(nmes)) })
+      ++ Macros.fieldNamesOf[T].map({ case(str, nmes) => (str, names.fromListOfNames(nmes)) })).toMap
 
   inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
     inline m match
@@ -109,7 +115,11 @@ object Descriptor {
 
   inline def sum[T](using m: Mirror.SumOf[T]) =
     val coproductName: CoproductName =
-      CoproductName(originalName = constValue[m.MirroredLabel], alternativeNames = findAllAnnotatedNamesOf[T])
+      CoproductName(
+        originalName = constValue[m.MirroredLabel],
+        alternativeNames = namesOf[T],
+        descriptions = Macros.documentationOf[T].map(_.describe)
+      )
 
     val subClassDescriptions =
       summonDescriptorForCoProduct[m.MirroredElemTypes]
@@ -117,40 +127,42 @@ object Descriptor {
     val desc =
       mergeAllProducts(subClassDescriptions.map(castTo[Descriptor[T]]))
 
-    Descriptor(tryAllkeys(desc.desc, None, coproductName.alternativeNames))
+    Descriptor.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames))
 
   def mergeAllProducts[T](
     allDescs: => List[Descriptor[T]],
   ): Descriptor[T] =
-    Descriptor(
+    val desc =
       allDescs
         .map(desc =>
           desc.metadata match {
-            case Some((productName, fields)) if (fields.nonEmpty) =>
+            case Some(Metadata.Product(productName, fields)) if (fields.nonEmpty) =>
               tryAllkeys(desc.desc, Some(productName.originalName), productName.alternativeNames)
 
             case Some(_) => desc.desc
             case None => desc.desc
           }
         ).reduce(_ orElse _)
-    )
+
+    from(desc)
 
   inline def product[T](using m: Mirror.ProductOf[T]) =
     val productName =
-      ProductName(constValue[m.MirroredLabel], findAllAnnotatedNamesOf[T])
+      ProductName(
+        originalName = constValue[m.MirroredLabel],
+        alternativeNames = namesOf[T],
+        descriptions = Macros.documentationOf[T].map(_.describe)
+      )
 
     val originalFieldNames =
       fieldNameList[m.MirroredElemLabels]
 
-    val fieldAnnotations =
-      findAllFieldAnnotatedNamesOf[T]
-
     val documentations =
-      findAllFieldeAnnotedDocumentationsOf[T]
+      Macros.fieldDocumentationOf[T].toMap
 
     val fieldNames =
       originalFieldNames.foldRight(Nil: List[FieldName])((str, list) => {
-        val alternativeNames = fieldAnnotations.get(str).map(_.names).getOrElse(Nil)
+        val alternativeNames = fieldNamesOf[T].get(str).map(_.names).getOrElse(Nil)
         val descriptions = documentations.get(str).map(_.map(_.describe)).getOrElse(Nil)
         FieldName(str, alternativeNames.toList, descriptions) :: list
       })
@@ -178,8 +190,11 @@ object Descriptor {
          Descriptor(
            tryAllPaths.transform[T](
              _ => f(List.empty[Any]),
-             t => productName.alternativeNames.headOption.getOrElse(productName.originalName)), productName
+             t => productName.alternativeNames.headOption.getOrElse(productName.originalName)
+           ),
+           Some(Metadata.Object(productName))
          )
+
        else
          val listOfDesc =
            fieldNames.zip(allDescs).map({ case (fieldName, desc) => {
@@ -192,7 +207,7 @@ object Descriptor {
          val descOfList =
            collectAll(listOfDesc.head, listOfDesc.tail: _*)
 
-         Descriptor(descOfList.transform[T](f, g), Some(productName -> fieldNames))
+         Descriptor(descOfList.transform[T](f, g), Some(Metadata.Product(productName, fieldNames)))
 
   def tryAllkeys[A](
     desc: ConfigDescriptor[A],
