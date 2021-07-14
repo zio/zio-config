@@ -32,7 +32,6 @@ object Descriptor {
     final case class Coproduct(name: CoproductName, metadata: List[Metadata]) extends Metadata
   }
 
-
   final case class FieldName(originalName: String, alternativeNames: List[String], descriptions: List[String])
   final case class ProductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
   final case class CoproductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
@@ -93,15 +92,15 @@ object Descriptor {
       case _ : EmptyTuple => Nil
       case _: (t *: ts) => summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
 
-  inline def fieldNameList[T <: Tuple]: List[String] =
+  inline def labelsOf[T <: Tuple]: List[String] =
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
-      case _ : ( t *: ts) => constValue[t].toString :: fieldNameList[ts]
+      case _ : ( t *: ts) => constValue[t].toString :: labelsOf[ts]
 
-  inline def namesOf[T] =
+  inline def customNamesOf[T]: List[String] =
     Macros.nameOf[T].map(_.name) ++ Macros.namesOf[T].flatMap(_.names)
 
-  inline def fieldNamesOf[T] =
+  inline def customFieldNamesOf[T]: Map[String, names] =
     (Macros.fieldNameOf[T].map({ case(str, nmes) => (str, names.fromListOfName(nmes)) })
       ++ Macros.fieldNamesOf[T].map({ case(str, nmes) => (str, names.fromListOfNames(nmes)) })).toMap
 
@@ -117,7 +116,7 @@ object Descriptor {
     val coproductName: CoproductName =
       CoproductName(
         originalName = constValue[m.MirroredLabel],
-        alternativeNames = namesOf[T],
+        alternativeNames = customNamesOf[T],
         descriptions = Macros.documentationOf[T].map(_.describe)
       )
 
@@ -150,19 +149,22 @@ object Descriptor {
     val productName =
       ProductName(
         originalName = constValue[m.MirroredLabel],
-        alternativeNames = namesOf[T],
+        alternativeNames = customNamesOf[T],
         descriptions = Macros.documentationOf[T].map(_.describe)
       )
 
-    val originalFieldNames =
-      fieldNameList[m.MirroredElemLabels]
+    val originalFieldNamesList =
+      labelsOf[m.MirroredElemLabels]
+
+    val customFieldNameMap =
+      customFieldNamesOf[T]
 
     val documentations =
       Macros.fieldDocumentationOf[T].toMap
 
     val fieldNames =
-      originalFieldNames.foldRight(Nil: List[FieldName])((str, list) => {
-        val alternativeNames = fieldNamesOf[T].get(str).map(_.names).getOrElse(Nil)
+      originalFieldNamesList.foldRight(Nil: List[FieldName])((str, list) => {
+        val alternativeNames = customFieldNameMap.get(str).map(_.names).getOrElse(Nil)
         val descriptions = documentations.get(str).map(_.map(_.describe)).getOrElse(Nil)
         FieldName(str, alternativeNames.toList, descriptions) :: list
       })
