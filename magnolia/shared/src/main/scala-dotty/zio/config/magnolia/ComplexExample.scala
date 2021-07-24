@@ -3,6 +3,7 @@ package zio.config.magnolia
 import zio.config.magnolia._
 import zio.config._
 
+//FIXME: Temporary example
 sealed trait Cloud
 
 object Cloud {
@@ -15,17 +16,16 @@ object Cloud {
 final case class RawConfig(tableDetails: List[RawTableConfig])
 
 final case class RawTableConfig(
-  x: String,
-                                 transformOptions: Option[TransformOptions],
-                                 //database: Option[String],
-//                                 featureBucket: String,
-//                                 table: String,
-//                                 @describe("partition scheme of s3 paths") partitionScheme: Option[PartitionScheme],
-//                                 @describe("Example: as_at_date=2019-10-11/minor_version=1/run_time=123") partitionString: Option[String],
-//                                 numberOfPartitions: Option[Int],
-//                                 blockSizeMb: Option[Int],
-//                                 destination: Destination,
-//                                 cloud: Cloud
+                                 transformOptions: Option[TransformOptions], // FIXME: Changing of this field triggers compiler error
+                                 database: Option[String],
+                                 featureBucket: String,
+                                 table: String,
+                                 @describe("partition scheme of s3 paths") partitionScheme: Option[PartitionScheme],
+                                 @describe("Example: as_at_date=2019-10-11/minor_version=1/run_time=123") partitionString: Option[String],
+                                 numberOfPartitions: Option[Int],
+                                 blockSizeMb: Option[Int],
+                                 destination: Destination,
+                                 cloud: Cloud
                                )
 
 final case class Destination(

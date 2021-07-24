@@ -71,7 +71,7 @@ object BuildHelper {
       if (scalaVersion.value == ScalaDotty)
         Seq("-Xfatal-warnings")
       else
-        Seq.empty
+        Seq("-Yretain-trees")
     },
     Compile / doc / sources := {
       val old = (Compile / doc / sources).value

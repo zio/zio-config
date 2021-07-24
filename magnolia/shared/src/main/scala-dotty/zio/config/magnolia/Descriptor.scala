@@ -61,8 +61,8 @@ object Descriptor {
   given eitherDesc[A, B](using ev1: Descriptor[A], ev2: Descriptor[B]): Descriptor[Either[A, B]] =
     Descriptor.from(ev1.desc.orElseEither(ev2.desc))
 
-  given optDesc[A: Descriptor]: Descriptor[Option[A]] =
-    Descriptor.from(Descriptor[A].optional)
+  given optDesc[A](using ev: Descriptor[A]): Descriptor[Option[A]] =
+    Descriptor.from(ev.desc.optional)
 
   given listDesc[A](using ev: Descriptor[A]): Descriptor[List[A]] =
     Descriptor.from(list(ev.desc))
@@ -90,7 +90,8 @@ object Descriptor {
   inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
     inline erasedValue[T] match
       case _ : EmptyTuple => Nil
-      case _: (t *: ts) => summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
+      case _: (t *: ts) =>
+        summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
 
   inline def labelsOf[T <: Tuple]: List[String] =
     inline erasedValue[T] match
@@ -149,7 +150,7 @@ object Descriptor {
             FieldName(str, alternativeNames.toList, descriptions) :: list
           })
 
-        val descriptors =
+        lazy val descriptors =
           summonDescriptorAll[m.MirroredElemTypes].asInstanceOf[List[Descriptor[Any]]]
 
         val descriptorsWithDefaultValues =

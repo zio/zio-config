@@ -17,7 +17,7 @@ final case class B(
   j: P
 )
 
-final case class C()
+final case class C(x: Option[List[E]])
 
 sealed trait E
 
@@ -61,16 +61,18 @@ object Example extends App :
     )
 
   val desc = descriptor[A]
+  println(desc)
 
-  val readResult = read(desc from source)
 
-  val expected =
-    A(B(b = "v1",c = C(), d = List(C(), C()), e = None,f = Right(E.G("v2")), g = E.D, h = E.G("GValue"), i = P.Q, j = P.T("v3")))
-
-  assert(readResult == Right(expected))
-
-  val writeResult =
-    write(desc, expected).map(_.flattenKeyAndValue(valueDelimiter = ", "))
-
-  assert(writeResult.map(_.toList.sortBy(_._1)) == Right(sourceMap.toList.sortBy(_._1)))
+//  val readResult = read(desc from source)
+//
+//  val expected =
+//    A(B(b = "v1",c = C(), d = List(C(), C()), e = None,f = Right(E.G("v2")), g = E.D, h = E.G("GValue"), i = P.Q, j = P.T("v3")))
+//
+//  assert(readResult == Right(expected))
+//
+//  val writeResult =
+//    write(desc, expected).map(_.flattenKeyAndValue(valueDelimiter = ", "))
+//
+//  assert(writeResult.map(_.toList.sortBy(_._1)) == Right(sourceMap.toList.sortBy(_._1)))
 end Example
