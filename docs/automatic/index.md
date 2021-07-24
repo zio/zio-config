@@ -14,6 +14,11 @@ Take a look at the magnolia examples in `zio-config`. One of them is provided he
 Note:  `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects. 
 It will be deprecated once we find users have moved on from scala 2.11. 
 
+Also, there are a few differences when it comes to scala-3 for auto-matic derivation.
+Refer scala-3 section in this page for specific differences. Most of them, 
+is an intentional reduction in the number of moving parts in the entire mechanism of auto-derivation, plus,
+a few subtle limitations.
+
 ### Example
 
 #### Config
@@ -308,3 +313,147 @@ Please find the example in `magnolia` package in examples module.
 Please find the examples in ChangeKeys.scala in magnolia module to find how to manipulate
 keys in an automatic derivation such as being able to specify keys as camelCase, kebabCase or snakeCase in
 the source config.
+
+
+## Scala3 Autoderivation
+Works just like scala-2.12 and scala-2.13, however we don't have DeriveConfigDescriptor anymore.
+Such a design will be revisited in future versions.
+
+
+#### No more DeriveConfigDescriptor class
+
+If you are in scala-3, just make sure you **don't** have the import
+`zio.config.magnolia.DeriveConfigDescriptor.descriptor`, because  `DeriveConfigDescriptor`
+doesn't exist in scala3. 
+
+Instead use `zio.config.magnolia.descriptor`.
+
+Eventually, we hope to bring the same behaviour in scala-2.x and make it consistent across
+all versions.
+
+### No support for `...extends AnyVal` 
+
+You may encounter the following error, if you have `AnyVal` in your config.
+
+```scala
+
+no implicit argument of type zio.config.magnolia.Descriptor
+
+```
+
+If looking for newtypes, use better strategies (https://afsal-taj06.medium.com/newtype-is-new-now-63f1b632429d),
+and add custom `Descriptor`.
+
+
+### No more SealedStraitStrategy
+
+If you are familiar with SealedTraitStrategy in zio-config for scala-2.x, you will miss it in scala-3. 
+With scala-3 (and hopefully in scala-2.x in future versions) most of the outcomes that you
+get using `SealedStraitStrategy` is possible with `name` annotations. We think, this can be more intuitive
+to users, and less magic in your application code compared to `customDerivation` that you do by extending
+`DeriveConfigDescriptor`
+
+#### Example:
+
+The name of the sealed trait itself is skipped completely by default.
+However, if you put a `name` annotation on top of the sealed-trait itself,
+then it become part of the config. The name of the case class will be always available
+in the config, and by default it's the exact name of the case class.
+
+```scala
+
+sealed trait A
+case class B(x: String) extends A
+case class C(y: String) extends A
+
+case class Config(a: A) 
+
+```
+
+With the above config, `descriptor[A]` can read following source.
+
+```scala
+
+ {
+   "a" : {
+    "B" : {
+       "x" : "abc"
+      }
+    }
+   }
+ }
+
+// or a.B.x="abc", if your source is just property file
+```
+
+However if you give `name` annotation for A, the name of the sealed trait
+should be part of the config. That is
+
+```scala
+
+@name("aaaaa")
+sealed trait A
+case class B(x: String) extends A
+case class C(y: String) extends A
+
+case class Config(a: A) 
+
+```
+
+With the above config, `descriptor[A]` can read following source.
+
+```scala
+
+
+ {
+   "a" : {
+     "aaaaa" : 
+       "B" : {
+         "x" : "abc"
+      }
+    }
+   }
+ }
+
+
+
+```
+As you can imagine, you can give name annotations to any case class as well (similar to scala 2.x)
+
+#### Example:
+
+```scala
+
+sealed trait A
+
+@name("b")
+case class B(x: String) extends A
+case class C(y: String) extends A
+
+case class Config(a: A) 
+
+
+```
+
+In this case, the config should be
+
+```scala
+
+ {
+   "a" : {
+    "b" : {
+       "x" : "abc"
+      }
+    }
+   }
+ }
+
+```
+
+### No guaranteed behavior for enums yet
+With the current release, there is no guaranteed support of scala-3 enum.
+
+### No support for recursive example (but you can make it work)
+
+There is no support yet for recursive config in the case of scala-3.
+However, you can make it work. Please refer to examples module.
