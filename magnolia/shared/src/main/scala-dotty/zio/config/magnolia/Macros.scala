@@ -49,12 +49,12 @@ object Macros:
     import quotes.reflect.*
 
     val tpe = TypeRepr.of[T]
-    
+
     Expr.ofList {
       tpe.typeSymbol.annotations.filter { a => {
          a.tpe.typeSymbol.fullName == ownerName
       }}.map(_.asExpr.asInstanceOf[Expr[A]])
-    }  
+    }
   }
 
   def fieldAnns[T: Type, A: Type](ownerName: String)(using Quotes): Expr[List[(String, List[A])]] =

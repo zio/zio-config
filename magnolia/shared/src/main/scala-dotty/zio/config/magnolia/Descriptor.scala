@@ -87,10 +87,10 @@ object Descriptor {
           ), desc.metadata
         ) :: summonDescriptorForCoProduct[ts]
 
-  inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[Any]] =
+  inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
     inline erasedValue[T] match
       case _ : EmptyTuple => Nil
-      case _: (t *: ts) => summonInline[Descriptor[t]].asInstanceOf[Descriptor[Any]] :: summonDescriptorAll[ts]
+      case _: (t *: ts) => summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
 
   inline def labelsOf[T <: Tuple]: List[String] =
     inline erasedValue[T] match
@@ -107,26 +107,61 @@ object Descriptor {
   inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
     inline m match
       case s: Mirror.SumOf[T] =>
-        sum[T](using s)
+        val coproductName: CoproductName =
+          CoproductName(
+            originalName = constValue[m.MirroredLabel],
+            alternativeNames = customNamesOf[T],
+            descriptions = Macros.documentationOf[T].map(_.describe)
+          )
 
-      case p: Mirror.ProductOf[T] =>
-        product[T](using p)
+        val subClassDescriptions =
+          summonDescriptorForCoProduct[m.MirroredElemTypes]
 
-  inline def sum[T](using m: Mirror.SumOf[T]) =
-    val coproductName: CoproductName =
-      CoproductName(
-        originalName = constValue[m.MirroredLabel],
-        alternativeNames = customNamesOf[T],
-        descriptions = Macros.documentationOf[T].map(_.describe)
-      )
+        val desc =
+          mergeAllProducts(subClassDescriptions.map(castTo[Descriptor[T]]))
 
-    val subClassDescriptions =
-      summonDescriptorForCoProduct[m.MirroredElemTypes]
+        Descriptor.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames))
 
-    val desc =
-      mergeAllProducts(subClassDescriptions.map(castTo[Descriptor[T]]))
+      case m: Mirror.ProductOf[T] =>
+        val productName =
+          ProductName(
+            originalName = constValue[m.MirroredLabel],
+            alternativeNames = customNamesOf[T],
+            descriptions = Macros.documentationOf[T].map(_.describe)
+          )
 
-    Descriptor.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames))
+        val originalFieldNamesList =
+          labelsOf[m.MirroredElemLabels]
+
+        val customFieldNameMap =
+          customFieldNamesOf[T]
+
+        val documentations =
+          Macros.fieldDocumentationOf[T].toMap
+
+        val fieldAndDefaultValues: Map[String, Any] =
+          Macros.defaultValuesOf[T].toMap
+
+        val fieldNames =
+          originalFieldNamesList.foldRight(Nil: List[FieldName])((str, list) => {
+            val alternativeNames = customFieldNameMap.get(str).map(_.names).getOrElse(Nil)
+            val descriptions = documentations.get(str).map(_.map(_.describe)).getOrElse(Nil)
+            FieldName(str, alternativeNames.toList, descriptions) :: list
+          })
+
+        val descriptors =
+          summonDescriptorAll[m.MirroredElemTypes].asInstanceOf[List[Descriptor[Any]]]
+
+        val descriptorsWithDefaultValues =
+          addDefaultValues(fieldAndDefaultValues, originalFieldNamesList, descriptors)
+
+        mergeAllFields(
+          descriptorsWithDefaultValues,
+          productName,
+          fieldNames,
+          lst => m.fromProduct(Tuple.fromArray(lst.toArray[Any])),
+          castTo[Product](_).productIterator.toList
+        )
 
   def mergeAllProducts[T](
     allDescs: => List[Descriptor[T]],
@@ -143,48 +178,7 @@ object Descriptor {
           }
         ).reduce(_ orElse _)
 
-    from(desc)
-
-  inline def product[T](using m: Mirror.ProductOf[T]) =
-    val productName =
-      ProductName(
-        originalName = constValue[m.MirroredLabel],
-        alternativeNames = customNamesOf[T],
-        descriptions = Macros.documentationOf[T].map(_.describe)
-      )
-
-    val originalFieldNamesList =
-      labelsOf[m.MirroredElemLabels]
-
-    val customFieldNameMap =
-      customFieldNamesOf[T]
-
-    val documentations =
-      Macros.fieldDocumentationOf[T].toMap
-
-    val fieldAndDefaultValues: Map[String, Any] =
-      Macros.defaultValuesOf[T].toMap
-
-    val fieldNames =
-      originalFieldNamesList.foldRight(Nil: List[FieldName])((str, list) => {
-        val alternativeNames = customFieldNameMap.get(str).map(_.names).getOrElse(Nil)
-        val descriptions = documentations.get(str).map(_.map(_.describe)).getOrElse(Nil)
-        FieldName(str, alternativeNames.toList, descriptions) :: list
-      })
-
-    val descriptors =
-      summonDescriptorAll[m.MirroredElemTypes]
-
-    val descriptorsWithDefaultValues =
-      addDefaultValues(fieldAndDefaultValues, originalFieldNamesList, descriptors)
-
-    mergeAllFields(
-      descriptorsWithDefaultValues,
-      productName,
-      fieldNames,
-      lst => m.fromProduct(Tuple.fromArray(lst.toArray[Any])),
-      castTo[Product](_).productIterator.toList
-    )
+    Descriptor.from(desc)
 
   def addDefaultValues(
     defaultValues: Map[String, Any],

@@ -1,10 +1,8 @@
 package zio.config.magnolia
 
-import zio.config._
-import zio.test.Assertion._
-import zio.test._
-
-import ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
+import zio.test.Assertion.equalTo
+import zio.test.{DefaultRunnableSpec, ZSpec, assert}
 
 object MarkdownSpec extends DefaultRunnableSpec {
   sealed trait Cloud
@@ -238,7 +236,6 @@ object MarkdownSpec extends DefaultRunnableSpec {
       assert(markdown)(equalTo(expectedMarkdown)) && assert(markdown)(equalTo(expectedMarkdown))
     },
     test("An outer nested config with orElseEither with nested on left") {
-      import zio.config._, ConfigDescriptor._
 
       val config = nested("a")(nested("b")(int).orElseEither(string))
 
@@ -264,7 +261,6 @@ object MarkdownSpec extends DefaultRunnableSpec {
       assert(result)(equalTo(expectedMarkdown))
     },
     test("An outer nested config with orElseEither with nested on right") {
-      import zio.config._, ConfigDescriptor._
 
       val config = nested("a")(int.orElseEither(nested("b")(string)))
 
@@ -290,7 +286,6 @@ object MarkdownSpec extends DefaultRunnableSpec {
       assert(result)(equalTo(expectedMarkdown))
     },
     test("An outer nested config with orElseEither with nested on left and right") {
-      import zio.config._, ConfigDescriptor._
 
       val config = nested("a")(nested("b")(int).orElseEither(nested("c")(string)))
 
@@ -316,7 +311,6 @@ object MarkdownSpec extends DefaultRunnableSpec {
       assert(result)(equalTo(expectedMarkdown))
     },
     test("An outer nested config with orElseEither with nested on orElseEither with 3 configs") {
-      import zio.config._, ConfigDescriptor._
 
       val config = nested("a")(nested("b")(int).orElseEither(nested("c")(string).orElseEither(nested("d")(int))))
 
@@ -343,7 +337,6 @@ object MarkdownSpec extends DefaultRunnableSpec {
       assert(result)(equalTo(expectedMarkdown))
     },
     test("Markdown works for configs with no keys") {
-      import zio.config._, ConfigDescriptor._
 
       val config = nested("a")(string).orElseEither(nested("b")(int).orElseEither(double))
 
@@ -370,7 +363,6 @@ object MarkdownSpec extends DefaultRunnableSpec {
       assert(result)(equalTo(expectedMarkdown))
     },
     test("Markdown works for a single key that can be more than 2 types") {
-      import zio.config._, ConfigDescriptor._
 
       val config =
         nested("a")(string.orElseEither(int).orElseEither(double))
@@ -398,7 +390,6 @@ object MarkdownSpec extends DefaultRunnableSpec {
       assert(result)(equalTo(expectedMarkdown))
     },
     test("Markdown works for a single key that can be multiple types zipped with same config") {
-      import zio.config._, ConfigDescriptor._
 
       val config1 =
         nested("a")(string.orElseEither(int).orElseEither(double))
@@ -444,7 +435,6 @@ object MarkdownSpec extends DefaultRunnableSpec {
       assert(result)(equalTo(expectedMarkdown))
     },
     test("Markdown works when there is a  parent key with a few children not having key") {
-      import zio.config._, ConfigDescriptor._
 
       val config =
         nested("a")(
