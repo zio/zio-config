@@ -152,9 +152,7 @@ object Descriptor {
         alternativeNames = customNamesOf[T],
         descriptions = Macros.documentationOf[T].map(_.describe)
       )
-
-    println(Macros.defaultValuesOf[T])
-
+  
     val originalFieldNamesList =
       labelsOf[m.MirroredElemLabels]
 
@@ -163,11 +161,6 @@ object Descriptor {
 
     val documentations =
       Macros.fieldDocumentationOf[T].toMap
-
-    val defaultValuesOfFields =
-      Macros.defaultValuesOf[T]
-
-    println(defaultValuesOfFields)
 
     val fieldNames =
       originalFieldNamesList.foldRight(Nil: List[FieldName])((str, list) => {
