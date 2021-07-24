@@ -9,31 +9,41 @@ object Macros:
   inline def fieldNameOf[T]: List[(String, List[name])] = ${fieldAnns[T, name]("zio.config.magnolia.name")}
   inline def fieldNamesOf[T]: List[(String, List[names])] = ${fieldAnns[T, names]("zio.config.magnolia.names")}
   inline def fieldDocumentationOf[T]: List[(String, List[describe])] = ${fieldAnns[T, describe]("zio.config.magnolia.describe")}
-  inline def defaultValuesOf[T]: List[(String, List[Any])] = ${defaultValues[T]}
+  inline def defaultValuesOf[T]: List[(String, Any)] = ${defaultValues[T]}
 
-  def defaultValues[T : Type](using Quotes): Expr[List[(String, List[Any])]] =
+  def defaultValues[T : Type](using Quotes): Expr[List[(String, Any)]] =
     import quotes.reflect.*
     val tpe = TypeRepr.of[T]
-    val sym = tpe.typeSymbol
-    val comp = sym.companionClass
 
-    // Compiler throws horrible errors otherwise
+    val sym = tpe.typeSymbol
+
+    val namesOfFieldsWithDefaultValues =
+      sym.caseFields.filter(s => s.flags.is(Flags.HasDefault)).map(_.name)
+
+    val companionClas =
+      sym.companionClass
+
+    // Compiler throws horrible, if no specific checks
     val tree =
-      if (comp.isClassDef) {
-        Some(comp.tree.asInstanceOf[ClassDef].body)
+      if (companionClas.isClassDef) {
+        Some(companionClas.tree.asInstanceOf[ClassDef].body)
       } else {
         None
       }
 
-    val idents: List[(String, List[Ref])] =
+    val defaultRefs: List[Ref] =
       tree match {
         case Some(body) =>
-          for case deff @ DefDef(name, _, _, _) <- body
-          yield if name.startsWith("$lessinit$greater$default") then (name, List(Ref(deff.symbol))) else (name, Nil)
+          body.collect {
+            case df @ DefDef(name, _, _, _)  if name.startsWith("$lessinit$greater$default") =>
+              Ref(df.symbol)
+          }
         case None => Nil
       }
 
-    Expr.ofList(idents.map(t => Expr.ofTuple((Expr(t._1), Expr.ofList(t._2.map(_.asExpr))))))
+    Expr.ofList(namesOfFieldsWithDefaultValues.zip(defaultRefs).map {
+      case (n, ref) => Expr.ofTuple(Expr(n), ref.asExpr)
+    })
 
   def anns[T: Type, A: Type](ownerName: String)(using Quotes): Expr[List[A]] = {
     import quotes.reflect.*

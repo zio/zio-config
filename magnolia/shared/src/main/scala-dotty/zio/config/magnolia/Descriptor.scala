@@ -87,10 +87,10 @@ object Descriptor {
           ), desc.metadata
         ) :: summonDescriptorForCoProduct[ts]
 
-  inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
+  inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[Any]] =
     inline erasedValue[T] match
       case _ : EmptyTuple => Nil
-      case _: (t *: ts) => summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
+      case _: (t *: ts) => summonInline[Descriptor[t]].asInstanceOf[Descriptor[Any]] :: summonDescriptorAll[ts]
 
   inline def labelsOf[T <: Tuple]: List[String] =
     inline erasedValue[T] match
@@ -162,6 +162,9 @@ object Descriptor {
     val documentations =
       Macros.fieldDocumentationOf[T].toMap
 
+    val fieldAndDefaultValues: Map[String, Any] =
+      Macros.defaultValuesOf[T].toMap
+
     val fieldNames =
       originalFieldNamesList.foldRight(Nil: List[FieldName])((str, list) => {
         val alternativeNames = customFieldNameMap.get(str).map(_.names).getOrElse(Nil)
@@ -169,18 +172,31 @@ object Descriptor {
         FieldName(str, alternativeNames.toList, descriptions) :: list
       })
 
-    val values =
-      Macros.defaultValuesOf[T]
+    val descriptors =
+      summonDescriptorAll[m.MirroredElemTypes]
 
-    println(values)
+    val descriptorsWithDefaultValues =
+      addDefaultValues(fieldAndDefaultValues, originalFieldNamesList, descriptors)
 
     mergeAllFields(
-      summonDescriptorAll[m.MirroredElemTypes],
+      descriptorsWithDefaultValues,
       productName,
       fieldNames,
       lst => m.fromProduct(Tuple.fromArray(lst.toArray[Any])),
       castTo[Product](_).productIterator.toList
     )
+
+  def addDefaultValues(
+    defaultValues: Map[String, Any],
+    fieldNames: List[String],
+    descriptors: List[Descriptor[Any]]
+  ): List[Descriptor[_]] = {
+    descriptors.zip(fieldNames).map({ case (desc, fieldName) =>
+      defaultValues.get(fieldName) match {
+        case Some(any) => Descriptor(desc.desc.default(any), desc.metadata)
+        case None => desc
+    }})
+  }
 
   def mergeAllFields[T](
     allDescs: => List[Descriptor[_]],
