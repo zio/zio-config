@@ -9,9 +9,9 @@ object Macros:
   inline def fieldNameOf[T]: List[(String, List[name])] = ${fieldAnns[T, name]("zio.config.magnolia.name")}
   inline def fieldNamesOf[T]: List[(String, List[names])] = ${fieldAnns[T, names]("zio.config.magnolia.names")}
   inline def fieldDocumentationOf[T]: List[(String, List[describe])] = ${fieldAnns[T, describe]("zio.config.magnolia.describe")}
-  inline def defaultValuesOf[T]: List[Any] = ${defaultValues[T]}
+  inline def defaultValuesOf[T]: List[(String, List[Any])] = ${defaultValues[T]}
 
-  def defaultValues[T : Type](using Quotes): Expr[List[Any]] =
+  def defaultValues[T : Type](using Quotes): Expr[List[(String, List[Any])]] =
     import quotes.reflect.*
     val tpe = TypeRepr.of[T]
     val sym = tpe.typeSymbol
@@ -25,17 +25,15 @@ object Macros:
         None
       }
 
-    val idents: List[Ref] =
+    val idents: List[(String, List[Ref])] =
       tree match {
         case Some(body) =>
           for case deff @ DefDef(name, _, _, _) <- body
-          // Example: List(Ident(apply), Ident(unapply), Ident(toString), Ident($lessinit$greater$default$1), Ident(writeReplace), Ident(fromProduct))
-          if name.startsWith("$lessinit$greater$default")
-          yield Ref(deff.symbol)
+          yield if name.startsWith("$lessinit$greater$default") then (name, List(Ref(deff.symbol))) else (name, Nil)
         case None => Nil
       }
 
-    Expr.ofList(idents.map(_.asExpr))
+    Expr.ofList(idents.map(t => Expr.ofTuple((Expr(t._1), Expr.ofList(t._2.map(_.asExpr))))))
 
   def anns[T: Type, A: Type](ownerName: String)(using Quotes): Expr[List[A]] = {
     import quotes.reflect.*
