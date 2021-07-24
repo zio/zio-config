@@ -152,7 +152,7 @@ object Descriptor {
         alternativeNames = customNamesOf[T],
         descriptions = Macros.documentationOf[T].map(_.describe)
       )
-  
+
     val originalFieldNamesList =
       labelsOf[m.MirroredElemLabels]
 
@@ -168,6 +168,11 @@ object Descriptor {
         val descriptions = documentations.get(str).map(_.map(_.describe)).getOrElse(Nil)
         FieldName(str, alternativeNames.toList, descriptions) :: list
       })
+
+    val values =
+      Macros.defaultValuesOf[T]
+
+    println(values)
 
     mergeAllFields(
       summonDescriptorAll[m.MirroredElemTypes],

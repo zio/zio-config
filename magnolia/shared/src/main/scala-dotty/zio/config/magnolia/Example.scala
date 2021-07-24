@@ -6,15 +6,15 @@ import zio.config._, ConfigDescriptor._
 final case class A(a: B)
 
 final case class B(
-  b: String,
-  c: C,
-  d: List[C],
-  e: Option[C],
-  f: Either[C, E],
-  g: E,
-  h: E,
-  i: P,
-  j: P
+  b: String = "wqwqwqwqw",
+//  c: C,
+//  d: List[C],
+//  e: Option[C],
+//  f: Either[C, E],
+//  g: E,
+//  h: E,
+//  i: P,
+//  j: P
 )
 
 final case class C()
@@ -60,17 +60,17 @@ object Example extends App :
       valueDelimiter = Some(',')
     )
 
-  val desc = descriptor[A]
+  val desc = descriptor[B]
 
-  val readResult = read(desc from source)
-
-  val expected =
-    A(B(b = "v1",c = C(), d = List(C(), C()), e = None,f = Right(E.G("v2")), g = E.D, h = E.G("GValue"), i = P.Q, j = P.T("v3")))
-
-  assert(readResult == Right(expected))
-
-  val writeResult =
-    write(desc, expected).map(_.flattenKeyAndValue(valueDelimiter = ", "))
-
-  assert(writeResult.map(_.toList.sortBy(_._1)) == Right(sourceMap.toList.sortBy(_._1)))
+//  val readResult = read(desc from source)
+//
+//  val expected =
+//    A(B(b = "v1",c = C(), d = List(C(), C()), e = None,f = Right(E.G("v2")), g = E.D, h = E.G("GValue"), i = P.Q, j = P.T("v3")))
+//
+//  assert(readResult == Right(expected))
+//
+//  val writeResult =
+//    write(desc, expected).map(_.flattenKeyAndValue(valueDelimiter = ", "))
+//
+//  assert(writeResult.map(_.toList.sortBy(_._1)) == Right(sourceMap.toList.sortBy(_._1)))
 end Example
