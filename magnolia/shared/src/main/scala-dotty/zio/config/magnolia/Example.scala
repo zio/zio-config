@@ -34,7 +34,7 @@ sealed trait P
 object P {
   case object Q extends P
   case object R extends P
-  case class S(@name("zz") @describe("it is z") z: String) extends P
+  case class S(@name("zz") @describe("it is z") z: String = "10") extends P
   @name("t")
   case class T(u: String) extends P
 }
