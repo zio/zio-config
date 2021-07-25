@@ -1,8 +1,10 @@
 package zio.config.magnolia
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
 import zio.test.Assertion._
 import zio.test._
+
+import ConfigDescriptor._
 import MarkdowSpecUtils._
 
 object MarkdownSpec extends BaseSpec {
@@ -370,7 +372,7 @@ object MarkdowSpecUtils {
     hasRunDate: Boolean
   )
 
-  val expectedMarkdown =
+  val expectedMarkdown: String =
     s"""
        |## Configuration Details
        |
