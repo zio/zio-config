@@ -95,7 +95,7 @@ lazy val magnoliaDependencies =
 
 lazy val refinedDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11") Seq.empty // Just to make IntelliJ happy
+    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
     else Seq("eu.timepit" %% "refined" % refinedVersion)
   }
 
@@ -228,6 +228,7 @@ lazy val examples    = crossProject(JVMPlatform)
         .value
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigGen)
+
 lazy val examplesJVM = examples.jvm
 
 lazy val zioConfigDerivation = crossProject(JVMPlatform)
@@ -295,12 +296,14 @@ lazy val zioConfigShapeless    = crossProject(JVMPlatform)
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
+
 lazy val zioConfigShapelessJVM = zioConfigShapeless.jvm
 
 lazy val zioConfigTypesafe    = crossProject(JVMPlatform)
   .in(file("typesafe"))
   .settings(stdSettings("zio-config-typesafe"))
   .settings(crossProjectSettings)
+  .settings(dottySettings)
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe" % "config"       % "1.4.1",
@@ -310,6 +313,7 @@ lazy val zioConfigTypesafe    = crossProject(JVMPlatform)
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
+
 lazy val zioConfigTypesafeJVM = zioConfigTypesafe.jvm
   .settings(dottySettings)
 

@@ -1,4 +1,4 @@
----
+Z---
 id: automatic_index
 title:  "Automatic Derivation of ConfigDescriptor"
 ---
@@ -317,8 +317,7 @@ the source config.
 
 ## Scala3 Autoderivation
 Works just like scala-2.12 and scala-2.13, however we don't have DeriveConfigDescriptor anymore.
-Such a design will be revisited in future versions.
-
+If possible, we will make this behaviour consistent in scala-2.12 and scala-2.13 in future versions of zio-config.
 
 #### No more DeriveConfigDescriptor class
 
@@ -326,12 +325,12 @@ If you are in scala-3, just make sure you **don't** have the import
 `zio.config.magnolia.DeriveConfigDescriptor.descriptor`, because  `DeriveConfigDescriptor`
 doesn't exist in scala3. 
 
-Instead use `zio.config.magnolia.descriptor`.
+Instead, use `zio.config.magnolia.descriptor`. This already works in scala-2.x as well.
 
 Eventually, we hope to bring the same behaviour in scala-2.x and make it consistent across
 all versions.
 
-### No support for `...extends AnyVal` 
+### No support for `AnyVal` 
 
 You may encounter the following error, if you have `AnyVal` in your config.
 
@@ -341,24 +340,29 @@ no implicit argument of type zio.config.magnolia.Descriptor
 
 ```
 
-If looking for newtypes, use better strategies (https://afsal-taj06.medium.com/newtype-is-new-now-63f1b632429d),
-and add custom `Descriptor`.
+If looking for new-types, use better strategies than AnyVal (https://afsal-taj06.medium.com/newtype-is-new-now-63f1b632429d),
+and add custom `Descriptor`explicitly in its companion objects.
 
+We will consider adding `AnyVal` support, for supporting legacy applications in future versions
+of zio-config
 
 ### No more SealedStraitStrategy
 
-If you are familiar with SealedTraitStrategy in zio-config for scala-2.x, you will miss it in scala-3. 
+If you are familiar with `SealedTraitStrategy` in zio-config for scala-2.x, you will miss it in scala-3. 
 With scala-3 (and hopefully in scala-2.x in future versions) most of the outcomes that you
-get using `SealedStraitStrategy` is possible with `name` annotations. We think, this can be more intuitive
-to users, and less magic in your application code compared to `customDerivation` that you do by extending
-`DeriveConfigDescriptor`
+get using `SealedStraitStrategy` is possible with `name` (or `names`) annotations. 
+
+We think, this is more explicit, and less of a magic compared to creating `customDerivation` by 
+extending `DeriveConfigDescriptor`
 
 #### Example:
 
 The name of the sealed trait itself is skipped completely by default.
 However, if you put a `name` annotation on top of the sealed-trait itself,
-then it become part of the config. The name of the case class will be always available
-in the config, and by default it's the exact name of the case class.
+then it becomes part of the config. 
+
+The name of the case-class should be available in config-source, 
+and by default it should the same name as that of the case-class.
 
 ```scala
 
@@ -386,8 +390,8 @@ With the above config, `descriptor[A]` can read following source.
 // or a.B.x="abc", if your source is just property file
 ```
 
-However if you give `name` annotation for A, the name of the sealed trait
-should be part of the config. That is
+However, if you give `name` annotation for A, the name of the sealed trait
+should be part of the config too. This is rarely used.
 
 ```scala
 
@@ -418,7 +422,7 @@ With the above config, `descriptor[A]` can read following source.
 
 
 ```
-As you can imagine, you can give name annotations to any case class as well (similar to scala 2.x)
+Similar to scala-2.x, you can give name annotations to any case-class as well (similar to scala 2.x)
 
 #### Example:
 
@@ -450,10 +454,11 @@ In this case, the config should be
 
 ```
 
-### No guaranteed behavior for enums yet
-With the current release, there is no guaranteed support of scala-3 enum.
+### No guaranteed behavior for scala-3 enum yet
+With the current release, there is no guaranteed support of scala-3 enum. 
+Use `sealed trait` and `case class` pattern.
 
-### No support for recursive example (but you can make it work)
+### No support for recursive config in auto-derivation, but we can make it work
 
-There is no support yet for recursive config in the case of scala-3.
-However, you can make it work. Please refer to examples module.
+There is no support for auto-deriving recursive config with scala-3.
+Please refer to examples in magnolia package (not in the main examples module)
