@@ -23,7 +23,7 @@ object Macros:
     val companionClas =
       sym.companionClass
 
-    // Compiler throws horrible, if no specific checks
+    // Compiler throws errors, if no specific checks
     val tree =
       if (companionClas.isClassDef) {
         Some(companionClas.tree.asInstanceOf[ClassDef].body)
