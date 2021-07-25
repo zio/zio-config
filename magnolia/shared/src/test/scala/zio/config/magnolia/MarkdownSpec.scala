@@ -306,26 +306,26 @@ object MarkdowSpecUtils {
   final case class RawConfig(tableDetails: List[RawTableConfig])
 
   final case class RawTableConfig(
-                                   database: Option[String],
-                                   featureBucket: String,
-                                   table: String,
-                                   @describe("partition scheme of s3 paths") partitionScheme: Option[PartitionScheme],
-                                   @describe("Example: as_at_date=2019-10-11/minor_version=1/run_time=123") partitionString: Option[String],
-                                   numberOfPartitions: Option[Int],
-                                   transformOptions: Option[TransformOptions],
-                                   blockSizeMb: Option[Int],
-                                   destination: Destination,
-                                   cloud: Cloud
-                                 )
+    database: Option[String],
+    featureBucket: String,
+    table: String,
+    @describe("partition scheme of s3 paths") partitionScheme: Option[PartitionScheme],
+    @describe("Example: as_at_date=2019-10-11/minor_version=1/run_time=123") partitionString: Option[String],
+    numberOfPartitions: Option[Int],
+    transformOptions: Option[TransformOptions],
+    blockSizeMb: Option[Int],
+    destination: Destination,
+    cloud: Cloud
+  )
 
   final case class Destination(
-                                downstream: Downstream,
-                                dataFileNaming: Option[PatternFileNamingPolicy],
-                                eotFileNaming: Option[PatternFileNamingPolicy],
-                                controlFileNaming: Option[PatternFileNamingPolicy],
-                                rename: Option[Map[String, String]],
-                                roleArn: Option[String]
-                              )
+    downstream: Downstream,
+    dataFileNaming: Option[PatternFileNamingPolicy],
+    eotFileNaming: Option[PatternFileNamingPolicy],
+    controlFileNaming: Option[PatternFileNamingPolicy],
+    rename: Option[Map[String, String]],
+    roleArn: Option[String]
+  )
 
   final case class Downstream(`type`: String, details: Either[S32, S3])
 
@@ -336,39 +336,39 @@ object MarkdowSpecUtils {
   final case class S32(d: String, e: String)
 
   final case class Sftp(
-                         host: String,
-                         username: String,
-                         authFilePath: String = "/opt/keys/sfmc/id_rsa.cij",
-                         port: Option[Int],
-                         directory: String,
-                         options: Map[String, String] = Map("StrictHostKeyChecking" -> "no"),
-                         timeout: Option[Int],
-                         encryption: Option[Encryption]
-                       )
+    host: String,
+    username: String,
+    authFilePath: String = "/opt/keys/sfmc/id_rsa.cij",
+    port: Option[Int],
+    directory: String,
+    options: Map[String, String] = Map("StrictHostKeyChecking" -> "no"),
+    timeout: Option[Int],
+    encryption: Option[Encryption]
+  )
 
   final case class Encryption(algorithm: String, keyFile: String = "/opt/keys/sfmc/pgp.sfmc.pub", armor: Boolean)
 
   final case class TransformOptions(
-                                     columns: List[String],
-                                     filter: Option[String],
-                                     maskedColumns: Option[List[String]],
-                                     header: Boolean,
-                                     separator: String,
-                                     compression: Option[String],
-                                     dateFormat: Option[String],
-                                     timestampFormat: Option[String],
-                                     quoteAll: Boolean,
-                                     emptyValue: Option[String],
-                                     nullValue: Option[String],
-                                     intermediateS3BasePath: String
-                                   )
+    columns: List[String],
+    filter: Option[String],
+    maskedColumns: Option[List[String]],
+    header: Boolean,
+    separator: String,
+    compression: Option[String],
+    dateFormat: Option[String],
+    timestampFormat: Option[String],
+    quoteAll: Boolean,
+    emptyValue: Option[String],
+    nullValue: Option[String],
+    intermediateS3BasePath: String
+  )
 
   final case class PartitionScheme(
-                                    partitionName: Option[String],
-                                    dateFormat: String,
-                                    hasVersion: Boolean,
-                                    hasRunDate: Boolean
-                                  )
+    partitionName: Option[String],
+    dateFormat: String,
+    hasVersion: Boolean,
+    hasRunDate: Boolean
+  )
 
   val expectedMarkdown =
     s"""

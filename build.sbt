@@ -201,7 +201,7 @@ lazy val zioConfigRefinedJVM = zioConfigRefined.jvm
 
 lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module")
 
-lazy val examples    = crossProject(JVMPlatform)
+lazy val examples = crossProject(JVMPlatform)
   .in(file("examples"))
   .settings(stdSettings("zio-config-examples"))
   .settings(crossProjectSettings)
