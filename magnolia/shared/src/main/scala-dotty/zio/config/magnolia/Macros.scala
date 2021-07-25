@@ -23,23 +23,13 @@ object Macros:
     val companionClas =
       sym.companionClass
 
-    // Compiler throws errors, if no specific checks
-    val tree =
-      if (companionClas.isClassDef) {
-        Some(companionClas.tree.asInstanceOf[ClassDef].body)
-      } else {
-        None
-      }
-
-    val defaultRefs: List[Ref] =
-      tree match {
-        case Some(body) =>
-          body.collect {
-            case df @ DefDef(name, _, _, _)  if name.startsWith("$lessinit$greater$default") =>
-              Ref(df.symbol)
-          }
-        case None => Nil
-      }
+    val defaultRefs =
+      if companionClas.isClassDef then
+        companionClas.tree.asInstanceOf[ClassDef].body.collect {
+          case df @ DefDef(name, _, _, _)  if name.startsWith("$lessinit$greater$default") =>
+            Ref(df.symbol)
+        }
+      else Nil
 
     Expr.ofList(namesOfFieldsWithDefaultValues.zip(defaultRefs).map {
       case (n, ref) => Expr.ofTuple(Expr(n), ref.asExpr)
