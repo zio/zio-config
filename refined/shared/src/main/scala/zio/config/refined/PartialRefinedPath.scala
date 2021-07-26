@@ -6,11 +6,11 @@ import zio.config.magnolia.Descriptor
 
 import ConfigDescriptor.nested
 
-final class PartialRefinedPath[FAP] {
+final case class PartialRefinedPath[FAP]() {
   def apply[F[_, _], A, P](
     path: String
   )(implicit
-    ev: FAP =:= F[A, P],
+    ev: F[A, P] =:= FAP,
     rt: RefType[F],
     v: Validate[A, P],
     d: Descriptor[A]
@@ -18,7 +18,7 @@ final class PartialRefinedPath[FAP] {
     nested(path)(
       d.desc
         .transformOrFail[F[A, P]](
-          t => rt.refine[P](t).map(ev.flip.apply),
+          t => rt.refine[P](t).map(_.asInstanceOf[F[A, P]]), // =:= ev.apply doesn't work with 2.12.13
           rf => Right(rt.unwrap(rf))
         )
     )

@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import eu.timepit.refined.api._
+import eu.timepit.refined.api.{RefType, Refined, Validate}
 import zio.config.ConfigDescriptor.nested
 import zio.config.magnolia.DeriveConfigDescriptor.Descriptor
 
@@ -107,6 +107,6 @@ package object refined {
    *     (refineType[NonEmptyString]("username") |@| refineType[NonEmptyString]("password"))(Jdbc.apply, Jdbc.unapply)
    * }}}
    */
-  def refineType[RefinedType]: PartialRefinedPath[RefinedType] =
-    new PartialRefinedPath[RefinedType]
+  def refineType[R]: PartialRefinedPath[R] =
+    PartialRefinedPath[R]()
 }
