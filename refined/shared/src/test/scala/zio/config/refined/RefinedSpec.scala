@@ -3,7 +3,7 @@ package zio.config.refined
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.types.string.NonEmptyString
-import zio.config.{ BaseSpec, _ }
+import zio.config.{BaseSpec, _}
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
