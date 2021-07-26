@@ -1,9 +1,10 @@
 package zio.config.refined
 
-import zio.config.ConfigDescriptor, ConfigDescriptor.nested
+import eu.timepit.refined.api.{RefType, Validate}
+import zio.config.ConfigDescriptor
 import zio.config.magnolia.Descriptor
-import eu.timepit.refined.api.{Validate}
-import eu.timepit.refined.api.{RefType}
+
+import ConfigDescriptor.nested
 
 final class PartialRefinedPath[FAP] {
   def apply[F[_, _], A, P](
