@@ -1,11 +1,9 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import eu.timepit.refined._
+import eu.timepit.refined.api._
 import zio.config.ConfigDescriptor.nested
 import zio.config.magnolia.DeriveConfigDescriptor.Descriptor
-
-import api._
 
 package object refined {
 
