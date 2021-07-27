@@ -2,10 +2,10 @@ package zio.config
 
 import zio.config.PropertyType.PropertyReadError
 
-import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
 import java.util.UUID
 import scala.concurrent.duration.Duration
-import scala.util.{Failure, Success, Try}
+import scala.util.{ Failure, Success, Try }
 
 trait PropertyType[V, A] {
   def read(propertyValue: V): Either[PropertyReadError[V], A]
@@ -14,6 +14,13 @@ trait PropertyType[V, A] {
 
 object PropertyType extends PropertyTypePlatformSpecific {
   final case class PropertyReadError[V](value: V, typeInfo: String)
+
+  case class Constant(value: String) extends PropertyType[String, String] {
+    override def read(propertyValue: String): Either[PropertyReadError[String], String] =
+      if (propertyValue == value) Right(value) else Left(PropertyReadError(value, "constant"))
+
+    override def write(a: String): String = a
+  }
 
   case object StringType extends PropertyType[String, String] {
     def read(value: String): Either[PropertyReadError[String], String] = Right(value)

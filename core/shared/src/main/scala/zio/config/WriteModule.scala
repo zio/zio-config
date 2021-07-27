@@ -75,6 +75,7 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
             result <- merged.headOption.toRight("Failed to write the config back to property tree, at zip node")
           } yield result
       }
+
     go(config, a)
   }
 }

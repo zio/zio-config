@@ -1,12 +1,12 @@
 package zio.config
 
 import zio.system.System
-import zio.{Has, Layer, Tag, ZIO, ZLayer}
+import zio.{ Has, Layer, Tag, ZIO, ZLayer }
 
 import java.io.File
-import java.net.{URI, URL}
-import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
-import java.util.{Properties, UUID}
+import java.net.{ URI, URL }
+import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
+import java.util.{ Properties, UUID }
 import scala.concurrent.duration.Duration
 
 trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
@@ -165,6 +165,15 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * }}}
      */
     def byte(path: String): ConfigDescriptor[Byte] = nested(path)(byte)
+
+    def constant(cons: String): ConfigDescriptor[String] =
+      sourceDesc(ConfigSource.empty, PropertyType.Constant(cons)) ?? s"constant value: ${cons}"
+
+    /**
+     * A config descriptor that describes retrieving a constant string from a given path.
+     */
+    def constant(cons: String, path: String): ConfigDescriptor[String] =
+      nested(path)(constant(cons))
 
     val double: ConfigDescriptor[Double] =
       sourceDesc(ConfigSource.empty, PropertyType.DoubleType) ?? "value of type double"
