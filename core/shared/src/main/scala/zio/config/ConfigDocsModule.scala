@@ -207,13 +207,15 @@ trait ConfigDocsModule extends WriteModule {
           }
         )
 
-    sealed case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None) extends ConfigDocs
-    sealed case class Recursion(sources: Set[ConfigSourceName])                                                      extends ConfigDocs
-    sealed case class Nested(path: K, docs: ConfigDocs, descriptions: List[Description])                             extends ConfigDocs
-    sealed case class Zip(left: ConfigDocs, right: ConfigDocs)                                                       extends ConfigDocs
-    sealed case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                                            extends ConfigDocs
-    sealed case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty)                     extends ConfigDocs
-    sealed case class DynamicMap(schemaDocs: ConfigDocs, valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs])   extends ConfigDocs
+    sealed case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None)
+        extends ConfigDocs
+    sealed case class Recursion(sources: Set[ConfigSourceName])                                  extends ConfigDocs
+    sealed case class Nested(path: K, docs: ConfigDocs, descriptions: List[Description])         extends ConfigDocs
+    sealed case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
+    sealed case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
+    sealed case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
+    sealed case class DynamicMap(schemaDocs: ConfigDocs, valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs])
+        extends ConfigDocs
 
   }
 
@@ -471,7 +473,9 @@ trait ConfigDocsModule extends WriteModule {
         val name =
           fieldName.fold(_.asString(Some("Field Descriptions")), _.asString)
 
-        baseLink.fold(Link.confluenceLink(name, headingStr))(baseLink => Link.confluenceLink(name, s"${baseLink}-${headingStr}"))
+        baseLink.fold(Link.confluenceLink(name, headingStr))(baseLink =>
+          Link.confluenceLink(name, s"${baseLink}-${headingStr}")
+        )
       }
 
     def singletonTable(tableRow: TableRow): Table =
@@ -554,7 +558,7 @@ trait ConfigDocsModule extends WriteModule {
     }
   }
 
-  import ConfigDocs.{ DynamicMap => DocsMap, Leaf => DocsLeaf }
+  import ConfigDocs.{DynamicMap => DocsMap, Leaf => DocsLeaf}
 
   /**
    * Generate documentation based on the `ConfigDescriptor`, where a

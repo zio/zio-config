@@ -2,10 +2,10 @@ package zio.config
 
 import zio.config.PropertyType.PropertyReadError
 
-import java.time.{ Instant, LocalDate, LocalDateTime, LocalTime }
+import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
 import scala.concurrent.duration.Duration
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 trait PropertyType[V, A] {
   def read(propertyValue: V): Either[PropertyReadError[V], A]

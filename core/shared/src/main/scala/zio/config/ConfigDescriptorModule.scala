@@ -2,7 +2,7 @@ package zio.config
 
 import com.github.ghik.silencer.silent
 
-import scala.collection.mutable.{ ListBuffer, Map => MutableMap }
+import scala.collection.mutable.{ListBuffer, Map => MutableMap}
 import scala.reflect.ClassTag
 
 @silent("Unused import")
@@ -246,7 +246,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
         override def zip[X, Y]: (ConfigDescriptor[X], ConfigDescriptor[Y]) => ConfigDescriptor[(X, Y)] =
           (a, b) => lazyDesc(a.zip(b))
 
-        override def xmapEither[X, Y]: (ConfigDescriptor[X], X => Either[String, Y], Y => Either[String, X]) => ConfigDescriptor[Y] =
+        override def xmapEither[X, Y]
+          : (ConfigDescriptor[X], X => Either[String, Y], Y => Either[String, X]) => ConfigDescriptor[Y] =
           (a, b, c) => lazyDesc(a.transformOrFail(b, c))
 
         override val a: ConfigDescriptor[A] = lazyDesc(self)
@@ -1729,7 +1730,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
               case None        => Left("Cannot write an empty list back")
             }
           )
-        )
+      )
 
     /**
      * Retrieve a `Map`given an existing `ConfigDescriptor`.
@@ -1978,7 +1979,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-    sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[Map[K, A]]
+    sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A])
+        extends ConfigDescriptor[Map[K, A]]
 
     sealed case class Lazy[A](get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
@@ -1988,7 +1990,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class OrElse[A](left: ConfigDescriptor[A], right: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
-    sealed case class OrElseEither[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B]) extends ConfigDescriptor[Either[A, B]]
+    sealed case class OrElseEither[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
+        extends ConfigDescriptor[Either[A, B]]
 
     sealed case class Sequence[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
 
