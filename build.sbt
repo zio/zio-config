@@ -77,7 +77,7 @@ addCommandAlias(
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
 )
 
-lazy val zioVersion       = "1.0.9"
+lazy val zioVersion       = "1.0.11"
 lazy val magnoliaVersion  = "0.17.0"
 lazy val refinedVersion   = "0.9.27"
 lazy val shapelessVersion = "2.4.0-M1"
