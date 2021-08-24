@@ -159,9 +159,9 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(macroDefinitionSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio"                 %% "zio"                     % zioVersion,
+      "dev.zio"                %% "zio"                     % zioVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0",
-      "dev.zio"                 %% "zio-test"                % zioVersion % Test
+      "dev.zio"                %% "zio-test"                % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
