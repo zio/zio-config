@@ -67,17 +67,11 @@ object BuildHelper {
 
   val dottySettings = Seq(
     crossScalaVersions += ScalaDotty,
-    scalacOptions ++= {
-      if (scalaVersion.value == ScalaDotty)
-        Seq("-noindent")
-      else
-        Seq()
-    },
     scalacOptions --= {
       if (scalaVersion.value == ScalaDotty)
         Seq("-Xfatal-warnings")
       else
-        Seq()
+        Seq("-Xprint:typer")
     },
     Compile / doc / sources := {
       val old = (Compile / doc / sources).value
