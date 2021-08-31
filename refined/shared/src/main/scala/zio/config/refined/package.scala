@@ -3,11 +3,12 @@ package zio.config
 import com.github.ghik.silencer.silent
 import eu.timepit.refined.api.{RefType, Refined, Validate}
 import zio.config.ConfigDescriptor.nested
-import zio.config.magnolia.DeriveConfigDescriptor.Descriptor
+import zio.config.magnolia.Descriptor
 
 package object refined {
 
   /**
+   * FIXME
    * Automatically derive instances of Descriptor for any refined types
    */
   @silent("deprecated")
