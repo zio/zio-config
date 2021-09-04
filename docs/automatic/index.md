@@ -1,4 +1,4 @@
----
+Z---
 id: automatic_index
 title:  "Automatic Derivation of ConfigDescriptor"
 ---
@@ -13,6 +13,11 @@ Take a look at the magnolia examples in `zio-config`. One of them is provided he
 
 Note:  `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects. 
 It will be deprecated once we find users have moved on from scala 2.11. 
+
+Also, there are a few differences when it comes to scala-3 for auto-matic derivation.
+Refer scala-3 section in this page for specific differences. Most of them, 
+is an intentional reduction in the number of moving parts in the entire mechanism of auto-derivation, plus,
+a few subtle limitations.
 
 ### Example
 
@@ -308,3 +313,152 @@ Please find the example in `magnolia` package in examples module.
 Please find the examples in ChangeKeys.scala in magnolia module to find how to manipulate
 keys in an automatic derivation such as being able to specify keys as camelCase, kebabCase or snakeCase in
 the source config.
+
+
+## Scala3 Autoderivation
+Works just like scala-2.12 and scala-2.13, however we don't have DeriveConfigDescriptor anymore.
+If possible, we will make this behaviour consistent in scala-2.12 and scala-2.13 in future versions of zio-config.
+
+#### No more DeriveConfigDescriptor class
+
+If you are in scala-3, just make sure you **don't** have the import
+`zio.config.magnolia.DeriveConfigDescriptor.descriptor`, because  `DeriveConfigDescriptor`
+doesn't exist in scala3. 
+
+Instead, use `zio.config.magnolia.descriptor`. This already works in scala-2.x as well.
+
+Eventually, we hope to bring the same behaviour in scala-2.x and make it consistent across
+all versions.
+
+### No support for `AnyVal` 
+
+You may encounter the following error, if you have `AnyVal` in your config.
+
+```scala
+
+no implicit argument of type zio.config.magnolia.Descriptor
+
+```
+
+If looking for new-types, use better strategies than AnyVal (https://afsal-taj06.medium.com/newtype-is-new-now-63f1b632429d),
+and add custom `Descriptor`explicitly in its companion objects.
+
+We will consider adding `AnyVal` support, for supporting legacy applications in future versions
+of zio-config
+
+### No more SealedStraitStrategy
+
+If you are familiar with `SealedTraitStrategy` in zio-config for scala-2.x, you will miss it in scala-3. 
+With scala-3 (and hopefully in scala-2.x in future versions) most of the outcomes that you
+get using `SealedStraitStrategy` is possible with `name` (or `names`) annotations. 
+
+We think, this is more explicit, and less of a magic compared to creating `customDerivation` by 
+extending `DeriveConfigDescriptor`
+
+#### Example:
+
+The name of the sealed trait itself is skipped completely by default.
+However, if you put a `name` annotation on top of the sealed-trait itself,
+then it becomes part of the config. 
+
+The name of the case-class should be available in config-source, 
+and by default it should the same name as that of the case-class.
+
+```scala
+
+sealed trait A
+case class B(x: String) extends A
+case class C(y: String) extends A
+
+case class Config(a: A) 
+
+```
+
+With the above config, `descriptor[A]` can read following source.
+
+```scala
+
+ {
+   "a" : {
+    "B" : {
+       "x" : "abc"
+      }
+    }
+   }
+ }
+
+// or a.B.x="abc", if your source is just property file
+```
+
+However, if you give `name` annotation for A, the name of the sealed trait
+should be part of the config too. This is rarely used.
+
+```scala
+
+@name("aaaaa")
+sealed trait A
+case class B(x: String) extends A
+case class C(y: String) extends A
+
+case class Config(a: A) 
+
+```
+
+With the above config, `descriptor[A]` can read following source.
+
+```scala
+
+
+ {
+   "a" : {
+     "aaaaa" : 
+       "B" : {
+         "x" : "abc"
+      }
+    }
+   }
+ }
+
+
+
+```
+Similar to scala-2.x, you can give name annotations to any case-class as well (similar to scala 2.x)
+
+#### Example:
+
+```scala
+
+sealed trait A
+
+@name("b")
+case class B(x: String) extends A
+case class C(y: String) extends A
+
+case class Config(a: A) 
+
+
+```
+
+In this case, the config should be
+
+```scala
+
+ {
+   "a" : {
+    "b" : {
+       "x" : "abc"
+      }
+    }
+   }
+ }
+
+```
+
+### No guaranteed behavior for scala-3 enum yet
+With the current release, there is no guaranteed support of scala-3 enum. 
+Use `sealed trait` and `case class` pattern.
+
+### No support for recursive config in auto-derivation, but we can make it work
+
+There is no support for auto-deriving recursive config with scala-3.
+Please refer to examples in magnolia package (not in the main examples module)
