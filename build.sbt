@@ -167,7 +167,6 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio"                %% "zio"                     % zioVersion,
-      "dev.zio"                 %% "zio-prelude"            % "1.0.0-RC6",
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0",
       "dev.zio"                %% "zio-test"                % zioVersion % Test
     ),

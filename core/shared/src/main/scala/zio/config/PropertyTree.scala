@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.prelude.NonEmptyList
+import zio.NonEmptyChunk
 
 import scala.annotation.tailrec
 import scala.collection.immutable.Nil
@@ -117,12 +117,12 @@ sealed trait PropertyTree[+K, +V] { self =>
    * @param that
    * @return
    */
-  final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): NonEmptyList[PropertyTree[K1, V1]] =
+  final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): NonEmptyChunk[PropertyTree[K1, V1]] =
     (self, that) match {
-      case (Sequence(l), Sequence(r))           => NonEmptyList(Sequence(l ++ r))
+      case (Sequence(l), Sequence(r))           => NonEmptyChunk(Sequence(l ++ r))
       case (l: Record[K, V], r: Record[K1, V1]) =>
         (l.value.keySet ++ r.value.keySet)
-          .foldLeft(NonEmptyList[Map[K1, PropertyTree[K1, V1]]](Map.empty)) { case (acc, k) =>
+          .foldLeft(NonEmptyChunk[Map[K1, PropertyTree[K1, V1]]](Map.empty)) { case (acc, k) =>
             (l.value.get(k.asInstanceOf[K]), r.value.get(k)) match {
               case (None, None)       => acc
               case (Some(l), Some(r)) =>
@@ -132,9 +132,9 @@ sealed trait PropertyTree[+K, +V] { self =>
             }
           }
           .map(v => PropertyTree.Record(v))
-      case (left, right) if left.isEmpty        => NonEmptyList(right)
-      case (left, right) if right.isEmpty       => NonEmptyList(left)
-      case (l, r)                               => NonEmptyList(l, r)
+      case (left, right) if left.isEmpty        => NonEmptyChunk(right)
+      case (left, right) if right.isEmpty       => NonEmptyChunk(left)
+      case (l, r)                               => NonEmptyChunk(l, r)
     }
 
   final def nonEmpty: Boolean = !isEmpty
