@@ -139,7 +139,8 @@ object BuildHelper {
       case Some((3, 0))  =>
         Seq(
           "-language:implicitConversions",
-          "-Xignore-scala2-macros"
+          "-Xignore-scala2-macros",
+          "-Yretain-trees"
         )
       case Some((2, 13)) =>
         Seq(
