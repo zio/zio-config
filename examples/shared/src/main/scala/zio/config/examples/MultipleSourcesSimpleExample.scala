@@ -32,9 +32,23 @@ object MultipleSourcesSimpleExample extends App {
       "constant"
     )
 
+  // Hocon -> keys -> env
+  // ConfigSource, ConfigDescriptor - mapKeys.
+  // Read is lazy -
+  // _.port//
+  // getConfig[CaseClass]: ZIO[CaseClass] 
+  // Even components within the config-data should be lazy (may be)
+  // ConfigSource getValue: ZIO[PropertyTree]  
   val myConfig: ConfigDescriptor[MyConfig] =
-    ((string("LDAP").from(source1.orElse(source3)) |@| int("PORT").from(source4)) |@|
+    ((string("LDAP").from(source1).orElse(string("ldap").from(source3.at("x.y.z")))) |@| int("PORT").from(source4)) |@|
       string("DB_URL").optional.from(source1.orElse(source5)))(MyConfig.apply, MyConfig.unapply)
+
+  val myConfig2: ConfigDescriptor[MyConfig] = 
+      ((string("LDAP") |@| int("PORT")) |@|
+      string("DB_URL").optional)(MyConfig.apply, MyConfig.unapply)
+
+  val allSource = 
+    source1.orElse(source3).retain("LDAP") ++ source4.retain("PORT") ++ source1.orElse(source5).retain("DB_URL")   
 
   // Let's reset the whole source details in the original description
   val myConfigWithReset: ConfigDescriptor[MyConfig] =

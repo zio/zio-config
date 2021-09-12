@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.PropertyTree.{Leaf, Record, Sequence, unflatten}
+import zio.config._, PropertyTree.{Leaf, Record, Sequence, unflatten}
 import zio.system.System
 import zio.{IO, Task, UIO, ZIO}
 
@@ -8,13 +8,39 @@ import java.io.{File, FileInputStream}
 import java.{util => ju}
 import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
+import java.io.ObjectInputFilter.Config
+import zio.ZManaged
+import java.io.IOException
 
 trait ConfigSourceModule extends KeyValueModule {
   case class ConfigSourceName(name: String)
 
   trait ConfigSource { self =>
+    def locate(propertyTreePath: PropertyTreePath[K]): ConfigSource = ???
+
+    def transformPath(f: PropertyTreePath[K] => PropertyTreePath[K]): ConfigSource = new ConfigSource {
+      override def getConfigValue(propertyTreePath: PropertyTreePath[K]): ZIO[Any, ReadError[K], PropertyTree[K, V]] = 
+        self.getConfigValue(f(propertyTreePath))
+      
+      override def names: Set[ConfigSourceName] = ???
+        
+      override def leafForSequence: LeafForSequence = ???  
+    }
+
     def names: Set[ConfigSourceName]
-    def getConfigValue(keys: List[K]): PropertyTree[K, V]
+
+    def getConfigValue(keys: PropertyTreePath[K]): ZIO[Any, ReadError[K], PropertyTree[K, V]]
+
+    def merge(that: ConfigSource): ConfigSource = ??? 
+    
+    def ++ (that: ConfigSource): ConfigSource = merge(that)
+
+    def memoize(properyTreePath: PropertyTreePath[K]): UIO[ConfigSource] = ???
+
+    def retain(properyTreePath: PropertyTreePath[K]): ConfigSource = ???
+
+    def transformTreeAt(path: PropertyTreePath[K])(f: PropertyTree[K, V] => PropertyTree[K, V]): ConfigSource = ??? 
+
     def leafForSequence: LeafForSequence
 
     /**
@@ -36,7 +62,7 @@ trait ConfigSourceModule extends KeyValueModule {
     def orElse(that: => ConfigSource): ConfigSource =
       getConfigSource(
         self.names ++ that.names,
-        path => self.getConfigValue(path).getOrElse(that.getConfigValue(path)),
+        path => self.getConfigValue(path).orElse(that.getConfigValue(path)),
         that.leafForSequence
       )
 
@@ -87,15 +113,17 @@ trait ConfigSourceModule extends KeyValueModule {
       getConfigSource(names, l => getConfigValue(l.map(f)), leafForSequence)
   }
 
+  final case class ConfigSource( sourceNames: Set[ConfigSourceName], access: ZManaged[Any, IOException, PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]],  isLeafValidSequence: LeafForSequence)
+
   protected def getConfigSource(
     sourceNames: Set[ConfigSourceName],
-    getTree: List[K] => PropertyTree[K, V],
+    getTree: PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]],
     // FIXME: May be move to specific sources
     isLeafValidSequence: LeafForSequence
   ): ConfigSource =
     new ConfigSource { self =>
       def names: Set[ConfigSourceName]                      = sourceNames
-      def getConfigValue(keys: List[K]): PropertyTree[K, V] = getTree(keys)
+      def getConfigValue(keys: PropertyTreePath[K]): ZIO[Any, ReadError[K], PropertyTree[K, V]] = getTree(keys)
       def leafForSequence: LeafForSequence                  = isLeafValidSequence
     }
 
@@ -112,7 +140,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
   trait ConfigSourceFunctions {
     val empty: ConfigSource =
-      getConfigSource(Set.empty, _ => PropertyTree.empty, LeafForSequence.Valid)
+      getConfigSource(Set.empty, _ => ZIO.succeed(PropertyTree.empty), LeafForSequence.Valid)
 
     protected def dropEmpty(tree: PropertyTree[K, V]): PropertyTree[K, V] =
       if (tree.isEmpty) PropertyTree.Empty
@@ -162,7 +190,7 @@ trait ConfigSourceModule extends KeyValueModule {
       source: String,
       leafForSequence: LeafForSequence
     ): ConfigSource =
-      getConfigSource(Set(ConfigSourceName(source)), tree.getPath, leafForSequence)
+      getConfigSource(Set(ConfigSourceName(source)), path => ZIO.succeed(tree.getPath(path)), leafForSequence)
 
     protected def fromPropertyTrees(
       trees: Iterable[PropertyTree[K, V]],
@@ -393,7 +421,9 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): Task[ConfigSource] =
+    ): Task[ConfigSource] = 
+
+      getConfigSource(filePath, path => ZManaged.make(new FileInputStream(new )))
       for {
         properties <- ZIO.bracket(
                         ZIO.effect(new FileInputStream(new File(filePath)))

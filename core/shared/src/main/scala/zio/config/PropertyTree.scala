@@ -5,6 +5,22 @@ import com.github.ghik.silencer.silent
 import scala.annotation.tailrec
 import scala.collection.immutable.Nil
 
+final case class PropertyTreePath[K](path: Vector[K])
+
+object PropertyTreePath {
+
+  /**
+    * Example:
+    * 
+    * $("aws.regions[0].`servers name`.plainText")
+    *
+    * @param path
+    * @return
+    */
+  def $(path: String): PropertTreePath[String] = ???
+  implicit def stringToPropTreePath(s: String): PropertTreePath[String] = $(s)
+}
+
 @silent("Unused import")
 sealed trait PropertyTree[+K, +V] { self =>
   import PropertyTree._
@@ -49,20 +65,19 @@ sealed trait PropertyTree[+K, +V] { self =>
     if (self == PropertyTree.empty) tree else self
 
   @tailrec
-  final def getPath[K1 >: K](k: List[K1]): PropertyTree[K1, V] =
-    k match {
-      case Nil          => self
-      case head :: next =>
-        self match {
+  final def getPath[K1 >: K](k: PropertyTreePath[K1]): PropertyTree[K1, V] =
+    k.path.foldLeft(self)({
+      case (node, segment) => 
+        node match {
           case Empty | Leaf(_) | Sequence(_) => Empty
           case record: Record[K, V]          =>
-            record.value.get(head.asInstanceOf[K]) match {
-              case Some(value) => value.getPath(next)
+            record.value.get(segment.asInstanceOf[K]) match {
+              case Some(value) => value
               case None        => Empty
             }
         }
-    }
-
+    })
+    
   final def isEmpty: Boolean = self match {
     case Empty           => true
     case Leaf(_)         => false
