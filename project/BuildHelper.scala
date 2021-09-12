@@ -67,17 +67,11 @@ object BuildHelper {
 
   val dottySettings = Seq(
     crossScalaVersions += ScalaDotty,
-    scalacOptions ++= {
-      if (scalaVersion.value == ScalaDotty)
-        Seq("-noindent")
-      else
-        Seq()
-    },
     scalacOptions --= {
       if (scalaVersion.value == ScalaDotty)
         Seq("-Xfatal-warnings")
       else
-        Seq()
+        Seq("-Xprint:typer")
     },
     Compile / doc / sources := {
       val old = (Compile / doc / sources).value
@@ -243,7 +237,7 @@ object BuildHelper {
         Seq(
           "com.github.ghik" % "silencer-lib"            % SilencerVersion % Provided cross CrossVersion.full,
           compilerPlugin("com.github.ghik" % "silencer-plugin" % SilencerVersion cross CrossVersion.full),
-          compilerPlugin("org.typelevel"  %% "kind-projector"  % "0.13.0" cross CrossVersion.full)
+          compilerPlugin("org.typelevel"  %% "kind-projector"  % "0.13.1" cross CrossVersion.full)
         )
     },
     semanticdbEnabled := scalaVersion.value != ScalaDotty, // enable SemanticDB
