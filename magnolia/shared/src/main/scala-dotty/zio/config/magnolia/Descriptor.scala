@@ -164,7 +164,7 @@ object Descriptor {
           castTo[Product](_).productIterator.toList
         )
 
-  def mergeAllProducts[T](
+  inline def mergeAllProducts[T](
     allDescs: => List[Descriptor[T]],
   ): Descriptor[T] =
     val desc =
@@ -181,7 +181,7 @@ object Descriptor {
 
     Descriptor.from(desc)
 
-  def addDefaultValues(
+  inline def addDefaultValues(
     defaultValues: Map[String, Any],
     fieldNames: List[String],
     descriptors: List[Descriptor[Any]]
