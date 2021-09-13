@@ -115,10 +115,10 @@ object Descriptor {
             descriptions = Macros.documentationOf[T].map(_.describe)
           )
 
-        val subClassDescriptions =
+        lazy val subClassDescriptions =
           summonDescriptorForCoProduct[m.MirroredElemTypes]
 
-        val desc =
+        lazy val desc =
           mergeAllProducts(subClassDescriptions.map(castTo[Descriptor[T]]))
 
         Descriptor.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames))
@@ -131,19 +131,19 @@ object Descriptor {
             descriptions = Macros.documentationOf[T].map(_.describe)
           )
 
-        val originalFieldNamesList =
+        lazy val originalFieldNamesList =
           labelsOf[m.MirroredElemLabels]
 
-        val customFieldNameMap =
+        lazy val customFieldNameMap =
           customFieldNamesOf[T]
 
-        val documentations =
+        lazy val documentations =
           Macros.fieldDocumentationOf[T].toMap
 
-        val fieldAndDefaultValues: Map[String, Any] =
+        lazy val fieldAndDefaultValues: Map[String, Any] =
           Macros.defaultValuesOf[T].toMap
 
-        val fieldNames =
+        lazy val fieldNames =
           originalFieldNamesList.foldRight(Nil: List[FieldName])((str, list) => {
             val alternativeNames = customFieldNameMap.get(str).map(_.names).getOrElse(Nil)
             val descriptions = documentations.get(str).map(_.map(_.describe)).getOrElse(Nil)
@@ -153,7 +153,7 @@ object Descriptor {
         lazy val descriptors =
           summonDescriptorAll[m.MirroredElemTypes].asInstanceOf[List[Descriptor[Any]]]
 
-        val descriptorsWithDefaultValues =
+        lazy val descriptorsWithDefaultValues =
           addDefaultValues(fieldAndDefaultValues, originalFieldNamesList, descriptors)
 
         mergeAllFields(
@@ -164,7 +164,7 @@ object Descriptor {
           castTo[Product](_).productIterator.toList
         )
 
-  inline def mergeAllProducts[T](
+  def mergeAllProducts[T](
     allDescs: => List[Descriptor[T]],
   ): Descriptor[T] =
     val desc =
@@ -181,7 +181,7 @@ object Descriptor {
 
     Descriptor.from(desc)
 
-  inline def addDefaultValues(
+  def addDefaultValues(
     defaultValues: Map[String, Any],
     fieldNames: List[String],
     descriptors: List[Descriptor[Any]]
