@@ -16,7 +16,7 @@ package object cats {
 
   def nonEmptyChain[A](aDesc: ConfigDescriptor[A]): ConfigDescriptor[NonEmptyChain[A]] =
     chain(aDesc).transformOrFailLeft(value =>
-      NonEmptyChain.fromChain(value).fold[Either[String, NonEmptyChain[A]]](Left("bla"))(value => Right(value))
+      NonEmptyChain.fromChain(value).fold[Either[String, NonEmptyChain[A]]](Left("chain is empty"))(value => Right(value))
     )(
       _.toChain
     )
