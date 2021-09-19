@@ -42,7 +42,8 @@ package object refined {
       )
 
   /**
-   * refine allows to retrieve a `refined` type given an existing `ConfigDescriptor`
+   * refine[Predicate] allows to retrieve a `refined` type given an existing `ConfigDescriptor`
+   * and a predicate Predicate. Example of a Predicate is `NonEmpty`.
    *
    * Example:
    *
@@ -50,7 +51,7 @@ package object refined {
    *
    *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
    *
-   *   case class MyConfig(url: String, port: Int)
+   *   final case class MyConfig(url: String, port: Int)
    *
    *   val configs: ConfigDescriptor[List[MyConfig]] =
    *     list("databases")(descriptor[MyConfig])
@@ -58,7 +59,55 @@ package object refined {
    *   val configDescriptor: ConfigDescriptor[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
    *     refined[Size[Greater[W.`2`.T]]](configs)
    * }}}
+   *
+   * If you don't care predicates specifically, and need to pass a fully formed Refined type
+   * (Example: type NonEmptyString = String Refined NonEmpty), refer `refineType[RefinedType]`
    */
-  def refine[P]: PartialRefined[P] =
-    new PartialRefined[P]
+  def refine[Predicate]: PartialRefined[Predicate] =
+    new PartialRefined[Predicate]
+
+  /**
+   * refineType[RefinedType] allows to retrieve a RefinedType (example: NonEmptyString) from a path.
+   *
+   * Unlike `refine[Predicate]` method, `refineType[RefinedType]`
+   * allows you to a pass a fully formed refined type
+   * and be careless about the `ConfigDescriptor` of the underlying type.
+   *
+   * Example:
+   *
+   * {{{
+   *
+   *   type NonEmptyString = String Refined NonEmpty
+   *   refineType[NonEmptyString]("USERNAME")
+   *
+   *   // is same as
+   *
+   *   val userName: ConfigDescriptor[String] = string("USERNAME")
+   *   refine[NonEmpty](userName)
+   *
+   * }}}
+   *
+   * While, `refineType[RefinedType]` is useful for simple application,
+   * `refine[Predicate]` can be more flexible in complex configurations where you need more
+   * orthogonality between raw config and refined configs.
+   *
+   * `refine[Predicate]` allows you to build entire ConfigDescriptor without worrying
+   * about `Refined` modules, allowing you to then pass the `ConfigDescriptor[RawConfig]`
+   * to `refine[Predicate]` and refine the types, which is more into an orthogonal design.
+   *
+   * A complete example of refineType:
+   *
+   * {{{
+   *
+   *   import zio.config._
+   *   import eu.timepit.refined.types.string.NonEmptyString
+   *
+   *   final case class Jdbc(username: NonEmptyString, password: NonEmptyString)
+   *
+   *   val jdbc: ConfigDescriptor[Jdbc] =
+   *     (refineType[NonEmptyString]("username") |@| refineType[NonEmptyString]("password"))(Jdbc.apply, Jdbc.unapply)
+   * }}}
+   */
+  def refineType[R]: PartialRefinedPath[R] =
+    PartialRefinedPath[R]()
 }
