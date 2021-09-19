@@ -23,7 +23,7 @@ sealed trait E
 object E {
   case object D extends E
   case object F extends E
-  case class G(value: String) extends E
+  case class G(value: String = "hello") extends E
 }
 
 // If a name is provided then the name of the sealed trait itself become part of the config

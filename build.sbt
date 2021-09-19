@@ -74,7 +74,7 @@ addCommandAlias(
 )
 addCommandAlias(
   "testDotty",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigMagnoliaJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
 )
 
 lazy val zioVersion       = "1.0.9"

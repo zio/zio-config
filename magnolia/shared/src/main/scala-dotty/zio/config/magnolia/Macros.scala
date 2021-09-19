@@ -24,12 +24,8 @@ object Macros:
       sym.companionClass
 
     val defaultRefs =
-      if companionClas.isClassDef then
-        companionClas.tree.asInstanceOf[ClassDef].body.collect {
-          case df @ DefDef(name, _, _, _)  if name.startsWith("$lessinit$greater$default") =>
-            Ref(df.symbol)
-        }
-      else Nil
+      companionClas.declarations.filter(_.name.startsWith("$lessinit$greater$default"))
+       .map(Ref(_))
 
     Expr.ofList(namesOfFieldsWithDefaultValues.zip(defaultRefs).map {
       case (n, ref) => Expr.ofTuple(Expr(n), ref.asExpr)
