@@ -369,29 +369,16 @@ trait DeriveConfigDescriptor { self =>
               acc orElse f(n)
             }
           case head :: tail =>
-            def makeNestedParam(name: String, unwrapped: ConfigDescriptor[Any], optional: Boolean) =
-              if (optional) {
-                nested(name)(unwrapped).optional.asInstanceOf[ConfigDescriptor[Any]]
-              } else {
-                nested(name)(unwrapped)
-              }
-
             def makeDescriptor(param: Param[Descriptor, T]): ConfigDescriptor[Any] = {
               val descriptions =
                 param.annotations
                   .filter(_.isInstanceOf[describe])
                   .map(_.asInstanceOf[describe].describe)
 
-              val paramNames = prepareFieldNames(param.annotations, param.label)
+              val raw = param.typeclass.desc
 
-              val raw                      = param.typeclass.desc
-              val (unwrapped, wasOptional) = unwrapFromOptional(raw)
-              val withNesting              = paramNames.tail.foldLeft(makeNestedParam(paramNames.head, unwrapped, wasOptional)) {
-                case (acc, name) =>
-                  acc orElse makeNestedParam(name, unwrapped, wasOptional)
-              }
-              val described                = descriptions.foldLeft(withNesting)(_ ?? _)
-              param.default.fold(described)(described.default(_))
+              val described = descriptions.foldLeft(raw)(_ ?? _).asInstanceOf[ConfigDescriptor[Any]]
+              param.default.fold(described.asInstanceOf[ConfigDescriptor[Any]])(described.default(_))
             }
 
             collectAll(
