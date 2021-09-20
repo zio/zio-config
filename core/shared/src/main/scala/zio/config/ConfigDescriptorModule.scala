@@ -1032,7 +1032,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
           case Describe(conf, message) =>
             Describe(loop(conf), message)
-          case Default(conf, b)        =>
+
+          case Default(conf, b) =>
             Default(loop(conf), b)
 
           case TransformOrFail(conf, f, g) =>

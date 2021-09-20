@@ -358,6 +358,40 @@ lazy val zioConfigYaml    = crossProject(JVMPlatform)
 lazy val zioConfigYamlJVM = zioConfigYaml.jvm
   .settings(dottySettings)
 
+lazy val zioConfigScalaz    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .in(file("scalaz"))
+  .settings(stdSettings("zio-config-scalaz"))
+  .settings(crossProjectSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scalaz" %% "scalaz-core"  % "7.4.0-M7",
+      "dev.zio"    %% "zio-test"     % zioVersion % Test,
+      "dev.zio"    %% "zio-test-sbt" % zioVersion % Test
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "compile->compile;test->test")
+
+lazy val zioConfigScalazJVM = zioConfigScalaz.jvm
+  .settings(dottySettings)
+
+lazy val zioConfigCats    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .in(file("cats"))
+  .settings(stdSettings("zio-config-cats"))
+  .settings(crossProjectSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-core"    % "2.6.1",
+      "dev.zio"       %% "zio-test"     % zioVersion % Test,
+      "dev.zio"       %% "zio-test-sbt" % zioVersion % Test
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "compile->compile;test->test")
+
+lazy val zioConfigCatsJVM = zioConfigCats.jvm
+  .settings(dottySettings)
+
 lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .in(file("typesafe-magnolia-tests"))
   .settings(stdSettings("zio-config-typesafe-magnolia-tests"))
