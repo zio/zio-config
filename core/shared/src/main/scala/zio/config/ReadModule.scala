@@ -243,9 +243,10 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      if (programSummary.contains(config) && isEmptyConfigSource(config, keys.reverse)) {
+      // This is to handle recursive configs
+      if (programSummary.contains(config) && isEmptyConfigSource(config, keys.reverse))
         Left(ReadError.MissingValue(path.reverse, descriptions))
-      } else {
+      else
         config match {
           case c @ Lazy(thunk) =>
             loopAny(path, keys, thunk(), descriptions, c :: programSummary)
@@ -283,7 +284,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           case c @ Sequence(_, _) =>
             loopSequence(path, keys, c, descriptions, c :: programSummary)
         }
-      }
 
     loopAny(Nil, Nil, configuration, Nil, Nil).map(_.value)
 
