@@ -22,7 +22,7 @@ If you are only interested in automatic derviation of configuration, find the de
 
 Jump to [examples](examples/shared/src/main/scala/zio/config/examples) to see various usecases. Hop over to the [Discord](https://discord.gg/2ccFBr4) #zio-config channel to chat with developers and other users.
 
-Try out _ZIO Config_ quickly in [Scastie](https://scastie.scala-lang.org/IpEEuwoaSq2RemrKUXBGkw), which comes pre-loaded with an example. We try to make sure the scastie-buildsettings are updated with latest version of _ZIO Config_.
+Try out _ZIO Config_ quickly in [Scastie](https://scastie.scala-lang.org/WMlkdQeZQvm4yDyZ0pigJA), which comes pre-loaded with an example in scala-3. We try to make sure the scastie-buildsettings are updated with latest version of _ZIO Config_.
 
 [Badge-CI]: https://github.com/zio/zio-config/workflows/CI/badge.svg "ci"
 [Badge-IsItMaintained]: http://isitmaintained.com/badge/resolution/zio/zio-config.svg "Average time to resolve an issue"

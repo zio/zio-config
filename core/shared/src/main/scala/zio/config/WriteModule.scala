@@ -73,6 +73,7 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
             right <- rightResult
           } yield left.merge(right).head
       }
+
     go(config, a)
   }
 }
