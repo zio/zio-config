@@ -2,7 +2,7 @@ package zio.config
 
 import _root_.pureconfig.ConfigConvert
 import zio.config._
-import zio.config.typesafe.TypesafeConfigDescriptor._
+import zio.config.typesafe.configValueConfigDescriptor
 
 package object pureconfig {
   def fromPureconfig[A](implicit cc: ConfigConvert[A]): ConfigDescriptor[A] =
