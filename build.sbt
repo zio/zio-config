@@ -77,10 +77,11 @@ addCommandAlias(
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
 )
 
-lazy val zioVersion       = "1.0.9"
-lazy val magnoliaVersion  = "0.17.0"
-lazy val refinedVersion   = "0.9.27"
-lazy val shapelessVersion = "2.4.0-M1"
+lazy val zioVersion        = "1.0.9"
+lazy val magnoliaVersion   = "0.17.0"
+lazy val refinedVersion    = "0.9.27"
+lazy val pureconfigVersion = "0.16.0"
+lazy val shapelessVersion  = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
   libraryDependencies ++= {
@@ -97,6 +98,12 @@ lazy val refinedDependencies =
   libraryDependencies ++= {
     if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
     else Seq("eu.timepit" %% "refined" % refinedVersion)
+  }
+
+lazy val pureconfigDependencies =
+  libraryDependencies ++= {
+    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
+    else Seq("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
   }
 
 lazy val scala211projects =
@@ -198,6 +205,24 @@ lazy val zioConfigRefined    = crossProject(JVMPlatform)
   .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
 
 lazy val zioConfigRefinedJVM = zioConfigRefined.jvm
+
+lazy val zioConfigPureconfig    = crossProject(JVMPlatform)
+  .in(file("pureconfig"))
+  .settings(stdSettings("zio-config-pureconfig"))
+  .settings(crossProjectSettings)
+  .settings(
+    crossScalaVersions --= Seq(Scala211),
+    pureconfigDependencies,
+    libraryDependencies ++=
+      Seq(
+        "dev.zio" %% "zio-test"     % zioVersion % Test,
+        "dev.zio" %% "zio-test-sbt" % zioVersion % Test
+      ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "test->test", zioConfigTypesafe)
+
+lazy val zioConfigPureconfigJVM = zioConfigPureconfig.jvm
 
 lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module")
 

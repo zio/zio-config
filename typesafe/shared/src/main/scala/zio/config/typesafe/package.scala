@@ -1,6 +1,6 @@
 package zio.config
 
-import com.typesafe.config.{ConfigObject, ConfigRenderOptions}
+import com.typesafe.config.{ConfigObject, ConfigRenderOptions, ConfigValue}
 
 package object typesafe {
   implicit class PropertyTreeOps(tree: PropertyTree[String, String]) { self =>
@@ -58,4 +58,8 @@ package object typesafe {
       write(configDescriptor, a).map(_.toJson)
 
   }
+
+  val configValueConfigDescriptor: ConfigDescriptor[ConfigValue] =
+    ConfigDescriptorAdt.sourceDesc(ConfigSource.empty, ConfigValuePropertyType)
+
 }
