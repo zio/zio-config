@@ -27,9 +27,6 @@ trait ConfigSourceModule extends KeyValueModule {
     ): ZManaged[Any, ReadError[K], UIO[ZIO[Any, ReadError[K], PropertyTree[K, V]]]] =
       access.map(f => f(keys))
 
-    def memoize: ConfigSource =
-      self.copy(access = self.access.map(f => (tree: PropertyTreePath[K]) => f(tree).flatMap(_.memoize)))
-
     /**
      * Transform keys before getting queried from source. Note that, this method could be hardly useful.
      * Most of the time all you need to use is `mapKeys` in `ConfigDescriptor`
@@ -66,6 +63,9 @@ trait ConfigSourceModule extends KeyValueModule {
      */
     def mapKeys(f: K => K): ConfigSource =
       self.copy(access = self.access.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f))))
+
+    def memoize: ConfigSource =
+      self.copy(access = self.access.map(f => (tree: PropertyTreePath[K]) => f(tree).flatMap(_.memoize)))
 
     /**
      * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
@@ -114,13 +114,6 @@ trait ConfigSourceModule extends KeyValueModule {
     def <>(that: => ConfigSource): ConfigSource = self orElse that
   }
 
-  protected def getConfigSource(
-    sourceNames: Set[ConfigSourceName],
-    getTree: ZManaged[Any, ReadError[K], PropertyTreePath[K] => UIO[ZIO[Any, ReadError[K], PropertyTree[K, V]]]],
-    isLeafValidSequence: LeafForSequence
-  ): ConfigSource =
-    ConfigSource(sourceNames, getTree, isLeafValidSequence)
-
   /**
    * To specify if a singleton leaf should be considered
    * as a valid sequence or not.
@@ -134,7 +127,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
   trait ConfigSourceFunctions {
     val empty: ConfigSource =
-      getConfigSource(Set.empty, ZManaged.succeed(_ => UIO(ZIO.succeed(PropertyTree.empty))), LeafForSequence.Valid)
+      ConfigSource(Set.empty, ZManaged.succeed(_ => UIO(ZIO.succeed(PropertyTree.empty))), LeafForSequence.Valid)
 
     protected def dropEmpty(tree: PropertyTree[K, V]): PropertyTree[K, V] =
       if (tree.isEmpty) PropertyTree.Empty
@@ -184,7 +177,7 @@ trait ConfigSourceModule extends KeyValueModule {
       source: String,
       leafForSequence: LeafForSequence
     ): ConfigSource =
-      getConfigSource(
+      ConfigSource(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(()).map(_ => (path: PropertyTreePath[K]) => UIO(ZIO.succeed(tree.at(path)))),
         leafForSequence
