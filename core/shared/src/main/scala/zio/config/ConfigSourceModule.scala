@@ -28,11 +28,7 @@ trait ConfigSourceModule extends KeyValueModule {
       access.map(f => f(keys))
 
     def memoize: ConfigSource =
-      self.copy(access =
-        self.access
-          .mapError(error => ReadError.SourceError(error.toString): ReadError[K])
-          .map(f => (tree: PropertyTreePath[K]) => f(tree).flatMap(_.memoize))
-      )
+      self.copy(access = self.access.map(f => (tree: PropertyTreePath[K]) => f(tree).flatMap(_.memoize)))
 
     /**
      * Transform keys before getting queried from source. Note that, this method could be hardly useful.
@@ -188,7 +184,11 @@ trait ConfigSourceModule extends KeyValueModule {
       source: String,
       leafForSequence: LeafForSequence
     ): ConfigSource =
-      getConfigSource(Set(ConfigSourceName(source)), path => ZIO.succeed(tree.getPath(path)), leafForSequence)
+      getConfigSource(
+        Set(ConfigSourceName(source)),
+        ZManaged.succeed(()).map(_ => (path: PropertyTreePath[K]) => UIO(ZIO.succeed(tree.at(path)))),
+        leafForSequence
+      )
 
     protected def fromPropertyTrees(
       trees: Iterable[PropertyTree[K, V]],
