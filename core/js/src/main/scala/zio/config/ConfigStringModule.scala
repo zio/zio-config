@@ -776,13 +776,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
     )(implicit tag: Tag[A]): Layer[ReadError[K], Has[A]] =
-      ZLayer.fromEffect(ZIO.fromEither(read(configDescriptor)))
+      ZLayer.fromEffect(read(configDescriptor))
 
     private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
       configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
     )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
       ZLayer.fromEffect(
-        configDescriptor.flatMap(descriptor => ZIO.fromEither(read(descriptor)))
+        configDescriptor.flatMap(descriptor => read(descriptor))
       )
   }
 

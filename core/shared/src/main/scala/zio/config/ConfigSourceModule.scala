@@ -112,6 +112,9 @@ trait ConfigSourceModule extends KeyValueModule {
      * }}}
      */
     def <>(that: => ConfigSource): ConfigSource = self orElse that
+
+    def withTree(tree: PropertyTree[K, V]): ConfigSource =
+      copy(access = ZManaged.succeed(a => UIO(ZIO.succeed(tree.at(a)))))
   }
 
   /**

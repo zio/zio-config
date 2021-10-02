@@ -28,25 +28,32 @@ package object config extends KeyConversionFunctions with ConfigStringModule wit
   ): ZManaged[Any, List[E], Map[K, B]] =
     map.foldLeft(
       ZManaged.fromEither[List[E], Map[K, B]](Right(Map.empty: Map[K, B]))
-    )((acc, b) =>
+    ) { case (acc, (k, managed)) =>
       (for {
-        a  <- acc.either
-        b2 <- b._2.either
-      } yield (a, (b._1, b2)) match {
+        a <- acc.either
+        m <- managed.either
+      } yield (a, (k, m)) match {
         case (Left(es), (_, Left(e)))   => Left(e :: es)
         case (Left(cs), (_, Right(_)))  => Left(cs)
         case (Right(_), (_, Left(e)))   => Left(e :: Nil)
         case (Right(bs), (k, Right(b))) => Right(bs.updated(k, b))
       }).absolve
-    )
+    }
 
-  private[config] def seqEither2[A, B, C](genError: (Int, A) => C)(list: List[Either[A, B]]): Either[List[C], List[B]] =
+  private[config] def seqEither2[A, B, C](
+    genError: (Int, A) => C
+  )(list: List[ZManaged[Any, A, B]]): ZManaged[Any, List[C], List[B]] =
     list.zipWithIndex
-      .foldLeft(Right(Nil): Either[List[C], List[B]]) {
-        case (Left(cs), (Left(a), index)) => Left(genError(index, a) :: cs)
-        case (Left(cs), (Right(_), _))    => Left(cs)
-        case (Right(_), (Left(a), index)) => Left(genError(index, a) :: Nil)
-        case (Right(bs), (Right(b), _))   => Right(b :: bs)
+      .foldLeft(ZManaged.fromEither(Right(Nil)): ZManaged[Any, List[C], List[B]]) { case (acc, (managed, index)) =>
+        (for {
+          a <- acc.either
+          m <- managed.either
+        } yield (a, (m, index)) match {
+          case (Left(cs), (Left(a), index)) => Left(genError(index, a) :: cs)
+          case (Left(cs), (Right(_), _))    => Left(cs)
+          case (Right(_), (Left(a), index)) => Left(genError(index, a) :: Nil)
+          case (Right(bs), (Right(b), _))   => Right(b :: bs)
+        }).absolve
       }
       .map(_.reverse)
 }
