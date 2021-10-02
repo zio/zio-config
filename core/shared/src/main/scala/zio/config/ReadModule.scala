@@ -98,7 +98,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[Either[B, C]] =
       loopAny(path, keys, cfg.left, descriptions, programSummary).either flatMap {
         case Right(value) =>
-          ZManaged.effectTotal(value.map(Left(_)))
+          ZManaged.succeed(value.map(Left(_)))
 
         case Left(leftError) =>
           loopAny(path, keys, cfg.right, descriptions, programSummary).either flatMap {
