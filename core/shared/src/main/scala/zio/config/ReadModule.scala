@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.ZManaged
+import zio.{ZIO, ZManaged}
 import zio.config.ReadError._
 
 @silent("Unused import")
@@ -16,12 +16,10 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     import ConfigDescriptorAdt._
 
     def formatError(paths: List[Step[K]], actualType: String, expectedType: String, descriptions: List[String]) =
-      Left(
-        ReadError.FormatError(
-          paths.reverse,
-          s"Provided value is of type $actualType, expecting the type $expectedType",
-          descriptions
-        )
+      ReadError.FormatError(
+        paths.reverse,
+        s"Provided value is of type $actualType, expecting the type $expectedType",
+        descriptions
       )
 
     def loopNested[B](
@@ -48,8 +46,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           ZManaged.fromEither(handleDefaultValues(error, cfg.config, None))
 
         case Right(value) =>
-          ZManaged.fromEither(
-            Right(AnnotatedRead(Some(value.value), Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations))
+          ZManaged.succeed(
+            AnnotatedRead(Some(value.value), Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations)
           )
       }
 
@@ -65,8 +63,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           ZManaged.fromEither(handleDefaultValues(error, cfg.config, cfg.default))
 
         case Right(value) =>
-          ZManaged.fromEither(
-            Right(AnnotatedRead(value.value, Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations))
+          ZManaged.succeed(
+            AnnotatedRead(value.value, Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations)
           )
       }
 
@@ -81,12 +79,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case a @ Right(_)    => ZManaged.fromEither(a)
         case Left(leftError) =>
           loopAny(path, keys, cfg.right, descriptions, programSummary).either flatMap {
-            case a @ Right(_)     => ZManaged.fromEither(a)
+            case a @ Right(_) =>
+              ZManaged.fromEither(a)
+
             case Left(rightError) =>
-              ZManaged.fromEither(
-                Left(
-                  ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations)
-                )
+              ZManaged.fail(
+                ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations)
               )
           }
       }
@@ -98,41 +96,47 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Either[B, C]] =
-      loopAny(path, keys, cfg.left, descriptions, programSummary) match {
+      loopAny(path, keys, cfg.left, descriptions, programSummary).either flatMap {
         case Right(value) =>
-          Right(value.map(Left(_)))
+          ZManaged.effectTotal(value.map(Left(_)))
 
         case Left(leftError) =>
-          loopAny(path, keys, cfg.right, descriptions, programSummary) match {
+          loopAny(path, keys, cfg.right, descriptions, programSummary).either flatMap {
             case Right(rightValue) =>
-              Right(rightValue.map(Right(_)))
+              ZManaged.succeed(rightValue.map(Right(_)))
 
             case Left(rightError) =>
-              Left(ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations))
+              ZManaged.fail(
+                ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations)
+              )
           }
       }
 
     def loopSource[B](path: List[Step[K]], keys: List[K], cfg: Source[B], descriptions: List[String]): Res[B] =
-      cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Empty       => Left(ReadError.MissingValue(path.reverse, descriptions))
-        case PropertyTree.Record(_)   => formatError(path, "Record", "Leaf", descriptions)
-        case PropertyTree.Sequence(_) => formatError(path, "Sequence", "Leaf", descriptions)
-        case PropertyTree.Leaf(value) =>
-          cfg.propertyType.read(value) match {
-            case Left(parseError) =>
-              Left(
-                ReadError.FormatError(
-                  path.reverse,
-                  parseErrorMessage(
-                    parseError.value.toString,
-                    parseError.typeInfo
-                  )
-                )
-              )
-            case Right(parsed)    =>
-              Right(AnnotatedRead(parsed, Set.empty))
-          }
-      }
+      cfg.source.getConfigValue(PropertyTreePath(keys.reverse.toVector.map(PropertyTreePath.Step.Value(_)))) flatMap (
+        possiblyMemoizedZIO =>
+          ZManaged.fromEffect(possiblyMemoizedZIO.flatMap { a =>
+            a.flatMap({
+              case PropertyTree.Empty       => ZIO.fail(ReadError.MissingValue(path.reverse, descriptions))
+              case PropertyTree.Record(_)   => ZIO.fail(formatError(path, "Record", "Leaf", descriptions))
+              case PropertyTree.Sequence(_) => ZIO.fail(formatError(path, "Sequence", "Leaf", descriptions))
+              case PropertyTree.Leaf(value) =>
+                cfg.propertyType.read(value) match {
+                  case Left(parseError) =>
+                    ZIO.fail(
+                      formatError(
+                        path.reverse,
+                        parseError.value.toString,
+                        parseError.typeInfo,
+                        descriptions
+                      )
+                    )
+                  case Right(parsed)    =>
+                    ZIO.succeed(AnnotatedRead(parsed, Set.empty))
+                }
+            })
+          })
+      )
 
     def loopZip[B, C](
       path: List[Step[K]],
@@ -141,22 +145,21 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[(B, C)] =
-      (
-        loopAny(path, keys, cfg.left, descriptions, programSummary),
-        loopAny(path, keys, cfg.right, descriptions, programSummary)
-      ) match {
-        case (Right(leftV), Right(rightV)) =>
-          Right(leftV.zip(rightV))
+      loopAny(path, keys, cfg.left, descriptions, programSummary).either
+        .zip(loopAny(path, keys, cfg.right, descriptions, programSummary).either)
+        .flatMap {
+          case (Right(leftV), Right(rightV)) =>
+            ZManaged.succeed(leftV.zip(rightV))
 
-        case (Left(error1), Left(error2)) =>
-          Left(ZipErrors(error1 :: error2 :: Nil, error1.annotations ++ error2.annotations))
+          case (Left(error1), Left(error2)) =>
+            ZManaged.fail(ZipErrors(error1 :: error2 :: Nil, error1.annotations ++ error2.annotations))
 
-        case (Left(error), Right(annotated)) =>
-          Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
+          case (Left(error), Right(annotated)) =>
+            ZManaged.fail(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
 
-        case (Right(annotated), Left(error)) =>
-          Left(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
-      }
+          case (Right(annotated), Left(error)) =>
+            ZManaged.fail(ZipErrors(error :: Nil, error.annotations ++ annotated.annotations))
+        }
 
     def loopXmapEither[B, C](
       path: List[Step[K]],
