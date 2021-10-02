@@ -7,11 +7,20 @@ import scala.collection.immutable.Nil
 import scala.util.Try
 import scala.util.matching.Regex
 
-final case class PropertyTreePath[K](path: Vector[Step[K]])
+final case class PropertyTreePath[K](path: Vector[Step[K]]) {
+  def mapKeys(f: K => K): PropertyTreePath[K] =
+    PropertyTreePath(path.map(_.map(f)))
+}
 
 object PropertyTreePath {
 
-  sealed trait Step[+K]
+  sealed trait Step[+K] { self =>
+    def map[K1 >: K, K2](f: K1 => K2): Step[K2] =
+      self match {
+        case Step.Index(n) => Step.Index(n)
+        case Step.Value(k) => Step.Value(f(k.asInstanceOf[K1]))
+      }
+  }
 
   object Step {
     val pattern: Regex = """([a-zA-Z0-9 -@\-^-~]*)\[([0-9]*)\]""".r.anchored

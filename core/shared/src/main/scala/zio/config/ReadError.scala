@@ -210,8 +210,5 @@ object ReadError {
 
   final case class MapErrors[A](list: List[ReadError[A]], annotations: Set[Annotation] = Set.empty) extends ReadError[A]
 
-  final case class SourceError(
-    message: String,
-    annotations: Set[Annotation] = Set.empty
-  ) extends ReadError[Nothing]
+  final case class SourceError(message: String, annotations: Set[Annotation] = Set.empty) extends ReadError[Nothing]
 }
