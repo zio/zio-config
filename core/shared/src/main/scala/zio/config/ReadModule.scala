@@ -1,6 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
+import zio.ZManaged
 import zio.config.ReadError._
 
 @silent("Unused import")
@@ -10,7 +11,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   final def read[A](
     configuration: ConfigDescriptor[A]
   ): Either[ReadError[K], A] = {
-    type Res[+B] = Either[ReadError[K], AnnotatedRead[B]]
+    type Res[+B] = ZManaged[Any, ReadError[K], AnnotatedRead[B]]
 
     import ConfigDescriptorAdt._
 
@@ -42,12 +43,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Option[B]] =
-      loopAny(path, keys, cfg.config, descriptions, programSummary) match {
+      loopAny(path, keys, cfg.config, descriptions, programSummary).either flatMap {
         case Left(error) =>
-          handleDefaultValues(error, cfg.config, None)
+          ZManaged.fromEither(handleDefaultValues(error, cfg.config, None))
 
         case Right(value) =>
-          Right(AnnotatedRead(Some(value.value), Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations))
+          ZManaged.fromEither(
+            Right(AnnotatedRead(Some(value.value), Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations))
+          )
       }
 
     def loopDefault[B](
@@ -57,12 +60,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      loopAny(path, keys, cfg.config, descriptions, programSummary) match {
+      loopAny(path, keys, cfg.config, descriptions, programSummary).either flatMap {
         case Left(error) =>
-          handleDefaultValues(error, cfg.config, cfg.default)
+          ZManaged.fromEither(handleDefaultValues(error, cfg.config, cfg.default))
 
         case Right(value) =>
-          Right(AnnotatedRead(value.value, Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations))
+          ZManaged.fromEither(
+            Right(AnnotatedRead(value.value, Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations))
+          )
       }
 
     def loopOrElse[B](
@@ -72,13 +77,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      loopAny(path, keys, cfg.left, descriptions, programSummary) match {
-        case a @ Right(_)    => a
+      loopAny(path, keys, cfg.left, descriptions, programSummary).either flatMap {
+        case a @ Right(_)    => ZManaged.fromEither(a)
         case Left(leftError) =>
-          loopAny(path, keys, cfg.right, descriptions, programSummary) match {
-            case a @ Right(_)     => a
+          loopAny(path, keys, cfg.right, descriptions, programSummary).either flatMap {
+            case a @ Right(_)     => ZManaged.fromEither(a)
             case Left(rightError) =>
-              Left(ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations))
+              ZManaged.fromEither(
+                Left(
+                  ReadError.OrErrors(leftError :: rightError :: Nil, leftError.annotations ++ rightError.annotations)
+                )
+              )
           }
       }
 
