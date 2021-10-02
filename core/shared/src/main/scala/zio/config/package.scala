@@ -24,16 +24,21 @@ package object config extends KeyConversionFunctions with ConfigStringModule wit
     )
 
   private[config] def seqMap2[K, E, B](
-    map: Map[K, Either[E, B]]
-  ): Either[List[E], Map[K, B]] =
+    map: Map[K, ZManaged[Any, E, B]]
+  ): ZManaged[Any, List[E], Map[K, B]] =
     map.foldLeft(
-      Right(Map.empty: Map[K, B]): Either[List[E], Map[K, B]]
-    ) {
-      case (Left(es), (_, Left(e)))   => Left(e :: es)
-      case (Left(cs), (_, Right(_)))  => Left(cs)
-      case (Right(_), (_, Left(e)))   => Left(e :: Nil)
-      case (Right(bs), (k, Right(b))) => Right(bs.updated(k, b))
-    }
+      ZManaged.fromEither[List[E], Map[K, B]](Right(Map.empty: Map[K, B]))
+    )((acc, b) =>
+      (for {
+        a  <- acc.either
+        b2 <- b._2.either
+      } yield (a, (b._1, b2)) match {
+        case (Left(es), (_, Left(e)))   => Left(e :: es)
+        case (Left(cs), (_, Right(_)))  => Left(cs)
+        case (Right(_), (_, Left(e)))   => Left(e :: Nil)
+        case (Right(bs), (k, Right(b))) => Right(bs.updated(k, b))
+      }).absolve
+    )
 
   private[config] def seqEither2[A, B, C](genError: (Int, A) => C)(list: List[Either[A, B]]): Either[List[C], List[B]] =
     list.zipWithIndex

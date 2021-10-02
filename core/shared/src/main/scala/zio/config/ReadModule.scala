@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{ZIO, ZManaged}
+import zio.{UIO, ZIO, ZManaged}
 import zio.config.ReadError._
 
 @silent("Unused import")
@@ -168,10 +168,13 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[C] =
-      loopAny(path, keys, cfg.config, descriptions, programSummary) match {
-        case Left(error) => Left(error)
+      loopAny(path, keys, cfg.config, descriptions, programSummary).either flatMap {
+        case Left(error) =>
+          ZManaged.fail(error)
         case Right(a)    =>
-          a.mapError(cfg.f).swap.map(message => ReadError.ConversionError(path.reverse, message, a.annotations)).swap
+          ZManaged.fromEither(
+            a.mapError(cfg.f).swap.map(message => ReadError.ConversionError(path.reverse, message, a.annotations)).swap
+          )
       }
 
     def loopMap[B](
@@ -181,32 +184,40 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Map[K, B]] =
-      cfg.source.getConfigValue(keys.reverse) match {
-        case PropertyTree.Leaf(_)        => formatError(path, "Leaf", "Record", descriptions)
-        case PropertyTree.Sequence(_)    => formatError(path, "Sequence", "Record", descriptions)
-        case PropertyTree.Record(values) =>
-          val result: List[(K, Res[B])] = values.toList.map { case ((k, tree)) =>
-            val source: ConfigSource =
-              getConfigSource(cfg.source.names, tree.getPath, cfg.source.leafForSequence)
+      cfg.source.getConfigValue(
+        PropertyTreePath(keys.reverse.toVector.map(k => PropertyTreePath.Step.Value(k)))
+      ) flatMap { possiblyMemoizedZIO =>
+        possiblyMemoizedZIO.toManaged_.flatMap(a =>
+          a.toManaged_.flatMap({
+            case PropertyTree.Leaf(_)        => ZManaged.fail(formatError(path, "Leaf", "Record", descriptions))
+            case PropertyTree.Sequence(_)    => ZManaged.fail(formatError(path, "Sequence", "Record", descriptions))
+            case PropertyTree.Record(values) =>
+              val result: List[(K, Res[B])] = values.toList.map { case ((k, tree)) =>
+                val source: ConfigSource =
+                  ConfigSource(
+                    cfg.source.sourceNames,
+                    ZManaged.succeed(a => UIO(ZIO.succeed(tree.at(a)))),
+                    cfg.source.canSingletonBeSequence
+                  )
+                (
+                  k,
+                  loopAny(
+                    Step.Key(k) :: path,
+                    Nil,
+                    cfg.config.updateSource(_ => source),
+                    descriptions,
+                    programSummary
+                  )
+                )
+              }
 
-            (
-              k,
-              loopAny(
-                Step.Key(k) :: path,
-                Nil,
-                cfg.config.updateSource(_ => source),
-                descriptions,
-                programSummary
-              )
-            )
-          }
+              seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap)
+                .mapError(errs => ReadError.MapErrors(errs, errs.flatMap(_.annotations).toSet))
+                .map(mapp => AnnotatedRead(mapp, Set.empty))
 
-          seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap).swap
-            .map(errs => ReadError.MapErrors(errs, errs.flatMap(_.annotations).toSet))
-            .swap
-            .map(mapp => AnnotatedRead(mapp, Set.empty))
-
-        case PropertyTree.Empty => Left(ReadError.MissingValue(path.reverse, descriptions))
+            case PropertyTree.Empty => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+          })
+        )
       }
 
     def loopSequence[B](
