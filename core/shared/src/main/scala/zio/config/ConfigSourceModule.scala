@@ -31,10 +31,6 @@ trait ConfigSourceModule extends KeyValueModule {
 
     def getConfigValue(keys: PropertyTreePath[K]): ZIO[Any, ReadError[K], PropertyTree[K, V]]
 
-    def merge(that: ConfigSource): ConfigSource = ??? 
-    
-    def ++ (that: ConfigSource): ConfigSource = merge(that)
-
     def memoize(properyTreePath: PropertyTreePath[K]): UIO[ConfigSource] = ???
 
     def retain(properyTreePath: PropertyTreePath[K]): ConfigSource = ???
@@ -113,7 +109,11 @@ trait ConfigSourceModule extends KeyValueModule {
       getConfigSource(names, l => getConfigValue(l.map(f)), leafForSequence)
   }
 
-  final case class ConfigSource( sourceNames: Set[ConfigSourceName], access: ZManaged[Any, IOException, PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]],  isLeafValidSequence: LeafForSequence)
+  final case class ConfigSource(
+     sourceNames: Set[ConfigSourceName],
+     access: ZManaged[Any, IOException, PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]],
+     canSingletonBeSequence: LeafForSequence
+  )
 
   protected def getConfigSource(
     sourceNames: Set[ConfigSourceName],
