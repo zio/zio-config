@@ -114,32 +114,32 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopSource[B](path: List[Step[K]], keys: List[K], cfg: Source[B], descriptions: List[String]): Res[B] =
       for {
-        memoized <-
+        maybeMemoized <-
           cfg.source
             .getConfigValue(
               PropertyTreePath(keys.reverse.toVector.map(PropertyTreePath.Step.Value(_)))
             )
-        zio      <- memoized.toManaged_
-        tree     <- zio.toManaged_
-        res      <- tree match {
-                      case PropertyTree.Empty       => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                      case PropertyTree.Record(_)   => ZManaged.fail(formatError(path, "Record", "Leaf", descriptions))
-                      case PropertyTree.Sequence(_) => ZManaged.fail(formatError(path, "Sequence", "Leaf", descriptions))
-                      case PropertyTree.Leaf(value) =>
-                        cfg.propertyType.read(value) match {
-                          case Left(parseError) =>
-                            ZManaged.fail(
-                              formatError(
-                                path.reverse,
-                                parseError.value.toString,
-                                parseError.typeInfo,
-                                descriptions
-                              )
-                            )
-                          case Right(parsed)    =>
-                            ZManaged.succeed(AnnotatedRead(parsed, Set.empty))
-                        }
-                    }
+        zio           <- maybeMemoized.toManaged_
+        tree          <- zio.toManaged_
+        res           <- tree match {
+                           case PropertyTree.Empty       => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                           case PropertyTree.Record(_)   => ZManaged.fail(formatError(path, "Record", "Leaf", descriptions))
+                           case PropertyTree.Sequence(_) => ZManaged.fail(formatError(path, "Sequence", "Leaf", descriptions))
+                           case PropertyTree.Leaf(value) =>
+                             cfg.propertyType.read(value) match {
+                               case Left(parseError) =>
+                                 ZManaged.fail(
+                                   formatError(
+                                     path.reverse,
+                                     parseError.value.toString,
+                                     parseError.typeInfo,
+                                     descriptions
+                                   )
+                                 )
+                               case Right(parsed)    =>
+                                 ZManaged.succeed(AnnotatedRead(parsed, Set.empty))
+                             }
+                         }
       } yield res
 
     def loopZip[B, C](
@@ -189,11 +189,11 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Map[K, B]] =
       for {
-        possiblyMemoizedZIO <- cfg.source.getConfigValue(
-                                 PropertyTreePath(keys.reverse.toVector.map(k => PropertyTreePath.Step.Value(k)))
-                               )
+        maybeMemoized <- cfg.source.getConfigValue(
+                           PropertyTreePath(keys.reverse.toVector.map(k => PropertyTreePath.Step.Value(k)))
+                         )
 
-        zio  <- possiblyMemoizedZIO.toManaged_
+        zio  <- maybeMemoized.toManaged_
         tree <- zio.toManaged_
         res  <- tree match {
                   case PropertyTree.Leaf(_)        => ZManaged.fail(formatError(path, "Leaf", "Record", descriptions))
@@ -253,10 +253,10 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       }
 
       for {
-        possiblyMemoizedZIO <-
+        maybeMemoized <-
           cfg.source.getConfigValue(PropertyTreePath(keys.reverse.map(PropertyTreePath.Step.Value(_)).toVector))
 
-        zio  <- possiblyMemoizedZIO.toManaged_
+        zio  <- maybeMemoized.toManaged_
         tree <- zio.toManaged_
         res  <- tree match {
                   case leaf @ PropertyTree.Leaf(_) =>
@@ -329,7 +329,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     config: ConfigDescriptor[A],
     keys: List[K]
   ): Boolean = {
-    val sourceTrees = config.sources.map(_.getConfigValue(keys))
+    val sourceTrees = config.sources.map(_.getConfigValue(PropertyTreePath(keys.toVector.map(PropertyTreePath.Step.Value(_)))))
     sourceTrees.forall(_ == PropertyTree.empty)
   }
 

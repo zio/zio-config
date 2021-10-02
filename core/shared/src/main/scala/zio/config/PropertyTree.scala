@@ -67,16 +67,17 @@ sealed trait PropertyTree[+K, +V] { self =>
    *
    * {{{
    *
-   * Given:
+   * Given a config:
    *
    *   {
    *    x : [ a, b, c ]
-   *     }
+   *   }
    *
    *   at("x")            // returns Some([a, b, c])
    *   at("x").atIndex(2) // returns Some(Leaf("c"))
    *   at("x").atKey("y") // returns None
    *
+   * Similarly, given a more complex config:
    *   {
    *    x : [
    *      {
@@ -92,19 +93,17 @@ sealed trait PropertyTree[+K, +V] { self =>
    *    ]
    *   }
    *
-   *   at("x").atIndex(0).atKey("y1")
-   *   Some(Leaf(v1)
-   *
+   *   at("x").atIndex(0).atKey("y1") // returns Some(Leaf(v1)
    * }}}
    */
   final def at[K1 >: K](propertyTreePath: PropertyTreePath[K1]): PropertyTree[K1, V] = {
     val steps = propertyTreePath.path
 
     steps.foldLeft(self) { (tree, step) =>
-      step match {
-        case Step.Index(n) => tree.atIndex(n).getOrElse(PropertyTree.empty)
-        case Step.Value(k) => tree.atKey(k.asInstanceOf[K]).getOrElse(PropertyTree.empty)
-      }
+      (step match {
+        case Step.Index(n) => tree.atIndex(n)
+        case Step.Value(k) => tree.atKey(k.asInstanceOf[K])
+      }).getOrElse(PropertyTree.empty)
     }
   }
 
