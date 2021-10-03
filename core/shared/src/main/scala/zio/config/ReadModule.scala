@@ -200,8 +200,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                   case PropertyTree.Sequence(_)    => ZManaged.fail(formatError(path, "Sequence", "Record", descriptions))
                   case PropertyTree.Record(values) =>
                     val result: List[(K, Res[B])] = values.toList.map { case ((k, tree)) =>
-                      val source: ConfigSource =
-                        ConfigSource(
+                      val source: ConfigSource_ =
+                        ConfigSource_(
                           cfg.source.sourceNames,
                           ZManaged.succeed(a => UIO(ZIO.succeed(tree.at(a)))),
                           cfg.source.canSingletonBeSequence
@@ -280,8 +280,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
       for {
-        alreadySeen <- ZManaged.succeed(programSummary.contains(config))
         isEmpty     <- isEmptyConfigSource(config, keys.reverse)
+        alreadySeen <- ZManaged.succeed(programSummary.contains(config))
         res         <- if (alreadySeen && isEmpty)
                          ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
                        else
@@ -322,7 +322,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            case c @ Sequence(_, _) =>
                              loopSequence(path, keys, c, descriptions, c :: programSummary)
                          }
-      } yield res
+      } yield res.asInstanceOf[AnnotatedRead[B]]
 
     loopAny(Nil, Nil, configuration, Nil, Nil).map(_.value).use(a => ZIO.succeed(a))
 

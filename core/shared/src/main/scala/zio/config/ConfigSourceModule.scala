@@ -13,13 +13,13 @@ import zio.ZManaged
 trait ConfigSourceModule extends KeyValueModule {
   case class ConfigSourceName(name: String)
 
-  final case class ConfigSource(
+  case class ConfigSource_(
     sourceNames: Set[ConfigSourceName],
     access: ZManaged[Any, ReadError[K], PropertyTreePath[K] => UIO[ZIO[Any, ReadError[K], PropertyTree[K, V]]]],
     canSingletonBeSequence: LeafForSequence
   ) { self =>
 
-    def at(propertyTreePath: PropertyTreePath[K]): ConfigSource =
+    def at(propertyTreePath: PropertyTreePath[K]): ConfigSource_ =
       self.copy(access = self.access.map(f => f(_).map(_.map(_.at(propertyTreePath)))))
 
     def getConfigValue(
@@ -61,10 +61,10 @@ trait ConfigSourceModule extends KeyValueModule {
      *   read(config.mapKeys(addAwsPrefix) from source)
      * }}}
      */
-    def mapKeys(f: K => K): ConfigSource =
+    def mapKeys(f: K => K): ConfigSource_ =
       self.copy(access = self.access.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f))))
 
-    def memoize: ConfigSource =
+    def memoize: ConfigSource_ =
       self.copy(access = self.access.map(f => (tree: PropertyTreePath[K]) => f(tree).flatMap(_.memoize)))
 
     /**
@@ -83,8 +83,8 @@ trait ConfigSourceModule extends KeyValueModule {
      *   read(config from configSource3)
      * }}}
      */
-    def orElse(that: => ConfigSource): ConfigSource =
-      ConfigSource(
+    def orElse(that: => ConfigSource_): ConfigSource_ =
+      ConfigSource_(
         self.sourceNames ++ that.sourceNames,
         self.access.flatMap(f1 =>
           that.access.map(f2 =>
@@ -111,9 +111,9 @@ trait ConfigSourceModule extends KeyValueModule {
      *   read(config from configSource3)
      * }}}
      */
-    def <>(that: => ConfigSource): ConfigSource = self orElse that
+    def <>(that: => ConfigSource_): ConfigSource_ = self orElse that
 
-    def withTree(tree: PropertyTree[K, V]): ConfigSource =
+    def withTree(tree: PropertyTree[K, V]): ConfigSource_ =
       copy(access = ZManaged.succeed(a => UIO(ZIO.succeed(tree.at(a)))))
   }
 
@@ -129,8 +129,8 @@ trait ConfigSourceModule extends KeyValueModule {
   }
 
   trait ConfigSourceFunctions {
-    val empty: ConfigSource =
-      ConfigSource(Set.empty, ZManaged.succeed(_ => UIO(ZIO.succeed(PropertyTree.empty))), LeafForSequence.Valid)
+    val empty: ConfigSource_ =
+      ConfigSource_(Set.empty, ZManaged.succeed(_ => UIO(ZIO.succeed(PropertyTree.empty))), LeafForSequence.Valid)
 
     protected def dropEmpty(tree: PropertyTree[K, V]): PropertyTree[K, V] =
       if (tree.isEmpty) PropertyTree.Empty
@@ -179,8 +179,8 @@ trait ConfigSourceModule extends KeyValueModule {
       tree: PropertyTree[K, V],
       source: String,
       leafForSequence: LeafForSequence
-    ): ConfigSource =
-      ConfigSource(
+    ): ConfigSource_ =
+      ConfigSource_(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(()).map(_ => (path: PropertyTreePath[K]) => UIO(ZIO.succeed(tree.at(path)))),
         leafForSequence
@@ -190,12 +190,12 @@ trait ConfigSourceModule extends KeyValueModule {
       trees: Iterable[PropertyTree[K, V]],
       source: String,
       leafForSequence: LeafForSequence
-    ): ConfigSource =
+    ): ConfigSource_ =
       mergeAll(trees.map(fromPropertyTree(_, source, leafForSequence)))
 
     private[config] def mergeAll(
-      sources: Iterable[ConfigSource]
-    ): ConfigSource =
+      sources: Iterable[ConfigSource_]
+    ): ConfigSource_ =
       sources.reduceLeftOption(_ orElse _).getOrElse(empty)
   }
 
@@ -250,7 +250,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       args: List[String],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    ): ConfigSource =
+    ): ConfigSource_ =
       ConfigSource.fromPropertyTrees(
         getPropertyTreeFromArgs(
           args.filter(_.nonEmpty),
@@ -291,7 +291,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): ConfigSource =
+    ): ConfigSource_ =
       fromMapInternal(constantMap.filter({ case (k, _) => filterKeys(k) }))(
         x => {
           val listOfValues =
@@ -331,7 +331,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): ConfigSource =
+    ): ConfigSource_ =
       fromMapInternal(map.filter({ case (k, _) => filterKeys(k) }))(
         identity,
         keyDelimiter,
@@ -369,7 +369,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): ConfigSource = {
+    ): ConfigSource_ = {
       val mapString = property
         .stringPropertyNames()
         .asScala
@@ -415,7 +415,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): Task[ConfigSource] =
+    ): Task[ConfigSource_] =
       for {
         properties <- ZIO.bracket(
                         ZIO.effect(new FileInputStream(new File(filePath)))
@@ -435,7 +435,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         filterKeys
       )
 
-    def fromSystemEnv: ZIO[System, ReadError[String], ConfigSource] =
+    def fromSystemEnv: ZIO[System, ReadError[String], ConfigSource_] =
       fromSystemEnv(None, None)
 
     /**
@@ -447,7 +447,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): IO[ReadError[String], ConfigSource] =
+    ): IO[ReadError[String], ConfigSource_] =
       fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence, filterKeys).provideLayer(System.live)
 
     /**
@@ -480,7 +480,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): ZIO[System, ReadError[String], ConfigSource] = {
+    ): ZIO[System, ReadError[String], ConfigSource_] = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
 
       if (keyDelimiter.forall(validDelimiters.contains)) {
@@ -497,7 +497,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
     }
 
     @deprecated("Consider using fromSystemProps, which uses zio.system.System to load the properties", since = "1.0.2")
-    def fromSystemProperties: UIO[ConfigSource] =
+    def fromSystemProperties: UIO[ConfigSource_] =
       fromSystemProperties(None, None)
 
     /**
@@ -527,7 +527,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): UIO[ConfigSource] =
+    ): UIO[ConfigSource_] =
       for {
         systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
       } yield ConfigSource.fromProperties(
@@ -538,7 +538,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         leafForSequence = leafForSequence
       )
 
-    def fromSystemProps: ZIO[System, ReadError[String], ConfigSource] =
+    def fromSystemProps: ZIO[System, ReadError[String], ConfigSource_] =
       fromSystemProps(None, None)
 
     /**
@@ -567,7 +567,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): ZIO[System, ReadError[String], ConfigSource] =
+    ): ZIO[System, ReadError[String], ConfigSource_] =
       ZIO
         .accessM[System](_.get.properties)
         .map(_.filter({ case (k, _) => filterKeys(k) }))
@@ -581,7 +581,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       keyDelimiter: Option[Char],
       source: ConfigSourceName,
       leafForSequence: LeafForSequence
-    ): ConfigSource =
+    ): ConfigSource_ =
       fromPropertyTrees(
         unwrapSingletonLists(dropEmpty(unflatten(map.map { tuple =>
           val vectorOfKeys = keyDelimiter match {

@@ -16,13 +16,12 @@ object ProductBuilderTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cS22, p))
-              reread  <- ZIO
-                           .fromEither(
+              reread  <- 
                              read(
                                cS22 from ConfigSource
                                  .fromMultiMap(written.flattenString("."), "test")
                              )
-                           )
+                          
                            .mapError(_.getMessage)
             } yield reread
 
@@ -63,13 +62,12 @@ object ProductBuilderTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cS22Tupled, tuple))
-              reread  <- ZIO
-                           .fromEither(
+              reread  <- 
                              read(
                                cS22Tupled from ConfigSource
                                  .fromMultiMap(written.flattenString("."), "test")
                              )
-                           )
+                           
                            .mapError(_.getMessage)
             } yield reread
 
