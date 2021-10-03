@@ -19,6 +19,9 @@ trait ConfigSourceModule extends KeyValueModule {
     canSingletonBeSequence: LeafForSequence
   ) { self =>
 
+    def runTree(p: PropertyTreePath[K]): ZIO[Any, ReadError[K], PropertyTree[K, V]] =
+      access.use(_(p).flatMap(_.map(identity)))
+
     def at(propertyTreePath: PropertyTreePath[K]): ConfigSource_ =
       self.copy(access = self.access.map(f => f(_).map(_.map(_.at(propertyTreePath)))))
 
@@ -88,7 +91,18 @@ trait ConfigSourceModule extends KeyValueModule {
         self.sourceNames ++ that.sourceNames,
         self.access.flatMap(f1 =>
           that.access.map(f2 =>
-            (tree: PropertyTreePath[K]) => f1(tree).flatMap(zio1 => f2(tree).map(zio2 => zio1.orElse(zio2)))
+            (tree: PropertyTreePath[K]) => {
+              for {
+                zio1 <- f1(tree)
+                zio2 <- f2(tree)
+                x    <- zio1.either
+                y    <- zio2.either
+                res   = (x, y) match {
+                          case (Right(x), Right(y)) => ZIO.succeed(x.getOrElse(y))
+                          case (_, _)               => zio1.orElse(zio2)
+                        }
+              } yield res
+            }
           )
         ),
         that.canSingletonBeSequence

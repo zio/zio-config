@@ -322,6 +322,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            case c @ Sequence(_, _) =>
                              loopSequence(path, keys, c, descriptions, c :: programSummary)
                          }
+
       } yield res.asInstanceOf[AnnotatedRead[B]]
 
     loopAny(Nil, Nil, configuration, Nil, Nil).map(_.value).use(a => ZIO.succeed(a))
