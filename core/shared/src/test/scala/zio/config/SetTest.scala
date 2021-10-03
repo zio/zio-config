@@ -318,7 +318,8 @@ object SetTest extends BaseSpec {
                   MissingValue(List(Key("a"), Index(2), Key("a2"))),
                   FormatError(
                     List(Key("a"), Index(0), Key("a2")),
-                    "Provided value is lorem ipsum, expecting the type int"
+                    "Provided value is lorem ipsum, expecting the type int",
+                    List("value of type int")
                   )
                 )
               ),
@@ -375,7 +376,8 @@ object SetTest extends BaseSpec {
                   MissingValue(List(Key("a"), Index(2), Key("a2")), List("value of type int")),
                   FormatError(
                     List(Key("a"), Index(0), Key("a2")),
-                    "Provided value is lorem ipsum, expecting the type int"
+                    "Provided value is lorem ipsum, expecting the type int",
+                    List("value of type int")
                   )
                 )
               ),

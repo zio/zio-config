@@ -199,24 +199,19 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                   case PropertyTree.Leaf(_)        => ZManaged.fail(formatError(path, "Leaf", "Record", descriptions))
                   case PropertyTree.Sequence(_)    => ZManaged.fail(formatError(path, "Sequence", "Record", descriptions))
                   case PropertyTree.Record(values) =>
-                    val result: List[(K, Res[B])] = values.toList.map { case ((k, tree)) =>
-                      val source: ConfigSource_ =
-                        ConfigSource_(
-                          cfg.source.sourceNames,
-                          ZManaged.succeed(a => UIO(ZIO.succeed(tree.at(a)))),
-                          cfg.source.canSingletonBeSequence
+                    val result: List[(K, Res[B])] =
+                      values.toList.map { case ((k, tree)) =>
+                        (
+                          k,
+                          loopAny(
+                            Step.Key(k) :: path,
+                            Nil,
+                            cfg.config.updateSource(_ => source.withTree(tree)),
+                            descriptions,
+                            programSummary
+                          )
                         )
-                      (
-                        k,
-                        loopAny(
-                          Step.Key(k) :: path,
-                          Nil,
-                          cfg.config.updateSource(_ => source),
-                          descriptions,
-                          programSummary
-                        )
-                      )
-                    }
+                      }
 
                     seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap)
                       .mapError(errs => ReadError.MapErrors(errs, errs.flatMap(_.annotations).toSet))

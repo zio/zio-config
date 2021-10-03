@@ -266,10 +266,22 @@ object ListsCornerCasesTest extends BaseSpec {
             List(
               ListErrors(
                 List(
-                  FormatError(List(Key("a"), Index(1)), "Provided value is lorem ipsum, expecting the type boolean")
+                  FormatError(
+                    List(Key("a"), Index(1)),
+                    "Provided value is lorem ipsum, expecting the type boolean",
+                    List("value of type boolean")
+                  )
                 )
               ),
-              ListErrors(List(FormatError(List(Key("b"), Index(0)), "Provided value is one, expecting the type int")))
+              ListErrors(
+                List(
+                  FormatError(
+                    List(Key("b"), Index(0)),
+                    "Provided value is one, expecting the type int",
+                    List("value of type int")
+                  )
+                )
+              )
             )
           )
 
