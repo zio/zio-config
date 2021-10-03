@@ -586,7 +586,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *       int("PORT") from configSource2.orElse(configSource1))(Config.apply, Config.unapply) from configSource2
      * }}}
      */
-    final def from(that: ConfigSource): ConfigDescriptor[A] =
+    final def from(that: ConfigSource_): ConfigDescriptor[A] =
       self.updateSource(_.orElse(that))
 
     /**
@@ -995,7 +995,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * if it fails to retrieve the value of USERNAME from configSource1.
      */
     final def updateSource(
-      f: ConfigSource => ConfigSource
+      f: ConfigSource_ => ConfigSource_
     ): ConfigDescriptor[A] = {
       val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
         MutableMap()
@@ -1032,8 +1032,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
           case Describe(conf, message) =>
             Describe(loop(conf), message)
-
-          case Default(conf, b) =>
+          case Default(conf, b)        =>
             Default(loop(conf), b)
 
           case TransformOrFail(conf, f, g) =>
@@ -1055,12 +1054,12 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     /**
      * Fetch all the sources associated with a ConfigDescriptor.
      */
-    lazy val sources: Set[ConfigSource] = {
+    lazy val sources: Set[ConfigSource_] = {
       val sourceUpdatedConfigDescriptors: ListBuffer[ConfigDescriptor[_]] =
         ListBuffer()
 
-      def loop(cfg: ConfigDescriptor[_], set: Set[ConfigSource]): Set[ConfigSource] = {
-        def runLoop(config: ConfigDescriptor[_], sourceOfConfig: Option[ConfigSource]): Set[ConfigSource] =
+      def loop(cfg: ConfigDescriptor[_], set: Set[ConfigSource_]): Set[ConfigSource_] = {
+        def runLoop(config: ConfigDescriptor[_], sourceOfConfig: Option[ConfigSource_]): Set[ConfigSource_] =
           if (sourceUpdatedConfigDescriptors.contains(config)) {
             set
           } else {
@@ -1068,7 +1067,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             loop(config, sourceOfConfig.fold(set)(source => Set(source) ++ set))
           }
 
-        def runLoopForBoth(left: ConfigDescriptor[_], right: ConfigDescriptor[_]): Set[ConfigSource] =
+        def runLoopForBoth(left: ConfigDescriptor[_], right: ConfigDescriptor[_]): Set[ConfigSource_] =
           (sourceUpdatedConfigDescriptors.contains(left), sourceUpdatedConfigDescriptors.contains(right)) match {
             case (true, true) =>
               set
@@ -1979,12 +1978,12 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-    sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A])
+    sealed case class DynamicMap[A](source: ConfigSource_, config: ConfigDescriptor[A])
         extends ConfigDescriptor[Map[K, A]]
 
     sealed case class Lazy[A](get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
-    sealed case class Nested[A](source: ConfigSource, path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
+    sealed case class Nested[A](source: ConfigSource_, path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
     sealed case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
@@ -1993,9 +1992,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     sealed case class OrElseEither[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
         extends ConfigDescriptor[Either[A, B]]
 
-    sealed case class Sequence[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
+    sealed case class Sequence[A](source: ConfigSource_, config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
 
-    sealed case class Source[A](source: ConfigSource, propertyType: PropertyType[V, A]) extends ConfigDescriptor[A]
+    sealed case class Source[A](source: ConfigSource_, propertyType: PropertyType[V, A]) extends ConfigDescriptor[A]
 
     sealed case class Zip[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B]) extends ConfigDescriptor[(A, B)]
 
@@ -2011,7 +2010,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def describeDesc[A](config: => ConfigDescriptor[A], message: String): ConfigDescriptor[A] =
       Describe(lazyDesc(config), message)
 
-    final def dynamicMapDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
+    final def dynamicMapDesc[A](source: ConfigSource_, config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
       DynamicMap(source, lazyDesc(config))
 
     final def lazyDesc[A](
@@ -2019,7 +2018,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[A] =
       Lazy(() => config)
 
-    final def nestedDesc[A](source: ConfigSource, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
+    final def nestedDesc[A](source: ConfigSource_, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(source, path, lazyDesc(config))
 
     final def optionalDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
@@ -2034,10 +2033,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[Either[A, B]] =
       OrElseEither(lazyDesc(left), lazyDesc(right))
 
-    final def sequenceDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
+    final def sequenceDesc[A](source: ConfigSource_, config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       Sequence(source, lazyDesc(config))
 
-    final def sourceDesc[A](source: ConfigSource, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
+    final def sourceDesc[A](source: ConfigSource_, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
       Source(source, propertyType)
 
     final def zipDesc[A, B](left: => ConfigDescriptor[A], right: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =

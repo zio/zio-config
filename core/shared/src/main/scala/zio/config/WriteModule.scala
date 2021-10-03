@@ -69,11 +69,12 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
           val rightResult = go(cd.right, tuple._2)
 
           for {
-            left  <- leftResult
-            right <- rightResult
-          } yield left.merge(right).head
+            left   <- leftResult
+            right  <- rightResult
+            merged  = left.merge(right)
+            result <- merged.headOption.toRight("Failed to write the config back to property tree, at zip node")
+          } yield result
       }
-
     go(config, a)
   }
 }

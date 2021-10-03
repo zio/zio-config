@@ -21,6 +21,9 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      *     val valueConfig: ConfigDescriptor[Either[BigDecimal, String]] = bigDecimal.orElseEither(string)
      *
+     *     // Describes fetching a map that is under the path "key-values" where the value of each can be either a BigDecimal or
+     *     // if it's not try to fetch it as a String. An example source config
+     *
      *     val sourceString =
      *       """
      *           {
@@ -71,6 +74,9 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      * {{{
      *
      *     val valueConfig: ConfigDescriptor[Either[BigInt, String]] = bigInt.orElseEither(string)
+     *
+     *     // Describes fetching a map that is under the path "key-values" where the value of each can be either a BigDecimal or
+     *     // if it's not try to fetch it as a String. An example source config
      *
      *     val sourceString =
      *       """
@@ -770,13 +776,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
     )(implicit tag: Tag[A]): Layer[ReadError[K], Has[A]] =
-      ZLayer.fromEffect(ZIO.fromEither(read(configDescriptor)))
+      ZLayer.fromEffect(read(configDescriptor))
 
     private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
       configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
     )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
       ZLayer.fromEffect(
-        configDescriptor.flatMap(descriptor => ZIO.fromEither(read(descriptor)))
+        configDescriptor.flatMap(descriptor => read(descriptor))
       )
   }
 

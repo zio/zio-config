@@ -601,7 +601,7 @@ trait ConfigDocsModule extends WriteModule {
           loopTo(sources, descriptions, thunk(), latestPath, alreadySeen)
 
         case Source(source, _) =>
-          DocsLeaf((source.names ++ sources), descriptions, None)
+          DocsLeaf((source.sourceNames ++ sources), descriptions, None)
 
         case Default(c, _) =>
           loopTo(sources, descriptions, c, None, alreadySeen)
@@ -609,7 +609,7 @@ trait ConfigDocsModule extends WriteModule {
         case cd: DynamicMap[_] =>
           ConfigDocs.DynamicMap(
             loopTo(
-              (cd.source.names ++ sources),
+              (cd.source.sourceNames ++ sources),
               descriptions,
               cd.config,
               None,
@@ -623,7 +623,7 @@ trait ConfigDocsModule extends WriteModule {
         case Sequence(source, c) =>
           ConfigDocs.Sequence(
             loopTo(
-              (source.names ++ sources),
+              (source.sourceNames ++ sources),
               descriptions,
               c,
               None,
@@ -647,7 +647,7 @@ trait ConfigDocsModule extends WriteModule {
           ConfigDocs.Nested(
             path,
             loopTo(
-              source.names ++ sources,
+              source.sourceNames ++ sources,
               List.empty,
               c,
               Some(path),

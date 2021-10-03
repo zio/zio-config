@@ -6,15 +6,15 @@ import zio.config.helpers._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, ZIO}
+import zio.{Has}
 
 object NestedConfigTest extends BaseSpec {
 
   val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[ReadError[String]], TestSuccess] =
     suite("Nested config")(
       testM("read") {
-        check(genNestedConfigParams) { p =>
-          assert(read(p.config.from(p.source)))(isRight(equalTo(p.value)))
+        checkM(genNestedConfigParams) { p =>
+          assertM(read(p.config.from(p.source)))(equalTo(p.value))
         }
       },
       testM("write") {
@@ -26,9 +26,8 @@ object NestedConfigTest extends BaseSpec {
       },
       testM("nested with default") {
         val config = string("x").default("y")
-        val r      = ZIO.fromEither(
+        val r      =
           read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid))
-        )
 
         assertM(r)(equalTo("y"))
       }
@@ -99,7 +98,7 @@ object NestedConfigTestUtils {
         Seq("pricing" -> value.pricing.toString)
       ).flatten.toMap
 
-    val source: ConfigSource =
+    val source: ConfigSource_ =
       ConfigSource.fromMap(map, keyDelimiter = Some('.'))
   }
 

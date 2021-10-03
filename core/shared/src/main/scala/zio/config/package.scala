@@ -24,24 +24,36 @@ package object config extends KeyConversionFunctions with ConfigStringModule wit
     )
 
   private[config] def seqMap2[K, E, B](
-    map: Map[K, Either[E, B]]
-  ): Either[List[E], Map[K, B]] =
+    map: Map[K, ZManaged[Any, E, B]]
+  ): ZManaged[Any, List[E], Map[K, B]] =
     map.foldLeft(
-      Right(Map.empty: Map[K, B]): Either[List[E], Map[K, B]]
-    ) {
-      case (Left(es), (_, Left(e)))   => Left(e :: es)
-      case (Left(cs), (_, Right(_)))  => Left(cs)
-      case (Right(_), (_, Left(e)))   => Left(e :: Nil)
-      case (Right(bs), (k, Right(b))) => Right(bs.updated(k, b))
+      ZManaged.fromEither[List[E], Map[K, B]](Right(Map.empty: Map[K, B]))
+    ) { case (acc, (k, managed)) =>
+      (for {
+        a <- acc.either
+        m <- managed.either
+      } yield (a, (k, m)) match {
+        case (Left(es), (_, Left(e)))   => Left(e :: es)
+        case (Left(cs), (_, Right(_)))  => Left(cs)
+        case (Right(_), (_, Left(e)))   => Left(e :: Nil)
+        case (Right(bs), (k, Right(b))) => Right(bs.updated(k, b))
+      }).absolve
     }
 
-  private[config] def seqEither2[A, B, C](genError: (Int, A) => C)(list: List[Either[A, B]]): Either[List[C], List[B]] =
+  private[config] def seqEither2[A, B, C](
+    genError: (Int, A) => C
+  )(list: List[ZManaged[Any, A, B]]): ZManaged[Any, List[C], List[B]] =
     list.zipWithIndex
-      .foldLeft(Right(Nil): Either[List[C], List[B]]) {
-        case (Left(cs), (Left(a), index)) => Left(genError(index, a) :: cs)
-        case (Left(cs), (Right(_), _))    => Left(cs)
-        case (Right(_), (Left(a), index)) => Left(genError(index, a) :: Nil)
-        case (Right(bs), (Right(b), _))   => Right(b :: bs)
+      .foldLeft(ZManaged.fromEither(Right(Nil)): ZManaged[Any, List[C], List[B]]) { case (acc, (managed, index)) =>
+        (for {
+          a <- acc.either
+          m <- managed.either
+        } yield (a, (m, index)) match {
+          case (Left(cs), (Left(a), index)) => Left(genError(index, a) :: cs)
+          case (Left(cs), (Right(_), _))    => Left(cs)
+          case (Right(_), (Left(a), index)) => Left(genError(index, a) :: Nil)
+          case (Right(bs), (Right(b), _))   => Right(b :: bs)
+        }).absolve
       }
       .map(_.reverse)
 }
