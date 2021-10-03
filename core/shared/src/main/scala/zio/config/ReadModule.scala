@@ -279,47 +279,50 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      if (programSummary.contains(config) && isEmptyConfigSource(config, keys.reverse)) {
-        ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-      } else {
-        config match {
-          case c @ Lazy(thunk) =>
-            loopAny(path, keys, thunk(), descriptions, c :: programSummary)
+      for {
+        alreadySeen <- ZManaged.succeed(programSummary.contains(config))
+        isEmpty     <- isEmptyConfigSource(config, keys.reverse)
+        res         <- if (alreadySeen && isEmpty)
+                         ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                       else
+                         config match {
+                           case c @ Lazy(thunk) =>
+                             loopAny(path, keys, thunk(), descriptions, c :: programSummary)
 
-          case c @ Default(_, _) =>
-            loopDefault(path, keys, c, descriptions, c :: programSummary)
+                           case c @ Default(_, _) =>
+                             loopDefault(path, keys, c, descriptions, c :: programSummary)
 
-          case c @ Describe(_, message) =>
-            loopAny(path, keys, c.config, descriptions :+ message, c :: programSummary)
+                           case c @ Describe(_, message) =>
+                             loopAny(path, keys, c.config, descriptions :+ message, c :: programSummary)
 
-          case c @ DynamicMap(_, _) =>
-            loopMap(path, keys, c, descriptions, c :: programSummary)
+                           case c @ DynamicMap(_, _) =>
+                             loopMap(path, keys, c, descriptions, c :: programSummary)
 
-          case c @ Nested(_, _, _) =>
-            loopNested(path, keys, c, descriptions, c :: programSummary)
+                           case c @ Nested(_, _, _) =>
+                             loopNested(path, keys, c, descriptions, c :: programSummary)
 
-          case c @ Optional(_) =>
-            loopOptional(path, keys, c, descriptions, c :: programSummary)
+                           case c @ Optional(_) =>
+                             loopOptional(path, keys, c, descriptions, c :: programSummary)
 
-          case c @ OrElse(_, _) =>
-            loopOrElse(path, keys, c, descriptions, c :: programSummary)
+                           case c @ OrElse(_, _) =>
+                             loopOrElse(path, keys, c, descriptions, c :: programSummary)
 
-          case c @ OrElseEither(_, _) =>
-            loopOrElseEither(path, keys, c, descriptions, c :: programSummary)
+                           case c @ OrElseEither(_, _) =>
+                             loopOrElseEither(path, keys, c, descriptions, c :: programSummary)
 
-          case c @ Source(_, _) =>
-            loopSource(path, keys, c, descriptions)
+                           case c @ Source(_, _) =>
+                             loopSource(path, keys, c, descriptions)
 
-          case c @ Zip(_, _) =>
-            loopZip(path, keys, c, descriptions, c :: programSummary)
+                           case c @ Zip(_, _) =>
+                             loopZip(path, keys, c, descriptions, c :: programSummary)
 
-          case c @ TransformOrFail(_, _, _) =>
-            loopXmapEither(path, keys, c, descriptions, c :: programSummary)
+                           case c @ TransformOrFail(_, _, _) =>
+                             loopXmapEither(path, keys, c, descriptions, c :: programSummary)
 
-          case c @ Sequence(_, _) =>
-            loopSequence(path, keys, c, descriptions, c :: programSummary)
-        }
-      }
+                           case c @ Sequence(_, _) =>
+                             loopSequence(path, keys, c, descriptions, c :: programSummary)
+                         }
+      } yield res
 
     loopAny(Nil, Nil, configuration, Nil, Nil).map(_.value).use(a => ZIO.succeed(a))
 
@@ -328,9 +331,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   private[config] def isEmptyConfigSource[A](
     config: ConfigDescriptor[A],
     keys: List[K]
-  ): Boolean = {
-    val sourceTrees = config.sources.map(_.getConfigValue(PropertyTreePath(keys.toVector.map(PropertyTreePath.Step.Value(_)))))
-    sourceTrees.forall(_ == PropertyTree.empty)
+  ): ZManaged[Any, ReadError[K], Boolean] = {
+    val sourceTrees =
+      config.sources.map(_.getConfigValue(PropertyTreePath(keys.toVector.map(PropertyTreePath.Step.Value(_)))))
+
+    ZManaged.forall(sourceTrees) { managed =>
+      for {
+        memoized <- managed
+        treeZIO  <- memoized.toManaged_
+        tree     <- treeZIO.toManaged_
+      } yield tree.isEmpty
+    }
   }
 
   private[config] def foldReadError[B](
