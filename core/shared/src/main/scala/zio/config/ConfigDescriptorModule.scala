@@ -586,7 +586,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *       int("PORT") from configSource2.orElse(configSource1))(Config.apply, Config.unapply) from configSource2
      * }}}
      */
-    final def from(that: ConfigSource_): ConfigDescriptor[A] =
+    final def from(that: ConfigSource): ConfigDescriptor[A] =
       self.updateSource(_.orElse(that))
 
     /**
@@ -973,7 +973,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  }}}
      */
     final def unsourced: ConfigDescriptor[A] =
-      self.updateSource(_ => ConfigSourceFunctions.empty)
+      self.updateSource(_ => ConfigSource.empty)
 
     /**
      * `updateSource` can update the source of an existing `ConfigDescriptor`
@@ -995,7 +995,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * if it fails to retrieve the value of USERNAME from configSource1.
      */
     final def updateSource(
-      f: ConfigSource_ => ConfigSource_
+      f: ConfigSource => ConfigSource
     ): ConfigDescriptor[A] = {
       val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
         MutableMap()
@@ -1054,12 +1054,12 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     /**
      * Fetch all the sources associated with a ConfigDescriptor.
      */
-    lazy val sources: Set[ConfigSource_] = {
+    lazy val sources: Set[ConfigSource] = {
       val sourceUpdatedConfigDescriptors: ListBuffer[ConfigDescriptor[_]] =
         ListBuffer()
 
-      def loop(cfg: ConfigDescriptor[_], set: Set[ConfigSource_]): Set[ConfigSource_] = {
-        def runLoop(config: ConfigDescriptor[_], sourceOfConfig: Option[ConfigSource_]): Set[ConfigSource_] =
+      def loop(cfg: ConfigDescriptor[_], set: Set[ConfigSource]): Set[ConfigSource] = {
+        def runLoop(config: ConfigDescriptor[_], sourceOfConfig: Option[ConfigSource]): Set[ConfigSource] =
           if (sourceUpdatedConfigDescriptors.contains(config)) {
             set
           } else {
@@ -1067,7 +1067,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             loop(config, sourceOfConfig.fold(set)(source => Set(source) ++ set))
           }
 
-        def runLoopForBoth(left: ConfigDescriptor[_], right: ConfigDescriptor[_]): Set[ConfigSource_] =
+        def runLoopForBoth(left: ConfigDescriptor[_], right: ConfigDescriptor[_]): Set[ConfigSource] =
           (sourceUpdatedConfigDescriptors.contains(left), sourceUpdatedConfigDescriptors.contains(right)) match {
             case (true, true) =>
               set
@@ -1618,7 +1618,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  `nested("xyz")(list(string("USERNAME"))` is same as `list("xyz")(string("USERNAME"))`
      */
     def list[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      ConfigDescriptorAdt.sequenceDesc(ConfigSourceFunctions.empty, desc)
+      ConfigDescriptorAdt.sequenceDesc(ConfigSource.empty, desc)
 
     /**
      *  `list("xyz")(confgDescriptor)` represents just a list variant of configDescriptor within the key `xyz`.
@@ -1821,7 +1821,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * in the map from an nested key within itself. In this example it is "id".
      */
     def map[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(ConfigSourceFunctions.empty, lazyDesc(desc))
+      DynamicMap(ConfigSource.empty, lazyDesc(desc))
     // ConfigDescriptorAdt.dynamicMapDesc(ConfigSourceFunctions.empty, desc)
 
     /**
@@ -1896,7 +1896,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * Note that `string("key")` is same as that of `nested("key")(string)`
      */
     def nested[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      ConfigDescriptorAdt.nestedDesc(ConfigSourceFunctions.empty, path, desc)
+      ConfigDescriptorAdt.nestedDesc(ConfigSource.empty, path, desc)
 
     /**
      *  `set("xyz")(confgDescriptor)` represents just a set variant of configDescriptor within the key `xyz`.
@@ -1978,12 +1978,12 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-    sealed case class DynamicMap[A](source: ConfigSource_, config: ConfigDescriptor[A])
+    sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A])
         extends ConfigDescriptor[Map[K, A]]
 
     sealed case class Lazy[A](get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
-    sealed case class Nested[A](source: ConfigSource_, path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
+    sealed case class Nested[A](source: ConfigSource, path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
     sealed case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
@@ -1992,9 +1992,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     sealed case class OrElseEither[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
         extends ConfigDescriptor[Either[A, B]]
 
-    sealed case class Sequence[A](source: ConfigSource_, config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
+    sealed case class Sequence[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
 
-    sealed case class Source[A](source: ConfigSource_, propertyType: PropertyType[V, A]) extends ConfigDescriptor[A]
+    sealed case class Source[A](source: ConfigSource, propertyType: PropertyType[V, A]) extends ConfigDescriptor[A]
 
     sealed case class Zip[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B]) extends ConfigDescriptor[(A, B)]
 
@@ -2010,7 +2010,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def describeDesc[A](config: => ConfigDescriptor[A], message: String): ConfigDescriptor[A] =
       Describe(lazyDesc(config), message)
 
-    final def dynamicMapDesc[A](source: ConfigSource_, config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
+    final def dynamicMapDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
       DynamicMap(source, lazyDesc(config))
 
     final def lazyDesc[A](
@@ -2018,7 +2018,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[A] =
       Lazy(() => config)
 
-    final def nestedDesc[A](source: ConfigSource_, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
+    final def nestedDesc[A](source: ConfigSource, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
       Nested(source, path, lazyDesc(config))
 
     final def optionalDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
@@ -2033,10 +2033,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[Either[A, B]] =
       OrElseEither(lazyDesc(left), lazyDesc(right))
 
-    final def sequenceDesc[A](source: ConfigSource_, config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
+    final def sequenceDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       Sequence(source, lazyDesc(config))
 
-    final def sourceDesc[A](source: ConfigSource_, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
+    final def sourceDesc[A](source: ConfigSource, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
       Source(source, propertyType)
 
     final def zipDesc[A, B](left: => ConfigDescriptor[A], right: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =

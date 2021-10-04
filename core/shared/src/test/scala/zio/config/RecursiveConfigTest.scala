@@ -147,7 +147,7 @@ object RecursiveConfigTestUtils {
     val expected: SimpleRec =
       SimpleRec(1, Some(SimpleRec(2, None)))
 
-    val source: ConfigSource_ =
+    val source =
       ConfigSource.fromPropertyTree(
         tree,
         "tree",
@@ -181,7 +181,7 @@ object RecursiveConfigTestUtils {
 
     val expected: SimpleListRec = SimpleListRec(1, List(SimpleListRec(2, Nil)))
 
-    val source: ConfigSource_ =
+    val source: ConfigSource =
       ConfigSource.fromPropertyTree(
         tree,
         "tree",
@@ -216,7 +216,7 @@ object RecursiveConfigTestUtils {
     val expected: SimpleEitherRec =
       SimpleEitherRec(1, Left(SimpleEitherRec(2, Left(SimpleEitherRec(3, Right(1))))))
 
-    val source: ConfigSource_ =
+    val source: ConfigSource =
       ConfigSource.fromPropertyTree(
         tree,
         "tree",
@@ -243,7 +243,7 @@ object RecursiveConfigTestUtils {
 
     val expected: SimpleRecReversed = SimpleRecReversed(Some(SimpleRecReversed(None, 2)), 1)
 
-    val source: ConfigSource_ =
+    val source: ConfigSource =
       ConfigSource.fromPropertyTree(
         tree,
         "tree",
@@ -269,7 +269,7 @@ object RecursiveConfigTestUtils {
       )
     )
 
-    val source: ConfigSource_ =
+    val source: ConfigSource =
       ConfigSource.fromPropertyTree(
         tree,
         "tree",
@@ -286,7 +286,7 @@ object RecursiveConfigTestUtils {
   lazy val row: ConfigDescriptor[Row]   = (int("id") |@| data.optional).to[Row]
   lazy val data: ConfigDescriptor[Data] = nested("rows")(row).to[Data]
 
-  val testSource: ConfigSource_ = ConfigSource.fromPropertyTree(
+  val testSource: ConfigSource = ConfigSource.fromPropertyTree(
     PropertyTree.Record(
       Map(
         "rows" -> PropertyTree.Record(
@@ -334,8 +334,8 @@ object RecursiveConfigTestUtils {
     lit <> add
   }
 
-  val exprValue: Add            = Add(List(Lit(1), Add(List(Add(List(Lit(2), Lit(3))), Lit(4))), Lit(5)))
-  val exprSource: ConfigSource_ = ConfigSource.fromPropertyTree(
+  val exprValue: Add           = Add(List(Lit(1), Add(List(Add(List(Lit(2), Lit(3))), Lit(4))), Lit(5)))
+  val exprSource: ConfigSource = ConfigSource.fromPropertyTree(
     write(expr, exprValue) match {
       case Left(_)      => ???
       case Right(value) => value

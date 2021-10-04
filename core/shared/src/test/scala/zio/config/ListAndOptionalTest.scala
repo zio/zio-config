@@ -104,7 +104,7 @@ object ListAndOptionalTest extends BaseSpec {
       },
       testM("key doesn't exist in list") {
         val src                                              = ConfigSource.fromPropertyTree(
-          PropertyTree  .Sequence(List(Record(Map()))),
+          PropertyTree.Sequence(List(Record(Map()))),
           "src",
           LeafForSequence.Valid
         )

@@ -98,7 +98,7 @@ object NestedConfigTestUtils {
         Seq("pricing" -> value.pricing.toString)
       ).flatten.toMap
 
-    val source: ConfigSource_ =
+    val source =
       ConfigSource.fromMap(map, keyDelimiter = Some('.'))
   }
 

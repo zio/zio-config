@@ -7,6 +7,7 @@ import zio.config.ReadError._
 @silent("Unused import")
 private[config] trait ReadModule extends ConfigDescriptorModule {
   import VersionSpecificSupport._
+  import ConfigSource._
 
   final def read[A](
     configuration: ConfigDescriptor[A]

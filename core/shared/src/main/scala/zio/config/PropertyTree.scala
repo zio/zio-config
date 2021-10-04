@@ -180,12 +180,22 @@ sealed trait PropertyTree[+K, +V] { self =>
     case Sequence(value) => value.forall(_.isEmpty)
   }
 
+  final def mapKey[K2](f: K => K2): PropertyTree[K2, V] = self match {
+    case Leaf(value)        => Leaf(value)
+    case Record(value)      => Record(value.map({ case (k, v) => (f(k), v.mapKey(f)) }))
+    case PropertyTree.Empty => PropertyTree.Empty
+    case Sequence(value)    => Sequence(value.map(_.mapKey(f)))
+  }
+
   final def map[V2](f: V => V2): PropertyTree[K, V2] = self match {
     case Leaf(value)     => Leaf(f(value))
     case Record(v)       => Record(v.map { case (k, tree) => (k, tree.map(f)) })
     case Sequence(value) => Sequence(value.map(_.map(f)))
     case Empty           => Empty
   }
+
+  def bimap[K2, V2](f: K => K2, g: V => V2): PropertyTree[K2, V2] =
+    self.mapKey(f).map(g)
 
   final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): List[PropertyTree[K1, V1]] =
     (self, that) match {

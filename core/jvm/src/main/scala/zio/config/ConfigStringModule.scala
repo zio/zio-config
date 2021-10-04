@@ -9,8 +9,7 @@ import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.{Properties, UUID}
 import scala.concurrent.duration.Duration
 
-trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
-
+trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
   object ConfigDescriptor extends ConfigDescriptorFunctions {
     import ConfigDescriptorAdt._
 

@@ -3,6 +3,7 @@ package zio.config
 trait ConfigDocsModule extends WriteModule {
   import ConfigDescriptorAdt._
   import Table._
+  import ConfigSource._
 
   /**
    * `ConfigDocs` holds the descriptions and details of a `ConfigDescriptor`
