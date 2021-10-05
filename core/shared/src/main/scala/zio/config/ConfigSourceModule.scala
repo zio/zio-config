@@ -2,13 +2,12 @@ package zio.config
 
 import PropertyTree.{Leaf, Record, Sequence, unflatten}
 import zio.system.System
-import zio.{IO, Task, UIO, ZIO}
+import zio.{UIO, ZIO, ZLayer, ZManaged}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
 import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
-import zio.ZManaged
 
 trait ConfigSourceModule extends KeyValueModule {
   // Currently all sources are just String and String
@@ -141,6 +140,13 @@ trait ConfigSourceModule extends KeyValueModule {
     private[config] val SystemProperties     = "system properties"
     private[config] val CommandLineArguments = "command line arguments"
 
+    val empty: ConfigSource =
+      ConfigSource(
+        Set.empty,
+        ZManaged.succeed(ZManaged.succeed(_ => ZIO.succeed(PropertyTree.empty))),
+        LeafForSequence.Valid
+      )
+
     /**
      * EXPERIMENTAL
      *
@@ -180,16 +186,21 @@ trait ConfigSourceModule extends KeyValueModule {
       args: List[String],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    ): ConfigSource =
-      ConfigSource.fromPropertyTrees(
+    ): ConfigSource = {
+      val tree = selectNonEmptyPropertyTree(
         getPropertyTreeFromArgs(
           args.filter(_.nonEmpty),
           keyDelimiter,
           valueDelimiter
-        ),
-        CommandLineArguments,
+        )
+      )
+
+      ConfigSource(
+        Set(ConfigSourceName(CommandLineArguments)),
+        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path)))),
         LeafForSequence.Valid
       )
+    }
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -221,18 +232,16 @@ trait ConfigSourceModule extends KeyValueModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): ConfigSource =
-      fromMapInternal(constantMap.filter({ case (k, _) => filterKeys(k) }))(
-        x => {
-          val listOfValues =
-            valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
+    ): ConfigSource = {
+      val tree =
+        getPropertyTreeFromMap(constantMap, keyDelimiter, valueDelimiter, filterKeys)
 
-          ::(listOfValues.head, listOfValues.tail)
-        },
-        keyDelimiter,
-        ConfigSourceName(source),
+      ConfigSource(
+        Set(ConfigSourceName(source)),
+        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path)))),
         leafForSequence
       )
+    }
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -261,13 +270,19 @@ trait ConfigSourceModule extends KeyValueModule {
       keyDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): ConfigSource =
-      fromMapInternal(map.filter({ case (k, _) => filterKeys(k) }))(
-        identity,
-        keyDelimiter,
-        ConfigSourceName(source),
+    ): ConfigSource = {
+      val tree =
+        getPropertyTreeFromMapA(map.filter({ case (k, _) => filterKeys(k) }))(
+          identity,
+          keyDelimiter
+        )
+
+      ConfigSource(
+        Set(ConfigSourceName(source)),
+        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path)))),
         leafForSequence
       )
+    }
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -300,21 +315,34 @@ trait ConfigSourceModule extends KeyValueModule {
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
-      val mapString = property
-        .stringPropertyNames()
-        .asScala
-        .foldLeft(Map.empty[String, String]) { (acc, a) =>
-          if (filterKeys(a)) acc.updated(a, property.getProperty(a)) else acc
-        }
+      val tree =
+        getPropertyTreeFromProperties(property, keyDelimiter, valueDelimiter, filterKeys)
 
-      mergeAll(
-        unwrapSingletonLists(
-          dropEmpty(
-            PropertyTree.fromStringMap(mapString, keyDelimiter, valueDelimiter)
-          )
-        ).map(tree => fromPropertyTree(tree, source, leafForSequence))
+      ConfigSource(
+        Set(ConfigSourceName(source)),
+        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path)))),
+        leafForSequence
       )
     }
+
+    /**
+     * To obtain a config source directly from a property tree.
+     *
+     * @param tree            : PropertyTree
+     * @param source          : Label the source with a name
+     * @param leafForSequence : Should a single value wrapped in Leaf be considered as Sequence
+     * @return
+     */
+    def fromPropertyTree(
+      tree: PropertyTree[K, V],
+      source: String,
+      leafForSequence: LeafForSequence
+    ): ConfigSource =
+      ConfigSource(
+        Set(ConfigSourceName(source)),
+        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path)))),
+        leafForSequence
+      )
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -345,40 +373,36 @@ trait ConfigSourceModule extends KeyValueModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): Task[ConfigSource] =
-      for {
-        properties <- ZIO.bracket(
-                        ZIO.effect(new FileInputStream(new File(filePath)))
-                      )(r => ZIO.effectTotal(r.close())) { inputStream =>
-                        ZIO.effect {
-                          val properties = new java.util.Properties()
-                          properties.load(inputStream)
-                          properties
-                        }
-                      }
-      } yield ConfigSource.fromProperties(
-        properties,
-        filePath,
-        keyDelimiter,
-        valueDelimiter,
-        leafForSequence,
-        filterKeys
+    ): ConfigSource = {
+      val managed: ZManaged[Any, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
+        ZManaged
+          .make(
+            ZIO.effect(new FileInputStream(new File(filePath)))
+          )(r => ZIO.effectTotal(r.close()))
+          .mapM { inputStream =>
+            for {
+              properties <- ZIO.effect {
+                              val properties = new java.util.Properties()
+                              properties.load(inputStream)
+                              properties
+                            }
+
+              tree = getPropertyTreeFromProperties(properties, keyDelimiter, valueDelimiter, filterKeys)
+
+              fn = (path: PropertyTreePath[K]) => ZIO.succeed(tree.at(path))
+            } yield fn
+          }
+          .mapError(throwable => ReadError.SourceError(throwable.toString))
+
+      ConfigSource(
+        Set(ConfigSourceName(filePath)),
+        ZManaged.succeed(managed),
+        leafForSequence
       )
+    }
 
-    def fromSystemEnv: ZIO[System, ReadError[String], ConfigSource] =
+    val fromSystemEnv: ConfigSource =
       fromSystemEnv(None, None)
-
-    /**
-     * For users that dont want to use layers in their application
-     * This method provides live system environment layer
-     */
-    def fromSystemEnvLive(
-      keyDelimiter: Option[Char],
-      valueDelimiter: Option[Char],
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
-      filterKeys: String => Boolean = _ => true
-    ): IO[ReadError[String], ConfigSource] =
-      fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence, filterKeys).provideLayer(System.live)
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -409,26 +433,42 @@ trait ConfigSourceModule extends KeyValueModule {
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
-      filterKeys: String => Boolean = _ => true
-    ): ZIO[System, ReadError[String], ConfigSource] = {
+      filterKeys: String => Boolean = _ => true,
+      system: System.Service = System.Service.live
+    ): ConfigSource = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
 
-      if (keyDelimiter.forall(validDelimiters.contains)) {
+      val managed =
         ZIO
           .accessM[System](_.get.envs)
-          .map(_.filter({ case (k, _) => filterKeys(k) }))
-          .bimap(
-            error => ReadError.SourceError(s"Error while getting system environment variables: ${error.getMessage}"),
-            fromMap(_, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
+          .toManaged_
+          .mapError(throwable => ReadError.SourceError(throwable.toString))
+          .flatMap { map =>
+            if (keyDelimiter.forall(validDelimiters.contains)) {
+              ZIO
+                .succeed(
+                  getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
+                )
+                .toManaged_
+            } else {
+              ZIO.fail(ReadError.SourceError(s"Invalid system key delimiter: ${keyDelimiter.get}")).toManaged_
+            }
+          }
+          .map(tree =>
+            (path: PropertyTreePath[K]) => {
+              ZIO.succeed(
+                tree.at(path)
+              )
+            }
           )
-      } else {
-        IO.fail(ReadError.SourceError(s"Invalid system key delimiter: ${keyDelimiter.get}"))
-      }
-    }
+          .provideLayer(ZLayer.succeed(system))
 
-    @deprecated("Consider using fromSystemProps, which uses zio.system.System to load the properties", since = "1.0.2")
-    def fromSystemProperties: UIO[ConfigSource] =
-      fromSystemProperties(None, None)
+      ConfigSource(
+        Set(ConfigSourceName(SystemProperties)),
+        ZManaged.succeed(managed),
+        leafForSequence
+      )
+    }
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -451,24 +491,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
-    @deprecated("Consider using fromSystemProps, which uses zio.System to load the properties", since = "1.0.2")
-    def fromSystemProperties(
-      keyDelimiter: Option[Char],
-      valueDelimiter: Option[Char],
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
-      filterKeys: String => Boolean = _ => true
-    ): UIO[ConfigSource] =
-      for {
-        systemProperties <- UIO.effectTotal(java.lang.System.getProperties)
-      } yield ConfigSource.fromProperties(
-        property = systemProperties,
-        source = SystemProperties,
-        keyDelimiter = keyDelimiter,
-        valueDelimiter = valueDelimiter,
-        leafForSequence = leafForSequence
-      )
-
-    def fromSystemProps: ZIO[System, ReadError[String], ConfigSource] =
+    val fromSystemProps: ConfigSource =
       fromSystemProps(None, None)
 
     /**
@@ -496,32 +519,24 @@ trait ConfigSourceModule extends KeyValueModule {
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
-      filterKeys: String => Boolean = _ => true
-    ): ZIO[System, ReadError[String], ConfigSource] =
-      ZIO
-        .accessM[System](_.get.properties)
-        .map(_.filter({ case (k, _) => filterKeys(k) }))
-        .bimap(
-          error => ReadError.SourceError(s"Error while getting system properties: ${error.getMessage}"),
-          fromMap(_, SystemProperties, keyDelimiter, valueDelimiter, leafForSequence)
-        )
-
-    private def fromMapInternal[A](map: Map[K, A])(
-      f: A => ::[V],
-      keyDelimiter: Option[Char],
-      source: ConfigSourceName,
-      leafForSequence: LeafForSequence
+      filterKeys: String => Boolean = _ => true,
+      system: System.Service = System.Service.live
     ): ConfigSource =
-      fromPropertyTrees(
-        unwrapSingletonLists(dropEmpty(unflatten(map.map { tuple =>
-          val vectorOfKeys = keyDelimiter match {
-            case Some(keyDelimiter) =>
-              tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
-            case None               => Vector(tuple._1)
-          }
-          vectorOfKeys -> f(tuple._2)
-        }))),
-        source.name,
+      ConfigSource(
+        Set(ConfigSourceName(SystemProperties)),
+        ZManaged.succeed(
+          ZIO
+            .accessM[System](_.get.properties)
+            .toManaged_
+            .mapError(throwable => ReadError.SourceError(throwable.toString))
+            .map(map =>
+              (path: PropertyTreePath[K]) =>
+                ZIO.succeed(
+                  getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys).at(path)
+                )
+            )
+            .provideLayer(ZLayer.succeed(system))
+        ),
         leafForSequence
       )
 
@@ -708,17 +723,45 @@ trait ConfigSourceModule extends KeyValueModule {
           case Nil       => Nil
         }
 
-      unwrapSingletonLists(dropEmpty(PropertyTree.mergeAll(loop(args).map(_.bimap(KS.flip, VS.flip)))))
+      dropEmptyNode(PropertyTree.mergeAll(loop(args).map(_.bimap(KS.flip, VS.flip)))).map(unwrapSingletonLists(_))
     }
 
-    val empty: ConfigSource =
-      ConfigSource(
-        Set.empty,
-        ZManaged.succeed(ZManaged.succeed(_ => ZIO.succeed(PropertyTree.empty))),
-        LeafForSequence.Valid
+    private[config] def getPropertyTreeFromMapA[A](map: Map[K, A])(
+      f: A => ::[V],
+      keyDelimiter: Option[Char]
+    ): PropertyTree[K, V] =
+      selectNonEmptyPropertyTree(
+        dropEmptyNode(unflatten(map.map { tuple =>
+          val vectorOfKeys = keyDelimiter match {
+            case Some(keyDelimiter) =>
+              tuple._1.split(keyDelimiter).toVector.filterNot(_.trim == "")
+            case None               => Vector(tuple._1)
+          }
+          vectorOfKeys -> f(tuple._2)
+        })).map(unwrapSingletonLists(_))
       )
 
-    def dropEmpty(tree: PropertyTree[K, V]): PropertyTree[K, V] =
+    private[config] def getPropertyTreeFromProperties(
+      property: ju.Properties,
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None,
+      filterKeys: String => Boolean = _ => true
+    ): PropertyTree[K, V] = {
+      val mapString = property
+        .stringPropertyNames()
+        .asScala
+        .foldLeft(Map.empty[String, String]) { (acc, a) =>
+          if (filterKeys(a)) acc.updated(a, property.getProperty(a)) else acc
+        }
+
+      selectNonEmptyPropertyTree(
+        dropEmptyNode(
+          PropertyTree.fromStringMap(mapString, keyDelimiter, valueDelimiter)
+        ).map(unwrapSingletonLists(_))
+      )
+    }
+
+    private[config] def dropEmpty(tree: PropertyTree[K, V]): PropertyTree[K, V] =
       if (tree.isEmpty) PropertyTree.Empty
       else
         tree match {
@@ -729,7 +772,7 @@ trait ConfigSourceModule extends KeyValueModule {
           case Sequence(value)    => Sequence(value.filterNot(_.isEmpty))
         }
 
-    def dropEmpty(
+    private[config] def dropEmptyNode(
       trees: List[PropertyTree[K, V]]
     ): List[PropertyTree[K, V]] = {
       val res = trees.map(dropEmpty(_)).filterNot(_.isEmpty)
@@ -737,7 +780,7 @@ trait ConfigSourceModule extends KeyValueModule {
       else res
     }
 
-    def unwrapSingletonLists(
+    private[config] def unwrapSingletonLists(
       tree: PropertyTree[K, V]
     ): PropertyTree[K, V] = tree match {
       case l @ Leaf(_)            => l
@@ -748,41 +791,26 @@ trait ConfigSourceModule extends KeyValueModule {
       case Sequence(value)        => Sequence(value.map(unwrapSingletonLists(_)))
     }
 
-    def unwrapSingletonLists(
-      trees: List[PropertyTree[K, V]]
-    ): List[PropertyTree[K, V]] =
-      trees.map(unwrapSingletonLists(_))
+    private[config] def getPropertyTreeFromMap(
+      constantMap: Map[String, String],
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None,
+      filterKeys: String => Boolean = _ => true
+    ): PropertyTree[K, V] =
+      getPropertyTreeFromMapA(constantMap.filter({ case (k, _) => filterKeys(k) }))(
+        x => {
+          val listOfValues =
+            valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
 
-    /**
-     * To obtain a config source directly from a property tree.
-     *
-     * @param tree            : PropertyTree
-     * @param source          : Label the source with a name
-     * @param leafForSequence : Should a single value wrapped in Leaf be considered as Sequence
-     * @return
-     */
-    def fromPropertyTree(
-      tree: PropertyTree[K, V],
-      source: String,
-      leafForSequence: LeafForSequence
-    ): ConfigSource =
-      ConfigSource(
-        Set(ConfigSourceName(source)),
-        ZManaged.succeed(()).map(_ => ZManaged.succeed((path: PropertyTreePath[K]) => ZIO.succeed(tree.at(path)))),
-        leafForSequence
+          ::(listOfValues.head, listOfValues.tail)
+        },
+        keyDelimiter
       )
 
-    def fromPropertyTrees(
-      trees: Iterable[PropertyTree[K, V]],
-      source: String,
-      leafForSequence: LeafForSequence
-    ): ConfigSource =
-      mergeAll(trees.map(fromPropertyTree(_, source, leafForSequence)))
-
-    private[config] def mergeAll(
-      sources: Iterable[ConfigSource]
-    ): ConfigSource =
-      sources.reduceLeftOption(_ orElse _).getOrElse(empty)
+    private[config] def selectNonEmptyPropertyTree(
+      trees: Iterable[PropertyTree[K, V]]
+    ): PropertyTree[K, V] =
+      trees.find(_.nonEmpty).getOrElse(PropertyTree.empty)
   }
 
   /**

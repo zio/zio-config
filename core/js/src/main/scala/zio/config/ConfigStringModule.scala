@@ -701,11 +701,10 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[Throwable, Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+      fromConfigDescriptor(
+        configDescriptor from ConfigSource
           .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
       )
 
     /**
@@ -735,8 +734,8 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      fromConfigDescriptorM(ConfigSource.fromSystemEnv(keyDelimiter, valueDelimiter).map(configDescriptor from _))
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+      fromConfigDescriptor(configDescriptor from ConfigSource.fromSystemEnv(keyDelimiter, valueDelimiter))
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -766,23 +765,15 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
+      fromConfigDescriptor(
+        configDescriptor from ConfigSource
           .fromSystemProps(keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
       )
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
     )(implicit tag: Tag[A]): Layer[ReadError[K], Has[A]] =
       ZLayer.fromEffect(read(configDescriptor))
-
-    private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
-      configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
-    )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
-      ZLayer.fromEffect(
-        configDescriptor.flatMap(descriptor => read(descriptor))
-      )
   }
 
 }

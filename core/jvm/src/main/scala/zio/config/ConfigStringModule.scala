@@ -795,11 +795,10 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[Throwable, Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+      fromConfigDescriptor(
+        configDescriptor from ConfigSource
           .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
       )
 
     /**
@@ -832,10 +831,16 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
-          .fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
+      ZLayer.fromServiceM[System.Service, Any, ReadError[String], A]((system: System.Service) =>
+        read(
+          configDescriptor from ConfigSource.fromSystemEnv(
+            keyDelimiter,
+            valueDelimiter,
+            leafForSequence,
+            filterKeys,
+            system
+          )
+        )
       )
 
     /**
@@ -862,10 +867,20 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
     def fromSystemProperties[K, V, A](
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None
+      valueDelimiter: Option[Char] = None,
+      leafForSequence: LeafForSequence = LeafForSequence.Valid,
+      filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource.fromSystemProps(keyDelimiter, valueDelimiter).map(configDescriptor from _)
+      ZLayer.fromServiceM[System.Service, Any, ReadError[String], A]((system: System.Service) =>
+        read(
+          configDescriptor from ConfigSource.fromSystemProps(
+            keyDelimiter,
+            valueDelimiter,
+            leafForSequence,
+            filterKeys,
+            system
+          )
+        )
       )
 
     private[config] def fromConfigDescriptor[A](

@@ -701,11 +701,11 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[Throwable, Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
-          .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
+    )(implicit tag: Tag[A]): Layer[ReadError[K], Has[A]] =
+      fromConfigDescriptor(
+        configDescriptor from
+          ConfigSource
+            .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
       )
 
     /**
@@ -737,11 +737,10 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+      fromConfigDescriptor(
+        configDescriptor from ConfigSource
           .fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
       )
 
     /**
@@ -771,22 +770,15 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
-          .fromSystemProps(keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+      fromConfigDescriptor(
+        configDescriptor from ConfigSource.fromSystemProps(keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
       )
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
     )(implicit tag: Tag[A]): Layer[ReadError[K], Has[A]] =
       ZLayer.fromEffect(read(configDescriptor))
-
-    private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
-      configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
-    )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
-      ZLayer.fromEffect(configDescriptor.flatMap(read))
   }
 
 }

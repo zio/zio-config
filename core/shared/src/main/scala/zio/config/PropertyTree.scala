@@ -8,6 +8,13 @@ import scala.util.Try
 import scala.util.matching.Regex
 
 final case class PropertyTreePath[K](path: Vector[Step[K]]) {
+  def toPath: String = path
+    .map({
+      case Step.Index(n) => s"[${n}]"
+      case Step.Value(k) => k.toString
+    })
+    .mkString(".")
+
   def mapKeys(f: K => K): PropertyTreePath[K] =
     PropertyTreePath(path.map(_.map(f)))
 }
@@ -51,8 +58,6 @@ object PropertyTreePath {
    */
   def $(path: String): PropertyTreePath[String] =
     PropertyTreePath(path.split(".").toVector.flatMap(str => Step.steps(str)))
-
-  implicit def stringToPropTreePath(s: String): PropertyTreePath[String] = $(s)
 }
 
 @silent("Unused import")
@@ -261,13 +266,14 @@ object PropertyTree {
       }
     )
 
-  def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] = list.reverse match {
-    case Nil          => Nil
-    case head :: tail =>
-      tail.foldLeft(List(head)) { case (acc, tree) =>
-        acc.flatMap(tree0 => tree.merge(tree0))
-      }
-  }
+  def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
+    list.reverse match {
+      case Nil          => Nil
+      case head :: tail =>
+        tail.foldLeft(List(head)) { case (acc, tree) =>
+          acc.flatMap(tree0 => tree.merge(tree0))
+        }
+    }
 
   def unflatten[K, V](key: List[K], value: ::[V]): PropertyTree[K, V] =
     unflatten(key, Sequence(value.map(Leaf(_))))
