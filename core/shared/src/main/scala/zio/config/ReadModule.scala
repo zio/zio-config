@@ -120,7 +120,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
             .getConfigValue(
               PropertyTreePath(keys.reverse.toVector.map(PropertyTreePath.Step.Value(_)))
             )
-        zio           <- maybeMemoized.toManaged_
+        zio           <- maybeMemoized
         tree          <- zio.toManaged_
         res           <- tree match {
                            case PropertyTree.Empty       => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
@@ -194,7 +194,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            PropertyTreePath(keys.reverse.toVector.map(k => PropertyTreePath.Step.Value(k)))
                          )
 
-        zio  <- maybeMemoized.toManaged_
+        zio  <- maybeMemoized
         tree <- zio.toManaged_
         res  <- tree match {
                   case PropertyTree.Leaf(_)        => ZManaged.fail(formatError(path, "Leaf", "Record", descriptions))
@@ -252,7 +252,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         maybeMemoized <-
           cfg.source.getConfigValue(PropertyTreePath(keys.reverse.map(PropertyTreePath.Step.Value(_)).toVector))
 
-        zio  <- maybeMemoized.toManaged_
+        zio  <- maybeMemoized
         tree <- zio.toManaged_
         res  <- tree match {
                   case leaf @ PropertyTree.Leaf(_) =>
@@ -335,7 +335,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ZManaged.forall(sourceTrees) { managed =>
       for {
         memoized <- managed
-        treeZIO  <- memoized.toManaged_
+        treeZIO  <- memoized
         tree     <- treeZIO.toManaged_
       } yield tree.isEmpty
     }

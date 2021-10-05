@@ -17,20 +17,24 @@ trait ConfigSourceModule extends KeyValueModule {
 
   case class ConfigSource(
     sourceNames: Set[ConfigSource.ConfigSourceName],
-    access: ZManaged[Any, ReadError[K], PropertyTreePath[K] => UIO[ZIO[Any, ReadError[K], PropertyTree[K, V]]]],
+    access: ZManaged[
+      Any,
+      Nothing,
+      ZManaged[Any, ReadError[K], PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]]
+    ],
     canSingletonBeSequence: LeafForSequence
   ) { self =>
 
     def runTree(p: PropertyTreePath[K]): ZIO[Any, ReadError[K], PropertyTree[K, V]] =
-      access.use(_(p).flatMap(_.map(identity)))
+      access.use(t => t.use(_(p)))
 
     def at(propertyTreePath: PropertyTreePath[K]): ConfigSource =
-      self.copy(access = self.access.map(f => f(_).map(_.map(_.at(propertyTreePath)))))
+      self.copy(access = self.access.map(_.map(getTree => getTree(_).map(_.at(propertyTreePath)))))
 
     def getConfigValue(
       keys: PropertyTreePath[K]
-    ): ZManaged[Any, ReadError[K], UIO[ZIO[Any, ReadError[K], PropertyTree[K, V]]]] =
-      access.map(f => f(keys))
+    ): ZManaged[Any, Nothing, ZManaged[Any, ReadError[K], ZIO[Any, ReadError[K], PropertyTree[K, V]]]] =
+      access.map(_.map(_(keys)))
 
     /**
      * Transform keys before getting queried from source. Note that, this method could be hardly useful.
@@ -67,10 +71,10 @@ trait ConfigSourceModule extends KeyValueModule {
      * }}}
      */
     def mapKeys(f: K => K): ConfigSource =
-      self.copy(access = self.access.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f))))
+      self.copy(access = self.access.map(_.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f)))))
 
     def memoize: ConfigSource =
-      self.copy(access = self.access.map(f => (tree: PropertyTreePath[K]) => f(tree).flatMap(_.memoize)))
+      self.copy(access = self.access.flatMap(_.memoize))
 
     /**
      * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
@@ -91,22 +95,19 @@ trait ConfigSourceModule extends KeyValueModule {
     def orElse(that: => ConfigSource): ConfigSource =
       ConfigSource(
         self.sourceNames ++ that.sourceNames,
-        self.access.flatMap(f1 =>
-          that.access.map(f2 =>
-            (tree: PropertyTreePath[K]) => {
-              for {
-                zio1 <- f1(tree)
-                zio2 <- f2(tree)
-                x    <- zio1.either
-                y    <- zio2.either
-                res   = (x, y) match {
-                          case (Right(x), Right(y)) => ZIO.succeed(x.getOrElse(y))
-                          case (_, _)               => zio1.orElse(zio2)
-                        }
-              } yield res
-            }
-          )
-        ),
+        for {
+          m1 <- self.access
+          m2 <- that.access
+          res =
+            for {
+              f1 <- m1
+              f2 <- m2
+              res = (path: PropertyTreePath[K]) =>
+                      f1(path)
+                        .flatMap(tree => if (tree.isEmpty) f2(path) else ZIO.succeed(tree))
+                        .orElse(f2(path))
+            } yield res
+        } yield res,
         that.canSingletonBeSequence
       )
 
@@ -130,7 +131,7 @@ trait ConfigSourceModule extends KeyValueModule {
     def <>(that: => ConfigSource): ConfigSource = self orElse that
 
     def withTree(tree: PropertyTree[K, V]): ConfigSource =
-      copy(access = ZManaged.succeed(a => UIO(ZIO.succeed(tree.at(a)))))
+      copy(access = ZManaged.succeed(ZManaged.succeed(a => ZIO.succeed(tree.at(a)))))
   }
 
   object ConfigSource {
@@ -711,7 +712,11 @@ trait ConfigSourceModule extends KeyValueModule {
     }
 
     val empty: ConfigSource =
-      ConfigSource(Set.empty, ZManaged.succeed(_ => UIO(ZIO.succeed(PropertyTree.empty))), LeafForSequence.Valid)
+      ConfigSource(
+        Set.empty,
+        ZManaged.succeed(ZManaged.succeed(_ => ZIO.succeed(PropertyTree.empty))),
+        LeafForSequence.Valid
+      )
 
     def dropEmpty(tree: PropertyTree[K, V]): PropertyTree[K, V] =
       if (tree.isEmpty) PropertyTree.Empty
@@ -763,7 +768,7 @@ trait ConfigSourceModule extends KeyValueModule {
     ): ConfigSource =
       ConfigSource(
         Set(ConfigSourceName(source)),
-        ZManaged.succeed(()).map(_ => (path: PropertyTreePath[K]) => UIO(ZIO.succeed(tree.at(path)))),
+        ZManaged.succeed(()).map(_ => ZManaged.succeed((path: PropertyTreePath[K]) => ZIO.succeed(tree.at(path)))),
         leafForSequence
       )
 
