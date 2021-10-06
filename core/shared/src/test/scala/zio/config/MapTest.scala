@@ -87,7 +87,7 @@ object MapTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-            "tree",
+            "tree"
           )
         )
 
@@ -161,8 +161,7 @@ object MapTest extends BaseSpec {
         val res  = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-            "tree",
-
+            "tree"
           )
         )
 
@@ -237,8 +236,7 @@ object MapTest extends BaseSpec {
       testM("key doesn't exist in map") {
         val src                                                     = ConfigSource.fromPropertyTree(
           PropertyTree.Record(Map("usr" -> PropertyTree.Leaf("v1"))),
-          "src",
-
+          "src"
         )
         val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("keyNotExists")).optional
         assertM(read(optional from src).either)(isLeft(anything))
@@ -246,8 +244,7 @@ object MapTest extends BaseSpec {
       testM("when empty map") {
         val src                                                     = ConfigSource.fromPropertyTree(
           PropertyTree.empty,
-          "src",
-
+          "src"
         )
         val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("usr")).optional
         assertM(read(optional from src))(isNone)

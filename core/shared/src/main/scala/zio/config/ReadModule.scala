@@ -115,7 +115,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         zio           <- maybeMemoized
         tree          <- zio.toManaged_
         res           <- tree match {
-                           case PropertyTree.Empty          => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                           case PropertyTree.Empty          =>
+                             ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
                            case PropertyTree.Record(_)      =>
                              ZManaged.fail(formatError(path, "of type Map", "Singleton", descriptions))
                            case PropertyTree.Sequence(_)    =>
@@ -222,7 +223,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       def fromTrees(
         values: List[PropertyTree[K, V]]
       ): ZManaged[Any, ReadError[String], AnnotatedRead[PropertyTree[K, List[B]]]] = {
-        val list = values.zipWithIndex.map { case (_, idx) =>
+        val list = values.zipWithIndex.map { case (value, idx) =>
           loopAny(
             Step.Index(idx) :: path,
             cfg.config,
@@ -256,9 +257,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       for {
         isEmpty     <- isEmptyConfigSource(config, path.reverse)
         alreadySeen <- ZManaged.succeed(programSummary.contains(config))
-        res         <- if (alreadySeen && isEmpty)
+        res         <- if (alreadySeen && isEmpty) {
                          ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                       else
+                       } else
                          config match {
                            case c @ Lazy(thunk) =>
                              loopAny(path, thunk(), descriptions, c :: programSummary)
@@ -341,7 +342,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         memoized <- managed
         treeZIO  <- memoized
         tree     <- treeZIO.toManaged_
-      } yield tree.isEmpty
+      } yield tree == PropertyTree.empty
     }
   }
 

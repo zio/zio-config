@@ -645,11 +645,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             }
 
           case Source(source, propertyType) => Source(source, propertyType)
-          case DynamicMap(conf)     => DynamicMap(loop(conf))
+          case DynamicMap(conf)             => DynamicMap(loop(conf))
           case Nested(source, path, conf)   =>
             Nested(source, f(path), loop(conf))
           case Optional(conf)               => Optional(loop(conf))
-          case Sequence(conf)       => Sequence(loop(conf))
+          case Sequence(conf)               => Sequence(loop(conf))
           case Describe(conf, message)      => Describe(loop(conf), message)
           case Default(conf, value)         => Default(loop(conf), value)
           case TransformOrFail(conf, f, g)  =>
@@ -1978,8 +1978,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-    sealed case class DynamicMap[A](config: ConfigDescriptor[A])
-        extends ConfigDescriptor[Map[K, A]]
+    sealed case class DynamicMap[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Map[K, A]]
 
     sealed case class Lazy[A](get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 

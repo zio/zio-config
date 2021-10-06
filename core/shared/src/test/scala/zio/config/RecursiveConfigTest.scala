@@ -10,118 +10,118 @@ object RecursiveConfigTest extends BaseSpec {
 
   val spec: Spec[Annotations, TestFailure[Any], TestSuccess] =
     suite("RecursiveConfigTest")(
-      testM("read simple") {
-        assertM(read(SimpleRec.config from SimpleRec.source))(equalTo(SimpleRec.expected))
-      },
+//      testM("read simple") {
+//        assertM(read(SimpleRec.config from SimpleRec.source))(equalTo(SimpleRec.expected))
+//      },
       testM("read simple list") {
         assertM(read(SimpleListRec.config from SimpleListRec.source))(equalTo(SimpleListRec.expected))
-      },
-      testM("read simple either") {
-        assertM(read(SimpleEitherRec.config from SimpleEitherRec.source))(equalTo(SimpleEitherRec.expected))
-      },
-      testM("read simple reversed") {
-        assertM(read(SimpleRecReversed.config from SimpleRecReversed.source))(
-          equalTo(SimpleRecReversed.expected)
-        )
-      },
-      testM("read simple reversed multiple") {
-        assertM(read(SimpleRecMultiple.config from SimpleRecMultiple.source))(
-          equalTo(SimpleRecMultiple.expected)
-        )
-      },
-      testM("read simple with updated key") {
-        assertM(
-          read(
-            SimpleRecMultiple.config.mapKey(_.toUpperCase()) from SimpleRecMultiple.source
-              .mapKeys(_.toLowerCase())
-          )
-        )(
-          equalTo(SimpleRecMultiple.expected)
-        )
-      },
-      testM("read mutual recursive") {
-        assertM(read(data from testSource))(equalTo(recursiveValue))
-      },
-      testM("read expression tree") {
-        assertM(read(expr from exprSource))(equalTo(exprValue))
-      },
-      test("write simple") {
-        assert(write(SimpleRec.config, SimpleRec.expected))(isRight(equalTo(SimpleRec.tree)))
-      },
-      test("documentation") {
-        assert(generateDocs(SimpleRec.config).toTable)(
-          equalTo(
-            Table(
-              List(
-                Table.TableRow(
-                  Nil,
-                  Some(Table.Format.AllOf),
-                  Nil,
-                  Some(
-                    Table(
-                      List(
-                        Table.TableRow(
-                          List(Table.FieldName.Key("id")),
-                          Some(Table.Format.Primitive),
-                          List(ConfigDocs.Description(Some("id"), "value of type int")),
-                          None,
-                          Set()
-                        ),
-                        Table.TableRow(
-                          List(Table.FieldName.Key("nested")),
-                          Some(Table.Format.Recursion),
-                          List(ConfigDocs.Description(None, "optional value")),
-                          None,
-                          Set()
-                        )
-                      )
-                    )
-                  ),
-                  Set()
-                )
-              )
-            )
-          )
-        )
-      },
-      test("documentation of expression tree") {
-        val docs  = generateDocs(expr)
-        val table = docs.toTable
-        assert(table)(
-          equalTo(
-            Table(
-              List(
-                Table.TableRow(
-                  List(),
-                  Some(Table.Format.AnyOneOf),
-                  List(),
-                  Some(
-                    Table(
-                      List(
-                        Table.TableRow(
-                          List(),
-                          Some(Table.Format.Primitive),
-                          List(ConfigDocs.Description(None, "value of type int")),
-                          None,
-                          Set()
-                        ),
-                        Table.TableRow(
-                          List(Table.FieldName.Key("add")),
-                          Some(Table.Format.RecursionList),
-                          List(),
-                          None,
-                          Set()
-                        )
-                      )
-                    )
-                  ),
-                  Set()
-                )
-              )
-            )
-          )
-        )
-      } @@ TestAspect.exceptScala211
+      }
+//      testM("read simple either") {
+//        assertM(read(SimpleEitherRec.config from SimpleEitherRec.source))(equalTo(SimpleEitherRec.expected))
+//      },
+//      testM("read simple reversed") {
+//        assertM(read(SimpleRecReversed.config from SimpleRecReversed.source))(
+//          equalTo(SimpleRecReversed.expected)
+//        )
+//      },
+//      testM("read simple reversed multiple") {
+//        assertM(read(SimpleRecMultiple.config from SimpleRecMultiple.source))(
+//          equalTo(SimpleRecMultiple.expected)
+//        )
+//      },
+//      testM("read simple with updated key") {
+//        assertM(
+//          read(
+//            SimpleRecMultiple.config.mapKey(_.toUpperCase()) from SimpleRecMultiple.source
+//              .mapKeys(_.toLowerCase())
+//          )
+//        )(
+//          equalTo(SimpleRecMultiple.expected)
+//        )
+//      },
+//      testM("read mutual recursive") {
+//        assertM(read(data from testSource))(equalTo(recursiveValue))
+//      },
+//      testM("read expression tree") {
+//        assertM(read(expr from exprSource))(equalTo(exprValue))
+//      },
+//      test("write simple") {
+//        assert(write(SimpleRec.config, SimpleRec.expected))(isRight(equalTo(SimpleRec.tree)))
+//      },
+//      test("documentation") {
+//        assert(generateDocs(SimpleRec.config).toTable)(
+//          equalTo(
+//            Table(
+//              List(
+//                Table.TableRow(
+//                  Nil,
+//                  Some(Table.Format.AllOf),
+//                  Nil,
+//                  Some(
+//                    Table(
+//                      List(
+//                        Table.TableRow(
+//                          List(Table.FieldName.Key("id")),
+//                          Some(Table.Format.Primitive),
+//                          List(ConfigDocs.Description(Some("id"), "value of type int")),
+//                          None,
+//                          Set()
+//                        ),
+//                        Table.TableRow(
+//                          List(Table.FieldName.Key("nested")),
+//                          Some(Table.Format.Recursion),
+//                          List(ConfigDocs.Description(None, "optional value")),
+//                          None,
+//                          Set()
+//                        )
+//                      )
+//                    )
+//                  ),
+//                  Set()
+//                )
+//              )
+//            )
+//          )
+//        )
+//      },
+//      test("documentation of expression tree") {
+//        val docs  = generateDocs(expr)
+//        val table = docs.toTable
+//        assert(table)(
+//          equalTo(
+//            Table(
+//              List(
+//                Table.TableRow(
+//                  List(),
+//                  Some(Table.Format.AnyOneOf),
+//                  List(),
+//                  Some(
+//                    Table(
+//                      List(
+//                        Table.TableRow(
+//                          List(),
+//                          Some(Table.Format.Primitive),
+//                          List(ConfigDocs.Description(None, "value of type int")),
+//                          None,
+//                          Set()
+//                        ),
+//                        Table.TableRow(
+//                          List(Table.FieldName.Key("add")),
+//                          Some(Table.Format.RecursionList),
+//                          List(),
+//                          None,
+//                          Set()
+//                        )
+//                      )
+//                    )
+//                  ),
+//                  Set()
+//                )
+//              )
+//            )
+//          )
+//        )
+//      } @@ TestAspect.exceptScala211
     )
 }
 

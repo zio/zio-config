@@ -69,8 +69,7 @@ object ListAndOptionalTest extends BaseSpec {
                 )
               )
             ),
-            "src",
-
+            "src"
           )
 
         val actual = read(cListConfig from src).mapError(_.getMessage)
@@ -92,8 +91,7 @@ object ListAndOptionalTest extends BaseSpec {
         val src =
           ConfigSource.fromPropertyTree(
             Record(Map("list" -> PropertyTree.Sequence[String, String](Nil))),
-            "src",
-
+            "src"
           )
 
         val actual = read(cListConfig from src).mapError(_.getMessage)
@@ -105,8 +103,7 @@ object ListAndOptionalTest extends BaseSpec {
       testM("key doesn't exist in list") {
         val src                                              = ConfigSource.fromPropertyTree(
           PropertyTree.Sequence(List(Record(Map()))),
-          "src",
-
+          "src"
         )
         val optional: ConfigDescriptor[Option[List[String]]] = list(string("keyNotExists")).optional
         assertM(read(optional from src).either)(isLeft(anything))
@@ -114,8 +111,7 @@ object ListAndOptionalTest extends BaseSpec {
       testM("when empty list") {
         val src                                              = ConfigSource.fromPropertyTree(
           PropertyTree.empty,
-          "src",
-
+          "src"
         )
         val optional: ConfigDescriptor[Option[List[String]]] = list(string("usr")).optional
         assertM(read(optional from src).either)(isRight(isNone))
@@ -141,8 +137,7 @@ object ListAndOptionalTest extends BaseSpec {
               )
             )
           ),
-          "src",
-
+          "src"
         )
         case class AppConfig(branches: Option[List[Branch]])
         case class Branch(pattern: String, tag: Boolean)
@@ -171,8 +166,7 @@ object ListAndOptionalTest extends BaseSpec {
                 )
               )
             ),
-            "src",
-
+            "src"
           )
 
         val config   = listOrSingleton("list")(string)
@@ -185,7 +179,7 @@ object ListAndOptionalTest extends BaseSpec {
         val src =
           ConfigSource.fromPropertyTree(
             Record(Map("list" -> PropertyTree.Leaf("x"))),
-            "src",
+            "src"
           )
 
         val config   = listOrSingleton("list")(string)
