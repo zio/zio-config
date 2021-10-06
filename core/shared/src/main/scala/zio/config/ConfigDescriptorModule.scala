@@ -645,11 +645,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             }
 
           case Source(source, propertyType) => Source(source, propertyType)
-          case DynamicMap(source, conf)     => DynamicMap(source, loop(conf))
+          case DynamicMap(conf)     => DynamicMap(loop(conf))
           case Nested(source, path, conf)   =>
             Nested(source, f(path), loop(conf))
           case Optional(conf)               => Optional(loop(conf))
-          case Sequence(source, conf)       => Sequence(source, loop(conf))
+          case Sequence(conf)       => Sequence(loop(conf))
           case Describe(conf, message)      => Describe(loop(conf), message)
           case Default(conf, value)         => Default(loop(conf), value)
           case TransformOrFail(conf, f, g)  =>
@@ -1018,8 +1018,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Source(source, propertyType) =>
             Source(f(source), propertyType)
 
-          case DynamicMap(source, conf) =>
-            DynamicMap(f(source), loop(conf))
+          case DynamicMap(conf) =>
+            DynamicMap(loop(conf))
 
           case Nested(source, path, conf) =>
             Nested(f(source), path, loop(conf))
@@ -1027,8 +1027,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Optional(conf) =>
             Optional(loop(conf))
 
-          case Sequence(source, conf) =>
-            Sequence(f(source), loop(conf))
+          case Sequence(conf) =>
+            Sequence(loop(conf))
 
           case Describe(conf, message) =>
             Describe(loop(conf), message)
@@ -1092,11 +1092,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Describe(config, _) =>
             runLoop(config, None)
 
-          case DynamicMap(_, config) =>
+          case DynamicMap(config) =>
             runLoop(config, None)
 
-          case Sequence(source, config) =>
-            runLoop(config, Some(source))
+          case Sequence(config) =>
+            runLoop(config, None)
 
           case Lazy(get) =>
             runLoop(get(), None)
@@ -1618,7 +1618,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  `nested("xyz")(list(string("USERNAME"))` is same as `list("xyz")(string("USERNAME"))`
      */
     def list[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      ConfigDescriptorAdt.sequenceDesc(ConfigSource.empty, desc)
+      ConfigDescriptorAdt.sequenceDesc(desc)
 
     /**
      *  `list("xyz")(confgDescriptor)` represents just a list variant of configDescriptor within the key `xyz`.
@@ -1821,7 +1821,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * in the map from an nested key within itself. In this example it is "id".
      */
     def map[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(ConfigSource.empty, lazyDesc(desc))
+      DynamicMap(lazyDesc(desc))
     // ConfigDescriptorAdt.dynamicMapDesc(ConfigSourceFunctions.empty, desc)
 
     /**
@@ -1978,7 +1978,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-    sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A])
+    sealed case class DynamicMap[A](config: ConfigDescriptor[A])
         extends ConfigDescriptor[Map[K, A]]
 
     sealed case class Lazy[A](get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
@@ -1992,7 +1992,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     sealed case class OrElseEither[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
         extends ConfigDescriptor[Either[A, B]]
 
-    sealed case class Sequence[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
+    sealed case class Sequence[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
 
     sealed case class Source[A](source: ConfigSource, propertyType: PropertyType[V, A]) extends ConfigDescriptor[A]
 
@@ -2010,8 +2010,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def describeDesc[A](config: => ConfigDescriptor[A], message: String): ConfigDescriptor[A] =
       Describe(lazyDesc(config), message)
 
-    final def dynamicMapDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(source, lazyDesc(config))
+    final def dynamicMapDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
+      DynamicMap(lazyDesc(config))
 
     final def lazyDesc[A](
       config: => ConfigDescriptor[A]
@@ -2033,8 +2033,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[Either[A, B]] =
       OrElseEither(lazyDesc(left), lazyDesc(right))
 
-    final def sequenceDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      Sequence(source, lazyDesc(config))
+    final def sequenceDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
+      Sequence(lazyDesc(config))
 
     final def sourceDesc[A](source: ConfigSource, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
       Source(source, propertyType)

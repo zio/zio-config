@@ -269,7 +269,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            case c @ Describe(_, message) =>
                              loopAny(path, c.config, descriptions :+ message, c :: programSummary)
 
-                           case c @ DynamicMap(_, _) =>
+                           case c @ DynamicMap(_) =>
                              loopMap(path, c, descriptions, c :: programSummary)
 
                            case c @ Nested(_, key, _) =>
@@ -297,7 +297,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            case c @ TransformOrFail(_, _, _) =>
                              loopXmapEither(path, c, descriptions, c :: programSummary)
 
-                           case c @ Sequence(_, _) =>
+                           case c @ Sequence(_) =>
                              loopSequence(path, c, descriptions, c :: programSummary)
                          }
 
@@ -412,8 +412,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case ConfigDescriptorAdt.OrElse(left, right)        => loop(count, left) + loop(count, right)
         case ConfigDescriptorAdt.OrElseEither(left, right)  => loop(count, left) + loop(count, right)
         case ConfigDescriptorAdt.Default(_, _)              => 0
-        case ConfigDescriptorAdt.Sequence(_, _)             => 1
-        case ConfigDescriptorAdt.DynamicMap(_, _)           => 1
+        case ConfigDescriptorAdt.Sequence(_)                => 1
+        case ConfigDescriptorAdt.DynamicMap(_)              => 1
       }
 
     loop(Nil, config)

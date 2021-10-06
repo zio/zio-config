@@ -610,7 +610,7 @@ trait ConfigDocsModule extends WriteModule {
         case cd: DynamicMap[_] =>
           ConfigDocs.DynamicMap(
             loopTo(
-              (cd.source.sourceNames ++ sources),
+              sources,
               descriptions,
               cd.config,
               None,
@@ -621,10 +621,10 @@ trait ConfigDocsModule extends WriteModule {
         case Optional(c) =>
           loopTo(sources, descriptions, c, None, alreadySeen)
 
-        case Sequence(source, c) =>
+        case Sequence(c) =>
           ConfigDocs.Sequence(
             loopTo(
-              (source.sourceNames ++ sources),
+              sources,
               descriptions,
               c,
               None,
