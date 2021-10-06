@@ -694,9 +694,9 @@ trait ConfigDocsModule extends WriteModule {
           case DocsLeaf(sources, descriptions, None) =>
             // Feed value when it hits leaf
             tree.getPath(keys) match {
-              case PropertyTree.Leaf(value) =>
+              case PropertyTree.Leaf(value, _) =>
                 DocsLeaf(sources, descriptions, Some(value))
-              case _                        => DocsLeaf(sources, descriptions, None)
+              case _                           => DocsLeaf(sources, descriptions, None)
             }
 
           case a: DocsLeaf => a

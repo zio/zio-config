@@ -20,14 +20,14 @@ object EitherReciprocityTest extends BaseSpec {
               rereadLeft   <-
                 read(
                   cCoproductConfig from ConfigSource
-                    .fromPropertyTree(writtenLeft, "test", LeafForSequence.Valid)
+                    .fromPropertyTree(writtenLeft, "test")
                 )
                   .mapError(_.getMessage)
               writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
               rereadRight  <-
                 read(
                   cCoproductConfig from ConfigSource
-                    .fromPropertyTree(writtenRight, "test", LeafForSequence.Valid)
+                    .fromPropertyTree(writtenRight, "test")
                 )
                   .mapError(_.getMessage)
             } yield (rereadLeft.coproduct, rereadRight.coproduct) match {

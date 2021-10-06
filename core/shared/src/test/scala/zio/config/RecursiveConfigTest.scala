@@ -150,8 +150,7 @@ object RecursiveConfigTestUtils {
     val source =
       ConfigSource.fromPropertyTree(
         tree,
-        "tree",
-        LeafForSequence.Valid
+        "tree"
       )
 
   }
@@ -182,11 +181,11 @@ object RecursiveConfigTestUtils {
     val expected: SimpleListRec = SimpleListRec(1, List(SimpleListRec(2, Nil)))
 
     val source: ConfigSource =
-      ConfigSource.fromPropertyTree(
-        tree,
-        "tree",
-        LeafForSequence.Invalid
-      )
+      ConfigSource
+        .fromPropertyTree(
+          tree.leafNotASequence,
+          "tree"
+        )
 
   }
   case class SimpleEitherRec(id: Int, nested: Either[SimpleEitherRec, Int])
@@ -217,11 +216,11 @@ object RecursiveConfigTestUtils {
       SimpleEitherRec(1, Left(SimpleEitherRec(2, Left(SimpleEitherRec(3, Right(1))))))
 
     val source: ConfigSource =
-      ConfigSource.fromPropertyTree(
-        tree,
-        "tree",
-        LeafForSequence.Invalid
-      )
+      ConfigSource
+        .fromPropertyTree(
+          tree.leafNotASequence,
+          "tree"
+        )
   }
 
   case class SimpleRecReversed(nested: Option[SimpleRecReversed], id: Int)
@@ -246,8 +245,7 @@ object RecursiveConfigTestUtils {
     val source: ConfigSource =
       ConfigSource.fromPropertyTree(
         tree,
-        "tree",
-        LeafForSequence.Valid
+        "tree"
       )
 
   }
@@ -272,8 +270,7 @@ object RecursiveConfigTestUtils {
     val source: ConfigSource =
       ConfigSource.fromPropertyTree(
         tree,
-        "tree",
-        LeafForSequence.Valid
+        "tree"
       )
 
     val expected: SimpleRecMultiple = SimpleRecMultiple(Some(SimpleRecMultiple(None, 2, None)), 1, None)
@@ -301,8 +298,7 @@ object RecursiveConfigTestUtils {
         )
       )
     ),
-    "tree",
-    LeafForSequence.Valid
+    "tree"
   )
 
   val recursiveValue: Data = Data(Row(1, Some(Data(Row(2, None)))))
@@ -340,7 +336,6 @@ object RecursiveConfigTestUtils {
       case Left(_)      => ???
       case Right(value) => value
     },
-    "test",
-    LeafForSequence.Invalid
+    "test"
   )
 }

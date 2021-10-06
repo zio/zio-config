@@ -20,15 +20,14 @@ trait ConfigSourceModule extends KeyValueModule {
       Any,
       Nothing,
       ZManaged[Any, ReadError[K], PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]]
-    ],
-    canSingletonBeSequence: LeafForSequence
+    ]
   ) { self =>
 
     def runTree(p: PropertyTreePath[K]): ZIO[Any, ReadError[K], PropertyTree[K, V]] =
       access.use(t => t.use(_(p)))
 
     def at(propertyTreePath: PropertyTreePath[K]): ConfigSource =
-      self.copy(access = self.access.map(_.map(getTree => getTree(_).map(_.at(propertyTreePath, canSingletonBeSequence.toBoolean)))))
+      self.copy(access = self.access.map(_.map(getTree => getTree(_).map(_.at(propertyTreePath)))))
 
     def getConfigValue(
       keys: PropertyTreePath[K]
@@ -113,8 +112,7 @@ trait ConfigSourceModule extends KeyValueModule {
                         .flatMap(tree => if (tree.isEmpty) f2(path) else ZIO.succeed(tree))
                         .orElse(f2(path))
             } yield res
-        } yield res,
-        that.canSingletonBeSequence
+        } yield res
       )
 
     /**
@@ -137,7 +135,7 @@ trait ConfigSourceModule extends KeyValueModule {
     def <>(that: => ConfigSource): ConfigSource = self orElse that
 
     def withTree(tree: PropertyTree[K, V]): ConfigSource =
-      copy(access = ZManaged.succeed(ZManaged.succeed(a => ZIO.succeed(tree.at(a, self.canSingletonBeSequence.toBoolean)))))
+      copy(access = ZManaged.succeed(ZManaged.succeed(a => ZIO.succeed(tree.at(a)))))
   }
 
   object ConfigSource {
@@ -150,8 +148,7 @@ trait ConfigSourceModule extends KeyValueModule {
     val empty: ConfigSource =
       ConfigSource(
         Set.empty,
-        ZManaged.succeed(ZManaged.succeed(_ => ZIO.succeed(PropertyTree.empty))),
-        LeafForSequence.Valid
+        ZManaged.succeed(ZManaged.succeed(_ => ZIO.succeed(PropertyTree.empty)))
       )
 
     /**
@@ -204,8 +201,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
       ConfigSource(
         Set(ConfigSourceName(CommandLineArguments)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path, leafForSequence = true)))),
-        LeafForSequence.Valid
+        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
       )
     }
 
@@ -237,7 +233,6 @@ trait ConfigSourceModule extends KeyValueModule {
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
       val tree =
@@ -245,8 +240,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
       ConfigSource(
         Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path, leafForSequence.toBoolean)))),
-        leafForSequence
+        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
       )
     }
 
@@ -275,7 +269,6 @@ trait ConfigSourceModule extends KeyValueModule {
       map: Map[String, ::[String]],
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
       val tree =
@@ -286,8 +279,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
       ConfigSource(
         Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path, leafForSequence.toBoolean)))),
-        leafForSequence
+        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
       )
     }
 
@@ -319,7 +311,6 @@ trait ConfigSourceModule extends KeyValueModule {
       source: String = "properties",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
       val tree =
@@ -327,8 +318,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
       ConfigSource(
         Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path, leafForSequence.toBoolean)))),
-        leafForSequence
+        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
       )
     }
 
@@ -342,13 +332,11 @@ trait ConfigSourceModule extends KeyValueModule {
      */
     def fromPropertyTree(
       tree: PropertyTree[K, V],
-      source: String,
-      leafForSequence: LeafForSequence
+      source: String
     ): ConfigSource =
       ConfigSource(
         Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path, leafForSequence.toBoolean)))),
-        leafForSequence
+        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
       )
 
     /**
@@ -378,7 +366,6 @@ trait ConfigSourceModule extends KeyValueModule {
       filePath: String,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
       val managed: ZManaged[Any, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
@@ -394,17 +381,21 @@ trait ConfigSourceModule extends KeyValueModule {
                               properties
                             }
 
-              tree = getPropertyTreeFromProperties(properties, keyDelimiter, valueDelimiter, filterKeys)
+              tree = getPropertyTreeFromProperties(
+                       properties,
+                       keyDelimiter,
+                       valueDelimiter,
+                       filterKeys
+                     )
 
-              fn = (path: PropertyTreePath[K]) => ZIO.succeed(tree.at(path, leafForSequence.toBoolean))
+              fn = (path: PropertyTreePath[K]) => ZIO.succeed(tree.at(path))
             } yield fn
           }
           .mapError(throwable => ReadError.SourceError(throwable.toString))
 
       ConfigSource(
         Set(ConfigSourceName(filePath)),
-        ZManaged.succeed(managed),
-        leafForSequence
+        ZManaged.succeed(managed)
       )
     }
 
@@ -439,7 +430,6 @@ trait ConfigSourceModule extends KeyValueModule {
     def fromSystemEnv(
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true,
       system: System.Service = System.Service.live
     ): ConfigSource = {
@@ -464,7 +454,7 @@ trait ConfigSourceModule extends KeyValueModule {
           .map(tree =>
             (path: PropertyTreePath[K]) => {
               ZIO.succeed(
-                tree.at(path, leafForSequence.toBoolean)
+                tree.at(path)
               )
             }
           )
@@ -472,8 +462,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
       ConfigSource(
         Set(ConfigSourceName(SystemProperties)),
-        ZManaged.succeed(managed),
-        leafForSequence
+        ZManaged.succeed(managed)
       )
     }
 
@@ -525,7 +514,6 @@ trait ConfigSourceModule extends KeyValueModule {
     def fromSystemProps(
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char],
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true,
       system: System.Service = System.Service.live
     ): ConfigSource =
@@ -539,12 +527,12 @@ trait ConfigSourceModule extends KeyValueModule {
             .map(map =>
               (path: PropertyTreePath[K]) =>
                 ZIO.succeed(
-                  getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys).at(path, leafForSequence.toBoolean)
+                  getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
+                    .at(path)
                 )
             )
             .provideLayer(ZLayer.succeed(system))
-        ),
-        leafForSequence
+        )
       )
 
     private[config] def getPropertyTreeFromArgs(
@@ -772,7 +760,7 @@ trait ConfigSourceModule extends KeyValueModule {
       if (tree.isEmpty) PropertyTree.Empty
       else
         tree match {
-          case l @ Leaf(_)        => l
+          case l @ Leaf(_, _)     => l
           case Record(value)      =>
             Record(value.filterNot { case (_, v) => v.isEmpty })
           case PropertyTree.Empty => PropertyTree.Empty
@@ -790,7 +778,7 @@ trait ConfigSourceModule extends KeyValueModule {
     private[config] def unwrapSingletonLists(
       tree: PropertyTree[K, V]
     ): PropertyTree[K, V] = tree match {
-      case l @ Leaf(_)            => l
+      case l @ Leaf(_, _)         => l
       case Record(value)          =>
         Record(value.map { case (k, v) => k -> unwrapSingletonLists(v) })
       case PropertyTree.Empty     => PropertyTree.Empty
@@ -818,21 +806,5 @@ trait ConfigSourceModule extends KeyValueModule {
       trees: Iterable[PropertyTree[K, V]]
     ): PropertyTree[K, V] =
       trees.find(_.nonEmpty).getOrElse(PropertyTree.empty)
-  }
-
-  /**
-   * To specify if a singleton leaf should be considered
-   * as a valid sequence or not.
-   */
-  sealed trait LeafForSequence { self =>
-    def toBoolean: Boolean = self match {
-      case LeafForSequence.Invalid => false
-      case LeafForSequence.Valid => true
-    }
-  }
-
-  object LeafForSequence {
-    case object Invalid extends LeafForSequence
-    case object Valid   extends LeafForSequence
   }
 }

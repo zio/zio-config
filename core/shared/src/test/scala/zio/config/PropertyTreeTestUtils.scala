@@ -79,7 +79,7 @@ object PropertyTreeTestUtils {
     n: Int
   ): List[PropertyTree[String, A]] =
     tree match {
-      case Leaf(r)                     => List(Leaf(r))
+      case Leaf(r, bool)               => List(Leaf(r, bool))
       case Record(value)               => value.values.flatMap(tree => getTreeFromNLevelSequence(tree, n)).toList
       case PropertyTree.Empty          => Nil
       case Sequence(value) if (n == 1) => value

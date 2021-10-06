@@ -70,7 +70,7 @@ object ListAndOptionalTest extends BaseSpec {
               )
             ),
             "src",
-            LeafForSequence.Valid
+
           )
 
         val actual = read(cListConfig from src).mapError(_.getMessage)
@@ -93,7 +93,7 @@ object ListAndOptionalTest extends BaseSpec {
           ConfigSource.fromPropertyTree(
             Record(Map("list" -> PropertyTree.Sequence[String, String](Nil))),
             "src",
-            LeafForSequence.Valid
+
           )
 
         val actual = read(cListConfig from src).mapError(_.getMessage)
@@ -106,7 +106,7 @@ object ListAndOptionalTest extends BaseSpec {
         val src                                              = ConfigSource.fromPropertyTree(
           PropertyTree.Sequence(List(Record(Map()))),
           "src",
-          LeafForSequence.Valid
+
         )
         val optional: ConfigDescriptor[Option[List[String]]] = list(string("keyNotExists")).optional
         assertM(read(optional from src).either)(isLeft(anything))
@@ -115,7 +115,7 @@ object ListAndOptionalTest extends BaseSpec {
         val src                                              = ConfigSource.fromPropertyTree(
           PropertyTree.empty,
           "src",
-          LeafForSequence.Valid
+
         )
         val optional: ConfigDescriptor[Option[List[String]]] = list(string("usr")).optional
         assertM(read(optional from src).either)(isRight(isNone))
@@ -123,7 +123,7 @@ object ListAndOptionalTest extends BaseSpec {
       testM("list write read") {
         checkM(genListConfig) { p =>
           val actual = ZIO.fromEither(write(cListConfig, p)).flatMap { tree =>
-            read(cListConfig from ConfigSource.fromPropertyTree(tree, "tree", LeafForSequence.Valid))
+            read(cListConfig from ConfigSource.fromPropertyTree(tree, "tree"))
               .mapError(_.getMessage)
           }
           assertM(actual)(equalTo(p))
@@ -142,7 +142,7 @@ object ListAndOptionalTest extends BaseSpec {
             )
           ),
           "src",
-          LeafForSequence.Valid
+
         )
         case class AppConfig(branches: Option[List[Branch]])
         case class Branch(pattern: String, tag: Boolean)
@@ -172,7 +172,7 @@ object ListAndOptionalTest extends BaseSpec {
               )
             ),
             "src",
-            LeafForSequence.Valid
+
           )
 
         val config   = listOrSingleton("list")(string)
@@ -186,7 +186,6 @@ object ListAndOptionalTest extends BaseSpec {
           ConfigSource.fromPropertyTree(
             Record(Map("list" -> PropertyTree.Leaf("x"))),
             "src",
-            LeafForSequence.Invalid // Note that with LeafForSequence.Valid, this is accepted as a list (not the 'orElse singleton')
           )
 
         val config   = listOrSingleton("list")(string)

@@ -120,12 +120,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         zio           <- maybeMemoized
         tree          <- zio.toManaged_
         res           <- tree match {
-                           case PropertyTree.Empty       => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                           case PropertyTree.Record(_)   =>
+                           case PropertyTree.Empty          => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                           case PropertyTree.Record(_)      =>
                              ZManaged.fail(formatError(path, "of type Map", "Singleton", descriptions))
-                           case PropertyTree.Sequence(_) =>
+                           case PropertyTree.Sequence(_)    =>
                              ZManaged.fail(formatError(path, "of type List", "Singleton", descriptions))
-                           case PropertyTree.Leaf(value) =>
+                           case PropertyTree.Leaf(value, _) =>
                              cfg.propertyType.read(value) match {
                                case Left(parseError) =>
                                  ZManaged.fail(
@@ -193,8 +193,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[Map[K, B]] =
       for {
         tree_ <- treeOf(cfg)
-        res   <- tree_.at(PropertyTreePath(path.reverse.toVector), true) match {
-                   case PropertyTree.Leaf(_)        =>
+        res   <- tree_.at(PropertyTreePath(path.reverse.toVector)) match {
+                   case PropertyTree.Leaf(_, _)     =>
                      ZManaged.fail(formatError(path, "of type Singleton", "Map", descriptions))
                    case PropertyTree.Sequence(_)    =>
                      ZManaged.fail(formatError(path, "of type List", "Map", descriptions))
@@ -250,17 +250,11 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
       for {
         tree_ <- treeOf(cfg)
-        res   <- tree_.at(PropertyTreePath(path.reverse.toVector), true) match {
-                   case leaf @ PropertyTree.Leaf(_) =>
-                     cfg.source.canSingletonBeSequence match {
-                       case LeafForSequence.Invalid =>
-                         ZManaged.fail(formatError(path, "of type Singleton", "List", descriptions))
-                       case LeafForSequence.Valid   => fromTrees(List(leaf), tree_)
-                     }
-
-                   case PropertyTree.Record(_)        => ZManaged.fail(formatError(path, "of type Map", "List", descriptions))
-                   case PropertyTree.Empty            => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                   case PropertyTree.Sequence(values) => fromTrees(values, tree_)
+        res   <- tree_.at(PropertyTreePath(path.reverse.toVector)) match {
+                   case leaf @ PropertyTree.Leaf(_, _) => fromTrees(List(leaf), tree_)
+                   case PropertyTree.Record(_)         => ZManaged.fail(formatError(path, "of type Map", "List", descriptions))
+                   case PropertyTree.Empty             => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                   case PropertyTree.Sequence(values)  => fromTrees(values, tree_)
                  }
       } yield res
     }
@@ -325,8 +319,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     loopAny(Nil, None, configuration, Nil, Nil)
       .map(_.value)
       .use {
-        case PropertyTree.Leaf(value) => ZIO.succeed(value)
-        case _                        => ZIO.fail(ReadError.SourceError("Failed to read"))
+        case PropertyTree.Leaf(value, _) => ZIO.succeed(value)
+        case _                           => ZIO.fail(ReadError.SourceError("Failed to read"))
       }
 
   }

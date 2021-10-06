@@ -19,8 +19,7 @@ object SetTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -35,8 +34,7 @@ object SetTest extends BaseSpec {
           read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Sequence(Nil) :: Nil))),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
@@ -51,8 +49,7 @@ object SetTest extends BaseSpec {
           read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"))),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
@@ -67,8 +64,7 @@ object SetTest extends BaseSpec {
           read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
@@ -82,8 +78,7 @@ object SetTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -97,8 +92,7 @@ object SetTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -112,8 +106,7 @@ object SetTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -127,8 +120,7 @@ object SetTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -142,8 +134,7 @@ object SetTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -156,9 +147,8 @@ object SetTest extends BaseSpec {
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
-            Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))),
-            "tree",
-            LeafForSequence.Invalid
+            Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))).leafNotASequence,
+            "tree"
           )
         )
 
@@ -172,8 +162,7 @@ object SetTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Nil))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -197,8 +186,7 @@ object SetTest extends BaseSpec {
                 )
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -214,8 +202,7 @@ object SetTest extends BaseSpec {
             Record(
               Map("a" -> Leaf("sa"), "b" -> Sequence(Record[String, String](Map.empty) :: Sequence(Nil) :: Nil))
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -231,8 +218,7 @@ object SetTest extends BaseSpec {
             Record(
               Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Leaf("v1") :: Nil))
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -265,8 +251,7 @@ object SetTest extends BaseSpec {
                 )
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -305,8 +290,7 @@ object SetTest extends BaseSpec {
                 "b" -> Sequence(Leaf("2") :: Leaf("one") :: Leaf("2") :: Nil)
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
         val expected: ReadError[String] =
@@ -367,8 +351,7 @@ object SetTest extends BaseSpec {
                 "b" -> Sequence(Leaf("2") :: Leaf("one") :: Leaf("2") :: Nil)
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
         val expected: ReadError[String] =
@@ -386,7 +369,13 @@ object SetTest extends BaseSpec {
                 )
               ),
               ZipErrors(
-                List(FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int", List("value of type int")))
+                List(
+                  FormatError(
+                    List(Key("b"), Index(1)),
+                    "Provided value is one, expecting the type int",
+                    List("value of type int")
+                  )
+                )
               )
             )
           )
