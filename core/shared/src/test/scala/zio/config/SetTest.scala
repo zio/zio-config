@@ -2,7 +2,7 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
-import zio.config.ReadError.Step.{Index, Key}
+import zio.config.PropertyTreePath.Step.{Index, Key}
 import zio.config.ReadError.{ConversionError, FormatError, ListErrors, MissingValue, ZipErrors}
 import zio.test.Assertion._
 import zio.test._
@@ -325,7 +325,11 @@ object SetTest extends BaseSpec {
               ),
               ZipErrors(
                 List(
-                  FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int")
+                  FormatError(
+                    List(Key("b"), Index(1)),
+                    "Provided value is one, expecting the type int",
+                    List("value of type int")
+                  )
                 )
               )
             )
@@ -382,7 +386,7 @@ object SetTest extends BaseSpec {
                 )
               ),
               ZipErrors(
-                List(FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int"))
+                List(FormatError(List(Key("b"), Index(1)), "Provided value is one, expecting the type int", List("value of type int")))
               )
             )
           )

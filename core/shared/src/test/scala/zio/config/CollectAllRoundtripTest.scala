@@ -29,7 +29,7 @@ object CollectAllRoundtripTest extends BaseSpec {
 
           val readAndWrite =
             for {
-              result  <- read(config from ConfigSource.fromMap(inputSource))
+              result  <- read(config from ConfigSource.fromMap(inputSource).memoize)
               written <- ZIO.fromEither(write(config, result))
             } yield written
 

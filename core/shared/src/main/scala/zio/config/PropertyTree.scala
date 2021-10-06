@@ -8,13 +8,6 @@ import scala.util.Try
 import scala.util.matching.Regex
 
 final case class PropertyTreePath[K](path: Vector[Step[K]]) {
-  def toPath: String = path
-    .map({
-      case Step.Index(n) => s"[${n}]"
-      case Step.Value(k) => k.toString
-    })
-    .mkString(".")
-
   def mapKeys(f: K => K): PropertyTreePath[K] =
     PropertyTreePath(path.map(_.map(f)))
 }
@@ -25,7 +18,7 @@ object PropertyTreePath {
     def map[K1 >: K, K2](f: K1 => K2): Step[K2] =
       self match {
         case Step.Index(n) => Step.Index(n)
-        case Step.Value(k) => Step.Value(f(k.asInstanceOf[K1]))
+        case Step.Key(k)   => Step.Key(f(k.asInstanceOf[K1]))
       }
   }
 
@@ -39,13 +32,13 @@ object PropertyTreePath {
         .flatMap(regexMatch =>
           (1 to regexMatch.groupCount).map { index =>
             val strOrInt = regexMatch.group(index)
-            Try(Step.Index(strOrInt.toInt)).getOrElse(Step.Value(IsString(strOrInt)))
+            Try(Step.Index(strOrInt.toInt)).getOrElse(Step.Key(IsString(strOrInt)))
           }
         )
         .toVector
 
-    final case class Index(n: Int)  extends Step[Nothing]
-    final case class Value[K](k: K) extends Step[K]
+    final case class Index(n: Int) extends Step[Nothing]
+    final case class Key[K](k: K)  extends Step[K]
   }
 
   /**
@@ -104,10 +97,10 @@ sealed trait PropertyTree[+K, +V] { self =>
   final def at[K1 >: K](propertyTreePath: PropertyTreePath[K1]): PropertyTree[K1, V] = {
     val steps = propertyTreePath.path
 
-    steps.foldLeft(self) { (tree, step) =>
+    steps.foldLeft(self.asInstanceOf[PropertyTree[K1, V]]) { (tree, step) =>
       (step match {
         case Step.Index(n) => tree.atIndex(n)
-        case Step.Value(k) => tree.atKey(k.asInstanceOf[K])
+        case Step.Key(k)   => tree.atKey(k)
       }).getOrElse(PropertyTree.empty)
     }
   }

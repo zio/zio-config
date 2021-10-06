@@ -60,7 +60,7 @@ object AutoDerivationCustom extends App {
     case Left(_)  => throw new Exception("bad hocon string")
   }
 
-  val s: Either[ReadError[String], AppConfig] = read(appConfigDesc from source)
+  val s = read(appConfigDesc from source)
 
   assert(
     s == Right(

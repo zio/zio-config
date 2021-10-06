@@ -2,7 +2,7 @@ package zio.config
 
 import com.github.ghik.silencer.silent
 import zio.config.ConfigDescriptor._
-import zio.config.ReadError.Step.Key
+import zio.config.PropertyTreePath.Step.Key
 import zio.config.helpers._
 import zio.random.Random
 import zio.test.Assertion._
@@ -63,7 +63,8 @@ object CoproductTest extends BaseSpec {
                       List(
                         FormatError(
                           List(Key(p.kFactor)),
-                          "Provided value is notafloat, expecting the type float"
+                          "Provided value is notafloat, expecting the type float",
+                          List("value of type float")
                         )
                       )
                     )

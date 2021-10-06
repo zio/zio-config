@@ -3,6 +3,7 @@ package zio.config
 import com.github.ghik.silencer.silent
 import zio.{IO, ZIO, ZManaged}
 import zio.config.ReadError._
+import PropertyTreePath.Step
 
 @silent("Unused import")
 private[config] trait ReadModule extends ConfigDescriptorModule {
@@ -16,10 +17,10 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     import ConfigDescriptorAdt._
 
-    def formatError(paths: List[Step[K]], actualType: String, expectedType: String, descriptions: List[String]) =
+    def formatError(paths: List[Step[K]], actual: String, expected: String, descriptions: List[String]) =
       ReadError.FormatError(
         paths.reverse,
-        s"Provided value is of type $actualType, expecting the type $expectedType",
+        s"Provided value is $actual, expecting the type $expected",
         descriptions
       )
 
@@ -118,21 +119,23 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         maybeMemoized <-
           cfg.source
             .getConfigValue(
-              PropertyTreePath(keys.reverse.toVector.map(PropertyTreePath.Step.Value(_)))
+              PropertyTreePath(keys.reverse.toVector.map(PropertyTreePath.Step.Key(_)))
             )
         zio           <- maybeMemoized
         tree          <- zio.toManaged_
         res           <- tree match {
                            case PropertyTree.Empty       => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                           case PropertyTree.Record(_)   => ZManaged.fail(formatError(path, "Record", "Leaf", descriptions))
-                           case PropertyTree.Sequence(_) => ZManaged.fail(formatError(path, "Sequence", "Leaf", descriptions))
+                           case PropertyTree.Record(_)   =>
+                             ZManaged.fail(formatError(path, "of type Map", "Singleton", descriptions))
+                           case PropertyTree.Sequence(_) =>
+                             ZManaged.fail(formatError(path, "of type List", "Singleton", descriptions))
                            case PropertyTree.Leaf(value) =>
                              cfg.propertyType.read(value) match {
                                case Left(parseError) =>
                                  ZManaged.fail(
                                    formatError(
-                                     path.reverse,
-                                     parseError.value.toString,
+                                     path,
+                                     parseError.value,
                                      parseError.typeInfo,
                                      descriptions
                                    )
@@ -191,14 +194,15 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[Map[K, B]] =
       for {
         maybeMemoized <- cfg.source.getConfigValue(
-                           PropertyTreePath(keys.reverse.toVector.map(k => PropertyTreePath.Step.Value(k)))
+                           PropertyTreePath(keys.reverse.toVector.map(k => PropertyTreePath.Step.Key(k)))
                          )
 
         zio  <- maybeMemoized
         tree <- zio.toManaged_
         res  <- tree match {
-                  case PropertyTree.Leaf(_)        => ZManaged.fail(formatError(path, "Leaf", "Record", descriptions))
-                  case PropertyTree.Sequence(_)    => ZManaged.fail(formatError(path, "Sequence", "Record", descriptions))
+                  case PropertyTree.Leaf(_)        =>
+                    ZManaged.fail(formatError(path, "of type Singleton", "Map", descriptions))
+                  case PropertyTree.Sequence(_)    => ZManaged.fail(formatError(path, "of type List", "Map", descriptions))
                   case PropertyTree.Record(values) =>
                     val result: List[(K, Res[B])] =
                       values.toList.map { case ((k, tree)) =>
@@ -250,18 +254,19 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
       for {
         maybeMemoized <-
-          cfg.source.getConfigValue(PropertyTreePath(keys.reverse.map(PropertyTreePath.Step.Value(_)).toVector))
+          cfg.source.getConfigValue(PropertyTreePath(keys.reverse.map(PropertyTreePath.Step.Key(_)).toVector))
 
         zio  <- maybeMemoized
         tree <- zio.toManaged_
         res  <- tree match {
                   case leaf @ PropertyTree.Leaf(_) =>
                     cfg.source.canSingletonBeSequence match {
-                      case LeafForSequence.Invalid => ZManaged.fail(formatError(path, "Leaf", "Sequence", descriptions))
+                      case LeafForSequence.Invalid =>
+                        ZManaged.fail(formatError(path, "of type Singleton", "List", descriptions))
                       case LeafForSequence.Valid   => fromTrees(List(leaf))
                     }
 
-                  case PropertyTree.Record(_)        => ZManaged.fail(formatError(path, "Record", "Sequence", descriptions))
+                  case PropertyTree.Record(_)        => ZManaged.fail(formatError(path, "of type Map", "List", descriptions))
                   case PropertyTree.Empty            => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
                   case PropertyTree.Sequence(values) => fromTrees(values)
                 }
@@ -330,7 +335,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     keys: List[K]
   ): ZManaged[Any, ReadError[K], Boolean] = {
     val sourceTrees =
-      config.sources.map(_.getConfigValue(PropertyTreePath(keys.toVector.map(PropertyTreePath.Step.Value(_)))))
+      config.sources.map(_.getConfigValue(PropertyTreePath(keys.toVector.map(PropertyTreePath.Step.Key(_)))))
 
     ZManaged.forall(sourceTrees) { managed =>
       for {

@@ -2,7 +2,7 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
-import zio.config.ReadError.Step.{Index, Key}
+import zio.config.PropertyTreePath.Step.{Index, Key}
 import zio.config.ReadError.{FormatError, ListErrors, ZipErrors}
 import zio.test.Assertion._
 import zio.test._

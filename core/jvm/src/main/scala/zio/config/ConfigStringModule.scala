@@ -831,7 +831,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      ZLayer.fromServiceM[System.Service, Any, ReadError[String], A]((system: System.Service) =>
+      ZLayer.fromServiceM((system: System.Service) =>
         read(
           configDescriptor from ConfigSource.fromSystemEnv(
             keyDelimiter,
@@ -871,7 +871,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      ZLayer.fromServiceM[System.Service, Any, ReadError[String], A]((system: System.Service) =>
+      ZLayer.fromServiceM((system: System.Service) =>
         read(
           configDescriptor from ConfigSource.fromSystemProps(
             keyDelimiter,
