@@ -25,21 +25,19 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopNested[B](
       path: List[Step[K]],
-      tree: Option[PropertyTree[K, V]],
       cfg: Nested[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      loopAny(path, tree, cfg.config, descriptions, programSummary)
+      loopAny(path, cfg.config, descriptions, programSummary)
 
     def loopOptional[B](
       path: List[Step[K]],
-      tree: Option[PropertyTree[K, V]],
       cfg: Optional[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Option[B]] =
-      loopAny(path, tree, cfg.config, descriptions, programSummary).either flatMap {
+      loopAny(path, cfg.config, descriptions, programSummary).either flatMap {
         case Left(error) =>
           ZManaged.fromEither(handleDefaultValues(error, cfg.config, None))
 
@@ -51,12 +49,11 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopDefault[B](
       path: List[Step[K]],
-      tree: Option[PropertyTree[K, V]],
       cfg: Default[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      loopAny(path, tree, cfg.config, descriptions, programSummary).either flatMap {
+      loopAny(path, cfg.config, descriptions, programSummary).either flatMap {
         case Left(error) =>
           ZManaged.fromEither(handleDefaultValues(error, cfg.config, cfg.default))
 
@@ -68,15 +65,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopOrElse[B](
       path: List[Step[K]],
-      tree: Option[PropertyTree[K, V]],
       cfg: OrElse[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      loopAny(path, tree, cfg.left, descriptions, programSummary).either flatMap {
+      loopAny(path, cfg.left, descriptions, programSummary).either flatMap {
         case a @ Right(_)    => ZManaged.fromEither(a)
         case Left(leftError) =>
-          loopAny(path, tree, cfg.right, descriptions, programSummary).either flatMap {
+          loopAny(path, cfg.right, descriptions, programSummary).either flatMap {
             case a @ Right(_) =>
               ZManaged.fromEither(a)
 
@@ -89,17 +85,16 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopOrElseEither[B, C](
       path: List[Step[K]],
-      tree: Option[PropertyTree[K, V]],
       cfg: OrElseEither[B, C],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Either[B, C]] =
-      loopAny(path, tree, cfg.left, descriptions, programSummary).either flatMap {
+      loopAny(path, cfg.left, descriptions, programSummary).either flatMap {
         case Right(value) =>
           ZManaged.succeed(value.map(_.map(Left(_))))
 
         case Left(leftError) =>
-          loopAny(path, tree, cfg.right, descriptions, programSummary).either flatMap {
+          loopAny(path, cfg.right, descriptions, programSummary).either flatMap {
             case Right(rightValue) =>
               ZManaged.succeed(rightValue.map(_.map(Right(_))))
 
@@ -144,13 +139,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopZip[B, C](
       path: List[Step[K]],
-      tree: Option[PropertyTree[K, V]],
       cfg: Zip[B, C],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[(B, C)] =
-      loopAny(path, tree, cfg.left, descriptions, programSummary).either
-        .zip(loopAny(path, tree, cfg.right, descriptions, programSummary).either)
+      loopAny(path, cfg.left, descriptions, programSummary).either
+        .zip(loopAny(path, cfg.right, descriptions, programSummary).either)
         .flatMap {
           case (Right(leftV), Right(rightV)) =>
             ZManaged.succeed(leftV.zipWith(rightV)(_.zip(_)))
@@ -167,12 +161,11 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopXmapEither[B, C](
       path: List[Step[K]],
-      tree: Option[PropertyTree[K, V]],
       cfg: TransformOrFail[B, C],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[C] =
-      loopAny(path, tree, cfg.config, descriptions, programSummary).either flatMap {
+      loopAny(path, cfg.config, descriptions, programSummary).either flatMap {
         case Left(error) =>
           ZManaged.fail(error)
         case Right(a)    =>
@@ -186,7 +179,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopMap[B](
       path: List[Step[K]],
-      tree: Option[PropertyTree[K, V]],
       cfg: DynamicMap[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
@@ -205,7 +197,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            k,
                            loopAny(
                              Step.Key(k) :: path,
-                             Some(tree_),
                              cfg.config,
                              descriptions,
                              programSummary
@@ -223,20 +214,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopSequence[B](
       path: List[Step[K]],
-      tree: Option[PropertyTree[K, V]],
       cfg: Sequence[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[List[B]] = {
 
       def fromTrees(
-        values: List[PropertyTree[K, V]],
-        originalTree: PropertyTree[K, V]
+        values: List[PropertyTree[K, V]]
       ): ZManaged[Any, ReadError[String], AnnotatedRead[PropertyTree[K, List[B]]]] = {
         val list = values.zipWithIndex.map { case (_, idx) =>
           loopAny(
             Step.Index(idx) :: path,
-            Some(originalTree),
             cfg.config,
             descriptions,
             programSummary
@@ -251,17 +239,16 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       for {
         tree_ <- treeOf(cfg)
         res   <- tree_.at(PropertyTreePath(path.reverse.toVector)) match {
-                   case leaf @ PropertyTree.Leaf(_, _) => fromTrees(List(leaf), tree_)
+                   case leaf @ PropertyTree.Leaf(_, _) => fromTrees(List(leaf))
                    case PropertyTree.Record(_)         => ZManaged.fail(formatError(path, "of type Map", "List", descriptions))
                    case PropertyTree.Empty             => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                   case PropertyTree.Sequence(values)  => fromTrees(values, tree_)
+                   case PropertyTree.Sequence(values)  => fromTrees(values)
                  }
       } yield res
     }
 
     def loopAny[B](
       path: List[Step[K]],
-      tree: Option[PropertyTree[K, V]],
       config: ConfigDescriptor[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
@@ -274,49 +261,49 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                        else
                          config match {
                            case c @ Lazy(thunk) =>
-                             loopAny(path, tree, thunk(), descriptions, c :: programSummary)
+                             loopAny(path, thunk(), descriptions, c :: programSummary)
 
                            case c @ Default(_, _) =>
-                             loopDefault(path, tree, c, descriptions, c :: programSummary)
+                             loopDefault(path, c, descriptions, c :: programSummary)
 
                            case c @ Describe(_, message) =>
-                             loopAny(path, tree, c.config, descriptions :+ message, c :: programSummary)
+                             loopAny(path, c.config, descriptions :+ message, c :: programSummary)
 
                            case c @ DynamicMap(_, _) =>
-                             loopMap(path, tree, c, descriptions, c :: programSummary)
+                             loopMap(path, c, descriptions, c :: programSummary)
 
                            case c @ Nested(_, key, _) =>
-                             loopNested(Step.Key(key) :: path, tree, c, descriptions, c :: programSummary)
+                             loopNested(Step.Key(key) :: path, c, descriptions, c :: programSummary)
 
                            case c @ Optional(_) =>
-                             loopOptional(path, tree, c, descriptions, c :: programSummary)
+                             loopOptional(path, c, descriptions, c :: programSummary)
 
                            case c @ OrElse(_, _) =>
-                             loopOrElse(path, tree, c, descriptions, c :: programSummary)
+                             loopOrElse(path, c, descriptions, c :: programSummary)
 
                            case c @ OrElseEither(_, _) =>
-                             loopOrElseEither(path, tree, c, descriptions, c :: programSummary)
+                             loopOrElseEither(path, c, descriptions, c :: programSummary)
 
                            case c @ Source(_, _) =>
                              loopSource(
                                path,
-                               c.copy(source = tree.fold(c.source)(c.source.withTree)),
+                               c,
                                descriptions
                              )
 
                            case c @ Zip(_, _) =>
-                             loopZip(path, tree, c, descriptions, c :: programSummary)
+                             loopZip(path, c, descriptions, c :: programSummary)
 
                            case c @ TransformOrFail(_, _, _) =>
-                             loopXmapEither(path, tree, c, descriptions, c :: programSummary)
+                             loopXmapEither(path, c, descriptions, c :: programSummary)
 
                            case c @ Sequence(_, _) =>
-                             loopSequence(path, tree, c, descriptions, c :: programSummary)
+                             loopSequence(path, c, descriptions, c :: programSummary)
                          }
 
       } yield res.asInstanceOf[AnnotatedRead[PropertyTree[K, B]]]
 
-    loopAny(Nil, None, configuration, Nil, Nil)
+    loopAny(Nil, configuration, Nil, Nil)
       .map(_.value)
       .use {
         case PropertyTree.Leaf(value, _) => ZIO.succeed(value)

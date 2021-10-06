@@ -1,7 +1,5 @@
 package zio
 
-import scala.collection.immutable.{AbstractMap, SeqMap, SortedMap}
-
 package object config extends KeyConversionFunctions with ConfigStringModule with ImplicitTupleConversion {
 
   implicit class MapOps[A](a: => A) {
