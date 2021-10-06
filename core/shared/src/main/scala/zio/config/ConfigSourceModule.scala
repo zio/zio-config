@@ -34,7 +34,7 @@ trait ConfigSourceModule extends KeyValueModule {
     ): ZManaged[Any, Nothing, ZManaged[Any, ReadError[K], ZIO[Any, ReadError[K], PropertyTree[K, V]]]] =
       access.map(_.map(_(keys)))
 
-    def root: ZManaged[Any, Nothing, ZManaged[
+    lazy val root: ZManaged[Any, Nothing, ZManaged[
       Any,
       ReadError[String],
       ZIO[Any, ReadError[String], PropertyTree[String, String]]
