@@ -105,12 +105,12 @@ sealed trait PropertyTree[+K, +V] { self =>
    *   at("x").atIndex(0).atKey("y1") // returns Some(Leaf(v1)
    * }}}
    */
-  final def at[K1 >: K](propertyTreePath: PropertyTreePath[K1]): PropertyTree[K1, V] = {
+  final def at[K1 >: K](propertyTreePath: PropertyTreePath[K1], leafForSequence: Boolean): PropertyTree[K1, V] = {
     val steps = propertyTreePath.path
 
     steps.foldLeft(self.asInstanceOf[PropertyTree[K1, V]]) { (tree, step) =>
       (step match {
-        case Step.Index(n) => tree.atIndex(n)
+        case Step.Index(n) => tree.atIndex(n, leafForSequence)
         case Step.Key(k)   => tree.atKey(k)
       }).getOrElse(PropertyTree.empty)
     }
@@ -124,9 +124,9 @@ sealed trait PropertyTree[+K, +V] { self =>
       case Sequence(_)        => None
     }
 
-  final def atIndex[K1 >: K](index: Int): Option[PropertyTree[K1, V]] =
+  final def atIndex[K1 >: K](index: Int, leafForSequence: Boolean = true): Option[PropertyTree[K1, V]] =
     self match {
-      case Leaf(_)            => None
+      case Leaf(v)            => if (index == 0 && leafForSequence) Some(Leaf(v)) else None
       case Record(_)          => None
       case PropertyTree.Empty => None
       case Sequence(value)    => value.lift(index)

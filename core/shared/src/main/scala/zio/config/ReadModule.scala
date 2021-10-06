@@ -8,7 +8,6 @@ import PropertyTreePath.Step
 @silent("Unused import")
 private[config] trait ReadModule extends ConfigDescriptorModule {
   import VersionSpecificSupport._
-  import ConfigSource._
 
   final def read[A](
     configuration: ConfigDescriptor[A]
@@ -26,24 +25,21 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopNested[B](
       path: List[Step[K]],
-      keys: List[K],
+      tree: Option[PropertyTree[K, V]],
       cfg: Nested[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
-    ): Res[B] = {
-      val updatedKeys = cfg.path :: keys
-      val updatedPath = Step.Key(cfg.path) :: path
-      loopAny(updatedPath, updatedKeys, cfg.config, descriptions, programSummary)
-    }
+    ): Res[B] =
+      loopAny(path, tree, cfg.config, descriptions, programSummary)
 
     def loopOptional[B](
       path: List[Step[K]],
-      keys: List[K],
+      tree: Option[PropertyTree[K, V]],
       cfg: Optional[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Option[B]] =
-      loopAny(path, keys, cfg.config, descriptions, programSummary).either flatMap {
+      loopAny(path, tree, cfg.config, descriptions, programSummary).either flatMap {
         case Left(error) =>
           ZManaged.fromEither(handleDefaultValues(error, cfg.config, None))
 
@@ -55,12 +51,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopDefault[B](
       path: List[Step[K]],
-      keys: List[K],
+      tree: Option[PropertyTree[K, V]],
       cfg: Default[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      loopAny(path, keys, cfg.config, descriptions, programSummary).either flatMap {
+      loopAny(path, tree, cfg.config, descriptions, programSummary).either flatMap {
         case Left(error) =>
           ZManaged.fromEither(handleDefaultValues(error, cfg.config, cfg.default))
 
@@ -72,15 +68,15 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopOrElse[B](
       path: List[Step[K]],
-      keys: List[K],
+      tree: Option[PropertyTree[K, V]],
       cfg: OrElse[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
-      loopAny(path, keys, cfg.left, descriptions, programSummary).either flatMap {
+      loopAny(path, tree, cfg.left, descriptions, programSummary).either flatMap {
         case a @ Right(_)    => ZManaged.fromEither(a)
         case Left(leftError) =>
-          loopAny(path, keys, cfg.right, descriptions, programSummary).either flatMap {
+          loopAny(path, tree, cfg.right, descriptions, programSummary).either flatMap {
             case a @ Right(_) =>
               ZManaged.fromEither(a)
 
@@ -93,17 +89,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopOrElseEither[B, C](
       path: List[Step[K]],
-      keys: List[K],
+      tree: Option[PropertyTree[K, V]],
       cfg: OrElseEither[B, C],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Either[B, C]] =
-      loopAny(path, keys, cfg.left, descriptions, programSummary).either flatMap {
+      loopAny(path, tree, cfg.left, descriptions, programSummary).either flatMap {
         case Right(value) =>
           ZManaged.succeed(value.map(_.map(Left(_))))
 
         case Left(leftError) =>
-          loopAny(path, keys, cfg.right, descriptions, programSummary).either flatMap {
+          loopAny(path, tree, cfg.right, descriptions, programSummary).either flatMap {
             case Right(rightValue) =>
               ZManaged.succeed(rightValue.map(_.map(Right(_))))
 
@@ -114,13 +110,13 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           }
       }
 
-    def loopSource[B](path: List[Step[K]], keys: List[K], cfg: Source[B], descriptions: List[String]): Res[B] =
+    def loopSource[B](
+      path: List[Step[K]],
+      cfg: Source[B],
+      descriptions: List[String]
+    ): Res[B] =
       for {
-        maybeMemoized <-
-          cfg.source
-            .getConfigValue(
-              PropertyTreePath(keys.reverse.toVector.map(PropertyTreePath.Step.Key(_)))
-            )
+        maybeMemoized <- cfg.source.getConfigValue(PropertyTreePath(path.reverse.toVector))
         zio           <- maybeMemoized
         tree          <- zio.toManaged_
         res           <- tree match {
@@ -148,13 +144,13 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopZip[B, C](
       path: List[Step[K]],
-      keys: List[K],
+      tree: Option[PropertyTree[K, V]],
       cfg: Zip[B, C],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[(B, C)] =
-      loopAny(path, keys, cfg.left, descriptions, programSummary).either
-        .zip(loopAny(path, keys, cfg.right, descriptions, programSummary).either)
+      loopAny(path, tree, cfg.left, descriptions, programSummary).either
+        .zip(loopAny(path, tree, cfg.right, descriptions, programSummary).either)
         .flatMap {
           case (Right(leftV), Right(rightV)) =>
             ZManaged.succeed(leftV.zipWith(rightV)(_.zip(_)))
@@ -171,12 +167,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopXmapEither[B, C](
       path: List[Step[K]],
-      keys: List[K],
+      tree: Option[PropertyTree[K, V]],
       cfg: TransformOrFail[B, C],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[C] =
-      loopAny(path, keys, cfg.config, descriptions, programSummary).either flatMap {
+      loopAny(path, tree, cfg.config, descriptions, programSummary).either flatMap {
         case Left(error) =>
           ZManaged.fail(error)
         case Right(a)    =>
@@ -190,64 +186,58 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
     def loopMap[B](
       path: List[Step[K]],
-      keys: List[K],
+      tree: Option[PropertyTree[K, V]],
       cfg: DynamicMap[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Map[K, B]] =
       for {
-        maybeMemoized <- cfg.source.getConfigValue(
-                           PropertyTreePath(keys.reverse.toVector.map(k => PropertyTreePath.Step.Key(k)))
+        tree_ <- treeOf(cfg)
+        res   <- tree_.at(PropertyTreePath(path.reverse.toVector), true) match {
+                   case PropertyTree.Leaf(_)        =>
+                     ZManaged.fail(formatError(path, "of type Singleton", "Map", descriptions))
+                   case PropertyTree.Sequence(_)    =>
+                     ZManaged.fail(formatError(path, "of type List", "Map", descriptions))
+                   case PropertyTree.Record(values) =>
+                     val result: List[(K, Res[B])] =
+                       values.toList.map { case ((k, _)) =>
+                         (
+                           k,
+                           loopAny(
+                             Step.Key(k) :: path,
+                             Some(tree_),
+                             cfg.config,
+                             descriptions,
+                             programSummary
+                           )
                          )
+                       }
 
-        zio  <- maybeMemoized
-        tree <- zio.toManaged_
-        res  <- tree match {
-                  case PropertyTree.Leaf(_)        =>
-                    ZManaged.fail(formatError(path, "of type Singleton", "Map", descriptions))
-                  case PropertyTree.Sequence(_)    =>
-                    ZManaged.fail(formatError(path, "of type List", "Map", descriptions))
-                  case PropertyTree.Record(values) =>
-                    val result: List[(K, Res[B])] =
-                      values.toList.map { case ((k, tree)) =>
-                        (
-                          k,
-                          loopAny(
-                            Step.Key(k) :: path,
-                            Nil,
-                            cfg.config.updateSource(_ => cfg.source.withTree(tree)),
-                            descriptions,
-                            programSummary
-                          )
-                        )
-                      }
+                     seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap)
+                       .mapError(errs => ReadError.MapErrors(errs, errs.flatMap(_.annotations).toSet))
+                       .map(mapp => AnnotatedRead(mapp, Set.empty))
 
-                    seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap)
-                      .mapError(errs => ReadError.MapErrors(errs, errs.flatMap(_.annotations).toSet))
-                      .map(mapp => AnnotatedRead(mapp, Set.empty))
-
-                  case PropertyTree.Empty => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                }
+                   case PropertyTree.Empty => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                 }
       } yield res
 
     def loopSequence[B](
       path: List[Step[K]],
-      keys: List[K],
+      tree: Option[PropertyTree[K, V]],
       cfg: Sequence[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[List[B]] = {
-      def fromTrees(
-        values: List[PropertyTree[K, V]]
-      ): ZManaged[Any, ReadError[String], AnnotatedRead[PropertyTree[K, List[B]]]] = {
-        val list = values.zipWithIndex.map { case (tree, idx) =>
-          val source =
-            cfg.source.withTree(tree)
 
+      def fromTrees(
+        values: List[PropertyTree[K, V]],
+        originalTree: PropertyTree[K, V]
+      ): ZManaged[Any, ReadError[String], AnnotatedRead[PropertyTree[K, List[B]]]] = {
+        val list = values.zipWithIndex.map { case (_, idx) =>
           loopAny(
             Step.Index(idx) :: path,
-            Nil,
-            cfg.config.updateSource(_ => source),
+            Some(originalTree),
+            cfg.config,
             descriptions,
             programSummary
           )
@@ -259,80 +249,80 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       }
 
       for {
-        maybeMemoized <-
-          cfg.source.getConfigValue(PropertyTreePath(keys.reverse.map(PropertyTreePath.Step.Key(_)).toVector))
+        tree_ <- treeOf(cfg)
+        res   <- tree_.at(PropertyTreePath(path.reverse.toVector), true) match {
+                   case leaf @ PropertyTree.Leaf(_) =>
+                     cfg.source.canSingletonBeSequence match {
+                       case LeafForSequence.Invalid =>
+                         ZManaged.fail(formatError(path, "of type Singleton", "List", descriptions))
+                       case LeafForSequence.Valid   => fromTrees(List(leaf), tree_)
+                     }
 
-        zio  <- maybeMemoized
-        tree <- zio.toManaged_
-        res  <- tree match {
-                  case leaf @ PropertyTree.Leaf(_) =>
-                    cfg.source.canSingletonBeSequence match {
-                      case LeafForSequence.Invalid =>
-                        ZManaged.fail(formatError(path, "of type Singleton", "List", descriptions))
-                      case LeafForSequence.Valid   => fromTrees(List(leaf))
-                    }
-
-                  case PropertyTree.Record(_)        => ZManaged.fail(formatError(path, "of type Map", "List", descriptions))
-                  case PropertyTree.Empty            => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                  case PropertyTree.Sequence(values) => fromTrees(values)
-                }
+                   case PropertyTree.Record(_)        => ZManaged.fail(formatError(path, "of type Map", "List", descriptions))
+                   case PropertyTree.Empty            => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                   case PropertyTree.Sequence(values) => fromTrees(values, tree_)
+                 }
       } yield res
     }
 
     def loopAny[B](
       path: List[Step[K]],
-      keys: List[K],
+      tree: Option[PropertyTree[K, V]],
       config: ConfigDescriptor[B],
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
       for {
-        isEmpty     <- isEmptyConfigSource(config, keys.reverse)
+        isEmpty     <- isEmptyConfigSource(config, path.reverse)
         alreadySeen <- ZManaged.succeed(programSummary.contains(config))
         res         <- if (alreadySeen && isEmpty)
                          ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
                        else
                          config match {
                            case c @ Lazy(thunk) =>
-                             loopAny(path, keys, thunk(), descriptions, c :: programSummary)
+                             loopAny(path, tree, thunk(), descriptions, c :: programSummary)
 
                            case c @ Default(_, _) =>
-                             loopDefault(path, keys, c, descriptions, c :: programSummary)
+                             loopDefault(path, tree, c, descriptions, c :: programSummary)
 
                            case c @ Describe(_, message) =>
-                             loopAny(path, keys, c.config, descriptions :+ message, c :: programSummary)
+                             loopAny(path, tree, c.config, descriptions :+ message, c :: programSummary)
 
                            case c @ DynamicMap(_, _) =>
-                             loopMap(path, keys, c, descriptions, c :: programSummary)
+                             loopMap(path, tree, c, descriptions, c :: programSummary)
 
-                           case c @ Nested(_, _, _) =>
-                             loopNested(path, keys, c, descriptions, c :: programSummary)
+                           case c @ Nested(_, key, _) =>
+                             loopNested(Step.Key(key) :: path, tree, c, descriptions, c :: programSummary)
 
                            case c @ Optional(_) =>
-                             loopOptional(path, keys, c, descriptions, c :: programSummary)
+                             loopOptional(path, tree, c, descriptions, c :: programSummary)
 
                            case c @ OrElse(_, _) =>
-                             loopOrElse(path, keys, c, descriptions, c :: programSummary)
+                             loopOrElse(path, tree, c, descriptions, c :: programSummary)
 
                            case c @ OrElseEither(_, _) =>
-                             loopOrElseEither(path, keys, c, descriptions, c :: programSummary)
+                             loopOrElseEither(path, tree, c, descriptions, c :: programSummary)
 
                            case c @ Source(_, _) =>
-                             loopSource(path, keys, c, descriptions)
+                             loopSource(
+                               path,
+                               c.copy(source = tree.fold(c.source)(c.source.withTree)),
+                               descriptions
+                             )
 
                            case c @ Zip(_, _) =>
-                             loopZip(path, keys, c, descriptions, c :: programSummary)
+                             loopZip(path, tree, c, descriptions, c :: programSummary)
 
                            case c @ TransformOrFail(_, _, _) =>
-                             loopXmapEither(path, keys, c, descriptions, c :: programSummary)
+                             loopXmapEither(path, tree, c, descriptions, c :: programSummary)
 
                            case c @ Sequence(_, _) =>
-                             loopSequence(path, keys, c, descriptions, c :: programSummary)
+                             loopSequence(path, tree, c, descriptions, c :: programSummary)
                          }
 
       } yield res.asInstanceOf[AnnotatedRead[PropertyTree[K, B]]]
 
-    loopAny(Nil, Nil, configuration, Nil, Nil)
+    loopAny(Nil, None, configuration, Nil, Nil)
       .map(_.value)
       .use {
         case PropertyTree.Leaf(value) => ZIO.succeed(value)
@@ -341,12 +331,29 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
   }
 
+  private[config] def treeOf[A](
+    config: ConfigDescriptor[A]
+  ): ZManaged[Any, ReadError[String], PropertyTree[K, V]] = {
+    val sourceTreesManaged =
+      config.sources.toList.map(_.root)
+
+    val sourceTrees = ZManaged.foreach(sourceTreesManaged) { managed =>
+      for {
+        memoized <- managed
+        treeZIO  <- memoized
+        tree     <- treeZIO.toManaged_
+      } yield tree
+    }
+
+    sourceTrees.map(_.reduceLeftOption(_.getOrElse(_)).getOrElse(PropertyTree.empty))
+  }
+
   private[config] def isEmptyConfigSource[A](
     config: ConfigDescriptor[A],
-    keys: List[K]
+    keys: List[Step[K]]
   ): ZManaged[Any, ReadError[K], Boolean] = {
     val sourceTrees =
-      config.sources.map(_.getConfigValue(PropertyTreePath(keys.toVector.map(PropertyTreePath.Step.Key(_)))))
+      config.sources.map(_.getConfigValue(PropertyTreePath(keys.toVector)))
 
     ZManaged.forall(sourceTrees) { managed =>
       for {
