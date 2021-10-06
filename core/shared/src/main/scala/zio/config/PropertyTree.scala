@@ -58,6 +58,17 @@ sealed trait PropertyTree[+K, +V] { self =>
   import PropertyTree._
   import scala.collection.compat._
 
+  def flatMap[K1 >: K, V1](f: V => PropertyTree[K1, V1]): PropertyTree[K1, V1] =
+    self match {
+      case Leaf(value)        => f(value)
+      case Record(value)      => Record(value.map({ case (k, v) => (k.asInstanceOf[K1], v.flatMap(f)) }))
+      case PropertyTree.Empty => PropertyTree.Empty
+      case Sequence(value)    => Sequence(value.map(_.flatMap(f)))
+    }
+
+  def zip[K1 >: K, V1](that: PropertyTree[K1, V1]): PropertyTree[K1, (V, V1)] =
+    self.flatMap(t1 => that.map(t2 => (t1, t2)))
+
   /**
    * `at` allows us to fetch a sub-tree from property-tree
    *
@@ -190,6 +201,24 @@ sealed trait PropertyTree[+K, +V] { self =>
     case Record(v)       => Record(v.map { case (k, tree) => (k, tree.map(f)) })
     case Sequence(value) => Sequence(value.map(_.map(f)))
     case Empty           => Empty
+  }
+
+  final def mapEither[E, V2](f: V => Either[E, V2]): Either[E, PropertyTree[K, V2]] = self match {
+    case Leaf(value) =>
+      f(value).map(Leaf(_))
+    case Record(v)   =>
+      val map = v.map { case (k, tree) => (k, tree.mapEither(f)) }
+      seqMap(map).map(Record(_))
+
+    case Sequence(value) =>
+      val list = value.map(_.mapEither(f))
+      list
+        .foldRight(Right(Nil): Either[E, List[PropertyTree[K, V2]]]) { (acc, a) =>
+          acc.flatMap(tree => a.map(list => tree :: list))
+        }
+        .map(Sequence(_))
+
+    case Empty => Right(Empty)
   }
 
   def bimap[K2, V2](f: K => K2, g: V => V2): PropertyTree[K2, V2] =

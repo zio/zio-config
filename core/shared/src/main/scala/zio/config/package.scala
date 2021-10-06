@@ -1,5 +1,7 @@
 package zio
 
+import scala.collection.immutable.{AbstractMap, SeqMap, SortedMap}
+
 package object config extends KeyConversionFunctions with ConfigStringModule with ImplicitTupleConversion {
 
   implicit class MapOps[A](a: => A) {
@@ -24,10 +26,10 @@ package object config extends KeyConversionFunctions with ConfigStringModule wit
     )
 
   private[config] def seqMap2[K, E, B](
-    map: Map[K, ZManaged[Any, E, B]]
-  ): ZManaged[Any, List[E], Map[K, B]] =
+    map: Map[K, ZManaged[Any, E, PropertyTree[K, B]]]
+  ): ZManaged[Any, List[E], PropertyTree[K, Map[K, B]]] =
     map.foldLeft(
-      ZManaged.fromEither[List[E], Map[K, B]](Right(Map.empty: Map[K, B]))
+      ZManaged.fromEither[List[E], PropertyTree[K, Map[K, B]]](Right(PropertyTree.Leaf(Map.empty)))
     ) { case (acc, (k, managed)) =>
       (for {
         a <- acc.either
@@ -36,15 +38,17 @@ package object config extends KeyConversionFunctions with ConfigStringModule wit
         case (Left(es), (_, Left(e)))   => Left(e :: es)
         case (Left(cs), (_, Right(_)))  => Left(cs)
         case (Right(_), (_, Left(e)))   => Left(e :: Nil)
-        case (Right(bs), (k, Right(b))) => Right(bs.updated(k, b))
+        case (Right(bs), (k, Right(b))) => Right(bs.flatMap(map => b.map(leaf => map.updated(k, leaf))))
       }).absolve
     }
 
-  private[config] def seqEither2[A, B, C](
+  private[config] def seqEither2[K, A, B, C](
     genError: (Int, A) => C
-  )(list: List[ZManaged[Any, A, B]]): ZManaged[Any, List[C], List[B]] =
+  )(list: List[ZManaged[Any, A, PropertyTree[K, B]]]): ZManaged[Any, List[C], PropertyTree[K, List[B]]] =
     list.zipWithIndex
-      .foldLeft(ZManaged.fromEither(Right(Nil)): ZManaged[Any, List[C], List[B]]) { case (acc, (managed, index)) =>
+      .foldLeft(
+        ZManaged.fromEither(Right(PropertyTree.Leaf(List.empty))): ZManaged[Any, List[C], PropertyTree[K, List[B]]]
+      ) { case (acc, (managed, index)) =>
         (for {
           a <- acc.either
           m <- managed.either
@@ -52,8 +56,8 @@ package object config extends KeyConversionFunctions with ConfigStringModule wit
           case (Left(cs), (Left(a), index)) => Left(genError(index, a) :: cs)
           case (Left(cs), (Right(_), _))    => Left(cs)
           case (Right(_), (Left(a), index)) => Left(genError(index, a) :: Nil)
-          case (Right(bs), (Right(b), _))   => Right(b :: bs)
+          case (Right(bs), (Right(b), _))   => Right(bs.flatMap(list => b.map(leaf => leaf :: list)))
         }).absolve
       }
-      .map(_.reverse)
+      .map(_.map(_.reverse))
 }

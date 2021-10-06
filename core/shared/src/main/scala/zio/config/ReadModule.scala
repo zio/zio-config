@@ -13,7 +13,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   final def read[A](
     configuration: ConfigDescriptor[A]
   ): IO[ReadError[K], A] = {
-    type Res[+B] = ZManaged[Any, ReadError[K], AnnotatedRead[B]]
+    type Res[+B] = ZManaged[Any, ReadError[K], AnnotatedRead[PropertyTree[K, B]]]
 
     import ConfigDescriptorAdt._
 
@@ -49,7 +49,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
         case Right(value) =>
           ZManaged.succeed(
-            AnnotatedRead(Some(value.value), Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations)
+            AnnotatedRead(value.value.map(Some(_)), Set(AnnotatedRead.Annotation.NonDefaultValue) ++ value.annotations)
           )
       }
 
@@ -100,12 +100,12 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[Either[B, C]] =
       loopAny(path, keys, cfg.left, descriptions, programSummary).either flatMap {
         case Right(value) =>
-          ZManaged.succeed(value.map(Left(_)))
+          ZManaged.succeed(value.map(_.map(Left(_))))
 
         case Left(leftError) =>
           loopAny(path, keys, cfg.right, descriptions, programSummary).either flatMap {
             case Right(rightValue) =>
-              ZManaged.succeed(rightValue.map(Right(_)))
+              ZManaged.succeed(rightValue.map(_.map(Right(_))))
 
             case Left(rightError) =>
               ZManaged.fail(
@@ -141,7 +141,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                                    )
                                  )
                                case Right(parsed)    =>
-                                 ZManaged.succeed(AnnotatedRead(parsed, Set.empty))
+                                 ZManaged.succeed(AnnotatedRead(PropertyTree.Leaf(parsed), Set.empty))
                              }
                          }
       } yield res
@@ -157,7 +157,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         .zip(loopAny(path, keys, cfg.right, descriptions, programSummary).either)
         .flatMap {
           case (Right(leftV), Right(rightV)) =>
-            ZManaged.succeed(leftV.zip(rightV))
+            ZManaged.succeed(leftV.zipWith(rightV)(_.zip(_)))
 
           case (Left(error1), Left(error2)) =>
             ZManaged.fail(ZipErrors(error1 :: error2 :: Nil, error1.annotations ++ error2.annotations))
@@ -181,7 +181,10 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           ZManaged.fail(error)
         case Right(a)    =>
           ZManaged.fromEither(
-            a.mapError(cfg.f).swap.map(message => ReadError.ConversionError(path.reverse, message, a.annotations)).swap
+            a.mapEither(tree => tree.mapEither(cfg.f))
+              .swap
+              .map(message => ReadError.ConversionError(path.reverse, message, a.annotations))
+              .swap
           )
       }
 
@@ -202,7 +205,8 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         res  <- tree match {
                   case PropertyTree.Leaf(_)        =>
                     ZManaged.fail(formatError(path, "of type Singleton", "Map", descriptions))
-                  case PropertyTree.Sequence(_)    => ZManaged.fail(formatError(path, "of type List", "Map", descriptions))
+                  case PropertyTree.Sequence(_)    =>
+                    ZManaged.fail(formatError(path, "of type List", "Map", descriptions))
                   case PropertyTree.Record(values) =>
                     val result: List[(K, Res[B])] =
                       values.toList.map { case ((k, tree)) =>
@@ -233,7 +237,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String],
       programSummary: List[ConfigDescriptor[_]]
     ): Res[List[B]] = {
-      def fromTrees(values: List[PropertyTree[K, V]]) = {
+      def fromTrees(
+        values: List[PropertyTree[K, V]]
+      ): ZManaged[Any, ReadError[String], AnnotatedRead[PropertyTree[K, List[B]]]] = {
         val list = values.zipWithIndex.map { case (tree, idx) =>
           val source =
             cfg.source.withTree(tree)
@@ -247,7 +253,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           )
         }
 
-        seqEither2[ReadError[K], B, ReadError[K]]((_, a) => a)(list.map(res => res.map(_.value)))
+        seqEither2[K, ReadError[K], B, ReadError[K]]((_, a) => a)(list.map(res => res.map(_.value)))
           .mapError(errs => ReadError.ListErrors(errs, errs.flatMap(_.annotations).toSet))
           .map(list => AnnotatedRead(list, Set.empty))
       }
@@ -324,9 +330,14 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                              loopSequence(path, keys, c, descriptions, c :: programSummary)
                          }
 
-      } yield res.asInstanceOf[AnnotatedRead[B]]
+      } yield res.asInstanceOf[AnnotatedRead[PropertyTree[K, B]]]
 
-    loopAny(Nil, Nil, configuration, Nil, Nil).map(_.value).use(a => ZIO.succeed(a))
+    loopAny(Nil, Nil, configuration, Nil, Nil)
+      .map(_.value)
+      .use {
+        case PropertyTree.Leaf(value) => ZIO.succeed(value)
+        case _                        => ZIO.fail(ReadError.SourceError("Failed to read"))
+      }
 
   }
 
@@ -369,7 +380,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     error: ReadError[K],
     config: ConfigDescriptor[A],
     default: B
-  ): Either[ReadError[K], AnnotatedRead[B]] = {
+  ): Either[ReadError[K], AnnotatedRead[PropertyTree[K, B]]] = {
 
     val hasOnlyMissingValuesAndZeroIrrecoverable =
       foldReadError(error)(alternative = false) {
@@ -384,13 +395,13 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       !annotations.contains(AnnotatedRead.Annotation.NonDefaultValue)
 
     error match {
-      case MissingValue(_, _, annotations) => Right(AnnotatedRead(default, annotations))
+      case MissingValue(_, _, annotations) => Right(AnnotatedRead(PropertyTree.Leaf(default), annotations))
 
       case ReadError.ZipErrors(_, annotations) if baseConditionForFallBack && hasZeroNonDefaultValues(annotations) =>
-        Right(AnnotatedRead(default, annotations))
+        Right(AnnotatedRead(PropertyTree.Leaf(default), annotations))
 
       case ReadError.OrErrors(_, annotations) if baseConditionForFallBack && hasZeroNonDefaultValues(annotations) =>
-        Right(AnnotatedRead(default, annotations))
+        Right(AnnotatedRead(PropertyTree.Leaf(default), annotations))
 
       case e =>
         Left(Irrecoverable(List(e)))
