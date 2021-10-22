@@ -1,9 +1,9 @@
 package zio.config.testsupport
 
 import zio.config._
-import zio.{Has, Random}
 import zio.test.Gen.alphaNumericChar
 import zio.test.{Gen, Sized}
+import zio.{Has, Random}
 
 import ConfigDescriptor._
 

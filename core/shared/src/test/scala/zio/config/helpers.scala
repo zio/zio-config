@@ -1,8 +1,8 @@
 package zio.config
 
-import zio.{Has, Random}
 import zio.test.Assertion.assertion
 import zio.test.{Assertion, Gen}
+import zio.{Has, Random}
 
 object helpers {
   final case class Id(value: String)

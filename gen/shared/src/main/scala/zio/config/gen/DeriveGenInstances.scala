@@ -1,8 +1,8 @@
 package zio.config.gen
 
-import zio.{Has, Random}
 import zio.test.magnolia.DeriveGen
 import zio.test.{Gen, Sized}
+import zio.{Has, Random}
 
 import java.io.File
 import java.net.{URI, URL}

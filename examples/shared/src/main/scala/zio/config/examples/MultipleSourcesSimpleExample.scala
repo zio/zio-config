@@ -1,8 +1,8 @@
 package zio.config.examples
 
 import com.github.ghik.silencer.silent
-import zio.config._
 import zio.System
+import zio.config._
 
 import ConfigDescriptor._
 

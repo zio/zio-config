@@ -2,10 +2,9 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.config.ProductBuilderTestUtils._
-import zio.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, ZIO}
+import zio.{Has, Random, ZIO}
 
 object ProductBuilderTest extends BaseSpec {
 

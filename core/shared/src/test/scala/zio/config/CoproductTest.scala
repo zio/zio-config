@@ -2,14 +2,15 @@ package zio.config
 
 import com.github.ghik.silencer.silent
 import zio.config.ConfigDescriptor._
-import zio.config.ReadError._
 import zio.config.ReadError.Step.Key
+import zio.config.ReadError._
 import zio.config.helpers._
-import zio.{Has, Random}
 import zio.test.Assertion._
 import zio.test._
+import zio.{Has, Random}
 
 import scala.concurrent.duration.Duration
+
 import CoproductTestUtils._
 
 @silent("Unused import")

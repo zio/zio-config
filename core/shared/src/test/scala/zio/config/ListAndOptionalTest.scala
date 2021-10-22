@@ -4,10 +4,9 @@ import zio.config.ConfigDescriptor._
 import zio.config.ListAndOptionalTestUtils._
 import zio.config.PropertyTree.{Leaf, Record}
 import zio.config.helpers._
-import zio.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, ZIO}
+import zio.{Has, Random, ZIO}
 
 object ListAndOptionalTest extends BaseSpec {
 

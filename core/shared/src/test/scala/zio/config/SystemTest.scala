@@ -1,11 +1,10 @@
 package zio.config
 
 import zio.config.ConfigDescriptor._
-import zio.Random
 import zio.test.Assertion._
 import zio.test.environment.{TestEnvironment, TestSystem}
 import zio.test.{DefaultRunnableSpec, _}
-import zio.{Has, ZIO}
+import zio.{Has, Random, ZIO}
 
 object SystemTest extends DefaultRunnableSpec {
 

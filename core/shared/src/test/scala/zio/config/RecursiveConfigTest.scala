@@ -1,10 +1,11 @@
 package zio.config
 
+import zio.Has
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test._
+
 import RecursiveConfigTestUtils._
-import zio.Has
 
 object RecursiveConfigTest extends BaseSpec {
 

@@ -1,14 +1,15 @@
 package zio.config.shapeless
 
-import zio.{Has, Random, ZIO}
 import zio.config._
 import zio.config.helpers._
 import zio.config.shapeless.DeriveConfigDescriptor._
 import zio.test.Assertion._
 import zio.test._
+import zio.{Has, Random, ZIO}
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
+
 import AutomaticConfigTestUtils._
 
 object AutomaticConfigTest extends {

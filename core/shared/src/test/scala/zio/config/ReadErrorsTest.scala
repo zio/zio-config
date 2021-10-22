@@ -2,9 +2,9 @@ package zio.config
 
 import zio.config.ReadError.Step
 import zio.config.ReadErrorsTestUtils._
-import zio.{Has, Random}
 import zio.test.Assertion._
 import zio.test._
+import zio.{Has, Random}
 
 object ReadErrorsTest extends BaseSpec {
 

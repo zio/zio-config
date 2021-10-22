@@ -3,10 +3,9 @@ package zio.config
 import zio.config.ConfigDescriptor._
 import zio.config.NestedConfigTestUtils._
 import zio.config.helpers._
-import zio.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, ZIO}
+import zio.{Has, Random, ZIO}
 
 object NestedConfigTest extends BaseSpec {
 

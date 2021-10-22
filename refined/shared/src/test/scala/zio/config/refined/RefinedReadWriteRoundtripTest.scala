@@ -9,10 +9,9 @@ import eu.timepit.refined.string.Trimmed
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
 import zio.config.{BaseSpec, ConfigDescriptor, ConfigSource, LeafForSequence, helpers, read, write}
-import zio.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, ZIO}
+import zio.{Has, Random, ZIO}
 
 import ConfigDescriptor._
 
