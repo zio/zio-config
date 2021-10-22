@@ -9,7 +9,7 @@ import eu.timepit.refined.string.Trimmed
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
 import zio.config.{BaseSpec, ConfigDescriptor, ConfigSource, LeafForSequence, helpers, read, write}
-import zio.random.Random
+import zio.Random
 import zio.test.Assertion._
 import zio.test._
 import zio.{Has, ZIO}
@@ -18,10 +18,10 @@ import ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[String], TestSuccess] =
+  val spec: Spec[Has[TestConfig] with Has[Random], TestFailure[String], TestSuccess] =
     suite("Refined support")(
-      testM("Refined config roundtrip") {
-        checkM(genRefinedProd) { p =>
+      test("Refined config roundtrip") {
+        check(genRefinedProd) { p =>
           val cfg = prodConfig(p.longs.value.size)
           val p2  =
             for {
@@ -36,7 +36,7 @@ object RefinedReadWriteRoundtripTest extends BaseSpec {
           assertM(p2)(equalTo(p))
         }
       },
-      testM("Refined config invalid") {
+      test("Refined config invalid") {
         check(genRefinedProdInvalid) { case (n, envMap) =>
           val p2 =
             read(prodConfig(n) from ConfigSource.fromMap(envMap))
@@ -86,13 +86,13 @@ object RefinedReadWriteRoundtripTestUtils {
 
   ////
 
-  def genRefinedProd: Gen[Random, RefinedProd] =
+  def genRefinedProd: Gen[Has[Random], RefinedProd] =
     for {
       ldap  <- genSymbol(1, 10)
       port  <- Gen.int(1025, 64000)
       dburl <- Gen.option(genSymbol(1, 20))
       n     <- Gen.int(3, 10)
-      longs <- Gen.listOfN(n)(Gen.anyLong)
+      longs <- Gen.listOfN(n)(Gen.long)
       pwd   <- genSymbol(1, 10)
     } yield RefinedProd(
       Refined.unsafeApply(ldap),
@@ -102,11 +102,11 @@ object RefinedReadWriteRoundtripTestUtils {
       Refined.unsafeApply(pwd)
     )
 
-  def genRefinedProdInvalid: Gen[Random, (Int, Map[String, String])] =
+  def genRefinedProdInvalid: Gen[Has[Random], (Int, Map[String, String])] =
     for {
       port  <- Gen.int(0, 1023)
       n     <- Gen.int(1, 2)
-      longs <- Gen.listOfN(n)(Gen.anyLong)
+      longs <- Gen.listOfN(n)(Gen.long)
     } yield (
       n,
       Map(

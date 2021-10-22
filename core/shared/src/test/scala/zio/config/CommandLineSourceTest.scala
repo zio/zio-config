@@ -11,8 +11,8 @@ import zio.{Has, IO, ZIO}
 object CommandLineSourceTest extends DefaultRunnableSpec {
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration from command-line-style arguments")(
-      testM("Configuration from arguments roundtrip separate args --key value") {
-        checkM(genAppConfig()) { appConfig =>
+      test("Configuration from arguments roundtrip separate args --key value") {
+        check(genAppConfig()) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
               args   <- toSeparateArgs(AppConfig.descriptor, appConfig)
@@ -22,8 +22,8 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
       },
-      testM("Configuration from arguments roundtrip single arg --key=value") {
-        checkM(genAppConfig()) { appConfig =>
+      test("Configuration from arguments roundtrip single arg --key=value") {
+        check(genAppConfig()) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
               args   <- toSingleArg(AppConfig.descriptor, appConfig)
@@ -33,8 +33,8 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
       },
-      testM("Configuration from arguments roundtrip single arg --key=value multiple values take the head") {
-        checkM(genAppConfig()) { appConfig =>
+      test("Configuration from arguments roundtrip single arg --key=value multiple values take the head") {
+        check(genAppConfig()) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
               args   <- toMultiSingleArg(AppConfig.descriptor, appConfig)
@@ -44,8 +44,8 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
       },
-      testM("Configuration from arguments roundtrip singe arg --key-value where value contains = char") {
-        checkM(genAppConfig(stringNWithInjector(1, 15, "="))) { appConfig =>
+      test("Configuration from arguments roundtrip singe arg --key-value where value contains = char") {
+        check(genAppConfig(stringNWithInjector(1, 15, "="))) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
               args   <- toSingleArg(AppConfig.descriptor, appConfig)
@@ -65,7 +65,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
     a: A
   ): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
-      .bimap(
+      .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
           propertyTree.flatten.toList.flatMap { (t: (Vector[String], ::[String])) =>
@@ -75,7 +75,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
 
   def toSingleArg[A](descriptor: ConfigDescriptor[A], a: A): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
-      .bimap(
+      .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
           propertyTree.flatten.toList.flatMap { (t: (Vector[String], ::[String])) =>
@@ -88,7 +88,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
     a: A
   ): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
-      .bimap(
+      .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
           propertyTree.flatten.toList.flatMap { (t: (Vector[String], ::[String])) =>

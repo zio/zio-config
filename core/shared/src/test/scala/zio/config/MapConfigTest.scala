@@ -13,8 +13,8 @@ object MapConfigTest extends DefaultRunnableSpec {
 
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration from Map")(
-      testM("Configuration from Map roundtrip") {
-        checkM(genAppConfig()) { appConfig =>
+      test("Configuration from Map roundtrip") {
+        check(genAppConfig()) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
               args   <- toMap(AppConfig.descriptor, appConfig)
@@ -34,7 +34,7 @@ object MapConfigTest extends DefaultRunnableSpec {
     a: A
   ): ZIO[Any, ReadError[String], Map[String, String]] =
     IO.fromEither(write(descriptor, a))
-      .bimap(
+      .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTreeArgs
       )

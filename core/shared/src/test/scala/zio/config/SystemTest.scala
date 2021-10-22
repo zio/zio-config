@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.config.ConfigDescriptor._
-import zio.random.Random
+import zio.Random
 import zio.test.Assertion._
 import zio.test.environment.{TestEnvironment, TestSystem}
 import zio.test.{DefaultRunnableSpec, _}
@@ -11,8 +11,8 @@ object SystemTest extends DefaultRunnableSpec {
 
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration from system")(
-      testM("from system properties") {
-        checkM(genSomeConfig, genDelimiter) { (config, delimiter) =>
+      test("from system properties") {
+        check(genSomeConfig, genDelimiter) { (config, delimiter) =>
           val result = for {
             _ <- setSystemProperties(config, delimiter)
             p <- ZIO
@@ -23,7 +23,7 @@ object SystemTest extends DefaultRunnableSpec {
           assertM(result.either)(isRight(equalTo(config)))
         }
       },
-      testM("from system environment") {
+      test("from system environment") {
         val config = SomeConfig(100, "ABC")
         val result = fromSystemEnvResult(
           keyDelimiter = '_',
@@ -32,7 +32,7 @@ object SystemTest extends DefaultRunnableSpec {
 
         assertM(result.either)(isRight(equalTo(config)))
       },
-      testM("invalid system environment delimiter") {
+      test("invalid system environment delimiter") {
         val keyDelimiter = '.'
         val result       = fromSystemEnvResult(keyDelimiter = keyDelimiter)
 
@@ -66,16 +66,16 @@ object SystemTest extends DefaultRunnableSpec {
       )
   }
 
-  def genSomeConfig: Gen[Random with Sized, SomeConfig] =
+  def genSomeConfig: Gen[Has[Random] with Has[Sized], SomeConfig] =
     for {
-      size <- Gen.anyInt
-      desc <- Gen.anyString
+      size <- Gen.int
+      desc <- Gen.string
     } yield SomeConfig(size, desc)
 
-  def genDelimiter: Gen[Random, Char]       = Gen.elements('.', '_', '-', ':')
-  def genSystemDelimiter: Gen[Random, Char] = Gen.elements('_')
+  def genDelimiter: Gen[Has[Random], Char]       = Gen.elements('.', '_', '-', ':')
+  def genSystemDelimiter: Gen[Has[Random], Char] = Gen.elements('_')
 
-  def setSystemProperties(config: SomeConfig, delimiter: Char): ZIO[TestSystem, Nothing, Unit] =
+  def setSystemProperties(config: SomeConfig, delimiter: Char): ZIO[Has[TestSystem], Nothing, Unit] =
     for {
       _ <- TestSystem.putProperty(s"SYSTEMPROPERTIESTEST${delimiter}SIZE", config.size.toString)
       _ <- TestSystem.putProperty(s"SYSTEMPROPERTIESTEST${delimiter}DESCRIPTION", config.description)

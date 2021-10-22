@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.ZIO
+import zio.{Has, System, ZIO}
 import zio.config._
 
 import ConfigDescriptor._
@@ -15,7 +15,7 @@ object DefaultValueExample extends App {
       PgmConfig.unapply
     )
 
-  val pgmConfig: ZIO[zio.system.System, ReadError[String], ConfigDescriptor[PgmConfig]] =
+  val pgmConfig: ZIO[Has[System], ReadError[String], ConfigDescriptor[PgmConfig]] =
     ConfigSource.fromSystemEnv.map(source => conf from source)
 
   val runtime = zio.Runtime.default

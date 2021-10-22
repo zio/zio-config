@@ -1,12 +1,11 @@
 package zio.config.examples
 
 import zio.config._
-import zio.console._
-import zio.{App, ExitCode, Has, URIO, ZEnv, ZIO}
-
-import ConfigDescriptor._
+import zio.{Console, ExitCode, Has, ZEnv, ZIO, ZIOAppArgs, ZIOAppDefault}
 
 final case class Prod(ldap: String, port: Int, dburl: Option[String])
+
+import ConfigDescriptor._
 
 object Prod {
   val prodConfig: ConfigDescriptor[Prod] =
@@ -19,22 +18,22 @@ object Prod {
     } yield (prod.ldap, prod.dburl)
 }
 
-object ReadConfig extends App {
+object ReadConfig extends ZIOAppDefault {
 
-  override def run(args: List[String]): URIO[ZEnv, ExitCode] =
+  override def run: ZIO[ZEnv with Has[ZIOAppArgs], Nothing, ExitCode] = {
+    val configLayer = ZConfig.fromMap(
+      Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"),
+      Prod.prodConfig,
+      "constant"
+    )
     for {
-      console    <- ZIO.environment[Console].map(_.get)
-      configLayer = ZConfig.fromMap(
-                      Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"),
-                      Prod.prodConfig,
-                      "constant"
-                    )
-      out        <- Prod.myAppLogic
-                      .provideLayer(configLayer)
-                      .foldM(
-                        failure => console.putStrLn(failure.toString),
-                        _ => console.putStrLn("Success")
-                      )
-                      .exitCode
+      out <- Prod.myAppLogic
+               .provideLayer(configLayer)
+               .foldZIO(
+                 failure => Console.printLine(failure.toString),
+                 _ => Console.printLine("Success")
+               )
+               .exitCode
     } yield out
+  }
 }

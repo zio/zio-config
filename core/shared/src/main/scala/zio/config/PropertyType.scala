@@ -97,10 +97,10 @@ object PropertyType extends PropertyTypePlatformSpecific {
     def write(value: UUID): String                                   = value.toString
   }
 
-  case object ZioDurationType extends PropertyType[String, zio.duration.Duration] {
-    def read(value: String): Either[PropertyReadError[String], zio.duration.Duration] =
-      DurationType.read(value).map(zio.duration.Duration.fromScala)
-    def write(value: zio.duration.Duration): String                                   = DurationType.write(Duration.fromNanos(value.toNanos))
+  case object ZioDurationType extends PropertyType[String, zio.Duration] {
+    def read(value: String): Either[PropertyReadError[String], zio.Duration] =
+      DurationType.read(value).map(zio.Duration.fromScala)
+    def write(value: zio.Duration): String                                   = DurationType.write(Duration.fromNanos(value.toNanos))
   }
 
   case object LocalDateType extends PropertyType[String, LocalDate] {

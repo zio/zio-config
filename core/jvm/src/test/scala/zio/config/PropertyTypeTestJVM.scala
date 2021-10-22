@@ -11,11 +11,11 @@ object PropertyTypeTestJVM extends BaseSpec {
 
   val spec: ZSpec[Environment, Failure] =
     suite("PropertyTypeJVM")(
-      testM(s"valid URI string roundtrip") {
-        check(Gen.anyString)(assertValidRoundtrip(UriType, new URI(_)))
+      test(s"valid URI string roundtrip") {
+        check(Gen.string)(assertValidRoundtrip(UriType, new URI(_)))
       },
-      testM(s"valid FileType string roundtrip") {
-        check(Gen.anyString)(assertValidRoundtrip(FileType, new File(_)))
+      test(s"valid FileType string roundtrip") {
+        check(Gen.string)(assertValidRoundtrip(FileType, new File(_)))
       },
       propertyTypeRoundtripSuite(
         typeInfo = "URL",
@@ -23,8 +23,8 @@ object PropertyTypeTestJVM extends BaseSpec {
         genValid = genValidUrlString,
         parse = new URL(_)
       ),
-      testM("valid JavaFilePathType string roundtrip") {
-        check(Gen.anyString)(assertValidRoundtrip(JavaFilePathType, java.nio.file.Paths.get(_)))
+      test("valid JavaFilePathType string roundtrip") {
+        check(Gen.string)(assertValidRoundtrip(JavaFilePathType, java.nio.file.Paths.get(_)))
       }
     )
 }

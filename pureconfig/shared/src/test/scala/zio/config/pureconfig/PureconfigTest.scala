@@ -1,16 +1,15 @@
 package zio.config.pureconfig
 
-import zio.ZIO
+import zio.{Has, Random, ZIO}
 import zio.config._
 import zio.test.Assertion._
-import zio.test.{Gen, checkM, _}
-import zio.random.Random
+import zio.test.{Gen, _}
 
 object PureconfigTest extends BaseSpec {
-  override val spec: Spec[TestConfig with Random with Sized, TestFailure[Serializable], TestSuccess] =
+  override val spec: Spec[Has[TestConfig] with Has[Random] with Has[Sized], TestFailure[Serializable], TestSuccess] =
     suite("Pureconfig support")(
-      testM("vector roundtrip") {
-        checkM(Gen.vectorOf(Gen.anyString)) { v =>
+      test("vector roundtrip") {
+        check(Gen.vectorOf(Gen.string)) { v =>
           val cfg = fromPureconfig[Vector[String]]
           val v2  =
             for {

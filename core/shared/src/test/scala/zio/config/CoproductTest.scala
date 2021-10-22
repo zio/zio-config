@@ -2,15 +2,14 @@ package zio.config
 
 import com.github.ghik.silencer.silent
 import zio.config.ConfigDescriptor._
+import zio.config.ReadError._
 import zio.config.ReadError.Step.Key
 import zio.config.helpers._
-import zio.random.Random
+import zio.{Has, Random}
 import zio.test.Assertion._
 import zio.test._
 
 import scala.concurrent.duration.Duration
-
-import ReadError._
 import CoproductTestUtils._
 
 @silent("Unused import")
@@ -20,19 +19,19 @@ object CoproductTest extends BaseSpec {
 
   val spec: ZSpec[Environment, Failure] =
     suite("Coproduct support")(
-      testM("left element satisfied") {
+      test("left element satisfied") {
         check(genTestParams) { p =>
           assert(readLeft(p))(isRight(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
         }
       },
-      testM("right element satisfied") {
+      test("right element satisfied") {
         check(genTestParams) { p =>
           assert(readRight(p))(
             isRight(equalTo(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid)))))
           )
         }
       },
-      testM("round trip of enum works") {
+      test("round trip of enum works") {
         check(genSealedTraitParams) { sourceMap =>
           val source      = ConfigSource.fromMap(sourceMap, keyDelimiter = Some('.'))
           val readResult  = read(Z.config from source)
@@ -44,7 +43,7 @@ object CoproductTest extends BaseSpec {
           assert(writeResult)(equalTo(Right[String, Map[String, String]](sourceMap)))
         }
       },
-      testM("should accumulate all errors") {
+      test("should accumulate all errors") {
         check(genTestParams) { p =>
           val expected: ReadError[String] =
             OrErrors(
@@ -68,7 +67,7 @@ object CoproductTest extends BaseSpec {
           assert(readWithErrors(p))(isLeft(equalTo(expected)))
         }
       },
-      testM("left and right both populated should choose left") {
+      test("left and right both populated should choose left") {
         check(genTestParams) { p =>
           assert(readChooseLeftFromBoth(p))(isRight(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
         }
@@ -141,7 +140,7 @@ object CoproductTestUtils {
     vCodeValid: String
   )
 
-  val genSealedTraitParams: Gen[Random with Sized, Map[String, String]] =
+  val genSealedTraitParams: Gen[Has[Random] with Has[Sized], Map[String, String]] =
     for {
       s1     <- Gen.alphaNumericStringBounded(1, 10)
       s2     <- Gen.alphaNumericStringBounded(1, 10)
@@ -164,7 +163,7 @@ object CoproductTestUtils {
 
     } yield result
 
-  val genTestParams: Gen[Random, TestParams] =
+  val genTestParams: Gen[Has[Random], TestParams] =
     for {
       kLdap       <- genSymbol(1, 20)
       vLdap       <- genNonEmptyString(50)
@@ -173,9 +172,9 @@ object CoproductTestUtils {
       kUser       <- genSymbol(1, 20).filter(s => s != kLdap && s != kDbUrl)
       vUser       <- genNonEmptyString(50)
       kCount      <- genSymbol(1, 20).filter(s => s != kLdap && s != kDbUrl && s != kUser)
-      vCount      <- Gen.anyInt
+      vCount      <- Gen.int
       kDbUrlLocal <- genSymbol(1, 20).filter(s => s != kLdap && s != kDbUrl && s != kUser && s != kCount)
-      vDbUrlLocal <- Gen.anyFloat
+      vDbUrlLocal <- Gen.float
       kCValid     <-
         genNonEmptyString(15).filter(s => s != kLdap && s != kDbUrl && s != kUser && s != kCount && s != kDbUrlLocal)
       vCValid     <- genDuration(5)

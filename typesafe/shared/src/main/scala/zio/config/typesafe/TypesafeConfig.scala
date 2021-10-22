@@ -70,7 +70,7 @@ object TypesafeConfig {
     fromTypesafeConfigM(
       getFile.flatMap { file =>
         ZIO
-          .effect(ConfigFactory.parseFile(file).resolve)
+          .attempt(ConfigFactory.parseFile(file).resolve)
           .mapError(failure => ReadError.SourceError(message = failure.getMessage))
       },
       configDescriptor
@@ -119,7 +119,7 @@ object TypesafeConfig {
     fromTypesafeConfigM(
       getStr.flatMap { str =>
         ZIO
-          .effect(ConfigFactory.parseString(str).resolve)
+          .attempt(ConfigFactory.parseString(str).resolve)
           .mapError(failure => ReadError.SourceError(message = failure.getMessage))
       },
       configDescriptor

@@ -10,8 +10,8 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
 
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration of a list from multiple entries")(
-      testM("Using single arg --key=value style") {
-        checkM(Gen.int(1, 10)) { count =>
+      test("Using single arg --key=value style") {
+        check(Gen.int(1, 10)) { count =>
           val args                                      = renderArgs(count)
           val p2: zio.IO[ReadError[String], SomeConfig] =
             fromArgs(args)

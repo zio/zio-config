@@ -3,7 +3,7 @@ package zio.config.magnolia
 import magnolia._
 import zio.config._
 import zio.config.derivation.DerivationUtils._
-import zio.duration.Duration
+import zio.Duration
 
 import java.io.File
 import java.net.{URI, URL}

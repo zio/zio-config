@@ -4,19 +4,19 @@ import zio.config.ConfigDescriptor._
 import zio.config.ListAndOptionalTestUtils._
 import zio.config.PropertyTree.{Leaf, Record}
 import zio.config.helpers._
-import zio.random.Random
+import zio.Random
 import zio.test.Assertion._
 import zio.test._
 import zio.{Has, ZIO}
 
 object ListAndOptionalTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service] with Has[Sized.Service], TestFailure[
+  val spec: Spec[Has[TestConfig] with Has[Random] with Has[Sized], TestFailure[
     String
   ], TestSuccess] =
     suite("List and options")(
-      testM("optional write") {
-        checkM(genOverallConfig) { p =>
+      test("optional write") {
+        check(genOverallConfig) { p =>
           val actual = ZIO.fromEither(write(cOverallConfig, p)).map(_.flattenString())
 
           val expected = p.option
@@ -26,7 +26,7 @@ object ListAndOptionalTest extends BaseSpec {
           assertM(actual)(equalTo(expected))
         }
       },
-      testM("list read") {
+      test("list read") {
 
         val src =
           ConfigSource.fromPropertyTree(
@@ -87,7 +87,7 @@ object ListAndOptionalTest extends BaseSpec {
 
         assertM(actual)(equalTo(expected))
       },
-      testM("empty list read") {
+      test("empty list read") {
 
         val src =
           ConfigSource.fromPropertyTree(
@@ -120,8 +120,8 @@ object ListAndOptionalTest extends BaseSpec {
         val optional: ConfigDescriptor[Option[List[String]]] = list(string("usr")).optional
         assert(read(optional from src))(isRight(isNone))
       },
-      testM("list write read") {
-        checkM(genListConfig) { p =>
+      test("list write read") {
+        check(genListConfig) { p =>
           val actual = ZIO.fromEither(write(cListConfig, p)).flatMap { tree =>
             ZIO
               .fromEither(read(cListConfig from ConfigSource.fromPropertyTree(tree, "tree", LeafForSequence.Valid)))
@@ -162,7 +162,7 @@ object ListAndOptionalTest extends BaseSpec {
 
         assert(read(appConfigDesc from src))(isLeft(anything))
       },
-      testM("listOrSingleton on list input") {
+      test("listOrSingleton on list input") {
         val src =
           ConfigSource.fromPropertyTree(
             Record(
@@ -182,7 +182,7 @@ object ListAndOptionalTest extends BaseSpec {
 
         assertM(actual)(equalTo(expected))
       },
-      testM("listOrSingleton on singleton input") {
+      test("listOrSingleton on singleton input") {
         val src =
           ConfigSource.fromPropertyTree(
             Record(Map("list" -> PropertyTree.Leaf("x"))),
@@ -202,7 +202,7 @@ object ListAndOptionalTest extends BaseSpec {
 object ListAndOptionalTestUtils {
   final case class OverallConfig(option: Option[Option[Option[Id]]])
 
-  val genOverallConfig: Gen[Random, OverallConfig] =
+  val genOverallConfig: Gen[Has[Random], OverallConfig] =
     Gen.option(genId).map(t => OverallConfig(t.map(t => Option(Option(t)))))
 
   private def id(path: String) = string(path).to[Id]
@@ -219,11 +219,11 @@ object ListAndOptionalTestUtils {
 
   val cListConfig: ConfigDescriptor[ListConfig] = list("list")(cOpt3Config).to[ListConfig]
 
-  val genOpt3Config: Gen[Random, Opt3Config] = for {
+  val genOpt3Config: Gen[Has[Random], Opt3Config] = for {
     a <- genId
     b <- Gen.option(genId)
     c <- Gen.option(genId)
   } yield Opt3Config(a, b, c)
 
-  val genListConfig: Gen[Random with Sized, ListConfig] = Gen.listOf(genOpt3Config).map(ListConfig.apply)
+  val genListConfig: Gen[Has[Random] with Has[Sized], ListConfig] = Gen.listOf(genOpt3Config).map(ListConfig.apply)
 }

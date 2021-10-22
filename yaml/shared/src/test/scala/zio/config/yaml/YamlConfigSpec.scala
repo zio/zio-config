@@ -46,7 +46,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
 
       assert(result.map(_.getConfigValue(List())))(equalTo(Right(expected)))
     },
-    testM("Read a complex structure into a sealed trait") {
+    test("Read a complex structure into a sealed trait") {
       case class Child(sum: List[Sum])
 
       sealed trait Sum         extends Product with Serializable
@@ -81,7 +81,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
         )
       val expected = Child(List(A("str"), B(false)))
 
-      assertM(result.build.map(_.get).run.useNow)(succeeds(equalTo(expected)))
+      assertM(result.build.map(_.get).exit.useNow)(succeeds(equalTo(expected)))
     }
   )
 }
