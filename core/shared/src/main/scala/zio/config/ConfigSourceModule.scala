@@ -1,8 +1,7 @@
 package zio.config
 
 import zio.config.PropertyTree.{Leaf, Record, Sequence, unflatten}
-import zio.system.System
-import zio.{IO, Task, UIO, ZIO}
+import zio.{Has, IO, System, Task, UIO, ZIO}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
@@ -395,10 +394,10 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       filterKeys: String => Boolean = _ => true
     ): Task[ConfigSource] =
       for {
-        properties <- ZIO.bracket(
-                        ZIO.effect(new FileInputStream(new File(filePath)))
-                      )(r => ZIO.effectTotal(r.close())) { inputStream =>
-                        ZIO.effect {
+        properties <- ZIO.acquireReleaseWith(
+                        ZIO.attempt(new FileInputStream(new File(filePath)))
+                      )(r => ZIO.succeed(r.close())) { inputStream =>
+                        ZIO.attempt {
                           val properties = new java.util.Properties()
                           properties.load(inputStream)
                           properties
@@ -413,7 +412,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         filterKeys
       )
 
-    def fromSystemEnv: ZIO[System, ReadError[String], ConfigSource] =
+    def fromSystemEnv: ZIO[Has[System], ReadError[String], ConfigSource] =
       fromSystemEnv(None, None)
 
     /**
@@ -458,14 +457,14 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): ZIO[System, ReadError[String], ConfigSource] = {
+    ): ZIO[Has[System], ReadError[String], ConfigSource] = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
 
       if (keyDelimiter.forall(validDelimiters.contains)) {
         ZIO
-          .accessM[System](_.get.envs)
+          .serviceWith[System](_.envs)
           .map(_.filter({ case (k, _) => filterKeys(k) }))
-          .bimap(
+          .mapBoth(
             error => ReadError.SourceError(s"Error while getting system environment variables: ${error.getMessage}"),
             fromMap(_, SystemEnvironment, keyDelimiter, valueDelimiter, leafForSequence)
           )
@@ -516,7 +515,7 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
         leafForSequence = leafForSequence
       )
 
-    def fromSystemProps: ZIO[System, ReadError[String], ConfigSource] =
+    def fromSystemProps: ZIO[Has[System], ReadError[String], ConfigSource] =
       fromSystemProps(None, None)
 
     /**
@@ -545,11 +544,11 @@ trait ConfigSourceStringModule extends ConfigSourceModule {
       valueDelimiter: Option[Char],
       leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    ): ZIO[System, ReadError[String], ConfigSource] =
+    ): ZIO[Has[System], ReadError[String], ConfigSource] =
       ZIO
-        .accessM[System](_.get.properties)
+        .serviceWith[System](_.properties)
         .map(_.filter({ case (k, _) => filterKeys(k) }))
-        .bimap(
+        .mapBoth(
           error => ReadError.SourceError(s"Error while getting system properties: ${error.getMessage}"),
           fromMap(_, SystemProperties, keyDelimiter, valueDelimiter, leafForSequence)
         )

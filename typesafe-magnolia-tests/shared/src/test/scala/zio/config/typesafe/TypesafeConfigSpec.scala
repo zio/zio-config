@@ -42,7 +42,7 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
     test("Read a complex hocon structure successfully") {
       assert(readComplexSource)(equalTo(expectedResult))
     },
-    testM("Read a complex hocon structure produced by effect successfully") {
+    test("Read a complex hocon structure produced by effect successfully") {
       assertM(
         TypesafeConfig
           .fromHoconStringM(ZIO.succeed(hocon), complexDescription)

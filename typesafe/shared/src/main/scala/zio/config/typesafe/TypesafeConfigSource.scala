@@ -49,8 +49,8 @@ object TypesafeConfigSource {
    */
   def fromDefaultLoader: IO[ReadError.SourceError, ConfigSource] =
     ZIO
-      .effect(ConfigFactory.load.resolve)
-      .bimap(exception => ReadError.SourceError(exception.getMessage), fromConfig)
+      .attempt(ConfigFactory.load.resolve)
+      .mapBoth(exception => ReadError.SourceError(exception.getMessage), fromConfig)
       .absolve
 
   /**

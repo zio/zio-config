@@ -10,7 +10,7 @@ object PropertyTreeTest extends BaseSpec {
 
   val spec: ZSpec[Environment, Failure] =
     suite("PropertyTree.reduceInner")(
-      testM("reduceInner goes any n level deep tree and reduce the last Sequence(leaves) ") {
+      test("reduceInner goes any n level deep tree and reduce the last Sequence(leaves) ") {
         check(nLevelSequenceWithLeaves) { input =>
           val (tree, leaves, levelCount) = input
 
@@ -22,14 +22,14 @@ object PropertyTreeTest extends BaseSpec {
           )
         }
       },
-      testM("reduceInner should convert a simple Sequence(List(Leaf(1))) to Leaf(List(1))") {
+      test("reduceInner should convert a simple Sequence(List(Leaf(1))) to Leaf(List(1))") {
         check(genLeaf) { input =>
           assert(Sequence(List(input)).map(_ :: Nil).reduceInner(_ ++ _))(
             equalTo(Leaf(List(input.value)))
           )
         }
       },
-      testM(
+      test(
         "reduceInner should convert multiple leaves to a single leaf of multiple values"
       ) {
         check(genListOfLeaves) { input =>
@@ -46,7 +46,7 @@ object PropertyTreeTest extends BaseSpec {
           equalTo(input)
         )
       },
-      testM(
+      test(
         "reduceInner should keep the outer structure while reducing the inner sequence(leaves)"
       ) {
         check(genListOfLeaves) { input =>
@@ -55,7 +55,7 @@ object PropertyTreeTest extends BaseSpec {
           )
         }
       },
-      testM("reduceInner should not change a simple leaf(list(v))") {
+      test("reduceInner should not change a simple leaf(list(v))") {
         check(genLeaf) { input =>
           assert(input.map(_ :: Nil).reduceInner(_ ++ _))(
             equalTo(input.map(_ :: Nil))

@@ -296,8 +296,7 @@ This will tell you how to consider configuration as just a part of `Environment`
 
 ```scala mdoc:silent
 
-import zio.{ ZIO, ZLayer, Has }
-import zio.console._
+import zio.{ Console, ZIO, ZLayer, Has }
 
 case class ApplicationConfig(bridgeIp: String, userName: String)
 
@@ -307,8 +306,8 @@ val configuration =
 val finalExecution =
   for {
     appConfig <- getConfig[ApplicationConfig]
-    _         <- putStrLn(appConfig.bridgeIp)
-    _         <- putStrLn(appConfig.userName)
+    _         <- Console.printLine(appConfig.bridgeIp)
+    _         <- Console.printLine(appConfig.userName)
   } yield ()
 
 val configLayer = ZConfig.fromPropertiesFile("file-location", configuration)

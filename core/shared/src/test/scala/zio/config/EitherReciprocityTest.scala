@@ -1,19 +1,18 @@
 package zio.config
 
-import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.EitherReciprocityTestUtils._
 import zio.config.helpers._
-import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
+import zio.{Has, Random, ZIO}
 
 object EitherReciprocityTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Random, TestFailure[String], TestSuccess] =
+  val spec: Spec[Has[TestConfig] with Has[Random], TestFailure[String], TestSuccess] =
     suite("Either reciprocity")(
-      testM("coproduct should yield the same config representation on both sides of Either") {
-        checkM(genNestedConfig) { p =>
+      test("coproduct should yield the same config representation on both sides of Either") {
+        check(genNestedConfig) { p =>
           val lr =
             for {
               writtenLeft  <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
@@ -56,11 +55,11 @@ object EitherReciprocityTestUtils {
       dburl <- genDbUrl
     } yield EnterpriseAuth(id, dburl)
 
-  val genNestedConfig: Gen[Random, NestedPath] =
+  val genNestedConfig: Gen[Has[Random], NestedPath] =
     for {
       auth   <- genEnterpriseAuth
-      count  <- Gen.anyInt
-      factor <- Gen.anyFloat
+      count  <- Gen.int
+      factor <- Gen.float
     } yield NestedPath(auth, count, factor)
 
   private val cIdLeft             = string("klId").to[Id]

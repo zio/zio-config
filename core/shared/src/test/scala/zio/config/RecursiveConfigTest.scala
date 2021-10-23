@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.Has
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test._
@@ -8,7 +9,7 @@ import RecursiveConfigTestUtils._
 
 object RecursiveConfigTest extends BaseSpec {
 
-  val spec: Spec[Annotations, TestFailure[Any], TestSuccess] =
+  val spec: Spec[Has[Annotations], TestFailure[Any], TestSuccess] =
     suite("RecursiveConfigTest")(
       test("read simple") {
         assert(read(SimpleRec.config from SimpleRec.source))(isRight(equalTo(SimpleRec.expected)))

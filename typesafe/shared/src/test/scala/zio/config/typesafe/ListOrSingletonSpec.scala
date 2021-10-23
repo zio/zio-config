@@ -10,7 +10,7 @@ import zio.test.{DefaultRunnableSpec, ZSpec, assertM}
 object ListOrSingletonSpec extends DefaultRunnableSpec {
   override def spec: ZSpec[TestEnvironment, Any] =
     suite("listOrSingleton")(
-      testM("reads singleton") {
+      test("reads singleton") {
         val configString =
           """list = "x"
             |""".stripMargin
@@ -25,7 +25,7 @@ object ListOrSingletonSpec extends DefaultRunnableSpec {
 
         assertM(result)(equalTo(List("x")))
       },
-      testM("reads list") {
+      test("reads list") {
         val configString =
           """list = ["x", "y"]
             |""".stripMargin

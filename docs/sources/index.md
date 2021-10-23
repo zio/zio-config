@@ -469,10 +469,9 @@ sources, especially when some of the sources returns ZIO.
 ```scala mdoc:silent
 import java.io.File
 
-import zio.{App, ExitCode, URIO, ZIO, system}
+import zio.{App, Console, ExitCode, Has, URIO, ZIO, System}
 import zio.config._
 import zio.config.typesafe._
-import zio.console.{Console, putStrLn}
 
 /**
  * One of the ways you can summon various sources especially
@@ -480,11 +479,11 @@ import zio.console.{Console, putStrLn}
  */
 object CombineSourcesExample extends zio.App {
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-    application.either.flatMap(r => putStrLn(s"Result: ${r}")).exitCode
+    application.either.flatMap(r => Console.printLine(s"Result: ${r}")).exitCode
 
   final case class Config(username: String , password: String)
 
-  val getDesc: ZIO[system.System, ReadError[String], ConfigDescriptor[Config]] =
+  val getDesc: ZIO[Has[System], ReadError[String], ConfigDescriptor[Config]] =
     for {
       hoconFile <- ZIO.fromEither(TypesafeConfigSource.fromHoconFile(new File("/invalid/path")))
       constant  <- ZIO.fromEither(TypesafeConfigSource.fromHoconString(s""))
@@ -498,7 +497,7 @@ object CombineSourcesExample extends zio.App {
       desc        <- getDesc.mapError(_.prettyPrint())
       configValue <- ZIO.fromEither(read(desc)).mapError(_.prettyPrint())
       string      <- ZIO.fromEither(configValue.toJson(desc))
-      _ <- putStrLn(string)
+      _           <- Console.printLine(string)
     } yield ()
 }
 

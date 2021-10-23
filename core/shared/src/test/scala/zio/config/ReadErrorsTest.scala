@@ -2,22 +2,22 @@ package zio.config
 
 import zio.config.ReadError.Step
 import zio.config.ReadErrorsTestUtils._
-import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
+import zio.{Has, Random}
 
 object ReadErrorsTest extends BaseSpec {
 
   val spec: ZSpec[Environment, Failure] =
     suite("ReadErrors/NEL")(
-      testM("concat") {
+      test("concat") {
         check(genReadErrors, genReadErrors) { (l1, l2) =>
           val actual =
             concat(::(l1.head, l1.tail), ::(l2.head, l2.tail))
           assert(actual)(equalTo(l1 ++ l2))
         }
       },
-      testM("prettyPrint of complex ReadError full text") {
+      test("prettyPrint of complex ReadError full text") {
         check(Gen.const(complexErrorsForPrettyPrint), Gen.const(complexErrorsPrettyPrint)) { (error, prettyPrint) =>
           assert(error.prettyPrint())(equalTo(prettyPrint))
         }
@@ -28,15 +28,15 @@ object ReadErrorsTest extends BaseSpec {
 object ReadErrorsTestUtils {
   private val genFormatError =
     for {
-      s1 <- Gen.anyString
-      s2 <- Gen.anyString
-      s3 <- Gen.anyString
+      s1 <- Gen.string
+      s2 <- Gen.string
+      s3 <- Gen.string
     } yield ReadError.FormatError(List(Step.Key(s1)), parseErrorMessage(s2, s3))
 
-  private val genReadError: Gen[Random with Sized, ReadError[String]] =
+  private val genReadError: Gen[Has[Random] with Has[Sized], ReadError[String]] =
     Gen.oneOf(Gen.const(ReadError.MissingValue(List(Step.Key("somekey")))), genFormatError)
 
-  val genReadErrors: Gen[Random with Sized, List[ReadError[String]]] = {
+  val genReadErrors: Gen[Has[Random] with Has[Sized], List[ReadError[String]]] = {
     for {
       n    <- Gen.int(1, 20)
       list <- Gen.listOfN(n)(genReadError)
