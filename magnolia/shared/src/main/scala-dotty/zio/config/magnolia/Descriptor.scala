@@ -1,7 +1,7 @@
 package zio.config.magnolia
 
 import zio.config._, ConfigDescriptor._
-import zio.duration.Duration
+import zio.Duration
 import zio.config.derivation.DerivationUtils
 
 import java.io.File
