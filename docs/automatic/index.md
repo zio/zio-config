@@ -233,6 +233,22 @@ In order to provide implicit instances, following choices are there
 
 Now `descriptor[Execution]` compiles.
 
+Custom descriptors are also needed in case you use value classes to describe your configuration. You can use them
+together with automatic derivation and those implicit custom descriptors will be taken automatically into account
+
+```scala
+import zio.config.magnolia.{descriptor, Descriptor}
+
+final case class AwsRegion(value: String) extends AnyVal {
+  override def toString: String = value
+}
+
+object AwsRegion {
+  implicit val descriptor: Descriptor[AwsRegion] = 
+    Descriptor[String].transform(AwsRegion(_), _.value)
+}
+```
+
 ### Is that the only way for custom derivation ?
 
 What if our custom type is complex enough that, parsing from a string would actually fail?
@@ -344,7 +360,28 @@ If looking for new-types, use better strategies than AnyVal (https://afsal-taj06
 and add custom `Descriptor`explicitly in its companion objects.
 
 We will consider adding `AnyVal` support, for supporting legacy applications in future versions
-of zio-config
+of zio-config.
+
+In the meantime, if you are migrating from Scala 2 where you had custom descriptors defined for value classes
+you need to slightly change your code to compile it with Scala 3
+ - remove `AnyVal` trait
+ - modify definition of custom descriptor
+ - add import to include `ConfigDescriptor` combinators
+
+```scala
+import zio.config.ConfigDescriptor._
+import zio.config.magnolia.{descriptor, Descriptor}
+
+final case class AwsRegion(value: String) {
+  override def toString: String = value
+}
+
+object AwsRegion {
+  given Descriptor[AwsRegion] =
+    Descriptor.from(string.transform(AwsRegion(_), _.value))
+}
+```
+this way there is no need for you to update the configuration files.
 
 ### No more SealedStraitStrategy
 
