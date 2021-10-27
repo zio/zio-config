@@ -378,7 +378,7 @@ final case class AwsRegion(value: String) {
 
 object AwsRegion {
   given Descriptor[AwsRegion] =
-    Descriptor.from(string.transform(AwsRegion(_), _.value))
+    Descriptor.from(string.to[AwsRegion])
 }
 ```
 this way there is no need for you to update the configuration files.
