@@ -71,7 +71,7 @@ object YamlConfigSource {
     Try {
       ConfigSource.fromPropertyTree(
         convertYaml(
-          new Load(LoadSettings.builder().build())
+          snakeYamlLoader()
             .loadFromInputStream(new FileInputStream(file))
         ),
         file.getAbsolutePath,
@@ -108,7 +108,7 @@ object YamlConfigSource {
     Try {
       ConfigSource.fromPropertyTree(
         convertYaml(
-          new Load(LoadSettings.builder().build()).loadFromString(yamlString)
+          snakeYamlLoader().loadFromString(yamlString)
         ),
         sourceName,
         LeafForSequence.Invalid
@@ -120,4 +120,13 @@ object YamlConfigSource {
         ): ReadError[String]
       )
       .swap
+
+
+  private def snakeYamlLoader(): Load = 
+    new Load(
+      LoadSettings.
+        builder().
+        setEnvConfig(ju.Optional.of(EnvConfigImpl)).
+        build()
+      )
 }
