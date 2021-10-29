@@ -122,13 +122,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       for {
         maybeMemoized <- cachedSources.get(cfg) match {
                            case Some(value) =>
-                             println("anytime here?")
                              value.map(_(PropertyTreePath(path.reverse.toVector)))
                            case None        =>
-                             println("anytime here?2")
-
                              cfg.source.access.flatMap { reader =>
-                               println("shit")
                                cachedSources.update(cfg, reader)
                                ZManaged
                                  .succeed(cachedSources.update(cfg, reader))
