@@ -370,9 +370,16 @@ trait ConfigSourceModule extends KeyValueModule {
     ): ConfigSource = {
       val managed: ZManaged[Any, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
         ZManaged
-          .make(
-            ZIO.effect(new FileInputStream(new File(filePath)))
-          )(r => ZIO.effectTotal(r.close()))
+          .make({
+
+            ZIO.effect({
+              println("damn")
+              new FileInputStream(new File(filePath))
+            })
+          }) { r =>
+            println("closing")
+            ZIO.effectTotal(r.close())
+          }
           .mapM { inputStream =>
             for {
               properties <- ZIO.effect {
