@@ -22,7 +22,7 @@ private[this] object EnvConfigImpl extends EnvConfig {
     (Option(environment), Option(separator)) match {
       case (None, Some(sep)) if sep == ":?" || sep == "?" => throw new Exception(value)
       case (None, Some(sep)) if sep == ":-" || sep == "-" => Optional.ofNullable(value)
-      case (None, _)                                      => Optional.of(s"$${$value}")
+      case (None, _)                                      => Optional.of(s"$${$name}")
       case (Some(v), _)                                   => Optional.of(v)
     }
 }
