@@ -121,12 +121,8 @@ object YamlConfigSource {
       )
       .swap
 
-
-  private def snakeYamlLoader(): Load = 
+  private def snakeYamlLoader(): Load =
     new Load(
-      LoadSettings.
-        builder().
-        setEnvConfig(ju.Optional.of(EnvConfigImpl)).
-        build()
-      )
+      LoadSettings.builder().setEnvConfig(ju.Optional.of(EnvConfigImpl)).build()
+    )
 }

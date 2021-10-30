@@ -7,6 +7,7 @@
 
 ```scala
 cd zio-config
+sbt fmt fix check
 sbt compileAll
 sbt runAllExamples
 sbt testAll
