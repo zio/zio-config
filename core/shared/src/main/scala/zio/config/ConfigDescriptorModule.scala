@@ -646,8 +646,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
           case Source(source, propertyType) => Source(source, propertyType)
           case DynamicMap(conf)             => DynamicMap(loop(conf))
-          case Nested(source, path, conf)   =>
-            Nested(source, f(path), loop(conf))
+          case Nested(path, conf)           =>
+            Nested(f(path), loop(conf))
           case Optional(conf)               => Optional(loop(conf))
           case Sequence(conf)               => Sequence(loop(conf))
           case Describe(conf, message)      => Describe(loop(conf), message)
@@ -1008,8 +1008,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             val res = thunk()
 
             descriptors.get(c) match {
-              case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
-              case None        =>
+              case Some(value) =>
+                value.asInstanceOf[ConfigDescriptor[B]]
+
+              case None =>
                 val result = Lazy(() => loop(res))
                 descriptors.update(c, result)
                 result
@@ -1021,8 +1023,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case DynamicMap(conf) =>
             DynamicMap(loop(conf))
 
-          case Nested(source, path, conf) =>
-            Nested(f(source), path, loop(conf))
+          case Nested(path, conf) =>
+            Nested(path, loop(conf))
 
           case Optional(conf) =>
             Optional(loop(conf))
@@ -1032,7 +1034,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
           case Describe(conf, message) =>
             Describe(loop(conf), message)
-          case Default(conf, b)        =>
+
+          case Default(conf, b) =>
             Default(loop(conf), b)
 
           case TransformOrFail(conf, f, g) =>
@@ -1101,8 +1104,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Lazy(get) =>
             runLoop(get(), None)
 
-          case Nested(source, _, config) =>
-            runLoop(config, Some(source))
+          case Nested(_, config) =>
+            runLoop(config, None)
 
           case Optional(config) =>
             runLoop(config, None)
@@ -1896,7 +1899,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * Note that `string("key")` is same as that of `nested("key")(string)`
      */
     def nested[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      ConfigDescriptorAdt.nestedDesc(ConfigSource.empty, path, desc)
+      ConfigDescriptorAdt.nestedDesc(path, desc)
 
     /**
      *  `set("xyz")(confgDescriptor)` represents just a set variant of configDescriptor within the key `xyz`.
@@ -1982,7 +1985,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class Lazy[A](get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
-    sealed case class Nested[A](source: ConfigSource, path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
+    sealed case class Nested[A](path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
     sealed case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
@@ -2017,8 +2020,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[A] =
       Lazy(() => config)
 
-    final def nestedDesc[A](source: ConfigSource, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      Nested(source, path, lazyDesc(config))
+    final def nestedDesc[A](path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
+      Nested(path, lazyDesc(config))
 
     final def optionalDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
       Optional(lazyDesc(config))

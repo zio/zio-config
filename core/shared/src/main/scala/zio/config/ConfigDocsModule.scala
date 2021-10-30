@@ -644,11 +644,11 @@ trait ConfigDocsModule extends WriteModule {
             alreadySeen
           )
 
-        case Nested(source, path, c) =>
+        case Nested(path, c) =>
           ConfigDocs.Nested(
             path,
             loopTo(
-              source.sourceNames ++ sources,
+              sources,
               List.empty,
               c,
               Some(path),

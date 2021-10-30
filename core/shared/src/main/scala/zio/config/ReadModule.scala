@@ -11,15 +11,12 @@ import scala.collection.mutable.{Map => MutableMap}
 private[config] trait ReadModule extends ConfigDescriptorModule {
   import VersionSpecificSupport._
 
-  type Reader =
-    ZManaged[Any, ReadError[K], PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]]
-
   final def read[A](
     configuration: ConfigDescriptor[A]
   ): IO[ReadError[K], A] = {
     type Res[+B] = ZManaged[Any, ReadError[K], AnnotatedRead[PropertyTree[K, B]]]
 
-    val cachedSources: MutableMap[ConfigDescriptorAdt.Source[_], Reader] =
+    val cachedSources: MutableMap[ConfigDescriptorAdt.Source[_], ConfigSource.ReaderAccess] =
       MutableMap()
 
     import ConfigDescriptorAdt._
@@ -78,7 +75,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
       loopAny(path, cfg.left, descriptions, programSummary).either flatMap {
-        case a @ Right(_)    => ZManaged.fromEither(a)
+        case a @ Right(_) =>
+          ZManaged.fromEither(a)
+
         case Left(leftError) =>
           loopAny(path, cfg.right, descriptions, programSummary).either flatMap {
             case a @ Right(_) =>
@@ -117,14 +116,13 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       path: List[Step[K]],
       cfg: Source[B],
       descriptions: List[String]
-    ): Res[B] = {
-      println(cfg)
+    ): Res[B] =
       for {
         maybeMemoized <- cachedSources.get(cfg) match {
                            case Some(value) =>
                              value.map(_(PropertyTreePath(path.reverse.toVector)))
                            case None        =>
-                             cfg.source.access.flatMap { reader =>
+                             cfg.source.run.access.flatMap { reader =>
                                cachedSources.update(cfg, reader)
                                ZManaged
                                  .succeed(cachedSources.update(cfg, reader))
@@ -156,7 +154,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                     }
                 }
       } yield res
-    }
 
     def loopZip[B, C](
       path: List[Step[K]],
@@ -293,7 +290,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            case c @ DynamicMap(_) =>
                              loopMap(path, c, descriptions, c :: programSummary)
 
-                           case c @ Nested(_, key, _) =>
+                           case c @ Nested(key, _) =>
                              loopNested(Step.Key(key) :: path, c, descriptions, c :: programSummary)
 
                            case c @ Optional(_) =>
@@ -337,7 +334,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     config: ConfigDescriptor[A]
   ): ZManaged[Any, ReadError[String], PropertyTree[K, V]] = {
     val sourceTreesManaged =
-      config.sources.toList.map(_.root)
+      config.sources.toList.map(_.run.root)
 
     val sourceTrees = ZManaged.foreach(sourceTreesManaged) { managed =>
       for {
@@ -355,7 +352,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     keys: List[Step[K]]
   ): ZManaged[Any, ReadError[K], Boolean] = {
     val sourceTrees =
-      config.sources.map(_.getConfigValue(PropertyTreePath(keys.toVector)))
+      config.sources.map(_.run.getConfigValue(PropertyTreePath(keys.toVector)))
 
     ZManaged.forall(sourceTrees) { managed =>
       for {
@@ -427,7 +424,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case ConfigDescriptorAdt.Zip(left, right)           => loop(count, left) + loop(count, right)
         case ConfigDescriptorAdt.TransformOrFail(cfg, _, _) => loop(count, cfg)
         case ConfigDescriptorAdt.Describe(cfg, _)           => loop(count, cfg)
-        case ConfigDescriptorAdt.Nested(_, _, next)         => loop(count, next)
+        case ConfigDescriptorAdt.Nested(_, next)            => loop(count, next)
         case ConfigDescriptorAdt.Source(_, _)               => 1
         case ConfigDescriptorAdt.Optional(_)                => 0
         case ConfigDescriptorAdt.OrElse(left, right)        => loop(count, left) + loop(count, right)
