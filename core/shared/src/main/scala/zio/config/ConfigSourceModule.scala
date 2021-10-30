@@ -99,7 +99,12 @@ trait ConfigSourceModule extends KeyValueModule {
       self.copy(access = self.access.map(_.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f)))))
 
     def memoizeRaw: ConfigSourceRaw =
-      self.copy(access = self.access.flatMap(_.memoize))
+      self.copy(access = {
+
+        println("sss")
+        self.access.flatMap(_.memoize)
+
+      })
 
     /**
      * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
