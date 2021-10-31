@@ -276,10 +276,10 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[B] =
       for {
         alreadySeen <- ZManaged.succeed(programSummary.contains(config))
-        isEmpty     <- if (alreadySeen) isEmptyConfigSource(config, path.reverse)
-                       else ZManaged.succeed(false)
-        res         <- if (alreadySeen && isEmpty) {
-                         ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+        res         <- if (alreadySeen) {
+                         isEmptyConfigSource(config, path.reverse).whenM(
+                           ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                         )
                        } else
                          config match {
                            case c @ Lazy(thunk) =>
