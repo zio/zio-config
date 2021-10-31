@@ -201,7 +201,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Map[K, B]] =
       for {
-        tree_ <- treeOf(cfg)
+        tree_ <- treeOf(cfg, cachedSources)
         res   <- tree_.at(PropertyTreePath(path.reverse.toVector)) match {
                    case PropertyTree.Leaf(_, _)     =>
                      ZManaged.fail(formatError(path, "of type Singleton", "Map", descriptions))
@@ -254,7 +254,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       }
 
       for {
-        tree_ <- treeOf(cfg)
+        tree_ <- treeOf(cfg, cachedSources)
         res   <- tree_.at(PropertyTreePath(path.reverse.toVector)) match {
                    case leaf @ PropertyTree.Leaf(_, _) => fromTrees(List(leaf))
                    case PropertyTree.Record(_)         => ZManaged.fail(formatError(path, "of type Map", "List", descriptions))
@@ -333,17 +333,21 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   }
 
   private[config] def treeOf[A](
-    config: ConfigDescriptor[A]
+    config: ConfigDescriptor[A],
+    cachedSources: MutableMap[ConfigSource, ConfigSource.ManagedReader]
   ): ZManaged[Any, ReadError[String], PropertyTree[K, V]] = {
-    val sourceTreesManaged =
-      config.sources.toList.map(_.run.root)
-
-    val sourceTrees = ZManaged.foreach(sourceTreesManaged) { managed =>
+    val sourceTrees = ZManaged.foreach(config.sources.toList) { managed =>
       for {
-        memoized <- managed
-        treeZIO  <- memoized
-        tree     <- treeZIO.toManaged_
-      } yield tree
+        existing <- ZManaged.succeed(cachedSources.get(managed))
+        reader   <- existing match {
+                      case Some(value) =>
+                        ZManaged.succeed(value)
+                      case None        =>
+                        managed.run.access
+                    }
+        fn       <- reader
+        rootTree <- fn(PropertyTreePath(Vector.empty)).toManaged_
+      } yield rootTree
     }
 
     sourceTrees.map(_.reduceLeftOption(_.getOrElse(_)).getOrElse(PropertyTree.empty))
