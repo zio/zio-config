@@ -27,7 +27,7 @@ object NestedConfigTest extends BaseSpec {
       testM("nested with default") {
         val config = string("x").default("y")
         val r      =
-          read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid))
+          read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test"))
 
         assertM(r)(equalTo("y"))
       }

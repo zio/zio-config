@@ -19,8 +19,7 @@ object ListsCornerCasesTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -37,8 +36,7 @@ object ListsCornerCasesTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Sequence(Nil) :: Nil))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
@@ -53,7 +51,7 @@ object ListsCornerCasesTest extends BaseSpec {
         val res =
           read(
             cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
+              .fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
           )
 
         assertM(res)(equalTo(Cfg("sa", None)))
@@ -68,8 +66,7 @@ object ListsCornerCasesTest extends BaseSpec {
           read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
@@ -82,7 +79,7 @@ object ListsCornerCasesTest extends BaseSpec {
           .default("x" :: Nil)).to[Cfg]
 
         val res = read(
-          cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
+          cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
         )
 
         assertM(res)(equalTo(Cfg("sa", "x" :: Nil)))
@@ -96,8 +93,7 @@ object ListsCornerCasesTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -116,8 +112,7 @@ object ListsCornerCasesTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
@@ -136,26 +131,25 @@ object ListsCornerCasesTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
         assertM(res)(equalTo(Cfg("sa", Right("v" :: Nil))))
       },
       testM("distinguish scalar from list left") {
-        case class Cfg(a: String, b: Either[String, List[String]])
+        case class Cfg(a: String, b: Either[List[String], String])
 
         val cCfg = (string("a") |@| nested("b")(
-          string.orElseEither(list(string))
+          list(string).orElseEither(string)
         )).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource
-            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
+            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
         )
 
-        assertM(res)(equalTo(Cfg("sa", Left("v"))))
+        assertM(res)(equalTo(Cfg("sa", Left(List("v")))))
       },
       testM("distinguish scalar from list right") {
         case class Cfg(a: String, b: Either[List[String], String])
@@ -166,7 +160,7 @@ object ListsCornerCasesTest extends BaseSpec {
 
         val res = read(
           cCfg from ConfigSource
-            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Invalid)
+            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))).leafNotASequence, "tree")
         )
 
         assertM(res)(equalTo(Cfg("sa", Right("v"))))
@@ -184,8 +178,7 @@ object ListsCornerCasesTest extends BaseSpec {
                 "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Nil)
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -213,8 +206,7 @@ object ListsCornerCasesTest extends BaseSpec {
                 )
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -236,8 +228,7 @@ object ListsCornerCasesTest extends BaseSpec {
                 )
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -256,8 +247,7 @@ object ListsCornerCasesTest extends BaseSpec {
                 "b" -> Sequence(Leaf("one") :: Leaf("2") :: Nil)
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 

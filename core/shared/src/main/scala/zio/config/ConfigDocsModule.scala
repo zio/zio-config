@@ -610,7 +610,7 @@ trait ConfigDocsModule extends WriteModule {
         case cd: DynamicMap[_] =>
           ConfigDocs.DynamicMap(
             loopTo(
-              (cd.source.sourceNames ++ sources),
+              sources,
               descriptions,
               cd.config,
               None,
@@ -621,10 +621,10 @@ trait ConfigDocsModule extends WriteModule {
         case Optional(c) =>
           loopTo(sources, descriptions, c, None, alreadySeen)
 
-        case Sequence(source, c) =>
+        case Sequence(c) =>
           ConfigDocs.Sequence(
             loopTo(
-              (source.sourceNames ++ sources),
+              sources,
               descriptions,
               c,
               None,
@@ -644,11 +644,11 @@ trait ConfigDocsModule extends WriteModule {
             alreadySeen
           )
 
-        case Nested(source, path, c) =>
+        case Nested(path, c) =>
           ConfigDocs.Nested(
             path,
             loopTo(
-              source.sourceNames ++ sources,
+              sources,
               List.empty,
               c,
               Some(path),
@@ -672,7 +672,7 @@ trait ConfigDocsModule extends WriteModule {
             loopTo(sources, descriptions, right, None, alreadySeen)
           )
 
-        case OrElse(left, right) =>
+        case ConfigDescriptorAdt.OrElse(left, right) =>
           ConfigDocs.OrElse(
             loopTo(sources, descriptions, left, None, alreadySeen),
             loopTo(sources, descriptions, right, None, alreadySeen)
@@ -694,9 +694,9 @@ trait ConfigDocsModule extends WriteModule {
           case DocsLeaf(sources, descriptions, None) =>
             // Feed value when it hits leaf
             tree.getPath(keys) match {
-              case PropertyTree.Leaf(value) =>
+              case PropertyTree.Leaf(value, _) =>
                 DocsLeaf(sources, descriptions, Some(value))
-              case _                        => DocsLeaf(sources, descriptions, None)
+              case _                           => DocsLeaf(sources, descriptions, None)
             }
 
           case a: DocsLeaf => a

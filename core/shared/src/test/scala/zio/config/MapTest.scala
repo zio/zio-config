@@ -20,8 +20,7 @@ object MapTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Record(Map("c" -> Leaf("d"), "f" -> Leaf("h"))))))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
         )
 
@@ -36,8 +35,7 @@ object MapTest extends BaseSpec {
           cCfg from ConfigSource
             .fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Record(Map("c" -> Leaf("d"))))))),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
         )
 
@@ -54,8 +52,7 @@ object MapTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Sequence(List(Record(Map("c" -> Leaf("d"))))))))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
         )
 
@@ -90,8 +87,7 @@ object MapTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -108,8 +104,7 @@ object MapTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Record(Map("k" -> Record(Map("hello" -> Sequence(Nil))))))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
@@ -124,7 +119,7 @@ object MapTest extends BaseSpec {
         val res =
           read(
             cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Record(Map("c" -> Leaf("a"))))), "tree", LeafForSequence.Valid)
+              .fromPropertyTree(Record(Map("a" -> Record(Map("c" -> Leaf("a"))))), "tree")
           )
 
         assertM(res)(equalTo(Cfg(None)))
@@ -139,8 +134,7 @@ object MapTest extends BaseSpec {
           read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
@@ -153,7 +147,7 @@ object MapTest extends BaseSpec {
           .default(Map("x" -> "y", "z" -> "a"))).to[Cfg]
 
         val res  = read(
-          cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
+          cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
         )
 
         assertM(res)(equalTo(Cfg("sa", Map("x" -> "y", "z" -> "a"))))
@@ -167,8 +161,7 @@ object MapTest extends BaseSpec {
         val res  = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -187,8 +180,7 @@ object MapTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Record(Map("k" -> PropertyTree.Leaf("v"))))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
@@ -207,8 +199,7 @@ object MapTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Record(Map("x" -> Leaf("v"))))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
@@ -223,7 +214,7 @@ object MapTest extends BaseSpec {
 
         val res = read(
           cCfg from ConfigSource
-            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
+            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
         )
 
         assertM(res)(equalTo(Cfg("sa", Left("v"))))
@@ -237,7 +228,7 @@ object MapTest extends BaseSpec {
 
         val res = read(
           cCfg from ConfigSource
-            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
+            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
         )
 
         assertM(res)(equalTo(Cfg("sa", Right("v"))))
@@ -245,8 +236,7 @@ object MapTest extends BaseSpec {
       testM("key doesn't exist in map") {
         val src                                                     = ConfigSource.fromPropertyTree(
           PropertyTree.Record(Map("usr" -> PropertyTree.Leaf("v1"))),
-          "src",
-          LeafForSequence.Valid
+          "src"
         )
         val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("keyNotExists")).optional
         assertM(read(optional from src).either)(isLeft(anything))
@@ -254,8 +244,7 @@ object MapTest extends BaseSpec {
       testM("when empty map") {
         val src                                                     = ConfigSource.fromPropertyTree(
           PropertyTree.empty,
-          "src",
-          LeafForSequence.Valid
+          "src"
         )
         val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("usr")).optional
         assertM(read(optional from src))(isNone)

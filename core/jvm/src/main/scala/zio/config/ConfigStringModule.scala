@@ -681,7 +681,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
@@ -690,7 +689,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
           source,
           keyDelimiter,
           valueDelimiter,
-          leafForSequence,
           filterKeys
         )
       )
@@ -719,11 +717,10 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       configDescriptor: ConfigDescriptor[A],
       source: String,
       keyDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
-        configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, leafForSequence, filterKeys)
+        configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, filterKeys)
       )
 
     /**
@@ -753,7 +750,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       source: String,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
@@ -762,7 +758,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
           source,
           keyDelimiter,
           valueDelimiter,
-          leafForSequence,
           filterKeys
         )
       )
@@ -793,12 +788,11 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource
-          .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
+          .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, filterKeys)
       )
 
     /**
@@ -828,7 +822,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
       ZLayer.fromServiceM((system: System.Service) =>
@@ -836,7 +829,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
           configDescriptor from ConfigSource.fromSystemEnv(
             keyDelimiter,
             valueDelimiter,
-            leafForSequence,
             filterKeys,
             system
           )
@@ -868,15 +860,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
-      filterKeys: String => Boolean = _ => true
+      filterKeys: String => Boolean = _ => true,
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
       ZLayer.fromServiceM((system: System.Service) =>
         read(
           configDescriptor from ConfigSource.fromSystemProps(
             keyDelimiter,
             valueDelimiter,
-            leafForSequence,
             filterKeys,
             system
           )

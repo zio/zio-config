@@ -7,7 +7,7 @@ import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
 import zio.test.{DefaultRunnableSpec, _}
 import zio.{Has, IO, ZIO}
-import zio.config.PropertyTreePath._, Step._
+import zio.config.PropertyTreePath._
 
 object CommandLineSourceTest extends DefaultRunnableSpec {
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
