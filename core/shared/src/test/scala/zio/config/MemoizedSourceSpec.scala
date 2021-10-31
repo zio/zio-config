@@ -15,7 +15,9 @@ object MemoizedSourceSpec extends BaseSpec {
     suite(
       "ConfigSource memoization and lazy config gets"
     )(
-      testM("A non-memoized source runs a resource acquisition for each config retrieval, and get config lazily") {
+      testM(
+        "A non-memoized source runs a resource acquisition for each config retrieval"
+      ) {
         val config = (string("k1") |@| string("k2")).tupled
 
         val resource =
@@ -24,9 +26,12 @@ object MemoizedSourceSpec extends BaseSpec {
         val configCount =
           new AtomicInteger(0)
 
+        val source =
+          effectFulSource(acquire(resource), UIO(resource.get), incrementCount(configCount))
+
         val effect =
           for {
-            v <- read(config from effectFulSource(acquire(resource), UIO(resource.get), incrementCount(configCount)))
+            v <- read(config from source)
             r <- ZIO.succeed(resource.get)
             c <- ZIO.succeed(configCount.get)
           } yield (v, r, c)
@@ -35,7 +40,7 @@ object MemoizedSourceSpec extends BaseSpec {
 
       },
       testM(
-        "A non-memoized source runs a resource release before the next config retrieval while getting the configs lazily"
+        "A non-memoized source runs a resource release before the next config retrieval"
       ) {
         val resource =
           new AtomicInteger(0)
@@ -43,16 +48,48 @@ object MemoizedSourceSpec extends BaseSpec {
         val configCount =
           new AtomicInteger(0)
 
-        val config = (string("k1") |@| string("k2")).tupled
+        val config =
+          (string("k1") |@| string("k2")).tupled
+
+        val source =
+          effectFulSource(acquire(resource), release(resource), incrementCount(configCount))
 
         val effect =
           for {
-            v <- read(config from effectFulSource(acquire(resource), release(resource), incrementCount(configCount)))
+            v <- read(config from source)
             r <- ZIO.succeed(resource.get)
             c <- ZIO.succeed(configCount.get)
           } yield (v, r, c)
 
         assertM(effect)(equalTo(((s"v1_1_1", "v2_1_2"), 0, 2)))
+      },
+      testM(
+        "A memoized source runs a resource acquisition and release only once, while getting multiple configs incrementally"
+      ) {
+        val resource1 =
+          new AtomicInteger(0)
+
+        val resource2 =
+          new AtomicInteger(0)
+
+        val configCount =
+          new AtomicInteger(0)
+
+        val config =
+          (string("k1") |@| string("k2")).tupled
+
+        val source =
+          effectFulSource(acquire(resource1), acquire(resource2), incrementCount(configCount)).memoize
+
+        val effect =
+          for {
+            result       <- read(config from source)
+            acquireCount <- ZIO.succeed(resource1.get)
+            releaseCount <- ZIO.succeed(resource2.get)
+            count        <- ZIO.succeed(configCount.get)
+          } yield (result, acquireCount, releaseCount, count)
+
+        assertM(effect)(equalTo(((s"v1_1_1", "v2_1_2"), 1, 1, 2)))
       }
     )
 }
