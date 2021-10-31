@@ -338,15 +338,15 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   ): ZManaged[Any, ReadError[String], PropertyTree[K, V]] = {
     val sourceTrees = ZManaged.foreach(config.sources.toList) { managed =>
       for {
-        existing <- ZManaged.succeed(cachedSources.get(managed))
-        reader   <- existing match {
-                      case Some(value) =>
-                        ZManaged.succeed(value)
-                      case None        =>
-                        managed.run.access
-                    }
-        fn       <- reader
-        rootTree <- fn(PropertyTreePath(Vector.empty)).toManaged_
+        existing      <- ZManaged.succeed(cachedSources.get(managed))
+        managedReader <- existing match {
+                           case Some(value) =>
+                             ZManaged.succeed(value)
+                           case None        =>
+                             managed.run.access
+                         }
+        reader        <- managedReader
+        rootTree      <- reader(PropertyTreePath(Vector.empty)).toManaged_
       } yield rootTree
     }
 
@@ -360,15 +360,15 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   ): ZManaged[Any, ReadError[K], Boolean] =
     ZManaged.forall(config.sources) { managed =>
       for {
-        existing <- ZManaged.succeed(cachedSources.get(managed))
-        reader   <- existing match {
-                      case Some(value) =>
-                        ZManaged.succeed(value)
-                      case None        =>
-                        managed.run.access
-                    }
-        fn       <- reader
-        tree     <- fn(PropertyTreePath(keys.toVector)).toManaged_
+        existing      <- ZManaged.succeed(cachedSources.get(managed))
+        managedReader <- existing match {
+                           case Some(value) =>
+                             ZManaged.succeed(value)
+                           case None        =>
+                             managed.run.access
+                         }
+        reader        <- managedReader
+        tree          <- reader(PropertyTreePath(keys.toVector)).toManaged_
       } yield tree == PropertyTree.empty
     }
 
