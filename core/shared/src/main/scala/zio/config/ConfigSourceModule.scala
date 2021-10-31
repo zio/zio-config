@@ -14,178 +14,177 @@ trait ConfigSourceModule extends KeyValueModule {
   type K = String
   type V = String
 
+  import ConfigSource._
+
   sealed trait ConfigSource { self =>
-    def run: ConfigSourceRaw =
+    def run: Reader =
       self match {
-        case ConfigSourceOrElse(self, that)                      => self.run.orElse(that.run)
-        case source @ ConfigSourceRaw(configSourceNames, access) => source
+        case OrElse(self, that)    => self.run.orElse(that.run)
+        case reader @ Reader(_, _) => reader
       }
 
     def memoize: ConfigSource =
       self match {
-        case ConfigSourceOrElse(self, that)                      => self.memoize.orElse(that.memoize)
-        case source @ ConfigSourceRaw(configSourceNames, access) => source.memoizeRaw
+        case OrElse(self, that)    => self.memoize.orElse(that.memoize)
+        case reader @ Reader(_, _) => reader.memoizeRaw
       }
 
     def sourceNames: Set[ConfigSource.ConfigSourceName] =
       self match {
-        case ConfigSourceOrElse(self, that)       => self.sourceNames ++ that.sourceNames
-        case ConfigSourceRaw(sourceNames, access) => sourceNames
+        case OrElse(self, that)     => self.sourceNames ++ that.sourceNames
+        case Reader(sourceNames, _) => sourceNames
       }
 
-    def orElse(that: ConfigSource) = ConfigSourceOrElse(self, that)
-  }
-
-  case class ConfigSourceOrElse(self: ConfigSource, that: ConfigSource) extends ConfigSource
-
-  case class ConfigSourceRaw(
-    configSourceNames: Set[ConfigSource.ConfigSourceName],
-    access: ConfigSource.MemoizableReaderAccess
-  ) extends ConfigSource { self =>
-
-    def runTree(p: PropertyTreePath[K]): ZIO[Any, ReadError[K], PropertyTree[K, V]] =
-      access.use(t => t.use(_(p)))
-
-    def at(propertyTreePath: PropertyTreePath[K]): ConfigSource =
-      self.copy(access = self.access.map(_.map(getTree => getTree(_).map(_.at(propertyTreePath)))))
-
-    def getConfigValue(
-      keys: PropertyTreePath[K]
-    ): ZManaged[Any, Nothing, ZManaged[Any, ReadError[K], ZIO[Any, ReadError[K], PropertyTree[K, V]]]] =
-      access.map(_.map(_(keys)))
-
-    lazy val root: ZManaged[Any, Nothing, ZManaged[
-      Any,
-      ReadError[String],
-      ZIO[Any, ReadError[String], PropertyTree[String, String]]
-    ]] =
-      getConfigValue(PropertyTreePath(Vector.empty))
-
-    /**
-     * Transform keys before getting queried from source. Note that, this method could be hardly useful.
-     * Most of the time all you need to use is `mapKeys` in `ConfigDescriptor`
-     * i.e, `read(descriptor[Config].mapKeys(f) from ConfigSource.fromMap(source))`
-     *
-     * If you are still curious to understand `mapKeys` in `ConfigSource`, then read on, or else
-     * avoid a confusion.
-     *
-     * {{{
-     *   case class Hello(a: String, b: String)
-     *   val config: ConfigDescriptor[Hello] = (string("a") |@| string("b")).to[Hello]
-     *
-     *   However your source is different for some reason. Example:
-     *   {
-     *     "aws_a" : "1"
-     *     "aws_b" : "2"
-     *   }
-     *
-     *   If you are not interested in changing the `descriptor` or `case class`, you have a freedom
-     *   to pre-map keys before its queried from ConfigSource
-     *
-     *   val removeAwsPrefix  = (s: String) = s.replace("aws", "")
-     *
-     *   val source = ConfigSource.fromMap(map)
-     *   val updatedSource = ConfigSource.fromMap(map).mapKeys(removeAwsPrefix)
-     *
-     *   read(config from updatedSource)
-     *
-     *   // This is exactly the same as
-     *
-     *   val addAwsPrefix = (s: String) = s"aws_${s}")
-     *   read(config.mapKeys(addAwsPrefix) from source)
-     * }}}
-     */
-    def mapKeys(f: K => K): ConfigSource =
-      self.copy(access = self.access.map(_.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f)))))
-
-    def memoizeRaw: ConfigSourceRaw =
-      self.copy(access = {
-
-        println("sss")
-        self.access.flatMap(_.memoize)
-
-      })
-
-    /**
-     * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
-     *
-     * For example:
-     *
-     * Given three configSources, `configSource1`, `configSource2` and `configSource3`, such that
-     * configSource1 and configSource2 will only have `id` and `configSource3` act as a global fall-back source.
-     *
-     * The following config tries to fetch `Id` from configSource1, and if fails, it tries `configSource2`,
-     * and if both fails it gets from `configSource3`. `Age` will be fetched only from `configSource3`.
-     *
-     * {{{
-     *   val config = (string("Id") from (configSource1 orElse configSource2) |@| int("Age"))(Person.apply, Person.unapply)
-     *   read(config from configSource3)
-     * }}}
-     */
-    def orElse(that: ConfigSourceRaw): ConfigSourceRaw =
-      ConfigSourceRaw(
-        self.sourceNames ++ that.sourceNames,
-        for {
-          m1 <- self.access
-          m2 <- that.access
-          res =
-            for {
-              f1 <- m1
-              f2 <- m2
-              res = (path: PropertyTreePath[K]) =>
-                      f1(path)
-                        .flatMap(tree => if (tree.isEmpty) f2(path) else ZIO.succeed(tree))
-                        .orElse(f2(path))
-            } yield res
-        } yield res
-      )
-
-    /**
-     * `<>` is an alias to `orElse`.
-     * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
-     *
-     * For example:
-     *
-     * Given three configSources, `configSource1`, `configSource2` and `configSource3`, such that
-     * configSource1 and configSource2 will only have `id` and `configSource3` act as a global fall-back source.
-     *
-     * The following config tries to fetch `Id` from configSource1, and if fails, it tries `configSource2`,
-     * and if both fails it gets from `configSource3`. `Age` will be fetched only from `configSource3`.
-     *
-     * {{{
-     *   val config = (string("Id") from (configSource1 orElse configSource2) |@| int("Age"))(Person.apply, Person.unapply)
-     *   read(config from configSource3)
-     * }}}
-     */
-    def <>(that: => ConfigSourceRaw): ConfigSource = self orElse that
-
-    def withTree(tree: PropertyTree[K, V]): ConfigSource =
-      copy(access = ZManaged.succeed(ZManaged.succeed(a => ZIO.succeed(tree.at(a)))))
+    def orElse(that: ConfigSource): ConfigSource = OrElse(self, that)
   }
 
   object ConfigSource {
 
+    case class OrElse(self: ConfigSource, that: ConfigSource) extends ConfigSource
+
+    case class Reader(
+      names: Set[ConfigSource.ConfigSourceName],
+      access: ConfigSource.MemoizableManagedReader
+    ) extends ConfigSource { self =>
+      def at(propertyTreePath: PropertyTreePath[K]): ConfigSource =
+        self.copy(access = self.access.map(_.map(getTree => getTree(_).map(_.at(propertyTreePath)))))
+
+      def getConfigValue(
+        keys: PropertyTreePath[K]
+      ): ZManaged[Any, Nothing, ZManaged[Any, ReadError[K], ZIO[Any, ReadError[K], PropertyTree[K, V]]]] =
+        access.map(_.map(_(keys)))
+
+      lazy val root: ZManaged[Any, Nothing, ZManaged[
+        Any,
+        ReadError[String],
+        ZIO[Any, ReadError[String], PropertyTree[String, String]]
+      ]] =
+        getConfigValue(PropertyTreePath(Vector.empty))
+
+      /**
+       * Transform keys before getting queried from source. Note that, this method could be hardly useful.
+       * Most of the time all you need to use is `mapKeys` in `ConfigDescriptor`
+       * i.e, `read(descriptor[Config].mapKeys(f) from ConfigSource.fromMap(source))`
+       *
+       * If you are still curious to understand `mapKeys` in `ConfigSource`, then read on, or else
+       * avoid a confusion.
+       *
+       * {{{
+       *   case class Hello(a: String, b: String)
+       *   val config: ConfigDescriptor[Hello] = (string("a") |@| string("b")).to[Hello]
+       *
+       *   However your source is different for some reason. Example:
+       *   {
+       *     "aws_a" : "1"
+       *     "aws_b" : "2"
+       *   }
+       *
+       *   If you are not interested in changing the `descriptor` or `case class`, you have a freedom
+       *   to pre-map keys before its queried from ConfigSource
+       *
+       *   val removeAwsPrefix  = (s: String) = s.replace("aws", "")
+       *
+       *   val source = ConfigSource.fromMap(map)
+       *   val updatedSource = ConfigSource.fromMap(map).mapKeys(removeAwsPrefix)
+       *
+       *   read(config from updatedSource)
+       *
+       *   // This is exactly the same as
+       *
+       *   val addAwsPrefix = (s: String) = s"aws_${s}")
+       *   read(config.mapKeys(addAwsPrefix) from source)
+       * }}}
+       */
+      def mapKeys(f: K => K): ConfigSource =
+        self.copy(access = self.access.map(_.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f)))))
+
+      def memoizeRaw: Reader =
+        self.copy(access = {
+
+          println("sss")
+          self.access.flatMap(_.memoize)
+
+        })
+
+      /**
+       * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
+       *
+       * For example:
+       *
+       * Given three configSources, `configSource1`, `configSource2` and `configSource3`, such that
+       * configSource1 and configSource2 will only have `id` and `configSource3` act as a global fall-back source.
+       *
+       * The following config tries to fetch `Id` from configSource1, and if fails, it tries `configSource2`,
+       * and if both fails it gets from `configSource3`. `Age` will be fetched only from `configSource3`.
+       *
+       * {{{
+       *   val config = (string("Id") from (configSource1 orElse configSource2) |@| int("Age"))(Person.apply, Person.unapply)
+       *   read(config from configSource3)
+       * }}}
+       */
+      def orElse(that: Reader): Reader =
+        Reader(
+          self.sourceNames ++ that.sourceNames,
+          for {
+            m1 <- self.access
+            m2 <- that.access
+            res =
+              for {
+                f1 <- m1
+                f2 <- m2
+                res = (path: PropertyTreePath[K]) =>
+                        f1(path)
+                          .flatMap(tree => if (tree.isEmpty) f2(path) else ZIO.succeed(tree))
+                          .orElse(f2(path))
+              } yield res
+          } yield res
+        )
+
+      /**
+       * `<>` is an alias to `orElse`.
+       * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
+       *
+       * For example:
+       *
+       * Given three configSources, `configSource1`, `configSource2` and `configSource3`, such that
+       * configSource1 and configSource2 will only have `id` and `configSource3` act as a global fall-back source.
+       *
+       * The following config tries to fetch `Id` from configSource1, and if fails, it tries `configSource2`,
+       * and if both fails it gets from `configSource3`. `Age` will be fetched only from `configSource3`.
+       *
+       * {{{
+       *   val config = (string("Id") from (configSource1 orElse configSource2) |@| int("Age"))(Person.apply, Person.unapply)
+       *   read(config from configSource3)
+       * }}}
+       */
+      def <>(that: => Reader): ConfigSource = self orElse that
+
+      def withTree(tree: PropertyTree[K, V]): ConfigSource =
+        copy(access = ZManaged.succeed(ZManaged.succeed(a => ZIO.succeed(tree.at(a)))))
+    }
+
     /**
      * A Reader is a function that goes from a propertyTreePath
-     * to a PropertyTree. Given a PropertyTreePath, retrival of the whole/subset
+     * to a PropertyTree. Given a PropertyTreePath, retrieval of the whole/subset
      * of a PropertyTree can happen under an effect.
      */
-    type Reader = PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]
+    type PropertyTreeReader = PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]
 
     /**
-     * In order to access the reader, we might need to perform
+     * In order to even access the reader, we might need to perform
      * some resource bound effects, represented by ZManaged.
-     * Example, it is impossible to compute the `Reader` without opening a file.
+     * Example, it is impossible to compute the `PropertyTreeReader` without opening a file.
      */
-    type ReaderAccess = ZManaged[Any, ReadError[K], Reader]
+    type ManagedReader = ZManaged[Any, ReadError[K], PropertyTreeReader]
 
     /**
-     * A ReaderAcccess that could be potentially memoized.
-     * This implies the effect needed to compute the Reader itself
+     * A ManagedReader that could be potentially memoized.
+     * This implies the effect (example: open file)
+     * needed to compute the Reader itself
      * is memoized.
      */
-    type MemoizableReaderAccess =
-      ZManaged[Any, Nothing, ReaderAccess]
+    type MemoizableManagedReader =
+      ZManaged[Any, Nothing, ManagedReader]
 
     case class ConfigSourceName(name: String)
 
@@ -194,7 +193,7 @@ trait ConfigSourceModule extends KeyValueModule {
     private[config] val CommandLineArguments = "command line arguments"
 
     val empty: ConfigSource =
-      ConfigSourceRaw(
+      Reader(
         Set.empty,
         ZManaged.succeed(ZManaged.succeed(_ => ZIO.succeed(PropertyTree.empty)))
       )
@@ -247,7 +246,7 @@ trait ConfigSourceModule extends KeyValueModule {
         )
       )
 
-      ConfigSourceRaw(
+      Reader(
         Set(ConfigSourceName(CommandLineArguments)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
       )
@@ -286,7 +285,7 @@ trait ConfigSourceModule extends KeyValueModule {
       val tree =
         getPropertyTreeFromMap(constantMap, keyDelimiter, valueDelimiter, filterKeys)
 
-      ConfigSourceRaw(
+      Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
       )
@@ -325,7 +324,7 @@ trait ConfigSourceModule extends KeyValueModule {
           keyDelimiter
         )
 
-      ConfigSourceRaw(
+      Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
       )
@@ -364,7 +363,7 @@ trait ConfigSourceModule extends KeyValueModule {
       val tree =
         getPropertyTreeFromProperties(property, keyDelimiter, valueDelimiter, filterKeys)
 
-      ConfigSourceRaw(
+      Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
       )
@@ -382,7 +381,7 @@ trait ConfigSourceModule extends KeyValueModule {
       tree: PropertyTree[K, V],
       source: String
     ): ConfigSource =
-      ConfigSourceRaw(
+      Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
       )
@@ -447,7 +446,7 @@ trait ConfigSourceModule extends KeyValueModule {
           }
           .mapError(throwable => ReadError.SourceError(throwable.toString))
 
-      ConfigSourceRaw(
+      Reader(
         Set(ConfigSourceName(filePath)),
         ZManaged.succeed(managed)
       )
@@ -514,7 +513,7 @@ trait ConfigSourceModule extends KeyValueModule {
           )
           .provideLayer(ZLayer.succeed(system))
 
-      ConfigSourceRaw(
+      Reader(
         Set(ConfigSourceName(SystemProperties)),
         ZManaged.succeed(managed)
       )
@@ -571,7 +570,7 @@ trait ConfigSourceModule extends KeyValueModule {
       filterKeys: String => Boolean = _ => true,
       system: System.Service = System.Service.live
     ): ConfigSource =
-      ConfigSourceRaw(
+      Reader(
         Set(ConfigSourceName(SystemProperties)),
         ZManaged.succeed(
           ZIO

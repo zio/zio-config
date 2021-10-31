@@ -672,7 +672,7 @@ trait ConfigDocsModule extends WriteModule {
             loopTo(sources, descriptions, right, None, alreadySeen)
           )
 
-        case OrElse(left, right) =>
+        case ConfigDescriptorAdt.OrElse(left, right) =>
           ConfigDocs.OrElse(
             loopTo(sources, descriptions, left, None, alreadySeen),
             loopTo(sources, descriptions, right, None, alreadySeen)

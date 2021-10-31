@@ -10,14 +10,14 @@ import scala.collection.mutable.{Map => MutableMap}
 @silent("Unused import")
 private[config] trait ReadModule extends ConfigDescriptorModule {
   import VersionSpecificSupport._
-  var count: List[ConfigSource.ReaderAccess] = List()
+  var count: List[ConfigSource.ManagedReader] = List()
 
   final def read[A](
     configuration: ConfigDescriptor[A]
   ): IO[ReadError[K], A] = {
     type Res[+B] = ZManaged[Any, ReadError[K], AnnotatedRead[PropertyTree[K, B]]]
 
-    val cachedSources: MutableMap[ConfigDescriptorAdt.Source[_], ConfigSource.ReaderAccess] =
+    val cachedSources: MutableMap[ConfigDescriptorAdt.Source[_], ConfigSource.ManagedReader] =
       MutableMap()
 
     import ConfigDescriptorAdt._
