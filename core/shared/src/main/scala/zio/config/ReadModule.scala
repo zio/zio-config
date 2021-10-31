@@ -122,40 +122,36 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         existing            <- ZManaged.succeed(cachedSources.get(cfg.source))
         maybeMemoizedReader <- existing match {
                                  case Some(value) =>
-//                                   println("retrievingssss")
                                    ZManaged.succeed(value)
                                  case None        =>
-                                   //                                 println("hmmmm?? " + count)
                                    cfg.source.run.access
                                }
-
-        _ <- ZManaged.succeed(cachedSources.update(cfg.source, maybeMemoizedReader))
-
-        reader <- maybeMemoizedReader
-        treeZIO = reader(PropertyTreePath(path.reverse.toVector))
-        tree   <- treeZIO.toManaged_
-        res    <- tree match {
-                    case PropertyTree.Empty          =>
-                      ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                    case PropertyTree.Record(_)      =>
-                      ZManaged.fail(formatError(path, "of type Map", "Singleton", descriptions))
-                    case PropertyTree.Sequence(_)    =>
-                      ZManaged.fail(formatError(path, "of type List", "Singleton", descriptions))
-                    case PropertyTree.Leaf(value, _) =>
-                      cfg.propertyType.read(value) match {
-                        case Left(parseError) =>
-                          ZManaged.fail(
-                            formatError(
-                              path,
-                              parseError.value,
-                              parseError.typeInfo,
-                              descriptions
-                            )
-                          )
-                        case Right(parsed)    =>
-                          ZManaged.succeed(AnnotatedRead(PropertyTree.Leaf(parsed), Set.empty))
-                      }
-                  }
+        _                   <- ZManaged.succeed(cachedSources.update(cfg.source, maybeMemoizedReader))
+        reader              <- maybeMemoizedReader
+        treeZIO              = reader(PropertyTreePath(path.reverse.toVector))
+        tree                <- treeZIO.toManaged_
+        res                 <- tree match {
+                                 case PropertyTree.Empty          =>
+                                   ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                                 case PropertyTree.Record(_)      =>
+                                   ZManaged.fail(formatError(path, "of type Map", "Singleton", descriptions))
+                                 case PropertyTree.Sequence(_)    =>
+                                   ZManaged.fail(formatError(path, "of type List", "Singleton", descriptions))
+                                 case PropertyTree.Leaf(value, _) =>
+                                   cfg.propertyType.read(value) match {
+                                     case Left(parseError) =>
+                                       ZManaged.fail(
+                                         formatError(
+                                           path,
+                                           parseError.value,
+                                           parseError.typeInfo,
+                                           descriptions
+                                         )
+                                       )
+                                     case Right(parsed)    =>
+                                       ZManaged.succeed(AnnotatedRead(PropertyTree.Leaf(parsed), Set.empty))
+                                   }
+                               }
       } yield res
 
     def loopZip[B, C](
@@ -275,53 +271,55 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       programSummary: List[ConfigDescriptor[_]]
     ): Res[B] =
       for {
-        alreadySeen <- ZManaged.succeed(programSummary.contains(config))
-        res         <- if (alreadySeen) {
-                         isEmptyConfigSource(config, path.reverse).whenM(
-                           ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                         )
-                       } else
-                         config match {
-                           case c @ Lazy(thunk) =>
-                             loopAny(path, thunk(), descriptions, c :: programSummary)
+        alreadySeen         <- ZManaged.succeed(programSummary.contains(config))
+        isEmptyConfigSource <-
+          if (alreadySeen) isEmptyConfigSource(config, path.reverse, cachedSources)
+          else ZManaged.succeed(false)
+        res                 <- if (isEmptyConfigSource) {
+                                 ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
 
-                           case c @ Default(_, _) =>
-                             loopDefault(path, c, descriptions, c :: programSummary)
+                               } else
+                                 config match {
+                                   case c @ Lazy(thunk) =>
+                                     loopAny(path, thunk(), descriptions, c :: programSummary)
 
-                           case c @ Describe(_, message) =>
-                             loopAny(path, c.config, descriptions :+ message, c :: programSummary)
+                                   case c @ Default(_, _) =>
+                                     loopDefault(path, c, descriptions, c :: programSummary)
 
-                           case c @ DynamicMap(_) =>
-                             loopMap(path, c, descriptions, c :: programSummary)
+                                   case c @ Describe(_, message) =>
+                                     loopAny(path, c.config, descriptions :+ message, c :: programSummary)
 
-                           case c @ Nested(key, _) =>
-                             loopNested(Step.Key(key) :: path, c, descriptions, c :: programSummary)
+                                   case c @ DynamicMap(_) =>
+                                     loopMap(path, c, descriptions, c :: programSummary)
 
-                           case c @ Optional(_) =>
-                             loopOptional(path, c, descriptions, c :: programSummary)
+                                   case c @ Nested(key, _) =>
+                                     loopNested(Step.Key(key) :: path, c, descriptions, c :: programSummary)
 
-                           case c @ OrElse(_, _) =>
-                             loopOrElse(path, c, descriptions, c :: programSummary)
+                                   case c @ Optional(_) =>
+                                     loopOptional(path, c, descriptions, c :: programSummary)
 
-                           case c @ OrElseEither(_, _) =>
-                             loopOrElseEither(path, c, descriptions, c :: programSummary)
+                                   case c @ OrElse(_, _) =>
+                                     loopOrElse(path, c, descriptions, c :: programSummary)
 
-                           case c @ Source(_, _) =>
-                             loopSource(
-                               path,
-                               c,
-                               descriptions
-                             )
+                                   case c @ OrElseEither(_, _) =>
+                                     loopOrElseEither(path, c, descriptions, c :: programSummary)
 
-                           case c @ Zip(_, _) =>
-                             loopZip(path, c, descriptions, c :: programSummary)
+                                   case c @ Source(_, _) =>
+                                     loopSource(
+                                       path,
+                                       c,
+                                       descriptions
+                                     )
 
-                           case c @ TransformOrFail(_, _, _) =>
-                             loopXmapEither(path, c, descriptions, c :: programSummary)
+                                   case c @ Zip(_, _) =>
+                                     loopZip(path, c, descriptions, c :: programSummary)
 
-                           case c @ Sequence(_) =>
-                             loopSequence(path, c, descriptions, c :: programSummary)
-                         }
+                                   case c @ TransformOrFail(_, _, _) =>
+                                     loopXmapEither(path, c, descriptions, c :: programSummary)
+
+                                   case c @ Sequence(_) =>
+                                     loopSequence(path, c, descriptions, c :: programSummary)
+                                 }
 
       } yield res.asInstanceOf[AnnotatedRead[PropertyTree[K, B]]]
 
@@ -353,48 +351,22 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
   private[config] def isEmptyConfigSource[A](
     config: ConfigDescriptor[A],
-    keys: List[Step[K]]
-  ): ZManaged[Any, ReadError[K], Boolean] = {
-    val sourceTrees =
-      config.sources.map(_.run.getConfigValue(PropertyTreePath(keys.toVector)))
-
-    ZManaged.forall(sourceTrees) { managed =>
+    keys: List[Step[K]],
+    cachedSources: MutableMap[ConfigSource, ConfigSource.ManagedReader]
+  ): ZManaged[Any, ReadError[K], Boolean] =
+    ZManaged.forall(config.sources) { managed =>
       for {
-        memoized <- managed
-        treeZIO  <- memoized
-        tree     <- treeZIO.toManaged_
+        existing <- ZManaged.succeed(cachedSources.get(managed))
+        reader   <- existing match {
+                      case Some(value) =>
+                        ZManaged.succeed(value)
+                      case None        =>
+                        managed.run.access
+                    }
+        fn       <- reader
+        tree     <- fn(PropertyTreePath(keys.toVector)).toManaged_
       } yield tree == PropertyTree.empty
     }
-  }
-
-  /**
-   *   private[config] def isEmptyConfigSource[A](
-   *    config: ConfigDescriptor[A],
-   *    keys: List[Step[K]],
-   *    cachedSources: MutableMap[ConfigSource, ConfigSource.ManagedReader]
-   *  ): ZManaged[Any, ReadError[K], Boolean] = {
-   *    val sourceTrees =
-   *      config.sources
-   *
-   *    ZManaged.forall(sourceTrees) { managed =>
-   *      for {
-   *        managed <- cachedSources.get(managed) match {
-   *                     case Some(value) => value
-   *                     case None        => ZManaged.fail(ReadError.SourceError("internal error"))
-   *                   }
-   *
-   *        tree <- managed(PropertyTreePath(keys.toVector)).toManaged_
-   *      } yield tree == PropertyTree.empty
-   *    }
-   *  }
-   *
-   * @param error
-   * @param alternative
-   * @param f
-   * @param g
-   * @param zero
-   * @return
-   */
 
   private[config] def foldReadError[B](
     error: ReadError[K]

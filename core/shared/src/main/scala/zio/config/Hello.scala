@@ -5,10 +5,10 @@ import ConfigDescriptor._
 final case class Config(x: String, y: Option[Config])
 
 object Hello extends App {
-  // val s = ConfigSource.fromPropertiesFile("filepath", keyDelimiter = Some('.'))
+  val s = ConfigSource.fromPropertiesFile("filepath", keyDelimiter = Some('.')).memoize
 
-  val s =
-    ConfigSource.fromMap(Map("x" -> "y", "y.x" -> "y"), keyDelimiter = Some('.'))
+//  val s =
+//    ConfigSource.fromMap(Map("x" -> "y", "y.x" -> "y"), keyDelimiter = Some('.'))
 
   // val hello = s.access.flatMap(_.map(a => a(PropertyTreePath.apply(Vector.empty)))).use(identity)
 

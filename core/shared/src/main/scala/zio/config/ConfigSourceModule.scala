@@ -60,7 +60,8 @@ trait ConfigSourceModule extends KeyValueModule {
         case reader @ ConfigSource.Reader(_, _) =>
           reader.copy(access = reader.access.map(_.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f)))))
       }
-    def run: Reader                      =
+
+    def run: Reader =
       self match {
         case OrElse(self, that)    => self.run.orElse(that.run)
         case reader @ Reader(_, _) => reader
