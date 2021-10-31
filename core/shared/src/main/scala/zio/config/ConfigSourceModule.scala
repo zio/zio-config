@@ -17,7 +17,50 @@ trait ConfigSourceModule extends KeyValueModule {
   import ConfigSource._
 
   sealed trait ConfigSource { self =>
-    def run: Reader =
+
+    /**
+     * Transform keys before getting queried from source. Note that, this method could be hardly useful.
+     * Most of the time all you need to use is `mapKeys` in `ConfigDescriptor`
+     * i.e, `read(descriptor[Config].mapKeys(f) from ConfigSource.fromMap(source))`
+     *
+     * If you are still curious to understand `mapKeys` in `ConfigSource`, then read on, or else
+     * avoid a confusion.
+     *
+     * {{{
+     *   case class Hello(a: String, b: String)
+     *   val config: ConfigDescriptor[Hello] = (string("a") |@| string("b")).to[Hello]
+     *
+     *   However your source is different for some reason. Example:
+     *   {
+     *     "aws_a" : "1"
+     *     "aws_b" : "2"
+     *   }
+     *
+     *   If you are not interested in changing the `descriptor` or `case class`, you have a freedom
+     *   to pre-map keys before its queried from ConfigSource
+     *
+     *   val removeAwsPrefix  = (s: String) = s.replace("aws", "")
+     *
+     *   val source = ConfigSource.fromMap(map)
+     *   val updatedSource = ConfigSource.fromMap(map).mapKeys(removeAwsPrefix)
+     *
+     *   read(config from updatedSource)
+     *
+     *   // This is exactly the same as
+     *
+     *   val addAwsPrefix = (s: String) = s"aws_${s}")
+     *   read(config.mapKeys(addAwsPrefix) from source)
+     * }}}
+     */
+    def mapKeys(f: K => K): ConfigSource =
+      self match {
+        case ConfigSource.OrElse(left, right) =>
+          ConfigSource.OrElse(left.mapKeys(f), right.mapKeys(f))
+
+        case reader @ ConfigSource.Reader(_, _) =>
+          reader.copy(access = reader.access.map(_.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f)))))
+      }
+    def run: Reader                      =
       self match {
         case OrElse(self, that)    => self.run.orElse(that.run)
         case reader @ Reader(_, _) => reader
@@ -25,8 +68,10 @@ trait ConfigSourceModule extends KeyValueModule {
 
     def memoize: ConfigSource =
       self match {
-        case OrElse(self, that)    => self.memoize.orElse(that.memoize)
-        case reader @ Reader(_, _) => reader.memoizeRaw
+        case OrElse(self, that)    =>
+          self.memoize.orElse(that.memoize)
+        case reader @ Reader(_, _) =>
+          reader.copy(access = reader.access.flatMap(_.memoize))
       }
 
     def sourceNames: Set[ConfigSource.ConfigSourceName] =
@@ -60,51 +105,6 @@ trait ConfigSourceModule extends KeyValueModule {
         ZIO[Any, ReadError[String], PropertyTree[String, String]]
       ]] =
         getConfigValue(PropertyTreePath(Vector.empty))
-
-      /**
-       * Transform keys before getting queried from source. Note that, this method could be hardly useful.
-       * Most of the time all you need to use is `mapKeys` in `ConfigDescriptor`
-       * i.e, `read(descriptor[Config].mapKeys(f) from ConfigSource.fromMap(source))`
-       *
-       * If you are still curious to understand `mapKeys` in `ConfigSource`, then read on, or else
-       * avoid a confusion.
-       *
-       * {{{
-       *   case class Hello(a: String, b: String)
-       *   val config: ConfigDescriptor[Hello] = (string("a") |@| string("b")).to[Hello]
-       *
-       *   However your source is different for some reason. Example:
-       *   {
-       *     "aws_a" : "1"
-       *     "aws_b" : "2"
-       *   }
-       *
-       *   If you are not interested in changing the `descriptor` or `case class`, you have a freedom
-       *   to pre-map keys before its queried from ConfigSource
-       *
-       *   val removeAwsPrefix  = (s: String) = s.replace("aws", "")
-       *
-       *   val source = ConfigSource.fromMap(map)
-       *   val updatedSource = ConfigSource.fromMap(map).mapKeys(removeAwsPrefix)
-       *
-       *   read(config from updatedSource)
-       *
-       *   // This is exactly the same as
-       *
-       *   val addAwsPrefix = (s: String) = s"aws_${s}")
-       *   read(config.mapKeys(addAwsPrefix) from source)
-       * }}}
-       */
-      def mapKeys(f: K => K): ConfigSource =
-        self.copy(access = self.access.map(_.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f)))))
-
-      def memoizeRaw: Reader =
-        self.copy(access = {
-
-          println("sss")
-          self.access.flatMap(_.memoize)
-
-        })
 
       /**
        * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
@@ -183,8 +183,10 @@ trait ConfigSourceModule extends KeyValueModule {
      * needed to compute the Reader itself
      * is memoized.
      */
+    type Memoized[A] = ZManaged[Any, Nothing, A]
+
     type MemoizableManagedReader =
-      ZManaged[Any, Nothing, ManagedReader]
+      Memoized[ManagedReader]
 
     case class ConfigSourceName(name: String)
 

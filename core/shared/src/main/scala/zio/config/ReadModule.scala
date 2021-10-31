@@ -17,7 +17,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   ): IO[ReadError[K], A] = {
     type Res[+B] = ZManaged[Any, ReadError[K], AnnotatedRead[PropertyTree[K, B]]]
 
-    val cachedSources: MutableMap[ConfigDescriptorAdt.Source[_], ConfigSource.ManagedReader] =
+    val cachedSources: MutableMap[ConfigSource, ConfigSource.ManagedReader] =
       MutableMap()
 
     import ConfigDescriptorAdt._
@@ -119,17 +119,17 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String]
     ): Res[B] =
       for {
-        existing            <- ZManaged.succeed(cachedSources.get(cfg))
+        existing            <- ZManaged.succeed(cachedSources.get(cfg.source))
         maybeMemoizedReader <- existing match {
                                  case Some(value) =>
-                                   println("retrievingssss")
+//                                   println("retrievingssss")
                                    ZManaged.succeed(value)
                                  case None        =>
-                                   println("hmmmm?? " + count)
+                                   //                                 println("hmmmm?? " + count)
                                    cfg.source.run.access
                                }
 
-        _ <- ZManaged.succeed(cachedSources.update(cfg, maybeMemoizedReader))
+        _ <- ZManaged.succeed(cachedSources.update(cfg.source, maybeMemoizedReader))
 
         reader <- maybeMemoizedReader
         treeZIO = reader(PropertyTreePath(path.reverse.toVector))
@@ -366,6 +366,35 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       } yield tree == PropertyTree.empty
     }
   }
+
+  /**
+   *   private[config] def isEmptyConfigSource[A](
+   *    config: ConfigDescriptor[A],
+   *    keys: List[Step[K]],
+   *    cachedSources: MutableMap[ConfigSource, ConfigSource.ManagedReader]
+   *  ): ZManaged[Any, ReadError[K], Boolean] = {
+   *    val sourceTrees =
+   *      config.sources
+   *
+   *    ZManaged.forall(sourceTrees) { managed =>
+   *      for {
+   *        managed <- cachedSources.get(managed) match {
+   *                     case Some(value) => value
+   *                     case None        => ZManaged.fail(ReadError.SourceError("internal error"))
+   *                   }
+   *
+   *        tree <- managed(PropertyTreePath(keys.toVector)).toManaged_
+   *      } yield tree == PropertyTree.empty
+   *    }
+   *  }
+   *
+   * @param error
+   * @param alternative
+   * @param f
+   * @param g
+   * @param zero
+   * @return
+   */
 
   private[config] def foldReadError[B](
     error: ReadError[K]
