@@ -2,10 +2,10 @@ package zio.config
 
 import ConfigDescriptor._
 
-final case class Config(x: String, y: Option[Config])
+final case class Config(x: String, y: String)
 
 object Hello extends App {
-  val s = ConfigSource.fromPropertiesFile("filepath", keyDelimiter = Some('.')).memoize
+  val s = ConfigSource.fromPropertiesFile("filepath", keyDelimiter = Some('.'))
 
 //  val s =
 //    ConfigSource.fromMap(Map("x" -> "y", "y.x" -> "y"), keyDelimiter = Some('.'))
@@ -29,7 +29,7 @@ object Hello extends App {
   // val s2 = zio.Runtime.default.unsafeRun(hello.use(a => zio.ZIO.succeed(a)))
 
   val hi: ConfigDescriptor[Config] =
-    (string("x") |@| nested("y")(hi).optional).to[Config]
+    (string("x") |@| string("y")).to[Config]
 
   val s2 =
     zio.Runtime.default.unsafeRun(read(hi from s))

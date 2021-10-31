@@ -127,9 +127,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                                    cfg.source.run.access
                                }
         _                   <- ZManaged.succeed(cachedSources.update(cfg.source, maybeMemoizedReader))
-        reader              <- maybeMemoizedReader
-        treeZIO              = reader(PropertyTreePath(path.reverse.toVector))
-        tree                <- treeZIO.toManaged_
+        tree                <- ZManaged.fromEffect(maybeMemoizedReader.use(reader => reader(PropertyTreePath(path.reverse.toVector))))
         res                 <- tree match {
                                  case PropertyTree.Empty          =>
                                    ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
@@ -345,8 +343,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            case None        =>
                              managed.run.access
                          }
-        reader        <- managedReader
-        rootTree      <- reader(PropertyTreePath(Vector.empty)).toManaged_
+        rootTree      <- ZManaged.fromEffect(managedReader.use(reader => reader(PropertyTreePath(Vector.empty))))
       } yield rootTree
     }
 
@@ -367,8 +364,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            case None        =>
                              managed.run.access
                          }
-        reader        <- managedReader
-        tree          <- reader(PropertyTreePath(keys.toVector)).toManaged_
+        tree          <- ZManaged.fromEffect(managedReader.use(_(PropertyTreePath(Vector.empty))))
       } yield tree == PropertyTree.empty
     }
 

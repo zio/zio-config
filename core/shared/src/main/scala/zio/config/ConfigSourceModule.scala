@@ -85,6 +85,23 @@ trait ConfigSourceModule extends KeyValueModule {
   }
 
   object ConfigSource {
+    type Managed[A]              = ZManaged[Any, ReadError[K], A]
+    type TreeReader              = PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]
+    type MemoizableManaged[A]    = ZManaged[Any, Nothing, ZManaged[Any, ReadError[K], A]]
+    type ManagedReader           = Managed[TreeReader]
+    type MemoizableManagedReader = MemoizableManaged[TreeReader]
+
+    case class ConfigSourceName(name: String)
+
+    private[config] val SystemEnvironment    = "system environment"
+    private[config] val SystemProperties     = "system properties"
+    private[config] val CommandLineArguments = "command line arguments"
+
+    val empty: ConfigSource =
+      Reader(
+        Set.empty,
+        ZManaged.succeed(ZManaged.succeed(_ => ZIO.succeed(PropertyTree.empty)))
+      )
 
     case class OrElse(self: ConfigSource, that: ConfigSource) extends ConfigSource
 
@@ -94,18 +111,6 @@ trait ConfigSourceModule extends KeyValueModule {
     ) extends ConfigSource { self =>
       def at(propertyTreePath: PropertyTreePath[K]): ConfigSource =
         self.copy(access = self.access.map(_.map(getTree => getTree(_).map(_.at(propertyTreePath)))))
-
-      def getConfigValue(
-        keys: PropertyTreePath[K]
-      ): ZManaged[Any, Nothing, ZManaged[Any, ReadError[K], ZIO[Any, ReadError[K], PropertyTree[K, V]]]] =
-        access.map(_.map(_(keys)))
-
-      lazy val root: ZManaged[Any, Nothing, ZManaged[
-        Any,
-        ReadError[String],
-        ZIO[Any, ReadError[String], PropertyTree[String, String]]
-      ]] =
-        getConfigValue(PropertyTreePath(Vector.empty))
 
       /**
        * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
@@ -159,28 +164,7 @@ trait ConfigSourceModule extends KeyValueModule {
        * }}}
        */
       def <>(that: => Reader): ConfigSource = self orElse that
-
-      def withTree(tree: PropertyTree[K, V]): ConfigSource =
-        copy(access = ZManaged.succeed(ZManaged.succeed(a => ZIO.succeed(tree.at(a)))))
     }
-
-    type Managed[A]              = ZManaged[Any, ReadError[K], A]
-    type TreeReader              = PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]
-    type MemoizableManaged[A]    = ZManaged[Any, Nothing, ZManaged[Any, ReadError[K], A]]
-    type ManagedReader           = Managed[TreeReader]
-    type MemoizableManagedReader = MemoizableManaged[TreeReader]
-
-    case class ConfigSourceName(name: String)
-
-    private[config] val SystemEnvironment    = "system environment"
-    private[config] val SystemProperties     = "system properties"
-    private[config] val CommandLineArguments = "command line arguments"
-
-    val empty: ConfigSource =
-      Reader(
-        Set.empty,
-        ZManaged.succeed(ZManaged.succeed(_ => ZIO.succeed(PropertyTree.empty)))
-      )
 
     /**
      * EXPERIMENTAL
@@ -465,8 +449,8 @@ trait ConfigSourceModule extends KeyValueModule {
      * Note: The delimiter '.' for keys doesn't work in system environment.
      */
     def fromSystemEnv(
-      keyDelimiter: Option[Char],
-      valueDelimiter: Option[Char],
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true,
       system: System.Service = System.Service.live
     ): ConfigSource = {
@@ -502,30 +486,6 @@ trait ConfigSourceModule extends KeyValueModule {
         ZManaged.succeed(managed)
       )
     }
-
-    /**
-     * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
-     * Consider providing valueDelimiter if you need any value to be a list
-     *
-     * Example:
-     *
-     * Given:
-     *
-     * {{{
-     *    vars in sys.env  = "KAFKA.SERVERS" = "server1, server2" ; "KAFKA.SERDE" = "confluent"
-     *    keyDelimiter     = Some('.')
-     *    valueDelimiter   = Some(',')
-     * }}}
-     *
-     * then, the following works:
-     *
-     * {{{
-     *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
-     * }}}
-     */
-    val fromSystemProps: ConfigSource =
-      fromSystemProps(None, None)
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
