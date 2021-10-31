@@ -15,47 +15,71 @@ object MemoizedSourceSpec extends BaseSpec {
     suite(
       "ConfigSource memoization and lazy config gets"
     )(
-      // testM("A non-memoized source runs a resource acquisition for each config retrieval, and get config lazily") {
-      //   val config = (string("k1") |@| string("k2")).tupled
-      //   assertM(read(config from effectFulSource(releaseResource = false)))(equalTo((s"v1_1_1", "v2_2_2")))
-      // }
+      testM("A non-memoized source runs a resource acquisition for each config retrieval, and get config lazily") {
+        val config = (string("k1") |@| string("k2")).tupled
+
+        val effect =
+          for {
+            _ <- resetEnv
+            _  = println(resource.get())
+            v <- read(config from effectFulSource(releaseResource = false))
+            r <- ZIO.succeed(resource.get)
+            c <- ZIO.succeed(configCount.get)
+          } yield (v, r, c)
+
+        assertM(effect)(equalTo(((s"v1", "v2"), 2, 2)))
+
+      },
       testM(
         "A non-memoized source runs a resource release before the next config retrieval while getting the configs lazily"
       ) {
         val config = (string("k1") |@| string("k2")).tupled
-        assertM(read(config from effectFulSource(releaseResource = true)))(equalTo((s"v1_1_1", "v2_2_1")))
+
+        val effect =
+          for {
+            _ <- resetEnv
+            _  = println("hello " + resource.get())
+            v <- read(config from effectFulSource(releaseResource = true))
+            r <- ZIO.succeed(resource.get)
+            c <- ZIO.succeed(configCount.get)
+          } yield (v, r, c)
+
+        assertM(effect)(equalTo(((s"v1", "v2"), 0, 2)))
+
       }
     )
 }
 
 object MemoizedSourceSpecUtils {
-
-  val Resource =
+  val resource =
     new AtomicInteger(0)
 
   val configCount =
     new AtomicInteger(0)
 
-  def tree(configCount: Int, resourceCount: Int, path: PropertyTreePath[String]): PropertyTree[String, String] =
+  def resetEnv = ZIO.effectTotal({
+    resource.set(0)
+    configCount.set(0)
+  })
+
+  def tree(path: PropertyTreePath[String]): PropertyTree[String, String] =
     PropertyTree
       .Record(
         Map(
-          "k1" -> PropertyTree.Leaf(s"v1_${configCount}_${resourceCount}"),
-          "k2" -> PropertyTree.Leaf(s"v2_${configCount}_${resourceCount}")
+          "k1" -> PropertyTree.Leaf(s"v1"),
+          "k2" -> PropertyTree.Leaf(s"v2")
         )
       )
       .at(path)
 
   val acquire =
     ZIO.effectTotal({
-      println("hurry")
-      Resource.incrementAndGet()
+      resource.incrementAndGet()
     })
 
   val release =
     ZIO.effectTotal({
-      println("hurry2")
-      Resource.decrementAndGet()
+      resource.decrementAndGet()
     })
 
   val logConfigValueFetch =
@@ -67,10 +91,7 @@ object MemoizedSourceSpecUtils {
         .make(acquire) { _ =>
           if (releaseResource) release else ZIO.unit
         }
-        .map(resourceCount =>
-          (path: PropertyTreePath[String]) =>
-            logConfigValueFetch.map(configCount => tree(configCount, resourceCount, path))
-        )
+        .map(_ => (path: PropertyTreePath[String]) => logConfigValueFetch.map(_ => tree(path)))
 
     ConfigSource.Reader(
       Set(ConfigSource.ConfigSourceName("effectful-source")),
