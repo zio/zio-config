@@ -10,15 +10,15 @@ import scala.collection.mutable.{Map => MutableMap}
 @silent("Unused import")
 private[config] trait ReadModule extends ConfigDescriptorModule {
   import VersionSpecificSupport._
-  var count: List[ConfigSource.ManagedReader] = List()
+
+  type CachedReaders = MutableMap[ConfigSource, ConfigSource.ManagedReader]
 
   final def read[A](
     configuration: ConfigDescriptor[A]
   ): IO[ReadError[K], A] = {
     type Res[+B] = ZManaged[Any, ReadError[K], AnnotatedRead[PropertyTree[K, B]]]
 
-    val cachedSources: MutableMap[ConfigSource, ConfigSource.ManagedReader] =
-      MutableMap()
+    val cachedSources: CachedReaders = MutableMap()
 
     import ConfigDescriptorAdt._
 
@@ -334,7 +334,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
 
   private[config] def treeOf[A](
     config: ConfigDescriptor[A],
-    cachedSources: MutableMap[ConfigSource, ConfigSource.ManagedReader]
+    cachedSources: CachedReaders
   ): ZManaged[Any, ReadError[String], PropertyTree[K, V]] = {
     val sourceTrees = ZManaged.foreach(config.sources.toList) { managed =>
       for {
@@ -356,7 +356,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   private[config] def isEmptyConfigSource[A](
     config: ConfigDescriptor[A],
     keys: List[Step[K]],
-    cachedSources: MutableMap[ConfigSource, ConfigSource.ManagedReader]
+    cachedSources: CachedReaders
   ): ZManaged[Any, ReadError[K], Boolean] =
     ZManaged.forall(config.sources) { managed =>
       for {

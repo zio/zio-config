@@ -164,30 +164,11 @@ trait ConfigSourceModule extends KeyValueModule {
         copy(access = ZManaged.succeed(ZManaged.succeed(a => ZIO.succeed(tree.at(a)))))
     }
 
-    /**
-     * A Reader is a function that goes from a propertyTreePath
-     * to a PropertyTree. Given a PropertyTreePath, retrieval of the whole/subset
-     * of a PropertyTree can happen under an effect.
-     */
-    type PropertyTreeReader = PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]
-
-    /**
-     * In order to even access the reader, we might need to perform
-     * some resource bound effects, represented by ZManaged.
-     * Example, it is impossible to compute the `PropertyTreeReader` without opening a file.
-     */
-    type ManagedReader = ZManaged[Any, ReadError[K], PropertyTreeReader]
-
-    /**
-     * A ManagedReader that could be potentially memoized.
-     * This implies the effect (example: open file)
-     * needed to compute the Reader itself
-     * is memoized.
-     */
-    type Memoized[A] = ZManaged[Any, Nothing, A]
-
-    type MemoizableManagedReader =
-      Memoized[ManagedReader]
+    type Managed[A]              = ZManaged[Any, ReadError[K], A]
+    type TreeReader              = PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]
+    type MemoizableManaged[A]    = ZManaged[Any, Nothing, ZManaged[Any, ReadError[K], A]]
+    type ManagedReader           = Managed[TreeReader]
+    type MemoizableManagedReader = MemoizableManaged[TreeReader]
 
     case class ConfigSourceName(name: String)
 
