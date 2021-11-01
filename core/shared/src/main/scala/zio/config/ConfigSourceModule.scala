@@ -420,9 +420,6 @@ trait ConfigSourceModule extends KeyValueModule {
       )
     }
 
-    val fromSystemEnv: ConfigSource =
-      fromSystemEnv(None, None)
-
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
      * Consider providing valueDelimiter if you need any value to be a list
@@ -458,20 +455,11 @@ trait ConfigSourceModule extends KeyValueModule {
 
       val managed =
         ZIO
-          .accessM[System](_.get.envs)
+          .accessM[System](
+            _.get.envs.map(map => getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys))
+          )
           .toManaged_
           .mapError(throwable => ReadError.SourceError(throwable.toString))
-          .flatMap { map =>
-            if (keyDelimiter.forall(validDelimiters.contains)) {
-              ZIO
-                .succeed(
-                  getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
-                )
-                .toManaged_
-            } else {
-              ZIO.fail(ReadError.SourceError(s"Invalid system key delimiter: ${keyDelimiter.get}")).toManaged_
-            }
-          }
           .map(tree =>
             (path: PropertyTreePath[K]) => {
               ZIO.succeed(
@@ -483,7 +471,13 @@ trait ConfigSourceModule extends KeyValueModule {
 
       Reader(
         Set(ConfigSourceName(SystemProperties)),
-        ZManaged.succeed(managed)
+        if (keyDelimiter.forall(validDelimiters.contains)) {
+          ZManaged.succeed(managed)
+        } else {
+          // If delimiters are wrong, there isn't a need to build an inner zmanaged,
+          // that's invoked per config. Instead die.
+          ZManaged.fail(ReadError.SourceError(s"Invalid system key delimiter: ${keyDelimiter.get}")).orDie
+        }
       )
     }
 
