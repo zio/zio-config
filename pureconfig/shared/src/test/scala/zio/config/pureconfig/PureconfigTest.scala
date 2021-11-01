@@ -15,9 +15,7 @@ object PureconfigTest extends BaseSpec {
           val v2  =
             for {
               written <- ZIO.fromEither(write(cfg, v))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <- read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
             } yield reread
 
           assertM(v2)(equalTo(v))
