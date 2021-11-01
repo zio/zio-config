@@ -17,23 +17,23 @@ object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
 
 object OverrideDerivationTest extends DefaultRunnableSpec {
   val spec: ZSpec[Environment, Failure] = suite("OverrideDerivationTest")(
-    test("simple config") {
+    testM("simple config") {
       import OverrideDerivationTestEnv._
 
       case class Cfg(fieldName: String)
 
       val res = write(getDescriptor[Cfg].desc, Cfg("a"))
 
-      assert(res)(isRight(equalTo(Record(Map("prefix_field_name" -> Leaf("a")))))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(
+        zio.ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(getDescriptor[Cfg].desc from v))
       )(
-        isRight(equalTo(Cfg("a")))
+        equalTo(Cfg("a"))
       )
     },
-    test("unwrapped sealed hierarchy") {
+    testM("unwrapped sealed hierarchy") {
       import OverrideDerivationTestEnv._
 
       sealed trait Inner
@@ -61,16 +61,16 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
         )
       )
 
-      assert(res)(isRight(equalTo(expected))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(
+        zio.ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(getDescriptor[Outer].desc from v))
       )(
-        isRight(equalTo(cfg))
+        equalTo(cfg)
       )
     },
-    test("wrapped sealed hierarchy") {
+    testM("wrapped sealed hierarchy") {
       val wrappedSealedHierarchy = new DeriveConfigDescriptor {
         import Descriptor.SealedTraitStrategy._
 
@@ -105,16 +105,16 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
         )
       )
 
-      assert(res)(isRight(equalTo(expected))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(
+        zio.ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
       )(
-        isRight(equalTo(cfg))
+        equalTo(cfg)
       )
     },
-    test("config with type labels ignoring the name of sealed trait") {
+    testM("config with type labels ignoring the name of sealed trait") {
       val wrappedSealedHierarchy = new DeriveConfigDescriptor {
         import Descriptor.SealedTraitStrategy._
 
@@ -148,16 +148,16 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
           )
         )
       )
-      assert(res)(isRight(equalTo(expected))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(
+        zio.ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
       )(
-        isRight(equalTo(cfg))
+        equalTo(cfg)
       )
     },
-    test("config with type labels wrapped with sealed trait name") {
+    testM("config with type labels wrapped with sealed trait name") {
       val wrappedSealedHierarchy = new DeriveConfigDescriptor {
         import Descriptor.SealedTraitStrategy._
 
@@ -199,13 +199,13 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
           )
         )
       )
-      assert(res)(isRight(equalTo(expected))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(
+        zio.ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
       )(
-        isRight(equalTo(cfg))
+        equalTo(cfg)
       )
     }
   )

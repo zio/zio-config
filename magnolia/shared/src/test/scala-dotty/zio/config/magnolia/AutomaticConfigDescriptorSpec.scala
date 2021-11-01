@@ -25,7 +25,7 @@ object AutomaticConfigTest extends BaseSpec {
 
           val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
             for {
-              result  <- ZIO.fromEither(read(configDesc from source))
+              result  <- read(configDesc from source)
               written <- ZIO.effectTotal(write(configDesc, result))
             } yield written
 
