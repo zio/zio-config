@@ -860,7 +860,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      filterKeys: String => Boolean = _ => true,
+      filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
       ZLayer.fromServiceM((system: System.Service) =>
         read(
