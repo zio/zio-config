@@ -4,7 +4,7 @@ import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import zio.config._
 
-import java.io.{File, FileInputStream}
+import java.io.{File, FileInputStream, Reader}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
 import java.nio.file.Path
 import java.{util => ju}
@@ -68,22 +68,51 @@ object YamlConfigSource {
    * }}}
    */
   def fromYamlFile(file: File): Either[ReadError[String], ConfigSource] =
-    Try {
-      ConfigSource.fromPropertyTree(
-        convertYaml(
-          snakeYamlLoader()
-            .loadFromInputStream(new FileInputStream(file))
-        ),
-        file.getAbsolutePath,
-        LeafForSequence.Invalid
-      )
-    }.toEither.swap
-      .map(throwable =>
-        ReadError.SourceError(
-          message = s"Failed to retrieve a valid from the yaml source. ${throwable.getMessage}"
-        ): ReadError[String]
-      )
-      .swap
+    loadFromPropertyTree(
+      convertYaml(
+        loadYaml(file)
+      ),
+      file.getAbsolutePath
+    )
+
+  /**
+   * Retrieve a `ConfigSource` from yaml reader.
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *
+   *   import zio.*
+   *   import scala.io.Source
+   *   import java.io.InputStreamReader
+   *   import zio.config.yaml.YamlConfigSource
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   def acquire(yamlResourcePath: String) = ZIO.effect(Source.fromResource(yamlResourcePath).reader)
+   *   def release(reader: InputStreamReader) = ZIO.effectTotal(reader.close())
+   *
+   *   val myConfig: InputStreamReader => IO[ReadError[String], MyConfig] = reader =>
+   *     IO.fromEither(
+   *        for {
+   *          source <- YamlConfigSource.fromYamlReader(reader)
+   *          myConfig <- read(descriptor[MyConfig] from source)
+   *        } yield myConfig
+   *     )
+   *
+   *   val result: Task[MyConfig] = ZManaged.make(acquire("relative/path/to/your/application/resource.yml"))(release).use(myConfig)
+   * }}}
+   */
+  def fromYamlReader(
+    reader: Reader,
+    sourceName: String = "yaml"
+  ): Either[ReadError[String], ConfigSource] =
+    loadFromPropertyTree(
+      convertYaml(
+        loadYaml(reader)
+      ),
+      sourceName
+    )
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -105,21 +134,40 @@ object YamlConfigSource {
     yamlString: String,
     sourceName: String = "yaml"
   ): Either[ReadError[String], ConfigSource] =
+    loadFromPropertyTree(
+      convertYaml(
+        loadYaml(yamlString)
+      ),
+      sourceName
+    )
+
+  private def loadFromPropertyTree(
+    propertyTree: => PropertyTree[String, String],
+    sourceName: String
+  ): Either[ReadError[String], ConfigSource] =
     Try {
       ConfigSource.fromPropertyTree(
-        convertYaml(
-          snakeYamlLoader().loadFromString(yamlString)
-        ),
+        propertyTree,
         sourceName,
         LeafForSequence.Invalid
       )
     }.toEither.swap
       .map(throwable =>
         ReadError.SourceError(
-          message = s"Failed to retrieve a valid from the yaml source. ${throwable.getMessage}"
-        ): ReadError[String]
+          message = s"Failed to retrieve a valid yaml from the yaml source. ${throwable.getMessage}",
+          Set.empty
+        )
       )
       .swap
+
+  private def loadYaml(yamlFile: File): AnyRef =
+    snakeYamlLoader().loadFromInputStream(new FileInputStream(yamlFile))
+
+  private def loadYaml(yamlReader: Reader): AnyRef =
+    snakeYamlLoader().loadFromReader(yamlReader)
+
+  private def loadYaml(yamlString: String): AnyRef =
+    snakeYamlLoader().loadFromString(yamlString)
 
   private def snakeYamlLoader(): Load =
     new Load(
