@@ -42,7 +42,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *   val removeAwsPrefix  = (s: String) = s.replace("aws", "")
      *
      *   val source = ConfigSource.fromMap(map)
-     *   val updatedSource = ConfigSource.fromMap(map).mapKeys(removeAwsPrefix)
+     *   val updatedSource = source.mapKeys(removeAwsPrefix)
      *
      *   read(config from updatedSource)
      *
