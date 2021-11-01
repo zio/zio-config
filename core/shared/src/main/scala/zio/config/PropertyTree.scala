@@ -6,6 +6,7 @@ import zio.config.PropertyTreePath.Step
 import scala.collection.immutable.Nil
 import scala.util.Try
 import scala.util.matching.Regex
+import VersionSpecificSupport._
 
 final case class PropertyTreePath[K](path: Vector[Step[K]]) {
   def mapKeys(f: K => K): PropertyTreePath[K] =
@@ -124,9 +125,9 @@ sealed trait PropertyTree[+K, +V] { self =>
   }
 
   final def atKey[K1 >: K](key: K1): Option[PropertyTree[K1, V]] =
-    self match {
+    self.asInstanceOf[PropertyTree[K1, V]] match {
       case Leaf(_, _)         => None
-      case Record(value)      => value.get(key.asInstanceOf[K])
+      case r: Record[K1, V]   => r.value.get(key)
       case PropertyTree.Empty => None
       case Sequence(_)        => None
     }
@@ -150,7 +151,8 @@ sealed trait PropertyTree[+K, +V] { self =>
             .fold[Map[Vector[K1], ::[V1]]](acc.updated(key, ::(v, Nil)))(value =>
               acc.updated(key, ::(value.head, value.tail :+ v))
             )
-        case Record(value)   => value.flatMap(t => go(key :+ t._1, t._2, acc))
+        case Record(value)   =>
+          value.flatMap(t => go(key :+ t._1, t._2, acc))
       }
 
     go(Vector.empty, self, Map.empty[Vector[K1], ::[V1]])

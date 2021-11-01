@@ -530,7 +530,7 @@ trait ConfigSourceModule extends KeyValueModule {
       args: List[String],
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char]
-    )(implicit KS: K =:= String, VS: V =:= String): List[PropertyTree[K, V]] = {
+    )(implicit KS: String =:= K, VS: String =:= V): List[PropertyTree[K, V]] = {
       def unFlattenWith(
         key: String,
         tree: PropertyTree[String, String]
@@ -709,7 +709,7 @@ trait ConfigSourceModule extends KeyValueModule {
           case Nil       => Nil
         }
 
-      dropEmptyNode(PropertyTree.mergeAll(loop(args).map(_.bimap(KS.flip, VS.flip)))).map(unwrapSingletonLists(_))
+      dropEmptyNode(PropertyTree.mergeAll(loop(args).map(_.bimap(KS, VS)))).map(unwrapSingletonLists(_))
     }
 
     private[config] def getPropertyTreeFromMapA[A](map: Map[K, A])(

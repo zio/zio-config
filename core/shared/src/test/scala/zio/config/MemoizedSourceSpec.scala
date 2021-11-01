@@ -40,6 +40,30 @@ object MemoizedSourceSpec extends BaseSpec {
 
       },
       testM(
+        "A non-memoized source runs a single resource acquisition when retrieving a list"
+      ) {
+        val config = (string("k1") |@| string("k2")).tupled
+
+        val resource =
+          new AtomicInteger(0)
+
+        val configCount =
+          new AtomicInteger(0)
+
+        val source =
+          effectFulSource(acquire(resource), UIO(resource.get), incrementCount(configCount))
+
+        val effect =
+          for {
+            v <- read(config from source)
+            r <- ZIO.succeed(resource.get)
+            c <- ZIO.succeed(configCount.get)
+          } yield (v, r, c)
+
+        assertM(effect)(equalTo(((s"v1_1_1", "v2_2_2"), 2, 2)))
+
+      },
+      testM(
         "A non-memoized source runs a resource release before the next config retrieval"
       ) {
         val resource =
@@ -123,7 +147,7 @@ object MemoizedSourceSpecUtils {
     release: UIO[Int],
     incrementConfig: UIO[Int]
   ): ConfigSource = {
-    val managed: ZManaged[Any, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
+    val managed: ZManaged[Any, ReadError[String], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
       ZManaged
         .make(acquire) { _ =>
           release
