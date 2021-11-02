@@ -46,14 +46,14 @@ object MultipleSourcesSimpleExample extends App {
   //
 
   assert(
-    read(myConfig) == Right(MyConfig("jolap", 1999, Some("newyork.com")))
+    read(myConfig) == MyConfig("jolap", 1999, Some("newyork.com"))
   )
 
   assert(
-    read(myConfigWithReset) == Right(MyConfig("jolap", 1999, Some("newyork.com")))
+    read(myConfigWithReset) == MyConfig("jolap", 1999, Some("newyork.com"))
   )
 
   assert(
-    read(myConfigChangedSource) == Right(MyConfig("jolap", 1999, Some("newyork.com")))
+    read(myConfigChangedSource) == MyConfig("jolap", 1999, Some("newyork.com"))
   )
 }

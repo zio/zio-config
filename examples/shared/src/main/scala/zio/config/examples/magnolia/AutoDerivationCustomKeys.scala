@@ -1,7 +1,7 @@
 package zio.config.examples.magnolia
 
 import com.github.ghik.silencer.silent
-import zio.config._
+import zio.config._, examples._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
@@ -24,12 +24,12 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       |""".stripMargin
 
   // Default behaviour, and hence no mapKey
-  val camelCaseResult: Either[ReadError[String], MyConfig] =
+  val camelCaseResult =
     read(
-      descriptor[MyConfig] from (TypesafeConfigSource.fromHoconString(camelCaseConfig).loadOrThrow)
+      descriptor[MyConfig] from (TypesafeConfigSource.fromHoconString(camelCaseConfig))
     )
 
-  assert(camelCaseResult == Right(MyConfig("abcd", "us-east")))
+  assert(camelCaseResult == MyConfig("abcd", "us-east"))
 
   val kebabCaseConfig: String =
     """
@@ -39,23 +39,10 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  val kebabCaseResult: Either[ReadError[String], MyConfig] =
+  val kebabCaseResult =
     read(
-      descriptor[MyConfig].mapKey(toKebabCase) from (TypesafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow)
+      descriptor[MyConfig].mapKey(toKebabCase) from (TypesafeConfigSource.fromHoconString(kebabCaseConfig))
     )
 
-  assert(kebabCaseResult == Right(MyConfig("abcd", "us-east")))
-
-  val snakeCaseConfig: String =
-    """
-      |{
-      |  aws_region: us-east
-      |  account_id: abcd
-      |}
-      |""".stripMargin
-
-  val snakeCaseResult: Either[ReadError[String], MyConfig] =
-    read(
-      descriptor[MyConfig].mapKey(toSnakeCase) from (TypesafeConfigSource.fromHoconString(snakeCaseConfig).loadOrThrow)
-    )
+  assert(kebabCaseResult == MyConfig("abcd", "us-east"))
 }

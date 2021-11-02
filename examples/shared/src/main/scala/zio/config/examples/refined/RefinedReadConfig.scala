@@ -4,7 +4,7 @@ import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.{NonEmpty, Size}
 import eu.timepit.refined.numeric.{Greater, GreaterEqual}
-import zio.config._
+import zio.config._, examples._
 import zio.config.refined._
 
 import ConfigDescriptor._

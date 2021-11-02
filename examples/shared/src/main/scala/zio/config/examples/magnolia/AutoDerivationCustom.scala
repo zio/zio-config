@@ -1,6 +1,6 @@
 package zio.config.examples.magnolia
 
-import zio.config._
+import zio.config._, examples._
 import zio.config.magnolia._
 import zio.config.typesafe._
 
@@ -60,15 +60,12 @@ object AutoDerivationCustom extends App {
     case Left(_)  => throw new Exception("bad hocon string")
   }
 
-  val s = read(appConfigDesc from source)
-
   assert(
-    s == Right(
+    read(appConfigDesc from source) ==
       AppConfig(
         "spark",
         Some(Detail("abcdefg", Left(ZonedDateTime.parse("2020-06-20T17:15:23.601712+10:00[Australia/Sydney]")))),
         S3Path("s3://path")
       )
-    )
   )
 }

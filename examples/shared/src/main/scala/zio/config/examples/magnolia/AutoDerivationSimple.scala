@@ -1,6 +1,6 @@
 package zio.config.examples.magnolia
 
-import zio.config._
+import zio.config._, examples._
 import zio.config.examples.magnolia.MyConfig._
 import zio.config.magnolia.DeriveConfigDescriptor._
 import zio.config.magnolia.describe
@@ -54,7 +54,7 @@ object AutomaticConfigDescriptor extends App {
 
   assert(
     config ==
-      Right(MyConfig(Aws("us-east", Token("token")), Inr(1000), DbUrl("some url"), 10, Some(3.14), Left(30.0), 12, 14))
+      MyConfig(Aws("us-east", Token("token")), Inr(1000), DbUrl("some url"), 10, Some(3.14), Left(30.0), 12, 14)
   )
 
 }

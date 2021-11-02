@@ -1,6 +1,6 @@
 package zio.config.examples.commandline
 
-import zio.config._
+import zio.config._, examples._
 
 import ConfigDescriptor._
 
@@ -63,16 +63,14 @@ object CommandLineComplex extends App {
 
   assert(
     read(AppConfig.desc from (source)) ==
-      Right(
-        AppConfig(
-          SparkConfig(
-            DatabaseConfig(UserPassword("1", "hi"), "jdbc://xyz"),
-            10
-          ),
-          VaultConfig(UserPassword("3", "10")),
-          List("1", "2"),
-          List("111", "112")
-        )
+      AppConfig(
+        SparkConfig(
+          DatabaseConfig(UserPassword("1", "hi"), "jdbc://xyz"),
+          10
+        ),
+        VaultConfig(UserPassword("3", "10")),
+        List("1", "2"),
+        List("111", "112")
       )
   )
 }
