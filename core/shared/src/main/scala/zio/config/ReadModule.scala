@@ -119,8 +119,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       descriptions: List[String]
     ): Res[B] =
       for {
-        existing            <- ZManaged.succeed(cachedSources.get(cfg.source))
-        maybeMemoizedReader <- existing match {
+        maybeMemoizedReader <- cachedSources.get(cfg.source) match {
                                  case Some(value) =>
                                    ZManaged.succeed(value)
                                  case None        =>
