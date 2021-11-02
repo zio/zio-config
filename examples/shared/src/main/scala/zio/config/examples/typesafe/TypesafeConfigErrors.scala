@@ -59,29 +59,21 @@ object TypesafeConfigErrors extends App {
     }
    """
 
-  val nestedConfigAutomaticResult1: Either[ReadError[String], AwsConfig] =
-    TypesafeConfigSource.fromHoconString(hocconStringWithStringDb) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(configNestedAutomatic from source)
-    }
+  val nestedConfigAutomaticResult1 =
+    read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))
 
-  val nestedConfigAutomaticResult2: Either[ReadError[String], AwsConfig] =
-    TypesafeConfigSource.fromHoconString(hocconStringWithDb) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(configNestedAutomatic from source)
-    }
+  val nestedConfigAutomaticResult2 =
+    read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithDb))
 
-  val nestedConfigAutomaticResult3: Either[ReadError[String], AwsConfig] =
-    TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(configNestedAutomatic from source)
-    }
+  val nestedConfigAutomaticResult3 =
+    read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
   assert(
     nestedConfigAutomaticResult1 == Right(
       AwsConfig(Account("us-east", "jon"), Some(Right("hi")))
     )
   )
+
   assert(
     nestedConfigAutomaticResult2 == Right(
       AwsConfig(
@@ -106,41 +98,29 @@ object TypesafeConfigErrors extends App {
       .optional)(AwsConfig.apply, AwsConfig.unapply)
   }
 
-  val nestedConfigManualResult1: Either[ReadError[String], AwsConfig] =
-    TypesafeConfigSource.fromHoconString(hocconStringWithDb) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(configNestedManual from source)
-    }
+  val nestedConfigManualResult1 =
+    read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithDb))
 
-  val nestedConfigManualResult2: Either[ReadError[String], AwsConfig] =
-    TypesafeConfigSource.fromHoconString(hocconStringWithStringDb) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(configNestedManual from source)
-    }
+  val nestedConfigManualResult2 =
+    read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))
 
-  val nestedConfigManualResult3: Either[ReadError[String], AwsConfig] =
-    TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(configNestedManual from source)
-    }
+  val nestedConfigManualResult3 =
+    read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
   assert(
-    nestedConfigManualResult1 == Right(
+    nestedConfigManualResult1 ==
       AwsConfig(
         Account("us-east", "jon"),
         Some(Left(Database(1200, "postgres")))
       )
-    )
   )
   assert(
-    nestedConfigManualResult2 == Right(
+    nestedConfigManualResult2 ==
       AwsConfig(Account("us-east", "jon"), Some(Right("hi")))
-    )
   )
   assert(
-    nestedConfigManualResult3 == Right(
+    nestedConfigManualResult3 ==
       AwsConfig(Account("us-east", "jon"), None)
-    )
   )
 
   // Substitution Example, Example from typesafe/config documentation
@@ -156,15 +136,11 @@ object TypesafeConfigErrors extends App {
 
   val configWithHoconSubstitution: ConfigDescriptor[DatabaseDetails] = descriptor[DatabaseDetails]
 
-  val finalResult: Either[ReadError[String], DatabaseDetails] =
-    TypesafeConfigSource.fromHoconString(hoconStringWithSubstitution) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(configWithHoconSubstitution from source)
-    }
+  val finalResult =
+    read(configWithHoconSubstitution from TypesafeConfigSource.fromHoconString(hoconStringWithSubstitution))
 
   assert(
-    finalResult == Right(
+    finalResult ==
       DatabaseDetails(Details(8, "west"), Details(6, "east"))
-    )
   )
 }
