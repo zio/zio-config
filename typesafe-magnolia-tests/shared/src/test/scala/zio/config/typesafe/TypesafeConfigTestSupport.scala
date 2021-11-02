@@ -167,10 +167,10 @@ object TypesafeConfigTestSupport extends EitherSupport {
       |m = []
       |""".stripMargin
 
-  val complexHoconSource: ConfigSource = TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
+  val complexHoconSource: ConfigSource = TypesafeConfigSource.fromHoconString(hocon)
 
   val complexDescription: ConfigDescriptor[A] = descriptor[A]
-  val readComplexSource: A                    = read(complexDescription from complexHoconSource).loadOrThrow
+  val readComplexSource                       = read(complexDescription from complexHoconSource)
 
   val expectedResult: A =
     A(

@@ -275,7 +275,6 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
           else ZManaged.succeed(false)
         res                 <- if (isEmptyConfigSource) {
                                  ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-
                                } else
                                  config match {
                                    case c @ Lazy(thunk) =>

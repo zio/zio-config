@@ -4,6 +4,7 @@ import zio.config.PropertyTree._
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
+import zio.ZIO
 
 object CoproductSealedTraitSpec extends DefaultRunnableSpec {
 
@@ -21,9 +22,9 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
   case class Config(x: X)
 
   val spec: ZSpec[Environment, Failure] = suite("MagnoliaConfig")(testM("descriptor of coproduct sealed trait") {
-    assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "A"))))(equalTo(Config(A))) &&&
-      assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "B"))))(equalTo(Config(B))) &&&
-      assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Config(C))) &&&
+    assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "A"))))(equalTo(Config(A))) *>
+      assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "B"))))(equalTo(Config(B))) *>
+      assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Config(C))) *>
       assertM(
         read(
           descriptor[Config] from ConfigSource.fromMap(
@@ -36,7 +37,7 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
             keyDelimiter = Some('.')
           )
         )
-      )(equalTo(Config(D(Detail("ff", "ll", Region("strath", "syd")))))) &&&
+      )(equalTo(Config(D(Detail("ff", "ll", Region("strath", "syd")))))) *>
       assertM(
         read(
           descriptor[Config] from ConfigSource.fromMap(
@@ -49,7 +50,7 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
             keyDelimiter = Some('.')
           )
         )
-      )(equalTo(Config(E(Detail("ff", "ll", Region("strath", "syd")))))) &&&
+      )(equalTo(Config(E(Detail("ff", "ll", Region("strath", "syd")))))) *>
       assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(D(Detail("ff", "ll", Region("strath", "syd")))))))(
         equalTo(
           Record(
@@ -72,9 +73,13 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
             )
           )
         )
-      ) &&
-      assert(write(descriptor[Config], Config(A)))(equalTo(Right(Record(Map("x" -> Leaf("A")))))) &&
-      assert(write(descriptor[Config], Config(B)))(equalTo(Right(Record(Map("x" -> Leaf("B")))))) &&
-      assert(write(descriptor[Config], Config(C)))(equalTo(Right(Record(Map("x" -> Leaf("c"))))))
+      ) *>
+      assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(A))))(
+        equalTo(Record(Map("x" -> Leaf("A"))))
+      ) *>
+      assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(B))))(
+        equalTo(Record(Map("x" -> Leaf("B"))))
+      ) *>
+      assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(C))))(equalTo(Record(Map("x" -> Leaf("c")))))
   })
 }

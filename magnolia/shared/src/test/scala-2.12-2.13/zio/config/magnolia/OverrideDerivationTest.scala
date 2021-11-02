@@ -1,6 +1,5 @@
 package zio.config.magnolia
 
-import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
@@ -48,19 +47,6 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val res = write(OverrideDerivationTestEnv.getDescriptor[Outer].desc, cfg)
 
-      val expected = Record(
-        Map(
-          "prefix_list" -> Sequence(
-            List(
-              Leaf("other_object_suffix"),
-              Leaf("obj1_name_suffix"),
-              Record(Map("prefix_value" -> Leaf("a"))),
-              Record(Map("prefix_data" -> Leaf("b")))
-            )
-          )
-        )
-      )
-
       assertM(
         zio.ZIO
           .fromEither(res)
@@ -91,19 +77,6 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
       val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
-
-      val expected = Record(
-        Map(
-          "list" -> Sequence(
-            List(
-              Record(Map("Inner" -> Leaf("OtherOBJECT"))),
-              Record(Map("Inner" -> Leaf("Obj1Name"))),
-              Record(Map("Inner" -> Record(Map("ClassWithValue" -> Record(Map("value" -> Leaf("a"))))))),
-              Record(Map("Inner" -> Record(Map("ClassWithData" -> Record(Map("data" -> Leaf("b")))))))
-            )
-          )
-        )
-      )
 
       assertM(
         zio.ZIO
@@ -136,18 +109,6 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
 
-      val expected = Record(
-        Map(
-          "list" -> Sequence(
-            List(
-              Leaf("OtherOBJECT"),
-              Leaf("Obj1Name"),
-              Record(Map("value" -> Leaf("a"), "type" -> Leaf("ClassWithValue"))),
-              Record(Map("data" -> Leaf("b"), "type" -> Leaf("ClassWithData")))
-            )
-          )
-        )
-      )
       assertM(
         zio.ZIO
           .fromEither(res)
@@ -179,26 +140,6 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
 
-      val expected = Record(
-        Map(
-          "list" -> Sequence(
-            List(
-              Record(Map("Inner" -> Leaf("OtherOBJECT"))),
-              Record(Map("Inner" -> Leaf("Obj1Name"))),
-              Record(
-                Map(
-                  "Inner" -> Record(Map("value" -> Leaf("a"), "type" -> Leaf("ClassWithValue")))
-                )
-              ),
-              Record(
-                Map(
-                  "Inner" -> Record(Map("data" -> Leaf("b"), "type" -> Leaf("ClassWithData")))
-                )
-              )
-            )
-          )
-        )
-      )
       assertM(
         zio.ZIO
           .fromEither(res)

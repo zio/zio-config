@@ -2,7 +2,7 @@ package zio.config
 
 import PropertyTree.{Leaf, Record, Sequence, unflatten}
 import zio.system.System
-import zio.{UIO, ZIO, ZLayer, ZManaged}
+import zio.{UIO, ZIO, IO, ZLayer, ZManaged}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
@@ -30,7 +30,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *   case class Hello(a: String, b: String)
      *   val config: ConfigDescriptor[Hello] = (string("a") |@| string("b")).to[Hello]
      *
-     *   However your source is different for some reason. Example:
+     *   However your source is different for some reason (i.e, its not `a` and `b`). Example:
      *   {
      *     "aws_a" : "1"
      *     "aws_b" : "2"
@@ -82,6 +82,21 @@ trait ConfigSourceModule extends KeyValueModule {
       }
 
     def orElse(that: ConfigSource): ConfigSource = OrElse(self, that)
+
+    def runTree(path: PropertyTreePath[K]): IO[ReadError[K], PropertyTree[K, V]] =
+      self match {
+        case OrElse(self, that) =>
+          self.runTree(path).orElse(that.runTree(path))
+
+        case Reader(names, access) =>
+          access.use(_.use(tree => tree(path)))
+      }
+
+    def at(propertyTreePath: PropertyTreePath[K]): ConfigSource = self match {
+      case OrElse(self, that)    => self.at(propertyTreePath).orElse(that.at(propertyTreePath))
+      case Reader(names, access) =>
+        Reader(names, access.map(_.map(fn => (path => fn(propertyTreePath).map(_.at(path))))))
+    }
   }
 
   object ConfigSource {
@@ -109,8 +124,6 @@ trait ConfigSourceModule extends KeyValueModule {
       names: Set[ConfigSource.ConfigSourceName],
       access: ConfigSource.MemoizableManagedReader
     ) extends ConfigSource { self =>
-      def at(propertyTreePath: PropertyTreePath[K]): ConfigSource =
-        self.copy(access = self.access.map(_.map(getTree => getTree(_).map(_.at(propertyTreePath)))))
 
       /**
        * Try `this` (`configSource`), and if it fails, try `that` (`configSource`)
