@@ -55,7 +55,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    val configSource: ConfigSource = ConfigSource.fromMap(Map.empty)
      *
      *    // Read
-     *    val configResult: Either[ReadError[String], String] = read(portString from configSource)
+     *    val configResult: ZIO[Any, ReadError[String], String] = read(portString from configSource)
      *
      *  }}}
      *
@@ -166,10 +166,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *   {{{
      *     import zio.config._, ConfigDescriptor._
+     *     read(Config.databaseConfig from ConfigSource.fromMap(Map.empty))
      *
-     *     println(
-     *        read(Config.databaseConfig from ConfigSource.fromMap(Map.empty))
-     *      )
      *   }}}
      *
      *  returns:
@@ -492,9 +490,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   {{{
      *     import zio.config._, ConfigDescriptor._
      *
-     *     println(
-     *        read(Config.databaseConfig from ConfigSource.fromMap(Map.empty))
-     *      )
+     *     read(Config.databaseConfig from ConfigSource.fromMap(Map.empty))
+     *
      *   }}}
      *
      *  returns:
@@ -536,7 +533,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * {{{
      *
-     *   val either: Either[ReadError[String], String] = read(config)
+     *   val either: ZIO[Any, ReadError[String], String] = read(config)
      *
      * }}}
      *
@@ -700,9 +697,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *     val source = ConfigSource.fromMap(Map("USERNAME" -> "af"))
      *
-     *     println(
-     *        read(Config.databaseConfig from source)
-     *      )
+     *     read(Config.databaseConfig from source)
+     *
      *   }}}
      *
      *  returns:
@@ -716,9 +712,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  {{{
      *    val source = ConfigSource.fromMap(Map("USERNAME" -> "af", "PORT" -> "8888"))
      *
-     *    println(
-     *      read(Config.databaseConfig from source)
-     *    )
+     *    read(Config.databaseConfig from source)
      *
      *  }}}
      *
@@ -743,9 +737,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *     val source = ConfigSource.fromMap(Map("USERNAME" -> "af", "PORT" -> "abc"))
      *
-     *     println(
-     *        read(Config.databaseConfig from source)
-     *      )
+     *     read(Config.databaseConfig from source)
+     *
      *   }}}
      *
      *   returns:
@@ -1524,6 +1517,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   object Config {
      *     val source =
      *       ConfigSource.fromMap(Map("USERNAME" -> "af,sa", "PORT" -> "1"), valueDelimiter = Some(','))
+     *
      *     val databaseConfig: ConfigDescriptor[Config] =
      *       (head(string("USERNAME")) |@| int("PORT").optional)(Config.apply, Config.unapply)
      *   }
@@ -1554,6 +1548,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   object Config {
      *     val source =
      *       ConfigSource.fromMap(Map("USERNAME" -> "af,sa", "PORT" -> "1"), valueDelimiter = Some(','))
+     *
      *     val databaseConfig: ConfigDescriptor[Config] =
      *       (head("USERNAME")(string) |@| int("PORT").optional)(Config.apply, Config.unapply)
      *   }
@@ -1592,9 +1587,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          | ]
      *          |""".stripMargin
      *
-     *     val getSource: Either[ReadError[String], ConfigSource] =
-     *       TypesafeConfigSource.fromHoconString(json)
-     *
      *     val config = string("USERNAME")
      *
      *     // Within the key "xyz", we have a list of key-value pair, where key is always "USERNAME"
@@ -1602,17 +1594,16 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *     val listConfig = nested("xyz")(list(config))
      *
-     *     val userNames: Either[ReadError[String], List[String]] =
-     *       getSource.flatMap(source => read(listConfig from source))
+     *     val userNames: ZIO[Any, ReadError[String], List[String]] =
+     *        read(listConfig from TypesafeConfigSource.fromHoconString(json))
      *
-     *     println(userNames)
      *  }}}
      *
      *  returns
      *
      *  {{{
      *
-     *    Right(List(value1, value2))
+     *    List(value1, value2)
      *
      *  }}}
      *
@@ -1652,9 +1643,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          | ]
      *          |""".stripMargin
      *
-     *     val getSource: Either[ReadError[String], ConfigSource] =
-     *       TypesafeConfigSource.fromHoconString(json)
-     *
      *     val config = string("USERNAME")
      *
      *     // Within the key "xyz", we have a list of key-value pair, where key is always "USERNAME"
@@ -1662,17 +1650,16 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *     val listConfig = list("xyz")(config)
      *
-     *     val userNames: Either[ReadError[String], List[String]] =
-     *       getSource.flatMap(source => read(listConfig from source))
+     *     val userNames: ZIO[Any, ReadError[String], List[String]] =
+     *       read(listConfig from ypesafeConfigSource.fromHoconString(json))
      *
-     *     println(userNames)
      *  }}}
      *
      *  returns
      *
      *  {{{
      *
-     *    Right(List(value1, value2))
+     *    List(value1, value2)
      *
      *  }}}
      */
@@ -1701,22 +1688,18 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          |   }
      *          |""".stripMargin
      *
-     *     val getSource: Either[ReadError[String], ConfigSource] =
-     *       TypesafeConfigSource.fromHoconString(json)
-     *
      *     val config = string("USERNAME")
      *
-     *     val usernames: Either[ReadError[String], List[String]] =
-     *       getSource.flatMap(
-     *         source => read(listOrSingleton("configs")(config) from source)
-     *       )
+     *     val usernames: ZIO[Any, ReadError[String], List[String]] =
+     *       read(listOrSingleton("configs")(config) from TypesafeConfigSource.fromHoconString(json))
+     *
      *  }}}
      *
      *  returns
      *
      *  {{{
      *
-     *    Right(List(value1))
+     *     List(value1)
      *
      *  }}}
      */
@@ -1760,7 +1743,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *    val config = map("xyz")(int)
      *
-     *    val sourceOrFailed: Either[ReadError[String], ConfigSource] =
+     *    val source: ConfigSource =
      *      TypesafeConfigSource.fromHoconString(
      *        "xyz" : {
      *           "key1" : "1"
@@ -1773,7 +1756,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    // the HOCON string can be an invalid string.
      *
      *    val result =  sourceOrFailed.flatMap(source => read(config from source))
-     *    // Right(Map("key1" -> 1, "key2" -> 2, "key3" -> 3))
+     *    // Map("key1" -> 1, "key2" -> 2, "key3" -> 3)
      *  }}}
      *
      *  We explained `map` using TypesafeConfigSource. However, for zio-config source doesn't really matter.
@@ -1789,7 +1772,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *     )
      *
      *    val config = read(config from source)
-     *    // Right( Map("key1" -> 1, "key2" -> 2, "key3" -> 3))
+     *    // Map("key1" -> 1, "key2" -> 2, "key3" -> 3)
      *
      *  }}}
      *
@@ -1805,7 +1788,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *   // This means there exists a Map whose value is of the type {"String" : "Int"}.
      *
-     *   val sourceOrFailure: Either[ReadError[String], TypesafeConfigSource] = TypesafeConfigSource.fromHoconString(
+     *   val sourceOrFailure: ConfigSource =
+     *     TypesafeConfigSource.fromHoconString(
      *     s"""
      *      "abc" : {
      *       "key1" : { "id" :  "2" },
@@ -1815,8 +1799,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *      """"
      *    )
      *
-     *   val result = sourceOrFailure.flatMap(s => read(nested("abc")(map(int("id"))) from s))
-     *   // Right(Map("key1" -> 1, "key2" -> 2))
+     *   val result = read(nested("abc")(map(int("id"))) from source)
+     *   // Map("key1" -> 1, "key2" -> 2)
      *
      *  }}}
      *
@@ -1843,7 +1827,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *    val config = map("xyz")(int)
      *
-     *    val sourceOrFailed: Either[ReadError[String], ConfigSource] =
+     *    val source: ConfigSource =
      *      TypesafeConfigSource.fromHoconString(
      *        "xyz" : {
      *           "key1" : "1"
@@ -1855,7 +1839,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    // Forming a TypesafeConfigSource from string returned an Either (being able to capture errors) because
      *    // the HOCON string can be an invalid string.
      *
-     *    val result =  sourceOrFailed.flatMap(source => read(config from source))
+     *    val result =  read(config from source)
      *    // Right(Map("key1" -> 1, "key2" -> 2, "key3" -> 3))
      *  }}}
      *
@@ -1893,7 +1877,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    )
      *
      *    val result = read(config from mapSource)
-     *    // Right("value")
+     *    // "value"
      * }}}
      *
      * Note that `string("key")` is same as that of `nested("key")(string)`
@@ -1917,10 +1901,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          | xyz : ["a", "b"]
      *          |""".stripMargin
      *
-     *    val sourceOrFailure: Either[ReadError[String], TypesafeConfigSource] =
+     *    val source: ConfigSource =
      *     TypesafeConfigSource.fromHoconString(json)
      *
-     *   sourceOrFailure.flatMap(source => read(set("xyz")(string) from source))
+     *   read(set("xyz")(string) from source)
      *
      *  }}}
      *
@@ -1951,10 +1935,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          | xyz : ["a", "b"]
      *          |""".stripMargin
      *
-     *    val sourceOrFailure: Either[ReadError[String], TypesafeConfigSource] =
+     *    val source: ConfigSource =
      *     TypesafeConfigSource.fromHoconString(json)
      *
-     *   sourceOrFailure.flatMap(source => read(set("xyz")(string) from source))
+     *   read(set("xyz")(string) from source)
      *
      *  }}}
      *
@@ -1962,7 +1946,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  {{{
      *
-     *    Right(List(value1, value2))
+     *    List(value1, value2)
      *
      *  }}}
      */
