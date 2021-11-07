@@ -69,23 +69,20 @@ object TypesafeConfigErrors extends App {
     read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
   assert(
-    nestedConfigAutomaticResult1 == Right(
+    nestedConfigAutomaticResult1 equalM
       AwsConfig(Account("us-east", "jon"), Some(Right("hi")))
-    )
   )
 
   assert(
-    nestedConfigAutomaticResult2 == Right(
+    nestedConfigAutomaticResult2 equalM
       AwsConfig(
         Account("us-east", "jon"),
         Some(Left(Database(1200, "postgres")))
       )
-    )
   )
   assert(
-    nestedConfigAutomaticResult3 == Right(
+    nestedConfigAutomaticResult3 equalM
       AwsConfig(Account("us-east", "jon"), None)
-    )
   )
 
   val configNestedManual: ConfigDescriptor[AwsConfig] = {
@@ -108,18 +105,18 @@ object TypesafeConfigErrors extends App {
     read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
   assert(
-    nestedConfigManualResult1 ==
+    nestedConfigManualResult1 equalM
       AwsConfig(
         Account("us-east", "jon"),
         Some(Left(Database(1200, "postgres")))
       )
   )
   assert(
-    nestedConfigManualResult2 ==
+    nestedConfigManualResult2 equalM
       AwsConfig(Account("us-east", "jon"), Some(Right("hi")))
   )
   assert(
-    nestedConfigManualResult3 ==
+    nestedConfigManualResult3 equalM
       AwsConfig(Account("us-east", "jon"), None)
   )
 
@@ -140,7 +137,7 @@ object TypesafeConfigErrors extends App {
     read(configWithHoconSubstitution from TypesafeConfigSource.fromHoconString(hoconStringWithSubstitution))
 
   assert(
-    finalResult ==
+    finalResult equalM
       DatabaseDetails(Details(8, "west"), Details(6, "east"))
   )
 }

@@ -29,7 +29,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       descriptor[MyConfig] from (TypesafeConfigSource.fromHoconString(camelCaseConfig))
     )
 
-  assert(camelCaseResult == MyConfig("abcd", "us-east"))
+  assert(camelCaseResult equalM MyConfig("abcd", "us-east"))
 
   val kebabCaseConfig: String =
     """
@@ -44,5 +44,5 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       descriptor[MyConfig].mapKey(toKebabCase) from (TypesafeConfigSource.fromHoconString(kebabCaseConfig))
     )
 
-  assert(kebabCaseResult == MyConfig("abcd", "us-east"))
+  assert(kebabCaseResult equalM MyConfig("abcd", "us-east"))
 }

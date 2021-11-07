@@ -1,6 +1,6 @@
 package zio.config.examples.typesafe
 
-import zio.config._
+import zio.config._, examples._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 
@@ -70,62 +70,53 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
       databaseConfig
     ) |@| list("users")(int))(AwsDetails.apply, AwsDetails.unapply)
 
-  val listResult: Either[ReadError[String], AwsDetails] =
-    fromHoconString(validHocon) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(awsDetailsConfig from source)
-    }
+  val listResult =
+    read(awsDetailsConfig from fromHoconString(validHocon))
 
   assert(
-    listResult ==
-      Right(
-        AwsDetails(
-          List(
-            Account(
-              Some(Right("jon")),
-              List("us-east", "dd", "ee"),
-              Some(Details("jaku", 10))
-            ),
-            Account(
-              Some(Left(123)),
-              List("us-west", "ab", "cd"),
-              Some(Details("zak", 11))
-            ),
-            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+    listResult equalM
+      AwsDetails(
+        List(
+          Account(
+            Some(Right("jon")),
+            List("us-east", "dd", "ee"),
+            Some(Details("jaku", 10))
           ),
-          Database(Some(100), "postgres"),
-          List(1, 2, 3)
-        )
+          Account(
+            Some(Left(123)),
+            List("us-west", "ab", "cd"),
+            Some(Details("zak", 11))
+          ),
+          Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+        ),
+        Database(Some(100), "postgres"),
+        List(1, 2, 3)
       )
   )
+
   val automaticAwsDetailsConfig: ConfigDescriptor[AwsDetails] = descriptor[AwsDetails]
 
-  val automaticResult: Either[ReadError[String], AwsDetails] =
-    fromHoconString(validHocon) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(automaticAwsDetailsConfig from source)
-    }
+  val automaticResult =
+    read(automaticAwsDetailsConfig from fromHoconString(validHocon))
 
   assert(
-    automaticResult ==
-      Right(
-        AwsDetails(
-          List(
-            Account(
-              Some(Right("jon")),
-              List("us-east", "dd", "ee"),
-              Some(Details("jaku", 10))
-            ),
-            Account(
-              Some(Left(123)),
-              List("us-west", "ab", "cd"),
-              Some(Details("zak", 11))
-            ),
-            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+    automaticResult equalM
+      AwsDetails(
+        List(
+          Account(
+            Some(Right("jon")),
+            List("us-east", "dd", "ee"),
+            Some(Details("jaku", 10))
           ),
-          Database(Some(100), "postgres"),
-          List(1, 2, 3)
-        )
+          Account(
+            Some(Left(123)),
+            List("us-west", "ab", "cd"),
+            Some(Details("zak", 11))
+          ),
+          Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+        ),
+        Database(Some(100), "postgres"),
+        List(1, 2, 3)
       )
   )
 
@@ -156,7 +147,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     """
 
   println(
-    read(descriptor[AwsDetails] from fromHoconString(invalidHocon).loadOrThrow)
+    zio.Runtime.default.unsafeRun(read(descriptor[AwsDetails] from fromHoconString(invalidHocon)))
   )
   /*
     ╥

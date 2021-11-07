@@ -31,9 +31,7 @@ object TypesafeConfigSource {
    */
   def fromResourcePath: ConfigSource =
     fromTypesafeConfig(
-      ZIO
-        .effect(ConfigFactory.load.resolve)
-        .mapError(exception => ReadError.SourceError(exception.getMessage))
+      ZIO.effect(ConfigFactory.load.resolve)
     )
 
   /**
@@ -54,11 +52,6 @@ object TypesafeConfigSource {
     val rawConfig =
       Task
         .effect(ConfigFactory.parseFile(file).resolve)
-        .mapError(r =>
-          ReadError.SourceError(
-            s"Unable to get a form a valid config-source from hocon file. ${r}"
-          ): ReadError[String]
-        )
 
     fromTypesafeConfig(rawConfig)
   }
@@ -108,7 +101,6 @@ object TypesafeConfigSource {
     fromTypesafeConfig(
       ZIO
         .effect(ConfigFactory.parseString(input).resolve)
-        .mapError(exception => ReadError.SourceError(message = exception.getMessage))
     )
 
   /**
@@ -135,16 +127,17 @@ object TypesafeConfigSource {
    * }}}
    */
   def fromTypesafeConfig(
-    rawConfig: ZIO[Any, ReadError[String], com.typesafe.config.Config]
+    rawConfig: ZIO[Any, Throwable, com.typesafe.config.Config]
   ): ConfigSource = {
     val effect =
       rawConfig.flatMap { value =>
         getPropertyTree(value) match {
-          case Left(error) => ZIO.fail(ReadError.SourceError(message = error))
+          case Left(error) =>
+            ZIO.fail(ReadError.SourceError(message = error))
           case Right(tree) =>
             ZIO.succeed((path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
         }
-      }
+      }.mapError(exception => ReadError.SourceError(message = exception.getMessage))
 
     ConfigSource.Reader(
       Set(ConfigSource.ConfigSourceName("hocon")),

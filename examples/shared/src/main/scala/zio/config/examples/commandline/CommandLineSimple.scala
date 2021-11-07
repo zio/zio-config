@@ -15,12 +15,12 @@ object CommandLineSimple extends App {
   final case class A(key1: String, key2: String)
 
   assert(
-    read(descriptor[A] from ConfigSource.fromCommandLineArgs(cmdLineArgs.split(' ').toList)) ==
+    read(descriptor[A] from ConfigSource.fromCommandLineArgs(cmdLineArgs.split(' ').toList)) equalM
       A("value1", "value2")
   )
 
   assert(
-    read((string("key1") |@| string("key2"))(A.apply, A.unapply) from source) ==
+    read((string("key1") |@| string("key2"))(A.apply, A.unapply) from source) equalM
       A("value1", "value2")
   )
 
@@ -33,7 +33,7 @@ object CommandLineSimple extends App {
   val source2: ConfigSource = ConfigSource.fromCommandLineArgs(cmdLineArgsWithEqualSeparator.split(' ').toList)
 
   assert(
-    read(descriptor[A] from source2) == A("value1", "value2")
+    read(descriptor[A] from source2) equalM A("value1", "value2")
   )
 
   /**
@@ -45,7 +45,7 @@ object CommandLineSimple extends App {
   val source3: ConfigSource = ConfigSource.fromCommandLineArgs(cmdLineArgsWithEqualInValue.split(' ').toList)
 
   assert {
-    read(descriptor[A] from source3) ==
+    read(descriptor[A] from source3) equalM
       A("=1", "value=")
   }
 }

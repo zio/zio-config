@@ -59,17 +59,15 @@ object CollectAllExample extends App {
 
   // Read it back from the wrtten tree
   assert(
-    zio.Runtime.default.unsafeRun(
-      read(configOfList from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-    ) ==
-      ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
+    read(configOfList from ConfigSource.fromPropertyTree(written, "tree"))
+      equalM
+        ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
   )
 
 //   // Read it back from the flattened tree
   assert(
-    zio.Runtime.default.unsafeRun(
-      read(configOfList from ConfigSource.fromMultiMap(written.flattenString(), "tree"))
-    ) ==
-      ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
+    read(configOfList from ConfigSource.fromMultiMap(written.flattenString(), "tree"))
+      equalM
+        ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
   )
 }

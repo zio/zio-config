@@ -27,7 +27,7 @@ object WriteExample extends App with EitherImpureOps {
 
   // loadOrThrow here is only for the purpose of example
   val readFromSource: A =
-    read(description from ConfigSource.fromMap(map, "map")).loadOrThrow
+    zio.Runtime.default.unsafeRun(read(description from ConfigSource.fromMap(map, "map")))
 
   val written: PropertyTree[String, String] =
     write(description, readFromSource).loadOrThrow
@@ -44,13 +44,13 @@ object WriteExample extends App with EitherImpureOps {
       )
   )
 
-  val readFromTree: A =
-    read(description from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid)).loadOrThrow
+  val readFromTree =
+    read(description from ConfigSource.fromPropertyTree(written, "tree"))
 
-  assert(readFromTree == readFromSource)
+  assert(readFromTree equalM readFromSource)
 
-  val readFromMap: A =
-    read(description from ConfigSource.fromMultiMap(written.flattenString(), "tree")).loadOrThrow
+  val readFromMap =
+    read(description from ConfigSource.fromMultiMap(written.flattenString(), "tree"))
 
-  assert(readFromMap == readFromSource)
+  assert(readFromMap equalM readFromSource)
 }

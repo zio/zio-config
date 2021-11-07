@@ -4,8 +4,8 @@ import zio.Runtime.default
 import zio.ZIO
 
 trait ZioSupport {
-  implicit class ZioOps[R, E, A](self: ZIO[R, E, A]) {
-    def ==(a: A) =
+  implicit class ZioOps[E, A](self: ZIO[Any, E, A]) {
+    def equalM(a: A) =
       default.unsafeRun(self) == a
   }
 }

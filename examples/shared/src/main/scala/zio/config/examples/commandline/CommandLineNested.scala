@@ -17,9 +17,8 @@ object CommandLineNested extends App {
   final case class A(conf: SparkConf, key3: String)
 
   assert(
-    read(descriptor[A] from source).either.unsafeRun == Right(
+    read(descriptor[A] from source) equalM
       A(SparkConf("v1", "v2"), "v3")
-    )
   )
 
   /**
@@ -32,7 +31,7 @@ object CommandLineNested extends App {
     ConfigSource.fromCommandLineArgs(cmdLineArgsAlternative.split(' ').toList)
 
   assert(
-    read(descriptor[A] from source2) ==
+    read(descriptor[A] from source2) equalM
       A(SparkConf("v1", "v2"), "v3")
   )
 
@@ -52,9 +51,8 @@ object CommandLineNested extends App {
     ConfigSource.fromCommandLineArgs(awsCmdLineArgs.split(' ').toList, keyDelimiter = Some('.'))
 
   assert(
-    read(descriptor[AppConfig] from source3).either.unsafeRun == Right(
+    read(descriptor[AppConfig] from source3) equalM
       AppConfig(AwsConfig(KinesisConfig("v1", "v2"), S3Config("v3", "v4")), "jo")
-    )
   )
 
   // The above example is equivalent to the below args which uses both type of nesting.
@@ -69,7 +67,7 @@ object CommandLineNested extends App {
     ConfigSource.fromCommandLineArgs(awsCmdLineArgs2.split(' ').toList, keyDelimiter = Some('.'))
 
   assert(
-    read(descriptor[AppConfig] from source4) ==
+    read(descriptor[AppConfig] from source4) equalM
       AppConfig(AwsConfig(KinesisConfig("v1", "v2"), S3Config("v3", "v4")), "jo")
   )
 }

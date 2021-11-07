@@ -78,16 +78,15 @@ object PureConfigInterop extends App with EitherImpureOps {
            | } 
            |""".stripMargin
       )
-      .loadOrThrow
 
   import customConfigDescriptor._
 
-  assert(read(customConfigDescriptor.descriptor[Config] from aHoconSource) == Config(A))
-  assert(read(customConfigDescriptor.descriptor[Config] from bHoconSource) == Config(B))
-  assert(read(customConfigDescriptor.descriptor[Config] from cHoconSource) == Config(C))
+  assert(read(customConfigDescriptor.descriptor[Config] from aHoconSource) equalM Config(A))
+  assert(read(customConfigDescriptor.descriptor[Config] from bHoconSource) equalM Config(B))
+  assert(read(customConfigDescriptor.descriptor[Config] from cHoconSource) equalM Config(C))
 
   assert(
-    read(customConfigDescriptor.descriptor[Config] from dHoconSource) ==
+    read(customConfigDescriptor.descriptor[Config] from dHoconSource) equalM
       Config(D(Detail("ff", "ll", Region("strath", "syd"))))
   )
 }

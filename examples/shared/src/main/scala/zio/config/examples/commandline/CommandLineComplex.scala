@@ -62,7 +62,7 @@ object CommandLineComplex extends App {
   }
 
   assert(
-    read(AppConfig.desc from (source)) ==
+    read(AppConfig.desc from (source)) equalM
       AppConfig(
         SparkConfig(
           DatabaseConfig(UserPassword("1", "hi"), "jdbc://xyz"),

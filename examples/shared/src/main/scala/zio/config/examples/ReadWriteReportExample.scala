@@ -1,5 +1,7 @@
 package zio.config.examples
 
+import zio.ZIO
+
 import zio.config._
 
 import ConfigDescriptor._
@@ -39,14 +41,14 @@ object ReadWriteReportExample extends App {
 
   val config: ConfigDescriptor[Either[UserPwd, Token]] = configWithoutSource from source
 
-  val result: Either[ReadError[String], Either[UserPwd, Token]] =
+  val result: ZIO[Any, ReadError[String], Either[UserPwd, Token]] =
     read(config) // Equivalent to Config.fromMap(userNamePassword, config)
 
   val expected: Left[UserPwd, Nothing] =
     Left(UserPwd("v1", Some(Password("v2")), None, Some(XYZ("v3", Left(1)))))
 
   assert(
-    result == Right(expected)
+    result equalM expected
   )
 
   assert(

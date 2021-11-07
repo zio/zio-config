@@ -152,7 +152,11 @@ trait ConfigSourceModule extends KeyValueModule {
         case Reader(sourceNames, _) => sourceNames
       }
 
-    def orElse(that: ConfigSource): ConfigSource = OrElse(self, that)
+    def orElse(that: ConfigSource): ConfigSource =
+      OrElse(self, that)
+
+    def <>(that: ConfigSource): ConfigSource =
+      orElse(that)
 
     def runTree(path: PropertyTreePath[K]): IO[ReadError[K], PropertyTree[K, V]] =
       self match {
@@ -554,7 +558,7 @@ trait ConfigSourceModule extends KeyValueModule {
           .provideLayer(ZLayer.succeed(system))
 
       Reader(
-        Set(ConfigSourceName(SystemProperties)),
+        Set(ConfigSourceName(SystemEnvironment)),
         if (keyDelimiter.forall(validDelimiters.contains)) {
           ZManaged.succeed(managed)
         } else {
@@ -587,8 +591,8 @@ trait ConfigSourceModule extends KeyValueModule {
      * }}}
      */
     def fromSystemProps(
-      keyDelimiter: Option[Char],
-      valueDelimiter: Option[Char],
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true,
       system: System.Service = System.Service.live
     ): ConfigSource =

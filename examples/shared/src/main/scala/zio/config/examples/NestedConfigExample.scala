@@ -33,12 +33,12 @@ object NestedConfigExample extends App with EitherImpureOps {
 
   val runtime = zio.Runtime.default
 
-  val readConfig: AwsConfig =
-    read(appConfig from source).loadOrThrow
+  val readConfig =
+    read(appConfig from source)
 
   // Read
   assert(
-    readConfig == AwsConfig(
+    readConfig equalM AwsConfig(
       Database("abc.com", 8111),
       Database("xyz.com", 8888),
       "myApp"
@@ -47,7 +47,14 @@ object NestedConfigExample extends App with EitherImpureOps {
 
   // Write your nested config back.
   val writtenResult: PropertyTree[String, String] =
-    write(appConfig, readConfig).loadOrThrow
+    write(
+      appConfig,
+      AwsConfig(
+        Database("abc.com", 8111),
+        Database("xyz.com", 8888),
+        "myApp"
+      )
+    ).loadOrThrow
 
   assert(
     writtenResult ==

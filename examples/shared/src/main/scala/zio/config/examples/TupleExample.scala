@@ -10,5 +10,5 @@ object TupleExample extends App {
 
   val source: ConfigSource = ConfigSource.fromMap(Map("a" -> "a", "b" -> "1"))
 
-  assert(read(config from source) == Right((("a", 1))))
+  assert(read(config from source) equalM (("a", 1)))
 }

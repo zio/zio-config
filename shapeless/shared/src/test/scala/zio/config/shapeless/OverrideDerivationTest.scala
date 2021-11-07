@@ -4,6 +4,7 @@ import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
+import zio.ZIO
 
 object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
   override def mapClassName(name: String): String = toSnakeCase(name) + "_suffix"
@@ -23,20 +24,21 @@ object OverrideDerivationTestWithWrappedSealedTraitName extends DeriveConfigDesc
 
 object OverrideDerivationTest extends DefaultRunnableSpec {
   val spec: ZSpec[Environment, Failure] = suite("OverrideDerivationTest")(
-    test("simple config") {
+    testM("simple config") {
       import OverrideDerivationTestEnv._
 
       case class Cfg(fieldName: String)
 
       val res = write(getDescriptor[Cfg].configDescriptor, Cfg("a"))
 
-      assert(res)(isRight(equalTo(Record(Map("prefix_field_name" -> Leaf("a")))))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(ZIO.fromEither(res))(equalTo(Record(Map("prefix_field_name" -> Leaf("a"))))) &&
+      assertM(
+        ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(getDescriptor[Cfg].configDescriptor from v))
       )(
-        isRight(equalTo(Cfg("a")))
+        equalTo(Cfg("a"))
       )
     },
     test("unwrapped sealed hierarchy") {
@@ -73,8 +75,9 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       assert(res)(isRight(equalTo(expected))) &&
       assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+        ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
       )(
         isRight(equalTo(cfg))
@@ -114,8 +117,11 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       assert(res)(isRight(equalTo(expected))) &&
       assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+        ZIO
+          .fromEither(
+            res
+              .map(ConfigSource.fromPropertyTree(_, "tree"))
+          )
           .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
       )(
         isRight(equalTo(cfg))

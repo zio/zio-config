@@ -5,6 +5,7 @@ import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
 import zio.{ExitCode, IO}
+import zio.ZIO
 
 object ConfigLoader {
   def apply[A](
@@ -14,7 +15,7 @@ object ConfigLoader {
   ): IO[ReadError[String], A] =
     for {
       config        <- getConfigProgram(prefix, args, schema)
-      serviceConfig <- IO.fromEither(read(config))
+      serviceConfig <- read(config)
     } yield serviceConfig
 
   private def getConfigProgram[A](
@@ -23,29 +24,29 @@ object ConfigLoader {
     configSchema: ConfigDescriptor[A]
   ): IO[ReadError[String], ConfigDescriptor[A]] =
     for {
-      cmdConf  <- IO.succeed(
-                    ConfigSource.fromCommandLineArgs(args, Some('.'))
-                  )
+      cmdConf <- IO.succeed(
+                   ConfigSource.fromCommandLineArgs(args, Some('.'))
+                 )
       // for demonstration: this should be ur sysEnv
-      sysConf  <- IO.succeed(
-                    ConfigSource.fromMap(
-                      Map(
-                        // Prefix added only for system env
-                        "SERVICENAME_SCHEMAREGISTRYURL" -> "schemaregistry:system_env",
-                        "SERVICENAME_serialization"     -> "serdes:system_env"
-                      )
-                    )
-                  )
+      sysConf <- IO.succeed(
+                   ConfigSource.fromMap(
+                     Map(
+                       // Prefix added only for system env
+                       "SERVICENAME_SCHEMAREGISTRYURL" -> "schemaregistry:system_env",
+                       "SERVICENAME_serialization"     -> "serdes:system_env"
+                     )
+                   )
+                 )
 
       // application.conf in resource folder
-      ressConf <- IO.fromEither(TypesafeConfigSource.fromTypesafeConfig(ConfigFactory.defaultApplication()))
+      ressConf = TypesafeConfigSource.fromTypesafeConfig(ZIO.effect(ConfigFactory.defaultApplication()))
 
       sourceSpec = cmdConf <>
-                     cmdConf.convertKeys(_.toLowerCase()) <>
-                     sysConf.convertKeys(key => addPrefixToKey(prefix.toUpperCase())(key.toLowerCase())) <>
-                     sysConf.convertKeys(r => addPrefixToKey(prefix)(r).toUpperCase) <>
+                     cmdConf.mapKeys(_.toLowerCase()) <>
+                     sysConf.mapKeys(key => addPrefixToKey(prefix.toUpperCase())(key.toLowerCase())) <>
+                     sysConf.mapKeys(r => addPrefixToKey(prefix)(r).toUpperCase) <>
                      ressConf <>
-                     ressConf.convertKeys(_.toLowerCase())
+                     ressConf.mapKeys(_.toLowerCase())
 
       updatedSchema = configSchema.updateSource(_ => sourceSpec)
 

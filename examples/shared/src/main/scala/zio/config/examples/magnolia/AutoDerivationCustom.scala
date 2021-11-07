@@ -55,13 +55,10 @@ object AutoDerivationCustom extends App {
   val appConfigDesc: ConfigDescriptor[AppConfig] =
     descriptor[AppConfig]
 
-  val source: ConfigSource = TypesafeConfigSource.fromHoconString(config) match {
-    case Right(a) => a
-    case Left(_)  => throw new Exception("bad hocon string")
-  }
+  val source: ConfigSource = TypesafeConfigSource.fromHoconString(config)
 
   assert(
-    read(appConfigDesc from source) ==
+    read(appConfigDesc from source) equalM
       AppConfig(
         "spark",
         Some(Detail("abcdefg", Left(ZonedDateTime.parse("2020-06-20T17:15:23.601712+10:00[Australia/Sydney]")))),

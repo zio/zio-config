@@ -47,7 +47,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[CfgCfg] from TypesafeConfigSource.fromHoconString(s1)) ==
+    read(descriptor[CfgCfg] from TypesafeConfigSource.fromHoconString(s1)) equalM
       CfgCfg(Cfg(C("b", G("hi"))), 1, "l")
   )
 
@@ -56,14 +56,14 @@ object Cfg extends App with EitherImpureOps {
       |fieldName = A
       |""".stripMargin
 
-  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2)) == Cfg(A))
+  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2)) equalM Cfg(A))
 
   val s3: String =
     """
       |fieldName = B
       |""".stripMargin
 
-  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s3)) == Cfg(B))
+  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s3)) equalM Cfg(B))
 
   val s4: String =
     """
@@ -78,7 +78,7 @@ object Cfg extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s4)) == Cfg(D(Z("1"))))
+  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s4)) equalM Cfg(D(Z("1"))))
 
   val s5: String =
     """
@@ -90,7 +90,7 @@ object Cfg extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s5)) == Cfg(E("1", 2)))
+  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s5)) equalM Cfg(E("1", 2)))
 
   val s6: String =
     """
@@ -107,7 +107,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s6)) ==
+    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s6)) equalM
       Cfg(F("1", None, Z("2")))
   )
 
@@ -127,7 +127,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s7)) ==
+    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s7)) equalM
       Cfg(F("1", Some(2), Z("2")))
   )
 

@@ -147,9 +147,9 @@ object TypesafeConfigList extends App with EitherImpureOps {
 
   // Since we already have a string with us, we don't need Config Service (or ZIO)
   val source: ConfigSource =
-    TypesafeConfigSource.fromHoconString(configString).loadOrThrow // Don't use loadOrThrow. This is only for example
+    TypesafeConfigSource.fromHoconString(configString)
 
-  val zioConfigResult: Either[ReadError[String], A] =
+  val zioConfigResult =
     read(descriptor[A] from source)
 
   val anoth: A =
@@ -232,13 +232,13 @@ object TypesafeConfigList extends App with EitherImpureOps {
     write(descriptor[A], expectedResult).loadOrThrow.toHocon
       .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
 
-  val readWritten: Either[ReadError[String], A] = read(
-    descriptor[A] from TypesafeConfigSource.fromHoconString(written).loadOrThrow
+  val readWritten = read(
+    descriptor[A] from TypesafeConfigSource.fromHoconString(written)
   )
 
   assert(readWritten == zioConfigResult)
 
-  assert(zioConfigResult == Right(expectedResult))
+  assert(zioConfigResult equalM expectedResult)
 
   val kebabCaseConfig: String =
     """
@@ -372,52 +372,51 @@ object TypesafeConfigList extends App with EitherImpureOps {
   final case class Database(port: Port)
 
   val kebabConfigSource: ConfigSource =
-    TypesafeConfigSource.fromHoconString(kebabCaseConfig).loadOrThrow
+    TypesafeConfigSource.fromHoconString(kebabCaseConfig)
 
-  val zioConfigWithKeysInKebabResult: Either[ReadError[String], ExportDetails] =
+  val zioConfigWithKeysInKebabResult =
     read(descriptor[ExportDetails].mapKey(toKebabCase) from kebabConfigSource)
 
   assert(
-    zioConfigWithKeysInKebabResult ==
-      Right(
-        ExportDetails(
-          List(
-            Details(
-              "some_name",
-              List("a", "b", "c", "d"),
-              List(
-                Extra(
-                  "di",
-                  "ci",
-                  List(
-                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
-                    Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
-                    Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
-                  )
-                ),
-                Extra(
-                  "di",
-                  "ci",
-                  List(
-                    Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
-                    Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
-                    Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
-                  )
-                ),
-                Extra("di", "ci", Nil)
-              )
-            ),
-            Details(
-              "some_name1",
-              Nil,
-              List(Extra("di", "ci", Nil), Extra("di", "ci", Nil), Extra("di", "ci", Nil))
-            ),
-            Details("some_name1", Nil, Nil),
-            Details("some_name2", Nil, Nil),
-            Details("some_name2", Nil, Nil)
+    zioConfigWithKeysInKebabResult equalM
+
+      ExportDetails(
+        List(
+          Details(
+            "some_name",
+            List("a", "b", "c", "d"),
+            List(
+              Extra(
+                "di",
+                "ci",
+                List(
+                  Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
+                  Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
+                  Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
+                )
+              ),
+              Extra(
+                "di",
+                "ci",
+                List(
+                  Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
+                  Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
+                  Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
+                )
+              ),
+              Extra("di", "ci", Nil)
+            )
           ),
-          Database(Port("ba"))
-        )
+          Details(
+            "some_name1",
+            Nil,
+            List(Extra("di", "ci", Nil), Extra("di", "ci", Nil), Extra("di", "ci", Nil))
+          ),
+          Details("some_name1", Nil, Nil),
+          Details("some_name2", Nil, Nil),
+          Details("some_name2", Nil, Nil)
+        ),
+        Database(Port("ba"))
       )
   )
 

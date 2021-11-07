@@ -4,7 +4,7 @@ import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.{NonEmpty, Size}
 import eu.timepit.refined.numeric.{Greater, GreaterEqual}
-import zio.config._, examples._
+import zio.config._
 import zio.config.refined._
 
 import ConfigDescriptor._
@@ -35,7 +35,7 @@ object RefinedReadConfig extends App {
       "LONGS"  -> ::("1234", List("2345", "3456"))
     )
 
-  read(prodConfig.from(ConfigSource.fromMultiMap(configMultiMap)))
+  zio.Runtime.default.unsafeRun(read(prodConfig.from(ConfigSource.fromMultiMap(configMultiMap))))
   // Right(RefinedProd(ldap,1999,Some(ddd),List(1234, 2345, 3456)))
 
   // you can also derive the descriptor automatically
