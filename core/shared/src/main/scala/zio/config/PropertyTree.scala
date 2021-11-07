@@ -42,14 +42,6 @@ object PropertyTreePath {
     final case class Key[K](k: K)  extends Step[K]
   }
 
-  /**
-   * Example:
-   *
-   * $("aws.regions[0].`servers name`.plainText")
-   *
-   * @param path
-   * @return
-   */
   def $(path: String): PropertyTreePath[String] =
     PropertyTreePath(path.split(".").toVector.flatMap(str => Step.steps(str)))
 }
