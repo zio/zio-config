@@ -19,9 +19,40 @@ trait ConfigSourceModule extends KeyValueModule {
   sealed trait ConfigSource { self =>
 
     /**
-     * With `strictlyOnce`, regardless the number of times `read`
+     * With `strictlyOnce`, regardless of the number of times `read`
      * is invoked, `ConfigSource` is evaluated
      * strictly once.
+     *
+     * It returns an Effect, because by the time ConfigSource is retrieved,
+     * an effect is performed (which may involve a resource acquisition and release)
+     *
+     * {{{
+     *   val sourceZIO = ConfigSource.fromPropertiesFile(...).strictlyOnce
+     *
+     *   for {
+     *     src     <- sourceZIO
+     *     result1 <- read(config from src)
+     *     result2 <- read(config from src)
+     *   } yield (result1, result2)
+     *
+     * }}}
+     *
+     * In this case, the propertiesFile is read only once.
+     *
+     * vs
+     *
+     * {{{
+     *   val source: ConfigSource =
+     *     ConfigSource.fromPropertiesFile(...).memoize
+     *
+     *   for {
+     *     result1 <- read(config from source)
+     *     result2 <- read(config from source)
+     *   } yield (result1, result2)
+     *
+     * }}}
+     *
+     * In this case, the propertiesFile is read once per each read, i.e, twice.
      */
     def strictlyOnce: ZIO[Any, ReadError[K], ConfigSource] =
       (self match {
@@ -35,7 +66,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
     /**
      * A Layer is assumed to be "memoized" by default, i.e the construction
-     * of ConfigSource layer is done strictly once regardless of number of read is invoked
+     * of ConfigSource layer is done strictly once regardless of number times the read is invoked.
      */
     def toLayer: ZLayer[Any, ReadError[K], Has[ConfigSource]] =
       strictlyOnce.toLayer
