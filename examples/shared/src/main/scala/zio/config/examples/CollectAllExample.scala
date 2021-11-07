@@ -36,7 +36,7 @@ object CollectAllExample extends App {
 
   // loadOrThrow here is only for the purpose of example
   val resultZIO = read(configOfList from ConfigSource.fromMap(map, "constant"))
-  val result    = zio.Runtime.default.unsafeRun(resultZIO)
+  val result    = resultZIO.unsafeRun
 
   val written: PropertyTree[String, String] = write(configOfList, result).getOrElse(throw new Exception("write failed"))
 

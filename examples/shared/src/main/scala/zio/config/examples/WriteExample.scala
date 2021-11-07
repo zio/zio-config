@@ -27,7 +27,7 @@ object WriteExample extends App with EitherImpureOps {
 
   // loadOrThrow here is only for the purpose of example
   val readFromSource: A =
-    zio.Runtime.default.unsafeRun(read(description from ConfigSource.fromMap(map, "map")))
+    read(description from ConfigSource.fromMap(map, "map")).unsafeRun
 
   val written: PropertyTree[String, String] =
     write(description, readFromSource).loadOrThrow

@@ -35,7 +35,7 @@ object RefinedReadConfig extends App {
       "LONGS"  -> ::("1234", List("2345", "3456"))
     )
 
-  zio.Runtime.default.unsafeRun(read(prodConfig.from(ConfigSource.fromMultiMap(configMultiMap))))
+  read(prodConfig.from(ConfigSource.fromMultiMap(configMultiMap))).unsafeRun
   // Right(RefinedProd(ldap,1999,Some(ddd),List(1234, 2345, 3456)))
 
   // you can also derive the descriptor automatically

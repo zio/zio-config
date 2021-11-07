@@ -45,7 +45,7 @@ object EitherExample extends App {
     ConfigSource.fromMap(parseErrorConfig, "constant")
 
   println(
-    zio.Runtime.default.unsafeRun(read(prodOrDev from invalidSource).mapError(_.prettyPrint()).either)
+    read(prodOrDev from invalidSource).mapError(_.prettyPrint()).either.unsafeRun
   )
   /*
       ╥

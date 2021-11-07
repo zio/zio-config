@@ -147,7 +147,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     """
 
   println(
-    zio.Runtime.default.unsafeRun(read(descriptor[AwsDetails] from fromHoconString(invalidHocon)))
+    read(descriptor[AwsDetails] from fromHoconString(invalidHocon)).either.unsafeRun
   )
   /*
     ╥

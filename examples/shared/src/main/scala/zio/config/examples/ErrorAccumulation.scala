@@ -19,7 +19,7 @@ object ErrorAccumulation extends App {
   val parsed =
     read(config from ConfigSource.fromMap(Map.empty))
 
-  println(zio.Runtime.default.unsafeRun(parsed.mapError(_.prettyPrint()).either))
+  println(parsed.mapError(_.prettyPrint()).either.unsafeRun)
   /*
     ReadError:
     ╥
@@ -104,7 +104,8 @@ object ErrorAccumulation extends App {
           List(
             FormatError(
               List(Step.Key("envvar")),
-              parseErrorMessage("wrong", "int")
+              parseErrorMessage("wrong", "int"),
+              List("value of type int")
             ),
             OrErrors(
               List(

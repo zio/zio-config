@@ -236,7 +236,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
     descriptor[A] from TypesafeConfigSource.fromHoconString(written)
   )
 
-  assert(readWritten == zioConfigResult)
+  assert(readWritten.unsafeRun == zioConfigResult.unsafeRun)
 
   assert(zioConfigResult equalM expectedResult)
 

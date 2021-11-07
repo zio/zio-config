@@ -5,7 +5,10 @@ import zio.ZIO
 
 trait ZioSupport {
   implicit class ZioOps[E, A](self: ZIO[Any, E, A]) {
+    def unsafeRun =
+      default.unsafeRun(self)
+
     def equalM(a: A) =
-      default.unsafeRun(self) == a
+      unsafeRun == a
   }
 }

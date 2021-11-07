@@ -88,7 +88,8 @@ object NullAndOptionalConfig extends App {
       1000
     )
 
-  val result = read(employeeDetails from hocconSourceList)
-
-  assert(result equalM expectedResult)
+  assert(
+    read(employeeDetails from hocconSourceList)
+      equalM expectedResult
+  )
 }
