@@ -2,7 +2,7 @@ package zio.config
 
 import PropertyTree.{Leaf, Record, Sequence, unflatten}
 import zio.system.System
-import zio.{Has, IO, UIO, ULayer, ZIO, ZLayer, ZManaged}
+import zio.{ZIO, Has, IO, UIO, ZLayer, ZManaged}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
