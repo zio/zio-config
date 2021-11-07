@@ -2,7 +2,7 @@ package zio.config
 
 import PropertyTree.{Leaf, Record, Sequence, unflatten}
 import zio.system.System
-import zio.{UIO, ZIO, IO, ZLayer, ZManaged}
+import zio.{Has, IO, UIO, ULayer, ZIO, ZLayer, ZManaged}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
@@ -17,6 +17,28 @@ trait ConfigSourceModule extends KeyValueModule {
   import ConfigSource._
 
   sealed trait ConfigSource { self =>
+
+    /**
+     * With `strictlyOnce`, regardless the number of times `read`
+     * is invoked, `ConfigSource` is evaluated
+     * strictly once.
+     */
+    def strictlyOnce: ZIO[Any, ReadError[K], ConfigSource] =
+      (self match {
+        case ConfigSource.OrElse(self, that) =>
+          self.strictlyOnce.orElse(that.strictlyOnce)
+
+        case ConfigSource.Reader(names, access) =>
+          val strictAccess = access.flatMap(identity).use(value => ZIO.succeed(value))
+          strictAccess.map(reader => Reader(names, ZManaged.succeed(ZManaged.succeed(reader))))
+      })
+
+    /**
+     * A Layer is assumed to be "memoized" by default, i.e the construction
+     * of ConfigSource layer is done strictly once regardless of number of read is invoked
+     */
+    def toLayer: ZLayer[Any, ReadError[K], Has[ConfigSource]] =
+      strictlyOnce.toLayer
 
     /**
      * Transform keys before getting queried from source. Note that, this method could be hardly useful.
@@ -67,6 +89,24 @@ trait ConfigSourceModule extends KeyValueModule {
         case reader @ Reader(_, _) => reader
       }
 
+    /**
+     * Within a `read`, ConfigSource is evaluated only once if memoized.
+     *
+     * Example:
+     *   {{{
+     *     (string("x") |@| string("y")).to[Config] from databaseSource
+     *   }}}
+     *
+     * In the above case, within a single database connection, `x` and `y` is
+     * retrieved
+     *
+     * However, for every individual read,
+     * ConfigSource will be re-computed.
+     *
+     * If ConfigSource need to be computed only once even for
+     * multiple reads, then consider using `strictlyOnce` combinator
+     * or use `toLayer`
+     */
     def memoize: ConfigSource =
       self match {
         case OrElse(self, that)    =>
@@ -88,7 +128,7 @@ trait ConfigSourceModule extends KeyValueModule {
         case OrElse(self, that) =>
           self.runTree(path).orElse(that.runTree(path))
 
-        case Reader(names, access) =>
+        case Reader(_, access) =>
           access.use(_.use(tree => tree(path)))
       }
 

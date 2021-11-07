@@ -16,7 +16,7 @@ object MemoizedSourceSpec extends BaseSpec {
       "ConfigSource memoization and lazy config gets"
     )(
       testM(
-        "A non-memoized source runs a resource acquisition for each config retrieval"
+        "A non-memoized source runs a resource release for each config value during a read"
       ) {
         val config = (string("k1") |@| string("k2")).tupled
 
@@ -40,31 +40,7 @@ object MemoizedSourceSpec extends BaseSpec {
 
       },
       testM(
-        "A non-memoized source runs a single resource acquisition when retrieving a list"
-      ) {
-        val config = (string("k1") |@| string("k2")).tupled
-
-        val resource =
-          new AtomicInteger(0)
-
-        val configCount =
-          new AtomicInteger(0)
-
-        val source =
-          effectFulSource(acquire(resource), UIO(resource.get), incrementCount(configCount))
-
-        val effect =
-          for {
-            v <- read(config from source)
-            r <- ZIO.succeed(resource.get)
-            c <- ZIO.succeed(configCount.get)
-          } yield (v, r, c)
-
-        assertM(effect)(equalTo(((s"v1_1_1", "v2_2_2"), 2, 2)))
-
-      },
-      testM(
-        "A non-memoized source runs a resource release before the next config retrieval"
+        "A non-memoized source runs a resource release for each config value during a read"
       ) {
         val resource =
           new AtomicInteger(0)
@@ -88,7 +64,7 @@ object MemoizedSourceSpec extends BaseSpec {
         assertM(effect)(equalTo(((s"v1_1_1", "v2_1_2"), 0, 2)))
       },
       testM(
-        "A memoized source runs a resource acquisition and release only once, while getting multiple configs incrementally"
+        "A memoized source runs a resource acquisition and release only once during the read of multiple of config values"
       ) {
         val resource1 =
           new AtomicInteger(0)
@@ -114,6 +90,36 @@ object MemoizedSourceSpec extends BaseSpec {
           } yield (result, acquireCount, releaseCount, count)
 
         assertM(effect)(equalTo(((s"v1_1_1", "v2_1_2"), 1, 1, 2)))
+      },
+      testM(
+        "A strictlyOnce source runs a resource acquisition and release only once, regardless of the number of reads invoked"
+      ) {
+        val resource1 =
+          new AtomicInteger(0)
+
+        val resource2 =
+          new AtomicInteger(0)
+
+        val configCount =
+          new AtomicInteger(0)
+
+        val config =
+          (string("k1") |@| string("k2")).tupled
+
+        val source =
+          effectFulSource(acquire(resource1), acquire(resource2), incrementCount(configCount)).strictlyOnce
+
+        val effect =
+          for {
+            src          <- source
+            result1      <- read(config from src)
+            result2      <- read(config from src)
+            acquireCount <- ZIO.succeed(resource1.get)
+            releaseCount <- ZIO.succeed(resource2.get)
+            count        <- ZIO.succeed(configCount.get)
+          } yield (result1, result2, acquireCount, releaseCount, count)
+
+        assertM(effect)(equalTo((("v1_1_1", "v2_1_2"), ("v1_1_3", "v2_1_4"), 1, 1, 4)))
       }
     )
 }
