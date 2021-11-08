@@ -1,7 +1,7 @@
 package zio.config.yaml
 
 import zio.config._
-import zio.{Has, Layer, Tag, ZIO}
+import zio.{Has, Layer, Tag}
 
 import java.io.File
 import java.nio.file.Path
@@ -26,8 +26,8 @@ object YamlConfig {
    * }}}
    */
   def fromString[A: Tag](yamlString: String, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], Has[A]] =
-    ZConfig.fromConfigDescriptorM(
-      ZIO.fromEither(YamlConfigSource.fromYamlString(yamlString).map(descriptor from _))
+    ZConfig.fromConfigDescriptor(
+      descriptor from YamlConfigSource.fromYamlString(yamlString)
     )
 
   /**
@@ -64,7 +64,6 @@ object YamlConfig {
    * }}}
    */
   def fromFile[A: Tag](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], Has[A]] =
-    ZConfig.fromConfigDescriptorM(
-      ZIO.fromEither(YamlConfigSource.fromYamlFile(file).map(descriptor from _))
-    )
+    ZConfig.fromConfigDescriptor(descriptor from YamlConfigSource.fromYamlFile(file))
+
 }

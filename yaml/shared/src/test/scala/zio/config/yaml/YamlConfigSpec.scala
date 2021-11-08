@@ -3,10 +3,11 @@ package zio.config.yaml
 import zio.config.{ConfigDescriptor, PropertyTree}
 import zio.test.Assertion._
 import zio.test._
+import zio.config.PropertyTreePath
 
 object YamlConfigSpec extends DefaultRunnableSpec {
   val spec: ZSpec[Environment, Failure] = suite("YamlConfig")(
-    test("Read a complex structure") {
+    testM("Read a complex structure") {
       val result   = YamlConfigSource.fromYamlString(
         """
           |top:
@@ -44,7 +45,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
           )
         )
 
-      assert(result.map(_.getConfigValue(List())))(equalTo(Right(expected)))
+      assertM(result.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
     },
     testM("Read a complex structure into a sealed trait") {
       case class Child(sum: List[Sum])
