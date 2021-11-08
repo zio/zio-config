@@ -764,6 +764,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
+    @silent("a type was inferred to be `Any`")
     def fromSystemProperties[K, V, A](
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
