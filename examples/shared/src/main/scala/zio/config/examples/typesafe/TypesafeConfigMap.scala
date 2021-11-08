@@ -7,6 +7,8 @@ import zio.config.typesafe.{TypesafeConfigSource, _}
 import zio.config.{ConfigDescriptor, read, write}
 
 import TypesafeConfigSource._
+import zio.IO
+import zio.config.ReadErro
 
 object TypesafeConfigMap extends App with EitherImpureOps {
   final case class A(m1: Map[String, List[Int]], l1: List[Int], l2: List[Int], m2: Map[String, B])
@@ -77,7 +79,7 @@ object TypesafeConfigMap extends App with EitherImpureOps {
   val source: zio.config.ConfigSource =
     TypesafeConfigSource.fromHoconString(hocon)
 
-  val readResult =
+  val readResult: IO[ReadError[String], A] =
     read(A.config from source)
 
   assert(

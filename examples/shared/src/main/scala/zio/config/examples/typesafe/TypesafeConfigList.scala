@@ -1,10 +1,10 @@
 package zio.config.examples.typesafe
 
 import com.typesafe.config.ConfigRenderOptions
+import zio.IO
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
-import zio.IO
 
 object TypesafeConfigList extends App with EitherImpureOps {
   val configString: String =

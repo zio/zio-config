@@ -1,9 +1,9 @@
 package zio.config.examples
 
+import zio.IO
 import zio.config._
 
 import ConfigDescriptor._
-import zio.IO
 
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,

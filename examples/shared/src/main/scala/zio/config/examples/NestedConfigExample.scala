@@ -1,10 +1,10 @@
 package zio.config.examples
 
+import zio.IO
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 
 import ConfigDescriptor._
-import zio.IO
 
 object NestedConfigExample extends App with EitherImpureOps {
 
