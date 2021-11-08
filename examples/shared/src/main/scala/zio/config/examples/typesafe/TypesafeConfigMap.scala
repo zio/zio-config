@@ -1,10 +1,11 @@
 package zio.config.examples.typesafe
 
-import zio.config.examples._
 import com.typesafe.config.ConfigRenderOptions
 import zio.config.ConfigDescriptor._
+import zio.config.examples._
 import zio.config.typesafe.{TypesafeConfigSource, _}
 import zio.config.{ConfigDescriptor, read, write}
+
 import TypesafeConfigSource._
 
 object TypesafeConfigMap extends App with EitherImpureOps {

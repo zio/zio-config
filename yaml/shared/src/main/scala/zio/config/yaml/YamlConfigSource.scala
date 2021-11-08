@@ -1,16 +1,16 @@
 package zio.config.yaml
 
-import zio.{ZIO, ZManaged}
-
 import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import zio.config._
+import zio.{ZIO, ZManaged}
 
 import java.io.{File, FileInputStream, Reader}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
 import java.nio.file.Path
 import java.{util => ju}
 import scala.jdk.CollectionConverters._
+
 import ConfigSource.{Reader => ConfigSourceReader, _}
 
 @silent("Unused import")

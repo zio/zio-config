@@ -1,10 +1,13 @@
 package zio.config.examples.magnolia
 
 import com.github.ghik.silencer.silent
-import zio.config._, examples._
+import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
+
+import examples._
+import zio.IO
 
 @silent("deprecated")
 object AutoDerivationCustomKeys extends App with EitherImpureOps {
@@ -24,7 +27,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       |""".stripMargin
 
   // Default behaviour, and hence no mapKey
-  val camelCaseResult =
+  val camelCaseResult: IO[ReadError[String], MyConfig] =
     read(
       descriptor[MyConfig] from (TypesafeConfigSource.fromHoconString(camelCaseConfig))
     )
@@ -39,7 +42,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  val kebabCaseResult =
+  val kebabCaseResult: IO[ReadError[String], MyConfig] =
     read(
       descriptor[MyConfig].mapKey(toKebabCase) from (TypesafeConfigSource.fromHoconString(kebabCaseConfig))
     )

@@ -1,7 +1,6 @@
 package zio.config.examples
 
 import zio.ZIO
-
 import zio.config._
 
 import ConfigDescriptor._

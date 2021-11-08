@@ -1,13 +1,14 @@
 package zio.config
 
-import PropertyTree.{Leaf, Record, Sequence, unflatten}
 import zio.system.System
-import zio.{ZIO, Has, IO, UIO, ZLayer, ZManaged}
+import zio.{Has, IO, UIO, ZIO, ZLayer, ZManaged}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
 import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
+
+import PropertyTree.{Leaf, Record, Sequence, unflatten}
 
 trait ConfigSourceModule extends KeyValueModule {
   // Currently all sources are just String and String

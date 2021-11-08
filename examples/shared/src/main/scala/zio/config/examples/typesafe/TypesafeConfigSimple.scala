@@ -1,10 +1,12 @@
 package zio.config.examples.typesafe
 
-import zio.config._, examples._
+import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 
+import examples._
 import ConfigDescriptor._
+import zio.IO
 
 object TypesafeConfigSimple extends App with EitherImpureOps {
   // A nested example with type safe config, and usage of magnolia
@@ -70,7 +72,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
       databaseConfig
     ) |@| list("users")(int))(AwsDetails.apply, AwsDetails.unapply)
 
-  val listResult =
+  val listResult: IO[ReadError[String], AwsDetails] =
     read(awsDetailsConfig from fromHoconString(validHocon))
 
   assert(
@@ -96,7 +98,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
 
   val automaticAwsDetailsConfig: ConfigDescriptor[AwsDetails] = descriptor[AwsDetails]
 
-  val automaticResult =
+  val automaticResult: IO[ReadError[String], AwsDetails] =
     read(automaticAwsDetailsConfig from fromHoconString(validHocon))
 
   assert(

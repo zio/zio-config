@@ -5,6 +5,7 @@ import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe._
 
 import ConfigDescriptor._
+import zio.IO
 
 object TypesafeConfigErrors extends App {
   // A nested example with type safe config, and usage of magnolia
@@ -59,13 +60,13 @@ object TypesafeConfigErrors extends App {
     }
    """
 
-  val nestedConfigAutomaticResult1 =
+  val nestedConfigAutomaticResult1: IO[ReadError[String], AwsConfig] =
     read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))
 
-  val nestedConfigAutomaticResult2 =
+  val nestedConfigAutomaticResult2: IO[ReadError[String], AwsConfig] =
     read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithDb))
 
-  val nestedConfigAutomaticResult3 =
+  val nestedConfigAutomaticResult3: IO[ReadError[String], AwsConfig] =
     read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
   assert(
@@ -95,13 +96,13 @@ object TypesafeConfigErrors extends App {
       .optional)(AwsConfig.apply, AwsConfig.unapply)
   }
 
-  val nestedConfigManualResult1 =
+  val nestedConfigManualResult1: IO[ReadError[String], AwsConfig] =
     read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithDb))
 
-  val nestedConfigManualResult2 =
+  val nestedConfigManualResult2: IO[ReadError[String], AwsConfig] =
     read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))
 
-  val nestedConfigManualResult3 =
+  val nestedConfigManualResult3: IO[ReadError[String], AwsConfig] =
     read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
   assert(
@@ -133,7 +134,7 @@ object TypesafeConfigErrors extends App {
 
   val configWithHoconSubstitution: ConfigDescriptor[DatabaseDetails] = descriptor[DatabaseDetails]
 
-  val finalResult =
+  val finalResult: IO[ReadError[String], DatabaseDetails] =
     read(configWithHoconSubstitution from TypesafeConfigSource.fromHoconString(hoconStringWithSubstitution))
 
   assert(

@@ -3,6 +3,7 @@ package zio.config.examples
 import zio.config._
 
 import ConfigDescriptor._
+import zio.IO
 
 /**
  * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,
@@ -35,8 +36,8 @@ object CollectAllExample extends App {
     )
 
   // loadOrThrow here is only for the purpose of example
-  val resultZIO = read(configOfList from ConfigSource.fromMap(map, "constant"))
-  val result    = resultZIO.unsafeRun
+  val resultZIO: IO[ReadError[String], List[Variables]] = read(configOfList from ConfigSource.fromMap(map, "constant"))
+  val result                                            = resultZIO.unsafeRun
 
   val written: PropertyTree[String, String] = write(configOfList, result).getOrElse(throw new Exception("write failed"))
 

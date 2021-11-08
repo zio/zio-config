@@ -3,7 +3,9 @@ package zio.config.examples
 import zio.config._
 
 import ConfigDescriptor._
-import ReadError._, PropertyTreePath._
+import ReadError._
+import PropertyTreePath._
+import zio.{IO, ZIO}
 
 object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)

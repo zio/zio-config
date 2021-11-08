@@ -4,6 +4,7 @@ import com.typesafe.config.ConfigRenderOptions
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
+import zio.IO
 
 object TypesafeConfigList extends App with EitherImpureOps {
   val configString: String =
@@ -149,7 +150,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
   val source: ConfigSource =
     TypesafeConfigSource.fromHoconString(configString)
 
-  val zioConfigResult =
+  val zioConfigResult: IO[ReadError[String], A] =
     read(descriptor[A] from source)
 
   val anoth: A =
@@ -232,7 +233,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
     write(descriptor[A], expectedResult).loadOrThrow.toHocon
       .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
 
-  val readWritten = read(
+  val readWritten: IO[ReadError[String], A] = read(
     descriptor[A] from TypesafeConfigSource.fromHoconString(written)
   )
 
@@ -374,7 +375,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
   val kebabConfigSource: ConfigSource =
     TypesafeConfigSource.fromHoconString(kebabCaseConfig)
 
-  val zioConfigWithKeysInKebabResult =
+  val zioConfigWithKeysInKebabResult: IO[ReadError[String], ExportDetails] =
     read(descriptor[ExportDetails].mapKey(toKebabCase) from kebabConfigSource)
 
   assert(

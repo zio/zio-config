@@ -4,6 +4,7 @@ import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 
 import ConfigDescriptor._
+import zio.IO
 
 object WriteExample extends App with EitherImpureOps {
 
@@ -44,12 +45,12 @@ object WriteExample extends App with EitherImpureOps {
       )
   )
 
-  val readFromTree =
+  val readFromTree: IO[ReadError[String], A] =
     read(description from ConfigSource.fromPropertyTree(written, "tree"))
 
   assert(readFromTree equalM readFromSource)
 
-  val readFromMap =
+  val readFromMap: IO[ReadError[String], A] =
     read(description from ConfigSource.fromMultiMap(written.flattenString(), "tree"))
 
   assert(readFromMap equalM readFromSource)

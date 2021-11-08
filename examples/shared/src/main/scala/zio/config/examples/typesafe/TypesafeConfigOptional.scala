@@ -1,8 +1,9 @@
 package zio.config.examples.typesafe
 
-import zio.config._, examples._
+import zio.config._
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 
+import examples._
 import EmployeeDetails._
 import ConfigDescriptor._
 
@@ -77,7 +78,7 @@ object NullAndOptionalConfig extends App {
        """
     )
 
-  val expectedResult =
+  val expectedResult: EmployeeDetails =
     EmployeeDetails(
       List(
         Employee("jon", Some(Right("CA")), Left(Left(1.278))),

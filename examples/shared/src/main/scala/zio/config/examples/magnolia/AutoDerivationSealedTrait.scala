@@ -1,9 +1,11 @@
 package zio.config.examples.magnolia
 
-import zio.config._, examples._
+import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
+
+import examples._
 
 sealed trait X
 

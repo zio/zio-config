@@ -1,9 +1,10 @@
 package zio.config.examples.typesafe
 
-import zio.config._, examples._
+import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-
 import zio.config.typesafe._
+
+import examples._
 
 object TypesafeConfigSealedTrait extends App with EitherImpureOps {
   sealed trait X

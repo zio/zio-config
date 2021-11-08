@@ -4,8 +4,7 @@ import com.typesafe.config._
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
-import zio.{ExitCode, IO}
-import zio.ZIO
+import zio.{ExitCode, IO, ZIO}
 
 object ConfigLoader {
   def apply[A](

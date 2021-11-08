@@ -4,6 +4,7 @@ import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 
 import ConfigDescriptor._
+import zio.IO
 
 object NestedConfigExample extends App with EitherImpureOps {
 
@@ -33,7 +34,7 @@ object NestedConfigExample extends App with EitherImpureOps {
 
   val runtime = zio.Runtime.default
 
-  val readConfig =
+  val readConfig: IO[ReadError[String], AwsConfig] =
     read(appConfig from source)
 
   // Read

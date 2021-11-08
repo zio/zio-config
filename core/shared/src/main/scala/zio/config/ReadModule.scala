@@ -1,11 +1,12 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{IO, ZIO, ZManaged}
 import zio.config.ReadError._
-import PropertyTreePath.Step
+import zio.{IO, ZIO, ZManaged}
 
 import scala.collection.mutable.{Map => MutableMap}
+
+import PropertyTreePath.Step
 
 @silent("Unused import")
 private[config] trait ReadModule extends ConfigDescriptorModule {

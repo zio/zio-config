@@ -1,8 +1,8 @@
 package zio.config.examples
 
+import zio.ZIO
 import zio.config._
 
-import zio.ZIO
 import ConfigDescriptor._
 
 // see Stackoverflow: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
