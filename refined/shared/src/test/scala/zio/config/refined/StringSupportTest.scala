@@ -5,7 +5,7 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string._
 import zio.ZIO
 import zio.config.helpers._
-import zio.config.{BaseSpec, helpers, _}
+import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test._
 
