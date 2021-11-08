@@ -6,14 +6,15 @@ import zio.config.PropertyTreePath.Step
 import scala.collection.immutable.Nil
 import scala.util.Try
 import scala.util.matching.Regex
-import VersionSpecificSupport._
 
 final case class PropertyTreePath[K](path: Vector[Step[K]]) {
   def mapKeys(f: K => K): PropertyTreePath[K] =
     PropertyTreePath(path.map(_.map(f)))
 }
 
+@silent("Unused import")
 object PropertyTreePath {
+  import VersionSpecificSupport._
 
   sealed trait Step[+K] { self =>
     def map[K1 >: K, K2](f: K1 => K2): Step[K2] =
@@ -50,6 +51,7 @@ object PropertyTreePath {
 sealed trait PropertyTree[+K, +V] { self =>
   import PropertyTree._
   import scala.collection.compat._
+  import VersionSpecificSupport._
 
   def leafNotASequence: PropertyTree[K, V] = self match {
     case Leaf(value, _)     => Leaf(value, canBeSequence = false)

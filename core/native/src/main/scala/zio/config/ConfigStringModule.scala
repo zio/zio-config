@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.system.System
-import zio.{Has, Layer, Tag, ZIO, ZLayer}
+import zio.{Has, Layer, Tag, ZLayer}
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.{Properties, UUID}
