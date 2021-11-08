@@ -7,8 +7,8 @@ import java.io.{File, FileInputStream}
 import java.{util => ju}
 import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
-
 import PropertyTree.{Leaf, Record, Sequence, unflatten}
+import com.github.ghik.silencer.silent
 
 trait ConfigSourceModule extends KeyValueModule {
   // Currently all sources are just String and String
@@ -55,6 +55,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * In this case, the propertiesFile is read once per each read, i.e, twice.
      */
+    @silent("a type was inferred to be `Any`")
     def strictlyOnce: ZIO[Any, ReadError[K], ConfigSource] =
       (self match {
         case ConfigSource.OrElse(self, that) =>

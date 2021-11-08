@@ -1,5 +1,6 @@
 package zio.config
 
+import com.github.ghik.silencer.silent
 import zio.system.System
 import zio.{Has, Layer, Tag, ZLayer}
 
@@ -724,6 +725,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      *
      * Note: The delimiter '.' for keys doesn't work in system environment.
      */
+    @silent("a type was inferred to be `Any`")
     def fromSystemEnv[K, V, A](
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
