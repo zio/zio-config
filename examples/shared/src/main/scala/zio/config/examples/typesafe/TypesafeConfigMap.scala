@@ -1,14 +1,13 @@
 package zio.config.examples.typesafe
 
 import com.typesafe.config.ConfigRenderOptions
+import zio.IO
 import zio.config.ConfigDescriptor._
 import zio.config.examples._
 import zio.config.typesafe.{TypesafeConfigSource, _}
-import zio.config.{ConfigDescriptor, read, write}
+import zio.config.{ConfigDescriptor, ReadError, read, write}
 
 import TypesafeConfigSource._
-import zio.IO
-import zio.config.ReadError
 
 object TypesafeConfigMap extends App with EitherImpureOps {
   final case class A(m1: Map[String, List[Int]], l1: List[Int], l2: List[Int], m2: Map[String, B])
