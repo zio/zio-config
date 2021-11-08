@@ -232,19 +232,13 @@ val anotherHoconSource =
       """
   )
 
-hoconSource match {
-  case Left(value) => Left(value)
-  case Right(source) => read(automaticDescription from source)
-}
+read(automaticDescription from hoconSource)
 
-// yielding Right(SimpleConfig(123,bla,Some(useast)))
+// yielding SimpleConfig(123,bla,Some(useast))
 
-anotherHoconSource match {
-  case Left(value) => Left(value)
-  case Right(source) => read(automaticDescription from source)
-}
+read(automaticDescription from source)
 
-// yielding Right(SimpleConfig(123,bla,Some(useast)))
+// yielding SimpleConfig(123,bla,Some(useast))
 
 // Please check other ways to load the hocon file in `TypesafeConfig`
 
@@ -484,19 +478,18 @@ object CombineSourcesExample extends zio.App {
 
   final case class Config(username: String , password: String)
 
-  val getDesc: ZIO[system.System, ReadError[String], ConfigDescriptor[Config]] =
-    for {
-      hoconFile <- ZIO.fromEither(TypesafeConfigSource.fromHoconFile(new File("/invalid/path")))
-      constant  <- ZIO.fromEither(TypesafeConfigSource.fromHoconString(s""))
-      env       <- ConfigSource.fromSystemEnv
-      sysProp   <- ConfigSource.fromSystemProperties
-      source    = hoconFile <> constant <> env <> sysProp
-    } yield (descriptor[Config] from source)
+  val desc: ConfigDescriptor[Config] ={
+    val hoconFile = TypesafeConfigSource.fromHoconFile(new File("/invalid/path"))
+    val constant  = TypesafeConfigSource.fromHoconString(s"")
+    val env       = ConfigSource.fromSystemEnv()
+    val sysProp   = ConfigSource.fromSystemProperties
+    val source    = hoconFile <> constant <> env <> sysProp
+    (descriptor[Config] from source)
+  }
 
   val application =
     for {
-      desc        <- getDesc.mapError(_.prettyPrint())
-      configValue <- ZIO.fromEither(read(desc)).mapError(_.prettyPrint())
+      configValue <- read(desc)).mapError(_.prettyPrint()
       string      <- ZIO.fromEither(configValue.toJson(desc))
       _ <- putStrLn(string)
     } yield ()
