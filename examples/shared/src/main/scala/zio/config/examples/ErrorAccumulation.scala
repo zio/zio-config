@@ -72,7 +72,7 @@ object ErrorAccumulation extends App {
 
   val invalidSource: ConfigSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
 
-  val result2: ZIO[Any,String,SampleConfig] =
+  val result2: ZIO[Any, String, SampleConfig] =
     read(config from invalidSource).mapError(_.prettyPrint())
 
   println(zio.Runtime.default.unsafeRun(result2.either))
