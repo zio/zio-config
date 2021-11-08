@@ -122,15 +122,17 @@ object YamlConfigSource {
     )
   }
 
-  private[yaml] def convertYaml(data: AnyRef): ZIO[Any, ReadError[String], PropertyTree[String, String]] =
+  private[yaml] def convertYaml(data: AnyRef): ZIO[Any, ReadError[String], PropertyTree[String, String]] = {
+    def strictLeaf[A](leaf: A) = PropertyTree.Leaf(leaf, canBeSequence = false)
+
     data match {
       case null          => ZIO.succeed(PropertyTree.empty)
-      case t: JInteger   => ZIO.succeed(PropertyTree.Leaf(t.toString))
-      case t: JLong      => ZIO.succeed(PropertyTree.Leaf(t.toString))
-      case t: JFloat     => ZIO.succeed(PropertyTree.Leaf(t.toString))
-      case t: JDouble    => ZIO.succeed(PropertyTree.Leaf(t.toString))
-      case t: String     => ZIO.succeed(PropertyTree.Leaf(t))
-      case t: JBoolean   => ZIO.succeed(PropertyTree.Leaf(t.toString))
+      case t: JInteger   => ZIO.succeed(strictLeaf(t.toString))
+      case t: JLong      => ZIO.succeed(strictLeaf(t.toString))
+      case t: JFloat     => ZIO.succeed(strictLeaf(t.toString))
+      case t: JDouble    => ZIO.succeed(strictLeaf(t.toString))
+      case t: String     => ZIO.succeed(strictLeaf(t))
+      case t: JBoolean   => ZIO.succeed(strictLeaf(t.toString))
       case t: ju.List[_] =>
         ZIO
           .foreach(
@@ -147,6 +149,7 @@ object YamlConfigSource {
 
       case _ => ZIO.fail(ReadError.SourceError("unexpected data type in convertYaml"))
     }
+  }
 
   private def loadYaml(yamlFile: File): ZIO[Any, ReadError[String], AnyRef] =
     snakeYamlLoader().flatMap(r =>
