@@ -7,11 +7,11 @@ import zio.test.{DefaultRunnableSpec, _}
 import magnolia._
 import ConfigDescriptor._
 
-object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
-  final case class Account(region: String, accountId: String)
-  final case class Database(port: Int, url: String)
-  final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
+final case class Account(region: String, accountId: String)
+final case class Database(port: Int, url: String)
+final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
 
+object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
   val configNestedAutomatic: ConfigDescriptor[AwsConfig] = descriptor[AwsConfig]
 
   val hocconStringWithStringDb: String =
@@ -124,7 +124,7 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
       val result =
         nestedConfigManualResult1.zip(nestedConfigManualResult2).zip(nestedConfigManualResult3)
 
-      assertM(result)(equalTo((nestedConfigManualExpect1, nestedConfigManualExpect2), nestedConfigManualExpect3))
+      assertM(result)(equalTo(((nestedConfigManualExpect1, nestedConfigManualExpect2), nestedConfigManualExpect3)))
     },
     testM("A substitution case with typesafe HOCON config and a magnolia description") {
       val hoconStringWithSubstitution =

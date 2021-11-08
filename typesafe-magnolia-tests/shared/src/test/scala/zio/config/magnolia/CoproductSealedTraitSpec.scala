@@ -4,7 +4,6 @@ import zio.config.PropertyTree._
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
-import zio.ZIO
 
 object CoproductSealedTraitSpec extends DefaultRunnableSpec {
 
