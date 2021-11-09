@@ -1,9 +1,8 @@
 package zio.config.yaml
 
-import zio.config.{ConfigDescriptor, PropertyTree}
+import zio.config.{ConfigDescriptor, PropertyTree, PropertyTreePath}
 import zio.test.Assertion._
 import zio.test._
-import zio.config.PropertyTreePath
 
 object YamlConfigSpec extends DefaultRunnableSpec {
   val spec: ZSpec[Environment, Failure] = suite("YamlConfig")(

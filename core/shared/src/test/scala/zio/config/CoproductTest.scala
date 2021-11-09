@@ -7,9 +7,9 @@ import zio.config.helpers._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
+import zio.{IO, ZIO}
 
 import scala.concurrent.duration.Duration
-import zio.{ZIO, IO}
 
 import ReadError._
 import CoproductTestUtils._

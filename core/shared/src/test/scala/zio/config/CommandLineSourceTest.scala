@@ -1,13 +1,13 @@
 package zio.config
 
-import zio.config.ReadError.{ConversionError}
+import zio.config.PropertyTreePath._
+import zio.config.ReadError.ConversionError
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.config.testsupport.MapConfigTestSupport.{AppConfig, genAppConfig, stringNWithInjector}
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
 import zio.test.{DefaultRunnableSpec, _}
 import zio.{Has, IO, ZIO}
-import zio.config.PropertyTreePath._
 
 object CommandLineSourceTest extends DefaultRunnableSpec {
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =

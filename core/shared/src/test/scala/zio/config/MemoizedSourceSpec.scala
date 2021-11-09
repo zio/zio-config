@@ -4,10 +4,10 @@ import zio.config.ConfigDescriptor._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.ZIO
-import zio.{Has, ZManaged}
+import zio.{Has, UIO, ZIO, ZManaged}
+
 import java.util.concurrent.atomic.AtomicInteger
-import zio.UIO
+
 import MemoizedSourceSpecUtils._
 
 object MemoizedSourceSpec extends BaseSpec {
@@ -135,17 +135,17 @@ object MemoizedSourceSpecUtils {
       )
       .at(path)
 
-  def acquire(resource: AtomicInteger) =
+  def acquire(resource: AtomicInteger): UIO[Int] =
     ZIO.effectTotal({
       resource.incrementAndGet()
     })
 
-  def release(resource: AtomicInteger) =
+  def release(resource: AtomicInteger): UIO[Int] =
     ZIO.effectTotal({
       resource.decrementAndGet()
     })
 
-  def incrementCount(configCount: AtomicInteger) =
+  def incrementCount(configCount: AtomicInteger): UIO[Int] =
     ZIO.effectTotal(configCount.incrementAndGet())
 
   def effectFulSource(

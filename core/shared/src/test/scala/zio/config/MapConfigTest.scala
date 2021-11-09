@@ -4,8 +4,8 @@ import zio.test.Assertion._
 import zio.test._
 import zio.test.environment.TestEnvironment
 import zio.{Has, IO, ZIO}
-import PropertyTreePath.Step
 
+import PropertyTreePath.Step
 import ReadError._
 import testsupport.MapConfigTestSupport.AppConfig.descriptor
 

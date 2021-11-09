@@ -147,7 +147,7 @@ object RecursiveConfigTestUtils {
     val expected: SimpleRec =
       SimpleRec(1, Some(SimpleRec(2, None)))
 
-    val source =
+    val source: ConfigSource =
       ConfigSource.fromPropertyTree(
         tree,
         "tree"

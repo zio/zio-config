@@ -1,12 +1,13 @@
 package zio.config.typesafe
 
-import zio.config.PropertyTreePath.Step, Step._
+import zio.config.PropertyTreePath.Step
 import zio.config.magnolia._
 import zio.config.typesafe.OptionalSpecUtils._
 import zio.config.{BaseSpec, ReadError, foldReadError, read}
 import zio.test.Assertion._
 import zio.test._
 
+import Step._
 import ReadError._
 
 object TypesafeConfigOptionalTest extends BaseSpec {

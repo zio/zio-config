@@ -1,11 +1,10 @@
 package zio.config.typesafe
 
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
-import zio.config.ReadError
 import zio.config.typesafe.TypesafeConfigTestSupport._
+import zio.config.{PropertyTreePath, ReadError}
 import zio.test.Assertion._
 import zio.test._
-import zio.config.PropertyTreePath
 
 object TypesafeConfigSpec extends DefaultRunnableSpec {
   val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig")(

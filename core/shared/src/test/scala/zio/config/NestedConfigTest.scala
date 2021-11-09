@@ -1,12 +1,12 @@
 package zio.config
 
+import zio.Has
 import zio.config.ConfigDescriptor._
 import zio.config.NestedConfigTestUtils._
 import zio.config.helpers._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has}
 
 object NestedConfigTest extends BaseSpec {
 
@@ -98,7 +98,7 @@ object NestedConfigTestUtils {
         Seq("pricing" -> value.pricing.toString)
       ).flatten.toMap
 
-    val source =
+    val source: ConfigSource =
       ConfigSource.fromMap(map, keyDelimiter = Some('.'))
   }
 
