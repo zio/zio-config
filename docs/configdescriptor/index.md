@@ -214,7 +214,7 @@ zio-config do support this scenario. This can happen in complex applications.
 ```scala mdoc:silent
 
 
-val source1 = ConfigSource.fromSystemProperties()
+val source1 = ConfigSource.fromSystemProps()
 val source2 = ConfigSource.fromSystemEnv()
  
 val configDesc =
@@ -225,7 +225,7 @@ val configDesc =
 read(configDesc)
 
 // we can also separately add new config
-read(desc from ConfigSource.fromMap(Map.empty))
+read(configDesc from ConfigSource.fromMap(Map.empty))
 
 // In this case, `ConfigSource.fromMap` will also be tried along with the sources that are already given.
 
@@ -271,13 +271,13 @@ object CombineSourcesExample extends zio.App {
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     application.either.flatMap(r => putStrLn(s"Result: ${r}")).exitCode
 
-  final case class Config(username: String , password: String)
+  case class Config(username: String , password: String)
 
   val desc: ConfigDescriptor[Config] = {
     val hoconFile = TypesafeConfigSource.fromHoconFile(new File("/invalid/path"))
     val constant  = TypesafeConfigSource.fromHoconString(s"")
-    val env       = ConfigSource.fromSystemEnv
-    val sysProp   = ConfigSource.fromSystemProperties
+    val env       = ConfigSource.fromSystemEnv()
+    val sysProp   = ConfigSource.fromSystemProps()
     val source    = hoconFile <> constant <> env <> sysProp
     (descriptor[Config] from source)
   }

@@ -34,7 +34,7 @@ package object syntax {
      *  val endpoint: ZLayer[Has[ApiConfig], Nothing, Has[Endpoint]]    = ZLayer.fromService(_ => new Endpoint {})
      *  val repository: ZLayer[Has[DbConfig], Nothing, Has[Repository]] = ZLayer.fromService(_ => new Repository {})
      *
-     *  val cfg = TypesafeConfig.fromDefaultLoader(configDescription)
+     *  val cfg = TypesafeConfig.fromResourcePath(configDescription)
      *
      *  cfg.narrow(_.api) >>> endpoint // narrowing down to a proper config subtree
      *  cfg.narrow(_.db) >>> repository

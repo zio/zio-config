@@ -57,37 +57,24 @@ a few subtle limitations.
 ```
 
 ```scala
-  // Only for example purpose
-  implicit class ImpureEither[A, B](either: Either[A, B]) {
-    def loadOrThrow: B = either match {
-      case Left(_) => throw new Exception()
-      case Right(v) => v
-     }
-  }
-```
-
-```scala
 
   // Defining different possibility of HOCON source
 
   val aHoconSource =
     TypesafeConfigSource
       .fromHoconString("x = A")
-      .loadOrThrow
 ```
 
 ```scala
   val bHoconSource =
     TypesafeConfigSource
       .fromHoconString("x = B")
-      .loadOrThrow
 ```
 
 ```scala
   val cHoconSource =
     TypesafeConfigSource
       .fromHoconString("x = C")
-      .loadOrThrow
 ```
 
 ```scala
@@ -109,7 +96,6 @@ a few subtle limitations.
            |}
            |""".stripMargin
       )
-      .loadOrThrow
 
 ```
 
