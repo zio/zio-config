@@ -7,6 +7,8 @@ import zio.config.typesafe._
 import java.time.{LocalDate, ZonedDateTime}
 import scala.util.Try
 
+import examples._
+
 object AutoDerivationCustom extends App {
   case class AppConfig(jobName: String, details: Option[Detail], s3Path: S3Path)
 
@@ -55,20 +57,14 @@ object AutoDerivationCustom extends App {
   val appConfigDesc: ConfigDescriptor[AppConfig] =
     descriptor[AppConfig]
 
-  val source: ConfigSource = TypesafeConfigSource.fromHoconString(config) match {
-    case Right(a) => a
-    case Left(_)  => throw new Exception("bad hocon string")
-  }
-
-  val s: Either[ReadError[String], AppConfig] = read(appConfigDesc from source)
+  val source: ConfigSource = TypesafeConfigSource.fromHoconString(config)
 
   assert(
-    s == Right(
+    read(appConfigDesc from source) equalM
       AppConfig(
         "spark",
         Some(Detail("abcdefg", Left(ZonedDateTime.parse("2020-06-20T17:15:23.601712+10:00[Australia/Sydney]")))),
         S3Path("s3://path")
       )
-    )
   )
 }

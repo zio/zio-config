@@ -2,8 +2,9 @@ package zio.config.examples.typesafe
 
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.typesafe._
 
-import typesafe._
+import examples._
 
 object TypesafeConfigSealedTrait extends App with EitherImpureOps {
   sealed trait X
@@ -35,7 +36,6 @@ object TypesafeConfigSealedTrait extends App with EitherImpureOps {
            |x = A
            |""".stripMargin
       )
-      .loadOrThrow
 
   val bHoconSource: ConfigSource =
     TypesafeConfigSource
@@ -44,7 +44,6 @@ object TypesafeConfigSealedTrait extends App with EitherImpureOps {
            |x = B
            |""".stripMargin
       )
-      .loadOrThrow
 
   val cHoconSource: ConfigSource =
     TypesafeConfigSource
@@ -53,7 +52,6 @@ object TypesafeConfigSealedTrait extends App with EitherImpureOps {
            |x = C
            |""".stripMargin
       )
-      .loadOrThrow
 
   val dHoconSource: ConfigSource =
     TypesafeConfigSource
@@ -73,14 +71,12 @@ object TypesafeConfigSealedTrait extends App with EitherImpureOps {
            |}
            |""".stripMargin
       )
-      .loadOrThrow
 
-  assert(read(descriptor[Config] from aHoconSource) == Right(Config(A)))
-  assert(read(descriptor[Config] from bHoconSource) == Right(Config(B)))
-  assert(read(descriptor[Config] from cHoconSource) == Right(Config(C)))
+  assert(read(descriptor[Config] from aHoconSource) equalM Config(A))
+  assert(read(descriptor[Config] from bHoconSource) equalM Config(B))
+  assert(read(descriptor[Config] from cHoconSource) equalM Config(C))
   assert(
-    read(descriptor[Config] from dHoconSource) == Right(
+    read(descriptor[Config] from dHoconSource) equalM
       Config(D(Detail("ff", "ll", Region("strath", "syd"))))
-    )
   )
 }

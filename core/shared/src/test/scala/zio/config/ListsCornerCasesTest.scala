@@ -2,7 +2,7 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
-import zio.config.ReadError.Step.{Index, Key}
+import zio.config.PropertyTreePath.Step.{Index, Key}
 import zio.config.ReadError.{FormatError, ListErrors, ZipErrors}
 import zio.test.Assertion._
 import zio.test._
@@ -11,7 +11,7 @@ object ListsCornerCasesTest extends BaseSpec {
 
   val spec: ZSpec[Environment, Failure] =
     suite("ListsCornerCasesTest")(
-      test("read empty list") {
+      testM("read empty list") {
         case class Cfg(a: String, b: List[String])
 
         val cCfg = (string("a") |@| list("b")(string)).to[Cfg]
@@ -19,14 +19,13 @@ object ListsCornerCasesTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Nil))))
+        assertM(res)(equalTo(Cfg("sa", Nil)))
       },
-      test("read nested lists") {
+      testM("read nested lists") {
         case class Cfg(a: String, b: List[List[String]])
 
         val cCfg = (string("a") |@| list("b")(list(string))).to[Cfg]
@@ -37,14 +36,13 @@ object ListsCornerCasesTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Sequence(Nil) :: Nil))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Nil :: Nil))))
+        assertM(res)(equalTo(Cfg("sa", Nil :: Nil)))
       },
-      test("read absent optional lists") {
+      testM("read absent optional lists") {
         case class Cfg(a: String, b: Option[List[String]])
 
         val cCfg =
@@ -53,12 +51,12 @@ object ListsCornerCasesTest extends BaseSpec {
         val res =
           read(
             cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
+              .fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
           )
 
-        assert(res)(isRight(equalTo(Cfg("sa", None))))
+        assertM(res)(equalTo(Cfg("sa", None)))
       },
-      test("read present optional empty lists") {
+      testM("read present optional empty lists") {
         case class Cfg(a: String, b: Option[List[String]])
 
         val cCfg =
@@ -68,26 +66,25 @@ object ListsCornerCasesTest extends BaseSpec {
           read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Some(Nil)))))
+        assertM(res)(equalTo(Cfg("sa", Some(Nil))))
       },
-      test("use default value for absent list") {
+      testM("use default value for absent list") {
         case class Cfg(a: String, b: List[String])
 
         val cCfg = (string("a") |@| list("b")(string)
           .default("x" :: Nil)).to[Cfg]
 
         val res = read(
-          cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
+          cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", "x" :: Nil))))
+        assertM(res)(equalTo(Cfg("sa", "x" :: Nil)))
       },
-      test("override default non-empty list with empty list") {
+      testM("override default non-empty list with empty list") {
         case class Cfg(a: String, b: List[String])
 
         val cCfg = (string("a") |@| list("b")(string)
@@ -96,14 +93,13 @@ object ListsCornerCasesTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Sequence(Nil))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Nil))))
+        assertM(res)(equalTo(Cfg("sa", Nil)))
       },
-      test("distinguish list from scalar left") {
+      testM("distinguish list from scalar left") {
         case class Cfg(a: String, b: Either[List[String], String])
 
         val cCfg = (string("a") |@| nested("b")(
@@ -116,14 +112,13 @@ object ListsCornerCasesTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Left("v" :: Nil)))))
+        assertM(res)(equalTo(Cfg("sa", Left("v" :: Nil))))
       },
-      test("distinguish list from scalar right") {
+      testM("distinguish list from scalar right") {
         case class Cfg(a: String, b: Either[String, List[String]])
 
         val cCfg = (string("a") |@| nested("b")(
@@ -136,28 +131,13 @@ object ListsCornerCasesTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Sequence(Leaf("v") :: Nil))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Right("v" :: Nil)))))
+        assertM(res)(equalTo(Cfg("sa", Right("v" :: Nil))))
       },
-      test("distinguish scalar from list left") {
-        case class Cfg(a: String, b: Either[String, List[String]])
-
-        val cCfg = (string("a") |@| nested("b")(
-          string.orElseEither(list(string))
-        )).to[Cfg]
-
-        val res = read(
-          cCfg from ConfigSource
-            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
-        )
-
-        assert(res)(isRight(equalTo(Cfg("sa", Left("v")))))
-      },
-      test("distinguish scalar from list right") {
+      testM("distinguish scalar from list left") {
         case class Cfg(a: String, b: Either[List[String], String])
 
         val cCfg = (string("a") |@| nested("b")(
@@ -166,12 +146,26 @@ object ListsCornerCasesTest extends BaseSpec {
 
         val res = read(
           cCfg from ConfigSource
-            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Invalid)
+            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
+        assertM(res)(equalTo(Cfg("sa", Left(List("v")))))
       },
-      test("read list as scalar") {
+      testM("distinguish scalar from list right") {
+        case class Cfg(a: String, b: Either[List[String], String])
+
+        val cCfg = (string("a") |@| nested("b")(
+          list(string).orElseEither(string)
+        )).to[Cfg]
+
+        val res = read(
+          cCfg from ConfigSource
+            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))).leafNotASequence, "tree")
+        )
+
+        assertM(res)(equalTo(Cfg("sa", Right("v"))))
+      },
+      testM("read list as scalar") {
         case class Cfg(a: String, b: String)
 
         val cCfg = (string("a") |@| head("b")(string)).to[Cfg]
@@ -184,14 +178,13 @@ object ListsCornerCasesTest extends BaseSpec {
                 "b" -> Sequence(Leaf("v1") :: Leaf("v2") :: Nil)
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", "v1"))))
+        assertM(res)(equalTo(Cfg("sa", "v1")))
       },
-      test("read single key objects in nested lists") {
+      testM("read single key objects in nested lists") {
         case class Cfg(a: String, b: List[List[String]])
 
         val cCfg = (string("a") |@| list("b")(list(string("c")))).to[Cfg]
@@ -213,18 +206,13 @@ object ListsCornerCasesTest extends BaseSpec {
                 )
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
-        assert(res)(
-          isRight(
-            equalTo(Cfg("sa", List("v1") :: Nil :: List("v2", "v3") :: Nil))
-          )
-        )
+        assertM(res)(equalTo(Cfg("sa", List("v1") :: Nil :: List("v2", "v3") :: Nil)))
       },
-      test("collect errors from list elements") {
+      testM("collect errors from list elements") {
         case class Cfg(a: String, b: List[String])
 
         val cCfg =
@@ -240,14 +228,13 @@ object ListsCornerCasesTest extends BaseSpec {
                 )
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
-        assert(res)(isLeft(hasField[ReadError[String], Int]("size", _.size, equalTo(2))))
+        assertM(res.either)(isLeft(hasField[ReadError[String], Int]("size", _.size, equalTo(2))))
       },
-      test("accumulates all errors") {
+      testM("accumulates all errors") {
         case class Cfg(a: List[Boolean], b: List[Int])
 
         val cCfg = (nested("a")(list(boolean)) |@| nested("b")(list(int))).to[Cfg]
@@ -260,8 +247,7 @@ object ListsCornerCasesTest extends BaseSpec {
                 "b" -> Sequence(Leaf("one") :: Leaf("2") :: Nil)
               )
             ),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
@@ -270,14 +256,26 @@ object ListsCornerCasesTest extends BaseSpec {
             List(
               ListErrors(
                 List(
-                  FormatError(List(Key("a"), Index(1)), "Provided value is lorem ipsum, expecting the type boolean")
+                  FormatError(
+                    List(Key("a"), Index(1)),
+                    "Provided value is lorem ipsum, expecting the type boolean",
+                    List("value of type boolean")
+                  )
                 )
               ),
-              ListErrors(List(FormatError(List(Key("b"), Index(0)), "Provided value is one, expecting the type int")))
+              ListErrors(
+                List(
+                  FormatError(
+                    List(Key("b"), Index(0)),
+                    "Provided value is one, expecting the type int",
+                    List("value of type int")
+                  )
+                )
+              )
             )
           )
 
-        assert(res)(isLeft(equalTo(expected)))
+        assertM(res.either)(isLeft(equalTo(expected)))
       }
     )
 }

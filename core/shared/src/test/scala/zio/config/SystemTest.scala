@@ -35,17 +35,7 @@ object SystemTest extends DefaultRunnableSpec {
       testM("invalid system environment delimiter") {
         val keyDelimiter = '.'
         val result       = fromSystemEnvResult(keyDelimiter = keyDelimiter)
-
-        assertM(result.either)(
-          isLeft(
-            equalTo(
-              ReadError.SourceError(
-                message = s"Invalid system key delimiter: $keyDelimiter",
-                annotations = Set.empty
-              )
-            )
-          )
-        )
+        assertM(result.sandbox.mapError(_.died).either)(isLeft(equalTo(true)))
       }
     )
   import zio.test.environment.TestSystem._

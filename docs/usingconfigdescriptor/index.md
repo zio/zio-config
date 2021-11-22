@@ -83,7 +83,7 @@ import zio.Runtime
     ) from ConfigSource.fromMap(map, keyDelimiter = Some('.'))
 
   val awsConfigResult =
-    read(appConfig).getOrThrow
+    zio.Runtime.default.unsafeRun(read(appConfig))
 
    // yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)
 

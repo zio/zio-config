@@ -1,7 +1,7 @@
 package zio.config.cats
 
 import cats._
-import zio.config._, ConfigDescriptor._
+import zio.config._
 
 package object instances {
   implicit val cfgDescInvariantSemiGroupal: InvariantSemigroupal[ConfigDescriptor] =

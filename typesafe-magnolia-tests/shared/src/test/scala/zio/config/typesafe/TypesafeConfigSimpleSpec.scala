@@ -49,7 +49,7 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
       |}""".stripMargin
 
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig")(
-    test("A nested example with typesafe HOCON config") {
+    testM("A nested example with typesafe HOCON config") {
 
       val details          = (string("name") |@| int("age"))(Details.apply, Details.unapply)
       val accountConfig    =
@@ -66,12 +66,9 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
           AwsDetails.unapply
         )
       val listResult       =
-        fromHoconString(validHocon) match {
-          case Left(value)   => Left(value)
-          case Right(source) => read(awsDetailsConfig from source)
-        }
+        read(awsDetailsConfig from fromHoconString(validHocon))
 
-      val expectedResult = Right(
+      val expectedResult =
         AwsDetails(
           List(
             Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
@@ -81,20 +78,16 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
           Database(Some(100), "postgres"),
           List(1, 2, 3)
         )
-      )
 
-      assert(listResult)(equalTo(expectedResult))
+      assertM(listResult)(equalTo(expectedResult))
     },
-    test("A nested example with typesafe HOCON config and Magnlia") {
+    testM("A nested example with typesafe HOCON config and Magnlia") {
       val automaticAwsDetailsConfig = descriptor[AwsDetails]
 
       val automaticResult =
-        fromHoconString(validHocon) match {
-          case Left(value)   => Left(value)
-          case Right(source) => read(automaticAwsDetailsConfig from source)
-        }
+        read(automaticAwsDetailsConfig from fromHoconString(validHocon))
 
-      val expectedResult = Right(
+      val expectedResult =
         AwsDetails(
           List(
             Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
@@ -104,9 +97,8 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
           Database(Some(100), "postgres"),
           List(1, 2, 3)
         )
-      )
 
-      assert(automaticResult)(equalTo(expectedResult))
+      assertM(automaticResult)(equalTo(expectedResult))
     }
   )
 }

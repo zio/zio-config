@@ -3,6 +3,7 @@ package zio.config.examples.typesafe
 import zio.config._
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 
+import examples._
 import EmployeeDetails._
 import ConfigDescriptor._
 
@@ -47,7 +48,7 @@ object EmployeeDetails {
 
 object NullAndOptionalConfig extends App {
   // Take a look at state values, that can either exist, or be given a null
-  val hocconSourceList: Either[ReadError[String], ConfigSource] =
+  val hocconSourceList: ConfigSource =
     fromHoconString(
       """
        details {
@@ -77,23 +78,19 @@ object NullAndOptionalConfig extends App {
        """
     )
 
-  val expectedResult: Right[Nothing, EmployeeDetails] =
-    Right(
-      EmployeeDetails(
-        List(
-          Employee("jon", Some(Right("CA")), Left(Left(1.278))),
-          Employee("chris", Some(Left(151)), Right("High")),
-          Employee("martha", None, Right("Medium")),
-          Employee("susan", None, Right("f"))
-        ),
-        1000
-      )
+  val expectedResult: EmployeeDetails =
+    EmployeeDetails(
+      List(
+        Employee("jon", Some(Right("CA")), Left(Left(1.278))),
+        Employee("chris", Some(Left(151)), Right("High")),
+        Employee("martha", None, Right("Medium")),
+        Employee("susan", None, Right("f"))
+      ),
+      1000
     )
 
-  val result: Either[ReadError[String], EmployeeDetails] = hocconSourceList match {
-    case Left(value)   => Left(value)
-    case Right(source) => read(employeeDetails from source)
-  }
-
-  assert(result == expectedResult)
+  assert(
+    read(employeeDetails from hocconSourceList)
+      equalM expectedResult
+  )
 }
