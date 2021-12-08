@@ -1,12 +1,14 @@
 package zio.config.examples.typesafe
 
-import zio.config._, magnolia._
+import zio.config._
 import zio.config.typesafe.TypesafeConfigSource
+
+import magnolia._
 
 object SubConfigExample extends App {
   final case class ShortConfig(x: Int, y: Int)
 
-  val config =
+  val hoconStr: String =
     s"""
        | {
        |    "a" : {
@@ -28,7 +30,7 @@ object SubConfigExample extends App {
 
   assert(
     read(
-      descriptor[ShortConfig] from TypesafeConfigSource.fromHoconString(config).at(path"a.b.c[0]")
+      descriptor[ShortConfig] from TypesafeConfigSource.fromHoconString(hoconStr).at(path"a.b.c[0]")
     ) equalM (ShortConfig(1, 2))
   )
 }
