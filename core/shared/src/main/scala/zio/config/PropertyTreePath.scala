@@ -34,12 +34,14 @@ object PropertyTreePath {
         .filter(_.group(0).nonEmpty)
         .toVector
         .flatMap { regexMatched =>
-          val optionalKey   = Option(regexMatched.group(1)).flatMap(s => if (s.isEmpty) None else Some(s))
+          val optionalKey = Option(regexMatched.group(1))
+            .flatMap(s => if (s.isEmpty) None else Some(s))
+
           val optionalValue = Option(regexMatched.group(3))
             .flatMap(s => if (s.isEmpty) None else Try(s.toInt).toOption)
 
           (optionalKey, optionalValue) match {
-            case (Some(key), Some(value)) => Vector(Step.Key(key), Step.Index(value))
+            case (Some(key), Some(value)) => Vector(Step.Key(IsString(key)), Step.Index(value))
             case (None, Some(value))      => Vector(Step.Index(value))
             case (Some(key), None)        => Vector(Step.Key(IsString(key)))
             case (None, None)             => Vector.empty
