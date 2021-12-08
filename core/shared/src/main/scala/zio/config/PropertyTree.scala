@@ -4,48 +4,6 @@ import com.github.ghik.silencer.silent
 import zio.config.PropertyTreePath.Step
 
 import scala.collection.immutable.Nil
-import scala.util.Try
-import scala.util.matching.Regex
-
-final case class PropertyTreePath[K](path: Vector[Step[K]]) {
-  def mapKeys(f: K => K): PropertyTreePath[K] =
-    PropertyTreePath(path.map(_.map(f)))
-}
-
-@silent("Unused import")
-object PropertyTreePath {
-  import VersionSpecificSupport._
-
-  sealed trait Step[+K] { self =>
-    def map[K1 >: K, K2](f: K1 => K2): Step[K2] =
-      self match {
-        case Step.Index(n) => Step.Index(n)
-        case Step.Key(k)   => Step.Key(f(k.asInstanceOf[K1]))
-      }
-  }
-
-  object Step {
-    val pattern: Regex = """([a-zA-Z0-9 -@\-^-~]*)\[([0-9]*)\]""".r.anchored
-
-    def steps[K](s: String)(implicit IsString: String =:= K): Vector[Step[K]] =
-      Step.pattern
-        .findAllIn(s)
-        .matchData
-        .flatMap(regexMatch =>
-          (1 to regexMatch.groupCount).map { index =>
-            val strOrInt = regexMatch.group(index)
-            Try(Step.Index(strOrInt.toInt)).getOrElse(Step.Key(IsString(strOrInt)))
-          }
-        )
-        .toVector
-
-    final case class Index(n: Int) extends Step[Nothing]
-    final case class Key[K](k: K)  extends Step[K]
-  }
-
-  def $(path: String): PropertyTreePath[String] =
-    PropertyTreePath(path.split(".").toVector.flatMap(str => Step.steps(str)))
-}
 
 @silent("Unused import")
 sealed trait PropertyTree[+K, +V] { self =>
