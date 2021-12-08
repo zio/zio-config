@@ -13,6 +13,7 @@ final case class PropertyTreePath[K](path: Vector[Step[K]]) {
 
 @silent("Unused import")
 object PropertyTreePath {
+  import scala.collection.compat._
   import VersionSpecificSupport._
 
   sealed trait Step[+K] { self =>
