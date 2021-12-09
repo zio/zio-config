@@ -2,7 +2,7 @@ package zio
 
 package object config extends KeyConversionFunctions with ConfigStringModule with ImplicitTupleConversion {
 
-  implicit class Interpolator(val sc: StringContext) extends AnyVal {
+  implicit class Interpolator(private val sc: StringContext) extends AnyVal {
     def path(str: String*): PropertyTreePath[String] = PropertyTreePath.$(sc.s(str: _*))
   }
 
