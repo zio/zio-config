@@ -6,11 +6,11 @@ import zio.config.PropertyTree.{Leaf, Record}
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, Random, ZIO}
+import zio.{Random, ZIO}
 
 object ListAndOptionalTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig] with Has[Random] with Has[Sized], TestFailure[
+  val spec: Spec[TestConfig with Random with Sized, TestFailure[
     String
   ], TestSuccess] =
     suite("List and options")(
@@ -99,7 +99,7 @@ object ListAndOptionalTest extends BaseSpec {
 
         assertM(actual)(equalTo(expected))
       },
-      testM("key doesn't exist in list") {
+      test("key doesn't exist in list") {
         val src                                              = ConfigSource.fromPropertyTree(
           PropertyTree.Sequence(List(Record(Map()))),
           "src"
@@ -107,7 +107,7 @@ object ListAndOptionalTest extends BaseSpec {
         val optional: ConfigDescriptor[Option[List[String]]] = list(string("keyNotExists")).optional
         assertM(read(optional from src).either)(isLeft(anything))
       },
-      testM("when empty list") {
+      test("when empty list") {
         val src                                              = ConfigSource.fromPropertyTree(
           PropertyTree.empty,
           "src"
@@ -124,7 +124,7 @@ object ListAndOptionalTest extends BaseSpec {
           assertM(actual)(equalTo(p))
         }
       },
-      testM("return failure when branch is not defined correctly") {
+      test("return failure when branch is not defined correctly") {
         val src = ConfigSource.fromPropertyTree(
           Record(
             Map(
@@ -193,7 +193,7 @@ object ListAndOptionalTest extends BaseSpec {
 object ListAndOptionalTestUtils {
   final case class OverallConfig(option: Option[Option[Option[Id]]])
 
-  val genOverallConfig: Gen[Has[Random], OverallConfig] =
+  val genOverallConfig: Gen[Random, OverallConfig] =
     Gen.option(genId).map(t => OverallConfig(t.map(t => Option(Option(t)))))
 
   private def id(path: String) = string(path).to[Id]
@@ -210,11 +210,11 @@ object ListAndOptionalTestUtils {
 
   val cListConfig: ConfigDescriptor[ListConfig] = list("list")(cOpt3Config).to[ListConfig]
 
-  val genOpt3Config: Gen[Has[Random], Opt3Config] = for {
+  val genOpt3Config: Gen[Random, Opt3Config] = for {
     a <- genId
     b <- Gen.option(genId)
     c <- Gen.option(genId)
   } yield Opt3Config(a, b, c)
 
-  val genListConfig: Gen[Has[Random] with Has[Sized], ListConfig] = Gen.listOf(genOpt3Config).map(ListConfig.apply)
+  val genListConfig: Gen[Random with Sized, ListConfig] = Gen.listOf(genOpt3Config).map(ListConfig.apply)
 }

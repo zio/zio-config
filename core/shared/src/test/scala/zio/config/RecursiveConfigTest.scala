@@ -1,6 +1,5 @@
 package zio.config
 
-import zio.Has
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test._
@@ -9,28 +8,28 @@ import RecursiveConfigTestUtils._
 
 object RecursiveConfigTest extends BaseSpec {
 
-  val spec: Spec[Has[Annotations], TestFailure[Any], TestSuccess] =
+  val spec: Spec[Annotations, TestFailure[Any], TestSuccess] =
     suite("RecursiveConfigTest")(
-      testM("read simple") {
+      test("read simple") {
         assertM(read(SimpleRec.config from SimpleRec.source))(equalTo(SimpleRec.expected))
       },
-      testM("read simple list") {
+      test("read simple list") {
         assertM(read(SimpleListRec.config from SimpleListRec.source))(equalTo(SimpleListRec.expected))
       },
-      testM("read simple either") {
+      test("read simple either") {
         assertM(read(SimpleEitherRec.config from SimpleEitherRec.source))(equalTo(SimpleEitherRec.expected))
       },
-      testM("read simple reversed") {
+      test("read simple reversed") {
         assertM(read(SimpleRecReversed.config from SimpleRecReversed.source))(
           equalTo(SimpleRecReversed.expected)
         )
       },
-      testM("read simple reversed multiple") {
+      test("read simple reversed multiple") {
         assertM(read(SimpleRecMultiple.config from SimpleRecMultiple.source))(
           equalTo(SimpleRecMultiple.expected)
         )
       },
-      testM("read simple with updated key") {
+      test("read simple with updated key") {
         assertM(
           read(
             SimpleRecMultiple.config.mapKey(_.toUpperCase()) from SimpleRecMultiple.source
@@ -40,10 +39,10 @@ object RecursiveConfigTest extends BaseSpec {
           equalTo(SimpleRecMultiple.expected)
         )
       },
-      testM("read mutual recursive") {
+      test("read mutual recursive") {
         assertM(read(data from testSource))(equalTo(recursiveValue))
       },
-      testM("read expression tree") {
+      test("read expression tree") {
         assertM(read(expr from exprSource))(equalTo(exprValue))
       },
       test("write simple") {

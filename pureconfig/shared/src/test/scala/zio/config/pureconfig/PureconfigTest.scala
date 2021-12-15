@@ -6,7 +6,7 @@ import zio.test.Assertion._
 import zio.test.{Gen, _}
 
 object PureconfigTest extends BaseSpec {
-  override val spec: Spec[Has[TestConfig] with Has[Random] with Has[Sized], TestFailure[Serializable], TestSuccess] =
+  override val spec: Spec[Has[TestConfig] with Random with Sized, TestFailure[Serializable], TestSuccess] =
     suite("Pureconfig support")(
       test("vector roundtrip") {
         check(Gen.vectorOf(Gen.string)) { v =>

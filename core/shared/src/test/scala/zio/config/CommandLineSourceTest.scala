@@ -5,9 +5,8 @@ import zio.config.ReadError.ConversionError
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.config.testsupport.MapConfigTestSupport.{AppConfig, genAppConfig, stringNWithInjector}
 import zio.test.Assertion._
-import zio.test.environment.TestEnvironment
 import zio.test.{DefaultRunnableSpec, _}
-import zio.{Has, IO, ZIO}
+import zio.{IO, ZIO}
 
 object CommandLineSourceTest extends DefaultRunnableSpec {
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
@@ -18,7 +17,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
             for {
               args   <- toSeparateArgs(AppConfig.descriptor, appConfig)
               reread <- fromArgs(args)
-            } yield reread.get
+            } yield reread
 
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
@@ -29,7 +28,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
             for {
               args   <- toSingleArg(AppConfig.descriptor, appConfig)
               reread <- fromArgs(args)
-            } yield reread.get
+            } yield reread
 
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
@@ -40,7 +39,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
             for {
               args   <- toMultiSingleArg(AppConfig.descriptor, appConfig)
               reread <- fromArgs(args)
-            } yield reread.get
+            } yield reread
 
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
@@ -51,15 +50,15 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
             for {
               args   <- toSingleArg(AppConfig.descriptor, appConfig)
               reread <- fromArgs(args)
-            } yield reread.get
+            } yield reread
 
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
       }
     )
 
-  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Has[AppConfig]] =
-    ZIO.environment.provideLayer(ZConfig.fromCommandLineArgs(args, descriptor, Some('_'), None))
+  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], AppConfig] =
+    ZIO.service[AppConfig].provideLayer(ZConfig.fromCommandLineArgs(args, descriptor, Some('_'), None))
 
   def toSeparateArgs[A](
     descriptor: ConfigDescriptor[A],

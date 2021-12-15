@@ -5,11 +5,11 @@ import zio.config.ReadWriteRoundtripTestUtils._
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, Random, ZIO}
+import zio.{Random, ZIO}
 
 object ReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig] with Has[Random], TestFailure[String], TestSuccess] =
+  val spec: Spec[TestConfig with Random, TestFailure[String], TestSuccess] =
     suite("Coproduct support")(
       test("newtype 1 roundtrip") {
         check(genId) { p =>
@@ -117,31 +117,31 @@ object ReadWriteRoundtripTestUtils {
   final case class NestedPath(enterpriseAuth: EnterpriseAuth, count: Int, factor: Float)
   final case class SingleField(count: Int)
 
-  val genDataItem: Gen[Has[Random], DataItem] =
+  val genDataItem: Gen[Random, DataItem] =
     for {
       oid   <- Gen.option(genId)
       count <- Gen.int
     } yield DataItem(oid, count)
 
-  val genEnterpriseAuth: Gen[Has[Random], EnterpriseAuth] =
+  val genEnterpriseAuth: Gen[Random, EnterpriseAuth] =
     for {
       id    <- genId
       dburl <- genDbUrl
     } yield EnterpriseAuth(id, dburl)
 
-  val genNestedConfig: Gen[Has[Random], NestedPath] =
+  val genNestedConfig: Gen[Random, NestedPath] =
     for {
       auth   <- genEnterpriseAuth
       count  <- Gen.int
       factor <- Gen.float
     } yield NestedPath(auth, count, factor)
 
-  val genSingleField: Gen[Has[Random], SingleField] =
+  val genSingleField: Gen[Random, SingleField] =
     for {
       count <- Gen.int
     } yield SingleField(count)
 
-  val genCoproductConfig: Gen[Has[Random], CoproductConfig] =
+  val genCoproductConfig: Gen[Random, CoproductConfig] =
     Gen.either(genDataItem, genNestedConfig).map(CoproductConfig.apply)
 
   val cId: ConfigDescriptor[Id]                         = string("kId").to[Id]

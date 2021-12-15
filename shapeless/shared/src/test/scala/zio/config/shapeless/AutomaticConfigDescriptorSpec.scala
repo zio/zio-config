@@ -14,7 +14,7 @@ import AutomaticConfigTestUtils._
 
 object AutomaticConfigTest extends {
 
-  val spec: Spec[Has[TestConfig] with Has[Random] with Has[Sized], TestFailure[Any], TestSuccess] =
+  val spec: Spec[Has[TestConfig] with Random with Sized, TestFailure[Any], TestSuccess] =
     suite("shapeless spec")(
       test("automatic derivation spec") {
         check(genEnvironment) { environment =>
@@ -75,8 +75,8 @@ object AutomaticConfigTestUtils {
   )
 
   private val genPriceDescription                     = genNonEmptyString(5).map(Description)
-  private val genCurrency: Gen[Has[Random], Currency] = Gen.double(10.0, 20.0).map(Currency)
-  private val genPrice: Gen[Has[Random], Price]       = Gen.oneOf(genPriceDescription, genCurrency)
+  private val genCurrency: Gen[Random, Currency] = Gen.double(10.0, 20.0).map(Currency)
+  private val genPrice: Gen[Random, Price]       = Gen.oneOf(genPriceDescription, genCurrency)
 
   private val genToken       = genNonEmptyString(5).map(Token)
   private val genPassword    = genNonEmptyString(5).map(Password)
@@ -131,22 +131,22 @@ object AutomaticConfigTestUtils {
       case (None, None)         => partialMyConfig
     }
 
-  def genAlpha: Gen[Has[Random], String] =
+  def genAlpha: Gen[Random, String] =
     for {
       n <- Gen.int(1, 10) // zio-config supports only cons hence starting with 1
       s <- Gen.listOfN(n)(Gen.char(65, 122))
     } yield s.mkString
 
-  val genInstant: Gen[Has[Random], Instant] =
+  val genInstant: Gen[Random, Instant] =
     Gen.long.map(Instant.ofEpochMilli)
 
-  val genLocalDateString: Gen[Has[Random] with Has[Sized], String] =
+  val genLocalDateString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDate.toString)
 
-  val genLocalDateTimeString: Gen[Has[Random] with Has[Sized], String] =
+  val genLocalDateTimeString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDateTime.toString)
 
-  val genLocalTimeString: Gen[Has[Random] with Has[Sized], String] =
+  val genLocalTimeString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
 
   val configDesc: ConfigDescriptor[MyConfig] = descriptor[MyConfig]

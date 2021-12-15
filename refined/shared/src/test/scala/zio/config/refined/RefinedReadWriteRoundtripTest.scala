@@ -17,7 +17,7 @@ import ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig] with Has[Random], TestFailure[String], TestSuccess] =
+  val spec: Spec[Has[TestConfig] with Random, TestFailure[String], TestSuccess] =
     suite("Refined support")(
       test("Refined config roundtrip") {
         check(genRefinedProd) { p =>
@@ -83,7 +83,7 @@ object RefinedReadWriteRoundtripTestUtils {
 
   ////
 
-  def genRefinedProd: Gen[Has[Random], RefinedProd] =
+  def genRefinedProd: Gen[Random, RefinedProd] =
     for {
       ldap  <- genSymbol(1, 10)
       port  <- Gen.int(1025, 64000)
@@ -99,7 +99,7 @@ object RefinedReadWriteRoundtripTestUtils {
       Refined.unsafeApply(pwd)
     )
 
-  def genRefinedProdInvalid: Gen[Has[Random], (Int, Map[String, String])] =
+  def genRefinedProdInvalid: Gen[Random, (Int, Map[String, String])] =
     for {
       port  <- Gen.int(0, 1023)
       n     <- Gen.int(1, 2)

@@ -48,7 +48,7 @@ object RefinedUtils {
   }
 
   object Key {
-    val gen: Gen[Has[Random] with Has[Sized], Key] =
+    val gen: Gen[Random with Sized, Key] =
       Gen
         .alphaNumericStringBounded(1, 10)
         .map(string => Refined.unsafeApply[String, NonEmpty](string))
@@ -60,7 +60,7 @@ object RefinedUtils {
   }
 
   object Value {
-    val gen: Gen[Has[Random] with Has[Sized], Value] =
+    val gen: Gen[Random with Sized, Value] =
       Gen
         .alphaNumericStringBounded(1, 10)
         .map(string => Refined.unsafeApply[String, NonEmpty](string))
@@ -70,7 +70,7 @@ object RefinedUtils {
   final case class KeyValue(k: Key, v: Value)
 
   object KeyValue {
-    val gen: Gen[Has[Random] with Has[Sized], KeyValue] =
+    val gen: Gen[Random with Sized, KeyValue] =
       for {
         key   <- Key.gen
         value <- Value.gen

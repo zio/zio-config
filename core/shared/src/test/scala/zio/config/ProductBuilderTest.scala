@@ -4,11 +4,11 @@ import zio.config.ConfigDescriptor._
 import zio.config.ProductBuilderTestUtils._
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, Random, ZIO}
+import zio.{Random, ZIO}
 
 object ProductBuilderTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig] with Has[Random], TestFailure[String], TestSuccess] =
+  val spec: Spec[TestConfig with Random, TestFailure[String], TestSuccess] =
     suite("ProductBuilder")(
       test("combine 22 for case class") {
         check(genS22) { p =>
@@ -132,7 +132,7 @@ object ProductBuilderTestUtils {
   ] =
     (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21).tupled
 
-  val genS22: Gen[Has[Random], S22] =
+  val genS22: Gen[Random, S22] =
     for {
       s0  <- Gen.int
       s1  <- Gen.int

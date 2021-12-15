@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{Has, IO, System, UIO, ZIO, ZLayer, ZManaged}
+import zio.{IO, System, UIO, ZIO, ZLayer, ZManaged}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
@@ -70,7 +70,7 @@ trait ConfigSourceModule extends KeyValueModule {
      * A Layer is assumed to be "memoized" by default, i.e the construction
      * of ConfigSource layer is done strictly once regardless of number times the read is invoked.
      */
-    def toLayer: ZLayer[Any, ReadError[K], Has[ConfigSource]] =
+    def toLayer: ZLayer[Any, ReadError[K], ConfigSource] =
       strictlyOnce.toLayer
 
     /**
@@ -475,18 +475,18 @@ trait ConfigSourceModule extends KeyValueModule {
     ): ConfigSource = {
       val managed: ZManaged[Any, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
         ZManaged
-          .make({
-            ZIO.effect({
+          .acquireReleaseWith({
+            ZIO.attempt({
               println("retrieving")
               new FileInputStream(new File(filePath))
             })
           }) { r =>
             println("closing")
-            ZIO.effectTotal(r.close())
+            ZIO.succeed(r.close())
           }
-          .mapM { inputStream =>
+          .mapZIO { inputStream =>
             for {
-              properties <- ZIO.effect {
+              properties <- ZIO.attempt {
                               val properties = new java.util.Properties()
                               properties.load(inputStream)
                               properties
@@ -539,23 +539,23 @@ trait ConfigSourceModule extends KeyValueModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true,
-      system: System.Service = System.Service.live
+      system: System
     ): ConfigSource = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
 
       val managed =
         ZIO
-          .accessM[System](
-            _.get.envs.map(map => getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys))
+          .serviceWithZIO[System](
+            _.envs.map(map => getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys))
           )
-          .toManaged_
-          .mapError(throwable => ReadError.SourceError(throwable.toString))
-          .map(tree =>
-            (path: PropertyTreePath[K]) => {
-              ZIO.succeed(
-                tree.at(path)
-              )
-            }
+          .toManaged
+          .mapBoth(
+            throwable => ReadError.SourceError(throwable.toString),
+            tree =>
+              (path: PropertyTreePath[K]) =>
+                ZIO.succeed(
+                  tree.at(path)
+                )
           )
           .provideLayer(ZLayer.succeed(system))
 
@@ -596,21 +596,22 @@ trait ConfigSourceModule extends KeyValueModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true,
-      system: System.Service = System.Service.live
+      system: System
     ): ConfigSource =
       Reader(
         Set(ConfigSourceName(SystemProperties)),
         ZManaged.succeed(
           ZIO
-            .accessM[System](_.get.properties)
-            .toManaged_
-            .mapError(throwable => ReadError.SourceError(throwable.toString))
-            .map(map =>
-              (path: PropertyTreePath[K]) =>
-                ZIO.succeed(
-                  getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
-                    .at(path)
-                )
+            .serviceWithZIO[System](_.properties)
+            .toManaged
+            .mapBoth(
+              throwable => ReadError.SourceError(throwable.toString),
+              map =>
+                (path: PropertyTreePath[K]) =>
+                  ZIO.succeed(
+                    getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
+                      .at(path)
+                  )
             )
             .provideLayer(ZLayer.succeed(system))
         )

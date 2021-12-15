@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.{Has, Tag, ZIO, ZLayer}
+import zio.{IsNotIntersection, Tag, ZIO, ZLayer}
 
 trait ConfigModule
     extends ConfigDescriptorModule
@@ -17,7 +17,7 @@ trait ConfigModule
    *  val appConfigLayer  =
    *     ConfigSource.fromMap(Map("age" -> "20")).toLayer >>> configLayer(int("age"))
    *
-   *  val app: ZIO[Has[MyConfig] with zio.console.Console,java.io.IOException, Unit] =
+   *  val app: ZIO[MyConfig with zio.console.Console,java.io.IOException, Unit] =
    *    getConfig[Int].flatMap(age => putStrLn(s"My age is ${age}"))
    *
    *  app.provideSomeLayer[Console](appConfigLayer)
@@ -38,10 +38,8 @@ trait ConfigModule
    * The preference depends on how you want to design the entry point to managing config
    * of your app.
    */
-  final def configLayer[A](config: ConfigDescriptor[A])(implicit
-    tag: Tag[A]
-  ): ZLayer[Has[ConfigSource], ReadError[K], Has[A]] =
-    ZIO.accessM[Has[ConfigSource]](source => read(config from source.get)).toLayer
+  final def configLayer[A: Tag: IsNotIntersection](config: ConfigDescriptor[A]): ZLayer[ConfigSource, ReadError[K], A] =
+    ZIO.service[ConfigSource].flatMap(source => read(config from source)).toLayer
 
   /**
    * Example usage:
@@ -60,9 +58,7 @@ trait ConfigModule
    *  // ZIO[zio.console.Console, Exception, Unit]
    * }}}
    */
-  final def configLayer_[A](config: ConfigDescriptor[A])(implicit
-    tag: Tag[A]
-  ): ZLayer[Any, ReadError[K], Has[A]] =
+  final def configLayer_[A: Tag: IsNotIntersection](config: ConfigDescriptor[A]): ZLayer[Any, ReadError[K], A] =
     ConfigSource.empty.toLayer >>> configLayer(config)
 
   /**
@@ -96,6 +92,6 @@ trait ConfigModule
    *
    * }}}
    */
-  final def getConfig[A](implicit tag: Tag[A]): ZIO[Has[A], Nothing, A] =
-    ZIO.access(_.get)
+  final def getConfig[A: Tag: IsNotIntersection]: ZIO[A, Nothing, A] =
+    ZIO.service[A]
 }

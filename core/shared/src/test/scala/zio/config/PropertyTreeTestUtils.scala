@@ -2,7 +2,7 @@ package zio.config
 
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.test.{Gen, Sized}
-import zio.{Has, Random}
+import zio.{Random}
 
 object PropertyTreeTestUtils {
   final case class PropertyTreeTestParams(
@@ -10,10 +10,10 @@ object PropertyTreeTestUtils {
     recordKeyCount: Int
   )
 
-  private[config] val genLeaf: Gen[Has[Random] with Has[Sized], Leaf[String]] =
+  private[config] val genLeaf: Gen[Random with Sized, Leaf[String]] =
     Gen.string.map(str => Leaf(str))
 
-  private[config] val genListOfLeaves: Gen[Has[Random] with Has[Sized], List[Leaf[String]]] =
+  private[config] val genListOfLeaves: Gen[Random with Sized, List[Leaf[String]]] =
     Gen.int(1, 20).flatMap(n => Gen.listOfN(n)(genLeaf))
 
   final case class Leaves[V](list: List[List[Leaf[V]]]) {
@@ -30,12 +30,12 @@ object PropertyTreeTestUtils {
   }
 
   object Leaves {
-    val genLeaves: Gen[Has[Random] with Has[Sized], Leaves[String]] =
+    val genLeaves: Gen[Random with Sized, Leaves[String]] =
       Gen.int(1, 3).flatMap(n => Gen.listOfN(n)(genListOfLeaves)).map(Leaves(_))
   }
 
   private[config] val nLevelSequenceWithRecords
-    : Gen[Has[Random] with Has[Sized], (Record[String, String], Leaves[String], PropertyTreeTestParams)] =
+    : Gen[Random with Sized, (Record[String, String], Leaves[String], PropertyTreeTestParams)] =
     for {
       leaves <- Leaves.genLeaves
       nested <- Gen.int(1, 3)
@@ -46,7 +46,7 @@ object PropertyTreeTestUtils {
     } yield (Record(map), leaves, PropertyTreeTestParams(nested, keys.size))
 
   private[config] val nLevelSequenceWithRecordsEmpty
-    : Gen[Has[Random] with Has[Sized], (Record[String, String], PropertyTreeTestParams)] =
+    : Gen[Random with Sized, (Record[String, String], PropertyTreeTestParams)] =
     for {
       nested <- Gen.int(1, 3)
       keys    = (1 to 3)
@@ -56,7 +56,7 @@ object PropertyTreeTestUtils {
     } yield (Record(map), PropertyTreeTestParams(nested, keys.size))
 
   private[config] val nLevelSequenceWithLeaves
-    : Gen[Has[Random] with Has[Sized], (PropertyTree[String, String], Leaves[String], Int)] =
+    : Gen[Random with Sized, (PropertyTree[String, String], Leaves[String], Int)] =
     Leaves.genLeaves.flatMap(l =>
       Gen
         .int(1, 3)

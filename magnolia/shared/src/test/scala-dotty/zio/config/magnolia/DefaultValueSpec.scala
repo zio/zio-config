@@ -8,7 +8,7 @@ import DefaultValueSpecUtils._
 import zio.config.magnolia.Macros
 
 object DefaultValueSpec extends BaseSpec {
-  val spec: Spec[Has[TestConfig] with Has[Random] with Has[Sized], TestFailure[Any], TestSuccess] =
+  val spec: Spec[Has[TestConfig] with Random with Sized, TestFailure[Any], TestSuccess] =
     suite("magnolia spec")(
       test("default value for primitives") {
         assert(Macros.defaultValuesOf[A])(equalTo(List(("x", "defaultValue"))))
