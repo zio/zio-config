@@ -1,29 +1,33 @@
 package zio.config.examples.typesafe
 
 import com.typesafe.config.ConfigRenderOptions
+import zio.IO
 import zio.config.ConfigDescriptor._
+import zio.config.examples._
 import zio.config.typesafe.{TypesafeConfigSource, _}
-import zio.config.{ConfigDescriptor, read, write}
+import zio.config.{ConfigDescriptor, ReadError, read, write}
+
+import TypesafeConfigSource._
 
 object TypesafeConfigMap extends App with EitherImpureOps {
   final case class A(m1: Map[String, List[Int]], l1: List[Int], l2: List[Int], m2: Map[String, B])
 
   object A {
-    val config: _root_.zio.config.ConfigDescriptor[A] =
+    val config: ConfigDescriptor[A] =
       (map("m1")(list(int)) |@| list("l1")(int) |@| list("l2")(int) |@| map("m2")(B.config))(A.apply, A.unapply)
   }
 
   final case class B(m1: Map[String, C], i: Int)
 
   object B {
-    val config: _root_.zio.config.ConfigDescriptor[B] =
+    val config: ConfigDescriptor[B] =
       (map("m1")(C.config) |@| int("ll"))(B.apply, B.unapply)
   }
 
   final case class C(a1: String, a2: Int)
 
   object C {
-    val config: _root_.zio.config.ConfigDescriptor[C] =
+    val config: ConfigDescriptor[C] =
       (string("a1") |@| int("a2"))(C.apply, C.unapply)
   }
 
@@ -72,13 +76,13 @@ object TypesafeConfigMap extends App with EitherImpureOps {
        |""".stripMargin
 
   val source: zio.config.ConfigSource =
-    TypesafeConfigSource.fromHoconString(hocon).loadOrThrow
+    TypesafeConfigSource.fromHoconString(hocon)
 
-  val readResult: A =
-    read(A.config from source).loadOrThrow
+  val readResult: IO[ReadError[String], A] =
+    read(A.config from source)
 
   assert(
-    readResult ==
+    readResult equalM
       A(
         Map("m11" -> List(1, 2), "m12" -> List(1)),
         List(),
@@ -133,9 +137,10 @@ object TypesafeConfigMap extends App with EitherImpureOps {
 
   // Invalid Hocon for map error reporting
   println(
-    TypesafeConfigSource
-      .fromHoconString(invalidHocon)
-      .flatMap(invalidSource => read(A.config from invalidSource).swap.map(_.prettyPrint()).swap)
+    read(
+      A.config from TypesafeConfigSource
+        .fromHoconString(invalidHocon)
+    ).mapError(_.prettyPrint()).either.unsafeRun
   )
 
   /*
@@ -158,8 +163,11 @@ object TypesafeConfigMap extends App with EitherImpureOps {
    */
 
   println(
-    write(A.config from source, readResult).loadOrThrow.toHocon
-      .render(ConfigRenderOptions.concise().setFormatted(true))
+    write(A.config from source, readResult.unsafeRun)
+      .map(
+        _.toHocon
+          .render(ConfigRenderOptions.concise().setFormatted(true))
+      )
   )
 
   /**
@@ -225,7 +233,7 @@ object TypesafeConfigMap extends App with EitherImpureOps {
   val xx: ConfigDescriptor[Map[String, String]] = nested("k")(map("s")(string("y")))
 
   assert(
-    read(xx from TypesafeConfigSource.fromHoconString(hocon3).loadOrThrow) == Right(Map("dynamicMap" -> "z"))
+    read(xx from fromHoconString(hocon3)) equalM Map("dynamicMap" -> "z")
   )
 
   val hocon4: String =
@@ -236,6 +244,6 @@ object TypesafeConfigMap extends App with EitherImpureOps {
   val xx2: zio.config.ConfigDescriptor[Map[String, String]] = nested("k")(map(string("y")))
 
   assert(
-    read(xx2 from TypesafeConfigSource.fromHoconString(hocon4).loadOrThrow) == Right(Map("dynamicMap" -> "z"))
+    read(xx2 from fromHoconString(hocon4)) equalM Map("dynamicMap" -> "z")
   )
 }

@@ -43,9 +43,8 @@ object PureConfigInterop extends App with EitherImpureOps {
            |x = A
            |""".stripMargin
       )
-      .loadOrThrow
 
-  val bHoconSource: zio.config.ConfigSource =
+  val bHoconSource: ConfigSource =
     TypesafeConfigSource
       .fromHoconString(
         s"""
@@ -53,18 +52,16 @@ object PureConfigInterop extends App with EitherImpureOps {
            |
            |""".stripMargin
       )
-      .loadOrThrow
 
-  val cHoconSource: zio.config.ConfigSource =
+  val cHoconSource: ConfigSource =
     TypesafeConfigSource
       .fromHoconString(
         s"""
            |x = C
            |""".stripMargin
       )
-      .loadOrThrow
 
-  val dHoconSource: zio.config.ConfigSource =
+  val dHoconSource: ConfigSource =
     TypesafeConfigSource
       .fromHoconString(
         s"""
@@ -81,17 +78,15 @@ object PureConfigInterop extends App with EitherImpureOps {
            | } 
            |""".stripMargin
       )
-      .loadOrThrow
 
   import customConfigDescriptor._
 
-  assert(read(customConfigDescriptor.descriptor[Config] from aHoconSource) == Right(Config(A)))
-  assert(read(customConfigDescriptor.descriptor[Config] from bHoconSource) == Right(Config(B)))
-  assert(read(customConfigDescriptor.descriptor[Config] from cHoconSource) == Right(Config(C)))
+  assert(read(customConfigDescriptor.descriptor[Config] from aHoconSource) equalM Config(A))
+  assert(read(customConfigDescriptor.descriptor[Config] from bHoconSource) equalM Config(B))
+  assert(read(customConfigDescriptor.descriptor[Config] from cHoconSource) equalM Config(C))
 
   assert(
-    read(customConfigDescriptor.descriptor[Config] from dHoconSource) == Right(
+    read(customConfigDescriptor.descriptor[Config] from dHoconSource) equalM
       Config(D(Detail("ff", "ll", Region("strath", "syd"))))
-    )
   )
 }

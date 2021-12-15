@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.Has
 import zio.config.ConfigDescriptor._
 import zio.config.NestedConfigTestUtils._
 import zio.config.helpers._
@@ -13,7 +14,7 @@ object NestedConfigTest extends BaseSpec {
     suite("Nested config")(
       test("read") {
         check(genNestedConfigParams) { p =>
-          assert(read(p.config.from(p.source)))(isRight(equalTo(p.value)))
+          assert(read(p.config.from(p.source)))(equalTo(p.value))
         }
       },
       test("write") {
@@ -25,9 +26,8 @@ object NestedConfigTest extends BaseSpec {
       },
       test("nested with default") {
         val config = string("x").default("y")
-        val r      = ZIO.fromEither(
-          read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid))
-        )
+        val r      =
+          read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test"))
 
         assertM(r)(equalTo("y"))
       }

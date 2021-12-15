@@ -99,7 +99,7 @@ ZConfig.fromMultiMap(Map(), myConfig, "constant")
 ```scala mdoc:silent
 
 val sysEnvSource =
-  ConfigSource.fromSystemEnv
+  ConfigSource.fromSystemEnv()
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val sysEnvSourceSupportingList =
@@ -146,15 +146,15 @@ zio-config can source system properties.
 ```scala mdoc:silent
 
 val sysPropertiesSource =
-  ConfigSource.fromSystemProperties
+  ConfigSource.fromSystemProps()
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val sysPropertiesSourceWithList =
-  ConfigSource.fromSystemProperties(None, valueDelimiter = Some(','))
+  ConfigSource.fromSystemProps(None, valueDelimiter = Some(','))
 
 // If you want to consider system-properties as a nested config, provide keyDelimiter. Refer to API doc
 // Example, Given KAFKA.SERVERS = "servers1, server2"
-  ConfigSource.fromSystemProperties(keyDelimiter = Some('.'), valueDelimiter = Some(','))
+  ConfigSource.fromSystemProps(keyDelimiter = Some('.'), valueDelimiter = Some(','))
 
 
 ```
@@ -232,19 +232,13 @@ val anotherHoconSource =
       """
   )
 
-hoconSource match {
-  case Left(value) => Left(value)
-  case Right(source) => read(automaticDescription from source)
-}
+read(automaticDescription from hoconSource)
 
-// yielding Right(SimpleConfig(123,bla,Some(useast)))
+// yielding SimpleConfig(123,bla,Some(useast))
 
-anotherHoconSource match {
-  case Left(value) => Left(value)
-  case Right(source) => read(automaticDescription from source)
-}
+read(automaticDescription from anotherHoconSource)
 
-// yielding Right(SimpleConfig(123,bla,Some(useast)))
+// yielding SimpleConfig(123,bla,Some(useast))
 
 // Please check other ways to load the hocon file in `TypesafeConfig`
 
@@ -321,7 +315,7 @@ val nestedSource =
 )
 
 val nestedConfig = descriptor[NestedCommandLineConfig] from nestedSource
-assert(read(nestedConfig) == Right(NestedCommandLineConfig(SparkConf("v1", "v2"), "v3")))
+assert(zio.Runtime.default.unsafeRun(read(nestedConfig)) == NestedCommandLineConfig(SparkConf("v1", "v2"), "v3"))
 
 ```
 
@@ -338,7 +332,7 @@ val nestedCmdLineArgs2 = "--conf -key1=v1 --conf -key2=v2 --key3 v3"
 val nestedSource2 = ConfigSource.fromCommandLineArgs(nestedCmdLineArgs2.split(' ').toList)
 val nestedConfig2 = descriptor[NestedCommandLineConfig] from nestedSource2
 
-assert(read(nestedConfig2) == Right(NestedCommandLineConfig(SparkConf("v1", "v2"), "v3")))
+assert(zio.Runtime.default.unsafeRun(read(nestedConfig2)) == NestedCommandLineConfig(SparkConf("v1", "v2"), "v3"))
 ```
 
 Here we don't use delimiters for nesting, hence keyDelimiter is `None`. 
@@ -368,7 +362,7 @@ val listArgs = "--users Jane --users Jack"
 val listSource = ConfigSource.fromCommandLineArgs(listArgs.split(' ').toList)
 val listConfigCmdLineArgs = list("users")(string) from listSource
 
-assert(read(listConfigCmdLineArgs) == Right(List("Jane", "Jack")))
+assert(zio.Runtime.default.unsafeRun(read(listConfigCmdLineArgs)) == List("Jane", "Jack"))
 
 ```
 
@@ -385,7 +379,7 @@ val listSource2 = ConfigSource.fromCommandLineArgs(
    valueDelimiter = Some(',')
 )
 
-assert(read(list("users")(string) from listSource2) == Right(List("Jane", "Jack")))
+assert(zio.Runtime.default.unsafeRun(read(list("users")(string) from listSource2)) == List("Jane", "Jack"))
 
 ```
 
@@ -481,21 +475,20 @@ object CombineSourcesExample extends zio.App {
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     application.either.flatMap(r => Console.printLine(s"Result: ${r}")).exitCode
 
-  final case class Config(username: String , password: String)
+  case class Config(username: String , password: String)
 
-  val getDesc: ZIO[Has[System], ReadError[String], ConfigDescriptor[Config]] =
-    for {
-      hoconFile <- ZIO.fromEither(TypesafeConfigSource.fromHoconFile(new File("/invalid/path")))
-      constant  <- ZIO.fromEither(TypesafeConfigSource.fromHoconString(s""))
-      env       <- ConfigSource.fromSystemEnv
-      sysProp   <- ConfigSource.fromSystemProperties
-      source    = hoconFile <> constant <> env <> sysProp
-    } yield (descriptor[Config] from source)
+  val desc: ConfigDescriptor[Config] ={
+    val hoconFile = TypesafeConfigSource.fromHoconFile(new File("/invalid/path"))
+    val constant  = TypesafeConfigSource.fromHoconString(s"")
+    val env       = ConfigSource.fromSystemEnv()
+    val sysProp   = ConfigSource.fromSystemProps()
+    val source    = hoconFile <> constant <> env <> sysProp
+    (descriptor[Config] from source)
+  }
 
   val application =
     for {
-      desc        <- getDesc.mapError(_.prettyPrint())
-      configValue <- ZIO.fromEither(read(desc)).mapError(_.prettyPrint())
+      configValue <- read(desc).mapError(_.prettyPrint())
       string      <- ZIO.fromEither(configValue.toJson(desc))
       _           <- Console.printLine(string)
     } yield ()

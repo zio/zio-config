@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ReadError.Step
+import zio.config.PropertyTreePath.Step
 import zio.config.ReadErrorsTestUtils._
 import zio.test.Assertion._
 import zio.test._

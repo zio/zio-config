@@ -16,23 +16,19 @@ object EitherReciprocityTest extends BaseSpec {
           val lr =
             for {
               writtenLeft  <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
-              rereadLeft   <- ZIO
-                                .fromEither(
-                                  read(
-                                    cCoproductConfig from ConfigSource
-                                      .fromPropertyTree(writtenLeft, "test", LeafForSequence.Valid)
-                                  )
-                                )
-                                .mapError(_.getMessage)
+              rereadLeft   <-
+                read(
+                  cCoproductConfig from ConfigSource
+                    .fromPropertyTree(writtenLeft, "test")
+                )
+                  .mapError(_.getMessage)
               writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
-              rereadRight  <- ZIO
-                                .fromEither(
-                                  read(
-                                    cCoproductConfig from ConfigSource
-                                      .fromPropertyTree(writtenRight, "test", LeafForSequence.Valid)
-                                  )
-                                )
-                                .mapError(_.getMessage)
+              rereadRight  <-
+                read(
+                  cCoproductConfig from ConfigSource
+                    .fromPropertyTree(writtenRight, "test")
+                )
+                  .mapError(_.getMessage)
             } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
               case (Left(pl), Right(pr)) => Some(pl -> pr)
               case _                     => None

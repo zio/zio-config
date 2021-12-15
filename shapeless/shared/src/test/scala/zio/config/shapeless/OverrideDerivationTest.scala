@@ -1,5 +1,6 @@
 package zio.config.shapeless
 
+import zio.ZIO
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.config._
 import zio.test.Assertion._
@@ -22,6 +23,9 @@ object OverrideDerivationTestWithWrappedSealedTraitName extends DeriveConfigDesc
 }
 
 object OverrideDerivationTest extends DefaultRunnableSpec {
+  def unsafeRun[E, A](effect: ZIO[Any, E, A]): A =
+    zio.Runtime.default.unsafeRun(effect)
+
   val spec: ZSpec[Environment, Failure] = suite("OverrideDerivationTest")(
     test("simple config") {
       import OverrideDerivationTestEnv._
@@ -30,13 +34,16 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val res = write(getDescriptor[Cfg].configDescriptor, Cfg("a"))
 
-      assert(res)(isRight(equalTo(Record(Map("prefix_field_name" -> Leaf("a")))))) &&
+      assert(res)(equalTo(Right(Record(Map("prefix_field_name" -> Leaf("a")))))) &&
       assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
-          .flatMap(v => read(getDescriptor[Cfg].configDescriptor from v))
+        unsafeRun(
+          ZIO
+            .fromEither(res)
+            .map(ConfigSource.fromPropertyTree(_, "tree"))
+            .flatMap(v => read(getDescriptor[Cfg].configDescriptor from v))
+        )
       )(
-        isRight(equalTo(Cfg("a")))
+        equalTo(Cfg("a"))
       )
     },
     test("unwrapped sealed hierarchy") {
@@ -73,11 +80,14 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       assert(res)(isRight(equalTo(expected))) &&
       assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
-          .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
+        unsafeRun(
+          ZIO
+            .fromEither(res)
+            .map(ConfigSource.fromPropertyTree(_, "tree"))
+            .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
+        )
       )(
-        isRight(equalTo(cfg))
+        equalTo(cfg)
       )
     },
     test("wrapped sealed hierarchy") {
@@ -114,11 +124,16 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       assert(res)(isRight(equalTo(expected))) &&
       assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
-          .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
+        unsafeRun(
+          ZIO
+            .fromEither(
+              res
+                .map(ConfigSource.fromPropertyTree(_, "tree"))
+            )
+            .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
+        )
       )(
-        isRight(equalTo(cfg))
+        equalTo(cfg)
       )
     }
   )

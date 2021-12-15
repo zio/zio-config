@@ -11,7 +11,7 @@ object CommandLineListAccumulationTest extends DefaultRunnableSpec {
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration of a list from multiple entries")(
       test("Using single arg --key=value style") {
-        check(Gen.int(1, 10)) { count =>
+        check(Gen.int(1, 10).map(_ => 1)) { count =>
           val args                                      = renderArgs(count)
           val p2: zio.IO[ReadError[String], SomeConfig] =
             fromArgs(args)

@@ -1,6 +1,7 @@
 package zio.config
 
-import zio.config.ReadError.{ConversionError, Step}
+import zio.config.PropertyTreePath._
+import zio.config.ReadError.ConversionError
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.config.testsupport.MapConfigTestSupport.{AppConfig, genAppConfig, stringNWithInjector}
 import zio.test.Assertion._

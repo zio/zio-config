@@ -4,7 +4,7 @@ import com.github.ghik.silencer.silent
 import com.typesafe.config._
 import zio.config.PropertyTree._
 import zio.config._
-import zio.{IO, ZIO}
+import zio.{Task, ZIO, ZManaged}
 
 import java.io.File
 import java.lang.{Boolean => JBoolean}
@@ -25,33 +25,14 @@ object TypesafeConfigSource {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Either[ReadError[String], MyConfig] =
-   *     TypesafeConfigSource.unsafeDefaultLoader
-   *     .flatMap(source => read(descriptor[MyConfig] from source)))
-   * }}}
-   */
-  def unsafeDefaultLoader: Either[ReadError[String], ConfigSource] =
-    fromTypesafeConfig(ConfigFactory.load.resolve)
-
-  /**
-   * Retrieve a `ConfigSource` from `typesafe-config` from a given file in resource classpath.
-   *
-   * A complete example usage:
-   *
-   * {{{
-   *
-   *   case class MyConfig(port: Int, url: String)
-   *
    *   val result: IO[ReadError[String], MyConfig] =
-   *     TypesafeConfigSource.fromDefaultLoader
-   *     .flatMap(source => ZIO.fromEither(read(descriptor[MyConfig] from source)))
+   *     read(descriptor[MyConfig] from TypesafeConfigSource.fromResourcePath))
    * }}}
    */
-  def fromDefaultLoader: IO[ReadError.SourceError, ConfigSource] =
-    ZIO
-      .attempt(ConfigFactory.load.resolve)
-      .mapBoth(exception => ReadError.SourceError(exception.getMessage), fromConfig)
-      .absolve
+  def fromResourcePath: ConfigSource =
+    fromTypesafeConfig(
+      ZIO.effect(ConfigFactory.load.resolve)
+    )
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` from a given config file
@@ -67,17 +48,31 @@ object TypesafeConfigSource {
    *     configSource.flatMap(source => ZIO.fromEither(read(descriptor[MyConfig] from source))
    * }}}
    */
-  def fromHoconFile[A](file: File): Either[ReadError[String], ConfigSource] =
-    Try(ConfigFactory.parseFile(file).resolve).toEither.swap
-      .map(r =>
-        ReadError.SourceError(
-          s"Unable to get a form a valid config-source from hocon file. ${r}"
-        ): ReadError[String]
-      )
-      .swap
-      .flatMap { typesafeConfig =>
-        fromTypesafeConfig(typesafeConfig)
-      }
+  def fromHoconFile[A](file: File): ConfigSource = {
+    val rawConfig =
+      Task
+        .effect(ConfigFactory.parseFile(file).resolve)
+
+    fromTypesafeConfig(rawConfig)
+  }
+
+  /**
+   * Retrieve a `ConfigSource` from `typesafe-config` from a path to a config file
+   *
+   * A complete example usage:
+   *
+   * {{{
+   *   val configSource =
+   *     TypesafeConfigSource.fromHoconFilePath("/path/to/xyz.hocon")
+   *
+   *   case class MyConfig(port: Int, url: String)
+   *
+   *   val result: Task[MyConfig] =
+   *     read(descriptor[MyConfig] from configSource)
+   * }}}
+   */
+  def fromHoconFilePath[A](filePath: String): ConfigSource =
+    fromHoconFile(new File(filePath))
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` HOCON string.
@@ -102,8 +97,11 @@ object TypesafeConfigSource {
    *     configSource.flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromHoconString(input: String): Either[ReadError[String], ConfigSource] =
-    fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
+  def fromHoconString(input: String): ConfigSource =
+    fromTypesafeConfig(
+      ZIO
+        .effect(ConfigFactory.parseString(input).resolve)
+    )
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` data type.
@@ -129,53 +127,23 @@ object TypesafeConfigSource {
    * }}}
    */
   def fromTypesafeConfig(
-    input: => com.typesafe.config.Config
-  ): Either[ReadError[String], ConfigSource] =
-    Try {
-      input
-    } match {
-      case Failure(exception) =>
-        Left(ReadError.SourceError(message = exception.getMessage))
-      case Success(value)     =>
+    rawConfig: ZIO[Any, Throwable, com.typesafe.config.Config]
+  ): ConfigSource = {
+    val effect =
+      rawConfig.flatMap { value =>
         getPropertyTree(value) match {
-          case Left(value)  => Left(ReadError.SourceError(message = value))
-          case Right(value) =>
-            Right(
-              ConfigSource
-                .fromPropertyTree(value, "hocon", LeafForSequence.Invalid)
-            )
+          case Left(error) =>
+            ZIO.fail(ReadError.SourceError(message = error))
+          case Right(tree) =>
+            ZIO.succeed((path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
         }
-    }
+      }.mapError(exception => ReadError.SourceError(message = exception.getMessage))
 
-  /**
-   * Retrieve a `ConfigSource` from `typesafe-config` data type.
-   *
-   * A complete example usage:
-   *
-   * {{{
-   *
-   *   val hocon =
-   *     s"""
-   *       {
-   *          port : 8080
-   *          url  : abc.com
-   *       }
-   *
-   *     """
-   *   val typesafeConfig: com.typesafe.config.Config = ...
-   *   val configSource = TypesafeConfigSource.fromConfig(typesafeConfig)
-   *
-   *   case class MyConfig(port: Int, url: String)
-   *
-   *   val result: Either[ReadError[String], MyConfig] =
-   *     configSource.flatMap(source => read(descriptor[MyConfig] from source)))
-   * }}}
-   */
-  def fromConfig(input: com.typesafe.config.Config): Either[ReadError.SourceError, ConfigSource] =
-    getPropertyTree(input).fold(
-      error => Left(ReadError.SourceError(error)),
-      propertyTree => Right(ConfigSource.fromPropertyTree(propertyTree, "hocon", LeafForSequence.Invalid))
+    ConfigSource.Reader(
+      Set(ConfigSource.ConfigSourceName("hocon")),
+      ZManaged.succeed(ZManaged.fromEffect(effect))
     )
+  }
 
   /**
    * Get `PropertyTree` from a typesafe Config
@@ -183,10 +151,11 @@ object TypesafeConfigSource {
   private[config] def getPropertyTree(
     input: com.typesafe.config.Config
   ): Either[String, PropertyTree[String, String]] = {
-    def loopBoolean(value: Boolean)         = Leaf(value.toString)
-    def loopNumber(value: Number)           = Leaf(value.toString)
+    val strictLeaf                          = Leaf(_: String, canBeSequence = false)
+    def loopBoolean(value: Boolean)         = strictLeaf(value.toString)
+    def loopNumber(value: Number)           = strictLeaf(value.toString)
     val loopNull                            = PropertyTree.empty
-    def loopString(value: String)           = Leaf(value)
+    def loopString(value: String)           = strictLeaf(value)
     def loopList(values: List[ConfigValue]) = Sequence(values.map(loopAny))
 
     def loopConfig(config: ConfigObject) =
@@ -228,15 +197,15 @@ object TypesafeConfigSource {
   ): com.typesafe.config.ConfigObject =
     loopAny(tree, None)
 
-  def loopAny(tree: PropertyTree[String, String], key: Option[String]): com.typesafe.config.ConfigObject =
+  private def loopAny(tree: PropertyTree[String, String], key: Option[String]): com.typesafe.config.ConfigObject =
     tree match {
-      case leaf @ Leaf(_)     => loopLeaf(key, leaf)
+      case leaf @ Leaf(_, _)  => loopLeaf(key, leaf)
       case record @ Record(_) => loopRecord(key, record)
       case PropertyTree.Empty => loopEmpty(key)
       case seqq @ Sequence(_) => loopSequence(key, seqq)
     }
 
-  def loopEmpty(key: Option[String]): ConfigObject =
+  private def loopEmpty(key: Option[String]): ConfigObject =
     key.fold(ConfigFactory.empty().root()) { k =>
       ConfigFactory
         .empty()
@@ -244,7 +213,7 @@ object TypesafeConfigSource {
         .root()
     }
 
-  def loopLeaf(key: Option[String], tree: Leaf[String]): ConfigObject =
+  private def loopLeaf(key: Option[String], tree: Leaf[String]): ConfigObject =
     key
       .fold(ConfigFactory.empty())(last =>
         ConfigFactory
@@ -256,7 +225,7 @@ object TypesafeConfigSource {
       )
       .root()
 
-  def loopRecord(key: Option[String], tree: Record[String, String]): ConfigObject = {
+  private def loopRecord(key: Option[String], tree: Record[String, String]): ConfigObject = {
     val inner = tree.value.toList.foldLeft(ConfigFactory.empty().root()) { case (acc, (k, tree)) =>
       val newObject =
         loopAny(tree, Some(k))
@@ -266,11 +235,11 @@ object TypesafeConfigSource {
     key.fold(inner)(key => inner.atKey(key).root())
   }
 
-  def loopSequence(key: Option[String], tree: Sequence[String, String]): ConfigObject =
+  private def loopSequence(key: Option[String], tree: Sequence[String, String]): ConfigObject =
     key match {
       case Some(key) =>
-        val leaves = partitionWith(tree.value) { case Leaf(value) =>
-          Leaf(value)
+        val leaves = partitionWith(tree.value) { case Leaf(value, bool) =>
+          Leaf(value, bool)
         }
 
         if (leaves.nonEmpty)

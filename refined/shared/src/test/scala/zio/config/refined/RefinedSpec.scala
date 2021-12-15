@@ -3,6 +3,7 @@ package zio.config.refined
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.types.string.NonEmptyString
+import zio.config.PropertyTreePath._
 import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test._
@@ -22,7 +23,7 @@ object RefinedSpec extends BaseSpec {
           val result =
             read(cfg from ConfigSource.fromMap(Map(keyValue.k.underlying -> keyValue.v.underlying)))
 
-          assert(result)(equalTo(Right(keyValue.v.value)))
+          assertM(result)(equalTo(keyValue.v.value))
         }
       },
       test("RefineType returns ReadError for invalid values in a given path") {
@@ -35,7 +36,7 @@ object RefinedSpec extends BaseSpec {
           val expected =
             ConversionError(List(Step.Key(key.underlying)), "Predicate isEmpty() did not fail.", Set.empty)
 
-          assert(result)(equalTo(Left(expected)))
+          assertM(result.either)(equalTo(Left(expected)))
         }
       }
     )

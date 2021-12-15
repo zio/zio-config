@@ -23,7 +23,7 @@ object AutomaticConfigTest extends {
 
           val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
             for {
-              result  <- ZIO.fromEither(read(configDesc from source))
+              result  <- read(configDesc from source)
               written <- ZIO.succeed(write(configDesc, result))
             } yield written
 

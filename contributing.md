@@ -7,6 +7,7 @@
 
 ```scala
 cd zio-config
+sbt fmt fix check
 sbt compileAll
 sbt runAllExamples
 sbt testAll
@@ -31,7 +32,7 @@ that all assertions in the example holds true even after your change.
 ```
 cd zio-config
 rm -r website/build/
-./sbt ++2.12.11! docs/docusaurusCreateSite
+./sbt ++2.12.13! docs/docusaurusCreateSite
 cd ./website/build/zio-config/
 npm run start
 

@@ -5,7 +5,7 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string._
 import zio.ZIO
 import zio.config.helpers._
-import zio.config.{BaseSpec, helpers, _}
+import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test._
 
@@ -21,9 +21,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -35,7 +35,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config IPv6 invalid") {
@@ -44,7 +44,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config MatchesRegex roundtrip") {
@@ -54,9 +54,9 @@ object StringSupportTest extends BaseSpec {
           val p2 =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -69,7 +69,7 @@ object StringSupportTest extends BaseSpec {
           val p2 =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config Regex roundtrip") {
@@ -78,9 +78,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -92,7 +92,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config Uri roundtrip") {
@@ -101,9 +101,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -115,9 +115,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -129,9 +129,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -143,7 +143,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config ValidByte roundtrip") {
@@ -152,9 +152,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -166,7 +166,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config ValidShort roundtrip") {
@@ -175,9 +175,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -189,7 +189,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config ValidInt roundtrip") {
@@ -198,9 +198,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -212,7 +212,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config ValidLong roundtrip") {
@@ -221,9 +221,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -235,7 +235,8 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+
         }
       },
       test("Refined config ValidFloat roundtrip") {
@@ -244,9 +245,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -258,7 +259,8 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+
         }
       },
       test("Refined config ValidDouble roundtrip") {
@@ -267,9 +269,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -281,7 +283,8 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+
         }
       },
       test("Refined config ValidBigInt roundtrip") {
@@ -290,9 +293,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -304,7 +307,8 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+
         }
       },
       test("Refined config ValidBigDecimal roundtrip") {
@@ -313,9 +317,9 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO.fromEither(
-                           read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                         )
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -327,7 +331,8 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assert(p2)(helpers.assertErrors(_.size == 1))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+
         }
       }
     )

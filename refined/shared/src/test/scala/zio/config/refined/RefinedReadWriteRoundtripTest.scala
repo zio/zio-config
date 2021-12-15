@@ -25,11 +25,9 @@ object RefinedReadWriteRoundtripTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO
-                           .fromEither(
-                             read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                           )
-                           .mapError(_.getMessage)
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+                  .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -40,7 +38,7 @@ object RefinedReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
-          assert(p2)(helpers.isErrors(hasField("size", _.size, equalTo(5))))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(5)))
         }
       }
     )

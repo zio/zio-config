@@ -19,15 +19,15 @@ object DerivationTest extends DefaultRunnableSpec {
       ): List[(Option[String], String)] = desc match {
         case Lazy(thunk)                   => collectDescriptions(thunk(), path)
         case Default(config, _)            => collectDescriptions(config, path)
-        case DynamicMap(_, config)         => collectDescriptions(config, path)
+        case DynamicMap(config)            => collectDescriptions(config, path)
         case Describe(config, message)     => (path, message) :: collectDescriptions(config, path)
-        case Nested(_, path, config)       => collectDescriptions(config, Some(path))
+        case Nested(path, config)          => collectDescriptions(config, Some(path))
         case Optional(config)              => collectDescriptions(config, path)
         case OrElse(left, right)           =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
         case OrElseEither(left, right)     =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
-        case Sequence(_, config)           => collectDescriptions(config, path)
+        case Sequence(config)              => collectDescriptions(config, path)
         case Source(_, _)                  => Nil
         case Zip(left, right)              =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
@@ -56,12 +56,12 @@ object DerivationTest extends DefaultRunnableSpec {
         case Lazy(thunk)                   => collectPath(thunk())
         case Default(config, _)            => collectPath(config)
         case Describe(config, _)           => collectPath(config)
-        case DynamicMap(_, config)         => collectPath(config)
-        case Nested(_, path, config)       => path :: collectPath(config)
+        case DynamicMap(config)            => collectPath(config)
+        case Nested(path, config)          => path :: collectPath(config)
         case Optional(config)              => collectPath(config)
         case OrElse(left, right)           => collectPath(left) ::: collectPath(right)
         case OrElseEither(left, right)     => collectPath(left) ::: collectPath(right)
-        case Sequence(_, config)           => collectPath(config)
+        case Sequence(config)              => collectPath(config)
         case Source(_, _)                  => Nil
         case Zip(left, right)              => collectPath(left) ::: collectPath(right)
         case TransformOrFail(config, _, _) => collectPath(config)
@@ -85,13 +85,13 @@ object DerivationTest extends DefaultRunnableSpec {
         case Lazy(thunk)                   => collectDefault(thunk(), path)
         case Default(config, v)            => (path -> v) :: collectDefault(config, path)
         case Describe(config, _)           => collectDefault(config, path)
-        case DynamicMap(_, config)         => collectDefault(config, path)
-        case Nested(_, path, config)       => collectDefault(config, Some(path))
+        case DynamicMap(config)            => collectDefault(config, path)
+        case Nested(path, config)          => collectDefault(config, Some(path))
         case Optional(config)              => collectDefault(config, path)
         case OrElse(left, right)           => collectDefault(left, path) ::: collectDefault(right, path)
         case OrElseEither(left, right)     =>
           collectDefault(left, path) ::: collectDefault(right, path)
-        case Sequence(_, config)           => collectDefault(config, path)
+        case Sequence(config)              => collectDefault(config, path)
         case Source(_, _)                  => Nil
         case Zip(left, right)              => collectDefault(left, path) ::: collectDefault(right, path)
         case TransformOrFail(config, _, _) => collectDefault(config, path)
@@ -110,11 +110,11 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Record(Map("a" -> PropertyTree.Sequence(List(loop(depth - 1)))))
         else Leaf("str")
 
-      val src = ConfigSource.fromPropertyTree(loop(5), "tree", LeafForSequence.Valid)
+      val src = ConfigSource.fromPropertyTree(loop(5), "tree")
 
       val res = read(DeriveConfigDescriptor.descriptor[A5] from src)
 
-      assert(res)(isRight(anything))
+      assert(res)(anything)
     },
     test("support lists non-recursive") {
       import NonRecursiveListHelper._
@@ -123,11 +123,11 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) Record(Map("a" -> PropertyTree.Sequence(List(loop(depth - 1)))))
         else Leaf("str")
 
-      val src = ConfigSource.fromPropertyTree(loop(5), "tree", LeafForSequence.Valid)
+      val src = ConfigSource.fromPropertyTree(loop(5), "tree")
 
       val res = read(NonRecursiveDerivation.getDescriptor[A5].configDescriptor from src)
 
-      assert(res)(isRight(anything))
+      assert(res)(anything)
     },
     test("support nested lists non-recursive") {
       import NonRecursiveDerivation.{getDescriptor, Descriptor}
@@ -141,11 +141,13 @@ object DerivationTest extends DefaultRunnableSpec {
         if (depth > 0) PropertyTree.Sequence(List(loop(depth - 1)))
         else Record(Map("a" -> PropertyTree.Sequence(List(Leaf("s")))))
 
-      val src                                            = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree", LeafForSequence.Valid)
+      val src                                            =
+        ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree")
 
-      val res = read(getDescriptor[B].configDescriptor from src)
+      val res                                            =
+        read(getDescriptor[B].configDescriptor from src)
 
-      assert(res)(isRight(anything))
+      assert(res)(anything)
     }
 
     // FIXME Make recursion work without losing view to errors

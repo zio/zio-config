@@ -8,7 +8,6 @@ import zio.test._
 import zio.{Has, Random, ZIO}
 
 object CollectAllRoundtripTest extends BaseSpec {
-
   val spec: ZSpec[Environment, Failure] =
     suite("ConfigDescriptor.collectAll")(
       test("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
@@ -28,7 +27,7 @@ object CollectAllRoundtripTest extends BaseSpec {
 
           val readAndWrite =
             for {
-              result  <- ZIO.fromEither(read(config from ConfigSource.fromMap(inputSource)))
+              result  <- read(config from ConfigSource.fromMap(inputSource))
               written <- ZIO.fromEither(write(config, result))
             } yield written
 
