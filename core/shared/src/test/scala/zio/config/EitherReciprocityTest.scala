@@ -37,7 +37,7 @@ object EitherReciprocityTest extends BaseSpec {
           assertM(lr)(isSome(equalTo(p -> p)))
         }
       }
-    )
+    ) @@ TestAspect.samples(50)
 }
 
 object EitherReciprocityTestUtils {

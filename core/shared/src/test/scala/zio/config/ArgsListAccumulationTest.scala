@@ -19,7 +19,7 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
           assertM(p2.either)(isRight(equalTo(SomeConfig(expected))))
         }
       }
-    )
+    ) @@ TestAspect.samples(50)
 
   final case class SomeConfig(ints: List[Int])
 

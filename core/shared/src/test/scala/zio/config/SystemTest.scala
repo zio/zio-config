@@ -35,7 +35,7 @@ object SystemTest extends DefaultRunnableSpec {
         val result       = fromSystemEnvResult(keyDelimiter = keyDelimiter)
         assertM(result.sandbox.mapError(_.isDie).either)(isLeft(equalTo(true)))
       }
-    )
+    ) @@ TestAspect.samples(50)
   import zio.test.TestSystem._
 
   private def fromSystemEnvResult(keyDelimiter: Char, sysEnv: Map[String, String] = Map.empty) = {

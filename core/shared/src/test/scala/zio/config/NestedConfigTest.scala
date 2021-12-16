@@ -30,7 +30,7 @@ object NestedConfigTest extends BaseSpec {
 
         assertM(r)(equalTo("y"))
       }
-    )
+    ) @@ TestAspect.samples(50)
 }
 
 object NestedConfigTestUtils {

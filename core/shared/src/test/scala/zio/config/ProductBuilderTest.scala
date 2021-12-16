@@ -71,7 +71,7 @@ object ProductBuilderTest extends BaseSpec {
           assertM(p2)(equalTo(tuple))
         }
       }
-    )
+    ) @@ TestAspect.samples(50)
 }
 
 object ProductBuilderTestUtils {
