@@ -2,7 +2,7 @@ package zio.config.typesafe
 
 import com.typesafe.config.ConfigFactory
 import zio.config._
-import zio.{Has, Layer, Tag, ZIO}
+import zio.{IsNotIntersection, Layer, Tag, ZIO}
 
 import java.io.File
 
@@ -20,13 +20,13 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[ReadError[String], MyConfig] =
    *     TypesafeConfig.fromDefaultLoader(descriptor[MyConfig])
    * }}}
    */
-  def fromResourcePath[A](
+  def fromResourcePath[A: Tag: IsNotIntersection](
     configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+  ): Layer[ReadError[String], A] =
     fromTypesafeConfig(ConfigFactory.load.resolve, configDescriptor)
 
   /**
@@ -40,13 +40,14 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[ReadError[String], MyConfig] =
    *     TypesafeConfig.fromHoconFile(new File("/path/to/xyz.hocon"), descriptor[MyConfig])
    * }}}
    */
-  def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(implicit
-    tag: Tag[A]
-  ): Layer[ReadError[String], Has[A]] =
+  def fromHoconFile[A: Tag: IsNotIntersection](
+    file: File,
+    configDescriptor: ConfigDescriptor[A]
+  ): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       configDescriptor from TypesafeConfigSource.fromHoconFile(file)
     )
@@ -62,13 +63,14 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[ReadError[String], MyConfig] =
    *     TypesafeConfig.fromHoconFilePath("/path/to/xyz.hocon", descriptor[MyConfig])
    * }}}
    */
-  def fromHoconFilePath[A](filePath: String, configDescriptor: ConfigDescriptor[A])(implicit
-    tag: Tag[A]
-  ): Layer[ReadError[String], Has[A]] =
+  def fromHoconFilePath[A: Tag: IsNotIntersection](
+    filePath: String,
+    configDescriptor: ConfigDescriptor[A]
+  ): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       configDescriptor from TypesafeConfigSource.fromHoconFilePath(filePath)
     )
@@ -86,13 +88,14 @@ object TypesafeConfig {
    *
    *   val configString = """port: 10, url: "http://x.y""""
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[ReadError[String], MyConfig] =
    *     TypesafeConfig.fromHoconString(configString, descriptor[MyConfig])
    * }}}
    */
-  def fromHoconString[A](hoconString: String, configDescriptor: ConfigDescriptor[A])(implicit
-    tag: Tag[A]
-  ): Layer[ReadError[String], Has[A]] =
+  def fromHoconString[A: Tag: IsNotIntersection](
+    hoconString: String,
+    configDescriptor: ConfigDescriptor[A]
+  ): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       configDescriptor from TypesafeConfigSource.fromHoconString(hoconString)
     )
@@ -108,14 +111,14 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[ReadError[String], MyConfig] =
    *     TypesafeConfig.fromTypesafeConfig(ConfigFactory.load.resolve, descriptor[MyConfig])
    * }}}
    */
-  def fromTypesafeConfig[A](
+  def fromTypesafeConfig[A: Tag: IsNotIntersection](
     conf: => com.typesafe.config.Config,
     configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+  ): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       configDescriptor from TypesafeConfigSource.fromTypesafeConfig(ZIO.succeed(conf))
     )

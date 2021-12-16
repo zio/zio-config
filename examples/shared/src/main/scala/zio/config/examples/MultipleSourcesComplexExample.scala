@@ -4,7 +4,7 @@ import com.typesafe.config._
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
-import zio.{ExitCode, Has, IO, ZIOAppArgs, ZIOAppDefault}
+import zio.{ExitCode, IO, ZIO, ZIOAppArgs, ZIOAppDefault}
 
 object ConfigLoader {
   def apply[A](
@@ -38,7 +38,7 @@ object ConfigLoader {
                  )
 
       // application.conf in resource folder
-      ressConf = TypesafeConfigSource.fromTypesafeConfig(ZIO.effect(ConfigFactory.defaultApplication()))
+      ressConf = TypesafeConfigSource.fromTypesafeConfig(ZIO.attempt(ConfigFactory.defaultApplication()))
 
       sourceSpec = cmdConf <>
                      cmdConf.mapKeys(_.toLowerCase()) <>
@@ -62,7 +62,7 @@ object KafkaApplication {
 }
 
 object MultipleSourcesComplexExample extends ZIOAppDefault {
-  override def run: zio.URIO[zio.ZEnv with Has[ZIOAppArgs], ExitCode] = {
+  override def run: zio.URIO[zio.ZEnv with ZIOAppArgs, ExitCode] = {
     val pgm =
       ConfigLoader(
         "serviceName_",

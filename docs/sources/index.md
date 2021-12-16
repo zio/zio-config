@@ -463,7 +463,7 @@ sources, especially when some of the sources returns ZIO.
 ```scala mdoc:silent
 import java.io.File
 
-import zio.{App, Console, ExitCode, Has, URIO, ZIO, System}
+import zio.{App, Console, ExitCode, URIO, ZIO, System}
 import zio.config._
 import zio.config.typesafe._
 

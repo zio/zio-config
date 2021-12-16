@@ -3,11 +3,10 @@ package zio.config.typesafe
 import zio.config.ConfigDescriptor._
 import zio.config.read
 import zio.test.Assertion._
-import zio.test.environment.TestEnvironment
 import zio.test.{DefaultRunnableSpec, ZSpec, assertM}
 
 object ListOrSingletonSpec extends DefaultRunnableSpec {
-  override def spec: ZSpec[TestEnvironment, Any] =
+  override def spec: ZSpec[Environment, Any] =
     suite("listOrSingleton")(
       test("reads singleton") {
         val configString =

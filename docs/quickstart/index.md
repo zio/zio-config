@@ -296,7 +296,7 @@ This will tell you how to consider configuration as just a part of `Environment`
 
 ```scala mdoc:silent
 
-import zio.{ Console, ZIO, ZLayer, Has }
+import zio.{ Console, ZIO, ZLayer }
 
 case class ApplicationConfig(bridgeIp: String, userName: String)
 
@@ -326,7 +326,6 @@ So to avoid that and do it in an ergonomic way, there's a `narrow` syntax extens
 ```scala mdoc:silent
 import zio._
 import zio.config.typesafe._
-import zio.config.syntax._
 import zio.config.magnolia.DeriveConfigDescriptor
 
 trait Endpoint
@@ -339,11 +338,11 @@ case class ApiConfig(host: String,   port: Int)
 val configDescription = DeriveConfigDescriptor.descriptor[AppConfig]
 
 // components have only required dependencies
-val endpoint: ZLayer[Has[ApiConfig], Nothing, Has[Endpoint]]    = ZLayer.fromService(_ => new Endpoint {})
-val repository: ZLayer[Has[DbConfig], Nothing, Has[Repository]] = ZLayer.fromService(_ => new Repository {}) 
+val endpoint: ZLayer[ApiConfig, Nothing, Endpoint]    = ZLayer.fromService(_ => new Endpoint {})
+val repository: ZLayer[DbConfig, Nothing, Repository] = ZLayer.fromService(_ => new Repository {}) 
 
 val cfg = TypesafeConfig.fromResourcePath(configDescription)
 
-cfg.narrow(_.api) >>> endpoint // narrowing down to a proper config subtree
-cfg.narrow(_.db) >>> repository
+cfg.project(_.api) >>> endpoint // narrowing down to a proper config subtree
+cfg.project(_.db) >>> repository
 ```

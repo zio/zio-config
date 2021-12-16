@@ -36,7 +36,7 @@ object EmployeeDetails {
 
 object NullAndOptionalConfig extends DefaultRunnableSpec {
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig Null and Optional")(
-    testM("A config case which keys maybe null or optional") {
+    test("A config case which keys maybe null or optional") {
       val hoconSource =
         fromHoconString(
           """details {

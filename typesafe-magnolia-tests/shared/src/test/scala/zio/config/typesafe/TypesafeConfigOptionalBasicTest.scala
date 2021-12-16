@@ -11,7 +11,7 @@ import magnolia._
 // A basic test before the set of TypesafeConfigOptionalTest
 object TypesafeConfigOptionalBasicTest extends DefaultRunnableSpec with EitherSupport {
   val spec: ZSpec[Environment, Failure] = suite("Optional Spec")(
-    testM("Fails if any one of the required fields is missing in an optional product") {
+    test("Fails if any one of the required fields is missing in an optional product") {
 
       final case class RawConfig(tableDetails: List[RawTableConfig])
 

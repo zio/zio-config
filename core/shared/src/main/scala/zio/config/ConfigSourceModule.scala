@@ -1,13 +1,12 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{IO, System, UIO, ZIO, ZLayer, ZManaged}
+import zio.{IO, System, UIO, ULayer, ZIO, ZLayer, ZManaged}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
 import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
-
 import PropertyTree.{Leaf, Record, Sequence, unflatten}
 
 trait ConfigSourceModule extends KeyValueModule {
@@ -539,7 +538,7 @@ trait ConfigSourceModule extends KeyValueModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true,
-      system: System
+      system: ULayer[System] = System.live
     ): ConfigSource = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
 
@@ -557,7 +556,7 @@ trait ConfigSourceModule extends KeyValueModule {
                   tree.at(path)
                 )
           )
-          .provideLayer(ZLayer.succeed(system))
+          .provideLayer(system)
 
       Reader(
         Set(ConfigSourceName(SystemEnvironment)),
@@ -596,7 +595,7 @@ trait ConfigSourceModule extends KeyValueModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true,
-      system: System
+      system: ULayer[System] = System.live
     ): ConfigSource =
       Reader(
         Set(ConfigSourceName(SystemProperties)),
@@ -613,7 +612,7 @@ trait ConfigSourceModule extends KeyValueModule {
                       .at(path)
                   )
             )
-            .provideLayer(ZLayer.succeed(system))
+            .provideLayer(system)
         )
       )
 

@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config._
-import zio.{Console, ExitCode, Has, ZEnv, ZIO, ZIOAppArgs, ZIOAppDefault}
+import zio.{Console, ExitCode, ZEnv, ZIO, ZIOAppArgs, ZIOAppDefault}
 
 final case class Prod(ldap: String, port: Int, dburl: Option[String])
 
@@ -12,7 +12,7 @@ object Prod {
     (string("LDAP") |@| int("PORT") |@|
       string("DB_URL").optional)(Prod.apply, Prod.unapply)
 
-  val myAppLogic: ZIO[Has[Prod], Throwable, (String, Option[String])] =
+  val myAppLogic: ZIO[Prod, Throwable, (String, Option[String])] =
     for {
       prod <- getConfig[Prod]
     } yield (prod.ldap, prod.dburl)
@@ -20,7 +20,7 @@ object Prod {
 
 object ReadConfig extends ZIOAppDefault {
 
-  override def run: ZIO[ZEnv with Has[ZIOAppArgs], Nothing, ExitCode] = {
+  override def run: ZIO[ZEnv with ZIOAppArgs, Nothing, ExitCode] = {
     val configLayer = ZConfig.fromMap(
       Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"),
       Prod.prodConfig,

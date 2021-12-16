@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config._
-import zio.{Has, System, ZIO}
+import zio.ZIO
 
 import ConfigDescriptor._
 

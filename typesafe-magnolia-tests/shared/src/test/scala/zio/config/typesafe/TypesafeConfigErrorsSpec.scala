@@ -59,7 +59,7 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
     """
 
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig Error")(
-    testM("A variant error case with typesafe HOCON config and a magnolia description") {
+    test("A variant error case with typesafe HOCON config and a magnolia description") {
       val nestedConfigAutomaticResult1 =
         read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))
 
@@ -80,7 +80,7 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
         nestedConfigAutomaticResult1.zip(nestedConfigAutomaticResult2).zip(nestedConfigAutomaticResult3)
 
       assertM(result)(
-        equalTo(((nestedConfigAutomaticExpect1, nestedConfigAutomaticExpect2), nestedConfigAutomaticExpect3))
+        equalTo((nestedConfigAutomaticExpect1, nestedConfigAutomaticExpect2, nestedConfigAutomaticExpect3))
       )
     },
     // test("A variant error case with a not well-formed typesafe HOCON config") {
@@ -93,7 +93,7 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
 
     //   assert(notWellFormedConfigResult.isLeft)(Assertion.isTrue)
     // },
-    testM("A variant error case with typesafe HOCON config and a manual description") {
+    test("A variant error case with typesafe HOCON config and a manual description") {
       val configNestedManual = {
         val accountConfig  =
           (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
@@ -124,9 +124,9 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
       val result =
         nestedConfigManualResult1.zip(nestedConfigManualResult2).zip(nestedConfigManualResult3)
 
-      assertM(result)(equalTo(((nestedConfigManualExpect1, nestedConfigManualExpect2), nestedConfigManualExpect3)))
+      assertM(result)(equalTo((nestedConfigManualExpect1, nestedConfigManualExpect2, nestedConfigManualExpect3)))
     },
-    testM("A substitution case with typesafe HOCON config and a magnolia description") {
+    test("A substitution case with typesafe HOCON config and a magnolia description") {
       val hoconStringWithSubstitution =
         """
         datacentergeneric = { clustersize = 6 }

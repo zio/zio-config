@@ -49,7 +49,7 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
       |}""".stripMargin
 
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig")(
-    testM("A nested example with typesafe HOCON config") {
+    test("A nested example with typesafe HOCON config") {
 
       val details          = (string("name") |@| int("age"))(Details.apply, Details.unapply)
       val accountConfig    =
@@ -81,7 +81,7 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
 
       assertM(listResult)(equalTo(expectedResult))
     },
-    testM("A nested example with typesafe HOCON config and Magnlia") {
+    test("A nested example with typesafe HOCON config and Magnlia") {
       val automaticAwsDetailsConfig = descriptor[AwsDetails]
 
       val automaticResult =

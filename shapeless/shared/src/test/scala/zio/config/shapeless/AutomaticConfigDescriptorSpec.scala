@@ -5,7 +5,7 @@ import zio.config.helpers._
 import zio.config.shapeless.DeriveConfigDescriptor._
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, Random, ZIO}
+import zio.{Random, ZIO}
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
@@ -14,7 +14,7 @@ import AutomaticConfigTestUtils._
 
 object AutomaticConfigTest extends {
 
-  val spec: Spec[Has[TestConfig] with Random with Sized, TestFailure[Any], TestSuccess] =
+  val spec: Spec[TestConfig with Random with Sized, TestFailure[Any], TestSuccess] =
     suite("shapeless spec")(
       test("automatic derivation spec") {
         check(genEnvironment) { environment =>
@@ -74,7 +74,7 @@ object AutomaticConfigTestUtils {
     id: UUID
   )
 
-  private val genPriceDescription                     = genNonEmptyString(5).map(Description)
+  private val genPriceDescription                = genNonEmptyString(5).map(Description)
   private val genCurrency: Gen[Random, Currency] = Gen.double(10.0, 20.0).map(Currency)
   private val genPrice: Gen[Random, Price]       = Gen.oneOf(genPriceDescription, genCurrency)
 

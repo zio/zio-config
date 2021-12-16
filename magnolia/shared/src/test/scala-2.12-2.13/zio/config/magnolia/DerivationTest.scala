@@ -139,7 +139,7 @@ object DerivationTest extends DefaultRunnableSpec {
 
       assert(collectDefault(descriptor[Cfg], None))(equalTo((None, "defaultV") :: Nil))
     },
-    testM("support lists recursive") {
+    test("support lists recursive") {
       case class A1(a: List[String])
       case class A2(a: List[A1])
       case class A3(a: List[A2])
@@ -156,7 +156,7 @@ object DerivationTest extends DefaultRunnableSpec {
 
       assertM(res.either)(isRight(anything))
     },
-    testM("support nested lists recursive") {
+    test("support nested lists recursive") {
       case class A(a: List[String])
       case class B(a: List[List[List[List[List[List[List[List[List[List[A]]]]]]]]]])
 
@@ -171,7 +171,7 @@ object DerivationTest extends DefaultRunnableSpec {
 
       assertM(res.either)(isRight(anything))
     },
-    testM("support recursive structures") {
+    test("support recursive structures") {
       case class SimpleRec(id: Int, nested: Option[SimpleRec])
 
       val desc                                         = descriptor[SimpleRec]

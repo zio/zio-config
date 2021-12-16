@@ -732,16 +732,18 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
     ): ZLayer[System, ReadError[String], A] =
-      ZLayer.fromServiceM((system: System.Service) =>
-        read(
-          configDescriptor from ConfigSource.fromSystemEnv(
-            keyDelimiter,
-            valueDelimiter,
-            filterKeys,
-            system
+      ZLayer {
+        ZIO.service[System].flatMap { system =>
+          read(
+            configDescriptor from ConfigSource.fromSystemEnv(
+              keyDelimiter,
+              valueDelimiter,
+              filterKeys,
+              ZLayer.succeed(system)
+            )
           )
-        )
-      )
+        }
+      }
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -771,21 +773,23 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
     ): ZLayer[System, ReadError[String], A] =
-      ZLayer.fromServiceM((system: System.Service) =>
-        read(
-          configDescriptor from ConfigSource.fromSystemProps(
-            keyDelimiter,
-            valueDelimiter,
-            filterKeys,
-            system
+      ZLayer {
+        ZIO.service[System].flatMap { system =>
+          read(
+            configDescriptor from ConfigSource.fromSystemProps(
+              keyDelimiter,
+              valueDelimiter,
+              filterKeys,
+              ZLayer.succeed(system)
+            )
           )
-        )
-      )
+        }
+      }
 
     private[config] def fromConfigDescriptor[A: Tag: IsNotIntersection](
       configDescriptor: ConfigDescriptor[A]
     ): Layer[ReadError[K], A] =
-      ZLayer.fromEffect(read(configDescriptor))
+      ZLayer.fromZIO(read(configDescriptor))
   }
 
   private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A: Tag: IsNotIntersection](

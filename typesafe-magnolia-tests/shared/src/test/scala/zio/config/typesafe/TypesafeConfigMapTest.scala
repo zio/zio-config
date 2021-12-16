@@ -11,7 +11,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
 
   override def spec: ZSpec[Environment, Failure] =
     suite("Map Typesafe Integration")(
-      testM("read typesafe config") {
+      test("read typesafe config") {
         val result =
           read(sssDescription from source)
 
@@ -20,7 +20,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
         )
 
       },
-      testM("read nested typesafe config map using map") {
+      test("read nested typesafe config map using map") {
         val source = TypesafeConfigSource.fromHoconString(hocon2)
         val result = read(
           nested("result")(map(sssDescription))(
@@ -36,7 +36,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
           equalTo(TypesafeConfigMapSpecUtils.Nested(Map("dynamic1" -> expected, "dynamic2" -> expected)))
         )
       },
-      testM("map fetch the value of k when given map(string(k))") {
+      test("map fetch the value of k when given map(string(k))") {
         val hocon3 =
           s"""
              |k : {
@@ -56,7 +56,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
 
         assertM(result)(equalTo(Cfg(Map("dynamicKey" -> "z"), "z")))
       },
-      testM("map(string(y)) takes the value of y as a string and returns the map") {
+      test("map(string(y)) takes the value of y as a string and returns the map") {
         val hocon4 =
           s"""
              |k : {

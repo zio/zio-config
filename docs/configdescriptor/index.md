@@ -78,10 +78,9 @@ To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
 import zio.System
-import zio.Has
 
 // That's system environment
-val result: Layer[ReadError[String], Has[MyConfig]] = System.live >>> ZConfig.fromSystemEnv(myConfig)
+val result: Layer[ReadError[String], MyConfig] = System.live >>> ZConfig.fromSystemEnv(myConfig)
 ```
 
 Another way of doing this is:
@@ -258,7 +257,7 @@ sources, especially when some of the sources returns ZIO.
 ```scala mdoc:silent
 import java.io.File
 
-import zio.{Console, ExitCode, Has, URIO, ZIO, System}
+import zio.{Console, ExitCode, URIO, ZIO, System}
 import zio.config._
 import zio.config.typesafe._
 

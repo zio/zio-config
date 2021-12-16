@@ -832,7 +832,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
               keyDelimiter,
               valueDelimiter,
               filterKeys,
-              system
+              ZLayer.succeed(system)
             )
           )
         }
@@ -873,7 +873,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
               keyDelimiter,
               valueDelimiter,
               filterKeys,
-              system
+              ZLayer.succeed(system)
             )
           )
         }

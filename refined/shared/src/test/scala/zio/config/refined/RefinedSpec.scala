@@ -7,7 +7,7 @@ import zio.config.PropertyTreePath._
 import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, Random}
+import zio.Random
 
 import ReadError._
 import RefinedUtils._

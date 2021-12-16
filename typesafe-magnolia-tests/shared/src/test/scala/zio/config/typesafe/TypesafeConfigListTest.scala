@@ -9,7 +9,7 @@ import magnolia._
 object TypesafeConfigListTest extends DefaultRunnableSpec {
 
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig List")(
-    testM("A kebab case for testing HOCON List config") {
+    test("A kebab case for testing HOCON List config") {
       val kebabCaseConfig =
         """
           |export-details = [

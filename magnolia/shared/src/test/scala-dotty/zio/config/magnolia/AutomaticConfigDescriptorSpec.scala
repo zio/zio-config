@@ -16,7 +16,7 @@ object AutomaticConfigTest extends BaseSpec {
 
   val spec: Spec[TestConfig with Random with Sized, TestFailure[Any], TestSuccess] =
     suite("magnolia spec")(
-      testM("automatic derivation spec") {
+      test("automatic derivation spec") {
         checkM(genEnvironment) { environment =>
           val configDesc = descriptor[MyConfig]
 

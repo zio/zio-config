@@ -8,16 +8,16 @@ import eu.timepit.refined.numeric._
 import eu.timepit.refined.string.Trimmed
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
-import zio.config.{BaseSpec, ConfigDescriptor, ConfigSource, LeafForSequence, helpers, read, write}
+import zio.config._
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, Random, ZIO}
+import zio.{Random, ZIO}
 
 import ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig] with Random, TestFailure[String], TestSuccess] =
+  val spec: Spec[TestConfig with Random, TestFailure[String], TestSuccess] =
     suite("Refined support")(
       test("Refined config roundtrip") {
         check(genRefinedProd) { p =>
