@@ -187,7 +187,7 @@ object ListAndOptionalTest extends BaseSpec {
 
         assertM(actual)(equalTo(expected))
       }
-    ) @@ TestAspect.samples(10)
+    )
 }
 
 object ListAndOptionalTestUtils {

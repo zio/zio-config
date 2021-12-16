@@ -55,7 +55,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
       }
-    ) @@ TestAspect.samples(10)
+    )
 
   def fromArgs(args: List[String]): ZIO[Any, ReadError[String], AppConfig] =
     ZIO.service[AppConfig].provideLayer(ZConfig.fromCommandLineArgs(args, descriptor, Some('_'), None))

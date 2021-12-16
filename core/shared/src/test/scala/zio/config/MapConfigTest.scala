@@ -24,7 +24,7 @@ object MapConfigTest extends DefaultRunnableSpec {
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
       }
-    ) @@ TestAspect.samples(10)
+    )
 
   def fromMap(args: Map[String, String]): ZIO[Any, ReadError[String], AppConfig] =
     ZIO.service[AppConfig].provideLayer(ZConfig.fromMap(args, descriptor, "WTL", Some('_'), None))

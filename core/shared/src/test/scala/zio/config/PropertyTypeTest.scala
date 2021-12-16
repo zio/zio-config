@@ -146,7 +146,7 @@ object PropertyTypeTestUtils {
           )
         )
       }
-    ) @@ TestAspect.samples(10)
+    )
 
   def assertValidRoundtrip[A](
     propType: PropertyType[String, A],

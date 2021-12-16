@@ -44,5 +44,5 @@ object PropertyTreeCombinatorsTest extends BaseSpec {
           )
         }
       }
-    ) @@ TestAspect.samples(10)
+    )
 }
