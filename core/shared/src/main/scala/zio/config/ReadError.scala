@@ -4,6 +4,8 @@ import zio.config.AnnotatedRead.Annotation
 
 import scala.util.control.NoStackTrace
 
+import PropertyTreePath._
+
 sealed trait ReadError[+A] extends Exception with NoStackTrace { self =>
   def annotations: Set[Annotation]
 
@@ -40,11 +42,11 @@ sealed trait ReadError[+A] extends Exception with NoStackTrace { self =>
     final case class Parallel(all: List[Sequential]) extends Step
     final case class Failure(lines: List[String])    extends Step
 
-    def renderSteps(steps: List[ReadError.Step[A]]): String =
+    def renderSteps(steps: List[PropertyTreePath.Step[A]]): String =
       steps
         .foldLeft(new StringBuilder()) {
-          case (r, ReadError.Step.Key(k))   => r.append(keyDelimiter).append(k.toString)
-          case (r, ReadError.Step.Index(i)) => r.append('[').append(i).append(']')
+          case (r, Step.Key(k))   => r.append(keyDelimiter).append(k.toString)
+          case (r, Step.Index(i)) => r.append('[').append(i).append(']')
         }
         .delete(0, 1)
         .toString()
@@ -175,28 +177,24 @@ sealed trait ReadError[+A] extends Exception with NoStackTrace { self =>
 }
 
 object ReadError {
-  sealed trait Step[+K]
-
-  object Step {
-    final case class Key[+K](key: K)   extends Step[K]
-    final case class Index(index: Int) extends Step[Nothing]
-  }
-
   final case class MissingValue[A](
-    path: List[Step[A]],
+    path: List[PropertyTreePath.Step[A]],
     detail: List[String] = Nil,
     annotations: Set[Annotation] = Set.empty
   ) extends ReadError[A]
 
   final case class FormatError[A](
-    path: List[Step[A]],
+    path: List[PropertyTreePath.Step[A]],
     message: String,
     detail: List[String] = Nil,
     annotations: Set[Annotation] = Set.empty
   ) extends ReadError[A]
 
-  final case class ConversionError[A](path: List[Step[A]], message: String, annotations: Set[Annotation] = Set.empty)
-      extends ReadError[A]
+  final case class ConversionError[A](
+    path: List[PropertyTreePath.Step[A]],
+    message: String,
+    annotations: Set[Annotation] = Set.empty
+  ) extends ReadError[A]
 
   final case class Irrecoverable[A](list: List[ReadError[A]], annotations: Set[Annotation] = Set.empty)
       extends ReadError[A]
@@ -210,8 +208,5 @@ object ReadError {
 
   final case class MapErrors[A](list: List[ReadError[A]], annotations: Set[Annotation] = Set.empty) extends ReadError[A]
 
-  final case class SourceError(
-    message: String,
-    annotations: Set[Annotation] = Set.empty
-  ) extends ReadError[Nothing]
+  final case class SourceError(message: String, annotations: Set[Annotation] = Set.empty) extends ReadError[Nothing]
 }

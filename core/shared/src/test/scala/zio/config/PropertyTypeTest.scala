@@ -1,11 +1,10 @@
 package zio.config
 
+import zio.Random
 import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
 import zio.test.Assertion._
 import zio.test._
-import zio.test.environment.TestEnvironment
-import zio.{Has, Random}
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
@@ -131,7 +130,7 @@ object PropertyTypeTestUtils {
   def propertyTypeRoundtripSuite[A](
     typeInfo: String,
     propType: PropertyType[String, A],
-    genValid: Gen[Has[Random] with Has[Sized], String],
+    genValid: Gen[Random with Sized, String],
     parse: String => A
   ): Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite(s"${typeInfo}Type")(
@@ -189,69 +188,69 @@ object PropertyTypeTestUtils {
 
   val genValidBooleanStrings: Gen[Any, String] = Gen.fromIterable(validBooleanStrings)
 
-  private def genOptionalStr(gen: Gen[Has[Random] with Has[Sized], String]) =
+  private def genOptionalStr(gen: Gen[Random with Sized, String]) =
     oneOf(const(""), gen)
 
-  private val genDigit0To9: Gen[Has[Random], String] = char('0', '9').map(_.toString)
-  private val genDigit1To9: Gen[Has[Random], String] = char('1', '9').map(_.toString)
+  private val genDigit0To9: Gen[Random, String] = char('0', '9').map(_.toString)
+  private val genDigit1To9: Gen[Random, String] = char('1', '9').map(_.toString)
 
   /**
    * Generates a string of up to n digits. Default maxLength digits is 100.
    */
-  private def genDigits(maxLength: Int = 100): Gen[Has[Random] with Has[Sized], String] =
+  private def genDigits(maxLength: Int = 100): Gen[Random with Sized, String] =
     sized(n => listOfN(math.min(n, maxLength))(genDigit0To9).map(_.mkString))
 
-  val genValidBigIntString: Gen[Has[Random] with Has[Sized], String] = for {
+  val genValidBigIntString: Gen[Random with Sized, String] = for {
     sign   <- genOptionalStr(const("-"))
     digits <- genDigits()
   } yield sign + digits
 
   // Should be generalized and written in terms of `sequence`, or `traverse`
   private def genAppend(
-    as: Gen[Has[Random] with Has[Sized], String]*
-  ): Gen[Has[Random] with Has[Sized], String] =
+    as: Gen[Random with Sized, String]*
+  ): Gen[Random with Sized, String] =
     for {
-      str  <- as.headOption.fold[Gen[Has[Random] with Has[Sized], String]](const(""))(identity)
+      str  <- as.headOption.fold[Gen[Random with Sized, String]](const(""))(identity)
       rest <- if (as.isEmpty) const("") else genAppend(as.tail: _*)
     } yield str + rest
 
-  private val leadingZeros: Gen[Has[Random] with Has[Sized], String] =
+  private val leadingZeros: Gen[Random with Sized, String] =
     listOf(const('0')).map(_.mkString)
 
-  def genPadLeadingZeros[A: Numeric](gen: Gen[Has[Random], A]): Gen[Has[Random] with Has[Sized], String] =
+  def genPadLeadingZeros[A: Numeric](gen: Gen[Random, A]): Gen[Random with Sized, String] =
     (leadingZeros <*> gen.map(_.toString)).map { case (zeros, num) =>
       if (num.startsWith("-")) "-" + zeros + num.drop(1)
       else zeros + num
     }
 
-  private val genWhole: Gen[Has[Random] with Has[Sized], String] = oneOf(
+  private val genWhole: Gen[Random with Sized, String] = oneOf(
     const("0"),
     genAppend(genDigit1To9, genDigits())
   )
 
-  private val genDecimal: Gen[Has[Random] with Has[Sized], String] = oneOf(
+  private val genDecimal: Gen[Random with Sized, String] = oneOf(
     genOptionalStr(const(".")),
     genAppend(const("."), genDigits())
   )
 
-  private val genExponent: Gen[Has[Random] with Has[Sized], String] = genAppend(
+  private val genExponent: Gen[Random with Sized, String] = genAppend(
     oneOf(const("e"), const("E")),
     genOptionalStr(oneOf(const("+"), const("-"))),
     genAppend(genDigit0To9, genDigit0To9) // let's keep it reasonable...
   )
 
   // loose reference https://i.stack.imgur.com/wmFqa.gif
-  val genValidBigDecimalString: Gen[Has[Random] with Has[Sized], String] = genAppend(
+  val genValidBigDecimalString: Gen[Random with Sized, String] = genAppend(
     genOptionalStr(const("-")),
     genAppend(leadingZeros, genWhole),
     genOptionalStr(genDecimal),
     genOptionalStr(genExponent)
   )
 
-  val genAlphaChar: Gen[Has[Random], Char] =
+  val genAlphaChar: Gen[Random, Char] =
     oneOf(char(65, 90), char(97, 122))
 
-  private val genScheme: Gen[Has[Random] with Has[Sized], String] = for {
+  private val genScheme: Gen[Random with Sized, String] = for {
     letter <- genAlphaChar.map(_.toString)
     rest   <- listOf(
                 weighted(
@@ -261,7 +260,7 @@ object PropertyTypeTestUtils {
               ).map(_.mkString)
   } yield letter + rest
 
-  private val genAuth: Gen[Has[Random] with Has[Sized], String] = genAppend(
+  private val genAuth: Gen[Random with Sized, String] = genAppend(
     const("//"),
     genAppend(genOptionalStr(alphaNumericString), const("@")),           // userinfo
     const("@"),
@@ -269,10 +268,10 @@ object PropertyTypeTestUtils {
     genOptionalStr(genAppend(const(":"), int(0, 65535).map(_.toString))) // port
   )
 
-  private val genPath: Gen[Has[Random] with Has[Sized], String]  =
+  private val genPath: Gen[Random with Sized, String]  =
     listOf1(listOf1(alphaNumericChar).map(_.mkString)).map(_.mkString("/"))
 
-  private val genAuthorityAndPath: Gen[Has[Random] with Has[Sized], String] = {
+  private val genAuthorityAndPath: Gen[Random with Sized, String] = {
     for {
       hasAuthority <- boolean
       authAndPath  <- if (hasAuthority) {
@@ -280,12 +279,12 @@ object PropertyTypeTestUtils {
                       } else genPath
     } yield authAndPath
   }
-  private val genQuery: Gen[Has[Random] with Has[Sized], String] = genAppend(
+  private val genQuery: Gen[Random with Sized, String] = genAppend(
     const("?"),
     oneOf(alphaNumericString, listOfN(2)(alphaNumericString).map(_.mkString("=")))
   )
 
-  private val genFragment: Gen[Has[Random] with Has[Sized], String] =
+  private val genFragment: Gen[Random with Sized, String] =
     alphaNumericString
 
   /**
@@ -296,7 +295,7 @@ object PropertyTypeTestUtils {
    * <br/><br/>
    * reference: https://en.wikipedia.org/wiki/Uniform_Resource_Identifier#Generic_syntax
    */
-  val genValidUriString: Gen[Has[Random] with Has[Sized], String] = genAppend(
+  val genValidUriString: Gen[Random with Sized, String] = genAppend(
     genScheme,
     const(":"),
     genAuthorityAndPath,
@@ -304,7 +303,7 @@ object PropertyTypeTestUtils {
     genOptionalStr(genFragment)
   )
 
-  val genValidUrlString: Gen[Has[Random] with Has[Sized], String] = genAppend(
+  val genValidUrlString: Gen[Random with Sized, String] = genAppend(
     Gen.elements("http", "https", "ftp", "file"),
     const(":"),
     genAuthorityAndPath,
@@ -312,16 +311,16 @@ object PropertyTypeTestUtils {
     genOptionalStr(genFragment)
   )
 
-  val genInstant: Gen[Has[Random], Instant] =
+  val genInstant: Gen[Random, Instant] =
     Gen.long.map(Instant.ofEpochMilli)
 
-  val genLocalDateString: Gen[Has[Random] with Has[Sized], String] =
+  val genLocalDateString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDate.toString)
 
-  val genLocalDateTimeString: Gen[Has[Random] with Has[Sized], String] =
+  val genLocalDateTimeString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDateTime.toString)
 
-  val genLocalTimeString: Gen[Has[Random] with Has[Sized], String] =
+  val genLocalTimeString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
 
 }

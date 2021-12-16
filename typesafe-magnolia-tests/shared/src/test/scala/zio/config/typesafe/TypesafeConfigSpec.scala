@@ -1,11 +1,10 @@
 package zio.config.typesafe
 
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
-import zio.config.ReadError
 import zio.config.typesafe.TypesafeConfigTestSupport._
+import zio.config.{PropertyTreePath, ReadError}
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, ZIO}
 
 object TypesafeConfigSpec extends DefaultRunnableSpec {
   val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig")(
@@ -20,9 +19,9 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
             |""".stripMargin
         )
 
-      val expected = Record(Map("a" -> Record(Map("b" -> Leaf("s"), "c" -> Sequence(Nil)))))
+      val expected = Record(Map("a" -> Record(Map("b" -> Leaf("s", false), "c" -> Sequence(Nil)))))
 
-      assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
+      assertM(res.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
     },
     test("Read mixed list") {
       val res =
@@ -35,20 +34,12 @@ object TypesafeConfigSpec extends DefaultRunnableSpec {
             |""".stripMargin
         )
 
-      val expected = Record(Map("list" -> Sequence(List(Leaf("a"), Record(Map("b" -> Leaf("c")))))))
+      val expected = Record(Map("list" -> Sequence(List(Leaf("a", false), Record(Map("b" -> Leaf("c", false)))))))
 
-      assert(res.map(_.getConfigValue(List.empty)))(isRight(equalTo(expected)))
+      assertM(res.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
     },
     test("Read a complex hocon structure successfully") {
-      assert(readComplexSource)(equalTo(expectedResult))
-    },
-    test("Read a complex hocon structure produced by effect successfully") {
-      assertM(
-        TypesafeConfig
-          .fromHoconStringM(ZIO.succeed(hocon), complexDescription)
-          .build
-          .useNow
-      )(equalTo(Has(expectedResult)))
+      assertM(readComplexSource)(equalTo(expectedResult))
     }
   )
 }

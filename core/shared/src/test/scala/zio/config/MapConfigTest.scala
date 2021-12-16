@@ -2,9 +2,9 @@ package zio.config
 
 import zio.test.Assertion._
 import zio.test._
-import zio.test.environment.TestEnvironment
-import zio.{Has, IO, ZIO}
+import zio.{IO, ZIO}
 
+import PropertyTreePath.Step
 import ReadError._
 import testsupport.MapConfigTestSupport.AppConfig.descriptor
 
@@ -19,15 +19,15 @@ object MapConfigTest extends DefaultRunnableSpec {
             for {
               args   <- toMap(AppConfig.descriptor, appConfig)
               reread <- fromMap(args)
-            } yield reread.get
+            } yield reread
 
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
       }
     )
 
-  def fromMap(args: Map[String, String]): ZIO[Any, ReadError[String], Has[AppConfig]] =
-    ZIO.environment.provideLayer(ZConfig.fromMap(args, descriptor, "WTL", Some('_'), None))
+  def fromMap(args: Map[String, String]): ZIO[Any, ReadError[String], AppConfig] =
+    ZIO.service[AppConfig].provideLayer(ZConfig.fromMap(args, descriptor, "WTL", Some('_'), None))
 
   def toMap[A](
     descriptor: ConfigDescriptor[A],

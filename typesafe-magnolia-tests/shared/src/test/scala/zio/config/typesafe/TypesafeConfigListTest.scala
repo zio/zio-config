@@ -138,11 +138,13 @@ object TypesafeConfigListTest extends DefaultRunnableSpec {
       final case class Port(va: String)
       final case class Database(port: Port)
 
-      val zioConfigWithKeysInKebabResult = TypesafeConfigSource
-        .fromHoconString(kebabCaseConfig)
-        .fold(v => Left(v), s => read(descriptor[ExportDetails].mapKey(toKebabCase) from s))
+      val zioConfigWithKeysInKebabResult =
+        read(
+          descriptor[ExportDetails].mapKey(toKebabCase) from TypesafeConfigSource
+            .fromHoconString(kebabCaseConfig)
+        )
 
-      val expectedResult = Right(
+      val expectedResult =
         ExportDetails(
           List(
             Details1(
@@ -181,9 +183,8 @@ object TypesafeConfigListTest extends DefaultRunnableSpec {
           ),
           Database(Port("ba"))
         )
-      )
 
-      assert(zioConfigWithKeysInKebabResult)(equalTo(expectedResult))
+      assertM(zioConfigWithKeysInKebabResult)(equalTo(expectedResult))
     }
   )
 }

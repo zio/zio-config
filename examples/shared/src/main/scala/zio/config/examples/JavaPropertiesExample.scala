@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config._
-import zio.{Console, ExitCode, Has, ZEnv, ZIO, ZIOAppArgs, ZIOAppDefault}
+import zio.{Console, ExitCode, ZEnv, ZIO, ZIOAppArgs, ZIOAppDefault}
 
 import java.io.IOException
 
@@ -24,7 +24,7 @@ object JavaPropertiesExample extends ZIOAppDefault {
   properties.put("bridgeIp", "10.0.0.1")
   properties.put("username", "afs")
 
-  override def run: ZIO[ZEnv with Has[ZIOAppArgs], Nothing, ExitCode] = {
+  override def run: ZIO[ZEnv with ZIOAppArgs, Nothing, ExitCode] = {
     val configLayer =
       ZConfig.fromProperties(properties, ApplicationConfig.configuration, "constant")
 
@@ -43,14 +43,14 @@ object JavaPropertiesExample extends ZIOAppDefault {
 // The core application functions
 object SimpleExample {
 
-  val printConfigs: ZIO[Has[ApplicationConfig] with Has[Console], IOException, Unit] =
+  val printConfigs: ZIO[ApplicationConfig with Console, IOException, Unit] =
     for {
       appConfig <- getConfig[ApplicationConfig]
       _         <- Console.printLine(appConfig.bridgeIp)
       _         <- Console.printLine(appConfig.userName)
     } yield ()
 
-  val finalExecution: ZIO[Has[ApplicationConfig] with Has[Console], IOException, Unit] =
+  val finalExecution: ZIO[ApplicationConfig with Console, IOException, Unit] =
     for {
       _ <- printConfigs
       _ <- Console.printLine(s"processing data......")

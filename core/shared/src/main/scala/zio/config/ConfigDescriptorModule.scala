@@ -55,7 +55,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    val configSource: ConfigSource = ConfigSource.fromMap(Map.empty)
      *
      *    // Read
-     *    val configResult: Either[ReadError[String], String] = read(portString from configSource)
+     *    val configResult: ZIO[Any, ReadError[String], String] = read(portString from configSource)
      *
      *  }}}
      *
@@ -166,10 +166,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *   {{{
      *     import zio.config._, ConfigDescriptor._
+     *     read(Config.databaseConfig from ConfigSource.fromMap(Map.empty))
      *
-     *     println(
-     *        read(Config.databaseConfig from ConfigSource.fromMap(Map.empty))
-     *      )
      *   }}}
      *
      *  returns:
@@ -492,9 +490,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   {{{
      *     import zio.config._, ConfigDescriptor._
      *
-     *     println(
-     *        read(Config.databaseConfig from ConfigSource.fromMap(Map.empty))
-     *      )
+     *     read(Config.databaseConfig from ConfigSource.fromMap(Map.empty))
+     *
      *   }}}
      *
      *  returns:
@@ -536,7 +533,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * {{{
      *
-     *   val either: Either[ReadError[String], String] = read(config)
+     *   val either: ZIO[Any, ReadError[String], String] = read(config)
      *
      * }}}
      *
@@ -645,11 +642,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             }
 
           case Source(source, propertyType) => Source(source, propertyType)
-          case DynamicMap(source, conf)     => DynamicMap(source, loop(conf))
-          case Nested(source, path, conf)   =>
-            Nested(source, f(path), loop(conf))
+          case DynamicMap(conf)             => DynamicMap(loop(conf))
+          case Nested(path, conf)           =>
+            Nested(f(path), loop(conf))
           case Optional(conf)               => Optional(loop(conf))
-          case Sequence(source, conf)       => Sequence(source, loop(conf))
+          case Sequence(conf)               => Sequence(loop(conf))
           case Describe(conf, message)      => Describe(loop(conf), message)
           case Default(conf, value)         => Default(loop(conf), value)
           case TransformOrFail(conf, f, g)  =>
@@ -700,9 +697,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *     val source = ConfigSource.fromMap(Map("USERNAME" -> "af"))
      *
-     *     println(
-     *        read(Config.databaseConfig from source)
-     *      )
+     *     read(Config.databaseConfig from source)
+     *
      *   }}}
      *
      *  returns:
@@ -716,9 +712,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  {{{
      *    val source = ConfigSource.fromMap(Map("USERNAME" -> "af", "PORT" -> "8888"))
      *
-     *    println(
-     *      read(Config.databaseConfig from source)
-     *    )
+     *    read(Config.databaseConfig from source)
      *
      *  }}}
      *
@@ -743,9 +737,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *     val source = ConfigSource.fromMap(Map("USERNAME" -> "af", "PORT" -> "abc"))
      *
-     *     println(
-     *        read(Config.databaseConfig from source)
-     *      )
+     *     read(Config.databaseConfig from source)
+     *
      *   }}}
      *
      *   returns:
@@ -973,7 +966,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  }}}
      */
     final def unsourced: ConfigDescriptor[A] =
-      self.updateSource(_ => ConfigSourceFunctions.empty)
+      self.updateSource(_ => ConfigSource.empty)
 
     /**
      * `updateSource` can update the source of an existing `ConfigDescriptor`
@@ -1008,8 +1001,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             val res = thunk()
 
             descriptors.get(c) match {
-              case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
-              case None        =>
+              case Some(value) =>
+                value.asInstanceOf[ConfigDescriptor[B]]
+
+              case None =>
                 val result = Lazy(() => loop(res))
                 descriptors.update(c, result)
                 result
@@ -1018,17 +1013,17 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Source(source, propertyType) =>
             Source(f(source), propertyType)
 
-          case DynamicMap(source, conf) =>
-            DynamicMap(f(source), loop(conf))
+          case DynamicMap(conf) =>
+            DynamicMap(loop(conf))
 
-          case Nested(source, path, conf) =>
-            Nested(f(source), path, loop(conf))
+          case Nested(path, conf) =>
+            Nested(path, loop(conf))
 
           case Optional(conf) =>
             Optional(loop(conf))
 
-          case Sequence(source, conf) =>
-            Sequence(f(source), loop(conf))
+          case Sequence(conf) =>
+            Sequence(loop(conf))
 
           case Describe(conf, message) =>
             Describe(loop(conf), message)
@@ -1093,17 +1088,17 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Describe(config, _) =>
             runLoop(config, None)
 
-          case DynamicMap(_, config) =>
+          case DynamicMap(config) =>
             runLoop(config, None)
 
-          case Sequence(source, config) =>
-            runLoop(config, Some(source))
+          case Sequence(config) =>
+            runLoop(config, None)
 
           case Lazy(get) =>
             runLoop(get(), None)
 
-          case Nested(source, _, config) =>
-            runLoop(config, Some(source))
+          case Nested(_, config) =>
+            runLoop(config, None)
 
           case Optional(config) =>
             runLoop(config, None)
@@ -1522,6 +1517,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   object Config {
      *     val source =
      *       ConfigSource.fromMap(Map("USERNAME" -> "af,sa", "PORT" -> "1"), valueDelimiter = Some(','))
+     *
      *     val databaseConfig: ConfigDescriptor[Config] =
      *       (head(string("USERNAME")) |@| int("PORT").optional)(Config.apply, Config.unapply)
      *   }
@@ -1552,6 +1548,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   object Config {
      *     val source =
      *       ConfigSource.fromMap(Map("USERNAME" -> "af,sa", "PORT" -> "1"), valueDelimiter = Some(','))
+     *
      *     val databaseConfig: ConfigDescriptor[Config] =
      *       (head("USERNAME")(string) |@| int("PORT").optional)(Config.apply, Config.unapply)
      *   }
@@ -1590,9 +1587,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          | ]
      *          |""".stripMargin
      *
-     *     val getSource: Either[ReadError[String], ConfigSource] =
-     *       TypesafeConfigSource.fromHoconString(json)
-     *
      *     val config = string("USERNAME")
      *
      *     // Within the key "xyz", we have a list of key-value pair, where key is always "USERNAME"
@@ -1600,17 +1594,16 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *     val listConfig = nested("xyz")(list(config))
      *
-     *     val userNames: Either[ReadError[String], List[String]] =
-     *       getSource.flatMap(source => read(listConfig from source))
+     *     val userNames: ZIO[Any, ReadError[String], List[String]] =
+     *        read(listConfig from TypesafeConfigSource.fromHoconString(json))
      *
-     *     println(userNames)
      *  }}}
      *
      *  returns
      *
      *  {{{
      *
-     *    Right(List(value1, value2))
+     *    List(value1, value2)
      *
      *  }}}
      *
@@ -1619,7 +1612,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *  `nested("xyz")(list(string("USERNAME"))` is same as `list("xyz")(string("USERNAME"))`
      */
     def list[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      ConfigDescriptorAdt.sequenceDesc(ConfigSourceFunctions.empty, desc)
+      ConfigDescriptorAdt.sequenceDesc(desc)
 
     /**
      *  `list("xyz")(confgDescriptor)` represents just a list variant of configDescriptor within the key `xyz`.
@@ -1650,9 +1643,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          | ]
      *          |""".stripMargin
      *
-     *     val getSource: Either[ReadError[String], ConfigSource] =
-     *       TypesafeConfigSource.fromHoconString(json)
-     *
      *     val config = string("USERNAME")
      *
      *     // Within the key "xyz", we have a list of key-value pair, where key is always "USERNAME"
@@ -1660,17 +1650,16 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *     val listConfig = list("xyz")(config)
      *
-     *     val userNames: Either[ReadError[String], List[String]] =
-     *       getSource.flatMap(source => read(listConfig from source))
+     *     val userNames: ZIO[Any, ReadError[String], List[String]] =
+     *       read(listConfig from ypesafeConfigSource.fromHoconString(json))
      *
-     *     println(userNames)
      *  }}}
      *
      *  returns
      *
      *  {{{
      *
-     *    Right(List(value1, value2))
+     *    List(value1, value2)
      *
      *  }}}
      */
@@ -1699,22 +1688,18 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          |   }
      *          |""".stripMargin
      *
-     *     val getSource: Either[ReadError[String], ConfigSource] =
-     *       TypesafeConfigSource.fromHoconString(json)
-     *
      *     val config = string("USERNAME")
      *
-     *     val usernames: Either[ReadError[String], List[String]] =
-     *       getSource.flatMap(
-     *         source => read(listOrSingleton("configs")(config) from source)
-     *       )
+     *     val usernames: ZIO[Any, ReadError[String], List[String]] =
+     *       read(listOrSingleton("configs")(config) from TypesafeConfigSource.fromHoconString(json))
+     *
      *  }}}
      *
      *  returns
      *
      *  {{{
      *
-     *    Right(List(value1))
+     *     List(value1)
      *
      *  }}}
      */
@@ -1758,7 +1743,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *    val config = map("xyz")(int)
      *
-     *    val sourceOrFailed: Either[ReadError[String], ConfigSource] =
+     *    val source: ConfigSource =
      *      TypesafeConfigSource.fromHoconString(
      *        "xyz" : {
      *           "key1" : "1"
@@ -1771,7 +1756,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    // the HOCON string can be an invalid string.
      *
      *    val result =  sourceOrFailed.flatMap(source => read(config from source))
-     *    // Right(Map("key1" -> 1, "key2" -> 2, "key3" -> 3))
+     *    // Map("key1" -> 1, "key2" -> 2, "key3" -> 3)
      *  }}}
      *
      *  We explained `map` using TypesafeConfigSource. However, for zio-config source doesn't really matter.
@@ -1787,7 +1772,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *     )
      *
      *    val config = read(config from source)
-     *    // Right( Map("key1" -> 1, "key2" -> 2, "key3" -> 3))
+     *    // Map("key1" -> 1, "key2" -> 2, "key3" -> 3)
      *
      *  }}}
      *
@@ -1803,7 +1788,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *   // This means there exists a Map whose value is of the type {"String" : "Int"}.
      *
-     *   val sourceOrFailure: Either[ReadError[String], TypesafeConfigSource] = TypesafeConfigSource.fromHoconString(
+     *   val sourceOrFailure: ConfigSource =
+     *     TypesafeConfigSource.fromHoconString(
      *     s"""
      *      "abc" : {
      *       "key1" : { "id" :  "2" },
@@ -1813,8 +1799,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *      """"
      *    )
      *
-     *   val result = sourceOrFailure.flatMap(s => read(nested("abc")(map(int("id"))) from s))
-     *   // Right(Map("key1" -> 1, "key2" -> 2))
+     *   val result = read(nested("abc")(map(int("id"))) from source)
+     *   // Map("key1" -> 1, "key2" -> 2)
      *
      *  }}}
      *
@@ -1822,7 +1808,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * in the map from an nested key within itself. In this example it is "id".
      */
     def map[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(ConfigSourceFunctions.empty, lazyDesc(desc))
+      DynamicMap(lazyDesc(desc))
     // ConfigDescriptorAdt.dynamicMapDesc(ConfigSourceFunctions.empty, desc)
 
     /**
@@ -1841,7 +1827,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *    val config = map("xyz")(int)
      *
-     *    val sourceOrFailed: Either[ReadError[String], ConfigSource] =
+     *    val source: ConfigSource =
      *      TypesafeConfigSource.fromHoconString(
      *        "xyz" : {
      *           "key1" : "1"
@@ -1853,7 +1839,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    // Forming a TypesafeConfigSource from string returned an Either (being able to capture errors) because
      *    // the HOCON string can be an invalid string.
      *
-     *    val result =  sourceOrFailed.flatMap(source => read(config from source))
+     *    val result =  read(config from source)
      *    // Right(Map("key1" -> 1, "key2" -> 2, "key3" -> 3))
      *  }}}
      *
@@ -1891,13 +1877,13 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    )
      *
      *    val result = read(config from mapSource)
-     *    // Right("value")
+     *    // "value"
      * }}}
      *
      * Note that `string("key")` is same as that of `nested("key")(string)`
      */
     def nested[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      ConfigDescriptorAdt.nestedDesc(ConfigSourceFunctions.empty, path, desc)
+      ConfigDescriptorAdt.nestedDesc(path, desc)
 
     /**
      *  `set("xyz")(confgDescriptor)` represents just a set variant of configDescriptor within the key `xyz`.
@@ -1915,10 +1901,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          | xyz : ["a", "b"]
      *          |""".stripMargin
      *
-     *    val sourceOrFailure: Either[ReadError[String], TypesafeConfigSource] =
+     *    val source: ConfigSource =
      *     TypesafeConfigSource.fromHoconString(json)
      *
-     *   sourceOrFailure.flatMap(source => read(set("xyz")(string) from source))
+     *   read(set("xyz")(string) from source)
      *
      *  }}}
      *
@@ -1949,10 +1935,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *          | xyz : ["a", "b"]
      *          |""".stripMargin
      *
-     *    val sourceOrFailure: Either[ReadError[String], TypesafeConfigSource] =
+     *    val source: ConfigSource =
      *     TypesafeConfigSource.fromHoconString(json)
      *
-     *   sourceOrFailure.flatMap(source => read(set("xyz")(string) from source))
+     *   read(set("xyz")(string) from source)
      *
      *  }}}
      *
@@ -1960,7 +1946,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  {{{
      *
-     *    Right(List(value1, value2))
+     *    List(value1, value2)
      *
      *  }}}
      */
@@ -1979,12 +1965,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
-    sealed case class DynamicMap[A](source: ConfigSource, config: ConfigDescriptor[A])
-        extends ConfigDescriptor[Map[K, A]]
+    sealed case class DynamicMap[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Map[K, A]]
 
     sealed case class Lazy[A](get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
-    sealed case class Nested[A](source: ConfigSource, path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
+    sealed case class Nested[A](path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
     sealed case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
@@ -1993,7 +1978,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     sealed case class OrElseEither[A, B](left: ConfigDescriptor[A], right: ConfigDescriptor[B])
         extends ConfigDescriptor[Either[A, B]]
 
-    sealed case class Sequence[A](source: ConfigSource, config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
+    sealed case class Sequence[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[List[A]]
 
     sealed case class Source[A](source: ConfigSource, propertyType: PropertyType[V, A]) extends ConfigDescriptor[A]
 
@@ -2011,16 +1996,16 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def describeDesc[A](config: => ConfigDescriptor[A], message: String): ConfigDescriptor[A] =
       Describe(lazyDesc(config), message)
 
-    final def dynamicMapDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
-      DynamicMap(source, lazyDesc(config))
+    final def dynamicMapDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
+      DynamicMap(lazyDesc(config))
 
     final def lazyDesc[A](
       config: => ConfigDescriptor[A]
     ): ConfigDescriptor[A] =
       Lazy(() => config)
 
-    final def nestedDesc[A](source: ConfigSource, path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      Nested(source, path, lazyDesc(config))
+    final def nestedDesc[A](path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
+      Nested(path, lazyDesc(config))
 
     final def optionalDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
       Optional(lazyDesc(config))
@@ -2034,8 +2019,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[Either[A, B]] =
       OrElseEither(lazyDesc(left), lazyDesc(right))
 
-    final def sequenceDesc[A](source: ConfigSource, config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
-      Sequence(source, lazyDesc(config))
+    final def sequenceDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
+      Sequence(lazyDesc(config))
 
     final def sourceDesc[A](source: ConfigSource, propertyType: PropertyType[V, A]): ConfigDescriptor[A] =
       Source(source, propertyType)

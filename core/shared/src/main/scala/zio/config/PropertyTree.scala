@@ -1,28 +1,152 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.NonEmptyChunk
+import zio.config.PropertyTreePath.Step
 
-import scala.annotation.tailrec
 import scala.collection.immutable.Nil
+import scala.util.Try
+import scala.util.matching.Regex
+
+final case class PropertyTreePath[K](path: Vector[Step[K]]) {
+  def mapKeys(f: K => K): PropertyTreePath[K] =
+    PropertyTreePath(path.map(_.map(f)))
+}
+
+@silent("Unused import")
+object PropertyTreePath {
+  import VersionSpecificSupport._
+
+  sealed trait Step[+K] { self =>
+    def map[K1 >: K, K2](f: K1 => K2): Step[K2] =
+      self match {
+        case Step.Index(n) => Step.Index(n)
+        case Step.Key(k)   => Step.Key(f(k.asInstanceOf[K1]))
+      }
+  }
+
+  object Step {
+    val pattern: Regex = """([a-zA-Z0-9 -@\-^-~]*)\[([0-9]*)\]""".r.anchored
+
+    def steps[K](s: String)(implicit IsString: String =:= K): Vector[Step[K]] =
+      Step.pattern
+        .findAllIn(s)
+        .matchData
+        .flatMap(regexMatch =>
+          (1 to regexMatch.groupCount).map { index =>
+            val strOrInt = regexMatch.group(index)
+            Try(Step.Index(strOrInt.toInt)).getOrElse(Step.Key(IsString(strOrInt)))
+          }
+        )
+        .toVector
+
+    final case class Index(n: Int) extends Step[Nothing]
+    final case class Key[K](k: K)  extends Step[K]
+  }
+
+  def $(path: String): PropertyTreePath[String] =
+    PropertyTreePath(path.split(".").toVector.flatMap(str => Step.steps(str)))
+}
 
 @silent("Unused import")
 sealed trait PropertyTree[+K, +V] { self =>
   import PropertyTree._
   import scala.collection.compat._
+  import VersionSpecificSupport._
+
+  def leafNotASequence: PropertyTree[K, V] = self match {
+    case Leaf(value, _)     => Leaf(value, canBeSequence = false)
+    case Record(value)      => Record(value.map({ case (k, v) => (k, v.leafNotASequence) }))
+    case PropertyTree.Empty => PropertyTree.Empty
+    case Sequence(value)    => Sequence(value.map(_.leafNotASequence))
+  }
+
+  def flatMap[K1 >: K, V1](f: V => PropertyTree[K1, V1]): PropertyTree[K1, V1] =
+    self match {
+      case Leaf(value, _)     => f(value)
+      case Record(value)      => Record(value.map({ case (k, v) => (k.asInstanceOf[K1], v.flatMap(f)) }))
+      case PropertyTree.Empty => PropertyTree.Empty
+      case Sequence(value)    => Sequence(value.map(_.flatMap(f)))
+    }
+
+  def zip[K1 >: K, V1](that: PropertyTree[K1, V1]): PropertyTree[K1, (V, V1)] =
+    self.flatMap(t1 => that.map(t2 => (t1, t2)))
+
+  /**
+   * `at` allows us to fetch a sub-tree from property-tree
+   *
+   * Example:
+   *
+   * {{{
+   *
+   * Given a config:
+   *
+   *   {
+   *    x : [ a, b, c ]
+   *   }
+   *
+   *   at("x")            // returns Some([a, b, c])
+   *   at("x").atIndex(2) // returns Some(Leaf("c"))
+   *   at("x").atKey("y") // returns None
+   *
+   * Similarly, given a more complex config:
+   *   {
+   *    x : [
+   *      {
+   *        y1: 1
+   *        y2: 2
+   *        y3: 3
+   *      }
+   *      {
+   *        y1: 1
+   *        y2: 2
+   *        y3: 3
+   *      }
+   *    ]
+   *   }
+   *
+   *   at("x").atIndex(0).atKey("y1") // returns Some(Leaf(v1)
+   * }}}
+   */
+  final def at[K1 >: K](propertyTreePath: PropertyTreePath[K1]): PropertyTree[K1, V] = {
+    val steps = propertyTreePath.path
+
+    steps.foldLeft(self.asInstanceOf[PropertyTree[K1, V]]) { (tree, step) =>
+      (step match {
+        case Step.Index(n) => tree.atIndex(n)
+        case Step.Key(k)   => tree.atKey(k)
+      }).getOrElse(PropertyTree.empty)
+    }
+  }
+
+  final def atKey[K1 >: K](key: K1): Option[PropertyTree[K1, V]] =
+    self.asInstanceOf[PropertyTree[K1, V]] match {
+      case Leaf(_, _)         => None
+      case r: Record[K1, V]   => r.value.get(key)
+      case PropertyTree.Empty => None
+      case Sequence(_)        => None
+    }
+
+  final def atIndex[K1 >: K](index: Int): Option[PropertyTree[K1, V]] =
+    self match {
+      case Leaf(v, bool)      => if (index == 0 && bool) Some(Leaf(v)) else None
+      case Record(_)          => None
+      case PropertyTree.Empty => None
+      case Sequence(value)    => value.lift(index)
+    }
 
   final def flatten[K1 >: K, V1 >: V]: Map[Vector[K1], ::[V1]] = {
     def go(key: Vector[K1], propertyTree: PropertyTree[K1, V], acc: Map[Vector[K1], ::[V1]]): Map[Vector[K1], ::[V1]] =
       propertyTree match {
         case Empty           => acc
         case Sequence(value) => value.foldLeft(acc)((acc, propertyTree) => go(key, propertyTree, acc))
-        case Leaf(v)         =>
+        case Leaf(v, _)      =>
           acc
             .get(key)
             .fold[Map[Vector[K1], ::[V1]]](acc.updated(key, ::(v, Nil)))(value =>
               acc.updated(key, ::(value.head, value.tail :+ v))
             )
-        case Record(value)   => value.flatMap(t => go(key :+ t._1, t._2, acc))
+        case Record(value)   =>
+          value.flatMap(t => go(key :+ t._1, t._2, acc))
       }
 
     go(Vector.empty, self, Map.empty[Vector[K1], ::[V1]])
@@ -49,80 +173,66 @@ sealed trait PropertyTree[+K, +V] { self =>
   final def getOrElse[K1 >: K, V1 >: V](tree: => PropertyTree[K1, V1]): PropertyTree[K1, V1] =
     if (self == PropertyTree.empty) tree else self
 
-  @tailrec
   final def getPath[K1 >: K](k: List[K1]): PropertyTree[K1, V] =
-    k match {
-      case Nil          => self
-      case head :: next =>
-        self match {
-          case Empty | Leaf(_) | Sequence(_) => Empty
-          case record: Record[K, V]          =>
-            record.value.get(head.asInstanceOf[K]) match {
-              case Some(value) => value.getPath(next)
-              case None        => Empty
-            }
-        }
-    }
+    k.foldLeft(self)({ case (node, segment) =>
+      node match {
+        case Empty | Leaf(_, _) | Sequence(_) => Empty
+        case record: Record[K, V]             =>
+          record.value.get(segment.asInstanceOf[K]) match {
+            case Some(value) => value
+            case None        => Empty
+          }
+      }
+    })
 
   final def isEmpty: Boolean = self match {
     case Empty           => true
-    case Leaf(_)         => false
+    case Leaf(_, _)      => false
     case Record(value)   => value.values.isEmpty
     case Sequence(value) => value.forall(_.isEmpty)
   }
 
+  final def mapKey[K2](f: K => K2): PropertyTree[K2, V] = self match {
+    case Leaf(value, bool)  => Leaf(value, bool)
+    case Record(value)      => Record(value.map({ case (k, v) => (f(k), v.mapKey(f)) }))
+    case PropertyTree.Empty => PropertyTree.Empty
+    case Sequence(value)    => Sequence(value.map(_.mapKey(f)))
+  }
+
   final def map[V2](f: V => V2): PropertyTree[K, V2] = self match {
-    case Leaf(value)     => Leaf(f(value))
-    case Record(v)       => Record(v.map { case (k, tree) => (k, tree.map(f)) })
-    case Sequence(value) => Sequence(value.map(_.map(f)))
-    case Empty           => Empty
+    case Leaf(value, bool) => Leaf(f(value), bool)
+    case Record(v)         => Record(v.map { case (k, tree) => (k, tree.map(f)) })
+    case Sequence(value)   => Sequence(value.map(_.map(f)))
+    case Empty             => Empty
   }
 
-  final def mapEmpty[K1 >: K, V1 >: V](f: Vector[Either[Int, K1]] => PropertyTree[K1, V1]): PropertyTree[K1, V1] = {
-    def loop(acc: Vector[Either[Int, K1]], tree: PropertyTree[K, V]): PropertyTree[K1, V1] =
-      tree match {
-        case Leaf(value)        => Leaf(value)
-        case Record(value)      =>
-          Record(
-            value
-              .map(a =>
-                a._1.asInstanceOf[K1] -> loop(
-                  acc :+ Right(a._1.asInstanceOf[K1]),
-                  a._2.asInstanceOf[PropertyTree[K, V]]
-                )
-              )
-          )
-        case PropertyTree.Empty => f(acc)
-        case Sequence(value)    =>
-          Sequence(value.zipWithIndex.map { case (v, index) =>
-            loop(acc :+ Left(index), v)
-          })
-      }
+  final def mapEither[E, V2](f: V => Either[E, V2]): Either[E, PropertyTree[K, V2]] = self match {
+    case Leaf(value, bool) =>
+      f(value).map(Leaf(_, bool))
+    case Record(v)         =>
+      val map = v.map { case (k, tree) => (k, tree.mapEither(f)) }
+      seqMap(map).map(Record(_))
 
-    loop(Vector.empty, self)
+    case Sequence(value) =>
+      val list = value.map(_.mapEither(f))
+      list
+        .foldRight(Right(Nil): Either[E, List[PropertyTree[K, V2]]]) { (acc, a) =>
+          acc.flatMap(tree => a.map(list => tree :: list))
+        }
+        .map(Sequence(_))
+
+    case Empty => Right(Empty)
   }
 
-  final def mapEmptyToError[E, V2](f: => E): PropertyTree[K, Either[E, V]] = self match {
-    case Leaf(value)        => Leaf(Right(value))
-    case Record(v)          => Record(v.map { case (k, tree) => (k, tree.mapEmptyToError(f)) })
-    case PropertyTree.Empty => PropertyTree.Leaf(Left(f))
-    case Sequence(value)    => Sequence(value.map(_.mapEmptyToError(f)))
-  }
+  def bimap[K2, V2](f: K => K2, g: V => V2): PropertyTree[K2, V2] =
+    self.mapKey(f).map(g)
 
-  /**
-   * Fix me
-   * merge empty = self
-   * merge self = ??? (uncertain)
-   *
-   * @param that
-   * @return
-   */
-  final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): NonEmptyChunk[PropertyTree[K1, V1]] =
+  final def merge[K1 >: K, V1 >: V](that: PropertyTree[K1, V1]): List[PropertyTree[K1, V1]] =
     (self, that) match {
-      case (Sequence(l), Sequence(r))           => NonEmptyChunk(Sequence(l ++ r))
+      case (Sequence(l), Sequence(r))           => singleton(Sequence(l ++ r))
       case (l: Record[K, V], r: Record[K1, V1]) =>
         (l.value.keySet ++ r.value.keySet)
-          .foldLeft(NonEmptyChunk[Map[K1, PropertyTree[K1, V1]]](Map.empty)) { case (acc, k) =>
+          .foldLeft(List[Map[K1, PropertyTree[K1, V1]]](Map.empty)) { case (acc, k) =>
             (l.value.get(k.asInstanceOf[K]), r.value.get(k)) match {
               case (None, None)       => acc
               case (Some(l), Some(r)) =>
@@ -132,92 +242,19 @@ sealed trait PropertyTree[+K, +V] { self =>
             }
           }
           .map(v => PropertyTree.Record(v))
-      case (left, right) if left.isEmpty        => NonEmptyChunk(right)
-      case (left, right) if right.isEmpty       => NonEmptyChunk(left)
-      case (l, r)                               => NonEmptyChunk(l, r)
+      case (left, right) if left.isEmpty        => singleton(right)
+      case (left, right) if right.isEmpty       => singleton(left)
+      case (l, r)                               => l :: r :: Nil
     }
 
   final def nonEmpty: Boolean = !isEmpty
-
-  final def reduceInner[V1 >: V](f: (V1, V1) => V1): PropertyTree[K, V1] = {
-    def pruneEmpty[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
-      list.collect {
-        case tree if !tree.isEmpty => tree
-      }
-
-    self match {
-      case Empty         => Empty
-      case Leaf(value)   => Leaf(value)
-      case Record(value) =>
-        Record(value.view.mapValues(_.reduceInner(f)).toMap)
-
-      case Sequence(value) =>
-        val (vs0, rest0) = PropertyTree.partitionWith(value) { case Leaf(value) =>
-          value
-        }
-
-        val (vs, rest) = (vs0, pruneEmpty(rest0))
-
-        //Fixme what should happen if we have Sequence(Nil). We don't know whether or not we should do at this level, or at a deeper level, which we don't know
-        (vs, rest) match {
-          case (Nil, _)  =>
-            Sequence(value.map(_.reduceInner(f)))
-          case (vs, Nil) =>
-            vs.reduceOption(f).map(Leaf(_)).getOrElse(Sequence(Nil))
-          case (vs, res) =>
-            Sequence(vs.map(Leaf(_))).zipWith(Sequence(res).reduceInner(f))(f)
-        }
-    }
-  }
-
-  final def zip[K1 >: K, V2, V3](that: PropertyTree[K1, V2]): PropertyTree[K1, (V, V2)] =
-    self.zipWith(that)((a, b) => ((a, b)))
-
-  final def zipWith[K1 >: K, V2, V3](that: PropertyTree[K1, V2])(f: (V, V2) => V3): PropertyTree[K, V3] =
-    (self, that) match {
-      case (Sequence(ls), Sequence(rs)) =>
-        val max = ls.length.max(rs.length)
-        val min = ls.length.min(rs.length)
-        val pad = List.fill(max - min)(Empty)
-
-        Sequence(
-          (ls ++ pad)
-            .zip(rs ++ pad)
-            .map { case (l, r) =>
-              l.zipWith(r)(f)
-            }
-        )
-
-      case (l: Record[K, V] @unchecked, r: Record[K, V2] @unchecked) =>
-        Record((l.value.keySet ++ r.value.keySet).foldLeft(Map.empty[K, PropertyTree[K, V3]]) { case (map, key) =>
-          val v  = l.value.getOrElse(key.asInstanceOf[K], Empty)
-          val v2 = r.value.getOrElse(key.asInstanceOf[K], Empty)
-
-          map.updated(key, v.zipWith(v2)(f))
-        })
-
-      case (Leaf(l), Leaf(r)) => Leaf(f(l, r))
-
-      case (Sequence(l), r) => Sequence(l.map(_.zipWith(r)(f)))
-
-      case (l, Sequence(r)) =>
-        Sequence(r.map(tree => l.zipWith(tree)(f)))
-
-      case (l, r: Record[K, V2] @unchecked) => Record(r.value.view.mapValues(v => l.zipWith(v)(f)).toMap)
-
-      case (Record(l), r) => Record(l.view.mapValues(v => v.zipWith(r)(f)).toMap)
-
-      case (Empty, _) => Empty
-
-      case (_, Empty) => Empty
-    }
 }
 
 object PropertyTree {
-  def apply(v: V): PropertyTree[Nothing, V] =
+  def apply[V](v: V): PropertyTree[Nothing, V] =
     Leaf(v)
 
-  private[config] final case class Leaf[V](value: V) extends PropertyTree[Nothing, V]
+  private[config] final case class Leaf[V](value: V, canBeSequence: Boolean = true) extends PropertyTree[Nothing, V]
 
   private[config] final case class Record[K, V](value: Map[K, PropertyTree[K, V]]) extends PropertyTree[K, V]
 
@@ -254,7 +291,15 @@ object PropertyTree {
       }
     )
 
-  // FIXME alphabetic order
+  def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] =
+    list.reverse match {
+      case Nil          => Nil
+      case head :: tail =>
+        tail.foldLeft(List(head)) { case (acc, tree) =>
+          acc.flatMap(tree0 => tree.merge(tree0))
+        }
+    }
+
   def unflatten[K, V](key: List[K], value: ::[V]): PropertyTree[K, V] =
     unflatten(key, Sequence(value.map(Leaf(_))))
 
@@ -266,22 +311,4 @@ object PropertyTree {
 
   def unflatten[K, V](map: Map[Vector[K], ::[V]]): List[PropertyTree[K, V]] =
     mergeAll(map.toList.map(tuple => unflatten(tuple._1.toList, tuple._2)))
-
-  def mergeAll[K, V](list: List[PropertyTree[K, V]]): List[PropertyTree[K, V]] = list.reverse match {
-    case Nil          => Nil
-    case head :: tail =>
-      tail.foldLeft(List(head)) { case (acc, tree) =>
-        acc.flatMap(tree0 => tree.merge(tree0))
-      }
-  }
-
-  def partitionWith[K, V, A](
-    trees: List[PropertyTree[K, V]]
-  )(pf: PartialFunction[PropertyTree[K, V], A]): (List[A], List[PropertyTree[K, V]]) =
-    trees.map {
-      case tree if pf.isDefinedAt(tree) => (pf(tree) :: Nil, Nil)
-      case tree                         => (Nil, tree :: Nil)
-    }.foldLeft((List.empty[A], List.empty[PropertyTree[K, V]])) { case ((accLeft, accRight), (left, right)) =>
-      (accLeft ++ left, accRight ++ right)
-    }
 }

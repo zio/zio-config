@@ -3,10 +3,11 @@ package zio.config.refined
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.types.string.NonEmptyString
+import zio.Random
+import zio.config.PropertyTreePath._
 import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, Random}
 
 import ReadError._
 import RefinedUtils._
@@ -22,7 +23,7 @@ object RefinedSpec extends BaseSpec {
           val result =
             read(cfg from ConfigSource.fromMap(Map(keyValue.k.underlying -> keyValue.v.underlying)))
 
-          assert(result)(equalTo(Right(keyValue.v.value)))
+          assertM(result)(equalTo(keyValue.v.value))
         }
       },
       test("RefineType returns ReadError for invalid values in a given path") {
@@ -35,7 +36,7 @@ object RefinedSpec extends BaseSpec {
           val expected =
             ConversionError(List(Step.Key(key.underlying)), "Predicate isEmpty() did not fail.", Set.empty)
 
-          assert(result)(equalTo(Left(expected)))
+          assertM(result.either)(equalTo(Left(expected)))
         }
       }
     )
@@ -47,7 +48,7 @@ object RefinedUtils {
   }
 
   object Key {
-    val gen: Gen[Has[Random] with Has[Sized], Key] =
+    val gen: Gen[Random with Sized, Key] =
       Gen
         .alphaNumericStringBounded(1, 10)
         .map(string => Refined.unsafeApply[String, NonEmpty](string))
@@ -59,7 +60,7 @@ object RefinedUtils {
   }
 
   object Value {
-    val gen: Gen[Has[Random] with Has[Sized], Value] =
+    val gen: Gen[Random with Sized, Value] =
       Gen
         .alphaNumericStringBounded(1, 10)
         .map(string => Refined.unsafeApply[String, NonEmpty](string))
@@ -69,7 +70,7 @@ object RefinedUtils {
   final case class KeyValue(k: Key, v: Value)
 
   object KeyValue {
-    val gen: Gen[Has[Random] with Has[Sized], KeyValue] =
+    val gen: Gen[Random with Sized, KeyValue] =
       for {
         key   <- Key.gen
         value <- Value.gen

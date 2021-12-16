@@ -78,18 +78,17 @@ To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
 import zio.System
-import zio.Has
 
 // That's system environment
-val result: Layer[ReadError[String], Has[MyConfig]] = System.live >>> ZConfig.fromSystemEnv(myConfig)
+val result: Layer[ReadError[String], MyConfig] = System.live >>> ZConfig.fromSystemEnv(myConfig)
 ```
 
 Another way of doing this is:
 
 ```scala mdoc:silent
-val systemSource = ConfigSource.fromSystemEnv
+val systemSource = ConfigSource.fromSystemEnv()
 
-systemSource.flatMap(source => ZIO.fromEither(read(myConfig from source)))
+read(myConfig from systemSource)
 
 ```
 
@@ -213,19 +212,19 @@ zio-config do support this scenario. This can happen in complex applications.
 
 ```scala mdoc:silent
 
-val configDesc = for {
- source1 <- ConfigSource.fromSystemProperties
- source2 <- ConfigSource.fromSystemEnv
- desc =
-   (string("LDAP").from(source1.orElse(source2)) |@| int("PORT")(Port.apply, Port.unapply).from(source1) |@|
+
+val source1 = ConfigSource.fromSystemProps()
+val source2 = ConfigSource.fromSystemEnv()
+ 
+val configDesc =
+  (string("LDAP").from(source1.orElse(source2)) |@| int("PORT")(Port.apply, Port.unapply).from(source1) |@|
     string("DB_URL").optional.from(source2))(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
-} yield desc
 
 
-configDesc.flatMap(desc => ZIO.fromEither(read(desc)))
+read(configDesc)
 
 // we can also separately add new config
-configDesc.flatMap(desc => ZIO.fromEither(read(desc from ConfigSource.fromMap(Map.empty))))
+read(configDesc from ConfigSource.fromMap(Map.empty))
 
 // In this case, `ConfigSource.fromMap` will also be tried along with the sources that are already given.
 
@@ -235,7 +234,7 @@ We can reset the sources for the config using
 
 ```scala mdoc:silent
 
-configDesc.map(desc => desc.unsourced)
+configDesc.unsourced
 
 ```
 
@@ -245,10 +244,7 @@ from a constant map for all of it.
 ```scala mdoc:silent
 
 val testConfig =
-  configDesc
-    .map(
-      desc =>
-        desc.unsourced from ConfigSource.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235")))
+  configDesc.unsourced from ConfigSource.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235"))
 
 ```
 
@@ -261,7 +257,7 @@ sources, especially when some of the sources returns ZIO.
 ```scala mdoc:silent
 import java.io.File
 
-import zio.{Console, ExitCode, Has, URIO, ZIO, System}
+import zio.{Console, ExitCode, URIO, ZIO, System}
 import zio.config._
 import zio.config.typesafe._
 
@@ -273,21 +269,20 @@ object CombineSourcesExample extends zio.App {
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     application.either.flatMap(r => Console.printLine(s"Result: ${r}")).exitCode
 
-  final case class Config(username: String , password: String)
+  case class Config(username: String , password: String)
 
-  val getDesc: ZIO[Has[System], ReadError[String], ConfigDescriptor[Config]] =
-    for {
-      hoconFile <- ZIO.fromEither(TypesafeConfigSource.fromHoconFile(new File("/invalid/path")))
-      constant  <- ZIO.fromEither(TypesafeConfigSource.fromHoconString(s""))
-      env       <- ConfigSource.fromSystemEnv
-      sysProp   <- ConfigSource.fromSystemProperties
-      source    = hoconFile <> constant <> env <> sysProp
-    } yield (descriptor[Config] from source)
+  val desc: ConfigDescriptor[Config] = {
+    val hoconFile = TypesafeConfigSource.fromHoconFile(new File("/invalid/path"))
+    val constant  = TypesafeConfigSource.fromHoconString(s"")
+    val env       = ConfigSource.fromSystemEnv()
+    val sysProp   = ConfigSource.fromSystemProps()
+    val source    = hoconFile <> constant <> env <> sysProp
+    (descriptor[Config] from source)
+  }
 
   val application =
     for {
-      desc        <- getDesc.mapError(_.prettyPrint())
-      configValue <- ZIO.fromEither(read(desc)).mapError(_.prettyPrint())
+      configValue <- read(desc).mapError(_.prettyPrint())
       string      <- ZIO.fromEither(configValue.toJson(desc))
       _           <- Console.printLine(string)
     } yield ()

@@ -2,7 +2,7 @@ package zio.config.typesafe
 
 import com.typesafe.config.ConfigFactory
 import zio.config._
-import zio.{Has, Layer, Tag, ZIO, ZLayer}
+import zio.{IsNotIntersection, Layer, Tag, ZIO}
 
 import java.io.File
 
@@ -20,13 +20,13 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[ReadError[String], MyConfig] =
    *     TypesafeConfig.fromDefaultLoader(descriptor[MyConfig])
    * }}}
    */
-  def fromDefaultLoader[A](
+  def fromResourcePath[A: Tag: IsNotIntersection](
     configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+  ): Layer[ReadError[String], A] =
     fromTypesafeConfig(ConfigFactory.load.resolve, configDescriptor)
 
   /**
@@ -40,17 +40,20 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[ReadError[String], MyConfig] =
    *     TypesafeConfig.fromHoconFile(new File("/path/to/xyz.hocon"), descriptor[MyConfig])
    * }}}
    */
-  def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(implicit
-    tag: Tag[A]
-  ): Layer[ReadError[String], Has[A]] =
-    fromTypesafeConfig(ConfigFactory.parseFile(file).resolve, configDescriptor)
+  def fromHoconFile[A: Tag: IsNotIntersection](
+    file: File,
+    configDescriptor: ConfigDescriptor[A]
+  ): Layer[ReadError[String], A] =
+    ZConfig.fromConfigDescriptor(
+      configDescriptor from TypesafeConfigSource.fromHoconFile(file)
+    )
 
   /**
-   * Retrieve a config from a Hocon file calculated by an effect
+   * Retrieve your config from a path to HOCON file
    *
    * A complete example usage:
    *
@@ -60,20 +63,16 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
-   *     TypesafeConfig.fromHoconFileM(ZIO.succeed(new File("/path/to/xyz.hocon")), descriptor[MyConfig])
+   *   val result: Layer[ReadError[String], MyConfig] =
+   *     TypesafeConfig.fromHoconFilePath("/path/to/xyz.hocon", descriptor[MyConfig])
    * }}}
    */
-  def fromHoconFileM[R, E >: ReadError[String], A](getFile: ZIO[R, E, File], configDescriptor: ConfigDescriptor[A])(
-    implicit tag: Tag[A]
-  ): ZLayer[R, E, Has[A]] =
-    fromTypesafeConfigM(
-      getFile.flatMap { file =>
-        ZIO
-          .attempt(ConfigFactory.parseFile(file).resolve)
-          .mapError(failure => ReadError.SourceError(message = failure.getMessage))
-      },
-      configDescriptor
+  def fromHoconFilePath[A: Tag: IsNotIntersection](
+    filePath: String,
+    configDescriptor: ConfigDescriptor[A]
+  ): Layer[ReadError[String], A] =
+    ZConfig.fromConfigDescriptor(
+      configDescriptor from TypesafeConfigSource.fromHoconFilePath(filePath)
     )
 
   /**
@@ -88,41 +87,17 @@ object TypesafeConfig {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val configString = """port: 10, url: "http://x.y""""
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *
+   *   val result: Layer[ReadError[String], MyConfig] =
    *     TypesafeConfig.fromHoconString(configString, descriptor[MyConfig])
    * }}}
    */
-  def fromHoconString[A](str: String, configDescriptor: ConfigDescriptor[A])(implicit
-    tag: Tag[A]
-  ): Layer[ReadError[String], Has[A]] =
-    fromTypesafeConfig(ConfigFactory.parseString(str).resolve, configDescriptor)
-
-  /**
-   * Retrieve a config from a HOCON string value produced by an effect
-   *
-   * A complete example usage:
-   *
-   * {{{
-   *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-   *
-   *   case class MyConfig(port: Int, url: String)
-   *
-   *   val configString = """port: 10, url: "http://x.y""""
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
-   *     TypesafeConfig.fromHoconStringM(ZIO.succeed(configString), descriptor[MyConfig])
-   * }}}
-   */
-  def fromHoconStringM[R, E >: ReadError[String], A](getStr: ZIO[R, E, String], configDescriptor: ConfigDescriptor[A])(
-    implicit tag: Tag[A]
-  ): ZLayer[R, E, Has[A]] =
-    fromTypesafeConfigM(
-      getStr.flatMap { str =>
-        ZIO
-          .attempt(ConfigFactory.parseString(str).resolve)
-          .mapError(failure => ReadError.SourceError(message = failure.getMessage))
-      },
-      configDescriptor
+  def fromHoconString[A: Tag: IsNotIntersection](
+    hoconString: String,
+    configDescriptor: ConfigDescriptor[A]
+  ): Layer[ReadError[String], A] =
+    ZConfig.fromConfigDescriptor(
+      configDescriptor from TypesafeConfigSource.fromHoconString(hoconString)
     )
 
   /**
@@ -136,43 +111,15 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[ReadError[String], MyConfig] =
    *     TypesafeConfig.fromTypesafeConfig(ConfigFactory.load.resolve, descriptor[MyConfig])
    * }}}
    */
-  def fromTypesafeConfig[A](
+  def fromTypesafeConfig[A: Tag: IsNotIntersection](
     conf: => com.typesafe.config.Config,
     configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
-    ZConfig.fromConfigDescriptorM(
-      ZIO
-        .fromEither(TypesafeConfigSource.fromTypesafeConfig(conf))
-        .map(configDescriptor from _)
-    )
-
-  /**
-   * Retrieve a config from `com.typesafe.config.Config` returned by an effect
-   *
-   * A complete example usage:
-   *
-   * {{{
-   *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-   *
-   *   case class MyConfig(port: Int, url: String)
-   *
-   *   val result: Layer[Throwable, Has[MyConfig]] =
-   *     TypesafeConfig.fromTypesafeConfigM(ZIO.effect(ConfigFactory.load.resolve), descriptor[MyConfig])
-   * }}}
-   */
-  def fromTypesafeConfigM[R, E >: ReadError[String], A](
-    getConfig: ZIO[R, E, com.typesafe.config.Config],
-    configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
-    ZConfig.fromConfigDescriptorM(
-      for {
-        config    <- getConfig
-        rawConfig <- ZIO.fromEither(TypesafeConfigSource.fromTypesafeConfig(config))
-      } yield configDescriptor from rawConfig
+  ): Layer[ReadError[String], A] =
+    ZConfig.fromConfigDescriptor(
+      configDescriptor from TypesafeConfigSource.fromTypesafeConfig(ZIO.succeed(conf))
     )
 }

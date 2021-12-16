@@ -44,10 +44,10 @@ addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt sc
 addCommandAlias("check", "; scalafmtSbtCheck; scalafmtCheckAll; compile:scalafix --check; test:scalafix --check")
 addCommandAlias(
   "checkAll",
-  "; ++2.11.12; project root2-11; check; ++2.12.11; project root2-12; check; ++2.13.2; project root2-13; check"
+  "; ++2.11.12; project root2-11; check; ++2.12.13; project root2-12; check; ++2.13.5; project root2-13; check"
 )
-addCommandAlias("compileAll", "; ++2.11.12; root2-11/compile; ++2.12.11; root2-12/compile; ++2.13.2!; root2-13/compile")
-addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.11; root2-12/test; ++2.13.2!; root2-13/test")
+addCommandAlias("compileAll", "; ++2.11.12; root2-11/compile; ++2.12.13; root2-12/compile; ++2.13.5!; root2-13/compile")
+addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.13; root2-12/test; ++2.13.5!; root2-13/test")
 addCommandAlias(
   "testJS",
   ";zioConfigJS/test"
@@ -77,7 +77,7 @@ addCommandAlias(
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigMagnoliaJVM/test"
 )
 
-lazy val zioVersion        = "2.0.0-M4"
+lazy val zioVersion        = "2.0.0-RC1"
 lazy val magnoliaVersion   = "0.17.0"
 lazy val refinedVersion    = "0.9.27"
 lazy val pureconfigVersion = "0.16.0"

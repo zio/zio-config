@@ -1,6 +1,5 @@
 package zio.config.magnolia
 
-import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
@@ -24,13 +23,13 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val res = write(getDescriptor[Cfg].desc, Cfg("a"))
 
-      assert(res)(isRight(equalTo(Record(Map("prefix_field_name" -> Leaf("a")))))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(
+        zio.ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(getDescriptor[Cfg].desc from v))
       )(
-        isRight(equalTo(Cfg("a")))
+        equalTo(Cfg("a"))
       )
     },
     test("unwrapped sealed hierarchy") {
@@ -48,26 +47,13 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val res = write(OverrideDerivationTestEnv.getDescriptor[Outer].desc, cfg)
 
-      val expected = Record(
-        Map(
-          "prefix_list" -> Sequence(
-            List(
-              Leaf("other_object_suffix"),
-              Leaf("obj1_name_suffix"),
-              Record(Map("prefix_value" -> Leaf("a"))),
-              Record(Map("prefix_data" -> Leaf("b")))
-            )
-          )
-        )
-      )
-
-      assert(res)(isRight(equalTo(expected))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(
+        zio.ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(getDescriptor[Outer].desc from v))
       )(
-        isRight(equalTo(cfg))
+        equalTo(cfg)
       )
     },
     test("wrapped sealed hierarchy") {
@@ -92,26 +78,13 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
 
-      val expected = Record(
-        Map(
-          "list" -> Sequence(
-            List(
-              Record(Map("Inner" -> Leaf("OtherOBJECT"))),
-              Record(Map("Inner" -> Leaf("Obj1Name"))),
-              Record(Map("Inner" -> Record(Map("ClassWithValue" -> Record(Map("value" -> Leaf("a"))))))),
-              Record(Map("Inner" -> Record(Map("ClassWithData" -> Record(Map("data" -> Leaf("b")))))))
-            )
-          )
-        )
-      )
-
-      assert(res)(isRight(equalTo(expected))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(
+        zio.ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
       )(
-        isRight(equalTo(cfg))
+        equalTo(cfg)
       )
     },
     test("config with type labels ignoring the name of sealed trait") {
@@ -136,25 +109,13 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
 
-      val expected = Record(
-        Map(
-          "list" -> Sequence(
-            List(
-              Leaf("OtherOBJECT"),
-              Leaf("Obj1Name"),
-              Record(Map("value" -> Leaf("a"), "type" -> Leaf("ClassWithValue"))),
-              Record(Map("data" -> Leaf("b"), "type" -> Leaf("ClassWithData")))
-            )
-          )
-        )
-      )
-      assert(res)(isRight(equalTo(expected))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(
+        zio.ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
       )(
-        isRight(equalTo(cfg))
+        equalTo(cfg)
       )
     },
     test("config with type labels wrapped with sealed trait name") {
@@ -179,33 +140,13 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
 
       val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
 
-      val expected = Record(
-        Map(
-          "list" -> Sequence(
-            List(
-              Record(Map("Inner" -> Leaf("OtherOBJECT"))),
-              Record(Map("Inner" -> Leaf("Obj1Name"))),
-              Record(
-                Map(
-                  "Inner" -> Record(Map("value" -> Leaf("a"), "type" -> Leaf("ClassWithValue")))
-                )
-              ),
-              Record(
-                Map(
-                  "Inner" -> Record(Map("data" -> Leaf("b"), "type" -> Leaf("ClassWithData")))
-                )
-              )
-            )
-          )
-        )
-      )
-      assert(res)(isRight(equalTo(expected))) &&
-      assert(
-        res
-          .map(ConfigSource.fromPropertyTree(_, "tree", LeafForSequence.Valid))
+      assertM(
+        zio.ZIO
+          .fromEither(res)
+          .map(ConfigSource.fromPropertyTree(_, "tree"))
           .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
       )(
-        isRight(equalTo(cfg))
+        equalTo(cfg)
       )
     }
   )

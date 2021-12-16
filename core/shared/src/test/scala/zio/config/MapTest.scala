@@ -20,12 +20,11 @@ object MapTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Record(Map("c" -> Leaf("d"), "f" -> Leaf("h"))))))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Map("z" -> "d")))))
+        assertM(res.either)(isRight(equalTo(Cfg("sa", Map("z" -> "d")))))
       },
       test("map(string(y)) returns the value of y amongst the values of the map as a string.") {
         case class Cfg(a: String, b: Map[String, String])
@@ -36,12 +35,11 @@ object MapTest extends BaseSpec {
           cCfg from ConfigSource
             .fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Record(Map("c" -> Leaf("d"))))))),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Map("z" -> "d")))))
+        assertM(res)(equalTo(Cfg("sa", Map("z" -> "d"))))
       },
       test("map(string(y)) returns the value of y from the value of the map.") {
         case class Cfg(a: String, b: Map[String, List[String]])
@@ -54,12 +52,11 @@ object MapTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Record(Map("z" -> Sequence(List(Record(Map("c" -> Leaf("d"))))))))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Map("z" -> List("d"))))))
+        assertM(res)(equalTo(Cfg("sa", Map("z" -> List("d")))))
       },
       test("list of delimited values from Map.") {
         case class Cfg(a: String, b: List[String])
@@ -80,7 +77,7 @@ object MapTest extends BaseSpec {
             )
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", List("q", "w", "e", "r", "ty", "uio")))))
+        assertM(res)(equalTo(Cfg("sa", List("q", "w", "e", "r", "ty", "uio"))))
       },
       test("read empty map") {
         case class Cfg(a: String, b: Map[String, String])
@@ -90,12 +87,11 @@ object MapTest extends BaseSpec {
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Map.empty))))
+        assertM(res)(equalTo(Cfg("sa", Map.empty)))
       },
       test("read nested maps") {
         case class Cfg(a: String, b: Map[String, Map[String, List[String]]])
@@ -108,12 +104,11 @@ object MapTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Record(Map("k" -> Record(Map("hello" -> Sequence(Nil))))))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Map("k" -> Map("hello" -> Nil))))))
+        assertM(res)(equalTo(Cfg("sa", Map("k" -> Map("hello" -> Nil)))))
       },
       test("read absent optional map") {
         case class Cfg(b: Option[Map[String, String]])
@@ -124,10 +119,10 @@ object MapTest extends BaseSpec {
         val res =
           read(
             cCfg from ConfigSource
-              .fromPropertyTree(Record(Map("a" -> Record(Map("c" -> Leaf("a"))))), "tree", LeafForSequence.Valid)
+              .fromPropertyTree(Record(Map("a" -> Record(Map("c" -> Leaf("a"))))), "tree")
           )
 
-        assert(res)(isRight(equalTo(Cfg(None))))
+        assertM(res)(equalTo(Cfg(None)))
       },
       test("read present optional empty map") {
         case class Cfg(a: String, b: Option[Map[String, String]])
@@ -139,12 +134,11 @@ object MapTest extends BaseSpec {
           read(
             cCfg from ConfigSource.fromPropertyTree(
               Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Some(Map.empty[String, String])))))
+        assertM(res)(equalTo(Cfg("sa", Some(Map.empty[String, String]))))
       },
       test("use default value for absent map") {
         case class Cfg(a: String, b: Map[String, String])
@@ -153,10 +147,10 @@ object MapTest extends BaseSpec {
           .default(Map("x" -> "y", "z" -> "a"))).to[Cfg]
 
         val res  = read(
-          cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree", LeafForSequence.Valid)
+          cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Map("x" -> "y", "z" -> "a")))))
+        assertM(res)(equalTo(Cfg("sa", Map("x" -> "y", "z" -> "a"))))
       },
       test("override default non-empty map with empty map") {
         case class Cfg(a: String, b: Map[String, String])
@@ -167,12 +161,11 @@ object MapTest extends BaseSpec {
         val res  = read(
           cCfg from ConfigSource.fromPropertyTree(
             Record(Map("a" -> Leaf("sa"), "b" -> Record(Map.empty[String, PropertyTree[String, String]]))),
-            "tree",
-            LeafForSequence.Valid
+            "tree"
           )
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Map.empty[String, String]))))
+        assertM(res)(equalTo(Cfg("sa", Map.empty[String, String])))
       },
       test("mapStrict picks map if map exists") {
         case class Cfg(a: String, b: Either[Map[String, String], String])
@@ -187,12 +180,11 @@ object MapTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Record(Map("k" -> PropertyTree.Leaf("v"))))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Left(Map("k" -> "v"))))))
+        assertM(res)(equalTo(Cfg("sa", Left(Map("k" -> "v")))))
       },
       test("mapStrict picks map over primitives") {
         case class Cfg(a: String, b: Either[String, Map[String, String]])
@@ -207,12 +199,11 @@ object MapTest extends BaseSpec {
               Record(
                 Map("a" -> Leaf("sa"), "b" -> Record(Map("x" -> Leaf("v"))))
               ),
-              "tree",
-              LeafForSequence.Valid
+              "tree"
             )
           )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Right(Map("x" -> "v"))))))
+        assertM(res)(equalTo(Cfg("sa", Right(Map("x" -> "v")))))
       },
       test("mapStrict picks alternative when failed to find map") {
         case class Cfg(a: String, b: Either[String, Map[String, String]])
@@ -223,10 +214,10 @@ object MapTest extends BaseSpec {
 
         val res = read(
           cCfg from ConfigSource
-            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
+            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Left("v")))))
+        assertM(res)(equalTo(Cfg("sa", Left("v"))))
       },
       test("mapStrict picks alternative on right when failed to find map") {
         case class Cfg(a: String, b: Either[Map[String, String], String])
@@ -237,28 +228,26 @@ object MapTest extends BaseSpec {
 
         val res = read(
           cCfg from ConfigSource
-            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree", LeafForSequence.Valid)
+            .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
         )
 
-        assert(res)(isRight(equalTo(Cfg("sa", Right("v")))))
+        assertM(res)(equalTo(Cfg("sa", Right("v"))))
       },
       test("key doesn't exist in map") {
         val src                                                     = ConfigSource.fromPropertyTree(
           PropertyTree.Record(Map("usr" -> PropertyTree.Leaf("v1"))),
-          "src",
-          LeafForSequence.Valid
+          "src"
         )
         val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("keyNotExists")).optional
-        assert(read(optional from src))(isLeft(anything))
+        assertM(read(optional from src).either)(isLeft(anything))
       },
       test("when empty map") {
         val src                                                     = ConfigSource.fromPropertyTree(
           PropertyTree.empty,
-          "src",
-          LeafForSequence.Valid
+          "src"
         )
         val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("usr")).optional
-        assert(read(optional from src))(isRight(isNone))
+        assertM(read(optional from src))(isNone)
       }
     )
 }

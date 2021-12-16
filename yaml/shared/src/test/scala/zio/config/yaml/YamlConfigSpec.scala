@@ -1,6 +1,6 @@
 package zio.config.yaml
 
-import zio.config.{ConfigDescriptor, PropertyTree}
+import zio.config.{ConfigDescriptor, PropertyTree, PropertyTreePath}
 import zio.test.Assertion._
 import zio.test._
 
@@ -27,16 +27,16 @@ object YamlConfigSpec extends DefaultRunnableSpec {
               Map(
                 "child" -> PropertyTree.Record(
                   Map(
-                    "i" -> PropertyTree.Leaf("1"),
-                    "b" -> PropertyTree.Leaf("true"),
-                    "s" -> PropertyTree.Leaf("str")
+                    "i" -> PropertyTree.Leaf("1", false),
+                    "b" -> PropertyTree.Leaf("true", false),
+                    "s" -> PropertyTree.Leaf("str", false)
                   )
                 ),
                 "list"  -> PropertyTree.Sequence(
                   List(
-                    PropertyTree.Record(Map("i" -> PropertyTree.Leaf("1"))),
-                    PropertyTree.Record(Map("b" -> PropertyTree.Leaf("true"))),
-                    PropertyTree.Record(Map("s" -> PropertyTree.Leaf("str")))
+                    PropertyTree.Record(Map("i" -> PropertyTree.Leaf("1", false))),
+                    PropertyTree.Record(Map("b" -> PropertyTree.Leaf("true", false))),
+                    PropertyTree.Record(Map("s" -> PropertyTree.Leaf("str", false)))
                   )
                 )
               )
@@ -44,7 +44,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
           )
         )
 
-      assert(result.map(_.getConfigValue(List())))(equalTo(Right(expected)))
+      assertM(result.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
     },
     test("Read a complex structure into a sealed trait") {
       case class Child(sum: List[Sum])

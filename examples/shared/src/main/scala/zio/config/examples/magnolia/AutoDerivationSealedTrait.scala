@@ -5,6 +5,8 @@ import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
 
+import examples._
+
 sealed trait X
 
 object X {
@@ -47,9 +49,8 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[CfgCfg] from TypesafeConfigSource.fromHoconString(s1).loadOrThrow) == Right(
+    read(descriptor[CfgCfg] from TypesafeConfigSource.fromHoconString(s1)) equalM
       CfgCfg(Cfg(C("b", G("hi"))), 1, "l")
-    )
   )
 
   val s2: String =
@@ -57,18 +58,14 @@ object Cfg extends App with EitherImpureOps {
       |fieldName = A
       |""".stripMargin
 
-  assert(
-    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2).loadOrThrow) == Right(Cfg(A))
-  )
+  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2)) equalM Cfg(A))
 
   val s3: String =
     """
       |fieldName = B
       |""".stripMargin
 
-  assert(
-    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s3).loadOrThrow) == Right(Cfg(B))
-  )
+  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s3)) equalM Cfg(B))
 
   val s4: String =
     """
@@ -83,9 +80,7 @@ object Cfg extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  assert(
-    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s4).loadOrThrow) == Right(Cfg(D(Z("1"))))
-  )
+  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s4)) equalM Cfg(D(Z("1"))))
 
   val s5: String =
     """
@@ -97,9 +92,7 @@ object Cfg extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  assert(
-    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s5).loadOrThrow) == Right(Cfg(E("1", 2)))
-  )
+  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s5)) equalM Cfg(E("1", 2)))
 
   val s6: String =
     """
@@ -116,9 +109,8 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s6).loadOrThrow) == Right(
+    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s6)) equalM
       Cfg(F("1", None, Z("2")))
-    )
   )
 
   val s7: String =
@@ -137,9 +129,8 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s7).loadOrThrow) == Right(
+    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s7)) equalM
       Cfg(F("1", Some(2), Z("2")))
-    )
   )
 
 }

@@ -37,7 +37,7 @@ object EmployeeDetails {
 object NullAndOptionalConfig extends DefaultRunnableSpec {
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig Null and Optional")(
     test("A config case which keys maybe null or optional") {
-      val hocconSourceList =
+      val hoconSource =
         fromHoconString(
           """details {
             |  employees = [{
@@ -64,25 +64,20 @@ object NullAndOptionalConfig extends DefaultRunnableSpec {
             |}""".stripMargin
         )
 
-      val result = hocconSourceList match {
-        case Left(value)   => Left(value)
-        case Right(source) => read(employeeDetails from source)
-      }
+      val result = read(employeeDetails from hoconSource)
 
       val expectedResult =
-        Right(
-          EmployeeDetails(
-            List(
-              Employee("jon", Some(Right("CA")), Left(Left(1.278))),
-              Employee("chris", Some(Left(151)), Right("High")),
-              Employee("martha", None, Right("Medium")),
-              Employee("susan", None, Right("f"))
-            ),
-            1000
-          )
+        EmployeeDetails(
+          List(
+            Employee("jon", Some(Right("CA")), Left(Left(1.278))),
+            Employee("chris", Some(Left(151)), Right("High")),
+            Employee("martha", None, Right("Medium")),
+            Employee("susan", None, Right("f"))
+          ),
+          1000
         )
 
-      assert(result)(equalTo(expectedResult))
+      assertM(result)(equalTo(expectedResult))
     }
   )
 }

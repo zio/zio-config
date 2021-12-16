@@ -1,12 +1,13 @@
 package zio.config.typesafe
 
-import zio.config.ReadError.Step.Key
+import zio.config.PropertyTreePath.Step
 import zio.config.magnolia._
 import zio.config.typesafe.OptionalSpecUtils._
 import zio.config.{BaseSpec, ReadError, foldReadError, read}
 import zio.test.Assertion._
 import zio.test._
 
+import Step._
 import ReadError._
 
 object TypesafeConfigOptionalTest extends BaseSpec {
@@ -33,9 +34,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase1.CaseClass1] from OptionalSpecUtils.getSource(validConfig))
 
         val summary =
-          result.swap.map(t => (OptionalSpecUtils.checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t))).swap
+          result.mapError(t => (OptionalSpecUtils.checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               (
@@ -69,9 +70,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t))).swap
+          result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               (
@@ -99,7 +100,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assert(result)(
+        assertM(result.either)(
           equalTo(
             Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", None))))
           )
@@ -126,9 +127,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t))).swap
+          result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               (
@@ -162,9 +163,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t))).swap
+          result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               (
@@ -197,9 +198,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t))).swap
+          result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               (
@@ -233,9 +234,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t))).swap
+          result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               (
@@ -269,9 +270,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t))).swap
+          result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               (
@@ -304,7 +305,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assert(result)(
+        assertM(result.either)(
           equalTo(
             Right(
               TestCase1.CaseClass1(
@@ -341,7 +342,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assert(result)(
+        assertM(result.either)(
           equalTo(
             Right(
               TestCase1.CaseClass1(
@@ -377,7 +378,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assert(result)(
+        assertM(result.either)(
           equalTo(
             Right(
               TestCase1.CaseClass1(
@@ -413,7 +414,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assert(result)(
+        assertM(result.either)(
           equalTo(
             Right(
               TestCase1.CaseClass1(
@@ -445,7 +446,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assert(result)(
+        assertM(result.either)(
           equalTo(
             Right(
               TestCase1.CaseClass1(
@@ -478,7 +479,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assert(result)(
+        assertM(result.either)(
           equalTo(
             Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", Some(TestCase1.CaseClass3("1", None))))))
           )
@@ -501,7 +502,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assert(result)(
+        assertM(result.either)(
           equalTo(
             Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", Some(TestCase1.CaseClass3("1", None))))))
           )
@@ -527,9 +528,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t))).swap
+          result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               (
@@ -563,9 +564,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase2.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(fetchMissingValueAndFormatErrors).swap
+          result.mapError(fetchMissingValueAndFormatErrors)
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               List(
@@ -573,7 +574,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
                   .MissingValue(List(Key("a"), Key("b"), Key("e")), List("optional value", "value of type string")),
                 ReadError.FormatError(
                   List(Key("a"), Key("b")),
-                  "Provided value is of type Record, expecting the type Leaf",
+                  "Provided value is of type Map, expecting the type Singleton",
                   List("optional value", "value of type int")
                 )
               )
@@ -596,16 +597,20 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase2.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(fetchMissingValueAndFormatErrors).swap
+          result.mapError(fetchMissingValueAndFormatErrors)
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               List(
                 MissingValue(List(Key("a"), Key("b"), Key("b")), List("optional value", "value of type string")),
                 MissingValue(List(Key("a"), Key("b"), Key("e")), List("optional value", "value of type string")),
                 MissingValue(List(Key("a"), Key("b"), Key("a")), List("optional value", "value of type string")),
-                FormatError(List(Key("a"), Key("b")), "Provided value is jj, expecting the type int")
+                FormatError(
+                  List(Key("a"), Key("b")),
+                  "Provided value is jj, expecting the type int",
+                  List("optional value", "value of type int")
+                )
               )
             )
           )
@@ -628,19 +633,23 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase2.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(fetchMissingValueAndFormatErrors).swap
+          result.mapError(fetchMissingValueAndFormatErrors)
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               List(
                 MissingValue(List(Key("a"), Key("b"), Key("b")), List("optional value", "value of type string")),
-                FormatError(List(Key("a"), Key("b"), Key("c")), "Provided value is nonint, expecting the type int"),
+                FormatError(
+                  List(Key("a"), Key("b"), Key("c")),
+                  "Provided value is nonint, expecting the type int",
+                  List("optional value", "optional value", "value of type int")
+                ),
                 MissingValue(List(Key("a"), Key("b"), Key("e")), List("optional value", "value of type string")),
                 MissingValue(List(Key("a"), Key("b"), Key("a")), List("optional value", "value of type string")),
                 FormatError(
                   List(Key("a"), Key("b")),
-                  "Provided value is of type Record, expecting the type Leaf",
+                  "Provided value is of type Map, expecting the type Singleton",
                   List("optional value", "value of type int")
                 )
               )
@@ -666,16 +675,16 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase3.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(fetchMissingValueAndFormatErrors).swap
+          result.mapError(fetchMissingValueAndFormatErrors)
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               List(
                 MissingValue(List(Key("a"), Key("b"), Key("e")), List("optional value", "value of type string")),
                 FormatError(
                   List(Key("a"), Key("b")),
-                  "Provided value is of type Record, expecting the type Leaf",
+                  "Provided value is of type Map, expecting the type Singleton",
                   List("optional value", "value of type int")
                 )
               )
@@ -697,9 +706,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase3.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(fetchMissingValueAndFormatErrors).swap
+          result.mapError(fetchMissingValueAndFormatErrors)
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Right(TestCase3.CaseClass1(TestCase3.CaseClass2("10", None)))
           )
@@ -720,9 +729,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase3.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(fetchMissingValueAndFormatErrors).swap
+          result.mapError(fetchMissingValueAndFormatErrors)
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Right(TestCase3.CaseClass1(TestCase3.CaseClass2("10", None)))
           )
@@ -742,9 +751,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase4.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(fetchMissingValueAndFormatErrors).swap
+          result.mapError(fetchMissingValueAndFormatErrors)
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               List(
@@ -777,9 +786,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase4.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(fetchMissingValueAndFormatErrors).swap
+          result.mapError(fetchMissingValueAndFormatErrors)
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               List(
@@ -812,9 +821,9 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           read(descriptor[TestCase4.CaseClass1] from getSource(validConfig))
 
         val summary =
-          result.swap.map(fetchMissingValueAndFormatErrors).swap
+          result.mapError(fetchMissingValueAndFormatErrors)
 
-        assert(summary)(
+        assertM(summary.either)(
           equalTo(
             Left(
               List(
@@ -894,5 +903,5 @@ object OptionalSpecUtils {
     }(_ ++ _, List.empty[ReadError[String]])
 
   def getSource(str: String): zio.config.ConfigSource =
-    TypesafeConfigSource.fromHoconString(str).fold(_ => throw new Exception("failed"), identity)
+    TypesafeConfigSource.fromHoconString(str)
 }

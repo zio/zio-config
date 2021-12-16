@@ -1,5 +1,6 @@
 package zio.config.examples
 
+import zio.ZIO
 import zio.config._
 
 import ConfigDescriptor._
@@ -56,16 +57,16 @@ object CoproductExample extends App {
 
   val runtime = zio.Runtime.default
 
-  def readA: Either[ReadError[String], Dance] =
+  def readA: ZIO[Any, ReadError[String], Dance] =
     read(danceConfig from aSource)
 
-  def readB: Either[ReadError[String], Dance] =
+  def readB: ZIO[Any, ReadError[String], Dance] =
     read(danceConfig from bSource)
 
-  def readC: Either[ReadError[String], Dance] =
+  def readC: ZIO[Any, ReadError[String], Dance] =
     read(danceConfig from cSource)
 
-  def readD: Either[ReadError[String], Dance] =
+  def readD: ZIO[Any, ReadError[String], Dance] =
     read(danceConfig from dSource)
 
   val a: A =
@@ -81,10 +82,10 @@ object CoproductExample extends App {
     D("I am Dancing !!")
 
   assert(
-    readA == Right(a) &&
-      readB == Right(b) &&
-      readC == Right(c) &&
-      readD == Right(d)
+    (readA equalM a) &&
+      (readB equalM b) &&
+      (readC equalM c) &&
+      (readD equalM d)
   )
 
   write(danceConfig, d).map(_.flattenString())
@@ -107,4 +108,5 @@ object CoproductExample extends App {
       writeC == Right(Map("can" -> singleton("false"))) &&
       writeD == Right(Map("dance" -> singleton("I am Dancing !!")))
   )
+
 }

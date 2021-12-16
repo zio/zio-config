@@ -5,7 +5,7 @@ import zio.config._
 import zio.stream.ZStream
 import zio.test.Sized
 import zio.test.magnolia.DeriveGen
-import zio.{Chunk, Clock, Has, Random, ZIO}
+import zio.{Chunk, Clock, Random, ZIO}
 
 import scala.collection.Map
 
@@ -74,7 +74,7 @@ trait GenerateConfig {
   def generateConfig[A: DeriveGen](
     config: ConfigDescriptor[A],
     size: Int = 0
-  ): ZStream[Has[Random] with Has[Sized] with Has[Clock], String, PropertyTree[String, String]] =
+  ): ZStream[Random with Sized with Clock, String, PropertyTree[String, String]] =
     DeriveGen[A].sample
       .repeat(recurs(Math.max(0, size - 1)))
       .flatMap {
@@ -150,7 +150,7 @@ trait GenerateConfig {
   def generateConfigHoconString[A: DeriveGen](
     config: ConfigDescriptor[A],
     size: Int = 0
-  ): ZStream[Has[Random] with Has[Sized] with Has[Clock], String, String] =
+  ): ZStream[Random with Sized with Clock, String, String] =
     generateConfig(config, size).map(_.toHoconString)
 
   /**
@@ -222,7 +222,7 @@ trait GenerateConfig {
   def generateConfigJson[A: DeriveGen](
     config: ConfigDescriptor[A],
     size: Int = 0
-  ): ZStream[Has[Random] with Has[Sized] with Has[Clock], String, String] =
+  ): ZStream[Random with Sized with Clock, String, String] =
     generateConfig(config, size).map(_.toJson)
 
   /**
@@ -290,10 +290,10 @@ trait GenerateConfig {
     config: ConfigDescriptor[A],
     size: Int,
     keyDelimiter: String = "."
-  ): ZStream[Has[Random] with Has[Sized] with Has[Clock], String, Map[String, ::[String]]] =
+  ): ZStream[Random with Sized with Clock, String, Map[String, ::[String]]] =
     generateConfig(config, size).map(_.flattenString(keyDelimiter))
 
-  implicit class UnsafeRunOps[E, A](s: ZStream[Has[Random] with Has[Sized] with Has[Clock], E, A]) {
+  implicit class UnsafeRunOps[E, A](s: ZStream[Random with Sized with Clock, E, A]) {
     def unsafeRunChunk: Chunk[A] = {
       val runtime = zio.Runtime.default
       runtime.unsafeRun(s.provideLayer(Sized.live(1) ++ Random.live ++ Clock.live).runCollect)

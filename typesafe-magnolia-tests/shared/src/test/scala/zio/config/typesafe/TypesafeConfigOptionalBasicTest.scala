@@ -1,6 +1,6 @@
 package zio.config.typesafe
 
-import zio.config.ReadError.Step.Key
+import zio.config.PropertyTreePath.Step.Key
 import zio.config.ReadError.{Irrecoverable, MissingValue, ZipErrors}
 import zio.config._
 import zio.test.Assertion._
@@ -34,43 +34,41 @@ object TypesafeConfigOptionalBasicTest extends DefaultRunnableSpec with EitherSu
            |      }
            |""".stripMargin
 
-      val result: Either[ReadError[String], RawTableConfig] =
-        read(descriptor[RawTableConfig] from TypesafeConfigSource.fromHoconString(string).loadOrThrow)
+      val result =
+        read(descriptor[RawTableConfig] from TypesafeConfigSource.fromHoconString(string))
 
-      val expected: Either[ReadError[String], RawTableConfig] =
-        Left(
-          Irrecoverable(
-            List(
-              ZipErrors(
-                List(
-                  ZipErrors(
-                    List(
-                      MissingValue(
-                        List(Key("transformOptions"), Key("header")),
-                        List("optional value", "value of type string"),
-                        Set()
-                      )
-                    ),
-                    Set()
+      val expected =
+        Irrecoverable(
+          List(
+            ZipErrors(
+              List(
+                ZipErrors(
+                  List(
+                    MissingValue(
+                      List(Key("transformOptions"), Key("header")),
+                      List("optional value", "value of type string"),
+                      Set()
+                    )
                   ),
-                  MissingValue(
-                    List(Key("transformOptions"), Key("separator")),
-                    List(
-                      "optional value",
-                      "value of " +
-                        "type string"
-                    ),
-                    Set()
-                  )
+                  Set()
                 ),
-                Set()
-              )
-            ),
-            Set()
-          )
+                MissingValue(
+                  List(Key("transformOptions"), Key("separator")),
+                  List(
+                    "optional value",
+                    "value of " +
+                      "type string"
+                  ),
+                  Set()
+                )
+              ),
+              Set()
+            )
+          ),
+          Set()
         )
 
-      assert(result)(equalTo(expected))
+      assertM(result.either)(equalTo(Left(expected)))
     }
   )
 }

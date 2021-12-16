@@ -1,10 +1,9 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
-import zio.test.environment.TestEnvironment
 import zio.test.{DefaultRunnableSpec, _}
-import zio.{Has, ZIO}
 
 object ArgsListAccumulationTest extends DefaultRunnableSpec {
 
@@ -15,7 +14,6 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
           val args                                      = renderArgs(count)
           val p2: zio.IO[ReadError[String], SomeConfig] =
             fromArgs(args)
-              .map(config => config.get)
 
           val expected = (1 to count).toList // O is missing values.
           assertM(p2.either)(isRight(equalTo(SomeConfig(expected))))
@@ -35,7 +33,7 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
       .map(i => s"--ints=$i")
       .toList
 
-  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Has[SomeConfig]] =
-    ZIO.environment.provideLayer(ZConfig.fromCommandLineArgs(args, SomeConfig.descriptor, None, None))
+  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], SomeConfig] =
+    ZIO.service[SomeConfig].provideLayer(ZConfig.fromCommandLineArgs(args, SomeConfig.descriptor, None, None))
 
 }

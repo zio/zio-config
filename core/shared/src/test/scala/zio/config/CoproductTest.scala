@@ -2,15 +2,15 @@ package zio.config
 
 import com.github.ghik.silencer.silent
 import zio.config.ConfigDescriptor._
-import zio.config.ReadError.Step.Key
-import zio.config.ReadError._
+import zio.config.PropertyTreePath.Step.Key
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, Random}
+import zio.{IO, Random, ZIO}
 
 import scala.concurrent.duration.Duration
 
+import ReadError._
 import CoproductTestUtils._
 
 @silent("Unused import")
@@ -22,26 +22,32 @@ object CoproductTest extends BaseSpec {
     suite("Coproduct support")(
       test("left element satisfied") {
         check(genTestParams) { p =>
-          assert(readLeft(p))(isRight(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
+          assertM(readLeft(p))(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
         }
       },
       test("right element satisfied") {
         check(genTestParams) { p =>
-          assert(readRight(p))(
-            isRight(equalTo(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid)))))
+          assertM(readRight(p))(
+            equalTo(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid))))
           )
         }
       },
       test("round trip of enum works") {
         check(genSealedTraitParams) { sourceMap =>
-          val source      = ConfigSource.fromMap(sourceMap, keyDelimiter = Some('.'))
-          val readResult  = read(Z.config from source)
-          val writeResult = readResult.swap
-            .map(_.prettyPrint())
-            .swap
-            .flatMap(r => r.toMap(Z.config).map(_.view.mapValues(_.mkString).toMap))
+          val source = ConfigSource.fromMap(sourceMap, keyDelimiter = Some('.'))
 
-          assert(writeResult)(equalTo(Right[String, Map[String, String]](sourceMap)))
+          val writeResult =
+            for {
+              readResult  <- read(Z.config from source).either
+              writeResult <- ZIO.fromEither(
+                               readResult.swap
+                                 .map(_.prettyPrint())
+                                 .swap
+                                 .flatMap(r => r.toMap(Z.config).map(_.view.mapValues(_.mkString).toMap))
+                             )
+            } yield writeResult
+
+          assertM(writeResult)(equalTo(sourceMap))
         }
       },
       test("should accumulate all errors") {
@@ -56,7 +62,8 @@ object CoproductTest extends BaseSpec {
                       List(
                         FormatError(
                           List(Key(p.kFactor)),
-                          "Provided value is notafloat, expecting the type float"
+                          "Provided value is notafloat, expecting the type float",
+                          List("value of type float")
                         )
                       )
                     )
@@ -65,12 +72,12 @@ object CoproductTest extends BaseSpec {
               )
             )
 
-          assert(readWithErrors(p))(isLeft(equalTo(expected)))
+          assertM(readWithErrors(p).either)(isLeft(equalTo(expected)))
         }
       },
       test("left and right both populated should choose left") {
         check(genTestParams) { p =>
-          assert(readChooseLeftFromBoth(p))(isRight(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl))))))
+          assertM(readChooseLeftFromBoth(p))(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
         }
       }
     )
@@ -141,7 +148,7 @@ object CoproductTestUtils {
     vCodeValid: String
   )
 
-  val genSealedTraitParams: Gen[Has[Random] with Has[Sized], Map[String, String]] =
+  val genSealedTraitParams: Gen[Random with Sized, Map[String, String]] =
     for {
       s1     <- Gen.alphaNumericStringBounded(1, 10)
       s2     <- Gen.alphaNumericStringBounded(1, 10)
@@ -164,7 +171,7 @@ object CoproductTestUtils {
 
     } yield result
 
-  val genTestParams: Gen[Has[Random], TestParams] =
+  val genTestParams: Gen[Random, TestParams] =
     for {
       kLdap       <- genSymbol(1, 20)
       vLdap       <- genNonEmptyString(50)
@@ -194,7 +201,7 @@ object CoproductTestUtils {
       vCValid
     )
 
-  def readLeft(p: TestParams): Either[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
+  def readLeft(p: TestParams): IO[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
@@ -210,7 +217,7 @@ object CoproductTestUtils {
 
   def readRight(
     p: TestParams
-  ): Either[ReadError[String], Either[CoproductTestUtils.EnterpriseAuth, CoproductTestUtils.PasswordAuth]] = {
+  ): IO[ReadError[String], Either[CoproductTestUtils.EnterpriseAuth, CoproductTestUtils.PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
@@ -234,7 +241,7 @@ object CoproductTestUtils {
 
   def readWithErrors(
     p: TestParams
-  ): Either[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
+  ): IO[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
@@ -257,7 +264,7 @@ object CoproductTestUtils {
     )
   }
 
-  def readChooseLeftFromBoth(p: TestParams): Either[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
+  def readChooseLeftFromBoth(p: TestParams): IO[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 

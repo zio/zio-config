@@ -1,6 +1,7 @@
 package zio.config
 
-import zio.{Has, Layer, System, Tag, ZIO, ZLayer}
+import com.github.ghik.silencer.silent
+import zio.{IsNotIntersection, Layer, System, Tag, ZIO, ZLayer}
 
 import java.io.File
 import java.net.{URI, URL}
@@ -8,8 +9,7 @@ import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.{Properties, UUID}
 import scala.concurrent.duration.Duration
 
-trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
-
+trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
   object ConfigDescriptor extends ConfigDescriptorFunctions {
     import ConfigDescriptorAdt._
 
@@ -640,12 +640,12 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      * @see [[https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples/commandline/CommandLineArgsExample.scala]]
      */
-    def fromCommandLineArgs[A](
+    def fromCommandLineArgs[A: Tag: IsNotIntersection](
       args: List[String],
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+    ): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromCommandLineArgs(
           args,
@@ -675,22 +675,20 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
-    def fromMap[A](
+    def fromMap[A: Tag: IsNotIntersection](
       map: Map[String, String],
       configDescriptor: ConfigDescriptor[A],
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+    ): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromMap(
           map,
           source,
           keyDelimiter,
           valueDelimiter,
-          leafForSequence,
           filterKeys
         )
       )
@@ -714,16 +712,15 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
-    def fromMultiMap[A](
+    def fromMultiMap[A: Tag: IsNotIntersection](
       map: Map[String, ::[String]],
       configDescriptor: ConfigDescriptor[A],
       source: String,
       keyDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+    ): Layer[ReadError[String], A] =
       fromConfigDescriptor(
-        configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, leafForSequence, filterKeys)
+        configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, filterKeys)
       )
 
     /**
@@ -747,22 +744,20 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
-    def fromProperties[A](
+    def fromProperties[A: Tag: IsNotIntersection](
       properties: Properties,
       configDescriptor: ConfigDescriptor[A],
       source: String,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+    ): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromProperties(
           properties,
           source,
           keyDelimiter,
           valueDelimiter,
-          leafForSequence,
           filterKeys
         )
       )
@@ -788,18 +783,16 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
-    def fromPropertiesFile[A](
+    def fromPropertiesFile[A: Tag: IsNotIntersection](
       filePath: String,
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[Throwable, Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
-          .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
+    ): Layer[ReadError[String], A] =
+      fromConfigDescriptor(
+        configDescriptor from ConfigSource
+          .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, filterKeys)
       )
 
     /**
@@ -825,18 +818,25 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      * Note: The delimiter '.' for keys doesn't work in system environment.
      */
-    def fromSystemEnv[K, V, A](
+    @silent("a type was inferred to be `Any`")
+    def fromSystemEnv[K, V, A: Tag: IsNotIntersection](
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): ZLayer[Has[System], ReadError[String], Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
-          .fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
-      )
+    ): ZLayer[System, ReadError[String], A] =
+      ZLayer {
+        ZIO.service[System].flatMap { system =>
+          read(
+            configDescriptor from ConfigSource.fromSystemEnv(
+              keyDelimiter,
+              valueDelimiter,
+              filterKeys,
+              ZLayer.succeed(system)
+            )
+          )
+        }
+      }
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -859,25 +859,36 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
-    def fromSystemProperties[K, V, A](
+    @silent("a type was inferred to be `Any`")
+    def fromSystemProperties[K, V, A: Tag: IsNotIntersection](
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): ZLayer[Has[System], ReadError[String], Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource.fromSystemProps(keyDelimiter, valueDelimiter).map(configDescriptor from _)
-      )
+      valueDelimiter: Option[Char] = None,
+      filterKeys: String => Boolean = _ => true
+    ): ZLayer[System, ReadError[String], A] =
+      ZLayer {
+        ZIO.service[System].flatMap { system =>
+          read(
+            configDescriptor from ConfigSource.fromSystemProps(
+              keyDelimiter,
+              valueDelimiter,
+              filterKeys,
+              ZLayer.succeed(system)
+            )
+          )
+        }
+      }
 
-    private[config] def fromConfigDescriptor[A](
+    private[config] def fromConfigDescriptor[A: Tag: IsNotIntersection](
       configDescriptor: ConfigDescriptor[A]
-    )(implicit tag: Tag[A]): Layer[ReadError[K], Has[A]] =
-      ZLayer.fromZIO(ZIO.fromEither(read(configDescriptor)))
+    ): Layer[ReadError[K], A] =
+      ZLayer.fromZIO(read(configDescriptor))
 
-    private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
+    private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A: Tag: IsNotIntersection](
       configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
-    )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
+    ): ZLayer[R, E, A] =
       ZLayer.fromZIO(
-        configDescriptor.flatMap(descriptor => ZIO.fromEither(read(descriptor)))
+        configDescriptor.flatMap(descriptor => read(descriptor))
       )
   }
 

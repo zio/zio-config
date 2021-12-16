@@ -43,52 +43,6 @@ object PropertyTreeCombinatorsTest extends BaseSpec {
             equalTo((1 to params.recordKeyCount).toList.flatMap(_ => leaves.map(_ + string).toSequences))
           )
         }
-      },
-      test(
-        "PropertyTree.mapEmptyToError on a tree with zero empty returns all leaves with values in Right of Either"
-      ) {
-        check(nLevelSequenceWithRecords, Gen.string) { (input, string) =>
-          val (tree, leaves, params) = input
-          val mapEmpty               = tree.mapEmptyToError(string)
-          assert(getTreeFromNLevelSequence(mapEmpty, params.nestedSequencesCount))(
-            equalTo(
-              (1 to params.recordKeyCount).toList
-                .flatMap(_ => leaves.map(Right(_): Either[String, String]).toSequences)
-            )
-          )
-        }
-      },
-      test(
-        "PropertyTree.mapEmptyToError on a tree with empty returns all leaves that are empty to Left(error)"
-      ) {
-        check(nLevelSequenceWithRecordsEmpty, Gen.string) { (input, string) =>
-          val (tree, params) = input
-          val mapEmpty       = tree.mapEmptyToError(string)
-
-          assert(getTreeFromNLevelSequence(mapEmpty, params.nestedSequencesCount))(
-            equalTo(
-              (List
-                .fill(params.recordKeyCount)(
-                  PropertyTree.Leaf(Left(string))
-                ))
-            )
-          )
-        }
-      },
-      test(
-        "PropertyTree.zip should return the same tree on left and right when zipped with same tree"
-      ) {
-        check(nLevelSequenceWithRecords) { input =>
-          val (tree, _, _) = input
-          val zippedA      = tree.zipWith(tree)((a, _) => a)
-          val zippedB      = tree.zipWith(tree)((_, b) => b)
-
-          assert((zippedA, zippedB))(
-            equalTo(
-              ((tree, tree))
-            )
-          )
-        }
       }
     )
 }

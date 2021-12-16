@@ -6,18 +6,18 @@ import eu.timepit.refined.boolean.And
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 import eu.timepit.refined.string.Trimmed
+import zio.config._
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
-import zio.config.{BaseSpec, ConfigDescriptor, ConfigSource, LeafForSequence, helpers, read, write}
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, Random, ZIO}
+import zio.{Random, ZIO}
 
 import ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig] with Has[Random], TestFailure[String], TestSuccess] =
+  val spec: Spec[TestConfig with Random, TestFailure[String], TestSuccess] =
     suite("Refined support")(
       test("Refined config roundtrip") {
         check(genRefinedProd) { p =>
@@ -25,11 +25,9 @@ object RefinedReadWriteRoundtripTest extends BaseSpec {
           val p2  =
             for {
               written <- ZIO.fromEither(write(cfg, p))
-              reread  <- ZIO
-                           .fromEither(
-                             read(cfg from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid))
-                           )
-                           .mapError(_.getMessage)
+              reread  <-
+                read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
+                  .mapError(_.getMessage)
             } yield reread
 
           assertM(p2)(equalTo(p))
@@ -40,7 +38,7 @@ object RefinedReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
-          assert(p2)(helpers.isErrors(hasField("size", _.size, equalTo(5))))
+          assertM(p2.mapError(_.size).either)(equalTo(Left(5)))
         }
       }
     )
@@ -85,7 +83,7 @@ object RefinedReadWriteRoundtripTestUtils {
 
   ////
 
-  def genRefinedProd: Gen[Has[Random], RefinedProd] =
+  def genRefinedProd: Gen[Random, RefinedProd] =
     for {
       ldap  <- genSymbol(1, 10)
       port  <- Gen.int(1025, 64000)
@@ -101,7 +99,7 @@ object RefinedReadWriteRoundtripTestUtils {
       Refined.unsafeApply(pwd)
     )
 
-  def genRefinedProdInvalid: Gen[Has[Random], (Int, Map[String, String])] =
+  def genRefinedProdInvalid: Gen[Random, (Int, Map[String, String])] =
     for {
       port  <- Gen.int(0, 1023)
       n     <- Gen.int(1, 2)

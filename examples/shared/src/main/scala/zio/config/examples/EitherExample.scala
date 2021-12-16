@@ -45,7 +45,7 @@ object EitherExample extends App {
     ConfigSource.fromMap(parseErrorConfig, "constant")
 
   println(
-    read(prodOrDev from invalidSource).swap.map(_.prettyPrint()).swap
+    read(prodOrDev from invalidSource).mapError(_.prettyPrint()).either.unsafeRun
   )
   /*
       ╥
@@ -73,7 +73,7 @@ object EitherExample extends App {
     Map("x1" -> "v1", "x2" -> "v2", "x3" -> "v3", "x4" -> "1", "x5" -> "2.0")
 
   assert(
-    read(prodOrDev from ConfigSource.fromMap(allConfigsExist)) ==
-      Right(Left(Prod(Ldap("v1"), DbUrl("v2"))))
+    read(prodOrDev from ConfigSource.fromMap(allConfigsExist)) equalM
+      Left(Prod(Ldap("v1"), DbUrl("v2")))
   )
 }

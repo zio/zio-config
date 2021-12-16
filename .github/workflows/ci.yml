@@ -1,8 +1,8 @@
 name: CI
 
 env:
-  JDK_JAVA_OPTIONS: '-XX:+PrintCommandLineFlags -Xmx2G'  # JDK_JAVA_OPTIONS is _the_ env. variable to use for modern Java
-  JVM_OPTS: '-XX:+PrintCommandLineFlags -Xmx2G' # for Java 8 only (sadly, it is not modern enough for JDK_JAVA_OPTIONS)
+  JDK_JAVA_OPTIONS: '-XX:+PrintCommandLineFlags -Xmx4G'  # JDK_JAVA_OPTIONS is _the_ env. variable to use for modern Java
+  JVM_OPTS: '-XX:+PrintCommandLineFlags -Xmx4G' # for Java 8 only (sadly, it is not modern enough for JDK_JAVA_OPTIONS)
 
 on:
   pull_request:
@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v2.3.5
+        uses: actions/checkout@v2.4.0
         with:
           fetch-depth: 0
       - name: Setup Scala and Java
@@ -36,7 +36,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v2.3.5
+        uses: actions/checkout@v2.4.0
       - name: Setup Scala and Java
         uses: olafurpg/setup-scala@v13
       - name: Cache scala dependencies
@@ -55,7 +55,7 @@ jobs:
         platform: ['JS', 'JVM', 'Native']
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v2.3.5
+        uses: actions/checkout@v2.4.0
         with:
           fetch-depth: 0
       - name: Setup Scala and Java
@@ -88,7 +88,7 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v2.3.5
+        uses: actions/checkout@v2.4.0
         with:
           fetch-depth: 0
       - name: Setup Scala and Java 
