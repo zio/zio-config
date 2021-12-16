@@ -237,7 +237,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       def fromTrees(
         values: List[PropertyTree[K, V]]
       ): ZManaged[Any, ReadError[String], AnnotatedRead[PropertyTree[K, List[B]]]] = {
-        val list = values.zipWithIndex.map { case (value, idx) =>
+        val list = values.zipWithIndex.map { case (_, idx) =>
           loopAny(
             Step.Index(idx) :: path,
             cfg.config,
