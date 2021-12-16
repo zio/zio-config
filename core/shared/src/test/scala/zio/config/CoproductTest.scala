@@ -80,7 +80,7 @@ object CoproductTest extends BaseSpec {
           assertM(readChooseLeftFromBoth(p))(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
         }
       }
-    ) @@ TestAspect.samples(50)
+    ) @@ TestAspect.samples(10)
 }
 
 object CoproductTestUtils {

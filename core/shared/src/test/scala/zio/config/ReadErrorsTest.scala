@@ -22,7 +22,7 @@ object ReadErrorsTest extends BaseSpec {
           assert(error.prettyPrint())(equalTo(prettyPrint))
         }
       }
-    ) @@ TestAspect.samples(50)
+    ) @@ TestAspect.samples(10)
 }
 
 object ReadErrorsTestUtils {

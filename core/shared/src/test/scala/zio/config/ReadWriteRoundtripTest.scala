@@ -107,7 +107,7 @@ object ReadWriteRoundtripTest extends BaseSpec {
 
         assertM(data2)(equalTo(data))
       }
-    ) @@ TestAspect.samples(50)
+    ) @@ TestAspect.samples(10)
 }
 
 object ReadWriteRoundtripTestUtils {
