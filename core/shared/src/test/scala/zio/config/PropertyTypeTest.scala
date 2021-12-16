@@ -1,10 +1,10 @@
 package zio.config
 
+import zio.Random
 import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
 import zio.test.Assertion._
 import zio.test._
-import zio.Random
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID

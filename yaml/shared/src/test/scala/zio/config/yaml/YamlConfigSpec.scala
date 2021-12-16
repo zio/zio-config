@@ -6,7 +6,7 @@ import zio.test._
 
 object YamlConfigSpec extends DefaultRunnableSpec {
   val spec: ZSpec[Environment, Failure] = suite("YamlConfig")(
-    testM("Read a complex structure") {
+    test("Read a complex structure") {
       val result   = YamlConfigSource.fromYamlString(
         """
           |top:

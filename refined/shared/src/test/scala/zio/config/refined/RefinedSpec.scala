@@ -3,11 +3,11 @@ package zio.config.refined
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.types.string.NonEmptyString
+import zio.Random
 import zio.config.PropertyTreePath._
 import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test._
-import zio.Random
 
 import ReadError._
 import RefinedUtils._

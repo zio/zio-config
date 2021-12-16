@@ -1,9 +1,9 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test.{DefaultRunnableSpec, _}
-import zio.ZIO
 
 object ArgsListAccumulationTest extends DefaultRunnableSpec {
 

@@ -2,8 +2,7 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
-import zio.test.{TestEnvironment, TestSystem}
-import zio.test.{DefaultRunnableSpec, _}
+import zio.test.{DefaultRunnableSpec, TestEnvironment, TestSystem, _}
 import zio.{Random, ZIO}
 
 object SystemTest extends DefaultRunnableSpec {

@@ -1,10 +1,10 @@
 package zio.config
 
+import zio.Random
 import zio.config.PropertyTreePath.Step
 import zio.config.ReadErrorsTestUtils._
 import zio.test.Assertion._
 import zio.test._
-import zio.Random
 
 object ReadErrorsTest extends BaseSpec {
 

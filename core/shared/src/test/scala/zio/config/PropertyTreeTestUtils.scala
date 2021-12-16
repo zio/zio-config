@@ -1,8 +1,8 @@
 package zio.config
 
+import zio.Random
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.test.{Gen, Sized}
-import zio.{Random}
 
 object PropertyTreeTestUtils {
   final case class PropertyTreeTestParams(

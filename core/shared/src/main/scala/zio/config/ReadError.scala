@@ -1,10 +1,9 @@
 package zio.config
 
+import PropertyTreePath._
 import zio.config.AnnotatedRead.Annotation
 
 import scala.util.control.NoStackTrace
-
-import PropertyTreePath._
 
 sealed trait ReadError[+A] extends Exception with NoStackTrace { self =>
   def annotations: Set[Annotation]

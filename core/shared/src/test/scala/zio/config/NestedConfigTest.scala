@@ -1,11 +1,11 @@
 package zio.config
 
+import zio.Random
 import zio.config.ConfigDescriptor._
 import zio.config.NestedConfigTestUtils._
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test._
-import zio.Random
 
 object NestedConfigTest extends BaseSpec {
 

@@ -6,9 +6,9 @@ import eu.timepit.refined.boolean.And
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 import eu.timepit.refined.string.Trimmed
+import zio.config._
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
-import zio.config._
 import zio.test.Assertion._
 import zio.test._
 import zio.{Random, ZIO}
