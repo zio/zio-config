@@ -20,7 +20,7 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
 
   case class Config(x: X)
 
-  val spec: ZSpec[Environment, Failure] = suite("MagnoliaConfig")(testM("descriptor of coproduct sealed trait") {
+  val spec: ZSpec[Environment, Failure] = suite("MagnoliaConfig")(test("descriptor of coproduct sealed trait") {
     assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "A"))))(equalTo(Config(A))) *>
       assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "B"))))(equalTo(Config(B))) *>
       assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Config(C))) *>
