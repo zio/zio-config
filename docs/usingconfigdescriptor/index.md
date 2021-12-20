@@ -32,14 +32,6 @@ case class MyConfig(ldap: String, port: Int, dburl: String)
 To not divert our focus on handling Either (only for explanation purpose), we will use 
 the below syntax troughout the code
 
-```scala mdoc:silent
-
-implicit class EitherImpureOps[A, B](self: Either[A, B]) {
-  def getOrThrow: B =
-   self.fold(a => throw new Exception(a.toString), identity)
-}
-
-```
 
 To perform any action using zio-config, we need a configuration description.
 Let's define a simple one.

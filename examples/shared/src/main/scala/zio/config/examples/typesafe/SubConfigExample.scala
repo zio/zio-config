@@ -1,7 +1,6 @@
 package zio.config.examples.typesafe
 
-import zio.config._
-import zio.config.typesafe.TypesafeConfigSource
+import zio.config._, typesafe._
 
 import magnolia._
 
@@ -30,7 +29,7 @@ object SubConfigExample extends App {
 
   assert(
     read(
-      descriptor[ShortConfig] from TypesafeConfigSource.fromHoconString(hoconStr).at(path"a.b.c[0]")
+      descriptor[ShortConfig] from ConfigSource.fromHoconString(hoconStr).at(path"a.b.c[0]")
     ) equalM (ShortConfig(1, 2))
   )
 }

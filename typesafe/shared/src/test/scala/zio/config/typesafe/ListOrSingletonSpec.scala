@@ -1,6 +1,6 @@
 package zio.config.typesafe
 
-import zio.config.ConfigDescriptor._
+import zio.config._, ConfigDescriptor._
 import zio.config.read
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
@@ -15,7 +15,7 @@ object ListOrSingletonSpec extends DefaultRunnableSpec {
             |""".stripMargin
 
         val config = listOrSingleton("list")(string)
-        val source = TypesafeConfigSource.fromHoconString(configString)
+        val source = ConfigSource.fromHoconString(configString)
 
         assertM(read(config from source))(equalTo(List("x")))
       },
@@ -25,7 +25,7 @@ object ListOrSingletonSpec extends DefaultRunnableSpec {
             |""".stripMargin
 
         val config = listOrSingleton("list")(string)
-        val source = TypesafeConfigSource.fromHoconString(configString)
+        val source = ConfigSource.fromHoconString(configString)
 
         assertM(read(config from source))(equalTo(List("x", "y")))
       }

@@ -1,8 +1,29 @@
 package zio.config
 
 import com.typesafe.config.{ConfigObject, ConfigRenderOptions, ConfigValue}
+import java.io.File
+import zio.ZIO
 
 package object typesafe {
+  implicit class FromConfigSource(c: ConfigSource.type) {
+    def fromResourcePath: ConfigSource =
+      TypesafeConfigSource.fromResourcePath
+
+    def fromHoconFile[A](file: File): ConfigSource =
+      TypesafeConfigSource.fromHoconFile(file)
+
+    def fromHoconFilePath[A](filePath: String): ConfigSource =
+      TypesafeConfigSource.fromHoconFilePath(filePath)
+
+    def fromHoconString(input: String): ConfigSource =
+      TypesafeConfigSource.fromHoconString(input)
+
+    def fromTypesafeConfig(
+      rawConfig: ZIO[Any, Throwable, com.typesafe.config.Config]
+    ): ConfigSource =
+      TypesafeConfigSource.fromTypesafeConfig(rawConfig)
+  }
+
   implicit class PropertyTreeOps(tree: PropertyTree[String, String]) { self =>
 
     /**

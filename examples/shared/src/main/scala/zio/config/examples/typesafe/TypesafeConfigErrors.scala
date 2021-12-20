@@ -61,13 +61,13 @@ object TypesafeConfigErrors extends App {
    """
 
   val nestedConfigAutomaticResult1: IO[ReadError[String], AwsConfig] =
-    read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))
+    read(configNestedAutomatic from ConfigSource.fromHoconString(hocconStringWithStringDb))
 
   val nestedConfigAutomaticResult2: IO[ReadError[String], AwsConfig] =
-    read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithDb))
+    read(configNestedAutomatic from ConfigSource.fromHoconString(hocconStringWithDb))
 
   val nestedConfigAutomaticResult3: IO[ReadError[String], AwsConfig] =
-    read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
+    read(configNestedAutomatic from ConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
   assert(
     nestedConfigAutomaticResult1 equalM
@@ -97,13 +97,13 @@ object TypesafeConfigErrors extends App {
   }
 
   val nestedConfigManualResult1: IO[ReadError[String], AwsConfig] =
-    read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithDb))
+    read(configNestedManual from ConfigSource.fromHoconString(hocconStringWithDb))
 
   val nestedConfigManualResult2: IO[ReadError[String], AwsConfig] =
-    read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))
+    read(configNestedManual from ConfigSource.fromHoconString(hocconStringWithStringDb))
 
   val nestedConfigManualResult3: IO[ReadError[String], AwsConfig] =
-    read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
+    read(configNestedManual from ConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
   assert(
     nestedConfigManualResult1 equalM
@@ -135,7 +135,7 @@ object TypesafeConfigErrors extends App {
   val configWithHoconSubstitution: ConfigDescriptor[DatabaseDetails] = descriptor[DatabaseDetails]
 
   val finalResult: IO[ReadError[String], DatabaseDetails] =
-    read(configWithHoconSubstitution from TypesafeConfigSource.fromHoconString(hoconStringWithSubstitution))
+    read(configWithHoconSubstitution from ConfigSource.fromHoconString(hoconStringWithSubstitution))
 
   assert(
     finalResult equalM

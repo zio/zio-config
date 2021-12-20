@@ -199,8 +199,8 @@ Here is an quick example
 
 ```scala mdoc:silent
 
-import zio.config.typesafe._, TypesafeConfigSource._
-import zio.config.magnolia.DeriveConfigDescriptor._
+import zio.config.typesafe._
+import zio.config.magnolia._
 
 ```
 
@@ -211,7 +211,7 @@ case class SimpleConfig(port: Int, url: String, region: Option[String])
 val automaticDescription = descriptor[SimpleConfig]
 
 val hoconSource =
-  TypesafeConfigSource.fromHoconString(
+  ConfigSource.fromHoconString(
       """
       {
         port : 123
@@ -224,7 +224,7 @@ val hoconSource =
 
 
 val anotherHoconSource =
-  TypesafeConfigSource.fromHoconString(
+  ConfigSource.fromHoconString(
       """
         port=123
         url=bla

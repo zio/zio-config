@@ -4,10 +4,8 @@ import com.typesafe.config.ConfigRenderOptions
 import zio.IO
 import zio.config.ConfigDescriptor._
 import zio.config.examples._
-import zio.config.typesafe.{TypesafeConfigSource, _}
+import zio.config._, zio.config.typesafe._
 import zio.config.{ConfigDescriptor, ReadError, read, write}
-
-import TypesafeConfigSource._
 
 object TypesafeConfigMap extends App with EitherImpureOps {
   final case class A(m1: Map[String, List[Int]], l1: List[Int], l2: List[Int], m2: Map[String, B])
@@ -233,7 +231,7 @@ object TypesafeConfigMap extends App with EitherImpureOps {
   val xx: ConfigDescriptor[Map[String, String]] = nested("k")(map("s")(string("y")))
 
   assert(
-    read(xx from fromHoconString(hocon3)) equalM Map("dynamicMap" -> "z")
+    read(xx from ConfigSource.fromHoconString(hocon3)) equalM Map("dynamicMap" -> "z")
   )
 
   val hocon4: String =
@@ -244,6 +242,6 @@ object TypesafeConfigMap extends App with EitherImpureOps {
   val xx2: zio.config.ConfigDescriptor[Map[String, String]] = nested("k")(map(string("y")))
 
   assert(
-    read(xx2 from fromHoconString(hocon4)) equalM Map("dynamicMap" -> "z")
+    read(xx2 from ConfigSource.fromHoconString(hocon4)) equalM Map("dynamicMap" -> "z")
   )
 }
