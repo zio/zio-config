@@ -17,7 +17,7 @@ object ReadWriteReportExample extends App {
   // An example where user provides a description once and for all, and use it for read, write, report!
   val configWithoutSource: ConfigDescriptor[Either[UserPwd, Token]] =
     (string("usr") ?? "Example: some-user" zip
-      string("pwd")(Password.apply, Password.unapply).optional ?? "sec" zip
+      string("pwd").to[Password].optional ?? "sec" zip
       string("jhi").optional ?? "Ex: ghi" zip
       (string("xyz") zip int("abc").orElseEither(string("def"))).to[XYZ].optional ?? "Ex: ha").to[UserPwd] orElseEither
       (string("auth_token") zip string("clientid")).to[Token] ?? "Prod Config"

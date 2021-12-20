@@ -14,7 +14,7 @@ object WriteExample extends App with EitherImpureOps {
   final case class A(b: B, i: Int)
 
   val description: ConfigDescriptor[A] = {
-    val bConfig = (int("c")(Id.apply, Id.unapply) zip int("d").to[Id]).to[B]
+    val bConfig = (int("c").to[Id] zip int("d").to[Id]).to[B]
 
     (bConfig zip int("i")).to[A]
   }
