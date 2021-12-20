@@ -18,20 +18,14 @@ object CommandLineComplex extends App {
   final case class UserPassword(k2: String, k3: String)
 
   object UserPassword {
-    val desc: ConfigDescriptor[UserPassword] = (string("username") |@| string("password"))(
-      UserPassword.apply,
-      UserPassword.unapply
-    )
+    val desc: ConfigDescriptor[UserPassword] = (string("username") zip string("password")).to[UserPassword]
   }
 
   final case class DatabaseConfig(conf: UserPassword, url: String)
 
   object DatabaseConfig {
     val desc: ConfigDescriptor[DatabaseConfig] = nested("database") {
-      (UserPassword.desc |@| string("url"))(
-        DatabaseConfig.apply,
-        DatabaseConfig.unapply
-      )
+      (UserPassword.desc zip string("url")).to[DatabaseConfig]
     }
   }
 
@@ -47,19 +41,16 @@ object CommandLineComplex extends App {
   final case class SparkConfig(databaseConfig: DatabaseConfig, numberOfExecutors: Int)
 
   object SparkConfig {
-    val desc: ConfigDescriptor[SparkConfig] = (DatabaseConfig.desc |@| int("num_execs"))(
-      SparkConfig.apply,
-      SparkConfig.unapply
-    )
+    val desc: ConfigDescriptor[SparkConfig] = (DatabaseConfig.desc zip int("num_execs")).to[SparkConfig]
   }
 
   final case class AppConfig(sparkConfig: SparkConfig, vault: VaultConfig, users: List[String], region: List[String])
 
   object AppConfig {
     val desc: ConfigDescriptor[AppConfig] =
-      (nested("conf")(SparkConfig.desc) |@| VaultConfig.desc |@| list(
+      (nested("conf")(SparkConfig.desc) zip VaultConfig.desc zip list(
         "users"
-      )(string) |@| list("region")(string))(AppConfig.apply, AppConfig.unapply)
+      )(string) zip list("region")(string)).to[AppConfig]
   }
 
   assert(

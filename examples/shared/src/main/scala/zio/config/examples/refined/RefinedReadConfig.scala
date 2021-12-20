@@ -17,16 +17,14 @@ object RefinedReadConfig extends App {
     longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
   )
 
-  def prodConfig                              =
+  def prodConfig =
     (
-      refine[String, NonEmpty]("LDAP") |@|
-        refine[GreaterEqual[W.`1024`.T]](int("PORT")) |@|
-        refine[String, NonEmpty]("DB_URL").optional |@|
+      refine[String, NonEmpty]("LDAP") zip
+        refine[GreaterEqual[W.`1024`.T]](int("PORT")) zip
+        refine[String, NonEmpty]("DB_URL").optional zip
         refine[Size[Greater[W.`2`.T]]](list("LONGS")(long))
-    )(
-      RefinedProd.apply,
-      RefinedProd.unapply
-    )
+    ).to[RefinedProd]
+
   val configMultiMap: Map[String, ::[String]] =
     Map(
       "LDAP"   -> ::("ldap", Nil),

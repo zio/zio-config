@@ -4,6 +4,7 @@ import com.github.ghik.silencer.silent
 
 import scala.collection.mutable.{ListBuffer, Map => MutableMap}
 import scala.reflect.ClassTag
+import java.io.ObjectInputFilter.Config
 
 @silent("Unused import")
 trait ConfigDescriptorModule extends ConfigSourceModule { module =>
@@ -89,6 +90,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *      // { "port" : "8080"  }
      *  }}}
      */
+    @deprecated("Use .to[B] if the transformation is to a case class. If not use use transform methods", since = "2.0")
     def apply[B](app: A => B, unapp: B => Option[A]): ConfigDescriptor[B] =
       ConfigDescriptorAdt.transformOrFailDesc(
         this,
@@ -236,21 +238,12 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *    (string("USERNAME") |@| int("PORT")).apply((a, b) => Config.apply(a, b), Config.unapply)
      *  }}}
      */
-    final def |@|[B](
+    final def zip[B, C](
       that: => ConfigDescriptor[B]
-    ): ProductBuilder[ConfigDescriptor, A, B] =
-      new ProductBuilder[ConfigDescriptor, A, B] {
-
-        override def zip[X, Y]: (ConfigDescriptor[X], ConfigDescriptor[Y]) => ConfigDescriptor[(X, Y)] =
-          (a, b) => lazyDesc(a.zip(b))
-
-        override def xmapEither[X, Y]
-          : (ConfigDescriptor[X], X => Either[String, Y], Y => Either[String, X]) => ConfigDescriptor[Y] =
-          (a, b, c) => lazyDesc(a.transformOrFail(b, c))
-
-        override val a: ConfigDescriptor[A] = lazyDesc(self)
-        override val b: ConfigDescriptor[B] = lazyDesc(that)
-      }
+    )(implicit Z: InvariantZip.WithOut[A, B, C]): ConfigDescriptor[C] =
+      ConfigDescriptorAdt
+        .zipDesc(self, that)
+        .transform[Z.Out](a => Z.combine(a._1, a._2), zOut => (Z.projectLeft(zOut), Z.projectRight(zOut)))
 
     /**
      * `<>` is an alias to function `orElse`.
@@ -1236,8 +1229,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  Using `|@|` over `<>` avoids nested tuples.
      */
-    final def zip[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
-      ConfigDescriptorAdt.zipDesc(self, that)
 
     /**
      * `zipWith` is similar to `xmapEither` but the function
@@ -1258,13 +1249,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * This is used to implement sequence` (`traverse`)
      * behaviour of `ConfigDescriptor[A]`
      */
-    final def zipWith[B, C](that: => ConfigDescriptor[B])(
-      to: (A, B) => Either[String, C],
-      from: C => Either[String, (A, B)]
-    ): ConfigDescriptor[C] =
-      (self |@| that)
-        .apply[(A, B)](Tuple2.apply, Tuple2.unapply)
-        .transformOrFail({ case (a, b) => to(a, b) }, from)
+    private[config] def zipWith[B, Out, C](that: => ConfigDescriptor[B])(to: Out => Either[String, C])(
+      from: C => Either[String, Out]
+    )(implicit Z: InvariantZip.WithOut[A, B, Out]): ConfigDescriptor[C] =
+      (self zip that)
+        .transformOrFail(to, from)
   }
 
   trait ConfigDescriptorFunctions {
@@ -1319,15 +1308,13 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           lazyDesc(head)
             .transform((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
         )((b: ConfigDescriptor[(A, List[A])], a: ConfigDescriptor[A]) =>
-          b.zipWith(a)(
-            { case ((first, tail), a) =>
-              Right((first, a :: tail))
-            },
-            {
-              case (_, Nil)              => Left("Invalid list length")
-              case (first, head :: tail) => Right(((first, tail), head))
-            }
-          )
+          (b.zipWith[A, (A, List[A], A), (A, List[A])](a)({ case (first, tail, a) =>
+            Right((a, first :: tail))
+          }) {
+            case (first, (head :: tail)) => Right((first, tail, head))
+            case _                       => Left("Invalid list length")
+
+          })
         )({ case (a, t) => a :: t }, l => l.headOption.map(h => (h, l.tail)))
 
     /**

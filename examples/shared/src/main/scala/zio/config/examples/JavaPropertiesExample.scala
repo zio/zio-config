@@ -15,7 +15,7 @@ final case class ApplicationConfig(bridgeIp: String, userName: String)
 
 object ApplicationConfig {
   val configuration: ConfigDescriptor[ApplicationConfig] =
-    ((string("bridgeIp")) |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
+    ((string("bridgeIp")) zip string("username")).to[ApplicationConfig]
 }
 
 // The main App

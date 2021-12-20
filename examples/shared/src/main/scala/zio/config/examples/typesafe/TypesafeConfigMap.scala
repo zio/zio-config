@@ -14,21 +14,21 @@ object TypesafeConfigMap extends App with EitherImpureOps {
 
   object A {
     val config: ConfigDescriptor[A] =
-      (map("m1")(list(int)) |@| list("l1")(int) |@| list("l2")(int) |@| map("m2")(B.config))(A.apply, A.unapply)
+      (map("m1")(list(int)) zip list("l1")(int) zip list("l2")(int) zip map("m2")(B.config)).to[A]
   }
 
   final case class B(m1: Map[String, C], i: Int)
 
   object B {
     val config: ConfigDescriptor[B] =
-      (map("m1")(C.config) |@| int("ll"))(B.apply, B.unapply)
+      (map("m1")(C.config) zip int("ll")).to[B]
   }
 
   final case class C(a1: String, a2: Int)
 
   object C {
     val config: ConfigDescriptor[C] =
-      (string("a1") |@| int("a2"))(C.apply, C.unapply)
+      (string("a1") zip int("a2")).to[C]
   }
 
   val hocon: String =

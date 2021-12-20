@@ -10,8 +10,8 @@ final case class Prod(ldap: String, port: Int, dburl: Option[String])
 
 object Prod {
   val prodConfig: ConfigDescriptor[Prod] =
-    (string("LDAP") |@| int("PORT") |@|
-      string("DB_URL").optional)(Prod.apply, Prod.unapply)
+    (string("LDAP") zip int("PORT") zip
+      string("DB_URL").optional).apply((Prod.apply _).tupled, Prod.unapply)
 
   val myAppLogic: ZIO[Has[Prod], Throwable, (String, Option[String])] =
     for {

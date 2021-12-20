@@ -88,12 +88,12 @@ object TypesafeConfigErrors extends App {
 
   val configNestedManual: ConfigDescriptor[AwsConfig] = {
     val accountConfig  =
-      (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
+      (string("region") zip string("accountId")).to[Account]
     val databaseConfig =
-      (int("port") |@| string("url"))(Database.apply, Database.unapply)
-    (nested("account")(accountConfig) |@| nested("database")(databaseConfig)
+      (int("port") zip string("url")).to[Database]
+    (nested("account")(accountConfig) zip nested("database")(databaseConfig)
       .orElseEither(string("database"))
-      .optional)(AwsConfig.apply, AwsConfig.unapply)
+      .optional).to[AwsConfig]
   }
 
   val nestedConfigManualResult1: IO[ReadError[String], AwsConfig] =

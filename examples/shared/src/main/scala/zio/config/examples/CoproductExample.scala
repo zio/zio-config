@@ -18,7 +18,7 @@ object CoproductExample extends App {
   final case class Height(height: Long)
 
   val personConfig: ConfigDescriptor[Person] =
-    (string("name") |@| int("age").optional)(Person.apply, Person.unapply)
+    (string("name") zip int("age").optional).to[Person]
 
   val heightConfig: ConfigDescriptor[Height] =
     long("height")(Height.apply, Height.unapply)
