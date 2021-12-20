@@ -23,10 +23,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
       testM("read nested typesafe config map using map") {
         val source = TypesafeConfigSource.fromHoconString(hocon2)
         val result = read(
-          nested("result")(map(sssDescription))(
-            TypesafeConfigMapSpecUtils.Nested.apply,
-            TypesafeConfigMapSpecUtils.Nested.unapply
-          ) from source
+          nested("result")(map(sssDescription)).to[TypesafeConfigMapSpecUtils.Nested] from source
         )
 
         val expected =
