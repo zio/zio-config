@@ -35,7 +35,7 @@ object CommandLineComplex extends App {
     val desc: ConfigDescriptor[VaultConfig] =
       nested("vault") {
         UserPassword.desc
-      }(VaultConfig.apply, VaultConfig.unapply)
+      }.to[VaultConfig]
   }
 
   final case class SparkConfig(databaseConfig: DatabaseConfig, numberOfExecutors: Int)

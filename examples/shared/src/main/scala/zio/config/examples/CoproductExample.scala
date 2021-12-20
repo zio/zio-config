@@ -21,12 +21,12 @@ object CoproductExample extends App {
     (string("name") zip int("age").optional).to[Person]
 
   val heightConfig: ConfigDescriptor[Height] =
-    long("height")(Height.apply, Height.unapply)
+    long("height").to[Height]
 
-  val aConfig: ConfigDescriptor[A] = nested("any")(personConfig)(A.apply, A.unapply)
-  val bConfig: ConfigDescriptor[B] = nested("body")(heightConfig)(B.apply, B.unapply)
-  val cConfig: ConfigDescriptor[C] = boolean("can")(C.apply, C.unapply)
-  val dConfig: ConfigDescriptor[D] = string("dance")(D.apply, D.unapply)
+  val aConfig: ConfigDescriptor[A] = nested("any")(personConfig).to[A]
+  val bConfig: ConfigDescriptor[B] = nested("body")(heightConfig).to[B]
+  val cConfig: ConfigDescriptor[C] = boolean("can").to[C]
+  val dConfig: ConfigDescriptor[D] = string("dance").to[D]
 
   val danceConfig: ConfigDescriptor[Dance] =
     enumeration[Dance](aConfig, bConfig, cConfig, dConfig)
