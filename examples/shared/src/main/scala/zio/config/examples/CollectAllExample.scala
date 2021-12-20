@@ -17,9 +17,7 @@ final case class Variables(variable1: Int, variable2: Option[Int])
 object CollectAllExample extends App {
   val listOfConfig: List[ConfigDescriptor[Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
-      .map(group =>
-        (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
-      )
+      .map(group => (int(s"${group}_VARIABLE1") zip int(s"${group}_VARIABLE2").optional).to[Variables])
 
   val configOfList: ConfigDescriptor[List[Variables]] =
     collectAll(listOfConfig.head, listOfConfig.tail: _*)

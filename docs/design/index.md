@@ -25,8 +25,8 @@ Hence, zio-config exposes an intuitive language, that allows you to describe you
   case class Prod(ldap: String, port: Int, dburl: Option[String])
 
   val prodConfig =
-    (string("LDAP") |@| int("PORT") |@|
-      string("DB_URL").optional)(Prod.apply, Prod.unapply)
+    (string("LDAP") zip int("PORT") zip
+      string("DB_URL").optional).to[Prod]
 
 ```
 

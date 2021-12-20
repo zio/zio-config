@@ -204,9 +204,9 @@ trait DeriveConfigDescriptor {
           defaultValue = evDf(defaults.head),
           description = evDs(descs.head)
         )
-        (fieldDesc |@| next(names.tail, descs.tail, defaults.tail))(
-          (v, t) => field[K](v) :: t,
-          l => Some((l.head, l.tail))
+        (fieldDesc zip next(names.tail, descs.tail, defaults.tail)).transform(
+          { case ((v, t)) => field[K](v) :: t },
+          l => ((l.head, l.tail))
         )
       }
   }

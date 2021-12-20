@@ -32,8 +32,8 @@ object MultipleSourcesSimpleExample extends App {
     )
 
   val myConfig: ConfigDescriptor[MyConfig] =
-    ((string("LDAP").from(source1.orElse(source3)) |@| int("PORT").from(source4)) |@|
-      string("DB_URL").optional.from(source1.orElse(source5)))(MyConfig.apply, MyConfig.unapply)
+    ((string("LDAP").from(source1.orElse(source3)) zip int("PORT").from(source4)) zip
+      string("DB_URL").optional.from(source1.orElse(source5))).to[MyConfig]
 
   // Let's reset the whole source details in the original description
   val myConfigWithReset: ConfigDescriptor[MyConfig] =

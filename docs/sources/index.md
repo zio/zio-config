@@ -25,7 +25,7 @@ Let's define a simple one.
 ```scala mdoc:silent
 
 val myConfig =
-  (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
+  (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
  // val automatedConfig = descriptor[MyConfig]; using zio-config-magnolia
 
@@ -69,7 +69,7 @@ This support a list of values for a key.
 ```scala mdoc:silent
 case class ListConfig(ldap: String, port: List[Int], dburl: String)
 
-val listConfig = (string("LDAP") |@| list("PORT")(int) |@| string("DB_URL"))(ListConfig.apply, ListConfig.unapply)
+val listConfig = (string("LDAP") zip list("PORT")(int) zip string("DB_URL")).to[ListConfig]
 
 val multiMapSource =
   ConfigSource.fromMultiMap(
@@ -131,7 +131,7 @@ Given:
 then, the below config will work
 
 ```scala
-nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+nested("KAFKA")(string("SERVER") zip string("FLAG")).to[KafkaConfig]
 ```
 
 

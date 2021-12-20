@@ -18,8 +18,8 @@ final case class Employee(
 object EmployeeDetails {
 
   val employee: ConfigDescriptor[Employee] =
-    (string("name") |@|
-      int("state").orElseEither(string("state")).optional |@|
+    (string("name") zip
+      int("state").orElseEither(string("state")).optional zip
       double("confidence")
         .orElseEither(int("confidence")) // The value can be Double or Int for key confidence
         .orElseEither(                   // If not Double or Int, then it could be string, but this time the key can be confidence, confidences or confs!
@@ -30,7 +30,7 @@ object EmployeeDetails {
 
   val employeeDetails: zio.config.ConfigDescriptor[EmployeeDetails] =
     nested("details") {
-      (nested("employees")(list(employee)) |@| int("accountId")).to[EmployeeDetails]
+      (nested("employees")(list(employee)) zip int("accountId")).to[EmployeeDetails]
     }
 }
 

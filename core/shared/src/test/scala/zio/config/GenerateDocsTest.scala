@@ -9,7 +9,7 @@ object GenerateDocsTest extends BaseSpec {
   val spec: ZSpec[Environment, Failure] =
     suite("Generate docs")(
       test("optional nested") {
-        val inner = (int("a") |@| int("b")).tupled
+        val inner = (int("a") zip int("b"))
         val outer = nested("c")(inner).optional
 
         val doc   = generateDocs(outer)
@@ -94,12 +94,12 @@ object GenerateDocsTestUtils {
   final case class AppConfig(secret: Option[String], credentials: Credentials, database: Database)
 
   def descriptor: ConfigDescriptor[AppConfig] = {
-    val credentials = (string("USERNAME") ?? "Example: ZioUser" |@| string("PASSWORD") ?? "Example: ZioPass")
+    val credentials = (string("USERNAME") ?? "Example: ZioUser" zip string("PASSWORD") ?? "Example: ZioPass")
       .to[Credentials] ?? "Credentials"
 
-    val database = (int("PORT") ?? "Example: 8088" |@| string("URL") ?? "Example: abc.com").to[Database] ?? "Database"
+    val database = (int("PORT") ?? "Example: 8088" zip string("URL") ?? "Example: abc.com").to[Database] ?? "Database"
 
-    (string("SECRET").optional ?? "Application secret" |@| nested("CREDENTIALS")(credentials) |@| nested(
+    (string("SECRET").optional ?? "Application secret" zip nested("CREDENTIALS")(credentials) zip nested(
       "DATABASE"
     )(database)).to[AppConfig]
   }
