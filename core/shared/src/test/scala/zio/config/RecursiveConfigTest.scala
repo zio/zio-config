@@ -131,7 +131,7 @@ object RecursiveConfigTestUtils {
 
   object SimpleRec {
     val config: ConfigDescriptor[SimpleRec] =
-      (int("id") |@| nested("nested")(config).optional).to[SimpleRec]
+      (int("id") zip nested("nested")(config).optional).to[SimpleRec]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
@@ -159,7 +159,7 @@ object RecursiveConfigTestUtils {
 
   object SimpleListRec {
     val config: ConfigDescriptor[SimpleListRec] =
-      (int("id") |@| list("nested")(config)).to[SimpleListRec]
+      (int("id") zip list("nested")(config)).to[SimpleListRec]
 
     val tree: PropertyTree[String, String] =
       PropertyTree.Record(
@@ -192,7 +192,7 @@ object RecursiveConfigTestUtils {
 
   object SimpleEitherRec {
     val config: ConfigDescriptor[SimpleEitherRec] =
-      (int("id") |@| (nested("nested")(config))
+      (int("id") zip (nested("nested")(config))
         .orElseEither(int("termination"))).to[SimpleEitherRec]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
@@ -227,7 +227,7 @@ object RecursiveConfigTestUtils {
 
   object SimpleRecReversed {
     val config: ConfigDescriptor[SimpleRecReversed] =
-      (nested("nested")(config).optional |@| int("id")).to[SimpleRecReversed]
+      (nested("nested")(config).optional zip int("id")).to[SimpleRecReversed]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
@@ -254,7 +254,7 @@ object RecursiveConfigTestUtils {
 
   object SimpleRecMultiple {
     val config: ConfigDescriptor[SimpleRecMultiple] =
-      (nested("nested")(config).optional |@| int("id") |@| nested("nested2")(config).optional).to[SimpleRecMultiple]
+      (nested("nested")(config).optional zip int("id") zip nested("nested2")(config).optional).to[SimpleRecMultiple]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
       Map(
@@ -280,7 +280,7 @@ object RecursiveConfigTestUtils {
 
   case class Row(id: Int, nested: Option[Data])
 
-  lazy val row: ConfigDescriptor[Row]   = (int("id") |@| data.optional).to[Row]
+  lazy val row: ConfigDescriptor[Row]   = (int("id") zip data.optional).to[Row]
   lazy val data: ConfigDescriptor[Data] = nested("rows")(row).to[Data]
 
   val testSource: ConfigSource = ConfigSource.fromPropertyTree(

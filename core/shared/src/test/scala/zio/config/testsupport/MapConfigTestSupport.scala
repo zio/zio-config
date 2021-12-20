@@ -97,7 +97,7 @@ object MapConfigTestSupport {
   object JobConfig {
     val descriptor: ConfigDescriptor[JobConfig] =
       head("job")(
-        (DataflowConfig.descriptor.optional |@| head("supervise")(boolean)).to[JobConfig]
+        (DataflowConfig.descriptor.optional zip head("supervise")(boolean)).to[JobConfig]
       )
   }
 
