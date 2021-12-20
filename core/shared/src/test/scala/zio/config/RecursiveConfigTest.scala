@@ -318,11 +318,11 @@ object RecursiveConfigTestUtils {
 
     val add: ConfigDescriptor[Expr] = nested("add")(
       list(expr)
-        .apply(
+        .transformOrFailRight(
           lst => Add(lst),
           {
-            case Add(items) => Some(items)
-            case _          => None
+            case Add(items) => Right(items)
+            case _          => Left("Failed to write")
           }
         )
     )
