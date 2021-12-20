@@ -50,7 +50,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
 
         case class Cfg(map: Map[String, String], y: String)
 
-        val desc = (nested("k")(map("s")(string("y"))) |@| string("y"))(Cfg.apply, Cfg.unapply)
+        val desc = (nested("k")(map("s")(string("y"))) zip string("y")).to[Cfg]
 
         val result = read(desc from TypesafeConfigSource.fromHoconString(hocon3))
 
@@ -111,7 +111,7 @@ object TypesafeConfigMapSpecUtils {
     map("z")(string)
 
   val sssDescription: ConfigDescriptor[sss] =
-    (c1 |@| c2 |@| c3 |@| c4)((a, b, c, d) => sss(a, b, c, d), sss.unapply)
+    (c1 zip c2 zip c3 zip c4).to[sss]
 
   final case class Nested(s: Map[String, sss])
 
