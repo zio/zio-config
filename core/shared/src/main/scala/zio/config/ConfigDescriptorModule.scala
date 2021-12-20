@@ -4,7 +4,6 @@ import com.github.ghik.silencer.silent
 
 import scala.collection.mutable.{ListBuffer, Map => MutableMap}
 import scala.reflect.ClassTag
-import java.io.ObjectInputFilter.Config
 
 @silent("Unused import")
 trait ConfigDescriptorModule extends ConfigSourceModule { module =>
@@ -1309,13 +1308,17 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             .transform((a: A) => (a, Nil), (b: (A, List[A])) => b._1)
         )((b: ConfigDescriptor[(A, List[A])], a: ConfigDescriptor[A]) =>
           (b.zipWith[A, (A, List[A], A), (A, List[A])](a)({ case (first, tail, a) =>
-            Right((a, first :: tail))
+            Right((first, a :: tail))
           }) {
             case (first, (head :: tail)) => Right((first, tail, head))
             case _                       => Left("Invalid list length")
 
           })
-        )({ case (a, t) => a :: t }, l => l.headOption.map(h => (h, l.tail)))
+        )
+        .transformOrFailRight(
+          { case (a, t) => a :: t },
+          l => l.headOption.toRight("Invalid list length").map(h => (h, l.tail))
+        )
 
     /**
      * enumeration allows user to up-cast all the subtypes to its super type defined by `D`.
@@ -1359,7 +1362,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *   val config = descriptor[D]
      * }}}
      */
-    def enumeration[D]                                                                                     = new PartiallyAppliedEnumeration[D]
+    def enumeration[D] = new PartiallyAppliedEnumeration[D]
 
     class PartiallyAppliedEnumeration[D] {
       def apply[X <: D](

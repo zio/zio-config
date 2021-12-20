@@ -26,8 +26,8 @@ A few examples are given below.
  case class Jdbc(username: NonEmptyString, password: NonEmptyString)
 
  val jdbc: ConfigDescriptor[Jdbc] =
-   (refineType[NonEmptyString]("username") |@| 
-     refineType[NonEmptyString]("password"))(Jdbc.apply, Jdbc.unapply)
+   (refineType[NonEmptyString]("username") zip
+     refineType[NonEmptyString]("password")).to[Jdbc]
 
  read(jdbc from ConfigSource.fromMap(Map("username" -> "", "password" -> "")))
 

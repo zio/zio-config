@@ -83,7 +83,7 @@ Let's define a simple one.
 ```scala mdoc:silent
 
 val myConfig: ConfigDescriptor[MyConfig] =
-  (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
+  (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
  // ConfigDescriptor[ MyConfig]
 
@@ -94,7 +94,7 @@ To get a tuple,
 ```scala mdoc:silent
 
 val myConfigTupled: ConfigDescriptor[(String, Int, String)] =
-  (string("LDAP") |@| int("PORT")|@| string("DB_URL")).tupled
+  (string("LDAP") zip int("PORT") zip string("DB_URL"))
 
 
 ```
@@ -176,9 +176,9 @@ generateDocs(myConfig)
 
 
 val betterConfig =
-  (string("LDAP") ?? "Related to auth" |@|  int("PORT") ?? "Database port" |@|
+  (string("LDAP") ?? "Related to auth" zip int("PORT") ?? "Database port" zip
     string("DB_URL") ?? "url of database"
-   )(MyConfig.apply, MyConfig.unapply)
+   ).to[MyConfig]
 
 generateDocs(betterConfig).toTable.toGithubFlavouredMarkdown
 // Custom documentation along with auto generated docs
@@ -302,7 +302,7 @@ import zio.console._
 case class ApplicationConfig(bridgeIp: String, userName: String)
 
 val configuration =
-  (string("bridgeIp") |@| string("username"))(ApplicationConfig.apply, ApplicationConfig.unapply)
+  (string("bridgeIp") zip string("username")).to[ApplicationConfig]
 
 val finalExecution =
   for {
