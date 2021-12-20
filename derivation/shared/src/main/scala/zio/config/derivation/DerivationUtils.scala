@@ -10,14 +10,18 @@ object DerivationUtils {
     def read(propertyValue: String): Either[PropertyType.PropertyReadError[String], String] =
       if (propertyValue == value) Right(value)
       else Left(PropertyType.PropertyReadError(propertyValue, s"constant string '$value'"))
-    def write(a: String): String                                                            = a
+
+    def write(a: String): String = a
   }
 
   def constantString(value: String): ConfigDescriptor[String] =
     ConfigDescriptorAdt.Source(ConfigSource.empty, ConstantString(value)) ?? s"constant string '$value'"
 
   def constant[T](label: String, value: T): ConfigDescriptor[T] =
-    constantString(label)(_ => value, p => Some(p).filter(_ == value).map(_ => label))
+    constantString(label).transformOrFailRight(
+      _ => value,
+      p => Some(p).filter(_ == value).map(_ => label).toRight("Failed to write back constant")
+    )
 
   /**
    * FIXME: Investigate why this logic, and see if we can avoid
