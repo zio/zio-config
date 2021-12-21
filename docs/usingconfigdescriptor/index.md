@@ -88,8 +88,8 @@ import zio.Runtime
 
 import zio.config.PropertyTree._
 
-val written: PropertyTree[String, String] = 
-  write(appConfig, awsConfigResult).getOrThrow
+val written: Either[String, PropertyTree[String, String]] = 
+  write(appConfig, awsConfigResult)
 
 
 ```
@@ -113,7 +113,7 @@ yield
 ```scala mdoc:silent
 
  // To yield the input map that was fed in, call `flattenString` !!
- written.flattenString()
+ written.map(_.flattenString())
 
  // yields
      Map(
@@ -132,7 +132,7 @@ yield
 
 import zio.config.typesafe._
 
-written.toHocon
+written.map(_.toHocon)
 
 // yields
 // SimpleConfigObject({"appName":"myApp","east":{"connection":"xyz.com","port":"8888"},"south":{"connection":"abc.com","port":"8111"}})
@@ -150,7 +150,7 @@ However, we thought we will provide a few helper functions which is a simple del
 
 import zio.config.typesafe._
 
-written.toHoconString
+written.map(_.toHoconString)
   /**
    *  yieling :
    *  {{{
@@ -179,7 +179,7 @@ However, we thought we will provide a few helper functions which is a simple del
 
 ```scala mdoc:silent
 
-written.toJson
+written.map(_.toJson)
 
   /**
    *  yieling :

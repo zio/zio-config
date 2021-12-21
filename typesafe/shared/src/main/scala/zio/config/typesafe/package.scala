@@ -3,8 +3,38 @@ package zio.config
 import com.typesafe.config.{ConfigObject, ConfigRenderOptions, ConfigValue}
 import java.io.File
 import zio.ZIO
+import zio.{Layer, Has}
+import izumi.reflect.Tag
 
 package object typesafe {
+  implicit class FromConfig(c: ZConfig.type) {
+    def fromResourcePath[A](configDescriptor: ConfigDescriptor[A])(implicit
+      tag: Tag[A]
+    ): Layer[ReadError[String], Has[A]] =
+      TypesafeConfig.fromResourcePath(configDescriptor)
+
+    def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(implicit
+      tag: Tag[A]
+    ): Layer[ReadError[String], Has[A]] =
+      TypesafeConfig.fromHoconFile(file, configDescriptor)
+
+    def fromHoconFilePath[A](filePath: String, configDescriptor: ConfigDescriptor[A])(implicit
+      tag: Tag[A]
+    ): Layer[ReadError[String], Has[A]] =
+      TypesafeConfig.fromHoconFilePath(filePath, configDescriptor)
+
+    def fromHoconString[A](hoconString: String, configDescriptor: ConfigDescriptor[A])(implicit
+      tag: Tag[A]
+    ): Layer[ReadError[String], Has[A]] =
+      TypesafeConfig.fromHoconString(hoconString, configDescriptor)
+
+    def fromTypesafeConfig[A](
+      conf: => com.typesafe.config.Config,
+      configDescriptor: ConfigDescriptor[A]
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+      TypesafeConfig.fromTypesafeConfig(conf, configDescriptor)
+  }
+
   implicit class FromConfigSource(c: ConfigSource.type) {
     def fromResourcePath: ConfigSource =
       TypesafeConfigSource.fromResourcePath

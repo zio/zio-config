@@ -240,10 +240,9 @@ read(automaticDescription from anotherHoconSource)
 
 // yielding SimpleConfig(123,bla,Some(useast))
 
-// Please check other ways to load the hocon file in `TypesafeConfig`
 
 // You could also do, in which case the return type is `Config` service
-TypesafeConfig.fromHoconString(
+ZConfig.fromHoconString(
      """
       {
         port : 123
@@ -262,7 +261,8 @@ Similar to `TypesafeConfig.fromHoconString(str, automaticDescription)`
 
 ```scala mdoc:silent
 
-TypesafeConfig.fromHoconFile(new java.io.File("fileapth"), automaticDescription)
+ZConfig.fromHoconFile(new java.io.File("fileapth"), automaticDescription)
+// or use, read(automaticDescription from ConfigSource.fromHoconFile(new java.io.File("fileapth")))
 
 ```
 
@@ -282,11 +282,11 @@ val jsonString =
 
    """
 
-TypesafeConfig.fromHoconString(jsonString, automaticDescription)
+ZConfig.fromHoconString(jsonString, automaticDescription)
+// or use, read(automaticDescription from ConfigSource.fromHoconString(jsonString))
 
 
 ```
-Please check other ways to load the hocon file in `TypesafeConfig`
 
 ## Command Line Arguments
 
