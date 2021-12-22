@@ -7,7 +7,7 @@ import zio.{Layer, Has}
 import izumi.reflect.Tag
 
 package object typesafe {
-  implicit class FromConfig(c: ZConfig.type) {
+  implicit class FromConfigTypesafe(c: ZConfig.type) {
     def fromResourcePath[A](configDescriptor: ConfigDescriptor[A])(implicit
       tag: Tag[A]
     ): Layer[ReadError[String], Has[A]] =
@@ -35,7 +35,7 @@ package object typesafe {
       TypesafeConfig.fromTypesafeConfig(conf, configDescriptor)
   }
 
-  implicit class FromConfigSource(c: ConfigSource.type) {
+  implicit class FromConfigSourceTypesafe(c: ConfigSource.type) {
     def fromResourcePath: ConfigSource =
       TypesafeConfigSource.fromResourcePath
 
