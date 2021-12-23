@@ -173,7 +173,7 @@ trait ConfigSourceModule extends KeyValueModule {
     def at(propertyTreePath: PropertyTreePath[K]): ConfigSource = self match {
       case OrElse(self, that)    => self.at(propertyTreePath).orElse(that.at(propertyTreePath))
       case Reader(names, access) =>
-        Reader(names, access.map(_.map(fn => (path => fn(propertyTreePath).map(_.at(path))))))
+        Reader(names, access.map(_.map(getTree => (path => getTree(propertyTreePath).map(_.at(path))))))
     }
   }
 
@@ -476,15 +476,7 @@ trait ConfigSourceModule extends KeyValueModule {
     ): ConfigSource = {
       val managed: ZManaged[Any, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
         ZManaged
-          .make({
-            ZIO.effect({
-              println("retrieving")
-              new FileInputStream(new File(filePath))
-            })
-          }) { r =>
-            println("closing")
-            ZIO.effectTotal(r.close())
-          }
+          .make(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))
           .mapM { inputStream =>
             for {
               properties <- ZIO.effect {
