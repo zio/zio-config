@@ -1,7 +1,9 @@
 package zio.config.examples.typesafe
 
-import zio.config._, typesafe._, magnolia._
+import zio.config._
 
+import typesafe._
+import magnolia._
 import examples._
 
 object TypesafeConfigSealedTrait extends App with EitherImpureOps {
