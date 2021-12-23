@@ -1,10 +1,11 @@
 package zio.config.typesafe
 
-import zio.config._, ConfigDescriptor._
-import zio.config.read
+import zio.config.{read, _}
 import zio.test.Assertion._
 import zio.test.environment.TestEnvironment
 import zio.test.{DefaultRunnableSpec, ZSpec, assertM}
+
+import ConfigDescriptor._
 
 object ListOrSingletonSpec extends DefaultRunnableSpec {
   override def spec: ZSpec[TestEnvironment, Any] =

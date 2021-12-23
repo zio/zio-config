@@ -1,10 +1,11 @@
 package zio.config.typesafe
 
-import zio.config._, ConfigDescriptor._
 import zio.config.typesafe.EmployeeDetails._
-import zio.config.{ConfigDescriptor, read}
+import zio.config.{ConfigDescriptor, read, _}
 import zio.test.Assertion._
 import zio.test.{DefaultRunnableSpec, _}
+
+import ConfigDescriptor._
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
