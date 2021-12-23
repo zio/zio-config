@@ -181,7 +181,7 @@ In this scenario, you could do
 
 ```scala mdoc:silent
 
-int("PORT")(Port.apply, Port.unapply)
+int("PORT").to[Port]
 
 ```
 

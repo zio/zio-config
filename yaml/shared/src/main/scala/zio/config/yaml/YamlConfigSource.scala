@@ -28,12 +28,12 @@ object YamlConfigSource {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Either[ReadError[String], MyConfig] =
-   *     YamlConfigSource.fromYamlPath(Path.of("/path/to/file.yaml"))
+   *     YamlConfigSource.fromYamlFile(new File("/path/to/file.yaml"))
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromYamlPath(path: Path): ConfigSource =
-    fromYamlFile(path.toFile)
+  def fromYamlFile(file: File): ConfigSource =
+    fromYamlRepr(file)(loadYaml(_), file.getAbsolutePath)
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -45,12 +45,12 @@ object YamlConfigSource {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Either[ReadError[String], MyConfig] =
-   *     YamlConfigSource.fromYamlFile(new File("/path/to/file.yaml"))
+   *     YamlConfigSource.fromYamlPath(Path.of("/path/to/file.yaml"))
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromYamlFile(file: File): ConfigSource =
-    fromYamlRepr(file)(loadYaml(_), file.getAbsolutePath)
+  def fromYamlPath(path: Path): ConfigSource =
+    fromYamlFile(path.toFile)
 
   /**
    * Retrieve a `ConfigSource` from yaml reader.

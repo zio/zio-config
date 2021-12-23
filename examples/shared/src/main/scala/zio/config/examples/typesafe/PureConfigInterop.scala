@@ -1,10 +1,10 @@
 package zio.config.examples.typesafe
 
+import zio.config._
 import zio.config.magnolia.Descriptor.SealedTraitStrategy
 import zio.config.magnolia.{DeriveConfigDescriptor, Descriptor}
-import zio.config.typesafe.TypesafeConfigSource
-import zio.config.{ConfigSource, read}
 
+import typesafe._
 import Descriptor.SealedTraitStrategy._
 
 object PureConfigInterop extends App with EitherImpureOps {
@@ -37,7 +37,7 @@ object PureConfigInterop extends App with EitherImpureOps {
   import X._
 
   val aHoconSource: ConfigSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString(
         s"""
            |x = A
@@ -45,7 +45,7 @@ object PureConfigInterop extends App with EitherImpureOps {
       )
 
   val bHoconSource: ConfigSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString(
         s"""
            |x = B
@@ -54,7 +54,7 @@ object PureConfigInterop extends App with EitherImpureOps {
       )
 
   val cHoconSource: ConfigSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString(
         s"""
            |x = C
@@ -62,7 +62,7 @@ object PureConfigInterop extends App with EitherImpureOps {
       )
 
   val dHoconSource: ConfigSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString(
         s"""
            | x : { 

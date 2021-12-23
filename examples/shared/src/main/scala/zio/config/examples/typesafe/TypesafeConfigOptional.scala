@@ -1,7 +1,7 @@
 package zio.config.examples.typesafe
 
 import zio.config._
-import zio.config.typesafe.TypesafeConfigSource.fromHoconString
+import zio.config.typesafe._
 
 import examples._
 import EmployeeDetails._
@@ -43,7 +43,7 @@ object EmployeeDetails {
 object NullAndOptionalConfig extends App {
   // Take a look at state values, that can either exist, or be given a null
   val hocconSourceList: ConfigSource =
-    fromHoconString(
+    ConfigSource.fromHoconString(
       """
        details {
           employees = [{
