@@ -1,6 +1,7 @@
 package zio.config.examples.typesafe
 
-import zio.config._, zio.config.typesafe._
+import zio.config._
+import zio.config.typesafe._
 
 import examples._
 import EmployeeDetails._

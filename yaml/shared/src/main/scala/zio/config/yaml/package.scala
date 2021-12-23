@@ -1,10 +1,10 @@
 package zio.config
 
-import java.nio.file.Path
-import java.io.File
-import java.io.Reader
-import zio.{ZIO, Layer, Has}
 import izumi.reflect.Tag
+import zio.{Has, Layer, ZIO}
+
+import java.io.{File, Reader}
+import java.nio.file.Path
 
 package object yaml {
   implicit class FromConfigYaml(c: ZConfig.type) {

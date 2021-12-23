@@ -1,7 +1,8 @@
 package zio.config.examples.typesafe
 
-import zio.config._, typesafe._
+import zio.config._
 
+import typesafe._
 import magnolia._
 
 object SubConfigExample extends App {

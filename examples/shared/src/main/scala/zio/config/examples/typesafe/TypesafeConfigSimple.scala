@@ -1,8 +1,10 @@
 package zio.config.examples.typesafe
 
 import zio.IO
-import zio.config._, typesafe._, magnolia._
+import zio.config._
 
+import typesafe._
+import magnolia._
 import examples._
 import ConfigDescriptor._
 

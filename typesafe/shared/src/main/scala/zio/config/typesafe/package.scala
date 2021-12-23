@@ -1,10 +1,10 @@
 package zio.config
 
 import com.typesafe.config.{ConfigObject, ConfigRenderOptions, ConfigValue}
-import java.io.File
-import zio.ZIO
-import zio.{Layer, Has}
 import izumi.reflect.Tag
+import zio.{Has, Layer, ZIO}
+
+import java.io.File
 
 package object typesafe {
   implicit class FromConfigTypesafe(c: ZConfig.type) {

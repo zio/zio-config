@@ -1,9 +1,10 @@
 package zio.config.examples.typesafe
 
+import zio.config._
 import zio.config.magnolia.Descriptor.SealedTraitStrategy
 import zio.config.magnolia.{DeriveConfigDescriptor, Descriptor}
-import zio.config._, typesafe._
 
+import typesafe._
 import Descriptor.SealedTraitStrategy._
 
 object PureConfigInterop extends App with EitherImpureOps {
