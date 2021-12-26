@@ -33,21 +33,23 @@ trait ConfigSourceModule extends KeyValueModule {
    * it will involve running this resourceful effect,
    * and then create a property tree in-memory.
    *
-   * If memoized, for most of the sources, the tree will be in-memory after the first read, and for each key, it's just
-   * a `get` from the tree.
+   * If memoized, for most of the config-sources, the the entire config source will be represented as a propertyTree in memory,
+   * after the read of the 1st config key.
    *
-   * However, for certain complex sources, it may not make sense to memoize at all. As an example, the author
-   * of ConfigSource can decide to not represent the entire config as an in-memory tree at any point.
-   * As an example, the implementation of a ConfigSource that requires a file-read, while implementing the method,
-   * `PropertyTreePath[K] => IO[ReadError[K], PropertyTree[K, V]]`, the author  cancan choose to read only that part
-   * of the file where the input `PropertyTreePath` exist and return just a minor part of the file as a tree.
+   * However, for certain complex sources, it may not make sense to memoize at all. This talks about situations where the author
+   * of ConfigSource can decide to NOT represent the entire config as an in-memory tree at any point.
+   * As an example, during the implementation of a ConfigSource that requires a file-read which requires creating a function
+   * `PropertyTreePath[K] => IO[ReadError[K], PropertyTree[K, V]]`, the author of the ConfigSource choose to read only a part
+   * of the file where the input `PropertyTreePath` exist and return just a smaller tree compared to the big file.
    *
-   * In this case memoize doesn't do much for you, as for the next key, it will
+   * In this case memoize doesn't do much for you, as for the next key, it has to
    * read the second part of the file and so on.
-   * It's important to have an eye on the semantics of your ConfigSource before you call `.memoize`.
+   * Therefore, it's recommended to have an eye on the semantics of your ConfigSource before you call `.memoize`.
    *
-   * Regardless of `.memoize`, everytime you call `read`, `ConfigSource` will be re-evaluated.
-   * If you need `ConfigSource` to be strictly evaluated once (example: read config content from a file only once)
+   * Note,`memoize` is only per `ConfigDescriptorModule.read`.
+   * i.e, everytime we call `read`, `ConfigSource` will be re-evaluated.
+   *
+   * If you need `ConfigSource` to be strictly evaluated once across the app (example: read config content from a file only once)
    * then use `strictlyOnce` or use `ConfigSource` as a layer.
    */
   sealed trait ConfigSource { self =>
