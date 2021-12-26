@@ -38,13 +38,14 @@ trait ConfigSourceModule extends KeyValueModule {
    *
    * However, for certain complex sources, it may not make sense to memoize at all. This talks about situations where the author
    * of ConfigSource can decide to NOT represent the entire config as an in-memory tree at any point.
-   * As an example, during the implementation of a ConfigSource that requires a file-read which requires creating a function
+   * As an example, during the implementation of a ConfigSource which requires creating a function
    * `PropertyTreePath[K] => IO[ReadError[K], PropertyTree[K, V]]`, the author of the ConfigSource choose to read only a part
-   * of the file where the input `PropertyTreePath` exist and return just a smaller tree compared to the big file.
-   *
-   * In this case memoize doesn't do much for you, as for the next key, it has to
+   * of the file where the input `PropertyTreePath` exist and return just a smaller tree compared to that of the entire big file.
+   * In this case configSource.memoize doesn't do much for you, as for the next key, it has to
    * read the second part of the file and so on.
+   *
    * Therefore, it's recommended to have an eye on the semantics of your ConfigSource before you call `.memoize`.
+   * The easiest way to think about question this "Does it make sense to memoize my Config Source?"
    *
    * Note,`memoize` is only per `ConfigDescriptorModule.read`.
    * i.e, everytime we call `read`, `ConfigSource` will be re-evaluated.
@@ -159,6 +160,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
     /**
      * Within a `read`, ConfigSource is evaluated only once if memoized.
+     * This may not be applicable for all ConfigSources
      *
      * Example:
      *   {{{
@@ -173,7 +175,29 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * If ConfigSource need to be computed only once even for
      * multiple reads, then consider using `strictlyOnce` combinator
-     * or use `toLayer`
+     * or use `toLayer`.
+     *
+     * Internal Details:
+     *
+     * If memoized, for most of the config-sources, the the entire config source will be represented as a propertyTree in memory,
+     * after the read of the 1st config key.
+     *
+     * However, for certain complex sources, it may not make sense to memoize at all. This talks about situations where the author
+     * of ConfigSource can decide to NOT represent the entire config as an in-memory tree at any point.
+     * As an example, during the implementation of a ConfigSource which requires creating a function
+     * `PropertyTreePath[K] => IO[ReadError[K], PropertyTree[K, V]]`, the author of the ConfigSource choose to read only a part
+     * of the file where the input `PropertyTreePath` exist and return just a smaller tree compared to that of the entire big file.
+     * In this case configSource.memoize doesn't do much for you, as for the next key, it has to
+     * read the second part of the file and so on.
+     *
+     * Therefore, it's recommended to have an eye on the semantics of your ConfigSource before you call `.memoize`.
+     * The easiest way to think about question this "Does it make sense to memoize my Config Source?"
+     *
+     * Note,`memoize` is only per `ConfigDescriptorModule.read`.
+     * i.e, everytime we call `read`, `ConfigSource` will be re-evaluated.
+     *
+     * If you need `ConfigSource` to be strictly evaluated once across the app (example: read config content from a file only once)
+     * then use `strictlyOnce` or use `ConfigSource` as a layer.
      */
     def memoize: ConfigSource =
       self match {
