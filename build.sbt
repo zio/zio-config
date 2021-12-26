@@ -77,6 +77,7 @@ addCommandAlias(
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
 )
 
+lazy val awsVersion        = "1.12.131"
 lazy val zioVersion        = "1.0.9"
 lazy val magnoliaVersion   = "0.17.0"
 lazy val refinedVersion    = "0.9.27"
@@ -187,6 +188,24 @@ lazy val zioConfigJVM    = zioConfig.jvm
   .settings(libraryDependencies += "dev.zio" %%% "zio-test-sbt" % zioVersion % Test)
 lazy val zioConfigNative = zioConfig.native
   .settings(nativeSettings)
+
+lazy val zioConfigAws    = crossProject(JVMPlatform)
+  .in(file("aws"))
+  .settings(stdSettings("zio-config-aws"))
+  .settings(crossProjectSettings)
+  .settings(dottySettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.amazonaws" % "aws-java-sdk-ssm" % awsVersion,
+      "dev.zio"      %% "zio-test"         % zioVersion % Test,
+      "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "compile->compile;test->test")
+
+lazy val zioConfigAwsJVM = zioConfigTypesafe.jvm
+  .settings(dottySettings)
 
 lazy val zioConfigRefined    = crossProject(JVMPlatform)
   .in(file("refined"))
