@@ -18,6 +18,38 @@ trait ConfigSourceModule extends KeyValueModule {
 
   import ConfigSource._
 
+  /**
+   * Every ConfigSource at the core is just a `Reader`,
+   * which is essentially a function that goes from `PropertyTreePath` to an actual `PropertyTree`.
+   * This `PropertyTree` will be further used to retrieve values for various keys.
+   *
+   * This function can be retrieved under an ZManaged effect. This implies it may involve an IO with managing resources
+   * to form this function.
+   *
+   * The effect that was required to create the function can be memoized as well with the help of the
+   * structure MemoizableManagedReader. `memoize` in ConfigSource makes use of this capability.
+   *
+   * For every read of a key (say, to form a case class), unless ConfigSource is memoized using `source.memoize`,
+   * it will involve running this resourceful effect,
+   * and then create a property tree in-memory.
+   *
+   * If memoized, for most of the sources, the tree will be in-memory after the first read, and for each key, it's just
+   * a `get` from the tree.
+   *
+   * However, for certain complex sources, it may not make sense to memoize at all. As an example, the author
+   * of ConfigSource can decide to not represent the entire config as an in-memory tree at any point.
+   * As an example, the implementation of a ConfigSource that requires a file-read, while implementing the method,
+   * `PropertyTreePath[K] => IO[ReadError[K], PropertyTree[K, V]]`, the author  cancan choose to read only that part
+   * of the file where the input `PropertyTreePath` exist and return just a minor part of the file as a tree.
+   *
+   * In this case memoize doesn't do much for you, as for the next key, it will
+   * read the second part of the file and so on.
+   * It's important to have an eye on the semantics of your ConfigSource before you call `.memoize`.
+   *
+   * Regardless of `.memoize`, everytime you call `read`, `ConfigSource` will be re-evaluated.
+   * If you need `ConfigSource` to be strictly evaluated once (example: read config content from a file only once)
+   * then use `strictlyOnce` or use `ConfigSource` as a layer.
+   */
   sealed trait ConfigSource { self =>
 
     /**
