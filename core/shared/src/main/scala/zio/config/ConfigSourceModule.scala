@@ -28,47 +28,30 @@ trait ConfigSourceModule extends KeyValueModule {
    * Internal details:
    *
    * This function `f` can be retrieved under an ZManaged effect. This implies it may involve an IO with managing resources
-   * to even form this function. This is with a vision to form even more complicated `ConfigSources` in future.
+   * to even form this function. Example: In order to retrieve a property-tree corresponding to a key (PropertyTreePath),
+   * it requires a database connection in the very first instance.
    *
-   * The effect that was required to create the function can be memoized as well with the help of the
-   * structure MemoizableManagedReader (see `memoize` function).
-   * In a first glance, this may look complicated, but it can come in handy quite soon.
-   * Note that, most of the pre-built ConfigSources are memoized, since for most of them, it doesn't make sense
-   * to calculate `f` for every key, instead all that is required is to apply `f` to get the String back.
+   * // pseudo-logic, doesn't compile
    *
-   * For every read of a key (say, to form a case class), unless ConfigSource is memoized using `source.memoize`,
-   * it will involve running this resourceful effect,
-   * and then create a property tree in-memory.
+   * val source: ConfigSource =
+   *   ConfigSource.Reader(
+   *     ZManaged(getDatabaseConnection)
+   *       .flatMap(connection => (key: PropertyTreePath[String] => IO.effect(connection.getStatement.executeQuery("get ${key} from table")))
+   *    )
    *
-   * If memoized, for most of the config-sources, the entire config source will be represented as a propertyTree in memory,
-   * after the read of the 1st config key.
-   *
-   * However, for certain complex sources, it may not make sense to memoize at all. This talks about situations where the author
-   * of ConfigSource can decide to NOT represent the entire config as an in-memory tree at any point.
-   * As an example, during the implementation of a ConfigSource which requires creating a function
-   * `PropertyTreePath[K] => IO[ReadError[K], PropertyTree[K, V]]`, the author of the ConfigSource choose to read only a part
-   * of the file where the input `PropertyTreePath` exist and return just a smaller tree compared to that of the entire big file.
-   * In this case configSource.memoize doesn't do much for you, as for the next key, it has to
-   * read the second part of the file and so on.
-   *
-   * Therefore, it's recommended to have an eye on the semantics of your ConfigSource before you call `.memoize`.
-   * The easiest way to think about question this "Does it make sense to memoize my Config Source?"
-   *
-   * Note,`memoize` is only per `ConfigDescriptorModule.read`.
-   * i.e, everytime we call `read`, `ConfigSource` will be re-evaluated.
-   *
-   * If you need `ConfigSource` to be strictly evaluated once across the app (example: read config content from a file only once)
-   * then use `strictlyOnce` or use `ConfigSource` as a layer.
+   * Note that `ConfigSource` has a generalised `memoize` function that allows you to memoize the effect required to form the
+   * function. In the context of the above example, with `source.memoize` we acquire only a single connection to retrieve
+   * the values for all the keys in your product/coproduct for an instance of `read`.
    */
   sealed trait ConfigSource { self =>
 
     /**
      * With `strictlyOnce`, regardless of the number of times `read`
-     * is invoked, `ConfigSource` is evaluated
-     * strictly once.
+     * is invoked, the effect required to form the `Reader` in `ConfigSource` is evaluated
+     * strictly once. Use `strictlyOnce` only if it's really required.
      *
-     * It returns an Effect, because by the time ConfigSource is retrieved,
-     * an effect is performed (which may involve a resource acquisition and release)
+     * In a normal scenarios, everytime `read` is invoked (as in `read(desc from source)`), it
+     * should read from the real source.
      *
      * {{{
      *   val sourceZIO = ConfigSource.fromPropertiesFile(...).strictlyOnce
@@ -110,8 +93,8 @@ trait ConfigSourceModule extends KeyValueModule {
       })
 
     /**
-     * A Layer is assumed to be "memoized" by default, i.e the construction
-     * of ConfigSource layer is done strictly once regardless of number times the read is invoked.
+     * A Layer is assumed to be "memoized" by default, i.e the effect required to form the reader (refer ConfigSource docs)
+     * is executed strictly once regardless of number of keys involved, or the number the reads invoked.
      */
     def toLayer: ZLayer[Any, ReadError[K], Has[ConfigSource]] =
       strictlyOnce.toLayer
@@ -586,7 +569,11 @@ trait ConfigSourceModule extends KeyValueModule {
       val managed =
         ZIO
           .accessM[System](
-            _.get.envs.map(map => getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys))
+            _.get.envs.map { map =>
+              println("going to calculate tree")
+              val s = getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
+              s
+            }
           )
           .toManaged_
           .mapError(throwable => ReadError.SourceError(throwable.toString))
