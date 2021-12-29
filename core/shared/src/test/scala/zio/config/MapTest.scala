@@ -12,7 +12,7 @@ object MapTest extends BaseSpec {
       testM("map(b)(string(y)) returns the value of y from the values inside map within b.") {
         case class Cfg(a: String, b: Map[String, String])
 
-        val cCfg = (string("a") |@| map("b")(string("c"))).to[Cfg]
+        val cCfg = (string("a") zip map("b")(string("c"))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource
@@ -29,7 +29,7 @@ object MapTest extends BaseSpec {
       testM("map(string(y)) returns the value of y amongst the values of the map as a string.") {
         case class Cfg(a: String, b: Map[String, String])
 
-        val cCfg = (string("a") |@| map("b")(string("c"))).to[Cfg]
+        val cCfg = (string("a") zip map("b")(string("c"))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource
@@ -44,7 +44,7 @@ object MapTest extends BaseSpec {
       testM("map(string(y)) returns the value of y from the value of the map.") {
         case class Cfg(a: String, b: Map[String, List[String]])
 
-        val cCfg = (string("a") |@| map("b")(list(string("c")))).to[Cfg]
+        val cCfg = (string("a") zip map("b")(list(string("c")))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource
@@ -61,7 +61,7 @@ object MapTest extends BaseSpec {
       testM("list of delimited values from Map.") {
         case class Cfg(a: String, b: List[String])
 
-        val cCfg = (string("a") |@| list("b")(string)).to[Cfg]
+        val cCfg = (string("a") zip list("b")(string)).to[Cfg]
 
         // also for ConfigSource.fromSystemEnv
         val res = read(
@@ -82,7 +82,7 @@ object MapTest extends BaseSpec {
       testM("read empty map") {
         case class Cfg(a: String, b: Map[String, String])
 
-        val cCfg = (string("a") |@| map("b")(string)).to[Cfg]
+        val cCfg = (string("a") zip map("b")(string)).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -96,7 +96,7 @@ object MapTest extends BaseSpec {
       testM("read nested maps") {
         case class Cfg(a: String, b: Map[String, Map[String, List[String]]])
 
-        val cCfg = (string("a") |@| map("b")(map(list(string)))).to[Cfg]
+        val cCfg = (string("a") zip map("b")(map(list(string)))).to[Cfg]
 
         val res =
           read(
@@ -128,7 +128,7 @@ object MapTest extends BaseSpec {
         case class Cfg(a: String, b: Option[Map[String, String]])
 
         val cCfg =
-          (string("a") |@| map("b")(string).optional).to[Cfg]
+          (string("a") zip map("b")(string).optional).to[Cfg]
 
         val res =
           read(
@@ -143,7 +143,7 @@ object MapTest extends BaseSpec {
       testM("use default value for absent map") {
         case class Cfg(a: String, b: Map[String, String])
 
-        val cCfg = (string("a") |@| map("b")(string)
+        val cCfg = (string("a") zip map("b")(string)
           .default(Map("x" -> "y", "z" -> "a"))).to[Cfg]
 
         val res  = read(
@@ -155,7 +155,7 @@ object MapTest extends BaseSpec {
       testM("override default non-empty map with empty map") {
         case class Cfg(a: String, b: Map[String, String])
 
-        val cCfg = (string("a") |@| map("b")(string)
+        val cCfg = (string("a") zip map("b")(string)
           .default(Map("x" -> "y"))).to[Cfg]
 
         val res  = read(
@@ -170,7 +170,7 @@ object MapTest extends BaseSpec {
       testM("mapStrict picks map if map exists") {
         case class Cfg(a: String, b: Either[Map[String, String], String])
 
-        val cCfg = (string("a") |@| nested("b")(
+        val cCfg = (string("a") zip nested("b")(
           map(string).orElseEither(string)
         )).to[Cfg]
 
@@ -189,7 +189,7 @@ object MapTest extends BaseSpec {
       testM("mapStrict picks map over primitives") {
         case class Cfg(a: String, b: Either[String, Map[String, String]])
 
-        val cCfg = (string("a") |@| nested("b")(
+        val cCfg = (string("a") zip nested("b")(
           string.orElseEither(map(string))
         )).to[Cfg]
 
@@ -208,7 +208,7 @@ object MapTest extends BaseSpec {
       testM("mapStrict picks alternative when failed to find map") {
         case class Cfg(a: String, b: Either[String, Map[String, String]])
 
-        val cCfg = (string("a") |@| nested("b")(
+        val cCfg = (string("a") zip nested("b")(
           string.orElseEither(map(string))
         )).to[Cfg]
 
@@ -222,7 +222,7 @@ object MapTest extends BaseSpec {
       testM("mapStrict picks alternative on right when failed to find map") {
         case class Cfg(a: String, b: Either[Map[String, String], String])
 
-        val cCfg = (string("a") |@| nested("b")(
+        val cCfg = (string("a") zip nested("b")(
           map(string).orElseEither(string)
         )).to[Cfg]
 

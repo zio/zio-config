@@ -12,12 +12,12 @@ object NestedConfigExample extends App with EitherImpureOps {
   final case class AwsConfig(c1: Database, c2: Database, c3: String)
 
   val database: ConfigDescriptor[Database] =
-    (string("connection") |@| int("port"))(Database.apply, Database.unapply)
+    (string("connection") zip int("port")).to[Database]
 
   val appConfig: ConfigDescriptor[AwsConfig] =
-    (nested("south")(database) ?? "South details" |@|
-      nested("east")(database) ?? "East details" |@|
-      string("appName"))(AwsConfig, AwsConfig.unapply)
+    (nested("south")(database) ?? "South details" zip
+      nested("east")(database) ?? "East details" zip
+      string("appName")).to[AwsConfig]
 
   // For simplicity in example, we use map source. Works with HOCON.
   val source: ConfigSource =

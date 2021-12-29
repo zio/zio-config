@@ -11,10 +11,7 @@ object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)
 
   val config: ConfigDescriptor[SampleConfig] =
-    (int("envvar") |@| string("envvar2").orElse(string("envvar3")))(
-      SampleConfig.apply,
-      SampleConfig.unapply
-    )
+    (int("envvar") zip string("envvar2").orElse(string("envvar3"))).to[SampleConfig]
 
   val runtime = zio.Runtime.default
 

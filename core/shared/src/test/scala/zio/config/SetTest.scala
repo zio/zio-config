@@ -14,7 +14,7 @@ object SetTest extends BaseSpec {
       testM("read empty set") {
         case class Cfg(a: String, b: Set[String])
 
-        val cCfg = (string("a") |@| set("b")(string)).to[Cfg]
+        val cCfg = (string("a") zip set("b")(string)).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -28,7 +28,7 @@ object SetTest extends BaseSpec {
       testM("read nested sets") {
         case class Cfg(a: String, b: Set[Set[String]])
 
-        val cCfg = (string("a") |@| set("b")(set(string))).to[Cfg]
+        val cCfg = (string("a") zip set("b")(set(string))).to[Cfg]
 
         val res =
           read(
@@ -43,7 +43,7 @@ object SetTest extends BaseSpec {
       testM("read absent optional sets") {
         case class Cfg(a: String, b: Option[Set[String]])
 
-        val cCfg = (string("a") |@| set("b")(string).optional).to[Cfg]
+        val cCfg = (string("a") zip set("b")(string).optional).to[Cfg]
 
         val res =
           read(
@@ -58,7 +58,7 @@ object SetTest extends BaseSpec {
       testM("read present optional empty sets") {
         case class Cfg(a: String, b: Option[Set[String]])
 
-        val cCfg = (string("a") |@| set("b")(string).optional).to[Cfg]
+        val cCfg = (string("a") zip set("b")(string).optional).to[Cfg]
 
         val res =
           read(
@@ -73,7 +73,7 @@ object SetTest extends BaseSpec {
       testM("use default value for absent set") {
         case class Cfg(a: String, b: Set[String])
 
-        val cCfg = (string("a") |@| set("b")(string).default(Set("x"))).to[Cfg]
+        val cCfg = (string("a") zip set("b")(string).default(Set("x"))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -87,7 +87,7 @@ object SetTest extends BaseSpec {
       testM("override default non-empty set with empty set") {
         case class Cfg(a: String, b: Set[String])
 
-        val cCfg = (string("a") |@| set("b")(string).default(Set("x"))).to[Cfg]
+        val cCfg = (string("a") zip set("b")(string).default(Set("x"))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -101,7 +101,7 @@ object SetTest extends BaseSpec {
       testM("distinguish set from scalar left") {
         case class Cfg(a: String, b: Either[Set[String], String])
 
-        val cCfg = (string("a") |@| nested("b")(set(string).orElseEither(string))).to[Cfg]
+        val cCfg = (string("a") zip nested("b")(set(string).orElseEither(string))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -115,7 +115,7 @@ object SetTest extends BaseSpec {
       testM("distinguish set from scalar right") {
         case class Cfg(a: String, b: Either[String, Set[String]])
 
-        val cCfg = (string("a") |@| nested("b")(string.orElseEither(set(string)))).to[Cfg]
+        val cCfg = (string("a") zip nested("b")(string.orElseEither(set(string)))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -129,7 +129,7 @@ object SetTest extends BaseSpec {
       testM("distinguish scalar from set left") {
         case class Cfg(a: String, b: Either[String, Set[String]])
 
-        val cCfg = (string("a") |@| nested("b")(string.orElseEither(set(string)))).to[Cfg]
+        val cCfg = (string("a") zip nested("b")(string.orElseEither(set(string)))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -143,7 +143,7 @@ object SetTest extends BaseSpec {
       testM("distinguish scalar from set right") {
         case class Cfg(a: String, b: Either[Set[String], String])
 
-        val cCfg = (string("a") |@| nested("b")(set(string).orElseEither(string))).to[Cfg]
+        val cCfg = (string("a") zip nested("b")(set(string).orElseEither(string))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -157,7 +157,7 @@ object SetTest extends BaseSpec {
       testM("read set as scalar") {
         case class Cfg(a: String, b: String)
 
-        val cCfg = (string("a") |@| head("b")(string)).to[Cfg]
+        val cCfg = (string("a") zip head("b")(string)).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -171,7 +171,7 @@ object SetTest extends BaseSpec {
       testM("read single key objects in nested sets") {
         case class Cfg(a: String, b: Set[Set[String]])
 
-        val cCfg = (string("a") |@| set("b")(set(string("c")))).to[Cfg]
+        val cCfg = (string("a") zip set("b")(set(string("c")))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -195,7 +195,7 @@ object SetTest extends BaseSpec {
       testM("collect errors from set elements") {
         case class Cfg(a: String, b: Set[String])
 
-        val cCfg = (string("a") |@| nested("b")(set(string))).to[Cfg]
+        val cCfg = (string("a") zip nested("b")(set(string))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -211,7 +211,7 @@ object SetTest extends BaseSpec {
       testM("fails if contains duplicate values") {
         case class Cfg(a: String, b: Set[String])
 
-        val cCfg = (string("a") |@| nested("b")(set(string))).to[Cfg]
+        val cCfg = (string("a") zip nested("b")(set(string))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -233,7 +233,7 @@ object SetTest extends BaseSpec {
       testM("fails if nested set contains duplicates") {
         case class Cfg(a: String, b: Set[Set[String]])
 
-        val cCfg = (string("a") |@| set("b")(set(string("c")))).to[Cfg]
+        val cCfg = (string("a") zip set("b")(set(string("c")))).to[Cfg]
 
         val res = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -264,8 +264,8 @@ object SetTest extends BaseSpec {
         case class CfgA(a1: Boolean, a2: Int)
         case class Cfg(a: Set[CfgA], b: Set[Int])
 
-        val cCfgA = (boolean("a1") |@| int("a2")).to[CfgA]
-        val cCfg  = (nested("a")(set(cCfgA)) |@| nested("b")(set(int))).to[Cfg]
+        val cCfgA = (boolean("a1") zip int("a2")).to[CfgA]
+        val cCfg  = (nested("a")(set(cCfgA)) zip nested("b")(set(int))).to[Cfg]
 
         val res                         = read(
           cCfg from ConfigSource.fromPropertyTree(
@@ -325,8 +325,8 @@ object SetTest extends BaseSpec {
         case class CfgA(a1: Boolean, a2: Int)
         case class Cfg(a: Set[CfgA], b: Set[Int])
 
-        val cCfgA = (boolean("a1") |@| int("a2")).to[CfgA]
-        val cCfg  = (nested("a")(set(cCfgA)) |@| nested("b")(set(int))).to[Cfg]
+        val cCfgA = (boolean("a1") zip int("a2")).to[CfgA]
+        val cCfg  = (nested("a")(set(cCfgA)) zip nested("b")(set(int))).to[Cfg]
 
         val res                         = read(
           cCfg from ConfigSource.fromPropertyTree(

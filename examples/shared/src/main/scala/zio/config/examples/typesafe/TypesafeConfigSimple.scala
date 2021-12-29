@@ -2,9 +2,9 @@ package zio.config.examples.typesafe
 
 import zio.IO
 import zio.config._
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 
+import typesafe._
+import magnolia._
 import examples._
 import ConfigDescriptor._
 
@@ -54,26 +54,23 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
 
     """
 
-  val details: ConfigDescriptor[Details] = (string("name") |@| int("age"))(Details.apply, Details.unapply)
+  val details: ConfigDescriptor[Details] = (string("name") zip int("age")).to[Details]
 
   val accountConfig: ConfigDescriptor[Account] =
-    (int("accountId").orElseEither(string("accountId")).optional |@| list(
+    (int("accountId").orElseEither(string("accountId")).optional zip list(
       "regions"
-    )(string) |@| nested("details")(details).optional)(
-      Account.apply,
-      Account.unapply
-    )
+    )(string) zip nested("details")(details).optional).to[Account]
 
   val databaseConfig: ConfigDescriptor[Database] =
-    (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
+    (int("port").optional zip string("url")).to[Database]
 
   val awsDetailsConfig: ConfigDescriptor[AwsDetails] =
-    (nested("accounts")(list(accountConfig)) |@| nested("database")(
+    (nested("accounts")(list(accountConfig)) zip nested("database")(
       databaseConfig
-    ) |@| list("users")(int))(AwsDetails.apply, AwsDetails.unapply)
+    ) zip list("users")(int)).to[AwsDetails]
 
   val listResult: IO[ReadError[String], AwsDetails] =
-    read(awsDetailsConfig from fromHoconString(validHocon))
+    read(awsDetailsConfig from ConfigSource.fromHoconString(validHocon))
 
   assert(
     listResult equalM
@@ -99,7 +96,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
   val automaticAwsDetailsConfig: ConfigDescriptor[AwsDetails] = descriptor[AwsDetails]
 
   val automaticResult: IO[ReadError[String], AwsDetails] =
-    read(automaticAwsDetailsConfig from fromHoconString(validHocon))
+    read(automaticAwsDetailsConfig from ConfigSource.fromHoconString(validHocon))
 
   assert(
     automaticResult equalM
@@ -149,7 +146,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     """
 
   println(
-    read(descriptor[AwsDetails] from fromHoconString(invalidHocon)).either.unsafeRun
+    read(descriptor[AwsDetails] from ConfigSource.fromHoconString(invalidHocon)).either.unsafeRun
   )
   /*
     ╥

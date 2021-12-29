@@ -19,7 +19,7 @@ object ListExample extends App with EitherImpureOps {
     )
 
   val config: ConfigDescriptor[PgmConfig] =
-    (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
+    (string("xyz") zip list("regions")(string)).to[PgmConfig]
 
   val mapSource: ConfigSource =
     ConfigSource.fromMap(map, "constant", keyDelimiter = None, valueDelimiter = Some(','))

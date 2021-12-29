@@ -21,7 +21,7 @@ object CommandLineSimple extends App {
   )
 
   assert(
-    read((string("key1") |@| string("key2"))(A.apply, A.unapply) from source) equalM
+    read((string("key1") zip string("key2")).to[A] from source) equalM
       A("value1", "value2")
   )
 

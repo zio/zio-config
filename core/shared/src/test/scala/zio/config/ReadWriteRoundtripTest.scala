@@ -97,7 +97,7 @@ object ReadWriteRoundtripTest extends BaseSpec {
         }
       },
       testM("empty sequence zipped with optional nested") {
-        val config = (list("a")(string) |@| nested("b")(string).optional).tupled
+        val config = (list("a")(string) zip nested("b")(string).optional)
         val data   = (Nil, None)
         val data2  = for {
           written <- ZIO.fromEither(write(config, data))
@@ -147,12 +147,12 @@ object ReadWriteRoundtripTestUtils {
 
   val cId: ConfigDescriptor[Id]                         = string("kId").to[Id]
   val cId2: ConfigDescriptor[Id]                        = string("kId2").to[Id]
-  val cDataItem: ConfigDescriptor[DataItem]             = (cId2.optional |@| int("kDiCount")).to[DataItem]
+  val cDataItem: ConfigDescriptor[DataItem]             = (cId2.optional zip int("kDiCount")).to[DataItem]
   val cDbUrl: ConfigDescriptor[DbUrl]                   = string("kDbUrl").to[DbUrl]
-  val cEnterpriseAuth: ConfigDescriptor[EnterpriseAuth] = (cId |@| cDbUrl).to[EnterpriseAuth]
+  val cEnterpriseAuth: ConfigDescriptor[EnterpriseAuth] = (cId zip cDbUrl).to[EnterpriseAuth]
 
   val cNestedConfig: ConfigDescriptor[NestedPath] =
-    (cEnterpriseAuth |@| int("kCount") |@| float("kFactor")).to[NestedPath]
+    (cEnterpriseAuth zip int("kCount") zip float("kFactor")).to[NestedPath]
 
   val cSingleField: ConfigDescriptor[SingleField] =
     int("kCount").to[SingleField]

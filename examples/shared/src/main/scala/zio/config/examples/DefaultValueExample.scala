@@ -9,11 +9,8 @@ object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
 
   val conf: ConfigDescriptor[PgmConfig] =
-    (string("HELLO").default("xyz") |@|
-      string("SOMETHING").orElseEither(int("PORT").default(1)))(
-      PgmConfig.apply,
-      PgmConfig.unapply
-    )
+    (string("HELLO").default("xyz") zip
+      string("SOMETHING").orElseEither(int("PORT").default(1))).to[PgmConfig]
 
   val pgmConfig: ConfigDescriptor[PgmConfig] =
     conf from ConfigSource.fromSystemEnv()

@@ -1,8 +1,59 @@
 package zio.config
 
 import com.typesafe.config.{ConfigObject, ConfigRenderOptions, ConfigValue}
+import izumi.reflect.Tag
+import zio.{Has, Layer, ZIO}
+
+import java.io.File
 
 package object typesafe {
+  implicit class FromConfigTypesafe(c: ZConfig.type) {
+    def fromResourcePath[A](configDescriptor: ConfigDescriptor[A])(implicit
+      tag: Tag[A]
+    ): Layer[ReadError[String], Has[A]] =
+      TypesafeConfig.fromResourcePath(configDescriptor)
+
+    def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(implicit
+      tag: Tag[A]
+    ): Layer[ReadError[String], Has[A]] =
+      TypesafeConfig.fromHoconFile(file, configDescriptor)
+
+    def fromHoconFilePath[A](filePath: String, configDescriptor: ConfigDescriptor[A])(implicit
+      tag: Tag[A]
+    ): Layer[ReadError[String], Has[A]] =
+      TypesafeConfig.fromHoconFilePath(filePath, configDescriptor)
+
+    def fromHoconString[A](hoconString: String, configDescriptor: ConfigDescriptor[A])(implicit
+      tag: Tag[A]
+    ): Layer[ReadError[String], Has[A]] =
+      TypesafeConfig.fromHoconString(hoconString, configDescriptor)
+
+    def fromTypesafeConfig[A](
+      conf: => com.typesafe.config.Config,
+      configDescriptor: ConfigDescriptor[A]
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+      TypesafeConfig.fromTypesafeConfig(conf, configDescriptor)
+  }
+
+  implicit class FromConfigSourceTypesafe(c: ConfigSource.type) {
+    def fromResourcePath: ConfigSource =
+      TypesafeConfigSource.fromResourcePath
+
+    def fromHoconFile[A](file: File): ConfigSource =
+      TypesafeConfigSource.fromHoconFile(file)
+
+    def fromHoconFilePath[A](filePath: String): ConfigSource =
+      TypesafeConfigSource.fromHoconFilePath(filePath)
+
+    def fromHoconString(input: String): ConfigSource =
+      TypesafeConfigSource.fromHoconString(input)
+
+    def fromTypesafeConfig(
+      rawConfig: ZIO[Any, Throwable, com.typesafe.config.Config]
+    ): ConfigSource =
+      TypesafeConfigSource.fromTypesafeConfig(rawConfig)
+  }
+
   implicit class PropertyTreeOps(tree: PropertyTree[String, String]) { self =>
 
     /**

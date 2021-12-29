@@ -18,7 +18,7 @@ object MemoizedSourceSpec extends BaseSpec {
       testM(
         "A non-memoized source runs a resource release for each config value during a read"
       ) {
-        val config = (string("k1") |@| string("k2")).tupled
+        val config = (string("k1") zip string("k2"))
 
         val resource =
           new AtomicInteger(0)
@@ -49,7 +49,7 @@ object MemoizedSourceSpec extends BaseSpec {
           new AtomicInteger(0)
 
         val config =
-          (string("k1") |@| string("k2")).tupled
+          (string("k1") zip string("k2"))
 
         val source =
           effectFulSource(acquire(resource), release(resource), incrementCount(configCount))
@@ -76,7 +76,7 @@ object MemoizedSourceSpec extends BaseSpec {
           new AtomicInteger(0)
 
         val config =
-          (string("k1") |@| string("k2")).tupled
+          (string("k1") zip string("k2"))
 
         val source =
           effectFulSource(acquire(resource1), acquire(resource2), incrementCount(configCount)).memoize
@@ -104,7 +104,7 @@ object MemoizedSourceSpec extends BaseSpec {
           new AtomicInteger(0)
 
         val config =
-          (string("k1") |@| string("k2")).tupled
+          (string("k1") zip string("k2"))
 
         val source =
           effectFulSource(acquire(resource1), acquire(resource2), incrementCount(configCount)).strictlyOnce

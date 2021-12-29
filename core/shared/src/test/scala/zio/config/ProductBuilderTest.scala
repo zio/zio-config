@@ -125,13 +125,13 @@ object ProductBuilderTestUtils {
   private val cId21 = int(s"kId21")
 
   val cS22: ConfigDescriptor[S22] =
-    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21)
+    (cId0 zip cId1 zip cId2 zip cId3 zip cId4 zip cId5 zip cId6 zip cId7 zip cId8 zip cId9 zip cId10 zip cId11 zip cId12 zip cId13 zip cId14 zip cId15 zip cId16 zip cId17 zip cId18 zip cId19 zip cId20 zip cId21)
       .to[S22]
 
   val cS22Tupled: ConfigDescriptor[
     (Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int, Int)
   ] =
-    (cId0 |@| cId1 |@| cId2 |@| cId3 |@| cId4 |@| cId5 |@| cId6 |@| cId7 |@| cId8 |@| cId9 |@| cId10 |@| cId11 |@| cId12 |@| cId13 |@| cId14 |@| cId15 |@| cId16 |@| cId17 |@| cId18 |@| cId19 |@| cId20 |@| cId21).tupled
+    (cId0 zip cId1 zip cId2 zip cId3 zip cId4 zip cId5 zip cId6 zip cId7 zip cId8 zip cId9 zip cId10 zip cId11 zip cId12 zip cId13 zip cId14 zip cId15 zip cId16 zip cId17 zip cId18 zip cId19 zip cId20 zip cId21)
 
   val genS22: Gen[Random, S22] =
     for {

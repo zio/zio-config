@@ -8,7 +8,7 @@ final case class Recursive(a: B, b: Option[Recursive])
 object RecursiveExample extends App:
   // A mix of automatic derivation + manual derivation
   val config: ConfigDescriptor[Recursive] =
-    (nested("a")(descriptor[B]) |@| nested("b")(config).optional)(Recursive.apply, b => Some(b.a, b.b))
+    (nested("a")(descriptor[B]) zip nested("b")(config).optional).to[Recursive]
 
   val sourceMap =
     Map(

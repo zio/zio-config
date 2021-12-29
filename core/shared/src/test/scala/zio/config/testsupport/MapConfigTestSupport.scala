@@ -42,7 +42,7 @@ object MapConfigTestSupport {
     object AwsConfig {
       val description: ConfigDescriptor[AwsConfig] =
         head("aws")(
-          (head("key")(string) |@| head("secret")(string) |@| KinesisConfig.description).to[AwsConfig]
+          (head("key")(string) zip head("secret")(string) zip KinesisConfig.description).to[AwsConfig]
         )
     }
 
@@ -62,7 +62,7 @@ object MapConfigTestSupport {
 
     val descriptor: ConfigDescriptor[AppConfig] =
       head("SystemF")(
-        (AwsConfig.description |@| AppConfig.PubSubConfig.description |@| JobConfig.descriptor).to[AppConfig]
+        (AwsConfig.description zip AppConfig.PubSubConfig.description zip JobConfig.descriptor).to[AppConfig]
       )
   }
 
@@ -78,11 +78,11 @@ object MapConfigTestSupport {
   object DataflowConfig {
     val descriptor: ConfigDescriptor[DataflowConfig] =
       head("df")(
-        ((head("name")(string)) |@|
-          head("project")(string) |@|
-          head("region")(string) |@|
-          head("zone")(string) |@|
-          head("subnet")(string) |@|
+        ((head("name")(string)) zip
+          head("project")(string) zip
+          head("region")(string) zip
+          head("zone")(string) zip
+          head("subnet")(string) zip
           head("gcptemplocation")(string)).to[DataflowConfig]
       )
   }
@@ -97,7 +97,7 @@ object MapConfigTestSupport {
   object JobConfig {
     val descriptor: ConfigDescriptor[JobConfig] =
       head("job")(
-        (DataflowConfig.descriptor.optional |@| head("supervise")(boolean)).to[JobConfig]
+        (DataflowConfig.descriptor.optional zip head("supervise")(boolean)).to[JobConfig]
       )
   }
 
