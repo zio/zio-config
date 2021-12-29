@@ -36,7 +36,7 @@ trait ConfigSourceModule extends KeyValueModule {
    * val source: ConfigSource =
    *   ConfigSource.Reader(
    *     ZManaged(getDatabaseConnection)
-   *       .flatMap(connection => (key: PropertyTreePath[String] => IO.effect(connection.getStatement.executeQuery("get ${key} from table")))
+   *       .flatMap(connection => (key: PropertyTreePath[String] => IO.effect(connection.getStatement.executeQuery(s"get key from table")))
    *    )
    *
    * Note that `ConfigSource` has a generalised `memoize` function that allows you to memoize the effect required to form the
@@ -129,7 +129,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      *   // This is exactly the same as
      *
-     *   val addAwsPrefix = (s: String) = s"aws_${s}")
+     *   def addAwsPrefix(s: String) = s"aws_${s}")
      *   read(config.mapKeys(addAwsPrefix) from source)
      * }}}
      */
