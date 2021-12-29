@@ -129,7 +129,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      *   // This is exactly the same as
      *
-     *   def addAwsPrefix(s: String) = s"aws_${s}")
+     *   def addAwsPrefix(s: String) = "aws_" + s
      *   read(config.mapKeys(addAwsPrefix) from source)
      * }}}
      */
