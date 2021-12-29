@@ -1,20 +1,20 @@
 package zio.config
 
+import zio.Has
 import zio.config.ConfigDescriptor._
 import zio.config.NestedConfigTestUtils._
 import zio.config.helpers._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, ZIO}
 
 object NestedConfigTest extends BaseSpec {
 
   val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[ReadError[String]], TestSuccess] =
     suite("Nested config")(
       testM("read") {
-        check(genNestedConfigParams) { p =>
-          assert(read(p.config.from(p.source)))(isRight(equalTo(p.value)))
+        checkM(genNestedConfigParams) { p =>
+          assertM(read(p.config.from(p.source)))(equalTo(p.value))
         }
       },
       testM("write") {
@@ -26,9 +26,8 @@ object NestedConfigTest extends BaseSpec {
       },
       testM("nested with default") {
         val config = string("x").default("y")
-        val r      = ZIO.fromEither(
-          read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test", LeafForSequence.Valid))
-        )
+        val r      =
+          read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test"))
 
         assertM(r)(equalTo("y"))
       }
@@ -68,16 +67,16 @@ object NestedConfigTestUtils {
   final case class TestParams(value: AppConfig) {
 
     val config: ConfigDescriptor[AppConfig] = {
-      val credentials  = (string("user") |@| string("password")).to[Credentials]
-      val dbConnection = (string("host") |@| int("port")).to[DbConnection]
+      val credentials  = (string("user") zip string("password")).to[Credentials]
+      val dbConnection = (string("host") zip int("port")).to[DbConnection]
 
       val database =
         (string("dburl")
           .to[DbUrl]
-          .orElseEither(nested("connection")(dbConnection)) |@|
+          .orElseEither(nested("connection")(dbConnection)) zip
           nested("credentials")(credentials).optional).to[Database]
 
-      (nested("database")(database) |@| double("pricing")).to[AppConfig]
+      (nested("database")(database) zip double("pricing")).to[AppConfig]
     }
 
     val map: Map[String, String] =

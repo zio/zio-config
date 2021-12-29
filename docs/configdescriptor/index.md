@@ -27,7 +27,7 @@ Let's define a simple one.
 
 ```scala mdoc:silent
 val myConfig: ConfigDescriptor[MyConfig] =
-  (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
+  (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
 ```
 
@@ -38,19 +38,19 @@ Case classes with a single field are simple too.
 case class MySingleConfig(ldap: String)
 
 val mySingleConfig: ConfigDescriptor[MySingleConfig] =
-  string("LDAP")(MySingleConfig.apply, MySingleConfig.unapply)
+  string("LDAP").to[MySingleConfig]
 ```
 
-If the config is not a case class, but a tuple, then call `.tupled`
+If the config is not a case class, but a tuple, then all you need to do is `zip`
 
 ```scala mdoc:silent
 
 val mySingleConfigTupled: ConfigDescriptor[(String, Int)] =
-  (string("LDAP") |@| int("PORT")).tupled
+  (string("LDAP") zip int("PORT"))
 
 ```
 
-Think of this as removing fields one-by-one, along with the `|@|` combinator syntax, ending up with a single field being applied.
+Think of this as removing fields one-by-one, along with the `zip` combinator syntax, ending up with a single field being applied.
 
 ## Fully Automated Config Description: zio-config-magnolia
 
@@ -87,9 +87,9 @@ val result: Layer[ReadError[String], Has[MyConfig]] = System.live >>> ZConfig.fr
 Another way of doing this is:
 
 ```scala mdoc:silent
-val systemSource = ConfigSource.fromSystemEnv
+val systemSource = ConfigSource.fromSystemEnv()
 
-systemSource.flatMap(source => ZIO.fromEither(read(myConfig from source)))
+read(myConfig from systemSource)
 
 ```
 
@@ -142,8 +142,8 @@ That is,
 case class MyConfigWithOptionalUrl(ldap: String, port: Port, dburl: Option[String])
 
 val myConfigOptional =
-  (string("LDAP") |@| int("PORT")(Port.apply, Port.unapply) |@|
-    string("DB_URL").optional)(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
+  (string("LDAP") zip int("PORT").to[Port] zip
+    string("DB_URL").optional).to[MyConfigWithOptionalUrl]
 
 ```
 
@@ -164,7 +164,7 @@ Sometimes, we don't need an optional value and instead happy providing a default
 case class MyConfigWithDefaultUserName(username: String, port: Int)
 
 val myConfigDefault =
-  (string("USERNAME").default("root-oh") |@| int("PORT"))(MyConfigWithDefaultUserName.apply, MyConfigWithDefaultUserName.unapply)
+  (string("USERNAME").default("root-oh") zip int("PORT")).to[MyConfigWithDefaultUserName]
 
 ```
 
@@ -181,7 +181,7 @@ In this scenario, you could do
 
 ```scala mdoc:silent
 
-int("PORT")(Port.apply, Port.unapply)
+int("PORT").to[Port]
 
 ```
 
@@ -200,8 +200,8 @@ That is,
 
  // Before
   val myConfigWithCustomType =
-    (string("LDAP") |@| int("PORT")(Port.apply, Port.unapply) |@|
-      string("DB_URL"))(MyCustomConfig.apply, MyCustomConfig.unapply)
+    (string("LDAP") zip int("PORT").to[Port] zip
+      string("DB_URL")).to[MyCustomConfig]
 
 ```
 
@@ -213,19 +213,19 @@ zio-config do support this scenario. This can happen in complex applications.
 
 ```scala mdoc:silent
 
-val configDesc = for {
- source1 <- ConfigSource.fromSystemProperties
- source2 <- ConfigSource.fromSystemEnv
- desc =
-   (string("LDAP").from(source1.orElse(source2)) |@| int("PORT")(Port.apply, Port.unapply).from(source1) |@|
-    string("DB_URL").optional.from(source2))(MyConfigWithOptionalUrl.apply, MyConfigWithOptionalUrl.unapply)
-} yield desc
+
+val source1 = ConfigSource.fromSystemProps()
+val source2 = ConfigSource.fromSystemEnv()
+ 
+val configDesc =
+  (string("LDAP").from(source1.orElse(source2)) zip int("PORT").to[Port].from(source1) zip
+    string("DB_URL").optional.from(source2)).to[MyConfigWithOptionalUrl]
 
 
-configDesc.flatMap(desc => ZIO.fromEither(read(desc)))
+read(configDesc)
 
 // we can also separately add new config
-configDesc.flatMap(desc => ZIO.fromEither(read(desc from ConfigSource.fromMap(Map.empty))))
+read(configDesc from ConfigSource.fromMap(Map.empty))
 
 // In this case, `ConfigSource.fromMap` will also be tried along with the sources that are already given.
 
@@ -235,7 +235,7 @@ We can reset the sources for the config using
 
 ```scala mdoc:silent
 
-configDesc.map(desc => desc.unsourced)
+configDesc.unsourced
 
 ```
 
@@ -245,10 +245,7 @@ from a constant map for all of it.
 ```scala mdoc:silent
 
 val testConfig =
-  configDesc
-    .map(
-      desc =>
-        desc.unsourced from ConfigSource.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235")))
+  configDesc.unsourced from ConfigSource.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235"))
 
 ```
 
@@ -274,21 +271,20 @@ object CombineSourcesExample extends zio.App {
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     application.either.flatMap(r => putStrLn(s"Result: ${r}")).exitCode
 
-  final case class Config(username: String , password: String)
+  case class Config(username: String , password: String)
 
-  val getDesc: ZIO[system.System, ReadError[String], ConfigDescriptor[Config]] =
-    for {
-      hoconFile <- ZIO.fromEither(TypesafeConfigSource.fromHoconFile(new File("/invalid/path")))
-      constant  <- ZIO.fromEither(TypesafeConfigSource.fromHoconString(s""))
-      env       <- ConfigSource.fromSystemEnv
-      sysProp   <- ConfigSource.fromSystemProperties
-      source    = hoconFile <> constant <> env <> sysProp
-    } yield (descriptor[Config] from source)
+  val desc: ConfigDescriptor[Config] = {
+    val hoconFile = TypesafeConfigSource.fromHoconFile(new File("/invalid/path"))
+    val constant  = TypesafeConfigSource.fromHoconString(s"")
+    val env       = ConfigSource.fromSystemEnv()
+    val sysProp   = ConfigSource.fromSystemProps()
+    val source    = hoconFile <> constant <> env <> sysProp
+    (descriptor[Config] from source)
+  }
 
   val application =
     for {
-      desc        <- getDesc.mapError(_.prettyPrint())
-      configValue <- ZIO.fromEither(read(desc)).mapError(_.prettyPrint())
+      configValue <- read(desc).mapError(_.prettyPrint())
       string      <- ZIO.fromEither(configValue.toJson(desc))
       _ <- putStrLn(string)
     } yield ()
@@ -311,7 +307,7 @@ That is,
 case class MyConfigWithEither(usernameOrToken: Either[String, String], port: Int)
 
 val myConfigEither =
-  (string("USERNAME").orElseEither(string("TOKEN")) |@| int("PORT"))(MyConfigWithEither.apply, MyConfigWithEither.unapply)
+  (string("USERNAME").orElseEither(string("TOKEN")) zip int("PORT")).to[MyConfigWithEither]
 
 ```
 
@@ -329,8 +325,8 @@ case class Prod(token: String, code: Int)
 
 type ZConfig = Either[Prod, Dev]
 
-val dev = (string("USERNAME") |@| string("PASSWORD"))(Dev.apply, Dev.unapply)
-val prod = (string("TOKEN") |@| int("CODE"))(Prod.apply, Prod.unapply)
+val dev = (string("USERNAME") zip string("PASSWORD")).to[Dev]
+val prod = (string("TOKEN") zip int("CODE")).to[Prod]
 
 prod <+> dev // that represents a description returning Config
 // ConfigDescriptor[ Config]
@@ -355,7 +351,7 @@ Example:
 
 ```scala mdoc:silent
 val configOrElse =
-  (string("TOKEN").orElse(string("token_x")) |@| int("CODE")) (Prod.apply, Prod.unapply)
+  (string("TOKEN").orElse(string("token_x")) zip int("CODE")).to[Prod]
 
 ```
 
@@ -377,9 +373,9 @@ This is more of a real life scenario, where you can different micro configuratio
 
 
   val databaseConfig =
-    (string("connection") |@| int("port"))(Database.apply, Database.unapply)
+    (string("connection") zip int("port")).to[Database]
 
-  (databaseConfig |@| string("c3"))(AwsConfig.apply, AwsConfig.unapply)
+  (databaseConfig zip string("c3")).to[AwsConfig]
 
 ```
 
@@ -394,9 +390,9 @@ any other configuration parsing libraries that deal with file formats such as HO
   case class AwsConfigExtended(c1: Database, c2: Database, c3: String)
 
   val appConfig =
-    (nested("south") { databaseConfig } |@|
-      nested("east") { databaseConfig } |@|
-      string("appName"))(AwsConfigExtended, AwsConfigExtended.unapply)
+    (nested("south") { databaseConfig } zip
+      nested("east") { databaseConfig } zip
+      string("appName")).to[AwsConfigExtended]
 
   // Let's say, a nested configuration as a flattened map is just "." delimited keys in a flat map.
   val constantMap =
@@ -418,9 +414,9 @@ Note that, you can write this back as well. This is discussed in write section
 
 ```scala mdoc:silent
  def database(i: Int) =
-   (string(s"${i}_URL") |@| int(s"${i}_PORT"))(Database, Database.unapply)
+   (string(s"${i}_URL") zip int(s"${i}_PORT")).to[Database]
 
- val list: ConfigDescriptor[ List[Database]] =
+ val list: ConfigDescriptor[List[Database]] =
    collectAll(database(0), (1 to 10).map(database): _*)
 
 ```
@@ -435,7 +431,7 @@ NOTE: `collectAll` is a synonym for `sequence`.
   final case class PgmConfig(a: String, b: List[String])
 
   val configWithList =
-    (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
+    (string("xyz") zip list("regions")(string)).to[PgmConfig]
 
 
   Config.fromEnv(configWithList, valueDelimiter = Some(","))
@@ -496,15 +492,12 @@ Note that `autoListConfig` (automatically generated) config, is exactly similar 
 ```scala
 
   val accnt =
-    (string("region") |@| string("accountId"))(Accnt.apply, Accnt.unapply)
+    (string("region") zip string("accountId")).to[Accnt]
 
-  val db = (int("port") |@| string("url"))(Db.apply, Db.unapply)
+  val db = (int("port") zip string("url"))(Db.apply, Db.unapply)
 
   val nonAutomatic =
-    (nested("accounts")(list(accnt)) |@| nested("database")(db))(
-      AwsDetails.apply,
-      AwsDetails.unapply
-    )
+    (nested("accounts")(list(accnt)) zip nested("database")(db)).to[AwsDetails]
 
 ```
 

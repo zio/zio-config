@@ -7,7 +7,7 @@ import zio.test._
 
 object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSupport {
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfigRecursiveAutomatic")(
-    test("Read recursive typesafe config with optional") {
+    testM("Read recursive typesafe config with optional") {
       case class SimpleRec(id: Int, s: Option[SimpleRec])
 
       val res =
@@ -20,11 +20,11 @@ object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSuppor
            |}
            |""".stripMargin
 
-      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res).loadOrThrow)
+      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
 
-      assert(result)(isRight(equalTo(SimpleRec(1, Some(SimpleRec(2, None))))))
+      assertM(result)(equalTo(SimpleRec(1, Some(SimpleRec(2, None)))))
     },
-    test("Read recursive typesafe config with list") {
+    testM("Read recursive typesafe config with list") {
       case class SimpleRec(id: Int, s: List[SimpleRec])
 
       val res =
@@ -38,11 +38,11 @@ object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSuppor
            |}
            |""".stripMargin
 
-      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res).loadOrThrow)
+      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
 
-      assert(result)(isRight(equalTo(SimpleRec(1, List(SimpleRec(2, Nil))))))
+      assertM(result)(equalTo(SimpleRec(1, List(SimpleRec(2, Nil)))))
     },
-    test("Read recursive typesafe config with either") {
+    testM("Read recursive typesafe config with either") {
       case class SimpleRec(id: Int, s: Either[SimpleRec, Int])
 
       val res =
@@ -56,11 +56,11 @@ object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSuppor
            |}
            |""".stripMargin
 
-      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res).loadOrThrow)
+      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
 
-      assert(result)(isRight(equalTo(SimpleRec(1, Left(SimpleRec(2, Right(3)))))))
+      assertM(result)(equalTo(SimpleRec(1, Left(SimpleRec(2, Right(3))))))
     },
-    test("Read recursive typesafe config with map") {
+    testM("Read recursive typesafe config with map") {
       type ProfessorId = Int
       type StudentId   = String
 
@@ -88,15 +88,13 @@ object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSuppor
            |}
            |""".stripMargin
 
-      val result = read(descriptor[Professor] from TypesafeConfigSource.fromHoconString(res).loadOrThrow)
+      val result = read(descriptor[Professor] from TypesafeConfigSource.fromHoconString(res))
 
-      assert(result)(
-        isRight(
-          equalTo(
-            Professor(
-              1,
-              Map("12" -> Professor(33, Map("13" -> Professor(44, Map.empty))), "11" -> Professor(22, Map.empty))
-            )
+      assertM(result)(
+        equalTo(
+          Professor(
+            1,
+            Map("12" -> Professor(33, Map("13" -> Professor(44, Map.empty))), "11" -> Professor(22, Map.empty))
           )
         )
       )

@@ -1,5 +1,6 @@
 package zio.config
 
+import com.github.ghik.silencer.silent
 import zio.system.System
 import zio.{Has, Layer, Tag, ZIO, ZLayer}
 
@@ -9,8 +10,7 @@ import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.{Properties, UUID}
 import scala.concurrent.duration.Duration
 
-trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
-
+trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
   object ConfigDescriptor extends ConfigDescriptorFunctions {
     import ConfigDescriptorAdt._
 
@@ -682,7 +682,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       source: String = "constant",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
@@ -691,7 +690,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
           source,
           keyDelimiter,
           valueDelimiter,
-          leafForSequence,
           filterKeys
         )
       )
@@ -720,11 +718,10 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       source: String,
       keyDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
-        configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, leafForSequence, filterKeys)
+        configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, filterKeys)
       )
 
     /**
@@ -754,7 +751,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       source: String,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
       fromConfigDescriptor(
@@ -763,7 +759,6 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
           source,
           keyDelimiter,
           valueDelimiter,
-          leafForSequence,
           filterKeys
         )
       )
@@ -794,13 +789,11 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[Throwable, Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
-          .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
+    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+      fromConfigDescriptor(
+        configDescriptor from ConfigSource
+          .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, filterKeys)
       )
 
     /**
@@ -826,17 +819,22 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *
      * Note: The delimiter '.' for keys doesn't work in system environment.
      */
+    @silent("a type was inferred to be `Any`")
     def fromSystemEnv[K, V, A](
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      leafForSequence: LeafForSequence = LeafForSequence.Valid,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource
-          .fromSystemEnv(keyDelimiter, valueDelimiter, leafForSequence, filterKeys)
-          .map(configDescriptor from _)
+      ZLayer.fromServiceM((system: System.Service) =>
+        read(
+          configDescriptor from ConfigSource.fromSystemEnv(
+            keyDelimiter,
+            valueDelimiter,
+            filterKeys,
+            system
+          )
+        )
       )
 
     /**
@@ -860,25 +858,34 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceStringModule {
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
      */
+    @silent("a type was inferred to be `Any`")
     def fromSystemProperties[K, V, A](
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None
+      valueDelimiter: Option[Char] = None,
+      filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      fromConfigDescriptorM(
-        ConfigSource.fromSystemProps(keyDelimiter, valueDelimiter).map(configDescriptor from _)
+      ZLayer.fromServiceM((system: System.Service) =>
+        read(
+          configDescriptor from ConfigSource.fromSystemProps(
+            keyDelimiter,
+            valueDelimiter,
+            filterKeys,
+            system
+          )
+        )
       )
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
     )(implicit tag: Tag[A]): Layer[ReadError[K], Has[A]] =
-      ZLayer.fromEffect(ZIO.fromEither(read(configDescriptor)))
+      ZLayer.fromEffect(read(configDescriptor))
 
     private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
       configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
     )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
       ZLayer.fromEffect(
-        configDescriptor.flatMap(descriptor => ZIO.fromEither(read(descriptor)))
+        configDescriptor.flatMap(descriptor => read(descriptor))
       )
   }
 

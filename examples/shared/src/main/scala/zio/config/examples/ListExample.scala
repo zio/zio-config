@@ -1,5 +1,6 @@
 package zio.config.examples
 
+import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTree.Leaf
 import zio.config.examples.typesafe.EitherImpureOps
@@ -18,23 +19,20 @@ object ListExample extends App with EitherImpureOps {
     )
 
   val config: ConfigDescriptor[PgmConfig] =
-    (string("xyz") |@| list("regions")(string))(PgmConfig.apply, PgmConfig.unapply)
+    (string("xyz") zip list("regions")(string)).to[PgmConfig]
 
   val mapSource: ConfigSource =
     ConfigSource.fromMap(map, "constant", keyDelimiter = None, valueDelimiter = Some(','))
 
-  val resultFromMultiMap: Either[ReadError[String], PgmConfig] =
+  val resultFromMultiMap: ZIO[Any, ReadError[String], PgmConfig] =
     read(config from mapSource)
 
-  println(resultFromMultiMap)
   val expected: PgmConfig =
     PgmConfig("something", List("australia", "canada", "usa"))
 
   assert(
-    resultFromMultiMap ==
-      Right(
-        PgmConfig("something", List("australia", "canada", "usa"))
-      )
+    resultFromMultiMap equalM
+      PgmConfig("something", List("australia", "canada", "usa"))
   )
 
   val propertyTree: Either[String, PropertyTree[String, String]] =

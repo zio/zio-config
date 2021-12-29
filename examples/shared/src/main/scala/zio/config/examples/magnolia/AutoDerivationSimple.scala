@@ -5,6 +5,8 @@ import zio.config.examples.magnolia.MyConfig._
 import zio.config.magnolia.DeriveConfigDescriptor._
 import zio.config.magnolia.describe
 
+import examples._
+
 final case class MyConfig(
   aws: Aws,
   price: Price,
@@ -53,8 +55,8 @@ object AutomaticConfigDescriptor extends App {
   private val config = read(automaticConfig from source)
 
   assert(
-    config ==
-      Right(MyConfig(Aws("us-east", Token("token")), Inr(1000), DbUrl("some url"), 10, Some(3.14), Left(30.0), 12, 14))
+    config equalM
+      MyConfig(Aws("us-east", Token("token")), Inr(1000), DbUrl("some url"), 10, Some(3.14), Left(30.0), 12, 14)
   )
 
 }

@@ -20,7 +20,7 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
           val bs = (b: Map[K, a]).toList.map(t => (t._1 -> go(cd.config, t._2)))
           seqMap(bs.toMap).map(t => Record(t))
 
-        case Nested(_, parent, c) =>
+        case Nested(parent, c) =>
           go(c, b) match {
             case Right(prop) => Right(PropertyTree.Record(Map(parent -> prop)))
             case Left(v)     => Left(v)

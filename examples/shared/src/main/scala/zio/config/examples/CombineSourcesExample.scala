@@ -5,7 +5,7 @@ import zio.config._
 import zio.config.magnolia._
 import zio.config.typesafe._
 import zio.console.putStrLn
-import zio.{App, ExitCode, URIO, ZIO, system}
+import zio.{App, ExitCode, URIO, ZIO}
 
 import java.io.File
 
@@ -22,19 +22,23 @@ object CombineSourcesExample extends App {
   final case class Config(username: String, password: String)
 
   @silent("deprecated")
-  val getConfig: ZIO[system.System, ReadError[String], _root_.zio.config.ConfigDescriptor[Config]] =
-    for {
-      hoconFile <- ZIO.fromEither(TypesafeConfigSource.fromHoconFile(new File("/invalid/path")))
-      constant  <- ZIO.fromEither(TypesafeConfigSource.fromHoconString(s""))
-      env       <- ConfigSource.fromSystemEnv
-      sysProp   <- ConfigSource.fromSystemProperties
-      source     = hoconFile <> constant <> env <> sysProp
-    } yield (descriptor[Config] from source)
+  val config: ConfigDescriptor[Config] =
+    (descriptor[Config] from
+      TypesafeConfigSource
+        .fromHoconFile(new File("/invalid/path"))
+        .<>(
+          TypesafeConfigSource.fromHoconString(s"")
+        )
+        .<>(
+          ConfigSource.fromSystemEnv()
+        )
+        .<>(
+          ConfigSource.fromSystemProps()
+        ))
 
   val application: ZIO[zio.system.System with zio.console.Console, String, String] =
     for {
-      desc        <- getConfig.mapError(_.prettyPrint())
-      configValue <- ZIO.fromEither(read(desc)).mapError(_.prettyPrint())
-      string      <- ZIO.fromEither(configValue.toJson(desc))
+      configValue <- read(config).mapError(_.prettyPrint())
+      string      <- ZIO.fromEither(configValue.toJson(config))
     } yield string
 }

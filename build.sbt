@@ -44,10 +44,10 @@ addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt sc
 addCommandAlias("check", "; scalafmtSbtCheck; scalafmtCheckAll; compile:scalafix --check; test:scalafix --check")
 addCommandAlias(
   "checkAll",
-  "; ++2.11.12; project root2-11; check; ++2.12.11; project root2-12; check; ++2.13.2; project root2-13; check"
+  "; ++2.11.12; project root2-11; check; ++2.12.13; project root2-12; check; ++2.13.5; project root2-13; check"
 )
-addCommandAlias("compileAll", "; ++2.11.12; root2-11/compile; ++2.12.11; root2-12/compile; ++2.13.2!; root2-13/compile")
-addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.11; root2-12/test; ++2.13.2!; root2-13/test")
+addCommandAlias("compileAll", "; ++2.11.12; root2-11/compile; ++2.12.13; root2-12/compile; ++2.13.5!; root2-13/compile")
+addCommandAlias("testAll", "; ++2.11.12; root2-11/test; ++2.12.13; root2-12/test; ++2.13.5!; root2-13/test")
 addCommandAlias(
   "testJS",
   ";zioConfigJS/test"
@@ -77,25 +77,33 @@ addCommandAlias(
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
 )
 
-lazy val zioVersion       = "1.0.9"
-lazy val magnoliaVersion  = "0.17.0"
-lazy val refinedVersion   = "0.9.27"
-lazy val shapelessVersion = "2.4.0-M1"
+lazy val zioVersion        = "1.0.9"
+lazy val magnoliaVersion   = "0.17.0"
+lazy val refinedVersion    = "0.9.28"
+lazy val pureconfigVersion = "0.16.0"
+lazy val shapelessVersion  = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11") Seq.empty // Just to make IntelliJ happy
-    else
+    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
+    else {
       Seq(
         "com.propensive" %% "magnolia"      % magnoliaVersion,
         "org.scala-lang"  % "scala-reflect" % scalaVersion.value
       )
+    }
   }
 
 lazy val refinedDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11") Seq.empty // Just to make IntelliJ happy
+    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
     else Seq("eu.timepit" %% "refined" % refinedVersion)
+  }
+
+lazy val pureconfigDependencies =
+  libraryDependencies ++= {
+    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
+    else Seq("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
   }
 
 lazy val scala211projects =
@@ -118,7 +126,13 @@ lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
 lazy val scala213projects = scala212projects
 
 lazy val scala3projects =
-  Seq[ProjectReference](zioConfigJVM, zioConfigTypesafeJVM, zioConfigYamlJVM, zioConfigDerivationJVM)
+  Seq[ProjectReference](
+    zioConfigJVM,
+    zioConfigTypesafeJVM,
+    zioConfigYamlJVM,
+    zioConfigDerivationJVM,
+    zioConfigMagnoliaJVM
+  )
 
 lazy val root =
   project
@@ -159,9 +173,9 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(macroDefinitionSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio"                 %% "zio"                     % zioVersion,
-      ("org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0").cross(CrossVersion.for3Use2_13),
-      "dev.zio"                 %% "zio-test"                % zioVersion % Test
+      "dev.zio"                %% "zio"                     % zioVersion,
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.5.0",
+      "dev.zio"                %% "zio-test"                % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
@@ -189,11 +203,30 @@ lazy val zioConfigRefined    = crossProject(JVMPlatform)
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
   .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
+
 lazy val zioConfigRefinedJVM = zioConfigRefined.jvm
+
+lazy val zioConfigPureconfig    = crossProject(JVMPlatform)
+  .in(file("pureconfig"))
+  .settings(stdSettings("zio-config-pureconfig"))
+  .settings(crossProjectSettings)
+  .settings(
+    crossScalaVersions --= Seq(Scala211),
+    pureconfigDependencies,
+    libraryDependencies ++=
+      Seq(
+        "dev.zio" %% "zio-test"     % zioVersion % Test,
+        "dev.zio" %% "zio-test-sbt" % zioVersion % Test
+      ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "test->test", zioConfigTypesafe)
+
+lazy val zioConfigPureconfigJVM = zioConfigPureconfig.jvm
 
 lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module")
 
-lazy val examples    = crossProject(JVMPlatform)
+lazy val examples = crossProject(JVMPlatform)
   .in(file("examples"))
   .settings(stdSettings("zio-config-examples"))
   .settings(crossProjectSettings)
@@ -220,17 +253,20 @@ lazy val examples    = crossProject(JVMPlatform)
         .value
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigGen)
+
 lazy val examplesJVM = examples.jvm
 
-lazy val zioConfigDerivation    = crossProject(JVMPlatform)
+lazy val zioConfigDerivation = crossProject(JVMPlatform)
   .in(file("derivation"))
   .settings(stdSettings("zio-config-derivation"))
   .settings(crossProjectSettings)
+  .settings(dottySettings)
   .dependsOn(zioConfig)
+
 lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm
   .settings(dottySettings)
 
-lazy val zioConfigGen    = crossProject(JVMPlatform)
+lazy val zioConfigGen = crossProject(JVMPlatform)
   .in(file("gen"))
   .settings(stdSettings("zio-config-gen"))
   .settings(crossProjectSettings)
@@ -243,15 +279,24 @@ lazy val zioConfigGen    = crossProject(JVMPlatform)
     )
   )
   .dependsOn(zioConfigTypesafe, zioConfigMagnolia)
+
 lazy val zioConfigGenJVM = zioConfigGen.jvm
 
 lazy val zioConfigMagnolia    = crossProject(JVMPlatform)
   .in(file("magnolia"))
   .settings(stdSettings("zio-config-magnolia"))
   .settings(crossProjectSettings)
+  .settings(dottySettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     magnoliaDependencies,
+    scalacOptions ++= {
+      if (scalaVersion.value == ScalaDotty) {
+        Seq.empty
+      } else {
+        Seq("-language:experimental.macros")
+      }
+    },
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-test"     % zioVersion % Test,
       "dev.zio" %% "zio-test-sbt" % zioVersion % Test
@@ -259,6 +304,7 @@ lazy val zioConfigMagnolia    = crossProject(JVMPlatform)
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
+
 lazy val zioConfigMagnoliaJVM = zioConfigMagnolia.jvm
 
 lazy val zioConfigShapeless    = crossProject(JVMPlatform)
@@ -275,12 +321,14 @@ lazy val zioConfigShapeless    = crossProject(JVMPlatform)
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
+
 lazy val zioConfigShapelessJVM = zioConfigShapeless.jvm
 
 lazy val zioConfigTypesafe    = crossProject(JVMPlatform)
   .in(file("typesafe"))
   .settings(stdSettings("zio-config-typesafe"))
   .settings(crossProjectSettings)
+  .settings(dottySettings)
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe" % "config"       % "1.4.1",
@@ -290,6 +338,7 @@ lazy val zioConfigTypesafe    = crossProject(JVMPlatform)
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
+
 lazy val zioConfigTypesafeJVM = zioConfigTypesafe.jvm
   .settings(dottySettings)
 
@@ -307,6 +356,40 @@ lazy val zioConfigYaml    = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 lazy val zioConfigYamlJVM = zioConfigYaml.jvm
+  .settings(dottySettings)
+
+lazy val zioConfigScalaz    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .in(file("scalaz"))
+  .settings(stdSettings("zio-config-scalaz"))
+  .settings(crossProjectSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.scalaz" %% "scalaz-core"  % "7.4.0-M7",
+      "dev.zio"    %% "zio-test"     % zioVersion % Test,
+      "dev.zio"    %% "zio-test-sbt" % zioVersion % Test
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "compile->compile;test->test")
+
+lazy val zioConfigScalazJVM = zioConfigScalaz.jvm
+  .settings(dottySettings)
+
+lazy val zioConfigCats    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .in(file("cats"))
+  .settings(stdSettings("zio-config-cats"))
+  .settings(crossProjectSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-core"    % "2.6.1",
+      "dev.zio"       %% "zio-test"     % zioVersion % Test,
+      "dev.zio"       %% "zio-test-sbt" % zioVersion % Test
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "compile->compile;test->test")
+
+lazy val zioConfigCatsJVM = zioConfigCats.jvm
   .settings(dottySettings)
 
 lazy val zioConfigEnumeratum               = crossProject(JSPlatform, JVMPlatform, NativePlatform)

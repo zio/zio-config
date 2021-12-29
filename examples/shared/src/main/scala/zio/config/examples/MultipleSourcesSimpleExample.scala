@@ -2,7 +2,6 @@ package zio.config.examples
 
 import com.github.ghik.silencer.silent
 import zio.config._
-import zio.system.System
 
 import ConfigDescriptor._
 
@@ -16,9 +15,9 @@ object MultipleSourcesSimpleExample extends App {
   // Assume they are different sources (env, property file, HOCON / database (in future))
   private val source1 = ConfigSource.fromMap(Map("LDAP" -> "jolap"), "constant")
   @silent("deprecated")
-  private val source2 = runtime.unsafeRun(ConfigSource.fromSystemProperties)
+  private val source2 = ConfigSource.fromSystemProps()
 
-  private val source3 = runtime.unsafeRun(ConfigSource.fromSystemEnv.provideLayer(System.live))
+  private val source3 = ConfigSource.fromSystemEnv()
   private val source4 = ConfigSource.fromMap(Map("PORT" -> "1999"), "constant")
   private val source5 = ConfigSource.fromMap(Map("DB_URL" -> "newyork.com"), "constant")
 
@@ -33,8 +32,8 @@ object MultipleSourcesSimpleExample extends App {
     )
 
   val myConfig: ConfigDescriptor[MyConfig] =
-    ((string("LDAP").from(source1.orElse(source3)) |@| int("PORT").from(source4)) |@|
-      string("DB_URL").optional.from(source1.orElse(source5)))(MyConfig.apply, MyConfig.unapply)
+    ((string("LDAP").from(source1.orElse(source3)) zip int("PORT").from(source4)) zip
+      string("DB_URL").optional.from(source1.orElse(source5))).to[MyConfig]
 
   // Let's reset the whole source details in the original description
   val myConfigWithReset: ConfigDescriptor[MyConfig] =
@@ -46,14 +45,14 @@ object MultipleSourcesSimpleExample extends App {
   //
 
   assert(
-    read(myConfig) == Right(MyConfig("jolap", 1999, Some("newyork.com")))
+    read(myConfig) equalM MyConfig("jolap", 1999, Some("newyork.com"))
   )
 
   assert(
-    read(myConfigWithReset) == Right(MyConfig("jolap", 1999, Some("newyork.com")))
+    read(myConfigWithReset) equalM MyConfig("jolap", 1999, Some("newyork.com"))
   )
 
   assert(
-    read(myConfigChangedSource) == Right(MyConfig("jolap", 1999, Some("newyork.com")))
+    read(myConfigChangedSource) equalM MyConfig("jolap", 1999, Some("newyork.com"))
   )
 }

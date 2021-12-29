@@ -1,10 +1,10 @@
 package zio.config.examples.typesafe
 
+import zio.config._
 import zio.config.magnolia.Descriptor.SealedTraitStrategy
 import zio.config.magnolia.{DeriveConfigDescriptor, Descriptor}
-import zio.config.typesafe.TypesafeConfigSource
-import zio.config.{ConfigSource, read}
 
+import typesafe._
 import Descriptor.SealedTraitStrategy._
 
 object PureConfigInterop extends App with EitherImpureOps {
@@ -37,35 +37,32 @@ object PureConfigInterop extends App with EitherImpureOps {
   import X._
 
   val aHoconSource: ConfigSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString(
         s"""
            |x = A
            |""".stripMargin
       )
-      .loadOrThrow
 
-  val bHoconSource: zio.config.ConfigSource =
-    TypesafeConfigSource
+  val bHoconSource: ConfigSource =
+    ConfigSource
       .fromHoconString(
         s"""
            |x = B
            |
            |""".stripMargin
       )
-      .loadOrThrow
 
-  val cHoconSource: zio.config.ConfigSource =
-    TypesafeConfigSource
+  val cHoconSource: ConfigSource =
+    ConfigSource
       .fromHoconString(
         s"""
            |x = C
            |""".stripMargin
       )
-      .loadOrThrow
 
-  val dHoconSource: zio.config.ConfigSource =
-    TypesafeConfigSource
+  val dHoconSource: ConfigSource =
+    ConfigSource
       .fromHoconString(
         s"""
            | x : { 
@@ -81,17 +78,15 @@ object PureConfigInterop extends App with EitherImpureOps {
            | } 
            |""".stripMargin
       )
-      .loadOrThrow
 
   import customConfigDescriptor._
 
-  assert(read(customConfigDescriptor.descriptor[Config] from aHoconSource) == Right(Config(A)))
-  assert(read(customConfigDescriptor.descriptor[Config] from bHoconSource) == Right(Config(B)))
-  assert(read(customConfigDescriptor.descriptor[Config] from cHoconSource) == Right(Config(C)))
+  assert(read(customConfigDescriptor.descriptor[Config] from aHoconSource) equalM Config(A))
+  assert(read(customConfigDescriptor.descriptor[Config] from bHoconSource) equalM Config(B))
+  assert(read(customConfigDescriptor.descriptor[Config] from cHoconSource) equalM Config(C))
 
   assert(
-    read(customConfigDescriptor.descriptor[Config] from dHoconSource) == Right(
+    read(customConfigDescriptor.descriptor[Config] from dHoconSource) equalM
       Config(D(Detail("ff", "ll", Region("strath", "syd"))))
-    )
   )
 }

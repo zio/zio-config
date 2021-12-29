@@ -20,39 +20,38 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
 
   case class Config(x: X)
 
-  val spec: ZSpec[Environment, Failure] = suite("MagnoliaConfig")(test("descriptor of coproduct sealed trait") {
-    assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "A"))))(equalTo(Right(Config(A)))) &&
-    assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "B"))))(equalTo(Right(Config(B)))) &&
-    assert(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Right(Config(C)))) &&
-    assert(
-      read(
-        descriptor[Config] from ConfigSource.fromMap(
-          constantMap = Map(
-            "x.D.detail.firstName"     -> "ff",
-            "x.D.detail.lastName"      -> "ll",
-            "x.D.detail.region.suburb" -> "strath",
-            "x.D.detail.region.city"   -> "syd"
-          ),
-          keyDelimiter = Some('.')
+  val spec: ZSpec[Environment, Failure] = suite("MagnoliaConfig")(testM("descriptor of coproduct sealed trait") {
+    assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "A"))))(equalTo(Config(A))) *>
+      assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "B"))))(equalTo(Config(B))) *>
+      assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Config(C))) *>
+      assertM(
+        read(
+          descriptor[Config] from ConfigSource.fromMap(
+            constantMap = Map(
+              "x.D.detail.firstName"     -> "ff",
+              "x.D.detail.lastName"      -> "ll",
+              "x.D.detail.region.suburb" -> "strath",
+              "x.D.detail.region.city"   -> "syd"
+            ),
+            keyDelimiter = Some('.')
+          )
         )
-      )
-    )(equalTo(Right(Config(D(Detail("ff", "ll", Region("strath", "syd"))))))) &&
-    assert(
-      read(
-        descriptor[Config] from ConfigSource.fromMap(
-          Map(
-            "x.E.detail.firstName"     -> "ff",
-            "x.E.detail.lastName"      -> "ll",
-            "x.E.detail.region.suburb" -> "strath",
-            "x.E.detail.region.city"   -> "syd"
-          ),
-          keyDelimiter = Some('.')
+      )(equalTo(Config(D(Detail("ff", "ll", Region("strath", "syd")))))) *>
+      assertM(
+        read(
+          descriptor[Config] from ConfigSource.fromMap(
+            Map(
+              "x.E.detail.firstName"     -> "ff",
+              "x.E.detail.lastName"      -> "ll",
+              "x.E.detail.region.suburb" -> "strath",
+              "x.E.detail.region.city"   -> "syd"
+            ),
+            keyDelimiter = Some('.')
+          )
         )
-      )
-    )(equalTo(Right(Config(E(Detail("ff", "ll", Region("strath", "syd"))))))) &&
-    assert(write(descriptor[Config], Config(D(Detail("ff", "ll", Region("strath", "syd"))))))(
-      equalTo(
-        Right(
+      )(equalTo(Config(E(Detail("ff", "ll", Region("strath", "syd")))))) *>
+      assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(D(Detail("ff", "ll", Region("strath", "syd")))))))(
+        equalTo(
           Record(
             Map(
               "x" -> Record(
@@ -73,10 +72,13 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
             )
           )
         )
-      )
-    ) &&
-    assert(write(descriptor[Config], Config(A)))(equalTo(Right(Record(Map("x" -> Leaf("A")))))) &&
-    assert(write(descriptor[Config], Config(B)))(equalTo(Right(Record(Map("x" -> Leaf("B")))))) &&
-    assert(write(descriptor[Config], Config(C)))(equalTo(Right(Record(Map("x" -> Leaf("c"))))))
+      ) *>
+      assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(A))))(
+        equalTo(Record(Map("x" -> Leaf("A"))))
+      ) *>
+      assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(B))))(
+        equalTo(Record(Map("x" -> Leaf("B"))))
+      ) *>
+      assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(C))))(equalTo(Record(Map("x" -> Leaf("c")))))
   })
 }

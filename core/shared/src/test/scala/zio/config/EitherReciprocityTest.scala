@@ -17,23 +17,19 @@ object EitherReciprocityTest extends BaseSpec {
           val lr =
             for {
               writtenLeft  <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Left(p))))
-              rereadLeft   <- ZIO
-                                .fromEither(
-                                  read(
-                                    cCoproductConfig from ConfigSource
-                                      .fromPropertyTree(writtenLeft, "test", LeafForSequence.Valid)
-                                  )
-                                )
-                                .mapError(_.getMessage)
+              rereadLeft   <-
+                read(
+                  cCoproductConfig from ConfigSource
+                    .fromPropertyTree(writtenLeft, "test")
+                )
+                  .mapError(_.getMessage)
               writtenRight <- ZIO.fromEither(write(cCoproductConfig, CoproductConfig(Right(p))))
-              rereadRight  <- ZIO
-                                .fromEither(
-                                  read(
-                                    cCoproductConfig from ConfigSource
-                                      .fromPropertyTree(writtenRight, "test", LeafForSequence.Valid)
-                                  )
-                                )
-                                .mapError(_.getMessage)
+              rereadRight  <-
+                read(
+                  cCoproductConfig from ConfigSource
+                    .fromPropertyTree(writtenRight, "test")
+                )
+                  .mapError(_.getMessage)
             } yield (rereadLeft.coproduct, rereadRight.coproduct) match {
               case (Left(pl), Right(pr)) => Some(pl -> pr)
               case _                     => None
@@ -65,17 +61,17 @@ object EitherReciprocityTestUtils {
 
   private val cIdLeft             = string("klId").to[Id]
   private val cDbUrlLeft          = string("klDbUrl").to[DbUrl]
-  private val cEnterpriseAuthLeft = (cIdLeft |@| cDbUrlLeft).to[EnterpriseAuth]
+  private val cEnterpriseAuthLeft = (cIdLeft zip cDbUrlLeft).to[EnterpriseAuth]
 
   private val cNestedConfigLeft =
-    (cEnterpriseAuthLeft |@| int("klCount") |@| float("klFactor")).to[NestedPath]
+    (cEnterpriseAuthLeft zip int("klCount") zip float("klFactor")).to[NestedPath]
 
   private val cIdRight             = string("krId").to[Id]
   private val cDbUrlRight          = string("krDbUrl").to[DbUrl]
-  private val cEnterpriseAuthRight = (cIdRight |@| cDbUrlRight).to[EnterpriseAuth]
+  private val cEnterpriseAuthRight = (cIdRight zip cDbUrlRight).to[EnterpriseAuth]
 
   private val cNestedConfigRight =
-    (cEnterpriseAuthRight |@| int("krCount") |@| float("krFactor")).to[NestedPath]
+    (cEnterpriseAuthRight zip int("krCount") zip float("krFactor")).to[NestedPath]
 
   val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
     (cNestedConfigLeft.orElseEither(cNestedConfigRight)).to[CoproductConfig]

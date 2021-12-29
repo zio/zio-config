@@ -9,28 +9,23 @@ object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: Either[String, Int])
 
   val conf: ConfigDescriptor[PgmConfig] =
-    (string("HELLO").default("xyz") |@|
-      string("SOMETHING").orElseEither(int("PORT").default(1)))(
-      PgmConfig.apply,
-      PgmConfig.unapply
-    )
+    (string("HELLO").default("xyz") zip
+      string("SOMETHING").orElseEither(int("PORT").default(1))).to[PgmConfig]
 
-  val pgmConfig: ZIO[zio.system.System, ReadError[String], ConfigDescriptor[PgmConfig]] =
-    ConfigSource.fromSystemEnv.map(source => conf from source)
+  val pgmConfig: ConfigDescriptor[PgmConfig] =
+    conf from ConfigSource.fromSystemEnv()
 
   val runtime = zio.Runtime.default
 
-  val confEx: ConfigDescriptor[PgmConfig] = runtime.unsafeRun(pgmConfig)
-
   // read(pgmConf from ConfigSource.fromEnv) is equivalent to Config.fromEnv(pgmConf) except that it returns `Config[A]` in return
   // which you can pass down to the rest of the program
-  val expected: PgmConfig                          = PgmConfig("xyz", Right(1))
-  val result: Either[ReadError[String], PgmConfig] = read(confEx)
+  val expected: PgmConfig                            = PgmConfig("xyz", Right(1))
+  val result: ZIO[Any, ReadError[String], PgmConfig] = read(pgmConfig)
 
-  assert(result == Right(PgmConfig("xyz", Right(1))))
+  assert(result equalM PgmConfig("xyz", Right(1)))
 
   assert(
-    generateDocs(confEx).toTable.toGithubFlavouredMarkdown ==
+    generateDocs(pgmConfig).toTable.toGithubFlavouredMarkdown ==
       s"""
          |## Configuration Details
          |

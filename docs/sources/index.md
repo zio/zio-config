@@ -25,7 +25,7 @@ Let's define a simple one.
 ```scala mdoc:silent
 
 val myConfig =
-  (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
+  (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
  // val automatedConfig = descriptor[MyConfig]; using zio-config-magnolia
 
@@ -69,7 +69,7 @@ This support a list of values for a key.
 ```scala mdoc:silent
 case class ListConfig(ldap: String, port: List[Int], dburl: String)
 
-val listConfig = (string("LDAP") |@| list("PORT")(int) |@| string("DB_URL"))(ListConfig.apply, ListConfig.unapply)
+val listConfig = (string("LDAP") zip list("PORT")(int) zip string("DB_URL")).to[ListConfig]
 
 val multiMapSource =
   ConfigSource.fromMultiMap(
@@ -99,7 +99,7 @@ ZConfig.fromMultiMap(Map(), myConfig, "constant")
 ```scala mdoc:silent
 
 val sysEnvSource =
-  ConfigSource.fromSystemEnv
+  ConfigSource.fromSystemEnv()
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val sysEnvSourceSupportingList =
@@ -131,7 +131,7 @@ Given:
 then, the below config will work
 
 ```scala
-nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+nested("KAFKA")(string("SERVER") zip string("FLAG")).to[KafkaConfig]
 ```
 
 
@@ -146,15 +146,15 @@ zio-config can source system properties.
 ```scala mdoc:silent
 
 val sysPropertiesSource =
-  ConfigSource.fromSystemProperties
+  ConfigSource.fromSystemProps()
 
 // If you want to support list of values, then you should be giving a valueDelimiter
 val sysPropertiesSourceWithList =
-  ConfigSource.fromSystemProperties(None, valueDelimiter = Some(','))
+  ConfigSource.fromSystemProps(None, valueDelimiter = Some(','))
 
 // If you want to consider system-properties as a nested config, provide keyDelimiter. Refer to API doc
 // Example, Given KAFKA.SERVERS = "servers1, server2"
-  ConfigSource.fromSystemProperties(keyDelimiter = Some('.'), valueDelimiter = Some(','))
+  ConfigSource.fromSystemProps(keyDelimiter = Some('.'), valueDelimiter = Some(','))
 
 
 ```
@@ -199,8 +199,8 @@ Here is an quick example
 
 ```scala mdoc:silent
 
-import zio.config.typesafe._, TypesafeConfigSource._
-import zio.config.magnolia.DeriveConfigDescriptor._
+import zio.config.typesafe._
+import zio.config.magnolia._
 
 ```
 
@@ -211,7 +211,7 @@ case class SimpleConfig(port: Int, url: String, region: Option[String])
 val automaticDescription = descriptor[SimpleConfig]
 
 val hoconSource =
-  TypesafeConfigSource.fromHoconString(
+  ConfigSource.fromHoconString(
       """
       {
         port : 123
@@ -224,7 +224,7 @@ val hoconSource =
 
 
 val anotherHoconSource =
-  TypesafeConfigSource.fromHoconString(
+  ConfigSource.fromHoconString(
       """
         port=123
         url=bla
@@ -232,24 +232,17 @@ val anotherHoconSource =
       """
   )
 
-hoconSource match {
-  case Left(value) => Left(value)
-  case Right(source) => read(automaticDescription from source)
-}
+read(automaticDescription from hoconSource)
 
-// yielding Right(SimpleConfig(123,bla,Some(useast)))
+// yielding SimpleConfig(123,bla,Some(useast))
 
-anotherHoconSource match {
-  case Left(value) => Left(value)
-  case Right(source) => read(automaticDescription from source)
-}
+read(automaticDescription from anotherHoconSource)
 
-// yielding Right(SimpleConfig(123,bla,Some(useast)))
+// yielding SimpleConfig(123,bla,Some(useast))
 
-// Please check other ways to load the hocon file in `TypesafeConfig`
 
 // You could also do, in which case the return type is `Config` service
-TypesafeConfig.fromHoconString(
+ZConfig.fromHoconString(
      """
       {
         port : 123
@@ -268,7 +261,8 @@ Similar to `TypesafeConfig.fromHoconString(str, automaticDescription)`
 
 ```scala mdoc:silent
 
-TypesafeConfig.fromHoconFile(new java.io.File("fileapth"), automaticDescription)
+ZConfig.fromHoconFile(new java.io.File("fileapth"), automaticDescription)
+// or use, read(automaticDescription from ConfigSource.fromHoconFile(new java.io.File("fileapth")))
 
 ```
 
@@ -288,11 +282,11 @@ val jsonString =
 
    """
 
-TypesafeConfig.fromHoconString(jsonString, automaticDescription)
+ZConfig.fromHoconString(jsonString, automaticDescription)
+// or use, read(automaticDescription from ConfigSource.fromHoconString(jsonString))
 
 
 ```
-Please check other ways to load the hocon file in `TypesafeConfig`
 
 ## Command Line Arguments
 
@@ -321,7 +315,7 @@ val nestedSource =
 )
 
 val nestedConfig = descriptor[NestedCommandLineConfig] from nestedSource
-assert(read(nestedConfig) == Right(NestedCommandLineConfig(SparkConf("v1", "v2"), "v3")))
+assert(zio.Runtime.default.unsafeRun(read(nestedConfig)) == NestedCommandLineConfig(SparkConf("v1", "v2"), "v3"))
 
 ```
 
@@ -338,7 +332,7 @@ val nestedCmdLineArgs2 = "--conf -key1=v1 --conf -key2=v2 --key3 v3"
 val nestedSource2 = ConfigSource.fromCommandLineArgs(nestedCmdLineArgs2.split(' ').toList)
 val nestedConfig2 = descriptor[NestedCommandLineConfig] from nestedSource2
 
-assert(read(nestedConfig2) == Right(NestedCommandLineConfig(SparkConf("v1", "v2"), "v3")))
+assert(zio.Runtime.default.unsafeRun(read(nestedConfig2)) == NestedCommandLineConfig(SparkConf("v1", "v2"), "v3"))
 ```
 
 Here we don't use delimiters for nesting, hence keyDelimiter is `None`. 
@@ -368,7 +362,7 @@ val listArgs = "--users Jane --users Jack"
 val listSource = ConfigSource.fromCommandLineArgs(listArgs.split(' ').toList)
 val listConfigCmdLineArgs = list("users")(string) from listSource
 
-assert(read(listConfigCmdLineArgs) == Right(List("Jane", "Jack")))
+assert(zio.Runtime.default.unsafeRun(read(listConfigCmdLineArgs)) == List("Jane", "Jack"))
 
 ```
 
@@ -385,7 +379,7 @@ val listSource2 = ConfigSource.fromCommandLineArgs(
    valueDelimiter = Some(',')
 )
 
-assert(read(list("users")(string) from listSource2) == Right(List("Jane", "Jack")))
+assert(zio.Runtime.default.unsafeRun(read(list("users")(string) from listSource2)) == List("Jane", "Jack"))
 
 ```
 
@@ -482,21 +476,20 @@ object CombineSourcesExample extends zio.App {
   override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
     application.either.flatMap(r => putStrLn(s"Result: ${r}")).exitCode
 
-  final case class Config(username: String , password: String)
+  case class Config(username: String , password: String)
 
-  val getDesc: ZIO[system.System, ReadError[String], ConfigDescriptor[Config]] =
-    for {
-      hoconFile <- ZIO.fromEither(TypesafeConfigSource.fromHoconFile(new File("/invalid/path")))
-      constant  <- ZIO.fromEither(TypesafeConfigSource.fromHoconString(s""))
-      env       <- ConfigSource.fromSystemEnv
-      sysProp   <- ConfigSource.fromSystemProperties
-      source    = hoconFile <> constant <> env <> sysProp
-    } yield (descriptor[Config] from source)
+  val desc: ConfigDescriptor[Config] ={
+    val hoconFile = TypesafeConfigSource.fromHoconFile(new File("/invalid/path"))
+    val constant  = TypesafeConfigSource.fromHoconString(s"")
+    val env       = ConfigSource.fromSystemEnv()
+    val sysProp   = ConfigSource.fromSystemProps()
+    val source    = hoconFile <> constant <> env <> sysProp
+    (descriptor[Config] from source)
+  }
 
   val application =
     for {
-      desc        <- getDesc.mapError(_.prettyPrint())
-      configValue <- ZIO.fromEither(read(desc)).mapError(_.prettyPrint())
+      configValue <- read(desc).mapError(_.prettyPrint())
       string      <- ZIO.fromEither(configValue.toJson(desc))
       _ <- putStrLn(string)
     } yield ()
