@@ -24,4 +24,33 @@ package object enumeratum {
   ): ConfigDescriptor[A] =
     nonEmptyString
       .transformOrFailLeft[A](v => enum.withValueEither(v.toLong).swap.map(_.getMessage()).swap)(_.value.toString)
+
+  def shortEnum[A <: ShortEnumEntry](enum: ShortEnum[A])(implicit
+    ct: ClassTag[A]
+  ): ConfigDescriptor[A] =
+    nonEmptyString
+      .transformOrFailLeft[A](v => enum.withValueEither(v.toShort).swap.map(_.getMessage()).swap)(_.value.toString)
+
+  def stringEnum[A <: StringEnumEntry](enum: StringEnum[A])(implicit
+    ct: ClassTag[A]
+  ): ConfigDescriptor[A] =
+    string
+      .transformOrFailLeft[A](v => enum.withValueEither(v).swap.map(_.getMessage()).swap)(_.value.toString)
+
+  def byteEnum[A <: ByteEnumEntry](enum: ByteEnum[A])(implicit
+    ct: ClassTag[A]
+  ): ConfigDescriptor[A] =
+    nonEmptyString
+      .transformOrFailLeft[A](v => enum.withValueEither(v.toByte).swap.map(_.getMessage()).swap)(_.value.toString)
+
+  def charEnum[A <: CharEnumEntry](enum: CharEnum[A])(implicit
+    ct: ClassTag[A]
+  ): ConfigDescriptor[A] =
+    nonEmptyString.transformOrFailLeft(v =>
+      v.toList match {
+        case h :: Nil => enum.withValueEither(h).swap.map(_.getMessage()).swap
+        case s        => Left(s"Failed to read a character from ${s}")
+      }
+    )(_.value.toString)
+
 }
