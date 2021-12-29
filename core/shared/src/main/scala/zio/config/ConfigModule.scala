@@ -23,7 +23,7 @@ trait ConfigModule
    *     ConfigSource.fromMap(Map("age" -> "20")).toLayer >>> configLayer(int("age").to[MyConfig])
    *
    *  val app: ZIO[Has[MyConfig] with zio.console.Console,java.io.IOException, Unit] =
-   *    getConfig[MyConfig].flatMap(config => putStrLn(s"My age is ${config.age}"))
+   *    getConfig[MyConfig].flatMap(putStrLn)
    *
    *  app.provideSomeLayer[Console](appConfigLayer)
    *  // ZIO[zio.console.Console, Exception, Unit]
@@ -63,7 +63,7 @@ trait ConfigModule
    *  }
    *
    *  val app: ZIO[Has[MyConfig] with zio.console.Console, java.io.IOException, Unit] =
-   *    getConfig[MyConfig].flatMap(age => putStrLn(s"My age is ${age}"))
+   *    getConfig[MyConfig].flatMap(putStrLn)
    *
    *  val io: ZIO[zio.console.Console, Exception, Unit] =
    *    app.provideSomeLayer[Console](configLayer_(MyConfig.config))
