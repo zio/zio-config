@@ -108,7 +108,7 @@ object YamlConfigSource {
   ): ConfigSource =
     fromYamlRepr(yamlString)(loadYaml(_), sourceName)
 
-  def fromYamlRepr[A](repr: A)(
+  private[config] def fromYamlRepr[A](repr: A)(
     loadYaml: A => ZIO[Any, ReadError[String], AnyRef],
     sourceName: String = "yaml"
   ): ConfigSource = {
@@ -119,7 +119,7 @@ object YamlConfigSource {
     ConfigSourceReader(
       Set(ConfigSourceName(sourceName)),
       ZManaged.succeed(managedTree.map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path))))
-    )
+    ).memoize
   }
 
   private[yaml] def convertYaml(data: AnyRef): ZIO[Any, ReadError[String], PropertyTree[String, String]] = {

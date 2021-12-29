@@ -125,6 +125,11 @@ object TypesafeConfigSource {
    *   val result: Either[ReadError[String], MyConfig] =
    *     configSource.flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
+   *
+   * We are ending up calling `memoize` (without leaving it to the user)
+   * is some of th limitations in typesafe/config project such as:
+   *
+   * https://github.com/lightbend/config/issues/30 (open as of 29/12/2021)
    */
   def fromTypesafeConfig(
     rawConfig: ZIO[Any, Throwable, com.typesafe.config.Config]
@@ -139,10 +144,12 @@ object TypesafeConfigSource {
         }
       }.mapError(exception => ReadError.SourceError(message = exception.getMessage))
 
-    ConfigSource.Reader(
-      Set(ConfigSource.ConfigSourceName("hocon")),
-      ZManaged.succeed(ZManaged.fromEffect(effect))
-    )
+    ConfigSource
+      .Reader(
+        Set(ConfigSource.ConfigSourceName("hocon")),
+        ZManaged.succeed(ZManaged.fromEffect(effect))
+      )
+      .memoize
   }
 
   /**
