@@ -18,6 +18,48 @@ trait ConfigSourceModule extends KeyValueModule {
 
   import ConfigSource._
 
+  /**
+   * Every ConfigSource at the core is just a `Reader`,
+   * which is essentially a function that goes from `PropertyTreePath` to an actual `PropertyTree`.
+   * i.e, `f: PropertyTreePath[String] => IO[ReadError[String], PropertyTree[String, String]`
+   * Later on for each `key` represented as `PropertyTreePath[String]` internally, `f` is used to
+   * applied to get the value as a `PropertyTree` itself.
+   *
+   * Internal details:
+   *
+   * This function `f` can be retrieved under an ZManaged effect. This implies it may involve an IO with managing resources
+   * to even form this function. This is with a vision to form even more complicated `ConfigSources` in future.
+   *
+   * The effect that was required to create the function can be memoized as well with the help of the
+   * structure MemoizableManagedReader (see `memoize` function).
+   * In a first glance, this may look complicated, but it can come in handy quite soon.
+   * Note that, most of the pre-built ConfigSources are memoized, since for most of them, it doesn't make sense
+   * to calculate `f` for every key, instead all that is required is to apply `f` to get the String back.
+   *
+   * For every read of a key (say, to form a case class), unless ConfigSource is memoized using `source.memoize`,
+   * it will involve running this resourceful effect,
+   * and then create a property tree in-memory.
+   *
+   * If memoized, for most of the config-sources, the entire config source will be represented as a propertyTree in memory,
+   * after the read of the 1st config key.
+   *
+   * However, for certain complex sources, it may not make sense to memoize at all. This talks about situations where the author
+   * of ConfigSource can decide to NOT represent the entire config as an in-memory tree at any point.
+   * As an example, during the implementation of a ConfigSource which requires creating a function
+   * `PropertyTreePath[K] => IO[ReadError[K], PropertyTree[K, V]]`, the author of the ConfigSource choose to read only a part
+   * of the file where the input `PropertyTreePath` exist and return just a smaller tree compared to that of the entire big file.
+   * In this case configSource.memoize doesn't do much for you, as for the next key, it has to
+   * read the second part of the file and so on.
+   *
+   * Therefore, it's recommended to have an eye on the semantics of your ConfigSource before you call `.memoize`.
+   * The easiest way to think about question this "Does it make sense to memoize my Config Source?"
+   *
+   * Note,`memoize` is only per `ConfigDescriptorModule.read`.
+   * i.e, everytime we call `read`, `ConfigSource` will be re-evaluated.
+   *
+   * If you need `ConfigSource` to be strictly evaluated once across the app (example: read config content from a file only once)
+   * then use `strictlyOnce` or use `ConfigSource` as a layer.
+   */
   sealed trait ConfigSource { self =>
 
     /**
@@ -124,22 +166,27 @@ trait ConfigSourceModule extends KeyValueModule {
       }
 
     /**
-     * Within a `read`, ConfigSource is evaluated only once if memoized.
+     * If memoized, for most of the config-sources, the effect required to form the function
+     * `f: PropertyTreePath[K] => IO[ReadError[K], PropertyTree[K, V]]` will be memoized.
+     * This is possible in limited number of ways, of which the most easiest is to load up the entire source
+     * as a PropertyTree, such that `f` doesn't need to be calculated for every key.
      *
-     * Example:
-     *   {{{
-     *     (string("x") |@| string("y")).to[Config] from databaseSource
-     *   }}}
+     * For certain simple ConfigSource, this `memoize` is done already for you. Example: A constant Map.
+     * It doesn't make sense to compute `f`, for each key in your config when it comes to a `ConfigSource.fromMap(..)`,
+     * instead all that is required is to apply the already formed `f` and get the `PropertyTree` for that particular
+     * `PropertyTreePath` that represents the key.
      *
-     * In the above case, within a single database connection, `x` and `y` is
-     * retrieved
+     * On the other hand, for certain complex sources, it may not make sense to memoize at all.
+     * For example, this can happen when ConfigSource cannot represent the entire config as an in-memory tree at any point.
      *
-     * However, for every individual read,
-     * ConfigSource will be re-computed.
+     * Therefore, it's recommended to have an eye on the semantics of your ConfigSource before you call `.memoize`.
+     * The easiest way to think about is asking yourself "Does it make sense to memoize my Config Source?"
      *
-     * If ConfigSource need to be computed only once even for
-     * multiple reads, then consider using `strictlyOnce` combinator
-     * or use `toLayer`
+     * Note,`memoize` is only per `ConfigDescriptorModule.read`.
+     * i.e, everytime we call `read`, `ConfigSource` will be re-evaluated.
+     *
+     * If you need `ConfigSource` to be strictly evaluated once across the app (example: read config content from a file only once)
+     * then use `strictlyOnce` or use `ConfigSource` as a layer.
      */
     def memoize: ConfigSource =
       self match {
@@ -173,7 +220,7 @@ trait ConfigSourceModule extends KeyValueModule {
     def at(propertyTreePath: PropertyTreePath[K]): ConfigSource = self match {
       case OrElse(self, that)    => self.at(propertyTreePath).orElse(that.at(propertyTreePath))
       case Reader(names, access) =>
-        Reader(names, access.map(_.map(fn => (path => fn(propertyTreePath).map(_.at(path))))))
+        Reader(names, access.map(_.map(getTree => (path => getTree(propertyTreePath).map(_.at(path))))))
     }
   }
 
@@ -308,7 +355,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(CommandLineArguments)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      )
+      ).memoize
     }
 
     /**
@@ -347,7 +394,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      )
+      ).memoize
     }
 
     /**
@@ -386,7 +433,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      )
+      ).memoize
     }
 
     /**
@@ -425,7 +472,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      )
+      ).memoize
     }
 
     /**
@@ -443,7 +490,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      )
+      ).memoize
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -476,15 +523,7 @@ trait ConfigSourceModule extends KeyValueModule {
     ): ConfigSource = {
       val managed: ZManaged[Any, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
         ZManaged
-          .make({
-            ZIO.effect({
-              println("retrieving")
-              new FileInputStream(new File(filePath))
-            })
-          }) { r =>
-            println("closing")
-            ZIO.effectTotal(r.close())
-          }
+          .make(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))
           .mapM { inputStream =>
             for {
               properties <- ZIO.effect {
@@ -508,7 +547,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(filePath)),
         ZManaged.succeed(managed)
-      )
+      ).memoize
     }
 
     /**
@@ -569,7 +608,7 @@ trait ConfigSourceModule extends KeyValueModule {
           // that's invoked per config. Instead die.
           ZManaged.fail(ReadError.SourceError(s"Invalid system key delimiter: ${keyDelimiter.get}")).orDie
         }
-      )
+      ).memoize
     }
 
     /**
@@ -615,7 +654,7 @@ trait ConfigSourceModule extends KeyValueModule {
             )
             .provideLayer(ZLayer.succeed(system))
         )
-      )
+      ).memoize
 
     private[config] def getPropertyTreeFromArgs(
       args: List[String],

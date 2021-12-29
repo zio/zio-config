@@ -61,25 +61,25 @@ a few subtle limitations.
   // Defining different possibility of HOCON source
 
   val aHoconSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString("x = A")
 ```
 
 ```scala
   val bHoconSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString("x = B")
 ```
 
 ```scala
   val cHoconSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString("x = C")
 ```
 
 ```scala
   val dHoconSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString(
         s"""
            | x {
@@ -163,7 +163,7 @@ case class DbUrl(value: String)
 This will be equivalent to the manual configuration of:
 
 ```scala
-   (string("region") |@| string("dburl").transform(DbUrl, _.value))(Aws.apply, Aws.unapply) ?? "This config is about aws"
+   (string("region") zip string("dburl").transform(DbUrl, _.value)).to[Aws] ?? "This config is about aws"
 ```
 
 You could provide `describe` annotation at field level
@@ -178,7 +178,7 @@ This will be equivalent to the manual configuration of:
 
 
 ```scala
-   (string("region") ?? "AWS region" |@| string("dburl").transform(DbUrl, _.value))(Aws.apply, Aws.unapply) ?? "This config is about aws"
+   (string("region") ?? "AWS region" zip string("dburl").to[DbUrl]).to[Aws] ?? "This config is about aws"
 ```
 
 

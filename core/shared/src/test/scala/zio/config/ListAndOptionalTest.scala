@@ -147,7 +147,7 @@ object ListAndOptionalTest extends BaseSpec {
 
         val branchConfigDesc =
           (
-            patternDesc |@|
+            patternDesc zip
               tagDesc
           ).to[Branch]
 
@@ -207,7 +207,7 @@ object ListAndOptionalTestUtils {
   final case class Opt3Config(a: Id, b: Option[Id], c: Option[Id])
   final case class ListConfig(list: List[Opt3Config])
 
-  val cOpt3Config: ConfigDescriptor[Opt3Config] = (id("a") |@| id("b").optional |@| id("c").optional).to[Opt3Config]
+  val cOpt3Config: ConfigDescriptor[Opt3Config] = (id("a") zip id("b").optional zip id("c").optional).to[Opt3Config]
 
   val cListConfig: ConfigDescriptor[ListConfig] = list("list")(cOpt3Config).to[ListConfig]
 

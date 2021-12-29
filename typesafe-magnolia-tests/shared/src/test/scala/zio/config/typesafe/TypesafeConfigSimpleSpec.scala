@@ -51,21 +51,18 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig")(
     testM("A nested example with typesafe HOCON config") {
 
-      val details          = (string("name") |@| int("age"))(Details.apply, Details.unapply)
-      val accountConfig    =
-        (int("accountId").orElseEither(string("accountId")).optional |@| list("regions")(string) |@| nested("details")(
+      val details       = (string("name") zip int("age")).to[Details]
+      val accountConfig =
+        (int("accountId").orElseEither(string("accountId")).optional zip list("regions")(string) zip nested("details")(
           details
-        ).optional)(
-          Account.apply,
-          Account.unapply
-        )
-      val databaseConfig   = (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
+        ).optional).to[Account]
+
+      val databaseConfig   = (int("port").optional zip string("url")).to[Database]
       val awsDetailsConfig =
-        (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig) |@| list("users")(int))(
-          AwsDetails.apply,
-          AwsDetails.unapply
-        )
-      val listResult       =
+        (nested("accounts")(list(accountConfig)) zip nested("database")(databaseConfig) zip list("users")(int))
+          .to[AwsDetails]
+
+      val listResult =
         read(awsDetailsConfig from fromHoconString(validHocon))
 
       val expectedResult =

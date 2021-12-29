@@ -52,7 +52,7 @@ object SystemTest extends DefaultRunnableSpec {
   object SomeConfig {
     val descriptor: ConfigDescriptor[SomeConfig] =
       nested("SYSTEMPROPERTIESTEST")(
-        (int("SIZE") |@| string("DESCRIPTION")).to[SomeConfig]
+        (int("SIZE") zip string("DESCRIPTION")).to[SomeConfig]
       )
   }
 

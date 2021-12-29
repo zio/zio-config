@@ -96,7 +96,7 @@ object CoproductTestUtils {
       string.transformOrFail(a => if (a == "b") Right(B) else Left("Can only be b"), _ => Right("b"))
 
     val cConfig: ConfigDescriptor[C] =
-      (int("c1") |@| string("c2")).to[C]
+      (int("c1") zip string("c2")).to[C]
 
     val dConfig: ConfigDescriptor[D] =
       int("d").to[D]
@@ -204,10 +204,10 @@ object CoproductTestUtils {
 
   def readLeft(p: TestParams): IO[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
-      (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
+      (string(p.kLdap).to[Ldap] zip string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid)).to[PasswordAuth]
+      (string(p.kUser) zip int(p.kCount) zip float(p.kFactor) zip duration(p.kCodeValid)).to[PasswordAuth]
 
     val authConfig = enterprise.orElseEither(password)
 
@@ -220,10 +220,10 @@ object CoproductTestUtils {
     p: TestParams
   ): IO[ReadError[String], Either[CoproductTestUtils.EnterpriseAuth, CoproductTestUtils.PasswordAuth]] = {
     val enterprise =
-      (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
+      (string(p.kLdap).to[Ldap] zip string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid)).to[PasswordAuth]
+      (string(p.kUser) zip int(p.kCount) zip float(p.kFactor) zip duration(p.kCodeValid)).to[PasswordAuth]
 
     val authConfig = enterprise.orElseEither(password)
 
@@ -244,10 +244,10 @@ object CoproductTestUtils {
     p: TestParams
   ): IO[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
-      (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
+      (string(p.kLdap).to[Ldap] zip string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid)).to[PasswordAuth]
+      (string(p.kUser) zip int(p.kCount) zip float(p.kFactor) zip duration(p.kCodeValid)).to[PasswordAuth]
 
     val authConfig = enterprise.orElseEither(password)
 
@@ -267,10 +267,10 @@ object CoproductTestUtils {
 
   def readChooseLeftFromBoth(p: TestParams): IO[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
-      (string(p.kLdap).to[Ldap] |@| string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
+      (string(p.kLdap).to[Ldap] zip string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
     val password =
-      (string(p.kUser) |@| int(p.kCount) |@| float(p.kFactor) |@| duration(p.kCodeValid)).to[PasswordAuth]
+      (string(p.kUser) zip int(p.kCount) zip float(p.kFactor) zip duration(p.kCodeValid)).to[PasswordAuth]
 
     val authConfig = enterprise.orElseEither(password)
 

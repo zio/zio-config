@@ -65,5 +65,4 @@ object YamlConfig {
    */
   def fromFile[A: Tag](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], Has[A]] =
     ZConfig.fromConfigDescriptor(descriptor from YamlConfigSource.fromYamlFile(file))
-
 }

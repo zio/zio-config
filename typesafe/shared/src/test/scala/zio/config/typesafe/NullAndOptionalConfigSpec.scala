@@ -1,11 +1,11 @@
 package zio.config.typesafe
 
-import zio.config.ConfigDescriptor._
 import zio.config.typesafe.EmployeeDetails._
-import zio.config.typesafe.TypesafeConfigSource.fromHoconString
-import zio.config.{ConfigDescriptor, read}
+import zio.config.{ConfigDescriptor, read, _}
 import zio.test.Assertion._
 import zio.test.{DefaultRunnableSpec, _}
+
+import ConfigDescriptor._
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
@@ -18,8 +18,8 @@ final case class Employee(
 object EmployeeDetails {
 
   val employee: ConfigDescriptor[Employee] =
-    (string("name") |@|
-      int("state").orElseEither(string("state")).optional |@|
+    (string("name") zip
+      int("state").orElseEither(string("state")).optional zip
       double("confidence")
         .orElseEither(int("confidence")) // The value can be Double or Int for key confidence
         .orElseEither(                   // If not Double or Int, then it could be string, but this time the key can be confidence, confidences or confs!
@@ -30,7 +30,7 @@ object EmployeeDetails {
 
   val employeeDetails: zio.config.ConfigDescriptor[EmployeeDetails] =
     nested("details") {
-      (nested("employees")(list(employee)) |@| int("accountId")).to[EmployeeDetails]
+      (nested("employees")(list(employee)) zip int("accountId")).to[EmployeeDetails]
     }
 }
 
@@ -38,7 +38,7 @@ object NullAndOptionalConfig extends DefaultRunnableSpec {
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig Null and Optional")(
     testM("A config case which keys maybe null or optional") {
       val hoconSource =
-        fromHoconString(
+        ConfigSource.fromHoconString(
           """details {
             |  employees = [{
             |    name: jon

@@ -17,7 +17,7 @@ object CollectAllRoundtripTest extends BaseSpec {
 
           // List is nonempty
           val consOfConfig = {
-            val configs = groups.map(group => (cId(group.id1Key).optional |@| cId(group.id2Key)).to[IdentityDetails])
+            val configs = groups.map(group => (cId(group.id1Key).optional zip cId(group.id2Key)).to[IdentityDetails])
             ::(configs.head, configs.tail)
           }
 
