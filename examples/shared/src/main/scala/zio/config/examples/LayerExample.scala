@@ -1,17 +1,18 @@
 package zio.config.examples
 
-import zio.{ZIO, Has}
-
-import zio.config._, ConfigDescriptor._
+import zio.config._
 import zio.console._
+
+import zio.{Has, ZIO}
+
+import ConfigDescriptor._
 
 object LayerExample extends App {
 
-  // Simple
   final case class MyConfig(age: Int, name: String)
 
   object MyConfig {
-    val config =
+    val config: ConfigDescriptor[MyConfig] =
       (int("age") zip string("name")).to[MyConfig] from ConfigSource.fromMap(Map("age" -> "20", "name" -> "afsal"))
   }
 
