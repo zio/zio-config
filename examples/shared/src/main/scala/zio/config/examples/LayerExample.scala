@@ -2,7 +2,6 @@ package zio.config.examples
 
 import zio.config._
 import zio.console._
-
 import zio.{Has, ZIO}
 
 import ConfigDescriptor._
