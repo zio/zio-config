@@ -74,12 +74,12 @@ addCommandAlias(
 )
 addCommandAlias(
   "testDotty",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigRefinedJVM/test"
 )
 
 lazy val zioVersion        = "1.0.9"
 lazy val magnoliaVersion   = "0.17.0"
-lazy val refinedVersion    = "0.9.27"
+lazy val refinedVersion    = "0.9.28"
 lazy val pureconfigVersion = "0.16.0"
 lazy val shapelessVersion  = "2.4.0-M1"
 
@@ -96,7 +96,7 @@ lazy val magnoliaDependencies =
 
 lazy val refinedDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
+    if (scalaBinaryVersion.value == "2.11") Seq.empty // Just to make IntelliJ happy
     else Seq("eu.timepit" %% "refined" % refinedVersion)
   }
 
@@ -128,7 +128,9 @@ lazy val scala213projects = scala212projects
 lazy val scala3projects =
   Seq[ProjectReference](
     zioConfigJVM,
+    zioConfigGenJVM,
     zioConfigTypesafeJVM,
+    zioConfigRefinedJVM,
     zioConfigYamlJVM,
     zioConfigDerivationJVM,
     zioConfigMagnoliaJVM
@@ -210,6 +212,7 @@ lazy val zioConfigPureconfig    = crossProject(JVMPlatform)
   .in(file("pureconfig"))
   .settings(stdSettings("zio-config-pureconfig"))
   .settings(crossProjectSettings)
+  .settings(dottySettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     pureconfigDependencies,
@@ -230,6 +233,7 @@ lazy val examples = crossProject(JVMPlatform)
   .in(file("examples"))
   .settings(stdSettings("zio-config-examples"))
   .settings(crossProjectSettings)
+  .settings(dottySettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     publish / skip := true,
@@ -270,6 +274,7 @@ lazy val zioConfigGen = crossProject(JVMPlatform)
   .in(file("gen"))
   .settings(stdSettings("zio-config-gen"))
   .settings(crossProjectSettings)
+  .settings(dottySettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     magnoliaDependencies,
