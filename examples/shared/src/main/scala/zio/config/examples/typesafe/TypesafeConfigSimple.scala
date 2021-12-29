@@ -1,9 +1,11 @@
 package zio.config.examples.typesafe
 
+import zio.IO
 import zio.config._
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 
+import typesafe._
+import magnolia._
+import examples._
 import ConfigDescriptor._
 
 object TypesafeConfigSimple extends App with EitherImpureOps {
@@ -52,80 +54,68 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
 
     """
 
-  val details: ConfigDescriptor[Details] = (string("name") |@| int("age"))(Details.apply, Details.unapply)
+  val details: ConfigDescriptor[Details] = (string("name") zip int("age")).to[Details]
 
   val accountConfig: ConfigDescriptor[Account] =
-    (int("accountId").orElseEither(string("accountId")).optional |@| list(
+    (int("accountId").orElseEither(string("accountId")).optional zip list(
       "regions"
-    )(string) |@| nested("details")(details).optional)(
-      Account.apply,
-      Account.unapply
-    )
+    )(string) zip nested("details")(details).optional).to[Account]
 
   val databaseConfig: ConfigDescriptor[Database] =
-    (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
+    (int("port").optional zip string("url")).to[Database]
 
   val awsDetailsConfig: ConfigDescriptor[AwsDetails] =
-    (nested("accounts")(list(accountConfig)) |@| nested("database")(
+    (nested("accounts")(list(accountConfig)) zip nested("database")(
       databaseConfig
-    ) |@| list("users")(int))(AwsDetails.apply, AwsDetails.unapply)
+    ) zip list("users")(int)).to[AwsDetails]
 
-  val listResult: Either[ReadError[String], AwsDetails] =
-    fromHoconString(validHocon) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(awsDetailsConfig from source)
-    }
+  val listResult: IO[ReadError[String], AwsDetails] =
+    read(awsDetailsConfig from ConfigSource.fromHoconString(validHocon))
 
   assert(
-    listResult ==
-      Right(
-        AwsDetails(
-          List(
-            Account(
-              Some(Right("jon")),
-              List("us-east", "dd", "ee"),
-              Some(Details("jaku", 10))
-            ),
-            Account(
-              Some(Left(123)),
-              List("us-west", "ab", "cd"),
-              Some(Details("zak", 11))
-            ),
-            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+    listResult equalM
+      AwsDetails(
+        List(
+          Account(
+            Some(Right("jon")),
+            List("us-east", "dd", "ee"),
+            Some(Details("jaku", 10))
           ),
-          Database(Some(100), "postgres"),
-          List(1, 2, 3)
-        )
+          Account(
+            Some(Left(123)),
+            List("us-west", "ab", "cd"),
+            Some(Details("zak", 11))
+          ),
+          Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+        ),
+        Database(Some(100), "postgres"),
+        List(1, 2, 3)
       )
   )
+
   val automaticAwsDetailsConfig: ConfigDescriptor[AwsDetails] = descriptor[AwsDetails]
 
-  val automaticResult: Either[ReadError[String], AwsDetails] =
-    fromHoconString(validHocon) match {
-      case Left(value)   => Left(value)
-      case Right(source) => read(automaticAwsDetailsConfig from source)
-    }
+  val automaticResult: IO[ReadError[String], AwsDetails] =
+    read(automaticAwsDetailsConfig from ConfigSource.fromHoconString(validHocon))
 
   assert(
-    automaticResult ==
-      Right(
-        AwsDetails(
-          List(
-            Account(
-              Some(Right("jon")),
-              List("us-east", "dd", "ee"),
-              Some(Details("jaku", 10))
-            ),
-            Account(
-              Some(Left(123)),
-              List("us-west", "ab", "cd"),
-              Some(Details("zak", 11))
-            ),
-            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+    automaticResult equalM
+      AwsDetails(
+        List(
+          Account(
+            Some(Right("jon")),
+            List("us-east", "dd", "ee"),
+            Some(Details("jaku", 10))
           ),
-          Database(Some(100), "postgres"),
-          List(1, 2, 3)
-        )
+          Account(
+            Some(Left(123)),
+            List("us-west", "ab", "cd"),
+            Some(Details("zak", 11))
+          ),
+          Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+        ),
+        Database(Some(100), "postgres"),
+        List(1, 2, 3)
       )
   )
 
@@ -156,7 +146,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     """
 
   println(
-    read(descriptor[AwsDetails] from fromHoconString(invalidHocon).loadOrThrow)
+    read(descriptor[AwsDetails] from ConfigSource.fromHoconString(invalidHocon)).either.unsafeRun
   )
   /*
     ╥

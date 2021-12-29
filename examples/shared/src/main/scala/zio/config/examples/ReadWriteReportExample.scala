@@ -1,5 +1,6 @@
 package zio.config.examples
 
+import zio.ZIO
 import zio.config._
 
 import ConfigDescriptor._
@@ -15,14 +16,11 @@ object ReadWriteReportExample extends App {
 
   // An example where user provides a description once and for all, and use it for read, write, report!
   val configWithoutSource: ConfigDescriptor[Either[UserPwd, Token]] =
-    ((string("usr") ?? "Example: some-user" |@|
-      string("pwd")(Password.apply, Password.unapply).optional ?? "sec" |@|
-      string("jhi").optional ?? "Ex: ghi" |@|
-      (string("xyz") |@| int("abc").orElseEither(string("def")))(XYZ.apply, XYZ.unapply).optional ?? "Ex: ha")(
-      UserPwd.apply,
-      UserPwd.unapply
-    ) orElseEither
-      (string("auth_token") |@| string("clientid"))(Token.apply, Token.unapply)) ?? "Prod Config"
+    (string("usr") ?? "Example: some-user" zip
+      string("pwd").to[Password].optional ?? "sec" zip
+      string("jhi").optional ?? "Ex: ghi" zip
+      (string("xyz") zip int("abc").orElseEither(string("def"))).to[XYZ].optional ?? "Ex: ha").to[UserPwd] orElseEither
+      (string("auth_token") zip string("clientid")).to[Token] ?? "Prod Config"
 
   val runtime = zio.Runtime.default
 
@@ -39,14 +37,14 @@ object ReadWriteReportExample extends App {
 
   val config: ConfigDescriptor[Either[UserPwd, Token]] = configWithoutSource from source
 
-  val result: Either[ReadError[String], Either[UserPwd, Token]] =
+  val result: ZIO[Any, ReadError[String], Either[UserPwd, Token]] =
     read(config) // Equivalent to Config.fromMap(userNamePassword, config)
 
   val expected: Left[UserPwd, Nothing] =
     Left(UserPwd("v1", Some(Password("v2")), None, Some(XYZ("v3", Left(1)))))
 
   assert(
-    result == Right(expected)
+    result equalM expected
   )
 
   assert(

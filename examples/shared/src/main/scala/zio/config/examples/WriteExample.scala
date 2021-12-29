@@ -1,5 +1,6 @@
 package zio.config.examples
 
+import zio.IO
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 
@@ -13,9 +14,9 @@ object WriteExample extends App with EitherImpureOps {
   final case class A(b: B, i: Int)
 
   val description: ConfigDescriptor[A] = {
-    val bConfig = (int("c")(Id.apply, Id.unapply) |@| int("d")(Id.apply, Id.unapply))(B.apply, B.unapply)
+    val bConfig = (int("c").to[Id] zip int("d").to[Id]).to[B]
 
-    (bConfig |@| int("i"))(A.apply, A.unapply)
+    (bConfig zip int("i")).to[A]
   }
 
   val map: Map[String, String] =
@@ -27,7 +28,7 @@ object WriteExample extends App with EitherImpureOps {
 
   // loadOrThrow here is only for the purpose of example
   val readFromSource: A =
-    read(description from ConfigSource.fromMap(map, "map")).loadOrThrow
+    read(description from ConfigSource.fromMap(map, "map")).unsafeRun
 
   val written: PropertyTree[String, String] =
     write(description, readFromSource).loadOrThrow
@@ -44,13 +45,13 @@ object WriteExample extends App with EitherImpureOps {
       )
   )
 
-  val readFromTree: A =
-    read(description from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid)).loadOrThrow
+  val readFromTree: IO[ReadError[String], A] =
+    read(description from ConfigSource.fromPropertyTree(written, "tree"))
 
-  assert(readFromTree == readFromSource)
+  assert(readFromTree equalM readFromSource)
 
-  val readFromMap: A =
-    read(description from ConfigSource.fromMultiMap(written.flattenString(), "tree")).loadOrThrow
+  val readFromMap: IO[ReadError[String], A] =
+    read(description from ConfigSource.fromMultiMap(written.flattenString(), "tree"))
 
-  assert(readFromMap == readFromSource)
+  assert(readFromMap equalM readFromSource)
 }

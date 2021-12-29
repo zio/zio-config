@@ -1,5 +1,6 @@
 package zio.config.examples
 
+import zio.ZIO
 import zio.config._
 
 import ConfigDescriptor._
@@ -17,15 +18,15 @@ object CoproductExample extends App {
   final case class Height(height: Long)
 
   val personConfig: ConfigDescriptor[Person] =
-    (string("name") |@| int("age").optional)(Person.apply, Person.unapply)
+    (string("name") zip int("age").optional).to[Person]
 
   val heightConfig: ConfigDescriptor[Height] =
-    long("height")(Height.apply, Height.unapply)
+    long("height").to[Height]
 
-  val aConfig: ConfigDescriptor[A] = nested("any")(personConfig)(A.apply, A.unapply)
-  val bConfig: ConfigDescriptor[B] = nested("body")(heightConfig)(B.apply, B.unapply)
-  val cConfig: ConfigDescriptor[C] = boolean("can")(C.apply, C.unapply)
-  val dConfig: ConfigDescriptor[D] = string("dance")(D.apply, D.unapply)
+  val aConfig: ConfigDescriptor[A] = nested("any")(personConfig).to[A]
+  val bConfig: ConfigDescriptor[B] = nested("body")(heightConfig).to[B]
+  val cConfig: ConfigDescriptor[C] = boolean("can").to[C]
+  val dConfig: ConfigDescriptor[D] = string("dance").to[D]
 
   val danceConfig: ConfigDescriptor[Dance] =
     enumeration[Dance](aConfig, bConfig, cConfig, dConfig)
@@ -56,16 +57,16 @@ object CoproductExample extends App {
 
   val runtime = zio.Runtime.default
 
-  def readA: Either[ReadError[String], Dance] =
+  def readA: ZIO[Any, ReadError[String], Dance] =
     read(danceConfig from aSource)
 
-  def readB: Either[ReadError[String], Dance] =
+  def readB: ZIO[Any, ReadError[String], Dance] =
     read(danceConfig from bSource)
 
-  def readC: Either[ReadError[String], Dance] =
+  def readC: ZIO[Any, ReadError[String], Dance] =
     read(danceConfig from cSource)
 
-  def readD: Either[ReadError[String], Dance] =
+  def readD: ZIO[Any, ReadError[String], Dance] =
     read(danceConfig from dSource)
 
   val a: A =
@@ -81,10 +82,10 @@ object CoproductExample extends App {
     D("I am Dancing !!")
 
   assert(
-    readA == Right(a) &&
-      readB == Right(b) &&
-      readC == Right(c) &&
-      readD == Right(d)
+    (readA equalM a) &&
+      (readB equalM b) &&
+      (readC equalM c) &&
+      (readD equalM d)
   )
 
   write(danceConfig, d).map(_.flattenString())
@@ -107,4 +108,5 @@ object CoproductExample extends App {
       writeC == Right(Map("can" -> singleton("false"))) &&
       writeD == Right(Map("dance" -> singleton("I am Dancing !!")))
   )
+
 }

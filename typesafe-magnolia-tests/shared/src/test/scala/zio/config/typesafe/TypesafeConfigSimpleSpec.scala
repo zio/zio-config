@@ -49,29 +49,23 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
       |}""".stripMargin
 
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig")(
-    test("A nested example with typesafe HOCON config") {
+    testM("A nested example with typesafe HOCON config") {
 
-      val details          = (string("name") |@| int("age"))(Details.apply, Details.unapply)
-      val accountConfig    =
-        (int("accountId").orElseEither(string("accountId")).optional |@| list("regions")(string) |@| nested("details")(
+      val details       = (string("name") zip int("age")).to[Details]
+      val accountConfig =
+        (int("accountId").orElseEither(string("accountId")).optional zip list("regions")(string) zip nested("details")(
           details
-        ).optional)(
-          Account.apply,
-          Account.unapply
-        )
-      val databaseConfig   = (int("port").optional |@| string("url"))(Database.apply, Database.unapply)
-      val awsDetailsConfig =
-        (nested("accounts")(list(accountConfig)) |@| nested("database")(databaseConfig) |@| list("users")(int))(
-          AwsDetails.apply,
-          AwsDetails.unapply
-        )
-      val listResult       =
-        fromHoconString(validHocon) match {
-          case Left(value)   => Left(value)
-          case Right(source) => read(awsDetailsConfig from source)
-        }
+        ).optional).to[Account]
 
-      val expectedResult = Right(
+      val databaseConfig   = (int("port").optional zip string("url")).to[Database]
+      val awsDetailsConfig =
+        (nested("accounts")(list(accountConfig)) zip nested("database")(databaseConfig) zip list("users")(int))
+          .to[AwsDetails]
+
+      val listResult =
+        read(awsDetailsConfig from fromHoconString(validHocon))
+
+      val expectedResult =
         AwsDetails(
           List(
             Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
@@ -81,20 +75,16 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
           Database(Some(100), "postgres"),
           List(1, 2, 3)
         )
-      )
 
-      assert(listResult)(equalTo(expectedResult))
+      assertM(listResult)(equalTo(expectedResult))
     },
-    test("A nested example with typesafe HOCON config and Magnlia") {
+    testM("A nested example with typesafe HOCON config and Magnlia") {
       val automaticAwsDetailsConfig = descriptor[AwsDetails]
 
       val automaticResult =
-        fromHoconString(validHocon) match {
-          case Left(value)   => Left(value)
-          case Right(source) => read(automaticAwsDetailsConfig from source)
-        }
+        read(automaticAwsDetailsConfig from fromHoconString(validHocon))
 
-      val expectedResult = Right(
+      val expectedResult =
         AwsDetails(
           List(
             Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
@@ -104,9 +94,8 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
           Database(Some(100), "postgres"),
           List(1, 2, 3)
         )
-      )
 
-      assert(automaticResult)(equalTo(expectedResult))
+      assertM(automaticResult)(equalTo(expectedResult))
     }
   )
 }

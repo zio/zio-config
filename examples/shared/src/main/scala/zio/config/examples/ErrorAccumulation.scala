@@ -1,25 +1,24 @@
 package zio.config.examples
 
 import zio.config._
+import zio.{IO, ZIO}
 
 import ConfigDescriptor._
 import ReadError._
+import PropertyTreePath._
 
 object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)
 
   val config: ConfigDescriptor[SampleConfig] =
-    (int("envvar") |@| string("envvar2").orElse(string("envvar3")))(
-      SampleConfig.apply,
-      SampleConfig.unapply
-    )
+    (int("envvar") zip string("envvar2").orElse(string("envvar3"))).to[SampleConfig]
 
   val runtime = zio.Runtime.default
 
-  val parsed: Either[ReadError[String], SampleConfig] =
+  val parsed: IO[ReadError[String], SampleConfig] =
     read(config from ConfigSource.fromMap(Map.empty))
 
-  println(parsed.swap.map(_.prettyPrint()))
+  println(parsed.mapError(_.prettyPrint()).either.unsafeRun)
   /*
     ReadError:
     ╥
@@ -42,7 +41,7 @@ object ErrorAccumulation extends App {
    */
 
   assert(
-    parsed ==
+    parsed.either equalM
       Left(
         // OrErrors indicate fix either of those errors associated with envvar2 or envvar3
         // AndErrors indicate fix the errors associated with both envvar1 and OrError(envvar2 or envvar3)
@@ -60,19 +59,20 @@ object ErrorAccumulation extends App {
       )
   )
 
-  val validSource: ConfigSource                         =
+  val validSource: ConfigSource                     =
     ConfigSource.fromMap(Map("envvar" -> "1", "envvar2" -> "value"))
 
-  val validRes: Either[ReadError[String], SampleConfig] = read(config from validSource)
+  val validRes: IO[ReadError[String], SampleConfig] =
+    read(config from validSource)
 
-  assert(validRes == Right(SampleConfig(1, "value")))
+  assert(validRes equalM SampleConfig(1, "value"))
 
   val invalidSource: ConfigSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
 
-  val result2: Either[ReadError[String], SampleConfig] =
-    read(config from invalidSource)
+  val result2: ZIO[Any, String, SampleConfig] =
+    read(config from invalidSource).mapError(_.prettyPrint())
 
-  println(result2.swap.map(_.prettyPrint()))
+  println(zio.Runtime.default.unsafeRun(result2.either))
 
   /*
   s"""
@@ -97,13 +97,14 @@ object ErrorAccumulation extends App {
    */
 
   assert(
-    read(config from invalidSource) ==
+    read(config from invalidSource).either equalM
       Left(
         ZipErrors(
           List(
             FormatError(
               List(Step.Key("envvar")),
-              parseErrorMessage("wrong", "int")
+              parseErrorMessage("wrong", "int"),
+              List("value of type int")
             ),
             OrErrors(
               List(

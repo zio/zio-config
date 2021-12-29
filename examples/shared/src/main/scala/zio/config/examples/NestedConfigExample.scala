@@ -1,5 +1,6 @@
 package zio.config.examples
 
+import zio.IO
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 
@@ -11,12 +12,12 @@ object NestedConfigExample extends App with EitherImpureOps {
   final case class AwsConfig(c1: Database, c2: Database, c3: String)
 
   val database: ConfigDescriptor[Database] =
-    (string("connection") |@| int("port"))(Database.apply, Database.unapply)
+    (string("connection") zip int("port")).to[Database]
 
   val appConfig: ConfigDescriptor[AwsConfig] =
-    (nested("south")(database) ?? "South details" |@|
-      nested("east")(database) ?? "East details" |@|
-      string("appName"))(AwsConfig, AwsConfig.unapply)
+    (nested("south")(database) ?? "South details" zip
+      nested("east")(database) ?? "East details" zip
+      string("appName")).to[AwsConfig]
 
   // For simplicity in example, we use map source. Works with HOCON.
   val source: ConfigSource =
@@ -33,12 +34,12 @@ object NestedConfigExample extends App with EitherImpureOps {
 
   val runtime = zio.Runtime.default
 
-  val readConfig: AwsConfig =
-    read(appConfig from source).loadOrThrow
+  val readConfig: IO[ReadError[String], AwsConfig] =
+    read(appConfig from source)
 
   // Read
   assert(
-    readConfig == AwsConfig(
+    readConfig equalM AwsConfig(
       Database("abc.com", 8111),
       Database("xyz.com", 8888),
       "myApp"
@@ -47,7 +48,14 @@ object NestedConfigExample extends App with EitherImpureOps {
 
   // Write your nested config back.
   val writtenResult: PropertyTree[String, String] =
-    write(appConfig, readConfig).loadOrThrow
+    write(
+      appConfig,
+      AwsConfig(
+        Database("abc.com", 8111),
+        Database("xyz.com", 8888),
+        "myApp"
+      )
+    ).loadOrThrow
 
   assert(
     writtenResult ==

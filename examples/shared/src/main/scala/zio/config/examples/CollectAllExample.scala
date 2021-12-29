@@ -1,7 +1,7 @@
 package zio.config.examples
 
+import zio.IO
 import zio.config._
-import zio.config.examples.typesafe.EitherImpureOps
 
 import ConfigDescriptor._
 
@@ -14,12 +14,10 @@ import ConfigDescriptor._
  */
 final case class Variables(variable1: Int, variable2: Option[Int])
 
-object CollectAllExample extends App with EitherImpureOps {
+object CollectAllExample extends App {
   val listOfConfig: List[ConfigDescriptor[Variables]] =
     List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
-      .map(group =>
-        (int(s"${group}_VARIABLE1") |@| int(s"${group}_VARIABLE2").optional)(Variables.apply, Variables.unapply)
-      )
+      .map(group => (int(s"${group}_VARIABLE1") zip int(s"${group}_VARIABLE2").optional).to[Variables])
 
   val configOfList: ConfigDescriptor[List[Variables]] =
     collectAll(listOfConfig.head, listOfConfig.tail: _*)
@@ -36,9 +34,10 @@ object CollectAllExample extends App with EitherImpureOps {
     )
 
   // loadOrThrow here is only for the purpose of example
-  val result: List[Variables] = read(configOfList from ConfigSource.fromMap(map, "constant")).loadOrThrow
+  val resultZIO: IO[ReadError[String], List[Variables]] = read(configOfList from ConfigSource.fromMap(map, "constant"))
+  val result                                            = resultZIO.unsafeRun
 
-  val written: PropertyTree[String, String] = write(configOfList, result).loadOrThrow
+  val written: PropertyTree[String, String] = write(configOfList, result).getOrElse(throw new Exception("write failed"))
 
   assert(
     result == List(Variables(1, Some(2)), Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None))
@@ -59,15 +58,15 @@ object CollectAllExample extends App with EitherImpureOps {
 
   // Read it back from the wrtten tree
   assert(
-    read(configOfList from ConfigSource.fromPropertyTree(written, "tree", LeafForSequence.Valid)) == Right(
-      ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
-    )
+    read(configOfList from ConfigSource.fromPropertyTree(written, "tree"))
+      equalM
+        ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
   )
 
-  // Read it back from the flattened tree
+//   // Read it back from the flattened tree
   assert(
-    read(configOfList from ConfigSource.fromMultiMap(written.flattenString(), "tree")) == Right(
-      ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
-    )
+    read(configOfList from ConfigSource.fromMultiMap(written.flattenString(), "tree"))
+      equalM
+        ::(Variables(1, Some(2)), List(Variables(3, Some(4)), Variables(5, Some(6)), Variables(7, None)))
   )
 }
