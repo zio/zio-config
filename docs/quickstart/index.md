@@ -139,7 +139,6 @@ val map =
 val source = ConfigSource.fromMap(map)
 
 read(myConfig from source)
-// Either[ReadError[String], MyConfig]
 
 // Alternatively, you can rely on `Config.from..` pattern to get ZLayers.
 val result =
@@ -161,7 +160,6 @@ As mentioned before, you can use config descriptor to read from various sources.
 
 val anotherResult =
   read(myConfig from source)
-// Either[ReadError[String], MyConfig]
 ```
 
 Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the previous section.
@@ -173,7 +171,6 @@ More details in [here](../configdescriptor/index.md).
 ```scala mdoc:silent
 generateDocs(myConfig)
 //Creates documentation (automatic)
-
 
 val betterConfig =
   (string("LDAP") ?? "Related to auth" zip int("PORT") ?? "Database port" zip
