@@ -93,8 +93,8 @@ trait ConfigSourceModule extends KeyValueModule {
       })
 
     /**
-     * A Layer is assumed to be "memoized" by default, i.e the construction
-     * of ConfigSource layer is done strictly once regardless of number times the read is invoked.
+     * A Layer is assumed to be "memoized" by default, i.e the effect required to form the reader (refer ConfigSource docs)
+     * is executed strictly once regardless of number of keys involved, or the number the reads invoked.
      */
     def toLayer: ZLayer[Any, ReadError[K], Has[ConfigSource]] =
       strictlyOnce.toLayer
@@ -569,7 +569,11 @@ trait ConfigSourceModule extends KeyValueModule {
       val managed =
         ZIO
           .accessM[System](
-            _.get.envs.map(map => getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys))
+            _.get.envs.map { map =>
+              println("going to calculate tree")
+              val s = getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
+              s
+            }
           )
           .toManaged_
           .mapError(throwable => ReadError.SourceError(throwable.toString))
