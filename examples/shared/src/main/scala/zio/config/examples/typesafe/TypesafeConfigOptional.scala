@@ -1,7 +1,7 @@
 package zio.config.examples.typesafe
 
 import zio.config._
-import zio.config.typesafe.TypesafeConfigSource.fromHoconString
+import zio.config.typesafe._
 
 import examples._
 import EmployeeDetails._
@@ -24,32 +24,26 @@ object EmployeeDetails {
    * need to describe your little configurations
    */
   val employee: ConfigDescriptor[Employee] =
-    (string("name") |@|
-      int("state").orElseEither(string("state")).optional |@|
+    (string("name") zip
+      int("state").orElseEither(string("state")).optional zip
       double("confidence")
         .orElseEither(int("confidence")) // The value can be Double or Int for key confidence
         .orElseEither(                   // If not Double or Int, then it could be string, but this time the key can be confidence, confidences or confs!
           string("confidence")
             .orElse(string("confidences"))
             .orElse(string("confs"))
-        ))(
-      Employee.apply,
-      Employee.unapply
-    )
+        )).to[Employee]
 
   val employeeDetails: ConfigDescriptor[EmployeeDetails] =
     nested("details") {
-      (nested("employees")(list(employee)) |@| int("accountId"))(
-        EmployeeDetails.apply,
-        EmployeeDetails.unapply
-      )
+      (nested("employees")(list(employee)) zip int("accountId")).to[EmployeeDetails]
     }
 }
 
 object NullAndOptionalConfig extends App {
   // Take a look at state values, that can either exist, or be given a null
   val hocconSourceList: ConfigSource =
-    fromHoconString(
+    ConfigSource.fromHoconString(
       """
        details {
           employees = [{

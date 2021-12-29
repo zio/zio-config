@@ -6,7 +6,7 @@ import ConfigDescriptor._
 
 object TupleExample extends App {
   val config: ConfigDescriptor[(String, Int)] =
-    (string("a") |@| int("b")).tupled
+    (string("a") zip int("b"))
 
   val source: ConfigSource = ConfigSource.fromMap(Map("a" -> "a", "b" -> "1"))
 

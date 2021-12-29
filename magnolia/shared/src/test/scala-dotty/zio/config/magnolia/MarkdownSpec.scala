@@ -243,7 +243,7 @@ object MarkdownSpec extends BaseSpec {
       val config =
         nested("a")(
           nested("b")(
-            (int("c") |@| string("d").orElseEither((string("e") |@| string("f") |@| string("g")).tupled)).tupled
+            (int("c") zip string("d").orElseEither((string("e") zip string("f") zip string("g"))))
           )
         )
 

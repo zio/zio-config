@@ -95,14 +95,14 @@ object TypesafeConfigErrorsSpec extends DefaultRunnableSpec {
     // },
     testM("A variant error case with typesafe HOCON config and a manual description") {
       val configNestedManual = {
-        val accountConfig  =
-          (string("region") |@| string("accountId"))(Account.apply, Account.unapply)
-        val databaseConfig = (int("port") |@| string("url"))(Database.apply, Database.unapply)
-        (nested("account")(accountConfig) |@|
-          (nested("database")(databaseConfig).orElseEither(string("database"))).optional)(
-          AwsConfig.apply,
-          AwsConfig.unapply
-        )
+        val accountConfig =
+          (string("region") zip string("accountId")).to[Account]
+
+        val databaseConfig =
+          (int("port") zip string("url")).to[Database]
+
+        (nested("account")(accountConfig) zip
+          (nested("database")(databaseConfig).orElseEither(string("database"))).optional).to[AwsConfig]
       }
       val nestedConfigManualResult1 =
         read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithDb))

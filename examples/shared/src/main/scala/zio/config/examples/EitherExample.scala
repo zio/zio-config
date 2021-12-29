@@ -12,13 +12,10 @@ object EitherExample extends App {
   case class Dev(user: String, password: Int, dburl: Double)
 
   val prod: ConfigDescriptor[Prod] =
-    (string("x1")(Ldap.apply, Ldap.unapply) |@| string("x2")(
-      DbUrl.apply,
-      DbUrl.unapply
-    ))(Prod.apply, Prod.unapply)
+    (string("x1").to[Ldap] zip string("x2").to[DbUrl]).to[Prod]
 
   val dev: ConfigDescriptor[Dev] =
-    (string("x3") |@| int("x4") |@| double("x5"))(Dev.apply, Dev.unapply)
+    (string("x3") zip int("x4") zip double("x5")).to[Dev]
 
   val prodOrDev: ConfigDescriptor[Either[Prod, Dev]] =
     prod orElseEither dev

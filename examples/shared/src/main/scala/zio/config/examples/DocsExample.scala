@@ -10,11 +10,8 @@ object DocsExample extends App {
 
   val config: ConfigDescriptor[Database] =
     nested("database") {
-      (int("PORT") ?? "Example: 8088" |@|
-        string("URL").optional ?? "Example: abc.com")(
-        Database.apply,
-        Database.unapply
-      ) ?? "Database related"
+      (int("PORT") ?? "Example: 8088" zip
+        string("URL").optional ?? "Example: abc.com").to[Database] ?? "Database related"
     }
 
   val docs: ConfigDocs =

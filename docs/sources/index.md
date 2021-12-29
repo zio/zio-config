@@ -25,7 +25,7 @@ Let's define a simple one.
 ```scala mdoc:silent
 
 val myConfig =
-  (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
+  (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
  // val automatedConfig = descriptor[MyConfig]; using zio-config-magnolia
 
@@ -69,7 +69,7 @@ This support a list of values for a key.
 ```scala mdoc:silent
 case class ListConfig(ldap: String, port: List[Int], dburl: String)
 
-val listConfig = (string("LDAP") |@| list("PORT")(int) |@| string("DB_URL"))(ListConfig.apply, ListConfig.unapply)
+val listConfig = (string("LDAP") zip list("PORT")(int) zip string("DB_URL")).to[ListConfig]
 
 val multiMapSource =
   ConfigSource.fromMultiMap(
@@ -131,7 +131,7 @@ Given:
 then, the below config will work
 
 ```scala
-nested("KAFKA")(string("SERVER") |@| string("FLAG"))(KafkaConfig.apply, KafkaConfig.unapply)
+nested("KAFKA")(string("SERVER") zip string("FLAG")).to[KafkaConfig]
 ```
 
 
@@ -199,8 +199,8 @@ Here is an quick example
 
 ```scala mdoc:silent
 
-import zio.config.typesafe._, TypesafeConfigSource._
-import zio.config.magnolia.DeriveConfigDescriptor._
+import zio.config.typesafe._
+import zio.config.magnolia._
 
 ```
 
@@ -211,7 +211,7 @@ case class SimpleConfig(port: Int, url: String, region: Option[String])
 val automaticDescription = descriptor[SimpleConfig]
 
 val hoconSource =
-  TypesafeConfigSource.fromHoconString(
+  ConfigSource.fromHoconString(
       """
       {
         port : 123
@@ -224,7 +224,7 @@ val hoconSource =
 
 
 val anotherHoconSource =
-  TypesafeConfigSource.fromHoconString(
+  ConfigSource.fromHoconString(
       """
         port=123
         url=bla
@@ -240,10 +240,9 @@ read(automaticDescription from anotherHoconSource)
 
 // yielding SimpleConfig(123,bla,Some(useast))
 
-// Please check other ways to load the hocon file in `TypesafeConfig`
 
 // You could also do, in which case the return type is `Config` service
-TypesafeConfig.fromHoconString(
+ZConfig.fromHoconString(
      """
       {
         port : 123
@@ -262,7 +261,8 @@ Similar to `TypesafeConfig.fromHoconString(str, automaticDescription)`
 
 ```scala mdoc:silent
 
-TypesafeConfig.fromHoconFile(new java.io.File("fileapth"), automaticDescription)
+ZConfig.fromHoconFile(new java.io.File("fileapth"), automaticDescription)
+// or use, read(automaticDescription from ConfigSource.fromHoconFile(new java.io.File("fileapth")))
 
 ```
 
@@ -282,11 +282,11 @@ val jsonString =
 
    """
 
-TypesafeConfig.fromHoconString(jsonString, automaticDescription)
+ZConfig.fromHoconString(jsonString, automaticDescription)
+// or use, read(automaticDescription from ConfigSource.fromHoconString(jsonString))
 
 
 ```
-Please check other ways to load the hocon file in `TypesafeConfig`
 
 ## Command Line Arguments
 

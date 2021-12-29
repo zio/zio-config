@@ -32,14 +32,6 @@ case class MyConfig(ldap: String, port: Int, dburl: String)
 To not divert our focus on handling Either (only for explanation purpose), we will use 
 the below syntax troughout the code
 
-```scala mdoc:silent
-
-implicit class EitherImpureOps[A, B](self: Either[A, B]) {
-  def getOrThrow: B =
-   self.fold(a => throw new Exception(a.toString), identity)
-}
-
-```
 
 To perform any action using zio-config, we need a configuration description.
 Let's define a simple one.
@@ -48,7 +40,7 @@ Let's define a simple one.
 ```scala mdoc:silent
 
 val myConfig =
-  (string("LDAP") |@| int("PORT")|@| string("DB_URL"))(MyConfig.apply, MyConfig.unapply)
+  (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
 read(myConfig from ConfigSource.fromMap(Map()))
 
@@ -65,7 +57,7 @@ import zio.Runtime
   case class AwsConfig(c1: Database, c2: Database, c3: String)
 
   val database =
-    (string("connection") |@| int("port"))(Database.apply, Database.unapply)
+    (string("connection") zip int("port")).to[Database]
 
   val map =
     Map(
@@ -77,9 +69,9 @@ import zio.Runtime
     )
 
   val appConfig =
-    (((nested("south") { database } ?? "South details" |@|
-      nested("east") { database } ?? "East details" |@|
-      string("appName"))(AwsConfig, AwsConfig.unapply)) ?? "asdf"
+    (((nested("south") { database } ?? "South details" zip
+      nested("east") { database } ?? "East details" zip
+      string("appName")).to[AwsConfig]) ?? "asdf"
     ) from ConfigSource.fromMap(map, keyDelimiter = Some('.'))
 
   val awsConfigResult =
@@ -96,8 +88,8 @@ import zio.Runtime
 
 import zio.config.PropertyTree._
 
-val written: PropertyTree[String, String] = 
-  write(appConfig, awsConfigResult).getOrThrow
+val written: Either[String, PropertyTree[String, String]] = 
+  write(appConfig, awsConfigResult)
 
 
 ```
@@ -121,7 +113,7 @@ yield
 ```scala mdoc:silent
 
  // To yield the input map that was fed in, call `flattenString` !!
- written.flattenString()
+ written.map(_.flattenString())
 
  // yields
      Map(
@@ -140,7 +132,7 @@ yield
 
 import zio.config.typesafe._
 
-written.toHocon
+written.map(_.toHocon)
 
 // yields
 // SimpleConfigObject({"appName":"myApp","east":{"connection":"xyz.com","port":"8888"},"south":{"connection":"abc.com","port":"8111"}})
@@ -158,7 +150,7 @@ However, we thought we will provide a few helper functions which is a simple del
 
 import zio.config.typesafe._
 
-written.toHoconString
+written.map(_.toHoconString)
   /**
    *  yieling :
    *  {{{
@@ -187,7 +179,7 @@ However, we thought we will provide a few helper functions which is a simple del
 
 ```scala mdoc:silent
 
-written.toJson
+written.map(_.toJson)
 
   /**
    *  yieling :
