@@ -150,7 +150,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
     /**
      * Memoize the effect required to form the Reader.
-     * 
+     *
      * Every ConfigSource at the core is just a `Reader`,
      * which is essentially a function that goes from `PropertyTreePath` to an actual `PropertyTree`.
      * i.e, `f: PropertyTreePath[String] => IO[ReadError[String], PropertyTree[String, String]`
