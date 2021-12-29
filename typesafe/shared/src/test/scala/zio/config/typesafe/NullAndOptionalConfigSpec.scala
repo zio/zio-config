@@ -1,11 +1,11 @@
 package zio.config.typesafe
 
-import zio.config.ConfigDescriptor._
 import zio.config.typesafe.EmployeeDetails._
-import zio.config.typesafe.TypesafeConfigSource.fromHoconString
-import zio.config.{ConfigDescriptor, read}
+import zio.config.{ConfigDescriptor, read, _}
 import zio.test.Assertion._
 import zio.test.{DefaultRunnableSpec, _}
+
+import ConfigDescriptor._
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
@@ -38,7 +38,7 @@ object NullAndOptionalConfig extends DefaultRunnableSpec {
   val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig Null and Optional")(
     testM("A config case which keys maybe null or optional") {
       val hoconSource =
-        fromHoconString(
+        ConfigSource.fromHoconString(
           """details {
             |  employees = [{
             |    name: jon

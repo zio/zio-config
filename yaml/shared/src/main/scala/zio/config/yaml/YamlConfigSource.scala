@@ -28,12 +28,12 @@ object YamlConfigSource {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Either[ReadError[String], MyConfig] =
-   *     YamlConfigSource.fromYamlPath(Path.of("/path/to/file.yaml"))
+   *     YamlConfigSource.fromYamlFile(new File("/path/to/file.yaml"))
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromYamlPath(path: Path): ConfigSource =
-    fromYamlFile(path.toFile)
+  def fromYamlFile(file: File): ConfigSource =
+    fromYamlRepr(file)(loadYaml(_), file.getAbsolutePath)
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -45,12 +45,12 @@ object YamlConfigSource {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Either[ReadError[String], MyConfig] =
-   *     YamlConfigSource.fromYamlFile(new File("/path/to/file.yaml"))
+   *     YamlConfigSource.fromYamlPath(Path.of("/path/to/file.yaml"))
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromYamlFile(file: File): ConfigSource =
-    fromYamlRepr(file)(loadYaml(_), file.getAbsolutePath)
+  def fromYamlPath(path: Path): ConfigSource =
+    fromYamlFile(path.toFile)
 
   /**
    * Retrieve a `ConfigSource` from yaml reader.
@@ -108,7 +108,7 @@ object YamlConfigSource {
   ): ConfigSource =
     fromYamlRepr(yamlString)(loadYaml(_), sourceName)
 
-  def fromYamlRepr[A](repr: A)(
+  private[config] def fromYamlRepr[A](repr: A)(
     loadYaml: A => ZIO[Any, ReadError[String], AnyRef],
     sourceName: String = "yaml"
   ): ConfigSource = {
@@ -119,7 +119,7 @@ object YamlConfigSource {
     ConfigSourceReader(
       Set(ConfigSourceName(sourceName)),
       ZManaged.succeed(managedTree.map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path))))
-    )
+    ).memoize
   }
 
   private[yaml] def convertYaml(data: AnyRef): ZIO[Any, ReadError[String], PropertyTree[String, String]] = {

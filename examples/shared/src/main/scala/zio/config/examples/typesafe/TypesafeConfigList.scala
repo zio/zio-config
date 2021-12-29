@@ -3,8 +3,9 @@ package zio.config.examples.typesafe
 import com.typesafe.config.ConfigRenderOptions
 import zio.IO
 import zio.config._
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
-import zio.config.typesafe.TypesafeConfigSource
+
+import typesafe._
+import magnolia._
 
 object TypesafeConfigList extends App with EitherImpureOps {
   val configString: String =
@@ -148,7 +149,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
 
   // Since we already have a string with us, we don't need Config Service (or ZIO)
   val source: ConfigSource =
-    TypesafeConfigSource.fromHoconString(configString)
+    ConfigSource.fromHoconString(configString)
 
   val zioConfigResult: IO[ReadError[String], A] =
     read(descriptor[A] from source)
@@ -234,7 +235,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
       .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
 
   val readWritten: IO[ReadError[String], A] = read(
-    descriptor[A] from TypesafeConfigSource.fromHoconString(written)
+    descriptor[A] from ConfigSource.fromHoconString(written)
   )
 
   assert(readWritten.unsafeRun == zioConfigResult.unsafeRun)
@@ -373,7 +374,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
   final case class Database(port: Port)
 
   val kebabConfigSource: ConfigSource =
-    TypesafeConfigSource.fromHoconString(kebabCaseConfig)
+    ConfigSource.fromHoconString(kebabCaseConfig)
 
   val zioConfigWithKeysInKebabResult: IO[ReadError[String], ExportDetails] =
     read(descriptor[ExportDetails].mapKey(toKebabCase) from kebabConfigSource)

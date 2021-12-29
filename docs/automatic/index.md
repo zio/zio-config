@@ -61,25 +61,25 @@ a few subtle limitations.
   // Defining different possibility of HOCON source
 
   val aHoconSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString("x = A")
 ```
 
 ```scala
   val bHoconSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString("x = B")
 ```
 
 ```scala
   val cHoconSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString("x = C")
 ```
 
 ```scala
   val dHoconSource =
-    TypesafeConfigSource
+    ConfigSource
       .fromHoconString(
         s"""
            | x {
