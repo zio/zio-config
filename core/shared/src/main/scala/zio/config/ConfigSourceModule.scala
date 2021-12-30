@@ -36,7 +36,7 @@ trait ConfigSourceModule extends KeyValueModule {
    * val source: ConfigSource =
    *   ConfigSource.Reader(
    *     ZManaged(getDatabaseConnection)
-   *       .flatMap(connection => (key: PropertyTreePath[String] => IO.effect(connection.getStatement.executeQuery("get ${key} from table")))
+   *       .flatMap(connection => (key: PropertyTreePath[String] => IO.effect(connection.getStatement.executeQuery(s"get key from table")))
    *    )
    *
    * Note that `ConfigSource` has a generalised `memoize` function that allows you to memoize the effect required to form the
@@ -129,7 +129,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      *   // This is exactly the same as
      *
-     *   val addAwsPrefix = (s: String) = s"aws_${s}")
+     *   def addAwsPrefix(s: String) = "aws_" + s
      *   read(config.mapKeys(addAwsPrefix) from source)
      * }}}
      */
@@ -149,27 +149,31 @@ trait ConfigSourceModule extends KeyValueModule {
       }
 
     /**
-     * If memoized, for most of the config-sources, the effect required to form the function
-     * `f: PropertyTreePath[K] => IO[ReadError[K], PropertyTree[K, V]]` will be memoized.
-     * This is possible in limited number of ways, of which the most easiest is to load up the entire source
-     * as a PropertyTree, such that `f` doesn't need to be calculated for every key.
+     * Memoize the effect required to form the Reader.
      *
-     * For certain simple ConfigSource, this `memoize` is done already for you. Example: A constant Map.
-     * It doesn't make sense to compute `f`, for each key in your config when it comes to a `ConfigSource.fromMap(..)`,
-     * instead all that is required is to apply the already formed `f` and get the `PropertyTree` for that particular
-     * `PropertyTreePath` that represents the key.
+     * Every ConfigSource at the core is just a `Reader`,
+     * which is essentially a function that goes from `PropertyTreePath` to an actual `PropertyTree`.
+     * i.e, `f: PropertyTreePath[String] => IO[ReadError[String], PropertyTree[String, String]`
+     * Later on for each `key` represented as `PropertyTreePath[String]` internally, `f` is used to
+     * applied to get the value as a `PropertyTree` itself.
      *
-     * On the other hand, for certain complex sources, it may not make sense to memoize at all.
-     * For example, this can happen when ConfigSource cannot represent the entire config as an in-memory tree at any point.
+     * Internal details:
      *
-     * Therefore, it's recommended to have an eye on the semantics of your ConfigSource before you call `.memoize`.
-     * The easiest way to think about is asking yourself "Does it make sense to memoize my Config Source?"
+     * This function `f` can be retrieved under an ZManaged effect. This implies it may involve an IO with managing resources
+     * to even form this function. Example: In order to retrieve a property-tree corresponding to a key (PropertyTreePath),
+     * it requires a database connection in the very first instance.
      *
-     * Note,`memoize` is only per `ConfigDescriptorModule.read`.
-     * i.e, everytime we call `read`, `ConfigSource` will be re-evaluated.
+     * // pseudo-logic, doesn't compile
      *
-     * If you need `ConfigSource` to be strictly evaluated once across the app (example: read config content from a file only once)
-     * then use `strictlyOnce` or use `ConfigSource` as a layer.
+     * val source: ConfigSource =
+     *   ConfigSource.Reader(
+     *     ZManaged(getDatabaseConnection)
+     *       .flatMap(connection => (key: PropertyTreePath[String] => IO.effect(connection.getStatement.executeQuery(s"get key from table")))
+     *    )
+     *
+     * Note that `ConfigSource` has a generalised `memoize` function that allows you to memoize the effect required to form the
+     * function. In the context of the above example, with `source.memoize` we acquire only a single connection to retrieve
+     * the values for all the keys in your product/coproduct for an instance of `read`.
      */
     def memoize: ConfigSource =
       self match {

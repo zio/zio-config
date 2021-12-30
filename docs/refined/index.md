@@ -39,10 +39,18 @@ If you need to directly interact with `Predicate`s (ex: `NonEmpty`), then
 `refine[A, P]` method is useful.
 
 ```scala mdoc:silent
- import eu.timepit.refined._, api._, string._
-
+ import eu.timepit.refined._, api._, string._, collection._
+ 
+ type NonEmptyString = String Refined NonEmpty
+ 
+ val refinedConfig: ConfigDescriptor[NonEmptyString] = 
+   refineType[NonEmptyString]("USERNAME")
+  
+ // Another way of doing it is
  val urlConfig: ConfigDescriptor[Refined[String, Url]] =
    refine[String, Url]("URL")
+   
+ // refineType takes a fully formed type (String Refined NonEmpty) where as refine allows you to play with the predicate directly (NonEmpty)  
 
 ```
 
