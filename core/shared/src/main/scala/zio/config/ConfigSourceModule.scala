@@ -461,7 +461,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * @param tree            : PropertyTree
      * @param source          : Label the source with a name
-     * @return
      */
     def fromPropertyTree(
       tree: PropertyTree[K, V],
