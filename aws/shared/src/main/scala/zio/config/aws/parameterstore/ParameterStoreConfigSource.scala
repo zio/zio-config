@@ -1,14 +1,17 @@
 package zio.config.aws.parameterstore
 
-import zio.config._
-import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagement
-import com.amazonaws.services.simplesystemsmanagement.AWSSimpleSystemsManagementClientBuilder
 import com.amazonaws.services.simplesystemsmanagement.model.{GetParametersByPathRequest, Parameter}
-import zio.{Task, ZIO, ZManaged}
+import com.amazonaws.services.simplesystemsmanagement.{
+  AWSSimpleSystemsManagement,
+  AWSSimpleSystemsManagementClientBuilder
+}
 import zio.config.PropertyTreePath.Step
-import zio.config.{PropertyTreePath, ReadError}
+import zio.config.{PropertyTreePath, ReadError, _}
+import zio.{Task, ZIO, ZManaged}
 
 import scala.jdk.CollectionConverters._
+
+import ConfigSource._
 
 object ParameterStoreConfigSource {
   def from(
@@ -38,7 +41,9 @@ object ParameterStoreConfigSource {
                   ZIO
                     .effect(ssm.getParametersByPath(request).getParameters)
                     .map(_.asScala.toList)
-                    .map { list => ConfigSource.getPropertyTreeFromMap(toMap(list, basePath), keyDelimiter = Some('/')) }
+                    .map { list =>
+                      ConfigSource.getPropertyTreeFromMap(toMap(list, basePath), keyDelimiter = Some('/'))
+                    }
               } yield tree)
                 .mapError(throwable => ReadError.SourceError(throwable.toString): ReadError[String])
           )
@@ -62,5 +67,4 @@ object ParameterStoreConfigSource {
         case Step.Key(k)   => k
       })
       .mkString("/")
-
 }
