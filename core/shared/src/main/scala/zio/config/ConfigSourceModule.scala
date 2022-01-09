@@ -8,6 +8,7 @@ import java.io.{File, FileInputStream}
 import java.{util => ju}
 import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
+
 import PropertyTree.{Leaf, Record, Sequence, unflatten}
 
 trait ConfigSourceModule extends KeyValueModule {
@@ -20,40 +21,37 @@ trait ConfigSourceModule extends KeyValueModule {
   /**
    * Every ConfigSource at the core is just a `Reader`,
    * which is essentially a function that goes from `PropertyTreePath` to an actual `PropertyTree`.
-   * This `PropertyTree` will be further used to retrieve values for various keys.
+   * i.e, `f: PropertyTreePath[String] => IO[ReadError[String], PropertyTree[String, String]`
+   * Later on for each `key` represented as `PropertyTreePath[String]` internally, `f` is used to
+   * applied to get the value as a `PropertyTree` itself.
    *
-   * This function can be retrieved under an ZManaged effect. This implies it may involve an IO with managing resources
-   * to form this function.
+   * Internal details:
    *
-   * The effect that was required to create the function can be memoized as well with the help of the
-   * structure MemoizableManagedReader. `memoize` in ConfigSource makes use of this capability.
+   * This function `f` can be retrieved under an ZManaged effect. This implies it may involve an IO with managing resources
+   * to even form this function. Example: In order to retrieve a property-tree corresponding to a key (PropertyTreePath),
+   * it requires a database connection in the very first instance.
    *
-   * For every read of a key (say, to form a case class), unless ConfigSource is memoized using `source.memoize`,
-   * it will involve running this resourceful effect,
-   * and then create a property tree in-memory.
+   * // pseudo-logic, doesn't compile
    *
-   * If memoized, for most of the sources, the tree will be in-memory after the first read, and for each key, it's just
-   * a `get` from the tree.
+   * val source: ConfigSource =
+   *   ConfigSource.Reader(
+   *     ZManaged(getDatabaseConnection)
+   *       .flatMap(connection => (key: PropertyTreePath[String] => IO.effect(connection.getStatement.executeQuery(s"get key from table")))
+   *    )
    *
-   * However, for certain complex sources, it may not make sense to memoize at all. As an example, the author
-   * of ConfigSource can decide to not represent the entire config as an in-memory tree at any point.
-   * As an example, the implementation of a ConfigSource that requires a file-read, while implementing the method,
-   * `PropertyTreePath[K] => IO[ReadError[K], PropertyTree[K, V]]`, the author  cancan choose to read only that part
-   * of the file where the input `PropertyTreePath` exist and return just a minor part of the file as a tree.
-   *
-   * In this case memoize doesn't do much for you, as for the next key, it will
-   * read the second part of the file and so on.
-   * It's important to have an eye on the semantics of your ConfigSource before you call `.memoize`.
+   * Note that `ConfigSource` has a generalised `memoize` function that allows you to memoize the effect required to form the
+   * function. In the context of the above example, with `source.memoize` we acquire only a single connection to retrieve
+   * the values for all the keys in your product/coproduct for an instance of `read`.
    */
   sealed trait ConfigSource { self =>
 
     /**
      * With `strictlyOnce`, regardless of the number of times `read`
-     * is invoked, `ConfigSource` is evaluated
-     * strictly once.
+     * is invoked, the effect required to form the `Reader` in `ConfigSource` is evaluated
+     * strictly once. Use `strictlyOnce` only if it's really required.
      *
-     * It returns an Effect, because by the time ConfigSource is retrieved,
-     * an effect is performed (which may involve a resource acquisition and release)
+     * In a normal scenarios, everytime `read` is invoked (as in `read(desc from source)`), it
+     * should read from the real source.
      *
      * {{{
      *   val sourceZIO = ConfigSource.fromPropertiesFile(...).strictlyOnce
@@ -85,18 +83,18 @@ trait ConfigSourceModule extends KeyValueModule {
      */
     @silent("a type was inferred to be `Any`")
     def strictlyOnce: ZIO[Any, ReadError[K], ConfigSource] =
-      self match {
+      (self match {
         case ConfigSource.OrElse(self, that) =>
           self.strictlyOnce.orElse(that.strictlyOnce)
 
         case ConfigSource.Reader(names, access) =>
           val strictAccess = access.flatMap(identity).use(value => ZIO.succeed(value))
           strictAccess.map(reader => Reader(names, ZManaged.succeed(ZManaged.succeed(reader))))
-      }
+      })
 
     /**
-     * A Layer is assumed to be "memoized" by default, i.e the construction
-     * of ConfigSource layer is done strictly once regardless of number times the read is invoked.
+     * A Layer is assumed to be "memoized" by default, i.e the effect required to form the reader (refer ConfigSource docs)
+     * is executed strictly once regardless of number of keys involved, or the number the reads invoked.
      */
     def toLayer: ZLayer[Any, ReadError[K], Has[ConfigSource]] =
       strictlyOnce.toLayer
@@ -131,7 +129,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      *   // This is exactly the same as
      *
-     *   val addAwsPrefix = (s: String) = s"aws_${s}")
+     *   def addAwsPrefix(s: String) = "aws_" + s
      *   read(config.mapKeys(addAwsPrefix) from source)
      * }}}
      */
@@ -151,22 +149,31 @@ trait ConfigSourceModule extends KeyValueModule {
       }
 
     /**
-     * Within a `read`, ConfigSource is evaluated only once if memoized.
+     * Memoize the effect required to form the Reader.
      *
-     * Example:
-     *   {{{
-     *     (string("x") |@| string("y")).to[Config] from databaseSource
-     *   }}}
+     * Every ConfigSource at the core is just a `Reader`,
+     * which is essentially a function that goes from `PropertyTreePath` to an actual `PropertyTree`.
+     * i.e, `f: PropertyTreePath[String] => IO[ReadError[String], PropertyTree[String, String]`
+     * Later on for each `key` represented as `PropertyTreePath[String]` internally, `f` is used to
+     * applied to get the value as a `PropertyTree` itself.
      *
-     * In the above case, within a single database connection, `x` and `y` is
-     * retrieved
+     * Internal details:
      *
-     * However, for every individual read,
-     * ConfigSource will be re-computed.
+     * This function `f` can be retrieved under an ZManaged effect. This implies it may involve an IO with managing resources
+     * to even form this function. Example: In order to retrieve a property-tree corresponding to a key (PropertyTreePath),
+     * it requires a database connection in the very first instance.
      *
-     * If ConfigSource need to be computed only once even for
-     * multiple reads, then consider using `strictlyOnce` combinator
-     * or use `toLayer`
+     * // pseudo-logic, doesn't compile
+     *
+     * val source: ConfigSource =
+     *   ConfigSource.Reader(
+     *     ZManaged(getDatabaseConnection)
+     *       .flatMap(connection => (key: PropertyTreePath[String] => IO.effect(connection.getStatement.executeQuery(s"get key from table")))
+     *    )
+     *
+     * Note that `ConfigSource` has a generalised `memoize` function that allows you to memoize the effect required to form the
+     * function. In the context of the above example, with `source.memoize` we acquire only a single connection to retrieve
+     * the values for all the keys in your product/coproduct for an instance of `read`.
      */
     def memoize: ConfigSource =
       self match {
@@ -335,7 +342,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(CommandLineArguments)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      )
+      ).memoize
     }
 
     /**
@@ -358,8 +365,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromMap(
       constantMap: Map[String, String],
@@ -374,7 +379,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      )
+      ).memoize
     }
 
     /**
@@ -395,8 +400,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromMultiMap(
       map: Map[String, ::[String]],
@@ -413,7 +416,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      )
+      ).memoize
     }
 
     /**
@@ -436,8 +439,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromProperties(
       property: ju.Properties,
@@ -452,7 +453,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      )
+      ).memoize
     }
 
     /**
@@ -460,8 +461,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * @param tree            : PropertyTree
      * @param source          : Label the source with a name
-     * @param leafForSequence : Should a single value wrapped in Leaf be considered as Sequence
-     * @return
      */
     def fromPropertyTree(
       tree: PropertyTree[K, V],
@@ -470,7 +469,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(source)),
         ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      )
+      ).memoize
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -492,8 +491,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromPropertiesFile[A](
       filePath: String,
@@ -501,8 +498,7 @@ trait ConfigSourceModule extends KeyValueModule {
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
-
-      val managed =
+      val managed: ZManaged[Any, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
         ZManaged
           .make(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))
           .mapM { inputStream =>
@@ -528,7 +524,7 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(filePath)),
         ZManaged.succeed(managed)
-      )
+      ).memoize
     }
 
     /**
@@ -567,7 +563,11 @@ trait ConfigSourceModule extends KeyValueModule {
       val managed =
         ZIO
           .accessM[System](
-            _.get.envs.map(map => getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys))
+            _.get.envs.map { map =>
+              println("going to calculate tree")
+              val s = getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
+              s
+            }
           )
           .toManaged_
           .mapError(throwable => ReadError.SourceError(throwable.toString))
@@ -589,7 +589,7 @@ trait ConfigSourceModule extends KeyValueModule {
           // that's invoked per config. Instead die.
           ZManaged.fail(ReadError.SourceError(s"Invalid system key delimiter: ${keyDelimiter.get}")).orDie
         }
-      )
+      ).memoize
     }
 
     /**
@@ -635,9 +635,9 @@ trait ConfigSourceModule extends KeyValueModule {
             )
             .provideLayer(ZLayer.succeed(system))
         )
-      )
+      ).memoize
 
-    private[config] def getPropertyTreeFromArgs(
+    def getPropertyTreeFromArgs(
       args: List[String],
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char]
@@ -823,7 +823,23 @@ trait ConfigSourceModule extends KeyValueModule {
       dropEmptyNode(PropertyTree.mergeAll(loop(args).map(_.bimap(KS, VS)))).map(unwrapSingletonLists(_))
     }
 
-    private[config] def getPropertyTreeFromMapA[A](map: Map[K, A])(
+    def getPropertyTreeFromMap(
+      constantMap: Map[String, String],
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None,
+      filterKeys: String => Boolean = _ => true
+    ): PropertyTree[K, V] =
+      getPropertyTreeFromMapA(constantMap.filter({ case (k, _) => filterKeys(k) }))(
+        x => {
+          val listOfValues =
+            valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
+
+          ::(listOfValues.head, listOfValues.tail)
+        },
+        keyDelimiter
+      )
+
+    def getPropertyTreeFromMapA[A](map: Map[K, A])(
       f: A => ::[V],
       keyDelimiter: Option[Char]
     ): PropertyTree[K, V] =
@@ -838,7 +854,7 @@ trait ConfigSourceModule extends KeyValueModule {
         })).map(unwrapSingletonLists(_))
       )
 
-    private[config] def getPropertyTreeFromProperties(
+    def getPropertyTreeFromProperties(
       property: ju.Properties,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
@@ -887,22 +903,6 @@ trait ConfigSourceModule extends KeyValueModule {
       case Sequence(value :: Nil) => unwrapSingletonLists(value)
       case Sequence(value)        => Sequence(value.map(unwrapSingletonLists(_)))
     }
-
-    private[config] def getPropertyTreeFromMap(
-      constantMap: Map[String, String],
-      keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None,
-      filterKeys: String => Boolean = _ => true
-    ): PropertyTree[K, V] =
-      getPropertyTreeFromMapA(constantMap.filter({ case (k, _) => filterKeys(k) }))(
-        x => {
-          val listOfValues =
-            valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
-
-          ::(listOfValues.head, listOfValues.tail)
-        },
-        keyDelimiter
-      )
 
     private[config] def selectNonEmptyPropertyTree(
       trees: Iterable[PropertyTree[K, V]]

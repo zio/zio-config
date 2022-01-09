@@ -10,15 +10,20 @@ trait ConfigModule
     with WriteModule {
 
   /**
+   * Convert a ConfigDescriptor to a Layer, which further requires a ConfigSource as input.
+   * Note: Use `configLayer_` instead of `configLayer` if ConfigSource information is already embedded in the descriptor.
+   *
    * Example usage:
    *
    * {{{
    *
+   *  final case class MyConfig(age: Int)
+   *
    *  val appConfigLayer  =
-   *     ConfigSource.fromMap(Map("age" -> "20")).toLayer >>> configLayer(int("age"))
+   *     ConfigSource.fromMap(Map("age" -> "20")).toLayer >>> configLayer(int("age").to[MyConfig])
    *
    *  val app: ZIO[Has[MyConfig] with zio.console.Console,java.io.IOException, Unit] =
-   *    getConfig[Int].flatMap(age => putStrLn(s"My age is ${age}"))
+   *    getConfig[MyConfig].flatMap(putStrLn)
    *
    *  app.provideSomeLayer[Console](appConfigLayer)
    *  // ZIO[zio.console.Console, Exception, Unit]
@@ -29,7 +34,7 @@ trait ConfigModule
    *
    * {{{
    *   val appConfigLayer  =
-   *    configLayer_(int("age") from  ConfigSource.fromMap(Map("age" -> "20")))
+   *    configLayer_(int("age").to[MyConfig] from  ConfigSource.fromMap(Map("age" -> "20")))
    *
    *   app.provideSomeLayer[Console](appConfigLayer)
    *
@@ -44,20 +49,27 @@ trait ConfigModule
     ZIO.accessM[Has[ConfigSource]](source => read(config from source.get)).toLayer
 
   /**
+   * Convert a ConfigDescriptor to a Layer.
+   *
    * Example usage:
    *
    * {{{
    *
-   *  final case class MyConfig(age: Int)
+   *  final case class MyConfig(age: Int, name: String)
    *
-   *  val configDesc =
-   *    int("age").to[MyConfig] from ConfigSource.fromMap(Map("age" -> "20"))
+   *  object MyConfig {
+   *    val config =
+   *      (int("age") zip string("name")).to[MyConfig] from ConfigSource.fromMap(Map("age" -> "20", "name" -> "afsal"))
+   *  }
    *
-   *  val app: ZIO[Has[MyConfig] with zio.console.Console,java.io.IOException, Unit] =
-   *    getConfig[MyConfig].flatMap(config => putStrLn(s"My age is ${config.age}"))
+   *  val app: ZIO[Has[MyConfig] with zio.console.Console, java.io.IOException, Unit] =
+   *    getConfig[MyConfig].flatMap(putStrLn)
    *
-   *  app.provideSomeLayer[Console](configLayer_(configDesc))
-   *  // ZIO[zio.console.Console, Exception, Unit]
+   *  val io: ZIO[zio.console.Console, Exception, Unit] =
+   *    app.provideSomeLayer[Console](configLayer_(MyConfig.config))
+   *
+   *  println(zio.Runtime.default.unsafeRun(io))
+   *
    * }}}
    */
   final def configLayer_[A](config: ConfigDescriptor[A])(implicit

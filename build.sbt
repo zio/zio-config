@@ -80,7 +80,7 @@ addCommandAlias(
 lazy val awsVersion        = "1.12.131"
 lazy val zioVersion        = "1.0.9"
 lazy val magnoliaVersion   = "0.17.0"
-lazy val refinedVersion    = "0.9.27"
+lazy val refinedVersion    = "0.9.28"
 lazy val pureconfigVersion = "0.16.0"
 lazy val shapelessVersion  = "2.4.0-M1"
 
@@ -410,6 +410,20 @@ lazy val zioConfigCats    = crossProject(JSPlatform, JVMPlatform, NativePlatform
 
 lazy val zioConfigCatsJVM = zioConfigCats.jvm
   .settings(dottySettings)
+
+lazy val zioConfigEnumeratum               = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+  .in(file("enumeratum"))
+  .settings(stdSettings("zio-config-enumeratum"))
+  .settings(crossProjectSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "com.beachape" %% "enumeratum"   % "1.7.0",
+      "dev.zio"      %% "zio-test"     % zioVersion % Test,
+      "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .in(file("typesafe-magnolia-tests"))

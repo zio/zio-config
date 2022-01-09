@@ -7,7 +7,7 @@ import java.util.Optional
 /**
  * Configurator for ENV format
  */
-private[this] object EnvConfigImpl extends EnvConfig {
+object EnvConfigImpl extends EnvConfig {
 
   /**
    * Implement deviation from the standard logic.
