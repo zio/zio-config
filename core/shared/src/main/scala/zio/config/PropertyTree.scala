@@ -212,13 +212,13 @@ object PropertyTree {
   def apply[V](v: V): PropertyTree[Nothing, V] =
     Leaf(v)
 
-  private[config] final case class Leaf[V](value: V, canBeSequence: Boolean = true) extends PropertyTree[Nothing, V]
+  final case class Leaf[V](value: V, canBeSequence: Boolean = true) extends PropertyTree[Nothing, V]
 
-  private[config] final case class Record[K, V](value: Map[K, PropertyTree[K, V]]) extends PropertyTree[K, V]
+  final case class Record[K, V](value: Map[K, PropertyTree[K, V]]) extends PropertyTree[K, V]
 
-  private[config] case object Empty extends PropertyTree[Nothing, Nothing]
+  case object Empty extends PropertyTree[Nothing, Nothing]
 
-  private[config] final case class Sequence[K, V](value: List[PropertyTree[K, V]]) extends PropertyTree[K, V]
+  final case class Sequence[K, V](value: List[PropertyTree[K, V]]) extends PropertyTree[K, V]
 
   val empty: PropertyTree[Nothing, Nothing] = Empty
 
