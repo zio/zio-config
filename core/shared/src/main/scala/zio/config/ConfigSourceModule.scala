@@ -365,8 +365,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromMap(
       constantMap: Map[String, String],
@@ -402,8 +400,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromMultiMap(
       map: Map[String, ::[String]],
@@ -443,8 +439,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromProperties(
       property: ju.Properties,
@@ -467,7 +461,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * @param tree            : PropertyTree
      * @param source          : Label the source with a name
-     * @param leafForSequence : Should a single value wrapped in Leaf be considered as Sequence
      * @return
      */
     def fromPropertyTree(
@@ -499,8 +492,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromPropertiesFile[A](
       filePath: String,
