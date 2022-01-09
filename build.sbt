@@ -54,7 +54,7 @@ addCommandAlias(
 )
 addCommandAlias(
   "testJVM",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test;zioConfigAwsJVM/test"
 )
 addCommandAlias(
   "testNative",
@@ -66,7 +66,7 @@ addCommandAlias(
 )
 addCommandAlias(
   "testJVM211",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test"
 )
 addCommandAlias(
   "testNative211",
@@ -74,7 +74,7 @@ addCommandAlias(
 )
 addCommandAlias(
   "testDotty",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test"
 )
 
 lazy val awsVersion        = "1.12.131"
@@ -204,7 +204,7 @@ lazy val zioConfigAws    = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
-lazy val zioConfigAwsJVM = zioConfigTypesafe.jvm
+lazy val zioConfigAwsJVM = zioConfigAws.jvm
   .settings(dottySettings)
 
 lazy val zioConfigRefined    = crossProject(JVMPlatform)
