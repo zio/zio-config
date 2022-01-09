@@ -647,7 +647,7 @@ trait ConfigSourceModule extends KeyValueModule {
         )
       ).memoize
 
-    private[config] def getPropertyTreeFromArgs(
+    def getPropertyTreeFromArgs(
       args: List[String],
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char]
@@ -833,7 +833,23 @@ trait ConfigSourceModule extends KeyValueModule {
       dropEmptyNode(PropertyTree.mergeAll(loop(args).map(_.bimap(KS, VS)))).map(unwrapSingletonLists(_))
     }
 
-    private[config] def getPropertyTreeFromMapA[A](map: Map[K, A])(
+    def getPropertyTreeFromMap(
+      constantMap: Map[String, String],
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None,
+      filterKeys: String => Boolean = _ => true
+    ): PropertyTree[K, V] =
+      getPropertyTreeFromMapA(constantMap.filter({ case (k, _) => filterKeys(k) }))(
+        x => {
+          val listOfValues =
+            valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
+
+          ::(listOfValues.head, listOfValues.tail)
+        },
+        keyDelimiter
+      )
+
+    def getPropertyTreeFromMapA[A](map: Map[K, A])(
       f: A => ::[V],
       keyDelimiter: Option[Char]
     ): PropertyTree[K, V] =
@@ -848,7 +864,7 @@ trait ConfigSourceModule extends KeyValueModule {
         })).map(unwrapSingletonLists(_))
       )
 
-    private[config] def getPropertyTreeFromProperties(
+    def getPropertyTreeFromProperties(
       property: ju.Properties,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
@@ -897,22 +913,6 @@ trait ConfigSourceModule extends KeyValueModule {
       case Sequence(value :: Nil) => unwrapSingletonLists(value)
       case Sequence(value)        => Sequence(value.map(unwrapSingletonLists(_)))
     }
-
-    private[config] def getPropertyTreeFromMap(
-      constantMap: Map[String, String],
-      keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None,
-      filterKeys: String => Boolean = _ => true
-    ): PropertyTree[K, V] =
-      getPropertyTreeFromMapA(constantMap.filter({ case (k, _) => filterKeys(k) }))(
-        x => {
-          val listOfValues =
-            valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
-
-          ::(listOfValues.head, listOfValues.tail)
-        },
-        keyDelimiter
-      )
 
     private[config] def selectNonEmptyPropertyTree(
       trees: Iterable[PropertyTree[K, V]]
