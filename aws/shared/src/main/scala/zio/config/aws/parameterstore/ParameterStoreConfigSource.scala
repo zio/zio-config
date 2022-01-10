@@ -48,7 +48,7 @@ object ParameterStoreConfigSource {
       )
   }
 
-  def convertParameterListToMap(list: List[Parameter], basePath: String): Map[String, String] = {
+  private[config] def convertParameterListToMap(list: List[Parameter], basePath: String): Map[String, String] = {
     val str = s"$basePath/"
     list.map(parameter => (parameter.getName.replaceFirst(str, ""), parameter.getValue)).toMap
   }
