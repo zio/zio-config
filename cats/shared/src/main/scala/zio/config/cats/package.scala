@@ -3,7 +3,6 @@ package zio.config
 import _root_.cats.data._
 import _root_.cats.implicits._
 import _root_.cats.kernel.Order
-import zio.config._
 
 import scala.collection.immutable.SortedMap
 
