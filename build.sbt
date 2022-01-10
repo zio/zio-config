@@ -411,7 +411,7 @@ lazy val zioConfigCats    = crossProject(JSPlatform, JVMPlatform, NativePlatform
   .settings(
     crossScalaVersions --= Seq(Scala211),
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core"    % "2.6.1",
+      "org.typelevel" %% "cats-core"    % "2.7.0",
       "dev.zio"       %% "zio-test"     % zioVersion % Test,
       "dev.zio"       %% "zio-test-sbt" % zioVersion % Test
     ),
