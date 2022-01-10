@@ -42,7 +42,8 @@ object ParameterStoreConfigSource {
                     .effect(ssm.getParametersByPath(request).getParameters)
                     .map(_.asScala.toList)
                     .map { list =>
-                      ConfigSource.getPropertyTreeFromMap(toMap(list, basePath), keyDelimiter = Some('/'))
+                      ConfigSource
+                        .getPropertyTreeFromMap(convertParameterListToMap(list, basePath), keyDelimiter = Some('/'))
                     }
               } yield tree)
                 .mapError(throwable => ReadError.SourceError(throwable.toString): ReadError[String])
@@ -57,10 +58,10 @@ object ParameterStoreConfigSource {
       )
   }
 
-  def toMap(list: List[Parameter], basePath: String): Map[String, String] =
+  private[config] def convertParameterListToMap(list: List[Parameter], basePath: String): Map[String, String] =
     list.map(parameter => (parameter.getName.replaceFirst(basePath, ""), parameter.getValue)).toMap
 
-  def convertPathToString(propertyTreePath: PropertyTreePath[String]): String =
+  private[config] def convertPathToString(propertyTreePath: PropertyTreePath[String]): String =
     propertyTreePath.path
       .map({
         case Step.Index(_) => ""
