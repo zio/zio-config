@@ -125,11 +125,10 @@ lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
   zioConfigRefinedJVM,
   zioConfigMagnoliaJVM,
   examplesJVM,
-  zioConfigScalazJVM,
   zioConfigTypesafeMagnoliaTestsJVM
 )
 
-lazy val scala213projects = scala212projects
+lazy val scala213projects = scala212projects ++ Seq[ProjectReference](zioConfigScalazJVM)
 
 lazy val scala3projects =
   Seq[ProjectReference](
@@ -392,6 +391,7 @@ lazy val zioConfigScalaz    = crossProject(JSPlatform, JVMPlatform, NativePlatfo
   .settings(stdSettings("zio-config-scalaz"))
   .settings(crossProjectSettings)
   .settings(
+    crossScalaVersions --= Seq(Scala211, Scala212),
     libraryDependencies ++= Seq(
       "org.scalaz" %% "scalaz-core"  % "7.4.0-M7",
       "dev.zio"    %% "zio-test"     % zioVersion % Test,
@@ -409,6 +409,7 @@ lazy val zioConfigCats    = crossProject(JSPlatform, JVMPlatform, NativePlatform
   .settings(stdSettings("zio-config-cats"))
   .settings(crossProjectSettings)
   .settings(
+    crossScalaVersions --= Seq(Scala211),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core"    % "2.6.1",
       "dev.zio"       %% "zio-test"     % zioVersion % Test,
@@ -426,6 +427,7 @@ lazy val zioConfigEnumeratum    = crossProject(JSPlatform, JVMPlatform, NativePl
   .settings(stdSettings("zio-config-enumeratum"))
   .settings(crossProjectSettings)
   .settings(
+    crossScalaVersions --= Seq(Scala211),
     libraryDependencies ++= Seq(
       "com.beachape" %% "enumeratum"   % "1.7.0",
       "dev.zio"      %% "zio-test"     % zioVersion % Test,
@@ -435,7 +437,7 @@ lazy val zioConfigEnumeratum    = crossProject(JSPlatform, JVMPlatform, NativePl
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
-lazy val zioConfigEnumeratumJVM = zioConfigCats.jvm
+lazy val zioConfigEnumeratumJVM = zioConfigEnumeratum.jvm
 
 lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .in(file("typesafe-magnolia-tests"))
