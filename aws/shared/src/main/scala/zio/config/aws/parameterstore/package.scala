@@ -19,7 +19,10 @@ package object parameterstore {
   }
 
   implicit class FromConfigSourceTypesafe(c: ConfigSource.type) {
-    def fromParameterStore(basePath: String): ConfigSource =
-      ParameterStoreConfigSource.from(basePath)
+    def fromParameterStore(
+      basePath: String,
+      getClient: Task[AWSSimpleSystemsManagement] = Task(AWSSimpleSystemsManagementClientBuilder.defaultClient())
+    ): ConfigSource =
+      ParameterStoreConfigSource.from(basePath, getClient)
   }
 }
