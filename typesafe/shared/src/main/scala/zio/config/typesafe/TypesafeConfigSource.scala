@@ -144,12 +144,7 @@ object TypesafeConfigSource {
         }
       }.mapError(exception => ReadError.SourceError(message = exception.getMessage))
 
-    ConfigSource
-      .Reader(
-        Set(ConfigSource.ConfigSourceName("hocon")),
-        ZManaged.succeed(ZManaged.fromEffect(effect))
-      )
-      .memoize
+    ConfigSource.fromManaged("hocon", ZManaged.fromEffect(effect)).memoize
   }
 
   /**
