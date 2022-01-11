@@ -1,9 +1,10 @@
 package zio.config
 
-import scala.reflect.ClassTag
-
 import _root_.enumeratum._
 import _root_.enumeratum.values._
+
+import scala.reflect.ClassTag
+
 import ConfigDescriptor._
 
 package object enumeratum {

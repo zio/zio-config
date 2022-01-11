@@ -218,6 +218,12 @@ trait ConfigSourceModule extends KeyValueModule {
     type ManagedReader           = Managed[TreeReader]
     type MemoizableManagedReader = MemoizableManaged[TreeReader]
 
+    def fromManaged(sourceName: String, effect: ZManaged[Any, ReadError[String], TreeReader]): ConfigSource =
+      Reader(
+        Set(ConfigSourceName(sourceName)),
+        ZManaged.succeed(effect)
+      )
+
     case class ConfigSourceName(name: String)
 
     private[config] val SystemEnvironment    = "system environment"
@@ -339,10 +345,12 @@ trait ConfigSourceModule extends KeyValueModule {
         )
       )
 
-      Reader(
-        Set(ConfigSourceName(CommandLineArguments)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      ).memoize
+      ConfigSource
+        .fromManaged(
+          CommandLineArguments,
+          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+        )
+        .memoize
     }
 
     /**
@@ -365,12 +373,10 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromMap(
       constantMap: Map[String, String],
-      source: String = "constant",
+      sourceName: String = "constant",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
@@ -378,10 +384,12 @@ trait ConfigSourceModule extends KeyValueModule {
       val tree =
         getPropertyTreeFromMap(constantMap, keyDelimiter, valueDelimiter, filterKeys)
 
-      Reader(
-        Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      ).memoize
+      ConfigSource
+        .fromManaged(
+          sourceName,
+          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+        )
+        .memoize
     }
 
     /**
@@ -402,12 +410,10 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromMultiMap(
       map: Map[String, ::[String]],
-      source: String = "constant",
+      sourceName: String = "constant",
       keyDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
@@ -417,10 +423,12 @@ trait ConfigSourceModule extends KeyValueModule {
           keyDelimiter
         )
 
-      Reader(
-        Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      ).memoize
+      ConfigSource
+        .fromManaged(
+          sourceName,
+          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+        )
+        .memoize
     }
 
     /**
@@ -443,12 +451,10 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromProperties(
       property: ju.Properties,
-      source: String = "properties",
+      sourceName: String = "properties",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
@@ -456,10 +462,12 @@ trait ConfigSourceModule extends KeyValueModule {
       val tree =
         getPropertyTreeFromProperties(property, keyDelimiter, valueDelimiter, filterKeys)
 
-      Reader(
-        Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      ).memoize
+      ConfigSource
+        .fromManaged(
+          sourceName,
+          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+        )
+        .memoize
     }
 
     /**
@@ -467,17 +475,12 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * @param tree            : PropertyTree
      * @param source          : Label the source with a name
-     * @param leafForSequence : Should a single value wrapped in Leaf be considered as Sequence
-     * @return
      */
     def fromPropertyTree(
       tree: PropertyTree[K, V],
-      source: String
+      sourceName: String
     ): ConfigSource =
-      Reader(
-        Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      ).memoize
+      ConfigSource.fromManaged(sourceName, ZManaged.succeed(path => ZIO.succeed(tree.at(path)))).memoize
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -499,8 +502,6 @@ trait ConfigSourceModule extends KeyValueModule {
      *    final case class kafkaConfig(server: String, serde: String)
      *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
      * }}}
-     *
-     * leafForSequence indicates whether a Leaf(value) (i.e, a singleton) could be considered a Sequence.
      */
     def fromPropertiesFile[A](
       filePath: String,
@@ -531,10 +532,7 @@ trait ConfigSourceModule extends KeyValueModule {
           }
           .mapError(throwable => ReadError.SourceError(throwable.toString))
 
-      Reader(
-        Set(ConfigSourceName(filePath)),
-        ZManaged.succeed(managed)
-      ).memoize
+      ConfigSource.fromManaged(filePath, managed).memoize
     }
 
     /**
@@ -629,9 +627,9 @@ trait ConfigSourceModule extends KeyValueModule {
       filterKeys: String => Boolean = _ => true,
       system: System.Service = System.Service.live
     ): ConfigSource =
-      Reader(
-        Set(ConfigSourceName(SystemProperties)),
-        ZManaged.succeed(
+      ConfigSource
+        .fromManaged(
+          SystemProperties,
           ZIO
             .accessM[System](_.get.properties)
             .toManaged_
@@ -645,9 +643,9 @@ trait ConfigSourceModule extends KeyValueModule {
             )
             .provideLayer(ZLayer.succeed(system))
         )
-      ).memoize
+        .memoize
 
-    private[config] def getPropertyTreeFromArgs(
+    def getPropertyTreeFromArgs(
       args: List[String],
       keyDelimiter: Option[Char],
       valueDelimiter: Option[Char]
@@ -833,7 +831,23 @@ trait ConfigSourceModule extends KeyValueModule {
       dropEmptyNode(PropertyTree.mergeAll(loop(args).map(_.bimap(KS, VS)))).map(unwrapSingletonLists(_))
     }
 
-    private[config] def getPropertyTreeFromMapA[A](map: Map[K, A])(
+    def getPropertyTreeFromMap(
+      constantMap: Map[String, String],
+      keyDelimiter: Option[Char] = None,
+      valueDelimiter: Option[Char] = None,
+      filterKeys: String => Boolean = _ => true
+    ): PropertyTree[K, V] =
+      getPropertyTreeFromMapA(constantMap.filter({ case (k, _) => filterKeys(k) }))(
+        x => {
+          val listOfValues =
+            valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
+
+          ::(listOfValues.head, listOfValues.tail)
+        },
+        keyDelimiter
+      )
+
+    def getPropertyTreeFromMapA[A](map: Map[K, A])(
       f: A => ::[V],
       keyDelimiter: Option[Char]
     ): PropertyTree[K, V] =
@@ -848,7 +862,7 @@ trait ConfigSourceModule extends KeyValueModule {
         })).map(unwrapSingletonLists(_))
       )
 
-    private[config] def getPropertyTreeFromProperties(
+    def getPropertyTreeFromProperties(
       property: ju.Properties,
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
@@ -897,22 +911,6 @@ trait ConfigSourceModule extends KeyValueModule {
       case Sequence(value :: Nil) => unwrapSingletonLists(value)
       case Sequence(value)        => Sequence(value.map(unwrapSingletonLists(_)))
     }
-
-    private[config] def getPropertyTreeFromMap(
-      constantMap: Map[String, String],
-      keyDelimiter: Option[Char] = None,
-      valueDelimiter: Option[Char] = None,
-      filterKeys: String => Boolean = _ => true
-    ): PropertyTree[K, V] =
-      getPropertyTreeFromMapA(constantMap.filter({ case (k, _) => filterKeys(k) }))(
-        x => {
-          val listOfValues =
-            valueDelimiter.fold(List(x))(delim => x.split(delim).toList.map(_.trim))
-
-          ::(listOfValues.head, listOfValues.tail)
-        },
-        keyDelimiter
-      )
 
     private[config] def selectNonEmptyPropertyTree(
       trees: Iterable[PropertyTree[K, V]]

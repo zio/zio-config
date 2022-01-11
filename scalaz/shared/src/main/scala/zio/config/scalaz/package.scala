@@ -2,7 +2,9 @@ package zio.config
 
 import _root_.scalaz.Isomorphism.<=>
 import _root_.scalaz.{==>>, IList, ISet, Maybe, Order}
-import zio.config._, ConfigDescriptor._
+import zio.config._
+
+import ConfigDescriptor._
 
 package object scalaz {
   def fromIso[A, B](D: A <=> B)(M: ConfigDescriptor[A]): ConfigDescriptor[B] =
