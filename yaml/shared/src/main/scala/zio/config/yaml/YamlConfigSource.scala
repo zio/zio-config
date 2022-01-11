@@ -2,16 +2,14 @@ package zio.config.yaml
 
 import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
+import zio.ZIO
 import zio.config._
-import zio.{ZIO, ZManaged}
 
 import java.io.{File, FileInputStream, Reader}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
 import java.nio.file.Path
 import java.{util => ju}
 import scala.jdk.CollectionConverters._
-
-import ConfigSource.{Reader => ConfigSourceReader, _}
 
 @silent("Unused import")
 object YamlConfigSource {
@@ -116,10 +114,12 @@ object YamlConfigSource {
     val managedTree =
       loadYaml(repr).flatMap(anyRef => convertYaml(anyRef)).toManaged_
 
-    ConfigSourceReader(
-      Set(ConfigSourceName(sourceName)),
-      ZManaged.succeed(managedTree.map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path))))
-    ).memoize
+    ConfigSource
+      .fromManaged(
+        sourceName,
+        managedTree.map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
+      )
+      .memoize
   }
 
   private[yaml] def convertYaml(data: AnyRef): ZIO[Any, ReadError[String], PropertyTree[String, String]] = {
