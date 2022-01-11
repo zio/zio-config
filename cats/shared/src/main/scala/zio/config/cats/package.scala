@@ -1,11 +1,12 @@
 package zio.config
 
-import scala.collection.immutable.SortedMap
 import _root_.cats.data._
 import _root_.cats.implicits._
 import _root_.cats.kernel.Order
 
-import zio.config._, ConfigDescriptor._
+import scala.collection.immutable.SortedMap
+
+import ConfigDescriptor._
 
 package object cats {
   def chain[A](aDesc: ConfigDescriptor[A]): ConfigDescriptor[Chain[A]] =
@@ -16,7 +17,9 @@ package object cats {
 
   def nonEmptyChain[A](aDesc: ConfigDescriptor[A]): ConfigDescriptor[NonEmptyChain[A]] =
     chain(aDesc).transformOrFailLeft(value =>
-      NonEmptyChain.fromChain(value).fold[Either[String, NonEmptyChain[A]]](Left("chain is empty"))(value => Right(value))
+      NonEmptyChain
+        .fromChain(value)
+        .fold[Either[String, NonEmptyChain[A]]](Left("chain is empty"))(value => Right(value))
     )(
       _.toChain
     )

@@ -1,7 +1,7 @@
 package zio.config.scalaz
 
 import scalaz.InvariantFunctor
-import zio.config._, ConfigDescriptor._
+import zio.config._
 
 package object instances {
   implicit val invariantConfigDescriptor: InvariantFunctor[ConfigDescriptor] =
