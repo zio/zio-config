@@ -218,6 +218,12 @@ trait ConfigSourceModule extends KeyValueModule {
     type ManagedReader           = Managed[TreeReader]
     type MemoizableManagedReader = MemoizableManaged[TreeReader]
 
+    def fromManaged(sourceName: String, effect: ZManaged[Any, ReadError[String], TreeReader]): ConfigSource =
+      Reader(
+        Set(ConfigSourceName(sourceName)),
+        ZManaged.succeed(effect)
+      )
+
     case class ConfigSourceName(name: String)
 
     private[config] val SystemEnvironment    = "system environment"
@@ -339,10 +345,12 @@ trait ConfigSourceModule extends KeyValueModule {
         )
       )
 
-      Reader(
-        Set(ConfigSourceName(CommandLineArguments)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      ).memoize
+      ConfigSource
+        .fromManaged(
+          CommandLineArguments,
+          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+        )
+        .memoize
     }
 
     /**
@@ -368,7 +376,7 @@ trait ConfigSourceModule extends KeyValueModule {
      */
     def fromMap(
       constantMap: Map[String, String],
-      source: String = "constant",
+      sourceName: String = "constant",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
@@ -376,10 +384,12 @@ trait ConfigSourceModule extends KeyValueModule {
       val tree =
         getPropertyTreeFromMap(constantMap, keyDelimiter, valueDelimiter, filterKeys)
 
-      Reader(
-        Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      ).memoize
+      ConfigSource
+        .fromManaged(
+          sourceName,
+          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+        )
+        .memoize
     }
 
     /**
@@ -403,7 +413,7 @@ trait ConfigSourceModule extends KeyValueModule {
      */
     def fromMultiMap(
       map: Map[String, ::[String]],
-      source: String = "constant",
+      sourceName: String = "constant",
       keyDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
@@ -413,10 +423,12 @@ trait ConfigSourceModule extends KeyValueModule {
           keyDelimiter
         )
 
-      Reader(
-        Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      ).memoize
+      ConfigSource
+        .fromManaged(
+          sourceName,
+          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+        )
+        .memoize
     }
 
     /**
@@ -442,7 +454,7 @@ trait ConfigSourceModule extends KeyValueModule {
      */
     def fromProperties(
       property: ju.Properties,
-      source: String = "properties",
+      sourceName: String = "properties",
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
@@ -450,10 +462,12 @@ trait ConfigSourceModule extends KeyValueModule {
       val tree =
         getPropertyTreeFromProperties(property, keyDelimiter, valueDelimiter, filterKeys)
 
-      Reader(
-        Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      ).memoize
+      ConfigSource
+        .fromManaged(
+          sourceName,
+          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+        )
+        .memoize
     }
 
     /**
@@ -464,12 +478,9 @@ trait ConfigSourceModule extends KeyValueModule {
      */
     def fromPropertyTree(
       tree: PropertyTree[K, V],
-      source: String
+      sourceName: String
     ): ConfigSource =
-      Reader(
-        Set(ConfigSourceName(source)),
-        ZManaged.succeed(ZManaged.succeed(path => ZIO.succeed(tree.at(path))))
-      ).memoize
+      ConfigSource.fromManaged(sourceName, ZManaged.succeed(path => ZIO.succeed(tree.at(path)))).memoize
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -521,10 +532,7 @@ trait ConfigSourceModule extends KeyValueModule {
           }
           .mapError(throwable => ReadError.SourceError(throwable.toString))
 
-      Reader(
-        Set(ConfigSourceName(filePath)),
-        ZManaged.succeed(managed)
-      ).memoize
+      ConfigSource.fromManaged(filePath, managed).memoize
     }
 
     /**
@@ -619,9 +627,9 @@ trait ConfigSourceModule extends KeyValueModule {
       filterKeys: String => Boolean = _ => true,
       system: System.Service = System.Service.live
     ): ConfigSource =
-      Reader(
-        Set(ConfigSourceName(SystemProperties)),
-        ZManaged.succeed(
+      ConfigSource
+        .fromManaged(
+          SystemProperties,
           ZIO
             .accessM[System](_.get.properties)
             .toManaged_
@@ -635,7 +643,7 @@ trait ConfigSourceModule extends KeyValueModule {
             )
             .provideLayer(ZLayer.succeed(system))
         )
-      ).memoize
+        .memoize
 
     def getPropertyTreeFromArgs(
       args: List[String],
