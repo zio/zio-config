@@ -5,7 +5,6 @@ import com.amazonaws.services.simplesystemsmanagement.{
   AWSSimpleSystemsManagement,
   AWSSimpleSystemsManagementClientBuilder
 }
-import zio.config.PropertyTreePath.Step
 import zio.config.{PropertyTreePath, ReadError, _}
 import zio.{Task, ZIO, ZManaged}
 
@@ -22,33 +21,24 @@ object ParameterStoreConfigSource {
       ZManaged.succeed {
         ZManaged
           .fromEffect(
-            getClient
-          )
-          .map(ssm =>
-            (path: PropertyTreePath[String]) =>
-              (for {
-                request <-
-                  ZIO
-                    .effect(
-                      new GetParametersByPathRequest()
-                        .withPath(s"${basePath}/${convertPathToString(path)}")
-                        .withRecursive(true)
-                        .withMaxResults(1000)
-                        .withWithDecryption(true)
-                    )
+            getClient.flatMap { ssm =>
+              val request =
+                new GetParametersByPathRequest()
+                  .withPath(basePath)
+                  .withRecursive(true)
+                  .withWithDecryption(true)
 
-                tree <-
-                  ZIO
-                    .effect(ssm.getParametersByPath(request).getParameters)
-                    .map(_.asScala.toList)
-                    .map { list =>
-                      ConfigSource
-                        .getPropertyTreeFromMap(convertParameterListToMap(list, basePath), keyDelimiter = Some('/'))
-                    }
-              } yield tree)
-                .mapError(throwable => ReadError.SourceError(throwable.toString): ReadError[String])
+              ZIO
+                .effect(ssm.getParametersByPath(request).getParameters)
+                .map(_.asScala.toList)
+                .map { list =>
+                  ConfigSource
+                    .getPropertyTreeFromMap(convertParameterListToMap(list, basePath), keyDelimiter = Some('/'))
+                }
+            }
+              .map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
+              .mapError(throwable => ReadError.SourceError(throwable.toString): ReadError[String])
           )
-          .mapError(throwable => ReadError.SourceError(throwable.toString): ReadError[String])
       }
 
     ConfigSource
@@ -58,14 +48,8 @@ object ParameterStoreConfigSource {
       )
   }
 
-  private[config] def convertParameterListToMap(list: List[Parameter], basePath: String): Map[String, String] =
-    list.map(parameter => (parameter.getName.replaceFirst(basePath, ""), parameter.getValue)).toMap
-
-  private[config] def convertPathToString(propertyTreePath: PropertyTreePath[String]): String =
-    propertyTreePath.path
-      .map({
-        case Step.Index(_) => ""
-        case Step.Key(k)   => k
-      })
-      .mkString("/")
+  private[config] def convertParameterListToMap(list: List[Parameter], basePath: String): Map[String, String] = {
+    val str = s"$basePath/"
+    list.map(parameter => (parameter.getName.replaceFirst(str, ""), parameter.getValue)).toMap
+  }
 }
