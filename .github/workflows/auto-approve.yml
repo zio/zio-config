@@ -10,4 +10,4 @@ jobs:
       - uses: hmarr/auto-approve-action@v2.1.0
         if: github.actor == 'scala-steward' || github.actor == 'renovate[bot]'
         with:
-          github-token: "${{ secrets.GITHUB_TOKEN }}"
+          GIT_DEPLOY_KEY: "${{ secrets.GIT_DEPLOY_KEY }}"
