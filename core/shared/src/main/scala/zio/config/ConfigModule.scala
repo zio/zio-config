@@ -22,8 +22,8 @@ trait ConfigModule
    *  val appConfigLayer  =
    *     ConfigSource.fromMap(Map("age" -> "20")).toLayer >>> configLayer(int("age").to[MyConfig])
    *
-   *  val app: ZIO[Has[MyConfig] with zio.console.Console,java.io.IOException, Unit] =
-   *    getConfig[MyConfig].flatMap(putStrLn)
+   *  val app: ZIO[MyConfig with zio.console.Console,java.io.IOException, Unit] =
+   *    getConfig[MyConfig].flatMap(Console.printLine)
    *
    *  app.provideSomeLayer[Console](appConfigLayer)
    *  // ZIO[zio.console.Console, Exception, Unit]
