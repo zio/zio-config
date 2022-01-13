@@ -1,14 +1,14 @@
 package zio.config.gen
 
+import zio.Random
 import zio.test.magnolia.DeriveGen
+import zio.test.{Gen, Sized}
 
 import java.io.File
 import java.net.{URI, URL}
 import java.time.{Instant, LocalDate, LocalDateTime}
 import java.util.UUID
 import scala.concurrent.duration.Duration
-import zio.Random
-import zio.test.{Gen, Sized}
 
 /**
  * DeriveGenInstances gives instance for DeriveGen for all the types

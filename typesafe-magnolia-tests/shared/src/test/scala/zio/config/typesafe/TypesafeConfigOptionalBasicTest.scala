@@ -4,10 +4,9 @@ import zio.config.PropertyTreePath.Step.Key
 import zio.config.ReadError.{Irrecoverable, MissingValue, ZipErrors}
 import zio.config._
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{ZIOSpecDefault, _}
 
 import magnolia._
-import zio.test.ZIOSpecDefault
 
 // A basic test before the set of TypesafeConfigOptionalTest
 object TypesafeConfigOptionalBasicTest extends ZIOSpecDefault with EitherSupport {

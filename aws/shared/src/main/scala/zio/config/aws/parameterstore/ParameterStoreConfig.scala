@@ -4,8 +4,8 @@ import com.amazonaws.services.simplesystemsmanagement.{
   AWSSimpleSystemsManagement,
   AWSSimpleSystemsManagementClientBuilder
 }
-import zio.config.{ReadError, _}
 import zio._
+import zio.config.{ReadError, _}
 
 object ParameterStoreConfig {
   def from[A](

@@ -1,13 +1,11 @@
 package zio.config
 
-import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.EitherReciprocityTestUtils._
 import zio.config.helpers._
 import zio.test.Assertion._
-import zio.test._
-import zio.Random
-import zio.test.TestConfig
+import zio.test.{TestConfig, _}
+import zio.{Random, ZIO}
 
 object EitherReciprocityTest extends BaseSpec {
 

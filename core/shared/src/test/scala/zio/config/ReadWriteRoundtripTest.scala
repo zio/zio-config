@@ -4,10 +4,8 @@ import zio.config.ConfigDescriptor._
 import zio.config.ReadWriteRoundtripTestUtils._
 import zio.config.helpers._
 import zio.test.Assertion._
-import zio.test._
-import zio.ZIO
-import zio.Random
-import zio.test.{Gen, TestConfig}
+import zio.test.{Gen, TestConfig, _}
+import zio.{Random, ZIO}
 
 object ReadWriteRoundtripTest extends BaseSpec {
 

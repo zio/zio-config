@@ -4,8 +4,7 @@ import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.config.typesafe.TypesafeConfigTestSupport._
 import zio.config.{PropertyTreePath, ReadError}
 import zio.test.Assertion._
-import zio.test._
-import zio.test.ZIOSpecDefault
+import zio.test.{ZIOSpecDefault, _}
 
 object TypesafeConfigSpec extends ZIOSpecDefault {
   val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig")(

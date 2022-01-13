@@ -1,17 +1,15 @@
 package zio.config
 
+import zio.Random
 import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
 import zio.test.Assertion._
-import zio.test._
-import zio.test.TestEnvironment
+import zio.test.{Gen, Sized, TestEnvironment, _}
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
 import scala.concurrent.duration.Duration
 import scala.util.Try
-import zio.Random
-import zio.test.{Gen, Sized}
 
 object PropertyTypeTest extends BaseSpec {
 

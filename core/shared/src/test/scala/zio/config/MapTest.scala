@@ -7,7 +7,7 @@ import zio.test._
 
 object MapTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] =
     suite("MapCornerCasesTest")(
       test("map(b)(string(y)) returns the value of y from the values inside map within b.") {
         case class Cfg(a: String, b: Map[String, String])

@@ -2,11 +2,8 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
-import zio.test.TestEnvironment
-import zio.test._
-import zio.ZIO
-import zio.Random
-import zio.test.{Gen, Sized, TestSystem, ZIOSpecDefault}
+import zio.test.{Gen, Sized, TestEnvironment, TestSystem, ZIOSpecDefault, _}
+import zio.{Random, ZIO}
 
 object SystemTest extends ZIOSpecDefault {
 

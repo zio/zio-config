@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{IO, UIO, ZIO, ZLayer, ZManaged}
+import zio.{IO, System, UIO, ZIO, ZLayer, ZManaged}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
@@ -9,7 +9,6 @@ import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
 
 import PropertyTree.{Leaf, Record, Sequence, unflatten}
-import zio.System
 
 trait ConfigSourceModule extends KeyValueModule {
   // Currently all sources are just String and String

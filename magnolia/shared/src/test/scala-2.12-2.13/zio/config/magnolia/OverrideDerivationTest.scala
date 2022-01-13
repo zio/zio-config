@@ -2,8 +2,7 @@ package zio.config.magnolia
 
 import zio.config._
 import zio.test.Assertion._
-import zio.test._
-import zio.test.ZIOSpecDefault
+import zio.test.{ZIOSpecDefault, _}
 
 object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
   import Descriptor.SealedTraitStrategy._
@@ -16,7 +15,7 @@ object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
 }
 
 object OverrideDerivationTest extends ZIOSpecDefault {
-  def spec = suite("OverrideDerivationTest")(
+  def spec: Spec[Any, TestFailure[Serializable], TestSuccess] = suite("OverrideDerivationTest")(
     test("simple config") {
       import OverrideDerivationTestEnv._
 

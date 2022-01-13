@@ -1,14 +1,12 @@
 package zio.config
 
 import zio.test.Assertion._
-import zio.test._
-import zio.test.TestEnvironment
+import zio.test.{TestEnvironment, ZIOSpecDefault, _}
 import zio.{IO, ZIO}
 
 import PropertyTreePath.Step
 import ReadError._
 import testsupport.MapConfigTestSupport.AppConfig.descriptor
-import zio.test.ZIOSpecDefault
 
 object MapConfigTest extends ZIOSpecDefault {
   import zio.config.testsupport.MapConfigTestSupport._

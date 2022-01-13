@@ -10,12 +10,10 @@ import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
 import zio.config.{BaseSpec, ConfigDescriptor, ConfigSource, read, write}
 import zio.test.Assertion._
-import zio.test._
-import zio.ZIO
+import zio.test.{Gen, TestConfig, _}
+import zio.{Random, ZIO}
 
 import ConfigDescriptor._
-import zio.Random
-import zio.test.{Gen, TestConfig}
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 

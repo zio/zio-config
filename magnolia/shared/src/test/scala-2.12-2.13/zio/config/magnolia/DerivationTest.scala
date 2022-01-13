@@ -3,13 +3,12 @@ package zio.config.magnolia
 import zio.config.PropertyTree.{Leaf, Record}
 import zio.config.{PropertyTree, _}
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{ZIOSpecDefault, _}
 
 import ConfigDescriptorAdt._
-import zio.test.ZIOSpecDefault
 
 object DerivationTest extends ZIOSpecDefault {
-  def spec = suite("DerivationTest")(
+  def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("DerivationTest")(
     test("support describe annotation") {
       @describe("class desc")
       case class Cfg(@describe("field desc") fname: String)

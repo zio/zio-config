@@ -1,10 +1,9 @@
 package zio.config
 
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{Gen, _}
 
 import PropertyTreeTestUtils._
-import zio.test.Gen
 
 object PropertyTreeCombinatorsTest extends BaseSpec {
 

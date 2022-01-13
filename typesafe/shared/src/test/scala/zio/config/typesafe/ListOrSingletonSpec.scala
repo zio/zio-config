@@ -2,12 +2,12 @@ package zio.config.typesafe
 
 import zio.config.{read, _}
 import zio.test.Assertion._
-import zio.test.{assertM, ZIOSpecDefault}
+import zio.test.{Spec, TestFailure, TestSuccess, ZIOSpecDefault, assertM}
 
 import ConfigDescriptor._
 
 object ListOrSingletonSpec extends ZIOSpecDefault {
-  override def spec =
+  override def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] =
     suite("listOrSingleton")(
       test("reads singleton") {
         val configString =

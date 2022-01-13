@@ -2,14 +2,13 @@ package zio.config.typesafe
 
 import zio.config._
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{ZIOSpecDefault, _}
 
 import magnolia._
-import zio.test.ZIOSpecDefault
 
 object TypesafeConfigListTest extends ZIOSpecDefault {
 
-  def spec = suite("TypesafeConfig List")(
+  def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig List")(
     test("A kebab case for testing HOCON List config") {
       val kebabCaseConfig =
         """

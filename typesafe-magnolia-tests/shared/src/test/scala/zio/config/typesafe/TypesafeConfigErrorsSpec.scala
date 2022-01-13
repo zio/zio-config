@@ -2,11 +2,10 @@ package zio.config.typesafe
 
 import zio.config._
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{ZIOSpecDefault, _}
 
 import magnolia._
 import ConfigDescriptor._
-import zio.test.ZIOSpecDefault
 
 final case class Account(region: String, accountId: String)
 final case class Database(port: Int, url: String)
@@ -59,7 +58,7 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
     }
     """
 
-  def spec = suite("TypesafeConfig Error")(
+  def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig Error")(
     test("A variant error case with typesafe HOCON config and a magnolia description") {
       val nestedConfigAutomaticResult1 =
         read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))

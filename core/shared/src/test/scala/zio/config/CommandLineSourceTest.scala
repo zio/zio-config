@@ -5,10 +5,8 @@ import zio.config.ReadError.ConversionError
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.config.testsupport.MapConfigTestSupport.{AppConfig, genAppConfig, stringNWithInjector}
 import zio.test.Assertion._
-import zio.test.TestEnvironment
-import zio.test._
+import zio.test.{TestEnvironment, ZIOSpecDefault, _}
 import zio.{IO, ZIO}
-import zio.test.ZIOSpecDefault
 
 object CommandLineSourceTest extends ZIOSpecDefault {
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
@@ -59,7 +57,7 @@ object CommandLineSourceTest extends ZIOSpecDefault {
       }
     )
 
-  def fromArgs(args: List[String]) =
+  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], AppConfig] =
     ZConfig.fromCommandLineArgs(args, descriptor, Some('_'), None).build.useNow.map(_.get[AppConfig])
 
   def toSeparateArgs[A](

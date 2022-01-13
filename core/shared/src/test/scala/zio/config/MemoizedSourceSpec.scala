@@ -2,14 +2,12 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
-import zio.test._
-import zio.{UIO, ZIO, ZManaged}
+import zio.test.{TestConfig, _}
+import zio.{Random, UIO, ZIO, ZManaged}
 
 import java.util.concurrent.atomic.AtomicInteger
 
 import MemoizedSourceSpecUtils._
-import zio.Random
-import zio.test.TestConfig
 
 object MemoizedSourceSpec extends BaseSpec {
   val spec: Spec[TestConfig with Random, TestFailure[ReadError[String]], TestSuccess] =

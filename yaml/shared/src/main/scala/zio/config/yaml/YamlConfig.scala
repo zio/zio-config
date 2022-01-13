@@ -1,11 +1,10 @@
 package zio.config.yaml
 
 import zio.config._
-import zio.{Layer, Tag}
+import zio.{IsNotIntersection, Layer, Tag}
 
 import java.io.File
 import java.nio.file.Path
-import zio.IsNotIntersection
 
 object YamlConfig {
 

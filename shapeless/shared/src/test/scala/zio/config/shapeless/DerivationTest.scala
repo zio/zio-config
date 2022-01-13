@@ -3,10 +3,9 @@ package zio.config.shapeless
 import zio.config.PropertyTree.{Leaf, Record}
 import zio.config.{PropertyTree, _}
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{ZIOSpecDefault, _}
 
 import ConfigDescriptorAdt._
-import zio.test.ZIOSpecDefault
 
 object DerivationTest extends ZIOSpecDefault {
   val spec: ZSpec[Environment, Failure] = suite("DerivationTest")(

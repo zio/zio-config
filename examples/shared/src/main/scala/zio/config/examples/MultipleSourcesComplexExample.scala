@@ -1,10 +1,10 @@
 package zio.config.examples
 
 import com.typesafe.config._
+import zio._
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
-import zio._
 
 object ConfigLoader {
   def apply[A](
@@ -62,7 +62,7 @@ object KafkaApplication {
 }
 
 object MultipleSourcesComplexExample extends zio.ZIOAppDefault {
-  def run = {
+  def run: URIO[Console, ExitCode] = {
     val pgm =
       ConfigLoader(
         "serviceName_",

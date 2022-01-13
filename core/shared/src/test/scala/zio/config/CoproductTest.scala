@@ -5,22 +5,20 @@ import zio.config.ConfigDescriptor._
 import zio.config.PropertyTreePath.Step.Key
 import zio.config.helpers._
 import zio.test.Assertion._
-import zio.test._
-import zio.{IO, ZIO}
+import zio.test.{Sized, _}
+import zio.{IO, Random, ZIO}
 
 import scala.concurrent.duration.Duration
 
 import ReadError._
 import CoproductTestUtils._
-import zio.Random
-import zio.test.Sized
 
 @silent("Unused import")
 object CoproductTest extends BaseSpec {
   import scala.collection.compat._
   import VersionSpecificSupport._
 
-  val spec =
+  val spec: Spec[TestConfig with Random with Sized with Any, TestFailure[Serializable], TestSuccess] =
     suite("Coproduct support")(
       test("left element satisfied") {
         check(genTestParams) { p =>

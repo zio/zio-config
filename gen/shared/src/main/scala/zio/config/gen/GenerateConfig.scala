@@ -3,14 +3,13 @@ package zio.config.gen
 import zio.Schedule.recurs
 import zio.config._
 import zio.stream.ZStream
+import zio.test.Sized
 import zio.test.magnolia.DeriveGen
-import zio.{Chunk, ZIO}
+import zio.{Chunk, Random, ZIO}
 
 import scala.collection.Map
 
 import typesafe._
-import zio.Random
-import zio.test.Sized
 
 trait GenerateConfig {
 

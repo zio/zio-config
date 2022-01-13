@@ -2,10 +2,9 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{Annotations, _}
 
 import RecursiveConfigTestUtils._
-import zio.test.Annotations
 
 object RecursiveConfigTest extends BaseSpec {
 

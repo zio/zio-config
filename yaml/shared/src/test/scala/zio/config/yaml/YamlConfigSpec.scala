@@ -1,12 +1,11 @@
 package zio.config.yaml
 
-import zio.config.{ConfigDescriptor, PropertyTree, PropertyTreePath}
+import zio.config.{ConfigDescriptor, PropertyTree, PropertyTreePath, ReadError}
 import zio.test.Assertion._
-import zio.test._
-import zio.test.ZIOSpecDefault
+import zio.test.{ZIOSpecDefault, _}
 
 object YamlConfigSpec extends ZIOSpecDefault {
-  def spec = suite("YamlConfig")(
+  def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("YamlConfig")(
     test("Read a complex structure") {
       val result   = YamlConfigSource.fromYamlString(
         """

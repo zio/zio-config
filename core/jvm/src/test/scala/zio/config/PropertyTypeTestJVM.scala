@@ -2,11 +2,10 @@ package zio.config
 
 import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
-import zio.test._
+import zio.test.{Gen, _}
 
 import java.io.File
 import java.net.{URI, URL}
-import zio.test.Gen
 
 object PropertyTypeTestJVM extends BaseSpec {
 

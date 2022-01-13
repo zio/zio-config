@@ -1,10 +1,9 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.ConfigDescriptor.{int, list}
 import zio.test.Assertion._
-import zio.test.TestEnvironment
-import zio.test._
-import zio.test.ZIOSpecDefault
+import zio.test.{TestEnvironment, ZIOSpecDefault, _}
 
 object CommandLineListAccumulationTest extends ZIOSpecDefault {
 
@@ -35,7 +34,7 @@ object CommandLineListAccumulationTest extends ZIOSpecDefault {
       .map(i => s"--ints=$i")
       .toList
 
-  def fromArgs(args: List[String]) =
+  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], SomeConfig] =
     ZConfig.fromCommandLineArgs(args, SomeConfig.descriptor, None, None).build.useNow.map(_.get[SomeConfig])
 
 }

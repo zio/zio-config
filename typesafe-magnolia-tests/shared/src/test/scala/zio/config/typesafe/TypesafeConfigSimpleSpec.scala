@@ -3,11 +3,10 @@ package zio.config.typesafe
 import zio.config._
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{ZIOSpecDefault, _}
 
 import magnolia._
 import ConfigDescriptor._
-import zio.test.ZIOSpecDefault
 
 object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
   final case class Details(name: String, age: Int)
@@ -49,7 +48,7 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
       |  url: postgres
       |}""".stripMargin
 
-  val spec = suite("TypesafeConfig")(
+  val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig")(
     test("A nested example with typesafe HOCON config") {
 
       val details       = (string("name") zip int("age")).to[Details]

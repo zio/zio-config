@@ -1,15 +1,13 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{Layer, Tag, ZIO, ZLayer}
+import zio.{IsNotIntersection, Layer, System, Tag, ZIO, ZLayer}
 
 import java.io.File
 import java.net.{URI, URL}
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.{Properties, UUID}
 import scala.concurrent.duration.Duration
-import zio.System
-import zio.IsNotIntersection
 
 trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
   object ConfigDescriptor extends ConfigDescriptorFunctions {

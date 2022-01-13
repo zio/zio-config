@@ -4,8 +4,7 @@ import zio.ZIO
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.config._
 import zio.test.Assertion._
-import zio.test._
-import zio.test.ZIOSpecDefault
+import zio.test.{ZIOSpecDefault, _}
 
 object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
   override def mapClassName(name: String): String = toSnakeCase(name) + "_suffix"

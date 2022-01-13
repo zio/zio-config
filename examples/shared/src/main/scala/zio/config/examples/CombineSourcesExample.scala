@@ -1,10 +1,10 @@
 package zio.config.examples
 
 import com.github.ghik.silencer.silent
+import zio._
 import zio.config._
 import zio.config.magnolia._
 import zio.config.typesafe._
-import zio._
 
 import java.io.File
 
@@ -15,7 +15,7 @@ import java.io.File
  * are invalid.
  */
 object CombineSourcesExample extends ZIOAppDefault {
-  override def run =
+  override def run: URIO[System with Console, ExitCode] =
     application.either.flatMap(r => Console.printLine(s"Result: ${r}")).exitCode
 
   final case class Config(username: String, password: String)

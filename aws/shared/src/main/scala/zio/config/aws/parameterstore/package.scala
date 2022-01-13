@@ -5,8 +5,8 @@ import com.amazonaws.services.simplesystemsmanagement.{
   AWSSimpleSystemsManagementClientBuilder
 }
 import izumi.reflect.Tag
-import zio.config._
 import zio._
+import zio.config._
 
 package object parameterstore {
   implicit class FromConfigTypesafe(c: ZConfig.type) {

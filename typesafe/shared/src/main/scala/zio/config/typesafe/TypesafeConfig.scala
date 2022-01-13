@@ -1,8 +1,8 @@
 package zio.config.typesafe
 
 import com.typesafe.config.ConfigFactory
-import zio.config._
 import zio._
+import zio.config._
 
 import java.io.File
 

@@ -1,7 +1,7 @@
 package zio.config.examples
 
-import zio.config._
 import zio._
+import zio.config._
 
 import java.io.IOException
 
@@ -24,7 +24,7 @@ object JavaPropertiesExample extends ZIOAppDefault {
   properties.put("bridgeIp", "10.0.0.1")
   properties.put("username", "afs")
 
-  override def run = {
+  override def run: URIO[Any with Console, ExitCode] = {
     val configLayer =
       ZConfig.fromProperties(properties, ApplicationConfig.configuration, "constant")
 

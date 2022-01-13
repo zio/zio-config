@@ -5,10 +5,8 @@ import zio.config.ListAndOptionalTestUtils._
 import zio.config.PropertyTree.{Leaf, Record}
 import zio.config.helpers._
 import zio.test.Assertion._
-import zio.test._
-import zio.ZIO
-import zio.Random
-import zio.test.{Sized, TestConfig}
+import zio.test.{Sized, TestConfig, _}
+import zio.{Random, ZIO}
 
 object ListAndOptionalTest extends BaseSpec {
 

@@ -9,7 +9,7 @@ import zio.test._
 
 object SetTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] =
     suite("SetsTest")(
       test("read empty set") {
         case class Cfg(a: String, b: Set[String])

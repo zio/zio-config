@@ -9,7 +9,7 @@ import zio.test._
 
 object ListsCornerCasesTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] =
     suite("ListsCornerCasesTest")(
       test("read empty list") {
         case class Cfg(a: String, b: List[String])

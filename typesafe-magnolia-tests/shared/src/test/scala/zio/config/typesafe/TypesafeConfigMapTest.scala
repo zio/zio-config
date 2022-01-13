@@ -9,7 +9,7 @@ import TypesafeConfigMapSpecUtils._
 
 object TypesafeConfigMapSpec extends BaseSpec {
 
-  override def spec = suite("Map Typesafe Integration")(
+  override def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("Map Typesafe Integration")(
     test("read typesafe config") {
       val result =
         read(sssDescription from source)

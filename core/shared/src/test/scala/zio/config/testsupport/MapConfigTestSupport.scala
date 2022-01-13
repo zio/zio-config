@@ -1,12 +1,11 @@
 package zio.config.testsupport
 
+import zio.Random
 import zio.config.{ConfigDescriptor, _}
 import zio.test.Gen.alphaNumericChar
-import zio.test.Gen
+import zio.test.{Gen, Sized}
 
 import ConfigDescriptor._
-import zio.Random
-import zio.test.Sized
 
 object MapConfigTestSupport {
   def genAppConfig(stringGen: Gen[Random with Sized, String] = stringN(1, 15)): Gen[Random with Sized, AppConfig] =

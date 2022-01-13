@@ -1,8 +1,7 @@
 package zio.config.examples
 
-import zio.config._
-
 import zio._
+import zio.config._
 
 import ConfigDescriptor._
 
@@ -18,6 +17,6 @@ object LayerExample extends ZIOAppDefault {
   val app: ZIO[MyConfig with Console, java.io.IOException, Unit] =
     getConfig[MyConfig].flatMap(age => Console.printLine(s"My age is ${age}"))
 
-  override def run = app.provideSomeLayer[Console](configLayer_(MyConfig.config))
+  override def run: ZIO[Console, Exception, Unit] = app.provideSomeLayer[Console](configLayer_(MyConfig.config))
 
 }

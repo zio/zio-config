@@ -1,9 +1,9 @@
 package zio.config.examples
 
+import zio._
 import zio.config._
 
 import ConfigDescriptor._
-import zio._
 
 final case class Prod(ldap: String, port: Int, dburl: Option[String])
 
@@ -20,7 +20,7 @@ object Prod {
 
 object ReadConfig extends ZIOAppDefault {
 
-  def run =
+  def run: ZIO[Environment with ZEnv with ZIOAppArgs, Any, Any] =
     for {
       console    <- ZIO.service[Console]
       configLayer = ZConfig.fromMap(
