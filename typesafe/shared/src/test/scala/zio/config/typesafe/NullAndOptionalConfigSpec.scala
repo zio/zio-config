@@ -3,9 +3,10 @@ package zio.config.typesafe
 import zio.config.typesafe.EmployeeDetails._
 import zio.config.{ConfigDescriptor, read, _}
 import zio.test.Assertion._
-import zio.test.{DefaultRunnableSpec, _}
+import zio.test._
 
 import ConfigDescriptor._
+import zio.test.ZIOSpecDefault
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
@@ -34,9 +35,9 @@ object EmployeeDetails {
     }
 }
 
-object NullAndOptionalConfig extends DefaultRunnableSpec {
-  val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig Null and Optional")(
-    testM("A config case which keys maybe null or optional") {
+object NullAndOptionalConfig extends ZIOSpecDefault {
+  def spec = suite("TypesafeConfig Null and Optional")(
+    test("A config case which keys maybe null or optional") {
       val hoconSource =
         ConfigSource.fromHoconString(
           """details {

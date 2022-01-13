@@ -2,23 +2,24 @@ package zio.config
 
 import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
-import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.test.environment.TestEnvironment
+import zio.test.TestEnvironment
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
 import scala.concurrent.duration.Duration
 import scala.util.Try
+import zio.Random
+import zio.test.{Gen, Sized}
 
 object PropertyTypeTest extends BaseSpec {
 
   val spec: ZSpec[Environment, Failure] =
     suite("PropertyType")(
-      testM("StringType roundtrip") {
+      test("StringType roundtrip") {
         // any string is a valid string i guess
-        check(Gen.anyString)(
+        check(Gen.string)(
           assertValidRoundtrip(StringType, parse = identity)
         )
       },
@@ -36,25 +37,25 @@ object PropertyTypeTest extends BaseSpec {
       propertyTypeRoundtripSuite(
         typeInfo = "Byte",
         propType = ByteType,
-        genValid = genPadLeadingZeros(Gen.anyByte),
+        genValid = genPadLeadingZeros(Gen.byte),
         parse = _.toByte
       ),
       propertyTypeRoundtripSuite(
         typeInfo = "Short",
         propType = ShortType,
-        genValid = genPadLeadingZeros(Gen.anyShort),
+        genValid = genPadLeadingZeros(Gen.short),
         parse = _.toShort
       ),
       propertyTypeRoundtripSuite(
         typeInfo = "Int",
         propType = IntType,
-        genValid = genPadLeadingZeros(Gen.anyInt),
+        genValid = genPadLeadingZeros(Gen.int),
         parse = _.toInt
       ),
       propertyTypeRoundtripSuite(
         typeInfo = "Long",
         propType = LongType,
-        genValid = genPadLeadingZeros(Gen.anyLong),
+        genValid = genPadLeadingZeros(Gen.long),
         parse = _.toLong
       ),
       propertyTypeRoundtripSuite(
@@ -66,7 +67,7 @@ object PropertyTypeTest extends BaseSpec {
       propertyTypeRoundtripSuite(
         typeInfo = "Float",
         propType = FloatType,
-        genValid = genPadLeadingZeros(Gen.anyFloat),
+        genValid = genPadLeadingZeros(Gen.float),
         parse = _.toFloat
       ),
       propertyTypeRoundtripSuite(
@@ -90,14 +91,14 @@ object PropertyTypeTest extends BaseSpec {
       propertyTypeRoundtripSuite(
         typeInfo = "UUID",
         propType = UuidType,
-        genValid = Gen.anyUUID.map(_.toString),
+        genValid = Gen.uuid.map(_.toString),
         parse = UUID.fromString(_)
       ),
       propertyTypeRoundtripSuite(
         typeInfo = "Duration",
         propType = ZioDurationType,
         genValid = Gen.sized(helpers.genDuration),
-        parse = s => zio.duration.Duration.fromScala(Duration(s))
+        parse = s => zio.Duration.fromScala(Duration(s))
       ),
       propertyTypeRoundtripSuite(
         typeInfo = "LocalDate",
@@ -135,11 +136,11 @@ object PropertyTypeTestUtils {
     parse: String => A
   ): Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite(s"${typeInfo}Type")(
-      testM(s"valid ${typeInfo} string roundtrip") {
+      test(s"valid ${typeInfo} string roundtrip") {
         check(genValid.map(_.toString))(assertValidRoundtrip(propType, parse))
       },
-      testM(s"invalid ${typeInfo} string roundtrip") {
-        val invalidString = Gen.anyString.filter(s => Try(parse(s)).isFailure)
+      test(s"invalid ${typeInfo} string roundtrip") {
+        val invalidString = Gen.string.filter(s => Try(parse(s)).isFailure)
         check(invalidString)(
           assertInvalidRoundtrip(
             propType,
@@ -313,7 +314,7 @@ object PropertyTypeTestUtils {
   )
 
   val genInstant: Gen[Random, Instant] =
-    Gen.anyLong.map(Instant.ofEpochMilli)
+    Gen.long.map(Instant.ofEpochMilli)
 
   val genLocalDateString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDate.toString)

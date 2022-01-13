@@ -9,9 +9,9 @@ import zio.test._
 
 object SetTest extends BaseSpec {
 
-  val spec: ZSpec[Environment, Failure] =
+  val spec =
     suite("SetsTest")(
-      testM("read empty set") {
+      test("read empty set") {
         case class Cfg(a: String, b: Set[String])
 
         val cCfg = (string("a") zip set("b")(string)).to[Cfg]
@@ -25,7 +25,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", Set.empty)))
       },
-      testM("read nested sets") {
+      test("read nested sets") {
         case class Cfg(a: String, b: Set[Set[String]])
 
         val cCfg = (string("a") zip set("b")(set(string))).to[Cfg]
@@ -40,7 +40,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", Set(Set.empty))))
       },
-      testM("read absent optional sets") {
+      test("read absent optional sets") {
         case class Cfg(a: String, b: Option[Set[String]])
 
         val cCfg = (string("a") zip set("b")(string).optional).to[Cfg]
@@ -55,7 +55,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", None)))
       },
-      testM("read present optional empty sets") {
+      test("read present optional empty sets") {
         case class Cfg(a: String, b: Option[Set[String]])
 
         val cCfg = (string("a") zip set("b")(string).optional).to[Cfg]
@@ -70,7 +70,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", Some(Set.empty))))
       },
-      testM("use default value for absent set") {
+      test("use default value for absent set") {
         case class Cfg(a: String, b: Set[String])
 
         val cCfg = (string("a") zip set("b")(string).default(Set("x"))).to[Cfg]
@@ -84,7 +84,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", Set("x"))))
       },
-      testM("override default non-empty set with empty set") {
+      test("override default non-empty set with empty set") {
         case class Cfg(a: String, b: Set[String])
 
         val cCfg = (string("a") zip set("b")(string).default(Set("x"))).to[Cfg]
@@ -98,7 +98,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", Set.empty)))
       },
-      testM("distinguish set from scalar left") {
+      test("distinguish set from scalar left") {
         case class Cfg(a: String, b: Either[Set[String], String])
 
         val cCfg = (string("a") zip nested("b")(set(string).orElseEither(string))).to[Cfg]
@@ -112,7 +112,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", Left(Set("v")))))
       },
-      testM("distinguish set from scalar right") {
+      test("distinguish set from scalar right") {
         case class Cfg(a: String, b: Either[String, Set[String]])
 
         val cCfg = (string("a") zip nested("b")(string.orElseEither(set(string)))).to[Cfg]
@@ -126,7 +126,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", Right(Set("v")))))
       },
-      testM("distinguish scalar from set left") {
+      test("distinguish scalar from set left") {
         case class Cfg(a: String, b: Either[String, Set[String]])
 
         val cCfg = (string("a") zip nested("b")(string.orElseEither(set(string)))).to[Cfg]
@@ -140,7 +140,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", Left("v"))))
       },
-      testM("distinguish scalar from set right") {
+      test("distinguish scalar from set right") {
         case class Cfg(a: String, b: Either[Set[String], String])
 
         val cCfg = (string("a") zip nested("b")(set(string).orElseEither(string))).to[Cfg]
@@ -154,7 +154,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", Right("v"))))
       },
-      testM("read set as scalar") {
+      test("read set as scalar") {
         case class Cfg(a: String, b: String)
 
         val cCfg = (string("a") zip head("b")(string)).to[Cfg]
@@ -168,7 +168,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", "v1")))
       },
-      testM("read single key objects in nested sets") {
+      test("read single key objects in nested sets") {
         case class Cfg(a: String, b: Set[Set[String]])
 
         val cCfg = (string("a") zip set("b")(set(string("c")))).to[Cfg]
@@ -192,7 +192,7 @@ object SetTest extends BaseSpec {
 
         assertM(res)(equalTo(Cfg("sa", Set(Set("v1"), Set(), Set("v2", "v3")))))
       },
-      testM("collect errors from set elements") {
+      test("collect errors from set elements") {
         case class Cfg(a: String, b: Set[String])
 
         val cCfg = (string("a") zip nested("b")(set(string))).to[Cfg]
@@ -208,7 +208,7 @@ object SetTest extends BaseSpec {
 
         assertM(res.either)(isLeft(hasField[ReadError[String], Int]("size", _.size, equalTo(2))))
       },
-      testM("fails if contains duplicate values") {
+      test("fails if contains duplicate values") {
         case class Cfg(a: String, b: Set[String])
 
         val cCfg = (string("a") zip nested("b")(set(string))).to[Cfg]
@@ -230,7 +230,7 @@ object SetTest extends BaseSpec {
           )
         )
       },
-      testM("fails if nested set contains duplicates") {
+      test("fails if nested set contains duplicates") {
         case class Cfg(a: String, b: Set[Set[String]])
 
         val cCfg = (string("a") zip set("b")(set(string("c")))).to[Cfg]
@@ -260,7 +260,7 @@ object SetTest extends BaseSpec {
 
         assertM(res.either)(isLeft(equalTo(expected)))
       },
-      testM("accumulates all errors") {
+      test("accumulates all errors") {
         case class CfgA(a1: Boolean, a2: Int)
         case class Cfg(a: Set[CfgA], b: Set[Int])
 
@@ -321,7 +321,7 @@ object SetTest extends BaseSpec {
 
         assertM(res.either)(isLeft(hasField[ReadError[String], Int]("size", _.size, equalTo(expected.size))))
       },
-      testM("accumulates all errors - pretty print") {
+      test("accumulates all errors - pretty print") {
         case class CfgA(a1: Boolean, a2: Int)
         case class Cfg(a: Set[CfgA], b: Set[Int])
 

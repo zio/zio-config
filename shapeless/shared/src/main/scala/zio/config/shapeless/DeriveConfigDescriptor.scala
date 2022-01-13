@@ -5,7 +5,7 @@ import shapeless.labelled._
 import zio.config._
 import zio.config.derivation.DerivationUtils.{constant, unwrapFromOptional}
 import zio.config.derivation.NeedsDerive
-import zio.duration.Duration
+import zio.Duration
 
 import java.io.File
 import java.net.{URI, URL}

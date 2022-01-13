@@ -3,17 +3,18 @@ package zio.config
 import zio.config.ConfigDescriptor._
 import zio.config.ReadWriteRoundtripTestUtils._
 import zio.config.helpers._
-import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, ZIO}
+import zio.ZIO
+import zio.Random
+import zio.test.{Gen, TestConfig}
 
 object ReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[String], TestSuccess] =
+  val spec: Spec[TestConfig with Random, TestFailure[String], TestSuccess] =
     suite("Coproduct support")(
-      testM("newtype 1 roundtrip") {
-        checkM(genId) { p =>
+      test("newtype 1 roundtrip") {
+        check(genId) { p =>
           val p2 =
             for {
               written <- ZIO.fromEither(write(cId, p))
@@ -25,8 +26,8 @@ object ReadWriteRoundtripTest extends BaseSpec {
           assertM(p2)(equalTo(p))
         }
       },
-      testM("newtype 2 roundtrip") {
-        checkM(genDbUrl) { p =>
+      test("newtype 2 roundtrip") {
+        check(genDbUrl) { p =>
           val p2 =
             for {
               written <- ZIO.fromEither(write(cDbUrl, p))
@@ -38,8 +39,8 @@ object ReadWriteRoundtripTest extends BaseSpec {
           assertM(p2)(equalTo(p))
         }
       },
-      testM("case class 1 roundtrip") {
-        checkM(genEnterpriseAuth) { p =>
+      test("case class 1 roundtrip") {
+        check(genEnterpriseAuth) { p =>
           val p2 =
             for {
               written <- ZIO.fromEither(write(cEnterpriseAuth, p))
@@ -53,8 +54,8 @@ object ReadWriteRoundtripTest extends BaseSpec {
           assertM(p2)(equalTo(p))
         }
       },
-      testM("nested case class roundtrip") {
-        checkM(genNestedConfig) { p =>
+      test("nested case class roundtrip") {
+        check(genNestedConfig) { p =>
           val p2 =
             for {
               written <- ZIO.fromEither(write(cNestedConfig, p))
@@ -68,8 +69,8 @@ object ReadWriteRoundtripTest extends BaseSpec {
           assertM(p2)(equalTo(p))
         }
       },
-      testM("single field case class roundtrip") {
-        checkM(genSingleField) { p =>
+      test("single field case class roundtrip") {
+        check(genSingleField) { p =>
           val p2 =
             for {
               written <- ZIO.fromEither(write(cSingleField, p))
@@ -81,8 +82,8 @@ object ReadWriteRoundtripTest extends BaseSpec {
           assertM(p2)(equalTo(p))
         }
       },
-      testM("coproduct roundtrip") {
-        checkM(genCoproductConfig) { p =>
+      test("coproduct roundtrip") {
+        check(genCoproductConfig) { p =>
           val p2 =
             for {
               written <- ZIO.fromEither(write(cCoproductConfig, p))
@@ -96,7 +97,7 @@ object ReadWriteRoundtripTest extends BaseSpec {
           assertM(p2)(equalTo(p))
         }
       },
-      testM("empty sequence zipped with optional nested") {
+      test("empty sequence zipped with optional nested") {
         val config = (list("a")(string) zip nested("b")(string).optional)
         val data   = (Nil, None)
         val data2  = for {
@@ -121,7 +122,7 @@ object ReadWriteRoundtripTestUtils {
   val genDataItem: Gen[Random, DataItem] =
     for {
       oid   <- Gen.option(genId)
-      count <- Gen.anyInt
+      count <- Gen.int
     } yield DataItem(oid, count)
 
   val genEnterpriseAuth: Gen[Random, EnterpriseAuth] =
@@ -133,13 +134,13 @@ object ReadWriteRoundtripTestUtils {
   val genNestedConfig: Gen[Random, NestedPath] =
     for {
       auth   <- genEnterpriseAuth
-      count  <- Gen.anyInt
-      factor <- Gen.anyFloat
+      count  <- Gen.int
+      factor <- Gen.float
     } yield NestedPath(auth, count, factor)
 
   val genSingleField: Gen[Random, SingleField] =
     for {
-      count <- Gen.anyInt
+      count <- Gen.int
     } yield SingleField(count)
 
   val genCoproductConfig: Gen[Random, CoproductConfig] =

@@ -5,6 +5,7 @@ import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
+import zio.test.ZIOSpecDefault
 
 object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
   override def mapClassName(name: String): String = toSnakeCase(name) + "_suffix"
@@ -22,7 +23,7 @@ object OverrideDerivationTestWithWrappedSealedTraitName extends DeriveConfigDesc
   val wrapSealedTraits: Boolean       = true
 }
 
-object OverrideDerivationTest extends DefaultRunnableSpec {
+object OverrideDerivationTest extends ZIOSpecDefault {
   def unsafeRun[E, A](effect: ZIO[Any, E, A]): A =
     zio.Runtime.default.unsafeRun(effect)
 

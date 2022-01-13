@@ -3,10 +3,11 @@ package zio.config.yaml
 import zio.config.{ConfigDescriptor, PropertyTree, PropertyTreePath}
 import zio.test.Assertion._
 import zio.test._
+import zio.test.ZIOSpecDefault
 
-object YamlConfigSpec extends DefaultRunnableSpec {
-  val spec: ZSpec[Environment, Failure] = suite("YamlConfig")(
-    testM("Read a complex structure") {
+object YamlConfigSpec extends ZIOSpecDefault {
+  def spec = suite("YamlConfig")(
+    test("Read a complex structure") {
       val result   = YamlConfigSource.fromYamlString(
         """
           |top:
@@ -46,7 +47,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
 
       assertM(result.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
     },
-    testM("Read a complex structure into a sealed trait") {
+    test("Read a complex structure into a sealed trait") {
       case class Child(sum: List[Sum])
 
       sealed trait Sum         extends Product with Serializable
@@ -81,7 +82,7 @@ object YamlConfigSpec extends DefaultRunnableSpec {
         )
       val expected = Child(List(A("str"), B(false)))
 
-      assertM(result.build.map(_.get).run.useNow)(succeeds(equalTo(expected)))
+      assertM(result.build.map(_.get).exit.useNow)(succeeds(equalTo(expected)))
     }
   )
 }

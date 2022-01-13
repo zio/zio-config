@@ -1,12 +1,12 @@
 package zio.config.examples
 
 import zio.config._
-import zio.console._
-import zio.{Has, ZIO}
+
+import zio._
 
 import ConfigDescriptor._
 
-object LayerExample extends App {
+object LayerExample extends ZIOAppDefault {
 
   final case class MyConfig(age: Int, name: String)
 
@@ -15,12 +15,9 @@ object LayerExample extends App {
       (int("age") zip string("name")).to[MyConfig] from ConfigSource.fromMap(Map("age" -> "20", "name" -> "afsal"))
   }
 
-  val app: ZIO[Has[MyConfig] with zio.console.Console, java.io.IOException, Unit] =
-    getConfig[MyConfig].flatMap(age => putStrLn(s"My age is ${age}"))
+  val app: ZIO[MyConfig with Console, java.io.IOException, Unit] =
+    getConfig[MyConfig].flatMap(age => Console.printLine(s"My age is ${age}"))
 
-  val io: ZIO[zio.console.Console, Exception, Unit] =
-    app.provideSomeLayer[Console](configLayer_(MyConfig.config))
-
-  println(zio.Runtime.default.unsafeRun(io))
+  override def run = app.provideSomeLayer[Console](configLayer_(MyConfig.config))
 
 }

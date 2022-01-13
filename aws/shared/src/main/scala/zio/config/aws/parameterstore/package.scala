@@ -6,7 +6,7 @@ import com.amazonaws.services.simplesystemsmanagement.{
 }
 import izumi.reflect.Tag
 import zio.config._
-import zio.{Has, Layer, Task}
+import zio._
 
 package object parameterstore {
   implicit class FromConfigTypesafe(c: ZConfig.type) {
@@ -14,7 +14,7 @@ package object parameterstore {
       configDescriptor: ConfigDescriptor[A],
       basePath: String,
       getClient: Task[AWSSimpleSystemsManagement] = Task(AWSSimpleSystemsManagementClientBuilder.defaultClient())
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
       ParameterStoreConfig.from(configDescriptor, basePath, getClient)
   }
 

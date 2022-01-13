@@ -1,21 +1,22 @@
 package zio.config
 
 import zio.config.ConfigDescriptor._
-import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
-import zio.{Has, UIO, ZIO, ZManaged}
+import zio.{UIO, ZIO, ZManaged}
 
 import java.util.concurrent.atomic.AtomicInteger
 
 import MemoizedSourceSpecUtils._
+import zio.Random
+import zio.test.TestConfig
 
 object MemoizedSourceSpec extends BaseSpec {
-  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[ReadError[String]], TestSuccess] =
+  val spec: Spec[TestConfig with Random, TestFailure[ReadError[String]], TestSuccess] =
     suite(
       "ConfigSource memoization and lazy config gets"
     )(
-      testM(
+      test(
         "A non-memoized source runs a resource release for each config value during a read"
       ) {
         val config = (string("k1") zip string("k2"))
@@ -39,7 +40,7 @@ object MemoizedSourceSpec extends BaseSpec {
         assertM(effect)(equalTo(((s"v1_1_1", "v2_2_2"), 2, 2)))
 
       },
-      testM(
+      test(
         "A non-memoized source runs a resource release for each config value during a read"
       ) {
         val resource =
@@ -63,7 +64,7 @@ object MemoizedSourceSpec extends BaseSpec {
 
         assertM(effect)(equalTo(((s"v1_1_1", "v2_1_2"), 0, 2)))
       },
-      testM(
+      test(
         "A memoized source runs a resource acquisition and release only once during the read of multiple of config values"
       ) {
         val resource1 =
@@ -91,7 +92,7 @@ object MemoizedSourceSpec extends BaseSpec {
 
         assertM(effect)(equalTo(((s"v1_1_1", "v2_1_2"), 1, 1, 2)))
       },
-      testM(
+      test(
         "A strictlyOnce source runs a resource acquisition and release only once, regardless of the number of reads invoked"
       ) {
         val resource1 =
@@ -136,17 +137,17 @@ object MemoizedSourceSpecUtils {
       .at(path)
 
   def acquire(resource: AtomicInteger): UIO[Int] =
-    ZIO.effectTotal({
+    ZIO.succeed({
       resource.incrementAndGet()
     })
 
   def release(resource: AtomicInteger): UIO[Int] =
-    ZIO.effectTotal({
+    ZIO.succeed({
       resource.decrementAndGet()
     })
 
   def incrementCount(configCount: AtomicInteger): UIO[Int] =
-    ZIO.effectTotal(configCount.incrementAndGet())
+    ZIO.succeed(configCount.incrementAndGet())
 
   def effectFulSource(
     acquire: UIO[Int],
@@ -155,7 +156,7 @@ object MemoizedSourceSpecUtils {
   ): ConfigSource = {
     val managed: ZManaged[Any, ReadError[String], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
       ZManaged
-        .make(acquire) { _ =>
+        .acquireReleaseWith(acquire) { _ =>
           release
         }
         .map(resourceCount =>

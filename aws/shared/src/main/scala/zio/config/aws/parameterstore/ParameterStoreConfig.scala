@@ -5,14 +5,14 @@ import com.amazonaws.services.simplesystemsmanagement.{
   AWSSimpleSystemsManagementClientBuilder
 }
 import zio.config.{ReadError, _}
-import zio.{Has, Layer, Tag, Task}
+import zio._
 
 object ParameterStoreConfig {
   def from[A](
     configDescriptor: ConfigDescriptor[A],
     basePath: String,
     getClient: Task[AWSSimpleSystemsManagement] = Task(AWSSimpleSystemsManagementClientBuilder.defaultClient())
-  )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+  )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       configDescriptor from ParameterStoreConfigSource.from(basePath, getClient)
     )

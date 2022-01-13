@@ -4,8 +4,9 @@ import zio.config.PropertyTree._
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
+import zio.test.ZIOSpecDefault
 
-object CoproductSealedTraitSpec extends DefaultRunnableSpec {
+object CoproductSealedTraitSpec extends ZIOSpecDefault {
 
   sealed trait X
 
@@ -20,7 +21,7 @@ object CoproductSealedTraitSpec extends DefaultRunnableSpec {
 
   case class Config(x: X)
 
-  val spec: ZSpec[Environment, Failure] = suite("MagnoliaConfig")(testM("descriptor of coproduct sealed trait") {
+  def spec = suite("MagnoliaConfig")(test("descriptor of coproduct sealed trait") {
     assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "A"))))(equalTo(Config(A))) *>
       assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "B"))))(equalTo(Config(B))) *>
       assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Config(C))) *>

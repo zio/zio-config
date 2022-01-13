@@ -3,12 +3,13 @@ package zio.config.typesafe
 import zio.config._
 import zio.config.typesafe.TypesafeConfigSource.fromHoconString
 import zio.test.Assertion._
-import zio.test.{DefaultRunnableSpec, _}
+import zio.test._
 
 import magnolia._
 import ConfigDescriptor._
+import zio.test.ZIOSpecDefault
 
-object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
+object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
   final case class Details(name: String, age: Int)
 
   final case class Account(accountId: Option[Either[Int, String]], regions: List[String], details: Option[Details])
@@ -48,8 +49,8 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
       |  url: postgres
       |}""".stripMargin
 
-  val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig")(
-    testM("A nested example with typesafe HOCON config") {
+  val spec = suite("TypesafeConfig")(
+    test("A nested example with typesafe HOCON config") {
 
       val details       = (string("name") zip int("age")).to[Details]
       val accountConfig =
@@ -78,7 +79,7 @@ object TypesafeConfigSimpleSpec extends DefaultRunnableSpec {
 
       assertM(listResult)(equalTo(expectedResult))
     },
-    testM("A nested example with typesafe HOCON config and Magnlia") {
+    test("A nested example with typesafe HOCON config and Magnlia") {
       val automaticAwsDetailsConfig = descriptor[AwsDetails]
 
       val automaticResult =

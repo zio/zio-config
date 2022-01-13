@@ -3,6 +3,7 @@ package zio.config.magnolia
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
+import zio.test.ZIOSpecDefault
 
 object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
   import Descriptor.SealedTraitStrategy._
@@ -14,9 +15,9 @@ object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
     ignoreSealedTraitName && ignoreSubClassName
 }
 
-object OverrideDerivationTest extends DefaultRunnableSpec {
-  val spec: ZSpec[Environment, Failure] = suite("OverrideDerivationTest")(
-    testM("simple config") {
+object OverrideDerivationTest extends ZIOSpecDefault {
+  def spec = suite("OverrideDerivationTest")(
+    test("simple config") {
       import OverrideDerivationTestEnv._
 
       case class Cfg(fieldName: String)
@@ -32,7 +33,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
         equalTo(Cfg("a"))
       )
     },
-    testM("unwrapped sealed hierarchy") {
+    test("unwrapped sealed hierarchy") {
       import OverrideDerivationTestEnv._
 
       sealed trait Inner
@@ -56,7 +57,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
         equalTo(cfg)
       )
     },
-    testM("wrapped sealed hierarchy") {
+    test("wrapped sealed hierarchy") {
       val wrappedSealedHierarchy = new DeriveConfigDescriptor {
         import Descriptor.SealedTraitStrategy._
 
@@ -87,7 +88,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
         equalTo(cfg)
       )
     },
-    testM("config with type labels ignoring the name of sealed trait") {
+    test("config with type labels ignoring the name of sealed trait") {
       val wrappedSealedHierarchy = new DeriveConfigDescriptor {
         import Descriptor.SealedTraitStrategy._
 
@@ -118,7 +119,7 @@ object OverrideDerivationTest extends DefaultRunnableSpec {
         equalTo(cfg)
       )
     },
-    testM("config with type labels wrapped with sealed trait name") {
+    test("config with type labels wrapped with sealed trait name") {
       val wrappedSealedHierarchy = new DeriveConfigDescriptor {
         import Descriptor.SealedTraitStrategy._
 

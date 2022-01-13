@@ -5,41 +5,41 @@ import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.types.string.NonEmptyString
 import zio.config.PropertyTreePath._
 import zio.config.{BaseSpec, _}
-import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
 
 import ReadError._
 import RefinedUtils._
+import zio.Random
+import zio.test.Sized
 
 object RefinedSpec extends BaseSpec {
-  override def spec: ZSpec[Environment, Failure] =
-    suite("Refine package")(
-      testM("RefineType can successfully read valid refined values from a given path") {
-        checkM(KeyValue.gen) { keyValue =>
-          val cfg =
-            refineType[NonEmptyString](keyValue.k.underlying)
+  override def spec = suite("Refine package")(
+    test("RefineType can successfully read valid refined values from a given path") {
+      check(KeyValue.gen) { keyValue =>
+        val cfg =
+          refineType[NonEmptyString](keyValue.k.underlying)
 
-          val result =
-            read(cfg from ConfigSource.fromMap(Map(keyValue.k.underlying -> keyValue.v.underlying)))
+        val result =
+          read(cfg from ConfigSource.fromMap(Map(keyValue.k.underlying -> keyValue.v.underlying)))
 
-          assertM(result)(equalTo(keyValue.v.value))
-        }
-      },
-      testM("RefineType returns ReadError for invalid values in a given path") {
-        checkM(Key.gen) { key =>
-          val cfg = refineType[NonEmptyString](key.underlying)
-
-          val result   =
-            read(cfg from ConfigSource.fromMap(Map(key.underlying -> "")))
-
-          val expected =
-            ConversionError(List(Step.Key(key.underlying)), "Predicate isEmpty() did not fail.", Set.empty)
-
-          assertM(result.either)(equalTo(Left(expected)))
-        }
+        assertM(result)(equalTo(keyValue.v.value))
       }
-    )
+    },
+    test("RefineType returns ReadError for invalid values in a given path") {
+      check(Key.gen) { key =>
+        val cfg = refineType[NonEmptyString](key.underlying)
+
+        val result   =
+          read(cfg from ConfigSource.fromMap(Map(key.underlying -> "")))
+
+        val expected =
+          ConversionError(List(Step.Key(key.underlying)), "Predicate isEmpty() did not fail.", Set.empty)
+
+        assertM(result.either)(equalTo(Left(expected)))
+      }
+    }
+  )
 }
 
 object RefinedUtils {

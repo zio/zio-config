@@ -4,10 +4,11 @@ import zio.config._
 import zio.config.magnolia.descriptor
 import zio.test.Assertion._
 import zio.test._
+import zio.test.ZIOSpecDefault
 
-object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSupport {
-  val spec: ZSpec[Environment, Failure] = suite("TypesafeConfigRecursiveAutomatic")(
-    testM("Read recursive typesafe config with optional") {
+object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
+  val spec = suite("TypesafeConfigRecursiveAutomatic")(
+    test("Read recursive typesafe config with optional") {
       case class SimpleRec(id: Int, s: Option[SimpleRec])
 
       val res =
@@ -24,7 +25,7 @@ object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSuppor
 
       assertM(result)(equalTo(SimpleRec(1, Some(SimpleRec(2, None)))))
     },
-    testM("Read recursive typesafe config with list") {
+    test("Read recursive typesafe config with list") {
       case class SimpleRec(id: Int, s: List[SimpleRec])
 
       val res =
@@ -42,7 +43,7 @@ object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSuppor
 
       assertM(result)(equalTo(SimpleRec(1, List(SimpleRec(2, Nil)))))
     },
-    testM("Read recursive typesafe config with either") {
+    test("Read recursive typesafe config with either") {
       case class SimpleRec(id: Int, s: Either[SimpleRec, Int])
 
       val res =
@@ -60,7 +61,7 @@ object TypesafeRecursiveConfigTest extends DefaultRunnableSpec with EitherSuppor
 
       assertM(result)(equalTo(SimpleRec(1, Left(SimpleRec(2, Right(3))))))
     },
-    testM("Read recursive typesafe config with map") {
+    test("Read recursive typesafe config with map") {
       type ProfessorId = Int
       type StudentId   = String
 

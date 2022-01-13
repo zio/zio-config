@@ -1,8 +1,7 @@
 package zio.config.examples
 
 import zio.config._
-import zio.console.Console
-import zio.{App, ExitCode, Has, ZEnv, ZIO, ZLayer, console}
+import zio._
 
 import java.io.IOException
 
@@ -19,23 +18,23 @@ object ApplicationConfig {
 }
 
 // The main App
-object JavaPropertiesExample extends App {
+object JavaPropertiesExample extends ZIOAppDefault {
 
   val properties = new java.util.Properties()
   properties.put("bridgeIp", "10.0.0.1")
   properties.put("username", "afs")
 
-  override def run(args: List[String]): ZIO[ZEnv, Nothing, ExitCode] = {
+  override def run = {
     val configLayer =
       ZConfig.fromProperties(properties, ApplicationConfig.configuration, "constant")
 
     val pgm =
-      SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.requires[Console])
+      SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.environment[Console])
 
     pgm
-      .foldM(
-        throwable => console.putStr(throwable.getMessage),
-        _ => console.putStrLn("hurray !! Application ran successfully..")
+      .foldZIO(
+        throwable => Console.print(throwable.getMessage),
+        _ => Console.printLine("hurray !! Application ran successfully..")
       )
       .exitCode
   }
@@ -44,17 +43,17 @@ object JavaPropertiesExample extends App {
 // The core application functions
 object SimpleExample {
 
-  val printConfigs: ZIO[Has[ApplicationConfig] with Console, IOException, Unit] =
+  val printConfigs: ZIO[ApplicationConfig with Console, IOException, Unit] =
     for {
       appConfig <- getConfig[ApplicationConfig]
-      _         <- console.putStrLn(appConfig.bridgeIp)
-      _         <- console.putStrLn(appConfig.userName)
+      _         <- Console.printLine(appConfig.bridgeIp)
+      _         <- Console.printLine(appConfig.userName)
     } yield ()
 
-  val finalExecution: ZIO[Has[ApplicationConfig] with Console, IOException, Unit] =
+  val finalExecution: ZIO[ApplicationConfig with Console, IOException, Unit] =
     for {
       _ <- printConfigs
-      _ <- console.putStrLn(s"processing data......")
+      _ <- Console.printLine(s"processing data......")
     } yield ()
 }
 // A note that, with magnolia module (which is still experimental), you can skip writing the {{ configuration }} in ApplicationConfig object

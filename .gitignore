@@ -5,6 +5,7 @@ project/project/
 .bloop
 .metals
 .sbtopts
+null
 project/.sbt
 project/travis-deploy-key
 project/secrets.tar.xz

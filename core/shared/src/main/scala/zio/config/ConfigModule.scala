@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.{Has, Tag, ZIO, ZLayer}
+import zio._
 
 trait ConfigModule
     extends ConfigDescriptorModule
@@ -44,9 +44,10 @@ trait ConfigModule
    * of your app.
    */
   final def configLayer[A](config: ConfigDescriptor[A])(implicit
-    tag: Tag[A]
-  ): ZLayer[Has[ConfigSource], ReadError[K], Has[A]] =
-    ZIO.accessM[Has[ConfigSource]](source => read(config from source.get)).toLayer
+    tag: Tag[A],
+    ev: IsNotIntersection[A]
+  ): ZLayer[ConfigSource, ReadError[K], A] =
+    ZIO.serviceWithZIO[ConfigSource](source => read(config from source)).toLayer
 
   /**
    * Convert a ConfigDescriptor to a Layer.
@@ -73,8 +74,9 @@ trait ConfigModule
    * }}}
    */
   final def configLayer_[A](config: ConfigDescriptor[A])(implicit
-    tag: Tag[A]
-  ): ZLayer[Any, ReadError[K], Has[A]] =
+    tag: Tag[A],
+    ev: IsNotIntersection[A]
+  ): ZLayer[Any, ReadError[K], A] =
     ConfigSource.empty.toLayer >>> configLayer(config)
 
   /**
@@ -108,6 +110,6 @@ trait ConfigModule
    *
    * }}}
    */
-  final def getConfig[A](implicit tag: Tag[A]): ZIO[Has[A], Nothing, A] =
-    ZIO.access(_.get)
+  final def getConfig[A](implicit tag: Tag[A], ev: IsNotIntersection[A]): ZIO[A, Nothing, A] =
+    ZIO.service[A]
 }

@@ -1,8 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.system.System
-import zio.{Has, IO, UIO, ZIO, ZLayer, ZManaged}
+import zio.{IO, UIO, ZIO, ZLayer, ZManaged}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
@@ -10,6 +9,7 @@ import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
 
 import PropertyTree.{Leaf, Record, Sequence, unflatten}
+import zio.System
 
 trait ConfigSourceModule extends KeyValueModule {
   // Currently all sources are just String and String
@@ -96,7 +96,7 @@ trait ConfigSourceModule extends KeyValueModule {
      * A Layer is assumed to be "memoized" by default, i.e the effect required to form the reader (refer ConfigSource docs)
      * is executed strictly once regardless of number of keys involved, or the number the reads invoked.
      */
-    def toLayer: ZLayer[Any, ReadError[K], Has[ConfigSource]] =
+    def toLayer: ZLayer[Any, ReadError[K], ConfigSource] =
       strictlyOnce.toLayer
 
     /**
@@ -511,10 +511,10 @@ trait ConfigSourceModule extends KeyValueModule {
     ): ConfigSource = {
       val managed: ZManaged[Any, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
         ZManaged
-          .make(ZIO.effect(new FileInputStream(new File(filePath))))(r => ZIO.effectTotal(r.close()))
-          .mapM { inputStream =>
+          .acquireReleaseWith(ZIO.attempt(new FileInputStream(new File(filePath))))(r => ZIO.succeed(r.close()))
+          .mapZIO { inputStream =>
             for {
-              properties <- ZIO.effect {
+              properties <- ZIO.attempt {
                               val properties = new java.util.Properties()
                               properties.load(inputStream)
                               properties
@@ -564,20 +564,20 @@ trait ConfigSourceModule extends KeyValueModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true,
-      system: System.Service = System.Service.live
+      system: System = System.SystemLive
     ): ConfigSource = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
 
       val managed =
         ZIO
-          .accessM[System](
-            _.get.envs.map { map =>
+          .serviceWithZIO[System](
+            _.envs.map { map =>
               println("going to calculate tree")
               val s = getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
               s
             }
           )
-          .toManaged_
+          .toManaged
           .mapError(throwable => ReadError.SourceError(throwable.toString))
           .map(tree =>
             (path: PropertyTreePath[K]) => {
@@ -625,14 +625,14 @@ trait ConfigSourceModule extends KeyValueModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true,
-      system: System.Service = System.Service.live
+      system: System = System.SystemLive
     ): ConfigSource =
       ConfigSource
         .fromManaged(
           SystemProperties,
           ZIO
-            .accessM[System](_.get.properties)
-            .toManaged_
+            .serviceWithZIO[System](_.properties)
+            .toManaged
             .mapError(throwable => ReadError.SourceError(throwable.toString))
             .map(map =>
               (path: PropertyTreePath[K]) =>

@@ -7,11 +7,12 @@ import zio.test.Assertion._
 import zio.test._
 
 import magnolia._
+import zio.test.ZIOSpecDefault
 
 // A basic test before the set of TypesafeConfigOptionalTest
-object TypesafeConfigOptionalBasicTest extends DefaultRunnableSpec with EitherSupport {
+object TypesafeConfigOptionalBasicTest extends ZIOSpecDefault with EitherSupport {
   val spec: ZSpec[Environment, Failure] = suite("Optional Spec")(
-    testM("Fails if any one of the required fields is missing in an optional product") {
+    test("Fails if any one of the required fields is missing in an optional product") {
 
       final case class RawConfig(tableDetails: List[RawTableConfig])
 

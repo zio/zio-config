@@ -4,8 +4,7 @@ import com.github.ghik.silencer.silent
 import zio.config._
 import zio.config.magnolia._
 import zio.config.typesafe._
-import zio.console.putStrLn
-import zio.{App, ExitCode, URIO, ZIO}
+import zio._
 
 import java.io.File
 
@@ -15,9 +14,9 @@ import java.io.File
  * The below example will return error result, as all the sources
  * are invalid.
  */
-object CombineSourcesExample extends App {
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-    application.either.flatMap(r => putStrLn(s"Result: ${r}")).exitCode
+object CombineSourcesExample extends ZIOAppDefault {
+  override def run =
+    application.either.flatMap(r => Console.printLine(s"Result: ${r}")).exitCode
 
   final case class Config(username: String, password: String)
 
@@ -36,7 +35,7 @@ object CombineSourcesExample extends App {
           ConfigSource.fromSystemProps()
         ))
 
-  val application: ZIO[zio.system.System with zio.console.Console, String, String] =
+  val application: ZIO[System with Console, String, String] =
     for {
       configValue <- read(config).mapError(_.prettyPrint())
       string      <- ZIO.fromEither(configValue.toJson(config))

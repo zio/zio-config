@@ -2,14 +2,15 @@ package zio.config.typesafe
 
 import zio.config._
 import zio.test.Assertion._
-import zio.test.{DefaultRunnableSpec, _}
+import zio.test._
 
 import magnolia._
+import zio.test.ZIOSpecDefault
 
-object TypesafeConfigListTest extends DefaultRunnableSpec {
+object TypesafeConfigListTest extends ZIOSpecDefault {
 
-  val spec: ZSpec[Environment, Failure] = suite("TypesafeConfig List")(
-    testM("A kebab case for testing HOCON List config") {
+  def spec = suite("TypesafeConfig List")(
+    test("A kebab case for testing HOCON List config") {
       val kebabCaseConfig =
         """
           |export-details = [

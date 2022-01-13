@@ -2,20 +2,20 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
-import zio.test.environment.TestEnvironment
-import zio.test.{DefaultRunnableSpec, _}
-import zio.{Has, ZIO}
+import zio.test.TestEnvironment
+import zio.test._
+import zio.test.ZIOSpecDefault
 
-object ArgsListAccumulationTest extends DefaultRunnableSpec {
+object ArgsListAccumulationTest extends ZIOSpecDefault {
 
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration of a list from multiple entries")(
-      testM("Using single arg --key=value style") {
-        checkM(Gen.int(1, 10)) { count =>
+      test("Using single arg --key=value style") {
+        check(Gen.int(1, 10)) { count =>
           val args                                      = renderArgs(count)
           val p2: zio.IO[ReadError[String], SomeConfig] =
             fromArgs(args)
-              .map(config => config.get)
+              .map(config => config)
 
           val expected = (1 to count).toList // O is missing values.
           assertM(p2.either)(isRight(equalTo(SomeConfig(expected))))
@@ -35,7 +35,7 @@ object ArgsListAccumulationTest extends DefaultRunnableSpec {
       .map(i => s"--ints=$i")
       .toList
 
-  def fromArgs(args: List[String]): ZIO[Any, ReadError[String], Has[SomeConfig]] =
-    ZIO.environment.provideLayer(ZConfig.fromCommandLineArgs(args, SomeConfig.descriptor, None, None))
+  def fromArgs(args: List[String]) =
+    ZConfig.fromCommandLineArgs(args, SomeConfig.descriptor, None, None).build.useNow.map(_.get[SomeConfig])
 
 }

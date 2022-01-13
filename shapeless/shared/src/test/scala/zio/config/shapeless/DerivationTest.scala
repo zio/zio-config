@@ -6,8 +6,9 @@ import zio.test.Assertion._
 import zio.test._
 
 import ConfigDescriptorAdt._
+import zio.test.ZIOSpecDefault
 
-object DerivationTest extends DefaultRunnableSpec {
+object DerivationTest extends ZIOSpecDefault {
   val spec: ZSpec[Environment, Failure] = suite("DerivationTest")(
     test("support describe annotation") {
       @describe("class desc")
