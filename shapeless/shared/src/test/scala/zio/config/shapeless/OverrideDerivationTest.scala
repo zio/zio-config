@@ -23,10 +23,7 @@ object OverrideDerivationTestWithWrappedSealedTraitName extends DeriveConfigDesc
 }
 
 object OverrideDerivationTest extends ZIOSpecDefault {
-  def unsafeRun[E, A](effect: ZIO[Any, E, A]): A =
-    zio.Runtime.default.unsafeRun(effect)
-
-  val spec: ZSpec[Environment, Failure] = suite("OverrideDerivationTest")(
+  def spec: Spec[Any, TestFailure[Serializable], TestSuccess] = suite("OverrideDerivationTest")(
     test("simple config") {
       import OverrideDerivationTestEnv._
 
@@ -34,15 +31,12 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val res = write(getDescriptor[Cfg].configDescriptor, Cfg("a"))
 
-      assert(res)(equalTo(Right(Record(Map("prefix_field_name" -> Leaf("a")))))) &&
-      assert(
-        unsafeRun(
-          ZIO
-            .fromEither(res)
-            .map(ConfigSource.fromPropertyTree(_, "tree"))
-            .flatMap(v => read(getDescriptor[Cfg].configDescriptor from v))
-        )
-      )(
+      for {
+        written <- ZIO
+                     .fromEither(res)
+                     .map(ConfigSource.fromPropertyTree(_, "tree"))
+                     .flatMap(v => read(getDescriptor[Cfg].configDescriptor from v))
+      } yield assert(res)(equalTo(Right(Record(Map("prefix_field_name" -> Leaf("a")))))) && assert(written)(
         equalTo(Cfg("a"))
       )
     },
@@ -78,17 +72,12 @@ object OverrideDerivationTest extends ZIOSpecDefault {
         )
       )
 
-      assert(res)(isRight(equalTo(expected))) &&
-      assert(
-        unsafeRun(
-          ZIO
-            .fromEither(res)
-            .map(ConfigSource.fromPropertyTree(_, "tree"))
-            .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
-        )
-      )(
-        equalTo(cfg)
-      )
+      for {
+        read <- ZIO
+                  .fromEither(res)
+                  .map(ConfigSource.fromPropertyTree(_, "tree"))
+                  .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
+      } yield assert(res)(isRight(equalTo(expected))) && assert(read)(equalTo(cfg))
     },
     test("wrapped sealed hierarchy") {
       import OverrideDerivationTestWithWrappedSealedTraitName._
@@ -122,19 +111,19 @@ object OverrideDerivationTest extends ZIOSpecDefault {
         )
       )
 
-      assert(res)(isRight(equalTo(expected))) &&
-      assert(
-        unsafeRun(
-          ZIO
-            .fromEither(
-              res
-                .map(ConfigSource.fromPropertyTree(_, "tree"))
-            )
-            .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
+      for {
+        read <- ZIO
+                  .fromEither(
+                    res
+                      .map(ConfigSource.fromPropertyTree(_, "tree"))
+                  )
+                  .flatMap(v => read(getDescriptor[Outer].configDescriptor from v))
+      } yield assert(res)(isRight(equalTo(expected))) &&
+        assert(
+          read
+        )(
+          equalTo(cfg)
         )
-      )(
-        equalTo(cfg)
-      )
     }
   )
 }
