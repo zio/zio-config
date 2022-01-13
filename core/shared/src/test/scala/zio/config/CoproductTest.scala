@@ -18,7 +18,7 @@ object CoproductTest extends BaseSpec {
   import scala.collection.compat._
   import VersionSpecificSupport._
 
-  val spec: Spec[TestConfig with Random with Sized with Any, TestFailure[Serializable], TestSuccess] =
+  def spec: zio.test.Spec[TestConfig with Random with Sized, TestFailure[scala.Serializable], TestSuccess] =
     suite("Coproduct support")(
       test("left element satisfied") {
         check(genTestParams) { p =>
