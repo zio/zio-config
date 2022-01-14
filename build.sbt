@@ -53,27 +53,19 @@ addCommandAlias(
   ";zioConfigJS/test"
 )
 addCommandAlias(
-  "testJVM",
+  "testJVM211",
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test"
+)
+addCommandAlias(
+  "testJVM212",
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test;zioConfigAwsJVM/test"
+)
+addCommandAlias(
+  "testJVM213",
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test;zioConfigAwsJVM/test"
 )
 addCommandAlias(
-  "testNative",
-  ";zioConfigNative/compile"
-)
-addCommandAlias(
-  "testJS211",
-  ";zioConfigJS/test"
-)
-addCommandAlias(
-  "testJVM211",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test"
-)
-addCommandAlias(
-  "testNative211",
-  ";zioConfigNative/compile"
-)
-addCommandAlias(
-  "testDotty",
+  "testJVM3x",
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test"
 )
 
