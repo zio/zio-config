@@ -58,7 +58,7 @@ addCommandAlias(
 )
 addCommandAlias(
   "testJVM212",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;examplesJVM/test;zioConfigAwsJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigRefinedJVM/test;examplesJVM/test;zioConfigAwsJVM/test"
 )
 addCommandAlias(
   "testJVM213",
@@ -116,8 +116,7 @@ lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
   zioConfigCatsJVM,
   zioConfigRefinedJVM,
   zioConfigMagnoliaJVM,
-  examplesJVM,
-  zioConfigTypesafeMagnoliaTestsJVM
+  examplesJVM
 )
 
 lazy val scala213projects = scala212projects ++ Seq[ProjectReference](zioConfigScalazJVM)
