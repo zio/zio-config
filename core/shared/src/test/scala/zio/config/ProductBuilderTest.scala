@@ -2,17 +2,16 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.config.ProductBuilderTestUtils._
-import zio.random.Random
 import zio.test.Assertion._
-import zio.test._
-import zio.{Has, ZIO}
+import zio.test.{Gen, TestConfig, _}
+import zio.{Random, ZIO}
 
 object ProductBuilderTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[String], TestSuccess] =
+  val spec: Spec[TestConfig with Random, TestFailure[String], TestSuccess] =
     suite("ProductBuilder")(
-      testM("combine 22 for case class") {
-        checkM(genS22) { p =>
+      test("combine 22 for case class") {
+        check(genS22) { p =>
           val p2 =
             for {
               written <- ZIO.fromEither(write(cS22, p))
@@ -27,8 +26,8 @@ object ProductBuilderTest extends BaseSpec {
           assertM(p2)(equalTo(p))
         }
       },
-      testM("combine 22 for tupled") {
-        checkM(genS22) { p =>
+      test("combine 22 for tupled") {
+        check(genS22) { p =>
           val conv  = implicitly[TupleConversion[
             S22,
             (
@@ -135,28 +134,28 @@ object ProductBuilderTestUtils {
 
   val genS22: Gen[Random, S22] =
     for {
-      s0  <- Gen.anyInt
-      s1  <- Gen.anyInt
-      s2  <- Gen.anyInt
-      s3  <- Gen.anyInt
-      s4  <- Gen.anyInt
-      s5  <- Gen.anyInt
-      s6  <- Gen.anyInt
-      s7  <- Gen.anyInt
-      s8  <- Gen.anyInt
-      s9  <- Gen.anyInt
-      s10 <- Gen.anyInt
-      s11 <- Gen.anyInt
-      s12 <- Gen.anyInt
-      s13 <- Gen.anyInt
-      s14 <- Gen.anyInt
-      s15 <- Gen.anyInt
-      s16 <- Gen.anyInt
-      s17 <- Gen.anyInt
-      s18 <- Gen.anyInt
-      s19 <- Gen.anyInt
-      s20 <- Gen.anyInt
-      s21 <- Gen.anyInt
+      s0  <- Gen.int
+      s1  <- Gen.int
+      s2  <- Gen.int
+      s3  <- Gen.int
+      s4  <- Gen.int
+      s5  <- Gen.int
+      s6  <- Gen.int
+      s7  <- Gen.int
+      s8  <- Gen.int
+      s9  <- Gen.int
+      s10 <- Gen.int
+      s11 <- Gen.int
+      s12 <- Gen.int
+      s13 <- Gen.int
+      s14 <- Gen.int
+      s15 <- Gen.int
+      s16 <- Gen.int
+      s17 <- Gen.int
+      s18 <- Gen.int
+      s19 <- Gen.int
+      s20 <- Gen.int
+      s21 <- Gen.int
     } yield S22(
       s0,
       s1,

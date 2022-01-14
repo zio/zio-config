@@ -1,10 +1,10 @@
 package zio.config.examples
 
 import com.typesafe.config._
+import zio._
 import zio.config._
 import zio.config.magnolia.DeriveConfigDescriptor.descriptor
 import zio.config.typesafe.TypesafeConfigSource
-import zio.{ExitCode, IO, ZIO}
 
 object ConfigLoader {
   def apply[A](
@@ -38,7 +38,7 @@ object ConfigLoader {
                  )
 
       // application.conf in resource folder
-      ressConf = TypesafeConfigSource.fromTypesafeConfig(ZIO.effect(ConfigFactory.defaultApplication()))
+      ressConf = TypesafeConfigSource.fromTypesafeConfig(ZIO.attempt(ConfigFactory.defaultApplication()))
 
       sourceSpec = cmdConf <>
                      cmdConf.mapKeys(_.toLowerCase()) <>
@@ -61,8 +61,8 @@ object KafkaApplication {
   )
 }
 
-object MultipleSourcesComplexExample extends zio.App {
-  override def run(args: List[String]): zio.URIO[zio.ZEnv, ExitCode] = {
+object MultipleSourcesComplexExample extends zio.ZIOAppDefault {
+  def run: URIO[Console, ExitCode] = {
     val pgm =
       ConfigLoader(
         "serviceName_",
@@ -70,7 +70,7 @@ object MultipleSourcesComplexExample extends zio.App {
         descriptor[KafkaApplication.KafkaConfig]
       )
 
-    pgm.flatMap(r => zio.console.putStrLn(r.toString)).exitCode
+    pgm.flatMap(r => zio.Console.printLine(r.toString)).exitCode
     // KafkaConfig(bootstrap:commandline,schemaregistry:system_env,from hocon source)
   }
 }

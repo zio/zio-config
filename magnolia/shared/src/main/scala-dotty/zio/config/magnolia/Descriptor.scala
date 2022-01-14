@@ -1,12 +1,11 @@
 package zio.config.magnolia
 
 import zio.config._, ConfigDescriptor._
-import zio.duration.Duration
 import zio.config.derivation.DerivationUtils
 
 import java.io.File
 import java.net.{URI, URL}
-import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
+import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
 import scala.deriving._

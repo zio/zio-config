@@ -3,12 +3,12 @@ package zio.config.shapeless
 import zio.config.PropertyTree.{Leaf, Record}
 import zio.config.{PropertyTree, _}
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{ZIOSpecDefault, _}
 
 import ConfigDescriptorAdt._
 
-object DerivationTest extends DefaultRunnableSpec {
-  val spec: ZSpec[Environment, Failure] = suite("DerivationTest")(
+object DerivationTest extends ZIOSpecDefault {
+  def spec: ZSpec[Environment, Failure] = suite("DerivationTest")(
     test("support describe annotation") {
       @describe("class desc")
       case class Cfg(@describe("field desc") fname: String)

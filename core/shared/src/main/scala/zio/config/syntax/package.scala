@@ -1,10 +1,10 @@
 package zio.config
 
-import zio.{Has, Tag, ZLayer}
+import zio._
 
 package object syntax {
   final implicit class ZIOConfigNarrowOps[R, E, A](
-    private val self: ZLayer[R, E, Has[A]]
+    private val self: ZLayer[R, E, A]
   ) extends AnyVal {
 
     /**
@@ -41,7 +41,9 @@ package object syntax {
      *
      * }}}
      */
-    def narrow[B: Tag](f: A => B)(implicit T: Tag[A]): ZLayer[R, E, Has[B]] =
-      self.map(a => Has(f(a.get)))
+    def narrow[B: Tag](
+      f: A => B
+    )(implicit ta: Tag[A], ev: IsNotIntersection[A], ev2: IsNotIntersection[B]): ZLayer[R, E, B] =
+      self.map(a => ZEnvironment[B](f(a.get[A])))
   }
 }
