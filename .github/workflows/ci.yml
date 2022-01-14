@@ -62,7 +62,7 @@ jobs:
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Run JS tests
-        if: ${{ matrix.platform == 'JS' }}
+        if: ${{ matrix.platform == 'JS' && !startsWith(matrix.scala, '3.') }}
         run: sbt ++${{ matrix.scala }}! testJS
       - name: Run 2.11 JVM tests
         if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '2.11') }}
