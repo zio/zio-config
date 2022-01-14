@@ -58,7 +58,7 @@ addCommandAlias(
 )
 addCommandAlias(
   "testJVM212",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test;zioConfigAwsJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;examplesJVM/test;zioConfigAwsJVM/test"
 )
 addCommandAlias(
   "testJVM213",
