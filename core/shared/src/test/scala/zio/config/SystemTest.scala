@@ -1,29 +1,27 @@
 package zio.config
 
 import zio.config.ConfigDescriptor._
-import zio.random.Random
 import zio.test.Assertion._
-import zio.test.environment.{TestEnvironment, TestSystem}
-import zio.test.{DefaultRunnableSpec, _}
-import zio.{Has, ZIO}
+import zio.test.{Gen, Sized, TestEnvironment, TestSystem, ZIOSpecDefault, _}
+import zio.{Random, ZIO}
 
-object SystemTest extends DefaultRunnableSpec {
+object SystemTest extends ZIOSpecDefault {
 
   def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
     suite("Configuration from system")(
-      testM("from system properties") {
-        checkM(genSomeConfig, genDelimiter) { (config, delimiter) =>
+      test("from system properties") {
+        check(genSomeConfig, genDelimiter) { (config, delimiter) =>
           val result = for {
             _ <- setSystemProperties(config, delimiter)
             p <- ZIO
-                   .environment[Has[SomeConfig]]
+                   .environment[SomeConfig]
                    .provideLayer(ZConfig.fromSystemProperties(SomeConfig.descriptor, Some(delimiter)))
           } yield p.get
 
           assertM(result.either)(isRight(equalTo(config)))
         }
       },
-      testM("from system environment") {
+      test("from system environment") {
         val config = SomeConfig(100, "ABC")
         val result = fromSystemEnvResult(
           keyDelimiter = '_',
@@ -32,19 +30,19 @@ object SystemTest extends DefaultRunnableSpec {
 
         assertM(result.either)(isRight(equalTo(config)))
       },
-      testM("invalid system environment delimiter") {
+      test("invalid system environment delimiter") {
         val keyDelimiter = '.'
         val result       = fromSystemEnvResult(keyDelimiter = keyDelimiter)
-        assertM(result.sandbox.mapError(_.died).either)(isLeft(equalTo(true)))
+        assertM(result.sandbox.mapError(_.isDie).either)(isLeft(equalTo(true)))
       }
     )
-  import zio.test.environment.TestSystem._
+  import zio.test.TestSystem._
 
   private def fromSystemEnvResult(keyDelimiter: Char, sysEnv: Map[String, String] = Map.empty) = {
     val sysEnvLayer    = TestSystem.live(Data(envs = sysEnv))
     val configEnvLayer = sysEnvLayer >>> ZConfig.fromSystemEnv(SomeConfig.descriptor, Some(keyDelimiter))
 
-    ZIO.environment[Has[SomeConfig]].provideLayer(configEnvLayer).map(_.get)
+    ZIO.environment[SomeConfig].provideLayer(configEnvLayer).map(_.get)
   }
 
   final case class SomeConfig(size: Int, description: String)
@@ -58,8 +56,8 @@ object SystemTest extends DefaultRunnableSpec {
 
   def genSomeConfig: Gen[Random with Sized, SomeConfig] =
     for {
-      size <- Gen.anyInt
-      desc <- Gen.anyString
+      size <- Gen.int
+      desc <- Gen.string
     } yield SomeConfig(size, desc)
 
   def genDelimiter: Gen[Random, Char]       = Gen.elements('.', '_', '-', ':')

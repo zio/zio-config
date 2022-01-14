@@ -53,32 +53,24 @@ addCommandAlias(
   ";zioConfigJS/test"
 )
 addCommandAlias(
-  "testJVM",
+  "testJVM211",
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test"
+)
+addCommandAlias(
+  "testJVM212",
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;examplesJVM/test;zioConfigAwsJVM/test"
+)
+addCommandAlias(
+  "testJVM213",
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test;zioConfigAwsJVM/test"
 )
 addCommandAlias(
-  "testNative",
-  ";zioConfigNative/compile"
-)
-addCommandAlias(
-  "testJS211",
-  ";zioConfigJS/test"
-)
-addCommandAlias(
-  "testJVM211",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test"
-)
-addCommandAlias(
-  "testNative211",
-  ";zioConfigNative/compile"
-)
-addCommandAlias(
-  "testDotty",
+  "testJVM3x",
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test"
 )
 
 lazy val awsVersion        = "1.12.137"
-lazy val zioVersion        = "1.0.9"
+lazy val zioVersion        = "2.0.0-RC1"
 lazy val magnoliaVersion   = "0.17.0"
 lazy val refinedVersion    = "0.9.28"
 lazy val pureconfigVersion = "0.16.0"
@@ -124,8 +116,7 @@ lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
   zioConfigCatsJVM,
   zioConfigRefinedJVM,
   zioConfigMagnoliaJVM,
-  examplesJVM,
-  zioConfigTypesafeMagnoliaTestsJVM
+  examplesJVM
 )
 
 lazy val scala213projects = scala212projects ++ Seq[ProjectReference](zioConfigScalazJVM)

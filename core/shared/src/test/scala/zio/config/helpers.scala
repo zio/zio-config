@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.random.Random
+import zio.Random
 import zio.test.Assertion.assertion
 import zio.test.{Assertion, Gen}
 

@@ -293,8 +293,7 @@ This will tell you how to consider configuration as just a part of `Environment`
 
 ```scala mdoc:silent
 
-import zio.{ ZIO, ZLayer, Has }
-import zio.console._
+import zio._
 
 case class ApplicationConfig(bridgeIp: String, userName: String)
 
@@ -304,8 +303,8 @@ val configuration =
 val finalExecution =
   for {
     appConfig <- getConfig[ApplicationConfig]
-    _         <- putStrLn(appConfig.bridgeIp)
-    _         <- putStrLn(appConfig.userName)
+    _         <- Console.printLine(appConfig.bridgeIp)
+    _         <- Console.printLine(appConfig.userName)
   } yield ()
 
 val configLayer = ZConfig.fromPropertiesFile("file-location", configuration)
@@ -337,8 +336,8 @@ case class ApiConfig(host: String,   port: Int)
 val configDescription = DeriveConfigDescriptor.descriptor[AppConfig]
 
 // components have only required dependencies
-val endpoint: ZLayer[Has[ApiConfig], Nothing, Has[Endpoint]]    = ZLayer.fromService(_ => new Endpoint {})
-val repository: ZLayer[Has[DbConfig], Nothing, Has[Repository]] = ZLayer.fromService(_ => new Repository {}) 
+val endpoint: ZLayer[ApiConfig, Nothing, Endpoint]    = ZLayer.succeed(new Endpoint {})
+val repository: ZLayer[DbConfig, Nothing, Repository] = ZLayer.succeed(new Repository {}) 
 
 val cfg = TypesafeConfig.fromResourcePath(configDescription)
 

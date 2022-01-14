@@ -14,7 +14,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
 
   val spec: ZSpec[Environment, Failure] =
     suite("partial products fail instead of returning none")(
-      testM(
+      test(
         "Presence of one optional value in an optional product with required fields returns failures"
       ) {
         val validConfig =
@@ -50,7 +50,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Presence of another optional value in an optional product with required fields returns failures"
       ) {
         val validConfig =
@@ -86,7 +86,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Absence of an optional product and a required field within another optional product returns some"
       ) {
         val validConfig =
@@ -106,7 +106,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Presence of all optional values in an optional product with required fields  returns failures"
       ) {
         val validConfig =
@@ -143,7 +143,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Presence of one required value in an optional product with multiple required fields returns failures"
       ) {
         val validConfig =
@@ -178,7 +178,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Presence of another required value in an optional product with multiple required fields returns failures"
       ) {
         val validConfig =
@@ -213,7 +213,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Presence of one required value and one optional value in an optional product with multiple required and optional fields returns failures"
       ) {
         val validConfig =
@@ -249,7 +249,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Presence of another required value and another optional value within an optional product with multiple required and optional fields returns failures"
       ) {
         val validConfig =
@@ -285,7 +285,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Presence of all required values, and absence of all optional values returns some product"
       ) {
         val validConfig =
@@ -320,7 +320,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Presence of all required values, and presence of all optional values returns some product"
       ) {
         val validConfig =
@@ -357,7 +357,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Presence of all required values, and presence of any optional value returns some product"
       ) {
         val validConfig =
@@ -393,7 +393,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Presence of all required values, and presence of any other optional value returns some product"
       ) {
         val validConfig =
@@ -429,7 +429,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "A null returns none in nested optional values"
       ) {
         val validConfig =
@@ -461,7 +461,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Absence of all optional values and required values in an optional product returns none"
       ) {
         val validConfig =
@@ -485,7 +485,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Absence of an optional product which itself has optional and required fields, within another optional product returns some of that product"
       ) {
         val validConfig =
@@ -508,7 +508,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "Absence of a required field and presence of an optional product within another optional product returns failure"
       ) {
         val validConfig =
@@ -543,7 +543,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "An either[a, product] in an optional product returns failure if product is partially applied"
       ) {
         val validConfig =
@@ -582,7 +582,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "An either[a, product] in an optional product returns format failures on the left, and reports missing value on the right"
       ) {
         val validConfig =
@@ -616,7 +616,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "An either[a, product] in an optional product failures on the right, and reports missing value on the left and right"
       ) {
         val validConfig =
@@ -657,7 +657,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "An optional either[a, product] returns failures if product is partially applied"
       ) {
         val validConfig =
@@ -692,7 +692,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "An optional either[a, product] returns none if the parent key is missing"
       ) {
         val validConfig =
@@ -714,7 +714,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "An optional either[a, product] returns none if the parent key is null"
       ) {
         val validConfig =
@@ -737,7 +737,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "An optional product with multiple either[product1, product2] returns failures if any either has partial configs"
       ) {
         val validConfig =
@@ -769,7 +769,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "An optional product with 2 required either[product1, product2] and 1 optional either[product1, product2] returns failures if optional value is present"
       ) {
         val validConfig =
@@ -805,7 +805,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
           )
         )
       },
-      testM(
+      test(
         "An optional product with 2 required either[product1, product2] and 1 optional either[product1, product2] returns failures if optional value is present partially"
       ) {
         val validConfig =

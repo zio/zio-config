@@ -112,7 +112,7 @@ object YamlConfigSource {
   ): ConfigSource = {
 
     val managedTree =
-      loadYaml(repr).flatMap(anyRef => convertYaml(anyRef)).toManaged_
+      loadYaml(repr).flatMap(anyRef => convertYaml(anyRef)).toManaged
 
     ConfigSource
       .fromManaged(
@@ -154,27 +154,27 @@ object YamlConfigSource {
   private def loadYaml(yamlFile: File): ZIO[Any, ReadError[String], AnyRef] =
     snakeYamlLoader().flatMap(r =>
       ZIO
-        .effect(r.loadFromInputStream(new FileInputStream(yamlFile)))
+        .attempt(r.loadFromInputStream(new FileInputStream(yamlFile)))
         .mapError(throwable => ReadError.SourceError(throwable.toString))
     )
 
   private def loadYaml(yamlReader: Reader): ZIO[Any, ReadError[String], AnyRef] =
     snakeYamlLoader().flatMap(r =>
       ZIO
-        .effect(r.loadFromReader(yamlReader))
+        .attempt(r.loadFromReader(yamlReader))
         .mapError(throwable => ReadError.SourceError(throwable.toString))
     )
 
   private def loadYaml(yamlString: String): ZIO[Any, ReadError[String], AnyRef] =
     snakeYamlLoader().flatMap(r =>
       ZIO
-        .effect(r.loadFromString(yamlString))
+        .attempt(r.loadFromString(yamlString))
         .mapError(throwable => ReadError.SourceError(throwable.toString))
     )
 
   private def snakeYamlLoader(): ZIO[Any, ReadError[String], Load] =
     ZIO
-      .effect(
+      .attempt(
         new Load(
           LoadSettings.builder().setEnvConfig(ju.Optional.of(EnvConfigImpl)).build()
         ): Load

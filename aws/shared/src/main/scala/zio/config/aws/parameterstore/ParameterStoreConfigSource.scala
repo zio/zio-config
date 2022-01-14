@@ -20,7 +20,7 @@ object ParameterStoreConfigSource {
     val effect: MemoizableManagedReader =
       ZManaged.succeed {
         ZManaged
-          .fromEffect(
+          .fromZIO(
             getClient.flatMap { ssm =>
               val request =
                 new GetParametersByPathRequest()
@@ -29,7 +29,7 @@ object ParameterStoreConfigSource {
                   .withWithDecryption(true)
 
               ZIO
-                .effect(ssm.getParametersByPath(request).getParameters)
+                .attempt(ssm.getParametersByPath(request).getParameters)
                 .map(_.asScala.toList)
                 .map { list =>
                   ConfigSource

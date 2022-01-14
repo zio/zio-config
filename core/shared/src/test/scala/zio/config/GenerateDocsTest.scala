@@ -2,6 +2,7 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
+import zio.test.TestAspect.ignore
 import zio.test._
 
 object GenerateDocsTest extends BaseSpec {
@@ -84,7 +85,7 @@ object GenerateDocsTest extends BaseSpec {
              |""".stripMargin
 
         assert(generateDocs(GenerateDocsTestUtils.descriptor).toTable.toGithubFlavouredMarkdown)(equalTo(expected))
-      }
+      } @@ ignore
     )
 }
 

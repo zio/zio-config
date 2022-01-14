@@ -1,30 +1,29 @@
 package zio.config
 
-import zio.Has
+import zio.Random
 import zio.config.ConfigDescriptor._
 import zio.config.NestedConfigTestUtils._
 import zio.config.helpers._
-import zio.random.Random
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{Gen, TestConfig, _}
 
 object NestedConfigTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service], TestFailure[ReadError[String]], TestSuccess] =
+  val spec: Spec[TestConfig with Random, TestFailure[ReadError[String]], TestSuccess] =
     suite("Nested config")(
-      testM("read") {
-        checkM(genNestedConfigParams) { p =>
+      test("read") {
+        check(genNestedConfigParams) { p =>
           assertM(read(p.config.from(p.source)))(equalTo(p.value))
         }
       },
-      testM("write") {
+      test("write") {
         check(genNestedConfigParams) { p =>
           assert(write(p.config, p.value).map(_.flattenString()))(
             isRight(equalTo(toMultiMap(p.map)))
           )
         }
       },
-      testM("nested with default") {
+      test("nested with default") {
         val config = string("x").default("y")
         val r      =
           read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test"))
@@ -49,7 +48,7 @@ object NestedConfigTestUtils {
   val genDbConnection: Gen[Random, DbConnection] =
     for {
       host <- genNonEmptyString(20)
-      port <- Gen.anyInt
+      port <- Gen.int
     } yield DbConnection(host, port)
 
   val genDb: Gen[Random, Database] =
@@ -61,7 +60,7 @@ object NestedConfigTestUtils {
   val genAppConfig: Gen[Random, AppConfig] =
     for {
       db      <- genDb
-      pricing <- Gen.anyFloat.map(_.toDouble)
+      pricing <- Gen.float.map(_.toDouble)
     } yield AppConfig(db, pricing)
 
   final case class TestParams(value: AppConfig) {

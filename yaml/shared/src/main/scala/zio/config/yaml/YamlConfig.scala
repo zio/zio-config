@@ -1,7 +1,7 @@
 package zio.config.yaml
 
 import zio.config._
-import zio.{Has, Layer, Tag}
+import zio.{IsNotIntersection, Layer, Tag}
 
 import java.io.File
 import java.nio.file.Path
@@ -25,7 +25,10 @@ object YamlConfig {
    *     YamlConfig.fromString(yamlString, descriptor[MyConfig])
    * }}}
    */
-  def fromString[A: Tag](yamlString: String, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], Has[A]] =
+  def fromString[A: Tag: IsNotIntersection](
+    yamlString: String,
+    descriptor: ConfigDescriptor[A]
+  ): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       descriptor from YamlConfigSource.fromYamlString(yamlString)
     )
@@ -45,7 +48,7 @@ object YamlConfig {
    *     YamlConfig.fromPath(Path.of("/path/to/file.yml"), descriptor[MyConfig])
    * }}}
    */
-  def fromPath[A: Tag](path: Path, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], Has[A]] =
+  def fromPath[A: Tag: IsNotIntersection](path: Path, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
     fromFile(path.toFile, descriptor)
 
   /**
@@ -63,6 +66,6 @@ object YamlConfig {
    *     YamlConfig.fromFile(new File("/path/to/file.yml"), descriptor[MyConfig])
    * }}}
    */
-  def fromFile[A: Tag](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], Has[A]] =
+  def fromFile[A: Tag: IsNotIntersection](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(descriptor from YamlConfigSource.fromYamlFile(file))
 }
