@@ -1,8 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.system.System
-import zio.{Has, Layer, Tag, ZIO, ZLayer}
+import zio.{IsNotIntersection, Layer, System, Tag, ZIO, ZLayer}
 
 import java.io.File
 import java.net.{URI, URL}
@@ -496,7 +495,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      */
     def url(path: String): ConfigDescriptor[URL] = nested(path)(url)
 
-    val zioDuration: ConfigDescriptor[zio.duration.Duration] =
+    val zioDuration: ConfigDescriptor[java.time.Duration] =
       sourceDesc(ConfigSource.empty, PropertyType.ZioDurationType) ?? "value of type duration"
 
     /**
@@ -516,7 +515,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      *
      * }}}
      */
-    def zioDuration(path: String): ConfigDescriptor[zio.duration.Duration] = nested(path)(zioDuration)
+    def zioDuration(path: String): ConfigDescriptor[java.time.Duration] = nested(path)(zioDuration)
 
     val javaFilePath: ConfigDescriptor[java.nio.file.Path] =
       sourceDesc(ConfigSource.empty, PropertyType.JavaFilePathType) ?? "value of type java.nio.file.Path"
@@ -646,7 +645,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromCommandLineArgs(
           args,
@@ -683,7 +682,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromMap(
           map,
@@ -719,7 +718,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       source: String,
       keyDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, filterKeys)
       )
@@ -752,7 +751,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromProperties(
           properties,
@@ -790,7 +789,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): Layer[ReadError[String], Has[A]] =
+    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource
           .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, filterKeys)
@@ -825,17 +824,18 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      ZLayer.fromServiceM((system: System.Service) =>
-        read(
-          configDescriptor from ConfigSource.fromSystemEnv(
-            keyDelimiter,
-            valueDelimiter,
-            filterKeys,
-            system
-          )
-        )
-      )
+    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): ZLayer[System, ReadError[String], A] =
+      (for {
+        system <- ZIO.service[System]
+        result <- read(
+                    configDescriptor from ConfigSource.fromSystemEnv(
+                      keyDelimiter,
+                      valueDelimiter,
+                      filterKeys,
+                      system
+                    )
+                  )
+      } yield result).toLayer
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -864,27 +864,28 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], Has[A]] =
-      ZLayer.fromServiceM((system: System.Service) =>
-        read(
-          configDescriptor from ConfigSource.fromSystemProps(
-            keyDelimiter,
-            valueDelimiter,
-            filterKeys,
-            system
-          )
-        )
-      )
+    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): ZLayer[System, ReadError[String], A] =
+      (for {
+        system <- ZIO.service[System]
+        result <- read(
+                    configDescriptor from ConfigSource.fromSystemProps(
+                      keyDelimiter,
+                      valueDelimiter,
+                      filterKeys,
+                      system
+                    )
+                  )
+      } yield result).toLayer
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
-    )(implicit tag: Tag[A]): Layer[ReadError[K], Has[A]] =
-      ZLayer.fromEffect(read(configDescriptor))
+    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[K], A] =
+      ZLayer.fromZIO(read(configDescriptor))
 
     private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
       configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
-    )(implicit tag: Tag[A]): ZLayer[R, E, Has[A]] =
-      ZLayer.fromEffect(
+    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): ZLayer[R, E, A] =
+      ZLayer.fromZIO(
         configDescriptor.flatMap(descriptor => read(descriptor))
       )
   }

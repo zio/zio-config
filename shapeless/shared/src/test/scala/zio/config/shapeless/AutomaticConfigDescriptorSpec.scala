@@ -1,12 +1,11 @@
 package zio.config.shapeless
 
-import zio.ZIO
 import zio.config._
 import zio.config.helpers._
 import zio.config.shapeless.DeriveConfigDescriptor._
-import zio.random.Random
 import zio.test.Assertion._
-import zio.test._
+import zio.test.{Gen, Sized, TestConfig, _}
+import zio.{Random, ZIO}
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
@@ -17,15 +16,15 @@ object AutomaticConfigTest extends {
 
   val spec: Spec[TestConfig with Random with Sized, TestFailure[Any], TestSuccess] =
     suite("shapeless spec")(
-      testM("automatic derivation spec") {
-        checkM(genEnvironment) { environment =>
+      test("automatic derivation spec") {
+        check(genEnvironment) { environment =>
           val source =
             ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
 
           val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
             for {
               result  <- read(configDesc from source)
-              written <- ZIO.effectTotal(write(configDesc, result))
+              written <- ZIO.succeed(write(configDesc, result))
             } yield written
 
           val defaultValue   = environment.getOrElse("default", "1")
@@ -96,16 +95,16 @@ object AutomaticConfigTestUtils {
       aws            <- genAws
       price          <- genPrice
       dbUrl          <- genDbUrl
-      port           <- Gen.anyInt
+      port           <- Gen.int
       amount         <- Gen.option(Gen.long(1, 100))
       quantity       <- Gen.either(Gen.long(5, 10), genAlpha)
-      default        <- Gen.option(Gen.anyInt)
+      default        <- Gen.option(Gen.int)
       anotherDefault <- Gen.option(Gen.boolean)
       descriptions   <- Gen.int(1, 10).flatMap(n => Gen.listOfN(n)(genNonEmptyString(10)))
       created        <- genLocalDateString
       updated        <- genLocalTimeString
       lastVisited    <- genLocalDateTimeString
-      id             <- Gen.anyUUID
+      id             <- Gen.uuid
       partialMyConfig = Map(
                           "aws.region"   -> aws.region,
                           aws.security match {
@@ -139,7 +138,7 @@ object AutomaticConfigTestUtils {
     } yield s.mkString
 
   val genInstant: Gen[Random, Instant] =
-    Gen.anyLong.map(Instant.ofEpochMilli)
+    Gen.long.map(Instant.ofEpochMilli)
 
   val genLocalDateString: Gen[Random with Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDate.toString)

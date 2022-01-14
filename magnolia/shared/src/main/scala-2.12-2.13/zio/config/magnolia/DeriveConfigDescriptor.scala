@@ -1,9 +1,9 @@
 package zio.config.magnolia
 
 import magnolia._
+import zio.Duration
 import zio.config._
 import zio.config.derivation.DerivationUtils._
-import zio.duration.Duration
 
 import java.io.File
 import java.net.{URI, URL}

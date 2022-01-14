@@ -1,7 +1,7 @@
 package zio.config.testsupport
 
+import zio.Random
 import zio.config.{ConfigDescriptor, _}
-import zio.random.Random
 import zio.test.Gen.alphaNumericChar
 import zio.test.{Gen, Sized}
 
