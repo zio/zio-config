@@ -4,19 +4,18 @@ import zio.config.ConfigDescriptor._
 import zio.config.ListAndOptionalTestUtils._
 import zio.config.PropertyTree.{Leaf, Record}
 import zio.config.helpers._
-import zio.random.Random
 import zio.test.Assertion._
-import zio.test._
-import zio.{Has, ZIO}
+import zio.test.{Sized, TestConfig, _}
+import zio.{Random, ZIO}
 
 object ListAndOptionalTest extends BaseSpec {
 
-  val spec: Spec[Has[TestConfig.Service] with Has[Random.Service] with Has[Sized.Service], TestFailure[
+  val spec: Spec[TestConfig with Random with Sized, TestFailure[
     String
   ], TestSuccess] =
     suite("List and options")(
-      testM("optional write") {
-        checkM(genOverallConfig) { p =>
+      test("optional write") {
+        check(genOverallConfig) { p =>
           val actual = ZIO.fromEither(write(cOverallConfig, p)).map(_.flattenString())
 
           val expected = p.option
@@ -26,7 +25,7 @@ object ListAndOptionalTest extends BaseSpec {
           assertM(actual)(equalTo(expected))
         }
       },
-      testM("list read") {
+      test("list read") {
 
         val src =
           ConfigSource.fromPropertyTree(
@@ -86,7 +85,7 @@ object ListAndOptionalTest extends BaseSpec {
 
         assertM(actual)(equalTo(expected))
       },
-      testM("empty list read") {
+      test("empty list read") {
 
         val src =
           ConfigSource.fromPropertyTree(
@@ -100,7 +99,7 @@ object ListAndOptionalTest extends BaseSpec {
 
         assertM(actual)(equalTo(expected))
       },
-      testM("key doesn't exist in list") {
+      test("key doesn't exist in list") {
         val src                                              = ConfigSource.fromPropertyTree(
           PropertyTree.Sequence(List(Record(Map()))),
           "src"
@@ -108,7 +107,7 @@ object ListAndOptionalTest extends BaseSpec {
         val optional: ConfigDescriptor[Option[List[String]]] = list(string("keyNotExists")).optional
         assertM(read(optional from src).either)(isLeft(anything))
       },
-      testM("when empty list") {
+      test("when empty list") {
         val src                                              = ConfigSource.fromPropertyTree(
           PropertyTree.empty,
           "src"
@@ -116,8 +115,8 @@ object ListAndOptionalTest extends BaseSpec {
         val optional: ConfigDescriptor[Option[List[String]]] = list(string("usr")).optional
         assertM(read(optional from src).either)(isRight(isNone))
       },
-      testM("list write read") {
-        checkM(genListConfig) { p =>
+      test("list write read") {
+        check(genListConfig) { p =>
           val actual = ZIO.fromEither(write(cListConfig, p)).flatMap { tree =>
             read(cListConfig from ConfigSource.fromPropertyTree(tree, "tree"))
               .mapError(_.getMessage)
@@ -125,7 +124,7 @@ object ListAndOptionalTest extends BaseSpec {
           assertM(actual)(equalTo(p))
         }
       },
-      testM("return failure when branch is not defined correctly") {
+      test("return failure when branch is not defined correctly") {
         val src = ConfigSource.fromPropertyTree(
           Record(
             Map(
@@ -156,7 +155,7 @@ object ListAndOptionalTest extends BaseSpec {
 
         assertM(read(appConfigDesc from src).either)(isLeft(anything))
       },
-      testM("listOrSingleton on list input") {
+      test("listOrSingleton on list input") {
         val src =
           ConfigSource.fromPropertyTree(
             Record(
@@ -175,7 +174,7 @@ object ListAndOptionalTest extends BaseSpec {
 
         assertM(actual)(equalTo(expected))
       },
-      testM("listOrSingleton on singleton input") {
+      test("listOrSingleton on singleton input") {
         val src =
           ConfigSource.fromPropertyTree(
             Record(Map("list" -> PropertyTree.Leaf("x"))),

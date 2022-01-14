@@ -31,7 +31,7 @@ object TypesafeConfigSource {
    */
   def fromResourcePath: ConfigSource =
     fromTypesafeConfig(
-      ZIO.effect(ConfigFactory.load.resolve)
+      ZIO.attempt(ConfigFactory.load.resolve)
     )
 
   /**
@@ -51,7 +51,7 @@ object TypesafeConfigSource {
   def fromHoconFile[A](file: File): ConfigSource = {
     val rawConfig =
       Task
-        .effect(ConfigFactory.parseFile(file).resolve)
+        .attempt(ConfigFactory.parseFile(file).resolve)
 
     fromTypesafeConfig(rawConfig)
   }
@@ -100,7 +100,7 @@ object TypesafeConfigSource {
   def fromHoconString(input: String): ConfigSource =
     fromTypesafeConfig(
       ZIO
-        .effect(ConfigFactory.parseString(input).resolve)
+        .attempt(ConfigFactory.parseString(input).resolve)
     )
 
   /**
@@ -144,7 +144,7 @@ object TypesafeConfigSource {
         }
       }.mapError(exception => ReadError.SourceError(message = exception.getMessage))
 
-    ConfigSource.fromManaged("hocon", ZManaged.fromEffect(effect)).memoize
+    ConfigSource.fromManaged("hocon", ZManaged.fromZIO(effect)).memoize
   }
 
   /**

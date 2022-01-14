@@ -1,18 +1,17 @@
 package zio.config
 
-import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.SequenceRoundtripTestUtils._
 import zio.config.helpers._
-import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
+import zio.{Random, ZIO}
 
 object CollectAllRoundtripTest extends BaseSpec {
   val spec: ZSpec[Environment, Failure] =
     suite("ConfigDescriptor.collectAll")(
-      testM("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
-        checkM(generateListOfGroups) { groups =>
+      test("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
+        check(generateListOfGroups) { groups =>
           val cId: String => ConfigDescriptor[Id] = string(_).to[Id]
 
           // List is nonempty

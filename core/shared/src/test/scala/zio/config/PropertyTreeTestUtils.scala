@@ -1,7 +1,7 @@
 package zio.config
 
+import zio.Random
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
-import zio.random.Random
 import zio.test.{Gen, Sized}
 
 object PropertyTreeTestUtils {
@@ -11,7 +11,7 @@ object PropertyTreeTestUtils {
   )
 
   private[config] val genLeaf: Gen[Random with Sized, Leaf[String]] =
-    Gen.anyString.map(str => Leaf(str))
+    Gen.string.map(str => Leaf(str))
 
   private[config] val genListOfLeaves: Gen[Random with Sized, List[Leaf[String]]] =
     Gen.int(1, 20).flatMap(n => Gen.listOfN(n)(genLeaf))

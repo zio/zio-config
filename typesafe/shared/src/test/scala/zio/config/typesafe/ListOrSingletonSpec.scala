@@ -2,15 +2,14 @@ package zio.config.typesafe
 
 import zio.config.{read, _}
 import zio.test.Assertion._
-import zio.test.environment.TestEnvironment
-import zio.test.{DefaultRunnableSpec, ZSpec, assertM}
+import zio.test.{Spec, TestFailure, TestSuccess, ZIOSpecDefault, assertM}
 
 import ConfigDescriptor._
 
-object ListOrSingletonSpec extends DefaultRunnableSpec {
-  override def spec: ZSpec[TestEnvironment, Any] =
+object ListOrSingletonSpec extends ZIOSpecDefault {
+  override def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] =
     suite("listOrSingleton")(
-      testM("reads singleton") {
+      test("reads singleton") {
         val configString =
           """list = "x"
             |""".stripMargin
@@ -20,7 +19,7 @@ object ListOrSingletonSpec extends DefaultRunnableSpec {
 
         assertM(read(config from source))(equalTo(List("x")))
       },
-      testM("reads list") {
+      test("reads list") {
         val configString =
           """list = ["x", "y"]
             |""".stripMargin

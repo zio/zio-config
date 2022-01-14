@@ -77,11 +77,10 @@ To read a config, means it has to perform some effects, and for that reason, it 
 To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 
 ```scala mdoc:silent
-import zio.system.System
-import zio.Has
+import zio.System
 
 // That's system environment
-val result: Layer[ReadError[String], Has[MyConfig]] = System.live >>> ZConfig.fromSystemEnv(myConfig)
+val result: Layer[ReadError[String], MyConfig] = System.live >>> ZConfig.fromSystemEnv(myConfig)
 ```
 
 Another way of doing this is:
@@ -90,7 +89,6 @@ Another way of doing this is:
 val systemSource = ConfigSource.fromSystemEnv()
 
 read(myConfig from systemSource)
-
 ```
 
 You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application.
@@ -258,18 +256,17 @@ sources, especially when some of the sources returns ZIO.
 ```scala mdoc:silent
 import java.io.File
 
-import zio.{ExitCode, URIO, ZIO, system}
+import zio._
 import zio.config._
 import zio.config.typesafe._
-import zio.console.{Console, putStrLn}
 
 /**
  * One of the ways you can summon various sources especially
  * when some of the `fromSource` functions return ZIO.
  */
-object CombineSourcesExample extends zio.App {
-  override def run(args: List[String]): URIO[zio.ZEnv, ExitCode] =
-    application.either.flatMap(r => putStrLn(s"Result: ${r}")).exitCode
+object CombineSourcesExample extends ZIOAppDefault {
+  override def run =
+    application.either.flatMap(r => Console.printLine(s"Result: ${r}"))
 
   case class Config(username: String , password: String)
 
@@ -286,7 +283,7 @@ object CombineSourcesExample extends zio.App {
     for {
       configValue <- read(desc).mapError(_.prettyPrint())
       string      <- ZIO.fromEither(configValue.toJson(desc))
-      _ <- putStrLn(string)
+      _           <- Console.printLine(string)
     } yield ()
 }
 

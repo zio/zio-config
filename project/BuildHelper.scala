@@ -8,7 +8,7 @@ import sbtcrossproject.CrossPlugin.autoImport._
 import scalafix.sbt.ScalafixPlugin.autoImport._
 
 object BuildHelper {
-  private val versions: Map[String, String] = {
+  private val versions: String => String = {
     import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 
     import java.util.{List => JList, Map => JMap}
@@ -18,12 +18,14 @@ object BuildHelper {
       .loadFromReader(scala.io.Source.fromFile(".github/workflows/ci.yml").bufferedReader())
     val yaml = doc.asInstanceOf[JMap[String, JMap[String, JMap[String, JMap[String, JMap[String, JList[String]]]]]]]
     val list = yaml.get("jobs").get("test").get("strategy").get("matrix").get("scala").asScala
-    list.map(v => (v.split('.').take(2).mkString("."), v)).toMap
+    val map  = list.map(v => (v.split('.').take(2).mkString("."), v)).toMap
+
+    (prefix: String) => map.find(_._1.startsWith(prefix)).map(_._2).get
   }
   val Scala211: String   = versions("2.11")
   val Scala212: String   = versions("2.12")
   val Scala213: String   = versions("2.13")
-  val ScalaDotty: String = versions("3.0")
+  val ScalaDotty: String = versions("3")
 
   val SilencerVersion = "1.7.6"
 
@@ -136,7 +138,7 @@ object BuildHelper {
 
   def extraOptions(scalaVersion: String, optimize: Boolean) =
     CrossVersion.partialVersion(scalaVersion) match {
-      case Some((3, 0))  =>
+      case Some((3, _))  =>
         Seq(
           "-language:implicitConversions",
           "-Xignore-scala2-macros"
@@ -196,7 +198,7 @@ object BuildHelper {
         List("2.12", "2.11+", "2.12+", "2.11-2.12", "2.12-2.13", "2.x")
       case Some((2, 13)) =>
         List("2.13", "2.11+", "2.12+", "2.13+", "2.12-2.13", "2.x")
-      case Some((3, 0))  =>
+      case Some((3, _))  =>
         List("dotty", "2.11+", "2.12+", "2.13+", "3.x")
       case _             =>
         List()

@@ -1,9 +1,9 @@
 package zio.config
 
-import zio.duration._
-import zio.test.environment.Live
-import zio.test.{DefaultRunnableSpec, TestAspect, TestAspectAtLeastR}
+import zio._
+import zio.test.{Live, TestAspect, TestAspectAtLeastR, TestConfig, ZIOSpecDefault}
 
-abstract class BaseSpec extends DefaultRunnableSpec {
-  override def aspects: List[TestAspectAtLeastR[Live]] = List(TestAspect.timeout(60.seconds))
+abstract class BaseSpec extends ZIOSpecDefault {
+  override def aspects: Chunk[TestAspectAtLeastR[Live with TestConfig]] =
+    Chunk(TestAspect.timeout(60.seconds) @@ TestAspect.samples(10))
 }
