@@ -1,7 +1,6 @@
 package zio.config
 
 import com.typesafe.config.{ConfigObject, ConfigRenderOptions, ConfigValue}
-import izumi.reflect.Tag
 import zio._
 
 import java.io.File
@@ -9,33 +8,29 @@ import java.io.File
 package object typesafe {
   implicit class FromConfigTypesafe(c: ZConfig.type) {
     def fromResourcePath[A](configDescriptor: ConfigDescriptor[A])(implicit
-      tag: Tag[A],
-      ev: IsNotIntersection[A]
+      tag: Tag[A]
     ): Layer[ReadError[String], A] =
       TypesafeConfig.fromResourcePath(configDescriptor)
 
     def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(implicit
-      tag: Tag[A],
-      ev: IsNotIntersection[A]
+      tag: Tag[A]
     ): Layer[ReadError[String], A] =
       TypesafeConfig.fromHoconFile(file, configDescriptor)
 
     def fromHoconFilePath[A](filePath: String, configDescriptor: ConfigDescriptor[A])(implicit
-      tag: Tag[A],
-      ev: IsNotIntersection[A]
+      tag: Tag[A]
     ): Layer[ReadError[String], A] =
       TypesafeConfig.fromHoconFilePath(filePath, configDescriptor)
 
     def fromHoconString[A](hoconString: String, configDescriptor: ConfigDescriptor[A])(implicit
-      tag: Tag[A],
-      ev: IsNotIntersection[A]
+      tag: Tag[A]
     ): Layer[ReadError[String], A] =
       TypesafeConfig.fromHoconString(hoconString, configDescriptor)
 
     def fromTypesafeConfig[A](
       conf: => com.typesafe.config.Config,
       configDescriptor: ConfigDescriptor[A]
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       TypesafeConfig.fromTypesafeConfig(conf, configDescriptor)
   }
 
