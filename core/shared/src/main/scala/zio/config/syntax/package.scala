@@ -43,7 +43,7 @@ package object syntax {
      */
     def narrow[B: Tag](
       f: A => B
-    )(implicit ta: Tag[A], ev: IsNotIntersection[A], ev2: IsNotIntersection[B]): ZLayer[R, E, B] =
+    )(implicit ta: Tag[A]): ZLayer[R, E, B] =
       self.map(a => ZEnvironment[B](f(a.get[A])))
   }
 }

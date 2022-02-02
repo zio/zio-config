@@ -44,8 +44,7 @@ trait ConfigModule
    * of your app.
    */
   final def configLayer[A](config: ConfigDescriptor[A])(implicit
-    tag: Tag[A],
-    ev: IsNotIntersection[A]
+    tag: Tag[A]
   ): ZLayer[ConfigSource, ReadError[K], A] =
     ZIO.serviceWithZIO[ConfigSource](source => read(config from source)).toLayer
 
@@ -74,8 +73,7 @@ trait ConfigModule
    * }}}
    */
   final def configLayer_[A](config: ConfigDescriptor[A])(implicit
-    tag: Tag[A],
-    ev: IsNotIntersection[A]
+    tag: Tag[A]
   ): ZLayer[Any, ReadError[K], A] =
     ConfigSource.empty.toLayer >>> configLayer(config)
 
@@ -110,6 +108,6 @@ trait ConfigModule
    *
    * }}}
    */
-  final def getConfig[A](implicit tag: Tag[A], ev: IsNotIntersection[A]): ZIO[A, Nothing, A] =
+  final def getConfig[A](implicit tag: Tag[A]): ZIO[A, Nothing, A] =
     ZIO.service[A]
 }
