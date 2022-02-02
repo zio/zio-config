@@ -69,8 +69,8 @@ addCommandAlias(
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test"
 )
 
-lazy val awsVersion        = "1.12.150"
-lazy val zioVersion        = "2.0.0-RC1"
+lazy val awsVersion        = "1.12.141"
+lazy val zioVersion        = "2.0.0-RC2"
 lazy val magnoliaVersion   = "0.17.0"
 lazy val refinedVersion    = "0.9.28"
 lazy val pureconfigVersion = "0.16.0"

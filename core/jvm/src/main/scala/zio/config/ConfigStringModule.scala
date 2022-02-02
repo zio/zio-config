@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{IsNotIntersection, Layer, System, Tag, ZIO, ZLayer}
+import zio.{Layer, System, Tag, ZIO, ZLayer}
 
 import java.io.File
 import java.net.{URI, URL}
@@ -645,7 +645,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromCommandLineArgs(
           args,
@@ -682,7 +682,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromMap(
           map,
@@ -718,7 +718,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       source: String,
       keyDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, filterKeys)
       )
@@ -751,7 +751,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromProperties(
           properties,
@@ -789,7 +789,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource
           .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, filterKeys)
@@ -824,7 +824,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): ZLayer[System, ReadError[String], A] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], A] =
       (for {
         system <- ZIO.service[System]
         result <- read(
@@ -864,7 +864,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): ZLayer[System, ReadError[String], A] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], A] =
       (for {
         system <- ZIO.service[System]
         result <- read(
@@ -879,12 +879,12 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[K], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[K], A] =
       ZLayer.fromZIO(read(configDescriptor))
 
     private[config] def fromConfigDescriptorM[R, E >: ReadError[K], A](
       configDescriptor: ZIO[R, E, ConfigDescriptor[A]]
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): ZLayer[R, E, A] =
+    )(implicit tag: Tag[A]): ZLayer[R, E, A] =
       ZLayer.fromZIO(
         configDescriptor.flatMap(descriptor => read(descriptor))
       )
