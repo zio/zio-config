@@ -555,7 +555,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       configDescriptor: ConfigDescriptor[A],
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter)
       )
@@ -588,7 +588,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromMap(
           map,
@@ -624,7 +624,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       source: String,
       keyDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, filterKeys)
       )
@@ -657,7 +657,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource.fromProperties(
           properties,
@@ -695,7 +695,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
         configDescriptor from ConfigSource
           .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, filterKeys)
@@ -730,7 +730,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): ZLayer[System, ReadError[String], A] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], A] =
       (for {
         system <- ZIO.service[System]
         result <- read(
@@ -770,7 +770,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): ZLayer[System, ReadError[String], A] =
+    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], A] =
       (for {
         system <- ZIO.service[System]
         result <- read(
@@ -785,7 +785,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
-    )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[K], A] =
+    )(implicit tag: Tag[A]): Layer[ReadError[K], A] =
       ZLayer.fromZIO(read(configDescriptor))
   }
 

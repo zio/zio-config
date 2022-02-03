@@ -5,6 +5,7 @@ import zio.config.ReadError.ConversionError
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.config.testsupport.MapConfigTestSupport.{AppConfig, genAppConfig, stringNWithInjector}
 import zio.test.Assertion._
+import zio.test.TestAspect._
 import zio.test.{TestEnvironment, ZIOSpecDefault, _}
 import zio.{IO, ZIO}
 
@@ -55,7 +56,7 @@ object CommandLineSourceTest extends ZIOSpecDefault {
           assertM(p2.either)(isRight(equalTo(appConfig)))
         }
       }
-    )
+    ) @@ jvmOnly
 
   def fromArgs(args: List[String]): ZIO[Any, ReadError[String], AppConfig] =
     ZConfig.fromCommandLineArgs(args, descriptor, Some('_'), None).build.useNow.map(_.get[AppConfig])
