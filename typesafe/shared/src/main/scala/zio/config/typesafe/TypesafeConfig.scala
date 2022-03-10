@@ -21,12 +21,12 @@ object TypesafeConfig {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Layer[ReadError[String], Has[MyConfig]] =
-   *     TypesafeConfig.fromDefaultLoader(descriptor[MyConfig])
+   *     TypesafeConfig.fromResourcePath(descriptor[MyConfig])
    * }}}
    */
   def fromResourcePath[A](
     configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+  )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
     fromTypesafeConfig(ConfigFactory.load.resolve, configDescriptor)
 
   /**
@@ -45,8 +45,7 @@ object TypesafeConfig {
    * }}}
    */
   def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(implicit
-    tag: Tag[A],
-    ev: IsNotIntersection[A]
+    tag: Tag[A]
   ): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       configDescriptor from TypesafeConfigSource.fromHoconFile(file)
@@ -68,8 +67,7 @@ object TypesafeConfig {
    * }}}
    */
   def fromHoconFilePath[A](filePath: String, configDescriptor: ConfigDescriptor[A])(implicit
-    tag: Tag[A],
-    ev: IsNotIntersection[A]
+    tag: Tag[A]
   ): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       configDescriptor from TypesafeConfigSource.fromHoconFilePath(filePath)
@@ -93,8 +91,7 @@ object TypesafeConfig {
    * }}}
    */
   def fromHoconString[A](hoconString: String, configDescriptor: ConfigDescriptor[A])(implicit
-    tag: Tag[A],
-    ev: IsNotIntersection[A]
+    tag: Tag[A]
   ): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       configDescriptor from TypesafeConfigSource.fromHoconString(hoconString)
@@ -118,7 +115,7 @@ object TypesafeConfig {
   def fromTypesafeConfig[A](
     conf: => com.typesafe.config.Config,
     configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A], ev: IsNotIntersection[A]): Layer[ReadError[String], A] =
+  )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       configDescriptor from TypesafeConfigSource.fromTypesafeConfig(ZIO.succeed(conf))
     )

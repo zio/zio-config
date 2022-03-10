@@ -1,6 +1,5 @@
 package zio.config
 
-import izumi.reflect.Tag
 import zio._
 
 import java.io.{File, Reader}
@@ -8,10 +7,10 @@ import java.nio.file.Path
 
 package object yaml {
   implicit class FromConfigYaml(c: ZConfig.type) {
-    def fromPath[A: Tag: IsNotIntersection](path: Path, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
+    def fromPath[A: Tag](path: Path, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
       YamlConfig.fromFile(path.toFile, descriptor)
 
-    def fromFile[A: Tag: IsNotIntersection](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
+    def fromFile[A: Tag](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
       YamlConfig.fromFile(file, descriptor)
   }
 
