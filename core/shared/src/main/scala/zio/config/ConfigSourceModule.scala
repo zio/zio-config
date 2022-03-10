@@ -571,9 +571,7 @@ trait ConfigSourceModule extends KeyValueModule {
         ZIO
           .serviceWithZIO[System](
             _.envs.map { map =>
-              println("going to calculate tree")
-              val s = getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
-              s
+              getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
             }
           )
           .toManaged
