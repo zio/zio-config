@@ -21,7 +21,7 @@ object TypesafeConfig {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Layer[ReadError[String], Has[MyConfig]] =
-   *     TypesafeConfig.fromDefaultLoader(descriptor[MyConfig])
+   *     TypesafeConfig.fromResourcePath(descriptor[MyConfig])
    * }}}
    */
   def fromResourcePath[A](
