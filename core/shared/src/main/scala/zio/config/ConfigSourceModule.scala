@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{IO, System, UIO, ZIO, ZLayer, ZManaged}
+import zio.{IO, Scope, System, UIO, ZIO, ZLayer}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
@@ -87,8 +87,8 @@ trait ConfigSourceModule extends KeyValueModule {
           self.strictlyOnce.orElse(that.strictlyOnce)
 
         case ConfigSource.Reader(names, access) =>
-          val strictAccess = access.flatMap(identity).use(value => ZIO.succeed(value))
-          strictAccess.map(reader => Reader(names, ZManaged.succeed(ZManaged.succeed(reader))))
+          val strictAccess = ZIO.scoped(access.flatMap(identity).flatMap(value => ZIO.succeed(value)))
+          strictAccess.map(reader => Reader(names, ZIO.succeed(ZIO.succeed(reader))))
       })
 
     /**
@@ -200,7 +200,7 @@ trait ConfigSourceModule extends KeyValueModule {
           self.runTree(path).orElse(that.runTree(path))
 
         case Reader(_, access) =>
-          access.use(_.use(tree => tree(path)))
+          ZIO.scoped(access.flatMap(_.flatMap(tree => tree(path))))
       }
 
     def at(propertyTreePath: PropertyTreePath[K]): ConfigSource = self match {
@@ -211,16 +211,16 @@ trait ConfigSourceModule extends KeyValueModule {
   }
 
   object ConfigSource {
-    type Managed[A]              = ZManaged[Any, ReadError[K], A]
+    type Managed[A]              = ZIO[Scope, ReadError[K], A]
     type TreeReader              = PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]
-    type MemoizableManaged[A]    = ZManaged[Any, Nothing, ZManaged[Any, ReadError[K], A]]
+    type MemoizableManaged[A]    = ZIO[Scope, Nothing, ZIO[Scope, ReadError[K], A]]
     type ManagedReader           = Managed[TreeReader]
     type MemoizableManagedReader = MemoizableManaged[TreeReader]
 
-    def fromManaged(sourceName: String, effect: ZManaged[Any, ReadError[String], TreeReader]): ConfigSource =
+    def fromManaged(sourceName: String, effect: ZIO[Scope, ReadError[String], TreeReader]): ConfigSource =
       Reader(
         Set(ConfigSourceName(sourceName)),
-        ZManaged.succeed(effect)
+        ZIO.succeed(effect)
       )
 
     case class ConfigSourceName(name: String)
@@ -232,7 +232,7 @@ trait ConfigSourceModule extends KeyValueModule {
     val empty: ConfigSource =
       Reader(
         Set.empty,
-        ZManaged.succeed(ZManaged.succeed(_ => ZIO.succeed(PropertyTree.empty)))
+        ZIO.succeed(ZIO.succeed(_ => ZIO.succeed(PropertyTree.empty)))
       )
 
     case class OrElse(self: ConfigSource, that: ConfigSource) extends ConfigSource
@@ -347,7 +347,7 @@ trait ConfigSourceModule extends KeyValueModule {
       ConfigSource
         .fromManaged(
           CommandLineArguments,
-          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+          ZIO.succeed(path => ZIO.succeed(tree.at(path)))
         )
         .memoize
     }
@@ -386,7 +386,7 @@ trait ConfigSourceModule extends KeyValueModule {
       ConfigSource
         .fromManaged(
           sourceName,
-          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+          ZIO.succeed(path => ZIO.succeed(tree.at(path)))
         )
         .memoize
     }
@@ -425,7 +425,7 @@ trait ConfigSourceModule extends KeyValueModule {
       ConfigSource
         .fromManaged(
           sourceName,
-          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+          ZIO.succeed(path => ZIO.succeed(tree.at(path)))
         )
         .memoize
     }
@@ -464,7 +464,7 @@ trait ConfigSourceModule extends KeyValueModule {
       ConfigSource
         .fromManaged(
           sourceName,
-          ZManaged.succeed(path => ZIO.succeed(tree.at(path)))
+          ZIO.succeed(path => ZIO.succeed(tree.at(path)))
         )
         .memoize
     }
@@ -473,13 +473,13 @@ trait ConfigSourceModule extends KeyValueModule {
      * To obtain a config source directly from a property tree.
      *
      * @param tree            : PropertyTree
-     * @param source          : Label the source with a name
+     * @param sourceName      : Label the source with a name
      */
     def fromPropertyTree(
       tree: PropertyTree[K, V],
       sourceName: String
     ): ConfigSource =
-      ConfigSource.fromManaged(sourceName, ZManaged.succeed(path => ZIO.succeed(tree.at(path)))).memoize
+      ConfigSource.fromManaged(sourceName, ZIO.succeed(path => ZIO.succeed(tree.at(path)))).memoize
 
     /**
      * Provide keyDelimiter if you need to consider flattened config as a nested config.
@@ -508,26 +508,26 @@ trait ConfigSourceModule extends KeyValueModule {
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
-      val managed: ZManaged[Any, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
-        ZManaged
-          .acquireReleaseWith(ZIO.attempt(new FileInputStream(new File(filePath))))(r => ZIO.succeed(r.close()))
-          .mapZIO { inputStream =>
-            for {
-              properties <- ZIO.attempt {
-                              val properties = new java.util.Properties()
-                              properties.load(inputStream)
-                              properties
-                            }
+      val managed: ZIO[Scope, ReadError[K], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
+        ZIO
+          .acquireReleaseWith(ZIO.attempt(new FileInputStream(new File(filePath))))(r => ZIO.succeed(r.close())) {
+            inputStream =>
+              for {
+                properties <- ZIO.attempt {
+                                val properties = new java.util.Properties()
+                                properties.load(inputStream)
+                                properties
+                              }
 
-              tree = getPropertyTreeFromProperties(
-                       properties,
-                       keyDelimiter,
-                       valueDelimiter,
-                       filterKeys
-                     )
+                tree = getPropertyTreeFromProperties(
+                         properties,
+                         keyDelimiter,
+                         valueDelimiter,
+                         filterKeys
+                       )
 
-              fn = (path: PropertyTreePath[K]) => ZIO.succeed(tree.at(path))
-            } yield fn
+                fn = (path: PropertyTreePath[K]) => ZIO.succeed(tree.at(path))
+              } yield fn
           }
           .mapError(throwable => ReadError.SourceError(throwable.toString))
 
@@ -571,12 +571,9 @@ trait ConfigSourceModule extends KeyValueModule {
         ZIO
           .serviceWithZIO[System](
             _.envs.map { map =>
-              println("going to calculate tree")
-              val s = getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
-              s
+              getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
             }
           )
-          .toManaged
           .mapError(throwable => ReadError.SourceError(throwable.toString))
           .map(tree =>
             (path: PropertyTreePath[K]) => {
@@ -590,11 +587,11 @@ trait ConfigSourceModule extends KeyValueModule {
       Reader(
         Set(ConfigSourceName(SystemEnvironment)),
         if (keyDelimiter.forall(validDelimiters.contains)) {
-          ZManaged.succeed(managed)
+          ZIO.succeed(managed)
         } else {
           // If delimiters are wrong, there isn't a need to build an inner zmanaged,
           // that's invoked per config. Instead die.
-          ZManaged.fail(ReadError.SourceError(s"Invalid system key delimiter: ${keyDelimiter.get}")).orDie
+          ZIO.die(ReadError.SourceError(s"Invalid system key delimiter: ${keyDelimiter.get}"))
         }
       ).memoize
     }
@@ -631,7 +628,6 @@ trait ConfigSourceModule extends KeyValueModule {
           SystemProperties,
           ZIO
             .serviceWithZIO[System](_.properties)
-            .toManaged
             .mapError(throwable => ReadError.SourceError(throwable.toString))
             .map(map =>
               (path: PropertyTreePath[K]) =>

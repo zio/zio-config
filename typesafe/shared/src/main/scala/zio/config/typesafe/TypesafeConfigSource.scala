@@ -4,7 +4,7 @@ import com.github.ghik.silencer.silent
 import com.typesafe.config._
 import zio.config.PropertyTree._
 import zio.config._
-import zio.{Task, ZIO, ZManaged}
+import zio.{Task, ZIO}
 
 import java.io.File
 import java.lang.{Boolean => JBoolean}
@@ -144,7 +144,7 @@ object TypesafeConfigSource {
         }
       }.mapError(exception => ReadError.SourceError(message = exception.getMessage))
 
-    ConfigSource.fromManaged("hocon", ZManaged.fromZIO(effect)).memoize
+    ConfigSource.fromManaged("hocon", effect).memoize
   }
 
   /**
