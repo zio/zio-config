@@ -1,5 +1,6 @@
 package zio.config.yaml
 
+import zio.ZIO
 import zio.config.{ConfigDescriptor, PropertyTree, PropertyTreePath, ReadError}
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
@@ -81,7 +82,7 @@ object YamlConfigSpec extends ZIOSpecDefault {
         )
       val expected = Child(List(A("str"), B(false)))
 
-      assertM(result.build.map(_.get).exit.useNow)(succeeds(equalTo(expected)))
+      assertM(ZIO.scoped(result.build.map(_.get).exit))(succeeds(equalTo(expected)))
     }
   )
 }
