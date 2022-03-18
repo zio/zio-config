@@ -35,6 +35,6 @@ object CommandLineListAccumulationTest extends ZIOSpecDefault {
       .toList
 
   def fromArgs(args: List[String]): ZIO[Any, ReadError[String], SomeConfig] =
-    ZConfig.fromCommandLineArgs(args, SomeConfig.descriptor, None, None).build.useNow.map(_.get[SomeConfig])
+    ZIO.scoped(ZConfig.fromCommandLineArgs(args, SomeConfig.descriptor, None, None).build.map(_.get[SomeConfig]))
 
 }
