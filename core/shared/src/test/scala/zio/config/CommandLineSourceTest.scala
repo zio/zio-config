@@ -59,7 +59,7 @@ object CommandLineSourceTest extends ZIOSpecDefault {
     ) @@ jvmOnly
 
   def fromArgs(args: List[String]): ZIO[Any, ReadError[String], AppConfig] =
-    ZConfig.fromCommandLineArgs(args, descriptor, Some('_'), None).build.useNow.map(_.get[AppConfig])
+    ZIO.scoped(ZConfig.fromCommandLineArgs(args, descriptor, Some('_'), None).build.map(_.get[AppConfig]))
 
   def toSeparateArgs[A](
     descriptor: ConfigDescriptor[A],
