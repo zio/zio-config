@@ -3,10 +3,9 @@ package zio.config
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test.{TestConfig, _}
-import zio.{Random, UIO, ZIO, ZManaged}
+import zio.{Random, Scope, UIO, ZIO}
 
 import java.util.concurrent.atomic.AtomicInteger
-
 import MemoizedSourceSpecUtils._
 
 object MemoizedSourceSpec extends BaseSpec {
@@ -26,7 +25,7 @@ object MemoizedSourceSpec extends BaseSpec {
           new AtomicInteger(0)
 
         val source =
-          effectFulSource(acquire(resource), UIO(resource.get), incrementCount(configCount))
+          effectFulSource(acquire(resource), UIO.succeed(resource.get), incrementCount(configCount))
 
         val effect =
           for {
@@ -152,9 +151,9 @@ object MemoizedSourceSpecUtils {
     release: UIO[Int],
     incrementConfig: UIO[Int]
   ): ConfigSource = {
-    val managed: ZManaged[Any, ReadError[String], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
-      ZManaged
-        .acquireReleaseWith(acquire) { _ =>
+    val managed: ZIO[Scope, ReadError[String], PropertyTreePath[String] => UIO[PropertyTree[String, String]]] =
+      ZIO
+        .acquireRelease(acquire) { _ =>
           release
         }
         .map(resourceCount =>
@@ -163,7 +162,7 @@ object MemoizedSourceSpecUtils {
 
     ConfigSource.Reader(
       Set(ConfigSource.ConfigSourceName("effectful-source")),
-      ZManaged.succeed(managed)
+      ZIO.succeed(managed)
     )
   }
 }
