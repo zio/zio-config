@@ -112,7 +112,7 @@ object YamlConfigSource {
   ): ConfigSource = {
 
     val managedTree =
-      loadYaml(repr).flatMap(anyRef => convertYaml(anyRef)).toManaged
+      loadYaml(repr).flatMap(anyRef => convertYaml(anyRef))
 
     ConfigSource
       .fromManaged(
