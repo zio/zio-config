@@ -66,7 +66,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
     a: A
   ): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
-      .bimap(
+      .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
           propertyTree.flatten.toList.flatMap { (t: (Vector[String], ::[String])) =>
@@ -76,7 +76,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
 
   def toSingleArg[A](descriptor: ConfigDescriptor[A], a: A): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
-      .bimap(
+      .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
           propertyTree.flatten.toList.flatMap { (t: (Vector[String], ::[String])) =>
@@ -89,7 +89,7 @@ object CommandLineSourceTest extends DefaultRunnableSpec {
     a: A
   ): ZIO[Any, ReadError[String], List[String]] =
     IO.fromEither(write(descriptor, a))
-      .bimap(
+      .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
           propertyTree.flatten.toList.flatMap { (t: (Vector[String], ::[String])) =>
