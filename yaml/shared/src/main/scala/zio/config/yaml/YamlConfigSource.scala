@@ -2,7 +2,7 @@ package zio.config.yaml
 
 import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
-import zio.ZIO
+import zio.{ZIO, ZManaged}
 import zio.config._
 
 import java.io.{File, FileInputStream, Reader}
@@ -81,8 +81,25 @@ object YamlConfigSource {
   def fromYamlReader(
     reader: Reader,
     sourceName: String = "yaml"
-  ): ConfigSource =
-    fromYamlRepr(reader)(loadYaml(_), sourceName)
+  ): ConfigSource = {
+
+    val anyRefZIO =
+      snakeYamlLoader().flatMap(r =>
+        ZIO
+          .effect(r.loadFromReader(reader))
+          .mapError(throwable => ReadError.SourceError(throwable.toString))
+      )
+
+    val readerZIO =
+      anyRefZIO
+        .flatMap(anyRef => convertYaml(anyRef))
+        .flatMap { tree =>
+          ZIO.succeed((path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
+        }
+
+    ConfigSource.fromManaged(sourceName, readerZIO.toManaged_).memoize
+
+  }
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -110,16 +127,12 @@ object YamlConfigSource {
     loadYaml: A => ZIO[Any, ReadError[String], AnyRef],
     sourceName: String = "yaml"
   ): ConfigSource = {
+    val readerZIO =
+      loadYaml(repr)
+        .flatMap(anyRef => convertYaml(anyRef))
+        .flatMap(tree => ZIO.succeed((path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path))))
 
-    val managedTree =
-      loadYaml(repr).flatMap(anyRef => convertYaml(anyRef)).toManaged_
-
-    ConfigSource
-      .fromManaged(
-        sourceName,
-        managedTree.map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
-      )
-      .memoize
+    ConfigSource.fromManaged(sourceName, ZManaged.fromEffect(readerZIO)).memoize
   }
 
   private[yaml] def convertYaml(data: AnyRef): ZIO[Any, ReadError[String], PropertyTree[String, String]] = {

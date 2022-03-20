@@ -279,7 +279,7 @@ lazy val examples = crossProject(JVMPlatform)
         })
         .value
   )
-  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigGen)
+  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigYaml, zioConfigGen)
 
 lazy val examplesJVM = examples.jvm
 
