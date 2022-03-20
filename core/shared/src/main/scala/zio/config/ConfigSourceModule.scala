@@ -276,17 +276,9 @@ trait ConfigSourceModule extends KeyValueModule {
 
                 res = (path: PropertyTreePath[K]) =>
                         f1(path)
-                          // .tapBoth(
-                          //   error => ZIO.debug("errro1  " + error + "for path " + path),
-                          //   value => ZIO.debug("success1 " + value + " for path " + path)
-                          // )
                           .flatMap(tree =>
                             if (tree.isEmpty) {
                               f2(path)
-                              // .tapBoth(
-                              //   error => ZIO.debug("errror2 " + error + "for path " + path),
-                              //   err => ZIO.debug("success2 " + err + " for path " + path)
-                              // )
                             } else {
                               ZIO.succeed(tree)
                             }
