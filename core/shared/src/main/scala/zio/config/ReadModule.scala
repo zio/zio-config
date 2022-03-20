@@ -130,13 +130,13 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                                  fn(PropertyTreePath(path.reverse.toVector))
                                })
         res                 <- tree match {
-                                 case PropertyTree.Empty              =>
+                                 case PropertyTree.Empty          =>
                                    ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                                 case PropertyTree.Record(_)          =>
+                                 case PropertyTree.Record(_)      =>
                                    ZManaged.fail(formatError(path, "of type Map", "Singleton", descriptions))
-                                 case tree @ PropertyTree.Sequence(_) =>
-                                   ZManaged.fail(formatError(path, s"of type List: ${tree}", "Singleton", descriptions))
-                                 case PropertyTree.Leaf(value, _)     =>
+                                 case PropertyTree.Sequence(_)    =>
+                                   ZManaged.fail(formatError(path, s"of type List", "Singleton", descriptions))
+                                 case PropertyTree.Leaf(value, _) =>
                                    cfg.propertyType.read(value) match {
                                      case Left(parseError) =>
                                        ZManaged.fail(
