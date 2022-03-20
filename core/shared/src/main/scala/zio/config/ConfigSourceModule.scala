@@ -45,6 +45,65 @@ trait ConfigSourceModule extends KeyValueModule {
    */
   sealed trait ConfigSource { self =>
 
+    def at(propertyTreePath: PropertyTreePath[K]): ConfigSource = self match {
+      case OrElse(self, that)    => self.at(propertyTreePath).orElse(that.at(propertyTreePath))
+      case Reader(names, access) =>
+        Reader(names, access.map(_.map(getTree => (path => getTree(propertyTreePath).map(_.at(path))))))
+    }
+
+    /**
+     * Transform keys before getting queried from source. Note that, this method could be hardly useful.
+     * Most of the time all you need to use is `mapKeys` in `ConfigDescriptor`
+     * i.e, `read(descriptor[Config].mapKeys(f) from ConfigSource.fromMap(source))`
+     *
+     * If you are still curious to understand `mapKeys` in `ConfigSource`, then read on, or else
+     * avoid a confusion.
+     *
+     * {{{
+     *   case class Hello(a: String, b: String)
+     *   val config: ConfigDescriptor[Hello] = (string("a") |@| string("b")).to[Hello]
+     *
+     *   However your source is different for some reason (i.e, its not `a` and `b`). Example:
+     *   {
+     *     "aws_a" : "1"
+     *     "aws_b" : "2"
+     *   }
+     *
+     *   If you are not interested in changing the `descriptor` or `case class`, you have a freedom
+     *   to pre-map keys before its queried from ConfigSource
+     *
+     *   val removeAwsPrefix  = (s: String) = s.replace("aws", "")
+     *
+     *   val source = ConfigSource.fromMap(map)
+     *   val updatedSource = source.mapKeys(removeAwsPrefix)
+     *
+     *   read(config from updatedSource)
+     *
+     *   // This is exactly the same as
+     *
+     *   def addAwsPrefix(s: String) = "aws_" + s
+     *   read(config.mapKeys(addAwsPrefix) from source)
+     * }}}
+     */
+    def mapKeys(f: K => K): ConfigSource =
+      self match {
+        case ConfigSource.OrElse(left, right) =>
+          ConfigSource.OrElse(left.mapKeys(f), right.mapKeys(f))
+
+        case reader @ ConfigSource.Reader(_, _) =>
+          reader.copy(access = reader.access.map(_.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f)))))
+      }
+
+    /**
+     * Access the Reader in a ConfigSource
+     */
+    def run: Reader =
+      self match {
+        case OrElse(self, that)    =>
+          self.run.orElse(that.run)
+        case reader @ Reader(_, _) => reader
+      }
+
     /**
      * With `strictlyOnce`, regardless of the number of times `read`
      * is invoked, the effect required to form the `Reader` in `ConfigSource` is evaluated
@@ -98,55 +157,6 @@ trait ConfigSourceModule extends KeyValueModule {
      */
     def toLayer: ZLayer[Any, ReadError[K], Has[ConfigSource]] =
       strictlyOnce.toLayer
-
-    /**
-     * Transform keys before getting queried from source. Note that, this method could be hardly useful.
-     * Most of the time all you need to use is `mapKeys` in `ConfigDescriptor`
-     * i.e, `read(descriptor[Config].mapKeys(f) from ConfigSource.fromMap(source))`
-     *
-     * If you are still curious to understand `mapKeys` in `ConfigSource`, then read on, or else
-     * avoid a confusion.
-     *
-     * {{{
-     *   case class Hello(a: String, b: String)
-     *   val config: ConfigDescriptor[Hello] = (string("a") |@| string("b")).to[Hello]
-     *
-     *   However your source is different for some reason (i.e, its not `a` and `b`). Example:
-     *   {
-     *     "aws_a" : "1"
-     *     "aws_b" : "2"
-     *   }
-     *
-     *   If you are not interested in changing the `descriptor` or `case class`, you have a freedom
-     *   to pre-map keys before its queried from ConfigSource
-     *
-     *   val removeAwsPrefix  = (s: String) = s.replace("aws", "")
-     *
-     *   val source = ConfigSource.fromMap(map)
-     *   val updatedSource = source.mapKeys(removeAwsPrefix)
-     *
-     *   read(config from updatedSource)
-     *
-     *   // This is exactly the same as
-     *
-     *   def addAwsPrefix(s: String) = "aws_" + s
-     *   read(config.mapKeys(addAwsPrefix) from source)
-     * }}}
-     */
-    def mapKeys(f: K => K): ConfigSource =
-      self match {
-        case ConfigSource.OrElse(left, right) =>
-          ConfigSource.OrElse(left.mapKeys(f), right.mapKeys(f))
-
-        case reader @ ConfigSource.Reader(_, _) =>
-          reader.copy(access = reader.access.map(_.map(fn => (path: PropertyTreePath[K]) => fn(path.mapKeys(f)))))
-      }
-
-    def run: Reader =
-      self match {
-        case OrElse(self, that)    => self.run.orElse(that.run)
-        case reader @ Reader(_, _) => reader
-      }
 
     /**
      * Memoize the effect required to form the Reader.
@@ -203,12 +213,6 @@ trait ConfigSourceModule extends KeyValueModule {
         case Reader(_, access) =>
           access.use(_.use(tree => tree(path)))
       }
-
-    def at(propertyTreePath: PropertyTreePath[K]): ConfigSource = self match {
-      case OrElse(self, that)    => self.at(propertyTreePath).orElse(that.at(propertyTreePath))
-      case Reader(names, access) =>
-        Reader(names, access.map(_.map(getTree => (path => getTree(propertyTreePath).map(_.at(path))))))
-    }
   }
 
   object ConfigSource {
@@ -269,9 +273,24 @@ trait ConfigSourceModule extends KeyValueModule {
               for {
                 f1 <- m1
                 f2 <- m2
+
                 res = (path: PropertyTreePath[K]) =>
                         f1(path)
-                          .flatMap(tree => if (tree.isEmpty) f2(path) else ZIO.succeed(tree))
+                          // .tapBoth(
+                          //   error => ZIO.debug("errro1  " + error + "for path " + path),
+                          //   value => ZIO.debug("success1 " + value + " for path " + path)
+                          // )
+                          .flatMap(tree =>
+                            if (tree.isEmpty) {
+                              f2(path)
+                              // .tapBoth(
+                              //   error => ZIO.debug("errror2 " + error + "for path " + path),
+                              //   err => ZIO.debug("success2 " + err + " for path " + path)
+                              // )
+                            } else {
+                              ZIO.succeed(tree)
+                            }
+                          )
                           .orElse(f2(path))
               } yield res
           } yield res
