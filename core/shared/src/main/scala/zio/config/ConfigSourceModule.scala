@@ -61,7 +61,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * {{{
      *   case class Hello(a: String, b: String)
-     *   val config: ConfigDescriptor[Hello] = (string("a") |@| string("b")).to[Hello]
+     *   val config: ConfigDescriptor[Hello] = (string("a") zip string("b")).to[Hello]
      *
      *   However your source is different for some reason (i.e, its not `a` and `b`). Example:
      *   {

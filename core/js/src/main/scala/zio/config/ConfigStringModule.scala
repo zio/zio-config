@@ -460,7 +460,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
    * {{{
    *   final case class MyConfig(dburl: String, port: Int)
    *
-   *   val myConfigDesc: ConfigDescriptor[MyConfig]             = (string("dburl") |@| int("port"))(MyConfig.apply, MyConfig.unapply)
+   *   val myConfigDesc: ConfigDescriptor[MyConfig]             = (string("dburl") zip int("port")).to[MyConfig]
    *   val myConfig: Layer[ReadError[String], Config[MyConfig]] = Config.fromSystemEnv(myConfigDesc)
    * }}}
    *
@@ -485,7 +485,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
    *   import zio.config._, ConfigDescriptor._
    *   final case class MyConfig(dburl: String, port: Int)
    *
-   *   val myConfig: ConfigDescriptor[MyConfig]         = (string("dburl") |@| int("port"))(MyConfig.apply, MyConfig.unapply)
+   *   val myConfig: ConfigDescriptor[MyConfig]         = (string("dburl") zip int("port")).to[MyConfig]
    *   val constantSource: ConfigSource                 = ConfigSource.fromMap(Map("dburl" -> "xyz", "port" -> "8080"))
    *   val result: Either[ReadError[String], MyConfig]  = read(myConfig from constantSource)
    * }}}
@@ -504,7 +504,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
    *
    *   final case class MyConfig(dburl: String, port: Int)
    *
-   *   val myConfig: ConfigDescriptor[MyConfig]     = (string("dburl") |@| int("port"))(MyConfig.apply, MyConfig.unapply)
+   *   val myConfig: ConfigDescriptor[MyConfig]     = (string("dburl") zip int("port")).to[MyConfig]
    *   val sysEnvSource: UIO[MyConfig]              = ConfigSource.fromSystemEnv
    *   val constantSource: ConfigSource             = ConfigSource.fromMap(Map("dburl" -> "xyz", "port" -> "8080"))
    *   val result: IO[ReadError[String], MyConfig]  = configSource.flatMap(source => read(myConfig from sysEnvSource.orElse(constantSource))
@@ -539,11 +539,11 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      *
      *  final case class Credentials(username: String, password: String)
      *
-     *  val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
+     *  val credentials = (string("username") zip string("password")).to[Credentials]
      *
      *  final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String], users: List[String])
      *
-     *  (nested("db") { credentials } |@| nested("vault") { credentials } |@| list("regions")(string) |@| list("user")(string))(Config.apply, Config.unapply)
+     *  (nested("db") { credentials } zip nested("vault") { credentials } zip list("regions")(string) zip list("user")(string)).to[Config]
      *
      *  // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
      *
@@ -579,7 +579,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      */
     def fromMap[A](
@@ -616,7 +616,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      */
     def fromMultiMap[A](
@@ -648,7 +648,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      */
     def fromProperties[A](
@@ -687,7 +687,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      */
     def fromPropertiesFile[A](
@@ -720,7 +720,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      *
      * Note: The delimiter '.' for keys doesn't work in system environment.
@@ -761,7 +761,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      */
     @silent("a type was inferred to be `Any`")
