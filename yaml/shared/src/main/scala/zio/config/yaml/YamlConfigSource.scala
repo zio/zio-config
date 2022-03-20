@@ -81,25 +81,8 @@ object YamlConfigSource {
   def fromYamlReader(
     reader: Reader,
     sourceName: String = "yaml"
-  ): ConfigSource = {
-
-    val anyRefZIO =
-      snakeYamlLoader().flatMap(r =>
-        ZIO
-          .effect(r.loadFromReader(reader))
-          .mapError(throwable => ReadError.SourceError(throwable.toString))
-      )
-
-    val readerZIO =
-      anyRefZIO
-        .flatMap(anyRef => convertYaml(anyRef))
-        .flatMap { tree =>
-          ZIO.succeed((path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
-        }
-
-    ConfigSource.fromManaged(sourceName, readerZIO.toManaged_).memoize
-
-  }
+  ): ConfigSource =
+    fromYamlRepr(reader)(loadYaml(_), sourceName)
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
