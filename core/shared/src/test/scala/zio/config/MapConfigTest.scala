@@ -35,7 +35,7 @@ object MapConfigTest extends DefaultRunnableSpec {
     a: A
   ): ZIO[Any, ReadError[String], Map[String, String]] =
     IO.fromEither(write(descriptor, a))
-      .mapBoth(
+      .bimap(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTreeArgs
       )
