@@ -1,13 +1,13 @@
 package zio.config.examples
 
-import zio.config.magnolia.descriptor
 import zio.config._
+import zio.config.magnolia.descriptor
 import zio.config.typesafe._
 import zio.config.yaml._
 
 object ConfigSourceOrElseExample extends App {
 
-  val applicationYaml =
+  val applicationYaml: String =
     s"""
         kafkaClients: {
           bootstrapServers: [
@@ -19,7 +19,7 @@ object ConfigSourceOrElseExample extends App {
         }
         """
 
-  val applicationDevYaml =
+  val applicationDevYaml: String =
     s"""
         kafkaClients: {
           region: US
@@ -29,7 +29,7 @@ object ConfigSourceOrElseExample extends App {
   case class KafkaClients(bootstrapServers: List[String], port: Int, region: String)
   case class ApplicationConfig(kafkaClients: KafkaClients)
 
-  val orElseSource =
+  val orElseSource: ApplicationConfig =
     zio.Runtime.default.unsafeRun(
       read(
         descriptor[ApplicationConfig] from
@@ -42,7 +42,7 @@ object ConfigSourceOrElseExample extends App {
   // list is picked from second source
   assert(orElseSource == ApplicationConfig(KafkaClients(List("localhost:9092", "localhost:9094"), 100, "US")))
 
-  val yamlString =
+  val yamlString: String =
     s"""
        |kafkaClients:
        |  bootstrapServers:
@@ -52,19 +52,19 @@ object ConfigSourceOrElseExample extends App {
        |  region: "US"
        |""".stripMargin
 
-  val applicationYamlSourceReader =
+  val applicationYamlSourceReader: ConfigSource =
     ConfigSource.fromYamlReader(scala.io.Source.fromResource("application.yml").reader())
 
-  val applicationYamlSourceString =
+  val applicationYamlSourceString: ConfigSource =
     ConfigSource.fromYamlString(yamlString)
 
-  val expected =
+  val expected: ApplicationConfig =
     ApplicationConfig(KafkaClients(List("localhost:9092", "locathost:9094"), 100, "US"))
 
-  val desc = descriptor[ApplicationConfig]
+  val desc: ConfigDescriptor[ApplicationConfig] = descriptor[ApplicationConfig]
 
-  val result1 = zio.Runtime.default.unsafeRun(read(desc from applicationYamlSourceReader))
-  val result2 = zio.Runtime.default.unsafeRun(read(desc from applicationYamlSourceString))
+  val result1: ApplicationConfig = zio.Runtime.default.unsafeRun(read(desc from applicationYamlSourceReader))
+  val result2: ApplicationConfig = zio.Runtime.default.unsafeRun(read(desc from applicationYamlSourceString))
 
   assert(result1 == expected)
   assert(result1 == result2)
