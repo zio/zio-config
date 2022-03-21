@@ -40,7 +40,8 @@ createProductBuilder := {
 }
 
 addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
-addCommandAlias("check", "; scalafmtSbtCheck; scalafmtCheckAll;")
+addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt scalafmtAll")
+addCommandAlias("check", "; scalafmtSbtCheck; scalafmtCheckAll; compile:scalafix --check; test:scalafix --check")
 addCommandAlias(
   "checkAll",
   "; ++2.11.12; project root2-11; check; ++2.12.13; project root2-12; check; ++2.13.5; project root2-13; check"
