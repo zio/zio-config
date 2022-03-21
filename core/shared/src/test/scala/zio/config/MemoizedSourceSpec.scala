@@ -18,7 +18,7 @@ object MemoizedSourceSpec extends BaseSpec {
       testM(
         "A non-memoized source runs a resource acquisition for each config value during a read"
       ) {
-        val config = (string("k1") zip string("k2"))
+        val config = (string("k1") zip string("k2") zip list("k3")(string))
 
         val resource =
           new AtomicInteger(0)
@@ -39,7 +39,9 @@ object MemoizedSourceSpec extends BaseSpec {
             c <- ZIO.succeed(configCount.get)
           } yield (v, r, c)
 
-        assertM(effect)(equalTo(((s"v1_1_1", "v2_2_2"), 2, 2)))
+        // To get third element a list, a resource is acquired (making it to 3),
+        // and for retrieving each element in the list (of size 2), a resource is acquired (4 and 5)
+        assertM(effect)(equalTo(((s"v1_1_1", "v2_2_2", List("v3_4_4", "v4_5_5")), 5, 5)))
 
       },
       testM(
@@ -52,7 +54,7 @@ object MemoizedSourceSpec extends BaseSpec {
           new AtomicInteger(0)
 
         val config =
-          (string("k1") zip string("k2"))
+          (string("k1") zip string("k2") zip list("k3")(string))
 
         // The acquisition of resource results in an increment of `resource` atomic
         // The release of resource results in a decrement of `resource` atomic
@@ -67,7 +69,7 @@ object MemoizedSourceSpec extends BaseSpec {
             c <- ZIO.succeed(configCount.get)
           } yield (v, r, c)
 
-        assertM(effect)(equalTo(((s"v1_1_1", "v2_1_2"), 0, 2)))
+        assertM(effect)(equalTo((("v1_1_1", "v2_1_2", List("v3_1_4", "v4_1_5")), 0, 5)))
       },
       testM(
         "A memoized source runs a resource acquisition and release only once during the read of multiple config keys"
@@ -82,7 +84,7 @@ object MemoizedSourceSpec extends BaseSpec {
           new AtomicInteger(0)
 
         val config =
-          (string("k1") zip string("k2"))
+          (string("k1") zip string("k2") zip list("k3")(string))
 
         // The acquisition of resource results in an increment of `resource1` atomic
         // The release of resource results in an increment of `resource2` atomic
@@ -99,7 +101,7 @@ object MemoizedSourceSpec extends BaseSpec {
             count        <- ZIO.succeed(configCount.get)
           } yield (result, acquireCount, releaseCount, count)
 
-        assertM(effect)(equalTo(((s"v1_1_1", "v2_1_2"), 1, 1, 2)))
+        assertM(effect)(equalTo(((s"v1_1_1", "v2_1_2", List("v3_1_4", "v4_1_5")), 1, 1, 5)))
       },
       testM(
         "A strictlyOnce source runs a resource acquisition and release only once, regardless of the number of reads invoked"
@@ -114,7 +116,7 @@ object MemoizedSourceSpec extends BaseSpec {
           new AtomicInteger(0)
 
         val config =
-          (string("k1") zip string("k2"))
+          (string("k1") zip string("k2") zip list("k3")(string))
 
         // The acquisition of resource results in an increment of `resource1` atomic
         // The release of resource results in an increment of `resource2` atomic
@@ -133,7 +135,17 @@ object MemoizedSourceSpec extends BaseSpec {
             count        <- ZIO.succeed(configCount.get)
           } yield (result1, result2, acquireCount, releaseCount, count)
 
-        assertM(effect)(equalTo((("v1_1_1", "v2_1_2"), ("v1_1_3", "v2_1_4"), 1, 1, 4)))
+        assertM(effect)(
+          equalTo(
+            (
+              ("v1_1_1", "v2_1_2", List("v3_1_4", "v4_1_5")),
+              ("v1_1_6", "v2_1_7", List("v3_1_9", "v4_1_10")),
+              1,
+              1,
+              10
+            )
+          )
+        )
       }
     )
 }
@@ -144,7 +156,13 @@ object MemoizedSourceSpecUtils {
       .Record(
         Map(
           "k1" -> PropertyTree.Leaf(s"v1_${resourceCount}_${configCount}"),
-          "k2" -> PropertyTree.Leaf(s"v2_${resourceCount}_${configCount}")
+          "k2" -> PropertyTree.Leaf(s"v2_${resourceCount}_${configCount}"),
+          "k3" -> PropertyTree.Sequence(
+            List(
+              PropertyTree.Leaf(s"v3_${resourceCount}_${configCount}"),
+              PropertyTree.Leaf(s"v4_${resourceCount}_${configCount}")
+            )
+          )
         )
       )
       .at(path)

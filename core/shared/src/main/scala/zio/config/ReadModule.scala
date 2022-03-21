@@ -366,7 +366,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     path: PropertyTreePath[K]
   ): ZManaged[Any, ReadError[String], PropertyTree[K, V]] = {
     val sourceTrees: Set[ZManaged[Any, ReadError[String], PropertyTree[String, String]]] =
-      sources.map(managed => managed.flatMap(reader => reader(path).toManaged_))
+      sources.map(managed => ZManaged.fromEffect(managed.use(reader => reader(path))))
 
     val collectedTrees: ZManaged[Any, ReadError[String], List[PropertyTree[String, String]]] =
       ZManaged.collectAll(sourceTrees.toList)
@@ -387,7 +387,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            case None        =>
                              managed.run.access
                          }
-        tree          <- ZManaged.fromEffect(managedReader.use(_(PropertyTreePath(keys.toVector))))
+        tree          <- managedReader.flatMap(f => ZManaged.fromEffect(f(PropertyTreePath(keys.toVector))))
       } yield tree == PropertyTree.empty
     }
 

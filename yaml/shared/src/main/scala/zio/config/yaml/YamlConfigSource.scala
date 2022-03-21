@@ -114,7 +114,9 @@ object YamlConfigSource {
     val readerZIO =
       loadYaml(repr)
         .flatMap(anyRef => convertYaml(anyRef))
-        .flatMap(tree => ZIO.succeed((path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path))))
+        .flatMap { tree =>
+          ZIO.succeed((path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
+        }
 
     ConfigSource.fromManaged(sourceName, ZManaged.fromEffect(readerZIO)).memoize
   }
