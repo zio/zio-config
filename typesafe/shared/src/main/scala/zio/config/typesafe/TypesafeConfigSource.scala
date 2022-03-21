@@ -134,7 +134,7 @@ object TypesafeConfigSource {
   def fromTypesafeConfig(
     rawConfig: ZIO[Any, Throwable, com.typesafe.config.Config]
   ): ConfigSource = {
-    val effect =
+    val readerZIO =
       rawConfig.flatMap { value =>
         getPropertyTree(value) match {
           case Left(error) =>
@@ -144,7 +144,7 @@ object TypesafeConfigSource {
         }
       }.mapError(exception => ReadError.SourceError(message = exception.getMessage))
 
-    ConfigSource.fromManaged("hocon", ZManaged.fromEffect(effect)).memoize
+    ConfigSource.fromManaged("hocon", ZManaged.fromEffect(readerZIO)).memoize
   }
 
   /**

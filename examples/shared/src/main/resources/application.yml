@@ -1,0 +1,6 @@
+kafkaClients:
+  bootstrapServers:
+    - "localhost:9092"
+    - "locathost:9094"
+  region: "US"
+  port: "100"

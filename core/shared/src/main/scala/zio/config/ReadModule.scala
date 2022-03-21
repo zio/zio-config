@@ -127,14 +127,16 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                                    cfg.source.run.access
                                }
         _                   <- ZManaged.succeed(cachedSources.update(cfg.source, maybeMemoizedReader))
-        tree                <- ZManaged.fromEffect(maybeMemoizedReader.use(_(PropertyTreePath(path.reverse.toVector))))
+        tree                <- ZManaged.fromEffect(maybeMemoizedReader.use { fn =>
+                                 fn(PropertyTreePath(path.reverse.toVector))
+                               })
         res                 <- tree match {
                                  case PropertyTree.Empty          =>
                                    ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
                                  case PropertyTree.Record(_)      =>
                                    ZManaged.fail(formatError(path, "of type Map", "Singleton", descriptions))
                                  case PropertyTree.Sequence(_)    =>
-                                   ZManaged.fail(formatError(path, "of type List", "Singleton", descriptions))
+                                   ZManaged.fail(formatError(path, s"of type List", "Singleton", descriptions))
                                  case PropertyTree.Leaf(value, _) =>
                                    cfg.propertyType.read(value) match {
                                      case Left(parseError) =>
@@ -199,32 +201,46 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Map[K, B]] =
       for {
-        tree_ <- treeOf(cfg, cachedSources)
-        res   <- tree_.at(PropertyTreePath(path.reverse.toVector)) match {
-                   case PropertyTree.Leaf(_, _)     =>
-                     ZManaged.fail(formatError(path, "of type Singleton", "Map", descriptions))
-                   case PropertyTree.Sequence(_)    =>
-                     ZManaged.fail(formatError(path, "of type List", "Map", descriptions))
-                   case PropertyTree.Record(values) =>
-                     val result: List[(K, Res[B])] =
-                       values.toList.map { case ((k, _)) =>
-                         (
-                           k,
-                           loopAny(
-                             Step.Key(k) :: path,
-                             cfg.config,
-                             descriptions,
-                             programSummary
-                           )
-                         )
-                       }
+        _    <- ZManaged.foreach(cfg.sources.toList) { managedSource =>
+                  for {
+                    maybeMemoizedReader <- cachedSources.get(managedSource) match {
+                                             case Some(value) =>
+                                               ZManaged.succeed(value)
+                                             case None        =>
+                                               managedSource.run.access
+                                           }
+                    _                   <- ZManaged.succeed(cachedSources.update(managedSource, maybeMemoizedReader))
+                  } yield ()
+                }
+        tree <- treeOf(
+                  cachedSources.filter(t => cfg.sources.contains(t._1)).values.toSet,
+                  PropertyTreePath(path.reverse.toVector)
+                )
+        res  <- tree match {
+                  case PropertyTree.Leaf(_, _)     =>
+                    ZManaged.fail(formatError(path, "of type Singleton", "Map", descriptions))
+                  case PropertyTree.Sequence(_)    =>
+                    ZManaged.fail(formatError(path, "of type List", "Map", descriptions))
+                  case PropertyTree.Record(values) =>
+                    val result: List[(K, Res[B])] =
+                      values.toList.map { case ((k, _)) =>
+                        (
+                          k,
+                          loopAny(
+                            Step.Key(k) :: path,
+                            cfg.config,
+                            descriptions,
+                            programSummary
+                          )
+                        )
+                      }
 
-                     seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap)
-                       .mapError(errs => ReadError.MapErrors(errs, errs.flatMap(_.annotations).toSet))
-                       .map(mapp => AnnotatedRead(mapp, Set.empty))
+                    seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap)
+                      .mapError(errs => ReadError.MapErrors(errs, errs.flatMap(_.annotations).toSet))
+                      .map(mapp => AnnotatedRead(mapp, Set.empty))
 
-                   case PropertyTree.Empty => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                 }
+                  case PropertyTree.Empty => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                }
       } yield res
 
     def loopSequence[B](
@@ -249,16 +265,32 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         seqEither2[K, ReadError[K], B, ReadError[K]]((_, a) => a)(list.map(res => res.map(_.value)))
           .mapError(errs => ReadError.ListErrors(errs, errs.flatMap(_.annotations).toSet))
           .map(list => AnnotatedRead(list, Set.empty))
+
       }
 
       for {
-        tree_ <- treeOf(cfg, cachedSources)
-        res   <- tree_.at(PropertyTreePath(path.reverse.toVector)) match {
-                   case leaf @ PropertyTree.Leaf(_, _) => fromTrees(List(leaf))
-                   case PropertyTree.Record(_)         => ZManaged.fail(formatError(path, "of type Map", "List", descriptions))
-                   case PropertyTree.Empty             => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
-                   case PropertyTree.Sequence(values)  => fromTrees(values)
-                 }
+        _ <- ZManaged.foreach(cfg.sources.toList) { managedSource =>
+               for {
+                 maybeMemoizedReader <- cachedSources.get(managedSource) match {
+                                          case Some(value) =>
+                                            ZManaged.succeed(value)
+                                          case None        =>
+                                            managedSource.run.access
+                                        }
+                 _                   <- ZManaged.succeed(cachedSources.update(managedSource, maybeMemoizedReader))
+               } yield ()
+             }
+
+        tree <- treeOf(
+                  cachedSources.filter(t => cfg.sources.contains(t._1)).values.toSet,
+                  PropertyTreePath(path.reverse.toVector)
+                )
+        res  <- tree match {
+                  case leaf @ PropertyTree.Leaf(_, _) => fromTrees(List(leaf))
+                  case PropertyTree.Record(_)         => ZManaged.fail(formatError(path, "of type Map", "List", descriptions))
+                  case PropertyTree.Empty             => ZManaged.fail(ReadError.MissingValue(path.reverse, descriptions))
+                  case PropertyTree.Sequence(values)  => fromTrees(values)
+                }
       } yield res
     }
 
@@ -330,23 +362,15 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
   }
 
   private[config] def treeOf[A](
-    config: ConfigDescriptor[A],
-    cachedSources: CachedReaders
+    sources: Set[ZManaged[Any, ReadError[K], ConfigSource.TreeReader]],
+    path: PropertyTreePath[K]
   ): ZManaged[Any, ReadError[String], PropertyTree[K, V]] = {
-    val sourceTrees = ZManaged.foreach(config.sources.toList) { managed =>
-      for {
-        existing      <- ZManaged.succeed(cachedSources.get(managed))
-        managedReader <- existing match {
-                           case Some(value) =>
-                             ZManaged.succeed(value)
-                           case None        =>
-                             managed.run.access
-                         }
-        rootTree      <- ZManaged.fromEffect(managedReader.use(reader => reader(PropertyTreePath(Vector.empty))))
-      } yield rootTree
-    }
+    val sourceTrees: Set[ZManaged[Any, ReadError[String], PropertyTree[String, String]]] =
+      sources.map(managed => ZManaged.fromEffect(managed.use(reader => reader(path))))
 
-    sourceTrees.map(_.reduceLeftOption(_.getOrElse(_)).getOrElse(PropertyTree.empty))
+    val collectedTrees: ZManaged[Any, ReadError[String], List[PropertyTree[String, String]]] =
+      ZManaged.collectAll(sourceTrees.toList)
+    collectedTrees.map(_.reduceLeftOption(_.getOrElse(_)).getOrElse(PropertyTree.empty))
   }
 
   private[config] def isEmptyConfigSource[A](
@@ -363,7 +387,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            case None        =>
                              managed.run.access
                          }
-        tree          <- ZManaged.fromEffect(managedReader.use(_(PropertyTreePath(keys.toVector))))
+        tree          <- managedReader.flatMap(f => ZManaged.fromEffect(f(PropertyTreePath(keys.toVector))))
       } yield tree == PropertyTree.empty
     }
 

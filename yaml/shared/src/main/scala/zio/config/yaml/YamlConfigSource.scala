@@ -2,8 +2,8 @@ package zio.config.yaml
 
 import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
-import zio.ZIO
 import zio.config._
+import zio.{ZIO, ZManaged}
 
 import java.io.{File, FileInputStream, Reader}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
@@ -106,20 +106,19 @@ object YamlConfigSource {
   ): ConfigSource =
     fromYamlRepr(yamlString)(loadYaml(_), sourceName)
 
+  @silent("a type was inferred to be `Any`")
   private[config] def fromYamlRepr[A](repr: A)(
     loadYaml: A => ZIO[Any, ReadError[String], AnyRef],
     sourceName: String = "yaml"
   ): ConfigSource = {
+    val readerZIO =
+      loadYaml(repr)
+        .flatMap(anyRef => convertYaml(anyRef))
+        .flatMap { tree =>
+          ZIO.succeed((path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
+        }
 
-    val managedTree =
-      loadYaml(repr).flatMap(anyRef => convertYaml(anyRef)).toManaged_
-
-    ConfigSource
-      .fromManaged(
-        sourceName,
-        managedTree.map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
-      )
-      .memoize
+    ConfigSource.fromManaged(sourceName, ZManaged.fromEffect(readerZIO)).memoize
   }
 
   private[yaml] def convertYaml(data: AnyRef): ZIO[Any, ReadError[String], PropertyTree[String, String]] = {

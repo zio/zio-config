@@ -11,13 +11,6 @@ sealed trait PropertyTree[+K, +V] { self =>
   import scala.collection.compat._
   import VersionSpecificSupport._
 
-  def leafNotASequence: PropertyTree[K, V] = self match {
-    case Leaf(value, _)     => Leaf(value, canBeSequence = false)
-    case Record(value)      => Record(value.map({ case (k, v) => (k, v.leafNotASequence) }))
-    case PropertyTree.Empty => PropertyTree.Empty
-    case Sequence(value)    => Sequence(value.map(_.leafNotASequence))
-  }
-
   def flatMap[K1 >: K, V1](f: V => PropertyTree[K1, V1]): PropertyTree[K1, V1] =
     self match {
       case Leaf(value, _)     => f(value)
@@ -25,6 +18,13 @@ sealed trait PropertyTree[+K, +V] { self =>
       case PropertyTree.Empty => PropertyTree.Empty
       case Sequence(value)    => Sequence(value.map(_.flatMap(f)))
     }
+
+  def leafNotASequence: PropertyTree[K, V] = self match {
+    case Leaf(value, _)     => Leaf(value, canBeSequence = false)
+    case Record(value)      => Record(value.map({ case (k, v) => (k, v.leafNotASequence) }))
+    case PropertyTree.Empty => PropertyTree.Empty
+    case Sequence(value)    => Sequence(value.map(_.leafNotASequence))
+  }
 
   def zip[K1 >: K, V1](that: PropertyTree[K1, V1]): PropertyTree[K1, (V, V1)] =
     self.flatMap(t1 => that.map(t2 => (t1, t2)))
