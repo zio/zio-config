@@ -2,8 +2,8 @@ package zio.config.yaml
 
 import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
-import zio.{ZIO, ZManaged}
 import zio.config._
+import zio.{ZIO, ZManaged}
 
 import java.io.{File, FileInputStream, Reader}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
