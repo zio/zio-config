@@ -106,6 +106,7 @@ object YamlConfigSource {
   ): ConfigSource =
     fromYamlRepr(yamlString)(loadYaml(_), sourceName)
 
+  @silent("a type was inferred to be `Any`")
   private[config] def fromYamlRepr[A](repr: A)(
     loadYaml: A => ZIO[Any, ReadError[String], AnyRef],
     sourceName: String = "yaml"
