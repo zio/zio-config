@@ -5,7 +5,6 @@ import zio.config.ReadError._
 import zio.{IO, Scope, ZIO}
 
 import scala.collection.mutable.{Map => MutableMap}
-
 import PropertyTreePath.Step
 
 @silent("Unused import")
@@ -199,32 +198,46 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       programSummary: List[ConfigDescriptor[_]]
     ): Res[Map[K, B]] =
       for {
-        tree_ <- treeOf(cfg, cachedSources)
-        res   <- tree_.at(PropertyTreePath(path.reverse.toVector)) match {
-                   case PropertyTree.Leaf(_, _)     =>
-                     ZIO.fail(formatError(path, "of type Singleton", "Map", descriptions))
-                   case PropertyTree.Sequence(_)    =>
-                     ZIO.fail(formatError(path, "of type List", "Map", descriptions))
-                   case PropertyTree.Record(values) =>
-                     val result: List[(K, Res[B])] =
-                       values.toList.map { case ((k, _)) =>
-                         (
-                           k,
-                           loopAny(
-                             Step.Key(k) :: path,
-                             cfg.config,
-                             descriptions,
-                             programSummary
-                           )
-                         )
-                       }
+        _    <- ZIO.foreach(cfg.sources.toList) { managedSource =>
+                  for {
+                    maybeMemoizedReader <- cachedSources.get(managedSource) match {
+                                             case Some(value) =>
+                                               ZIO.succeed(value)
+                                             case None        =>
+                                               managedSource.run.access
+                                           }
+                    _                   <- ZIO.succeed(cachedSources.update(managedSource, maybeMemoizedReader))
+                  } yield ()
+                }
+        tree <- treeOf(
+                  cachedSources.filter(t => cfg.sources.contains(t._1)).values.toSet,
+                  PropertyTreePath(path.reverse.toVector)
+                )
+        res  <- tree match {
+                  case PropertyTree.Leaf(_, _)     =>
+                    ZIO.fail(formatError(path, "of type Singleton", "Map", descriptions))
+                  case PropertyTree.Sequence(_)    =>
+                    ZIO.fail(formatError(path, "of type List", "Map", descriptions))
+                  case PropertyTree.Record(values) =>
+                    val result: List[(K, Res[B])] =
+                      values.toList.map { case ((k, _)) =>
+                        (
+                          k,
+                          loopAny(
+                            Step.Key(k) :: path,
+                            cfg.config,
+                            descriptions,
+                            programSummary
+                          )
+                        )
+                      }
 
-                     seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap)
-                       .mapError(errs => ReadError.MapErrors(errs, errs.flatMap(_.annotations).toSet))
-                       .map(mapp => AnnotatedRead(mapp, Set.empty))
+                    seqMap2[K, ReadError[K], B](result.map({ case (a, b) => (a, b.map(_.value)) }).toMap)
+                      .mapError(errs => ReadError.MapErrors(errs, errs.flatMap(_.annotations).toSet))
+                      .map(mapp => AnnotatedRead(mapp, Set.empty))
 
-                   case PropertyTree.Empty => ZIO.fail(ReadError.MissingValue(path.reverse, descriptions))
-                 }
+                  case PropertyTree.Empty => ZIO.fail(ReadError.MissingValue(path.reverse, descriptions))
+                }
       } yield res
 
     def loopSequence[B](
@@ -252,13 +265,28 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
       }
 
       for {
-        tree_ <- treeOf(cfg, cachedSources)
-        res   <- tree_.at(PropertyTreePath(path.reverse.toVector)) match {
-                   case leaf @ PropertyTree.Leaf(_, _) => fromTrees(List(leaf))
-                   case PropertyTree.Record(_)         => ZIO.fail(formatError(path, "of type Map", "List", descriptions))
-                   case PropertyTree.Empty             => ZIO.fail(ReadError.MissingValue(path.reverse, descriptions))
-                   case PropertyTree.Sequence(values)  => fromTrees(values)
-                 }
+        _ <- ZIO.foreach(cfg.sources.toList) { managedSource =>
+               for {
+                 maybeMemoizedReader <- cachedSources.get(managedSource) match {
+                                          case Some(value) =>
+                                            ZIO.succeed(value)
+                                          case None        =>
+                                            managedSource.run.access
+                                        }
+                 _                   <- ZIO.succeed(cachedSources.update(managedSource, maybeMemoizedReader))
+               } yield ()
+             }
+
+        tree <- treeOf(
+                  cachedSources.filter(t => cfg.sources.contains(t._1)).values.toSet,
+                  PropertyTreePath(path.reverse.toVector)
+                )
+        res  <- tree match {
+                  case leaf @ PropertyTree.Leaf(_, _) => fromTrees(List(leaf))
+                  case PropertyTree.Record(_)         => ZIO.fail(formatError(path, "of type Map", "List", descriptions))
+                  case PropertyTree.Empty             => ZIO.fail(ReadError.MissingValue(path.reverse, descriptions))
+                  case PropertyTree.Sequence(values)  => fromTrees(values)
+                }
       } yield res
     }
 
@@ -330,24 +358,18 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     }
   }
 
+  @silent("a type was inferred to be `Any`")
   private[config] def treeOf[A](
-    config: ConfigDescriptor[A],
-    cachedSources: CachedReaders
+    sources: Set[ZIO[Scope, ReadError[K], ConfigSource.TreeReader]],
+    path: PropertyTreePath[K]
   ): ZIO[Scope, ReadError[String], PropertyTree[K, V]] = {
-    val sourceTrees = ZIO.foreach(config.sources.toList) { managed =>
-      for {
-        existing      <- ZIO.succeed(cachedSources.get(managed))
-        managedReader <- existing match {
-                           case Some(value) =>
-                             ZIO.succeed(value)
-                           case None        =>
-                             managed.run.access
-                         }
-        rootTree      <- ZIO.scoped(managedReader.flatMap(reader => reader(PropertyTreePath(Vector.empty))))
-      } yield rootTree
-    }
+    val sourceTrees: Set[ZIO[Scope, ReadError[String], PropertyTree[String, String]]] =
+      sources.map(managed => ZIO.scoped(managed.flatMap(reader => reader(path))))
 
-    sourceTrees.map(_.reduceLeftOption(_.getOrElse(_)).getOrElse(PropertyTree.empty))
+    val collectedTrees: ZIO[Scope, ReadError[String], List[PropertyTree[String, String]]] =
+      ZIO.collectAll(sourceTrees.toList)
+
+    collectedTrees.map(_.reduceLeftOption(_.getOrElse(_)).getOrElse(PropertyTree.empty))
   }
 
   private[config] def isEmptyConfigSource[A](
@@ -364,7 +386,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                            case None        =>
                              managed.run.access
                          }
-        tree          <- ZIO.scoped(managedReader.flatMap(_(PropertyTreePath(keys.toVector))))
+        tree          <- managedReader.flatMap(_(PropertyTreePath(keys.toVector)))
       } yield tree == PropertyTree.empty
     }
 
