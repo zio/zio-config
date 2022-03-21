@@ -105,7 +105,7 @@ package object refined {
    *   final case class Jdbc(username: NonEmptyString, password: NonEmptyString)
    *
    *   val jdbc: ConfigDescriptor[Jdbc] =
-   *     (refineType[NonEmptyString]("username") |@| refineType[NonEmptyString]("password"))(Jdbc.apply, Jdbc.unapply)
+   *     (refineType[NonEmptyString]("username") zip refineType[NonEmptyString]("password")).to[Jdbc]
    * }}}
    */
   def refineType[R]: PartialRefinedPath[R] =

@@ -108,7 +108,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * {{{
      *   case class Hello(a: String, b: String)
-     *   val config: ConfigDescriptor[Hello] = (string("a") |@| string("b")).to[Hello]
+     *   val config: ConfigDescriptor[Hello] = (string("a") zip string("b")).to[Hello]
      *
      *   However your source is different for some reason (i.e, its not `a` and `b`). Example:
      *   {
@@ -254,7 +254,7 @@ trait ConfigSourceModule extends KeyValueModule {
        * and if both fails it gets from `configSource3`. `Age` will be fetched only from `configSource3`.
        *
        * {{{
-       *   val config = (string("Id") from (configSource1 orElse configSource2) |@| int("Age"))(Person.apply, Person.unapply)
+       *   val config = (string("Id") from (configSource1 orElse configSource2) zip int("Age")).to[Person]
        *   read(config from configSource3)
        * }}}
        */
@@ -289,7 +289,7 @@ trait ConfigSourceModule extends KeyValueModule {
        * and if both fails it gets from `configSource3`. `Age` will be fetched only from `configSource3`.
        *
        * {{{
-       *   val config = (string("Id") from (configSource1 orElse configSource2) |@| int("Age"))(Person.apply, Person.unapply)
+       *   val config = (string("Id") from (configSource1 orElse configSource2) zip int("Age")).to[Person]
        *   read(config from configSource3)
        * }}}
        */
@@ -319,11 +319,11 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      *    final case class Credentials(username: String, password: String)
      *
-     *    val credentials = (string("username") |@| string("password"))(Credentials.apply, Credentials.unapply)
+     *    val credentials = (string("username") zip string("password")).to[Credentials]
      *
      *    final case class Config(databaseCredentials: Credentials, vaultCredentials: Credentials, regions: List[String], users: List[String])
      *
-     *    (nested("db") { credentials } |@| nested("vault") { credentials } |@| list("regions")(string) |@| list("user")(string))(Config.apply, Config.unapply)
+     *    (nested("db") { credentials } zip nested("vault") { credentials } zip list("regions")(string) zip list("user")(string)).to[Config]
      *
      *    // res0 Config(Credentials(1, hi), Credentials(3, 10), List(111, 122), List(k1, k2))
      *
@@ -370,7 +370,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      */
     def fromMap(
@@ -407,7 +407,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      */
     def fromMultiMap(
@@ -448,7 +448,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      */
     def fromProperties(
@@ -499,7 +499,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      */
     def fromPropertiesFile[A](
@@ -552,7 +552,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      *
      * With filterKeys, you can choose to filter only those keys that needs to be considered.
@@ -614,7 +614,7 @@ trait ConfigSourceModule extends KeyValueModule {
      *
      * {{{
      *    final case class kafkaConfig(server: String, serde: String)
-     *    nested("KAFKA")(string("SERVERS") |@| string("SERDE"))(KafkaConfig.apply, KafkaConfig.unapply)
+     *    nested("KAFKA")(string("SERVERS") zip string("SERDE")).to[KafkaConfig]
      * }}}
      */
     def fromSystemProps(

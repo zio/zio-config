@@ -40,9 +40,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *        val dbConfig: ConfigDescriptor[Config] = (string("USERNAME") zip int("PORT")).to[Config]
      *     }
      *  }}}
-     *
-     * Note that the alternative of passing `(Config.apply, Config.unapply)` to transform the config descriptor
-     * is not compatible with Scala 3.
      */
     def to[B <: Product](implicit conv: TupleConversion[B, A]): ConfigDescriptor[B] =
       self.transform(
@@ -69,7 +66,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *     object Config {
      *        val dbConfig: ConfigDescriptor[Config] =
-     *           (string("USERNAME") zip int("PORT"))(Config.apply, Config.unapply)
+     *           (string("USERNAME") zip int("PORT")).to[Config]
      *     }
      *  }}}
      *
@@ -183,7 +180,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *   object Config {
      *     val databaseConfig: ConfigDescriptor[Config] =
-     *       (string("token") <> string("password")  zip int("PORT"))(Config.apply, Config.unapply)
+     *       (string("token") <> string("password")  zip int("PORT")).to[Config]
      *   }
      *
      * }}}
@@ -1179,9 +1176,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *   val config: ConfigDescriptor[D] =
      *     enumeration[D](
-     *       string("a")(A.Apply, A.unapply),
-     *       int("b")(B.apply, B.unapply),
-     *       double("c")(C.apply, C.unapply)
+     *       string("a").to[A],
+     *       int("b").to[B],
+     *       double("c").to[C]
      *     )
      * }}}
      *
