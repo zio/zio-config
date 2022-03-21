@@ -3,7 +3,6 @@ package zio.config.examples
 import zio.config.magnolia.descriptor
 import zio.config._, ConfigDescriptor._
 import zio.config._, typesafe._, yaml._
-import zio.test.{assertM, Assertion, DefaultRunnableSpec, ZSpec}
 
 object OrElseSourceExample extends App {
 
