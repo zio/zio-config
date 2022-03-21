@@ -28,10 +28,10 @@ package object config extends KeyConversionFunctions with ConfigStringModule wit
     )
 
   private[config] def seqMap2[K, E, B](
-    map: Map[K, ZManaged[Any, E, PropertyTree[K, B]]]
-  ): ZManaged[Any, List[E], PropertyTree[K, Map[K, B]]] =
-    map.foldLeft(
-      ZManaged.fromEither[List[E], PropertyTree[K, Map[K, B]]](Right(PropertyTree.Leaf(Map.empty)))
+    map: Map[K, ZIO[Scope, E, PropertyTree[K, B]]]
+  ): ZIO[Scope, List[E], PropertyTree[K, Map[K, B]]] =
+    map.foldLeft[ZIO[Scope, List[E], PropertyTree[K, Map[K, B]]]](
+      ZIO.fromEither[List[E], PropertyTree[K, Map[K, B]]](Right(PropertyTree.Leaf(Map.empty)))
     ) { case (acc, (k, managed)) =>
       (for {
         a <- acc.either
@@ -46,10 +46,10 @@ package object config extends KeyConversionFunctions with ConfigStringModule wit
 
   private[config] def seqEither2[K, A, B, C](
     genError: (Int, A) => C
-  )(list: List[ZManaged[Any, A, PropertyTree[K, B]]]): ZManaged[Any, List[C], PropertyTree[K, List[B]]] =
+  )(list: List[ZIO[Scope, A, PropertyTree[K, B]]]): ZIO[Scope, List[C], PropertyTree[K, List[B]]] =
     list.zipWithIndex
       .foldLeft(
-        ZManaged.fromEither(Right(PropertyTree.Leaf(List.empty))): ZManaged[Any, List[C], PropertyTree[K, List[B]]]
+        ZIO.fromEither(Right(PropertyTree.Leaf(List.empty))): ZIO[Scope, List[C], PropertyTree[K, List[B]]]
       ) { case (acc, (managed, index)) =>
         (for {
           a <- acc.either

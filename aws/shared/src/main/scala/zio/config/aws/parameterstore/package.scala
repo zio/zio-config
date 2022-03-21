@@ -12,7 +12,8 @@ package object parameterstore {
     def fromParameterStore[A](
       configDescriptor: ConfigDescriptor[A],
       basePath: String,
-      getClient: Task[AWSSimpleSystemsManagement] = Task(AWSSimpleSystemsManagementClientBuilder.defaultClient())
+      getClient: Task[AWSSimpleSystemsManagement] =
+        Task.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
     )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       ParameterStoreConfig.from(configDescriptor, basePath, getClient)
   }
@@ -20,7 +21,8 @@ package object parameterstore {
   implicit class FromConfigSourceTypesafe(c: ConfigSource.type) {
     def fromParameterStore(
       basePath: String,
-      getClient: Task[AWSSimpleSystemsManagement] = Task(AWSSimpleSystemsManagementClientBuilder.defaultClient())
+      getClient: Task[AWSSimpleSystemsManagement] =
+        Task.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
     ): ConfigSource =
       ParameterStoreConfigSource.from(basePath, getClient)
   }

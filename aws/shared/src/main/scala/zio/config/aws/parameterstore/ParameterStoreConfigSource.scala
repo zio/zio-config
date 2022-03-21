@@ -6,7 +6,7 @@ import com.amazonaws.services.simplesystemsmanagement.{
   AWSSimpleSystemsManagementClientBuilder
 }
 import zio.config.{PropertyTreePath, ReadError, _}
-import zio.{Task, ZIO, ZManaged}
+import zio.{Task, ZIO}
 
 import scala.jdk.CollectionConverters._
 
@@ -15,30 +15,27 @@ import ConfigSource._
 object ParameterStoreConfigSource {
   def from(
     basePath: String,
-    getClient: Task[AWSSimpleSystemsManagement] = Task(AWSSimpleSystemsManagementClientBuilder.defaultClient())
+    getClient: Task[AWSSimpleSystemsManagement] = Task.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
   ): ConfigSource = {
     val effect: MemoizableManagedReader =
-      ZManaged.succeed {
-        ZManaged
-          .fromZIO(
-            getClient.flatMap { ssm =>
-              val request =
-                new GetParametersByPathRequest()
-                  .withPath(basePath)
-                  .withRecursive(true)
-                  .withWithDecryption(true)
+      ZIO.succeed {
+        getClient.flatMap { ssm =>
+          val request =
+            new GetParametersByPathRequest()
+              .withPath(basePath)
+              .withRecursive(true)
+              .withWithDecryption(true)
 
-              ZIO
-                .attempt(ssm.getParametersByPath(request).getParameters)
-                .map(_.asScala.toList)
-                .map { list =>
-                  ConfigSource
-                    .getPropertyTreeFromMap(convertParameterListToMap(list, basePath), keyDelimiter = Some('/'))
-                }
+          ZIO
+            .attempt(ssm.getParametersByPath(request).getParameters)
+            .map(_.asScala.toList)
+            .map { list =>
+              ConfigSource
+                .getPropertyTreeFromMap(convertParameterListToMap(list, basePath), keyDelimiter = Some('/'))
             }
-              .map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
-              .mapError(throwable => ReadError.SourceError(throwable.toString): ReadError[String])
-          )
+        }
+          .map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
+          .mapError(throwable => ReadError.SourceError(throwable.toString): ReadError[String])
       }
 
     ConfigSource
