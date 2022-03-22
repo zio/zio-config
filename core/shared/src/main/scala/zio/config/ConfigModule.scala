@@ -101,7 +101,7 @@ trait ConfigModule
    *     } yield ()
    *
    *   val configDesc =
-   *     (string("USERNAME") |@| int("PORT")).to[MyConfig] from ConfigSource.fromMap(Map())
+   *     (string("USERNAME") zip int("PORT")).to[MyConfig] from ConfigSource.fromMap(Map())
    *
    *   val main: ZIO[zio.console.Console, Exception, Unit] =
    *     app.provideSomeLayer[Console](configLayer_(configDesc))

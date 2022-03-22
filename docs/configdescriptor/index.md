@@ -491,7 +491,7 @@ Note that `autoListConfig` (automatically generated) config, is exactly similar 
   val accnt =
     (string("region") zip string("accountId")).to[Accnt]
 
-  val db = (int("port") zip string("url"))(Db.apply, Db.unapply)
+  val db = (int("port") zip string("url")).to[Db]
 
   val nonAutomatic =
     (nested("accounts")(list(accnt)) zip nested("database")(db)).to[AwsDetails]
