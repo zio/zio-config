@@ -1,18 +1,11 @@
 package zio.config.examples.typesafe
 
 import zio.config._
-import zio.config.magnolia.Descriptor.SealedTraitStrategy
-import zio.config.magnolia.{DeriveConfigDescriptor, Descriptor}
+import zio.config.magnolia.Descriptor
 
 import typesafe._
-import Descriptor.SealedTraitStrategy._
 
 object PureConfigInterop extends App with EitherImpureOps {
-  val customConfigDescriptor: DeriveConfigDescriptor =
-    new DeriveConfigDescriptor {
-      override def sealedTraitStrategy: SealedTraitStrategy =
-        ignoreSealedTraitName && labelSubClassName("type")
-    }
 
   sealed trait X
 
@@ -79,14 +72,12 @@ object PureConfigInterop extends App with EitherImpureOps {
            |""".stripMargin
       )
 
-  import customConfigDescriptor._
-
-  assert(read(customConfigDescriptor.descriptor[Config] from aHoconSource) equalM Config(A))
-  assert(read(customConfigDescriptor.descriptor[Config] from bHoconSource) equalM Config(B))
-  assert(read(customConfigDescriptor.descriptor[Config] from cHoconSource) equalM Config(C))
+  assert(read(Descriptor.descriptorForPureConfig[Config] from aHoconSource) equalM Config(A))
+  assert(read(Descriptor.descriptorForPureConfig[Config] from bHoconSource) equalM Config(B))
+  assert(read(Descriptor.descriptorForPureConfig[Config] from cHoconSource) equalM Config(C))
 
   assert(
-    read(customConfigDescriptor.descriptor[Config] from dHoconSource) equalM
+    read(Descriptor.descriptorForPureConfig[Config] from dHoconSource) equalM
       Config(D(Detail("ff", "ll", Region("strath", "syd"))))
   )
 }

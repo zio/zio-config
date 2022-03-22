@@ -502,42 +502,17 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * }}}
      */
-    def mapKey(f: K => K): ConfigDescriptor[A] = {
-      val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
-        MutableMap()
+    def mapKey(f: K => K): ConfigDescriptor[A] =
+      mapKey(f, None)
 
-      def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
-        config match {
-          case c @ Lazy(thunk) =>
-            val res = thunk()
+    private[config] def mapSealedTraitName(f: K => K): ConfigDescriptor[A] =
+      mapKey(f, Some(KeyType.SealedTrait))
 
-            descriptors.get(c) match {
-              case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
-              case None        =>
-                val result = Lazy(() => loop(res))
-                descriptors.update(c, result)
-                result
-            }
+    private[config] def mapSubClassName(f: K => K): ConfigDescriptor[A] =
+      mapKey(f, Some(KeyType.SubClass))
 
-          case Source(source, propertyType) => Source(source, propertyType)
-          case DynamicMap(conf)             => DynamicMap(loop(conf))
-          case Nested(path, conf)           =>
-            Nested(f(path), loop(conf))
-          case Optional(conf)               => Optional(loop(conf))
-          case Sequence(conf)               => Sequence(loop(conf))
-          case Describe(conf, message)      => Describe(loop(conf), message)
-          case Default(conf, value)         => Default(loop(conf), value)
-          case TransformOrFail(conf, f, g)  =>
-            TransformOrFail(loop(conf), f, g)
-          case Zip(conf1, conf2)            => Zip(loop(conf1), loop(conf2))
-          case OrElseEither(conf1, conf2)   =>
-            OrElseEither(loop(conf1), loop(conf2))
-          case OrElse(value1, value2)       =>
-            OrElse(loop(value1), loop(value2))
-        }
-
-      loop(self)
-    }
+    private[config] def mapFieldName(f: K => K): ConfigDescriptor[A] =
+      mapKey(f, Some(KeyType.Primitive))
 
     /**
      * `optional` function allows us to tag a configuration parameter as optional.
@@ -894,8 +869,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case DynamicMap(conf) =>
             DynamicMap(loop(conf))
 
-          case Nested(path, conf) =>
-            Nested(path, loop(conf))
+          case Nested(path, conf, keyType) =>
+            Nested(path, loop(conf), keyType)
 
           case Optional(conf) =>
             Optional(loop(conf))
@@ -975,7 +950,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case Lazy(get) =>
             runLoop(get(), None)
 
-          case Nested(_, config) =>
+          case Nested(_, config, _) =>
             runLoop(config, None)
 
           case Optional(config) =>
@@ -1089,6 +1064,211 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       g: B => Either[String, A]
     ): ConfigDescriptor[B] =
       self.transformOrFail(t => Right(f(t)), (g))
+
+    private[config] def mapKey(f: K => K, onlyFor: Option[KeyType]): ConfigDescriptor[A] = {
+      val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
+        MutableMap()
+
+      def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
+        config match {
+          case c @ Lazy(thunk) =>
+            val res = thunk()
+
+            descriptors.get(c) match {
+              case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
+              case None        =>
+                val result = Lazy(() => loop(res))
+                descriptors.update(c, result)
+                result
+            }
+
+          case Source(source, propertyType) =>
+            Source(source, propertyType)
+
+          case DynamicMap(conf) =>
+            DynamicMap(loop(conf))
+
+          case Nested(path, conf, keyType) =>
+            (onlyFor, keyType) match {
+              case (Some(k1), Some(k2)) if k1 == k2 => Nested(f(path), loop(conf), keyType)
+              case (None, _)                        => Nested(f(path), loop(conf), keyType)
+              case (_, _)                           => Nested(path, loop(conf), keyType)
+            }
+
+          case Optional(conf) =>
+            Optional(loop(conf))
+
+          case Sequence(conf) =>
+            Sequence(loop(conf))
+
+          case Describe(conf, message) =>
+            Describe(loop(conf), message)
+
+          case Default(conf, value) =>
+            Default(loop(conf), value)
+
+          case TransformOrFail(conf, f, g) =>
+            TransformOrFail(loop(conf), f, g)
+
+          case Zip(conf1, conf2) =>
+            Zip(loop(conf1), loop(conf2))
+
+          case OrElseEither(conf1, conf2) =>
+            OrElseEither(loop(conf1), loop(conf2))
+
+          case OrElse(value1, value2) =>
+            OrElse(loop(value1), loop(value2))
+        }
+
+      loop(self)
+    }
+
+    private[config] def removeKey(keyTypes: List[KeyType]) = {
+      println("removing key")
+      val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
+        MutableMap()
+
+      def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
+        config match {
+          case c @ Lazy(thunk) =>
+            val res = thunk()
+
+            descriptors.get(c) match {
+              case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
+              case None        =>
+                val result = Lazy(() => loop(res))
+                descriptors.update(c, result)
+                result
+            }
+
+          case Source(source, propertyType) =>
+            Source(source, propertyType)
+
+          case DynamicMap(conf) =>
+            DynamicMap(loop(conf))
+
+          case Nested(path, conf, keyType0) =>
+            keyType0 match {
+              case Some(keyType0) if keyTypes.contains(keyType0) => loop(conf)
+              case Some(_)                                       => Nested(path, loop(conf), keyType0)
+              case None                                          => Nested(path, loop(conf), None)
+            }
+
+          case Optional(conf) =>
+            Optional(loop(conf))
+
+          case Sequence(conf) =>
+            Sequence(loop(conf))
+
+          case Describe(conf, message) =>
+            Describe(loop(conf), message)
+
+          case Default(conf, value) =>
+            Default(loop(conf), value)
+
+          case TransformOrFail(conf, f, g) =>
+            TransformOrFail(loop(conf), f, g)
+
+          case Zip(conf1, conf2) =>
+            Zip(loop(conf1), loop(conf2))
+
+          case OrElseEither(conf1, conf2) =>
+            OrElseEither(loop(conf1), loop(conf2))
+
+          case OrElse(value1, value2) =>
+            OrElse(loop(value1), loop(value2))
+        }
+
+      loop(self)
+    }
+
+    private[config] def pureConfig(labelName: String = "type") = {
+      println("on to pure config")
+      val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
+        MutableMap()
+
+      def loop[B](config: ConfigDescriptor[B]): ConfigDescriptor[B] =
+        config match {
+          case c @ Lazy(thunk) =>
+            val res = thunk()
+
+            descriptors.get(c) match {
+              case Some(value) => value.asInstanceOf[ConfigDescriptor[B]]
+              case None        =>
+                val result = Lazy(() => loop(res))
+                descriptors.update(c, result)
+                result
+            }
+
+          case Source(source, propertyType) =>
+            Source(source, propertyType)
+
+          case DynamicMap(conf) =>
+            DynamicMap(loop(conf))
+
+          case nested @ Nested(path, conf, keyType0) =>
+            keyType0 match {
+              case None        => nested
+              case Some(value) =>
+                value match {
+                  case KeyType.SealedTrait =>
+                    println("hmm")
+                    nested
+
+                  case KeyType.SubClass  =>
+                    println("hello")
+                    val stringType =
+                      sourceDesc(ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
+
+                    (nestedDesc(
+                      labelName,
+                      stringType,
+                      Some(KeyType.Primitive)
+                    ) ?? s"Expecting a constant string ${path}" zip conf)
+                      .transformOrFail[B](
+                        { case (name, sub) =>
+                          if (path == name) Right(sub)
+                          else
+                            Left(
+                              s"The type specified ${name} is not equal to the obtained config ${path}"
+                            )
+                        },
+                        b => Right((path, b)): Either[String, (String, B)]
+                      )
+                  case KeyType.Primitive =>
+                    println("hmm2")
+
+                    nested
+                }
+            }
+
+          case Optional(conf) =>
+            Optional(loop(conf))
+
+          case Sequence(conf) =>
+            Sequence(loop(conf))
+
+          case Describe(conf, message) =>
+            Describe(loop(conf), message)
+
+          case Default(conf, value) =>
+            Default(loop(conf), value)
+
+          case TransformOrFail(conf, f, g) =>
+            TransformOrFail(loop(conf), f, g)
+
+          case Zip(conf1, conf2) =>
+            Zip(loop(conf1), loop(conf2))
+
+          case OrElseEither(conf1, conf2) =>
+            OrElseEither(loop(conf1), loop(conf2))
+
+          case OrElse(value1, value2) =>
+            OrElse(loop(value1), loop(value2))
+        }
+
+      loop(self).removeKey(List(KeyType.SealedTrait))
+    }
 
     private[config] def zipWith[B, Out, C](that: => ConfigDescriptor[B])(to: Out => Either[String, C])(
       from: C => Either[String, Out]
@@ -1714,8 +1894,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * Note that `string("key")` is same as that of `nested("key")(string)`
      */
-    def nested[A](path: K)(desc: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      ConfigDescriptorAdt.nestedDesc(path, desc)
+    def nested[A](path: K)(desc: => ConfigDescriptor[A], keyType: Option[KeyType] = None): ConfigDescriptor[A] =
+      ConfigDescriptorAdt.nestedDesc(path, desc, keyType)
 
     /**
      *  `set("xyz")(confgDescriptor)` represents just a set variant of configDescriptor within the key `xyz`.
@@ -1793,6 +1973,14 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
   }
 
   private[config] object ConfigDescriptorAdt {
+    sealed trait KeyType
+
+    object KeyType {
+      final case object SealedTrait extends KeyType
+      final case object SubClass    extends KeyType
+      final case object Primitive   extends KeyType
+    }
+
     sealed case class Default[A](config: ConfigDescriptor[A], default: A) extends ConfigDescriptor[A]
 
     sealed case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
@@ -1801,7 +1989,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class Lazy[A](get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
-    sealed case class Nested[A](path: K, config: ConfigDescriptor[A]) extends ConfigDescriptor[A]
+    sealed case class Nested[A](path: K, config: ConfigDescriptor[A], keyType: Option[KeyType])
+        extends ConfigDescriptor[A]
 
     sealed case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
@@ -1836,8 +2025,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[A] =
       Lazy(() => config)
 
-    final def nestedDesc[A](path: K, config: => ConfigDescriptor[A]): ConfigDescriptor[A] =
-      Nested(path, lazyDesc(config))
+    final def nestedDesc[A](path: K, config: => ConfigDescriptor[A], keyType: Option[KeyType]): ConfigDescriptor[A] =
+      Nested(path, lazyDesc(config), keyType)
 
     final def optionalDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =
       Optional(lazyDesc(config))

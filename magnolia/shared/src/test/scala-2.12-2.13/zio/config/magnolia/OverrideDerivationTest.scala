@@ -4,36 +4,24 @@ import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
-object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
-  import Descriptor.SealedTraitStrategy._
-
-  override def mapClassName(name: String): String = toSnakeCase(name) + "_suffix"
-  override def mapFieldName(name: String): String = "prefix_" + toSnakeCase(name)
-
-  override def sealedTraitStrategy: Descriptor.SealedTraitStrategy =
-    ignoreSealedTraitName && ignoreSubClassName
-}
-
 object OverrideDerivationTest extends ZIOSpecDefault {
   def spec: Spec[Any, TestFailure[Serializable], TestSuccess] = suite("OverrideDerivationTest")(
     test("simple config") {
-      import OverrideDerivationTestEnv._
 
       case class Cfg(fieldName: String)
 
-      val res = write(getDescriptor[Cfg].desc, Cfg("a"))
+      val res = write(Descriptor.descriptorWithoutClassNames[Cfg], Cfg("a"))
 
       assertM(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
-          .flatMap(v => read(getDescriptor[Cfg].desc from v))
+          .flatMap(v => read(Descriptor.descriptorWithoutClassNames[Cfg] from v))
       )(
         equalTo(Cfg("a"))
       )
     },
     test("unwrapped sealed hierarchy") {
-      import OverrideDerivationTestEnv._
 
       sealed trait Inner
       case object Obj1Name                     extends Inner
@@ -45,26 +33,18 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(OverrideDerivationTestEnv.getDescriptor[Outer].desc, cfg)
+      val res = write(Descriptor.descriptorWithoutClassNames[Outer], cfg)
 
       assertM(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
-          .flatMap(v => read(getDescriptor[Outer].desc from v))
+          .flatMap(v => read(Descriptor.descriptorWithoutClassNames[Outer] from v))
       )(
         equalTo(cfg)
       )
     },
     test("wrapped sealed hierarchy") {
-      val wrappedSealedHierarchy = new DeriveConfigDescriptor {
-        import Descriptor.SealedTraitStrategy._
-
-        override def sealedTraitStrategy: Descriptor.SealedTraitStrategy =
-          wrapSealedTraitName && wrapSubClassName
-      }
-
-      import wrappedSealedHierarchy._
 
       sealed trait Inner
       case object Obj1Name                     extends Inner
@@ -76,26 +56,18 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
+      val res = write(Descriptor.descriptorWithClassNames[Outer], cfg)
 
       assertM(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
-          .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
+          .flatMap(v => read(Descriptor.descriptorWithClassNames[Outer] from v))
       )(
         equalTo(cfg)
       )
     },
     test("config with type labels ignoring the name of sealed trait") {
-      val wrappedSealedHierarchy = new DeriveConfigDescriptor {
-        import Descriptor.SealedTraitStrategy._
-
-        override def sealedTraitStrategy: Descriptor.SealedTraitStrategy =
-          ignoreSealedTraitName && labelSubClassName("type")
-      }
-
-      import wrappedSealedHierarchy._
 
       sealed trait Inner
       case object Obj1Name                     extends Inner
@@ -107,26 +79,18 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
+      val res = write(Descriptor.descriptorForPureConfig[Outer], cfg)
 
       assertM(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
-          .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
+          .flatMap(v => read(Descriptor.descriptorForPureConfig[Outer] from v))
       )(
         equalTo(cfg)
       )
     },
     test("config with type labels wrapped with sealed trait name") {
-      val wrappedSealedHierarchy = new DeriveConfigDescriptor {
-        import Descriptor.SealedTraitStrategy._
-
-        override def sealedTraitStrategy: Descriptor.SealedTraitStrategy =
-          wrapSealedTraitName && labelSubClassName("type")
-      }
-
-      import wrappedSealedHierarchy._
 
       sealed trait Inner
       case object Obj1Name                     extends Inner
@@ -138,13 +102,13 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(wrappedSealedHierarchy.descriptor[Outer], cfg)
+      val res = write(Descriptor.descriptorWithClassesWithLabel[Outer]("type"), cfg)
 
       assertM(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
-          .flatMap(v => read(wrappedSealedHierarchy.descriptor[Outer] from v))
+          .flatMap(v => read(Descriptor.descriptorWithClassesWithLabel[Outer]("type") from v))
       )(
         equalTo(cfg)
       )
