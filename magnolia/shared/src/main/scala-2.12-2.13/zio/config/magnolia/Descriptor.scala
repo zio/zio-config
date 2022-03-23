@@ -161,7 +161,6 @@ case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
 
   /**
    * Map all keys, where key corresponds to only field names of a case class,
-   * and not the one corresponding the name of any class
    */
   def mapFieldName(f: String => String): Descriptor[T] =
     Descriptor(desc.mapFieldName(f))
