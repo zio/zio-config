@@ -1124,7 +1124,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     }
 
     private[config] def removeKey(keyTypes: List[KeyType]) = {
-      println("removing key")
       val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
         MutableMap()
 
@@ -1182,8 +1181,41 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       loop(self)
     }
 
+    private[config] def keysOf(keyType: KeyType): List[String] = {
+      val descriptors: MutableMap[ConfigDescriptor[_], List[String]] =
+        MutableMap()
+
+      def loop[B](cfg: ConfigDescriptor[B]): List[String] =
+        cfg match {
+          case Default(config, default)  => loop(config)
+          case Describe(config, message) => loop(config)
+          case DynamicMap(config)        => loop(config)
+          case c @ Lazy(thunk)           =>
+            val res = thunk()
+
+            descriptors.get(c) match {
+              case Some(value) => value
+              case None        =>
+                val result: List[String] = loop(res)
+                descriptors.update(c, result)
+                result
+            }
+
+          case Nested(path, config, keyType0) if keyType0 == Some(keyType) => path :: loop(config)
+          case Nested(path, config, keyType)                               => loop(config)
+          case Optional(config)                                            => loop(config)
+          case OrElse(left, right)                                         => loop(left) ++ loop(right)
+          case OrElseEither(left, right)                                   => loop(left) ++ loop(right)
+          case Sequence(config)                                            => loop(config)
+          case Source(source, propertyType)                                => Nil
+          case Zip(left, right)                                            => loop(left) ++ loop(right)
+          case TransformOrFail(config, f, g)                               => loop(config)
+        }
+
+      loop(self)
+    }
+
     private[config] def pureConfig(labelName: String = "type") = {
-      println("on to pure config")
       val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
         MutableMap()
 
@@ -1206,17 +1238,16 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
           case DynamicMap(conf) =>
             DynamicMap(loop(conf))
 
-          case nested @ Nested(path, conf, keyType0) =>
+          case Nested(path, conf, keyType0) =>
             keyType0 match {
-              case None        => nested
+              case None        =>
+                Nested(path, loop(conf), keyType0)
               case Some(value) =>
                 value match {
                   case KeyType.SealedTrait =>
-                    println("hmm")
-                    nested
+                    Nested(path, loop(conf), keyType0)
 
-                  case KeyType.SubClass  =>
-                    println("hello")
+                  case KeyType.SubClass =>
                     val stringType =
                       sourceDesc(ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
 
@@ -1224,7 +1255,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
                       labelName,
                       stringType,
                       Some(KeyType.Primitive)
-                    ) ?? s"Expecting a constant string ${path}" zip conf)
+                    ) ?? s"Expecting a constant string ${path}" zip loop(conf))
                       .transformOrFail[B](
                         { case (name, sub) =>
                           if (path == name) Right(sub)
@@ -1235,10 +1266,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
                         },
                         b => Right((path, b)): Either[String, (String, B)]
                       )
-                  case KeyType.Primitive =>
-                    println("hmm2")
 
-                    nested
+                  case KeyType.Primitive  =>
+                    Nested(path, loop(conf), keyType0)
+                  case KeyType.CaseObject =>
+                    Nested(path, loop(conf), keyType0)
                 }
             }
 
@@ -1978,6 +2010,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     object KeyType {
       final case object SealedTrait extends KeyType
       final case object SubClass    extends KeyType
+      final case object CaseObject  extends KeyType
       final case object Primitive   extends KeyType
     }
 

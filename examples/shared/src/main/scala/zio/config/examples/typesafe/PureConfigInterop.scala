@@ -2,7 +2,6 @@ package zio.config.examples.typesafe
 
 import zio.config._
 import zio.config.magnolia.Descriptor
-
 import typesafe._
 
 object PureConfigInterop extends App with EitherImpureOps {
@@ -19,12 +18,9 @@ object PureConfigInterop extends App with EitherImpureOps {
     case class Region(suburb: String, city: String)
   }
 
-  /**
-   * We use automatic derivation here.
-   * As an example, In order to specify, {{{ x = a }}} in the source where `a`
-   * represents X.A object, we need a case class that wraps
-   * the sealed trait, and we use the field name of this case class as the key
-   */
+  // Note than in pure config, hocon corresponding to case objects need to be
+  // "x : { type = A }", while in zio-config that should be "x = A"
+  // However for case classes (Example: `D`), both libraries support "x : { type = D, ...}"
   final case class Config(x: X)
 
   import X._
@@ -71,6 +67,9 @@ object PureConfigInterop extends App with EitherImpureOps {
            | } 
            |""".stripMargin
       )
+
+  val cff        = Descriptor.descriptorWithClassNames[Config]
+  val cffRemoved = cff.pureConfig("type")
 
   assert(read(Descriptor.descriptorForPureConfig[Config] from aHoconSource) equalM Config(A))
   assert(read(Descriptor.descriptorForPureConfig[Config] from bHoconSource) equalM Config(B))
