@@ -498,6 +498,9 @@ object Descriptor {
       .removeKey(
         KeyType.SealedTrait
       )
+      .removeKey(
+        KeyType.CaseObject
+      )
 
   def descriptorForPureConfig[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
     descriptorWithClassNames[T].removeKey(KeyType.SealedTrait).pureConfig("type")
