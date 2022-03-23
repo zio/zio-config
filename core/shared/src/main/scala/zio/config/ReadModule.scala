@@ -318,7 +318,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
                                    case c @ DynamicMap(_) =>
                                      loopMap(path, c, descriptions, c :: programSummary)
 
-                                   case c @ Nested(key, _) =>
+                                   case c @ Nested(key, _, _) =>
                                      loopNested(Step.Key(key) :: path, c, descriptions, c :: programSummary)
 
                                    case c @ Optional(_) =>
@@ -452,7 +452,7 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         case ConfigDescriptorAdt.Zip(left, right)           => loop(count, left) + loop(count, right)
         case ConfigDescriptorAdt.TransformOrFail(cfg, _, _) => loop(count, cfg)
         case ConfigDescriptorAdt.Describe(cfg, _)           => loop(count, cfg)
-        case ConfigDescriptorAdt.Nested(_, next)            => loop(count, next)
+        case ConfigDescriptorAdt.Nested(_, next, _)         => loop(count, next)
         case ConfigDescriptorAdt.Source(_, _)               => 1
         case ConfigDescriptorAdt.Optional(_)                => 0
         case ConfigDescriptorAdt.OrElse(left, right)        => loop(count, left) + loop(count, right)

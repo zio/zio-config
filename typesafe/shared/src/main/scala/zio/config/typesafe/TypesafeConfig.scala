@@ -16,7 +16,7 @@ object TypesafeConfig {
    *
    * {{{
    *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *   import zio.config.magnolia.descriptor
    *
    *   case class MyConfig(port: Int, url: String)
    *
@@ -36,7 +36,7 @@ object TypesafeConfig {
    *
    * {{{
    *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *   import zio.config.magnolia.descriptor
    *
    *   case class MyConfig(port: Int, url: String)
    *
@@ -58,7 +58,7 @@ object TypesafeConfig {
    *
    * {{{
    *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *   import zio.config.magnolia.descriptor
    *
    *   case class MyConfig(port: Int, url: String)
    *
@@ -80,7 +80,7 @@ object TypesafeConfig {
    *
    * {{{
    *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *   import zio.config.magnolia.descriptor
    *
    *   case class MyConfig(port: Int, url: String)
    *
@@ -104,7 +104,7 @@ object TypesafeConfig {
    *
    * {{{
    *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *   import zio.config.magnolia.descriptor
    *
    *   case class MyConfig(port: Int, url: String)
    *

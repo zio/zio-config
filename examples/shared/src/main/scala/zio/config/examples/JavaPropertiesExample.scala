@@ -56,5 +56,3 @@ object SimpleExample {
       _ <- Console.printLine(s"processing data......")
     } yield ()
 }
-// A note that, with magnolia module (which is still experimental), you can skip writing the {{ configuration }} in ApplicationConfig object
-// import zio.config.magnolia.DeriveConfigDescriptor_,

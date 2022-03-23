@@ -21,7 +21,7 @@ object DerivationTest extends ZIOSpecDefault {
         case Default(config, _)            => collectDescriptions(config, path)
         case DynamicMap(config)            => collectDescriptions(config, path)
         case Describe(config, message)     => (path, message) :: collectDescriptions(config, path)
-        case Nested(path, config)          => collectDescriptions(config, Some(path))
+        case Nested(path, config, _)       => collectDescriptions(config, Some(path))
         case Optional(config)              => collectDescriptions(config, path)
         case OrElse(left, right)           =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
@@ -41,13 +41,6 @@ object DerivationTest extends ZIOSpecDefault {
     },
     test("support name annotation") {
 
-      val customDerivation = new DeriveConfigDescriptor {
-        import Descriptor.SealedTraitStrategy._
-        override def mapClassName(name: String): String                  = name
-        override def mapFieldName(name: String): String                  = name
-        override def sealedTraitStrategy: Descriptor.SealedTraitStrategy = wrapSealedTraitName && wrapSubClassName
-      }
-
       @name("St")
       sealed trait SealedTrait
       @name("className")
@@ -58,7 +51,7 @@ object DerivationTest extends ZIOSpecDefault {
         case Default(config, _)            => collectPath(config)
         case Describe(config, _)           => collectPath(config)
         case DynamicMap(config)            => collectPath(config)
-        case Nested(path, config)          => path :: collectPath(config)
+        case Nested(path, config, _)       => path :: collectPath(config)
         case Optional(config)              => collectPath(config)
         case OrElse(left, right)           => collectPath(left) ::: collectPath(right)
         case OrElseEither(left, right)     => collectPath(left) ::: collectPath(right)
@@ -69,32 +62,26 @@ object DerivationTest extends ZIOSpecDefault {
       }
 
       // IntelliJ will hide this, however it is required
-      import customDerivation._
 
-      assert(collectPath(customDerivation.getDescriptor[SealedTrait].desc))(
+      assert(collectPath(descriptorWithClassNames[SealedTrait]))(
         equalTo("St" :: "className" :: "otherName" :: Nil)
       )
     },
     test("support names annotation") {
-
-      val customDerivation = new DeriveConfigDescriptor {
-        import Descriptor.SealedTraitStrategy._
-        override def sealedTraitStrategy: Descriptor.SealedTraitStrategy = wrapSealedTraitName && wrapSubClassName
-      }
 
       @names("St1", "St2")
       sealed trait SealedTrait
       @names("className1", "className2")
       case class Cfg(@names("otherName1", "otherName2") fname: String) extends SealedTrait
 
-      val desc = customDerivation.getDescriptor[SealedTrait].desc
+      val desc = descriptorWithClassNames[SealedTrait]
 
       def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
         case Lazy(thunk)                   => collectPath(thunk())
         case Default(config, _)            => collectPath(config)
         case Describe(config, _)           => collectPath(config)
         case DynamicMap(config)            => collectPath(config)
-        case Nested(path, config)          => path :: collectPath(config)
+        case Nested(path, config, _)       => path :: collectPath(config)
         case Optional(config)              => collectPath(config)
         case OrElse(left, right)           => collectPath(left) ::: collectPath(right)
         case OrElseEither(left, right)     => collectPath(left) ::: collectPath(right)
@@ -126,7 +113,7 @@ object DerivationTest extends ZIOSpecDefault {
         case Default(config, v)            => (path -> v) :: collectDefault(config, path)
         case Describe(config, _)           => collectDefault(config, path)
         case DynamicMap(config)            => collectDefault(config, path)
-        case Nested(path, config)          => collectDefault(config, Some(path))
+        case Nested(path, config, _)       => collectDefault(config, Some(path))
         case Optional(config)              => collectDefault(config, path)
         case OrElse(left, right)           => collectDefault(left, path) ::: collectDefault(right, path)
         case OrElseEither(left, right)     =>

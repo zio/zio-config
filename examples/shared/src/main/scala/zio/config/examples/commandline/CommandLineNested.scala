@@ -1,7 +1,7 @@
 package zio.config.examples.commandline
 
 import zio.config._
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.magnolia.descriptor
 
 import examples._
 

@@ -21,7 +21,7 @@ object DerivationTest extends ZIOSpecDefault {
         case Default(config, _)            => collectDescriptions(config, path)
         case DynamicMap(config)            => collectDescriptions(config, path)
         case Describe(config, message)     => (path, message) :: collectDescriptions(config, path)
-        case Nested(path, config)          => collectDescriptions(config, Some(path))
+        case Nested(path, config, _)       => collectDescriptions(config, Some(path))
         case Optional(config)              => collectDescriptions(config, path)
         case OrElse(left, right)           =>
           collectDescriptions(left, path) ::: collectDescriptions(right, path)
@@ -57,7 +57,7 @@ object DerivationTest extends ZIOSpecDefault {
         case Default(config, _)            => collectPath(config)
         case Describe(config, _)           => collectPath(config)
         case DynamicMap(config)            => collectPath(config)
-        case Nested(path, config)          => path :: collectPath(config)
+        case Nested(path, config, _)       => path :: collectPath(config)
         case Optional(config)              => collectPath(config)
         case OrElse(left, right)           => collectPath(left) ::: collectPath(right)
         case OrElseEither(left, right)     => collectPath(left) ::: collectPath(right)
@@ -86,7 +86,7 @@ object DerivationTest extends ZIOSpecDefault {
         case Default(config, v)            => (path -> v) :: collectDefault(config, path)
         case Describe(config, _)           => collectDefault(config, path)
         case DynamicMap(config)            => collectDefault(config, path)
-        case Nested(path, config)          => collectDefault(config, Some(path))
+        case Nested(path, config, _)       => collectDefault(config, Some(path))
         case Optional(config)              => collectDefault(config, path)
         case OrElse(left, right)           => collectDefault(left, path) ::: collectDefault(right, path)
         case OrElseEither(left, right)     =>
