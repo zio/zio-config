@@ -49,7 +49,7 @@ package object refined {
    *
    * {{{
    *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *   import zio.config.magnolia.descriptor
    *
    *   final case class MyConfig(url: String, port: Int)
    *

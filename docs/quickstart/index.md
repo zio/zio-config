@@ -111,7 +111,7 @@ It will be deprecated once we find users have moved on from scala 2.11.
 ```scala mdoc:silent
 
 import zio.config._
-import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
+import zio.config.magnolia.{Descriptor, descriptor}
 
 val myConfigAutomatic = descriptor[MyConfig]
 
@@ -324,7 +324,7 @@ So to avoid that and do it in an ergonomic way, there's a `narrow` syntax extens
 import zio._
 import zio.config.typesafe._
 import zio.config.syntax._
-import zio.config.magnolia.DeriveConfigDescriptor
+import zio.config.magnolia._
 
 trait Endpoint
 trait Repository
@@ -333,7 +333,7 @@ case class AppConfig(api: ApiConfig, db: DbConfig)
 case class DbConfig (url: String,    driver: String)
 case class ApiConfig(host: String,   port: Int)
 
-val configDescription = DeriveConfigDescriptor.descriptor[AppConfig]
+val configDescription = descriptor[AppConfig]
 
 // components have only required dependencies
 val endpoint: ZLayer[ApiConfig, Nothing, Endpoint]    = ZLayer.succeed(new Endpoint {})

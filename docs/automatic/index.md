@@ -210,7 +210,7 @@ This is because zio-config-magnolia failed to derive an instance of Descriptor f
 In order to provide implicit instances, following choices are there
 
 ```
- import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
+ import zio.config.magnolia.{Descriptor, descriptor}
 
  implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
    Descriptor[String].transform(string => AwsRegion.from(string), _.toString)
@@ -241,7 +241,7 @@ What if our custom type is complex enough that, parsing from a string would actu
 The answer is, zio-config provides with all the functions that you need to handle errors.
 
 ```
- import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
+ import zio.config.magnolia.{Descriptor, descriptor}
 
   implicit val descriptorO: Descriptor[ZonedDateTime] =
     Descriptor[String].transformOrFailLeft(x => Try (ZonedDateTime.parse(x)).toEither.swap.map(_.getMessage).swap)(_.toString)
@@ -261,7 +261,7 @@ some description to custom types as well. For example:
 
 
 ```
- import zio.config.magnolia.DeriveConfigDescriptor.{Descriptor, descriptor}
+ import zio.config.magnolia.{Descriptor, descriptor}
 
 
   implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
@@ -318,19 +318,9 @@ the source config.
 
 
 ## Scala3 Autoderivation
-Works just like scala-2.12 and scala-2.13, however we don't have DeriveConfigDescriptor anymore.
+Works just like scala-2.12 and scala-2.13.
 If possible, we will make this behaviour consistent in scala-2.12 and scala-2.13 in future versions of zio-config.
 
-#### No more DeriveConfigDescriptor class
-
-If you are in scala-3, just make sure you **don't** have the import
-`zio.config.magnolia.DeriveConfigDescriptor.descriptor`, because  `DeriveConfigDescriptor`
-doesn't exist in scala3. 
-
-Instead, use `zio.config.magnolia.descriptor`. This already works in scala-2.x as well.
-
-Eventually, we hope to bring the same behaviour in scala-2.x and make it consistent across
-all versions.
 
 ### No support for `AnyVal` 
 
@@ -369,14 +359,7 @@ object AwsRegion {
 ```
 this way there is no need for you to update the configuration files.
 
-### No more SealedStraitStrategy
 
-If you are familiar with `SealedTraitStrategy` in zio-config for scala-2.x, you will miss it in scala-3. 
-With scala-3 (and hopefully in scala-2.x in future versions) most of the outcomes that you
-get using `SealedStraitStrategy` is possible with `name` (or `names`) annotations. 
-
-We think, this is more explicit, and less of a magic compared to creating `customDerivation` by 
-extending `DeriveConfigDescriptor`
 
 #### Example:
 
