@@ -10,6 +10,7 @@ import java.net.{URI, URL}
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
+
 import ConfigDescriptorAdt._
 
 case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
@@ -174,13 +175,13 @@ case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
   /**
    * Remove the need of all keys that corresponds to the name of sealed-trait
    */
-  def removeSealedTraitNameKey =
+  def removeSealedTraitNameKey: Descriptor[T] =
     Descriptor(desc.removeKey(ConfigDescriptorAdt.KeyType.SealedTrait))
 
   /**
    * Remove the need of all keys that corresponds to the name of a subclass of a sealed-trait
    */
-  def removeSubClassNameKey =
+  def removeSubClassNameKey: Descriptor[T] =
     Descriptor(desc.removeKey(ConfigDescriptorAdt.KeyType.SubClass))
 
   /**
