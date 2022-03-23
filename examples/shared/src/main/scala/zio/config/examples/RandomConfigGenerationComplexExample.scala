@@ -2,7 +2,7 @@ package zio.config.examples
 
 import com.github.ghik.silencer.silent
 import zio.config._
-import zio.config.magnolia.DeriveConfigDescriptor.Descriptor
+import zio.config.magnolia.Descriptor
 
 import ConfigDescriptor._
 

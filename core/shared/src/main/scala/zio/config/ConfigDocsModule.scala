@@ -644,7 +644,7 @@ trait ConfigDocsModule extends WriteModule {
             alreadySeen
           )
 
-        case Nested(path, c) =>
+        case Nested(path, c, _) =>
           ConfigDocs.Nested(
             path,
             loopTo(

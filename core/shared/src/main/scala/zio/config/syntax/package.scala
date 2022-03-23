@@ -19,7 +19,7 @@ package object syntax {
      * {{{
      *
      *  import zio._
-     *  import zio.config._, typesafe._, syntax._, magnolia.DeriveConfigDescriptor
+     *  import zio.config._, typesafe._, syntax._, magnolia._
      *
      *  trait Endpoint
      *  trait Repository
@@ -28,7 +28,7 @@ package object syntax {
      *  case class DbConfig (url: String,    driver: String)
      *  case class ApiConfig(host: String,   port: Int)
      *
-     *  val configDescription = DeriveConfigDescriptor.descriptor[AppConfig]
+     *  val configDescription = descriptor[AppConfig]
      *
      *  // components have only required dependencies
      *  val endpoint: ZLayer[Has[ApiConfig], Nothing, Has[Endpoint]]    = ZLayer.fromService(_ => new Endpoint {})

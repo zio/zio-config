@@ -1,18 +1,11 @@
 package zio.config.examples.typesafe
 
 import zio.config._
-import zio.config.magnolia.Descriptor.SealedTraitStrategy
-import zio.config.magnolia.{DeriveConfigDescriptor, Descriptor}
+import zio.config.magnolia.Descriptor
 
 import typesafe._
-import Descriptor.SealedTraitStrategy._
 
 object PureConfigInterop extends App with EitherImpureOps {
-  val customConfigDescriptor: DeriveConfigDescriptor =
-    new DeriveConfigDescriptor {
-      override def sealedTraitStrategy: SealedTraitStrategy =
-        ignoreSealedTraitName && labelSubClassName("type")
-    }
 
   sealed trait X
 
@@ -26,12 +19,9 @@ object PureConfigInterop extends App with EitherImpureOps {
     case class Region(suburb: String, city: String)
   }
 
-  /**
-   * We use automatic derivation here.
-   * As an example, In order to specify, {{{ x = a }}} in the source where `a`
-   * represents X.A object, we need a case class that wraps
-   * the sealed trait, and we use the field name of this case class as the key
-   */
+  // Note than in pure config, hocon corresponding to case objects need to be
+  // "x : { type = A }", while in zio-config that should be "x = A"
+  // However for case classes (Example: `D`), both libraries support "x : { type = D, ...}"
   final case class Config(x: X)
 
   import X._
@@ -79,14 +69,11 @@ object PureConfigInterop extends App with EitherImpureOps {
            |""".stripMargin
       )
 
-  import customConfigDescriptor._
-
-  assert(read(customConfigDescriptor.descriptor[Config] from aHoconSource) equalM Config(A))
-  assert(read(customConfigDescriptor.descriptor[Config] from bHoconSource) equalM Config(B))
-  assert(read(customConfigDescriptor.descriptor[Config] from cHoconSource) equalM Config(C))
-
+  assert(read(Descriptor.descriptorForPureConfig[Config] from aHoconSource) equalM Config(A))
+  assert(read(Descriptor.descriptorForPureConfig[Config] from bHoconSource) equalM Config(B))
+  assert(read(Descriptor.descriptorForPureConfig[Config] from cHoconSource) equalM Config(C))
   assert(
-    read(customConfigDescriptor.descriptor[Config] from dHoconSource) equalM
+    read(Descriptor.descriptorForPureConfig[Config] from dHoconSource) equalM
       Config(D(Detail("ff", "ll", Region("strath", "syd"))))
   )
 }
