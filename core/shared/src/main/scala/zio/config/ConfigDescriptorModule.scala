@@ -503,16 +503,36 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      * }}}
      */
     def mapKey(f: K => K): ConfigDescriptor[A] =
-      mapKey(f, None)
+      mapKey((k, _) => f(k))
 
     private[config] def mapSealedTraitName(f: K => K): ConfigDescriptor[A] =
-      mapKey(f, Some(KeyType.SealedTrait))
+      mapKey((k, keyType) =>
+        keyType match {
+          case Some(value) if value == KeyType.SealedTrait => f(k)
+          case Some(_)                                     => k
+          case None                                        => k
+        }
+      )
 
     private[config] def mapSubClassName(f: K => K): ConfigDescriptor[A] =
-      mapKey(f, Some(KeyType.SubClass))
+      mapKey((k, keyType) =>
+        keyType match {
+          case Some(value) if value == KeyType.SubClass => f(k)
+          case Some(_)                                  => k
+          case None                                     => k
+        }
+      )
 
     private[config] def mapFieldName(f: K => K): ConfigDescriptor[A] =
-      mapKey(f, Some(KeyType.Primitive))
+      mapKey((k, keyType) =>
+        keyType match {
+          // If there is a keytype info and it is primitive, apply f
+          case Some(value) if value == KeyType.Primitive => f(k)
+          // If there is no keytype info then we assume it is a primitive field, and apply f
+          case None                                      => f(k)
+          case Some(_)                                   => k
+        }
+      )
 
     /**
      * `optional` function allows us to tag a configuration parameter as optional.
@@ -1065,7 +1085,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[B] =
       self.transformOrFail(t => Right(f(t)), (g))
 
-    private[config] def mapKey(f: K => K, onlyFor: Option[KeyType]): ConfigDescriptor[A] = {
+    private[config] def mapKey(f: (K, Option[KeyType]) => K): ConfigDescriptor[A] = {
       val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
         MutableMap()
 
@@ -1089,11 +1109,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             DynamicMap(loop(conf))
 
           case Nested(path, conf, keyType) =>
-            (onlyFor, keyType) match {
-              case (Some(k1), Some(k2)) if k1 == k2 => Nested(f(path), loop(conf), keyType)
-              case (None, _)                        => Nested(f(path), loop(conf), keyType)
-              case (_, _)                           => Nested(path, loop(conf), keyType)
-            }
+            Nested(f(path, keyType), loop(conf), keyType)
 
           case Optional(conf) =>
             Optional(loop(conf))
@@ -1215,6 +1231,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       loop(self)
     }
 
+    /**
+     * Accessible only if you use auto-derivation using zio-config-magnolia
+     */
     private[config] def pureConfig(labelName: String = "type") = {
       val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
         MutableMap()
