@@ -2,6 +2,7 @@ package zio.config.examples.typesafe
 
 import zio.config._
 import zio.config.magnolia.Descriptor
+
 import typesafe._
 
 object PureConfigInterop extends App with EitherImpureOps {
@@ -67,9 +68,6 @@ object PureConfigInterop extends App with EitherImpureOps {
            | } 
            |""".stripMargin
       )
-
-  val cff        = Descriptor.descriptorWithClassNames[Config]
-  val cffRemoved = cff.pureConfig("type")
 
   assert(read(Descriptor.descriptorForPureConfig[Config] from aHoconSource) equalM Config(A))
   assert(read(Descriptor.descriptorForPureConfig[Config] from bHoconSource) equalM Config(B))

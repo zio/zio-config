@@ -51,7 +51,7 @@ a few subtle limitations.
   // Setting up imports
 
   import zio.config._, zio.config.typesafe._
-  import zio.config.magnolia.DeriveConfigDescriptor._
+  import zio.config.magnolia._
 
   import X._
 ```
