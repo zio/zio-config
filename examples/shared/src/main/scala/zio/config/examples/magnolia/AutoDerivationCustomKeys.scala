@@ -13,10 +13,7 @@ import examples._
 object AutoDerivationCustomKeys extends App with EitherImpureOps {
   final case class MyConfig(accountId: String, awsRegion: String)
 
-  import zio.config.magnolia.Descriptor
-
   final case class Region(value: String)
-  Descriptor[String].transform[Region](Region, _.value)
 
   val camelCaseConfig: String =
     """

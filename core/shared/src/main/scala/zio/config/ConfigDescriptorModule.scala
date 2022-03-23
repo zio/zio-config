@@ -1123,7 +1123,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       loop(self)
     }
 
-    private[config] def removeKey(keyTypes: List[KeyType]) = {
+    private[config] def removeKey(keyTypes: KeyType*) = {
       val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
         MutableMap()
 
@@ -1256,7 +1256,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
                       stringType,
                       Some(KeyType.Primitive)
                     ) ?? s"Expecting a constant string ${path}" zip loop(conf))
-                      .transformOrFail[B](
+                      .transformOrFail(
                         { case (name, sub) =>
                           if (path == name) Right(sub)
                           else
@@ -1267,10 +1267,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
                         b => Right((path, b)): Either[String, (String, B)]
                       )
 
-                  case KeyType.Primitive  =>
+                  case KeyType.Primitive =>
                     Nested(path, loop(conf), keyType0)
+
                   case KeyType.CaseObject =>
-                    Nested(path, loop(conf), keyType0)
+                    loop(conf)
                 }
             }
 
@@ -1299,7 +1300,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             OrElse(loop(value1), loop(value2))
         }
 
-      loop(self).removeKey(List(KeyType.SealedTrait))
+      loop(self).removeKey(KeyType.SealedTrait)
     }
 
     private[config] def zipWith[B, Out, C](that: => ConfigDescriptor[B])(to: Out => Either[String, C])(

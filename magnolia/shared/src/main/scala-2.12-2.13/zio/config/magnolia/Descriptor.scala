@@ -10,6 +10,7 @@ import java.net.{URI, URL}
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
+import ConfigDescriptorAdt._
 
 case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
 
@@ -152,6 +153,38 @@ case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
     Descriptor(desc.from(that))
 
   /**
+   * Map all keys that correspond to either the name of a sealed-trait or
+   * the name of a case-classe
+   */
+  def mapClassName(f: String => String): Descriptor[T] =
+    Descriptor(desc.mapSubClassName(f).mapSealedTraitName(f))
+
+  /**
+   * Map all keys, where key corresponds to only field names of a case class,
+   * and not the one corresponding the name of any class
+   */
+  def mapFieldName(f: String => String): Descriptor[T] =
+    Descriptor(desc.mapFieldName(f))
+
+  /**
+   * Map all keys with a given function `f: String => String`
+   */
+  def mapKey(f: String => String): Descriptor[T] =
+    Descriptor(desc.mapKey(f))
+
+  /**
+   * Remove the need of all keys that corresponds to the name of sealed-trait
+   */
+  def removeSealedTraitNameKey =
+    Descriptor(desc.removeKey(ConfigDescriptorAdt.KeyType.SealedTrait))
+
+  /**
+   * Remove the need of all keys that corresponds to the name of a subclass of a sealed-trait
+   */
+  def removeSubClassNameKey =
+    Descriptor(desc.removeKey(ConfigDescriptorAdt.KeyType.SubClass))
+
+  /**
    * `transform` allows us to define instance of `Descriptor`
    *
    * To give an overview of what `Descriptor`:
@@ -256,7 +289,9 @@ case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
 }
 
 object Descriptor {
-  def apply[A](implicit ev: Descriptor[A]): Descriptor[A] = ev
+  // The default behaviour of zio-config is to discard the name of a sealed trait
+  def apply[A](implicit ev: Descriptor[A]): Descriptor[A] =
+    ev.removeSealedTraitNameKey
 
   import zio.config.ConfigDescriptor._
 
@@ -348,56 +383,50 @@ object Descriptor {
     val ccNames      = prepareClassNames(caseClass.annotations, caseClass.typeName.short)
 
     val res =
-      if (caseClass.isObject) {
-        val f = (name: String) => constant[T](name, caseClass.construct(_ => ???))
-        ccNames.tail.foldLeft(f(ccNames.head)) { case (acc, n) =>
-          acc orElse f(n)
-        }
-      } else
-        caseClass.parameters.toList match {
-          case Nil          =>
-            val f = (name: String) =>
-              constantString(name).transform[T](
-                _ => caseClass.construct(_ => ???),
-                _ => name
-              )
-            ccNames.tail.foldLeft(f(ccNames.head)) { case (acc, n) =>
-              acc orElse f(n)
-            }
-          case head :: tail =>
-            def makeNestedParam(name: String, unwrapped: ConfigDescriptor[Any], optional: Boolean) =
-              if (optional) {
-                nested(name)(unwrapped).optional.asInstanceOf[ConfigDescriptor[Any]]
-              } else {
-                nested(name)(unwrapped)
-              }
-
-            def makeDescriptor(param: Param[Descriptor, T]): ConfigDescriptor[Any] = {
-              val descriptions =
-                param.annotations
-                  .filter(_.isInstanceOf[describe])
-                  .map(_.asInstanceOf[describe].describe)
-
-              val paramNames = prepareFieldNames(param.annotations, param.label)
-
-              val raw                      = param.typeclass.desc
-              val (unwrapped, wasOptional) = unwrapFromOptional(raw)
-              val withNesting              = paramNames.tail.foldLeft(makeNestedParam(paramNames.head, unwrapped, wasOptional)) {
-                case (acc, name) =>
-                  acc orElse makeNestedParam(name, unwrapped, wasOptional)
-              }
-              val described                = descriptions.foldLeft(withNesting)(_ ?? _)
-              param.default.fold(described)(described.default(_))
-            }
-
-            collectAll(
-              ConfigDescriptorAdt.lazyDesc(makeDescriptor(head)),
-              tail.map(a => ConfigDescriptorAdt.lazyDesc(makeDescriptor(a))): _*
-            ).transform[T](
-              l => caseClass.rawConstruct(l),
-              t => caseClass.parameters.map(_.dereference(t)).toList
+      caseClass.parameters.toList match {
+        case Nil          =>
+          val f = (name: String) =>
+            constantString(name).transform[T](
+              _ => caseClass.construct(_ => ???),
+              _ => name
             )
-        }
+          ccNames.tail.foldLeft(f(ccNames.head)) { case (acc, n) =>
+            acc orElse f(n)
+          }
+        case head :: tail =>
+          def makeNestedParam(name: String, unwrapped: ConfigDescriptor[Any], optional: Boolean) =
+            if (optional) {
+              nested(name)(unwrapped).optional.asInstanceOf[ConfigDescriptor[Any]]
+            } else {
+              nested(name)(unwrapped)
+            }
+
+          def makeDescriptor(param: Param[Descriptor, T]): ConfigDescriptor[Any] = {
+            val descriptions =
+              param.annotations
+                .filter(_.isInstanceOf[describe])
+                .map(_.asInstanceOf[describe].describe)
+
+            val paramNames = prepareFieldNames(param.annotations, param.label)
+
+            val raw                      = param.typeclass.desc
+            val (unwrapped, wasOptional) = unwrapFromOptional(raw)
+            val withNesting              = paramNames.tail.foldLeft(makeNestedParam(paramNames.head, unwrapped, wasOptional)) {
+              case (acc, name) =>
+                acc orElse makeNestedParam(name, unwrapped, wasOptional)
+            }
+            val described                = descriptions.foldLeft(withNesting)(_ ?? _)
+            param.default.fold(described)(described.default(_))
+          }
+
+          collectAll(
+            ConfigDescriptorAdt.lazyDesc(makeDescriptor(head)),
+            tail.map(a => ConfigDescriptorAdt.lazyDesc(makeDescriptor(a))): _*
+          ).transform[T](
+            l => caseClass.rawConstruct(l),
+            t => caseClass.parameters.map(_.dereference(t)).toList
+          )
+      }
 
     Descriptor(descriptions.foldLeft(res)(_ ?? _), caseClass.isObject || caseClass.parameters.isEmpty)
   }
@@ -426,47 +455,28 @@ object Descriptor {
           prepareClassNames(subtype.annotations, subClassName)
 
         val desc = {
-          val f = (name: String) => nested(name)(typeclass.desc, Some(ConfigDescriptorAdt.KeyType.SubClass))
+          val keyType =
+            if (typeclass.isObject)
+              ConfigDescriptorAdt.KeyType.CaseObject
+            else
+              ConfigDescriptorAdt.KeyType.SubClass
+
+          val f = (name: String) =>
+            nested(name)(
+              typeclass.desc,
+              Some(keyType)
+            )
 
           if (subClassNames.length > 1)
             subClassNames.tail.foldLeft(f(subClassNames.head)) { case (acc, n) =>
               acc orElse f(n)
             }
           else
-            nested(subClassName)(typeclass.desc, Some(ConfigDescriptorAdt.KeyType.SubClass))
+            nested(subClassName)(
+              typeclass.desc,
+              Some(keyType)
+            )
         }
-
-        // val desc = sealedTraitStrategy.subClass match {
-        // case Descriptor.SealedTraitSubClassNameStrategy.IgnoreSubClassName =>
-        //   typeclass.desc
-
-        // case Descriptor.SealedTraitSubClassNameStrategy.WrapSubClassName if typeclass.isObject =>
-        //   typeclass.desc
-
-        // case Descriptor.SealedTraitSubClassNameStrategy.WrapSubClassName =>
-        //   val f = (name: String) => nested(name)(typeclass.desc)
-        //   if (subClassNames.length > 1) {
-        //     subClassNames.tail.foldLeft(f(subClassNames.head)) { case (acc, n) =>
-        //       acc orElse f(n)
-        //     }
-        //   } else {
-        //     nested(subClassName)(typeclass.desc)
-        //   }
-
-        // case Descriptor.SealedTraitSubClassNameStrategy.LabelSubClassName(_) if typeclass.isObject =>
-        //   typeclass.desc
-
-        // case Descriptor.SealedTraitSubClassNameStrategy.LabelSubClassName(fieldName) =>
-        //   (string(fieldName) ?? s"Expecting a constant string ${subClassName}" zip typeclass.desc)
-        //     .transformOrFail[subtype.SType](
-        //       { case (name, sub) =>
-        //         if (subClassName == name) Right(sub)
-        //         else
-        //           Left(s"The type specified ${name} is not equal to the obtained config ${subtype.typeName.full}")
-        //       },
-        //       b => Right((subClassName, b)): Either[String, (String, subtype.SType)]
-        //     )
-        // }
 
         wrapSealedTrait(prepareClassNames(sealedTrait.annotations, sealedTrait.typeName.short), desc)
           .transformOrFail[T](
@@ -483,25 +493,24 @@ object Descriptor {
 
   implicit def getDescriptor[T]: Descriptor[T] = macro Magnolia.gen[T]
 
-  // Default desc
   def descriptor[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
     descriptorWithClassNames[T]
       .removeKey(
-        List(ConfigDescriptorAdt.KeyType.SealedTrait)
+        KeyType.SealedTrait
       )
+
+  def descriptorForPureConfig[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
+    descriptorWithClassNames[T].removeKey(KeyType.SealedTrait).pureConfig("type")
 
   def descriptorWithClassNames[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
     config.desc
 
-  def descriptorWithoutClassNames[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
-    descriptorWithClassNames[T].removeKey(
-      List(ConfigDescriptorAdt.KeyType.SealedTrait, ConfigDescriptorAdt.KeyType.SubClass)
-    )
-
-  def descriptorForPureConfig[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
-    descriptorWithClassNames[T].removeKey(List(ConfigDescriptorAdt.KeyType.SealedTrait)).pureConfig("type")
-
-  def descriptorWithClassesWithLabel[T](labelName: String)(implicit config: Descriptor[T]): ConfigDescriptor[T] =
+  def descriptorWithClassNames[T](labelName: String)(implicit config: Descriptor[T]): ConfigDescriptor[T] =
     descriptorWithClassNames[T].pureConfig(labelName)
 
+  def descriptorWithoutClassNames[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
+    descriptorWithClassNames[T].removeKey(
+      KeyType.SealedTrait,
+      KeyType.SubClass
+    )
 }

@@ -10,13 +10,13 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       case class Cfg(fieldName: String)
 
-      val res = write(Descriptor.descriptorWithoutClassNames[Cfg], Cfg("a"))
+      val res = write(descriptorWithoutClassNames[Cfg], Cfg("a"))
 
       assertM(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
-          .flatMap(v => read(Descriptor.descriptorWithoutClassNames[Cfg] from v))
+          .flatMap(v => read(descriptorWithoutClassNames[Cfg] from v))
       )(
         equalTo(Cfg("a"))
       )
@@ -33,13 +33,13 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(Descriptor.descriptorWithoutClassNames[Outer], cfg)
+      val res = write(descriptorWithoutClassNames[Outer], cfg)
 
       assertM(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
-          .flatMap(v => read(Descriptor.descriptorWithoutClassNames[Outer] from v))
+          .flatMap(v => read(descriptorWithoutClassNames[Outer] from v))
       )(
         equalTo(cfg)
       )
@@ -56,13 +56,13 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(Descriptor.descriptorWithClassNames[Outer], cfg)
+      val res = write(descriptorWithClassNames[Outer], cfg)
 
       assertM(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
-          .flatMap(v => read(Descriptor.descriptorWithClassNames[Outer] from v))
+          .flatMap(v => read(descriptorWithClassNames[Outer] from v))
       )(
         equalTo(cfg)
       )
@@ -79,13 +79,13 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(Descriptor.descriptorForPureConfig[Outer], cfg)
+      val res = write(descriptorForPureConfig[Outer], cfg)
 
       assertM(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
-          .flatMap(v => read(Descriptor.descriptorForPureConfig[Outer] from v))
+          .flatMap(v => read(descriptorForPureConfig[Outer] from v))
       )(
         equalTo(cfg)
       )
@@ -102,13 +102,13 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val cfg = Outer(List(OtherOBJECT, Obj1Name, ClassWithValue("a"), ClassWithData("b")))
 
-      val res = write(Descriptor.descriptorWithClassesWithLabel[Outer]("type"), cfg)
+      val res = write(descriptorWithClassNames[Outer]("type"), cfg)
 
       assertM(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
-          .flatMap(v => read(Descriptor.descriptorWithClassesWithLabel[Outer]("type") from v))
+          .flatMap(v => read(descriptorWithClassNames[Outer]("type") from v))
       )(
         equalTo(cfg)
       )

@@ -47,12 +47,129 @@ package object magnolia {
   def descriptor[A](implicit config: Descriptor[A]): ConfigDescriptor[A] =
     Descriptor.descriptor[A]
 
+  /**
+   * Derive ConfigDescriptor that can read ADTs, such that the type of the sub-class
+   * should be encoded as an extra key using the label `type`. Example:
+   *     {{{
+   *       sealed trait X
+   *       case class A(name: String) extends X
+   *       case class B(age: Int) extends X
+   *
+   *       case class AppConfig(x: X)
+   *
+   *       val str =
+   *         s"""
+   *          x : {
+   *            type = A
+   *            name = jon
+   *          }
+   *         """
+   *
+   *       read(descriptorForPureConfig[AppConfig] from ConfigSource.fromHoconString(str))
+   *     }}}
+   */
   def descriptorForPureConfig[A](implicit config: Descriptor[A]): ConfigDescriptor[A] =
     Descriptor.descriptorForPureConfig[A]
 
+  /**
+   * Derive ConfigDescriptor that consider the names sealed-traits and names of case-classes
+   * that are subtypes of a sealed-trait.
+   *
+   * {{{
+   *   sealed trait Y
+   *
+   *  object Y {
+   *    case class A(age: Int)     extends Y
+   *    case class B(name: String) extends Y
+   *  }
+   *
+   *  case class AppConfig(x: Y)
+   *
+   *  val str =
+   *    s"""
+   *             x : {
+   *                   Y : {
+   *                      A : {
+   *                        age : 10
+   *                      }
+   *                 }
+   *             }
+   *            """
+   *
+   *  zio.Runtime.default.unsafeRun(
+   *    read(descriptorWithClassNames[AppConfig] from ConfigSource.fromHoconString(str))
+   *  )
+   * }}}
+   */
   def descriptorWithClassNames[A](implicit config: Descriptor[A]): ConfigDescriptor[A] =
     Descriptor.descriptorWithClassNames[A]
 
+  /**
+   * Derive ConfigDescriptor that consider the names sealed-traits and names of case-classes
+   * that are subtypes of a sealed-trait, such that the name is encoded in a `label`, similar
+   * to that of pure-config.
+   *
+   *     {{{
+   *  sealed trait X
+   *
+   *  object X {
+   *    case class A(name: String) extends X
+   *    case class B(age: Int)     extends X
+   *  }
+   *
+   *  sealed trait Y
+   *
+   *  object Y {
+   *    case class A(age: Int)     extends Y
+   *    case class B(name: String) extends Y
+   *  }
+   *
+   *  case class AppConfig(x: Either[X, Y])
+   *
+   *  val str =
+   *    s"""
+   *             x : {
+   *                   Y : {
+   *                    type = A
+   *                    age = 10
+   *               }
+   *             }
+   *            """
+   *
+   *  zio.Runtime.default.unsafeRun(
+   *    read(descriptorWithClassNames[AppConfig]("type") from ConfigSource.fromHoconString(str))
+   *  )
+   *     }}}
+   */
+  def descriptorWithClassNames[A](label: String)(implicit config: Descriptor[A]): ConfigDescriptor[A] =
+    Descriptor.descriptorWithClassNames[A](label)
+
+  /**
+   * Derive ConfigDescriptor discarding the names of sealed-trait and case-classes
+   *
+   * {{{
+   *   sealed trait Y
+   *
+   *  object Y {
+   *    case class A(age: Int)     extends Y
+   *    case class B(name: String) extends Y
+   *  }
+   *
+   *  case class AppConfig(x: Y)
+   *
+   *  val str =
+   *    s"""
+   *             x : {
+   *               age : 10
+   *             }
+   *            """
+   *
+   *  zio.Runtime.default.unsafeRun(
+   *    read(descriptorWithoutClassNames[AppConfig] from ConfigSource.fromHoconString(str))
+   *  )
+   *
+   * }}}
+   */
   def descriptorWithoutClassNames[A](implicit config: Descriptor[A]): ConfigDescriptor[A] =
     Descriptor.descriptorWithoutClassNames[A]
 

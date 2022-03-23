@@ -63,7 +63,7 @@ object DerivationTest extends ZIOSpecDefault {
 
       // IntelliJ will hide this, however it is required
 
-      assert(collectPath(Descriptor.descriptorWithClassNames[SealedTrait]))(
+      assert(collectPath(descriptorWithClassNames[SealedTrait]))(
         equalTo("St" :: "className" :: "otherName" :: Nil)
       )
     },
@@ -74,7 +74,7 @@ object DerivationTest extends ZIOSpecDefault {
       @names("className1", "className2")
       case class Cfg(@names("otherName1", "otherName2") fname: String) extends SealedTrait
 
-      val desc = Descriptor.descriptorWithClassNames[SealedTrait]
+      val desc = descriptorWithClassNames[SealedTrait]
 
       def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
         case Lazy(thunk)                   => collectPath(thunk())

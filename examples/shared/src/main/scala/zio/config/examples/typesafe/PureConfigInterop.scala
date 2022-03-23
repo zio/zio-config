@@ -74,7 +74,6 @@ object PureConfigInterop extends App with EitherImpureOps {
   assert(read(Descriptor.descriptorForPureConfig[Config] from aHoconSource) equalM Config(A))
   assert(read(Descriptor.descriptorForPureConfig[Config] from bHoconSource) equalM Config(B))
   assert(read(Descriptor.descriptorForPureConfig[Config] from cHoconSource) equalM Config(C))
-
   assert(
     read(Descriptor.descriptorForPureConfig[Config] from dHoconSource) equalM
       Config(D(Detail("ff", "ll", Region("strath", "syd"))))
