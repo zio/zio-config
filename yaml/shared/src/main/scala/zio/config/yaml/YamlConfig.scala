@@ -17,7 +17,7 @@ object YamlConfig {
    *
    *   val yamlString = ???
    *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *   import zio.config.magnolia.descriptor
    *
    *   case class MyConfig(port: Int, url: String)
    *
@@ -40,7 +40,7 @@ object YamlConfig {
    *
    * {{{
    *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *   import zio.config.magnolia.descriptor
    *
    *   case class MyConfig(port: Int, url: String)
    *
@@ -58,7 +58,7 @@ object YamlConfig {
    *
    * {{{
    *
-   *   import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+   *   import zio.config.magnolia.descriptor
    *
    *   case class MyConfig(port: Int, url: String)
    *

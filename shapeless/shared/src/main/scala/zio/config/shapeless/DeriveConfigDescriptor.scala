@@ -18,9 +18,9 @@ import scala.reflect.ClassTag
  * `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects.
  * It will be deprecated once we find users have moved on from scala 2.11.
  *
- * DeriveConfigDescriptor.descriptor[Config] gives an automatic ConfigDescriptor for the case class Config recursively
+ * descriptor[Config] gives an automatic ConfigDescriptor for the case class Config recursively
  *
- * DeriveConfigDescriptor.descriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
+ * descriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
  *
  * {{{
  *

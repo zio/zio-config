@@ -38,7 +38,7 @@ object RefinedReadConfig extends App {
 
   // you can also derive the descriptor automatically
 
-  import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+  import zio.config.magnolia.descriptor
 
   val prodConfigAutomatic =
     read(

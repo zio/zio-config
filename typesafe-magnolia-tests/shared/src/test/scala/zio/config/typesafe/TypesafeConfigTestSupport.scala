@@ -1,7 +1,7 @@
 package zio.config.typesafe
 
 import zio.IO
-import zio.config.magnolia.DeriveConfigDescriptor.descriptor
+import zio.config.magnolia.descriptor
 import zio.config.{ConfigDescriptor, ConfigSource, ReadError, read}
 
 object TypesafeConfigTestSupport extends EitherSupport {
