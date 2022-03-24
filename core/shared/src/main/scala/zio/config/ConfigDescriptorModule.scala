@@ -1203,10 +1203,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
       def loop[B](cfg: ConfigDescriptor[B]): List[String] =
         cfg match {
-          case Default(config, default)  => loop(config)
-          case Describe(config, message) => loop(config)
-          case DynamicMap(config)        => loop(config)
-          case c @ Lazy(thunk)           =>
+          case Default(config, _)  => loop(config)
+          case Describe(config, _) => loop(config)
+          case DynamicMap(config)  => loop(config)
+          case c @ Lazy(thunk)     =>
             val res = thunk()
 
             descriptors.get(c) match {
@@ -1218,14 +1218,14 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             }
 
           case Nested(path, config, keyType0) if keyType0 == Some(keyType) => path :: loop(config)
-          case Nested(path, config, keyType)                               => loop(config)
+          case Nested(_, config, _)                                        => loop(config)
           case Optional(config)                                            => loop(config)
           case OrElse(left, right)                                         => loop(left) ++ loop(right)
           case OrElseEither(left, right)                                   => loop(left) ++ loop(right)
           case Sequence(config)                                            => loop(config)
-          case Source(source, propertyType)                                => Nil
+          case Source(_, _)                                                => Nil
           case Zip(left, right)                                            => loop(left) ++ loop(right)
-          case TransformOrFail(config, f, g)                               => loop(config)
+          case TransformOrFail(config, _, _)                               => loop(config)
         }
 
       loop(self)
