@@ -1150,8 +1150,8 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       mapKey((k, keyType) =>
         keyType match {
           case Some(value) if value == KeyType.CaseClass => f(k)
-          case Some(_)                                  => k
-          case None                                     => k
+          case Some(_)                                   => k
+          case None                                      => k
         }
       )
 
@@ -2045,7 +2045,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     object KeyType {
       final case object SealedTrait extends KeyType
-      final case object CaseClass    extends KeyType
+      final case object CaseClass   extends KeyType
       final case object CaseObject  extends KeyType
       final case object Primitive   extends KeyType
     }
