@@ -505,35 +505,6 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     def mapKey(f: K => K): ConfigDescriptor[A] =
       mapKey((k, _) => f(k))
 
-    private[config] def mapSealedTraitName(f: K => K): ConfigDescriptor[A] =
-      mapKey((k, keyType) =>
-        keyType match {
-          case Some(value) if value == KeyType.SealedTrait => f(k)
-          case Some(_)                                     => k
-          case None                                        => k
-        }
-      )
-
-    private[config] def mapSubClassName(f: K => K): ConfigDescriptor[A] =
-      mapKey((k, keyType) =>
-        keyType match {
-          case Some(value) if value == KeyType.SubClass => f(k)
-          case Some(_)                                  => k
-          case None                                     => k
-        }
-      )
-
-    private[config] def mapFieldName(f: K => K): ConfigDescriptor[A] =
-      mapKey((k, keyType) =>
-        keyType match {
-          // If there is a keytype info and it is primitive, apply f
-          case Some(value) if value == KeyType.Primitive => f(k)
-          // If there is no keytype info then we assume it is a primitive field, and apply f
-          case None                                      => f(k)
-          case Some(_)                                   => k
-        }
-      )
-
     /**
      * `optional` function allows us to tag a configuration parameter as optional.
      * It implies, even if it's missing configuration will be a success.
@@ -1085,6 +1056,17 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[B] =
       self.transformOrFail(t => Right(f(t)), (g))
 
+    private[config] def mapFieldName(f: K => K): ConfigDescriptor[A] =
+      mapKey((k, keyType) =>
+        keyType match {
+          // If there is a keytype info and it is primitive, apply f
+          case Some(value) if value == KeyType.Primitive => f(k)
+          // If there is no keytype info then we assume it is a primitive field, and apply f
+          case None                                      => f(k)
+          case Some(_)                                   => k
+        }
+      )
+
     private[config] def mapKey(f: (K, Option[KeyType]) => K): ConfigDescriptor[A] = {
       val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
         MutableMap()
@@ -1138,6 +1120,40 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
       loop(self)
     }
+
+    /**
+     * Accessible only through auto-derivation
+     *
+     * {{{
+     *   import zio.config.magnolia._
+     *   Descriptor[A].mapSealedTraitName(_.toUpperCase)
+     * }}}
+     */
+    private[config] def mapSealedTraitName(f: K => K): ConfigDescriptor[A] =
+      mapKey((k, keyType) =>
+        keyType match {
+          case Some(value) if value == KeyType.SealedTrait => f(k)
+          case Some(_)                                     => k
+          case None                                        => k
+        }
+      )
+
+    /**
+     * Accessible only through auto-derivation
+     *
+     * {{{
+     *   import zio.config.magnolia._
+     *   Descriptor[A].mapSubClassName(_.toUpperCase)
+     * }}}
+     */
+    private[config] def mapSubClassName(f: K => K): ConfigDescriptor[A] =
+      mapKey((k, keyType) =>
+        keyType match {
+          case Some(value) if value == KeyType.CaseClass => f(k)
+          case Some(_)                                  => k
+          case None                                     => k
+        }
+      )
 
     private[config] def removeKey(keyTypes: KeyType*) = {
       val descriptors: MutableMap[ConfigDescriptor[_], ConfigDescriptor[_]] =
@@ -1266,7 +1282,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
                   case KeyType.SealedTrait =>
                     Nested(path, loop(conf), keyType0)
 
-                  case KeyType.SubClass =>
+                  case KeyType.CaseClass =>
                     val stringType =
                       sourceDesc(ConfigSource.empty, PropertyType.StringType) ?? "value of type string"
 
@@ -2029,7 +2045,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     object KeyType {
       final case object SealedTrait extends KeyType
-      final case object SubClass    extends KeyType
+      final case object CaseClass    extends KeyType
       final case object CaseObject  extends KeyType
       final case object Primitive   extends KeyType
     }

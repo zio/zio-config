@@ -182,7 +182,7 @@ case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
    * Remove the need of all keys that corresponds to the name of a subclass of a sealed-trait
    */
   def removeSubClassNameKey: Descriptor[T] =
-    Descriptor(desc.removeKey(ConfigDescriptorAdt.KeyType.SubClass))
+    Descriptor(desc.removeKey(ConfigDescriptorAdt.KeyType.CaseClass))
 
   /**
    * `transform` allows us to define instance of `Descriptor`
@@ -459,7 +459,7 @@ object Descriptor {
             if (typeclass.isObject)
               ConfigDescriptorAdt.KeyType.CaseObject
             else
-              ConfigDescriptorAdt.KeyType.SubClass
+              ConfigDescriptorAdt.KeyType.CaseClass
 
           val f = (name: String) =>
             nested(name)(
@@ -514,6 +514,6 @@ object Descriptor {
   def descriptorWithoutClassNames[T](implicit config: Descriptor[T]): ConfigDescriptor[T] =
     descriptorWithClassNames[T].removeKey(
       KeyType.SealedTrait,
-      KeyType.SubClass
+      KeyType.CaseClass
     )
 }
