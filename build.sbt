@@ -384,7 +384,7 @@ lazy val zioConfigScalaz    = crossProject(JSPlatform, JVMPlatform, NativePlatfo
   .settings(
     crossScalaVersions --= Seq(Scala211, Scala212),
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-core"  % "7.4.0-M7",
+      "org.scalaz" %% "scalaz-core"  % "7.4.0-M11",
       "dev.zio"    %% "zio-test"     % zioVersion % Test,
       "dev.zio"    %% "zio-test-sbt" % zioVersion % Test
     ),
