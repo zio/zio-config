@@ -1,8 +1,8 @@
 package zio.config
 
+import zio.Scope
 import zio.test.Assertion._
 import zio.test.{Gen, _}
-import zio.{Scope}
 
 import PropertyTreeTestUtils._
 

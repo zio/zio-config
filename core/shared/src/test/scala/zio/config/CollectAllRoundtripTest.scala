@@ -5,7 +5,7 @@ import zio.config.SequenceRoundtripTestUtils._
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test._
-import zio.{ZIO, Scope}
+import zio.{Scope, ZIO}
 
 object CollectAllRoundtripTest extends BaseSpec {
   val spec: ZSpec[TestEnvironment with Scope, Any] =

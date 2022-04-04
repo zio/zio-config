@@ -1,17 +1,16 @@
 package zio.config
 
+import CoproductTestUtils._
+import ReadError._
 import com.github.ghik.silencer.silent
+import zio.IO
 import zio.config.ConfigDescriptor._
 import zio.config.PropertyTreePath.Step.Key
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test.{Sized, _}
-import zio.{IO}
 
 import scala.concurrent.duration.Duration
-
-import ReadError._
-import CoproductTestUtils._
 
 @silent("Unused import")
 object CoproductTest extends BaseSpec {

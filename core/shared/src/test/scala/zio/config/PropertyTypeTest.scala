@@ -1,10 +1,10 @@
 package zio.config
 
+import zio.Scope
 import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
 import zio.test.Assertion._
 import zio.test.{Gen, Sized, _}
-import zio.{Scope}
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
@@ -132,7 +132,7 @@ object PropertyTypeTestUtils {
     propType: PropertyType[String, A],
     genValid: Gen[Sized, String],
     parse: String => A
-  ) =
+  ): Spec[TestConfig with Sized, TestFailure[Nothing], TestSuccess] =
     suite(s"${typeInfo}Type")(
       test(s"valid ${typeInfo} string roundtrip") {
         check(genValid.map(_.toString))(assertValidRoundtrip(propType, parse))
