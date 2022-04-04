@@ -2,7 +2,7 @@ package zio.config
 
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
-import zio.{IO, Scope, ZIO, ZIOAppArgs}
+import zio.{IO, Scope, ZIO}
 
 import PropertyTreePath.Step
 import ReadError._
