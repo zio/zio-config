@@ -24,12 +24,12 @@ object JavaPropertiesExample extends ZIOAppDefault {
   properties.put("bridgeIp", "10.0.0.1")
   properties.put("username", "afs")
 
-  override def run: URIO[Any with Console, ExitCode] = {
+  override def run: URIO[Any, ExitCode] = {
     val configLayer =
       ZConfig.fromProperties(properties, ApplicationConfig.configuration, "constant")
 
     val pgm =
-      SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.environment[Console])
+      SimpleExample.finalExecution.provideLayer(configLayer)
 
     pgm
       .foldZIO(
@@ -43,14 +43,14 @@ object JavaPropertiesExample extends ZIOAppDefault {
 // The core application functions
 object SimpleExample {
 
-  val printConfigs: ZIO[ApplicationConfig with Console, IOException, Unit] =
+  val printConfigs: ZIO[ApplicationConfig, IOException, Unit] =
     for {
       appConfig <- getConfig[ApplicationConfig]
       _         <- Console.printLine(appConfig.bridgeIp)
       _         <- Console.printLine(appConfig.userName)
     } yield ()
 
-  val finalExecution: ZIO[ApplicationConfig with Console, IOException, Unit] =
+  val finalExecution: ZIO[ApplicationConfig, IOException, Unit] =
     for {
       _ <- printConfigs
       _ <- Console.printLine(s"processing data......")
