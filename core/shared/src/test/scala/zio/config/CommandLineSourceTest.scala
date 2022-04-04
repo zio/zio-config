@@ -6,11 +6,11 @@ import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
 import zio.config.testsupport.MapConfigTestSupport.{AppConfig, genAppConfig, stringNWithInjector}
 import zio.test.Assertion._
 import zio.test.TestAspect._
-import zio.test.{TestEnvironment, ZIOSpecDefault, _}
+import zio.test.{ZIOSpecDefault, _}
 import zio.{IO, ZIO}
 
 object CommandLineSourceTest extends ZIOSpecDefault {
-  def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
+  def spec: ZSpec[TestConfig with Sized with Any with Annotations, Any] =
     suite("Configuration from command-line-style arguments")(
       test("Configuration from arguments roundtrip separate args --key value") {
         check(genAppConfig()) { appConfig =>

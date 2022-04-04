@@ -14,9 +14,10 @@ object LayerExample extends ZIOAppDefault {
       (int("age") zip string("name")).to[MyConfig] from ConfigSource.fromMap(Map("age" -> "20", "name" -> "afsal"))
   }
 
-  val app: ZIO[MyConfig with Console, java.io.IOException, Unit] =
+  val app: ZIO[MyConfig, java.io.IOException, Unit] =
     getConfig[MyConfig].flatMap(age => Console.printLine(s"My age is ${age}"))
 
-  override def run: ZIO[Console, Exception, Unit] = app.provideSomeLayer[Console](configLayer_(MyConfig.config))
+  override def run: ZIO[Any, Exception, Unit] =
+    app.provideLayer(configLayer_(MyConfig.config))
 
 }

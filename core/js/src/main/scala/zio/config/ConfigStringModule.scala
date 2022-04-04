@@ -8,6 +8,7 @@ import java.util.{Properties, UUID}
 import scala.concurrent.duration.Duration
 
 trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
+
   object ConfigDescriptor extends ConfigDescriptorFunctions {
     import ConfigDescriptorAdt._
 
@@ -557,7 +558,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       valueDelimiter: Option[Char] = None
     )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
-        configDescriptor from ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter)
+        configDescriptor.from(ConfigSource.fromCommandLineArgs(args, keyDelimiter, valueDelimiter))
       )
 
     /**
@@ -590,12 +591,14 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
-        configDescriptor from ConfigSource.fromMap(
-          map,
-          source,
-          keyDelimiter,
-          valueDelimiter,
-          filterKeys
+        configDescriptor.from(
+          ConfigSource.fromMap(
+            map,
+            source,
+            keyDelimiter,
+            valueDelimiter,
+            filterKeys
+          )
         )
       )
 
@@ -626,7 +629,7 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
-        configDescriptor from ConfigSource.fromMultiMap(map, source, keyDelimiter, filterKeys)
+        configDescriptor.from(ConfigSource.fromMultiMap(map, source, keyDelimiter, filterKeys))
       )
 
     /**
@@ -659,12 +662,14 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
-        configDescriptor from ConfigSource.fromProperties(
-          properties,
-          source,
-          keyDelimiter,
-          valueDelimiter,
-          filterKeys
+        configDescriptor.from(
+          ConfigSource.fromProperties(
+            properties,
+            source,
+            keyDelimiter,
+            valueDelimiter,
+            filterKeys
+          )
         )
       )
 
@@ -697,8 +702,10 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       fromConfigDescriptor(
-        configDescriptor from ConfigSource
-          .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, filterKeys)
+        configDescriptor.from(
+          ConfigSource
+            .fromPropertiesFile(filePath, keyDelimiter, valueDelimiter, filterKeys)
+        )
       )
 
     /**
@@ -730,18 +737,16 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], A] =
-      (for {
-        system <- ZIO.service[System]
-        result <- read(
-                    configDescriptor from ConfigSource.fromSystemEnv(
-                      keyDelimiter,
-                      valueDelimiter,
-                      filterKeys,
-                      system
-                    )
-                  )
-      } yield result).toLayer
+    )(implicit tag: Tag[A]): ZLayer[Any, ReadError[String], A] =
+      read(
+        configDescriptor.from(
+          ConfigSource.fromSystemEnv(
+            keyDelimiter,
+            valueDelimiter,
+            filterKeys
+          )
+        )
+      ).toLayer
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -770,18 +775,16 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], A] =
-      (for {
-        system <- ZIO.service[System]
-        result <- read(
-                    configDescriptor from ConfigSource.fromSystemProps(
-                      keyDelimiter,
-                      valueDelimiter,
-                      filterKeys,
-                      system
-                    )
-                  )
-      } yield result).toLayer
+    )(implicit tag: Tag[A]): ZLayer[Any, ReadError[String], A] =
+      read(
+        configDescriptor.from(
+          ConfigSource.fromSystemProps(
+            keyDelimiter,
+            valueDelimiter,
+            filterKeys
+          )
+        )
+      ).toLayer
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
