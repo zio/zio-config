@@ -43,14 +43,14 @@ object JavaPropertiesExample extends ZIOAppDefault {
 // The core application functions
 object SimpleExample {
 
-  val printConfigs: ZIO[ApplicationConfig with Console, IOException, Unit] =
+  val printConfigs: ZIO[ApplicationConfig, IOException, Unit] =
     for {
       appConfig <- getConfig[ApplicationConfig]
       _         <- Console.printLine(appConfig.bridgeIp)
       _         <- Console.printLine(appConfig.userName)
     } yield ()
 
-  val finalExecution: ZIO[ApplicationConfig with Console, IOException, Unit] =
+  val finalExecution: ZIO[ApplicationConfig, IOException, Unit] =
     for {
       _ <- printConfigs
       _ <- Console.printLine(s"processing data......")
