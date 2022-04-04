@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{Layer, System, Tag, ZIO, ZLayer}
+import zio.{Layer, Tag, ZIO, ZLayer}
 
 import java.io.File
 import java.net.{URI, URL}

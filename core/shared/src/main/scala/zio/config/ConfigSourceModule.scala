@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{IO, Scope, System, UIO, ZIO, ZLayer}
+import zio.{IO, Scope, UIO, ZIO, ZLayer}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
