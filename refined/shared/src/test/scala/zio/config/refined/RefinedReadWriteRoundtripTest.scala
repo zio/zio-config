@@ -10,14 +10,14 @@ import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
 import zio.config.{BaseSpec, ConfigDescriptor, ConfigSource, read, write}
 import zio.test.Assertion._
-import zio.test.{Gen, TestConfig, _}
-import zio.{Random, ZIO}
+import zio.test.{Gen, _}
+import zio.{ZIO}
 
 import ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Random, TestFailure[String], TestSuccess] =
+  val spec =
     suite("Refined support")(
       test("Refined config roundtrip") {
         check(genRefinedProd) { p =>
@@ -80,7 +80,7 @@ object RefinedReadWriteRoundtripTestUtils {
 
   ////
 
-  def genRefinedProd: Gen[Random, RefinedProd] =
+  def genRefinedProd: Gen[Any, RefinedProd] =
     for {
       ldap  <- genSymbol(1, 10)
       port  <- Gen.int(1025, 64000)
@@ -96,7 +96,7 @@ object RefinedReadWriteRoundtripTestUtils {
       Refined.unsafeApply(pwd)
     )
 
-  def genRefinedProdInvalid: Gen[Random, (Int, Map[String, String])] =
+  def genRefinedProdInvalid: Gen[Any, (Int, Map[String, String])] =
     for {
       port  <- Gen.int(0, 1023)
       n     <- Gen.int(1, 2)

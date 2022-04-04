@@ -29,7 +29,7 @@ object JavaPropertiesExample extends ZIOAppDefault {
       ZConfig.fromProperties(properties, ApplicationConfig.configuration, "constant")
 
     val pgm =
-      SimpleExample.finalExecution.provideLayer(configLayer ++ ZLayer.environment[Console])
+      SimpleExample.finalExecution.provideLayer(configLayer)
 
     pgm
       .foldZIO(
