@@ -6,7 +6,7 @@ import zio.config.PropertyTreePath.Step.Key
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test.{Sized, _}
-import zio.{IO, ZIO}
+import zio.{IO}
 
 import scala.concurrent.duration.Duration
 
@@ -18,36 +18,18 @@ object CoproductTest extends BaseSpec {
   import scala.collection.compat._
   import VersionSpecificSupport._
 
-  def spec: Spec[TestConfig with Sized with Any,TestFailure[Serializable],TestSuccess] =
+  def spec: ZSpec[TestConfig, Any] =
     suite("Coproduct support")(
       test("left element satisfied") {
         check(genTestParams) { p =>
-          assertM(readLeft(p))(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
+          assertM(readLeft(p).orDie)(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
         }
       },
       test("right element satisfied") {
         check(genTestParams) { p =>
-          assertM(readRight(p))(
+          assertM(readRight(p).orDie)(
             equalTo(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid))))
           )
-        }
-      },
-      test("round trip of enum works") {
-        check(genSealedTraitParams) { sourceMap =>
-          val source = ConfigSource.fromMap(sourceMap, keyDelimiter = Some('.'))
-
-          val writeResult =
-            for {
-              readResult  <- read(Z.config from source).either
-              writeResult <- ZIO.fromEither(
-                               readResult.swap
-                                 .map(_.prettyPrint())
-                                 .swap
-                                 .flatMap(r => r.toMap(Z.config).map(_.view.mapValues(_.mkString).toMap))
-                             )
-            } yield writeResult
-
-          assertM(writeResult)(equalTo(sourceMap))
         }
       },
       test("should accumulate all errors") {
