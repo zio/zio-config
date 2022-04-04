@@ -8,7 +8,7 @@ import zio.test.{Gen, _}
 
 object ProductBuilderTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Any,TestFailure[String],TestSuccess] =
+  val spec: Spec[TestConfig with Any, TestFailure[String], TestSuccess] =
     suite("ProductBuilder")(
       test("combine 22 for case class") {
         check(genS22) { p =>

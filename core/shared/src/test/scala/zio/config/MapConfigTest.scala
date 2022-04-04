@@ -17,7 +17,7 @@ object MapConfigTest extends ZIOSpecDefault {
         check(genAppConfig()) { appConfig =>
           val p2: zio.IO[ReadError[String], AppConfig] =
             for {
-              args <- toMap(AppConfig.descriptor, appConfig)
+              args   <- toMap(AppConfig.descriptor, appConfig)
               reread <- fromMap(args)
             } yield reread
 

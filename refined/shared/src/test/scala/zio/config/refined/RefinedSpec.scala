@@ -12,7 +12,7 @@ import ReadError._
 import RefinedUtils._
 
 object RefinedSpec extends BaseSpec {
-  override def spec: Spec[TestConfig with Sized with Any,TestFailure[ReadError[String]],TestSuccess] =
+  override def spec: Spec[TestConfig with Sized with Any, TestFailure[ReadError[String]], TestSuccess] =
     suite("Refine package")(
       test("RefineType can successfully read valid refined values from a given path") {
         check(KeyValue.gen) { keyValue =>

@@ -10,7 +10,7 @@ import zio.test.{ZIOSpecDefault, _}
 import zio.{IO, ZIO}
 
 object CommandLineSourceTest extends ZIOSpecDefault {
-  def spec: ZSpec[TestConfig with Sized with Any with Annotations,Any] =
+  def spec: ZSpec[TestConfig with Sized with Any with Annotations, Any] =
     suite("Configuration from command-line-style arguments")(
       test("Configuration from arguments roundtrip separate args --key value") {
         check(genAppConfig()) { appConfig =>

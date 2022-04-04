@@ -9,7 +9,7 @@ import zio.test.{Gen, _}
 
 object ReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Any,TestFailure[String],TestSuccess] =
+  val spec: Spec[TestConfig with Any, TestFailure[String], TestSuccess] =
     suite("Coproduct support")(
       test("newtype 1 roundtrip") {
         check(genId) { p =>

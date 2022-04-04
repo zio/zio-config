@@ -17,7 +17,7 @@ import ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Any,TestFailure[String],TestSuccess] =
+  val spec: Spec[TestConfig with Any, TestFailure[String], TestSuccess] =
     suite("Refined support")(
       test("Refined config roundtrip") {
         check(genRefinedProd) { p =>

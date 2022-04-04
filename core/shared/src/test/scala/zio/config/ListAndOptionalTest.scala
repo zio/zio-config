@@ -10,7 +10,7 @@ import zio.test.{Sized, _}
 
 object ListAndOptionalTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Any with Sized,TestFailure[String],TestSuccess] =
+  val spec: Spec[TestConfig with Any with Sized, TestFailure[String], TestSuccess] =
     suite("List and options")(
       test("optional write") {
         check(genOverallConfig) { p =>

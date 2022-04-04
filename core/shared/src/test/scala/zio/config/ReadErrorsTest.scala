@@ -8,7 +8,7 @@ import zio.test.{Gen, Sized, _}
 
 object ReadErrorsTest extends BaseSpec {
 
-  val spec: Spec[Annotations with TestConfig with Sized,TestFailure[Nothing],TestSuccess] =
+  val spec: Spec[Annotations with TestConfig with Sized, TestFailure[Nothing], TestSuccess] =
     suite("ReadErrors/NEL")(
       test("concat") {
         check(genReadErrors, genReadErrors) { (l1, l2) =>

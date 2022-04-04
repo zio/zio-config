@@ -20,13 +20,13 @@ object Prod {
 
 object ReadConfig extends ZIOAppDefault {
 
-  val configLayer: Layer[ReadError[String],Prod] = ZConfig.fromMap(
+  val configLayer: Layer[ReadError[String], Prod] = ZConfig.fromMap(
     Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"),
     Prod.prodConfig,
     "constant"
   )
 
-  def run: URIO[Any,ExitCode] =
+  def run: URIO[Any, ExitCode] =
     Prod.myAppLogic
       .provideLayer(configLayer)
       .foldZIO(
