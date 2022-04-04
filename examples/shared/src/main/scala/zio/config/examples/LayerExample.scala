@@ -17,7 +17,7 @@ object LayerExample extends ZIOAppDefault {
   val app: ZIO[MyConfig, java.io.IOException, Unit] =
     getConfig[MyConfig].flatMap(age => Console.printLine(s"My age is ${age}"))
 
-  override def run: ZIO[MyConfig, Exception, Unit] =
-    app.provide(configLayer_(MyConfig.config))
+  override def run: ZIO[Any, Exception, Unit] =
+    app.provideLayer(configLayer_(MyConfig.config))
 
 }
