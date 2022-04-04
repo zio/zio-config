@@ -2,6 +2,7 @@ package zio.config.examples
 
 import zio._
 import zio.config._
+import zio.Console
 
 import ConfigDescriptor._
 
@@ -20,20 +21,18 @@ object Prod {
 
 object ReadConfig extends ZIOAppDefault {
 
-  def run: ZIO[Environment with ZEnv with ZIOAppArgs, Any, Any] =
-    for {
-      console    <- ZIO.service[Console]
-      configLayer = ZConfig.fromMap(
-                      Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"),
-                      Prod.prodConfig,
-                      "constant"
-                    )
-      out        <- Prod.myAppLogic
-                      .provideLayer(configLayer)
-                      .foldZIO(
-                        failure => console.printLine(failure.toString),
-                        _ => console.printLine("Success")
-                      )
-                      .exitCode
-    } yield out
+  val configLayer = ZConfig.fromMap(
+    Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"),
+    Prod.prodConfig,
+    "constant"
+  )
+
+  def run =
+    Prod.myAppLogic
+      .provideLayer(configLayer)
+      .foldZIO(
+        failure => Console.printLine(failure.toString),
+        _ => Console.printLine("Success")
+      )
+      .exitCode
 }
