@@ -5,10 +5,10 @@ import zio.config.SequenceRoundtripTestUtils._
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test._
-import zio.{ZIO}
+import zio.{ZIO, Scope}
 
 object CollectAllRoundtripTest extends BaseSpec {
-  val spec =
+  val spec: ZSpec[TestEnvironment with Scope, Any] =
     suite("ConfigDescriptor.collectAll")(
       test("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
         check(generateListOfGroups) { groups =>

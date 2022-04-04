@@ -1,8 +1,7 @@
 package zio.config.examples
 
-import zio._
 import zio.config._
-import zio.Console
+import zio.{Console, _}
 
 import ConfigDescriptor._
 
@@ -21,13 +20,13 @@ object Prod {
 
 object ReadConfig extends ZIOAppDefault {
 
-  val configLayer = ZConfig.fromMap(
+  val configLayer: Layer[ReadError[String],Prod] = ZConfig.fromMap(
     Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"),
     Prod.prodConfig,
     "constant"
   )
 
-  def run =
+  def run: URIO[Any,ExitCode] =
     Prod.myAppLogic
       .provideLayer(configLayer)
       .foldZIO(

@@ -2,12 +2,13 @@ package zio.config
 
 import zio.test.Assertion._
 import zio.test.{Gen, _}
+import zio.{Scope}
 
 import PropertyTreeTestUtils._
 
 object PropertyTreeCombinatorsTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[TestEnvironment with Scope, Any] =
     suite("PropertyTree.combinators")(
       test(
         "PropertyTree.map(tree, identity) returns tree"

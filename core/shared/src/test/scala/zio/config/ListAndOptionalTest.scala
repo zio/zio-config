@@ -1,16 +1,16 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.ListAndOptionalTestUtils._
 import zio.config.PropertyTree.{Leaf, Record}
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test.{Sized, _}
-import zio.{ZIO}
 
 object ListAndOptionalTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[TestConfig with Any with Sized,TestFailure[String],TestSuccess] =
     suite("List and options")(
       test("optional write") {
         check(genOverallConfig) { p =>

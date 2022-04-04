@@ -3,7 +3,6 @@ package zio.config.refined
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.types.string.NonEmptyString
-import zio.Random
 import zio.config.PropertyTreePath._
 import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
@@ -13,7 +12,7 @@ import ReadError._
 import RefinedUtils._
 
 object RefinedSpec extends BaseSpec {
-  override def spec =
+  override def spec: Spec[TestConfig with Sized with Any,TestFailure[ReadError[String]],TestSuccess] =
     suite("Refine package")(
       test("RefineType can successfully read valid refined values from a given path") {
         check(KeyValue.gen) { keyValue =>

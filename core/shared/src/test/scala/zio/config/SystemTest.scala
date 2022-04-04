@@ -1,10 +1,9 @@
 package zio.config
 
-import zio._
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
 import zio.test._
-import zio.{ZIO}
+import zio.{ZIO, _}
 
 object SystemTest extends ZIOSpecDefault {
   def spec: ZSpec[TestEnvironment with Scope, Any] =

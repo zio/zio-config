@@ -1,14 +1,14 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.ProductBuilderTestUtils._
 import zio.test.Assertion._
 import zio.test.{Gen, _}
-import zio.{ZIO}
 
 object ProductBuilderTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[TestConfig with Any,TestFailure[String],TestSuccess] =
     suite("ProductBuilder")(
       test("combine 22 for case class") {
         check(genS22) { p =>

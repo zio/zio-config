@@ -4,6 +4,7 @@ import zio.config.PropertyType._
 import zio.config.PropertyTypeTestUtils._
 import zio.test.Assertion._
 import zio.test.{Gen, Sized, _}
+import zio.{Scope}
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
@@ -12,7 +13,7 @@ import scala.util.Try
 
 object PropertyTypeTest extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[TestEnvironment with Scope, Any] =
     suite("PropertyType")(
       test("StringType roundtrip") {
         // any string is a valid string i guess

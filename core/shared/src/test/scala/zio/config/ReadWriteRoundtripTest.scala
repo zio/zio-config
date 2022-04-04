@@ -1,15 +1,15 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.ReadWriteRoundtripTestUtils._
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test.{Gen, _}
-import zio.{ZIO}
 
 object ReadWriteRoundtripTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[TestConfig with Any,TestFailure[String],TestSuccess] =
     suite("Coproduct support")(
       test("newtype 1 roundtrip") {
         check(genId) { p =>

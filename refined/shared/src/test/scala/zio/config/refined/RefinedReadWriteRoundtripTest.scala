@@ -6,18 +6,18 @@ import eu.timepit.refined.boolean.And
 import eu.timepit.refined.collection._
 import eu.timepit.refined.numeric._
 import eu.timepit.refined.string.Trimmed
+import zio.ZIO
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
 import zio.config.{BaseSpec, ConfigDescriptor, ConfigSource, read, write}
 import zio.test.Assertion._
 import zio.test.{Gen, _}
-import zio.{ZIO}
 
 import ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-  val spec =
+  val spec: Spec[TestConfig with Any,TestFailure[String],TestSuccess] =
     suite("Refined support")(
       test("Refined config roundtrip") {
         check(genRefinedProd) { p =>

@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import MemoizedSourceSpecUtils._
 
 object MemoizedSourceSpec extends BaseSpec {
-  val spec =
+  val spec: Spec[Any,TestFailure[ReadError[String]],TestSuccess] =
     suite(
       "ConfigSource memoization and lazy config gets"
     )(

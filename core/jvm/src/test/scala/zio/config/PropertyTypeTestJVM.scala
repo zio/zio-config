@@ -6,10 +6,11 @@ import zio.test.{Gen, _}
 
 import java.io.File
 import java.net.{URI, URL}
+import zio.{Scope}
 
 object PropertyTypeTestJVM extends BaseSpec {
 
-  val spec =
+  val spec: ZSpec[TestEnvironment with Scope, Any] =
     suite("PropertyTypeJVM")(
       test(s"valid URI string roundtrip") {
         check(Gen.string)(assertValidRoundtrip(UriType, new URI(_)))
