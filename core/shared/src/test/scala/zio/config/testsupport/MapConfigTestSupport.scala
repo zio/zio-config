@@ -1,6 +1,5 @@
 package zio.config.testsupport
 
-import zio.Random
 import zio.config.{ConfigDescriptor, _}
 import zio.test.Gen.alphaNumericChar
 import zio.test.{Gen, Sized}
@@ -8,7 +7,7 @@ import zio.test.{Gen, Sized}
 import ConfigDescriptor._
 
 object MapConfigTestSupport {
-  def genAppConfig(stringGen: Gen[Random with Sized, String] = stringN(1, 15)): Gen[Random with Sized, AppConfig] =
+  def genAppConfig(stringGen: Gen[Sized, String] = stringN(1, 15)): Gen[Sized, AppConfig] =
     for {
       strings   <- Gen.listOfN(10)(stringGen)
       supervise <- Gen.boolean
@@ -101,13 +100,13 @@ object MapConfigTestSupport {
       )
   }
 
-  def stringN(min: Int, max: Int): Gen[Random with Sized, String] =
+  def stringN(min: Int, max: Int): Gen[Sized, String] =
     for {
       n <- Gen.int(min, max)
       s <- Gen.stringN(n)(alphaNumericChar)
     } yield s
 
-  def stringNWithInjector(min: Int, max: Int, inj: String): Gen[Random with Sized, String] =
+  def stringNWithInjector(min: Int, max: Int, inj: String): Gen[Sized, String] =
     for {
       length  <- Gen.int(min, max)
       index   <- Gen.int(0, length - 1)

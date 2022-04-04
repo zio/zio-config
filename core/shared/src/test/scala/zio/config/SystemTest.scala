@@ -1,13 +1,13 @@
 package zio.config
 
+import zio._
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
-import zio.test.{Gen, Sized, TestEnvironment, TestSystem, ZIOSpecDefault, _}
-import zio.{Random, ZIO}
+import zio.test._
+import zio.{ZIO}
 
 object SystemTest extends ZIOSpecDefault {
-
-  def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
+  def spec: ZSpec[TestEnvironment with Scope, Any] =
     suite("Configuration from system")(
       test("from system properties") {
         check(genSomeConfig, genDelimiter) { (config, delimiter) =>
@@ -36,6 +36,7 @@ object SystemTest extends ZIOSpecDefault {
         assertM(result.sandbox.mapError(_.isDie).either)(isLeft(equalTo(true)))
       }
     )
+
   import zio.test.TestSystem._
 
   private def fromSystemEnvResult(keyDelimiter: Char, sysEnv: Map[String, String] = Map.empty) = {
@@ -54,16 +55,16 @@ object SystemTest extends ZIOSpecDefault {
       )
   }
 
-  def genSomeConfig: Gen[Random with Sized, SomeConfig] =
+  def genSomeConfig: Gen[Sized, SomeConfig] =
     for {
       size <- Gen.int
       desc <- Gen.string
     } yield SomeConfig(size, desc)
 
-  def genDelimiter: Gen[Random, Char]       = Gen.elements('.', '_', '-', ':')
-  def genSystemDelimiter: Gen[Random, Char] = Gen.elements('_')
+  def genDelimiter: Gen[Any, Char]       = Gen.elements('.', '_', '-', ':')
+  def genSystemDelimiter: Gen[Any, Char] = Gen.elements('_')
 
-  def setSystemProperties(config: SomeConfig, delimiter: Char): ZIO[TestSystem, Nothing, Unit] =
+  def setSystemProperties(config: SomeConfig, delimiter: Char): ZIO[Any, Nothing, Unit] =
     for {
       _ <- TestSystem.putProperty(s"SYSTEMPROPERTIESTEST${delimiter}SIZE", config.size.toString)
       _ <- TestSystem.putProperty(s"SYSTEMPROPERTIESTEST${delimiter}DESCRIPTION", config.description)

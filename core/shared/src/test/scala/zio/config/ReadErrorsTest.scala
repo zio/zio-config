@@ -1,6 +1,5 @@
 package zio.config
 
-import zio.Random
 import zio.config.PropertyTreePath.Step
 import zio.config.ReadErrorsTestUtils._
 import zio.test.Assertion._
@@ -9,7 +8,7 @@ import zio.test.{Gen, Sized, _}
 
 object ReadErrorsTest extends BaseSpec {
 
-  val spec: ZSpec[Environment, Failure] =
+  val spec =
     suite("ReadErrors/NEL")(
       test("concat") {
         check(genReadErrors, genReadErrors) { (l1, l2) =>
@@ -35,10 +34,10 @@ object ReadErrorsTestUtils {
       s3 <- Gen.string
     } yield ReadError.FormatError(List(Step.Key(s1)), parseErrorMessage(s2, s3))
 
-  private val genReadError: Gen[Random with Sized, ReadError[String]] =
+  private val genReadError: Gen[Sized, ReadError[String]] =
     Gen.oneOf(Gen.const(ReadError.MissingValue(List(Step.Key("somekey")))), genFormatError)
 
-  val genReadErrors: Gen[Random with Sized, List[ReadError[String]]] = {
+  val genReadErrors: Gen[Sized, List[ReadError[String]]] = {
     for {
       n    <- Gen.int(1, 20)
       list <- Gen.listOfN(n)(genReadError)

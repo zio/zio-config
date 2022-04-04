@@ -2,15 +2,15 @@ package zio.config
 
 import zio.config.ConfigDescriptor._
 import zio.test.Assertion._
-import zio.test.{TestConfig, _}
-import zio.{Random, Scope, UIO, ZIO}
+import zio.test._
+import zio.{Scope, UIO, ZIO}
 
 import java.util.concurrent.atomic.AtomicInteger
 
 import MemoizedSourceSpecUtils._
 
 object MemoizedSourceSpec extends BaseSpec {
-  val spec: Spec[TestConfig with Random, TestFailure[ReadError[String]], TestSuccess] =
+  val spec =
     suite(
       "ConfigSource memoization and lazy config gets"
     )(

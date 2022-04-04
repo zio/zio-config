@@ -824,15 +824,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], A] =
+    )(implicit tag: Tag[A]): ZLayer[Any, ReadError[String], A] =
       (for {
-        system <- ZIO.service[System]
         result <- read(
                     configDescriptor from ConfigSource.fromSystemEnv(
                       keyDelimiter,
                       valueDelimiter,
-                      filterKeys,
-                      system
+                      filterKeys
                     )
                   )
       } yield result).toLayer
@@ -864,15 +862,13 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
-    )(implicit tag: Tag[A]): ZLayer[System, ReadError[String], A] =
+    )(implicit tag: Tag[A]): ZLayer[Any, ReadError[String], A] =
       (for {
-        system <- ZIO.service[System]
         result <- read(
                     configDescriptor from ConfigSource.fromSystemProps(
                       keyDelimiter,
                       valueDelimiter,
-                      filterKeys,
-                      system
+                      filterKeys
                     )
                   )
       } yield result).toLayer

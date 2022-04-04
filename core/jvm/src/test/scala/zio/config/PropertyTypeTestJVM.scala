@@ -9,7 +9,7 @@ import java.net.{URI, URL}
 
 object PropertyTypeTestJVM extends BaseSpec {
 
-  val spec: ZSpec[Environment, Failure] =
+  val spec =
     suite("PropertyTypeJVM")(
       test(s"valid URI string roundtrip") {
         check(Gen.string)(assertValidRoundtrip(UriType, new URI(_)))

@@ -6,7 +6,7 @@ import zio.config.PropertyTreePath.Step.Key
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test.{Sized, _}
-import zio.{IO, Random, ZIO}
+import zio.{IO, ZIO}
 
 import scala.concurrent.duration.Duration
 
@@ -18,7 +18,7 @@ object CoproductTest extends BaseSpec {
   import scala.collection.compat._
   import VersionSpecificSupport._
 
-  def spec: zio.test.Spec[TestConfig with Random with Sized, TestFailure[java.io.Serializable], TestSuccess] =
+  def spec =
     suite("Coproduct support")(
       test("left element satisfied") {
         check(genTestParams) { p =>
@@ -148,7 +148,7 @@ object CoproductTestUtils {
     vCodeValid: String
   )
 
-  val genSealedTraitParams: Gen[Random with Sized, Map[String, String]] =
+  val genSealedTraitParams: Gen[Sized, Map[String, String]] =
     for {
       s1     <- Gen.alphaNumericStringBounded(1, 10)
       s2     <- Gen.alphaNumericStringBounded(1, 10)
@@ -171,7 +171,7 @@ object CoproductTestUtils {
 
     } yield result
 
-  val genTestParams: Gen[Random, TestParams] =
+  val genTestParams: Gen[Any, TestParams] =
     for {
       kLdap       <- genSymbol(1, 20)
       vLdap       <- genNonEmptyString(50)
