@@ -62,7 +62,7 @@ object KafkaApplication {
 }
 
 object MultipleSourcesComplexExample extends zio.ZIOAppDefault {
-  def run: URIO[Console, ExitCode] = {
+  def run: URIO[Any, ExitCode] = {
     val pgm =
       ConfigLoader(
         "serviceName_",
@@ -70,7 +70,7 @@ object MultipleSourcesComplexExample extends zio.ZIOAppDefault {
         descriptor[KafkaApplication.KafkaConfig]
       )
 
-    pgm.flatMap(r => zio.Console.printLine(r.toString)).exitCode
+    pgm.flatMap(r => Console.printLine(r.toString)).exitCode
     // KafkaConfig(bootstrap:commandline,schemaregistry:system_env,from hocon source)
   }
 }

@@ -74,7 +74,7 @@ trait GenerateConfig {
   def generateConfig[A: DeriveGen](
     config: ConfigDescriptor[A],
     size: Int = 0
-  ): ZStream[Random with Sized with zio.Clock, String, PropertyTree[String, String]] =
+  ): ZStream[Sized, String, PropertyTree[String, String]] =
     DeriveGen[A].sample
       .repeat(recurs(Math.max(0, size - 1)))
       .flatMap(r => ZStream.fromZIO(ZIO.fromEither(write(config, r.get.value))))
@@ -147,7 +147,7 @@ trait GenerateConfig {
   def generateConfigHoconString[A: DeriveGen](
     config: ConfigDescriptor[A],
     size: Int = 0
-  ): ZStream[Random with Sized with zio.Clock, String, String] =
+  ): ZStream[Sized, String, String] =
     generateConfig(config, size).map(_.toHoconString)
 
   /**
@@ -219,7 +219,7 @@ trait GenerateConfig {
   def generateConfigJson[A: DeriveGen](
     config: ConfigDescriptor[A],
     size: Int = 0
-  ): ZStream[Random with Sized with zio.Clock, String, String] =
+  ): ZStream[Sized, String, String] =
     generateConfig(config, size).map(_.toJson)
 
   /**
@@ -287,13 +287,13 @@ trait GenerateConfig {
     config: ConfigDescriptor[A],
     size: Int,
     keyDelimiter: String = "."
-  ): ZStream[Random with Sized with zio.Clock, String, Map[String, ::[String]]] =
+  ): ZStream[Sized, String, Map[String, ::[String]]] =
     generateConfig(config, size).map(_.flattenString(keyDelimiter))
 
-  implicit class UnsafeRunOps[E, A](s: ZStream[Random with Sized with zio.Clock, E, A]) {
+  implicit class UnsafeRunOps[E, A](s: ZStream[Sized, E, A]) {
     def unsafeRunChunk: Chunk[A] = {
       val runtime = zio.Runtime.default
-      runtime.unsafeRun(s.provideLayer(Sized.live(1) ++ Random.live ++ zio.Clock.live).runCollect)
+      runtime.unsafeRun(s.provideLayer(Sized.live(1) ++ Random.live).runCollect)
     }
   }
 }
