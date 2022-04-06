@@ -1,7 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
-import zio.{IO, Scope, System, UIO, ZIO, ZLayer}
+import zio.{IO, Scope, UIO, ZIO, ZLayer}
 
 import java.io.{File, FileInputStream}
 import java.{util => ju}
@@ -562,14 +562,13 @@ trait ConfigSourceModule extends KeyValueModule {
     def fromSystemEnv(
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      filterKeys: String => Boolean = _ => true,
-      system: System = System.SystemLive
+      filterKeys: String => Boolean = _ => true
     ): ConfigSource = {
       val validDelimiters = ('a' to 'z') ++ ('A' to 'Z') :+ '_'
 
       val managed =
-        ZIO
-          .serviceWithZIO[System](
+        ZIO.system
+          .flatMap(
             _.envs.map { map =>
               getPropertyTreeFromMap(map, keyDelimiter, valueDelimiter, filterKeys)
             }
@@ -582,7 +581,6 @@ trait ConfigSourceModule extends KeyValueModule {
               )
             }
           )
-          .provideLayer(ZLayer.succeed(system))
 
       Reader(
         Set(ConfigSourceName(SystemEnvironment)),
@@ -620,14 +618,13 @@ trait ConfigSourceModule extends KeyValueModule {
     def fromSystemProps(
       keyDelimiter: Option[Char] = None,
       valueDelimiter: Option[Char] = None,
-      filterKeys: String => Boolean = _ => true,
-      system: System = System.SystemLive
+      filterKeys: String => Boolean = _ => true
     ): ConfigSource =
       ConfigSource
         .fromManaged(
           SystemProperties,
-          ZIO
-            .serviceWithZIO[System](_.properties)
+          ZIO.system
+            .flatMap(_.properties)
             .mapError(throwable => ReadError.SourceError(throwable.toString))
             .map(map =>
               (path: PropertyTreePath[K]) =>
@@ -636,7 +633,6 @@ trait ConfigSourceModule extends KeyValueModule {
                     .at(path)
                 )
             )
-            .provideLayer(ZLayer.succeed(system))
         )
         .memoize
 

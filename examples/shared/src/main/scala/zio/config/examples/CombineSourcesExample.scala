@@ -15,7 +15,7 @@ import java.io.File
  * are invalid.
  */
 object CombineSourcesExample extends ZIOAppDefault {
-  override def run: URIO[System with Console, ExitCode] =
+  override def run: URIO[Any, ExitCode] =
     application.either.flatMap(r => Console.printLine(s"Result: ${r}")).exitCode
 
   final case class Config(username: String, password: String)
@@ -35,7 +35,7 @@ object CombineSourcesExample extends ZIOAppDefault {
           ConfigSource.fromSystemProps()
         ))
 
-  val application: ZIO[System with Console, String, String] =
+  val application: ZIO[Any, String, String] =
     for {
       configValue <- read(config).mapError(_.prettyPrint())
       string      <- ZIO.fromEither(configValue.toJson(config))

@@ -1,14 +1,14 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.ConfigDescriptor._
 import zio.config.ProductBuilderTestUtils._
 import zio.test.Assertion._
-import zio.test.{Gen, TestConfig, _}
-import zio.{Random, ZIO}
+import zio.test.{Gen, _}
 
 object ProductBuilderTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Random, TestFailure[String], TestSuccess] =
+  val spec: Spec[TestConfig with Any, TestFailure[String], TestSuccess] =
     suite("ProductBuilder")(
       test("combine 22 for case class") {
         check(genS22) { p =>
@@ -132,7 +132,7 @@ object ProductBuilderTestUtils {
   ] =
     (cId0 zip cId1 zip cId2 zip cId3 zip cId4 zip cId5 zip cId6 zip cId7 zip cId8 zip cId9 zip cId10 zip cId11 zip cId12 zip cId13 zip cId14 zip cId15 zip cId16 zip cId17 zip cId18 zip cId19 zip cId20 zip cId21)
 
-  val genS22: Gen[Random, S22] =
+  val genS22: Gen[Any, S22] =
     for {
       s0  <- Gen.int
       s1  <- Gen.int

@@ -1,8 +1,8 @@
 package zio.config
 
 import zio.test.Assertion._
-import zio.test.{TestEnvironment, ZIOSpecDefault, _}
-import zio.{IO, ZIO}
+import zio.test.{ZIOSpecDefault, _}
+import zio.{IO, Scope, ZIO}
 
 import PropertyTreePath.Step
 import ReadError._
@@ -11,7 +11,7 @@ import testsupport.MapConfigTestSupport.AppConfig.descriptor
 object MapConfigTest extends ZIOSpecDefault {
   import zio.config.testsupport.MapConfigTestSupport._
 
-  def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
+  def spec: ZSpec[TestEnvironment with Scope, Any] =
     suite("Configuration from Map")(
       test("Configuration from Map roundtrip") {
         check(genAppConfig()) { appConfig =>
