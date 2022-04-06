@@ -12,6 +12,7 @@ import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
 
 import ConfigDescriptorAdt._
+import zio.NonEmptyChunk
 
 case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
 
@@ -320,6 +321,9 @@ object Descriptor {
   implicit def implicitListDesc[A: Descriptor]: Descriptor[List[A]] =
     Descriptor(listDesc(implicitly[Descriptor[A]].desc))
 
+  implicit def implicitNonEmptyChunkDesc[A: Descriptor]: Descriptor[NonEmptyChunk[A]] =
+    Descriptor(nonEmptyChunkDesc(implicitly[Descriptor[A]].desc))
+
   implicit def implicitSetDesc[A: Descriptor]: Descriptor[Set[A]] =
     Descriptor(setDesc(implicitly[Descriptor[A]].desc))
 
@@ -342,6 +346,11 @@ object Descriptor {
     desc: ConfigDescriptor[A]
   ): ConfigDescriptor[Map[String, A]] =
     map(desc)
+
+  protected def nonEmptyChunkDesc[A](
+    desc: ConfigDescriptor[A]
+  ): ConfigDescriptor[NonEmptyChunk[A]] =
+    nonEmptyChunk(desc)
 
   protected def eitherDesc[A, B](
     left: ConfigDescriptor[A],
