@@ -1,10 +1,10 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
+import zio.NonEmptyChunk
 
 import scala.collection.mutable.{ListBuffer, Map => MutableMap}
 import scala.reflect.ClassTag
-import zio.NonEmptyChunk
 
 @silent("Unused import")
 trait ConfigDescriptorModule extends ConfigSourceModule { module =>

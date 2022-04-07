@@ -1,9 +1,9 @@
 package zio.config.magnolia
 
 import magnolia._
-import zio.Duration
 import zio.config._
 import zio.config.derivation.DerivationUtils._
+import zio.{Duration, NonEmptyChunk}
 
 import java.io.File
 import java.net.{URI, URL}
@@ -12,7 +12,6 @@ import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
 
 import ConfigDescriptorAdt._
-import zio.NonEmptyChunk
 
 case class Descriptor[T](desc: ConfigDescriptor[T], isObject: Boolean = false) {
 
