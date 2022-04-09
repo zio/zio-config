@@ -739,15 +739,17 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[Any, ReadError[String], A] =
-      read(
-        configDescriptor.from(
-          ConfigSource.fromSystemEnv(
-            keyDelimiter,
-            valueDelimiter,
-            filterKeys
+      ZLayer {
+        read(
+          configDescriptor.from(
+            ConfigSource.fromSystemEnv(
+              keyDelimiter,
+              valueDelimiter,
+              filterKeys
+            )
           )
         )
-      ).toLayer
+      }
 
     /**
      * Consider providing keyDelimiter if you need to consider flattened config as a nested config.
@@ -777,15 +779,17 @@ trait ConfigStringModule extends ConfigModule with ConfigSourceModule {
       valueDelimiter: Option[Char] = None,
       filterKeys: String => Boolean = _ => true
     )(implicit tag: Tag[A]): ZLayer[Any, ReadError[String], A] =
-      read(
-        configDescriptor.from(
-          ConfigSource.fromSystemProps(
-            keyDelimiter,
-            valueDelimiter,
-            filterKeys
+      ZLayer {
+        read(
+          configDescriptor.from(
+            ConfigSource.fromSystemProps(
+              keyDelimiter,
+              valueDelimiter,
+              filterKeys
+            )
           )
         )
-      ).toLayer
+      }
 
     private[config] def fromConfigDescriptor[A](
       configDescriptor: ConfigDescriptor[A]
