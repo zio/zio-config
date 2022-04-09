@@ -1,13 +1,12 @@
 package zio.config.pureconfig
 
-import zio.ZIO
+import zio.{Scope, ZIO}
 import zio.config._
 import zio.test.Assertion._
-import zio.test.{Gen, checkM, _}
-import zio.Random
+import zio.test._
 
 object PureconfigTest extends BaseSpec {
-  override val spec: Spec[TestConfig with Random with Sized, TestFailure[Serializable], TestSuccess] =
+  override val spec: ZSpec[TestEnvironment with Scope, Any] =
     suite("Pureconfig support")(
       test("vector roundtrip") {
         check(Gen.vectorOf(Gen.string)) { v =>

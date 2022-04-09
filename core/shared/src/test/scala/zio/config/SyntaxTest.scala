@@ -7,7 +7,7 @@ import zio.{ZIO, ZLayer}
 
 object SyntaxTest extends BaseSpec {
 
-  val spec: ZSpec[Environment, Failure] =
+  val spec: ZSpec[Environment, Any] =
     suite("SyntaxTest")(
       test("config.narrow") {
         case class Cfg(a: String, b: Int)
