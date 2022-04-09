@@ -96,7 +96,7 @@ trait ConfigSourceModule extends KeyValueModule {
      * is executed strictly once regardless of number of keys involved, or the number the reads invoked.
      */
     def toLayer: ZLayer[Any, ReadError[K], ConfigSource] =
-      strictlyOnce.toLayer
+      ZLayer(strictlyOnce)
 
     /**
      * Transform keys before getting queried from source. Note that, this method could be hardly useful.

@@ -12,7 +12,7 @@ import ReadError._
 
 object TypesafeConfigOptionalTest extends BaseSpec {
 
-  val spec: ZSpec[Environment, Failure] =
+  val spec: ZSpec[Environment, Any] =
     suite("partial products fail instead of returning none")(
       test(
         "Presence of one optional value in an optional product with required fields returns failures"
