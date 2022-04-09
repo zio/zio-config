@@ -2,6 +2,7 @@ package zio.config.magnolia
 
 import zio.config._, ConfigDescriptor._
 import zio.config.derivation.DerivationUtils
+import zio.NonEmptyChunk
 
 import java.io.File
 import java.net.{URI, URL}
