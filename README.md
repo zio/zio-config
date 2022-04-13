@@ -16,7 +16,8 @@ Using a single definition of configuration requirements, which can be derived au
  * Automatically generate documentation so devs / devops know how to configure the application
  * Generate a report that shows where each piece of configuration data came from
 
-Please find more details in the [website](https://zio.github.io/zio-config/).
+Please find more details in the [website](https://zio.github.io/zio-config/). The website is currently for the zio-config version 1.x only. For newer versions, please check the markdown files in `docs` directory here in GitHub.
+For example, the docs for 3.x is available [here](https://github.com/yadavan88/zio-config/tree/master/docs). The updated website will be published soon for the newer versions.
 
 If you are only interested in automatic derviation of configuration, find the details [here](https://zio.github.io/zio-config/docs/automatic/automatic_index).
 
