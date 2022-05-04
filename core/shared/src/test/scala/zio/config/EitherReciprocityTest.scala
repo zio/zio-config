@@ -9,7 +9,7 @@ import zio.test.{TestConfig, _}
 
 object EitherReciprocityTest extends BaseSpec {
 
-  val spec: ZSpec[TestConfig, Any] =
+  val spec: Spec[TestConfig, Any] =
     suite("Either reciprocity")(
       test("coproduct should yield the same config representation on both sides of Either") {
         check(genNestedConfig) { p =>
@@ -34,7 +34,7 @@ object EitherReciprocityTest extends BaseSpec {
               case _                     => None
             }
 
-          assertM(lr)(isSome(equalTo(p -> p)))
+          assertZIO(lr)(isSome(equalTo(p -> p)))
         }
       }
     )

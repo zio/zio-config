@@ -8,7 +8,7 @@ import PropertyTreeTestUtils._
 
 object PropertyTreeCombinatorsTest extends BaseSpec {
 
-  val spec: ZSpec[TestEnvironment with Scope, Any] =
+  val spec: Spec[TestEnvironment with Scope, Any] =
     suite("PropertyTree.combinators")(
       test(
         "PropertyTree.map(tree, identity) returns tree"

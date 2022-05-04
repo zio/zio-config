@@ -8,7 +8,7 @@ import ConfigDescriptor._
 import MarkdowSpecUtils._
 
 object MarkdownSpec extends BaseSpec {
-  val spec: ZSpec[Environment, Failure] = suite("Markdown Spec")(
+  val spec: Spec[Environment, Failure] = suite("Markdown Spec")(
     test("toGithubFlavouredMarkdown works for a complex config") {
       val markdown =
         generateDocs(descriptor[RawConfig]).toTable.toGithubFlavouredMarkdown

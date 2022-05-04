@@ -14,7 +14,7 @@ import AutomaticConfigTestUtils._
 
 object AutomaticConfigTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Random with Sized, TestFailure[Any], TestSuccess] =
+  val spec: Spec[TestConfig with Random with Sized, Any] =
     suite("magnolia spec")(
       testM("automatic derivation spec") {
         checkM(genEnvironment) { environment =>
@@ -41,7 +41,7 @@ object AutomaticConfigTest extends BaseSpec {
             .map(_.map(_.flattenString()))
             .map(_.fold(_ => Nil, fromMultiMap(_).toList.sortBy(_._1)))
 
-          assertM(actual)(equalTo(updatedEnv.toList.sortBy(_._1)))
+          assertZIO(actual)(equalTo(updatedEnv.toList.sortBy(_._1)))
         }
       }
     )

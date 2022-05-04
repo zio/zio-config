@@ -2,12 +2,12 @@ package zio.config.typesafe
 
 import zio.config.{read, _}
 import zio.test.Assertion._
-import zio.test.{Spec, TestFailure, TestSuccess, ZIOSpecDefault, assertM}
+import zio.test.{Spec, ZIOSpecDefault, assertZIO}
 
 import ConfigDescriptor._
 
 object ListOrSingletonSpec extends ZIOSpecDefault {
-  override def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] =
+  override def spec: Spec[Any, ReadError[String]] =
     suite("listOrSingleton")(
       test("reads singleton") {
         val configString =
@@ -17,7 +17,7 @@ object ListOrSingletonSpec extends ZIOSpecDefault {
         val config = listOrSingleton("list")(string)
         val source = ConfigSource.fromHoconString(configString)
 
-        assertM(read(config from source))(equalTo(List("x")))
+        assertZIO(read(config from source))(equalTo(List("x")))
       },
       test("reads list") {
         val configString =
@@ -27,7 +27,7 @@ object ListOrSingletonSpec extends ZIOSpecDefault {
         val config = listOrSingleton("list")(string)
         val source = ConfigSource.fromHoconString(configString)
 
-        assertM(read(config from source))(equalTo(List("x", "y")))
+        assertZIO(read(config from source))(equalTo(List("x", "y")))
       }
     )
 }

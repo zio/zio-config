@@ -35,7 +35,7 @@ object EmployeeDetails {
 }
 
 object NullAndOptionalConfig extends ZIOSpecDefault {
-  def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig Null and Optional")(
+  def spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig Null and Optional")(
     test("A config case which keys maybe null or optional") {
       val hoconSource =
         ConfigSource.fromHoconString(
@@ -77,7 +77,7 @@ object NullAndOptionalConfig extends ZIOSpecDefault {
           1000
         )
 
-      assertM(result)(equalTo(expectedResult))
+      assertZIO(result)(equalTo(expectedResult))
     }
   )
 }

@@ -6,7 +6,7 @@ import zio.test.Assertion._
 import zio.test._
 
 object PureconfigTest extends BaseSpec {
-  override val spec: ZSpec[TestEnvironment with Scope, Any] =
+  override val spec: Spec[TestEnvironment with Scope, Any] =
     suite("Pureconfig support")(
       test("vector roundtrip") {
         check(Gen.vectorOf(Gen.string)) { v =>
@@ -17,7 +17,7 @@ object PureconfigTest extends BaseSpec {
               reread  <- read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
             } yield reread
 
-          assertM(v2)(equalTo(v))
+          assertZIO(v2)(equalTo(v))
         }
       }
     )

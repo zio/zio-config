@@ -7,14 +7,14 @@ import zio.{ZIO, ZLayer}
 
 object SyntaxTest extends BaseSpec {
 
-  val spec: ZSpec[Environment, Any] =
+  val spec: Spec[Environment, Any] =
     suite("SyntaxTest")(
       test("config.narrow") {
         case class Cfg(a: String, b: Int)
         val cfg = ZLayer.succeed(Cfg("a", 1))
         val a   = ZIO.service[String]
 
-        assertM(a.provideLayer(cfg.narrow(_.a)))(equalTo("a"))
+        assertZIO(a.provideLayer(cfg.narrow(_.a)))(equalTo("a"))
       }
     )
 }

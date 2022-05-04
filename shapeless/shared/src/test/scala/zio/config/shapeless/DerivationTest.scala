@@ -8,7 +8,7 @@ import zio.test.{ZIOSpecDefault, _}
 import ConfigDescriptorAdt._
 
 object DerivationTest extends ZIOSpecDefault {
-  def spec: ZSpec[Environment, Any] = suite("DerivationTest")(
+  def spec: Spec[Environment, Any] = suite("DerivationTest")(
     test("support describe annotation") {
       @describe("class desc")
       case class Cfg(@describe("field desc") fname: String)

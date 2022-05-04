@@ -15,7 +15,7 @@ import ConfigSource._
 object ParameterStoreConfigSource {
   def from(
     basePath: String,
-    getClient: Task[AWSSimpleSystemsManagement] = Task.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
+    getClient: Task[AWSSimpleSystemsManagement] = ZIO.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
   ): ConfigSource = {
     val effect: MemoizableManagedReader =
       ZIO.succeed {

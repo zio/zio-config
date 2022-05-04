@@ -50,7 +50,7 @@ object TypesafeConfigSource {
    */
   def fromHoconFile[A](file: File): ConfigSource = {
     val rawConfig =
-      Task
+      ZIO
         .attempt(ConfigFactory.parseFile(file).resolve)
 
     fromTypesafeConfig(rawConfig)
