@@ -6,7 +6,7 @@ import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
-  val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfigRecursiveAutomatic")(
+  val spec: Spec[Any, ReadError[String]] = suite("TypesafeConfigRecursiveAutomatic")(
     test("Read recursive typesafe config with optional") {
       case class SimpleRec(id: Int, s: Option[SimpleRec])
 
@@ -22,7 +22,7 @@ object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
 
       val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
 
-      assertM(result)(equalTo(SimpleRec(1, Some(SimpleRec(2, None)))))
+      assertZIO(result)(equalTo(SimpleRec(1, Some(SimpleRec(2, None)))))
     },
     test("Read recursive typesafe config with list") {
       case class SimpleRec(id: Int, s: List[SimpleRec])
@@ -40,7 +40,7 @@ object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
 
       val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
 
-      assertM(result)(equalTo(SimpleRec(1, List(SimpleRec(2, Nil)))))
+      assertZIO(result)(equalTo(SimpleRec(1, List(SimpleRec(2, Nil)))))
     },
     test("Read recursive typesafe config with either") {
       case class SimpleRec(id: Int, s: Either[SimpleRec, Int])
@@ -58,7 +58,7 @@ object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
 
       val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
 
-      assertM(result)(equalTo(SimpleRec(1, Left(SimpleRec(2, Right(3))))))
+      assertZIO(result)(equalTo(SimpleRec(1, Left(SimpleRec(2, Right(3))))))
     },
     test("Read recursive typesafe config with map") {
       type ProfessorId = Int
@@ -90,7 +90,7 @@ object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
 
       val result = read(descriptor[Professor] from TypesafeConfigSource.fromHoconString(res))
 
-      assertM(result)(
+      assertZIO(result)(
         equalTo(
           Professor(
             1,

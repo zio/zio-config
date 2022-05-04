@@ -23,11 +23,11 @@ object ConfigLoader {
     configSchema: ConfigDescriptor[A]
   ): IO[ReadError[String], ConfigDescriptor[A]] =
     for {
-      cmdConf <- IO.succeed(
+      cmdConf <- ZIO.succeed(
                    ConfigSource.fromCommandLineArgs(args, Some('.'))
                  )
       // for demonstration: this should be ur sysEnv
-      sysConf <- IO.succeed(
+      sysConf <- ZIO.succeed(
                    ConfigSource.fromMap(
                      Map(
                        // Prefix added only for system env

@@ -6,7 +6,7 @@ import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 object YamlConfigSpec extends ZIOSpecDefault {
-  def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("YamlConfig")(
+  def spec: Spec[Any, ReadError[String]] = suite("YamlConfig")(
     test("Read a complex structure") {
       val result   = YamlConfigSource.fromYamlString(
         """
@@ -45,7 +45,7 @@ object YamlConfigSpec extends ZIOSpecDefault {
           )
         )
 
-      assertM(result.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
+      assertZIO(result.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
     },
     test("Read a complex structure into a sealed trait") {
       case class Child(sum: List[Sum])
@@ -82,7 +82,7 @@ object YamlConfigSpec extends ZIOSpecDefault {
         )
       val expected = Child(List(A("str"), B(false)))
 
-      assertM(ZIO.scoped(result.build.map(_.get).exit))(succeeds(equalTo(expected)))
+      assertZIO(ZIO.scoped(result.build.map(_.get).exit))(succeeds(equalTo(expected)))
     }
   )
 }

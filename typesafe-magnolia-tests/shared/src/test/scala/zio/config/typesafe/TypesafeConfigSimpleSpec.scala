@@ -48,7 +48,7 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
       |  url: postgres
       |}""".stripMargin
 
-  val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig")(
+  val spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig")(
     test("A nested example with typesafe HOCON config") {
 
       val details       = (string("name") zip int("age")).to[Details]
@@ -76,7 +76,7 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
           List(1, 2, 3)
         )
 
-      assertM(listResult)(equalTo(expectedResult))
+      assertZIO(listResult)(equalTo(expectedResult))
     },
     test("A nested example with typesafe HOCON config and Magnlia") {
       val automaticAwsDetailsConfig = descriptor[AwsDetails]
@@ -95,7 +95,7 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
           List(1, 2, 3)
         )
 
-      assertM(automaticResult)(equalTo(expectedResult))
+      assertZIO(automaticResult)(equalTo(expectedResult))
     }
   )
 }

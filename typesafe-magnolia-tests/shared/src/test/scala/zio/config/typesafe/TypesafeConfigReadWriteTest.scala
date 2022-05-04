@@ -11,7 +11,7 @@
 
 // object TypesafeConfigReadWriteTest extends BaseSpec {
 
-//   val spec: ZSpec[Environment, Failure] =
+//   val spec: Spec[Environment, Failure] =
 //     suite("read-write roundtrip tests")(
 //       testM(
 //         "Simple: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
@@ -25,7 +25,7 @@
 //         val readWritten =
 //           read(string("a") from TypesafeConfigSource.fromHoconString(written))
 
-//         assertM(readWritten.zip(readSource))(equalTo(("b", "b")))
+//         assertZIO(readWritten.zip(readSource))(equalTo(("b", "b")))
 //       },
 //       testM(
 //         "Nested: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
@@ -57,7 +57,7 @@
 //             readWritten <- read(config from TypesafeConfigSource.fromHoconString(written))
 //           } yield (readWritten, readSource)
 
-//         assertM(result)(equalTo((List("c", "c"), List("c", "c"))))
+//         assertZIO(result)(equalTo((List("c", "c"), List("c", "c"))))
 //       },
 //       testM(
 //         "Nested Empty List: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
@@ -72,7 +72,7 @@
 //             readWritten <- read(config from TypesafeConfigSource.fromHoconString(written))
 //           } yield (readWritten, readSource)
 
-//         assertM(readWritten.zip(readSource))(equalTo((Nil, Nil)))
+//         assertZIO(readWritten.zip(readSource))(equalTo((Nil, Nil)))
 //       },
 //       testM(
 //         "Nested Config with primitive lists: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
@@ -146,7 +146,7 @@
 //         val expected =
 //           sss(Map("syd" -> List(1, 2), "melb" -> List(1)), Nil, List(1, 3, 3), Map("v" -> "a"))
 
-//         assertM(readWritten.zip(readSource))(
+//         assertZIO(readWritten.zip(readSource))(
 //           equalTo(
 //             (readSource, expected)
 //           )
@@ -170,7 +170,7 @@
 //         val expected    =
 //           TypesafeConfigReadWriteTestUtils.Nested(Map("dynamic1" -> innerResult, "dynamic2" -> innerResult))
 
-//         assertM((readWritten.zip(readSource)))(equalTo((expected, expected)))
+//         assertZIO((readWritten.zip(readSource)))(equalTo((expected, expected)))
 //       },
 //       testM(
 //         "optional field: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
@@ -187,7 +187,7 @@
 //         val readWritten =
 //           read(optionalConfig from TypesafeConfigSource.fromHoconString(written))
 
-//         assertM(readWritten.zip(readSource))(equalTo((None, None)))
+//         assertZIO(readWritten.zip(readSource))(equalTo((None, None)))
 //       },
 //       test(
 //         "complex source: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
@@ -207,7 +207,7 @@
 //         val readWrittenHocon =
 //           read(complexDescription from TypesafeConfigSource.fromHoconString(writtenHocon))
 
-//         assertM((readWrittenHocon.zip(readWrittenProperty).zip(readComplexSource)))(
+//         assertZIO((readWrittenHocon.zip(readWrittenProperty).zip(readComplexSource)))(
 //           equalTo((expectedResult, expectedResult, expectedResult))
 //         )
 //       },
@@ -250,7 +250,7 @@
 //         val readWrittenHocon =
 //           read(aDescription from TypesafeConfigSource.fromHoconString(written))
 
-//         assertM((readSource.zip(readWrittenHocon)))(
+//         assertZIO((readSource.zip(readWrittenHocon)))(
 //           equalTo(
 //             (success, success)
 //           )

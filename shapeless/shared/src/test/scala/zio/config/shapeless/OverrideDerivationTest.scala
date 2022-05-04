@@ -23,7 +23,7 @@ object OverrideDerivationTestWithWrappedSealedTraitName extends DeriveConfigDesc
 }
 
 object OverrideDerivationTest extends ZIOSpecDefault {
-  def spec: Spec[Any, TestFailure[Serializable], TestSuccess] = suite("OverrideDerivationTest")(
+  def spec: Spec[Any, Any] = suite("OverrideDerivationTest")(
     test("simple config") {
       import OverrideDerivationTestEnv._
 

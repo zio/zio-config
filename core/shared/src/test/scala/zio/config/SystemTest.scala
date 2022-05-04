@@ -6,7 +6,7 @@ import zio.test._
 import zio.{ZIO, _}
 
 object SystemTest extends ZIOSpecDefault {
-  def spec: ZSpec[TestEnvironment with Scope, Any] =
+  def spec: Spec[TestEnvironment with Scope, Any] =
     suite("Configuration from system")(
       test("from system properties") {
         check(genSomeConfig, genDelimiter) { (config, delimiter) =>
@@ -17,7 +17,7 @@ object SystemTest extends ZIOSpecDefault {
                    .provideLayer(ZConfig.fromSystemProperties(SomeConfig.descriptor, Some(delimiter)))
           } yield p.get
 
-          assertM(result.either)(isRight(equalTo(config)))
+          assertZIO(result.either)(isRight(equalTo(config)))
         }
       },
       test("from system environment") {
@@ -27,12 +27,12 @@ object SystemTest extends ZIOSpecDefault {
           sysEnv = Map("SYSTEMPROPERTIESTEST_SIZE" -> "100", "SYSTEMPROPERTIESTEST_DESCRIPTION" -> "ABC")
         )
 
-        assertM(result.either)(isRight(equalTo(config)))
+        assertZIO(result.either)(isRight(equalTo(config)))
       },
       test("invalid system environment delimiter") {
         val keyDelimiter = '.'
         val result       = fromSystemEnvResult(keyDelimiter = keyDelimiter)
-        assertM(result.sandbox.mapError(_.isDie).either)(isLeft(equalTo(true)))
+        assertZIO(result.sandbox.mapError(_.isDie).either)(isLeft(equalTo(true)))
       }
     )
 

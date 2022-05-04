@@ -11,7 +11,7 @@ object ParameterStoreConfig {
   def from[A](
     configDescriptor: ConfigDescriptor[A],
     basePath: String,
-    getClient: Task[AWSSimpleSystemsManagement] = Task.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
+    getClient: Task[AWSSimpleSystemsManagement] = ZIO.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
   )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
       configDescriptor from ParameterStoreConfigSource.from(basePath, getClient)

@@ -8,7 +8,7 @@ import zio.test._
 import zio.{Scope, ZIO}
 
 object CollectAllRoundtripTest extends BaseSpec {
-  val spec: ZSpec[TestEnvironment with Scope, Any] =
+  val spec: Spec[TestEnvironment with Scope, Any] =
     suite("ConfigDescriptor.collectAll")(
       test("Can convert a list of config-descriptor to a single config-descriptor that returns list") {
         check(generateListOfGroups) { groups =>
@@ -35,7 +35,7 @@ object CollectAllRoundtripTest extends BaseSpec {
             .map(_.flattenString())
             .fold(_ => Nil, _.toList.sortBy(_._1))
 
-          assertM(actual)(equalTo(inputSource.toList.sortBy(_._1).map({ case (k, v) => (k, singleton(v)) })))
+          assertZIO(actual)(equalTo(inputSource.toList.sortBy(_._1).map({ case (k, v) => (k, singleton(v)) })))
         }
       }
     )
