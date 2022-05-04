@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.PropertyTreePath._
 import zio.config.ReadError.ConversionError
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
@@ -7,7 +8,6 @@ import zio.config.testsupport.MapConfigTestSupport.{AppConfig, genAppConfig, str
 import zio.test.Assertion._
 import zio.test.TestAspect._
 import zio.test.{ZIOSpecDefault, _}
-import zio.ZIO
 
 object CommandLineSourceTest extends ZIOSpecDefault {
   def spec: Spec[TestConfig with Sized with Any with Annotations, Any] =

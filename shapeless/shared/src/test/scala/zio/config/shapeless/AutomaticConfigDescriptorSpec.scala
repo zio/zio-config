@@ -1,11 +1,11 @@
 package zio.config.shapeless
 
+import zio.ZIO
 import zio.config._
 import zio.config.helpers._
 import zio.config.shapeless.DeriveConfigDescriptor._
 import zio.test.Assertion._
 import zio.test.{Gen, Sized, TestConfig, _}
-import zio.ZIO
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
