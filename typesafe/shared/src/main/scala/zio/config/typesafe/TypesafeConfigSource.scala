@@ -4,7 +4,7 @@ import com.github.ghik.silencer.silent
 import com.typesafe.config._
 import zio.config.PropertyTree._
 import zio.config._
-import zio.{Task, ZIO}
+import zio.ZIO
 
 import java.io.File
 import java.lang.{Boolean => JBoolean}
