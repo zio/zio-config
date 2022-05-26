@@ -5,6 +5,10 @@ import zio.NonEmptyChunk
 
 import scala.collection.mutable.{ListBuffer, Map => MutableMap}
 import scala.reflect.ClassTag
+import java.util.UUID
+import zio.ZIO
+import zio.Random
+import zio.Zippable
 
 @silent("Unused import")
 trait ConfigDescriptorModule extends ConfigSourceModule { module =>
@@ -23,6 +27,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
             Left("Unable to create case class instance")
           )(Right(_))
       )
+
+    def flatMap(f: ConfigValue[A] => ConfigDescriptor[B]): ConfigDescriptor[B] =
+      FlatMap(self, f)
 
     /**
      * Convert a `ConfigDescriptor[A]` to a config descriptor of a case class
@@ -1029,6 +1036,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     final def transform[B](to: A => B, from: B => A): ConfigDescriptor[B] =
       self.transformOrFail(a => Right(to(a)), b => Right(from(b)))
 
+    final def transformConfigValue[B](
+      to: ConfigValue[A] => ConfigValue[B],
+      from: ConfigValue[B] => ConfigValue[A]
+    ): ConfigDescriptor[B] = ???
+
     /**
      * Given `A` and `B`, `transformOrFail` function is used to convert a `ConfigDescriptor[A]` to `ConfigDescriptor[B]`.
      *
@@ -1930,6 +1942,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     )(desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
       nested(path)(map(desc))
 
+    def map[A](
+      path: ConfigValue[K]
+    )(desc: => ConfigDescriptor[A]): ConfigDescriptor[Map[K, A]] =
+      nested(path)(map(desc))
+
     /**
      * nested allows us to retrieve a config from a path `K`, where `K` is typically `String`.
      *
@@ -1947,7 +1964,9 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      * Note that `string("key")` is same as that of `nested("key")(string)`
      */
-    def nested[A](path: K)(desc: => ConfigDescriptor[A], keyType: Option[KeyType] = None): ConfigDescriptor[A] =
+    def nested[A](
+      path: ConfigValue[K]
+    )(desc: => ConfigDescriptor[A], keyType: ConfigValue[Option[KeyType]] = ConfigValue(None)): ConfigDescriptor[A] =
       ConfigDescriptorAdt.nestedDesc(path, desc, keyType)
 
     /**
@@ -2050,6 +2069,41 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       else Left("Duplicated values found")
   }
 
+  sealed trait ConfigValue[+A] { self =>
+    def map[B](f: A => B): ConfigValue[B] =
+      ConfigValue.Mapped(self, f)
+
+    def zip[B](that: ConfigValue[B])(implicit z: Zippable[A, B]): ConfigValue[z.Out] =
+      ConfigValue.Zipped(self, that, z.zip)
+  }
+
+  object ConfigValue {
+    implicit def apply[A](value: A): ConfigValue[A] =
+      Constant(value)
+
+    def newVar[A](implicit c: ConfigType[A]): zio.UIO[ConfigValue.Variable[A]] =
+      Random.nextUUID.map(uuid => Variable(uuid, c))
+
+    case class Constant[A](value: A)                                                        extends ConfigValue[A] {
+      override def map[B](f: A => B): ConfigValue[B] =
+        Constant(f(value))
+    }
+    case class Variable[A](uuid: UUID, configType: ConfigType[A])                           extends ConfigValue[A]
+    case class Mapped[A, B](value: ConfigValue[A], f: A => B)                               extends ConfigValue[B]
+    case class Zipped[A, B, C](left: ConfigValue[A], right: ConfigValue[B], f: (A, B) => C) extends ConfigValue[C]
+  }
+
+  case class ConfigType[A](propertyType: PropertyType[String, A])
+
+  object ConfigType {
+    implicit val stringType: ConfigType[String] = ConfigType(PropertyType.StringType)
+    implicit val doubleType: ConfigType[Double] = ConfigType(PropertyType.DoubleType)
+    implicit val boolType: ConfigType[Boolean]  = ConfigType(PropertyType.BooleanType)
+  }
+
+  def succeed[A](value: A)(implicit A: ConfigType[A]): ConfigDescriptor[A] =
+    Succeed(value, A)
+
   private[config] object ConfigDescriptorAdt {
     sealed trait KeyType
 
@@ -2060,7 +2114,12 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       final case object Primitive   extends KeyType
     }
 
-    sealed case class Default[A](config: ConfigDescriptor[A], default: A) extends ConfigDescriptor[A]
+    sealed case class Succeed[A](config: A, configType: ConfigType[A]) extends ConfigDescriptor[A]
+
+    sealed case class FlatMap[A, B](config: ConfigDescriptor[A], f: ConfigValue[A] => ConfigDescriptor[B])
+        extends ConfigDescriptor[B]
+
+    sealed case class Default[A](config: ConfigDescriptor[A], default: ConfigValue[A]) extends ConfigDescriptor[A]
 
     sealed case class Describe[A](config: ConfigDescriptor[A], message: String) extends ConfigDescriptor[A]
 
@@ -2068,8 +2127,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class Lazy[A](get: () => ConfigDescriptor[A]) extends ConfigDescriptor[A]
 
-    sealed case class Nested[A](path: K, config: ConfigDescriptor[A], keyType: Option[KeyType])
-        extends ConfigDescriptor[A]
+    sealed case class Nested[A](
+      path: ConfigValue[K],
+      config: ConfigDescriptor[A],
+      keyType: ConfigValue[Option[KeyType]]
+    ) extends ConfigDescriptor[A]
 
     sealed case class Optional[A](config: ConfigDescriptor[A]) extends ConfigDescriptor[Option[A]]
 
@@ -2086,11 +2148,11 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
 
     sealed case class TransformOrFail[A, B](
       config: ConfigDescriptor[A],
-      f: A => Either[String, B],
-      g: B => Either[String, A]
+      f: ConfigValue[A] => ConfigValue[Either[String, B]],
+      g: ConfigValue[B] => ConfigValue[Either[String, A]]
     ) extends ConfigDescriptor[B]
 
-    final def defaultDesc[A](config: => ConfigDescriptor[A], default: A): ConfigDescriptor[A] =
+    final def defaultDesc[A](config: => ConfigDescriptor[A], default: ConfigValue[A]): ConfigDescriptor[A] =
       Default(lazyDesc(config), default)
 
     final def describeDesc[A](config: => ConfigDescriptor[A], message: String): ConfigDescriptor[A] =
@@ -2104,7 +2166,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     ): ConfigDescriptor[A] =
       Lazy(() => config)
 
-    final def nestedDesc[A](path: K, config: => ConfigDescriptor[A], keyType: Option[KeyType]): ConfigDescriptor[A] =
+    final def nestedDesc[A](path: ConfigValue[K], config: => ConfigDescriptor[A], keyType: ConfigValue[Option[KeyType]]): ConfigDescriptor[A] =
       Nested(path, lazyDesc(config), keyType)
 
     final def optionalDesc[A](config: => ConfigDescriptor[A]): ConfigDescriptor[Option[A]] =

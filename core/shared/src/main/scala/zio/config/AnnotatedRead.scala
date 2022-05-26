@@ -1,8 +1,14 @@
 package zio.config
 
+import zio.ZIO
+
 private[config] final case class AnnotatedRead[+A](value: A, annotations: Set[AnnotatedRead.Annotation]) { self =>
   def map[B](f: A => B): AnnotatedRead[B] =
     AnnotatedRead(f(value), annotations)
+
+  // TODO; Move to READ Module
+  def flatMapZIO[R, E, B](f: A => ZIO[R, E, B]): ZIO[R, E, AnnotatedRead[B]] =
+    f(value).map(r => r.copy(annotations = r.annotations ++ self.annotations))
 
   def mapEither[E, B](f: A => Either[E, B]): Either[E, AnnotatedRead[B]] =
     f(value) match {

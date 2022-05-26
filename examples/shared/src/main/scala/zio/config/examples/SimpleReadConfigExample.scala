@@ -35,3 +35,16 @@ object ReadConfig extends ZIOAppDefault {
       )
       .exitCode
 }
+
+object test {
+  val hocon =
+    ConfigSource.fromMap(Map.empty)
+
+  val systemEnv =
+    ConfigSource.fromMap(Map.empty)
+
+  val config: ConfigDescriptor[(String, Map[String, String])] =
+    string("a").from(hocon) zip
+      string("b").from(hocon).flatMap(b => map(b)(string).from(systemEnv))
+
+}

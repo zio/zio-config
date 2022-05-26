@@ -212,6 +212,7 @@ trait ConfigSourceModule extends KeyValueModule {
 
   object ConfigSource {
     type Managed[A]              = ZIO[Scope, ReadError[K], A]
+    // If ConfigValue.Constant fails, try Any => Ref[VariableMap]
     type TreeReader              = PropertyTreePath[K] => ZIO[Any, ReadError[K], PropertyTree[K, V]]
     type MemoizableManaged[A]    = ZIO[Scope, Nothing, ZIO[Scope, ReadError[K], A]]
     type ManagedReader           = Managed[TreeReader]

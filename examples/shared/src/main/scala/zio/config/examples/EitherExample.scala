@@ -3,6 +3,7 @@ package zio.config.examples
 import zio.config._
 
 import ConfigDescriptor._
+import java.util.UUID
 
 object EitherExample extends App {
   final case class Ldap(value: String)  extends AnyVal
@@ -74,3 +75,5 @@ object EitherExample extends App {
       Left(Prod(Ldap("v1"), DbUrl("v2")))
   )
 }
+
+object test {}

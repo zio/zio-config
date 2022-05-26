@@ -48,7 +48,7 @@ object TypesafeConfigSource {
    *     configSource.flatMap(source => ZIO.fromEither(read(descriptor[MyConfig] from source))
    * }}}
    */
-  def fromHoconFile[A](file: File): ConfigSource = {
+  def fromHoconFile[A](file: ConfigValue[File]): ConfigSource = {
     val rawConfig =
       ZIO
         .attempt(ConfigFactory.parseFile(file).resolve)
@@ -71,7 +71,7 @@ object TypesafeConfigSource {
    *     read(descriptor[MyConfig] from configSource)
    * }}}
    */
-  def fromHoconFilePath[A](filePath: String): ConfigSource =
+  def fromHoconFilePath[A](filePath: ConfigValue[String]): ConfigSource =
     fromHoconFile(new File(filePath))
 
   /**
@@ -97,7 +97,7 @@ object TypesafeConfigSource {
    *     configSource.flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromHoconString(input: String): ConfigSource =
+  def fromHoconString(input: zio.config.ConfigValue[String]): ConfigSource =
     fromTypesafeConfig(
       ZIO
         .attempt(ConfigFactory.parseString(input).resolve)

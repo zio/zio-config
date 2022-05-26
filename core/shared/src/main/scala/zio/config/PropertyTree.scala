@@ -1,6 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
+import zio.ZIO
 import zio.config.PropertyTreePath.Step
 
 import scala.collection.immutable.Nil
@@ -24,6 +25,28 @@ sealed trait PropertyTree[+K, +V] { self =>
       case Record(value)      => Record(value.map({ case (k, v) => (k.asInstanceOf[K1], v.flatMap(f)) }))
       case PropertyTree.Empty => PropertyTree.Empty
       case Sequence(value)    => Sequence(value.map(_.flatMap(f)))
+    }
+
+  // TODO; Move to ReadModule
+  def flatMapZIO[R, E, K1 >: K, V1](f: V => ZIO[R, E, AnnotatedRead[PropertyTree[K1, V1]]]): ZIO[R, E, PropertyTree[K1, V1]] =
+    self match {
+      case Leaf(value, _) => f(value)
+      case Record(value)  =>
+        ZIO
+          .foreach(value) { case (k, v) =>
+            v.flatMapZIO(f(_)).map(va => (k.asInstanceOf[K1], va))
+
+          }
+          .map(Record(_))
+
+      case PropertyTree.Empty => ZIO.succeed(PropertyTree.Empty)
+      case Sequence(value)    =>
+        ZIO
+          .foreach(
+            value
+          )(v => v.flatMapZIO(f))
+          .map(Sequence(_))
+
     }
 
   def zip[K1 >: K, V1](that: PropertyTree[K1, V1]): PropertyTree[K1, (V, V1)] =

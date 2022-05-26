@@ -13,6 +13,8 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
         case Source(_, propertyType) =>
           Right(PropertyTree.Leaf(propertyType.write(b)))
 
+        case f: FlatMap[B, c] => ???
+
         case Describe(c, _) =>
           go(c, b)
 
@@ -21,12 +23,9 @@ private[config] trait WriteModule extends ConfigDescriptorModule {
           seqMap(bs.toMap).map(t => Record(t))
 
         case Nested(parent, c, _) =>
-          go(c, b) match {
-            case Right(prop) => Right(PropertyTree.Record(Map(parent -> prop)))
-            case Left(v)     => Left(v)
-          }
+          go(c, b).map(prop => PropertyTree.Record(Map(parent -> prop)))
 
-        case Optional(c) =>
+        case Optional(c)          =>
           b.fold(
             Right(PropertyTree.empty): Either[String, PropertyTree[K, V]]
           )(go(c, _))

@@ -2,22 +2,26 @@ package zio.config
 
 import com.github.ghik.silencer.silent
 import zio.config.ReadError._
-import zio.{IO, Scope, ZIO}
+import zio.{IO, Ref, Scope, ZIO}
 
 import scala.collection.mutable.{Map => MutableMap}
-
 import PropertyTreePath.Step
 
 @silent("Unused import")
 private[config] trait ReadModule extends ConfigDescriptorModule {
   import VersionSpecificSupport._
 
+  private class VariableMap(private val map: Map[ConfigValue.Variable[_], Any]) {
+    def get[A](v: ConfigValue.Variable[A]): Option[A]             = ???
+    def updated[A](v: ConfigValue.Variable[A], k: A): VariableMap = ???
+  }
+
   type CachedReaders = MutableMap[ConfigSource, ConfigSource.ManagedReader]
 
   final def read[A](
     configuration: ConfigDescriptor[A]
   ): IO[ReadError[K], A] = {
-    type Res[+B] = ZIO[Scope, ReadError[K], AnnotatedRead[PropertyTree[K, B]]]
+    type Res[+B] = ZIO[Scope with Ref[VariableMap], ReadError[K], AnnotatedRead[PropertyTree[K, B]]]
 
     val cachedSources: CachedReaders = MutableMap()
 
@@ -28,6 +32,38 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
         paths.reverse,
         s"Provided value is $actual, expecting the type $expected",
         descriptions
+      )
+
+    def getVariable[X](configValue: ConfigValue.Variable[X]): ZIO[Ref[VariableMap], Nothing, Option[X]] =
+      ZIO.serviceWithZIO(_.get.map(_.get(configValue)))
+
+    def getVariableOrFail[X](configValue: ConfigValue[X]): ZIO[Ref[VariableMap], Nothing, X] =
+      configValue match {
+        case ConfigValue.Constant(value)        => ZIO.succeed(value)
+        case c @ ConfigValue.Variable(_, _)     => ZIO.serviceWithZIO(_.get.map(_.get(c))).some.orDie
+        case ConfigValue.Mapped(value, f)       => getVariableOrFail(value).map(f)
+        case ConfigValue.Zipped(left, right, f) =>
+          for {
+            l <- getVariableOrFail(left)
+            r <- getVariableOrFail(right)
+          } yield f(l, r)
+      }
+
+    def addVariable[X](configValue: X): ZIO[Ref[VariableMap], Nothing, Unit] =
+      for {
+        r <- ZIO.service[Ref[VariableMap]]
+        n <- ConfigValue.newVar(null)
+        _ <- r.update(_.updated(n, configValue))
+      } yield ()
+
+    def loopFlatMap[B, C](
+      path: List[Step[K]],
+      cfg: FlatMap[B, C],
+      descriptions: List[String],
+      programSummary: List[ConfigDescriptor[_]]
+    ): Res[C] =
+      loopAny(path, cfg.config, descriptions, programSummary).flatMap(b =>
+        b.flatMapZIO(tree => tree.flatMapZIO(b => loopAny(path, cfg.f(ConfigValue(b)), descriptions, programSummary)))
       )
 
     def loopNested[B](
@@ -62,7 +98,9 @@ private[config] trait ReadModule extends ConfigDescriptorModule {
     ): Res[B] =
       loopAny(path, cfg.config, descriptions, programSummary).either flatMap {
         case Left(error) =>
-          ZIO.fromEither(handleDefaultValues(error, cfg.config, cfg.default))
+          getVariableOrFail(cfg.default).flatMap(b =>
+            ZIO.fromEither(handleDefaultValues(error, cfg.config, b))
+          )
 
         case Right(value) =>
           ZIO.succeed(
