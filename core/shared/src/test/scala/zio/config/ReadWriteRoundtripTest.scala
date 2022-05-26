@@ -9,7 +9,7 @@ import zio.test.{Gen, _}
 
 object ReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Any, TestFailure[String], TestSuccess] =
+  val spec: Spec[TestConfig, String] =
     suite("Coproduct support")(
       test("newtype 1 roundtrip") {
         check(genId) { p =>
@@ -21,7 +21,7 @@ object ReadWriteRoundtripTest extends BaseSpec {
                   .mapError(_.getMessage)
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("newtype 2 roundtrip") {
@@ -34,7 +34,7 @@ object ReadWriteRoundtripTest extends BaseSpec {
                   .mapError(_.getMessage)
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("case class 1 roundtrip") {
@@ -49,7 +49,7 @@ object ReadWriteRoundtripTest extends BaseSpec {
                   .mapError(_.getMessage)
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("nested case class roundtrip") {
@@ -64,7 +64,7 @@ object ReadWriteRoundtripTest extends BaseSpec {
                   .mapError(_.getMessage)
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("single field case class roundtrip") {
@@ -77,7 +77,7 @@ object ReadWriteRoundtripTest extends BaseSpec {
                   .mapError(_.getMessage)
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("coproduct roundtrip") {
@@ -92,7 +92,7 @@ object ReadWriteRoundtripTest extends BaseSpec {
                   .mapError(_.getMessage)
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("empty sequence zipped with optional nested") {
@@ -105,7 +105,7 @@ object ReadWriteRoundtripTest extends BaseSpec {
               .mapError(_.getMessage)
         } yield reread
 
-        assertM(data2)(equalTo(data))
+        assertZIO(data2)(equalTo(data))
       }
     )
 }

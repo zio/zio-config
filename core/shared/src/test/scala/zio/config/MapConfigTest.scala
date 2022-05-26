@@ -2,7 +2,7 @@ package zio.config
 
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
-import zio.{IO, Scope, ZIO}
+import zio.{Scope, ZIO}
 
 import PropertyTreePath.Step
 import ReadError._
@@ -11,7 +11,7 @@ import testsupport.MapConfigTestSupport.AppConfig.descriptor
 object MapConfigTest extends ZIOSpecDefault {
   import zio.config.testsupport.MapConfigTestSupport._
 
-  def spec: ZSpec[TestEnvironment with Scope, Any] =
+  def spec: Spec[TestEnvironment with Scope, Any] =
     suite("Configuration from Map")(
       test("Configuration from Map roundtrip") {
         check(genAppConfig()) { appConfig =>
@@ -21,7 +21,7 @@ object MapConfigTest extends ZIOSpecDefault {
               reread <- fromMap(args)
             } yield reread
 
-          assertM(p2.either)(isRight(equalTo(appConfig)))
+          assertZIO(p2.either)(isRight(equalTo(appConfig)))
         }
       }
     )
@@ -33,7 +33,8 @@ object MapConfigTest extends ZIOSpecDefault {
     descriptor: ConfigDescriptor[A],
     a: A
   ): ZIO[Any, ReadError[String], Map[String, String]] =
-    IO.fromEither(write(descriptor, a))
+    ZIO
+      .fromEither(write(descriptor, a))
       .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTreeArgs

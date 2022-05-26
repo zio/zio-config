@@ -8,11 +8,11 @@ import zio.test.{Gen, TestConfig, _}
 
 object NestedConfigTest extends BaseSpec {
 
-  val spec: Spec[TestConfig, TestFailure[ReadError[String]], TestSuccess] =
+  val spec: Spec[TestConfig, ReadError[String]] =
     suite("Nested config")(
       test("read") {
         check(genNestedConfigParams) { p =>
-          assertM(read(p.config.from(p.source)))(equalTo(p.value))
+          assertZIO(read(p.config.from(p.source)))(equalTo(p.value))
         }
       },
       test("write") {
@@ -27,7 +27,7 @@ object NestedConfigTest extends BaseSpec {
         val r      =
           read(config from ConfigSource.fromPropertyTree(PropertyTree.empty, "test"))
 
-        assertM(r)(equalTo("y"))
+        assertZIO(r)(equalTo("y"))
       }
     )
 }

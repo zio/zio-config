@@ -23,7 +23,7 @@ object NumericSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config Less invalid") {
@@ -32,7 +32,7 @@ object NumericSupportTest extends BaseSpec {
           val p2: ZIO[Any, ReadError[String], Refined[Int, Less[W.`10`.T]]] =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString), "test"))
 
-          assertM(p2.either)(helpers.assertErrors(_.size == 1))
+          assertZIO(p2.either)(helpers.assertErrors(_.size == 1))
         }
       },
       test("Refined config Greater roundtrip") {
@@ -46,7 +46,7 @@ object NumericSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config Greater invalid") {
@@ -55,7 +55,7 @@ object NumericSupportTest extends BaseSpec {
           val p2: ZIO[Any, ReadError[String], Refined[Int, Greater[W.`10`.T]]] =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
-          assertM(p2.either)(helpers.assertErrors(_.size == 1))
+          assertZIO(p2.either)(helpers.assertErrors(_.size == 1))
         }
       },
       test("Refined config LessEqual roundtrip") {
@@ -69,7 +69,7 @@ object NumericSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config LessEqual invalid") {
@@ -78,7 +78,7 @@ object NumericSupportTest extends BaseSpec {
           val p2: ZIO[Any, ReadError[String], Refined[Int, LessEqual[W.`10`.T]]] =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString), "test"))
 
-          assertM(p2.either)(helpers.assertErrors(_.size == 1))
+          assertZIO(p2.either)(helpers.assertErrors(_.size == 1))
         }
       },
       test("Refined config GreaterEqual roundtrip") {
@@ -92,7 +92,7 @@ object NumericSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config GreaterEqual invalid") {
@@ -101,7 +101,7 @@ object NumericSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config Divisible roundtrip") {
@@ -115,7 +115,7 @@ object NumericSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config Divisible invalid") {
@@ -124,7 +124,7 @@ object NumericSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString), "test"))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config NonDivisible roundtrip") {
@@ -138,7 +138,7 @@ object NumericSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config NonDivisible invalid") {
@@ -147,7 +147,7 @@ object NumericSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p.toString), "test"))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       }
     )

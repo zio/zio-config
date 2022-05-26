@@ -58,7 +58,7 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
     }
     """
 
-  def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig Error")(
+  def spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig Error")(
     test("A variant error case with typesafe HOCON config and a magnolia description") {
       val nestedConfigAutomaticResult1 =
         read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))
@@ -81,7 +81,7 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
 
       val expected = (nestedConfigAutomaticExpect1, nestedConfigAutomaticExpect2, nestedConfigAutomaticExpect3)
 
-      assertM(result)(equalTo(expected))
+      assertZIO(result)(equalTo(expected))
     },
     // test("A variant error case with a not well-formed typesafe HOCON config") {
     //   val hocconStringWithParseError =
@@ -127,7 +127,7 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
       val expected =
         (nestedConfigManualExpect1, nestedConfigManualExpect2, nestedConfigManualExpect3)
 
-      assertM(result)(equalTo(expected))
+      assertZIO(result)(equalTo(expected))
     },
     test("A substitution case with typesafe HOCON config and a magnolia description") {
       val hoconStringWithSubstitution =
@@ -147,7 +147,7 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
 
       val expect = DatabaseDetails(Details(8, "west"), Details(6, "east"))
 
-      assertM(substitutionResult)(equalTo(expect))
+      assertZIO(substitutionResult)(equalTo(expect))
     }
   )
 }

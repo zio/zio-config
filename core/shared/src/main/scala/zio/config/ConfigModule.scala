@@ -46,7 +46,9 @@ trait ConfigModule
   final def configLayer[A](config: ConfigDescriptor[A])(implicit
     tag: Tag[A]
   ): ZLayer[ConfigSource, ReadError[K], A] =
-    ZIO.serviceWithZIO[ConfigSource](source => read(config from source)).toLayer
+    ZLayer {
+      ZIO.serviceWithZIO[ConfigSource](source => read(config from source))
+    }
 
   /**
    * Convert a ConfigDescriptor to a Layer.

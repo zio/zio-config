@@ -2,9 +2,9 @@ package zio.config.typesafe
 
 import com.github.ghik.silencer.silent
 import com.typesafe.config._
+import zio.ZIO
 import zio.config.PropertyTree._
 import zio.config._
-import zio.{Task, ZIO}
 
 import java.io.File
 import java.lang.{Boolean => JBoolean}
@@ -50,7 +50,7 @@ object TypesafeConfigSource {
    */
   def fromHoconFile[A](file: File): ConfigSource = {
     val rawConfig =
-      Task
+      ZIO
         .attempt(ConfigFactory.parseFile(file).resolve)
 
     fromTypesafeConfig(rawConfig)

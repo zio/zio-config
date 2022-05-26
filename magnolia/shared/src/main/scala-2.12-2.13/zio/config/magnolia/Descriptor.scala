@@ -1,9 +1,9 @@
 package zio.config.magnolia
 
 import magnolia._
-import zio.Duration
 import zio.config._
 import zio.config.derivation.DerivationUtils._
+import zio.{Duration, NonEmptyChunk}
 
 import java.io.File
 import java.net.{URI, URL}
@@ -320,6 +320,9 @@ object Descriptor {
   implicit def implicitListDesc[A: Descriptor]: Descriptor[List[A]] =
     Descriptor(listDesc(implicitly[Descriptor[A]].desc))
 
+  implicit def implicitNonEmptyChunkDesc[A: Descriptor]: Descriptor[NonEmptyChunk[A]] =
+    Descriptor(nonEmptyChunkDesc(implicitly[Descriptor[A]].desc))
+
   implicit def implicitSetDesc[A: Descriptor]: Descriptor[Set[A]] =
     Descriptor(setDesc(implicitly[Descriptor[A]].desc))
 
@@ -342,6 +345,11 @@ object Descriptor {
     desc: ConfigDescriptor[A]
   ): ConfigDescriptor[Map[String, A]] =
     map(desc)
+
+  protected def nonEmptyChunkDesc[A](
+    desc: ConfigDescriptor[A]
+  ): ConfigDescriptor[NonEmptyChunk[A]] =
+    nonEmptyChunk(desc)
 
   protected def eitherDesc[A, B](
     left: ConfigDescriptor[A],

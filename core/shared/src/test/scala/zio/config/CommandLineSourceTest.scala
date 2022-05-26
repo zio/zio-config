@@ -1,5 +1,6 @@
 package zio.config
 
+import zio.ZIO
 import zio.config.PropertyTreePath._
 import zio.config.ReadError.ConversionError
 import zio.config.testsupport.MapConfigTestSupport.AppConfig.descriptor
@@ -7,10 +8,9 @@ import zio.config.testsupport.MapConfigTestSupport.{AppConfig, genAppConfig, str
 import zio.test.Assertion._
 import zio.test.TestAspect._
 import zio.test.{ZIOSpecDefault, _}
-import zio.{IO, ZIO}
 
 object CommandLineSourceTest extends ZIOSpecDefault {
-  def spec: ZSpec[TestConfig with Sized with Any with Annotations, Any] =
+  def spec: Spec[TestConfig with Sized with Any with Annotations, Any] =
     suite("Configuration from command-line-style arguments")(
       test("Configuration from arguments roundtrip separate args --key value") {
         check(genAppConfig()) { appConfig =>
@@ -20,7 +20,7 @@ object CommandLineSourceTest extends ZIOSpecDefault {
               reread <- fromArgs(args)
             } yield reread
 
-          assertM(p2.either)(isRight(equalTo(appConfig)))
+          assertZIO(p2.either)(isRight(equalTo(appConfig)))
         }
       },
       test("Configuration from arguments roundtrip single arg --key=value") {
@@ -31,7 +31,7 @@ object CommandLineSourceTest extends ZIOSpecDefault {
               reread <- fromArgs(args)
             } yield reread
 
-          assertM(p2.either)(isRight(equalTo(appConfig)))
+          assertZIO(p2.either)(isRight(equalTo(appConfig)))
         }
       },
       test("Configuration from arguments roundtrip single arg --key=value multiple values take the head") {
@@ -42,7 +42,7 @@ object CommandLineSourceTest extends ZIOSpecDefault {
               reread <- fromArgs(args)
             } yield reread
 
-          assertM(p2.either)(isRight(equalTo(appConfig)))
+          assertZIO(p2.either)(isRight(equalTo(appConfig)))
         }
       },
       test("Configuration from arguments roundtrip singe arg --key-value where value contains = char") {
@@ -53,7 +53,7 @@ object CommandLineSourceTest extends ZIOSpecDefault {
               reread <- fromArgs(args)
             } yield reread
 
-          assertM(p2.either)(isRight(equalTo(appConfig)))
+          assertZIO(p2.either)(isRight(equalTo(appConfig)))
         }
       }
     ) @@ jvmOnly
@@ -65,7 +65,8 @@ object CommandLineSourceTest extends ZIOSpecDefault {
     descriptor: ConfigDescriptor[A],
     a: A
   ): ZIO[Any, ReadError[String], List[String]] =
-    IO.fromEither(write(descriptor, a))
+    ZIO
+      .fromEither(write(descriptor, a))
       .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
@@ -75,7 +76,8 @@ object CommandLineSourceTest extends ZIOSpecDefault {
       )
 
   def toSingleArg[A](descriptor: ConfigDescriptor[A], a: A): ZIO[Any, ReadError[String], List[String]] =
-    IO.fromEither(write(descriptor, a))
+    ZIO
+      .fromEither(write(descriptor, a))
       .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>
@@ -88,7 +90,8 @@ object CommandLineSourceTest extends ZIOSpecDefault {
     descriptor: ConfigDescriptor[A],
     a: A
   ): ZIO[Any, ReadError[String], List[String]] =
-    IO.fromEither(write(descriptor, a))
+    ZIO
+      .fromEither(write(descriptor, a))
       .mapBoth(
         s => ConversionError[String](List(Step.Index(0)), s),
         propertyTree =>

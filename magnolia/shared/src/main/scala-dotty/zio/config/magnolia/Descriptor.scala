@@ -2,6 +2,7 @@ package zio.config.magnolia
 
 import zio.config._, ConfigDescriptor._
 import zio.config.derivation.DerivationUtils
+import zio.NonEmptyChunk
 
 import java.io.File
 import java.net.{URI, URL}
@@ -68,6 +69,9 @@ object Descriptor {
 
   given mapDesc[A](using ev: Descriptor[A]): Descriptor[Map[String, A]] =
     Descriptor.from(map(ev.desc))
+
+  given nonEmptyChunkDesc[A](using ev: Descriptor[A]): Descriptor[NonEmptyChunk[A]] =
+    Descriptor.from(nonEmptyChunk(ev.desc))
 
   inline def summonDescriptorForCoProduct[T <: Tuple]: List[Descriptor[Any]] =
     inline erasedValue[T] match

@@ -1,6 +1,7 @@
 package zio.config
 
 import com.github.ghik.silencer.silent
+import zio.NonEmptyChunk
 
 import scala.collection.mutable.{ListBuffer, Map => MutableMap}
 import scala.reflect.ClassTag
@@ -1948,6 +1949,31 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      */
     def nested[A](path: K)(desc: => ConfigDescriptor[A], keyType: Option[KeyType] = None): ConfigDescriptor[A] =
       ConfigDescriptorAdt.nestedDesc(path, desc, keyType)
+
+    /**
+     * Similar to `list` however the size of the values shouldn't be zero
+     */
+    def nonEmptyChunk[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[NonEmptyChunk[A]] =
+      list(desc).transformOrFailLeft(list =>
+        NonEmptyChunk.fromIterableOption(list).toRight("Empty chunk. Cannot be converted to NonEmptyChunk")
+      )(_.toList)
+
+    /**
+     * Similar to `list` however the size of the values shouldn't be zero
+     */
+    def nonEmptyChunk[A](path: String)(desc: => ConfigDescriptor[A]): ConfigDescriptor[NonEmptyChunk[A]] =
+      list(path)(desc).transformOrFailLeft(list =>
+        NonEmptyChunk.fromIterableOption(list).toRight("Empty chunk. Cannot be converted to NonEmptyChunk")
+      )(_.toList)
+
+    /**
+     * Similar to `list` however the size of the values shouldn't be zero.
+     * Also it can accept a singleton value as a NonEmptyChunk
+     */
+    def nonEmptyChunkOrSingleton[A](path: String)(desc: => ConfigDescriptor[A]): ConfigDescriptor[NonEmptyChunk[A]] =
+      listOrSingleton(path)(desc).transformOrFailLeft(list =>
+        NonEmptyChunk.fromIterableOption(list).toRight("Empty chunk. Cannot be converted to NonEmptyChunk")
+      )(_.toList)
 
     /**
      *  `set("xyz")(confgDescriptor)` represents just a set variant of configDescriptor within the key `xyz`.

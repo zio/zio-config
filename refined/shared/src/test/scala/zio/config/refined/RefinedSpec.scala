@@ -12,7 +12,7 @@ import ReadError._
 import RefinedUtils._
 
 object RefinedSpec extends BaseSpec {
-  override def spec: Spec[TestConfig with Sized with Any, TestFailure[ReadError[String]], TestSuccess] =
+  override def spec: Spec[TestConfig with Sized, ReadError[String]] =
     suite("Refine package")(
       test("RefineType can successfully read valid refined values from a given path") {
         check(KeyValue.gen) { keyValue =>
@@ -22,7 +22,7 @@ object RefinedSpec extends BaseSpec {
           val result =
             read(cfg from ConfigSource.fromMap(Map(keyValue.k.underlying -> keyValue.v.underlying)))
 
-          assertM(result)(equalTo(keyValue.v.value))
+          assertZIO(result)(equalTo(keyValue.v.value))
         }
       },
       test("RefineType returns ReadError for invalid values in a given path") {
@@ -35,7 +35,7 @@ object RefinedSpec extends BaseSpec {
           val expected =
             ConversionError(List(Step.Key(key.underlying)), "Predicate isEmpty() did not fail.", Set.empty)
 
-          assertM(result.either)(equalTo(Left(expected)))
+          assertZIO(result.either)(equalTo(Left(expected)))
         }
       }
     )

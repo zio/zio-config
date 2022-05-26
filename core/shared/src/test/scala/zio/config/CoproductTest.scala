@@ -18,16 +18,16 @@ object CoproductTest extends BaseSpec {
   import scala.collection.compat._
   import VersionSpecificSupport._
 
-  def spec: ZSpec[TestConfig, Any] =
+  def spec: Spec[TestConfig, Any] =
     suite("Coproduct support")(
       test("left element satisfied") {
         check(genTestParams) { p =>
-          assertM(readLeft(p).orDie)(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
+          assertZIO(readLeft(p).orDie)(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
         }
       },
       test("right element satisfied") {
         check(genTestParams) { p =>
-          assertM(readRight(p).orDie)(
+          assertZIO(readRight(p).orDie)(
             equalTo(Right(PasswordAuth(p.vUser, p.vCount, p.vFactor, Duration(p.vCodeValid))))
           )
         }
@@ -54,12 +54,12 @@ object CoproductTest extends BaseSpec {
               )
             )
 
-          assertM(readWithErrors(p).either)(isLeft(equalTo(expected)))
+          assertZIO(readWithErrors(p).either)(isLeft(equalTo(expected)))
         }
       },
       test("left and right both populated should choose left") {
         check(genTestParams) { p =>
-          assertM(readChooseLeftFromBoth(p))(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
+          assertZIO(readChooseLeftFromBoth(p))(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
         }
       }
     )

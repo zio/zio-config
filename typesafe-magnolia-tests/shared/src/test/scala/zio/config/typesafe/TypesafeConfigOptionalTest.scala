@@ -12,7 +12,7 @@ import ReadError._
 
 object TypesafeConfigOptionalTest extends BaseSpec {
 
-  val spec: ZSpec[Environment, Failure] =
+  val spec: Spec[Environment, Any] =
     suite("partial products fail instead of returning none")(
       test(
         "Presence of one optional value in an optional product with required fields returns failures"
@@ -36,7 +36,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(t => (OptionalSpecUtils.checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               (
@@ -72,7 +72,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               (
@@ -100,7 +100,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assertM(result.either)(
+        assertZIO(result.either)(
           equalTo(
             Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", None))))
           )
@@ -129,7 +129,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               (
@@ -165,7 +165,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               (
@@ -200,7 +200,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               (
@@ -236,7 +236,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               (
@@ -272,7 +272,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               (
@@ -305,7 +305,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assertM(result.either)(
+        assertZIO(result.either)(
           equalTo(
             Right(
               TestCase1.CaseClass1(
@@ -342,7 +342,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assertM(result.either)(
+        assertZIO(result.either)(
           equalTo(
             Right(
               TestCase1.CaseClass1(
@@ -378,7 +378,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assertM(result.either)(
+        assertZIO(result.either)(
           equalTo(
             Right(
               TestCase1.CaseClass1(
@@ -414,7 +414,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assertM(result.either)(
+        assertZIO(result.either)(
           equalTo(
             Right(
               TestCase1.CaseClass1(
@@ -446,7 +446,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assertM(result.either)(
+        assertZIO(result.either)(
           equalTo(
             Right(
               TestCase1.CaseClass1(
@@ -479,7 +479,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assertM(result.either)(
+        assertZIO(result.either)(
           equalTo(
             Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", Some(TestCase1.CaseClass3("1", None))))))
           )
@@ -502,7 +502,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val result =
           read(descriptor[TestCase1.CaseClass1] from getSource(validConfig))
 
-        assertM(result.either)(
+        assertZIO(result.either)(
           equalTo(
             Right(TestCase1.CaseClass1(Some(TestCase1.CaseClass2("10", Some(TestCase1.CaseClass3("1", None))))))
           )
@@ -530,7 +530,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(t => (checkIfOnlyMissingValues(t), getListOfMissingValueSteps(t)))
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               (
@@ -566,7 +566,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(fetchMissingValueAndFormatErrors)
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               List(
@@ -599,7 +599,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(fetchMissingValueAndFormatErrors)
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               List(
@@ -635,7 +635,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(fetchMissingValueAndFormatErrors)
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               List(
@@ -677,7 +677,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(fetchMissingValueAndFormatErrors)
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               List(
@@ -708,7 +708,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(fetchMissingValueAndFormatErrors)
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Right(TestCase3.CaseClass1(TestCase3.CaseClass2("10", None)))
           )
@@ -731,7 +731,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(fetchMissingValueAndFormatErrors)
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Right(TestCase3.CaseClass1(TestCase3.CaseClass2("10", None)))
           )
@@ -753,7 +753,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(fetchMissingValueAndFormatErrors)
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               List(
@@ -788,7 +788,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(fetchMissingValueAndFormatErrors)
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               List(
@@ -823,7 +823,7 @@ object TypesafeConfigOptionalTest extends BaseSpec {
         val summary =
           result.mapError(fetchMissingValueAndFormatErrors)
 
-        assertM(summary.either)(
+        assertZIO(summary.either)(
           equalTo(
             Left(
               List(

@@ -26,7 +26,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config IPv4 invalid") {
@@ -35,7 +35,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config IPv6 invalid") {
@@ -44,7 +44,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config MatchesRegex roundtrip") {
@@ -59,7 +59,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config MatchesRegex invalid") {
@@ -69,7 +69,7 @@ object StringSupportTest extends BaseSpec {
           val p2 =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config Regex roundtrip") {
@@ -83,7 +83,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config Regex invalid") {
@@ -92,7 +92,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config Uri roundtrip") {
@@ -106,7 +106,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config Url roundtrip") {
@@ -120,7 +120,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config Uuid roundtrip") {
@@ -134,7 +134,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config Uuid invalid") {
@@ -143,7 +143,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config ValidByte roundtrip") {
@@ -157,7 +157,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config ValidByte invalid") {
@@ -166,7 +166,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config ValidShort roundtrip") {
@@ -180,7 +180,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config ValidShort invalid") {
@@ -189,7 +189,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config ValidInt roundtrip") {
@@ -203,7 +203,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config ValidInt invalid") {
@@ -212,7 +212,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
       },
       test("Refined config ValidLong roundtrip") {
@@ -226,7 +226,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config ValidLong invalid") {
@@ -235,7 +235,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
 
         }
       },
@@ -250,7 +250,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config ValidFloat invalid") {
@@ -259,7 +259,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
 
         }
       },
@@ -274,7 +274,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config ValidDouble invalid") {
@@ -283,7 +283,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
 
         }
       },
@@ -298,7 +298,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config ValidBigInt invalid") {
@@ -307,7 +307,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
 
         }
       },
@@ -322,7 +322,7 @@ object StringSupportTest extends BaseSpec {
 
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config ValidBigDecimal invalid") {
@@ -331,7 +331,7 @@ object StringSupportTest extends BaseSpec {
           val p2  =
             read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(1)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
 
         }
       }

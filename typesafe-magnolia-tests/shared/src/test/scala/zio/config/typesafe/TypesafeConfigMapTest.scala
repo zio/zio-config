@@ -9,12 +9,12 @@ import TypesafeConfigMapSpecUtils._
 
 object TypesafeConfigMapSpec extends BaseSpec {
 
-  override def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("Map Typesafe Integration")(
+  override def spec: Spec[Any, ReadError[String]] = suite("Map Typesafe Integration")(
     test("read typesafe config") {
       val result =
         read(sssDescription from source)
 
-      assertM(result)(
+      assertZIO(result)(
         equalTo(sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a")))
       )
 
@@ -28,7 +28,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
       val expected =
         sss(Map("melb" -> List(1), "syd" -> List(1, 2)), List(), List(1, 3, 3), Map("v" -> "a"))
 
-      assertM(result)(
+      assertZIO(result)(
         equalTo(TypesafeConfigMapSpecUtils.Nested(Map("dynamic1" -> expected, "dynamic2" -> expected)))
       )
     },
@@ -50,7 +50,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
 
       val result = read(desc from TypesafeConfigSource.fromHoconString(hocon3))
 
-      assertM(result)(equalTo(Cfg(Map("dynamicKey" -> "z"), "z")))
+      assertZIO(result)(equalTo(Cfg(Map("dynamicKey" -> "z"), "z")))
     },
     test("map(string(y)) takes the value of y as a string and returns the map") {
       val hocon4 =
@@ -69,7 +69,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
 
       val xx2 = nested("k")(map(string("y")))
 
-      assertM(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4)))(
+      assertZIO(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4)))(
         equalTo(Map("dynamicKey" -> "z", "dynamicKey2" -> "z2"))
       )
     }

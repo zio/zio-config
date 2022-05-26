@@ -9,7 +9,7 @@ import zio.test._
 
 object ListsCornerCasesTest extends BaseSpec {
 
-  val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] =
+  val spec: Spec[Any, ReadError[String]] =
     suite("ListsCornerCasesTest")(
       test("read empty list") {
         case class Cfg(a: String, b: List[String])
@@ -23,7 +23,7 @@ object ListsCornerCasesTest extends BaseSpec {
           )
         )
 
-        assertM(res)(equalTo(Cfg("sa", Nil)))
+        assertZIO(res)(equalTo(Cfg("sa", Nil)))
       },
       test("read nested lists") {
         case class Cfg(a: String, b: List[List[String]])
@@ -40,7 +40,7 @@ object ListsCornerCasesTest extends BaseSpec {
             )
           )
 
-        assertM(res)(equalTo(Cfg("sa", Nil :: Nil)))
+        assertZIO(res)(equalTo(Cfg("sa", Nil :: Nil)))
       },
       test("read absent optional lists") {
         case class Cfg(a: String, b: Option[List[String]])
@@ -54,7 +54,7 @@ object ListsCornerCasesTest extends BaseSpec {
               .fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
           )
 
-        assertM(res)(equalTo(Cfg("sa", None)))
+        assertZIO(res)(equalTo(Cfg("sa", None)))
       },
       test("read present optional empty lists") {
         case class Cfg(a: String, b: Option[List[String]])
@@ -70,7 +70,7 @@ object ListsCornerCasesTest extends BaseSpec {
             )
           )
 
-        assertM(res)(equalTo(Cfg("sa", Some(Nil))))
+        assertZIO(res)(equalTo(Cfg("sa", Some(Nil))))
       },
       test("use default value for absent list") {
         case class Cfg(a: String, b: List[String])
@@ -82,7 +82,7 @@ object ListsCornerCasesTest extends BaseSpec {
           cCfg from ConfigSource.fromPropertyTree(Record(Map("a" -> Leaf("sa"))), "tree")
         )
 
-        assertM(res)(equalTo(Cfg("sa", "x" :: Nil)))
+        assertZIO(res)(equalTo(Cfg("sa", "x" :: Nil)))
       },
       test("override default non-empty list with empty list") {
         case class Cfg(a: String, b: List[String])
@@ -97,7 +97,7 @@ object ListsCornerCasesTest extends BaseSpec {
           )
         )
 
-        assertM(res)(equalTo(Cfg("sa", Nil)))
+        assertZIO(res)(equalTo(Cfg("sa", Nil)))
       },
       test("distinguish list from scalar left") {
         case class Cfg(a: String, b: Either[List[String], String])
@@ -116,7 +116,7 @@ object ListsCornerCasesTest extends BaseSpec {
             )
           )
 
-        assertM(res)(equalTo(Cfg("sa", Left("v" :: Nil))))
+        assertZIO(res)(equalTo(Cfg("sa", Left("v" :: Nil))))
       },
       test("distinguish list from scalar right") {
         case class Cfg(a: String, b: Either[String, List[String]])
@@ -135,7 +135,7 @@ object ListsCornerCasesTest extends BaseSpec {
             )
           )
 
-        assertM(res)(equalTo(Cfg("sa", Right("v" :: Nil))))
+        assertZIO(res)(equalTo(Cfg("sa", Right("v" :: Nil))))
       },
       test("distinguish scalar from list left") {
         case class Cfg(a: String, b: Either[List[String], String])
@@ -149,7 +149,7 @@ object ListsCornerCasesTest extends BaseSpec {
             .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))), "tree")
         )
 
-        assertM(res)(equalTo(Cfg("sa", Left(List("v")))))
+        assertZIO(res)(equalTo(Cfg("sa", Left(List("v")))))
       },
       test("distinguish scalar from list right") {
         case class Cfg(a: String, b: Either[List[String], String])
@@ -163,7 +163,7 @@ object ListsCornerCasesTest extends BaseSpec {
             .fromPropertyTree(Record(Map("a" -> Leaf("sa"), "b" -> Leaf("v"))).leafNotASequence, "tree")
         )
 
-        assertM(res)(equalTo(Cfg("sa", Right("v"))))
+        assertZIO(res)(equalTo(Cfg("sa", Right("v"))))
       },
       test("read list as scalar") {
         case class Cfg(a: String, b: String)
@@ -182,7 +182,7 @@ object ListsCornerCasesTest extends BaseSpec {
           )
         )
 
-        assertM(res)(equalTo(Cfg("sa", "v1")))
+        assertZIO(res)(equalTo(Cfg("sa", "v1")))
       },
       test("read single key objects in nested lists") {
         case class Cfg(a: String, b: List[List[String]])
@@ -210,7 +210,7 @@ object ListsCornerCasesTest extends BaseSpec {
           )
         )
 
-        assertM(res)(equalTo(Cfg("sa", List("v1") :: Nil :: List("v2", "v3") :: Nil)))
+        assertZIO(res)(equalTo(Cfg("sa", List("v1") :: Nil :: List("v2", "v3") :: Nil)))
       },
       test("collect errors from list elements") {
         case class Cfg(a: String, b: List[String])
@@ -232,7 +232,7 @@ object ListsCornerCasesTest extends BaseSpec {
           )
         )
 
-        assertM(res.either)(isLeft(hasField[ReadError[String], Int]("size", _.size, equalTo(2))))
+        assertZIO(res.either)(isLeft(hasField[ReadError[String], Int]("size", _.size, equalTo(2))))
       },
       test("accumulates all errors") {
         case class Cfg(a: List[Boolean], b: List[Int])
@@ -275,7 +275,7 @@ object ListsCornerCasesTest extends BaseSpec {
             )
           )
 
-        assertM(res.either)(isLeft(equalTo(expected)))
+        assertZIO(res.either)(isLeft(equalTo(expected)))
       }
     )
 }
