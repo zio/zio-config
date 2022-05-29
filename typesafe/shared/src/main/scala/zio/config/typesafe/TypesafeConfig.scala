@@ -110,7 +110,7 @@ object TypesafeConfig {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Layer[ReadError[String], Has[MyConfig]] =
-   *     TypesafeConfig.fromTypesafeConfig(ConfigFactory.load.resolve, descriptor[MyConfig])
+   *     TypesafeConfig.fromTypesafeConfig(ZIO.attempt(ConfigFactory.load.resolve), descriptor[MyConfig])
    * }}}
    */
   def fromTypesafeConfig[A](
