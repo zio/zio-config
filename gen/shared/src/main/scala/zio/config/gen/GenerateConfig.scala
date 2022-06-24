@@ -8,6 +8,7 @@ import zio.test.magnolia.DeriveGen
 import zio.{Chunk, Unsafe, ZIO}
 
 import scala.collection.Map
+
 import typesafe._
 
 trait GenerateConfig {

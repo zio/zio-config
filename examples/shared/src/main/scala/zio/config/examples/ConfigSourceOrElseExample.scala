@@ -1,10 +1,10 @@
 package zio.config.examples
 
+import zio.Unsafe
 import zio.config._
 import zio.config.magnolia.descriptor
 import zio.config.typesafe._
 import zio.config.yaml._
-import zio.Unsafe
 
 object ConfigSourceOrElseExample extends App {
 
