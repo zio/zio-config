@@ -4,6 +4,7 @@ import zio.config._
 import zio.config.magnolia.descriptor
 import zio.config.typesafe._
 import zio.config.yaml._
+import zio.Unsafe
 
 object ConfigSourceOrElseExample extends App {
 
@@ -30,12 +31,16 @@ object ConfigSourceOrElseExample extends App {
   case class ApplicationConfig(kafkaClients: KafkaClients)
 
   val orElseSource: ApplicationConfig =
-    zio.Runtime.default.unsafeRun(
-      read(
-        descriptor[ApplicationConfig] from
-          ConfigSource.fromHoconString(applicationDevYaml).orElse(ConfigSource.fromHoconString(applicationYaml))
-      )
-    )
+    Unsafe.unsafeCompat { implicit u =>
+      zio.Runtime.default.unsafe
+        .run(
+          read(
+            descriptor[ApplicationConfig] from
+              ConfigSource.fromHoconString(applicationDevYaml).orElse(ConfigSource.fromHoconString(applicationYaml))
+          )
+        )
+        .getOrThrowFiberFailure()
+    }
 
   // region US is picked from first source
   // port 100 is picked from second source
@@ -63,8 +68,14 @@ object ConfigSourceOrElseExample extends App {
 
   val desc: ConfigDescriptor[ApplicationConfig] = descriptor[ApplicationConfig]
 
-  val result1: ApplicationConfig = zio.Runtime.default.unsafeRun(read(desc from applicationYamlSourceReader))
-  val result2: ApplicationConfig = zio.Runtime.default.unsafeRun(read(desc from applicationYamlSourceString))
+  val result1: ApplicationConfig =
+    Unsafe.unsafeCompat { implicit u =>
+      zio.Runtime.default.unsafe.run(read(desc from applicationYamlSourceReader)).getOrThrowFiberFailure()
+    }
+  val result2: ApplicationConfig =
+    Unsafe.unsafeCompat { implicit u =>
+      zio.Runtime.default.unsafe.run(read(desc from applicationYamlSourceString)).getOrThrowFiberFailure()
+    }
 
   assert(result1 == expected)
   assert(result1 == result2)
