@@ -5,7 +5,7 @@ import zio.config._
 import zio.stream.ZStream
 import zio.test.Sized
 import zio.test.magnolia.DeriveGen
-import zio.{Chunk, Random, Unsafe, ZIO}
+import zio.{Chunk, Unsafe, ZIO}
 
 import scala.collection.Map
 import typesafe._
