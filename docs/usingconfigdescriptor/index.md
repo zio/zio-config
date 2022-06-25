@@ -74,9 +74,7 @@ import zio.Runtime
       string("appName")).to[AwsConfig]) ?? "asdf"
     ) from ConfigSource.fromMap(map, keyDelimiter = Some('.'))
 
-  val awsConfigResult =
-    zio.Runtime.default.unsafeRun(read(appConfig))
-
+   // zio.Runtime.default.unsafe.run(read(appConfig)) (refer examples on how to manually run zio computations)
    // yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)
 
   
@@ -88,6 +86,9 @@ import zio.Runtime
 
 import zio.config.PropertyTree._
 
+val awsConfigResult = 
+  AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)
+  
 val written: Either[String, PropertyTree[String, String]] = 
   write(appConfig, awsConfigResult)
 

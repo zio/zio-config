@@ -80,7 +80,7 @@ To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 import zio.System
 
 // That's system environment
-val result: Layer[ReadError[String], MyConfig] = System.live >>> ZConfig.fromSystemEnv(myConfig)
+val result: Layer[ReadError[String], MyConfig] = ZConfig.fromSystemEnv(myConfig)
 ```
 
 Another way of doing this is:
