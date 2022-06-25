@@ -346,3 +346,185 @@ val cfg = TypesafeConfig.fromResourcePath(configDescription)
 cfg.narrow(_.api) >>> endpoint // narrowing down to a proper config subtree
 cfg.narrow(_.db) >>> repository
 ```
+
+
+### What's new in zio-config-3.x ?
+
+Some of these details are repeated in certain parts of the documentations.
+We thought we will repeat here, which is much better than readers missing it out.
+
+## Removed `DeriveConfigDescriptor` and `SealedTraitStrategy`
+
+`DeriveConfigDescriptor` used to be the interface where users can override certain default behaviours of automatic derivation, mainly to change the way zio-config handles custom key names, and coproducts (sealed traits). Now this is deleted forever.
+
+Take a look at the API docs of `descriptor`, `descriptorForPureConfig`, `descriptorWithClassNames` and `descriptorWithoutClassNames` for more information.
+
+https://github.com/zio/zio-config/blob/master/magnolia/shared/src/main/scala-2.12-2.13/zio/config/magnolia/package.scala
+
+
+## Custom keys is just about changing `ConfigDescriptor`
+
+We recommend users to make use of `mapKey` in `ConfigDescriptor` to change any behaviour of the field-names (or class names, or sealed-trait names). The release ensures we no longer need to extend an interface called `DeriveConfigDescriptor` to change this behaviour.
+
+### Example:
+
+Now on, the only way to change keys is as follows:
+
+```scala
+  // mapKey is just a function in `ConfigDescriptor` that pre-existed
+
+  val config = descriptor[Config].mapKey(_.toUpperCase)
+ 
+```
+
+instead of 
+
+```scala
+
+// No longer supported
+val customDerivation = new DeriveConfigDescriptor {
+  override def mapFieldName(key: String) = key.toUpperCase
+ }
+
+import customDerivation._
+
+val config = descriptor[Config]
+
+```
+
+## Inbuilt support for pure-config
+
+Many users make use of the label `type` in HOCON files to annotate the type of the coproduct.
+Now on, zio-config has inbuilt support for reading such a file/string using `descriptorForPureConfig`.
+
+
+```scala
+
+    import zio.config._, typesafe._, magnolia._
+
+     sealed trait X
+     case class A(name: String) extends X
+     case class B(age: Int) extends X
+
+     case class AppConfig(x: X)
+
+     val str =
+       s"""
+        x : {
+          type = A
+          name = jon
+        }
+       """
+
+     read(descriptorForPureConfig[AppConfig] from ConfigSource.fromHoconString(str))
+
+
+```
+
+## Allow concise config source strings
+
+With this release we have `descriptorWithoutClassNames` along with `descriptor` that just completely discards the name of the sealed-trait and sub-class (case-class) names, allowing your source less verbose. Note that unlike `pure-config` example above, we don't need to have an extra label `type : A`.
+
+```scala
+
+ sealed trait Y
+
+ object Y {
+   case class A(age: Int)     extends Y
+   case class B(name: String) extends Y
+ }
+
+ case class AppConfig(x: Y)
+
+ val str =
+        s"""
+            x : {
+              age : 10
+            }
+           """
+
+   read(descriptorWithoutClassNames[AppConfig] from ConfigSource.fromHoconString(str))
+```
+
+PS: If you are using `descriptor` instead of `descriptorWithoutClassNames`, then the source has to be:
+
+```scala
+
+ 
+            x : {
+              A : { 
+                  age : 10
+              }
+            }
+
+
+```
+
+
+## Your ConfigSource is exactly your product and coproduct
+
+Some users prefer to encode the config-source exactly the same as that of Scala class files. The implication is, the source will know the name of the `sealed trait` and the name of all of its `subclasses`. There are several advantages to such an approach, while it can be questionable in certain situations. Regardless, zio-config now has inbuilt support to have this pattern.
+
+### Example: 
+
+Say, the config ADT is as below:
+
+```scala
+   sealed trait Y
+
+   object Y {
+     case class A(age: Int)     extends Y
+     case class B(name: String) extends Y
+   }
+
+   case class AppConfig(x: X)
+
+
+
+```
+
+Then the corresponding config-source should be as follows. Keep a note that under `x`, the name of sealed trait `Y` also exist.
+
+
+```scala
+
+      val str =
+        s"""
+           x : {
+                 Y : {
+                    A : {
+                      age : 10
+                    }
+               }
+           }
+          """
+
+```
+
+
+To read such a string (or any config-source encoded in such a hierarchy), use `descriptorWithClassNames` instead of `descriptor`. In short, `descriptorWithClassNames` considers the name of sealed-trait.
+
+
+```scala
+
+read(descriptorWithClassNames[AppConfig] from ConfigSource.fromHoconString(str))
+
+
+```
+
+## More composable `Descriptor`
+
+The whole bunch of methods such as `descriptor` works with the type class `Descriptor`. You can summon a `Descriptor` for type `A` using `Descriptor[A].apply`, which will give you access to lower level methods such as `removeSubClassNameKey`. These methods directly exist in `ConfigDescriptor`, however inaccessible, since there is no guarantee that a manually created `ConfigDescriptor` correctly tags keys to its types (i.e, a particular key is the name of a sub-class of a sealed-trait)
+
+```scala
+  case class A (...)
+
+  val config1: Descriptor[A] =  Descriptor[A].removeSealedTraitNameKey
+  val config2: Descriptor[A] = Descriptor[A].removeSubClassNameKey
+
+ // similar to descriptorWithoutClassNames 
+  val config3: Descriptor[A] =  Descriptor[A].removeSealedTraitNameKey. removeSubClassNameKey.mapFieldName(_.toUpperCase) 
+
+  
+
+```
