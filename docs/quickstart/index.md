@@ -312,7 +312,7 @@ val finalExecution =
 val configLayer = ZConfig.fromPropertiesFile("file-location", configuration)
 
 // Main App
-val pgm = finalExecution.provideLayer(configLayer ++ Console.live)
+val pgm = finalExecution.provideLayer(configLayer)
 
 ```
 

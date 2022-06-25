@@ -315,7 +315,9 @@ val nestedSource =
 )
 
 val nestedConfig = descriptor[NestedCommandLineConfig] from nestedSource
-assert(zio.Runtime.default.unsafeRun(read(nestedConfig)) == NestedCommandLineConfig(SparkConf("v1", "v2"), "v3"))
+
+// zio.Runtime.default.unsafe.run(read(nestedConfig)) 
+// returns NestedCommandLineConfig(SparkConf("v1", "v2"), "v3"))
 
 ```
 
@@ -332,7 +334,8 @@ val nestedCmdLineArgs2 = "--conf -key1=v1 --conf -key2=v2 --key3 v3"
 val nestedSource2 = ConfigSource.fromCommandLineArgs(nestedCmdLineArgs2.split(' ').toList)
 val nestedConfig2 = descriptor[NestedCommandLineConfig] from nestedSource2
 
-assert(zio.Runtime.default.unsafeRun(read(nestedConfig2)) == NestedCommandLineConfig(SparkConf("v1", "v2"), "v3"))
+// zio.Runtime.default.unsafe.run(read(nestedConfig2))
+// returns NestedCommandLineConfig(SparkConf("v1", "v2"), "v3"))
 ```
 
 Here we don't use delimiters for nesting, hence keyDelimiter is `None`. 
@@ -362,7 +365,8 @@ val listArgs = "--users Jane --users Jack"
 val listSource = ConfigSource.fromCommandLineArgs(listArgs.split(' ').toList)
 val listConfigCmdLineArgs = list("users")(string) from listSource
 
-assert(zio.Runtime.default.unsafeRun(read(listConfigCmdLineArgs)) == List("Jane", "Jack"))
+// zio.Runtime.default.unsafe.run(read(listConfigCmdLineArgs))
+// returns List("Jane", "Jack"))
 
 ```
 
@@ -379,7 +383,8 @@ val listSource2 = ConfigSource.fromCommandLineArgs(
    valueDelimiter = Some(',')
 )
 
-assert(zio.Runtime.default.unsafeRun(read(list("users")(string) from listSource2)) == List("Jane", "Jack"))
+// zio.Runtime.default.unsafe.run(read(list("users")(string) from listSource2)) 
+// returns List("Jane", "Jack"))
 
 ```
 
