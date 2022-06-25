@@ -257,16 +257,16 @@ lazy val examples = crossProject(JVMPlatform)
     runAllExamples :=
       Def
         .taskDyn({
-          val c    = (Compile / discoveredMainClasses).value
-          val runs = (Compile / runMain)
+          val classes = (Compile / discoveredMainClasses).value
+          val runs    = (Compile / runMain)
 
-          val x = c.map { cc =>
+          val runTasks = classes.map { cc =>
             Def.task {
               runs.toTask(s" ${cc}").value
             }
           }
 
-          Def.sequential(x)
+          Def.sequential(runTasks)
         })
         .value
   )
