@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.config._
-import zio.{IO, ZIO}
+import zio.{IO, Unsafe, ZIO}
 
 import ConfigDescriptor._
 import ReadError._
@@ -72,7 +72,9 @@ object ErrorAccumulation extends App {
   val result2: ZIO[Any, String, SampleConfig] =
     read(config from invalidSource).mapError(_.prettyPrint())
 
-  println(zio.Runtime.default.unsafeRun(result2.either))
+  Unsafe.unsafeCompat { implicit u =>
+    println(zio.Runtime.default.unsafe.run(result2.either).getOrThrowFiberFailure())
+  }
 
   /*
   s"""
