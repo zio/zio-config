@@ -13,8 +13,9 @@ jobs:
     timeout-minutes: 30
     if: github.event_name != 'pull_request'
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - uses: olafurpg/setup-scala@v13
-     # - run: ./sbt docs/docusaurusPublishGhpages
+      - run: sbt docs/docusaurusPublishGhpages
         env:
           GIT_DEPLOY_KEY: ${{ secrets.GIT_DEPLOY_KEY }}
+          
