@@ -87,7 +87,7 @@ import zio.Runtime
 import zio.config.PropertyTree._
 
 val awsConfigResult = 
-  AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)
+  AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp")
   
 val written: Either[String, PropertyTree[String, String]] = 
   write(appConfig, awsConfigResult)
