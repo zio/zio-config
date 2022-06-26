@@ -18,4 +18,5 @@ jobs:
       - uses: olafurpg/setup-gpg@v3
       - run: sbt ++2.13.7 docs/docusaurusPublishGhpages
         env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GIT_DEPLOY_KEY: ${{ secrets.GIT_DEPLOY_KEY }}
