@@ -1676,7 +1676,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  `nested("xyz")(list(string("USERNAME"))` is same as `list("xyz")(string("USERNAME"))`
      */
-    def list[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
+    def list[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       ConfigDescriptorAdt.sequenceDesc(desc)
 
     /**
@@ -2006,7 +2006,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  }}}
      */
-    def set[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
+    def set[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
       list(desc).transformOrFail(distinctListToSet, s => Right(s.toList))
 
     /**
