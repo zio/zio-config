@@ -402,11 +402,14 @@ object Descriptor {
             acc orElse f(n)
           }
         case head :: tail =>
+          def nest(name: String)(unwrapped: ConfigDescriptor[Any]) =
+            if (caseClass.isValueClass) unwrapped
+            else nested(name)(unwrapped)
           def makeNestedParam(name: String, unwrapped: ConfigDescriptor[Any], optional: Boolean) =
             if (optional) {
-              nested(name)(unwrapped).optional.asInstanceOf[ConfigDescriptor[Any]]
+              nest(name)(unwrapped).optional.asInstanceOf[ConfigDescriptor[Any]]
             } else {
-              nested(name)(unwrapped)
+              nest(name)(unwrapped)
             }
 
           def makeDescriptor(param: Param[Descriptor, T]): ConfigDescriptor[Any] = {
