@@ -468,10 +468,23 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     /**
      * Transform A to B, however usage of map disallows the usage of `write` back
      * functionality.
+     *
      * Use `map` if we really don't care writing back the config to the sources in future
      */
     final def map[B](f: A => B): ConfigDescriptor[B] =
       self.transformOrFailRight[B](
+        f,
+        _ => Left("Unable to write back the config. Use transform methods instead of map to specify how to write back")
+      )
+
+    /**
+     * Transform A to B that can fail, however usage of mapEither disallows the usage of `write` back
+     * functionality.
+     *
+     * Use `mapEither` if we really don't care writing back the config to the sources in future
+     */
+    final def mapEither[B](f: A => Either[String, B]): ConfigDescriptor[B] =
+      self.transformOrFail[B](
         f,
         _ => Left("Unable to write back the config. Use transform methods instead of map to specify how to write back")
       )
