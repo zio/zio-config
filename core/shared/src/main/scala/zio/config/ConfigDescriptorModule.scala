@@ -466,6 +466,17 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       self.updateSource(_.orElse(that))
 
     /**
+     * Transform A to B, however usage of map disallows the usage of `write` back
+     * functionality.
+     * Use `map` if we really don't care writing back the config to the sources in future
+     */
+    final def map[B](f: A => B): ConfigDescriptor[B] =
+      self.transformOrFailRight[B](
+        f,
+        _ => Left("Unable to write back the config. Use transform methods instead of map to specify how to write back")
+      )
+
+    /**
      * mapKey allows user to convert the keys in a ConfigDescriptor.
      *
      * Example:
