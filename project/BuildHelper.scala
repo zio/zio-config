@@ -27,7 +27,7 @@ object BuildHelper {
   val Scala213: String   = versions("2.13")
   val ScalaDotty: String = versions("3")
 
-  val SilencerVersion = "1.7.6"
+  val SilencerVersion = "1.7.9"
 
   private val stdOptions = Seq(
     "-deprecation",
@@ -239,7 +239,7 @@ object BuildHelper {
         Seq(
           "com.github.ghik" % "silencer-lib"            % SilencerVersion % Provided cross CrossVersion.full,
           compilerPlugin("com.github.ghik" % "silencer-plugin" % SilencerVersion cross CrossVersion.full),
-          compilerPlugin("org.typelevel"  %% "kind-projector"  % "0.13.1" cross CrossVersion.full)
+          compilerPlugin("org.typelevel"  %% "kind-projector"  % "0.13.2" cross CrossVersion.full)
         )
     },
     semanticdbEnabled := scalaVersion.value != ScalaDotty, // enable SemanticDB
