@@ -196,6 +196,7 @@ lazy val zioConfigAws    = crossProject(JVMPlatform)
   .settings(
     libraryDependencies ++= Seq(
       "com.amazonaws" % "aws-java-sdk-ssm" % awsVersion,
+      "dev.zio"      %% "zio-streams"      % zioVersion,
       "dev.zio"      %% "zio-test"         % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
     ),
