@@ -30,15 +30,13 @@ object ParameterStoreConfigSource {
           ZStream
             .paginateZIO(
               ZIO.attempt(ssm.getParametersByPath(request))
-            )(_.map { respponse =>
+            )(_.map { response =>
               val currentBatchResult =
                 Chunk.fromIterable(
-                  respponse.getParameters.asScala.toList
+                  response.getParameters.asScala.toList
                 )
-              val nextToken          =
-                respponse.getNextToken
-
-              val nextBatch =
+              val nextToken          = response.getNextToken
+              val nextBatch          =
                 if (nextToken == null || nextToken.trim.isEmpty)
                   None
                 else
