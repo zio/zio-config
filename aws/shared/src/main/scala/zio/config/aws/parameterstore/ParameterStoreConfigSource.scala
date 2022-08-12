@@ -6,7 +6,8 @@ import com.amazonaws.services.simplesystemsmanagement.{
   AWSSimpleSystemsManagementClientBuilder
 }
 import zio.config.{PropertyTreePath, ReadError, _}
-import zio.{Task, ZIO, ZManaged}
+import zio.stream.ZStream
+import zio.{Chunk, Task, ZIO, ZManaged}
 
 import scala.jdk.CollectionConverters._
 
@@ -28,12 +29,34 @@ object ParameterStoreConfigSource {
                   .withRecursive(true)
                   .withWithDecryption(true)
 
-              ZIO
-                .effect(ssm.getParametersByPath(request).getParameters)
-                .map(_.asScala.toList)
-                .map { list =>
+              ZStream
+                .paginateM(
+                  ZIO.effect(ssm.getParametersByPath(request))
+                )(_.map { response =>
+                  val currentBatchResult =
+                    Chunk.fromIterable(
+                      response.getParameters.asScala.toList
+                    )
+                  val nextToken          = response.getNextToken
+                  val nextBatch          =
+                    if (nextToken == null || nextToken.trim.isEmpty)
+                      None
+                    else
+                      Some(
+                        ZIO.effect(
+                          ssm.getParametersByPath(request.withNextToken(nextToken))
+                        )
+                      )
+
+                  (currentBatchResult, nextBatch)
+                })
+                .runCollect
+                .map { result =>
                   ConfigSource
-                    .getPropertyTreeFromMap(convertParameterListToMap(list, basePath), keyDelimiter = Some('/'))
+                    .getPropertyTreeFromMap(
+                      convertParameterListToMap(result.flatten.toList, basePath),
+                      keyDelimiter = Some('/')
+                    )
                 }
             }
               .map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
