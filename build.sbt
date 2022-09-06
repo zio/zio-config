@@ -54,7 +54,7 @@ addCommandAlias(
 )
 addCommandAlias(
   "testJVM",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test;zioConfigAwsJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigShapelessJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigGenJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test"
 )
 addCommandAlias(
   "testNative",
@@ -74,10 +74,11 @@ addCommandAlias(
 )
 addCommandAlias(
   "testDotty",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test"
 )
 
 lazy val awsVersion        = "1.12.137"
+lazy val zioAwsVersion     = "4.17.104.2"
 lazy val zioVersion        = "1.0.9"
 lazy val magnoliaVersion   = "0.17.0"
 lazy val refinedVersion    = "0.9.28"
@@ -125,7 +126,8 @@ lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
   zioConfigRefinedJVM,
   zioConfigMagnoliaJVM,
   examplesJVM,
-  zioConfigTypesafeMagnoliaTestsJVM
+  zioConfigTypesafeMagnoliaTestsJVM,
+  zioConfigZioAwsJVM
 )
 
 lazy val scala213projects = scala212projects ++ Seq[ProjectReference](zioConfigScalazJVM)
@@ -134,6 +136,7 @@ lazy val scala3projects =
   Seq[ProjectReference](
     zioConfigJVM,
     zioConfigAwsJVM,
+    zioConfigZioAwsJVM,
     zioConfigCatsJVM,
     zioConfigDerivationJVM,
     zioConfigEnumeratumJVM,
@@ -214,6 +217,25 @@ lazy val zioConfigAws    = crossProject(JVMPlatform)
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigAwsJVM = zioConfigAws.jvm
+  .settings(dottySettings)
+
+lazy val zioConfigZioAws    = crossProject(JVMPlatform)
+  .in(file("zio-aws"))
+  .settings(stdSettings("zio-config-zio-aws"))
+  .settings(crossProjectSettings)
+  .settings(dottySettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "io.github.vigoo" %% "zio-aws-ssm"  % zioAwsVersion,
+      "dev.zio"         %% "zio-streams"  % zioVersion,
+      "dev.zio"         %% "zio-test"     % zioVersion % Test,
+      "dev.zio"         %% "zio-test-sbt" % zioVersion % Test
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "compile->compile;test->test")
+
+lazy val zioConfigZioAwsJVM = zioConfigZioAws.jvm
   .settings(dottySettings)
 
 lazy val zioConfigRefined    = crossProject(JVMPlatform)
