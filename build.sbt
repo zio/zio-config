@@ -225,6 +225,7 @@ lazy val zioConfigZioAws    = crossProject(JVMPlatform)
   .settings(crossProjectSettings)
   .settings(dottySettings)
   .settings(
+    crossScalaVersions --= Seq(Scala211),
     libraryDependencies ++= Seq(
       "io.github.vigoo" %% "zio-aws-ssm"  % zioAwsVersion,
       "dev.zio"         %% "zio-streams"  % zioVersion,
