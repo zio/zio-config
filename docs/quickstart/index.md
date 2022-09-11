@@ -5,7 +5,7 @@ title:  "Quick Start"
 
 
 The library aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
-There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/src/main/scala/zio/config/examples) straight away as well.
+There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples) straight away as well.
 
 __Note that this documentation is for 1.x series. For newer versions, please refer to [docs](https://github.com/zio/zio-config/tree/master/docs) section in GitHub.__
 
