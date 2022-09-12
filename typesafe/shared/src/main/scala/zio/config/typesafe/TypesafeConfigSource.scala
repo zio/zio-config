@@ -2,9 +2,9 @@ package zio.config.typesafe
 
 import com.github.ghik.silencer.silent
 import com.typesafe.config._
+import zio.ZIO
 import zio.config.PropertyTree._
 import zio.config._
-import zio.{Task, ZIO}
 
 import java.io.File
 import java.lang.{Boolean => JBoolean}
@@ -50,7 +50,7 @@ object TypesafeConfigSource {
    */
   def fromHoconFile[A](file: File): ConfigSource = {
     val rawConfig =
-      Task
+      ZIO
         .attempt(ConfigFactory.parseFile(file).resolve)
 
     fromTypesafeConfig(rawConfig)
@@ -118,7 +118,7 @@ object TypesafeConfigSource {
    *       }
    *
    *     """
-   *   val configSource = TypesafeConfigSource.fromTypesafeConfig(ConfigFactory.load.resolve)
+   *   val configSource = TypesafeConfigSource.fromTypesafeConfig(ZIO.attempt(ConfigFactory.load.resolve))
    *
    *   case class MyConfig(port: Int, url: String)
    *
@@ -134,15 +134,16 @@ object TypesafeConfigSource {
   def fromTypesafeConfig(
     rawConfig: ZIO[Any, Throwable, com.typesafe.config.Config]
   ): ConfigSource = {
-    val effect =
-      rawConfig.flatMap { value =>
+    val effect = rawConfig
+      .mapError(exception => ReadError.SourceError(message = exception.toString))
+      .flatMap { value =>
         getPropertyTree(value) match {
           case Left(error) =>
             ZIO.fail(ReadError.SourceError(message = error))
           case Right(tree) =>
             ZIO.succeed((path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
         }
-      }.mapError(exception => ReadError.SourceError(message = exception.getMessage))
+      }
 
     ConfigSource.fromManaged("hocon", effect).memoize
   }

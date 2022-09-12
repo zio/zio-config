@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.test.Assertion.assertion
-import zio.test.{Assertion, Gen}
+import zio.test.{Assertion, ErrorMessage => M, Gen, TestArrow, TestTrace}
 
 object helpers {
   final case class Id(value: String)
@@ -32,7 +32,7 @@ object helpers {
   val genDbUrl: Gen[Any, DbUrl] = genNonEmptyString(20).map(DbUrl.apply)
 
   def isErrors[A](assertion: Assertion[ReadError[String]]): Assertion[Either[ReadError[String], A]] =
-    Assertion.assertionRec("isErrors")(Assertion.Render.param(assertion))(assertion) {
+    assertionRec("isErrors")(assertion) {
       case Left(errs: ReadError[String]) => Some(errs)
       case Right(_)                      => None
     }
@@ -40,15 +40,27 @@ object helpers {
   def assertErrors[A](
     pred: ReadError[String] => Boolean
   ): Assertion[Either[ReadError[String], A]] =
-    assertion[Either[ReadError[String], A]]("assertErrors")() {
+    assertion[Either[ReadError[String], A]]("assertErrors") {
       case Left(errs: ReadError[String]) => pred(errs)
       case Right(_)                      => false
     }
 
-  def toMultiMap[K, V](map: Map[K, V]): Map[K, ::[V]]                                    =
+  def toMultiMap[K, V](map: Map[K, V]): Map[K, ::[V]]                                                           =
     map.toList.map { case (k, v) => (k, singleton(v)) }.toMap
 
-  def fromMultiMap[K, V](map: Map[K, ::[V]], appendString: String = ","): Map[K, String] =
+  def fromMultiMap[K, V](map: Map[K, ::[V]], appendString: String = ","): Map[K, String]                        =
     map.toList.map { case (k, v) => (k, v.mkString(appendString)) }.toMap
 
+  private def assertionRec[A, B](name: String)(assertion: Assertion[B])(get: (=> A) => Option[B]): Assertion[A] =
+    Assertion(
+      TestArrow
+        .make[A, B] { a =>
+          get(a).fold[TestTrace[B]](
+            TestTrace.fail(M.text("Custom Assertion") + M.value(name) + M.choice("succeeded", "failed"))
+          ) { b =>
+            TestTrace.succeed(b)
+          }
+        }
+        .withCode(name) >>> assertion.arrow
+    )
 }

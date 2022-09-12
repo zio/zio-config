@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import MemoizedSourceSpecUtils._
 
 object MemoizedSourceSpec extends BaseSpec {
-  val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] =
+  val spec: Spec[Any, ReadError[String]] =
     suite(
       "ConfigSource memoization and lazy config gets"
     )(
@@ -40,7 +40,7 @@ object MemoizedSourceSpec extends BaseSpec {
 
         // To get third element a list, a resource is acquired (making it to 3),
         // and for retrieving each element in the list (of size 2), a resource is acquired (4 and 5)
-        assertM(effect)(equalTo(((s"v1_1_1", "v2_2_2", List("v3_4_4", "v4_5_5")), 5, 5)))
+        assertZIO(effect)(equalTo(((s"v1_1_1", "v2_2_2", List("v3_4_4", "v4_5_5")), 5, 5)))
 
       },
       test(
@@ -68,7 +68,7 @@ object MemoizedSourceSpec extends BaseSpec {
             c <- ZIO.succeed(configCount.get)
           } yield (v, r, c)
 
-        assertM(effect)(equalTo((("v1_1_1", "v2_1_2", List("v3_1_4", "v4_1_5")), 0, 5)))
+        assertZIO(effect)(equalTo((("v1_1_1", "v2_1_2", List("v3_1_4", "v4_1_5")), 0, 5)))
       },
       test(
         "A memoized source runs a resource acquisition and release only once during the read of multiple of config values"
@@ -100,7 +100,7 @@ object MemoizedSourceSpec extends BaseSpec {
             count        <- ZIO.succeed(configCount.get)
           } yield (result, acquireCount, releaseCount, count)
 
-        assertM(effect)(equalTo(((s"v1_1_1", "v2_1_2", List("v3_1_4", "v4_1_5")), 1, 1, 5)))
+        assertZIO(effect)(equalTo(((s"v1_1_1", "v2_1_2", List("v3_1_4", "v4_1_5")), 1, 1, 5)))
       },
       test(
         "A strictlyOnce source runs a resource acquisition and release only once, regardless of the number of reads invoked"
@@ -134,7 +134,7 @@ object MemoizedSourceSpec extends BaseSpec {
             count        <- ZIO.succeed(configCount.get)
           } yield (result1, result2, acquireCount, releaseCount, count)
 
-        assertM(effect)(
+        assertZIO(effect)(
           equalTo(
             (("v1_1_1", "v2_1_2", List("v3_1_4", "v4_1_5")), ("v1_1_6", "v2_1_7", List("v3_1_9", "v4_1_10")), 1, 1, 10)
           )

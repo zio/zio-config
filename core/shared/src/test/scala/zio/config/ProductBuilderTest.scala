@@ -8,7 +8,7 @@ import zio.test.{Gen, _}
 
 object ProductBuilderTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Any, TestFailure[String], TestSuccess] =
+  val spec: Spec[TestConfig, String] =
     suite("ProductBuilder")(
       test("combine 22 for case class") {
         check(genS22) { p =>
@@ -23,7 +23,7 @@ object ProductBuilderTest extends BaseSpec {
                   .mapError(_.getMessage)
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("combine 22 for tupled") {
@@ -68,7 +68,7 @@ object ProductBuilderTest extends BaseSpec {
                   .mapError(_.getMessage)
             } yield reread
 
-          assertM(p2)(equalTo(tuple))
+          assertZIO(p2)(equalTo(tuple))
         }
       }
     )

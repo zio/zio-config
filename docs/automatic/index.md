@@ -182,7 +182,6 @@ This will be equivalent to the manual configuration of:
 ```
 
 
-
 ### Custom ConfigDescription
 
 Every field in a case class should have an instance of `Descriptor` in order for the automatic derivation to work.
@@ -333,7 +332,7 @@ no implicit argument of type zio.config.magnolia.Descriptor
 ```
 
 If looking for new-types, use better strategies than AnyVal (https://afsal-taj06.medium.com/newtype-is-new-now-63f1b632429d),
-and add custom `Descriptor`explicitly in its companion objects.
+and add custom `Descriptor` explicitly in its companion objects.
 
 We will consider adding `AnyVal` support, for supporting legacy applications in future versions
 of zio-config.
@@ -468,3 +467,150 @@ Use `sealed trait` and `case class` pattern.
 
 There is no support for auto-deriving recursive config with scala-3.
 Please refer to examples in magnolia package (not in the main examples module)
+
+
+### Custom Keys
+
+With zio-config-3.x, the only way to change keys is as follows:
+
+```scala
+  // mapKey is just a function in `ConfigDescriptor` that pre-existed
+
+  val config = descriptor[Config].mapKey(_.toUpperCase)
+ 
+```
+
+instead of 
+
+```scala
+
+// No longer supported
+val customDerivation = new DeriveConfigDescriptor {
+  override def mapFieldName(key: String) = key.toUpperCase
+ }
+
+import customDerivation._
+
+val config = descriptor[Config]
+
+```
+
+## Inbuilt support for pure-config
+
+Many users make use of the label `type` in HOCON files to annotate the type of the coproduct.
+Now on, zio-config has inbuilt support for reading such a file/string using `descriptorForPureConfig`.
+
+
+```scala
+
+    import zio.config._, typesafe._, magnolia._
+
+     sealed trait X
+     case class A(name: String) extends X
+     case class B(age: Int) extends X
+
+     case class AppConfig(x: X)
+
+     val str =
+       s"""
+        x : {
+          type = A
+          name = jon
+        }
+       """
+
+     read(descriptorForPureConfig[AppConfig] from ConfigSource.fromHoconString(str))
+
+
+```
+
+## Allow concise config source strings
+
+With this release we have `descriptorWithoutClassNames` along with `descriptor` that just completely discards the name of the sealed-trait and sub-class (case-class) names, allowing your source less verbose. Note that unlike `pure-config` example above, we don't need to have an extra label `type : A`.
+
+```scala
+
+ sealed trait Y
+
+ object Y {
+   case class A(age: Int)     extends Y
+   case class B(name: String) extends Y
+ }
+
+ case class AppConfig(x: Y)
+
+ val str =
+        s"""
+            x : {
+              age : 10
+            }
+           """
+
+   read(descriptorWithoutClassNames[AppConfig] from ConfigSource.fromHoconString(str))
+```
+
+PS: If you are using `descriptor` instead of `descriptorWithoutClassNames`, then the source has to be:
+
+```scala
+
+ 
+            x : {
+              A : { 
+                  age : 10
+              }
+            }
+
+
+```
+
+
+## Your ConfigSource is exactly your product and coproduct
+
+Some users prefer to encode the config-source exactly the same as that of Scala class files. The implication is, the source will know the name of the `sealed trait` and the name of all of its `subclasses`. There are several advantages to such an approach, while it can be questionable in certain situations. Regardless, zio-config now has inbuilt support to have this pattern.
+
+### Example: 
+
+Say, the config ADT is as below:
+
+```scala
+   sealed trait Y
+
+   object Y {
+     case class A(age: Int)     extends Y
+     case class B(name: String) extends Y
+   }
+
+   case class AppConfig(x: X)
+
+
+
+```
+
+Then the corresponding config-source should be as follows. Keep a note that under `x`, the name of sealed trait `Y` also exist.
+
+
+```scala
+
+      val str =
+        s"""
+           x : {
+                 Y : {
+                    A : {
+                      age : 10
+                    }
+               }
+           }
+          """
+
+```
+
+
+To read such a string (or any config-source encoded in such a hierarchy), use `descriptorWithClassNames` instead of `descriptor`. In short, `descriptorWithClassNames` considers the name of sealed-trait.
+
+
+```scala
+
+read(descriptorWithClassNames[AppConfig] from ConfigSource.fromHoconString(str))
+
+
+```

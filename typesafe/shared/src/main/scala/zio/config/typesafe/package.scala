@@ -28,7 +28,7 @@ package object typesafe {
       TypesafeConfig.fromHoconString(hoconString, configDescriptor)
 
     def fromTypesafeConfig[A](
-      conf: => com.typesafe.config.Config,
+      conf: ZIO[Any, Throwable, com.typesafe.config.Config],
       configDescriptor: ConfigDescriptor[A]
     )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
       TypesafeConfig.fromTypesafeConfig(conf, configDescriptor)

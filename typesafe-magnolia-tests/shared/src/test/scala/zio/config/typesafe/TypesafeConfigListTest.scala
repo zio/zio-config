@@ -8,7 +8,7 @@ import magnolia._
 
 object TypesafeConfigListTest extends ZIOSpecDefault {
 
-  def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig List")(
+  def spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig List")(
     test("A kebab case for testing HOCON List config") {
       val kebabCaseConfig =
         """
@@ -184,7 +184,7 @@ object TypesafeConfigListTest extends ZIOSpecDefault {
           Database(Port("ba"))
         )
 
-      assertM(zioConfigWithKeysInKebabResult)(equalTo(expectedResult))
+      assertZIO(zioConfigWithKeysInKebabResult)(equalTo(expectedResult))
     }
   )
 }

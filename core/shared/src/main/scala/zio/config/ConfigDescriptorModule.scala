@@ -466,6 +466,30 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
       self.updateSource(_.orElse(that))
 
     /**
+     * Transform A to B, however usage of map disallows the usage of `write` back
+     * functionality.
+     *
+     * Use `map` if we really don't care writing back the config to the sources in future
+     */
+    final def map[B](f: A => B): ConfigDescriptor[B] =
+      self.transformOrFailRight[B](
+        f,
+        _ => Left("Unable to write back the config. Use transform methods instead of map to specify how to write back")
+      )
+
+    /**
+     * Transform A to B that can fail, however usage of mapEither disallows the usage of `write` back
+     * functionality.
+     *
+     * Use `mapEither` if we really don't care writing back the config to the sources in future
+     */
+    final def mapEither[B](f: A => Either[String, B]): ConfigDescriptor[B] =
+      self.transformOrFail[B](
+        f,
+        _ => Left("Unable to write back the config. Use transform methods instead of map to specify how to write back")
+      )
+
+    /**
      * mapKey allows user to convert the keys in a ConfigDescriptor.
      *
      * Example:
@@ -1676,7 +1700,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  `nested("xyz")(list(string("USERNAME"))` is same as `list("xyz")(string("USERNAME"))`
      */
-    def list[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
+    def list[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[List[A]] =
       ConfigDescriptorAdt.sequenceDesc(desc)
 
     /**
@@ -2006,7 +2030,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
      *
      *  }}}
      */
-    def set[K, V, A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
+    def set[A](desc: => ConfigDescriptor[A]): ConfigDescriptor[Set[A]] =
       list(desc).transformOrFail(distinctListToSet, s => Right(s.toList))
 
     /**

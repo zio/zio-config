@@ -7,7 +7,7 @@ import zio.test.{TestEnvironment, ZIOSpecDefault, _}
 
 object CommandLineListAccumulationTest extends ZIOSpecDefault {
 
-  def spec: Spec[TestEnvironment, TestFailure[Nothing], TestSuccess] =
+  def spec: Spec[TestEnvironment, Nothing] =
     suite("Configuration of a list from multiple entries")(
       test("Using single arg --key=value style") {
         check(Gen.int(1, 10).map(_ => 1)) { count =>
@@ -17,7 +17,7 @@ object CommandLineListAccumulationTest extends ZIOSpecDefault {
               .map(config => config)
 
           val expected = (1 to count).toList
-          assertM(p2.either)(isRight(equalTo(SomeConfig(expected))))
+          assertZIO(p2.either)(isRight(equalTo(SomeConfig(expected))))
         }
       }
     )

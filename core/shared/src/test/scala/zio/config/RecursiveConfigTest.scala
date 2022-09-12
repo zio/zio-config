@@ -8,29 +8,29 @@ import RecursiveConfigTestUtils._
 
 object RecursiveConfigTest extends BaseSpec {
 
-  val spec: Spec[Annotations, TestFailure[Any], TestSuccess] =
+  val spec: Spec[Annotations, Any] =
     suite("RecursiveConfigTest")(
       test("read simple") {
-        assertM(read(SimpleRec.config from SimpleRec.source))(equalTo(SimpleRec.expected))
+        assertZIO(read(SimpleRec.config from SimpleRec.source))(equalTo(SimpleRec.expected))
       },
       test("read simple list") {
-        assertM(read(SimpleListRec.config from SimpleListRec.source))(equalTo(SimpleListRec.expected))
+        assertZIO(read(SimpleListRec.config from SimpleListRec.source))(equalTo(SimpleListRec.expected))
       },
       test("read simple either") {
-        assertM(read(SimpleEitherRec.config from SimpleEitherRec.source))(equalTo(SimpleEitherRec.expected))
+        assertZIO(read(SimpleEitherRec.config from SimpleEitherRec.source))(equalTo(SimpleEitherRec.expected))
       },
       test("read simple reversed") {
-        assertM(read(SimpleRecReversed.config from SimpleRecReversed.source))(
+        assertZIO(read(SimpleRecReversed.config from SimpleRecReversed.source))(
           equalTo(SimpleRecReversed.expected)
         )
       },
       test("read simple reversed multiple") {
-        assertM(read(SimpleRecMultiple.config from SimpleRecMultiple.source))(
+        assertZIO(read(SimpleRecMultiple.config from SimpleRecMultiple.source))(
           equalTo(SimpleRecMultiple.expected)
         )
       },
       test("read simple with updated key") {
-        assertM(
+        assertZIO(
           read(
             SimpleRecMultiple.config.mapKey(_.toUpperCase()) from SimpleRecMultiple.source
               .mapKeys(_.toLowerCase())
@@ -40,10 +40,10 @@ object RecursiveConfigTest extends BaseSpec {
         )
       },
       test("read mutual recursive") {
-        assertM(read(data from testSource))(equalTo(recursiveValue))
+        assertZIO(read(data from testSource))(equalTo(recursiveValue))
       },
       test("read expression tree") {
-        assertM(read(expr from exprSource))(equalTo(exprValue))
+        assertZIO(read(expr from exprSource))(equalTo(exprValue))
       },
       test("write simple") {
         assert(write(SimpleRec.config, SimpleRec.expected))(isRight(equalTo(SimpleRec.tree)))

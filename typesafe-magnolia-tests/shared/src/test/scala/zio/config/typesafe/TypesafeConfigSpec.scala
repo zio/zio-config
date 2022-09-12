@@ -7,7 +7,7 @@ import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 object TypesafeConfigSpec extends ZIOSpecDefault {
-  val spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("TypesafeConfig")(
+  val spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig")(
     test("Read empty list") {
       val res =
         TypesafeConfigSource.fromHoconString(
@@ -21,7 +21,7 @@ object TypesafeConfigSpec extends ZIOSpecDefault {
 
       val expected = Record(Map("a" -> Record(Map("b" -> Leaf("s", false), "c" -> Sequence(Nil)))))
 
-      assertM(res.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
+      assertZIO(res.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
     },
     test("Read mixed list") {
       val res =
@@ -36,10 +36,10 @@ object TypesafeConfigSpec extends ZIOSpecDefault {
 
       val expected = Record(Map("list" -> Sequence(List(Leaf("a", false), Record(Map("b" -> Leaf("c", false)))))))
 
-      assertM(res.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
+      assertZIO(res.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
     },
     test("Read a complex hocon structure successfully") {
-      assertM(readComplexSource)(equalTo(expectedResult))
+      assertZIO(readComplexSource)(equalTo(expectedResult))
     }
   )
 }

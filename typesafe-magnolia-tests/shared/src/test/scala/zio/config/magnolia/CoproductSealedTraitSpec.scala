@@ -20,12 +20,12 @@ object CoproductSealedTraitSpec extends ZIOSpecDefault {
 
   case class Config(x: X)
 
-  def spec: Spec[Any, TestFailure[Serializable], TestSuccess] =
+  def spec: Spec[Any, Any] =
     suite("MagnoliaConfig")(test("descriptor of coproduct sealed trait") {
-      assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "A"))))(equalTo(Config(A))) *>
-        assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "B"))))(equalTo(Config(B))) *>
-        assertM(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Config(C))) *>
-        assertM(
+      assertZIO(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "A"))))(equalTo(Config(A))) *>
+        assertZIO(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "B"))))(equalTo(Config(B))) *>
+        assertZIO(read(descriptor[Config] from ConfigSource.fromMap(Map("x" -> "c"))))(equalTo(Config(C))) *>
+        assertZIO(
           read(
             descriptor[Config] from ConfigSource.fromMap(
               constantMap = Map(
@@ -38,7 +38,7 @@ object CoproductSealedTraitSpec extends ZIOSpecDefault {
             )
           )
         )(equalTo(Config(D(Detail("ff", "ll", Region("strath", "syd")))))) *>
-        assertM(
+        assertZIO(
           read(
             descriptor[Config] from ConfigSource.fromMap(
               Map(
@@ -51,7 +51,7 @@ object CoproductSealedTraitSpec extends ZIOSpecDefault {
             )
           )
         )(equalTo(Config(E(Detail("ff", "ll", Region("strath", "syd")))))) *>
-        assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(D(Detail("ff", "ll", Region("strath", "syd")))))))(
+        assertZIO(zio.ZIO.fromEither(write(descriptor[Config], Config(D(Detail("ff", "ll", Region("strath", "syd")))))))(
           equalTo(
             Record(
               Map(
@@ -74,12 +74,12 @@ object CoproductSealedTraitSpec extends ZIOSpecDefault {
             )
           )
         ) *>
-        assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(A))))(
+        assertZIO(zio.ZIO.fromEither(write(descriptor[Config], Config(A))))(
           equalTo(Record(Map("x" -> Leaf("A"))))
         ) *>
-        assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(B))))(
+        assertZIO(zio.ZIO.fromEither(write(descriptor[Config], Config(B))))(
           equalTo(Record(Map("x" -> Leaf("B"))))
         ) *>
-        assertM(zio.ZIO.fromEither(write(descriptor[Config], Config(C))))(equalTo(Record(Map("x" -> Leaf("c")))))
+        assertZIO(zio.ZIO.fromEither(write(descriptor[Config], Config(C))))(equalTo(Record(Map("x" -> Leaf("c")))))
     })
 }

@@ -13,27 +13,12 @@ on:
       - published
 
 jobs:
-  lint:
-    runs-on: ubuntu-20.04
-    timeout-minutes: 30
-    steps:
-      - name: Checkout current branch
-        uses: actions/checkout@v2.4.0
-        with:
-          fetch-depth: 0
-      - name: Setup Scala and Java
-        uses: olafurpg/setup-scala@v13
-      - name: Cache scala dependencies
-        uses: coursier/cache-action@v6
-      - name: Lint code
-        run: sbt check
-
   mdoc:
     runs-on: ubuntu-20.04
     timeout-minutes: 60
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v2.4.2
       - name: Setup Scala and Java
         uses: olafurpg/setup-scala@v13
       - name: Cache scala dependencies
@@ -52,7 +37,7 @@ jobs:
         platform: ['JS', 'JVM', 'Native']
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v2.4.2
         with:
           fetch-depth: 0
       - name: Setup Scala and Java
@@ -79,7 +64,7 @@ jobs:
 
   ci:
     runs-on: ubuntu-20.04
-    needs: [lint, mdoc, test]
+    needs: [mdoc, test]
     steps:
       - name: Report successful build
         run: echo "ci passed"
@@ -91,7 +76,7 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v2.4.0
+        uses: actions/checkout@v2.4.2
         with:
           fetch-depth: 0
       - name: Setup Scala and Java 

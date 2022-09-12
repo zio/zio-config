@@ -13,7 +13,7 @@ import scala.util.Try
 
 object PropertyTypeTest extends BaseSpec {
 
-  val spec: ZSpec[TestEnvironment with Scope, Any] =
+  val spec: Spec[TestEnvironment with Scope, Any] =
     suite("PropertyType")(
       test("StringType roundtrip") {
         // any string is a valid string i guess
@@ -132,7 +132,7 @@ object PropertyTypeTestUtils {
     propType: PropertyType[String, A],
     genValid: Gen[Sized, String],
     parse: String => A
-  ): Spec[TestConfig with Sized, TestFailure[Nothing], TestSuccess] =
+  ): Spec[TestConfig with Sized, Nothing] =
     suite(s"${typeInfo}Type")(
       test(s"valid ${typeInfo} string roundtrip") {
         check(genValid.map(_.toString))(assertValidRoundtrip(propType, parse))

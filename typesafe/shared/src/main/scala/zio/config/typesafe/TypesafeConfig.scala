@@ -1,6 +1,5 @@
 package zio.config.typesafe
 
-import com.typesafe.config.ConfigFactory
 import zio._
 import zio.config._
 
@@ -27,7 +26,9 @@ object TypesafeConfig {
   def fromResourcePath[A](
     configDescriptor: ConfigDescriptor[A]
   )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
-    fromTypesafeConfig(ConfigFactory.load.resolve, configDescriptor)
+    ZConfig.fromConfigDescriptor(
+      configDescriptor from TypesafeConfigSource.fromResourcePath
+    )
 
   /**
    * Retrieve your config from a HOCON file
@@ -109,14 +110,14 @@ object TypesafeConfig {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Layer[ReadError[String], Has[MyConfig]] =
-   *     TypesafeConfig.fromTypesafeConfig(ConfigFactory.load.resolve, descriptor[MyConfig])
+   *     TypesafeConfig.fromTypesafeConfig(ZIO.attempt(ConfigFactory.load.resolve), descriptor[MyConfig])
    * }}}
    */
   def fromTypesafeConfig[A](
-    conf: => com.typesafe.config.Config,
+    conf: ZIO[Any, Throwable, com.typesafe.config.Config],
     configDescriptor: ConfigDescriptor[A]
   )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
     ZConfig.fromConfigDescriptor(
-      configDescriptor from TypesafeConfigSource.fromTypesafeConfig(ZIO.succeed(conf))
+      configDescriptor from TypesafeConfigSource.fromTypesafeConfig(conf)
     )
 }

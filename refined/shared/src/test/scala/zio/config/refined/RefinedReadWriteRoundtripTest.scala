@@ -17,7 +17,7 @@ import ConfigDescriptor._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
-  val spec: Spec[TestConfig with Any, TestFailure[String], TestSuccess] =
+  val spec: Spec[TestConfig, String] =
     suite("Refined support")(
       test("Refined config roundtrip") {
         check(genRefinedProd) { p =>
@@ -30,7 +30,7 @@ object RefinedReadWriteRoundtripTest extends BaseSpec {
                   .mapError(_.getMessage)
             } yield reread
 
-          assertM(p2)(equalTo(p))
+          assertZIO(p2)(equalTo(p))
         }
       },
       test("Refined config invalid") {
@@ -38,7 +38,7 @@ object RefinedReadWriteRoundtripTest extends BaseSpec {
           val p2 =
             read(prodConfig(n) from ConfigSource.fromMap(envMap))
 
-          assertM(p2.mapError(_.size).either)(equalTo(Left(5)))
+          assertZIO(p2.mapError(_.size).either)(equalTo(Left(5)))
         }
       }
     )

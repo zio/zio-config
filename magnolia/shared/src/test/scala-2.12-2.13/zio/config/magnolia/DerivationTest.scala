@@ -8,7 +8,7 @@ import zio.test.{ZIOSpecDefault, _}
 import ConfigDescriptorAdt._
 
 object DerivationTest extends ZIOSpecDefault {
-  def spec: Spec[Any, TestFailure[ReadError[String]], TestSuccess] = suite("DerivationTest")(
+  def spec: Spec[Any, ReadError[String]] = suite("DerivationTest")(
     test("support describe annotation") {
       @describe("class desc")
       case class Cfg(@describe("field desc") fname: String)
@@ -141,7 +141,7 @@ object DerivationTest extends ZIOSpecDefault {
 
       val res = read(descriptor[A5] from src)
 
-      assertM(res.either)(isRight(anything))
+      assertZIO(res.either)(isRight(anything))
     },
     test("support nested lists recursive") {
       case class A(a: List[String])
@@ -156,7 +156,7 @@ object DerivationTest extends ZIOSpecDefault {
       val res                                            =
         read(descriptor[B] from src)
 
-      assertM(res.either)(isRight(anything))
+      assertZIO(res.either)(isRight(anything))
     },
     test("support recursive structures") {
       case class SimpleRec(id: Int, nested: Option[SimpleRec])
@@ -178,7 +178,7 @@ object DerivationTest extends ZIOSpecDefault {
       )
 
       val simpleRecursiveValue: SimpleRec = SimpleRec(1, Some(SimpleRec(2, None)))
-      assertM(read(desc from simpleTestSource))(equalTo(simpleRecursiveValue))
+      assertZIO(read(desc from simpleTestSource))(equalTo(simpleRecursiveValue))
     }
   )
 }

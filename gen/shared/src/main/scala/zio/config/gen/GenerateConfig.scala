@@ -5,7 +5,7 @@ import zio.config._
 import zio.stream.ZStream
 import zio.test.Sized
 import zio.test.magnolia.DeriveGen
-import zio.{Chunk, Random, ZIO}
+import zio.{Chunk, Unsafe, ZIO}
 
 import scala.collection.Map
 
@@ -291,9 +291,9 @@ trait GenerateConfig {
     generateConfig(config, size).map(_.flattenString(keyDelimiter))
 
   implicit class UnsafeRunOps[E, A](s: ZStream[Sized, E, A]) {
-    def unsafeRunChunk: Chunk[A] = {
+    def unsafeRunChunk: Chunk[A] = Unsafe.unsafeCompat { implicit u =>
       val runtime = zio.Runtime.default
-      runtime.unsafeRun(s.provideLayer(Sized.live(1) ++ Random.live).runCollect)
+      runtime.unsafe.run(s.provideLayer(Sized.live(1)).runCollect).getOrThrowFiberFailure()
     }
   }
 }

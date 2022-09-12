@@ -5,14 +5,14 @@ import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 object OverrideDerivationTest extends ZIOSpecDefault {
-  def spec: Spec[Any, TestFailure[Serializable], TestSuccess] = suite("OverrideDerivationTest")(
+  def spec: Spec[Any, Any] = suite("OverrideDerivationTest")(
     test("simple config") {
 
       case class Cfg(fieldName: String)
 
       val res = write(descriptorWithoutClassNames[Cfg], Cfg("a"))
 
-      assertM(
+      assertZIO(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
@@ -35,7 +35,7 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val res = write(descriptorWithoutClassNames[Outer], cfg)
 
-      assertM(
+      assertZIO(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
@@ -58,7 +58,7 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val res = write(descriptorWithClassNames[Outer], cfg)
 
-      assertM(
+      assertZIO(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
@@ -81,7 +81,7 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val res = write(descriptorForPureConfig[Outer], cfg)
 
-      assertM(
+      assertZIO(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
@@ -104,7 +104,7 @@ object OverrideDerivationTest extends ZIOSpecDefault {
 
       val res = write(descriptorWithClassNames[Outer]("type"), cfg)
 
-      assertM(
+      assertZIO(
         zio.ZIO
           .fromEither(res)
           .map(ConfigSource.fromPropertyTree(_, "tree"))
