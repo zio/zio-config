@@ -12,7 +12,9 @@ object SyntaxTest extends BaseSpec {
       test("<*> is an alias for zip") {
         import zio.config.ConfigDescriptor.string
 
-        assertTrue((string("A") zip string("B") zip string("C")) == (string("A") <*> string("B") <*> string("C")))
+        val _: ConfigDescriptor[(String, String, String)] = (string("A") <*> string("B") <*> string("C"))
+
+        assertCompletes
       },
       test("config.narrow") {
         case class Cfg(a: String, b: Int)
