@@ -9,6 +9,11 @@ object SyntaxTest extends BaseSpec {
 
   val spec: Spec[Environment, Any] =
     suite("SyntaxTest")(
+      test("<*> is an alias for zip") {
+        import zio.config.ConfigDescriptor.string
+
+        assertTrue((string("A") zip string("B") zip string("C")) == (string("A") <*> string("B") <*> string("C")))
+      },
       test("config.narrow") {
         case class Cfg(a: String, b: Int)
         val cfg = ZLayer.succeed(Cfg("a", 1))
