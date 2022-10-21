@@ -179,6 +179,25 @@ object DerivationTest extends ZIOSpecDefault {
 
       val simpleRecursiveValue: SimpleRec = SimpleRec(1, Some(SimpleRec(2, None)))
       assertZIO(read(desc from simpleTestSource))(equalTo(simpleRecursiveValue))
+    },
+    test("support unwrapping case classes extending AnyVal") {
+      case class Cfg(a: UnwrappingAnyVal.A, aVal: UnwrappingAnyVal.AVal)
+
+      val cfg = Cfg(UnwrappingAnyVal.A(1), UnwrappingAnyVal.AVal(2))
+
+      val desc                               = descriptor[Cfg]
+      val tree: PropertyTree[String, String] = PropertyTree.Record(
+        Map(
+          "a"    -> PropertyTree.Record(Map("value" -> PropertyTree.Leaf(cfg.a.value.toString))),
+          "aVal" -> PropertyTree.Leaf(cfg.aVal.value.toString)
+        )
+      )
+      assertZIO(read(desc from ConfigSource.fromPropertyTree(tree, "tree")))(equalTo(cfg))
     }
   )
+
+  private object UnwrappingAnyVal {
+    case class A(value: Int)
+    case class AVal(value: Int) extends AnyVal
+  }
 }

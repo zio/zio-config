@@ -192,7 +192,7 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     /**
      * `<*>` is an alias to function `zip`
      */
-    final def <*>[B](that: => ConfigDescriptor[B]): ConfigDescriptor[(A, B)] =
+    final def <*>[B, C](that: => ConfigDescriptor[B])(implicit Z: InvariantZip.WithOut[A, B, C]): ConfigDescriptor[C] =
       self zip that
 
     /**
