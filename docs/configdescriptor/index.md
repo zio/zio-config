@@ -117,6 +117,7 @@ uuid
 localDate
 localTime
 localDateTime
+Duration
 instant
 file
 url
