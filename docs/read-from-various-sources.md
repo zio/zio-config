@@ -1,5 +1,5 @@
 ---
-id: sources_index
+id: read-from-various-sources
 title:  "Read from various Sources"
 ---
 
@@ -9,30 +9,23 @@ Forming a source gets into a standard pattern, and is easy for you to add anothe
 ```scala mdoc:silent
 import zio.IO
 import zio.config._, ConfigDescriptor._, ConfigSource._
-
 ```
 
 ```scala mdoc:silent
-
 case class MyConfig(ldap: String, port: Int, dburl: String)
-
 ```
 
 To perform any action using zio-config, we need a configuration description.
 Let's define a simple one.
 
-
 ```scala mdoc:silent
-
 val myConfig =
   (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
  // val automatedConfig = descriptor[MyConfig]; using zio-config-magnolia
-
 ```
 
-More details about defining config descriptor is in [here](../configdescriptor/index.md).
-
+More details about defining config descriptor is in [here](manual-creation-of-config-descriptor.md).
 
 ## Constant Map
 
@@ -52,14 +45,11 @@ val io = read(myConfig from mapSource)
 
 ```
 
-Alternatively you can follow below snippet,  yielding Config[MyConfig], which you can use as ZIO environment.
+Alternatively you can follow below snippet, yielding Config[MyConfig], which you can use as ZIO environment.
 
 ```scala mdoc:silent
-
 ZConfig.fromMap(Map(), myConfig)
 // yielding Config[MyConfig], which is a service of config that you can use as ZIO environments.
-
-
 ```
 
 ## Multi Map Source
@@ -82,22 +72,18 @@ val multiMapSource =
 
 read(myConfig from multiMapSource)
 // Running this to completion yields ListConfig(xyz, List(1222, 2221), postgres)
-
 ```
 
 Alternatively you can follow below snippet, yielding Config[MyConfig], which you can use as ZIO environment.
 
 ```scala mdoc:silent
-
 ZConfig.fromMultiMap(Map(), myConfig, "constant")
 // yielding Config[MyConfig], which is a service of config that you can use as ZIO environments.
-
 ```
 
 ## System Environment
 
 ```scala mdoc:silent
-
 val sysEnvSource =
   ConfigSource.fromSystemEnv()
 
@@ -108,10 +94,7 @@ val sysEnvSourceSupportingList =
 // If you want to consider system-env as a nested config, provide keyDelimiter. Refer to API docs
 // Example, Given KAFKA_SERVERS = "servers1, server2"
   ConfigSource.fromSystemEnv(keyDelimiter = Some('_'), valueDelimiter = Some(','))
-
-
 ```
-
 
 Provide keyDelimiter if you need to consider flattened config as a nested config.
 Provide valueDelimiter if you need any value to be a list
@@ -128,12 +111,12 @@ Given:
 }}}
 
 ```
+
 then, the below config will work
 
 ```scala
 nested("KAFKA")(string("SERVER") zip string("FLAG")).to[KafkaConfig]
 ```
-
 
 Give valueDelimiter =  `,`
 and environment with `PORT=1222,2221`; then reading config yields
@@ -144,7 +127,6 @@ and environment with `PORT=1222,2221`; then reading config yields
 zio-config can source system properties.
 
 ```scala mdoc:silent
-
 val sysPropertiesSource =
   ConfigSource.fromSystemProps()
 
@@ -155,18 +137,15 @@ val sysPropertiesSourceWithList =
 // If you want to consider system-properties as a nested config, provide keyDelimiter. Refer to API doc
 // Example, Given KAFKA.SERVERS = "servers1, server2"
   ConfigSource.fromSystemProps(keyDelimiter = Some('.'), valueDelimiter = Some(','))
-
-
 ```
+
 Give valueDelimiter =  `,`
 and environemnt with `PORT=1222,2221`; then reading config yields
 `ListConfig(xyz, List(1222, 2221), postgres)`
 
-
 ## Java Properties
 
 ```scala mdoc:silent
-
 val javaProperties: java.util.Properties = new java.util.Properties() // Ideally loaded with values
 
 val javaPropertiesSource =
@@ -182,12 +161,10 @@ val javaPropertiesSourceWithList =
 ## Properties File
 
 ```scala mdoc:silent
-
 ZConfig.fromPropertiesFile("filepath", myConfig)
 
 // yielding Config[MyConfig] which you provide to
 // functions with zio environment as Config[MyConfig]
-
 ```
 
 ## HOCON String
@@ -198,14 +175,11 @@ There are many examples in examples module in zio-config.
 Here is an quick example
 
 ```scala mdoc:silent
-
 import zio.config.typesafe._
 import zio.config.magnolia._
-
 ```
 
 ```scala mdoc:silent
-
 case class SimpleConfig(port: Int, url: String, region: Option[String])
 
 val automaticDescription = descriptor[SimpleConfig]
@@ -250,28 +224,22 @@ ZConfig.fromHoconString(
         region: useast
       }
       """, automaticDescription)
-
-
 ```
-
 
 ## HOCON File
 
 Similar to `TypesafeConfig.fromHoconString(str, automaticDescription)`
 
 ```scala mdoc:silent
-
 ZConfig.fromHoconFile(new java.io.File("fileapth"), automaticDescription)
 // or use, read(automaticDescription from ConfigSource.fromHoconFile(new java.io.File("fileapth")))
-
 ```
 
 ## Json
+
 You can use `zio-config-typesafe` module to fetch json as well
 
-
 ```scala mdoc:silent
-
 val jsonString =
    """
    {
@@ -284,8 +252,6 @@ val jsonString =
 
 ZConfig.fromHoconString(jsonString, automaticDescription)
 // or use, read(automaticDescription from ConfigSource.fromHoconString(jsonString))
-
-
 ```
 
 ## Command Line Arguments
@@ -293,6 +259,7 @@ ZConfig.fromHoconString(jsonString, automaticDescription)
 This is currently experimental.
 
 ### Simple
+
 ```scala mdoc:silent
 case class SimpleCommandLineConfig(key1: String, key2: String)
 
@@ -300,6 +267,7 @@ val simpleCmdLineArgs = "--key1 value1 --key2 value2"
 val simpleSource = ConfigSource.fromCommandLineArgs(simpleCmdLineArgs.split(' ').toList)
 val simpleConfig = descriptor[SimpleCommandLineConfig] from simpleSource
 ```
+
 ### Nested: Approach 1
 
 ```scala mdoc:silent
@@ -318,18 +286,18 @@ val nestedConfig = descriptor[NestedCommandLineConfig] from nestedSource
 
 // zio.Runtime.default.unsafe.run(read(nestedConfig)) 
 // returns NestedCommandLineConfig(SparkConf("v1", "v2"), "v3"))
-
 ```
 
-This config is for those developers who really used to system properties `(-Dconf.key=1)` and want to take the same approach towards command line arguments.
+This config is for those developers who really used to system properties `(-Dconf.key=1)` and want to take the same
+approach towards command line arguments.
 Here we make use of delimiter `.` as the tool to nesting.
 
-For those who hate delimited keys in command line arguments and the associated nesting, we will have different approach as given below
+For those who hate delimited keys in command line arguments and the associated nesting, we will have different approach
+as given below
 
 ### Nested: Approach 2
 
 ```scala mdoc:silent
-
 val nestedCmdLineArgs2 = "--conf -key1=v1 --conf -key2=v2 --key3 v3"
 val nestedSource2 = ConfigSource.fromCommandLineArgs(nestedCmdLineArgs2.split(' ').toList)
 val nestedConfig2 = descriptor[NestedCommandLineConfig] from nestedSource2
@@ -338,42 +306,39 @@ val nestedConfig2 = descriptor[NestedCommandLineConfig] from nestedSource2
 // returns NestedCommandLineConfig(SparkConf("v1", "v2"), "v3"))
 ```
 
-Here we don't use delimiters for nesting, hence keyDelimiter is `None`. 
-In this case any key-value that comes after `--conf` comes under the root path conf. This is followed in various places such as `SparkConf`.
+Here we don't use delimiters for nesting, hence keyDelimiter is `None`.
+In this case any key-value that comes after `--conf` comes under the root path conf. This is followed in various places
+such as `SparkConf`.
 
 In fact, we can go any level nesting. For example, we can give `---aws --db -url="v" ---aws --kinesis -topic=x`,
 although let's don't complicate our command line arguments.
 
 ### Map
+
 Both the approaches that we saw with nesting is applicable to `map`.
 
 ```scala mdoc:silent
-
 val mapArgs = "--conf.key1=value1  --conf.key2=value2"
-
 ```
 
-`map("conf")(string)` retrieving `Map("key1" -> "value1", "key2" -> "value2")`.  
+`map("conf")(string)` retrieving `Map("key1" -> "value1", "key2" -> "value2")`.
 
 This will also work if `mapArgs` is `--conf -key1=value1 --conf -key2=value2`.
 
 ### List: Approach 1
 
 ```scala mdoc:silent
-
 val listArgs = "--users Jane --users Jack"
 val listSource = ConfigSource.fromCommandLineArgs(listArgs.split(' ').toList)
 val listConfigCmdLineArgs = list("users")(string) from listSource
 
 // zio.Runtime.default.unsafe.run(read(listConfigCmdLineArgs))
 // returns List("Jane", "Jack"))
-
 ```
 
 ### Lists: Approach 2
 
 ```scala mdoc:silent
-
 val listArgs2 = "--users Jane,Jack"
 
 // args.split(' ') is only for demo purpose. We already get a list if we use zio.App
@@ -385,7 +350,6 @@ val listSource2 = ConfigSource.fromCommandLineArgs(
 
 // zio.Runtime.default.unsafe.run(read(list("users")(string) from listSource2)) 
 // returns List("Jane", "Jack"))
-
 ```
 
 ### Behaviour of List in various sources
@@ -393,7 +357,7 @@ val listSource2 = ConfigSource.fromCommandLineArgs(
 No single values will be regarded as list. This is based on feedback from users.
 
 For the config:
- 
+
 ```
 Case class Config(key: List[String]) 
 ```
@@ -401,46 +365,49 @@ Case class Config(key: List[String])
 If the source is below HOCON (or json)
 
 ```scala
- {
-   Key : value
- }
-```
-
-then it fails, saying a `Sequence` is expected. This is quite intuitive but worth mentioning for users who are new to HOCON.
-
-However the following configs will work, as it clearly indicate it is a `List` with square brackets 
-```scala
 {
-   Key: [value]
+  Key: value
 }
 ```
+
+then it fails, saying a `Sequence` is expected. This is quite intuitive but worth mentioning for users who are new to
+HOCON.
+
+However the following configs will work, as it clearly indicate it is a `List` with square brackets
+
 ```scala
-
 {
-   key: [value1, value2]
+  Key:
+  [value
+  ]
 }
+```
 
-
+```scala
+{
+  key:
+  [value1
+  , value2
+  ]
+}
 ```
 
 If the source is a map given below (for example, in system environment), then it succeeds given any delimiter
 as it contains only one single value.
 
 ```scala
-export key="value"
+export key = "value"
 ``` 
 
 Given `valueDelimiter=Some(',')` the following config will work and we are able to retrieve List(value1, value2)
 
 ```scala
-export key="value1, value2"
-
+export key = "value1, value2"
 ```
 
 ### A Production application config using command line arguments (demo)
 
 ```scala mdoc:silent
-
 case class UserPassword(username: String, password: String)
 case class DatabaseConfig(database: UserPassword, url: String)
 case class VaultConfig(userPassword: UserPassword)
@@ -455,9 +422,7 @@ val complexSource = ConfigSource.fromCommandLineArgs(
   Some(',')
 )
 val appConfig = read(descriptor[AppConfig] from complexSource)
-
 ```
-
 
 ### Combining multiple sources
 
@@ -498,5 +463,4 @@ object CombineSourcesExample extends ZIOAppDefault {
       _ <- Console.printLine(string)
     } yield ()
 }
-
 ```

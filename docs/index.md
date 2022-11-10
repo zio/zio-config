@@ -1,8 +1,8 @@
 ---
-id: quickstart_index
-title:  "Quick Start"
+id: index
+title: "Getting Started with ZIO Config"
+sidebar_label: "Getting Started"
 ---
-
 
 The library aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application.
 There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples) straight away as well.
@@ -14,51 +14,38 @@ __Note that this documentation is for 1.x series. For newer versions, please ref
 If you are using sbt:
 
 ```scala
-
-libraryDependencies += "dev.zio" %% "zio-config" % <version>
-
+libraryDependencies += "dev.zio" %% "zio-config" % @VERSION@
 ```
 
 ##### Optional Dependency with magnolia module (Auto derivation)
 
 ```scala
-
-libraryDependencies += "dev.zio" %% "zio-config-magnolia" % <version>
-
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % @VERSION@
 ```
 
 ##### Optional Dependency with refined module (Integration with refined library)
 
 ```scala
-
-libraryDependencies += "dev.zio" %% "zio-config-refined" % <version>
-
+libraryDependencies += "dev.zio" %% "zio-config-refined" % @VERSION@
 ```
 
 
 ##### Optional Dependency with typesafe module (HOCON/Json source)
 
 ```scala
-
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % <version>
-
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % @VERSION@
 ```
-
 
 ##### Optional Dependency with yaml module (Yaml source)
 
 ```scala
-
-libraryDependencies += "dev.zio" %% "zio-config-yaml" % <version>
-
+libraryDependencies += "dev.zio" %% "zio-config-yaml" % @VERSION@
 ```
 
 ##### Optional Dependency for a random generation of a config
 
 ```scala
-
-libraryDependencies += "dev.zio" %% "zio-config-gen" % <version>
-
+libraryDependencies += "dev.zio" %% "zio-config-gen" % @VERSION@
 ```
 
 ## Describe the config by hand
@@ -70,35 +57,27 @@ We must fetch the configuration from the environment to a case class (product) i
 import zio.IO
 
 import zio.config._, ConfigDescriptor._, ConfigSource._
-
 ```
 
 ```scala mdoc:silent
-
 case class MyConfig(ldap: String, port: Int, dburl: String)
-
 ```
 To perform any action using zio-config, we need a configuration description.
 Let's define a simple one.
 
 
 ```scala mdoc:silent
-
 val myConfig: ConfigDescriptor[MyConfig] =
   (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
  // ConfigDescriptor[ MyConfig]
-
 ```
 
 To get a tuple,
 
 ```scala mdoc:silent
-
 val myConfigTupled: ConfigDescriptor[(String, Int, String)] =
   (string("LDAP") zip int("PORT") zip string("DB_URL"))
-
-
 ```
 
 ## Fully automated Config Description
@@ -111,12 +90,10 @@ It will be deprecated once we find users have moved on from scala 2.11.
 
 
 ```scala mdoc:silent
-
 import zio.config._
 import zio.config.magnolia.{Descriptor, descriptor}
 
 val myConfigAutomatic = descriptor[MyConfig]
-
 ```
 
 `myConfig` and `myConfigAutomatic` are same description, and is of the same type. 
@@ -126,7 +103,7 @@ More examples on automatic derivation is in examples module of [zio-config](http
 
 ## Read config from various sources
 
-There are more information on various sources in [here](../sources/index.md).
+There are more information on various sources in [here](read-from-various-sources.md).
 
 Below given is a simple example.
 
@@ -159,16 +136,15 @@ You can run this to [completion](https://zio.dev/docs/getting_started.html#main)
 As mentioned before, you can use config descriptor to read from various sources.
 
 ```scala mdoc:silent
-
 val anotherResult =
   read(myConfig from source)
 ```
 
 Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the previous section.
 
-More details in [here](../configdescriptor/index.md).
+More details in [here](manual-creation-of-config-descriptor.md).
 
-### Documentations using configdescriptor
+### Documentations using ConfigDescriptor
 
 ```scala mdoc:silent
 generateDocs(myConfig)
@@ -183,21 +159,19 @@ generateDocs(betterConfig).toTable.toGithubFlavouredMarkdown
 // Custom documentation along with auto generated docs
 ```
 
-More details in [here](../configdescriptor/index.md).
+More details in [here](manual-creation-of-config-descriptor.md).
 
 
-### Writers from configdescriptor
+### Writers from ConfigDescriptor
 
 ```scala mdoc:silent
-
 write(myConfig, MyConfig("xyz", 8888, "postgres")).map(_.flattenString())
 //  Map("LDAP" -> "xyz", "PORT" -> "8888", "DB_URL" -> "postgres")
-
 ```
 
-More details in [here](../configdescriptor/index.md).
+More details in [here](manual-creation-of-config-descriptor.md).
 
-### Report generation from configdescriptor
+### Report generation from ConfigDescriptor
 
 
 ```scala mdoc:silent
@@ -209,7 +183,6 @@ generateReport(myConfig, MyConfig("xyz", 8888, "postgres"))
 #### Generate a random config
 
 ```scala mdoc:silent
-
 import zio.config.derivation.name
 import zio.config.magnolia._, zio.config.gen._
 
@@ -251,6 +224,7 @@ Instead of directly printing misconfigurations, the `ReadError.prettyPrint` show
 ║ MissingValue
 ``` 
 2. `OrErrors` are in the same line which indicates a sequential misconfiguration    
+
 ```text
 ╥
 ╠MissingValue
@@ -280,7 +254,6 @@ Here is a complete example:
    ║  ║ path: var1
    ║  ▼
    ▼
-
 ```
 
 It says, fix `FormatError` related to path "var1" in the source. For the next error, either provide var2 or var3
@@ -294,7 +267,6 @@ Take a look at the below example that shows an entire mini app.
 This will tell you how to consider configuration as just a part of `Environment` of your ZIO functions across your application.
 
 ```scala mdoc:silent
-
 import zio._
 
 case class ApplicationConfig(bridgeIp: String, userName: String)
@@ -313,7 +285,6 @@ val configLayer = ZConfig.fromPropertiesFile("file-location", configuration)
 
 // Main App
 val pgm = finalExecution.provideLayer(configLayer)
-
 ```
 
 ### Separation of concerns with `narrow`
@@ -347,7 +318,6 @@ cfg.narrow(_.api) >>> endpoint // narrowing down to a proper config subtree
 cfg.narrow(_.db) >>> repository
 ```
 
-
 ### What's new in zio-config-3.x ?
 
 Some of these details are repeated in certain parts of the documentations.
@@ -374,13 +344,11 @@ Now on, the only way to change keys is as follows:
   // mapKey is just a function in `ConfigDescriptor` that pre-existed
 
   val config = descriptor[Config].mapKey(_.toUpperCase)
- 
 ```
 
 instead of 
 
 ```scala
-
 // No longer supported
 val customDerivation = new DeriveConfigDescriptor {
   override def mapFieldName(key: String) = key.toUpperCase
@@ -389,7 +357,6 @@ val customDerivation = new DeriveConfigDescriptor {
 import customDerivation._
 
 val config = descriptor[Config]
-
 ```
 
 ## Inbuilt support for pure-config
@@ -399,26 +366,23 @@ Now on, zio-config has inbuilt support for reading such a file/string using `des
 
 
 ```scala
+import zio.config._, typesafe._, magnolia._
 
-    import zio.config._, typesafe._, magnolia._
+sealed trait X
+case class A(name: String) extends X
+case class B(age: Int) extends X
 
-     sealed trait X
-     case class A(name: String) extends X
-     case class B(age: Int) extends X
+case class AppConfig(x: X)
 
-     case class AppConfig(x: X)
+val str =
+  s"""
+   x : {
+     type = A
+     name = jon
+   }
+  """
 
-     val str =
-       s"""
-        x : {
-          type = A
-          name = jon
-        }
-       """
-
-     read(descriptorForPureConfig[AppConfig] from ConfigSource.fromHoconString(str))
-
-
+read(descriptorForPureConfig[AppConfig] from ConfigSource.fromHoconString(str))
 ```
 
 ## Allow concise config source strings
@@ -426,38 +390,33 @@ Now on, zio-config has inbuilt support for reading such a file/string using `des
 With this release we have `descriptorWithoutClassNames` along with `descriptor` that just completely discards the name of the sealed-trait and sub-class (case-class) names, allowing your source less verbose. Note that unlike `pure-config` example above, we don't need to have an extra label `type : A`.
 
 ```scala
+sealed trait Y
 
- sealed trait Y
+object Y {
+  case class A(age: Int)     extends Y
+  case class B(name: String) extends Y
+}
 
- object Y {
-   case class A(age: Int)     extends Y
-   case class B(name: String) extends Y
- }
+case class AppConfig(x: Y)
 
- case class AppConfig(x: Y)
+val str =
+       s"""
+           x : {
+             age : 10
+           }
+          """
 
- val str =
-        s"""
-            x : {
-              age : 10
-            }
-           """
-
-   read(descriptorWithoutClassNames[AppConfig] from ConfigSource.fromHoconString(str))
+  read(descriptorWithoutClassNames[AppConfig] from ConfigSource.fromHoconString(str))
 ```
 
 PS: If you are using `descriptor` instead of `descriptorWithoutClassNames`, then the source has to be:
 
 ```scala
-
- 
-            x : {
-              A : { 
-                  age : 10
-              }
-            }
-
-
+x : {
+  A : { 
+      age : 10
+  }
+}
 ```
 
 
@@ -470,35 +429,30 @@ Some users prefer to encode the config-source exactly the same as that of Scala 
 Say, the config ADT is as below:
 
 ```scala
-   sealed trait Y
+sealed trait Y
 
-   object Y {
-     case class A(age: Int)     extends Y
-     case class B(name: String) extends Y
-   }
+object Y {
+  case class A(age: Int)     extends Y
+  case class B(name: String) extends Y
+}
 
-   case class AppConfig(x: X)
-
-
-
+case class AppConfig(x: X)
 ```
 
 Then the corresponding config-source should be as follows. Keep a note that under `x`, the name of sealed trait `Y` also exist.
 
 
 ```scala
-
-      val str =
-        s"""
-           x : {
-                 Y : {
-                    A : {
-                      age : 10
-                    }
-               }
-           }
-          """
-
+val str =
+  s"""
+     x : {
+           Y : {
+              A : {
+                age : 10
+              }
+         }
+     }
+    """
 ```
 
 
@@ -506,10 +460,7 @@ To read such a string (or any config-source encoded in such a hierarchy), use `d
 
 
 ```scala
-
 read(descriptorWithClassNames[AppConfig] from ConfigSource.fromHoconString(str))
-
-
 ```
 
 ## More composable `Descriptor`
@@ -517,14 +468,11 @@ read(descriptorWithClassNames[AppConfig] from ConfigSource.fromHoconString(str))
 The whole bunch of methods such as `descriptor` works with the type class `Descriptor`. You can summon a `Descriptor` for type `A` using `Descriptor[A].apply`, which will give you access to lower level methods such as `removeSubClassNameKey`. These methods directly exist in `ConfigDescriptor`, however inaccessible, since there is no guarantee that a manually created `ConfigDescriptor` correctly tags keys to its types (i.e, a particular key is the name of a sub-class of a sealed-trait)
 
 ```scala
-  case class A (...)
+case class A (...)
 
-  val config1: Descriptor[A] =  Descriptor[A].removeSealedTraitNameKey
-  val config2: Descriptor[A] = Descriptor[A].removeSubClassNameKey
+val config1: Descriptor[A] =  Descriptor[A].removeSealedTraitNameKey
+val config2: Descriptor[A] = Descriptor[A].removeSubClassNameKey
 
- // similar to descriptorWithoutClassNames 
-  val config3: Descriptor[A] =  Descriptor[A].removeSealedTraitNameKey. removeSubClassNameKey.mapFieldName(_.toUpperCase) 
-
-  
-
+// similar to descriptorWithoutClassNames 
+val config3: Descriptor[A] =  Descriptor[A].removeSealedTraitNameKey. removeSubClassNameKey.mapFieldName(_.toUpperCase) 
 ```
