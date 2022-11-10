@@ -16,10 +16,10 @@ Using a single definition of configuration requirements, which can be derived au
  * Automatically generate documentation so devs / devops know how to configure the application
  * Generate a report that shows where each piece of configuration data came from
 
-Please find more details in the [website](https://zio.github.io/zio-config/). _The website is currently for the zio-config version 1.x only. For newer versions, please check the markdown files in `docs` directory here in GitHub_.
+Please find more details in the [website](https://zio.dev/zio-config/). _The website is currently for the zio-config version 1.x only. For newer versions, please check the markdown files in `docs` directory here in GitHub_.
 For example, the docs for 3.x is available [here](https://github.com/zio/zio-config/tree/master/docs). The updated website will be published soon for the newer versions.
 
-If you are only interested in automatic derviation of configuration, find the details [here](https://zio.github.io/zio-config/docs/automatic/automatic_index).
+If you are only interested in automatic derviation of configuration, find the details [here](https://zio.dev/zio-config/automatic-derivation-of-config-descriptor).
 
 Jump to [examples](examples/shared/src/main/scala/zio/config/examples) to see various usecases. Hop over to the [Discord](https://discord.gg/2ccFBr4) #zio-config channel to chat with developers and other users.
 

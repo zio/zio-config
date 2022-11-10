@@ -1,6 +1,6 @@
 ---
-id: refined_index
-title:  "Automatic Validations"
+id: automatic-validations
+title: "Automatic Validations"
 ---
 
 By bringing in `zio-config-refined` module, you get validations for your config parameters almost for free. 
@@ -30,7 +30,6 @@ A few examples are given below.
      refineType[NonEmptyString]("password")).to[Jdbc]
 
  read(jdbc from ConfigSource.fromMap(Map("username" -> "", "password" -> "")))
-
 ```
 
 ## Direct Interaction with Refined Predicates
@@ -51,7 +50,6 @@ If you need to directly interact with `Predicate`s (ex: `NonEmpty`), then
    refine[String, Url]("URL")
    
  // refineType takes a fully formed type (String Refined NonEmpty) where as refine allows you to play with the predicate directly (NonEmpty)  
-
 ```
 
 ## Derive from existing ConfigDescriptor
@@ -109,5 +107,4 @@ object RefinedReadConfig extends App {
 
   // Right(RefinedProd(ldap,1999,Some(ddd),List(1234, 2345, 3456)))
 }
-
 ```

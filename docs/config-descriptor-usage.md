@@ -1,11 +1,12 @@
 ---
-id: configdescriptorusage_index
-title:  "Using ConfigDescriptor for Read, Write, Document and Report"
+id: config-descriptor-usage
+title: "Using ConfigDescriptor for Read, Write, Document and Report"
+sidebar_label: "ConfigDescriptor Usage"
 ---
 
 ## Using Config Descriptor
 
-Given a single [ConfigDescriptor](../configdescriptor/index.md) we can use it to:
+Given a single [ConfigDescriptor](manual-creation-of-config-descriptor.md) we can use it to:
 
 1. Get Readers that can read config from various sources
 2. Get Writer that can write config back
@@ -20,13 +21,10 @@ You should be familiar with reading config from various sources, given a  config
 ```scala mdoc:silent
 import zio.IO
 import zio.config._, ConfigDescriptor._, PropertyTree._
-
 ```
 
 ```scala mdoc:silent
-
 case class MyConfig(ldap: String, port: Int, dburl: String)
-
 ```
 
 To not divert our focus on handling Either (only for explanation purpose), we will use 
@@ -38,12 +36,10 @@ Let's define a simple one.
 
 
 ```scala mdoc:silent
-
 val myConfig =
   (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
 read(myConfig from ConfigSource.fromMap(Map()))
-
 ```
 
 ## Writer from config descriptor
@@ -53,31 +49,29 @@ Let's use `read` and get the result. Using the same result, we will write the co
 ```scala mdoc:silent
 import zio.Runtime
 
-  case class Database(url: String, port: Int)
-  case class AwsConfig(c1: Database, c2: Database, c3: String)
+case class Database(url: String, port: Int)
+case class AwsConfig(c1: Database, c2: Database, c3: String)
 
-  val database =
-    (string("connection") zip int("port")).to[Database]
+val database =
+  (string("connection") zip int("port")).to[Database]
 
-  val map =
-    Map(
-      "south.connection" -> "abc.com",
-      "south.port" -> "8111",
-      "east.connection" -> "xyz.com",
-      "east.port" -> "8888",
-      "appName" -> "myApp"
-    )
+val map =
+  Map(
+    "south.connection" -> "abc.com",
+    "south.port" -> "8111",
+    "east.connection" -> "xyz.com",
+    "east.port" -> "8888",
+    "appName" -> "myApp"
+  )
 
-  val appConfig =
-    (((nested("south") { database } ?? "South details" zip
-      nested("east") { database } ?? "East details" zip
-      string("appName")).to[AwsConfig]) ?? "asdf"
-    ) from ConfigSource.fromMap(map, keyDelimiter = Some('.'))
+val appConfig =
+  (((nested("south") { database } ?? "South details" zip
+    nested("east") { database } ?? "East details" zip
+    string("appName")).to[AwsConfig]) ?? "asdf"
+  ) from ConfigSource.fromMap(map, keyDelimiter = Some('.'))
 
-   // zio.Runtime.default.unsafe.run(read(appConfig)) (refer examples on how to manually run zio computations)
-   // yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)
-
-  
+ // zio.Runtime.default.unsafe.run(read(appConfig)) (refer examples on how to manually run zio computations)
+ // yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)
 ```
 
 #### Writing the config back to property tree
@@ -91,53 +85,45 @@ val awsConfigResult =
   
 val written: Either[String, PropertyTree[String, String]] = 
   write(appConfig, awsConfigResult)
-
-
 ```
 
 yield 
 
 ```scala
-
-  Record(
-    Map(
-      "south"   -> Record(Map("connection" -> Leaf("abc.com"), "port" -> Leaf("8111"))),
-      "east"    -> Record(Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))),
-      "appName" -> Leaf("myApp")
-    )
-  ) 
-
+Record(
+  Map(
+    "south"   -> Record(Map("connection" -> Leaf("abc.com"), "port" -> Leaf("8111"))),
+    "east"    -> Record(Map("connection" -> Leaf("xyz.com"), "port" -> Leaf("8888"))),
+    "appName" -> Leaf("myApp")
+  )
+) 
 ```
 
 #### Writing the config back to a Map
 
 ```scala mdoc:silent
+// To yield the input map that was fed in, call `flattenString` !!
+written.map(_.flattenString())
 
- // To yield the input map that was fed in, call `flattenString` !!
- written.map(_.flattenString())
-
- // yields
-     Map(
-      "south.connection" -> "abc.com",
-      "south.port" -> "8111",
-      "east.connection" -> "xyz.com",
-      "east.port" -> "8888",
-      "appName" -> "myApp"
-    )
-
+// yields
+    Map(
+     "south.connection" -> "abc.com",
+     "south.port" -> "8111",
+     "east.connection" -> "xyz.com",
+     "east.port" -> "8888",
+     "appName" -> "myApp"
+   )
 ```
 
 #### Writing the config back to a Typesafe Hocon
 
 ```scala mdoc:silent
-
 import zio.config.typesafe._
 
 written.map(_.toHocon)
 
 // yields
 // SimpleConfigObject({"appName":"myApp","east":{"connection":"xyz.com","port":"8888"},"south":{"connection":"abc.com","port":"8111"}})
-
 ```
 
 #### Writing the config back to a Typesafe Hocon String
@@ -148,7 +134,6 @@ provides us with an exhaustive combinations of rendering options.
 However, we thought we will provide a few helper functions which is a simple delegation to typesafe functionalities.
 
 ```scala mdoc:silent
-
 import zio.config.typesafe._
 
 written.map(_.toHoconString)
@@ -168,7 +153,6 @@ written.map(_.toHoconString)
    *
    *  }}}
    */
-
 ```
 
 #### Writing the config back to JSON
@@ -179,7 +163,6 @@ provides us with an exhaustive combinations of rendering options.
 However, we thought we will provide a few helper functions which is a simple delegation to typesafe functionalities.
 
 ```scala mdoc:silent
-
 written.map(_.toJson)
 
   /**
@@ -203,7 +186,6 @@ written.map(_.toJson)
 ## Generating a random Config using zio.config.gen
 
 ```scala mdoc:silent
-
 import zio.config.derivation.name
 import zio.config.magnolia._, zio.config.gen._
 
@@ -229,8 +211,6 @@ object RandomConfigGenerationSimpleExample extends App {
   //   }
   // )
 }
-
-
 ```
 
 Refer to RandomConfigGenerationComplexExample.scala for more complex scenarios,
@@ -243,37 +223,37 @@ To generate the documentation of the config, call `generateDocs`.
 
 
 ```scala mdoc:silent
- import zio.config.ConfigDocs
+import zio.config.ConfigDocs
 
- val generatedDocs = generateDocs(appConfig)
+val generatedDocs = generateDocs(appConfig)
 
- // as markdown 
-  val markdown =
-     generatedDocs.toTable.toGithubFlavouredMarkdown
+// as markdown 
+ val markdown =
+   generatedDocs.toTable.toGithubFlavouredMarkdown
 
- // produces the following markdown
+// produces the following markdown
 
-  /*
-    |FieldName      |Format          |Description               |Sources |
-    |---            |---             |---                       |---     |
-    |appName        |primitive       |value of type string, asdf|constant|
-    |[east](#east)  |[all-of](#east) |                          |        |
-    |[south](#south)|[all-of](#south)|                          |        |
-    
-    ### east
-    
-    |FieldName |Format   |Description                             |Sources |
-    |---       |---      |---                                     |---     |
-    |port      |primitive|value of type int, East details, asdf   |constant|
-    |connection|primitive|value of type string, East details, asdf|constant|
-    
-    ### south
-    
-    |FieldName |Format   |Description                              |Sources |
-    |---       |---      |---                                      |---     |
-    |port      |primitive|value of type int, South details, asdf   |constant|
-    |connection|primitive|value of type string, South details, asdf|constant|
-   */  
+/*
+  |FieldName      |Format          |Description               |Sources |
+  |---            |---             |---                       |---     |
+  |appName        |primitive       |value of type string, asdf|constant|
+  |[east](#east)  |[all-of](#east) |                          |        |
+  |[south](#south)|[all-of](#south)|                          |        |
+  
+  ### east
+  
+  |FieldName |Format   |Description                             |Sources |
+  |---       |---      |---                                     |---     |
+  |port      |primitive|value of type int, East details, asdf   |constant|
+  |connection|primitive|value of type string, East details, asdf|constant|
+  
+  ### south
+  
+  |FieldName |Format   |Description                              |Sources |
+  |---       |---      |---                                      |---     |
+  |port      |primitive|value of type int, South details, asdf   |constant|
+  |connection|primitive|value of type string, South details, asdf|constant|
+ */  
 ```
 
 In the above `markdown` is a standard markdown format string, rendered as:
@@ -308,11 +288,9 @@ along with the rest of the details.
 
 
 ```scala mdoc:silent
-
  generateReport(appConfig, AwsConfig(Database("abc.com", 8111), Database("xyz.com", 8888), "myApp"))
 
 // yields a report
-
 ```
 
 Pretty print will be coming soon!
