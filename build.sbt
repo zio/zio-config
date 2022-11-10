@@ -480,7 +480,7 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     magnoliaDependencies,
-    refinedDependencies,
+    refinedDependencies
   )
   .settings(macroDefinitionSettings)
   .dependsOn(
