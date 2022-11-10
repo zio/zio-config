@@ -142,6 +142,7 @@ lazy val root =
     .in(file("."))
     .settings(publish / skip := true)
     .aggregate(scala213projects: _*)
+    .aggregate(docs)
 
 lazy val `root2-11` =
   project
@@ -480,20 +481,6 @@ lazy val docs = project
     scalacOptions -= "-Xfatal-warnings",
     magnoliaDependencies,
     refinedDependencies,
-    ScalaUnidoc / unidoc / unidocProjectFilter := inProjects(
-      zioConfigJVM,
-      zioConfigTypesafeJVM,
-      zioConfigShapelessJVM,
-      zioConfigDerivationJVM,
-      zioConfigYamlJVM,
-      zioConfigGenJVM,
-      zioConfigRefinedJVM,
-      zioConfigMagnoliaJVM
-    ),
-    ScalaUnidoc / unidoc / target := (LocalRootProject / baseDirectory).value / "website" / "static" / "api",
-    cleanFiles += (ScalaUnidoc / unidoc / target).value,
-    docusaurusCreateSite := docusaurusCreateSite.dependsOn(Compile / unidoc).value,
-    docusaurusPublishGhpages := docusaurusPublishGhpages.dependsOn(Compile / unidoc).value
   )
   .settings(macroDefinitionSettings)
   .dependsOn(
@@ -506,4 +493,4 @@ lazy val docs = project
     zioConfigRefinedJVM,
     zioConfigMagnoliaJVM
   )
-  .enablePlugins(MdocPlugin, DocusaurusPlugin, ScalaUnidocPlugin)
+  .enablePlugins(WebsitePlugin)
