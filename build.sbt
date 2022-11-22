@@ -142,7 +142,6 @@ lazy val root =
     .in(file("."))
     .settings(publish / skip := true)
     .aggregate(scala213projects: _*)
-    .aggregate(docs)
 
 lazy val `root2-11` =
   project
