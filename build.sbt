@@ -70,7 +70,7 @@ addCommandAlias(
 )
 
 lazy val awsVersion        = "1.12.277"
-lazy val zioAwsVersion     = "5.17.267.4"
+lazy val zioAwsVersion     = "5.17.267.7"
 lazy val zioVersion        = "2.0.0"
 lazy val magnoliaVersion   = "0.17.0"
 lazy val refinedVersion    = "0.10.1"
