@@ -291,7 +291,7 @@ trait GenerateConfig {
     generateConfig(config, size).map(_.flattenString(keyDelimiter))
 
   implicit class UnsafeRunOps[E, A](s: ZStream[Sized, E, A]) {
-    def unsafeRunChunk: Chunk[A] = Unsafe.unsafeCompat { implicit u =>
+    def unsafeRunChunk: Chunk[A] = Unsafe.unsafe { implicit u =>
       val runtime = zio.Runtime.default
       runtime.unsafe.run(s.provideLayer(Sized.live(1)).runCollect).getOrThrowFiberFailure()
     }
