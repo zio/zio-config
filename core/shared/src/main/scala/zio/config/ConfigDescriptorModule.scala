@@ -2078,10 +2078,10 @@ trait ConfigDescriptorModule extends ConfigSourceModule { module =>
     sealed trait KeyType
 
     object KeyType {
-      final case object SealedTrait extends KeyType
-      final case object SubClass    extends KeyType
-      final case object CaseObject  extends KeyType
-      final case object Primitive   extends KeyType
+      case object SealedTrait extends KeyType
+      case object SubClass    extends KeyType
+      case object CaseObject  extends KeyType
+      case object Primitive   extends KeyType
     }
 
     sealed case class Default[A](config: ConfigDescriptor[A], default: A) extends ConfigDescriptor[A]
