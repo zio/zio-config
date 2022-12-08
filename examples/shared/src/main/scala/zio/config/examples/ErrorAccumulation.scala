@@ -72,7 +72,7 @@ object ErrorAccumulation extends App {
   val result2: ZIO[Any, String, SampleConfig] =
     read(config from invalidSource).mapError(_.prettyPrint())
 
-  Unsafe.unsafeCompat { implicit u =>
+  Unsafe.unsafe{ implicit u =>
     println(zio.Runtime.default.unsafe.run(result2.either).getOrThrowFiberFailure())
   }
 
