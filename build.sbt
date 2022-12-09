@@ -444,7 +444,7 @@ lazy val zioConfigEnumeratum    = crossProject(JSPlatform, JVMPlatform, NativePl
   .settings(
     crossScalaVersions --= Seq(Scala211),
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum"   % "1.7.0",
+      "com.beachape" %% "enumeratum"   % "1.7.2",
       "dev.zio"      %% "zio-test"     % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
     ),
