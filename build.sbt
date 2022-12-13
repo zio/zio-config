@@ -486,7 +486,7 @@ lazy val docs = project
         artifact = "zio-config_2.12",
         projectStage = ProjectStage.ProductionReady
       )
-    ),
+    )
   )
   .settings(macroDefinitionSettings)
   .dependsOn(
