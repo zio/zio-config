@@ -69,7 +69,7 @@ addCommandAlias(
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test"
 )
 
-val awsVersion        = "1.12.360"
+val awsVersion        = "1.12.373"
 val zioAwsVersion     = "5.17.295.13"
 val zioVersion        = "2.0.5"
 val magnoliaVersion   = "0.17.0"
