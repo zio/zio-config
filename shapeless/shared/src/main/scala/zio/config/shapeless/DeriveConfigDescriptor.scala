@@ -13,6 +13,7 @@ import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
 import scala.reflect.ClassTag
+import zio.Chunk
 
 /**
  * `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects.
@@ -123,6 +124,9 @@ trait DeriveConfigDescriptor {
 
   implicit def implicitListDesc[A: Descriptor]: Descriptor[List[A]] =
     Descriptor(listDesc(implicitly[Descriptor[A]].configDescriptor))
+
+  implicit def implicitChunkDesc[A: Descriptor]: Descriptor[Chunk[A]] =
+    implicitListDesc[A].transform(Chunk.from(_), _.toList)
 
   implicit def implicitSetDesc[A: Descriptor]: Descriptor[Set[A]] =
     Descriptor(setDesc(implicitly[Descriptor[A]].configDescriptor))
