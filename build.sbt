@@ -70,7 +70,7 @@ addCommandAlias(
 )
 
 val awsVersion        = "1.12.360"
-val zioAwsVersion     = "5.17.295.13"
+val zioAwsVersion     = "5.19.8.1"
 val zioVersion        = "2.0.5"
 val magnoliaVersion   = "0.17.0"
 val refinedVersion    = "0.10.1"
@@ -317,7 +317,7 @@ lazy val zioConfigGen = crossProject(JVMPlatform)
     magnoliaDependencies,
     libraryDependencies ++= Seq(
       "dev.zio"       %% "zio-test-magnolia" % zioVersion,
-      "org.scalatest" %% "scalatest"         % "3.2.14" % Test
+      "org.scalatest" %% "scalatest"         % "3.2.15" % Test
     )
   )
   .dependsOn(zioConfigTypesafe, zioConfigMagnolia)
