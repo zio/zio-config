@@ -474,19 +474,25 @@ lazy val zioConfigTypesafeMagnoliaTestsJVM = zioConfigTypesafeMagnoliaTests.jvm
 lazy val docs = project
   .in(file("zio-config-docs"))
   .settings(
-    publish / skip := true,
     moduleName := "zio-config-docs",
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     magnoliaDependencies,
     refinedDependencies,
     projectName := "ZIO Config",
-    badgeInfo := Some(
-      BadgeInfo(
-        artifact = "zio-config_2.12",
-        projectStage = ProjectStage.ProductionReady
+    mainModuleName := (zioConfigJVM / moduleName).value,
+    projectStage := ProjectStage.ProductionReady,
+    ScalaUnidoc / unidoc / unidocProjectFilter :=
+      inProjects(
+        zioConfigJVM,
+        zioConfigTypesafeJVM,
+        zioConfigShapelessJVM,
+        zioConfigDerivationJVM,
+        zioConfigYamlJVM,
+        zioConfigGenJVM,
+        zioConfigRefinedJVM,
+        zioConfigMagnoliaJVM
       )
-    )
   )
   .settings(macroDefinitionSettings)
   .dependsOn(
