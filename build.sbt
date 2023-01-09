@@ -479,7 +479,14 @@ lazy val docs = project
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     magnoliaDependencies,
-    refinedDependencies
+    refinedDependencies,
+    projectName := "ZIO Config",
+    badgeInfo := Some(
+      BadgeInfo(
+        artifact = "zio-config_2.12",
+        projectStage = ProjectStage.ProductionReady
+      )
+    )
   )
   .settings(macroDefinitionSettings)
   .dependsOn(
