@@ -109,7 +109,8 @@ lazy val scala211projects =
     zioConfigTypesafeJVM,
     zioConfigShapelessJVM,
     zioConfigDerivationJVM,
-    zioConfigYamlJVM
+    zioConfigYamlJVM,
+    docs
   )
 lazy val scala212projects = scala211projects ++ Seq[ProjectReference](
   zioConfigGenJVM,
@@ -134,7 +135,8 @@ lazy val scala3projects =
     zioConfigMagnoliaJVM,
     zioConfigScalazJVM,
     zioConfigTypesafeJVM,
-    zioConfigYamlJVM
+    zioConfigYamlJVM,
+    docs
   )
 
 lazy val root =
@@ -479,6 +481,7 @@ lazy val docs = project
     scalacOptions -= "-Xfatal-warnings",
     magnoliaDependencies,
     refinedDependencies,
+    crossScalaVersions := (zioConfigJVM / crossScalaVersions).value,
     projectName := "ZIO Config",
     mainModuleName := (zioConfigJVM / moduleName).value,
     projectStage := ProjectStage.ProductionReady,
