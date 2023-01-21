@@ -7,12 +7,20 @@ import zio.{IO, Scope, ZIO}
 import scala.collection.mutable.{Map => MutableMap}
 
 import PropertyTreePath.Step
+import zio.ConfigProvider
+import zio.Config
+
+// Backward compatible approach to minimise the client changes
+final case class Read[A](config: Config[A], configProvider: ConfigProvider)
 
 @silent("Unused import")
 private[config] trait ReadModule extends ConfigDescriptorModule {
   import VersionSpecificSupport._
 
   type CachedReaders = MutableMap[ConfigSource, ConfigSource.ManagedReader]
+
+  final def read_[A](reader: Read[A]): IO[Config.Error, A] =
+    reader.configProvider.load(reader.config)
 
   final def read[A](
     configuration: ConfigDescriptor[A]

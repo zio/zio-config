@@ -3,7 +3,7 @@ package zio.config.syntax
 import zio.config.TupleConversion, TupleConversion._
 import zio.Config
 import zio.ConfigProvider
-import zio.IO
+import zio.config.Read
 
 // To be moved to ZIO ?
 // Or may be zio-config can be considered as an extension to ZIO
@@ -18,8 +18,9 @@ trait ConfigSyntax {
       )
 
     // To reduce the number of changes in examples
-    def from(configProvider: ConfigProvider): IO[Config.Error, A] =
-      configProvider.load(config)
+    // Example: read(config from ConfigProvider.fromMap(""))
+    def from(configProvider: ConfigProvider): Read[A] =
+      Read(config, configProvider)
 
   }
 }

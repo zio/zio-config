@@ -5,6 +5,7 @@ import zio.{Console, _}
 import zio.Config
 import zio.ConfigProvider
 import zio.config.syntax._
+import zio.config._
 
 final case class Prod(ldap: String, port: Int, dburl: Option[String])
 
@@ -21,8 +22,7 @@ object ReadConfig extends ZIOAppDefault {
   val configProvider = ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"))
 
   def run: URIO[Any, ExitCode] =
-    configProvider
-      .load(Prod.prodConfig)
+    read_(Prod.prodConfig from ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd")))
       .foldZIO(
         failure => Console.printLine(failure.toString),
         value => Console.printLine(value.toString)
