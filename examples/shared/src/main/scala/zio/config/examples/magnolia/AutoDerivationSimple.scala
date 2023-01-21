@@ -2,7 +2,7 @@ package zio.config.examples.magnolia
 
 import zio.config._
 import zio.config.examples.magnolia.MyConfig._
-import zio.config.magnolia.Descriptor_._
+import zio.config.magnolia.DeriveConfig._
 
 import examples._
 import zio.ConfigProvider

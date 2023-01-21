@@ -14,51 +14,51 @@ import scala.concurrent.duration.{Duration => ScalaDuration}
 import zio.Config
 import zio.config.syntax._
 
-case class Descriptor_[T](desc: Config[T], isObject: Boolean = false) {
+case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
 
-  final def ??(description: String): Descriptor_[T] =
+  final def ??(description: String): DeriveConfig[T] =
     describe(description)
 
-  def describe(description: String): Descriptor_[T] =
-    Descriptor_(desc.??(description))
+  def describe(description: String): DeriveConfig[T] =
+    DeriveConfig(desc.??(description))
 
-  def map[B](f: T => B): Descriptor_[B] =
-    Descriptor_(desc.map(f))
+  def map[B](f: T => B): DeriveConfig[B] =
+    DeriveConfig(desc.map(f))
 
-  def mapOrFail[B](f: T => Either[Config.Error, B]): Descriptor_[B] =
-    Descriptor_(desc.mapOrFail(f))
+  def mapOrFail[B](f: T => Either[Config.Error, B]): DeriveConfig[B] =
+    DeriveConfig(desc.mapOrFail(f))
 
 }
 
-object Descriptor_ {
+object DeriveConfig {
   // The default behaviour of zio-config is to discard the name of a sealed trait
-  def apply[A](implicit ev: Descriptor_[A]): Descriptor_[A] =
+  def apply[A](implicit ev: DeriveConfig[A]): DeriveConfig[A] =
     ev
 
   import Config._
 
-  implicit val implicitStringDesc: Descriptor_[String]               = Descriptor_(string)
-  implicit val implicitBooleanDesc: Descriptor_[Boolean]             = Descriptor_(boolean)
-  implicit val implicitIntDesc: Descriptor_[Int]                     = Descriptor_(int)
-  implicit val implicitBigIntDesc: Descriptor_[BigInt]               = Descriptor_(bigInt)
-  implicit val implicitFloatDesc: Descriptor_[Float]                 = Descriptor_(float)
-  implicit val implicitDoubleDesc: Descriptor_[Double]               = Descriptor_(double)
-  implicit val implicitBigDecimalDesc: Descriptor_[BigDecimal]       = Descriptor_(bigDecimal)
-  implicit val implicitUriDesc: Descriptor_[URI]                     = Descriptor_(uri)
-  implicit val implicitLocalDateDesc: Descriptor_[LocalDate]         = Descriptor_(localDate)
-  implicit val implicitLocalTimeDesc: Descriptor_[LocalTime]         = Descriptor_(localTime)
-  implicit val implicitLocalDateTimeDesc: Descriptor_[LocalDateTime] = Descriptor_(localDateTime)
+  implicit val implicitStringDesc: DeriveConfig[String]               = DeriveConfig(string)
+  implicit val implicitBooleanDesc: DeriveConfig[Boolean]             = DeriveConfig(boolean)
+  implicit val implicitIntDesc: DeriveConfig[Int]                     = DeriveConfig(int)
+  implicit val implicitBigIntDesc: DeriveConfig[BigInt]               = DeriveConfig(bigInt)
+  implicit val implicitFloatDesc: DeriveConfig[Float]                 = DeriveConfig(float)
+  implicit val implicitDoubleDesc: DeriveConfig[Double]               = DeriveConfig(double)
+  implicit val implicitBigDecimalDesc: DeriveConfig[BigDecimal]       = DeriveConfig(bigDecimal)
+  implicit val implicitUriDesc: DeriveConfig[URI]                     = DeriveConfig(uri)
+  implicit val implicitLocalDateDesc: DeriveConfig[LocalDate]         = DeriveConfig(localDate)
+  implicit val implicitLocalTimeDesc: DeriveConfig[LocalTime]         = DeriveConfig(localTime)
+  implicit val implicitLocalDateTimeDesc: DeriveConfig[LocalDateTime] = DeriveConfig(localDateTime)
 
-  implicit def implicitListDesc[A: Descriptor_]: Descriptor_[List[A]] =
-    Descriptor_(Config.listOf(implicitly[Descriptor_[A]].desc))
+  implicit def implicitListDesc[A: DeriveConfig]: DeriveConfig[List[A]] =
+    DeriveConfig(Config.listOf(implicitly[DeriveConfig[A]].desc))
 
-  implicit def implicitSetDesc[A: Descriptor_]: Descriptor_[Set[A]] =
-    Descriptor_(Config.setOf(implicitly[Descriptor_[A]].desc))
+  implicit def implicitSetDesc[A: DeriveConfig]: DeriveConfig[Set[A]] =
+    DeriveConfig(Config.setOf(implicitly[DeriveConfig[A]].desc))
 
-  implicit def implicitMapDesc[K, A: Descriptor_]: Descriptor_[Map[String, A]] =
-    Descriptor_(Config.table(implicitly[Descriptor_[A]].desc))
+  implicit def implicitMapDesc[K, A: DeriveConfig]: DeriveConfig[Map[String, A]] =
+    DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc))
 
-  type Typeclass[T] = Descriptor_[T]
+  type Typeclass[T] = DeriveConfig[T]
 
   final def wrapSealedTrait[T](
     labels: Seq[String],
@@ -84,7 +84,7 @@ object Descriptor_ {
     annotations.collectFirst { case d: names => d.names }.getOrElse(List[String]()) ++
       List(annotations.collectFirst { case d: name => d.name }.getOrElse(name))
 
-  final def combine[T](caseClass: CaseClass[Descriptor_, T]): Descriptor_[T] = {
+  final def combine[T](caseClass: CaseClass[DeriveConfig, T]): DeriveConfig[T] = {
     val descriptions = caseClass.annotations.collect { case d: describe => d.describe }
     val ccNames      = prepareClassNames(caseClass.annotations, caseClass.typeName.short)
 
@@ -105,7 +105,7 @@ object Descriptor_ {
           def makeNestedParam(name: String, unwrapped: Config[Any]) =
             nest(name)(unwrapped)
 
-          def makeDescriptor(param: Param[Descriptor_, T]): Config[Any] = {
+          def makeDescriptor(param: Param[DeriveConfig, T]): Config[Any] = {
             val descriptions =
               param.annotations
                 .filter(_.isInstanceOf[describe])
@@ -129,13 +129,13 @@ object Descriptor_ {
             .map[T](l => caseClass.rawConstruct(l))
       }
 
-    Descriptor_(
+    DeriveConfig(
       descriptions.foldLeft(res.asInstanceOf[Config[T]])(_ ?? _),
       caseClass.isObject || caseClass.parameters.isEmpty
     )
   }
 
-  final def dispatch[T](sealedTrait: SealedTrait[Descriptor_, T]): Descriptor_[T] = {
+  final def dispatch[T](sealedTrait: SealedTrait[DeriveConfig, T]): DeriveConfig[T] = {
     val nameToLabel =
       sealedTrait.subtypes
         .map(tc => prepareClassName(tc.annotations, tc.typeName.short) -> tc.typeName.full)
@@ -150,7 +150,7 @@ object Descriptor_ {
 
     val desc =
       sealedTrait.subtypes.map { subtype =>
-        val typeclass: Descriptor_[subtype.SType] = subtype.typeclass
+        val typeclass: DeriveConfig[subtype.SType] = subtype.typeclass
 
         val subClassName =
           nameToLabel(subtype.typeName.full)
@@ -172,12 +172,12 @@ object Descriptor_ {
         wrapSealedTrait(prepareClassNames(sealedTrait.annotations, sealedTrait.typeName.short), desc)
       }.reduce(_.orElse(_))
 
-    Descriptor_(desc)
+    DeriveConfig(desc)
   }
 
-  implicit def getDescriptor_[T]: Descriptor_[T] = macro Magnolia.gen[T]
+  implicit def getDeriveConfig[T]: DeriveConfig[T] = macro Magnolia.gen[T]
 
-  def deriveConfig[T](implicit config: Descriptor_[T]): Config[T] =
+  def deriveConfig[T](implicit config: DeriveConfig[T]): Config[T] =
     config.desc
 
 }
