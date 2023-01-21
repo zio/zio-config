@@ -2,8 +2,10 @@ package zio.config.derivation
 
 import zio.config.ConfigDescriptorAdt._
 import zio.config._
+import zio.Config
 
 import scala.annotation.tailrec
+import java.io.ObjectInputFilter.Config
 
 object DerivationUtils {
   case class ConstantString(value: String) extends PropertyType[String, String] {

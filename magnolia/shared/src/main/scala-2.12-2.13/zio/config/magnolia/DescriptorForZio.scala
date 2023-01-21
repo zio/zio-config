@@ -62,9 +62,9 @@ object Descriptor_ {
 
   final def wrapSealedTrait[T](
     labels: Seq[String],
-    desc: ConfigDescriptor_[T]
-  ): ConfigDescriptor_[T] = {
-    val f = (name: String) => nested(name)(desc, Some(ConfigDescriptorAdt.KeyType.SealedTrait))
+    desc: Config[T]
+  ): Config[T] = {
+    val f = (name: String) => desc.nested(name)
     labels.tail.foldLeft(f(labels.head)) { case (acc, n) =>
       acc orElse f(n)
     }
@@ -100,17 +100,13 @@ object Descriptor_ {
             acc orElse f(n)
           }
         case head :: tail =>
-          def nest(name: String)(unwrapped: ConfigDescriptor[Any])                               =
+          def nest(name: String)(unwrapped: Config[Any])            =
             if (caseClass.isValueClass) unwrapped
-            else nested(name)(unwrapped)
-          def makeNestedParam(name: String, unwrapped: ConfigDescriptor[Any], optional: Boolean) =
-            if (optional) {
-              nest(name)(unwrapped).optional.asInstanceOf[ConfigDescriptor[Any]]
-            } else {
-              nest(name)(unwrapped)
-            }
+            else unwrapped.nested(name)
+          def makeNestedParam(name: String, unwrapped: Config[Any]) =
+            nest(name)(unwrapped)
 
-          def makeDescriptor(param: Param[Descriptor_, T]): ConfigDescriptor[Any] = {
+          def makeDescriptor(param: Param[Descriptor_, T]): Config[Any] = {
             val descriptions =
               param.annotations
                 .filter(_.isInstanceOf[describe])
@@ -118,14 +114,12 @@ object Descriptor_ {
 
             val paramNames = prepareFieldNames(param.annotations, param.label)
 
-            val raw                      = param.typeclass.desc
-            val (unwrapped, wasOptional) = unwrapFromOptional(raw)
-            val withNesting              = paramNames.tail.foldLeft(makeNestedParam(paramNames.head, unwrapped, wasOptional)) {
-              case (acc, name) =>
-                acc orElse makeNestedParam(name, unwrapped, wasOptional)
+            val raw         = param.typeclass.desc
+            val withNesting = paramNames.tail.foldLeft(makeNestedParam(paramNames.head, raw)) { case (acc, name) =>
+              acc orElse makeNestedParam(name, raw)
             }
-            val described                = descriptions.foldLeft(withNesting)(_ ?? _)
-            param.default.fold(described)(described.default(_))
+            val described   = descriptions.foldLeft(withNesting)(_ ?? _)
+            param.default.fold(described)(described.withDefault(_))
           }
 
           collectAll(
