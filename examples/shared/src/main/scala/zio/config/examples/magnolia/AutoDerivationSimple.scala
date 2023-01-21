@@ -2,7 +2,6 @@ package zio.config.examples.magnolia
 
 import zio.config._
 import zio.config.examples.magnolia.MyConfig._
-import zio.config.syntax._
 import zio.config.magnolia.Descriptor_._
 
 import examples._
@@ -20,8 +19,6 @@ final case class MyConfig(
 )
 
 object MyConfig {
-
-  import zio.config.magnolia.Descriptor_._
 
   sealed trait Credentials
   case class Password(value: String) extends Credentials
@@ -54,7 +51,7 @@ object AutomaticConfigDescriptor extends App {
       pathDelim = "."
     )
 
-  private val config = read_(automaticConfig from source)
+  private val config = source.load(automaticConfig)
 
   //TODO; Not working for option
   assert(
