@@ -1,6 +1,12 @@
 package zio.config
 
+import zio.Config
+
 package object magnolia {
+
+  def getDescriptor_[T](implicit config: Descriptor_[T]): Config[T] =
+    config.desc
+
   def getDescriptor[A](desc: ConfigDescriptor[A]): Descriptor[A] =
     Descriptor[A](desc)
 
