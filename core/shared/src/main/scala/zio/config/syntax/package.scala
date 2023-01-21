@@ -2,7 +2,7 @@ package zio.config
 
 import zio._
 
-package object syntax {
+package object syntax extends ConfigSyntax {
   final implicit class ZIOConfigNarrowOps[R, E, A](
     private val self: ZLayer[R, E, A]
   ) extends AnyVal {
