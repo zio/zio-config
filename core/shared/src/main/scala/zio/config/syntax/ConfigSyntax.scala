@@ -23,4 +23,6 @@ trait ConfigSyntax {
       Read(config, configProvider)
 
   }
+
+  implicit class FromConfigTypesafe(c: Config.type) {}
 }
