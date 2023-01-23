@@ -41,4 +41,22 @@ trait ConfigSyntax {
         )
         .map { case (a, t) => a :: t }
   }
+
+  // To be moved to ZIO
+  implicit class FromConfigProvider(c: ConfigProvider.type) {
+    def collectAll[A](head: => Config[A], tail: Config[A]*): Config[List[A]] =
+      tail.reverse
+        .map(Config.defer(_))
+        .foldLeft[Config[(A, List[A])]](
+          Config
+            .defer(head)
+            .map((a: A) => (a, Nil))
+        )((b: Config[(A, List[A])], a: Config[A]) =>
+          (b.zip[A](a)
+            .map({ case (first, tail, a) =>
+              (first, a :: tail)
+            }))
+        )
+        .map { case (a, t) => a :: t }
+  }
 }

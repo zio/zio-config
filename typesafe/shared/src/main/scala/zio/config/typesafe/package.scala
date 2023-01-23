@@ -6,6 +6,7 @@ import zio._
 import java.io.File
 
 package object typesafe {
+
   implicit class FromConfigTypesafe(c: ZConfig.type) {
     def fromResourcePath[A](configDescriptor: ConfigDescriptor[A])(implicit
       tag: Tag[A]
@@ -34,7 +35,13 @@ package object typesafe {
       TypesafeConfig.fromTypesafeConfig(conf, configDescriptor)
   }
 
-  implicit class FromConfigSourceTypesafe(c: ConfigSource.type) {
+  implicit class FromConfigSourceTypesafe(c: ConfigProvider.type) {
+    def fromResourcePath: ConfigProvider =
+      TypesafeConfigSource.fromResourcePath_
+
+  }
+
+  implicit class FromConfigProviderTypesafe(c: ConfigSource.type) {
     def fromResourcePath: ConfigSource =
       TypesafeConfigSource.fromResourcePath
 

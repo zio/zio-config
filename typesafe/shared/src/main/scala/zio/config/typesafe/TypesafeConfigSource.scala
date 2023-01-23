@@ -11,10 +11,38 @@ import java.lang.{Boolean => JBoolean}
 import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
+import zio.ConfigProvider
+import com.github.ghik.silencer.silent
+import com.typesafe.config._
+import zio.ZIO
+import zio.config.PropertyTree._
+import zio.config._
+
+import java.io.File
+import java.lang.{Boolean => JBoolean}
+import scala.collection.immutable.Nil
+import scala.jdk.CollectionConverters._
+import scala.util.{Failure, Success, Try}
+import zio.ConfigProvider, ConfigProvider._
+import zio.Chunk
+import scala.util.Try
+
+import zio.Config
+
+import zio.Trace
+import zio.IO
+import com.typesafe.config.ConfigValueType.LIST
+import com.typesafe.config.ConfigValueType.NUMBER
+import com.typesafe.config.ConfigValueType.STRING
+import com.typesafe.config.ConfigValueType.OBJECT
+import com.typesafe.config.ConfigValueType.BOOLEAN
+import com.typesafe.config.ConfigValueType.NULL
 
 @silent("Unused import")
 object TypesafeConfigSource {
   import VersionSpecificSupport._
+
+  def fromResourcePath_ : ConfigProvider = null
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` from a given file in resource classpath.
@@ -97,6 +125,10 @@ object TypesafeConfigSource {
    *     configSource.flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
+
+  def fromHoconString_(input: String): ConfigProvider =
+    fromTypesafeConfig_(ConfigFactory.parseString(input).resolve)
+
   def fromHoconString(input: String): ConfigSource =
     fromTypesafeConfig(
       ZIO
@@ -146,6 +178,43 @@ object TypesafeConfigSource {
       }
 
     ConfigSource.fromManaged("hocon", effect).memoize
+  }
+
+  // FIXME: Define KeyComponent and return Map[Chunk[KeyComponent], String]
+  // Make Config.Table to work with Chunk[KeyComponent] and allow easier and typesafe access to Index
+  // Make Flat and fromFlat to work with Map[Chunk[KeyComponent], String] instead of Map[String, String]
+  def fromTypesafeConfig_(config: com.typesafe.config.Config): ConfigProvider = {
+    def loop(config: com.typesafe.config.Config): Map[String, String] = {
+      val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue())).toMap
+      initLevel.flatMap({ case (k, possibleConfigValue) =>
+        possibleConfigValue.valueType() match {
+          case LIST    =>
+            Try(config.getConfigList(k)) match {
+              case Failure(exception) =>
+                val result = config.getList(k).unwrapped().asScala.toList
+                Map(k -> result.map(_.toString).mkString(","))
+
+              case Success(value)     =>
+                val list: List[com.typesafe.config.Config] = value.asScala.toList
+                list.zipWithIndex.map { case (config: com.typesafe.config.Config, index: Int) =>
+                  loop(config).map { case (newK, v) => Map(List(k, s"[${index}]", newK).mkString(".") -> v) }
+                    .reduceOption(_ ++ _)
+                    .getOrElse(Map.empty[String, String])
+                }.reduceOption(_ ++ _).getOrElse(Map.empty[String, String])
+
+            }
+          case NUMBER  => Map(k -> config.getNumber(k).toString())
+          case STRING  => Map(k -> config.getString(k))
+          case OBJECT  => throw new Exception("It shouldn't happen")      //FIXME: Move to IO
+          case BOOLEAN => Map(k -> config.getBoolean(k).toString())
+          case NULL    => throw new Exception("Well I can't do anything") // FIXME: Move to IO
+        }
+      })
+    }
+
+    println(loop(config))
+
+    ConfigProvider.fromMap(loop(config))
   }
 
   /**
