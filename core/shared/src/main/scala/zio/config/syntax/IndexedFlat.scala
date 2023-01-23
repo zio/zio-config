@@ -3,6 +3,9 @@ package zio.config.syntax
 import zio._
 
 trait IndexedFlat { self =>
+
+  def sequenceComponent: Map[Any, Int] = Map.empty
+
   def load[A](path: Chunk[KeyComponent], config: Config.Primitive[A])(implicit trace: Trace): IO[Config.Error, Chunk[A]]
 
   def enumerateChildren(path: Chunk[KeyComponent])(implicit trace: Trace): IO[Config.Error, Set[Chunk[KeyComponent]]]
@@ -44,6 +47,7 @@ trait IndexedFlat { self =>
 object IndexedFlat {
   def from(map: Map[Chunk[KeyComponent], String], seqDelim: String = ",") =
     new IndexedFlat {
+
       val escapedSeqDelim = java.util.regex.Pattern.quote(seqDelim)
 
       def load[A](path: Chunk[KeyComponent], primitive: Config.Primitive[A])(implicit

@@ -8,6 +8,28 @@ import zio.Chunk
 import zio.Trace
 import zio.ZIO
 import zio.IO
+import zio.config.syntax.KeyComponent.Index
+import zio.config.syntax.KeyComponent.KeyName
+import zio.Config.Nested
+import zio.Config.Sequence
+import zio.Config.Table
+import zio.Config.Fallback
+import zio.Config.MapOrFail
+import zio.Config.Zipped
+import zio.Config.Described
+import zio.Config.Lazy
+import zio.Config.LocalTime
+import zio.Config.LocalDate
+import zio.Config.SecretType
+import zio.Config.OffsetDateTime
+import zio.Config.Bool
+import zio.Config.Decimal
+import zio.Config.Text
+import zio.Config.Constant
+import zio.Config.Fail
+import zio.Config.LocalDateTime
+import zio.Config.Duration
+import zio.Unsafe
 
 // To be moved to ZIO ?
 // Or may be zio-config can be considered as an extension to ZIO
@@ -15,6 +37,23 @@ trait ConfigSyntax {
   import zio.config.VersionSpecificSupport._
 
   implicit class ConfigOps[A](config: zio.Config[A]) { self =>
+
+    def strict: Config[A] = {
+      def loop[B](config: Config[B]): Config[B] =
+        config match {
+          case Nested(name, config)           => Nested(name, config.strict)
+          case Sequence(config)               => Sequence(config.strict)
+          case Table(valueConfig)             => Table(valueConfig.strict)
+          case a: Fallback[_]                 => a.first.strict.orElse(a.second.strict)
+          case MapOrFail(original, mapOrFail) => MapOrFail(original.strict, mapOrFail)
+          case Zipped(left, right, zippable)  => Zipped(left.strict, right.strict, zippable)
+          case Described(config, description) => Described(config.strict, description)
+          case Lazy(thunk)                    => thunk()
+          case a                              => a
+        }
+
+      loop(config)
+    }
 
     def to[B <: Product](implicit conv: TupleConversion[B, A]): Config[B] =
       config.map(
@@ -94,19 +133,19 @@ trait ConfigSyntax {
               }
 
             case Sequence(config) =>
-              val configs = loop(prefix ++ Chunk(KeyComponent.Index(0)), config).map(Chunk(_))
+              for {
+                keys <- flat
+                          .enumerateChildren(prefix)
+                          .map(_.toList.map { chunk =>
+                            chunk.head.asInstanceOf[KeyComponent.Index] // FIXME
+                          })
 
-              println("The result of sequence")
+                values <-
+                  ZIO.foreach(Chunk.fromIterable(keys.toSet)) { key =>
+                    loop(prefix ++ Chunk(key), config)
+                  }
 
-              val runtime = zio.Runtime.default
-
-              val result = zio.Unsafe.unsafe { implicit unsafe =>
-                runtime.unsafe.run(configs).getOrThrowFiberFailure()
-              }
-
-              println(result)
-
-              configs
+              } yield (if (values.isEmpty) Chunk(Chunk.empty) else Chunk(values))
 
             case Nested(name, config) =>
               loop(prefix ++ Chunk(KeyComponent.KeyName(name)), config)
