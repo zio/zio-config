@@ -180,40 +180,50 @@ object TypesafeConfigSource {
     ConfigSource.fromManaged("hocon", effect).memoize
   }
 
-  // FIXME: Use IndexedFlat to make this work.
-  // loop will return Map[Chunk[keyComponent], String]
+  import zio.config.syntax
+  import zio.config.syntax._
+
   def fromTypesafeConfig_(config: com.typesafe.config.Config): ConfigProvider = {
-    def loop(config: com.typesafe.config.Config): Map[String, String] = {
+    def loop(config: com.typesafe.config.Config): Map[Chunk[syntax.KeyComponent], String] = {
       val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue())).toMap
+
       initLevel.flatMap({ case (k, possibleConfigValue) =>
+        val kIterated = Chunk.fromIterable(k.split('.')).map(KeyComponent.KeyName(_))
+
         possibleConfigValue.valueType() match {
           case LIST    =>
             Try(config.getConfigList(k)) match {
-              case Failure(exception) =>
+              case Failure(_)     =>
+                // Only possibility is a sequence of primitives
                 val result = config.getList(k).unwrapped().asScala.toList
-                Map(k -> result.map(_.toString).mkString(","))
 
-              case Success(value)     =>
-                val list: List[com.typesafe.config.Config] = value.asScala.toList
-                list.zipWithIndex.map { case (config: com.typesafe.config.Config, index: Int) =>
-                  loop(config).map { case (newK, v) => Map(List(k, s"[${index}]", newK).mkString(".") -> v) }
-                    .reduceOption(_ ++ _)
-                    .getOrElse(Map.empty[String, String])
-                }.reduceOption(_ ++ _).getOrElse(Map.empty[String, String])
+                Map(
+                  kIterated ++ Chunk(KeyComponent.Index(0)) -> result.map(_.toString).mkString(",")
+                )
+
+              // Only possibility is a sequence of nested Configs
+              case Success(value) =>
+                value.asScala.toList.zipWithIndex.map { case (config: com.typesafe.config.Config, index: Int) =>
+                  val oldKeyWithIndex: Chunk[KeyComponent] = kIterated ++ Chunk(KeyComponent.Index(index))
+
+                  loop(config).map { case (newKey, v) =>
+                    oldKeyWithIndex ++ newKey -> v
+                  }
+
+                }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[KeyComponent], String])
 
             }
-          case NUMBER  => Map(k -> config.getNumber(k).toString())
-          case STRING  => Map(k -> config.getString(k))
+          case NUMBER  =>
+            Map(kIterated -> config.getNumber(k).toString())
+          case STRING  => Map(kIterated -> config.getString(k))
           case OBJECT  => throw new Exception("It shouldn't happen")      //FIXME: Move to IO
-          case BOOLEAN => Map(k -> config.getBoolean(k).toString())
+          case BOOLEAN => Map(kIterated -> config.getBoolean(k).toString())
           case NULL    => throw new Exception("Well I can't do anything") // FIXME: Move to IO
         }
       })
     }
 
-    println(loop(config))
-
-    ConfigProvider.fromMap(loop(config))
+    ConfigProvider.fromIndexedFlat(syntax.IndexedFlat.from(loop(config)))
   }
 
   /**

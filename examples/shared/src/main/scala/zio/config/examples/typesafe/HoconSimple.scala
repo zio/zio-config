@@ -20,10 +20,6 @@ object HoconSimple extends ZIOAppDefault {
             unit : 10
             street : Homebush
           }
-          {
-            unit : 11
-            street: Beresford
-          }
         ]  
      }
     """
