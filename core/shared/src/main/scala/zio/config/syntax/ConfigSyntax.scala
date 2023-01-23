@@ -4,6 +4,7 @@ import zio.config.TupleConversion, TupleConversion._
 import zio.Config
 import zio.ConfigProvider
 import zio.config.Read
+import zio.Chunk
 
 // To be moved to ZIO ?
 // Or may be zio-config can be considered as an extension to ZIO

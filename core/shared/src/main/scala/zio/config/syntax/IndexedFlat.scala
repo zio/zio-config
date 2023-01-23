@@ -40,3 +40,37 @@ trait IndexedFlat { self =>
         self.enumerateChildren(name +: path)
     }
 }
+
+object IndexedFlat {
+  def from(map: Map[Chunk[KeyComponent], String]) =
+    new IndexedFlat {
+      val escapedSeqDelim                                     = java.util.regex.Pattern.quote(seqDelim)
+      val escapedPathDelim                                    = java.util.regex.Pattern.quote(pathDelim)
+      def makePathString(path: Chunk[String]): String         = path.mkString(pathDelim)
+      def unmakePathString(pathString: String): Chunk[String] = Chunk.fromArray(pathString.split(escapedPathDelim))
+
+      def load[A](path: Chunk[String], primitive: Config.Primitive[A])(implicit
+        trace: Trace
+      ): IO[Config.Error, Chunk[A]] = {
+        val pathString  = makePathString(path)
+        val name        = path.lastOption.getOrElse("<unnamed>")
+        val description = primitive.description
+        val valueOpt    = map.get(pathString)
+
+        for {
+          value   <- ZIO
+                       .fromOption(valueOpt)
+                       .mapError(_ => Config.Error.MissingData(path, s"Expected ${pathString} to be set in properties"))
+          results <- Flat.util.parsePrimitive(value, path, name, primitive, escapedSeqDelim)
+        } yield results
+      }
+
+      def enumerateChildren(path: Chunk[String])(implicit trace: Trace): IO[Config.Error, Set[String]] =
+        ZIO.succeed {
+          val keyPaths = Chunk.fromIterable(map.keys).map(unmakePathString)
+
+          keyPaths.filter(_.startsWith(path)).map(_.drop(path.length).take(1)).flatten.toSet
+        }
+    }
+
+}

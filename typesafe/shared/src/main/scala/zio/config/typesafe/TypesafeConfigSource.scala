@@ -180,9 +180,8 @@ object TypesafeConfigSource {
     ConfigSource.fromManaged("hocon", effect).memoize
   }
 
-  // FIXME: Define KeyComponent and return Map[Chunk[KeyComponent], String]
-  // Make Config.Table to work with Chunk[KeyComponent] and allow easier and typesafe access to Index
-  // Make Flat and fromFlat to work with Map[Chunk[KeyComponent], String] instead of Map[String, String]
+  // FIXME: Use IndexedFlat to make this work.
+  // loop will return Map[Chunk[keyComponent], String]
   def fromTypesafeConfig_(config: com.typesafe.config.Config): ConfigProvider = {
     def loop(config: com.typesafe.config.Config): Map[String, String] = {
       val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue())).toMap
