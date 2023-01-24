@@ -49,6 +49,9 @@ object DeriveConfig {
   implicit val implicitLocalTimeDesc: DeriveConfig[LocalTime]         = DeriveConfig(localTime)
   implicit val implicitLocalDateTimeDesc: DeriveConfig[LocalDateTime] = DeriveConfig(localDateTime)
 
+  implicit def implicitOptionDesc[A: DeriveConfig]: DeriveConfig[Option[A]] =
+    DeriveConfig(DeriveConfig[A].desc.optional)
+
   implicit def implicitListDesc[A: DeriveConfig]: DeriveConfig[List[A]] =
     DeriveConfig(Config.listOf(implicitly[DeriveConfig[A]].desc))
 
@@ -99,9 +102,10 @@ object DeriveConfig {
             acc orElse f(n)
           }
         case head :: tail =>
-          def nest(name: String)(unwrapped: Config[Any])            =
+          def nest(name: String)(unwrapped: Config[Any]) =
             if (caseClass.isValueClass) unwrapped
             else unwrapped.nested(name)
+
           def makeNestedParam(name: String, unwrapped: Config[Any]) =
             nest(name)(unwrapped)
 

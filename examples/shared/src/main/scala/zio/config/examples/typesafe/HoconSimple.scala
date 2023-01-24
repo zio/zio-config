@@ -8,7 +8,7 @@ import zio.Console._
 object HoconSimple extends ZIOAppDefault {
 
   final case class Customer(name: String, orderIds: List[Int], address: List[Address])
-  final case class Address(unit: Int, street: String)
+  final case class Address(unit: Int, street: String, pin: Option[Int])
 
   val customer =
     s"""
@@ -18,7 +18,8 @@ object HoconSimple extends ZIOAppDefault {
         address : [
           {
             unit : 10
-            street : Homebush
+            street : Homebush,
+            pin: 2135
           },
           {
             unit : 11
