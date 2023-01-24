@@ -23,6 +23,25 @@ object HoconSimple extends ZIOAppDefault {
           },
           {
             unit : 11
+            street: Beresford
+          }
+        ]  
+     }
+    """
+
+  val invalidCustomer =
+    s"""
+     {
+        name: Jon
+        orderIds: [1,2,3]
+        address : [
+          {
+            unit : 10
+            street : Homebush,
+            pin: 2135
+          },
+          {
+            unit : 11
           }
         ]  
      }
@@ -30,8 +49,10 @@ object HoconSimple extends ZIOAppDefault {
 
   def run =
     for {
-      customer <- TypesafeConfigSource.fromHoconString_(customer).load(deriveConfig[Customer])
-      _        <- printLine(customer)
+      customer        <- TypesafeConfigSource.fromHoconString_(customer).load(deriveConfig[Customer])
+      invalidCustomer <- TypesafeConfigSource.fromHoconString_(invalidCustomer).load(deriveConfig[Customer]).either
+      _               <- printLine(customer)
+      _               <- printLine(invalidCustomer)
     } yield ()
 
 }

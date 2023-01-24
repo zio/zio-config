@@ -65,7 +65,7 @@ object IndexedFlat {
                   s"Expected ${KeyComponent.pretty(path)} to be set in properties"
                 )
               )
-          results <- parsePrimitive(value, path, primitive, escapedSeqDelim)
+          results <- parsePrimitive(value, primitive, escapedSeqDelim)
         } yield results
       }
 
@@ -84,11 +84,9 @@ object IndexedFlat {
 
   def parsePrimitive[A](
     text: String,
-    path: Chunk[KeyComponent],
     primitive: Config.Primitive[A],
     escapedDelim: String
   ): IO[Config.Error, Chunk[A]] = {
-    val name    = path.lastOption.getOrElse("<unnamed>")
     val unsplit = primitive == Config.Secret
 
     if (unsplit) ZIO.fromEither(primitive.parse(text)).map(Chunk(_))

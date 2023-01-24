@@ -1,7 +1,6 @@
 package zio.config.syntax
 
 import zio.Chunk
-import scala.collection.immutable
 import zio.config.syntax.KeyComponent.KeyName
 
 sealed trait KeyComponent {
