@@ -35,13 +35,16 @@ package object typesafe {
       TypesafeConfig.fromTypesafeConfig(conf, configDescriptor)
   }
 
-  implicit class FromConfigSourceTypesafe(c: ConfigProvider.type) {
+  implicit class FromConfigProviderTypesafe(c: ConfigProvider.type) {
     def fromResourcePath: ConfigProvider =
       TypesafeConfigSource.fromResourcePath_
 
+    def fromHoconString(input: String): ConfigProvider =
+      TypesafeConfigSource.fromHoconString_(input)
+
   }
 
-  implicit class FromConfigProviderTypesafe(c: ConfigSource.type) {
+  implicit class FromConfigSourceTypesafe(c: ConfigSource.type) {
     def fromResourcePath: ConfigSource =
       TypesafeConfigSource.fromResourcePath
 
