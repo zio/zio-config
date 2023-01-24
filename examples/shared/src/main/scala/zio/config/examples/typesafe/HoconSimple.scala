@@ -23,7 +23,6 @@ object HoconSimple extends ZIOAppDefault {
           },
           {
             unit : 11
-            street : Beresford
           }
         ]  
      }

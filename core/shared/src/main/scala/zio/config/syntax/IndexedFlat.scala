@@ -61,8 +61,8 @@ object IndexedFlat {
               .fromOption(valueOpt)
               .mapError(_ =>
                 Config.Error.MissingData(
-                  path.map(_.toString()),
-                  s"Expected ${path.map(_.toString).mkString} to be set in properties"
+                  Chunk(KeyComponent.pretty(path)),
+                  s"Expected ${KeyComponent.pretty(path)} to be set in properties"
                 )
               )
           results <- parsePrimitive(value, path, primitive, escapedSeqDelim)
