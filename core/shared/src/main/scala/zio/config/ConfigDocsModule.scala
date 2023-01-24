@@ -1,7 +1,6 @@
 package zio.config
 
 trait ConfigDocsModule extends WriteModule {
-  import ConfigDescriptorAdt._
   import Table._
   import ConfigSource._
 
@@ -241,19 +240,19 @@ trait ConfigDocsModule extends WriteModule {
      */
     def toConfluenceMarkdown(
       baseUrl: Option[String]
-    )(implicit S: K <:< String): String =
+    ): String =
       toMarkdown(Table.confluenceFlavoured(baseUrl))
 
     /**
      * Create a Github flavored markdown string from Table.
      * This can be used to render markdowns in Github, Gitlab etc
      */
-    def toGithubFlavouredMarkdown(implicit S: K <:< String): String =
+    def toGithubFlavouredMarkdown: String =
       toMarkdown(Table.githubFlavoured)
 
     def toMarkdown(
       getLink: (Heading, Int, Either[FieldName, Format]) => Link
-    )(implicit S: K <:< String): String = {
+    ): String = {
       val headingColumns =
         List("FieldName", "Format", "Description", "Sources")
 
@@ -576,13 +575,15 @@ trait ConfigDocsModule extends WriteModule {
    *   generatedDocs(configDescriptor).toTable.toGithubFlavouredMarkdown
    * }}}
    */
-  final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
+  import zio.Config
+  import zio.Config._
+  final def generateDocs[A](config: zio.Config[A]): ConfigDocs = {
     def loopTo[B](
       sources: Set[ConfigSourceName],
       descriptions: List[ConfigDocs.Description],
-      config: ConfigDescriptor[B],
+      config: Config[B],
       latestPath: Option[K],
-      alreadySeen: Set[ConfigDescriptor[_]]
+      alreadySeen: Set[Config[_]]
     ): ConfigDocs =
       if (alreadySeen.contains(config)) {
         ConfigDocs.Recursion(sources)
@@ -593,35 +594,38 @@ trait ConfigDocsModule extends WriteModule {
     def loop[B](
       sources: Set[ConfigSourceName],
       descriptions: List[ConfigDocs.Description],
-      config: ConfigDescriptor[B],
+      config: Config[B],
       latestPath: Option[K],
-      alreadySeen: Set[ConfigDescriptor[_]]
+      alreadySeen: Set[Config[_]]
     ): ConfigDocs =
       config match {
-        case Lazy(thunk) =>
+        case Config.Lazy(thunk) =>
           loopTo(sources, descriptions, thunk(), latestPath, alreadySeen)
 
-        case Source(source, _) =>
-          DocsLeaf((source.sourceNames ++ sources), descriptions, None)
+        case cp: Config.Primitive[_] =>
+          loopTo(
+            sources,
+            descriptions ++ List(ConfigDocs.Description(None, cp.description)),
+            config,
+            latestPath,
+            alreadySeen
+          )
 
-        case Default(c, _) =>
-          loopTo(sources, descriptions, c, None, alreadySeen)
-
-        case cd: DynamicMap[_] =>
+        case cd: Config.Table[_] =>
           ConfigDocs.DynamicMap(
             loopTo(
               sources,
               descriptions,
-              cd.config,
+              cd.valueConfig,
               None,
               alreadySeen
             )
           )
 
-        case Optional(c) =>
+        case Config.Optional(c) =>
           loopTo(sources, descriptions, c, None, alreadySeen)
 
-        case Sequence(c) =>
+        case Config.Sequence(c) =>
           ConfigDocs.Sequence(
             loopTo(
               sources,
@@ -632,7 +636,7 @@ trait ConfigDocsModule extends WriteModule {
             )
           )
 
-        case Describe(c, desc) =>
+        case Config.Described(c, desc) =>
           val descri: ConfigDocs.Description =
             ConfigDocs.Description(latestPath, desc)
 
@@ -644,7 +648,7 @@ trait ConfigDocsModule extends WriteModule {
             alreadySeen
           )
 
-        case Nested(path, c, _) =>
+        case Config.Nested(path, c) =>
           ConfigDocs.Nested(
             path,
             loopTo(
@@ -657,91 +661,30 @@ trait ConfigDocsModule extends WriteModule {
             descriptions
           )
 
-        case TransformOrFail(c, _, _) =>
+        case Config.MapOrFail(c, _) =>
           loopTo(sources, descriptions, c, None, alreadySeen)
 
-        case Zip(left, right) =>
+        case Config.Zipped(left, right, zippable) =>
           ConfigDocs.Zip(
             loopTo(sources, descriptions, left, None, alreadySeen),
             loopTo(sources, descriptions, right, None, alreadySeen)
           )
 
-        case OrElseEither(left, right) =>
+        case Config.Fallback(left, right) =>
           ConfigDocs.OrElse(
             loopTo(sources, descriptions, left, None, alreadySeen),
             loopTo(sources, descriptions, right, None, alreadySeen)
           )
 
-        case ConfigDescriptorAdt.OrElse(left, right) =>
+        case Config.FallbackWith(left, right, _) =>
           ConfigDocs.OrElse(
             loopTo(sources, descriptions, left, None, alreadySeen),
             loopTo(sources, descriptions, right, None, alreadySeen)
           )
+
       }
 
     loopTo(Set.empty, Nil, config, None, Set.empty)
   }
 
-  /**
-   * Generate a report based on the `ConfigDescriptor` and an `A`, where a
-   * `ConfigDescriptor` represents the logic to fetch the application config
-   * from various sources, and `A` represents the actual config value that was retrieved.
-   */
-  def generateReport[A](config: ConfigDescriptor[A], value: A): Either[String, ConfigDocs] =
-    write[A](config, value).map { tree =>
-      def loop(tree: PropertyTree[K, V], schemaDocs: ConfigDocs, keys: List[K]): ConfigDocs =
-        schemaDocs match {
-          case DocsLeaf(sources, descriptions, None) =>
-            // Feed value when it hits leaf
-            tree.getPath(keys) match {
-              case PropertyTree.Leaf(value, _) =>
-                DocsLeaf(sources, descriptions, Some(value))
-              case _                           => DocsLeaf(sources, descriptions, None)
-            }
-
-          case a: DocsLeaf => a
-
-          case a: ConfigDocs.Recursion => a
-
-          case ConfigDocs.Nested(path, docs, descriptions) =>
-            ConfigDocs
-              .Nested(path, loop(tree, docs, keys :+ path), descriptions)
-
-          case ConfigDocs.Zip(left, right) =>
-            ConfigDocs.Zip(loop(tree, left, keys), loop(tree, right, keys))
-
-          case ConfigDocs.OrElse(left, right) =>
-            ConfigDocs.OrElse(loop(tree, left, keys), loop(tree, right, keys))
-
-          case cd: DocsMap =>
-            tree.getPath(keys) match {
-              case rec: PropertyTree.Record[K, V] =>
-                DocsMap(
-                  cd.schemaDocs,
-                  rec.value.toList.map { keyTree =>
-                    keyTree._1 -> loop(keyTree._2, cd.schemaDocs, List.empty)
-                  }.toMap
-                )
-              case v                              =>
-                DocsMap(
-                  loop(v, cd.schemaDocs, keys),
-                  Map.empty[K, ConfigDocs]
-                )
-            }
-
-          case ConfigDocs.Sequence(schema, values) =>
-            tree.getPath(keys) match {
-              case PropertyTree.Sequence(value) if value.nonEmpty =>
-                ConfigDocs.Sequence(
-                  schema,
-                  value.map(t => loop(t, schema, List.empty))
-                )
-              case _                                              =>
-                ConfigDocs
-                  .Sequence(schema, loop(tree, schema, keys) :: values)
-            }
-        }
-
-      loop(tree, generateDocs(config), List.empty)
-    }
 }

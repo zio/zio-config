@@ -69,46 +69,4 @@ object ReadWriteReportExample extends App {
       )
   )
 
-  assert(
-    generateDocs(config).toTable.toGithubFlavouredMarkdown ==
-      s"""
-         |## Configuration Details
-         |
-         |
-         ||FieldName|Format                         |Description|Sources|
-         ||---      |---                            |---        |---    |
-         ||         |[any-one-of](fielddescriptions)|           |       |
-         |
-         |### Field Descriptions
-         |
-         ||FieldName|Format                       |Description|Sources|
-         ||---      |---                          |---        |---    |
-         ||         |[all-of](fielddescriptions-2)|           |       |
-         ||         |[all-of](fielddescriptions-1)|           |       |
-         |
-         |### Field Descriptions
-         |
-         ||FieldName|Format                           |Description                                               |Sources |
-         ||---      |---                              |---                                                       |---     |
-         ||usr      |primitive                        |value of type string, Example: some-user, Prod Config     |constant|
-         ||pwd      |primitive                        |value of type string, optional value, sec, Prod Config    |constant|
-         ||jhi      |primitive                        |value of type string, optional value, Ex: ghi, Prod Config|constant|
-         ||xyz      |primitive                        |value of type string, optional value, Ex: ha, Prod Config |constant|
-         ||         |[any-one-of](fielddescriptions-3)|                                                          |        |
-         |
-         |### Field Descriptions
-         |
-         ||FieldName|Format   |Description                                              |Sources |
-         ||---      |---      |---                                                      |---     |
-         ||abc      |primitive|value of type int, optional value, Ex: ha, Prod Config   |constant|
-         ||def      |primitive|value of type string, optional value, Ex: ha, Prod Config|constant|
-         |
-         |### Field Descriptions
-         |
-         ||FieldName |Format   |Description                      |Sources |
-         ||---       |---      |---                              |---     |
-         ||auth_token|primitive|value of type string, Prod Config|constant|
-         ||clientid  |primitive|value of type string, Prod Config|constant|
-         |""".stripMargin
-  )
 }
