@@ -20,7 +20,7 @@ object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
            |}
            |""".stripMargin
 
-      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
+      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString_(res))
 
       assertZIO(result)(equalTo(SimpleRec(1, Some(SimpleRec(2, None)))))
     },

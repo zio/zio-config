@@ -1,6 +1,6 @@
 package zio.config.magnolia
 
-import zio.config._, ConfigDescriptor._
+import zio.config._
 import zio.config.derivation.DerivationUtils
 import zio.NonEmptyChunk
 
@@ -14,14 +14,15 @@ import scala.compiletime.{erasedValue, summonInline, constValue, summonFrom, con
 import scala.quoted
 import scala.util.Try
 import Descriptor._
+import zio.Config, Config._
 
-final case class Descriptor[A](desc: ConfigDescriptor[A], metadata: Option[Descriptor.Metadata])
+final case class Descriptor[A](desc: Config[A], metadata: Option[Descriptor.Metadata])
 
 object Descriptor {
-  def apply[A](implicit ev: Descriptor[A]): ConfigDescriptor[A] =
+  def apply[A](implicit ev: Descriptor[A]): Config[A] =
     ev.desc
 
-  def from[A](desc: ConfigDescriptor[A]) =
+  def from[A](desc: Config[A]) =
     Descriptor(desc, None)
 
   sealed trait Metadata
@@ -191,7 +192,7 @@ object Descriptor {
   ): List[Descriptor[_]] = {
     descriptors.zip(fieldNames).map({ case (desc, fieldName) =>
       defaultValues.get(fieldName) match {
-        case Some(any) => Descriptor(desc.desc.default(any), desc.metadata)
+        case Some(any) => Descriptor(desc.desc.withDefault(any), desc.metadata)
         case None => desc
     }})
   }
@@ -206,12 +207,11 @@ object Descriptor {
        if fieldNames.isEmpty then
          val tryAllPaths =
            (productName.originalName :: productName.alternativeNames)
-             .map(n => DerivationUtils.constantString(n)).reduce(_ orElse _)
+             .map(n => zio.Config.succeed(n)).reduce(_ orElse _)
 
          Descriptor(
-           tryAllPaths.transform[T](
-             _ => f(List.empty[Any]),
-             t => productName.alternativeNames.headOption.getOrElse(productName.originalName)
+           tryAllPaths.map[T](
+             _ => f(List.empty[Any])
            ),
            Some(Metadata.Object(productName))
          )
@@ -220,7 +220,7 @@ object Descriptor {
          val listOfDesc =
            fieldNames.zip(allDescs).map({ case (fieldName, desc) => {
              val fieldDesc =
-               tryAllkeys(castTo[ConfigDescriptor[Any]](desc.desc), Some(fieldName.originalName), fieldName.alternativeNames)
+               tryAllkeys(castTo[Config[Any]](desc.desc), Some(fieldName.originalName), fieldName.alternativeNames)
 
              fieldName.descriptions.foldRight(fieldDesc)((doc, desc) => desc ?? doc)
            }})
@@ -231,10 +231,10 @@ object Descriptor {
          Descriptor(descOfList.transform[T](f, g), Some(Metadata.Product(productName, fieldNames)))
 
   def tryAllkeys[A](
-    desc: ConfigDescriptor[A],
+    desc: Config[A],
     originalKey: Option[String],
     alternativeKeys: List[String]
-  ): ConfigDescriptor[A] =
+  ): Config[A] =
     if alternativeKeys.nonEmpty then
       alternativeKeys.map(key => nested(key)(desc)).reduce(_ orElse _)
     else
