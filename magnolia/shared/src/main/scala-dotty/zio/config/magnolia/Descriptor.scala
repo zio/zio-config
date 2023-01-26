@@ -20,6 +20,7 @@ import zio.config.syntax._
 final case class Descriptor[A](desc: Config[A], metadata: Option[Descriptor.Metadata])
 
 object Descriptor {
+
   def apply[A](implicit ev: Descriptor[A]): Config[A] =
     ev.desc
 
@@ -185,7 +186,7 @@ object Descriptor {
        if fieldNames.isEmpty then
          val tryAllPaths =
            (productName.originalName :: productName.alternativeNames)
-             .map(n => zio.Config.string).reduce(_ orElse _)
+             .map(n => zio.Config.constant(n)).reduce(_ orElse _)
 
          Descriptor(
            tryAllPaths.map[T](

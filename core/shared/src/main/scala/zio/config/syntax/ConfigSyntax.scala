@@ -185,6 +185,13 @@ trait ConfigSyntax {
 
   // To be moved to ZIO
   implicit class FromConfigTypesafe(c: Config.type) {
+
+    def constant(value: String) =
+      Config.string.mapOrFail(parsed =>
+        if (parsed == value) Right(value)
+        else Left(Config.Error.InvalidData(message = "Value in the config source should be ${value}"))
+      )
+
     def collectAll[A](head: => Config[A], tail: Config[A]*): Config[List[A]] =
       tail.reverse
         .map(Config.defer(_))
