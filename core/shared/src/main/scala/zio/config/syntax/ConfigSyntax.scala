@@ -161,23 +161,6 @@ trait ConfigSyntax {
 
   implicit class ConfigOps[A](config: zio.Config[A]) { self =>
 
-    def strict: Config[A] = {
-      def loop[B](config: Config[B]): Config[B] =
-        config match {
-          case Nested(name, config)           => Nested(name, config.strict)
-          case Sequence(config)               => Sequence(config.strict)
-          case Table(valueConfig)             => Table(valueConfig.strict)
-          case a: Fallback[_]                 => a.first.strict.orElse(a.second.strict)
-          case MapOrFail(original, mapOrFail) => MapOrFail(original.strict, mapOrFail)
-          case Zipped(left, right, zippable)  => Zipped(left.strict, right.strict, zippable)
-          case Described(config, description) => Described(config.strict, description)
-          case Lazy(thunk)                    => thunk()
-          case a                              => a
-        }
-
-      loop(config)
-    }
-
     def to[B <: Product](implicit conv: TupleConversion[B, A]): Config[B] =
       config.map(
         conv.from
@@ -268,7 +251,9 @@ trait ConfigSyntax {
                     loop(prefix ++ Chunk(key), config)
                   }
 
-              } yield (if (values.isEmpty) Chunk(Chunk.empty) else Chunk(values))
+              } yield
+                (if (values.isEmpty) Chunk(Chunk.empty).asInstanceOf[Chunk[A]]
+                 else Chunk(values).asInstanceOf[Chunk[A]])
 
             case Nested(name, config) =>
               loop(prefix ++ Chunk(KeyComponent.KeyName(name)), config)

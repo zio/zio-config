@@ -39,25 +39,16 @@ object Descriptor {
 
   lazy given Descriptor[String] = Descriptor.from(string)
   lazy given Descriptor[Boolean] = Descriptor.from(boolean)
-  lazy given Descriptor[Byte] = Descriptor.from(byte)
-  lazy given Descriptor[Short] = Descriptor.from(short)
   lazy given Descriptor[Int] = Descriptor.from(int)
-  lazy given Descriptor[Long] = Descriptor.from(long)
   lazy given Descriptor[BigInt] = Descriptor.from(bigInt)
   lazy given Descriptor[Float] = Descriptor.from(float)
   lazy given Descriptor[Double] = Descriptor.from(double)
   lazy given Descriptor[BigDecimal] = Descriptor.from(bigDecimal)
   lazy given Descriptor[URI] = Descriptor.from(uri)
-  lazy given Descriptor[URL] = Descriptor.from(url)
-  lazy given Descriptor[ScalaDuration] = Descriptor.from(duration)
-  lazy given Descriptor[Duration] = Descriptor.from(zioDuration)
-  lazy given Descriptor[UUID] = Descriptor.from(uuid)
+  lazy given Descriptor[zio.Duration] = Descriptor.from(duration)
   lazy given Descriptor[LocalDate] = Descriptor.from(localDate)
   lazy given Descriptor[LocalTime] = Descriptor.from(localTime)
   lazy given Descriptor[LocalDateTime] = Descriptor.from(localDateTime)
-  lazy given Descriptor[Instant] = Descriptor.from(instant)
-  lazy given Descriptor[File] = Descriptor.from(file)
-  lazy given Descriptor[java.nio.file.Path] = Descriptor.from(javaFilePath)
 
   given eitherDesc[A, B](using ev1: Descriptor[A], ev2: Descriptor[B]): Descriptor[Either[A, B]] =
     Descriptor.from(ev1.desc.orElseEither(ev2.desc))
@@ -80,15 +71,7 @@ object Descriptor {
       case _: (t *: ts) =>
         val desc = summonInline[Descriptor[t]]
         Descriptor[Any](
-          desc.desc.transformOrFail[Any](
-            a => Right(a),
-            b =>
-              Try(castTo[t](b))
-                .toEither
-                .mapError(r =>
-                  s"Failed to write ${b}. ${r}. This happens when A gets casted to a wrong SubType (given A has multiple subtypes) during write."
-                )
-          ), desc.metadata
+          desc.desc, desc.metadata
         ) :: summonDescriptorForCoProduct[ts]
 
   inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
