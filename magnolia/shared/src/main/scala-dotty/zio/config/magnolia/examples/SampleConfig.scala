@@ -9,7 +9,7 @@ final case class B(
   c: C,
   d: List[C],
   e: Option[C],
-  f: Either[C, E],
+  f: E,
   g: E,
   h: E,
   i: P,
@@ -21,9 +21,9 @@ final case class C()
 sealed trait E
 
 object E {
-  case object D extends E
-  case object F extends E
-  case class G(value: String = "hello") extends E
+  case object D               extends E
+  case object F               extends E
+  case class G(value: String) extends E
 }
 
 // If a name is provided then the name of the sealed trait itself become part of the config
@@ -31,9 +31,9 @@ object E {
 sealed trait P
 
 object P {
-  case object Q extends P
-  case object R extends P
+  case object Q                                            extends P
+  case object R                                            extends P
   case class S(@name("zz") @describe("it is z") z: String) extends P
   @name("t")
-  case class T(u: String) extends P
+  case class T(u: String)                                  extends P
 }

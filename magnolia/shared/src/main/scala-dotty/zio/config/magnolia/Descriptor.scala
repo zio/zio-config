@@ -185,7 +185,7 @@ object Descriptor {
        if fieldNames.isEmpty then
          val tryAllPaths =
            (productName.originalName :: productName.alternativeNames)
-             .map(n => zio.Config.succeed(n)).reduce(_ orElse _)
+             .map(n => zio.Config.string).reduce(_ orElse _)
 
          Descriptor(
            tryAllPaths.map[T](

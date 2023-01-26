@@ -8,8 +8,6 @@ import zio.Chunk
 import zio.Trace
 import zio.ZIO
 import zio.IO
-import zio.config.syntax.KeyComponent.Index
-import zio.config.syntax.KeyComponent.KeyName
 import zio.Config.Nested
 import zio.Config.Sequence
 import zio.Config.Table
@@ -18,18 +16,6 @@ import zio.Config.MapOrFail
 import zio.Config.Zipped
 import zio.Config.Described
 import zio.Config.Lazy
-import zio.Config.LocalTime
-import zio.Config.LocalDate
-import zio.Config.SecretType
-import zio.Config.OffsetDateTime
-import zio.Config.Bool
-import zio.Config.Decimal
-import zio.Config.Text
-import zio.Config.Constant
-import zio.Config.Fail
-import zio.Config.LocalDateTime
-import zio.Config.Duration
-import zio.Unsafe
 import zio.Config.Error.And
 import zio.Config.Error.InvalidData
 import zio.Config.Error.MissingData
@@ -43,6 +29,7 @@ trait ConfigSyntax {
   import zio.config.VersionSpecificSupport._
 
   implicit class ConfigErrorOps(error: Config.Error) { self =>
+
     final def prettyPrint(keyDelimiter: Char = '.'): String = {
 
       sealed trait Segment
@@ -160,6 +147,29 @@ trait ConfigSyntax {
   }
 
   implicit class ConfigOps[A](config: zio.Config[A]) { self =>
+
+    def strict: Config[A] = {
+
+      def loop[B](config: Config[B]): Config[B] =
+        config match {
+          case Nested(name, config)                  => Nested(name, loop(config))
+          case Sequence(config)                      => Sequence(loop(config))
+          case Config.Optional(config)               => Config.Optional(loop(config))
+          case Config.FallbackWith(first, second, f) => Config.FallbackWith(loop(first), loop(second), f)
+          case Table(valueConfig)                    => Table(loop(valueConfig))
+          case a: Fallback[B]                        => loop(a.first).orElse(loop(a.second))
+          case MapOrFail(original, mapOrFail)        => MapOrFail(loop(original), a => mapOrFail(a))
+          case Zipped(left, right, zippable)         => Zipped(loop(left), loop(right), zippable)
+          case Described(config, description)        => Described(loop(config), description)
+          case Lazy(thunk)                           => thunk().strict
+          case config: Config.Primitive[B]           =>
+            println("is it here?")
+            println(config)
+            config
+        }
+
+      loop(config)
+    }
 
     def to[B <: Product](implicit conv: TupleConversion[B, A]): Config[B] =
       config.map(
@@ -339,5 +349,7 @@ trait ConfigSyntax {
             }))
         )
         .map { case (a, t) => a :: t }
+
   }
+
 }
