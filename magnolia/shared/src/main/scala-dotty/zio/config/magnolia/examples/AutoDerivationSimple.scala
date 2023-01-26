@@ -15,7 +15,7 @@ object AutoDerivationSimple extends App :
       "a.c" -> "C",
       "a.d" -> "C,C",
       "a.f.G.value" -> "v2",
-      "a.g" -> "F",
+      "a.g" -> "afsak",
       "a.h.G.value" -> "GValue",
       "a.i.p" -> "Q",
       "a.j.p.t.u" -> "v3"

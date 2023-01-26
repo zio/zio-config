@@ -22,6 +22,17 @@ import zio.Config.Error.MissingData
 import zio.Config.Error.Or
 import zio.Config.Error.SourceUnavailable
 import zio.Config.Error.Unsupported
+import zio.Config.OffsetDateTime
+import zio.Config.SecretType
+import zio.Config.Decimal
+import zio.Config.Text
+import zio.Config.Duration
+import zio.Config.Bool
+import zio.Config.LocalDate
+import zio.Config.Constant
+import zio.Config.Fail
+import zio.Config.LocalTime
+import zio.Config.LocalDateTime
 
 // To be moved to ZIO ?
 // Or may be zio-config can be considered as an extension to ZIO
@@ -146,7 +157,41 @@ trait ConfigSyntax {
 
   }
 
+  import zio.Config._
   implicit class ConfigOps[A](config: zio.Config[A]) { self =>
+
+    // Important for usecases such as `SystemEnv.load(deriveConfig[A].mapKey(_.toUpperCase)` or `JsonSource.load(deriveConfig[A])`
+    // where annotations can't be of any help
+    def mapKey(f: String => String): Config[A] = {
+      def loop[B](config: Config[B]): Config[B] =
+        config match {
+          case Described(config, description) => Described(loop(config), description)
+          case config: FallbackWith[B]        => FallbackWith(loop(config.first), loop(config.second), f)
+          case config: Fallback[B]            => Fallback(loop(config.first), loop(config.second))
+          case Sequence(config)               => Sequence(loop(config))
+          case Nested(name, config)           => Nested(f(name), loop(config))
+          case MapOrFail(original, mapOrFail) => MapOrFail(loop(original), mapOrFail)
+          case Table(valueConfig)             => Table(loop(valueConfig))
+          case Zipped(left, right, zippable)  => Zipped(loop(left), loop(right), zippable)
+          case Lazy(thunk)                    => Lazy(() => loop(thunk()))
+          case primitive: Config.Primitive[B] => primitive
+          case Fail(message)                  => Fail(message)
+        }
+
+      loop(config)
+    }
+
+    def toKebabCase: Config[A] =
+      mapKey(zio.config.toKebabCase)
+
+    def toSnakeCase: Config[A] =
+      mapKey(zio.config.toSnakeCase)
+
+    def toUpperCase: Config[A] =
+      mapKey(_.toUpperCase())
+
+    def toLowerCase: Config[A] =
+      mapKey(_.toLowerCase())
 
     def strict: Config[A] = {
 
@@ -189,7 +234,7 @@ trait ConfigSyntax {
     def constant(value: String) =
       Config.string.mapOrFail(parsed =>
         if (parsed == value) Right(value)
-        else Left(Config.Error.InvalidData(message = "Value in the config source should be ${value}"))
+        else Left(Config.Error.InvalidData(message = s"value should be a constant: ${value}"))
       )
 
     def collectAll[A](head: => Config[A], tail: Config[A]*): Config[List[A]] =
