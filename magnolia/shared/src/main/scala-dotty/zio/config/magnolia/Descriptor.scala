@@ -15,6 +15,7 @@ import scala.quoted
 import scala.util.Try
 import Descriptor._
 import zio.Config, Config._
+import zio.config.syntax._
 
 final case class Descriptor[A](desc: Config[A], metadata: Option[Descriptor.Metadata])
 
@@ -50,20 +51,14 @@ object Descriptor {
   lazy given Descriptor[LocalTime] = Descriptor.from(localTime)
   lazy given Descriptor[LocalDateTime] = Descriptor.from(localDateTime)
 
-  given eitherDesc[A, B](using ev1: Descriptor[A], ev2: Descriptor[B]): Descriptor[Either[A, B]] =
-    Descriptor.from(ev1.desc.orElseEither(ev2.desc))
-
   given optDesc[A](using ev: Descriptor[A]): Descriptor[Option[A]] =
     Descriptor.from(ev.desc.optional)
 
   given listDesc[A](using ev: Descriptor[A]): Descriptor[List[A]] =
-    Descriptor.from(list(ev.desc))
+    Descriptor.from(listOf(ev.desc))
 
   given mapDesc[A](using ev: Descriptor[A]): Descriptor[Map[String, A]] =
-    Descriptor.from(map(ev.desc))
-
-  given nonEmptyChunkDesc[A](using ev: Descriptor[A]): Descriptor[NonEmptyChunk[A]] =
-    Descriptor.from(nonEmptyChunk(ev.desc))
+    Descriptor.from(table(ev.desc))
 
   inline def summonDescriptorForCoProduct[T <: Tuple]: List[Descriptor[Any]] =
     inline erasedValue[T] match
@@ -209,9 +204,9 @@ object Descriptor {
            }})
 
          val descOfList =
-           collectAll(listOfDesc.head, listOfDesc.tail: _*)
+           Config.collectAll(listOfDesc.head, listOfDesc.tail: _*)
 
-         Descriptor(descOfList.transform[T](f, g), Some(Metadata.Product(productName, fieldNames)))
+         Descriptor(descOfList.map(f), Some(Metadata.Product(productName, fieldNames)))
 
   def tryAllkeys[A](
     desc: Config[A],
@@ -219,9 +214,9 @@ object Descriptor {
     alternativeKeys: List[String]
   ): Config[A] =
     if alternativeKeys.nonEmpty then
-      alternativeKeys.map(key => nested(key)(desc)).reduce(_ orElse _)
+      alternativeKeys.map(key => desc.nested(key)).reduce(_ orElse _)
     else
-      originalKey.fold(desc)(key => nested(key)(desc))
+      originalKey.fold(desc)(key => desc.nested(key))
 
   def castTo[T](a: Any): T =
     a.asInstanceOf[T]
