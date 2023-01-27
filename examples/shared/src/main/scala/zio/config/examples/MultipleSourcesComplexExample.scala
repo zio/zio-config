@@ -10,8 +10,8 @@ object ConfigLoader {
   def apply[A](
     prefix: String,
     args: List[String],
-    schema: ConfigDescriptor[A]
-  ): IO[ReadError[String], A] =
+    schema: Config[A]
+  ): IO[Config.Error, A] =
     for {
       config        <- getConfigProgram(prefix, args, schema)
       serviceConfig <- read(config)
@@ -20,15 +20,15 @@ object ConfigLoader {
   private def getConfigProgram[A](
     prefix: String,
     args: List[String],
-    configSchema: ConfigDescriptor[A]
-  ): IO[ReadError[String], ConfigDescriptor[A]] =
+    configSchema: Config[A]
+  ): IO[Config.Error, Config[A]] =
     for {
       cmdConf <- ZIO.succeed(
                    ConfigSource.fromCommandLineArgs(args, Some('.'))
                  )
       // for demonstration: this should be ur sysEnv
       sysConf <- ZIO.succeed(
-                   ConfigSource.fromMap(
+                   ConfigProvider.fromMap(
                      Map(
                        // Prefix added only for system env
                        "SERVICENAME_SCHEMAREGISTRYURL" -> "schemaregistry:system_env",

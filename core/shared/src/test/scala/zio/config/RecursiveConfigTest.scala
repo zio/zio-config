@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ConfigDescriptor._
+import zio.{Config, ConfigProvider}, Config._
 import zio.test.Assertion._
 import zio.test.{Annotations, _}
 
@@ -130,7 +130,7 @@ object RecursiveConfigTestUtils {
   case class SimpleRec(id: Int, nested: Option[SimpleRec])
 
   object SimpleRec {
-    val config: ConfigDescriptor[SimpleRec] =
+    val config: Config[SimpleRec] =
       (int("id") zip nested("nested")(config).optional).to[SimpleRec]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
@@ -158,8 +158,8 @@ object RecursiveConfigTestUtils {
   case class SimpleListRec(id: Int, nested: List[SimpleListRec])
 
   object SimpleListRec {
-    val config: ConfigDescriptor[SimpleListRec] =
-      (int("id") zip list("nested")(config)).to[SimpleListRec]
+    val config: Config[SimpleListRec] =
+      (int("id") zip listOf("nested")(config)).to[SimpleListRec]
 
     val tree: PropertyTree[String, String] =
       PropertyTree.Record(
@@ -191,7 +191,7 @@ object RecursiveConfigTestUtils {
   case class SimpleEitherRec(id: Int, nested: Either[SimpleEitherRec, Int])
 
   object SimpleEitherRec {
-    val config: ConfigDescriptor[SimpleEitherRec] =
+    val config: Config[SimpleEitherRec] =
       (int("id") zip (nested("nested")(config))
         .orElseEither(int("termination"))).to[SimpleEitherRec]
 
@@ -226,7 +226,7 @@ object RecursiveConfigTestUtils {
   case class SimpleRecReversed(nested: Option[SimpleRecReversed], id: Int)
 
   object SimpleRecReversed {
-    val config: ConfigDescriptor[SimpleRecReversed] =
+    val config: Config[SimpleRecReversed] =
       (nested("nested")(config).optional zip int("id")).to[SimpleRecReversed]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
@@ -253,7 +253,7 @@ object RecursiveConfigTestUtils {
   case class SimpleRecMultiple(nested: Option[SimpleRecMultiple], id: Int, nested2: Option[SimpleRecMultiple])
 
   object SimpleRecMultiple {
-    val config: ConfigDescriptor[SimpleRecMultiple] =
+    val config: Config[SimpleRecMultiple] =
       (nested("nested")(config).optional zip int("id") zip nested("nested2")(config).optional).to[SimpleRecMultiple]
 
     val tree: PropertyTree[String, String] = PropertyTree.Record(
@@ -280,8 +280,8 @@ object RecursiveConfigTestUtils {
 
   case class Row(id: Int, nested: Option[Data])
 
-  lazy val row: ConfigDescriptor[Row]   = (int("id") zip data.optional).to[Row]
-  lazy val data: ConfigDescriptor[Data] = nested("rows")(row).to[Data]
+  lazy val row: Config[Row]   = (int("id") zip data.optional).to[Row]
+  lazy val data: Config[Data] = nested("rows")(row).to[Data]
 
   val testSource: ConfigSource = ConfigSource.fromPropertyTree(
     PropertyTree.Record(
@@ -307,8 +307,8 @@ object RecursiveConfigTestUtils {
   case class Lit(n: Int)            extends Expr
   case class Add(items: List[Expr]) extends Expr
 
-  lazy val expr: ConfigDescriptor[Expr] = {
-    val lit: ConfigDescriptor[Expr] = int.transformOrFail(
+  lazy val expr: Config[Expr] = {
+    val lit: Config[Expr] = int.transformOrFail(
       n => Right(Lit(n)),
       {
         case Lit(n) => Right(n)
@@ -316,8 +316,8 @@ object RecursiveConfigTestUtils {
       }
     )
 
-    val add: ConfigDescriptor[Expr] = nested("add")(
-      list(expr)
+    val add: Config[Expr] = nested("add")(
+      listOf(expr)
         .transformOrFailRight(
           lst => Add(lst),
           {

@@ -7,10 +7,10 @@ import java.nio.file.Path
 
 package object yaml {
   implicit class FromConfigYaml(c: ZConfig.type) {
-    def fromPath[A: Tag](path: Path, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
+    def fromPath[A: Tag](path: Path, descriptor: Config[A]): Layer[Config.Error, A] =
       YamlConfig.fromFile(path.toFile, descriptor)
 
-    def fromFile[A: Tag](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
+    def fromFile[A: Tag](file: File, descriptor: Config[A]): Layer[Config.Error, A] =
       YamlConfig.fromFile(file, descriptor)
   }
 
@@ -34,7 +34,7 @@ package object yaml {
       YamlConfigSource.fromYamlString(yamlString, sourceName)
 
     def fromYamlRepr[A](repr: A)(
-      loadYaml: A => ZIO[Any, ReadError[String], AnyRef],
+      loadYaml: A => ZIO[Any, Config.Error, AnyRef],
       sourceName: String = "yaml"
     ): ConfigSource =
       YamlConfigSource.fromYamlRepr(repr)(loadYaml, sourceName)

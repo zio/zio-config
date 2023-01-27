@@ -1,9 +1,9 @@
 ---
 id: automatic-derivation-of-config-descriptor
-title:  "Automatic Derivation of ConfigDescriptor"
+title:  "Automatic Derivation of Config"
 ---
 
-By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config. With a single import, `ConfigDescriptor` is automatically derived.
+By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config. With a single import, `Config` is automatically derived.
 
 Also, we will get to see the Hocon config for coproducts is devoid of any extra tagging to satisfy the library. This is much easier/intuitive unlike many existing implementations.
 
@@ -107,7 +107,7 @@ read(descriptor[MyConfig] from dHoconSource)
 // res0: Right(MyConfig(DetailsWrapped(Detail("ff", "ll", Region("strath", "syd")))))
 ```
 
-To know more about various semantics of `descriptor`, please refer to the [api docs](https://javadoc.io/static/dev.zio/zio-config-magnolia_2.13/1.0.0-RC31-1/zio/config/magnolia/index.html#descriptor[A](implicitconfig:zio.config.magnolia.package.Descriptor[A]):zio.config.ConfigDescriptor[A]).
+To know more about various semantics of `descriptor`, please refer to the [api docs](https://javadoc.io/static/dev.zio/zio-config-magnolia_2.13/1.0.0-RC31-1/zio/config/magnolia/index.html#descriptor[A](implicitconfig:zio.config.magnolia.package.Descriptor[A]):zio.Config[A]).
 
 **NOTE**
 
@@ -313,10 +313,10 @@ We will consider adding `AnyVal` support, for supporting legacy applications in 
 In the meantime, if you are migrating from Scala 2 where you had custom descriptors defined for value classes you need to slightly change your code to compile it with Scala 3
  - remove `AnyVal` trait
  - modify definition of custom descriptor
- - add import to include `ConfigDescriptor` combinators
+ - add import to include `Config` combinators
 
 ```scala
-import zio.config.ConfigDescriptor._
+import zio.{Config, ConfigProvider}, Config._
 import zio.config.magnolia.{descriptor, Descriptor}
 
 final case class AwsRegion(value: String) {
@@ -428,7 +428,7 @@ Please refer to examples in magnolia package (not in the main examples module)
 With zio-config-3.x, the only way to change keys is as follows:
 
 ```scala
-// mapKey is just a function in `ConfigDescriptor` that pre-existed
+// mapKey is just a function in `Config` that pre-existed
 
 val config = descriptor[Config].mapKey(_.toUpperCase)
 ```
@@ -437,7 +437,7 @@ instead of
 
 ```scala
 // No longer supported
-val customDerivation = new DeriveConfigDescriptor {
+val customDerivation = new DeriveConfig {
   override def mapFieldName(key: String) = key.toUpperCase
  }
 

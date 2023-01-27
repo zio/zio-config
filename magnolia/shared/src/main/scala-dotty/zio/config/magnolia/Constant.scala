@@ -3,7 +3,7 @@ package zio.config.magnolia
 import zio.config._
 
 final case class Constant(value: String) extends PropertyType[String, String] {
-  def read(propertyValue: String): Either[PropertyType.PropertyReadError[String], String] =
+  def read(propertyValue: String): Either[PropertyType.PropertyConfig.Error, String] =
     if (propertyValue == value) Right(value)
     else Left(PropertyType.PropertyReadError(propertyValue, s"constant string '$value'"))
 
@@ -11,6 +11,6 @@ final case class Constant(value: String) extends PropertyType[String, String] {
 }
 
 object Constant {
-  def mk(value: String): ConfigDescriptor[String] =
-    ConfigDescriptorAdt.Source(ConfigSource.empty, Constant(value)) ?? s"constant string '$value'"
+  def mk(value: String): Config[String] =
+    ConfigAdt.Source(ConfigSource.empty, Constant(value)) ?? s"constant string '$value'"
 }

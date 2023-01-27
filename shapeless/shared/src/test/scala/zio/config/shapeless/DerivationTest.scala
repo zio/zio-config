@@ -5,7 +5,7 @@ import zio.config.{PropertyTree, _}
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
-import ConfigDescriptorAdt._
+import ConfigAdt._
 
 object DerivationTest extends ZIOSpecDefault {
   def spec: Spec[Environment, Any] = suite("DerivationTest")(
@@ -14,7 +14,7 @@ object DerivationTest extends ZIOSpecDefault {
       case class Cfg(@describe("field desc") fname: String)
 
       def collectDescriptions[T](
-        desc: ConfigDescriptor[T],
+        desc: Config[T],
         path: Option[String]
       ): List[(Option[String], String)] = desc match {
         case Lazy(thunk)                   => collectDescriptions(thunk(), path)
@@ -34,13 +34,13 @@ object DerivationTest extends ZIOSpecDefault {
         case TransformOrFail(config, _, _) => collectDescriptions(config, path)
       }
 
-      assert(collectDescriptions(DeriveConfigDescriptor.descriptor[Cfg], None))(
+      assert(collectDescriptions(DeriveConfig.descriptor[Cfg], None))(
         contains((None: Option[String]) -> "class desc") &&
           contains(None                 -> "field desc")
       )
     },
     test("support name annotation") {
-      val customDerivation = new DeriveConfigDescriptor {
+      val customDerivation = new DeriveConfig {
         override def mapClassName(name: String): String = name
         override def mapFieldName(name: String): String = name
         override def wrapSealedTraitClasses: Boolean    = true
@@ -52,7 +52,7 @@ object DerivationTest extends ZIOSpecDefault {
       @name("className")
       case class Cfg(@name("otherName") fname: String) extends St
 
-      def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
+      def collectPath[T](desc: Config[T]): List[String] = desc match {
         case Lazy(thunk)                   => collectPath(thunk())
         case Default(config, _)            => collectPath(config)
         case Describe(config, _)           => collectPath(config)
@@ -79,7 +79,7 @@ object DerivationTest extends ZIOSpecDefault {
       case class Cfg(fname: String = "defaultV")
 
       def collectDefault[T](
-        desc: ConfigDescriptor[T],
+        desc: Config[T],
         path: Option[String]
       ): List[(Option[String], Any)] = desc match {
         case Lazy(thunk)                   => collectDefault(thunk(), path)
@@ -97,7 +97,7 @@ object DerivationTest extends ZIOSpecDefault {
         case TransformOrFail(config, _, _) => collectDefault(config, path)
       }
 
-      assert(collectDefault(DeriveConfigDescriptor.descriptor[Cfg], None))(equalTo((None, "defaultV") :: Nil))
+      assert(collectDefault(DeriveConfig.descriptor[Cfg], None))(equalTo((None, "defaultV") :: Nil))
     },
     test("support lists recursive") {
       case class A1(a: List[String])
@@ -112,7 +112,7 @@ object DerivationTest extends ZIOSpecDefault {
 
       val src = ConfigSource.fromPropertyTree(loop(5), "tree")
 
-      val res = read(DeriveConfigDescriptor.descriptor[A5] from src)
+      val res = read(DeriveConfig.descriptor[A5] from src)
 
       assert(res)(anything)
     },
@@ -162,7 +162,7 @@ object DerivationTest extends ZIOSpecDefault {
 
       val src = ConfigSource.fromPropertyTree(Record(Map("a" -> loop(10))), "tree", LeafForSequence.Valid)
 
-      val res = read(DeriveConfigDescriptor.descriptor[B] from src)
+      val res = read(DeriveConfig.descriptor[B] from src)
 
       assert(res)(isRight(anything))
     }*/

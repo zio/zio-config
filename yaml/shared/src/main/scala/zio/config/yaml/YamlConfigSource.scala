@@ -25,7 +25,7 @@ object YamlConfigSource {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Either[ReadError[String], MyConfig] =
+   *   val result: Either[Config.Error, MyConfig] =
    *     YamlConfigSource.fromYamlFile(new File("/path/to/file.yaml"))
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
@@ -42,7 +42,7 @@ object YamlConfigSource {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Either[ReadError[String], MyConfig] =
+   *   val result: Either[Config.Error, MyConfig] =
    *     YamlConfigSource.fromYamlPath(Path.of("/path/to/file.yaml"))
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
@@ -67,7 +67,7 @@ object YamlConfigSource {
    *   def acquire(yamlResourcePath: String) = ZIO.effect(Source.fromResource(yamlResourcePath).reader)
    *   def release(reader: InputStreamReader) = ZIO.effectTotal(reader.close())
    *
-   *   val myConfig: InputStreamReader => IO[ReadError[String], MyConfig] = reader =>
+   *   val myConfig: InputStreamReader => IO[Config.Error, MyConfig] = reader =>
    *     IO.fromEither(
    *        for {
    *          source <- YamlConfigSource.fromYamlReader(reader)
@@ -95,7 +95,7 @@ object YamlConfigSource {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Either[ReadError[String], MyConfig] =
+   *   val result: Either[Config.Error, MyConfig] =
    *     YamlConfigSource.fromYamlString(yamlString))
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
@@ -107,7 +107,7 @@ object YamlConfigSource {
     fromYamlRepr(yamlString)(loadYaml(_), sourceName)
 
   private[config] def fromYamlRepr[A](repr: A)(
-    loadYaml: A => ZIO[Any, ReadError[String], AnyRef],
+    loadYaml: A => ZIO[Any, Config.Error, AnyRef],
     sourceName: String = "yaml"
   ): ConfigSource = {
 
@@ -122,7 +122,7 @@ object YamlConfigSource {
       .memoize
   }
 
-  private[yaml] def convertYaml(data: AnyRef): ZIO[Any, ReadError[String], PropertyTree[String, String]] = {
+  private[yaml] def convertYaml(data: AnyRef): ZIO[Any, Config.Error, PropertyTree[String, String]] = {
     def strictLeaf[A](leaf: A) = PropertyTree.Leaf(leaf, canBeSequence = false)
 
     data match {
@@ -151,28 +151,28 @@ object YamlConfigSource {
     }
   }
 
-  private def loadYaml(yamlFile: File): ZIO[Any, ReadError[String], AnyRef] =
+  private def loadYaml(yamlFile: File): ZIO[Any, Config.Error, AnyRef] =
     snakeYamlLoader().flatMap(r =>
       ZIO
         .attempt(r.loadFromInputStream(new FileInputStream(yamlFile)))
         .mapError(throwable => ReadError.SourceError(throwable.toString))
     )
 
-  private def loadYaml(yamlReader: Reader): ZIO[Any, ReadError[String], AnyRef] =
+  private def loadYaml(yamlReader: Reader): ZIO[Any, Config.Error, AnyRef] =
     snakeYamlLoader().flatMap(r =>
       ZIO
         .attempt(r.loadFromReader(yamlReader))
         .mapError(throwable => ReadError.SourceError(throwable.toString))
     )
 
-  private def loadYaml(yamlString: String): ZIO[Any, ReadError[String], AnyRef] =
+  private def loadYaml(yamlString: String): ZIO[Any, Config.Error, AnyRef] =
     snakeYamlLoader().flatMap(r =>
       ZIO
         .attempt(r.loadFromString(yamlString))
         .mapError(throwable => ReadError.SourceError(throwable.toString))
     )
 
-  private def snakeYamlLoader(): ZIO[Any, ReadError[String], Load] =
+  private def snakeYamlLoader(): ZIO[Any, Config.Error, Load] =
     ZIO
       .attempt(
         new Load(

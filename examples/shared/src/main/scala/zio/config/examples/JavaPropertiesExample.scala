@@ -5,7 +5,7 @@ import zio.config._
 
 import java.io.IOException
 
-import ConfigDescriptor._
+import Config._
 
 /**
  * An example of an entire application that uses java properties
@@ -13,7 +13,7 @@ import ConfigDescriptor._
 final case class ApplicationConfig(bridgeIp: String, userName: String)
 
 object ApplicationConfig {
-  val configuration: ConfigDescriptor[ApplicationConfig] =
+  val configuration: Config[ApplicationConfig] =
     ((string("bridgeIp")) zip string("username")).to[ApplicationConfig]
 }
 

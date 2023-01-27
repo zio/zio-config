@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.ZIO
-import zio.config.ConfigDescriptor._
+import zio.{Config, ConfigProvider}, Config._
 import zio.config.PropertyTree.Leaf
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.typesafe._
@@ -18,13 +18,13 @@ object ListExample extends App with EitherImpureOps {
       "regions" -> "australia, canada, usa"
     )
 
-  val config: ConfigDescriptor[PgmConfig] =
-    (string("xyz") zip list("regions")(string)).to[PgmConfig]
+  val config: Config[PgmConfig] =
+    (string("xyz") zip listOf("regions")(string)).to[PgmConfig]
 
   val mapSource: ConfigSource =
-    ConfigSource.fromMap(map, "constant", keyDelimiter = None, valueDelimiter = Some(','))
+    ConfigProvider.fromMap(map, "constant", keyDelimiter = None, valueDelimiter = Some(','))
 
-  val resultFromMultiMap: ZIO[Any, ReadError[String], PgmConfig] =
+  val resultFromMultiMap: ZIO[Any, Config.Error, PgmConfig] =
     read(config from mapSource)
 
   val expected: PgmConfig =

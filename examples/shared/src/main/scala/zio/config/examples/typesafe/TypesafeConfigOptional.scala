@@ -5,7 +5,7 @@ import zio.config.typesafe._
 
 import examples._
 import EmployeeDetails._
-import ConfigDescriptor._
+import Config._
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
@@ -23,7 +23,7 @@ object EmployeeDetails {
    * will be just based on keys, and you can ofcourse manipulate keys later on but there is times when you really
    * need to describe your little configurations
    */
-  val employee: ConfigDescriptor[Employee] =
+  val employee: Config[Employee] =
     (string("name") zip
       int("state").orElseEither(string("state")).optional zip
       double("confidence")
@@ -34,9 +34,9 @@ object EmployeeDetails {
             .orElse(string("confs"))
         )).to[Employee]
 
-  val employeeDetails: ConfigDescriptor[EmployeeDetails] =
+  val employeeDetails: Config[EmployeeDetails] =
     nested("details") {
-      (nested("employees")(list(employee)) zip int("accountId")).to[EmployeeDetails]
+      (nested("employees")(listOf(employee)) zip int("accountId")).to[EmployeeDetails]
     }
 }
 

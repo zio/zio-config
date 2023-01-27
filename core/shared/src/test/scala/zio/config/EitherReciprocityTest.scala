@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.ConfigDescriptor._
+import zio.{Config, ConfigProvider}, Config._
 import zio.config.EitherReciprocityTestUtils._
 import zio.config.helpers._
 import zio.test.Assertion._
@@ -72,7 +72,7 @@ object EitherReciprocityTestUtils {
   private val cNestedConfigRight =
     (cEnterpriseAuthRight zip int("krCount") zip float("krFactor")).to[NestedPath]
 
-  val cCoproductConfig: ConfigDescriptor[CoproductConfig] =
+  val cCoproductConfig: Config[CoproductConfig] =
     (cNestedConfigLeft.orElseEither(cNestedConfigRight)).to[CoproductConfig]
 
 }

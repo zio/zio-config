@@ -3,7 +3,7 @@ package zio.config.examples
 import zio.ZIO
 import zio.config._
 
-import ConfigDescriptor._
+import Config._
 
 // see Stackoverflow: https://stackoverflow.com/questions/59670366/how-to-handle-an-adt-sealed-trait-with-zio-config
 object CoproductExample extends App {
@@ -17,39 +17,39 @@ object CoproductExample extends App {
   final case class Person(name: String, age: Option[Int])
   final case class Height(height: Long)
 
-  val personConfig: ConfigDescriptor[Person] =
+  val personConfig: Config[Person] =
     (string("name") zip int("age").optional).to[Person]
 
-  val heightConfig: ConfigDescriptor[Height] =
+  val heightConfig: Config[Height] =
     long("height").to[Height]
 
-  val aConfig: ConfigDescriptor[A] = nested("any")(personConfig).to[A]
-  val bConfig: ConfigDescriptor[B] = nested("body")(heightConfig).to[B]
-  val cConfig: ConfigDescriptor[C] = boolean("can").to[C]
-  val dConfig: ConfigDescriptor[D] = string("dance").to[D]
+  val aConfig: Config[A] = nested("any")(personConfig).to[A]
+  val bConfig: Config[B] = nested("body")(heightConfig).to[B]
+  val cConfig: Config[C] = boolean("can").to[C]
+  val dConfig: Config[D] = string("dance").to[D]
 
-  val danceConfig: ConfigDescriptor[Dance] =
+  val danceConfig: Config[Dance] =
     enumeration[Dance](aConfig, bConfig, cConfig, dConfig)
 
-  val aSource: ConfigSource = zio.config.ConfigSource.fromMap(
+  val aSource: ConfigSource = zio.config.ConfigProvider.fromMap(
     Map("any.name" -> "chris"),
     "constant",
     Some('.')
   )
 
-  val bSource: ConfigSource = ConfigSource.fromMap(
+  val bSource: ConfigSource = ConfigProvider.fromMap(
     Map("body.height" -> "179"),
     "constant",
     Some('.')
   )
 
-  val cSource: ConfigSource = ConfigSource.fromMap(
+  val cSource: ConfigSource = ConfigProvider.fromMap(
     Map("can" -> "false"),
     "constant",
     Some('.')
   )
 
-  val dSource: ConfigSource = ConfigSource.fromMap(
+  val dSource: ConfigSource = ConfigProvider.fromMap(
     Map("dance" -> "I am Dancing !!"),
     "constant",
     Some('.')
@@ -57,16 +57,16 @@ object CoproductExample extends App {
 
   val runtime = zio.Runtime.default
 
-  def readA: ZIO[Any, ReadError[String], Dance] =
+  def readA: ZIO[Any, Config.Error, Dance] =
     read(danceConfig from aSource)
 
-  def readB: ZIO[Any, ReadError[String], Dance] =
+  def readB: ZIO[Any, Config.Error, Dance] =
     read(danceConfig from bSource)
 
-  def readC: ZIO[Any, ReadError[String], Dance] =
+  def readC: ZIO[Any, Config.Error, Dance] =
     read(danceConfig from cSource)
 
-  def readD: ZIO[Any, ReadError[String], Dance] =
+  def readD: ZIO[Any, Config.Error, Dance] =
     read(danceConfig from dSource)
 
   val a: A =

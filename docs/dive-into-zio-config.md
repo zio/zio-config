@@ -12,7 +12,7 @@ We must fetch the configuration from the environment to a case class (product) i
 ```scala mdoc:silent
 import zio.IO
 
-import zio.config._, ConfigDescriptor._, ConfigSource._
+import zio.config._, Config._, ConfigSource._
 ```
 
 ```scala mdoc:silent
@@ -23,16 +23,16 @@ Let's define a simple one.
 
 
 ```scala mdoc:silent
-val myConfig: ConfigDescriptor[MyConfig] =
+val myConfig: Config[MyConfig] =
   (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
- // ConfigDescriptor[MyConfig]
+ // Config[MyConfig]
 ```
 
 To get a tuple,
 
 ```scala mdoc:silent
-val myConfigTupled: ConfigDescriptor[(String, Int, String)] =
+val myConfigTupled: Config[(String, Int, String)] =
   (string("LDAP") zip int("PORT") zip string("DB_URL"))
 ```
 
@@ -54,7 +54,7 @@ val myConfigAutomatic = descriptor[MyConfig]
 
 `myConfig` and `myConfigAutomatic` are same description, and is of the same type.
 
-Refer to API docs for more explanations on [descriptor](https://javadoc.io/static/dev.zio/zio-config-magnolia_2.13/1.0.0-RC31-1/zio/config/magnolia/index.html#descriptor[A](implicitconfig:zio.config.magnolia.package.Descriptor[A]):zio.config.ConfigDescriptor[A])
+Refer to API docs for more explanations on [descriptor](https://javadoc.io/static/dev.zio/zio-config-magnolia_2.13/1.0.0-RC31-1/zio/config/magnolia/index.html#descriptor[A](implicitconfig:zio.config.magnolia.package.Descriptor[A]):zio.Config[A])
 More examples on automatic derivation is in examples module of [zio-config](https://github.com/zio/zio-config)
 
 ## Read config from various sources
@@ -71,7 +71,7 @@ val map =
     "DB_URL" -> "postgres"
   )
 
-val source = ConfigSource.fromMap(map)
+val source = ConfigProvider.fromMap(map)
 
 read(myConfig from source)
 
@@ -79,7 +79,7 @@ read(myConfig from source)
 val result =
   ZConfig.fromMap(map, myConfig)
 
-// Layer[ReadError[String], Config[A]]  
+// Layer[Config.Error, Config[A]]  
 
 ```
 
@@ -100,7 +100,7 @@ Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the prev
 
 More details in [here](manual-creation-of-config-descriptor.md).
 
-### Documentations using ConfigDescriptor
+### Documentations using Config
 
 ```scala mdoc:silent
 generateDocs(myConfig)
@@ -118,7 +118,7 @@ generateDocs(betterConfig).toTable.toGithubFlavouredMarkdown
 More details in [here](manual-creation-of-config-descriptor.md).
 
 
-### Writers from ConfigDescriptor
+### Writers from Config
 
 ```scala mdoc:silent
 write(myConfig, MyConfig("xyz", 8888, "postgres")).map(_.flattenString())
@@ -127,7 +127,7 @@ write(myConfig, MyConfig("xyz", 8888, "postgres")).map(_.flattenString())
 
 More details in [here](manual-creation-of-config-descriptor.md).
 
-### Report generation from ConfigDescriptor
+### Report generation from Config
 
 
 ```scala mdoc:silent
@@ -279,25 +279,25 @@ cfg.narrow(_.db) >>> repository
 Some of these details are repeated in certain parts of the documentations.
 We thought we will repeat here, which is much better than readers missing it out.
 
-## Removed `DeriveConfigDescriptor` and `SealedTraitStrategy`
+## Removed `DeriveConfig` and `SealedTraitStrategy`
 
-`DeriveConfigDescriptor` used to be the interface where users can override certain default behaviours of automatic derivation, mainly to change the way zio-config handles custom key names, and coproducts (sealed traits). Now this is deleted forever.
+`DeriveConfig` used to be the interface where users can override certain default behaviours of automatic derivation, mainly to change the way zio-config handles custom key names, and coproducts (sealed traits). Now this is deleted forever.
 
 Take a look at the API docs of `descriptor`, `descriptorForPureConfig`, `descriptorWithClassNames` and `descriptorWithoutClassNames` for more information.
 
 https://github.com/zio/zio-config/blob/master/magnolia/shared/src/main/scala-2.12-2.13/zio/config/magnolia/package.scala
 
 
-## Custom keys is just about changing `ConfigDescriptor`
+## Custom keys is just about changing `Config`
 
-We recommend users to make use of `mapKey` in `ConfigDescriptor` to change any behaviour of the field-names (or class names, or sealed-trait names). The release ensures we no longer need to extend an interface called `DeriveConfigDescriptor` to change this behaviour.
+We recommend users to make use of `mapKey` in `Config` to change any behaviour of the field-names (or class names, or sealed-trait names). The release ensures we no longer need to extend an interface called `DeriveConfig` to change this behaviour.
 
 ### Example:
 
 Now on, the only way to change keys is as follows:
 
 ```scala
-  // mapKey is just a function in `ConfigDescriptor` that pre-existed
+  // mapKey is just a function in `Config` that pre-existed
 
   val config = descriptor[Config].mapKey(_.toUpperCase)
 ```
@@ -306,7 +306,7 @@ instead of
 
 ```scala
 // No longer supported
-val customDerivation = new DeriveConfigDescriptor {
+val customDerivation = new DeriveConfig {
   override def mapFieldName(key: String) = key.toUpperCase
  }
 
@@ -421,7 +421,7 @@ read(descriptorWithClassNames[AppConfig] from ConfigSource.fromHoconString(str))
 
 ## More composable `Descriptor`
 
-The whole bunch of methods such as `descriptor` works with the type class `Descriptor`. You can summon a `Descriptor` for type `A` using `Descriptor[A].apply`, which will give you access to lower level methods such as `removeSubClassNameKey`. These methods directly exist in `ConfigDescriptor`, however inaccessible, since there is no guarantee that a manually created `ConfigDescriptor` correctly tags keys to its types (i.e, a particular key is the name of a sub-class of a sealed-trait)
+The whole bunch of methods such as `descriptor` works with the type class `Descriptor`. You can summon a `Descriptor` for type `A` using `Descriptor[A].apply`, which will give you access to lower level methods such as `removeSubClassNameKey`. These methods directly exist in `Config`, however inaccessible, since there is no guarantee that a manually created `Config` correctly tags keys to its types (i.e, a particular key is the name of a sub-class of a sealed-trait)
 
 ```scala
 case class A (...)

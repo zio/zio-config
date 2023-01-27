@@ -54,7 +54,7 @@ object AutoDerivationCustom extends App {
         _.toString
       ) ?? "time in zoned date time"
 
-  val appConfigDesc: ConfigDescriptor[AppConfig] =
+  val appConfigDesc: Config[AppConfig] =
     descriptor[AppConfig]
 
   val source: ConfigSource = TypesafeConfigSource.fromHoconString(config)

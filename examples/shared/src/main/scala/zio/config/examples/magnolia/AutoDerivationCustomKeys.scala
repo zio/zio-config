@@ -24,7 +24,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       |""".stripMargin
 
   // Default behaviour, and hence no mapKey
-  val camelCaseResult: IO[ReadError[String], MyConfig] =
+  val camelCaseResult: IO[Config.Error, MyConfig] =
     read(
       descriptor[MyConfig] from (TypesafeConfigSource.fromHoconString(camelCaseConfig))
     )
@@ -39,7 +39,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  val kebabCaseResult: IO[ReadError[String], MyConfig] =
+  val kebabCaseResult: IO[Config.Error, MyConfig] =
     read(
       descriptor[MyConfig].mapKey(toKebabCase) from (TypesafeConfigSource.fromHoconString(kebabCaseConfig))
     )

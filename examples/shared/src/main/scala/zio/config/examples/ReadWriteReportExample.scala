@@ -3,7 +3,7 @@ package zio.config.examples
 import zio.ZIO
 import zio.config._
 
-import ConfigDescriptor._
+import Config._
 
 object ReadWriteReportExample extends App {
 
@@ -15,7 +15,7 @@ object ReadWriteReportExample extends App {
   type ProdConfig = Either[UserPwd, Token]
 
   // An example where user provides a description once and for all, and use it for read, write, report!
-  val configWithoutSource: ConfigDescriptor[Either[UserPwd, Token]] =
+  val configWithoutSource: Config[Either[UserPwd, Token]] =
     (string("usr") ?? "Example: some-user" zip
       string("pwd").to[Password].optional ?? "sec" zip
       string("jhi").optional ?? "Ex: ghi" zip
@@ -33,11 +33,11 @@ object ReadWriteReportExample extends App {
     )
 
   val source: ConfigSource =
-    ConfigSource.fromMap(userNamePassword)
+    ConfigProvider.fromMap(userNamePassword)
 
-  val config: ConfigDescriptor[Either[UserPwd, Token]] = configWithoutSource from source
+  val config: Config[Either[UserPwd, Token]] = configWithoutSource from source
 
-  val result: ZIO[Any, ReadError[String], Either[UserPwd, Token]] =
+  val result: ZIO[Any, Config.Error, Either[UserPwd, Token]] =
     read(config) // Equivalent to Config.fromMap(userNamePassword, config)
 
   val expected: Left[UserPwd, Nothing] =

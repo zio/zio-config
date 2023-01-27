@@ -1,10 +1,10 @@
 package zio.config.refined
 
 import eu.timepit.refined.api.{RefType, Validate}
-import zio.config.ConfigDescriptor
+import zio.Config
 import zio.config.magnolia.Descriptor
 
-import ConfigDescriptor.nested
+import Config.nested
 
 final case class PartialRefinedPath[FAP]() {
   def apply[F[_, _], A, P](
@@ -14,7 +14,7 @@ final case class PartialRefinedPath[FAP]() {
     rt: RefType[F],
     v: Validate[A, P],
     d: Descriptor[A]
-  ): ConfigDescriptor[F[A, P]] =
+  ): Config[F[A, P]] =
     nested(path)(
       d.desc
         .transformOrFail[F[A, P]](

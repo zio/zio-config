@@ -11,7 +11,7 @@ object ConfigValuePropertyType extends PropertyType[String, ConfigValue] {
   import PropertyType.PropertyReadError
   import VersionSpecificSupport._
 
-  override def read(propertyValue: String): Either[PropertyReadError[String], ConfigValue] =
+  override def read(propertyValue: String): Either[PropertyConfig.Error, ConfigValue] =
     Try(ConfigFactory.parseString(propertyValue).resolve)
       .map(_.root)
       .orElse(Try(ConfigFactory.parseString(s"k: $propertyValue").resolve).map(_.root.get("k")))

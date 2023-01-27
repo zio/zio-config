@@ -4,12 +4,12 @@ import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test._
 
-import ConfigDescriptor._
+import Config._
 import TypesafeConfigMapSpecUtils._
 
 object TypesafeConfigMapSpec extends BaseSpec {
 
-  override def spec: Spec[Any, ReadError[String]] = suite("Map Typesafe Integration")(
+  override def spec: Spec[Any, Config.Error] = suite("Map Typesafe Integration")(
     test("read typesafe config") {
       val result =
         read(sssDescription from source)
@@ -97,16 +97,16 @@ object TypesafeConfigMapSpecUtils {
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
-  val c1: ConfigDescriptor[Map[String, List[Int]]] =
-    map("zones")(list(int))
+  val c1: Config[Map[String, List[Int]]] =
+    map("zones")(listOf(int))
 
-  private val c2 = list("l")(int)
-  private val c3 = list("l2")(int)
+  private val c2 = listOf("l")(int)
+  private val c3 = listOf("l2")(int)
 
-  val c4: ConfigDescriptor[Map[String, String]] =
+  val c4: Config[Map[String, String]] =
     map("z")(string)
 
-  val sssDescription: ConfigDescriptor[sss] =
+  val sssDescription: Config[sss] =
     (c1 zip c2 zip c3 zip c4).to[sss]
 
   final case class Nested(s: Map[String, sss])

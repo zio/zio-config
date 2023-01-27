@@ -6,7 +6,7 @@ import zio.config._
 import typesafe._
 import magnolia._
 import examples._
-import ConfigDescriptor._
+import Config._
 
 object TypesafeConfigSimple extends App with EitherImpureOps {
   // A nested example with type safe config, and usage of magnolia
@@ -54,22 +54,22 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
 
     """
 
-  val details: ConfigDescriptor[Details] = (string("name") zip int("age")).to[Details]
+  val details: Config[Details] = (string("name") zip int("age")).to[Details]
 
-  val accountConfig: ConfigDescriptor[Account] =
-    (int("accountId").orElseEither(string("accountId")).optional zip list(
+  val accountConfig: Config[Account] =
+    (int("accountId").orElseEither(string("accountId")).optional zip listOf(
       "regions"
     )(string) zip nested("details")(details).optional).to[Account]
 
-  val databaseConfig: ConfigDescriptor[Database] =
+  val databaseConfig: Config[Database] =
     (int("port").optional zip string("url")).to[Database]
 
-  val awsDetailsConfig: ConfigDescriptor[AwsDetails] =
-    (nested("accounts")(list(accountConfig)) zip nested("database")(
+  val awsDetailsConfig: Config[AwsDetails] =
+    (nested("accounts")(listOf(accountConfig)) zip nested("database")(
       databaseConfig
-    ) zip list("users")(int)).to[AwsDetails]
+    ) zip listOf("users")(int)).to[AwsDetails]
 
-  val listResult: IO[ReadError[String], AwsDetails] =
+  val listResult: IO[Config.Error, AwsDetails] =
     read(awsDetailsConfig from ConfigSource.fromHoconString(validHocon))
 
   assert(
@@ -93,9 +93,9 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
       )
   )
 
-  val automaticAwsDetailsConfig: ConfigDescriptor[AwsDetails] = descriptor[AwsDetails]
+  val automaticAwsDetailsConfig: Config[AwsDetails] = descriptor[AwsDetails]
 
-  val automaticResult: IO[ReadError[String], AwsDetails] =
+  val automaticResult: IO[Config.Error, AwsDetails] =
     read(automaticAwsDetailsConfig from ConfigSource.fromHoconString(validHocon))
 
   assert(

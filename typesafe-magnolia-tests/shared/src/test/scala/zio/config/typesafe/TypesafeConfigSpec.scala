@@ -7,7 +7,7 @@ import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 object TypesafeConfigSpec extends ZIOSpecDefault {
-  val spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig")(
+  val spec: Spec[Any, Config.Error] = suite("TypesafeConfig")(
     test("Read empty list") {
       val res =
         TypesafeConfigSource.fromHoconString(

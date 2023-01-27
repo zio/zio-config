@@ -1,10 +1,10 @@
 package zio.config.testsupport
 
-import zio.config.{ConfigDescriptor, _}
+import zio.config.{Config, _}
 import zio.test.Gen.alphaNumericChar
 import zio.test.{Gen, Sized}
 
-import ConfigDescriptor._
+import Config._
 
 object MapConfigTestSupport {
   def genAppConfig(stringGen: Gen[Sized, String] = stringN(1, 15)): Gen[Sized, AppConfig] =
@@ -39,7 +39,7 @@ object MapConfigTestSupport {
     final case class AwsConfig(key: String, secret: String, kinesisConfig: KinesisConfig)
 
     object AwsConfig {
-      val description: ConfigDescriptor[AwsConfig] =
+      val description: Config[AwsConfig] =
         head("aws")(
           (head("key")(string) zip head("secret")(string) zip KinesisConfig.description).to[AwsConfig]
         )
@@ -48,18 +48,18 @@ object MapConfigTestSupport {
     final case class KinesisConfig(inputTopic: String)
 
     object KinesisConfig {
-      val description: ConfigDescriptor[KinesisConfig] =
+      val description: Config[KinesisConfig] =
         (head("kinesis")(head("inputtopic")(string)).to[KinesisConfig])
     }
 
     final case class PubSubConfig(outputTopic: String)
 
     object PubSubConfig {
-      val description: ConfigDescriptor[PubSubConfig] =
+      val description: Config[PubSubConfig] =
         head("ps")(head("outputtopic")(string).to[PubSubConfig])
     }
 
-    val descriptor: ConfigDescriptor[AppConfig] =
+    val descriptor: Config[AppConfig] =
       head("SystemF")(
         (AwsConfig.description zip AppConfig.PubSubConfig.description zip JobConfig.descriptor).to[AppConfig]
       )
@@ -75,7 +75,7 @@ object MapConfigTestSupport {
   )
 
   object DataflowConfig {
-    val descriptor: ConfigDescriptor[DataflowConfig] =
+    val descriptor: Config[DataflowConfig] =
       head("df")(
         ((head("name")(string)) zip
           head("project")(string) zip
@@ -94,7 +94,7 @@ object MapConfigTestSupport {
   )
 
   object JobConfig {
-    val descriptor: ConfigDescriptor[JobConfig] =
+    val descriptor: Config[JobConfig] =
       head("job")(
         (DataflowConfig.descriptor.optional zip head("supervise")(boolean)).to[JobConfig]
       )

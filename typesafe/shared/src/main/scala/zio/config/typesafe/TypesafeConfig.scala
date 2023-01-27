@@ -19,14 +19,14 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[Config.Error, Has[MyConfig]] =
    *     TypesafeConfig.fromResourcePath(descriptor[MyConfig])
    * }}}
    */
   def fromResourcePath[A](
-    configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
-    ZConfig.fromConfigDescriptor(
+    configDescriptor: Config[A]
+  )(implicit tag: Tag[A]): Layer[Config.Error, A] =
+    ZConfig.fromConfig(
       configDescriptor from TypesafeConfigSource.fromResourcePath
     )
 
@@ -41,14 +41,14 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[Config.Error, Has[MyConfig]] =
    *     TypesafeConfig.fromHoconFile(new File("/path/to/xyz.hocon"), descriptor[MyConfig])
    * }}}
    */
-  def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(implicit
+  def fromHoconFile[A](file: File, configDescriptor: Config[A])(implicit
     tag: Tag[A]
-  ): Layer[ReadError[String], A] =
-    ZConfig.fromConfigDescriptor(
+  ): Layer[Config.Error, A] =
+    ZConfig.fromConfig(
       configDescriptor from TypesafeConfigSource.fromHoconFile(file)
     )
 
@@ -63,14 +63,14 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[Config.Error, Has[MyConfig]] =
    *     TypesafeConfig.fromHoconFilePath("/path/to/xyz.hocon", descriptor[MyConfig])
    * }}}
    */
-  def fromHoconFilePath[A](filePath: String, configDescriptor: ConfigDescriptor[A])(implicit
+  def fromHoconFilePath[A](filePath: String, configDescriptor: Config[A])(implicit
     tag: Tag[A]
-  ): Layer[ReadError[String], A] =
-    ZConfig.fromConfigDescriptor(
+  ): Layer[Config.Error, A] =
+    ZConfig.fromConfig(
       configDescriptor from TypesafeConfigSource.fromHoconFilePath(filePath)
     )
 
@@ -87,14 +87,14 @@ object TypesafeConfig {
    *
    *   val configString = """port: 10, url: "http://x.y""""
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[Config.Error, Has[MyConfig]] =
    *     TypesafeConfig.fromHoconString(configString, descriptor[MyConfig])
    * }}}
    */
-  def fromHoconString[A](hoconString: String, configDescriptor: ConfigDescriptor[A])(implicit
+  def fromHoconString[A](hoconString: String, configDescriptor: Config[A])(implicit
     tag: Tag[A]
-  ): Layer[ReadError[String], A] =
-    ZConfig.fromConfigDescriptor(
+  ): Layer[Config.Error, A] =
+    ZConfig.fromConfig(
       configDescriptor from TypesafeConfigSource.fromHoconString(hoconString)
     )
 
@@ -109,15 +109,15 @@ object TypesafeConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[Config.Error, Has[MyConfig]] =
    *     TypesafeConfig.fromTypesafeConfig(ZIO.attempt(ConfigFactory.load.resolve), descriptor[MyConfig])
    * }}}
    */
   def fromTypesafeConfig[A](
     conf: ZIO[Any, Throwable, com.typesafe.config.Config],
-    configDescriptor: ConfigDescriptor[A]
-  )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
-    ZConfig.fromConfigDescriptor(
+    configDescriptor: Config[A]
+  )(implicit tag: Tag[A]): Layer[Config.Error, A] =
+    ZConfig.fromConfig(
       configDescriptor from TypesafeConfigSource.fromTypesafeConfig(conf)
     )
 }

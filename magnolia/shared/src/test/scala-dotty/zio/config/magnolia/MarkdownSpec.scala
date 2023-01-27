@@ -4,7 +4,7 @@ import zio.config._
 import zio.test.Assertion._
 import zio.test._
 
-import ConfigDescriptor._
+import Config._
 import MarkdowSpecUtils._
 
 object MarkdownSpec extends BaseSpec {

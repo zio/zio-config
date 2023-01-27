@@ -53,7 +53,7 @@ object TypesafeConfigSource {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: IO[ReadError[String], MyConfig] =
+   *   val result: IO[Config.Error, MyConfig] =
    *     read(descriptor[MyConfig] from TypesafeConfigSource.fromResourcePath))
    * }}}
    */
@@ -121,7 +121,7 @@ object TypesafeConfigSource {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Either[ReadError[String], MyConfig] =
+   *   val result: Either[Config.Error, MyConfig] =
    *     configSource.flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
@@ -154,7 +154,7 @@ object TypesafeConfigSource {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Either[ReadError[String], MyConfig] =
+   *   val result: Either[Config.Error, MyConfig] =
    *     configSource.flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    *

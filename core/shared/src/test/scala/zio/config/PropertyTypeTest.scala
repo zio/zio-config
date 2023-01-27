@@ -156,7 +156,7 @@ object PropertyTypeTestUtils {
 
   def assertInvalidRoundtrip[A](
     propType: PropertyType[String, A],
-    propReadError: String => PropertyReadError[String]
+    propReadError: String => PropertyConfig.Error
   )(s: String): TestResult =
     assert(roundTrip(propType, s))(isLeft(equalTo(propReadError(s))))
 

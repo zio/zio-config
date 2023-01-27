@@ -5,7 +5,7 @@
 // import zio.test.Assertion._
 // import zio.test._
 
-// import ConfigDescriptor._
+// import Config._
 // import TypesafeConfigReadWriteTestUtils._
 // import TypesafeConfigTestSupport._
 
@@ -48,7 +48,7 @@
 //         "Nested List: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
 //       ) {
 //         val config =
-//           nested("a")(list("b")(string))
+//           nested("a")(listOf("b")(string))
 
 //         val result =
 //           for {
@@ -63,7 +63,7 @@
 //         "Nested Empty List: read(descriptor from typesafeSource) == read(descriptor from write(descriptor, read(descriptor from typesafeSource)))"
 //       ) {
 //         val config =
-//           nested("a")(list("b")(string))
+//           nested("a")(listOf("b")(string))
 
 //         val result =
 //           for {
@@ -100,7 +100,7 @@
 //         val deConfig = nested("a") {
 //           nested("b") {
 //             nested("c") {
-//               ((list("d")(string) |@| list("e")(int) |@| int("f") |@| list("g")(string)))(
+//               ((listOf("d")(string) |@| listOf("e")(int) |@| int("f") |@| listOf("g")(string)))(
 //                 DEF.apply,
 //                 DEF.unapply
 //               )
@@ -220,9 +220,9 @@
 
 //         final case class C(c: String, metadata: String)
 
-//         val cDescription: ConfigDescriptor[C] = (string("c") |@| string("metadata"))((c, m) => C(c, m), C.unapply)
-//         val bDescription: ConfigDescriptor[B] = list("metadata")(cDescription)(B.apply, B.unapply)
-//         val aDescription: ConfigDescriptor[A] = list("metadata")(bDescription)(A.apply, A.unapply)
+//         val cDescription: Config[C] = (string("c") |@| string("metadata"))((c, m) => C(c, m), C.unapply)
+//         val bDescription: Config[B] = listOf("metadata")(cDescription)(B.apply, B.unapply)
+//         val aDescription: Config[A] = listOf("metadata")(bDescription)(A.apply, A.unapply)
 
 //         val success = A(List(B(List(C(c = "abc", metadata = "xyz")))))
 
@@ -280,16 +280,16 @@
 
 //   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
-//   val c1: ConfigDescriptor[Map[String, List[Int]]] =
-//     map("zones")(list(int))
+//   val c1: Config[Map[String, List[Int]]] =
+//     map("zones")(listOf(int))
 
-//   private val c2 = list("l")(int)
-//   private val c3 = list("l2")(int)
+//   private val c2 = listOf("l")(int)
+//   private val c3 = listOf("l2")(int)
 
-//   val c4: ConfigDescriptor[Map[String, String]] =
+//   val c4: Config[Map[String, String]] =
 //     map("z")(string)
 
-//   val sssDescription: ConfigDescriptor[sss] =
+//   val sssDescription: Config[sss] =
 //     (c1 |@| c2 |@| c3 |@| c4)((a, b, c, d) => sss(a, b, c, d), sss.unapply)
 
 //   final case class Nested(s: Map[String, sss])
@@ -329,7 +329,7 @@
 //        |}
 //        |""".stripMargin
 
-//   val complexConfig: ConfigDescriptor[Nested] =
+//   val complexConfig: Config[Nested] =
 //     nested("result")(map(sssDescription))(
 //       TypesafeConfigReadWriteTestUtils.Nested.apply,
 //       TypesafeConfigReadWriteTestUtils.Nested.unapply

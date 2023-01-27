@@ -4,9 +4,9 @@ import scalaz.InvariantFunctor
 import zio.config._
 
 package object instances {
-  implicit val invariantConfigDescriptor: InvariantFunctor[ConfigDescriptor] =
-    new InvariantFunctor[ConfigDescriptor] {
-      def xmap[A, B](ma: ConfigDescriptor[A], f: A => B, g: B => A): ConfigDescriptor[B] =
+  implicit val invariantConfig: InvariantFunctor[Config] =
+    new InvariantFunctor[Config] {
+      def xmap[A, B](ma: Config[A], f: A => B, g: B => A): Config[B] =
         ma.transform(f, g)
     }
 }

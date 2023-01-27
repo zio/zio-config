@@ -5,7 +5,7 @@ import zio.config._
 import zio.config.magnolia.descriptor
 import zio.config.typesafe._
 
-import ConfigDescriptor._
+import Config._
 
 object TypesafeConfigErrors extends App {
   // A nested example with type safe config, and usage of magnolia
@@ -13,7 +13,7 @@ object TypesafeConfigErrors extends App {
   final case class Database(port: Int, url: String)
   final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
 
-  val configNestedAutomatic: ConfigDescriptor[AwsConfig] =
+  val configNestedAutomatic: Config[AwsConfig] =
     descriptor[AwsConfig]
 
   val hocconStringWithStringDb: String =
@@ -60,13 +60,13 @@ object TypesafeConfigErrors extends App {
     }
    """
 
-  val nestedConfigAutomaticResult1: IO[ReadError[String], AwsConfig] =
+  val nestedConfigAutomaticResult1: IO[Config.Error, AwsConfig] =
     read(configNestedAutomatic from ConfigSource.fromHoconString(hocconStringWithStringDb))
 
-  val nestedConfigAutomaticResult2: IO[ReadError[String], AwsConfig] =
+  val nestedConfigAutomaticResult2: IO[Config.Error, AwsConfig] =
     read(configNestedAutomatic from ConfigSource.fromHoconString(hocconStringWithDb))
 
-  val nestedConfigAutomaticResult3: IO[ReadError[String], AwsConfig] =
+  val nestedConfigAutomaticResult3: IO[Config.Error, AwsConfig] =
     read(configNestedAutomatic from ConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
   assert(
@@ -86,7 +86,7 @@ object TypesafeConfigErrors extends App {
       AwsConfig(Account("us-east", "jon"), None)
   )
 
-  val configNestedManual: ConfigDescriptor[AwsConfig] = {
+  val configNestedManual: Config[AwsConfig] = {
     val accountConfig  =
       (string("region") zip string("accountId")).to[Account]
     val databaseConfig =
@@ -96,13 +96,13 @@ object TypesafeConfigErrors extends App {
       .optional).to[AwsConfig]
   }
 
-  val nestedConfigManualResult1: IO[ReadError[String], AwsConfig] =
+  val nestedConfigManualResult1: IO[Config.Error, AwsConfig] =
     read(configNestedManual from ConfigSource.fromHoconString(hocconStringWithDb))
 
-  val nestedConfigManualResult2: IO[ReadError[String], AwsConfig] =
+  val nestedConfigManualResult2: IO[Config.Error, AwsConfig] =
     read(configNestedManual from ConfigSource.fromHoconString(hocconStringWithStringDb))
 
-  val nestedConfigManualResult3: IO[ReadError[String], AwsConfig] =
+  val nestedConfigManualResult3: IO[Config.Error, AwsConfig] =
     read(configNestedManual from ConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
   assert(
@@ -132,9 +132,9 @@ object TypesafeConfigErrors extends App {
   final case class Details(clustersize: Int, name: String)
   final case class DatabaseDetails(datacenterwest: Details, datacentereast: Details)
 
-  val configWithHoconSubstitution: ConfigDescriptor[DatabaseDetails] = descriptor[DatabaseDetails]
+  val configWithHoconSubstitution: Config[DatabaseDetails] = descriptor[DatabaseDetails]
 
-  val finalResult: IO[ReadError[String], DatabaseDetails] =
+  val finalResult: IO[Config.Error, DatabaseDetails] =
     read(configWithHoconSubstitution from ConfigSource.fromHoconString(hoconStringWithSubstitution))
 
   assert(

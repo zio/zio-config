@@ -4,7 +4,7 @@ import com.github.ghik.silencer.silent
 import zio.config._
 import zio.config.magnolia.Descriptor
 
-import ConfigDescriptor._
+import Config._
 
 object RandomConfigGenerationComplexExample extends App {
   sealed trait VersionStrategy
@@ -52,7 +52,7 @@ object RandomConfigGenerationComplexExample extends App {
 
   // Since we have custom configuration, its difficult for user to figure out the
   // format of config and possible values. Hence we use zio.config.gen that emits
-  // a sample config given a ConfigDescriptor
+  // a sample config given a Config
   println(generateConfigJson(descriptor[MyConfig]).unsafeRunChunk)
 
   /**

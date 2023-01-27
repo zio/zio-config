@@ -21,15 +21,15 @@ object YamlConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[Config.Error, Has[MyConfig]] =
    *     YamlConfig.fromString(yamlString, descriptor[MyConfig])
    * }}}
    */
   def fromString[A: Tag](
     yamlString: String,
-    descriptor: ConfigDescriptor[A]
-  ): Layer[ReadError[String], A] =
-    ZConfig.fromConfigDescriptor(
+    descriptor: Config[A]
+  ): Layer[Config.Error, A] =
+    ZConfig.fromConfig(
       descriptor from YamlConfigSource.fromYamlString(yamlString)
     )
 
@@ -44,11 +44,11 @@ object YamlConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[Config.Error, Has[MyConfig]] =
    *     YamlConfig.fromPath(Path.of("/path/to/file.yml"), descriptor[MyConfig])
    * }}}
    */
-  def fromPath[A: Tag](path: Path, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
+  def fromPath[A: Tag](path: Path, descriptor: Config[A]): Layer[Config.Error, A] =
     fromFile(path.toFile, descriptor)
 
   /**
@@ -62,10 +62,10 @@ object YamlConfig {
    *
    *   case class MyConfig(port: Int, url: String)
    *
-   *   val result: Layer[ReadError[String], Has[MyConfig]] =
+   *   val result: Layer[Config.Error, Has[MyConfig]] =
    *     YamlConfig.fromFile(new File("/path/to/file.yml"), descriptor[MyConfig])
    * }}}
    */
-  def fromFile[A: Tag](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
-    ZConfig.fromConfigDescriptor(descriptor from YamlConfigSource.fromYamlFile(file))
+  def fromFile[A: Tag](file: File, descriptor: Config[A]): Layer[Config.Error, A] =
+    ZConfig.fromConfig(descriptor from YamlConfigSource.fromYamlFile(file))
 }

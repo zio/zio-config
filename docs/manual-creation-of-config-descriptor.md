@@ -1,6 +1,6 @@
 ---
 id: manual-creation-of-config-descriptor
-title:  "Manual creation of ConfigDescriptor"
+title:  "Manual creation of Config"
 ---
 
 Config Descriptor is the core of your configuration management. You can write a description by hand, or rely on
@@ -9,7 +9,7 @@ classes (or sealed traits) that represents your config.
 
 ```scala mdoc:silent
 import zio.{ ZIO, IO, Layer }
-import zio.config._, ConfigDescriptor._, ConfigSource._
+import zio.config._, Config._, ConfigSource._
 ```
 
 ## A Simple example
@@ -24,7 +24,7 @@ To perform any action using zio-config, we need a configuration description.
 Let's define a simple one.
 
 ```scala mdoc:silent
-val myConfig: ConfigDescriptor[MyConfig] =
+val myConfig: Config[MyConfig] =
   (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 ```
 
@@ -33,14 +33,14 @@ Case classes with a single field are simple too.
 ```scala mdoc:silent
 case class MySingleConfig(ldap: String)
 
-val mySingleConfig: ConfigDescriptor[MySingleConfig] =
+val mySingleConfig: Config[MySingleConfig] =
   string("LDAP").to[MySingleConfig]
 ```
 
 If the config is not a case class, but a tuple, then all you need to do is `zip`
 
 ```scala mdoc:silent
-val mySingleConfigTupled: ConfigDescriptor[(String, Int)] =
+val mySingleConfigTupled: Config[(String, Int)] =
   (string("LDAP") zip int("PORT"))
 ```
 
@@ -75,7 +75,7 @@ To be specific it returns an `IO` where `type IO[E, A] = ZIO[Any, E, A]`
 import zio.System
 
 // That's system environment
-val result: Layer[ReadError[String], MyConfig] = ZConfig.fromSystemEnv(myConfig)
+val result: Layer[Config.Error, MyConfig] = ZConfig.fromSystemEnv(myConfig)
 ```
 
 Another way of doing this is:
@@ -207,9 +207,9 @@ val configDesc =
 read(configDesc)
 
 // we can also separately add new config
-read(configDesc from ConfigSource.fromMap(Map.empty))
+read(configDesc from ConfigProvider.fromMap(Map.empty))
 
-// In this case, `ConfigSource.fromMap` will also be tried along with the sources that are already given.
+// In this case, `ConfigProvider.fromMap` will also be tried along with the sources that are already given.
 ```
 
 We can reset the sources for the config using
@@ -223,7 +223,7 @@ from a constant map for all of it.
 
 ```scala mdoc:silent
 val testConfig =
-  configDesc.unsourced from ConfigSource.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235"))
+  configDesc.unsourced from ConfigProvider.fromMap(Map("LDAP" -> "x", "DB_URL" -> "y",  "PORT" -> "1235"))
 ```
 
 ## Combining various effectful sources
@@ -249,7 +249,7 @@ object CombineSourcesExample extends ZIOAppDefault {
 
   case class Config(username: String , password: String)
 
-  val desc: ConfigDescriptor[Config] = {
+  val desc: Config[Config] = {
     val hoconFile = TypesafeConfigSource.fromHoconFile(new File("/invalid/path"))
     val constant  = TypesafeConfigSource.fromHoconString(s"")
     val env       = ConfigSource.fromSystemEnv()
@@ -305,7 +305,7 @@ val dev = (string("USERNAME") zip string("PASSWORD")).to[Dev]
 val prod = (string("TOKEN") zip int("CODE")).to[Prod]
 
 prod <+> dev // that represents a description returning Config
-// ConfigDescriptor[ Config]
+// Config[ Config]
 
 ```
 
@@ -389,7 +389,7 @@ Note that, you can write this back as well. This is discussed in write section
 def database(i: Int) =
   (string(s"${i}_URL") zip int(s"${i}_PORT")).to[Database]
 
-val list: ConfigDescriptor[List[Database]] =
+val list: Config[List[Database]] =
   collectAll(database(0), (1 to 10).map(database): _*)
 ```
 
@@ -403,7 +403,7 @@ NOTE: `collectAll` is a synonym for `sequence`.
 final case class PgmConfig(a: String, b: List[String])
 
 val configWithList =
-  (string("xyz") zip list("regions")(string)).to[PgmConfig]
+  (string("xyz") zip listOf("regions")(string)).to[PgmConfig]
 
 Config.fromEnv(configWithList, valueDelimiter = Some(","))
 // or read(configWithList from ConfigSource.fromEnv(valueDelimiter = Some(",")))
@@ -465,7 +465,7 @@ val accnt =
 val db = (int("port") zip string("url")).to[Db]
 
 val nonAutomatic =
-  (nested("accounts")(list(accnt)) zip nested("database")(db)).to[AwsDetails]
+  (nested("accounts")(listOf(accnt)) zip nested("database")(db)).to[AwsDetails]
 ```
 
 Please find more details on the behaviour of `List` for various sources in `Sources` section of the documentation.

@@ -3,7 +3,7 @@ package zio.config.examples
 import zio.IO
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
-import zio.Config, Config._
+import zio.{Config, ConfigProvider}, Config._
 import zio.config.syntax._
 import zio.ConfigProvider
 

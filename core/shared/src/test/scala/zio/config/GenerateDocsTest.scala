@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ConfigDescriptor._
+import zio.{Config, ConfigProvider}, Config._
 import zio.test.Assertion._
 import zio.test.TestAspect.ignore
 import zio.test._
@@ -94,7 +94,7 @@ object GenerateDocsTestUtils {
   final case class Database(port: Int, url: String)
   final case class AppConfig(secret: Option[String], credentials: Credentials, database: Database)
 
-  def descriptor: ConfigDescriptor[AppConfig] = {
+  def descriptor: Config[AppConfig] = {
     val credentials = (string("USERNAME") ?? "Example: ZioUser" zip string("PASSWORD") ?? "Example: ZioPass")
       .to[Credentials] ?? "Credentials"
 

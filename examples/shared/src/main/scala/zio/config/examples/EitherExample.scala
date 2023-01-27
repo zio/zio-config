@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.config._
 
-import ConfigDescriptor._
+import Config._
 
 object EitherExample extends App {
   final case class Ldap(value: String)  extends AnyVal
@@ -11,13 +11,13 @@ object EitherExample extends App {
   case class Prod(ldap: Ldap, dburl: DbUrl)
   case class Dev(user: String, password: Int, dburl: Double)
 
-  val prod: ConfigDescriptor[Prod] =
+  val prod: Config[Prod] =
     (string("x1").to[Ldap] zip string("x2").to[DbUrl]).to[Prod]
 
-  val dev: ConfigDescriptor[Dev] =
+  val dev: Config[Dev] =
     (string("x3") zip int("x4") zip double("x5")).to[Dev]
 
-  val prodOrDev: ConfigDescriptor[Either[Prod, Dev]] =
+  val prodOrDev: Config[Either[Prod, Dev]] =
     prod orElseEither dev
 
   val validProd: Map[String, String] =
@@ -25,13 +25,13 @@ object EitherExample extends App {
 
   // Obviously getting a constant map source doesn't need ZIO effect
   val source: ConfigSource           =
-    ConfigSource.fromMap(validProd, "constant")
+    ConfigProvider.fromMap(validProd, "constant")
 
   val validDev: Map[String, String] =
     Map("x3" -> "v3", "x4" -> "1", "x5" -> "2.0")
 
   val anotherSource: ConfigSource   =
-    ConfigSource.fromMap(validDev)
+    ConfigProvider.fromMap(validDev)
 
   //assert(read(prodOrDev from anotherSource) == Right(Dev("v3", 1, 2.0)))
 
@@ -39,7 +39,7 @@ object EitherExample extends App {
     Map("x2" -> "v2", "x3" -> "v3", "x4" -> "1", "x5" -> "notadouble")
 
   val invalidSource: ConfigSource           =
-    ConfigSource.fromMap(parseErrorConfig, "constant")
+    ConfigProvider.fromMap(parseErrorConfig, "constant")
 
   println(
     read(prodOrDev from invalidSource).mapError(_.prettyPrint()).either.unsafeRun
@@ -70,7 +70,7 @@ object EitherExample extends App {
     Map("x1" -> "v1", "x2" -> "v2", "x3" -> "v3", "x4" -> "1", "x5" -> "2.0")
 
   assert(
-    read(prodOrDev from ConfigSource.fromMap(allConfigsExist)) equalM
+    read(prodOrDev from ConfigProvider.fromMap(allConfigsExist)) equalM
       Left(Prod(Ldap("v1"), DbUrl("v2")))
   )
 }

@@ -4,10 +4,10 @@ import zio.config.{read, _}
 import zio.test.Assertion._
 import zio.test.{Spec, ZIOSpecDefault, assertZIO}
 
-import ConfigDescriptor._
+import Config._
 
 object ListOrSingletonSpec extends ZIOSpecDefault {
-  override def spec: Spec[Any, ReadError[String]] =
+  override def spec: Spec[Any, Config.Error] =
     suite("listOrSingleton")(
       test("reads singleton") {
         val configString =

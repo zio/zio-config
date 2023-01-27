@@ -8,7 +8,7 @@ Forming a source gets into a standard pattern, and is easy for you to add anothe
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config._, ConfigDescriptor._, ConfigSource._
+import zio.config._, Config._, ConfigSource._
 ```
 
 ```scala mdoc:silent
@@ -32,7 +32,7 @@ More details about defining config descriptor is in [here](manual-creation-of-co
 ```scala mdoc:silent
 
 val mapSource =
-  ConfigSource.fromMap(
+  ConfigProvider.fromMap(
     Map(
       "LDAP" -> "xyz",
       "PORT" -> "1222",
@@ -59,7 +59,7 @@ This support a list of values for a key.
 ```scala mdoc:silent
 case class ListConfig(ldap: String, port: List[Int], dburl: String)
 
-val listConfig = (string("LDAP") zip list("PORT")(int) zip string("DB_URL")).to[ListConfig]
+val listConfig = (string("LDAP") zip listOf("PORT")(int) zip string("DB_URL")).to[ListConfig]
 
 val multiMapSource =
   ConfigSource.fromMultiMap(
@@ -330,7 +330,7 @@ This will also work if `mapArgs` is `--conf -key1=value1 --conf -key2=value2`.
 ```scala mdoc:silent
 val listArgs = "--users Jane --users Jack"
 val listSource = ConfigSource.fromCommandLineArgs(listArgs.split(' ').toList)
-val listConfigCmdLineArgs = list("users")(string) from listSource
+val listConfigCmdLineArgs = listOf("users")(string) from listSource
 
 // zio.Runtime.default.unsafe.run(read(listConfigCmdLineArgs))
 // returns List("Jane", "Jack"))
@@ -348,7 +348,7 @@ val listSource2 = ConfigSource.fromCommandLineArgs(
    valueDelimiter = Some(',')
 )
 
-// zio.Runtime.default.unsafe.run(read(list("users")(string) from listSource2)) 
+// zio.Runtime.default.unsafe.run(read(listOf("users")(string) from listSource2)) 
 // returns List("Jane", "Jack"))
 ```
 
@@ -447,7 +447,7 @@ object CombineSourcesExample extends ZIOAppDefault {
 
   case class Config(username: String , password: String)
 
-  val desc: ConfigDescriptor[Config] ={
+  val desc: Config[Config] ={
     val hoconFile = TypesafeConfigSource.fromHoconFile(new File("/invalid/path"))
     val constant  = TypesafeConfigSource.fromHoconString(s"")
     val env       = ConfigSource.fromSystemEnv()

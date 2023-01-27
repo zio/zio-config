@@ -151,7 +151,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
   val source: ConfigSource =
     ConfigSource.fromHoconString(configString)
 
-  val zioConfigResult: IO[ReadError[String], A] =
+  val zioConfigResult: IO[Config.Error, A] =
     read(descriptor[A] from source)
 
   val anoth: A =
@@ -234,7 +234,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
     write(descriptor[A], expectedResult).loadOrThrow.toHocon
       .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
 
-  val readWritten: IO[ReadError[String], A] = read(
+  val readWritten: IO[Config.Error, A] = read(
     descriptor[A] from ConfigSource.fromHoconString(written)
   )
 
@@ -376,7 +376,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
   val kebabConfigSource: ConfigSource =
     ConfigSource.fromHoconString(kebabCaseConfig)
 
-  val zioConfigWithKeysInKebabResult: IO[ReadError[String], ExportDetails] =
+  val zioConfigWithKeysInKebabResult: IO[Config.Error, ExportDetails] =
     read(descriptor[ExportDetails].mapKey(toKebabCase) from kebabConfigSource)
 
   assert(

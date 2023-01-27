@@ -4,7 +4,7 @@ import scala.annotation.implicitAmbiguous
 
 /**
  * Preventing derivation for List, Option and Either.
- * */
+ */
 sealed trait NeedsDerive[+T]
 
 object NeedsDerive extends NeedsDerive[Nothing] {
@@ -13,7 +13,7 @@ object NeedsDerive extends NeedsDerive[Nothing] {
 
   @implicitAmbiguous(
     "Can't derive ConfigDescriptor for `List[T]` directly." +
-      " Wrap it with a `case class Config(list: List[T])` or use `list(descriptor[T])` manually."
+      " Wrap it with a `case class Config(list: List[T])` or use `listOf(descriptor[T])` manually."
   )
   implicit def needsDeriveAmbiguousList1: NeedsDerive[List[Nothing]] = NeedsDerive
   implicit def needsDeriveAmbiguousList2: NeedsDerive[List[Nothing]] = NeedsDerive

@@ -6,7 +6,7 @@ import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
-object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
+object OverrideDerivationTestEnv extends DeriveConfig {
   override def mapClassName(name: String): String = toSnakeCase(name) + "_suffix"
   override def mapFieldName(name: String): String = "prefix_" + toSnakeCase(name)
 
@@ -14,7 +14,7 @@ object OverrideDerivationTestEnv extends DeriveConfigDescriptor {
   val wrapSealedTraits: Boolean       = false
 }
 
-object OverrideDerivationTestWithWrappedSealedTraitName extends DeriveConfigDescriptor {
+object OverrideDerivationTestWithWrappedSealedTraitName extends DeriveConfig {
   override def mapClassName(name: String): String = toSnakeCase(name)
   override def mapFieldName(name: String): String = toSnakeCase(name)
 

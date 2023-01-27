@@ -15,7 +15,7 @@ trait GenerateConfig {
 
   /**
    * Generate an almost valid PropertyTree
-   * given a `ConfigDescriptor[A]` and `DeriveGen[A]`.
+   * given a `Config[A]` and `DeriveGen[A]`.
    *
    * Note that `DeriveGen[A]` is going to be available only
    * if all the fields in `A` (if A is a case class) has an instance of
@@ -56,7 +56,7 @@ trait GenerateConfig {
    *       )
    *  }}}
    *
-   * Note that this is based on ConfigDescriptor and not a direct view of a case class/sealed-trait.
+   * Note that this is based on Config and not a direct view of a case class/sealed-trait.
    * This is why you get almost a valid Json. If your entire config is statically represented (meaning,
    * no custom transformation especially using transformOrFail or transform, with maximised usage of sealed traits instead of
    * values that are known only at runtime), then the correctness increases in the
@@ -72,7 +72,7 @@ trait GenerateConfig {
    * until all the required scenarios are covered.
    */
   def generateConfig[A: DeriveGen](
-    config: ConfigDescriptor[A],
+    config: Config[A],
     size: Int = 0
   ): ZStream[Sized, String, PropertyTree[String, String]] =
     DeriveGen[A].sample
@@ -81,7 +81,7 @@ trait GenerateConfig {
 
   /**
    * Generate an almost valid configuration in HOCON format
-   * given a `ConfigDescriptor[A]` and `DeriveGen[A]`.
+   * given a `Config[A]` and `DeriveGen[A]`.
    *
    * Note that `DeriveGen[A]` is going to be available only
    * if all the fields in `A` (if A is a case class) has an instance of
@@ -129,7 +129,7 @@ trait GenerateConfig {
    * )
    * }}}
    *
-   * Note that this is based on ConfigDescriptor and not a direct Json/HOCON view of a case class/sealed-trait.
+   * Note that this is based on Config and not a direct Json/HOCON view of a case class/sealed-trait.
    * This is why you get almost a valid Json. If your entire config is statically represented (meaning,
    * no custom transformation especially using transformOrFail or transform, with maximised usage of sealed traits instead of
    * values that are known only at runtime), then the correctness increases in the
@@ -145,14 +145,14 @@ trait GenerateConfig {
    * until all the required scenarios are covered.
    */
   def generateConfigHoconString[A: DeriveGen](
-    config: ConfigDescriptor[A],
+    config: Config[A],
     size: Int = 0
   ): ZStream[Sized, String, String] =
     generateConfig(config, size).map(_.toHoconString)
 
   /**
    * Generate an almost valid configuration in Json format
-   * given a `ConfigDescriptor[A]` and `DeriveGen[A]`.
+   * given a `Config[A]` and `DeriveGen[A]`.
    *
    * Note that `DeriveGen[A]` is going to be available only
    * if all the fields in `A` (if A is a case class) has an instance of
@@ -201,7 +201,7 @@ trait GenerateConfig {
    * )
    * }}}
    *
-   * Note that this is based on the ConfigDescriptor and not a direct Json view of a case class/sealed-trait.
+   * Note that this is based on the Config and not a direct Json view of a case class/sealed-trait.
    * This is why you get almost a valid Json. If your entire config is statically represented (meaning,
    * no custom transformation especially using transformOrFail or transform, with maximised usage of sealed traits instead of
    * values that are known only at runtime), then the correctness increases in the
@@ -217,14 +217,14 @@ trait GenerateConfig {
    * until all the required scenarios are covered.
    */
   def generateConfigJson[A: DeriveGen](
-    config: ConfigDescriptor[A],
+    config: Config[A],
     size: Int = 0
   ): ZStream[Sized, String, String] =
     generateConfig(config, size).map(_.toJson)
 
   /**
    * Generate an almost valid configuration in Map format
-   * given a `ConfigDescriptor[A]` and `DeriveGen[A]`.
+   * given a `Config[A]` and `DeriveGen[A]`.
    *
    * Note that `DeriveGen[A]` is going to be available only
    * if all the fields in `A` (if A is a case class) has an instance of
@@ -268,7 +268,7 @@ trait GenerateConfig {
    *
    * }}}
    *
-   * Note that this is based on ConfigDescriptor and not a direct Json/HOCON view of a case class/sealed-trait.
+   * Note that this is based on Config and not a direct Json/HOCON view of a case class/sealed-trait.
    * This is why you get almost a valid Json. If your entire config is statically represented (meaning,
    * no custom transformation especially using transformOrFail or transform, with maximised usage of sealed traits instead of
    * values that are known only at runtime), then the correctness increases in the
@@ -284,7 +284,7 @@ trait GenerateConfig {
    * until all the required scenarios are covered.
    */
   def generateConfigMap[A: DeriveGen](
-    config: ConfigDescriptor[A],
+    config: Config[A],
     size: Int,
     keyDelimiter: String = "."
   ): ZStream[Sized, String, Map[String, ::[String]]] =

@@ -3,7 +3,7 @@ package zio.config.shapeless
 import zio.ZIO
 import zio.config._
 import zio.config.helpers._
-import zio.config.shapeless.DeriveConfigDescriptor._
+import zio.config.shapeless.DeriveConfig._
 import zio.test.Assertion._
 import zio.test.{Gen, Sized, TestConfig, _}
 
@@ -19,7 +19,7 @@ object AutomaticConfigTest extends {
       test("automatic derivation spec") {
         check(genEnvironment) { environment =>
           val source =
-            ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
+            ConfigProvider.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
 
           val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
             for {
@@ -149,5 +149,5 @@ object AutomaticConfigTestUtils {
   val genLocalTimeString: Gen[Sized, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
 
-  val configDesc: ConfigDescriptor[MyConfig] = descriptor[MyConfig]
+  val configDesc: Config[MyConfig] = descriptor[MyConfig]
 }

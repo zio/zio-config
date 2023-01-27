@@ -9,11 +9,11 @@ import zio.config.{ReadError, _}
 
 object ParameterStoreConfig {
   def from[A](
-    configDescriptor: ConfigDescriptor[A],
+    configDescriptor: Config[A],
     basePath: String,
     getClient: Task[AWSSimpleSystemsManagement] = ZIO.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
-  )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
-    ZConfig.fromConfigDescriptor(
+  )(implicit tag: Tag[A]): Layer[Config.Error, A] =
+    ZConfig.fromConfig(
       configDescriptor from ParameterStoreConfigSource.from(basePath, getClient)
     )
 }

@@ -1,12 +1,12 @@
 package zio.config.yaml
 
 import zio.ZIO
-import zio.config.{ConfigDescriptor, PropertyTree, PropertyTreePath, ReadError}
+import zio.config.{Config, PropertyTree, PropertyTreePath, ReadError}
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 object YamlConfigSpec extends ZIOSpecDefault {
-  def spec: Spec[Any, ReadError[String]] = suite("YamlConfig")(
+  def spec: Spec[Any, Config.Error] = suite("YamlConfig")(
     test("Read a complex structure") {
       val result   = YamlConfigSource.fromYamlString(
         """
@@ -55,11 +55,11 @@ object YamlConfigSpec extends ZIOSpecDefault {
       case class B(b: Boolean) extends Sum
 
       val descriptor =
-        ConfigDescriptor
+        Config
           .nested("sum") {
-            ConfigDescriptor.list {
-              (ConfigDescriptor.nested("A")(ConfigDescriptor.string("a").to[A]) orElseEither
-                ConfigDescriptor.nested("B")(ConfigDescriptor.boolean("b").to[B]))
+            Config.list {
+              (Config.nested("A")(Config.string("a").to[A]) orElseEither
+                Config.nested("B")(Config.boolean("b").to[B]))
                 .transform(
                   _.merge,
                   (_: Sum) match {

@@ -1,11 +1,9 @@
 package zio.config
 
 import CoproductTestUtils._
-import ReadError._
 import com.github.ghik.silencer.silent
 import zio.IO
-import zio.config.ConfigDescriptor._
-import zio.config.PropertyTreePath.Step.Key
+import zio.{Config, ConfigProvider}, Config._
 import zio.config.helpers._
 import zio.test.Assertion._
 import zio.test.{Sized, _}
@@ -31,31 +29,6 @@ object CoproductTest extends BaseSpec {
           )
         }
       },
-      test("should accumulate all errors") {
-        check(genTestParams) { p =>
-          val expected: ReadError[String] =
-            OrErrors(
-              List(
-                ZipErrors(List(MissingValue(List(Key(p.kLdap)), List("value of type string"))), Set()),
-                ZipErrors(
-                  List(
-                    ZipErrors(
-                      List(
-                        FormatError(
-                          List(Key(p.kFactor)),
-                          "Provided value is notafloat, expecting the type float",
-                          List("value of type float")
-                        )
-                      )
-                    )
-                  )
-                )
-              )
-            )
-
-          assertZIO(readWithErrors(p).either)(isLeft(equalTo(expected)))
-        }
-      },
       test("left and right both populated should choose left") {
         check(genTestParams) { p =>
           assertZIO(readChooseLeftFromBoth(p))(equalTo(Left(EnterpriseAuth(Ldap(p.vLdap), DbUrl(p.vDbUrl)))))
@@ -70,33 +43,33 @@ object CoproductTestUtils {
 
   object Z {
 
-    val aConfig: ConfigDescriptor[A] = string("a").to[A]
+    val aConfig: Config[A] = string("a").to[A]
 
-    val bConfig: ConfigDescriptor[B.type] =
-      string.transformOrFail(a => if (a == "b") Right(B) else Left("Can only be b"), _ => Right("b"))
+    val bConfig: Config[B.type] =
+      string.mapOrFail(a => if (a == "b") Right(B) else Left(Config.Error.InvalidData(message = "Can only be b")))
 
-    val cConfig: ConfigDescriptor[C] =
+    val cConfig: Config[C] =
       (int("c1") zip string("c2")).to[C]
 
-    val dConfig: ConfigDescriptor[D] =
+    val dConfig: Config[D] =
       int("d").to[D]
 
-    val eConfig: ConfigDescriptor[E] =
+    val eConfig: Config[E] =
       double("e").to[E]
 
-    val fConfig: ConfigDescriptor[F.type] =
-      string.transformOrFail(a => if (a == "f") Right(F) else Left("Can only be b"), _ => Right("f"))
+    val fConfig: Config[F.type] =
+      string.mapOrFail(a => if (a == "f") Right(F) else Left(Config.Error.InvaliData(message = "Can only be b")))
 
-    val gConfig: ConfigDescriptor[G.type] =
-      string.transformOrFail(a => if (a == "g") Right(G) else Left("Can only be b"), _ => Right("g"))
+    val gConfig: Config[G.type] =
+      string.mapOrFail(a => if (a == "g") Right(G) else Left(Config.Error.InvaliData(message = "Can only be b")))
 
-    val hConfig: ConfigDescriptor[H.type] =
-      string.transformOrFail(a => if (a == "h") Right(H) else Left("Can only be b"), _ => Right("h"))
+    val hConfig: Config[H.type] =
+      string.mapOrFail(a => if (a == "h") Right(H) else Left(Config.Error.InvaliData(message = "Can only be b")))
 
-    val iConfig: ConfigDescriptor[I] =
+    val iConfig: Config[I] =
       double("i").to[I]
 
-    val config: ConfigDescriptor[Z] =
+    val config: Config[Z] =
       nested("z")(enumeration[Z](aConfig, bConfig, cConfig, dConfig, eConfig, fConfig, gConfig, hConfig, iConfig))
 
     case class A(a: String)           extends Z
@@ -182,7 +155,7 @@ object CoproductTestUtils {
       vCValid
     )
 
-  def readLeft(p: TestParams): IO[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
+  def readLeft(p: TestParams): IO[Config.Error, Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap).to[Ldap] zip string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
@@ -192,13 +165,13 @@ object CoproductTestUtils {
     val authConfig = enterprise.orElseEither(password)
 
     read(
-      authConfig from ConfigSource.fromMap(Map(p.kLdap -> p.vLdap, p.kDbUrl -> p.vDbUrl))
+      authConfig from ConfigProvider.fromMap(Map(p.kLdap -> p.vLdap, p.kDbUrl -> p.vDbUrl))
     )
   }
 
   def readRight(
     p: TestParams
-  ): IO[ReadError[String], Either[CoproductTestUtils.EnterpriseAuth, CoproductTestUtils.PasswordAuth]] = {
+  ): IO[Config.Error, Either[CoproductTestUtils.EnterpriseAuth, CoproductTestUtils.PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap).to[Ldap] zip string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
@@ -209,7 +182,7 @@ object CoproductTestUtils {
 
     read(
       authConfig from
-        ConfigSource.fromMap(
+        ConfigProvider.fromMap(
           Map(
             p.kUser      -> p.vUser,
             p.kCount     -> p.vCount.toString,
@@ -222,7 +195,7 @@ object CoproductTestUtils {
 
   def readWithErrors(
     p: TestParams
-  ): IO[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
+  ): IO[Config.Error, Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap).to[Ldap] zip string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
@@ -233,7 +206,7 @@ object CoproductTestUtils {
 
     read(
       authConfig from
-        ConfigSource.fromMap(
+        ConfigProvider.fromMap(
           Map(
             p.kDbUrl     -> p.vDbUrl,
             p.kUser      -> p.vUser,
@@ -245,7 +218,7 @@ object CoproductTestUtils {
     )
   }
 
-  def readChooseLeftFromBoth(p: TestParams): IO[ReadError[String], Either[EnterpriseAuth, PasswordAuth]] = {
+  def readChooseLeftFromBoth(p: TestParams): IO[Config.Error, Either[EnterpriseAuth, PasswordAuth]] = {
     val enterprise =
       (string(p.kLdap).to[Ldap] zip string(p.kDbUrl).to[DbUrl]).to[EnterpriseAuth]
 
@@ -256,7 +229,7 @@ object CoproductTestUtils {
 
     read(
       authConfig from
-        ConfigSource.fromMap(
+        ConfigProvider.fromMap(
           Map(
             p.kLdap      -> p.vLdap,
             p.kDbUrl     -> p.vDbUrl,

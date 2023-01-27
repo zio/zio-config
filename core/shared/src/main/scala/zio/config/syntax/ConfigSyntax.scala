@@ -157,7 +157,7 @@ trait ConfigSyntax {
 
   }
 
-  import zio.Config._
+  import zio.{Config, ConfigProvider}, Config._
   implicit class ConfigOps[A](config: zio.Config[A]) { self =>
 
     // Important for usecases such as `SystemEnv.load(deriveConfig[A].mapKey(_.toUpperCase)` or `JsonSource.load(deriveConfig[A])`

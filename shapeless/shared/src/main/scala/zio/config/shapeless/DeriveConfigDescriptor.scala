@@ -19,9 +19,9 @@ import zio.Chunk
  * `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects.
  * It will be deprecated once we find users have moved on from scala 2.11.
  *
- * descriptor[Config] gives an automatic ConfigDescriptor for the case class Config recursively
+ * descriptor[Config] gives an automatic Config for the case class Config recursively
  *
- * descriptor[X] gives an automatic ConfigDescriptor for the sealed trait X (coproduct)
+ * descriptor[X] gives an automatic Config for the sealed trait X (coproduct)
  *
  * {{{
  *
@@ -37,7 +37,7 @@ import zio.Chunk
  *
  * Please find more (complex) examples in the examples module in zio-config
  */
-object DeriveConfigDescriptor extends DeriveConfigDescriptor {
+object DeriveConfig extends DeriveConfig {
   def mapClassName(name: String): String = name
   def mapFieldName(name: String): String = name
 
@@ -48,13 +48,13 @@ object DeriveConfigDescriptor extends DeriveConfigDescriptor {
    * By default this method is not implicit to allow custom non-recursive derivation
    */
   override implicit def getDescriptor[T: NeedsDerive: ClassDescriptor]: Descriptor[T] = super.getDescriptor[T]
-  implicit def descriptor[T: Descriptor]: ConfigDescriptor[T]                         = Descriptor[T].configDescriptor
+  implicit def descriptor[T: Descriptor]: Config[T]                                   = Descriptor[T].configDescriptor
 }
 
 /**
  * Non-recursive derivation
  */
-object NonRecursiveDerivation extends DeriveConfigDescriptor {
+object NonRecursiveDerivation extends DeriveConfig {
   def mapClassName(name: String): String = zio.config.toSnakeCase(name)
   def mapFieldName(name: String): String = name
 
@@ -62,12 +62,12 @@ object NonRecursiveDerivation extends DeriveConfigDescriptor {
   val wrapSealedTraits: Boolean       = false
 }
 
-trait DeriveConfigDescriptor {
-  import zio.config.ConfigDescriptor._
+trait DeriveConfig {
+  import zio.{Config, ConfigProvider}, Config._
 
-  case class ClassDescriptor[T](desc: ConfigDescriptor[T], name: String, isObject: Boolean)
+  case class ClassDescriptor[T](desc: Config[T], name: String, isObject: Boolean)
 
-  case class Descriptor[T](configDescriptor: ConfigDescriptor[T]) {
+  case class Descriptor[T](configDescriptor: Config[T]) {
     final def ??(description: String): Descriptor[T] =
       describe(description)
 
@@ -140,19 +140,19 @@ trait DeriveConfigDescriptor {
   implicit def implicitOptionDesc[A: Descriptor]: Descriptor[Option[A]] =
     Descriptor(optionDesc(implicitly[Descriptor[A]].configDescriptor))
 
-  protected def listDesc[A](desc: ConfigDescriptor[A]): ConfigDescriptor[List[A]]       = list(desc)
-  protected def setDesc[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Set[A]]         = set(desc)
-  protected def mapDesc[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Map[String, A]] = map(desc)
-  protected def optionDesc[A](desc: ConfigDescriptor[A]): ConfigDescriptor[Option[A]]   = desc.optional
+  protected def listDesc[A](desc: Config[A]): Config[List[A]]       = listOf(desc)
+  protected def setDesc[A](desc: Config[A]): Config[Set[A]]         = set(desc)
+  protected def mapDesc[A](desc: Config[A]): Config[Map[String, A]] = map(desc)
+  protected def optionDesc[A](desc: Config[A]): Config[Option[A]]   = desc.optional
 
   protected def eitherDesc[A, B](
-    left: ConfigDescriptor[A],
-    right: ConfigDescriptor[B]
-  ): ConfigDescriptor[Either[A, B]] =
+    left: Config[A],
+    right: Config[B]
+  ): Config[Either[A, B]] =
     left.orElseEither(right)
 
   trait CollectClassFields[L <: HList, Names <: HList, Descs <: HList, Defaults <: HList] {
-    def apply(names: Names, descs: Descs, defaults: Defaults): ConfigDescriptor[L]
+    def apply(names: Names, descs: Descs, defaults: Defaults): Config[L]
   }
 
   object CollectClassFields {
@@ -162,13 +162,13 @@ trait DeriveConfigDescriptor {
       fieldName: String,
       defaultValue: Option[V],
       description: Option[describe]
-    ): ConfigDescriptor[V] = {
+    ): Config[V] = {
       val name                     = manualName.map(_.name).getOrElse(mapFieldName(fieldName))
       val (unwrapped, wasOptional) = unwrapFromOptional(desc.configDescriptor)
       val withNesting              = if (wasOptional) {
-        nested(name)(unwrapped).optional.asInstanceOf[ConfigDescriptor[V]]
+        nested(name)(unwrapped).optional.asInstanceOf[Config[V]]
       } else {
-        nested(name)(unwrapped).asInstanceOf[ConfigDescriptor[V]]
+        nested(name)(unwrapped).asInstanceOf[Config[V]]
       }
       val described                = description.map(_.describe).toList.foldLeft(withNesting)(_ ?? _)
       defaultValue.fold(described)(described.default(_))
@@ -315,8 +315,8 @@ trait DeriveConfigDescriptor {
 
   final def wrapSealedTrait[T](
     label: String,
-    desc: ConfigDescriptor[T]
-  ): ConfigDescriptor[T] =
+    desc: Config[T]
+  ): Config[T] =
     if (wrapSealedTraits) nested(label)(desc)
     else desc
 

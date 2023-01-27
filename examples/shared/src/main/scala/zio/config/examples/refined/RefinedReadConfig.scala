@@ -7,7 +7,7 @@ import eu.timepit.refined.numeric.{Greater, GreaterEqual}
 import zio.config._
 import zio.config.refined._
 
-import ConfigDescriptor._
+import Config._
 
 object RefinedReadConfig extends App {
   case class RefinedProd(
@@ -22,7 +22,7 @@ object RefinedReadConfig extends App {
       refine[String, NonEmpty]("LDAP") zip
         refine[GreaterEqual[W.`1024`.T]](int("PORT")) zip
         refine[String, NonEmpty]("DB_URL").optional zip
-        refine[Size[Greater[W.`2`.T]]](list("LONGS")(long))
+        refine[Size[Greater[W.`2`.T]]](listOf("LONGS")(long))
     ).to[RefinedProd]
 
   val configMultiMap: Map[String, ::[String]] =

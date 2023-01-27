@@ -21,7 +21,7 @@ object CombineSourcesExample extends ZIOAppDefault {
   final case class Config(username: String, password: String)
 
   @silent("deprecated")
-  val config: ConfigDescriptor[Config] =
+  val config: Config[Config] =
     (descriptor[Config] from
       TypesafeConfigSource
         .fromHoconFile(new File("/invalid/path"))

@@ -4,7 +4,7 @@ trait ConfigDocsModule {
   import Table._
 
   /**
-   * `ConfigDocs` holds the descriptions and details of a `ConfigDescriptor`
+   * `ConfigDocs` holds the descriptions and details of a `Config`
    * which can be used to produce documentation.
    */
   sealed trait ConfigDocs { self =>
@@ -538,8 +538,8 @@ trait ConfigDocsModule {
   import ConfigDocs.{DynamicMap => DocsMap, Leaf => DocsLeaf}
 
   /**
-   * Generate documentation based on the `ConfigDescriptor`, where a
-   * `ConfigDescriptor` is a structure representing the logic to fetch the application config
+   * Generate documentation based on the `Config`, where a
+   * `Config` is a structure representing the logic to fetch the application config
    * from various sources.
    *
    * Once we generate the docs, this can be converted to a light weight `Table` structure which is much more easier to be converted
@@ -547,13 +547,13 @@ trait ConfigDocsModule {
    *
    * Example :
    * {{{
-   *   val configDescriptor: ConfigDescriptor[MyAppConfig] = ???
+   *   val configDescriptor: Config[MyAppConfig] = ???
    *
    *   generatedDocs(configDescriptor).toTable.toGithubFlavouredMarkdown
    * }}}
    */
   import zio.Config
-  import zio.Config._
+  import zio.{Config, ConfigProvider}, Config._
   final def generateDocs[A](config: zio.Config[A]): ConfigDocs = {
     def loopTo[B](
       descriptions: List[ConfigDocs.Description],

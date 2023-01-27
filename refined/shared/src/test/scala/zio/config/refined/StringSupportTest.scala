@@ -33,7 +33,7 @@ object StringSupportTest extends BaseSpec {
         check(Gen.listOfN(4)(Gen.int(256, 1000)).map(_.mkString("."))) { p =>
           val cfg = refine[String, IPv4]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
@@ -42,7 +42,7 @@ object StringSupportTest extends BaseSpec {
         check(genSymbol(0, 10).map(s => s + "ab")) { p =>
           val cfg = refine[String, IPv6]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
@@ -67,7 +67,7 @@ object StringSupportTest extends BaseSpec {
           val cfg = refine[String, MatchesRegex[W.`".*abc"`.T]]("TEST")
 
           val p2 =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
@@ -90,7 +90,7 @@ object StringSupportTest extends BaseSpec {
         check(genSymbol(0, 10).map(s => s + "\\q5ab")) { p =>
           val cfg = refine[String, Regex]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
@@ -141,7 +141,7 @@ object StringSupportTest extends BaseSpec {
         check(Gen.fromZIO(ZIO.succeed(UUID.randomUUID().toString + "ab"))) { p =>
           val cfg = refine[String, Uuid]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
@@ -164,7 +164,7 @@ object StringSupportTest extends BaseSpec {
         check(genSymbol(0, 10).map(s => s.toString + "ab")) { p =>
           val cfg = refine[String, ValidByte]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
@@ -187,7 +187,7 @@ object StringSupportTest extends BaseSpec {
         check(genSymbol(0, 10).map(s => s + "ab")) { p =>
           val cfg = refine[String, ValidShort]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
@@ -210,7 +210,7 @@ object StringSupportTest extends BaseSpec {
         check(genSymbol(0, 10).map(s => s + "ab")) { p =>
           val cfg = refine[String, ValidInt]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
         }
@@ -233,7 +233,7 @@ object StringSupportTest extends BaseSpec {
         check(genSymbol(0, 10).map(s => s + "ab")) { p =>
           val cfg = refine[String, ValidLong]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
 
@@ -257,7 +257,7 @@ object StringSupportTest extends BaseSpec {
         check(genSymbol(0, 10).map(s => s + "ab")) { p =>
           val cfg = refine[String, ValidFloat]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
 
@@ -281,7 +281,7 @@ object StringSupportTest extends BaseSpec {
         check(genSymbol(0, 10).map(s => s + "ab")) { p =>
           val cfg = refine[String, ValidDouble]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
 
@@ -305,7 +305,7 @@ object StringSupportTest extends BaseSpec {
         check(genSymbol(0, 10).map(s => s + "ab")) { p =>
           val cfg = refine[String, ValidBigInt]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
 
@@ -329,7 +329,7 @@ object StringSupportTest extends BaseSpec {
         check(genSymbol(0, 10).map(s => s + "ab")) { p =>
           val cfg = refine[String, ValidBigDecimal]("TEST")
           val p2  =
-            read(cfg from ConfigSource.fromMap(Map("TEST" -> p)))
+            read(cfg from ConfigProvider.fromMap(Map("TEST" -> p)))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(1)))
 

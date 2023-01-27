@@ -5,16 +5,16 @@ import zio.config.{PropertyTree, _}
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
-import ConfigDescriptorAdt._
+import ConfigAdt._
 
 object DerivationTest extends ZIOSpecDefault {
-  def spec: Spec[Any, ReadError[String]] = suite("DerivationTest")(
+  def spec: Spec[Any, Config.Error] = suite("DerivationTest")(
     test("support describe annotation") {
       @describe("class desc")
       case class Cfg(@describe("field desc") fname: String)
 
       def collectDescriptions[T](
-        desc: ConfigDescriptor[T],
+        desc: Config[T],
         path: Option[String]
       ): List[(Option[String], String)] = desc match {
         case Lazy(thunk)                   => collectDescriptions(thunk(), path)
@@ -46,7 +46,7 @@ object DerivationTest extends ZIOSpecDefault {
       @name("className")
       case class Cfg(@name("otherName") fname: String) extends SealedTrait
 
-      def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
+      def collectPath[T](desc: Config[T]): List[String] = desc match {
         case Lazy(thunk)                   => collectPath(thunk())
         case Default(config, _)            => collectPath(config)
         case Describe(config, _)           => collectPath(config)
@@ -76,7 +76,7 @@ object DerivationTest extends ZIOSpecDefault {
 
       val desc = descriptorWithClassNames[SealedTrait]
 
-      def collectPath[T](desc: ConfigDescriptor[T]): List[String] = desc match {
+      def collectPath[T](desc: Config[T]): List[String] = desc match {
         case Lazy(thunk)                   => collectPath(thunk())
         case Default(config, _)            => collectPath(config)
         case Describe(config, _)           => collectPath(config)
@@ -106,7 +106,7 @@ object DerivationTest extends ZIOSpecDefault {
       case class Cfg(fname: String = "defaultV")
 
       def collectDefault[T](
-        desc: ConfigDescriptor[T],
+        desc: Config[T],
         path: Option[String]
       ): List[(Option[String], Any)] = desc match {
         case Lazy(thunk)                   => collectDefault(thunk(), path)

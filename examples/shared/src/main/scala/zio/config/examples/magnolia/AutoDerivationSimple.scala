@@ -32,7 +32,7 @@ object MyConfig {
   final case class DbUrl(value: String) extends AnyVal
 }
 
-object AutomaticConfigDescriptor extends App {
+object AutomaticConfig extends App {
   private val automaticConfig = deriveConfig[MyConfig]
 
   private val source =

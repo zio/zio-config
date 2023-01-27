@@ -4,7 +4,7 @@ import zio.config._
 import zio.config.magnolia.descriptor
 
 import examples._
-import ConfigDescriptor._
+import Config._
 
 object CommandLineSimple extends App {
   val cmdLineArgs =

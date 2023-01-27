@@ -14,7 +14,7 @@ import scala.compiletime.{erasedValue, summonInline, constValue, summonFrom, con
 import scala.quoted
 import scala.util.Try
 import Descriptor._
-import zio.Config, Config._
+import zio.{Config, ConfigProvider}, Config._
 import zio.config.syntax._
 
 final case class Descriptor[A](desc: Config[A], metadata: Option[Descriptor.Metadata])

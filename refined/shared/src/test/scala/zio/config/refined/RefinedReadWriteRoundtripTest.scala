@@ -9,11 +9,11 @@ import eu.timepit.refined.string.Trimmed
 import zio.ZIO
 import zio.config.helpers._
 import zio.config.refined.RefinedReadWriteRoundtripTestUtils._
-import zio.config.{BaseSpec, ConfigDescriptor, ConfigSource, read, write}
+import zio.config.{BaseSpec, Config, ConfigSource, read, write}
 import zio.test.Assertion._
 import zio.test.{Gen, _}
 
-import ConfigDescriptor._
+import Config._
 
 object RefinedReadWriteRoundtripTest extends BaseSpec {
 
@@ -36,7 +36,7 @@ object RefinedReadWriteRoundtripTest extends BaseSpec {
       test("Refined config invalid") {
         check(genRefinedProdInvalid) { case (n, envMap) =>
           val p2 =
-            read(prodConfig(n) from ConfigSource.fromMap(envMap))
+            read(prodConfig(n) from ConfigProvider.fromMap(envMap))
 
           assertZIO(p2.mapError(_.size).either)(equalTo(Left(5)))
         }
@@ -56,7 +56,7 @@ object RefinedReadWriteRoundtripTestUtils {
     pwd: Refined[String, Trimmed And NonEmpty]
   )
 
-  def longList(n: Int): ::[ConfigDescriptor[Long]] = {
+  def longList(n: Int): ::[Config[Long]] = {
     val list =
       (1 to n).toList
         .map(group => long(s"GROUP${group}_LONGVAL"))
@@ -64,12 +64,12 @@ object RefinedReadWriteRoundtripTestUtils {
     ::(list.head, list.tail)
   }
 
-  def longs(n: Int): ConfigDescriptor[List[Long]] = {
+  def longs(n: Int): Config[List[Long]] = {
     val ll = longList(n)
     collectAll(ll.head, ll.tail: _*)
   }
 
-  def prodConfig(n: Int): ConfigDescriptor[RefinedProd] =
+  def prodConfig(n: Int): Config[RefinedProd] =
     (
       refine[String, NonEmpty]("LDAP") zip
         refine[Int, GreaterEqual[W.`1024`.T]]("PORT") zip

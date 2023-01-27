@@ -8,7 +8,7 @@ import magnolia._
 
 object TypesafeConfigListTest extends ZIOSpecDefault {
 
-  def spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig List")(
+  def spec: Spec[Any, Config.Error] = suite("TypesafeConfig List")(
     test("A kebab case for testing HOCON List config") {
       val kebabCaseConfig =
         """

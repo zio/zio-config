@@ -6,16 +6,16 @@ import _root_.cats.kernel.Order
 
 import scala.collection.immutable.SortedMap
 
-import ConfigDescriptor._
+import Config._
 
 package object cats {
-  def chain[A](aDesc: ConfigDescriptor[A]): ConfigDescriptor[Chain[A]] =
-    list(aDesc).transform(v => Chain.fromSeq(v), _.toList)
+  def chain[A](aDesc: Config[A]): Config[Chain[A]] =
+    listOf(aDesc).transform(v => Chain.fromSeq(v), _.toList)
 
-  def chain[A](path: String)(aDesc: ConfigDescriptor[A]): ConfigDescriptor[Chain[A]] =
+  def chain[A](path: String)(aDesc: Config[A]): Config[Chain[A]] =
     nested(path)(chain(aDesc))
 
-  def nonEmptyChain[A](aDesc: ConfigDescriptor[A]): ConfigDescriptor[NonEmptyChain[A]] =
+  def nonEmptyChain[A](aDesc: Config[A]): Config[NonEmptyChain[A]] =
     chain(aDesc).transformOrFailLeft(value =>
       NonEmptyChain
         .fromChain(value)
@@ -24,20 +24,20 @@ package object cats {
       _.toChain
     )
 
-  def nonEmptyChain[A](path: String)(aDesc: ConfigDescriptor[A]): ConfigDescriptor[NonEmptyChain[A]] =
+  def nonEmptyChain[A](path: String)(aDesc: Config[A]): Config[NonEmptyChain[A]] =
     nested(path)(nonEmptyChain(aDesc))
 
-  def nonEmptyList[A](aDesc: ConfigDescriptor[A]): ConfigDescriptor[NonEmptyList[A]] =
-    list(aDesc).transformOrFailLeft(value =>
+  def nonEmptyList[A](aDesc: Config[A]): Config[NonEmptyList[A]] =
+    listOf(aDesc).transformOrFailLeft(value =>
       NonEmptyList.fromList(value).fold[Either[String, NonEmptyList[A]]](Left("list is empty"))(v => Right(v))
     )(
       _.toList
     )
 
-  def nonEmptyList[A](path: String)(aDesc: ConfigDescriptor[A]): ConfigDescriptor[NonEmptyList[A]] =
+  def nonEmptyList[A](path: String)(aDesc: Config[A]): Config[NonEmptyList[A]] =
     nested(path)(nonEmptyList(aDesc))
 
-  def nonEmptyMap[A](aDesc: ConfigDescriptor[A]): ConfigDescriptor[NonEmptyMap[String, A]] =
+  def nonEmptyMap[A](aDesc: Config[A]): Config[NonEmptyMap[String, A]] =
     map(aDesc).transformOrFailLeft(x =>
       NonEmptyMap
         .fromMap(SortedMap(x.toSeq: _*)(Order[String].toOrdering))
@@ -46,6 +46,6 @@ package object cats {
       _.toSortedMap
     )
 
-  def nonEmptyMap[A](path: String)(aDesc: ConfigDescriptor[A]): ConfigDescriptor[NonEmptyMap[String, A]] =
+  def nonEmptyMap[A](path: String)(aDesc: Config[A]): Config[NonEmptyMap[String, A]] =
     nested(path)(nonEmptyMap(aDesc))
 }

@@ -15,7 +15,7 @@ object MapConfigTest extends ZIOSpecDefault {
     suite("Configuration from Map")(
       test("Configuration from Map roundtrip") {
         check(genAppConfig()) { appConfig =>
-          val p2: zio.IO[ReadError[String], AppConfig] =
+          val p2: zio.IO[Config.Error, AppConfig] =
             for {
               args   <- toMap(AppConfig.descriptor, appConfig)
               reread <- fromMap(args)
@@ -26,13 +26,13 @@ object MapConfigTest extends ZIOSpecDefault {
       }
     )
 
-  def fromMap(args: Map[String, String]): ZIO[Any, ReadError[String], AppConfig] =
+  def fromMap(args: Map[String, String]): ZIO[Any, Config.Error, AppConfig] =
     ZIO.environment.provideLayer(ZConfig.fromMap(args, descriptor, "WTL", Some('_'), None)).map(_.get[AppConfig])
 
   def toMap[A](
-    descriptor: ConfigDescriptor[A],
+    descriptor: Config[A],
     a: A
-  ): ZIO[Any, ReadError[String], Map[String, String]] =
+  ): ZIO[Any, Config.Error, Map[String, String]] =
     ZIO
       .fromEither(write(descriptor, a))
       .mapBoth(

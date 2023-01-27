@@ -886,21 +886,21 @@ object OptionalSpecUtils {
     final case class CaseClass4(a2: String, b2: String)
   }
 
-  final def getListOfMissingValueSteps(error: ReadError[String]): List[List[Step[String]]] =
+  final def getListOfMissingValueSteps(error: Config.Error): List[List[Step[String]]] =
     foldReadError(error)(List.empty[List[Step[String]]]) { case ReadError.MissingValue(steps, _, _) =>
       List(steps)
     }(_ ++ _, List.empty[List[Step[String]]])
 
-  def checkIfOnlyMissingValues(error: ReadError[String]): Boolean =
+  def checkIfOnlyMissingValues(error: Config.Error): Boolean =
     foldReadError(error)(alternative = false) { case ReadError.MissingValue(_, _, _) =>
       true
     }(_ && _, true)
 
-  def fetchMissingValueAndFormatErrors(error: ReadError[String]): List[ReadError[String]] =
-    foldReadError(error)(alternative = List.empty[ReadError[String]]) {
+  def fetchMissingValueAndFormatErrors(error: Config.Error): List[Config.Error] =
+    foldReadError(error)(alternative = List.empty[Config.Error]) {
       case e @ ReadError.MissingValue(_, _, _)   => List(e)
       case e @ ReadError.FormatError(_, _, _, _) => List(e)
-    }(_ ++ _, List.empty[ReadError[String]])
+    }(_ ++ _, List.empty[Config.Error])
 
   def getSource(str: String): zio.config.ConfigSource =
     TypesafeConfigSource.fromHoconString(str)

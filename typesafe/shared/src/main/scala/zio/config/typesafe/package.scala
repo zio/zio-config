@@ -8,30 +8,30 @@ import java.io.File
 package object typesafe {
 
   implicit class FromConfigTypesafe(c: ZConfig.type) {
-    def fromResourcePath[A](configDescriptor: ConfigDescriptor[A])(implicit
+    def fromResourcePath[A](configDescriptor: Config[A])(implicit
       tag: Tag[A]
-    ): Layer[ReadError[String], A] =
+    ): Layer[Config.Error, A] =
       TypesafeConfig.fromResourcePath(configDescriptor)
 
-    def fromHoconFile[A](file: File, configDescriptor: ConfigDescriptor[A])(implicit
+    def fromHoconFile[A](file: File, configDescriptor: Config[A])(implicit
       tag: Tag[A]
-    ): Layer[ReadError[String], A] =
+    ): Layer[Config.Error, A] =
       TypesafeConfig.fromHoconFile(file, configDescriptor)
 
-    def fromHoconFilePath[A](filePath: String, configDescriptor: ConfigDescriptor[A])(implicit
+    def fromHoconFilePath[A](filePath: String, configDescriptor: Config[A])(implicit
       tag: Tag[A]
-    ): Layer[ReadError[String], A] =
+    ): Layer[Config.Error, A] =
       TypesafeConfig.fromHoconFilePath(filePath, configDescriptor)
 
-    def fromHoconString[A](hoconString: String, configDescriptor: ConfigDescriptor[A])(implicit
+    def fromHoconString[A](hoconString: String, configDescriptor: Config[A])(implicit
       tag: Tag[A]
-    ): Layer[ReadError[String], A] =
+    ): Layer[Config.Error, A] =
       TypesafeConfig.fromHoconString(hoconString, configDescriptor)
 
     def fromTypesafeConfig[A](
       conf: ZIO[Any, Throwable, com.typesafe.config.Config],
-      configDescriptor: ConfigDescriptor[A]
-    )(implicit tag: Tag[A]): Layer[ReadError[String], A] =
+      configDescriptor: Config[A]
+    )(implicit tag: Tag[A]): Layer[Config.Error, A] =
       TypesafeConfig.fromTypesafeConfig(conf, configDescriptor)
   }
 
@@ -90,36 +90,36 @@ package object typesafe {
       )
   }
 
-  implicit class ConfigDescriptorOps[A](a: => A) { self =>
+  implicit class ConfigOps[A](a: => A) { self =>
 
     /**
      * Convert your config value `A` to `com.typesafe.config.ConfigObject`, given its
-     * `ConfigDescriptor`
+     * `Config`
      */
     def toHocon(
-      configDescriptor: ConfigDescriptor[A]
+      configDescriptor: Config[A]
     ): Either[String, ConfigObject] =
       write(configDescriptor, a).map(_.toHocon)
 
     /**
      * Convert your config value `A` to a verbose Hocon string, given its
-     * `ConfigDescriptor`
+     * `Config`
      */
     def toHoconString(
-      configDescriptor: ConfigDescriptor[A]
+      configDescriptor: Config[A]
     ): Either[String, String] =
       write(configDescriptor, a).map(_.toHoconString)
 
     /**
      * Convert your config value `A` to a concise Json string, given its
-     * `ConfigDescriptor`
+     * `Config`
      */
-    def toJson(configDescriptor: ConfigDescriptor[A]): Either[String, String] =
+    def toJson(configDescriptor: Config[A]): Either[String, String] =
       write(configDescriptor, a).map(_.toJson)
 
   }
 
-  val configValueConfigDescriptor: ConfigDescriptor[ConfigValue] =
-    ConfigDescriptorAdt.sourceDesc(ConfigSource.empty, ConfigValuePropertyType)
+  val configValueConfig: Config[ConfigValue] =
+    ConfigAdt.sourceDesc(ConfigSource.empty, ConfigValuePropertyType)
 
 }

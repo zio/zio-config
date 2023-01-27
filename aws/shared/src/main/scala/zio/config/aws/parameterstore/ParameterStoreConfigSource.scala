@@ -58,7 +58,7 @@ object ParameterStoreConfigSource {
             }
         }
           .map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
-          .mapError(throwable => ReadError.SourceError(throwable.toString): ReadError[String])
+          .mapError(throwable => ReadError.SourceError(throwable.toString): Config.Error)
       }
 
     ConfigSource

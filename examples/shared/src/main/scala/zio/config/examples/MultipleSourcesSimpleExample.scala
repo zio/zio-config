@@ -3,7 +3,7 @@ package zio.config.examples
 import com.github.ghik.silencer.silent
 import zio.config._
 
-import ConfigDescriptor._
+import Config._
 
 object MultipleSourcesSimpleExample extends App {
 
@@ -13,16 +13,16 @@ object MultipleSourcesSimpleExample extends App {
   val runtime = zio.Runtime.default
 
   // Assume they are different sources (env, property file, HOCON / database (in future))
-  private val source1 = ConfigSource.fromMap(Map("LDAP" -> "jolap"), "constant")
+  private val source1 = ConfigProvider.fromMap(Map("LDAP" -> "jolap"), "constant")
   @silent("deprecated")
   private val source2 = ConfigSource.fromSystemProps()
 
   private val source3 = ConfigSource.fromSystemEnv()
-  private val source4 = ConfigSource.fromMap(Map("PORT" -> "1999"), "constant")
-  private val source5 = ConfigSource.fromMap(Map("DB_URL" -> "newyork.com"), "constant")
+  private val source4 = ConfigProvider.fromMap(Map("PORT" -> "1999"), "constant")
+  private val source5 = ConfigProvider.fromMap(Map("DB_URL" -> "newyork.com"), "constant")
 
   private val oneValidSource =
-    ConfigSource.fromMap(
+    ConfigProvider.fromMap(
       Map(
         "LDAP"   -> "jolap",
         "PORT"   -> "1999",
@@ -31,16 +31,16 @@ object MultipleSourcesSimpleExample extends App {
       "constant"
     )
 
-  val myConfig: ConfigDescriptor[MyConfig] =
+  val myConfig: Config[MyConfig] =
     ((string("LDAP").from(source1.orElse(source3)) zip int("PORT").from(source4)) zip
       string("DB_URL").optional.from(source1.orElse(source5))).to[MyConfig]
 
   // Let's reset the whole source details in the original description
-  val myConfigWithReset: ConfigDescriptor[MyConfig] =
+  val myConfigWithReset: Config[MyConfig] =
     myConfig.unsourced.from(oneValidSource) // Equivalent to myConfig.fromNothing
 
   // Have got a few more sources to be tried, on top of what's there already ?
-  val myConfigChangedSource: ConfigDescriptor[MyConfig] = myConfig.updateSource(_.orElse(source2))
+  val myConfigChangedSource: Config[MyConfig] = myConfig.updateSource(_.orElse(source2))
 
   //
 

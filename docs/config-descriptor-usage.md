@@ -1,12 +1,12 @@
 ---
 id: config-descriptor-usage
-title: "Using ConfigDescriptor for Read, Write, Document and Report"
-sidebar_label: "ConfigDescriptor Usage"
+title: "Using Config for Read, Write, Document and Report"
+sidebar_label: "Config Usage"
 ---
 
 ## Using Config Descriptor
 
-Given a single [ConfigDescriptor](manual-creation-of-config-descriptor.md) we can use it to:
+Given a single [Config](manual-creation-of-config-descriptor.md) we can use it to:
 
 1. Get Readers that can read config from various sources
 2. Get Writer that can write config back
@@ -20,7 +20,7 @@ You should be familiar with reading config from various sources, given a  config
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config._, ConfigDescriptor._, PropertyTree._
+import zio.config._, Config._, PropertyTree._
 ```
 
 ```scala mdoc:silent
@@ -39,7 +39,7 @@ Let's define a simple one.
 val myConfig =
   (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
-read(myConfig from ConfigSource.fromMap(Map()))
+read(myConfig from ConfigProvider.fromMap(Map()))
 ```
 
 ## Writer from config descriptor
@@ -68,7 +68,7 @@ val appConfig =
   (((nested("south") { database } ?? "South details" zip
     nested("east") { database } ?? "East details" zip
     string("appName")).to[AwsConfig]) ?? "asdf"
-  ) from ConfigSource.fromMap(map, keyDelimiter = Some('.'))
+  ) from ConfigProvider.fromMap(map, keyDelimiter = Some('.'))
 
  // zio.Runtime.default.unsafe.run(read(appConfig)) (refer examples on how to manually run zio computations)
  // yields AwsConfig(Database(abc.com, 8111), Database(xyz.com, 8888), myApp)

@@ -31,17 +31,17 @@ object helpers {
 
   val genDbUrl: Gen[Any, DbUrl] = genNonEmptyString(20).map(DbUrl.apply)
 
-  def isErrors[A](assertion: Assertion[ReadError[String]]): Assertion[Either[ReadError[String], A]] =
+  def isErrors[A](assertion: Assertion[Config.Error]): Assertion[Either[Config.Error, A]] =
     assertionRec("isErrors")(assertion) {
-      case Left(errs: ReadError[String]) => Some(errs)
+      case Left(errs: Config.Error) => Some(errs)
       case Right(_)                      => None
     }
 
   def assertErrors[A](
-    pred: ReadError[String] => Boolean
-  ): Assertion[Either[ReadError[String], A]] =
-    assertion[Either[ReadError[String], A]]("assertErrors") {
-      case Left(errs: ReadError[String]) => pred(errs)
+    pred: Config.Error => Boolean
+  ): Assertion[Either[Config.Error, A]] =
+    assertion[Either[Config.Error, A]]("assertErrors") {
+      case Left(errs: Config.Error) => pred(errs)
       case Right(_)                      => false
     }
 

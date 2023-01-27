@@ -69,7 +69,7 @@ object ConfigSourceOrElseExample extends App {
   val desc: ConfigDescriptor[ApplicationConfig] = descriptor[ApplicationConfig]
 
   val result1: ApplicationConfig =
-    Unsafe.unsafe{ implicit u =>
+    Unsafe.unsafe { implicit u =>
       zio.Runtime.default.unsafe.run(read(desc from applicationYamlSourceReader)).getOrThrowFiberFailure()
     }
   val result2: ApplicationConfig =

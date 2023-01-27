@@ -6,7 +6,7 @@ import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 import magnolia._
-import ConfigDescriptor._
+import Config._
 
 object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
   final case class Details(name: String, age: Int)
@@ -48,18 +48,20 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
       |  url: postgres
       |}""".stripMargin
 
-  val spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig")(
+  val spec: Spec[Any, Config.Error] = suite("TypesafeConfig")(
     test("A nested example with typesafe HOCON config") {
 
       val details       = (string("name") zip int("age")).to[Details]
       val accountConfig =
-        (int("accountId").orElseEither(string("accountId")).optional zip list("regions")(string) zip nested("details")(
+        (int("accountId").orElseEither(string("accountId")).optional zip listOf("regions")(string) zip nested(
+          "details"
+        )(
           details
         ).optional).to[Account]
 
       val databaseConfig   = (int("port").optional zip string("url")).to[Database]
       val awsDetailsConfig =
-        (nested("accounts")(list(accountConfig)) zip nested("database")(databaseConfig) zip list("users")(int))
+        (nested("accounts")(listOf(accountConfig)) zip nested("database")(databaseConfig) zip listOf("users")(int))
           .to[AwsDetails]
 
       val listResult =

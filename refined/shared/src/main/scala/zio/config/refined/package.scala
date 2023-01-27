@@ -2,7 +2,7 @@ package zio.config
 
 import com.github.ghik.silencer.silent
 import eu.timepit.refined.api.{RefType, Refined, Validate}
-import zio.config.ConfigDescriptor.nested
+import zio.Config.nested
 import zio.config.magnolia.Descriptor
 
 package object refined {
@@ -26,7 +26,7 @@ package object refined {
    * {{{
    *   import eu.timepit.refined.string._
    *
-   *   val configDescriptor: ConfigDescriptor[Refined[String, Uuid]] =
+   *   val configDescriptor: Config[Refined[String, Uuid]] =
    *     refined[String, Uuid]("ID")
    * }}}
    */
@@ -34,7 +34,7 @@ package object refined {
   def refine[A, P](path: String)(implicit
     desc: Descriptor[A],
     validate: Validate[A, P]
-  ): ConfigDescriptor[Refined[A, P]] =
+  ): Config[Refined[A, P]] =
     nested(path)(desc.desc)
       .transformOrFail[Refined[A, P]](
         RefType.applyRef[Refined[A, P]](_),
@@ -42,7 +42,7 @@ package object refined {
       )
 
   /**
-   * refine[Predicate] allows to retrieve a `refined` type given an existing `ConfigDescriptor`
+   * refine[Predicate] allows to retrieve a `refined` type given an existing `Config`
    * and a predicate Predicate. Example of a Predicate is `NonEmpty`.
    *
    * Example:
@@ -53,10 +53,10 @@ package object refined {
    *
    *   final case class MyConfig(url: String, port: Int)
    *
-   *   val configs: ConfigDescriptor[List[MyConfig]] =
-   *     list("databases")(descriptor[MyConfig])
+   *   val configs: Config[List[MyConfig]] =
+   *     listOf("databases")(descriptor[MyConfig])
    *
-   *   val configDescriptor: ConfigDescriptor[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
+   *   val configDescriptor: Config[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
    *     refined[Size[Greater[W.`2`.T]]](configs)
    * }}}
    *
@@ -71,7 +71,7 @@ package object refined {
    *
    * Unlike `refine[Predicate]` method, `refineType[RefinedType]`
    * allows you to a pass a fully formed refined type
-   * and be careless about the `ConfigDescriptor` of the underlying type.
+   * and be careless about the `Config` of the underlying type.
    *
    * Example:
    *
@@ -82,7 +82,7 @@ package object refined {
    *
    *   // is same as
    *
-   *   val userName: ConfigDescriptor[String] = string("USERNAME")
+   *   val userName: Config[String] = string("USERNAME")
    *   refine[NonEmpty](userName)
    *
    * }}}
@@ -91,8 +91,8 @@ package object refined {
    * `refine[Predicate]` can be more flexible in complex configurations where you need more
    * orthogonality between raw config and refined configs.
    *
-   * `refine[Predicate]` allows you to build entire ConfigDescriptor without worrying
-   * about `Refined` modules, allowing you to then pass the `ConfigDescriptor[RawConfig]`
+   * `refine[Predicate]` allows you to build entire Config without worrying
+   * about `Refined` modules, allowing you to then pass the `Config[RawConfig]`
    * to `refine[Predicate]` and refine the types, which is more into an orthogonal design.
    *
    * A complete example of refineType:
@@ -104,7 +104,7 @@ package object refined {
    *
    *   final case class Jdbc(username: NonEmptyString, password: NonEmptyString)
    *
-   *   val jdbc: ConfigDescriptor[Jdbc] =
+   *   val jdbc: Config[Jdbc] =
    *     (refineType[NonEmptyString]("username") zip refineType[NonEmptyString]("password")).to[Jdbc]
    * }}}
    */

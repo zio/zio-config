@@ -6,7 +6,7 @@ import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
-  val spec: Spec[Any, ReadError[String]] = suite("TypesafeConfigRecursiveAutomatic")(
+  val spec: Spec[Any, Config.Error] = suite("TypesafeConfigRecursiveAutomatic")(
     test("Read recursive typesafe config with optional") {
       case class SimpleRec(id: Int, s: Option[SimpleRec])
 

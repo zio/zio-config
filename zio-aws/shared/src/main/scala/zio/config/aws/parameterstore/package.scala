@@ -7,9 +7,9 @@ import zio.{Tag, ZLayer}
 package object parameterstore {
   implicit class FromConfigTypesafe(c: ZConfig.type) {
     def fromParameterStore[A](
-      configDescriptor: ConfigDescriptor[A],
+      configDescriptor: Config[A],
       basePath: String
-    )(implicit tag: Tag[A]): ZLayer[Ssm, ReadError[String], A] =
+    )(implicit tag: Tag[A]): ZLayer[Ssm, Config.Error, A] =
       ParameterStoreConfig.from(configDescriptor, basePath)
   }
 

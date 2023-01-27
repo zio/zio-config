@@ -3,7 +3,7 @@ package zio.config.examples.commandline
 import zio.config._
 
 import examples._
-import ConfigDescriptor._
+import Config._
 
 object CommandLineComplex extends App {
   val argss =
@@ -18,13 +18,13 @@ object CommandLineComplex extends App {
   final case class UserPassword(k2: String, k3: String)
 
   object UserPassword {
-    val desc: ConfigDescriptor[UserPassword] = (string("username") zip string("password")).to[UserPassword]
+    val desc: Config[UserPassword] = (string("username") zip string("password")).to[UserPassword]
   }
 
   final case class DatabaseConfig(conf: UserPassword, url: String)
 
   object DatabaseConfig {
-    val desc: ConfigDescriptor[DatabaseConfig] = nested("database") {
+    val desc: Config[DatabaseConfig] = nested("database") {
       (UserPassword.desc zip string("url")).to[DatabaseConfig]
     }
   }
@@ -32,7 +32,7 @@ object CommandLineComplex extends App {
   final case class VaultConfig(userPassword: UserPassword)
 
   object VaultConfig {
-    val desc: ConfigDescriptor[VaultConfig] =
+    val desc: Config[VaultConfig] =
       nested("vault") {
         UserPassword.desc
       }.to[VaultConfig]
@@ -41,16 +41,16 @@ object CommandLineComplex extends App {
   final case class SparkConfig(databaseConfig: DatabaseConfig, numberOfExecutors: Int)
 
   object SparkConfig {
-    val desc: ConfigDescriptor[SparkConfig] = (DatabaseConfig.desc zip int("num_execs")).to[SparkConfig]
+    val desc: Config[SparkConfig] = (DatabaseConfig.desc zip int("num_execs")).to[SparkConfig]
   }
 
   final case class AppConfig(sparkConfig: SparkConfig, vault: VaultConfig, users: List[String], region: List[String])
 
   object AppConfig {
-    val desc: ConfigDescriptor[AppConfig] =
-      (nested("conf")(SparkConfig.desc) zip VaultConfig.desc zip list(
+    val desc: Config[AppConfig] =
+      (nested("conf")(SparkConfig.desc) zip VaultConfig.desc zip listOf(
         "users"
-      )(string) zip list("region")(string)).to[AppConfig]
+      )(string) zip listOf("region")(string)).to[AppConfig]
   }
 
   assert(

@@ -1,7 +1,7 @@
 package zio.config
 
 import zio.ZIO
-import zio.config.ConfigDescriptor._
+import zio.{Config, ConfigProvider}, Config._
 import zio.config.ListAndOptionalTestUtils._
 import zio.config.PropertyTree.{Leaf, Record}
 import zio.config.helpers._
@@ -98,19 +98,19 @@ object ListAndOptionalTest extends BaseSpec {
         assertZIO(actual)(equalTo(expected))
       },
       test("key doesn't exist in list") {
-        val src                                              = ConfigSource.fromPropertyTree(
+        val src                                    = ConfigSource.fromPropertyTree(
           PropertyTree.Sequence(List(Record(Map()))),
           "src"
         )
-        val optional: ConfigDescriptor[Option[List[String]]] = list(string("keyNotExists")).optional
+        val optional: Config[Option[List[String]]] = listOf(string("keyNotExists")).optional
         assertZIO(read(optional from src).either)(isLeft(anything))
       },
       test("when empty list") {
-        val src                                              = ConfigSource.fromPropertyTree(
+        val src                                    = ConfigSource.fromPropertyTree(
           PropertyTree.empty,
           "src"
         )
-        val optional: ConfigDescriptor[Option[List[String]]] = list(string("usr")).optional
+        val optional: Config[Option[List[String]]] = listOf(string("usr")).optional
         assertZIO(read(optional from src).either)(isRight(isNone))
       },
       test("list write read") {
@@ -149,7 +149,7 @@ object ListAndOptionalTest extends BaseSpec {
           ).to[Branch]
 
         val appConfigDesc =
-          (list("branches")(branchConfigDesc).optional).to[AppConfig]
+          (listOf("branches")(branchConfigDesc).optional).to[AppConfig]
 
         assertZIO(read(appConfigDesc from src).either)(isLeft(anything))
       },
@@ -198,15 +198,15 @@ object ListAndOptionalTestUtils {
 
   private val cId = id("kId")
 
-  val cOverallConfig: ConfigDescriptor[OverallConfig] =
+  val cOverallConfig: Config[OverallConfig] =
     cId.optional.optional.optional.to[OverallConfig]
 
   final case class Opt3Config(a: Id, b: Option[Id], c: Option[Id])
   final case class ListConfig(list: List[Opt3Config])
 
-  val cOpt3Config: ConfigDescriptor[Opt3Config] = (id("a") zip id("b").optional zip id("c").optional).to[Opt3Config]
+  val cOpt3Config: Config[Opt3Config] = (id("a") zip id("b").optional zip id("c").optional).to[Opt3Config]
 
-  val cListConfig: ConfigDescriptor[ListConfig] = list("list")(cOpt3Config).to[ListConfig]
+  val cListConfig: Config[ListConfig] = listOf("list")(cOpt3Config).to[ListConfig]
 
   val genOpt3Config: Gen[Any, Opt3Config] = for {
     a <- genId

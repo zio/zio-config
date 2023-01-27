@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio.IO
 
-import zio.Config, Config._
+import zio.{Config, ConfigProvider}, Config._
 import zio.config.syntax._
 import zio.ConfigProvider
 

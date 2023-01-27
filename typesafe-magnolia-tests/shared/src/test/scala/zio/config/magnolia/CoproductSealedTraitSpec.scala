@@ -51,7 +51,9 @@ object CoproductSealedTraitSpec extends ZIOSpecDefault {
             )
           )
         )(equalTo(Config(E(Detail("ff", "ll", Region("strath", "syd")))))) *>
-        assertZIO(zio.ZIO.fromEither(write(descriptor[Config], Config(D(Detail("ff", "ll", Region("strath", "syd")))))))(
+        assertZIO(
+          zio.ZIO.fromEither(write(descriptor[Config], Config(D(Detail("ff", "ll", Region("strath", "syd"))))))
+        )(
           equalTo(
             Record(
               Map(

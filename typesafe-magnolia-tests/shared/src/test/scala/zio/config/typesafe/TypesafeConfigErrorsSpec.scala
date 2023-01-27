@@ -5,14 +5,14 @@ import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 import magnolia._
-import ConfigDescriptor._
+import Config._
 
 final case class Account(region: String, accountId: String)
 final case class Database(port: Int, url: String)
 final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
 
 object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
-  val configNestedAutomatic: ConfigDescriptor[AwsConfig] = descriptor[AwsConfig]
+  val configNestedAutomatic: Config[AwsConfig] = descriptor[AwsConfig]
 
   val hocconStringWithStringDb: String =
     s"""
@@ -58,7 +58,7 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
     }
     """
 
-  def spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig Error")(
+  def spec: Spec[Any, Config.Error] = suite("TypesafeConfig Error")(
     test("A variant error case with typesafe HOCON config and a magnolia description") {
       val nestedConfigAutomaticResult1 =
         read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))

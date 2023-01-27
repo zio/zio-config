@@ -1,13 +1,13 @@
 package zio.config
 
-import zio.config.ConfigDescriptor._
+import zio.{Config, ConfigProvider}, Config._
 import zio.config.PropertyTree.{Leaf, Record, Sequence}
 import zio.test.Assertion.{anything, equalTo, isLeft, isNone, isRight}
 import zio.test._
 
 object MapTest extends BaseSpec {
 
-  val spec: Spec[Any, ReadError[String]] =
+  val spec: Spec[Any, Config.Error] =
     suite("MapCornerCasesTest")(
       test("map(b)(string(y)) returns the value of y from the values inside map within b.") {
         case class Cfg(a: String, b: Map[String, String])
@@ -234,19 +234,19 @@ object MapTest extends BaseSpec {
         assertZIO(res)(equalTo(Cfg("sa", Right("v"))))
       },
       test("key doesn't exist in map") {
-        val src                                                     = ConfigSource.fromPropertyTree(
+        val src                                           = ConfigSource.fromPropertyTree(
           PropertyTree.Record(Map("usr" -> PropertyTree.Leaf("v1"))),
           "src"
         )
-        val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("keyNotExists")).optional
+        val optional: Config[Option[Map[String, String]]] = map(string("keyNotExists")).optional
         assertZIO(read(optional from src).either)(isLeft(anything))
       },
       test("when empty map") {
-        val src                                                     = ConfigSource.fromPropertyTree(
+        val src                                           = ConfigSource.fromPropertyTree(
           PropertyTree.empty,
           "src"
         )
-        val optional: ConfigDescriptor[Option[Map[String, String]]] = map(string("usr")).optional
+        val optional: Config[Option[Map[String, String]]] = map(string("usr")).optional
         assertZIO(read(optional from src))(isNone)
       }
     )

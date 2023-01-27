@@ -3,20 +3,20 @@ package zio.config.examples
 import zio.config._
 import zio.{IO, Unsafe, ZIO}
 
-import ConfigDescriptor._
+import Config._
 import ReadError._
 import PropertyTreePath._
 
 object ErrorAccumulation extends App {
   case class SampleConfig(s1: Int, s2: String)
 
-  val config: ConfigDescriptor[SampleConfig] =
+  val config: Config[SampleConfig] =
     (int("envvar") zip string("envvar2").orElse(string("envvar3"))).to[SampleConfig]
 
   val runtime = zio.Runtime.default
 
   val parsed: IO[ReadError[String], SampleConfig] =
-    read(config from ConfigSource.fromMap(Map.empty))
+    read(config from ConfigProvider.fromMap(Map.empty))
 
   println(parsed.mapError(_.prettyPrint()).either.unsafeRun)
   /*
@@ -60,19 +60,19 @@ object ErrorAccumulation extends App {
   )
 
   val validSource: ConfigSource                     =
-    ConfigSource.fromMap(Map("envvar" -> "1", "envvar2" -> "value"))
+    ConfigProvider.fromMap(Map("envvar" -> "1", "envvar2" -> "value"))
 
   val validRes: IO[ReadError[String], SampleConfig] =
     read(config from validSource)
 
   assert(validRes equalM SampleConfig(1, "value"))
 
-  val invalidSource: ConfigSource = ConfigSource.fromMap(Map("envvar" -> "wrong"))
+  val invalidSource: ConfigSource = ConfigProvider.fromMap(Map("envvar" -> "wrong"))
 
   val result2: ZIO[Any, String, SampleConfig] =
     read(config from invalidSource).mapError(_.prettyPrint())
 
-  Unsafe.unsafe{ implicit u =>
+  Unsafe.unsafe { implicit u =>
     println(zio.Runtime.default.unsafe.run(result2.either).getOrThrowFiberFailure())
   }
 

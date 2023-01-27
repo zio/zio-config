@@ -2,7 +2,6 @@ package zio.config.magnolia
 
 import magnolia._
 import zio.config._
-import zio.config.derivation.DerivationUtils._
 import zio.{Duration, NonEmptyChunk}
 
 import java.io.File
@@ -10,9 +9,9 @@ import java.net.{URI, URL}
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
+import zio.config.derivation._
 
 import zio.Config
-import zio.config.syntax._
 
 case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
 

@@ -6,10 +6,10 @@ import zio.{Tag, ZIO, ZLayer}
 
 object ParameterStoreConfig {
   def from[A](
-    configDescriptor: ConfigDescriptor[A],
+    configDescriptor: Config[A],
     basePath: String
-  )(implicit tag: Tag[A]): ZLayer[Ssm, ReadError[String], A] =
-    ZConfig.fromConfigDescriptorM(
+  )(implicit tag: Tag[A]): ZLayer[Ssm, Config.Error, A] =
+    ZConfig.fromConfigM(
       ZIO.service[Ssm].map { ssm =>
         configDescriptor from ParameterStoreConfigSource.from(basePath, ssm)
       }

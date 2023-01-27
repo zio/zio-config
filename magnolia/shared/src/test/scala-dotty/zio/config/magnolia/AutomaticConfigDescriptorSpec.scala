@@ -21,7 +21,7 @@ object AutomaticConfigTest extends BaseSpec {
           val configDesc = descriptor[MyConfig]
 
           val source =
-            ConfigSource.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
+            ConfigProvider.fromMap(environment, keyDelimiter = Some('.'), valueDelimiter = Some(','))
 
           val readAndWrite: ZIO[Any, Any, Either[String, PropertyTree[String, String]]] =
             for {

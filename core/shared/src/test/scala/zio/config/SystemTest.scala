@@ -1,6 +1,6 @@
 package zio.config
 
-import zio.config.ConfigDescriptor._
+import zio.{Config, ConfigProvider}, Config._
 import zio.test.Assertion._
 import zio.test._
 import zio.{ZIO, _}
@@ -48,7 +48,7 @@ object SystemTest extends ZIOSpecDefault {
   final case class SomeConfig(size: Int, description: String)
 
   object SomeConfig {
-    val descriptor: ConfigDescriptor[SomeConfig] =
+    val descriptor: Config[SomeConfig] =
       nested("SYSTEMPROPERTIESTEST")(
         (int("SIZE") zip string("DESCRIPTION")).to[SomeConfig]
       )
