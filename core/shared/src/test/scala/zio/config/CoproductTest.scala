@@ -58,13 +58,13 @@ object CoproductTestUtils {
       double("e").to[E]
 
     val fConfig: Config[F.type] =
-      string.mapOrFail(a => if (a == "f") Right(F) else Left(Config.Error.InvaliData(message = "Can only be b")))
+      string.mapOrFail(a => if (a == "f") Right(F) else Left(Config.Error.InvalidData(message = "Can only be b")))
 
     val gConfig: Config[G.type] =
-      string.mapOrFail(a => if (a == "g") Right(G) else Left(Config.Error.InvaliData(message = "Can only be b")))
+      string.mapOrFail(a => if (a == "g") Right(G) else Left(Config.Error.InvalidData(message = "Can only be b")))
 
     val hConfig: Config[H.type] =
-      string.mapOrFail(a => if (a == "h") Right(H) else Left(Config.Error.InvaliData(message = "Can only be b")))
+      string.mapOrFail(a => if (a == "h") Right(H) else Left(Config.Error.InvalidData(message = "Can only be b")))
 
     val iConfig: Config[I] =
       double("i").to[I]
