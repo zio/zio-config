@@ -166,7 +166,7 @@ trait ConfigSyntax {
       def loop[B](config: Config[B]): Config[B] =
         config match {
           case Described(config, description) => Described(loop(config), description)
-          case config: FallbackWith[B]        => FallbackWith(loop(config.first), loop(config.second), f)
+          case config: FallbackWith[B]        => FallbackWith(loop(config.first), loop(config.second), config.f)
           case config: Fallback[B]            => Fallback(loop(config.first), loop(config.second))
           case Sequence(config)               => Sequence(loop(config))
           case Nested(name, config)           => Nested(f(name), loop(config))

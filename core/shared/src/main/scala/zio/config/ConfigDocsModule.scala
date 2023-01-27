@@ -1,8 +1,7 @@
 package zio.config
 
-trait ConfigDocsModule extends WriteModule {
+trait ConfigDocsModule {
   import Table._
-  import ConfigSource._
 
   /**
    * `ConfigDocs` holds the descriptions and details of a `ConfigDescriptor`
@@ -105,24 +104,6 @@ trait ConfigDocsModule extends WriteModule {
           }
 
         docs match {
-          case ConfigDocs.Leaf(sources, descriptions, _) =>
-            val desc = filterDescriptions(descriptionsUsedAlready, descriptions)
-
-            TableRow(
-              previousPaths,
-              Some(Table.Format.Primitive),
-              desc,
-              None,
-              sources.map(_.name)
-            ).asTable
-          case ConfigDocs.Recursion(sources)             =>
-            TableRow(
-              previousPaths,
-              Some(Table.Format.Recursion),
-              List.empty,
-              None,
-              sources.map(_.name)
-            ).asTable
 
           case c @ ConfigDocs.Nested(path, docs, descriptions) =>
             val descs  =
@@ -195,7 +176,7 @@ trait ConfigDocsModule extends WriteModule {
   }
 
   private[config] object ConfigDocs {
-    sealed case class Description(path: Option[K], description: String)
+    sealed case class Description(path: Option[String], description: String)
 
     def findByPath(description: List[Description], path: FieldName): List[Description] =
       description
@@ -207,15 +188,15 @@ trait ConfigDocsModule extends WriteModule {
           }
         )
 
-    sealed case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None)
-        extends ConfigDocs
-    sealed case class Recursion(sources: Set[ConfigSourceName])                                  extends ConfigDocs
-    sealed case class Nested(path: K, docs: ConfigDocs, descriptions: List[Description])         extends ConfigDocs
+    sealed case class Leaf(descriptions: List[Description], value: Option[String] = None)        extends ConfigDocs
+    sealed case class Nested(path: String, docs: ConfigDocs, descriptions: List[Description])    extends ConfigDocs
     sealed case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
     sealed case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
     sealed case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
-    sealed case class DynamicMap(schemaDocs: ConfigDocs, valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs])
-        extends ConfigDocs
+    sealed case class DynamicMap(
+      schemaDocs: ConfigDocs,
+      valueDocs: Map[String, ConfigDocs] = Map.empty[String, ConfigDocs]
+    )                                                                                            extends ConfigDocs
 
   }
 
@@ -437,9 +418,7 @@ trait ConfigDocsModule extends WriteModule {
      * given a path `x.y` and `k.y`, the heading `y` can appear twice in the markdown file with indices as 0 and 1. Depending on the flavour of markdown (Example: Github, Confluence)
      * we have different ways to produce links towards those headings. In this case, we employ the strategy used by Github.
      */
-    def githubFlavoured(implicit
-      S: K <:< String
-    ): (Heading, Int, Either[FieldName, Format]) => Link =
+    def githubFlavoured: (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, index, fieldNameOrFormat) => {
         val headingStr =
           heading.path
@@ -459,9 +438,7 @@ trait ConfigDocsModule extends WriteModule {
       }
 
     // Confluence markdown
-    def confluenceFlavoured(baseLink: Option[String])(implicit
-      S: K <:< String
-    ): (Heading, Int, Either[FieldName, Format]) => Link =
+    def confluenceFlavoured(baseLink: Option[String]): (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, _, fieldName) => {
         val headingStr =
           heading.path
@@ -545,16 +522,16 @@ trait ConfigDocsModule extends WriteModule {
     }
 
     sealed trait FieldName {
-      def asString(forBlank: Option[String])(implicit S: K <:< String): String =
+      def asString(forBlank: Option[String]): String =
         this match {
-          case FieldName.Key(k) => S.apply(k)
+          case FieldName.Key(k) => k
           case FieldName.Blank  => forBlank.getOrElse("")
         }
     }
 
     object FieldName {
-      case class Key(k: K) extends FieldName
-      case object Blank    extends FieldName
+      case class Key(k: String) extends FieldName
+      case object Blank         extends FieldName
     }
   }
 
@@ -579,32 +556,25 @@ trait ConfigDocsModule extends WriteModule {
   import zio.Config._
   final def generateDocs[A](config: zio.Config[A]): ConfigDocs = {
     def loopTo[B](
-      sources: Set[ConfigSourceName],
       descriptions: List[ConfigDocs.Description],
       config: Config[B],
-      latestPath: Option[K],
+      latestPath: Option[String],
       alreadySeen: Set[Config[_]]
     ): ConfigDocs =
-      if (alreadySeen.contains(config)) {
-        ConfigDocs.Recursion(sources)
-      } else {
-        loop(sources, descriptions, config, latestPath, alreadySeen + config)
-      }
+      loop(descriptions, config, latestPath, alreadySeen + config)
 
     def loop[B](
-      sources: Set[ConfigSourceName],
       descriptions: List[ConfigDocs.Description],
       config: Config[B],
-      latestPath: Option[K],
+      latestPath: Option[String],
       alreadySeen: Set[Config[_]]
     ): ConfigDocs =
       config match {
         case Config.Lazy(thunk) =>
-          loopTo(sources, descriptions, thunk(), latestPath, alreadySeen)
+          loopTo(descriptions, thunk(), latestPath, alreadySeen)
 
         case cp: Config.Primitive[_] =>
           loopTo(
-            sources,
             descriptions ++ List(ConfigDocs.Description(None, cp.description)),
             config,
             latestPath,
@@ -614,7 +584,6 @@ trait ConfigDocsModule extends WriteModule {
         case cd: Config.Table[_] =>
           ConfigDocs.DynamicMap(
             loopTo(
-              sources,
               descriptions,
               cd.valueConfig,
               None,
@@ -623,12 +592,11 @@ trait ConfigDocsModule extends WriteModule {
           )
 
         case Config.Optional(c) =>
-          loopTo(sources, descriptions, c, None, alreadySeen)
+          loopTo(descriptions, c, None, alreadySeen)
 
         case Config.Sequence(c) =>
           ConfigDocs.Sequence(
             loopTo(
-              sources,
               descriptions,
               c,
               None,
@@ -641,7 +609,6 @@ trait ConfigDocsModule extends WriteModule {
             ConfigDocs.Description(latestPath, desc)
 
           loopTo(
-            sources,
             descri :: descriptions,
             c,
             latestPath,
@@ -652,7 +619,6 @@ trait ConfigDocsModule extends WriteModule {
           ConfigDocs.Nested(
             path,
             loopTo(
-              sources,
               List.empty,
               c,
               Some(path),
@@ -662,29 +628,29 @@ trait ConfigDocsModule extends WriteModule {
           )
 
         case Config.MapOrFail(c, _) =>
-          loopTo(sources, descriptions, c, None, alreadySeen)
+          loopTo(descriptions, c, None, alreadySeen)
 
         case Config.Zipped(left, right, zippable) =>
           ConfigDocs.Zip(
-            loopTo(sources, descriptions, left, None, alreadySeen),
-            loopTo(sources, descriptions, right, None, alreadySeen)
+            loopTo(descriptions, left, None, alreadySeen),
+            loopTo(descriptions, right, None, alreadySeen)
           )
 
         case Config.Fallback(left, right) =>
           ConfigDocs.OrElse(
-            loopTo(sources, descriptions, left, None, alreadySeen),
-            loopTo(sources, descriptions, right, None, alreadySeen)
+            loopTo(descriptions, left, None, alreadySeen),
+            loopTo(descriptions, right, None, alreadySeen)
           )
 
         case Config.FallbackWith(left, right, _) =>
           ConfigDocs.OrElse(
-            loopTo(sources, descriptions, left, None, alreadySeen),
-            loopTo(sources, descriptions, right, None, alreadySeen)
+            loopTo(descriptions, left, None, alreadySeen),
+            loopTo(descriptions, right, None, alreadySeen)
           )
 
       }
 
-    loopTo(Set.empty, Nil, config, None, Set.empty)
+    loopTo(Nil, config, None, Set.empty)
   }
 
 }
