@@ -49,9 +49,6 @@ jobs:
       - name: Run JS tests
         if: ${{ matrix.platform == 'JS' && !startsWith(matrix.scala, '3.') }}
         run: sbt ++${{ matrix.scala }}! testJS
-      - name: Run 2.11 JVM tests
-        if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '2.11') }}
-        run: sbt ++${{ matrix.scala }}! testJVM211
       - name: Run 2.12 JVM tests
         if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '2.12') }}
         run: sbt ++${{ matrix.scala }}! testJVM212
