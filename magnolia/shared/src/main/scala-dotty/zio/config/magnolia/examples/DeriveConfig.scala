@@ -5,6 +5,7 @@ import zio.{Config, ConfigProvider}
 import zio.config.magnolia._
 import zio.config._
 import zio.Unsafe
+import zio.IO
 
 object AutoDerivationSimple extends App :
   // Use of Either is almost prohibited by the looks of it
@@ -26,11 +27,12 @@ object AutoDerivationSimple extends App :
     pathDelim = ".",
     seqDelim = ","
   )
-  
-  val desc = deriveConfig[A]
+
+  val io: IO[Config.Error, A] = 
+    source.autoLoad[A]  
 
   val readResult = Unsafe.unsafe { implicit u =>
-    zio.Runtime.default.unsafe.run(read(desc from source)).getOrThrowFiberFailure()
+    zio.Runtime.default.unsafe.run(io).getOrThrowFiberFailure()
   }
 
   println(readResult)

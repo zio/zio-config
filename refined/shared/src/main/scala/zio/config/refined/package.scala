@@ -2,8 +2,7 @@ package zio.config
 
 import com.github.ghik.silencer.silent
 import eu.timepit.refined.api.{RefType, Refined, Validate}
-import zio.Config.nested
-import zio.config.magnolia.Descriptor
+import zio.config.magnolia.DeriveConfig
 
 package object refined {
 
@@ -13,7 +12,7 @@ package object refined {
    */
   @silent("deprecated")
   implicit def deriveRefinedDescriptor[A, P](implicit
-    desc: Descriptor[A],
+    desc: DeriveConfig[A],
     validate: Validate[A, P]
   ): Descriptor[Refined[A, P]] =
     Descriptor(refine[P](desc.desc))

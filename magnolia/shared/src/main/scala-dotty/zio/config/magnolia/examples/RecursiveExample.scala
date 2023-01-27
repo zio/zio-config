@@ -28,7 +28,7 @@ object RecursiveExample extends App:
     sourceMap
   )
 
-  val result = read(config from source)
+  val result = source.load(config)
 
   // val expected =
   //   Recursive(B(b = "v1",c = C(), d = List(C(), C()), e = None,f = Right(E.G("v2")), g = E.D, h = E.G("GValue"), i = P.Q, j = P.T("v3")), None)

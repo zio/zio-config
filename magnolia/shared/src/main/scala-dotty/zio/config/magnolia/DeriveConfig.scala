@@ -12,19 +12,19 @@ import scala.deriving._
 import scala.compiletime.{erasedValue, summonInline, constValue, summonFrom, constValueTuple}
 import scala.quoted
 import scala.util.Try
-import Descriptor._
+import DeriveConfig._
 import zio.{Config, ConfigProvider}, Config._
 import zio.config.syntax._
 
-final case class Descriptor[A](desc: Config[A], metadata: Option[Descriptor.Metadata])
+final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata])
 
-object Descriptor {
+object DeriveConfig {
 
-  def apply[A](implicit ev: Descriptor[A]): Config[A] =
+  def apply[A](implicit ev: DeriveConfig[A]): Config[A] =
     ev.desc
 
   def from[A](desc: Config[A]) =
-    Descriptor(desc, None)
+    DeriveConfig(desc, None)
 
   sealed trait Metadata
 
@@ -38,42 +38,42 @@ object Descriptor {
   final case class ProductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
   final case class CoproductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
 
-  lazy given Descriptor[String] = Descriptor.from(string)
-  lazy given Descriptor[Boolean] = Descriptor.from(boolean)
-  lazy given Descriptor[Int] = Descriptor.from(int)
-  lazy given Descriptor[BigInt] = Descriptor.from(bigInt)
-  lazy given Descriptor[Float] = Descriptor.from(float)
-  lazy given Descriptor[Double] = Descriptor.from(double)
-  lazy given Descriptor[BigDecimal] = Descriptor.from(bigDecimal)
-  lazy given Descriptor[URI] = Descriptor.from(uri)
-  lazy given Descriptor[zio.Duration] = Descriptor.from(duration)
-  lazy given Descriptor[LocalDate] = Descriptor.from(localDate)
-  lazy given Descriptor[LocalTime] = Descriptor.from(localTime)
-  lazy given Descriptor[LocalDateTime] = Descriptor.from(localDateTime)
+  lazy given DeriveConfig[String] = DeriveConfig.from(string)
+  lazy given DeriveConfig[Boolean] = DeriveConfig.from(boolean)
+  lazy given DeriveConfig[Int] = DeriveConfig.from(int)
+  lazy given DeriveConfig[BigInt] = DeriveConfig.from(bigInt)
+  lazy given DeriveConfig[Float] = DeriveConfig.from(float)
+  lazy given DeriveConfig[Double] = DeriveConfig.from(double)
+  lazy given DeriveConfig[BigDecimal] = DeriveConfig.from(bigDecimal)
+  lazy given DeriveConfig[URI] = DeriveConfig.from(uri)
+  lazy given DeriveConfig[zio.Duration] = DeriveConfig.from(duration)
+  lazy given DeriveConfig[LocalDate] = DeriveConfig.from(localDate)
+  lazy given DeriveConfig[LocalTime] = DeriveConfig.from(localTime)
+  lazy given DeriveConfig[LocalDateTime] = DeriveConfig.from(localDateTime)
 
-  given optDesc[A](using ev: Descriptor[A]): Descriptor[Option[A]] =
-    Descriptor.from(ev.desc.optional)
+  given optDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Option[A]] =
+    DeriveConfig.from(ev.desc.optional)
 
-  given listDesc[A](using ev: Descriptor[A]): Descriptor[List[A]] =
-    Descriptor.from(listOf(ev.desc))
+  given listDesc[A](using ev: DeriveConfig[A]): DeriveConfig[List[A]] =
+    DeriveConfig.from(listOf(ev.desc))
 
-  given mapDesc[A](using ev: Descriptor[A]): Descriptor[Map[String, A]] =
-    Descriptor.from(table(ev.desc))
+  given mapDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Map[String, A]] =
+    DeriveConfig.from(table(ev.desc))
 
-  inline def summonDescriptorForCoProduct[T <: Tuple]: List[Descriptor[Any]] =
+  inline def summonDeriveConfigForCoProduct[T <: Tuple]: List[DeriveConfig[Any]] =
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
       case _: (t *: ts) =>
-        val desc = summonInline[Descriptor[t]]
-        Descriptor[Any](
+        val desc = summonInline[DeriveConfig[t]]
+        DeriveConfig[Any](
           desc.desc, desc.metadata
-        ) :: summonDescriptorForCoProduct[ts]
+        ) :: summonDeriveConfigForCoProduct[ts]
 
-  inline def summonDescriptorAll[T <: Tuple]: List[Descriptor[_]] =
+  inline def summonDeriveConfigAll[T <: Tuple]: List[DeriveConfig[_]] =
     inline erasedValue[T] match
       case _ : EmptyTuple => Nil
       case _: (t *: ts) =>
-        summonInline[Descriptor[t]] :: summonDescriptorAll[ts]
+        summonInline[DeriveConfig[t]] :: summonDeriveConfigAll[ts]
 
   inline def labelsOf[T <: Tuple]: List[String] =
     inline erasedValue[T] match
@@ -87,7 +87,7 @@ object Descriptor {
     (Macros.fieldNameOf[T].map({ case(str, nmes) => (str, names.fromListOfName(nmes)) })
       ++ Macros.fieldNamesOf[T].map({ case(str, nmes) => (str, names.fromListOfNames(nmes)) })).toMap
 
-  inline given derived[T](using m: Mirror.Of[T]): Descriptor[T] =
+  inline given derived[T](using m: Mirror.Of[T]): DeriveConfig[T] =
     inline m match
       case s: Mirror.SumOf[T] =>
         val coproductName: CoproductName =
@@ -98,12 +98,12 @@ object Descriptor {
           )
 
         lazy val subClassDescriptions =
-          summonDescriptorForCoProduct[m.MirroredElemTypes]
+          summonDeriveConfigForCoProduct[m.MirroredElemTypes]
 
         lazy val desc =
-          mergeAllProducts(subClassDescriptions.map(castTo[Descriptor[T]]))
+          mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]))
 
-        Descriptor.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames))
+        DeriveConfig.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames))
 
       case m: Mirror.ProductOf[T] =>
         val productName =
@@ -133,7 +133,7 @@ object Descriptor {
           })
 
         lazy val descriptors =
-          summonDescriptorAll[m.MirroredElemTypes].asInstanceOf[List[Descriptor[Any]]]
+          summonDeriveConfigAll[m.MirroredElemTypes].asInstanceOf[List[DeriveConfig[Any]]]
 
         lazy val descriptorsWithDefaultValues =
           addDefaultValues(fieldAndDefaultValues, originalFieldNamesList, descriptors)
@@ -147,8 +147,8 @@ object Descriptor {
         )
 
   def mergeAllProducts[T](
-    allDescs: => List[Descriptor[T]],
-  ): Descriptor[T] =
+    allDescs: => List[DeriveConfig[T]],
+  ): DeriveConfig[T] =
     val desc =
       allDescs
         .map(desc =>
@@ -161,33 +161,33 @@ object Descriptor {
           }
         ).reduce(_ orElse _)
 
-    Descriptor.from(desc)
+    DeriveConfig.from(desc)
 
   def addDefaultValues(
     defaultValues: Map[String, Any],
     fieldNames: List[String],
-    descriptors: List[Descriptor[Any]]
-  ): List[Descriptor[_]] = {
+    descriptors: List[DeriveConfig[Any]]
+  ): List[DeriveConfig[_]] = {
     descriptors.zip(fieldNames).map({ case (desc, fieldName) =>
       defaultValues.get(fieldName) match {
-        case Some(any) => Descriptor(desc.desc.withDefault(any), desc.metadata)
+        case Some(any) => DeriveConfig(desc.desc.withDefault(any), desc.metadata)
         case None => desc
     }})
   }
 
   def mergeAllFields[T](
-    allDescs: => List[Descriptor[_]],
+    allDescs: => List[DeriveConfig[_]],
     productName: ProductName,
     fieldNames: => List[FieldName],
     f: List[Any] => T,
     g: T => List[Any],
-   ): Descriptor[T] =
+   ): DeriveConfig[T] =
        if fieldNames.isEmpty then
          val tryAllPaths =
            (productName.originalName :: productName.alternativeNames)
              .map(n => zio.Config.constant(n)).reduce(_ orElse _)
 
-         Descriptor(
+         DeriveConfig(
            tryAllPaths.map[T](
              _ => f(List.empty[Any])
            ),
@@ -206,7 +206,7 @@ object Descriptor {
          val descOfList =
            Config.collectAll(listOfDesc.head, listOfDesc.tail: _*)
 
-         Descriptor(descOfList.map(f), Some(Metadata.Product(productName, fieldNames)))
+         DeriveConfig(descOfList.map(f), Some(Metadata.Product(productName, fieldNames)))
 
   def tryAllkeys[A](
     desc: Config[A],
