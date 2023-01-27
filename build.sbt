@@ -35,6 +35,7 @@ addCommandAlias(
   "testJS",
   ";zioConfigJS/test"
 )
+
 addCommandAlias(
   "testJVM212",
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;examplesJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test"
