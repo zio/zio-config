@@ -3,7 +3,6 @@ package zio.config.magnolia.examples
 import zio.config._
 import zio.{Config, ConfigProvider}
 import zio.config.magnolia._
-import zio.config.syntax._
 
 final case class Recursive(a: B, b: Option[Recursive])
 

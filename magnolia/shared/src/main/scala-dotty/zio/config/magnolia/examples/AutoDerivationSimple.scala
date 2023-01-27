@@ -2,7 +2,6 @@ package zio.config.magnolia.examples
 
 import zio.config.magnolia._
 import zio.{Config, ConfigProvider}
-import zio.config.syntax._
 import zio.config.magnolia._
 import zio.config._
 import zio.Unsafe

@@ -1,7 +1,6 @@
 package zio.config.magnolia
 
 import zio.config._
-import zio.config.derivation.DerivationUtils
 import zio.NonEmptyChunk
 
 import java.io.File

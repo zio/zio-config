@@ -3,7 +3,6 @@ package zio.config.syntax
 import zio.config.TupleConversion, TupleConversion._
 import zio.Config
 import zio.ConfigProvider
-import zio.config.Read
 import zio.Chunk
 import zio.Trace
 import zio.ZIO
@@ -34,9 +33,17 @@ import zio.Config.Fail
 import zio.Config.LocalTime
 import zio.Config.LocalDateTime
 
+// Backward compatible approach to minimise the client changes
+final case class Read[A](config: Config[A], configProvider: ConfigProvider)
+
 // To be moved to ZIO ?
 // Or may be zio-config can be considered as an extension to ZIO
 trait ConfigSyntax {
+
+  // Backward compatible approach to minimise the client changes
+  final def read[A](reader: Read[A]): IO[Config.Error, A] =
+    reader.configProvider.load(reader.config)
+
   import zio.config.VersionSpecificSupport._
 
   implicit class ConfigErrorOps(error: Config.Error) { self =>
