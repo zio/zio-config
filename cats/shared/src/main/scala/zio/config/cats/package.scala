@@ -6,32 +6,34 @@ import _root_.cats.kernel.Order
 
 import scala.collection.immutable.SortedMap
 
-import Config._
+import zio.Config, Config._
 
 package object cats {
   def chain[A](aDesc: Config[A]): Config[Chain[A]] =
-    listOf(aDesc).transform(v => Chain.fromSeq(v), _.toList)
+    listOf(aDesc).map(v => Chain.fromSeq(v))
 
   def chain[A](path: String)(aDesc: Config[A]): Config[Chain[A]] =
-    nested(path)(chain(aDesc))
+    chain(aDesc).nested(path)
 
   def nonEmptyChain[A](aDesc: Config[A]): Config[NonEmptyChain[A]] =
-    chain(aDesc).transformOrFailLeft(value =>
+    chain(aDesc).mapOrFail(value =>
       NonEmptyChain
         .fromChain(value)
-        .fold[Either[String, NonEmptyChain[A]]](Left("chain is empty"))(value => Right(value))
-    )(
-      _.toChain
+        .fold[Either[Config.Error, NonEmptyChain[A]]](Left(Config.Error.InvalidData(message = "chain is empty")))(
+          value => Right(value)
+        )
     )
 
   def nonEmptyChain[A](path: String)(aDesc: Config[A]): Config[NonEmptyChain[A]] =
-    nested(path)(nonEmptyChain(aDesc))
+    nonEmptyChain(aDesc).nested(path)
 
   def nonEmptyList[A](aDesc: Config[A]): Config[NonEmptyList[A]] =
-    listOf(aDesc).transformOrFailLeft(value =>
-      NonEmptyList.fromList(value).fold[Either[String, NonEmptyList[A]]](Left("list is empty"))(v => Right(v))
-    )(
-      _.toList
+    listOf(aDesc).mapOrFail(value =>
+      NonEmptyList
+        .fromList(value)
+        .fold[Either[Config.Error, NonEmptyList[A]]](Left(Config.Error.InvalidData(message = "list is empty")))(v =>
+          Right(v)
+        )
     )
 
   def nonEmptyList[A](path: String)(aDesc: Config[A]): Config[NonEmptyList[A]] =
