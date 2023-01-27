@@ -37,17 +37,17 @@ package object cats {
     )
 
   def nonEmptyList[A](path: String)(aDesc: Config[A]): Config[NonEmptyList[A]] =
-    nested(path)(nonEmptyList(aDesc))
+    nonEmptyList(aDesc).nested(path)
 
   def nonEmptyMap[A](aDesc: Config[A]): Config[NonEmptyMap[String, A]] =
-    map(aDesc).transformOrFailLeft(x =>
+    table(aDesc).mapOrFail(x =>
       NonEmptyMap
         .fromMap(SortedMap(x.toSeq: _*)(Order[String].toOrdering))
-        .fold[Either[String, NonEmptyMap[String, A]]](Left("map is empty"))(v => Right(v))
-    )(
-      _.toSortedMap
+        .fold[Either[Config.Error, NonEmptyMap[String, A]]](Left(Config.Error.InvalidData(message = "map is empty")))(
+          v => Right(v)
+        )
     )
 
   def nonEmptyMap[A](path: String)(aDesc: Config[A]): Config[NonEmptyMap[String, A]] =
-    nested(path)(nonEmptyMap(aDesc))
+    nonEmptyMap(aDesc).nested(path)
 }
