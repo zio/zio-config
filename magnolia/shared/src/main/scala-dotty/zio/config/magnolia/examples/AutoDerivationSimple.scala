@@ -31,7 +31,7 @@ object AutoDerivationSimple extends App :
   val desc = deriveConfig[A]
 
   val readResult = Unsafe.unsafe { implicit u =>
-    zio.Runtime.default.unsafe.run(read_(desc from source)).getOrThrowFiberFailure()
+    zio.Runtime.default.unsafe.run(read(desc from source)).getOrThrowFiberFailure()
   }
 
   println(readResult)

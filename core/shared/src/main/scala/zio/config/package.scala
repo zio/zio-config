@@ -7,3 +7,4 @@ package object config
     with ConfigSyntax
     with ImplicitTupleConversion
     with ConfigDocsModule
+    with ReadModule
