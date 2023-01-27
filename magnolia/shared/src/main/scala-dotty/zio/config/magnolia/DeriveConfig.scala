@@ -16,7 +16,7 @@ import DeriveConfig._
 import zio.{Config, ConfigProvider}, Config._
 import zio.config.syntax._
 
-final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata])
+final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None)
 
 object DeriveConfig {
 

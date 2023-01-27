@@ -70,7 +70,7 @@ lazy val magnoliaDependencies =
 
 lazy val refinedDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
+    if (scalaBinaryVersion.value == "2.11") Seq.empty // Just to make IntelliJ happy
     else Seq("eu.timepit" %% "refined" % refinedVersion)
   }
 
@@ -111,6 +111,7 @@ lazy val scala3projects =
     zioConfigDerivationJVM,
     zioConfigEnumeratumJVM,
     zioConfigMagnoliaJVM,
+    zioConfigRefinedJVM,
     zioConfigScalazJVM,
     zioConfigTypesafeJVM,
     zioConfigYamlJVM,
@@ -214,6 +215,7 @@ lazy val zioConfigRefined    = crossProject(JVMPlatform)
   .in(file("refined"))
   .settings(stdSettings("zio-config-refined"))
   .settings(crossProjectSettings)
+  .settings(dottySettings)
   .settings(
     crossScalaVersions --= Seq(Scala211),
     refinedDependencies,

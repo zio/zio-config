@@ -3,6 +3,7 @@ package zio.config
 import com.github.ghik.silencer.silent
 import eu.timepit.refined.api.{RefType, Refined, Validate}
 import zio.config.magnolia.DeriveConfig
+import zio.Config
 
 package object refined {
 
@@ -14,8 +15,8 @@ package object refined {
   implicit def deriveRefinedDescriptor[A, P](implicit
     desc: DeriveConfig[A],
     validate: Validate[A, P]
-  ): Descriptor[Refined[A, P]] =
-    Descriptor(refine[P](desc.desc))
+  ): DeriveConfig[Refined[A, P]] =
+    DeriveConfig(refine[P](desc.desc))
 
   /**
    * `refine` allows us to retrieve a `refined` type from a given path.
@@ -31,13 +32,13 @@ package object refined {
    */
   @silent("deprecated")
   def refine[A, P](path: String)(implicit
-    desc: Descriptor[A],
+    desc: DeriveConfig[A],
     validate: Validate[A, P]
   ): Config[Refined[A, P]] =
-    nested(path)(desc.desc)
-      .transformOrFail[Refined[A, P]](
-        RefType.applyRef[Refined[A, P]](_),
-        rf => Right(rf.value)
+    desc.desc
+      .nested(path)
+      .mapOrFail[Refined[A, P]](v =>
+        RefType.applyRef[Refined[A, P]](v).swap.map(str => Config.Error.InvalidData(message = str)).swap
       )
 
   /**
