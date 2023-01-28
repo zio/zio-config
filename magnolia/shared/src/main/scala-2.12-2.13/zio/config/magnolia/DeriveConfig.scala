@@ -145,24 +145,9 @@ object DeriveConfig {
   }
 
   final def dispatch[T](sealedTrait: SealedTrait[DeriveConfig, T]): DeriveConfig[T] = {
-    val nameToLabel =
-      sealedTrait.subtypes
-        .map(tc => prepareClassName(tc.annotations) -> tc.typeName.full)
-        .groupBy(_._1)
-        .toSeq
-        .flatMap {
-          case (label, Seq((_, fullName))) => (fullName -> label) :: Nil
-          case (label, seq)                =>
-            seq.zipWithIndex.map { case ((_, fullName), idx) => fullName -> s"${label}_$idx" }
-        }
-        .toMap
-
     val desc =
       sealedTrait.subtypes.map { subtype =>
         val typeclass: DeriveConfig[subtype.SType] = subtype.typeclass
-
-        val subClassName =
-          nameToLabel(subtype.typeName.full)
 
         val subClassNames =
           prepareClassNames(subtype.annotations)
