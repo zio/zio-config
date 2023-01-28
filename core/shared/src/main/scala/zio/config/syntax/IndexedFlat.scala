@@ -4,8 +4,6 @@ import zio._
 
 trait IndexedFlat { self =>
 
-  def sequenceComponent: Map[Any, Int] = Map.empty
-
   def load[A](path: Chunk[KeyComponent], config: Config.Primitive[A])(implicit trace: Trace): IO[Config.Error, Chunk[A]]
 
   def enumerateChildren(path: Chunk[KeyComponent])(implicit trace: Trace): IO[Config.Error, Set[Chunk[KeyComponent]]]

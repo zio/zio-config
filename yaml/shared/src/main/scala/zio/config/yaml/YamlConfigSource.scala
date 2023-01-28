@@ -2,7 +2,6 @@ package zio.config.yaml
 
 import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
-import zio.ZIO
 import zio.config._
 
 import java.io.{File, FileInputStream, Reader}
@@ -10,6 +9,8 @@ import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integ
 import java.nio.file.Path
 import java.{util => ju}
 import scala.jdk.CollectionConverters._
+import zio.ConfigProvider
+import zio.Chunk
 
 @silent("Unused import")
 object YamlConfigSource {
@@ -30,8 +31,8 @@ object YamlConfigSource {
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromYamlFile(file: File): ConfigSource =
-    fromYamlRepr(file)(loadYaml(_), file.getAbsolutePath)
+  def fromYamlFile(file: File): ConfigProvider =
+    convertYaml(loadYaml(file))
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -47,7 +48,7 @@ object YamlConfigSource {
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromYamlPath(path: Path): ConfigSource =
+  def fromYamlPath(path: Path): ConfigProvider =
     fromYamlFile(path.toFile)
 
   /**
@@ -79,10 +80,9 @@ object YamlConfigSource {
    * }}}
    */
   def fromYamlReader(
-    reader: Reader,
-    sourceName: String = "yaml"
-  ): ConfigSource =
-    fromYamlRepr(reader)(loadYaml(_), sourceName)
+    reader: Reader
+  ): ConfigProvider =
+    convertYaml(loadYaml(reader))
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -101,85 +101,71 @@ object YamlConfigSource {
    * }}}
    */
   def fromYamlString(
-    yamlString: String,
-    sourceName: String = "yaml"
-  ): ConfigSource =
-    fromYamlRepr(yamlString)(loadYaml(_), sourceName)
+    yamlString: String
+  ): ConfigProvider =
+    convertYaml(loadYaml(yamlString))
 
-  private[config] def fromYamlRepr[A](repr: A)(
-    loadYaml: A => ZIO[Any, Config.Error, AnyRef],
-    sourceName: String = "yaml"
-  ): ConfigSource = {
+  // Use zio-config-parser for xml, yaml, hcl and json
+  private[yaml] def convertYaml(data: AnyRef): ConfigProvider = {
+    def flattened(data: AnyRef, chunk: Chunk[syntax.KeyComponent]): Map[Chunk[syntax.KeyComponent], String] =
+      data match {
+        case null        => Map.empty
+        case t: JInteger => Map(chunk -> t.toString())
+        case t: JLong    => Map(chunk -> t.toString())
+        case t: JFloat   => Map(chunk -> t.toString())
+        case t: JDouble  => Map(chunk -> t.toString())
+        case t: String   => Map(chunk -> t.toString())
+        case t: JBoolean => Map(chunk -> t.toString())
 
-    val managedTree =
-      loadYaml(repr).flatMap(anyRef => convertYaml(anyRef))
+        case t: ju.List[_] =>
+          val list = t.asInstanceOf[ju.List[AnyRef]].asScala.toList
 
-    ConfigSource
-      .fromManaged(
-        sourceName,
-        managedTree.map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
-      )
-      .memoize
+          list.zipWithIndex
+            .map({ case (anyRef, index) =>
+              val keyComponentIndex = syntax.KeyComponent.Index(index)
+              flattened(anyRef, chunk ++ Chunk(keyComponentIndex))
+            })
+            .reduceOption(_ ++ _)
+            .getOrElse(Map.empty)
+
+        case t: ju.Map[_, _] =>
+          val map = t.asInstanceOf[ju.Map[String, AnyRef]].asScala.toMap
+
+          map
+            .map({ case (k, v) =>
+              flattened(v, chunk ++ Chunk(syntax.KeyComponent.KeyName(k)))
+            })
+            .reduceOption(_ ++ _)
+            .getOrElse(Map.empty)
+
+        // It is definitely comparitively less user friendly to return IO[ConfigProvider].
+        // This is not the case in pure-config or zio-config-3.x although it had the same behaviour of doing a flatMap
+        // Example: provider.flatMap(_.load(config)) or provider1ZIO.zip(provider2ZIO).map{(case (provider1, provider2) => provider1.orElse(provider2))}
+        //
+
+        case _ =>
+          throw new RuntimeException(
+            "Invalid yaml"
+          )
+      }
+
+    ConfigProvider.fromIndexedFlat(syntax.IndexedFlat.from(flattened(data, Chunk.empty)))
+
   }
 
-  private[yaml] def convertYaml(data: AnyRef): ZIO[Any, Config.Error, PropertyTree[String, String]] = {
-    def strictLeaf[A](leaf: A) = PropertyTree.Leaf(leaf, canBeSequence = false)
+  // It's hard to define a ConfigProvider on its on without effectful ConfigSource (similar to ZIO-Config 3.x)
+  private def loadYaml(yamlFile: File): AnyRef =
+    snakeYamlLoader().loadFromInputStream(new FileInputStream(yamlFile))
 
-    data match {
-      case null          => ZIO.succeed(PropertyTree.empty)
-      case t: JInteger   => ZIO.succeed(strictLeaf(t.toString))
-      case t: JLong      => ZIO.succeed(strictLeaf(t.toString))
-      case t: JFloat     => ZIO.succeed(strictLeaf(t.toString))
-      case t: JDouble    => ZIO.succeed(strictLeaf(t.toString))
-      case t: String     => ZIO.succeed(strictLeaf(t))
-      case t: JBoolean   => ZIO.succeed(strictLeaf(t.toString))
-      case t: ju.List[_] =>
-        ZIO
-          .foreach(
-            t.asInstanceOf[ju.List[AnyRef]].asScala.toList
-          )(each => convertYaml(each))
-          .map(PropertyTree.Sequence(_))
+  private def loadYaml(yamlReader: Reader): AnyRef =
+    snakeYamlLoader().loadFromReader(yamlReader)
 
-      case t: ju.Map[_, _] =>
-        ZIO
-          .foreach(
-            t.asInstanceOf[ju.Map[String, AnyRef]].asScala.toList
-          )(each => convertYaml(each._2).map(r => (each._1, r)))
-          .map(res => PropertyTree.Record(res.toMap))
+  private def loadYaml(yamlString: String): AnyRef =
+    snakeYamlLoader().loadAllFromString(yamlString)
 
-      case _ => ZIO.fail(ReadError.SourceError("unexpected data type in convertYaml"))
-    }
-  }
-
-  private def loadYaml(yamlFile: File): ZIO[Any, Config.Error, AnyRef] =
-    snakeYamlLoader().flatMap(r =>
-      ZIO
-        .attempt(r.loadFromInputStream(new FileInputStream(yamlFile)))
-        .mapError(throwable => ReadError.SourceError(throwable.toString))
+  private def snakeYamlLoader(): Load =
+    new Load(
+      LoadSettings.builder().setEnvConfig(ju.Optional.of(EnvConfigImpl)).build()
     )
 
-  private def loadYaml(yamlReader: Reader): ZIO[Any, Config.Error, AnyRef] =
-    snakeYamlLoader().flatMap(r =>
-      ZIO
-        .attempt(r.loadFromReader(yamlReader))
-        .mapError(throwable => ReadError.SourceError(throwable.toString))
-    )
-
-  private def loadYaml(yamlString: String): ZIO[Any, Config.Error, AnyRef] =
-    snakeYamlLoader().flatMap(r =>
-      ZIO
-        .attempt(r.loadFromString(yamlString))
-        .mapError(throwable => ReadError.SourceError(throwable.toString))
-    )
-
-  private def snakeYamlLoader(): ZIO[Any, Config.Error, Load] =
-    ZIO
-      .attempt(
-        new Load(
-          LoadSettings.builder().setEnvConfig(ju.Optional.of(EnvConfigImpl)).build()
-        ): Load
-      )
-      .mapError(throwable =>
-        ReadError.SourceError(s"Failed to load snake yaml environment config ${throwable.toString}")
-      )
 }
