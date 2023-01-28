@@ -1,6 +1,6 @@
 package zio.config.examples.typesafe
 
-import zio.config.magnolia._, DeriveConfig._
+import zio.config.magnolia._
 import zio.config.typesafe.TypesafeConfigSource
 import zio._
 import zio.Console._
