@@ -1,6 +1,7 @@
 package zio.config.syntax
 
 import zio._
+import zio.IO
 
 trait IndexedFlat { self =>
 

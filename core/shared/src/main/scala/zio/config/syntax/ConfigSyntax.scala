@@ -32,6 +32,8 @@ import zio.Config.Constant
 import zio.Config.Fail
 import zio.Config.LocalTime
 import zio.Config.LocalDateTime
+import zio.IO
+import zio.IO
 
 // Backward compatible approach to minimise the client changes
 final case class Read[A](config: Config[A], configProvider: ConfigProvider)
@@ -268,7 +270,7 @@ trait ConfigSyntax {
      * nesting is embedded into the string keys.
      */
     def fromIndexedFlat(flat: IndexedFlat): ConfigProvider =
-      new ConfigProvider {
+      new ConfigProvider { self =>
         import Config._
 
         def extend[A, B](
@@ -391,7 +393,35 @@ trait ConfigSyntax {
             }
           }
 
-        override def flatten: zio.ConfigProvider.Flat = null
+        override def flatten: zio.ConfigProvider.Flat =
+          new zio.ConfigProvider.Flat {
+            override def load[A](path: Chunk[String], config: Primitive[A])(implicit
+              trace: zio.Trace
+            ): IO[Error, Chunk[A]] = loop(
+              path.map { str =>
+                println(str)
+                // FIXME: Hack since zio.Config works non indexed flat as of now
+                if (str.startsWith("[") && str.endsWith("]")) {
+                  KeyComponent.Index(str.dropRight(1).drop(1).toInt)
+                } else {
+                  KeyComponent.KeyName(str)
+                }
+              },
+              config
+            )
+
+            override def enumerateChildren(path: Chunk[String])(implicit trace: zio.Trace): IO[Error, Set[String]] = {
+              val result = flat.enumerateChildren(path.map { str =>
+                println(str)
+                if (str.startsWith("[") && str.endsWith("]")) {
+                  KeyComponent.Index(str.dropRight(1).drop(1).toInt)
+                } else {
+                  KeyComponent.KeyName(str)
+                }
+              })
+              result.map(_.map(_.mkString(".")))
+            }
+          }
       }
 
     def collectAll[A](head: => Config[A], tail: Config[A]*): Config[List[A]] =

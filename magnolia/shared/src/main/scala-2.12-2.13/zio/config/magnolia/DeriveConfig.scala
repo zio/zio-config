@@ -11,6 +11,7 @@ import java.util.UUID
 import zio.config.derivation._
 
 import zio.Config
+import scala.collection.immutable
 
 case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
 
@@ -66,17 +67,23 @@ object DeriveConfig {
     desc: Config[T]
   ): Config[T] = {
     val f = (name: String) => desc.nested(name)
-    labels.tail.foldLeft(f(labels.head)) { case (acc, n) =>
-      acc orElse f(n)
+    labels.toList match {
+      case head :: next  => f(head)
+      case immutable.Nil => desc
+      case multiple      =>
+        multiple.tail.foldLeft(f(multiple.head)) { case (acc, n) =>
+          acc orElse f(n)
+        }
     }
+
   }
 
-  final def prepareClassName(annotations: Seq[Any], name: String): String       =
-    annotations.collectFirst { case d: name => d.name }.getOrElse(name)
+  final def prepareClassName(annotations: Seq[Any]): List[String]               =
+    annotations.collectFirst { case d: name => d.name }.toList
 
-  final def prepareClassNames(annotations: Seq[Any], name: String): Seq[String] =
+  final def prepareClassNames(annotations: Seq[Any]): Seq[String]               =
     annotations.collectFirst { case d: names => d.names }.getOrElse(List[String]()) ++
-      List(annotations.collectFirst { case d: name => d.name }.getOrElse(name))
+      annotations.collectFirst { case d: name => d.name }.toList
 
   final def prepareFieldName(annotations: Seq[Any], name: String): String       =
     annotations.collectFirst { case d: name => d.name }.getOrElse(name)
@@ -87,7 +94,7 @@ object DeriveConfig {
 
   final def combine[T](caseClass: CaseClass[DeriveConfig, T]): DeriveConfig[T] = {
     val descriptions = caseClass.annotations.collect { case d: describe => d.describe }
-    val ccNames      = prepareClassNames(caseClass.annotations, caseClass.typeName.short)
+    val ccNames      = prepareClassNames(caseClass.annotations)
 
     val res =
       caseClass.parameters.toList match {
@@ -140,7 +147,7 @@ object DeriveConfig {
   final def dispatch[T](sealedTrait: SealedTrait[DeriveConfig, T]): DeriveConfig[T] = {
     val nameToLabel =
       sealedTrait.subtypes
-        .map(tc => prepareClassName(tc.annotations, tc.typeName.short) -> tc.typeName.full)
+        .map(tc => prepareClassName(tc.annotations) -> tc.typeName.full)
         .groupBy(_._1)
         .toSeq
         .flatMap {
@@ -158,20 +165,23 @@ object DeriveConfig {
           nameToLabel(subtype.typeName.full)
 
         val subClassNames =
-          prepareClassNames(subtype.annotations, subClassName)
+          prepareClassNames(subtype.annotations)
 
         val desc = {
           val f = (name: String) => typeclass.desc.nested(name)
 
-          if (subClassNames.length > 1)
-            subClassNames.tail.foldLeft(f(subClassNames.head)) { case (acc, n) =>
-              acc orElse f(n)
-            }
-          else
-            typeclass.desc.nested(subClassName)
+          subClassNames.toList match {
+            case head :: Nil   => f(head)
+            case immutable.Nil => typeclass.desc
+            case multiple      =>
+              multiple.tail.foldLeft(f(multiple.head)) { case (acc, n) =>
+                acc orElse f(n)
+              }
+          }
+
         }
 
-        wrapSealedTrait(prepareClassNames(sealedTrait.annotations, sealedTrait.typeName.short), desc)
+        wrapSealedTrait(prepareClassNames(sealedTrait.annotations), desc)
       }.reduce(_.orElse(_))
 
     DeriveConfig(desc)
