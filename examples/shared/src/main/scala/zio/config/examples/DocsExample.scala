@@ -2,9 +2,7 @@ package zio.config.examples
 
 import zio.config._
 
-import Config._
-import zio.Config
-import zio.config.syntax._
+import zio.Config, Config._
 
 object DocsExample extends App {
 

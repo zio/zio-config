@@ -1,11 +1,11 @@
 package zio.config.examples.magnolia
 
-import zio.config._
+import zio.config._, magnolia._
 import zio.config.examples.magnolia.MyConfig._
 import zio.config.magnolia.DeriveConfig._
 
-import examples._
 import zio.ConfigProvider
+import zio.config.examples.ZioOps
 
 final case class MyConfig(
   aws: Aws,

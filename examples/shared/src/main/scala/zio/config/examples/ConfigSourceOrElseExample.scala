@@ -1,10 +1,11 @@
 package zio.config.examples
 
-import zio.Unsafe
+import zio._
 import zio.config._
-import zio.config.magnolia.descriptor
+import zio.config.magnolia.deriveConfig
 import zio.config.typesafe._
 import zio.config.yaml._
+import zio.ConfigProvider
 
 object ConfigSourceOrElseExample extends App {
 
@@ -35,8 +36,8 @@ object ConfigSourceOrElseExample extends App {
       zio.Runtime.default.unsafe
         .run(
           read(
-            descriptor[ApplicationConfig] from
-              ConfigSource.fromHoconString(applicationDevYaml).orElse(ConfigSource.fromHoconString(applicationYaml))
+            deriveConfig[ApplicationConfig] from
+              ConfigProvider.fromHoconString(applicationDevYaml).orElse(ConfigProvider.fromHoconString(applicationYaml))
           )
         )
         .getOrThrowFiberFailure()
@@ -57,16 +58,16 @@ object ConfigSourceOrElseExample extends App {
        |  region: "US"
        |""".stripMargin
 
-  val applicationYamlSourceReader: ConfigSource =
-    ConfigSource.fromYamlReader(scala.io.Source.fromResource("application.yml").reader())
+  val applicationYamlSourceReader: ConfigProvider =
+    ConfigProvider.fromYamlReader(scala.io.Source.fromResource("application.yml").reader())
 
-  val applicationYamlSourceString: ConfigSource =
-    ConfigSource.fromYamlString(yamlString)
+  val applicationYamlSourceString: ConfigProvider =
+    ConfigProvider.fromYamlString(yamlString)
 
   val expected: ApplicationConfig =
     ApplicationConfig(KafkaClients(List("localhost:9092", "locathost:9094"), 100, "US"))
 
-  val desc: ConfigDescriptor[ApplicationConfig] = descriptor[ApplicationConfig]
+  val desc: Config[ApplicationConfig] = deriveConfig[ApplicationConfig]
 
   val result1: ApplicationConfig =
     Unsafe.unsafe { implicit u =>

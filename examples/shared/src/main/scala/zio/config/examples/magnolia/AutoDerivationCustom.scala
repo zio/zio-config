@@ -3,11 +3,13 @@ package zio.config.examples.magnolia
 import zio.config._
 import zio.config.magnolia._
 import zio.config.typesafe._
+import zio.Config
 
 import java.time.{LocalDate, ZonedDateTime}
 import scala.util.Try
+import zio.config.examples.ZioOps
 
-import examples._
+import zio.ConfigProvider
 
 object AutoDerivationCustom extends App {
   case class AppConfig(jobName: String, details: Option[Detail], s3Path: S3Path)
@@ -20,12 +22,11 @@ object AutoDerivationCustom extends App {
     // For some reason you decided to check if the string inside s3Path is empty or not while writing back as well
     // If this implicit doesn't exist, zio-config-magnolia falls back to its default behaviour
     // and finds out an instance for S3Path as it is a simple case class.
-    implicit val descriptorOfS3Path: Descriptor[S3Path] =
-      Descriptor[String]
-        .transformOrFail(
-          s => validateS3Path(s).toRight(s"Invalid s3 path: ${s}"),
-          value => validateS3Path(value.s).map(_.s).toRight("Cannot write. Invalid S3 path.")
-        )
+    implicit val descriptorOfS3Path: DeriveConfig[S3Path] =
+      DeriveConfig(
+        DeriveConfig[String]
+          .mapOrFail(s => validateS3Path(s).toRight(Config.Error.InvalidData(message = s"Invalid s3 path: ${s}")))
+      )
 
     private def validateS3Path(s3Path: String): Option[S3Path] =
       if (s3Path.startsWith("s3://")) Some(S3Path(s3Path)) else None
@@ -48,16 +49,18 @@ object AutoDerivationCustom extends App {
   // Custom derivation for zoned date time. Since zonedDateTime is external,
   // we couldn't have a companion object to place this implicit, and hence placed
   // globally for the automatic derivation to work.
-  implicit val descriptorOfZonedDateTime: Descriptor[ZonedDateTime] =
-    Descriptor[String]
-      .transformOrFailLeft(x => Try(ZonedDateTime.parse(x)).toEither.swap.map(_.getMessage).swap)(
-        _.toString
-      ) ?? "time in zoned date time"
+  implicit val descriptorOfZonedDateTime: DeriveConfig[ZonedDateTime] =
+    DeriveConfig(
+      DeriveConfig[String]
+        .mapOrFail(x =>
+          Try(ZonedDateTime.parse(x)).toEither.swap.map(r => Config.Error.InvalidData(message = r.getMessage())).swap
+        ) ?? "time in zoned date time"
+    )
 
   val appConfigDesc: Config[AppConfig] =
-    descriptor[AppConfig]
+    deriveConfig[AppConfig]
 
-  val source: ConfigSource = TypesafeConfigSource.fromHoconString(config)
+  val source: ConfigProvider = TypesafeConfigSource.fromHoconString(config)
 
   assert(
     read(appConfigDesc from source) equalM

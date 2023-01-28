@@ -35,7 +35,7 @@ object CollectAllExample extends App {
     )
 
   // loadOrThrow here is only for the purpose of example
-  val resultZIO: IO[Config.Error, List[Variables]] = zio.config.read_(
+  val resultZIO: IO[Config.Error, List[Variables]] = zio.config.read(
     configOfList from ConfigProvider.fromMap(map, "constant")
   )
   val result                                       = resultZIO.unsafeRun

@@ -2,7 +2,7 @@ package zio.config.examples.magnolia
 
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
-import zio.config.magnolia.descriptor
+import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigSource
 
 import examples._
@@ -49,7 +49,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[CfgCfg] from TypesafeConfigSource.fromHoconString(s1)) equalM
+    read(deriveConfig[CfgCfg] from TypesafeConfigSource.fromHoconString(s1)) equalM
       CfgCfg(Cfg(C("b", G("hi"))), 1, "l")
   )
 
@@ -58,14 +58,14 @@ object Cfg extends App with EitherImpureOps {
       |fieldName = A
       |""".stripMargin
 
-  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s2)) equalM Cfg(A))
+  assert(read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s2)) equalM Cfg(A))
 
   val s3: String =
     """
       |fieldName = B
       |""".stripMargin
 
-  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s3)) equalM Cfg(B))
+  assert(read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s3)) equalM Cfg(B))
 
   val s4: String =
     """
@@ -80,7 +80,7 @@ object Cfg extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s4)) equalM Cfg(D(Z("1"))))
+  assert(read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s4)) equalM Cfg(D(Z("1"))))
 
   val s5: String =
     """
@@ -92,7 +92,7 @@ object Cfg extends App with EitherImpureOps {
       |}
       |""".stripMargin
 
-  assert(read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s5)) equalM Cfg(E("1", 2)))
+  assert(read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s5)) equalM Cfg(E("1", 2)))
 
   val s6: String =
     """
@@ -109,7 +109,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s6)) equalM
+    read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s6)) equalM
       Cfg(F("1", None, Z("2")))
   )
 
@@ -129,7 +129,7 @@ object Cfg extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(descriptor[Cfg] from TypesafeConfigSource.fromHoconString(s7)) equalM
+    read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s7)) equalM
       Cfg(F("1", Some(2), Z("2")))
   )
 

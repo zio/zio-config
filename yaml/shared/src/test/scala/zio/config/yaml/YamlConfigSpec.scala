@@ -8,7 +8,7 @@ import zio.test.{ZIOSpecDefault, _}
 object YamlConfigSpec extends ZIOSpecDefault {
   def spec: Spec[Any, Config.Error] = suite("YamlConfig")(
     test("Read a complex structure") {
-      val result   = YamlConfigSource.fromYamlString(
+      val result = YamlConfigSource.fromYamlString(
         """
           |top:
           |  child:
@@ -21,29 +21,6 @@ object YamlConfigSpec extends ZIOSpecDefault {
           |  - s: "str"
           |""".stripMargin
       )
-      val expected =
-        PropertyTree.Record(
-          Map(
-            "top" -> PropertyTree.Record(
-              Map(
-                "child" -> PropertyTree.Record(
-                  Map(
-                    "i" -> PropertyTree.Leaf("1", false),
-                    "b" -> PropertyTree.Leaf("true", false),
-                    "s" -> PropertyTree.Leaf("str", false)
-                  )
-                ),
-                "list"  -> PropertyTree.Sequence(
-                  List(
-                    PropertyTree.Record(Map("i" -> PropertyTree.Leaf("1", false))),
-                    PropertyTree.Record(Map("b" -> PropertyTree.Leaf("true", false))),
-                    PropertyTree.Record(Map("s" -> PropertyTree.Leaf("str", false)))
-                  )
-                )
-              )
-            )
-          )
-        )
 
       assertZIO(result.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
     },

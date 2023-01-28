@@ -2,29 +2,20 @@ package zio.config.examples.typesafe
 
 import zio.IO
 import zio.config._
-import zio.config.magnolia.descriptor
+import zio.config.magnolia.deriveConfig
 import zio.config.typesafe._
-
-import Config._
+import zio.config.examples.ZioOps
+import zio.Config, Config._
+import zio.ConfigProvider
 
 object TypesafeConfigErrors extends App {
   // A nested example with type safe config, and usage of magnolia
   final case class Account(region: String, accountId: String)
   final case class Database(port: Int, url: String)
-  final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
+  final case class AwsConfig(account: Account, database: Option[Database])
 
   val configNestedAutomatic: Config[AwsConfig] =
-    descriptor[AwsConfig]
-
-  val hocconStringWithStringDb: String =
-    s"""
-    account {
-        region : us-east
-        accountId: jon
-    }
-
-    database = "hi"
-   """
+    deriveConfig[AwsConfig]
 
   val hocconStringWithDb: String =
     s"""
@@ -60,27 +51,12 @@ object TypesafeConfigErrors extends App {
     }
    """
 
-  val nestedConfigAutomaticResult1: IO[Config.Error, AwsConfig] =
-    read(configNestedAutomatic from ConfigSource.fromHoconString(hocconStringWithStringDb))
-
   val nestedConfigAutomaticResult2: IO[Config.Error, AwsConfig] =
-    read(configNestedAutomatic from ConfigSource.fromHoconString(hocconStringWithDb))
+    read(configNestedAutomatic from ConfigProvider.fromHoconString(hocconStringWithDb))
 
   val nestedConfigAutomaticResult3: IO[Config.Error, AwsConfig] =
-    read(configNestedAutomatic from ConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
+    read(configNestedAutomatic from ConfigProvider.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
-  assert(
-    nestedConfigAutomaticResult1 equalM
-      AwsConfig(Account("us-east", "jon"), Some(Right("hi")))
-  )
-
-  assert(
-    nestedConfigAutomaticResult2 equalM
-      AwsConfig(
-        Account("us-east", "jon"),
-        Some(Left(Database(1200, "postgres")))
-      )
-  )
   assert(
     nestedConfigAutomaticResult3 equalM
       AwsConfig(Account("us-east", "jon"), None)
@@ -91,31 +67,17 @@ object TypesafeConfigErrors extends App {
       (string("region") zip string("accountId")).to[Account]
     val databaseConfig =
       (int("port") zip string("url")).to[Database]
-    (nested("account")(accountConfig) zip nested("database")(databaseConfig)
-      .orElseEither(string("database"))
+    ((accountConfig.nested("account")) zip (databaseConfig
+      .nested("database"))
       .optional).to[AwsConfig]
   }
 
   val nestedConfigManualResult1: IO[Config.Error, AwsConfig] =
-    read(configNestedManual from ConfigSource.fromHoconString(hocconStringWithDb))
-
-  val nestedConfigManualResult2: IO[Config.Error, AwsConfig] =
-    read(configNestedManual from ConfigSource.fromHoconString(hocconStringWithStringDb))
+    read(configNestedManual from ConfigProvider.fromHoconString(hocconStringWithDb))
 
   val nestedConfigManualResult3: IO[Config.Error, AwsConfig] =
-    read(configNestedManual from ConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
+    read(configNestedManual from ConfigProvider.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
-  assert(
-    nestedConfigManualResult1 equalM
-      AwsConfig(
-        Account("us-east", "jon"),
-        Some(Left(Database(1200, "postgres")))
-      )
-  )
-  assert(
-    nestedConfigManualResult2 equalM
-      AwsConfig(Account("us-east", "jon"), Some(Right("hi")))
-  )
   assert(
     nestedConfigManualResult3 equalM
       AwsConfig(Account("us-east", "jon"), None)
@@ -132,10 +94,10 @@ object TypesafeConfigErrors extends App {
   final case class Details(clustersize: Int, name: String)
   final case class DatabaseDetails(datacenterwest: Details, datacentereast: Details)
 
-  val configWithHoconSubstitution: Config[DatabaseDetails] = descriptor[DatabaseDetails]
+  val configWithHoconSubstitution: Config[DatabaseDetails] = deriveConfig[DatabaseDetails]
 
   val finalResult: IO[Config.Error, DatabaseDetails] =
-    read(configWithHoconSubstitution from ConfigSource.fromHoconString(hoconStringWithSubstitution))
+    read(configWithHoconSubstitution from ConfigProvider.fromHoconString(hoconStringWithSubstitution))
 
   assert(
     finalResult equalM

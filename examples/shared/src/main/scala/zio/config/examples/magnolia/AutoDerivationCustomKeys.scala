@@ -4,7 +4,8 @@ import com.github.ghik.silencer.silent
 import zio.IO
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
-import zio.config.magnolia.descriptor
+import zio.config.magnolia.deriveConfig
+import zio.Config
 import zio.config.typesafe.TypesafeConfigSource
 
 import examples._
@@ -26,7 +27,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
   // Default behaviour, and hence no mapKey
   val camelCaseResult: IO[Config.Error, MyConfig] =
     read(
-      descriptor[MyConfig] from (TypesafeConfigSource.fromHoconString(camelCaseConfig))
+      deriveConfig[MyConfig] from (TypesafeConfigSource.fromHoconString(camelCaseConfig))
     )
 
   assert(camelCaseResult equalM MyConfig("abcd", "us-east"))
@@ -41,7 +42,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
 
   val kebabCaseResult: IO[Config.Error, MyConfig] =
     read(
-      descriptor[MyConfig].mapKey(toKebabCase) from (TypesafeConfigSource.fromHoconString(kebabCaseConfig))
+      deriveConfig[MyConfig].mapKey(toKebabCase) from (TypesafeConfigSource.fromHoconString(kebabCaseConfig))
     )
 
   assert(kebabCaseResult equalM MyConfig("abcd", "us-east"))
