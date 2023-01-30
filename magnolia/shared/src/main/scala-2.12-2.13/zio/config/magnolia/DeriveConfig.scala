@@ -78,41 +78,38 @@ object DeriveConfig {
 
   }
 
-  final def prepareClassName(annotations: Seq[Any]): List[String]               =
-    annotations.collectFirst { case d: name => d.name }.toList
+  final def prepareClassName(annotations: Seq[Any], defaultClassName: String): String =
+    annotations.collectFirst { case d: name => d.name }.getOrElse(defaultClassName)
 
-  final def prepareClassNames(annotations: Seq[Any]): Seq[String]               =
-    annotations.collectFirst { case d: names => d.names }.getOrElse(List[String]()) ++
-      annotations.collectFirst { case d: name => d.name }.toList
+  final def prepareSealedTraitName(annotations: Seq[Any]): Option[String]             =
+    annotations.collectFirst { case d: name => d.name }
 
-  final def prepareFieldName(annotations: Seq[Any], name: String): String       =
+  final def prepareFieldName(annotations: Seq[Any], name: String): String             =
     annotations.collectFirst { case d: name => d.name }.getOrElse(name)
-
-  final def prepareFieldNames(annotations: Seq[Any], name: String): Seq[String] =
-    annotations.collectFirst { case d: names => d.names }.getOrElse(List[String]()) ++
-      List(annotations.collectFirst { case d: name => d.name }.getOrElse(name))
 
   final def combine[T](caseClass: CaseClass[DeriveConfig, T]): DeriveConfig[T] = {
     val descriptions = caseClass.annotations.collect { case d: describe => d.describe }
-    val ccNames      = prepareClassNames(caseClass.annotations)
+    val ccName       = prepareClassName(caseClass.annotations, caseClass.typeName.short)
 
     val res =
       caseClass.parameters.toList match {
-        case Nil          =>
-          val f = (name: String) =>
-            Config
-              .succeed(name)
+        case Nil =>
+          Config
+            .constant(ccName)
+            .mapOrFail(str =>
+              if (caseClass.typeName.short.toLowerCase == str.toLowerCase) Right(caseClass.rawConstruct(Seq.empty))
+              else
+                (Left(
+                  Config.Error.InvalidData(message =
+                    s"Failed to construct case object ${caseClass.typeName.short.toLowerCase} from ${str.toLowerCase}"
+                  )
+                ))
+            )
 
-          ccNames.tail.foldLeft(f(ccNames.head)) { case (acc, n) =>
-            acc orElse f(n)
-          }
         case head :: tail =>
           def nest(name: String)(unwrapped: Config[Any]) =
             if (caseClass.isValueClass) unwrapped
             else unwrapped.nested(name)
-
-          def makeNestedParam(name: String, unwrapped: Config[Any]) =
-            nest(name)(unwrapped)
 
           def makeDescriptor(param: Param[DeriveConfig, T]): Config[Any] = {
             val descriptions =
@@ -120,13 +117,10 @@ object DeriveConfig {
                 .filter(_.isInstanceOf[describe])
                 .map(_.asInstanceOf[describe].describe)
 
-            val paramNames = prepareFieldNames(param.annotations, param.label)
-
             val raw         = param.typeclass.desc
-            val withNesting = paramNames.tail.foldLeft(makeNestedParam(paramNames.head, raw)) { case (acc, name) =>
-              acc orElse makeNestedParam(name, raw)
-            }
-            val described   = descriptions.foldLeft(withNesting)(_ ?? _)
+            val withNesting = nest(prepareFieldName(param.annotations, param.label))(raw)
+
+            val described = descriptions.foldLeft(withNesting)(_ ?? _)
             param.default.fold(described)(described.withDefault(_))
           }
 
@@ -139,37 +133,66 @@ object DeriveConfig {
       }
 
     DeriveConfig(
-      descriptions.foldLeft(res.asInstanceOf[Config[T]])(_ ?? _),
+      descriptions.foldLeft(res)(_ ?? _),
       caseClass.isObject || caseClass.parameters.isEmpty
     )
   }
 
   final def dispatch[T](sealedTrait: SealedTrait[DeriveConfig, T]): DeriveConfig[T] = {
+    val nameToLabel =
+      sealedTrait.subtypes
+        .map(tc => prepareClassName(tc.annotations, tc.typeName.short) -> tc.typeName.full)
+        .groupBy(_._1)
+        .toSeq
+        .flatMap {
+          case (label, Seq((_, fullName))) => (fullName -> label) :: Nil
+          case (label, seq)                =>
+            seq.zipWithIndex.map { case ((_, fullName), idx) => fullName -> s"${label}_$idx" }
+        }
+        .toMap
+
+    val keyNameIfPureConfig: Option[String] =
+      sealedTrait.annotations.collectFirst { case nameWithLabel: nameWithLabel =>
+        Some(nameWithLabel.keyName)
+      }.getOrElse(None)
+
     val desc =
       sealedTrait.subtypes.map { subtype =>
         val typeclass: DeriveConfig[subtype.SType] = subtype.typeclass
 
-        val subClassNames =
-          prepareClassNames(subtype.annotations)
+        val subClassName =
+          nameToLabel(subtype.typeName.full)
 
-        val desc = {
-          val f = (name: String) => typeclass.desc.nested(name)
+        val f = (name: String) =>
+          keyNameIfPureConfig match {
+            case None =>
+              if (typeclass.isObject) typeclass.desc else typeclass.desc.nested(name)
 
-          subClassNames.toList match {
-            case head :: Nil   => f(head)
-            case immutable.Nil => typeclass.desc
-            case multiple      =>
-              multiple.tail.foldLeft(f(multiple.head)) { case (acc, n) =>
-                acc orElse f(n)
-              }
+            case Some(pureConfigKeyName) =>
+              if (typeclass.isObject) typeclass.desc
+              else
+                Config
+                  .string(pureConfigKeyName)
+                  .zip(typeclass.desc)
+                  .mapOrFail({ case (specifiedName, subClass) =>
+                    if (specifiedName == name) Right(subClass)
+                    else
+                      Left(
+                        Config.Error
+                          .InvalidData(message =
+                            s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match the expected name ${name}"
+                          )
+                      )
+                  })
           }
 
-        }
+        f(subClassName)
 
-        wrapSealedTrait(prepareClassNames(sealedTrait.annotations), desc)
       }.reduce(_.orElse(_))
 
-    DeriveConfig(desc)
+    DeriveConfig(
+      prepareSealedTraitName(sealedTrait.annotations).fold(desc)(name => wrapSealedTrait(List(name), desc))
+    )
   }
 
   implicit def getDeriveConfig[T]: DeriveConfig[T] = macro Magnolia.gen[T]

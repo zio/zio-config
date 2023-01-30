@@ -1,4 +1,4 @@
-package zio.config.examples.magnolia
+package zio.config.examples.autoderivation
 
 import com.github.ghik.silencer.silent
 import zio.IO

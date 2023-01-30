@@ -1,4 +1,4 @@
-package zio.config.examples.magnolia
+package zio.config.examples.autoderivation
 
 import zio.config._
 import zio.config.magnolia._

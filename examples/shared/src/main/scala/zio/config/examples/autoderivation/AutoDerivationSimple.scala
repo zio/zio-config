@@ -1,7 +1,7 @@
-package zio.config.examples.magnolia
+package zio.config.examples.autoderivation
 
 import zio.config._, magnolia._
-import zio.config.examples.magnolia.MyConfig._
+import zio.config.examples.autoderivation.MyConfig._
 
 import zio.ConfigProvider
 import zio.config.examples.ZioOps
