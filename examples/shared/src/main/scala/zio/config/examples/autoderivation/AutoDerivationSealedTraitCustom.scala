@@ -20,13 +20,15 @@ object AutoDerivationSealedTraitCustom extends App with EitherImpureOps {
   sealed trait RandomSealedTrait1
 
   object RandomSealedTrait1 {
-    @name("customobject1")
+    @name("customname1")
     case object SubObject1 extends RandomSealedTrait1
     case object SubObject2 extends RandomSealedTrait1
 
-    final case class Trait1SubClass1(value: String, g: RandomCaseClass)                extends RandomSealedTrait1
+    final case class Trait1SubClass1(value: String, g: RandomCaseClass) extends RandomSealedTrait1
+
+    @name("customname2")
     final case class Trait1SubClass2(value: RandomSealedTrait2)                        extends RandomSealedTrait1
-    final case class Trait1SubClass3(a: String, b: Int)                                extends RandomSealedTrait1
+    final case class Trait1SubClass3(@name("customfieldname") a: String, b: Int)       extends RandomSealedTrait1
     final case class Trait1SubClass4(a: String, b: Option[Int], c: RandomSealedTrait2) extends RandomSealedTrait1
 
     final case class RandomCaseClass(l: String)
@@ -65,7 +67,7 @@ object AutoDerivationSealedTraitCustom extends App with EitherImpureOps {
 
   val s2: String =
     """
-      |field = customobject1
+      |field = customname1
       |""".stripMargin
 
   assert(read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s2)) equalM AwsConfig(SubObject1))
@@ -80,7 +82,7 @@ object AutoDerivationSealedTraitCustom extends App with EitherImpureOps {
   val s4: String =
     """
       |field {
-      |  Trait1SubClass2 {
+      |  customname2 {
       |   value {
       |       Trait2SubClass {
       |         a = 1
@@ -91,7 +93,8 @@ object AutoDerivationSealedTraitCustom extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s4)) equalM AwsConfig(
+    read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s4))
+      .mapError(_.prettyPrint()) equalM AwsConfig(
       Trait1SubClass2(Trait2SubClass("1"))
     )
   )
@@ -100,7 +103,7 @@ object AutoDerivationSealedTraitCustom extends App with EitherImpureOps {
     """
       |field {
       |    Trait1SubClass3 {
-      |      a = 1
+      |      customfieldname = 1
       |      b = 2
       |    }
       |}

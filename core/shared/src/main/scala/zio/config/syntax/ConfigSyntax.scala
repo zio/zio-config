@@ -202,7 +202,17 @@ trait ConfigSyntax {
     def toLowerCase: Config[A] =
       mapKey(_.toLowerCase())
 
-    def strict: Config[A] = {
+    def to[B <: Product](implicit conv: TupleConversion[B, A]): Config[B] =
+      config.map(
+        conv.from
+      )
+
+    // To reduce the number of changes in examples
+    // Example: read(config from ConfigProvider.fromMap(""))
+    def from(configProvider: ConfigProvider): Read[A] =
+      Read(config, configProvider)
+
+    private[config] def strict: Config[A] = {
 
       def loop[B](config: Config[B]): Config[B] =
         config match {
@@ -216,24 +226,11 @@ trait ConfigSyntax {
           case Zipped(left, right, zippable)         => Zipped(loop(left), loop(right), zippable)
           case Described(config, description)        => Described(loop(config), description)
           case Lazy(thunk)                           => thunk().strict
-          case config: Config.Primitive[B]           =>
-            println("is it here?")
-            println(config)
-            config
+          case config: Config.Primitive[B]           => config
         }
 
       loop(config)
     }
-
-    def to[B <: Product](implicit conv: TupleConversion[B, A]): Config[B] =
-      config.map(
-        conv.from
-      )
-
-    // To reduce the number of changes in examples
-    // Example: read(config from ConfigProvider.fromMap(""))
-    def from(configProvider: ConfigProvider): Read[A] =
-      Read(config, configProvider)
 
   }
 
@@ -244,7 +241,7 @@ trait ConfigSyntax {
       Config.string.mapOrFail(parsed =>
         if (parsed == value) Right(value)
         else Left(Config.Error.InvalidData(message = s"value should be a constant: ${value}"))
-      )
+      ) ?? s"The value should be ${value}"
 
     def collectAll[A](head: => Config[A], tail: Config[A]*): Config[List[A]] =
       tail.reverse
