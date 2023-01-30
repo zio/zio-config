@@ -37,15 +37,15 @@ object AutomaticConfig extends App {
   private val source =
     ConfigProvider.fromMap(
       Map(
-        "aws.region"                              -> "us-east",
-        "aws.credentials.Credentials.Token.value" -> "token",
-        "port"                                    -> "10",
-        "default"                                 -> "12",
-        "dburl"                                   -> "some url",
-        "amount"                                  -> "3.14",
-        "quanity"                                 -> "30.0",
-        "price.Price.Inr.value"                   -> "1000",
-        "anotherDefault"                          -> "14"
+        "aws.region"                  -> "us-east",
+        "aws.credentials.Token.value" -> "token",
+        "port"                        -> "10",
+        "default"                     -> "12",
+        "dburl"                       -> "some url",
+        "amount"                      -> "3.14",
+        "quanity"                     -> "30.0",
+        "price.Inr.value"             -> "1000",
+        "anotherDefault"              -> "14"
       ),
       pathDelim = "."
     )
