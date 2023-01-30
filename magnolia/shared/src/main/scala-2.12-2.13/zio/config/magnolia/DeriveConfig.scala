@@ -96,15 +96,7 @@ object DeriveConfig {
         case Nil =>
           Config
             .constant(ccName)
-            .mapOrFail(str =>
-              if (caseClass.typeName.short.toLowerCase == str.toLowerCase) Right(caseClass.rawConstruct(Seq.empty))
-              else
-                (Left(
-                  Config.Error.InvalidData(message =
-                    s"Failed to construct case object ${caseClass.typeName.short.toLowerCase} from ${str.toLowerCase}"
-                  )
-                ))
-            )
+            .map(_ => caseClass.rawConstruct(Seq.empty))
 
         case head :: tail =>
           def nest(name: String)(unwrapped: Config[Any]) =
