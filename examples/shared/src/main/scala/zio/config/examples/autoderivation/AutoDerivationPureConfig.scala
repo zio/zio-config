@@ -6,137 +6,160 @@ import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigSource
 
 import examples._
-import zio.config.derivation.nameWithLabel
 import zio.config.derivation.name
+import zio.config.derivation.nameWithLabel
 
-object pureConfigDerivation extends App with EitherImpureOps {
+/**
+ * An example on how to configure Config classes
+ * to work with the below pattern (often followed in many libraries such as pure-config)
+ *
+ * {{{
+ * {
+ *   type : sublcassname
+ *   field1 : a
+ *   field2 : b
+ * }
+ * }}}
+ *
+ * Note that all sealed traits should be annotated with @nameWithLabel
+ */
+object AutoDerivationSealedTraitPureConfig extends App with EitherImpureOps {
+
+  /**
+   * An example that describes automatic derivation with a few name customisations (done using annotations)
+   * for coproducts (sealed traits) with objects and case classes as terms
+   */
+  final case class AppConfig(awsConfig: AwsConfig, appName: String)
+  final case class AwsConfig(field: RandomSealedTrait1)
 
   @nameWithLabel("type")
-  sealed trait X
+  sealed trait RandomSealedTrait1
 
-  object X {
-    case object A extends X
-    case object B extends X
+  object RandomSealedTrait1 {
+    case object SubObject1 extends RandomSealedTrait1
+    @name("randomcustomname")
+    case object SubObject2 extends RandomSealedTrait1
 
-    final case class C(value: String, g: G)             extends X
-    @name("d")
-    final case class D(value: Y)                        extends X
-    final case class E(a: String, b: Int)               extends X
-    final case class F(a: String, b: Option[Int], c: Y) extends X
+    final case class Trait1SubClass1(value: String, g: RandomCaseClass)                extends RandomSealedTrait1
+    final case class Trait1SubClass2(value: RandomSealedTrait2)                        extends RandomSealedTrait1
+    final case class Trait1SubClass3(@name("customfieldname") a: String, b: Int)       extends RandomSealedTrait1
+    final case class Trait1SubClass4(a: String, b: Option[Int], c: RandomSealedTrait2) extends RandomSealedTrait1
+
+    final case class RandomCaseClass(l: String)
+
   }
 
   @nameWithLabel("type")
-  sealed trait Y
-  case class Z(a: String) extends Y
+  sealed trait RandomSealedTrait2
 
-  case class G(l: String)
+  object RandomSealedTrait2 {
+    case class Trait2SubClass(a: String) extends RandomSealedTrait2
+  }
 
-  case class Cfg(fieldName: X)
-  case class CfgCfg(cfg: Cfg, n: Int, c: String)
-
-  import X._
+  import RandomSealedTrait1._
+  import RandomSealedTrait2._
 
   val s1: String =
     """
-      |cfg {
-      | fieldName {
-      |     type = C
+      |awsConfig {
+      | field {
+      |     type = Trait1SubClass1
       |     value = b
       |     g {
       |       l = hi
       |     }
-      |    }
-      | 
+      |  }
       |}
-      |n = 1
-      |c = l
+      |appName = l
       |
       |""".stripMargin
 
-//   assert(
-//     read(deriveConfig[CfgCfg] from TypesafeConfigSource.fromHoconString(s1)) equalM
-//       CfgCfg(Cfg(C("b", G("hi"))), 1, "l")
-//   )
+  assert(
+    read(deriveConfig[AppConfig] from TypesafeConfigSource.fromHoconString(s1)) equalM
+      AppConfig(AwsConfig(Trait1SubClass1("b", RandomCaseClass("hi"))), "l")
+  )
 
-//   val s2: String =
-//     """
-//       |fieldName = A
-//       |""".stripMargin
+  val s2: String =
+    """
+      |field = SubObject1
+      |""".stripMargin
 
-//   assert(read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s2)) equalM Cfg(A))
+  assert(read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s2)) equalM AwsConfig(SubObject1))
 
-//   val s3: String =
-//     """
-//       |fieldName = B
-//       |""".stripMargin
+  val s3: String =
+    """
+      |field = randomcustomname
+      |""".stripMargin
 
-//   assert(read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s3)) equalM Cfg(B))
+  assert(read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s3)) equalM AwsConfig(SubObject2))
 
   val s4: String =
     """
-      |{ 
-      | fieldName : {
-      |   type = d
+      |field {
+      |   type = Trait1SubClass2
       |   value {
-      |       Z {
-      |         a = 1
-      |       }
-      |     }
-      |}
+      |     type = Trait2SubClass
+      |     a = 1
+      |   }
       |}
       |""".stripMargin
 
-  assert(read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s4)) equalM Cfg(D(Z("1"))))
+  assert(
+    read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s4))
+      .mapError(_.prettyPrint()) equalM AwsConfig(
+      Trait1SubClass2(Trait2SubClass("1"))
+    )
+  )
 
-//   val s5: String =
-//     """
-//       |fieldName : {
-//       |      type = E
-//       |      a = 1
-//       |      b = 2
-//       |}
-//       |""".stripMargin
+  val s5: String =
+    """
+      |field {
+      |  type = Trait1SubClass3
+      |  customfieldname = 1
+      |  b = 2 
+      |}
+      |""".stripMargin
 
-//   assert(read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s5)) equalM Cfg(E("1", 2)))
+  assert(
+    read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s5)) equalM AwsConfig(
+      Trait1SubClass3("1", 2)
+    )
+  )
 
-//   val s6: String =
-//     """
-//       |fieldName: {
-//       |
-//       |     type = F
-//       |      a = 1
-//       |      c {
-//       |          Z {
-//       |            a = 2
-//       |          }
-//       |      }
-//       |
-//       |}
-//       |""".stripMargin
+  val s6: String =
+    """
+      |field {
+    
+      |      type = Trait1SubClass4
+      |      a = 1
+      |      c {
+      |        type = Trait2SubClass
+      |        a = 2  
+      |      }
+      |}
+      |""".stripMargin
 
-//   assert(
-//     read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s6)) equalM
-//       Cfg(F("1", None, Z("2")))
-//   )
+  assert(
+    read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s6)) equalM
+      AwsConfig(Trait1SubClass4("1", None, Trait2SubClass("2")))
+  )
 
-//   val s7: String =
-//     """
-//       |fieldName : {
-//              type = F
-//       |      a = 1
-//       |      b = 2
-//       |      c {
-//       |          Z {
-//       |            a = 2
-//       |          }
-//       |      }
+  val s7: String =
+    """
+      |field {
+      |  type = Trait1SubClass4
+      |  a = 1
+      |  b = 2
+      |  c {
+      |    type = Trait2SubClass
+      |    a = 2
+      |  }
+      |}
+      |""".stripMargin
 
-//       |}
-//       |""".stripMargin
-
-//   assert(
-//     read(deriveConfig[Cfg] from TypesafeConfigSource.fromHoconString(s7)) equalM
-//       Cfg(F("1", Some(2), Z("2")))
-//   )
+  assert(
+    read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s7)) equalM
+      AwsConfig(Trait1SubClass4("1", Some(2), Trait2SubClass("2")))
+  )
 
 }

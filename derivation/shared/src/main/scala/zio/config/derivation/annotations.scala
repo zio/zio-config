@@ -15,12 +15,15 @@ final case class name(name: String)         extends StaticAnnotation
  *       sealed trait FooBar
  *       case class Bar(x: Int) extends FooBar
  *       case class Foo(y: String) extends FooBar
+ *       case object Fooz extends FooBar
+ *
+ *       case class AppConfig(config :  FooBar)
  *      }}}
  *
  * corresponds to
  *
  *  {{{
- *     {
+ *    config : {
  *      type : Bar
  *      x : Int
  *     }
@@ -30,14 +33,22 @@ final case class name(name: String)         extends StaticAnnotation
  *
  *  {{{
  *
- *     {
+ *    config : {
  *      type: Foo
  *      x: Int
  *     }
  *
  *  }}}
  *
- * If given name instead of `nameWithLabel`, then the config should be
+ * or
+ *
+ * {{{
+ *
+ *   config : Fooz
+ *
+ * }}}
+ *
+ * If annotation is `name` instead of `nameWithLabel`, then name of the case class becomes a parent node
  *
  *  {{{
  *    Foo : {
