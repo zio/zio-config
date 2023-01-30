@@ -13,7 +13,7 @@ import zio.config.derivation._
 import zio.Config
 import scala.collection.immutable
 
-case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
+final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
 
   final def ??(description: String): DeriveConfig[T] =
     describe(description)
@@ -155,13 +155,14 @@ object DeriveConfig {
         val subClassName =
           nameToLabel(subtype.typeName.full)
 
-        keyNameIfPureConfig match {
-          case None =>
-            if (typeclass.isObject) typeclass.desc else typeclass.desc.nested(subClassName)
+        if (typeclass.isObject) {
+          typeclass.desc
+        } else
+          keyNameIfPureConfig match {
+            case None =>
+              typeclass.desc.nested(subClassName)
 
-          case Some(pureConfigKeyName) =>
-            if (typeclass.isObject) typeclass.desc
-            else
+            case Some(pureConfigKeyName) =>
               Config
                 .string(pureConfigKeyName)
                 .zip(typeclass.desc)
@@ -175,7 +176,7 @@ object DeriveConfig {
                         )
                     )
                 })
-        }
+          }
       }.reduce(_.orElse(_))
 
     DeriveConfig(
