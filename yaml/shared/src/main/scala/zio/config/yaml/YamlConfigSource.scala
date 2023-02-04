@@ -117,8 +117,8 @@ object YamlConfigSource {
         case t: String   => Map(chunk -> t.toString())
         case t: JBoolean => Map(chunk -> t.toString())
 
-        case t: ju.List[_] =>
-          val list = t.asInstanceOf[ju.List[AnyRef]].asScala.toList
+        case t: java.lang.Iterable[_] =>
+          val list = t.asInstanceOf[java.lang.Iterable[AnyRef]].asScala.toList
 
           list.zipWithIndex
             .map({ case (anyRef, index) =>
@@ -142,10 +142,9 @@ object YamlConfigSource {
         // This is not the case in pure-config or zio-config-3.x although it had the same behaviour of doing a flatMap
         // Example: provider.flatMap(_.load(config)) or provider1ZIO.zip(provider2ZIO).map{(case (provider1, provider2) => provider1.orElse(provider2))}
         //
-
-        case _ =>
+        case a               =>
           throw new RuntimeException(
-            "Invalid yaml"
+            s"Invalid yaml. ${a}"
           )
       }
 
