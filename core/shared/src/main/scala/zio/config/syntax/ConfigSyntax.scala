@@ -439,7 +439,8 @@ trait ConfigSyntax {
                   ZIO
                     .foreach(Chunk.fromIterable(keys.toSet)) { key =>
                       loop(prefix ++ Chunk(key), config)
-                    }.map(_.flatten)
+                    }
+                    .map(_.flatten)
               } yield
                 if (values.isEmpty) Chunk(Chunk.empty)
                 else Chunk(values)

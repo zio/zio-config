@@ -34,7 +34,7 @@ object helpers {
   def isErrors[A](assertion: Assertion[Config.Error]): Assertion[Either[Config.Error, A]] =
     assertionRec("isErrors")(assertion) {
       case Left(errs: Config.Error) => Some(errs)
-      case Right(_)                      => None
+      case Right(_)                 => None
     }
 
   def assertErrors[A](
@@ -42,7 +42,7 @@ object helpers {
   ): Assertion[Either[Config.Error, A]] =
     assertion[Either[Config.Error, A]]("assertErrors") {
       case Left(errs: Config.Error) => pred(errs)
-      case Right(_)                      => false
+      case Right(_)                 => false
     }
 
   def toMultiMap[K, V](map: Map[K, V]): Map[K, ::[V]]                                                           =

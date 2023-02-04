@@ -31,12 +31,9 @@ object SubConfigExample extends App {
        | }
        |""".stripMargin
 
-  val path =
-    Chunk(KeyComponent.KeyName("a"), KeyComponent.KeyName("b"), KeyComponent.KeyName("c"), KeyComponent.Index(0))
-
   assert(
     read(
-      deriveConfig[ShortConfig] from ConfigProvider.fromHoconString(hoconStr).at(path)
+      deriveConfig[ShortConfig] from ConfigProvider.fromHoconString(hoconStr).at(path"a.b.c[0]")
     ) equalM (ShortConfig(1, 2))
   )
 }
