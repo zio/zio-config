@@ -36,14 +36,14 @@ object KeyComponent {
 
   private val pattern: Regex = """([a-zA-Z0-9 -@\-^-~]*)(\[([0-9])*\])?""".r.anchored
 
-  def getPath(s: String): Chunk[KeyComponent] =
+  private[config] def from(s: String): Chunk[KeyComponent] =
     Chunk
       .fromIterable(
         pattern
           .findAllIn(s)
           .matchData
           .filter(_.group(0).nonEmpty)
-          .toArray
+          .toList
       )
       .flatMap { regexMatched =>
         val optionalKey = Option(regexMatched.group(1))
