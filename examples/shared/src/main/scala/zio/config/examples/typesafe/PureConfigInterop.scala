@@ -1,81 +1,82 @@
-// package zio.config.examples.typesafe
+package zio.config.examples.typesafe
 
-// import zio.config._
-// import zio.config.magnolia.Descriptor
+import zio.config._
+import zio.config.magnolia._
 
-// import typesafe._
-// import zio.ConfigProvider
-// import zio.config.magnolia.DeriveConfig
+import typesafe._
+import zio.ConfigProvider
+import zio.config.magnolia.DeriveConfig
+import zio.config.derivation.nameWithLabel
 
-// object PureConfigInterop extends App with EitherImpureOps {
+object PureConfigInterop extends App with EitherImpureOps {
 
-//   sealed trait X
+  @nameWithLabel()
+  sealed trait X
 
-//   object X {
-//     case object A                extends X
-//     case object B                extends X
-//     case object C                extends X
-//     case class D(detail: Detail) extends X
+  object X {
+    case object A                extends X
+    case object B                extends X
+    case object C                extends X
+    case class D(detail: Detail) extends X
 
-//     case class Detail(firstName: String, lastName: String, region: Region)
-//     case class Region(suburb: String, city: String)
-//   }
+    case class Detail(firstName: String, lastName: String, region: Region)
+    case class Region(suburb: String, city: String)
+  }
 
-//   // Note than in pure config, hocon corresponding to case objects need to be
-//   // "x : { type = A }", while in zio-config that should be "x = A"
-//   // However for case classes (Example: `D`), both libraries support "x : { type = D, ...}"
-//   final case class Config(x: X)
+  // Note than in pure config, hocon corresponding to case objects need to be
+  // "x : { type = A }", while in zio-config that should be "x = A"
+  // However for case classes (Example: `D`), both libraries support "x : { type = D, ...}"
+  final case class Config(x: X)
 
-//   import X._
+  import X._
 
-//   val aHoconSource: ConfigProvider =
-//     ConfigProvider
-//       .fromHoconString(
-//         s"""
-//            |x = A
-//            |""".stripMargin
-//       )
+  val aHoconSource: ConfigProvider =
+    ConfigProvider
+      .fromHoconString(
+        s"""
+           |x = A
+           |""".stripMargin
+      )
 
-//   val bHoconSource: ConfigProvider =
-//     ConfigProvider
-//       .fromHoconString(
-//         s"""
-//            |x = B
-//            |
-//            |""".stripMargin
-//       )
+  val bHoconSource: ConfigProvider =
+    ConfigProvider
+      .fromHoconString(
+        s"""
+           |x = B
+           |
+           |""".stripMargin
+      )
 
-//   val cHoconSource: ConfigProvider =
-//     ConfigProvider
-//       .fromHoconString(
-//         s"""
-//            |x = C
-//            |""".stripMargin
-//       )
+  val cHoconSource: ConfigProvider =
+    ConfigProvider
+      .fromHoconString(
+        s"""
+           |x = C
+           |""".stripMargin
+      )
 
-//   val dHoconSource: ConfigProvider =
-//     ConfigProvider
-//       .fromHoconString(
-//         s"""
-//            | x : {
-//            |  type = D
-//            |  detail : {
-//            |    firstName : ff
-//            |    lastName  : ll
-//            |    region {
-//            |      city   : syd
-//            |      suburb : strath
-//            |    }
-//            |  }
-//            | }
-//            |""".stripMargin
-//       )
+  val dHoconSource: ConfigProvider =
+    ConfigProvider
+      .fromHoconString(
+        s"""
+           | x : {
+           |  type = D
+           |  detail : {
+           |    firstName : ff
+           |    lastName  : ll
+           |    region {
+           |      city   : syd
+           |      suburb : strath
+           |    }
+           |  }
+           | }
+           |""".stripMargin
+      )
 
-//   assert(read(DeriveConfig.descriptorForPureConfig[Config] from aHoconSource) equalM Config(A))
-//   assert(read(Descriptor.descriptorForPureConfig[Config] from bHoconSource) equalM Config(B))
-//   assert(read(Descriptor.descriptorForPureConfig[Config] from cHoconSource) equalM Config(C))
-//   assert(
-//     read(Descriptor.descriptorForPureConfig[Config] from dHoconSource) equalM
-//       Config(D(Detail("ff", "ll", Region("strath", "syd"))))
-//   )
-// }
+  assert(read(deriveConfig[Config] from bHoconSource) equalM Config(B))
+  assert(read(deriveConfig[Config] from cHoconSource) equalM Config(C))
+  assert(
+    read(deriveConfig[Config] from dHoconSource) equalM
+      Config(D(Detail("ff", "ll", Region("strath", "syd"))))
+  )
+}
