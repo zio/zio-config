@@ -72,7 +72,7 @@ object TypesafeConfigSource {
    * Retrieve a `ConfigSource` from `typesafe-config` HOCON string.
    */
 
-  def fromHoconString(input: String): ConfigProvider =
+  def fromHoconString(input: String): syntax.ConfigProvider0 =
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
 
   /**
@@ -81,7 +81,7 @@ object TypesafeConfigSource {
    * With zio.config 3.x, https://github.com/lightbend/config/issues/30 was resolved within zio-config.
    * However this feature is removed with zio.Config 4.0.0
    */
-  def fromTypesafeConfig(config: com.typesafe.config.Config): ConfigProvider = {
+  def fromTypesafeConfig(config: com.typesafe.config.Config): syntax.ConfigProvider0 = {
     def loop(config: com.typesafe.config.Config): Map[Chunk[syntax.KeyComponent], String] = {
       val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue())).toMap
 

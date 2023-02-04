@@ -1,6 +1,9 @@
 package zio.config.syntax
 
 import zio.ConfigProvider
+import zio.Chunk
+import zio.{Config}
+import zio.{IO, Trace}
 
 // ConfigProvider that works with IndexedFlat
 // TODO; Move to Zio
@@ -20,6 +23,9 @@ trait ConfigProvider0 extends ConfigProvider { self =>
    */
   final def nested_(name: String): ConfigProvider =
     ConfigProvider.fromIndexedFlat(self.flatten_.nested(KeyComponent.KeyName(name)))
+
+  final def at(path: Chunk[KeyComponent]): ConfigProvider0 =
+    ConfigProvider.fromIndexedFlat(self.flatten_.nested_(path))
 
   /**
    * Returns a new config provider that preferentially loads configuration data

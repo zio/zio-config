@@ -30,6 +30,18 @@ trait IndexedFlat { self =>
         } yield result
     }
 
+  final def nested_(name: Chunk[KeyComponent]): IndexedFlat =
+    new IndexedFlat {
+      def load[A](path: Chunk[KeyComponent], config: Config.Primitive[A])(implicit
+        trace: Trace
+      ): IO[Config.Error, Chunk[A]]                 =
+        self.load(name ++ path, config)
+      def enumerateChildren(path: Chunk[KeyComponent])(implicit
+        trace: Trace
+      ): IO[Config.Error, Set[Chunk[KeyComponent]]] =
+        self.enumerateChildren(name ++ path)
+    }
+
   final def nested(name: KeyComponent): IndexedFlat =
     new IndexedFlat {
       def load[A](path: Chunk[KeyComponent], config: Config.Primitive[A])(implicit

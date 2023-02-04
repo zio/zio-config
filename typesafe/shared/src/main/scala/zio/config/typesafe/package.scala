@@ -16,7 +16,7 @@ package object typesafe {
     def fromHoconFilePath[A](filePath: String): ConfigProvider =
       TypesafeConfigSource.fromHoconFilePath(filePath)
 
-    def fromHoconString(input: String): ConfigProvider =
+    def fromHoconString(input: String): syntax.ConfigProvider0 =
       TypesafeConfigSource.fromHoconString(input)
 
     def fromTypesafeConfig(
