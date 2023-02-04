@@ -39,7 +39,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
           }
       }
       {
-         accountId: bb
+         accountId: 456
          regions : [us-some, ff, gg]
 
 
@@ -65,7 +65,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     (int("port").optional zip string("url")).to[Database]
 
   val awsDetailsConfig: Config[AwsDetails] =
-    (listOf(accountConfig).nested("account") zip (
+    (listOf(accountConfig).nested("accounts") zip (
       databaseConfig.nested("database")
     ) zip listOf("users", int)).to[AwsDetails]
 
@@ -78,15 +78,15 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
         List(
           Account(
             Some(123),
-            List("us-east", "dd", "ee"),
-            Some(Details("jaku", 10))
-          ),
-          Account(
-            Some(123),
             List("us-west", "ab", "cd"),
             Some(Details("zak", 11))
           ),
-          Account(Some(123), List("us-some", "ff", "gg"), None)
+          Account(
+            Some(123),
+            List("us-east", "dd", "ee"),
+            Some(Details("jaku", 10))
+          ),
+          Account(Some(456), List("us-some", "ff", "gg"), None)
         ),
         Database(Some(100), "postgres"),
         List(1, 2, 3)
@@ -104,15 +104,15 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
         List(
           Account(
             Some(123),
-            List("us-east", "dd", "ee"),
-            Some(Details("jaku", 10))
-          ),
-          Account(
-            Some(123),
             List("us-west", "ab", "cd"),
             Some(Details("zak", 11))
           ),
-          Account(Some(123), List("us-some", "ff", "gg"), None)
+          Account(
+            Some(123),
+            List("us-east", "dd", "ee"),
+            Some(Details("jaku", 10))
+          ),
+          Account(Some(456), List("us-some", "ff", "gg"), None)
         ),
         Database(Some(100), "postgres"),
         List(1, 2, 3)
@@ -125,11 +125,11 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     """
     accounts = [
       {
-          accountId: jon
+          accountId: 122
       }
       {
           region : us-west
-          accountId: chris
+          accountId: 221
       }
       {
 
@@ -139,14 +139,16 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     users = [1, 2, 3]
 
     database {
-        port : 1abcd
+        port : 1111
         url  : postgres
     }
 
     """
 
   println(
-    read(deriveConfig[AwsDetails] from ConfigProvider.fromHoconString(invalidHocon)).unsafeRun
+    read(deriveConfig[AwsDetails] from ConfigProvider.fromHoconString(invalidHocon)).either
+      .map(_.swap.map(_.prettyPrint()).swap)
+      .unsafeRun
   )
   /*
     ╥

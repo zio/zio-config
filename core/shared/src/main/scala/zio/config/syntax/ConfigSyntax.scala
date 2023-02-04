@@ -33,7 +33,7 @@ import zio.Config.Fail
 import zio.Config.LocalTime
 import zio.Config.LocalDateTime
 import zio.IO
-import zio.IO
+import scala.reflect.ClassTag
 
 // Backward compatible approach to minimise the client changes
 final case class Read[A](config: Config[A], configProvider: ConfigProvider)
@@ -237,6 +237,125 @@ trait ConfigSyntax {
   // To be moved to ZIO
   implicit class FromConfigTypesafe(c: Config.type) {
 
+    def enumeration[D] = new PartiallyAppliedEnumeration[D]
+
+    class PartiallyAppliedEnumeration[D] {
+      def apply[X <: D](
+        desc1: Config[X]
+      )(implicit tag: ClassTag[X]): Config[D] =
+        desc1.map(identity)
+
+      def apply[A <: D: ClassTag, B <: D: ClassTag](
+        desc1: Config[A],
+        desc2: Config[B]
+      ): Config[D] =
+        apply(desc1) orElse apply(desc2)
+
+      def apply[A <: D: ClassTag, B <: D: ClassTag, C <: D: ClassTag](
+        desc1: Config[A],
+        desc2: Config[B],
+        desc3: Config[C]
+      ): Config[D] =
+        apply(desc1, desc2).orElse(apply[C](desc3))
+
+      def apply[A <: D: ClassTag, B <: D: ClassTag, C <: D: ClassTag, E <: D: ClassTag](
+        desc1: Config[A],
+        desc2: Config[B],
+        desc3: Config[C],
+        desc4: Config[E]
+      ): Config[D] =
+        apply(desc1, desc2, desc3) orElse apply[E](desc4)
+
+      def apply[A <: D: ClassTag, B <: D: ClassTag, C <: D: ClassTag, E <: D: ClassTag, F <: D: ClassTag](
+        desc1: Config[A],
+        desc2: Config[B],
+        desc3: Config[C],
+        desc4: Config[E],
+        desc5: Config[F]
+      ): Config[D] =
+        apply(desc1, desc2, desc3, desc4) orElse apply(desc5)
+
+      def apply[
+        A <: D: ClassTag,
+        B <: D: ClassTag,
+        C <: D: ClassTag,
+        E <: D: ClassTag,
+        F <: D: ClassTag,
+        G <: D: ClassTag
+      ](
+        desc1: Config[A],
+        desc2: Config[B],
+        desc3: Config[C],
+        desc4: Config[E],
+        desc5: Config[F],
+        desc6: Config[G]
+      ): Config[D] =
+        apply(desc1, desc2, desc3, desc4, desc5) orElse apply(desc6)
+
+      def apply[
+        A <: D: ClassTag,
+        B <: D: ClassTag,
+        C <: D: ClassTag,
+        E <: D: ClassTag,
+        F <: D: ClassTag,
+        G <: D: ClassTag,
+        H <: D: ClassTag
+      ](
+        desc1: Config[A],
+        desc2: Config[B],
+        desc3: Config[C],
+        desc4: Config[E],
+        desc5: Config[F],
+        desc6: Config[G],
+        desc7: Config[H]
+      ): Config[D] =
+        apply(desc1, desc2, desc3, desc4, desc5, desc6) orElse apply(desc7)
+
+      def apply[
+        A <: D: ClassTag,
+        B <: D: ClassTag,
+        C <: D: ClassTag,
+        E <: D: ClassTag,
+        F <: D: ClassTag,
+        G <: D: ClassTag,
+        H <: D: ClassTag,
+        I <: D: ClassTag
+      ](
+        desc1: Config[A],
+        desc2: Config[B],
+        desc3: Config[C],
+        desc4: Config[E],
+        desc5: Config[F],
+        desc6: Config[G],
+        desc7: Config[H],
+        desc8: Config[I]
+      ): Config[D] =
+        apply(desc1, desc2, desc3, desc4, desc5, desc6, desc7) orElse apply(desc8)
+
+      def apply[
+        A <: D: ClassTag,
+        B <: D: ClassTag,
+        C <: D: ClassTag,
+        E <: D: ClassTag,
+        F <: D: ClassTag,
+        G <: D: ClassTag,
+        H <: D: ClassTag,
+        I <: D: ClassTag,
+        J <: D: ClassTag
+      ](
+        desc1: Config[A],
+        desc2: Config[B],
+        desc3: Config[C],
+        desc4: Config[E],
+        desc5: Config[F],
+        desc6: Config[G],
+        desc7: Config[H],
+        desc8: Config[I],
+        desc9: Config[J]
+      ): Config[D] =
+        apply(desc1, desc2, desc3, desc4, desc5, desc6, desc7, desc8) orElse apply(desc9)
+    }
+
     def constant(value: String) =
       Config.string.mapOrFail(parsed =>
         if (parsed == value) Right(value)
@@ -266,9 +385,11 @@ trait ConfigSyntax {
      * Constructs a new ConfigProvider from a key/value (flat) provider, where
      * nesting is embedded into the string keys.
      */
-    def fromIndexedFlat(flat: IndexedFlat): ConfigProvider =
-      new ConfigProvider { self =>
+    def fromIndexedFlat(flat: IndexedFlat): ConfigProvider0 =
+      new ConfigProvider0 { self =>
         import Config._
+
+        override def flatten_ : IndexedFlat = flat
 
         def extend[A, B](
           leftDef: Int => A,
@@ -315,13 +436,13 @@ trait ConfigSyntax {
                           })
 
                 values <-
-                  ZIO.foreach(Chunk.fromIterable(keys.toSet)) { key =>
-                    loop(prefix ++ Chunk(key), config)
-                  }
-
+                  ZIO
+                    .foreach(Chunk.fromIterable(keys.toSet)) { key =>
+                      loop(prefix ++ Chunk(key), config)
+                    }.map(_.flatten)
               } yield
-                (if (values.isEmpty) Chunk(Chunk.empty).asInstanceOf[Chunk[A]]
-                 else Chunk(values).asInstanceOf[Chunk[A]])
+                if (values.isEmpty) Chunk(Chunk.empty)
+                else Chunk(values)
 
             case Nested(name, config) =>
               loop(prefix ++ Chunk(KeyComponent.KeyName(name)), config)

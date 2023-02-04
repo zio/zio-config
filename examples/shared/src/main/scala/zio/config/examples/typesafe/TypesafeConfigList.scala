@@ -185,25 +185,25 @@ object TypesafeConfigList extends App with EitherImpureOps {
           List(
             C(
               List(
-                // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
-                D(List(1, 1, 1), List("a", "b", "c")),
-                D(List(12, 12), List("d")),
-                D(List(14, 14), List("e")),
-                D(List(15, 15), List("f", "g"))
+                D(List(37), List("e", "f", "g", "h", "i")),
+                D(List(33, 33, 33), List("xx")),
+                D(List(32, 32), List("x")),
+                D(List(31), List("b")),
+                D(List(31, 31), List("bb"))
               )
             )
           ),
           "some_name",
-          List("aa")
+          List("a")
         ),
         B(
           List(
             C(
               List(
-                D(List(21, 21), List("af")),
-                D(List(22, 22), List("sa", "l")),
                 D(List(23, 23, 23), List("af", "l")),
-                D(List(24, 24, 24), List("l"))
+                D(List(24, 24, 24), List("l")),
+                D(List(22, 22), List("sa", "l")),
+                D(List(21, 21), List("af"))
               )
             )
           ),
@@ -214,16 +214,16 @@ object TypesafeConfigList extends App with EitherImpureOps {
           List(
             C(
               List(
-                D(List(31, 31), List("bb")),
-                D(List(32, 32), List("x")),
-                D(List(33, 33, 33), List("xx")),
-                D(List(31), List("b")),
-                D(List(37), List("e", "f", "g", "h", "i"))
+                // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
+                D(List(14, 14), List("e")),
+                D(List(15, 15), List("f", "g")),
+                D(List(12, 12), List("d")),
+                D(List(1, 1, 1), List("a", "b", "c"))
               )
             )
           ),
           "some_name",
-          List("a")
+          List("aa")
         )
       ),
       X(Y("k")),
