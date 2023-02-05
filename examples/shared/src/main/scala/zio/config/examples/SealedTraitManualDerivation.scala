@@ -3,7 +3,8 @@ package zio.config.examples
 import zio.config._
 import zio.{Config, ConfigProvider}
 
-object AdtManualDerivation extends App {
+// Refer AutoDerivationSealedTrait.scala for auto derivation for ADTs
+object SealedTraitManualDerivation extends App {
   sealed trait FooBar
 
   case class Foo(a: Int) extends FooBar

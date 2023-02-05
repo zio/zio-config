@@ -15,25 +15,12 @@ object DocsExample extends App {
   val docs: ConfigDocs =
     generateDocs(config)
 
-  val markdown =
-    docs.toTable.toGithubFlavouredMarkdown
-
-  println(markdown)
-
   val confluenceMarkdown: String =
     docs.toTable.toConfluenceMarkdown(None)
 
   println(confluenceMarkdown)
 
   /**
-   *  |FieldName           |Format            |Description     |Sources|
-   *  |---                 |---               |---             |---    |
-   *  |[database](database)|[all-of](database)|Database related|       |
-   *  ### database
-   *  |FieldName|Format   |Description     |Sources|
-   *  |---      |---      |---             |---    |
-   *  |PORT     |recursion|Example: 8088   |       |
-   *  |URL      |recursion|Example: abc.com|       |
    *  ## Configuration Details
    *  |FieldName          |Format           |Description     |Sources|
    *  |---                |---              |---             |---    |
@@ -41,7 +28,7 @@ object DocsExample extends App {
    *  ### database
    *  |FieldName|Format   |Description     |Sources|
    *  |---      |---      |---             |---    |
-   *  |PORT     |recursion|Example: 8088   |       |
-   *  |URL      |recursion|Example: abc.com|       |
+   *  |PORT     |primitive|Example: 8088   |       |
+   *  |URL      |primitive|Example: abc.com|       |
    */
 }
