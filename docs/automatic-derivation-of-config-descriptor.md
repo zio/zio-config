@@ -1,5 +1,5 @@
 ---
-id: automatic-derivation-of-config-descriptor
+id: automatic-derivation-of-config
 title:  "Automatic Derivation of Config"
 ---
 
@@ -9,10 +9,6 @@ Also, we will get to see the Hocon config for coproducts is devoid of any extra 
 
 Take a look at the magnolia examples in `zio-config`. One of them is provided here for quick access.
 
-Note:  `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects. It will be deprecated once we find users have moved on from scala 2.11. 
-
-Also, there are a few differences when it comes to scala-3 for auto-matic derivation.
-Refer scala-3 section in this page for specific differences. Most of them, is an intentional reduction in the number of moving parts in the entire mechanism of auto-derivation, plus, a few subtle limitations.
 
 ### Example
 
@@ -44,8 +40,10 @@ case class MyConfig(x: X)
 ```scala
 // Setting up imports
 
-import zio.config._, zio.config.typesafe._
-  import zio.config.magnolia._
+import zio._
+import zio.config._, 
+import zio.config.typesafe._
+import zio.config.magnolia._
 
   import X._
 ```
@@ -54,25 +52,25 @@ import zio.config._, zio.config.typesafe._
 // Defining different possibility of HOCON source
 
 val aHoconSource =
-  ConfigSource
+  ConfigProvider
     .fromHoconString("x = A")
 ```
 
 ```scala
 val bHoconSource =
-  ConfigSource
+  ConfigProvider
     .fromHoconString("x = B")
 ```
 
 ```scala
 val cHoconSource =
-  ConfigSource
+  ConfigProvider
     .fromHoconString("x = C")
 ```
 
 ```scala
 val dHoconSource =
-  ConfigSource
+  ConfigProvider
     .fromHoconString(
       s"""
          | x {
@@ -94,20 +92,19 @@ val dHoconSource =
 ```scala
 // Let's try automatic derivation
 
-read(descriptor[MyConfig] from aHoconSource)
+aHoconSource.load(deriveConfig[MyConfig])
 // res0: Right(MyConfig(A))
 
-read(descriptor[MyConfig] from bHoconSource)
+bHoconSource.load(deriveConfig[MyConfig])
 // res0: Right(MyConfig(B))
 
-read(descriptor[MyConfig] from cHoconSource)
+cHoconSource.load(deriveConfig[MyConfig])
 // res0: Right(MyConfig(C))
 
-read(descriptor[MyConfig] from dHoconSource)
+dHoconSource.load(deriveConfig[MyConfig])
 // res0: Right(MyConfig(DetailsWrapped(Detail("ff", "ll", Region("strath", "syd")))))
 ```
 
-To know more about various semantics of `descriptor`, please refer to the [api docs](https://javadoc.io/static/dev.zio/zio-config-magnolia_2.13/1.0.0-RC31-1/zio/config/magnolia/index.html#descriptor[A](implicitconfig:zio.config.magnolia.package.Descriptor[A]):zio.Config[A]).
 
 **NOTE**
 
@@ -150,7 +147,7 @@ case class DbUrl(value: String)
 This will be equivalent to the manual configuration of:
 
 ```scala
-(string("region") zip string("dburl").transform(DbUrl, _.value)).to[Aws] ?? "This config is about aws"
+string("region").zip(string("dburl").to[DbUrl]).to[Aws] ?? "This config is about aws"
 ```
 
 You could provide `describe` annotation at field level
@@ -217,56 +214,11 @@ final case class AwsRegion(value: String) extends AnyVal {
 
 object AwsRegion {
   implicit val descriptor: Descriptor[AwsRegion] = 
-    Descriptor[String].transform(AwsRegion(_), _.value)
+    Descriptor[String].map(AwsRegion(_))
 }
 ```
 
-### Is that the only way for custom derivation ?
 
-What if our custom type is complex enough that, parsing from a string would actually fail? The answer is, zio-config provides with all the functions that you need to handle errors.
-
-```
-mport zio.config.magnolia.{Descriptor, descriptor}
-
-implicit val descriptorO: Descriptor[ZonedDateTime] =
-  Descriptor[String].transformOrFailLeft(x => Try (ZonedDateTime.parse(x)).toEither.swap.map(_.getMessage).swap)(_.toString)
-```
-
-What is transformOrFailLeft ? Parsing a String to ZonedDateTime can fail, but converting it back to a string
-won't fail. Logically, these are respectively the first 2 functions that we passed to transformEitherLeft. 
-
-PS: We recommend not to use `throwable.getMessage`. Provide more descriptive error message.
-
-You can also rely on `transformOrfail` if both `to` and `fro` can fail. 
-
-### Please give descriptions wherever possible for a better experience
-
-Giving descriptions is going to be helpful. While all the built-in types have documentations, it is better we give
-some description to custom types as well. For example:
-
-```
-mport zio.config.magnolia.{Descriptor, descriptor}
-
-
-implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
-  Descriptor[String].transform(string => AwsRegion.from(string), _.toString) ?? "value of type AWS.Region"
-```
-
-This way, when there is an error due to MissingValue, we get an error message (don't forget to use prettyPrint)
-that describes about the config parameter. For example, see the `Details` corresponding to the first `MissingValue` in a sample error message below.
-
-```scala
- ReadError:
- ╥
- ╠─MissingValue
- ║ path: aws.region
- ║ Details: value of type AWS.Region
- ║
- ╠─FormatError
- ║ cause: Provided value is 3dollars, expecting the type double
- ║ path: cost
- ▼
-```
 
 ### Where to place these implicits ?
 
@@ -276,11 +228,10 @@ If the types are owned by us, then the best place to keep implicit instance is t
 final case clas MyAwsRegion(value: AwsRegion)
 
 object MyAwsRegion {
-  implicit val awsRegionDescriptor: Descriptor[MyAwsRegion] =
-    Descriptor[String]
-      .transform(
-        string => MyAwsRegion(AwsRegion.from(string)), 
-        _.value.toString
+  implicit val awsRegionDescriptor: DeriveConfig[MyAwsRegion] =
+    DeriveConfig[String]
+      .map(
+        string => MyAwsRegion(AwsRegion.from(string))
       ) ?? "value of type AWS.Region"
 }
 ```
