@@ -121,6 +121,11 @@ object TypesafeConfigSource {
       })
     }
 
+    val flatten =
+      loop(config)
+
+    println(flatten)
+
     ConfigProvider.fromIndexedFlat(syntax.IndexedFlat.from(loop(config)))
   }
 

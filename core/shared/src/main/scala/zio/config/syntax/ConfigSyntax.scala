@@ -56,40 +56,40 @@ trait ConfigSyntax {
       sealed trait Segment
       sealed trait Step extends Segment
 
-      final case class Sequential(all: List[Step])     extends Segment
+      final case class Sequential(all: List[Step]) extends Segment
       final case class Parallel(all: List[Sequential]) extends Step
-      final case class Failure(lines: List[String])    extends Step
+      final case class Failure(lines: List[String]) extends Step
 
       def renderSteps(steps: List[KeyComponent]): String =
         steps
           .foldLeft(new StringBuilder()) {
             case (r, KeyComponent.KeyName(k)) => r.append(keyDelimiter).append(k.toString)
-            case (r, KeyComponent.Index(i))   => r.append('[').append(i).append(']')
+            case (r, KeyComponent.Index(i)) => r.append('[').append(i).append(']')
           }
           .delete(0, 1)
           .toString()
 
       def prefixBlock(values: List[String], p1: String, p2: String): List[String] =
         values match {
-          case Nil          => Nil
+          case Nil => Nil
           case head :: tail =>
             (p1 + head) :: tail.map(p2 + _)
         }
 
       def parallelSegments(readError: Config.Error): List[Sequential] =
         readError match {
-          case And(left, right)                        => parallelSegments(left) ++ parallelSegments(right)
-          case InvalidData(path, message)              => List(readErrorToSequential(readError))
-          case MissingData(path, message)              => List(readErrorToSequential(readError))
-          case Or(left, right)                         => List(readErrorToSequential(readError))
+          case And(left, right) => parallelSegments(left) ++ parallelSegments(right)
+          case InvalidData(path, message) => List(readErrorToSequential(readError))
+          case MissingData(path, message) => List(readErrorToSequential(readError))
+          case Or(left, right) => List(readErrorToSequential(readError))
           case SourceUnavailable(path, message, cause) => List(readErrorToSequential(readError))
-          case Unsupported(path, message)              => List(readErrorToSequential(readError))
+          case Unsupported(path, message) => List(readErrorToSequential(readError))
         }
 
       def linearSegments(readError: Config.Error): List[Step] =
         readError match {
           case Config.Error.Or(left, right) => linearSegments(left) ++ linearSegments(right)
-          case _                            => readErrorToSequential(readError).all
+          case _ => readErrorToSequential(readError).all
         }
 
       def renderMissingValue(err: Config.Error.MissingData): Sequential = {
@@ -128,19 +128,19 @@ trait ConfigSyntax {
 
       def readErrorToSequential(readError: Config.Error): Sequential =
         readError match {
-          case r: MissingData       => renderMissingValue(r)
+          case r: MissingData => renderMissingValue(r)
           case r: SourceUnavailable => renderSourceError(r)
-          case r: Unsupported       => renderConversionError(r)
-          case t: Or                => Sequential(linearSegments(t))
-          case b: And               => Sequential(List(Parallel(parallelSegments(b))))
-          case f: InvalidData       => renderFormatError(f)
+          case r: Unsupported => renderConversionError(r)
+          case t: Or => Sequential(linearSegments(t))
+          case b: And => Sequential(List(Parallel(parallelSegments(b))))
+          case f: InvalidData => renderFormatError(f)
         }
 
       def format(segment: Segment): List[String] =
         segment match {
-          case Failure(lines)  =>
+          case Failure(lines) =>
             prefixBlock(lines, "─", " ")
-          case Parallel(all)   =>
+          case Parallel(all) =>
             List(("══╦" * (all.size - 1)) + "══╗") ++
               all.foldRight[List[String]](Nil) { case (current, acc) =>
                 prefixBlock(acc, "  ║", "  ║") ++
@@ -181,16 +181,16 @@ trait ConfigSyntax {
       def loop[B](config: Config[B]): Config[B] =
         config match {
           case Described(config, description) => Described(loop(config), description)
-          case config: FallbackWith[B]        => FallbackWith(loop(config.first), loop(config.second), config.f)
-          case config: Fallback[B]            => Fallback(loop(config.first), loop(config.second))
-          case Sequence(config)               => Sequence(loop(config))
-          case Nested(name, config)           => Nested(f(name), loop(config))
+          case config: FallbackWith[B] => FallbackWith(loop(config.first), loop(config.second), config.f)
+          case config: Fallback[B] => Fallback(loop(config.first), loop(config.second))
+          case Sequence(config) => Sequence(loop(config))
+          case Nested(name, config) => Nested(f(name), loop(config))
           case MapOrFail(original, mapOrFail) => MapOrFail(loop(original), mapOrFail)
-          case Table(valueConfig)             => Table(loop(valueConfig))
-          case Zipped(left, right, zippable)  => Zipped(loop(left), loop(right), zippable)
-          case Lazy(thunk)                    => Lazy(() => loop(thunk()))
+          case Table(valueConfig) => Table(loop(valueConfig))
+          case Zipped(left, right, zippable) => Zipped(loop(left), loop(right), zippable)
+          case Lazy(thunk) => Lazy(() => loop(thunk()))
           case primitive: Config.Primitive[B] => primitive
-          case Fail(message)                  => Fail(message)
+          case Fail(message) => Fail(message)
         }
 
       loop(config)
@@ -222,17 +222,17 @@ trait ConfigSyntax {
 
       def loop[B](config: Config[B]): Config[B] =
         config match {
-          case Nested(name, config)                  => Nested(name, loop(config))
-          case Sequence(config)                      => Sequence(loop(config))
-          case Config.Optional(config)               => Config.Optional(loop(config))
+          case Nested(name, config) => Nested(name, loop(config))
+          case Sequence(config) => Sequence(loop(config))
+          case Config.Optional(config) => Config.Optional(loop(config))
           case Config.FallbackWith(first, second, f) => Config.FallbackWith(loop(first), loop(second), f)
-          case Table(valueConfig)                    => Table(loop(valueConfig))
-          case a: Fallback[B]                        => loop(a.first).orElse(loop(a.second))
-          case MapOrFail(original, mapOrFail)        => MapOrFail(loop(original), a => mapOrFail(a))
-          case Zipped(left, right, zippable)         => Zipped(loop(left), loop(right), zippable)
-          case Described(config, description)        => Described(loop(config), description)
-          case Lazy(thunk)                           => thunk().strict
-          case config: Config.Primitive[B]           => config
+          case Table(valueConfig) => Table(loop(valueConfig))
+          case a: Fallback[B] => loop(a.first).orElse(loop(a.second))
+          case MapOrFail(original, mapOrFail) => MapOrFail(loop(original), a => mapOrFail(a))
+          case Zipped(left, right, zippable) => Zipped(loop(left), loop(right), zippable)
+          case Described(config, description) => Described(loop(config), description)
+          case Lazy(thunk) => thunk().strict
+          case config: Config.Primitive[B] => config
         }
 
       loop(config)
@@ -247,118 +247,118 @@ trait ConfigSyntax {
 
     class PartiallyAppliedEnumeration[D] {
       def apply[X <: D](
-        desc1: Config[X]
-      )(implicit tag: ClassTag[X]): Config[D] =
+                         desc1: Config[X]
+                       )(implicit tag: ClassTag[X]): Config[D] =
         desc1.map(identity)
 
-      def apply[A <: D: ClassTag, B <: D: ClassTag](
-        desc1: Config[A],
-        desc2: Config[B]
-      ): Config[D] =
+      def apply[A <: D : ClassTag, B <: D : ClassTag](
+                                                       desc1: Config[A],
+                                                       desc2: Config[B]
+                                                     ): Config[D] =
         apply(desc1) orElse apply(desc2)
 
-      def apply[A <: D: ClassTag, B <: D: ClassTag, C <: D: ClassTag](
-        desc1: Config[A],
-        desc2: Config[B],
-        desc3: Config[C]
-      ): Config[D] =
+      def apply[A <: D : ClassTag, B <: D : ClassTag, C <: D : ClassTag](
+                                                                          desc1: Config[A],
+                                                                          desc2: Config[B],
+                                                                          desc3: Config[C]
+                                                                        ): Config[D] =
         apply(desc1, desc2).orElse(apply[C](desc3))
 
-      def apply[A <: D: ClassTag, B <: D: ClassTag, C <: D: ClassTag, E <: D: ClassTag](
-        desc1: Config[A],
-        desc2: Config[B],
-        desc3: Config[C],
-        desc4: Config[E]
-      ): Config[D] =
+      def apply[A <: D : ClassTag, B <: D : ClassTag, C <: D : ClassTag, E <: D : ClassTag](
+                                                                                             desc1: Config[A],
+                                                                                             desc2: Config[B],
+                                                                                             desc3: Config[C],
+                                                                                             desc4: Config[E]
+                                                                                           ): Config[D] =
         apply(desc1, desc2, desc3) orElse apply[E](desc4)
 
-      def apply[A <: D: ClassTag, B <: D: ClassTag, C <: D: ClassTag, E <: D: ClassTag, F <: D: ClassTag](
-        desc1: Config[A],
-        desc2: Config[B],
-        desc3: Config[C],
-        desc4: Config[E],
-        desc5: Config[F]
-      ): Config[D] =
+      def apply[A <: D : ClassTag, B <: D : ClassTag, C <: D : ClassTag, E <: D : ClassTag, F <: D : ClassTag](
+                                                                                                                desc1: Config[A],
+                                                                                                                desc2: Config[B],
+                                                                                                                desc3: Config[C],
+                                                                                                                desc4: Config[E],
+                                                                                                                desc5: Config[F]
+                                                                                                              ): Config[D] =
         apply(desc1, desc2, desc3, desc4) orElse apply(desc5)
 
       def apply[
-        A <: D: ClassTag,
-        B <: D: ClassTag,
-        C <: D: ClassTag,
-        E <: D: ClassTag,
-        F <: D: ClassTag,
-        G <: D: ClassTag
+        A <: D : ClassTag,
+        B <: D : ClassTag,
+        C <: D : ClassTag,
+        E <: D : ClassTag,
+        F <: D : ClassTag,
+        G <: D : ClassTag
       ](
-        desc1: Config[A],
-        desc2: Config[B],
-        desc3: Config[C],
-        desc4: Config[E],
-        desc5: Config[F],
-        desc6: Config[G]
-      ): Config[D] =
+         desc1: Config[A],
+         desc2: Config[B],
+         desc3: Config[C],
+         desc4: Config[E],
+         desc5: Config[F],
+         desc6: Config[G]
+       ): Config[D] =
         apply(desc1, desc2, desc3, desc4, desc5) orElse apply(desc6)
 
       def apply[
-        A <: D: ClassTag,
-        B <: D: ClassTag,
-        C <: D: ClassTag,
-        E <: D: ClassTag,
-        F <: D: ClassTag,
-        G <: D: ClassTag,
-        H <: D: ClassTag
+        A <: D : ClassTag,
+        B <: D : ClassTag,
+        C <: D : ClassTag,
+        E <: D : ClassTag,
+        F <: D : ClassTag,
+        G <: D : ClassTag,
+        H <: D : ClassTag
       ](
-        desc1: Config[A],
-        desc2: Config[B],
-        desc3: Config[C],
-        desc4: Config[E],
-        desc5: Config[F],
-        desc6: Config[G],
-        desc7: Config[H]
-      ): Config[D] =
+         desc1: Config[A],
+         desc2: Config[B],
+         desc3: Config[C],
+         desc4: Config[E],
+         desc5: Config[F],
+         desc6: Config[G],
+         desc7: Config[H]
+       ): Config[D] =
         apply(desc1, desc2, desc3, desc4, desc5, desc6) orElse apply(desc7)
 
       def apply[
-        A <: D: ClassTag,
-        B <: D: ClassTag,
-        C <: D: ClassTag,
-        E <: D: ClassTag,
-        F <: D: ClassTag,
-        G <: D: ClassTag,
-        H <: D: ClassTag,
-        I <: D: ClassTag
+        A <: D : ClassTag,
+        B <: D : ClassTag,
+        C <: D : ClassTag,
+        E <: D : ClassTag,
+        F <: D : ClassTag,
+        G <: D : ClassTag,
+        H <: D : ClassTag,
+        I <: D : ClassTag
       ](
-        desc1: Config[A],
-        desc2: Config[B],
-        desc3: Config[C],
-        desc4: Config[E],
-        desc5: Config[F],
-        desc6: Config[G],
-        desc7: Config[H],
-        desc8: Config[I]
-      ): Config[D] =
+         desc1: Config[A],
+         desc2: Config[B],
+         desc3: Config[C],
+         desc4: Config[E],
+         desc5: Config[F],
+         desc6: Config[G],
+         desc7: Config[H],
+         desc8: Config[I]
+       ): Config[D] =
         apply(desc1, desc2, desc3, desc4, desc5, desc6, desc7) orElse apply(desc8)
 
       def apply[
-        A <: D: ClassTag,
-        B <: D: ClassTag,
-        C <: D: ClassTag,
-        E <: D: ClassTag,
-        F <: D: ClassTag,
-        G <: D: ClassTag,
-        H <: D: ClassTag,
-        I <: D: ClassTag,
-        J <: D: ClassTag
+        A <: D : ClassTag,
+        B <: D : ClassTag,
+        C <: D : ClassTag,
+        E <: D : ClassTag,
+        F <: D : ClassTag,
+        G <: D : ClassTag,
+        H <: D : ClassTag,
+        I <: D : ClassTag,
+        J <: D : ClassTag
       ](
-        desc1: Config[A],
-        desc2: Config[B],
-        desc3: Config[C],
-        desc4: Config[E],
-        desc5: Config[F],
-        desc6: Config[G],
-        desc7: Config[H],
-        desc8: Config[I],
-        desc9: Config[J]
-      ): Config[D] =
+         desc1: Config[A],
+         desc2: Config[B],
+         desc3: Config[C],
+         desc4: Config[E],
+         desc5: Config[F],
+         desc6: Config[G],
+         desc7: Config[H],
+         desc8: Config[I],
+         desc9: Config[J]
+       ): Config[D] =
         apply(desc1, desc2, desc3, desc4, desc5, desc6, desc7, desc8) orElse apply(desc9)
     }
 
@@ -394,29 +394,30 @@ trait ConfigSyntax {
     def fromIndexedFlat(flat: IndexedFlat): ConfigProvider0 =
       new ConfigProvider0 {
         self =>
+
         import Config._
 
         override def flatten_ : IndexedFlat = flat
 
         def extend[A, B](
-          leftDef: Int => A,
-          rightDef: Int => B
-        )(left: Chunk[A], right: Chunk[B]): (Chunk[A], Chunk[B]) = {
-          val leftPad  = Chunk.unfold(left.length) { index =>
+                          leftDef: Int => A,
+                          rightDef: Int => B
+                        )(left: Chunk[A], right: Chunk[B]): (Chunk[A], Chunk[B]) = {
+          val leftPad = Chunk.unfold(left.length) { index =>
             if (index >= right.length) None else Some(leftDef(index) -> (index + 1))
           }
           val rightPad = Chunk.unfold(right.length) { index =>
             if (index >= left.length) None else Some(rightDef(index) -> (index + 1))
           }
 
-          val leftExtension  = left ++ leftPad
+          val leftExtension = left ++ leftPad
           val rightExtension = right ++ rightPad
 
           (leftExtension, rightExtension)
         }
 
         def loop[A](prefix: Chunk[KeyComponent], config: Config[A])(implicit
-          trace: Trace
+                                                                    trace: Trace
         ): IO[Config.Error, Chunk[A]] =
           config match {
             case fallback: Fallback[A] =>
@@ -437,10 +438,10 @@ trait ConfigSyntax {
             case Sequence(config) =>
               for {
                 keys <- flat
-                          .enumerateChildren(prefix)
-                          .map(_.toList.map { chunk =>
-                            chunk.head.asInstanceOf[KeyComponent.Index] // FIXME
-                          })
+                  .enumerateChildren(prefix)
+                  .map(set => set.toList.flatMap { chunk =>
+                    chunk.headOption.toList
+                  })
 
                 values <-
                   ZIO
@@ -456,48 +457,56 @@ trait ConfigSyntax {
               loop(prefix ++ Chunk(KeyComponent.KeyName(name)), config)
 
             case table: Table[valueType] =>
+              println("hello")
               import table.valueConfig
               for {
-                keys   <- flat.enumerateChildren(prefix)
+                keys <- flat.enumerateChildren(prefix)
+                _ = println(prefix)
+                _ = println(keys)
+                _ = println(valueConfig.strict)
                 values <- ZIO.foreach(Chunk.fromIterable(keys))(key => loop(prefix ++ key, valueConfig))
               } yield
                 if (values.isEmpty) Chunk(Map.empty[String, valueType])
-                else values.transpose.map(values => keys.map(comp => KeyComponent.pretty(comp)).zip(values).toMap)
+                else values.transpose.map(values => {
+                  println(values)
+                  println(keys)
+                  keys.map(comp => KeyComponent.pretty(comp)).zip(values).toMap
+                })
 
             case zipped: Zipped[leftType, rightType, c] =>
               import zipped.{left, right, zippable}
               for {
-                l      <- loop(prefix, left).either
-                r      <- loop(prefix, right).either
+                l <- loop(prefix, left).either
+                r <- loop(prefix, right).either
                 result <- (l, r) match {
-                            case (Left(e1), Left(e2)) => ZIO.fail(e1 && e2)
-                            case (Left(e1), Right(_)) => ZIO.fail(e1)
-                            case (Right(_), Left(e2)) => ZIO.fail(e2)
-                            case (Right(l), Right(r)) =>
-                              val path = prefix.mkString(".")
+                  case (Left(e1), Left(e2)) => ZIO.fail(e1 && e2)
+                  case (Left(e1), Right(_)) => ZIO.fail(e1)
+                  case (Right(_), Left(e2)) => ZIO.fail(e2)
+                  case (Right(l), Right(r)) =>
+                    val path = prefix.mkString(".")
 
-                              def lfail(index: Int): Either[Config.Error, leftType] =
-                                Left(
-                                  Config.Error.MissingData(
-                                    prefix.map(_.toString),
-                                    s"The element at index ${index} in a sequence at ${path} was missing"
-                                  )
-                                )
+                    def lfail(index: Int): Either[Config.Error, leftType] =
+                      Left(
+                        Config.Error.MissingData(
+                          prefix.map(_.toString),
+                          s"The element at index ${index} in a sequence at ${path} was missing"
+                        )
+                      )
 
-                              def rfail(index: Int): Either[Config.Error, rightType] =
-                                Left(
-                                  Config.Error.MissingData(
-                                    prefix.map(_.toString),
-                                    s"The element at index ${index} in a sequence at ${path} was missing"
-                                  )
-                                )
+                    def rfail(index: Int): Either[Config.Error, rightType] =
+                      Left(
+                        Config.Error.MissingData(
+                          prefix.map(_.toString),
+                          s"The element at index ${index} in a sequence at ${path} was missing"
+                        )
+                      )
 
-                              val (ls, rs) = extend(lfail, rfail)(l.map(Right(_)), r.map(Right(_)))
+                    val (ls, rs) = extend(lfail, rfail)(l.map(Right(_)), r.map(Right(_)))
 
-                              ZIO.foreach(ls.zip(rs)) { case (l, r) =>
-                                ZIO.fromEither(l).zipWith(ZIO.fromEither(r))(zippable.zip(_, _))
-                              }
-                          }
+                    ZIO.foreach(ls.zip(rs)) { case (l, r) =>
+                      ZIO.fromEither(l).zipWith(ZIO.fromEither(r))(zippable.zip(_, _))
+                    }
+                }
               } yield result
 
             case Constant(value) =>
@@ -508,10 +517,10 @@ trait ConfigSyntax {
 
             case primitive: Primitive[A] =>
               for {
-                vs     <- flat.load(prefix, primitive)
+                vs <- flat.load(prefix, primitive)
                 result <- if (vs.isEmpty)
-                            ZIO.fail(primitive.missingError(prefix.map(_.toString).lastOption.getOrElse("<n/a>")))
-                          else ZIO.succeed(vs)
+                  ZIO.fail(primitive.missingError(prefix.map(_.toString).lastOption.getOrElse("<n/a>")))
+                else ZIO.succeed(vs)
               } yield result
           }
 
@@ -519,7 +528,7 @@ trait ConfigSyntax {
           loop(Chunk.empty, config).flatMap { chunk =>
             chunk.headOption match {
               case Some(a) => ZIO.succeed(a)
-              case _       =>
+              case _ =>
                 ZIO.fail(Config.Error.MissingData(Chunk.empty, s"Expected a single value having structure ${config}"))
             }
           }
@@ -527,7 +536,7 @@ trait ConfigSyntax {
         override def flatten: zio.ConfigProvider.Flat =
           new zio.ConfigProvider.Flat {
             override def load[A](path: Chunk[String], config: Primitive[A])(implicit
-              trace: zio.Trace
+                                                                            trace: zio.Trace
             ): IO[Error, Chunk[A]] = loop(
               path.map { str =>
                 println(str)
