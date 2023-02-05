@@ -105,6 +105,17 @@ trait ConfigDocsModule {
 
         docs match {
 
+          case ConfigDocs.Leaf(descriptions, _) =>
+            val desc = filterDescriptions(descriptionsUsedAlready, descriptions)
+
+            TableRow(
+              previousPaths,
+              Some(Table.Format.Primitive),
+              desc,
+              None,
+              Set.empty
+            ).asTable
+
           case c @ ConfigDocs.Nested(path, docs, descriptions) =>
             val descs  =
               filterDescriptions(descriptionsUsedAlready, descriptions)
@@ -555,14 +566,6 @@ trait ConfigDocsModule {
   import zio.Config
   import zio.{Config, ConfigProvider}, Config._
   final def generateDocs[A](config: zio.Config[A]): ConfigDocs = {
-    def loopTo[B](
-      descriptions: List[ConfigDocs.Description],
-      config: Config[B],
-      latestPath: Option[String],
-      alreadySeen: Set[Config[_]]
-    ): ConfigDocs =
-      loop(descriptions, config, latestPath, alreadySeen + config)
-
     def loop[B](
       descriptions: List[ConfigDocs.Description],
       config: Config[B],
@@ -571,32 +574,27 @@ trait ConfigDocsModule {
     ): ConfigDocs =
       config match {
         case Config.Lazy(thunk) =>
-          loopTo(descriptions, thunk(), latestPath, alreadySeen)
+          loop(descriptions, thunk(), latestPath, alreadySeen + thunk())
 
         case cp: Config.Primitive[_] =>
-          loopTo(
-            descriptions ++ List(ConfigDocs.Description(None, cp.description)),
-            config,
-            latestPath,
-            alreadySeen
-          )
+          ConfigDocs.Leaf(descriptions, None)
 
         case cd: Config.Table[_] =>
           ConfigDocs.DynamicMap(
-            loopTo(
+            loop(
               descriptions,
               cd.valueConfig,
               None,
-              alreadySeen
+              alreadySeen + config
             )
           )
 
         case Config.Optional(c) =>
-          loopTo(descriptions, c, None, alreadySeen)
+          loop(descriptions, c, None, alreadySeen)
 
         case Config.Sequence(c) =>
           ConfigDocs.Sequence(
-            loopTo(
+            loop(
               descriptions,
               c,
               None,
@@ -608,7 +606,7 @@ trait ConfigDocsModule {
           val descri: ConfigDocs.Description =
             ConfigDocs.Description(latestPath, desc)
 
-          loopTo(
+          loop(
             descri :: descriptions,
             c,
             latestPath,
@@ -618,7 +616,7 @@ trait ConfigDocsModule {
         case Config.Nested(path, c) =>
           ConfigDocs.Nested(
             path,
-            loopTo(
+            loop(
               List.empty,
               c,
               Some(path),
@@ -628,29 +626,29 @@ trait ConfigDocsModule {
           )
 
         case Config.MapOrFail(c, _) =>
-          loopTo(descriptions, c, None, alreadySeen)
+          loop(descriptions, c, None, alreadySeen)
 
         case Config.Zipped(left, right, zippable) =>
           ConfigDocs.Zip(
-            loopTo(descriptions, left, None, alreadySeen),
-            loopTo(descriptions, right, None, alreadySeen)
+            loop(descriptions, left, None, alreadySeen),
+            loop(descriptions, right, None, alreadySeen)
           )
 
         case Config.Fallback(left, right) =>
           ConfigDocs.OrElse(
-            loopTo(descriptions, left, None, alreadySeen),
-            loopTo(descriptions, right, None, alreadySeen)
+            loop(descriptions, left, None, alreadySeen),
+            loop(descriptions, right, None, alreadySeen)
           )
 
         case Config.FallbackWith(left, right, _) =>
           ConfigDocs.OrElse(
-            loopTo(descriptions, left, None, alreadySeen),
-            loopTo(descriptions, right, None, alreadySeen)
+            loop(descriptions, left, None, alreadySeen),
+            loop(descriptions, right, None, alreadySeen)
           )
 
       }
 
-    loopTo(Nil, config, None, Set.empty)
+    loop(Nil, config, None, Set.empty)
   }
 
 }
