@@ -11,7 +11,7 @@ object GenerateDocsTest extends BaseSpec {
     suite("Generate docs")(
       test("optional nested") {
         val inner = (int("a") zip int("b"))
-        val outer = nested("c")(inner).optional
+        val outer = inner.nested("c").optional
 
         val doc   = generateDocs(outer)
         val table = doc.toTable
@@ -23,21 +23,21 @@ object GenerateDocsTest extends BaseSpec {
                 Table.TableRow(
                   List(Table.FieldName.Key("c")),
                   Some(Table.Format.AllOf),
-                  List(ConfigDocs.Description(None, "optional value")),
+                  Nil,
                   Some(
                     Table(
                       List(
                         Table.TableRow(
                           List(Table.FieldName.Key("a")),
                           Some(Table.Format.Primitive),
-                          List(ConfigDocs.Description(Some("a"), "value of type int")),
+                          Nil,
                           None,
                           Set.empty
                         ),
                         Table.TableRow(
                           List(Table.FieldName.Key("b")),
                           Some(Table.Format.Primitive),
-                          List(ConfigDocs.Description(Some("b"), "value of type int")),
+                          Nil,
                           None,
                           Set.empty
                         )
@@ -53,39 +53,39 @@ object GenerateDocsTest extends BaseSpec {
       },
       test("generate docs") {
         val expected =
-          s"""
-             |## Configuration Details
-             |
-             |
-             ||FieldName|Format                     |Description|Sources|
-             ||---      |---                        |---        |---    |
-             ||         |[all-of](fielddescriptions)|           |       |
-             |
-             |### Field Descriptions
-             |
-             ||FieldName                 |Format               |Description                                             |Sources|
-             ||---                       |---                  |---                                                     |---    |
-             ||SECRET                    |primitive            |value of type string, optional value, Application secret|       |
-             ||[CREDENTIALS](credentials)|[all-of](credentials)|Credentials                                             |       |
-             ||[DATABASE](database)      |[all-of](database)   |Database                                                |       |
-             |
-             |### CREDENTIALS
-             |
-             ||FieldName|Format   |Description                           |Sources|
-             ||---      |---      |---                                   |---    |
-             ||USERNAME |primitive|value of type string, Example: ZioUser|       |
-             ||PASSWORD |primitive|value of type string, Example: ZioPass|       |
-             |
-             |### DATABASE
-             |
-             ||FieldName|Format   |Description                           |Sources|
-             ||---      |---      |---                                   |---    |
-             ||PORT     |primitive|value of type int, Example: 8088      |       |
-             ||URL      |primitive|value of type string, Example: abc.com|       |
-             |""".stripMargin
+          s"""|## Configuration Details
+              |
+              |
+              ||FieldName|Format                     |Description|Sources|
+              ||---      |---                        |---        |---    |
+              ||         |[all-of](fielddescriptions)|           |       |
+              |
+              |### Field Descriptions
+              |
+              ||FieldName                 |Format               |Description       |Sources|
+              ||---                       |---                  |---               |---    |
+              ||SECRET                    |primitive            |Application secret|       |
+              ||[CREDENTIALS](credentials)|[all-of](credentials)|Credentials       |       |
+              ||[DATABASE](database)      |[all-of](database)   |Database          |       |
+              |
+              |### CREDENTIALS
+              |
+              ||FieldName|Format   |Description     |Sources|
+              ||---      |---      |---             |---    |
+              ||USERNAME |primitive|Example: ZioUser|       |
+              ||PASSWORD |primitive|Example: ZioPass|       |
+              |
+              |### DATABASE
+              |
+              ||FieldName|Format   |Description     |Sources|
+              ||---      |---      |---             |---    |
+              ||PORT     |primitive|Example: 8088   |       |
+              ||URL      |primitive|Example: abc.com|       |""".stripMargin
 
-        assert(generateDocs(GenerateDocsTestUtils.descriptor).toTable.toGithubFlavouredMarkdown)(equalTo(expected))
-      } @@ ignore
+        assert(generateDocs(GenerateDocsTestUtils.descriptor).toTable.toGithubFlavouredMarkdown.trim)(
+          equalTo(expected.trim)
+        )
+      }
     )
 }
 
@@ -95,13 +95,18 @@ object GenerateDocsTestUtils {
   final case class AppConfig(secret: Option[String], credentials: Credentials, database: Database)
 
   def descriptor: Config[AppConfig] = {
-    val credentials = (string("USERNAME") ?? "Example: ZioUser" zip string("PASSWORD") ?? "Example: ZioPass")
-      .to[Credentials] ?? "Credentials"
+    val credentials: Config[Credentials] =
+      (string("USERNAME") ?? "Example: ZioUser" zip string("PASSWORD") ?? "Example: ZioPass")
+        .to[Credentials] ?? "Credentials"
 
     val database = (int("PORT") ?? "Example: 8088" zip string("URL") ?? "Example: abc.com").to[Database] ?? "Database"
 
-    (string("SECRET").optional ?? "Application secret" zip nested("CREDENTIALS")(credentials) zip nested(
-      "DATABASE"
-    )(database)).to[AppConfig]
+    string("SECRET").optional
+      .??("Application secret")
+      .zip(
+        credentials.nested("CREDENTIALS")
+      )
+      .zip(database.nested("DATABASE"))
+      .to[AppConfig]
   }
 }

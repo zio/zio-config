@@ -169,6 +169,9 @@ trait ConfigSyntax {
   import zio.{Config, ConfigProvider}, Config._
   implicit class ConfigOps[A](config: zio.Config[A]) { self =>
 
+    def orElseEither[B](right: Config[B]): Config[Either[A, B]] =
+      Config.enumeration[Either[A, B]](config.map(Left(_)), right.map(Right(_)))
+
     // Important for usecases such as `SystemEnv.load(deriveConfig[A].mapKey(_.toUpperCase)` or `JsonSource.load(deriveConfig[A])`
     // where annotations can't be of any help
     def mapKey(f: String => String): Config[A] = {
