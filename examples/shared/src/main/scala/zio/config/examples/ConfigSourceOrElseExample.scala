@@ -40,7 +40,9 @@ object ConfigSourceOrElseExample extends App {
         .run(
           read(
             deriveConfig[ApplicationConfig] from
-              ConfigProvider.fromHoconString(applicationDevHocon).orElse_(ConfigProvider.fromHoconString(applicationHocon))
+              ConfigProvider
+                .fromHoconString(applicationDevHocon)
+                .orElse_(ConfigProvider.fromHoconString(applicationHocon))
           )
         )
         .getOrThrowFiberFailure()

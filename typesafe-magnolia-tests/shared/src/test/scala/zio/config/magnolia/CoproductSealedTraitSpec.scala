@@ -1,11 +1,11 @@
 package zio.config.magnolia
 
-import zio.config.PropertyTree._
 import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 import zio.config.magnolia._
 import zio.ConfigProvider
+import zio.config.derivation.name
 
 object CoproductSealedTraitSpec extends ZIOSpecDefault {
 
@@ -29,54 +29,27 @@ object CoproductSealedTraitSpec extends ZIOSpecDefault {
         assertZIO(read(deriveConfig[Config] from ConfigProvider.fromMap(Map("x" -> "c"))))(equalTo(Config(C))) *>
         assertZIO(
           read(
-            deriveConfig[Config] from ConfigSource.fromMap(
-              constantMap = Map(
+            deriveConfig[Config] from ConfigProvider.fromMap(
+              Map(
                 "x.D.detail.firstName"     -> "ff",
                 "x.D.detail.lastName"      -> "ll",
                 "x.D.detail.region.suburb" -> "strath",
                 "x.D.detail.region.city"   -> "syd"
-              ),
-              keyDelimiter = Some('.')
+              )
             )
           )
         )(equalTo(Config(D(Detail("ff", "ll", Region("strath", "syd")))))) *>
         assertZIO(
           read(
-            deriveConfig[Config] from ConfigSource.fromMap(
+            deriveConfig[Config] from ConfigProvider.fromMap(
               Map(
                 "x.E.detail.firstName"     -> "ff",
                 "x.E.detail.lastName"      -> "ll",
                 "x.E.detail.region.suburb" -> "strath",
                 "x.E.detail.region.city"   -> "syd"
-              ),
-              keyDelimiter = Some('.')
-            )
-          )
-        )(equalTo(Config(E(Detail("ff", "ll", Region("strath", "syd")))))) *>
-        assertZIO(
-          zio.ZIO.fromEither(write(deriveConfig[Config], Config(D(Detail("ff", "ll", Region("strath", "syd"))))))
-        )(
-          equalTo(
-            Record(
-              Map(
-                "x" -> Record(
-                  Map(
-                    "D" -> Record(
-                      Map(
-                        "detail" -> Record(
-                          Map(
-                            "region"    -> Record(Map("city" -> Leaf("syd"), "suburb" -> Leaf("strath"))),
-                            "lastName"  -> Leaf("ll"),
-                            "firstName" -> Leaf("ff")
-                          )
-                        )
-                      )
-                    )
-                  )
-                )
               )
             )
           )
-        )
+        )(equalTo(Config(E(Detail("ff", "ll", Region("strath", "syd"))))))
     })
 }

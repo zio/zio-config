@@ -3,7 +3,7 @@ package zio.config.typesafe
 import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
-
+import zio.Config
 import magnolia._
 import Config._
 
@@ -12,7 +12,7 @@ final case class Database(port: Int, url: String)
 final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
 
 object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
-  val configNestedAutomatic: Config[AwsConfig] = descriptor[AwsConfig]
+  val configNestedAutomatic: Config[AwsConfig] = deriveConfig[AwsConfig]
 
   val hocconStringWithStringDb: String =
     s"""
@@ -101,8 +101,8 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
         val databaseConfig =
           (int("port") zip string("url")).to[Database]
 
-        (nested("account")(accountConfig) zip
-          (nested("database")(databaseConfig).orElseEither(string("database"))).optional).to[AwsConfig]
+        ((accountConfig.nested("account")) zip
+          ((databaseConfig.nested("database")).orElseEither(string("database"))).optional).to[AwsConfig]
       }
       val nestedConfigManualResult1 =
         read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithDb))

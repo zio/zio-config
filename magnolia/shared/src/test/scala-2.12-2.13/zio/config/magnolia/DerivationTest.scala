@@ -1,11 +1,10 @@
 package zio.config.magnolia
 
-import zio.config.PropertyTree.{Leaf, Record}
-import zio.config.{PropertyTree, _}
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
-
-import ConfigAdt._
+import zio.Config
+import zio.Config._
+import zio.config.derivation.{describe, name}
 
 object DerivationTest extends ZIOSpecDefault {
   def spec: Spec[Any, Config.Error] = suite("DerivationTest")(
@@ -16,28 +15,26 @@ object DerivationTest extends ZIOSpecDefault {
       def collectDescriptions[T](
         desc: Config[T],
         path: Option[String]
-      ): List[(Option[String], String)] = desc match {
-        case Lazy(thunk)                   => collectDescriptions(thunk(), path)
-        case Default(config, _)            => collectDescriptions(config, path)
-        case DynamicMap(config)            => collectDescriptions(config, path)
-        case Describe(config, message)     => (path, message) :: collectDescriptions(config, path)
-        case Nested(path, config, _)       => collectDescriptions(config, Some(path))
-        case Optional(config)              => collectDescriptions(config, path)
-        case OrElse(left, right)           =>
-          collectDescriptions(left, path) ::: collectDescriptions(right, path)
-        case OrElseEither(left, right)     =>
-          collectDescriptions(left, path) ::: collectDescriptions(right, path)
-        case Sequence(config)              => collectDescriptions(config, path)
-        case Source(_, _)                  => Nil
-        case Zip(left, right)              =>
-          collectDescriptions(left, path) ::: collectDescriptions(right, path)
-        case TransformOrFail(config, _, _) => collectDescriptions(config, path)
-      }
+      ): List[(Option[String], String)] = {
+        desc match {
+          case Lazy(thunk)                => collectDescriptions(thunk(), path)
+          case Table(config)              => collectDescriptions(config, path)
+          case Described(config, message) => (path, message) :: collectDescriptions(config, path)
+          case Nested(path, config)       => collectDescriptions(config, Some(path))
+          case Optional(config)           => collectDescriptions(config, path)
+          case Fallback(left, right)      =>
+            collectDescriptions(left, path) ::: collectDescriptions(right, path)
+          case Sequence(config)           => collectDescriptions(config, path)
+          case Zipped(left, right, _)     =>
+            collectDescriptions(left, path) ::: collectDescriptions(right, path)
+          case MapOrFail(config, _)       => collectDescriptions(config, path)
+        }
 
-      assert(collectDescriptions(descriptor[Cfg], None))(
-        contains((None: Option[String]) -> "class desc") &&
-          contains(None                 -> "field desc")
-      )
+        assert(collectDescriptions(deriveConfig[Cfg], None))(
+          contains((None: Option[String]) -> "class desc") &&
+            contains(None                 -> "field desc")
+        )
+      }
     },
     test("support name annotation") {
 
@@ -47,18 +44,17 @@ object DerivationTest extends ZIOSpecDefault {
       case class Cfg(@name("otherName") fname: String) extends SealedTrait
 
       def collectPath[T](desc: Config[T]): List[String] = desc match {
-        case Lazy(thunk)                   => collectPath(thunk())
-        case Default(config, _)            => collectPath(config)
-        case Describe(config, _)           => collectPath(config)
-        case DynamicMap(config)            => collectPath(config)
-        case Nested(path, config, _)       => path :: collectPath(config)
-        case Optional(config)              => collectPath(config)
-        case OrElse(left, right)           => collectPath(left) ::: collectPath(right)
-        case OrElseEither(left, right)     => collectPath(left) ::: collectPath(right)
-        case Sequence(config)              => collectPath(config)
-        case Source(_, _)                  => Nil
-        case Zip(left, right)              => collectPath(left) ::: collectPath(right)
-        case TransformOrFail(config, _, _) => collectPath(config)
+        case Lazy(thunk)                => collectPath(thunk())
+        case Table(config)              => collectPath(config)
+        case Described(config, message) => collectPath(config)
+        case Nested(path, config)       => path :: collectPath(config)
+        case Optional(config)           => collectPath(config)
+        case Fallback(left, right)      =>
+          collectPath(left) ::: collectPath(right)
+        case Sequence(config)           => collectPath(config)
+        case Zipped(left, right, _)     =>
+          collectPath(left) ::: collectPath(right)
+        case MapOrFail(config, _)       => collectPath(config)
       }
 
       // IntelliJ will hide this, however it is required
@@ -198,6 +194,7 @@ object DerivationTest extends ZIOSpecDefault {
 
   private object UnwrappingAnyVal {
     case class A(value: Int)
+
     case class AVal(value: Int) extends AnyVal
   }
 }

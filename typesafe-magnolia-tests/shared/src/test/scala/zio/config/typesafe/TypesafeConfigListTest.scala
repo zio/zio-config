@@ -3,7 +3,7 @@ package zio.config.typesafe
 import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
-
+import zio.Config, Config._
 import magnolia._
 
 object TypesafeConfigListTest extends ZIOSpecDefault {
@@ -140,7 +140,7 @@ object TypesafeConfigListTest extends ZIOSpecDefault {
 
       val zioConfigWithKeysInKebabResult =
         read(
-          descriptor[ExportDetails].mapKey(toKebabCase) from TypesafeConfigSource
+          deriveConfig[ExportDetails].mapKey(toKebabCase) from TypesafeConfigSource
             .fromHoconString(kebabCaseConfig)
         )
 

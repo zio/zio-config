@@ -3,7 +3,7 @@ package zio
 import zio.config.syntax.{ConfigSyntax, KeyComponent}
 
 package object config
-  extends KeyConversionFunctions
+    extends KeyConversionFunctions
     with ConfigSyntax
     with ImplicitTupleConversion
     with ConfigDocsModule {

@@ -1,9 +1,10 @@
 package zio.config.typesafe
 
 import zio.config._
-import zio.config.magnolia.descriptor
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
+import zio.Config
+import zio.config.magnolia.deriveConfig
 
 object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
   val spec: Spec[Any, Config.Error] = suite("TypesafeConfigRecursiveAutomatic")(
@@ -20,7 +21,7 @@ object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
            |}
            |""".stripMargin
 
-      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString_(res))
+      val result = read(deriveConfig[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
 
       assertZIO(result)(equalTo(SimpleRec(1, Some(SimpleRec(2, None)))))
     },
@@ -38,7 +39,7 @@ object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
            |}
            |""".stripMargin
 
-      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
+      val result = read(deriveConfig[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
 
       assertZIO(result)(equalTo(SimpleRec(1, List(SimpleRec(2, Nil)))))
     },
@@ -56,7 +57,7 @@ object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
            |}
            |""".stripMargin
 
-      val result = read(descriptor[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
+      val result = read(deriveConfig[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
 
       assertZIO(result)(equalTo(SimpleRec(1, Left(SimpleRec(2, Right(3))))))
     },
@@ -88,7 +89,7 @@ object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
            |}
            |""".stripMargin
 
-      val result = read(descriptor[Professor] from TypesafeConfigSource.fromHoconString(res))
+      val result = read(deriveConfig[Professor] from TypesafeConfigSource.fromHoconString(res))
 
       assertZIO(result)(
         equalTo(

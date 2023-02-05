@@ -3,7 +3,7 @@ package zio.config.typesafe
 import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test._
-
+import zio.{Config, ConfigProvider}
 import Config._
 import TypesafeConfigMapSpecUtils._
 
@@ -22,7 +22,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
     test("read nested typesafe config map using map") {
       val source = TypesafeConfigSource.fromHoconString(hocon2)
       val result = read(
-        nested("result")(map(sssDescription)).to[TypesafeConfigMapSpecUtils.Nested] from source
+        (table(sssDescription).nested("result")).to[TypesafeConfigMapSpecUtils.Nested] from source
       )
 
       val expected =
@@ -46,7 +46,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
 
       case class Cfg(map: Map[String, String], y: String)
 
-      val desc = (nested("k")(map("s")(string("y"))) zip string("y")).to[Cfg]
+      val desc = ((table("s", string("y")).nested("k")) zip string("y")).to[Cfg]
 
       val result = read(desc from TypesafeConfigSource.fromHoconString(hocon3))
 
@@ -67,7 +67,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
            |}
            |""".stripMargin
 
-      val xx2 = nested("k")(map(string("y")))
+      val xx2 = (table(string("y")).nested("k"))
 
       assertZIO(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4)))(
         equalTo(Map("dynamicKey" -> "z", "dynamicKey2" -> "z2"))
@@ -93,18 +93,18 @@ object TypesafeConfigMapSpecUtils {
        |  }
        |""".stripMargin
 
-  val source: ConfigSource = TypesafeConfigSource.fromHoconString(hocon)
+  val source: ConfigProvider = TypesafeConfigSource.fromHoconString(hocon)
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 
   val c1: Config[Map[String, List[Int]]] =
-    map("zones")(listOf(int))
+    table("zones", listOf(int))
 
-  private val c2 = listOf("l")(int)
-  private val c3 = listOf("l2")(int)
+  private val c2 = listOf("l", int)
+  private val c3 = listOf("l2", int)
 
   val c4: Config[Map[String, String]] =
-    map("z")(string)
+    table("z", string)
 
   val sssDescription: Config[sss] =
     (c1 zip c2 zip c3 zip c4).to[sss]
