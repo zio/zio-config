@@ -8,20 +8,12 @@ import zio._
 import zio.config._
 
 package object parameterstore {
-  implicit class FromConfigTypesafe(c: ZConfig.type) {
-    def fromParameterStore[A](
-      configDescriptor: Config[A],
-      basePath: String,
-      getClient: Task[AWSSimpleSystemsManagement] = ZIO.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
-    )(implicit tag: Tag[A]): Layer[Config.Error, A] =
-      ParameterStoreConfig.from(configDescriptor, basePath, getClient)
-  }
 
-  implicit class FromConfigSourceTypesafe(c: ConfigSource.type) {
+  implicit class FromConfigSourceTypesafe(c: ConfigProvider.type) {
     def fromParameterStore(
       basePath: String,
       getClient: Task[AWSSimpleSystemsManagement] = ZIO.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
-    ): ConfigSource =
-      ParameterStoreConfigSource.from(basePath, getClient)
+    ): ZIO[Any, Config.Error, ConfigProvider] =
+      ParameterStoreConfigProvider.from(basePath, getClient)
   }
 }

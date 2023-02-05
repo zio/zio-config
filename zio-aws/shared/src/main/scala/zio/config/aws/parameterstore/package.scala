@@ -2,22 +2,16 @@ package zio.config.aws
 
 import zio.aws.ssm.Ssm
 import zio.config._
-import zio.{Tag, ZLayer}
+import zio.ConfigProvider
+import zio.{ZIO, Config}
 
 package object parameterstore {
-  implicit class FromConfigTypesafe(c: ZConfig.type) {
-    def fromParameterStore[A](
-      configDescriptor: Config[A],
-      basePath: String
-    )(implicit tag: Tag[A]): ZLayer[Ssm, Config.Error, A] =
-      ParameterStoreConfig.from(configDescriptor, basePath)
-  }
 
-  implicit class FromConfigSourceTypesafe(c: ConfigSource.type) {
+  implicit class FromConfigSourceTypesafe(c: ConfigProvider.type) {
     def fromParameterStore(
       basePath: String,
       ssm: Ssm
-    ): ConfigSource =
+    ): ZIO[Any, Config.Error, ConfigProvider] =
       ParameterStoreConfigSource.from(basePath, ssm)
   }
 }

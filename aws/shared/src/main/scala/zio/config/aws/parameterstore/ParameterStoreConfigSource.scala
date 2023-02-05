@@ -5,68 +5,58 @@ import com.amazonaws.services.simplesystemsmanagement.{
   AWSSimpleSystemsManagement,
   AWSSimpleSystemsManagementClientBuilder
 }
-import zio.config.{PropertyTreePath, ReadError, _}
+import zio.ConfigProvider
 import zio.stream.ZStream
 import zio.{Chunk, Task, ZIO}
 
 import scala.jdk.CollectionConverters._
 
-import ConfigSource._
+import zio.ConfigProvider
+import zio.Config
 
-object ParameterStoreConfigSource {
+object ParameterStoreConfigProvider {
   def from(
     basePath: String,
     getClient: Task[AWSSimpleSystemsManagement] = ZIO.attempt(AWSSimpleSystemsManagementClientBuilder.defaultClient())
-  ): ConfigSource = {
-    val effect: MemoizableManagedReader =
-      ZIO.succeed {
-        getClient.flatMap { ssm =>
-          val request =
-            new GetParametersByPathRequest()
-              .withPath(basePath)
-              .withRecursive(true)
-              .withWithDecryption(true)
+  ): ZIO[Any, Config.Error, ConfigProvider] =
+    getClient.flatMap { ssm =>
+      val request =
+        new GetParametersByPathRequest()
+          .withPath(basePath)
+          .withRecursive(true)
+          .withWithDecryption(true)
 
-          ZStream
-            .paginateZIO(
-              ZIO.attempt(ssm.getParametersByPath(request))
-            )(_.map { response =>
-              val currentBatchResult =
-                Chunk.fromIterable(
-                  response.getParameters.asScala.toList
+      ZStream
+        .paginateZIO(
+          ZIO.attempt(ssm.getParametersByPath(request))
+        )(_.map { response =>
+          val currentBatchResult =
+            Chunk.fromIterable(
+              response.getParameters.asScala.toList
+            )
+          val nextToken          = response.getNextToken
+          val nextBatch          =
+            if (nextToken == null || nextToken.trim.isEmpty)
+              None
+            else
+              Some(
+                ZIO.attempt(
+                  ssm.getParametersByPath(request.withNextToken(nextToken))
                 )
-              val nextToken          = response.getNextToken
-              val nextBatch          =
-                if (nextToken == null || nextToken.trim.isEmpty)
-                  None
-                else
-                  Some(
-                    ZIO.attempt(
-                      ssm.getParametersByPath(request.withNextToken(nextToken))
-                    )
-                  )
+              )
 
-              (currentBatchResult, nextBatch)
-            })
-            .runCollect
-            .map { result =>
-              ConfigSource
-                .getPropertyTreeFromMap(
-                  convertParameterListToMap(result.flatten.toList, basePath),
-                  keyDelimiter = Some('/')
-                )
-            }
+          (currentBatchResult, nextBatch)
+        })
+        .runCollect
+        .map { result =>
+          ConfigProvider
+            .fromMap(
+              convertParameterListToMap(result.flatten.toList, basePath),
+              pathDelim = "/"
+            )
         }
-          .map(tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path)))
-          .mapError(throwable => ReadError.SourceError(throwable.toString): Config.Error)
-      }
-
-    ConfigSource
-      .Reader(
-        Set(ConfigSourceName("parameter-store")),
-        effect
-      )
-  }
+    }
+      .mapError(throwable => Config.Error.Unsupported(message = throwable.toString): Config.Error)
 
   private[config] def convertParameterListToMap(list: List[Parameter], basePath: String): Map[String, String] = {
     val str = s"$basePath/"

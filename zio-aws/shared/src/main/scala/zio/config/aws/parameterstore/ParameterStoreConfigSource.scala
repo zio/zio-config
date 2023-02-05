@@ -3,42 +3,28 @@ package zio.config.aws.parameterstore
 import zio.aws.ssm.Ssm
 import zio.aws.ssm.model.primitives.PSParameterName
 import zio.aws.ssm.model.{GetParametersByPathRequest, Parameter}
-import zio.config.{PropertyTreePath, ReadError, _}
 import zio.{Chunk, ZIO}
-
-import ConfigSource._
+import zio.ConfigProvider
+import zio.Config
 
 object ParameterStoreConfigSource {
   def from(
     basePath: String,
     ssm: Ssm
-  ): ConfigSource = {
-    val effect: MemoizableManagedReader =
-      ZIO.succeed {
-        ssm
-          .getParametersByPath(
-            GetParametersByPathRequest(path = PSParameterName(basePath), recursive = true, withDecryption = true)
-          )
-          .runCollect
-          .map { result =>
-            ConfigSource
-              .getPropertyTreeFromMap(
-                convertParameterListToMap(result, basePath),
-                keyDelimiter = Some('/')
-              )
-          }
-          .mapBoth(
-            throwable => ReadError.SourceError(throwable.toString): Config.Error,
-            tree => (path: PropertyTreePath[String]) => ZIO.succeed(tree.at(path))
+  ): ZIO[Any, Config.Error, ConfigProvider] =
+    ssm
+      .getParametersByPath(
+        GetParametersByPathRequest(path = PSParameterName(basePath), recursive = true, withDecryption = true)
+      )
+      .runCollect
+      .map { result =>
+        ConfigProvider
+          .fromMap(
+            convertParameterListToMap(result, basePath),
+            pathDelim = "/"
           )
       }
-
-    ConfigSource
-      .Reader(
-        Set(ConfigSourceName("parameter-store")),
-        effect
-      )
-  }
+      .mapError(throwable => Config.Error.Unsupported(message = throwable.toString): Config.Error)
 
   private[config] def convertParameterListToMap(
     list: Chunk[Parameter.ReadOnly],
