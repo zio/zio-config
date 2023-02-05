@@ -10,10 +10,10 @@ import zio.test.{ZIOSpecDefault, _}
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
 final case class Employee(
-                           name: String,
-                           state: Option[Either[Int, String]],
-                           confidence: Either[Either[Double, Int], String]
-                         )
+  name: String,
+  state: Option[Either[Int, String]],
+  confidence: Either[Either[Double, Int], String]
+)
 
 object EmployeeDetails {
 
@@ -22,7 +22,7 @@ object EmployeeDetails {
       int("state").orElseEither(string("state")).optional zip
       double("confidence")
         .orElseEither(int("confidence")) // The value can be Double or Int for key confidence
-        .orElseEither( // If not Double or Int, then it could be string, but this time the key can be confidence, confidences or confs!
+        .orElseEither(                   // If not Double or Int, then it could be string, but this time the key can be confidence, confidences or confs!
           string("confidence")
             .orElse(string("confidences"))
             .orElse(string("confs"))
@@ -71,7 +71,7 @@ object NullAndOptionalConfig extends ZIOSpecDefault {
             Employee("chris", Some(Left(151)), Right("High")),
             Employee("jon", Some(Right("CA")), Left(Left(1.278))),
             Employee("susan", None, Right("f")),
-            Employee("martha", None, Right("Medium")),
+            Employee("martha", None, Right("Medium"))
           ),
           1000
         )
