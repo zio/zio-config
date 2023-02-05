@@ -21,10 +21,8 @@ package object yaml {
 
     def fromYamlString(
       yamlString: String
-    ): ConfigProvider = {
-      val configStream = new ByteArrayInputStream(yamlString.getBytes(Charset.forName("UTF-8")))
-      YamlConfigSource.fromYamlReader(new BufferedReader(new InputStreamReader(configStream)))
-    }
+    ): ConfigProvider =
+      YamlConfigSource.fromYamlString(yamlString)
 
     def fromYamlRepr[A](repr: A)(
       loadYaml: A => AnyRef

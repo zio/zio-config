@@ -1,29 +1,13 @@
 package zio.config.yaml
 
-import zio.ZIO
-import zio.config.{Config, PropertyTree, PropertyTreePath, ReadError}
+import zio.Runtime.default
+import zio.{Config, ConfigProvider, Unsafe, ZIO}
+import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 object YamlConfigSpec extends ZIOSpecDefault {
   def spec: Spec[Any, Config.Error] = suite("YamlConfig")(
-    test("Read a complex structure") {
-      val result = YamlConfigSource.fromYamlString(
-        """
-          |top:
-          |  child:
-          |    i: 1
-          |    b: true
-          |    s: "str"
-          |  list:
-          |  - i: 1
-          |  - b: true
-          |  - s: "str"
-          |""".stripMargin
-      )
-
-      assertZIO(result.runTree(PropertyTreePath(Vector.empty)))(equalTo(expected))
-    },
     test("Read a complex structure into a sealed trait") {
       case class Child(sum: List[Sum])
 
@@ -31,35 +15,30 @@ object YamlConfigSpec extends ZIOSpecDefault {
       case class A(a: String)  extends Sum
       case class B(b: Boolean) extends Sum
 
-      val descriptor =
+      val config =
         Config
-          .nested("sum") {
-            Config.list {
-              (Config.nested("A")(Config.string("a").to[A]) orElseEither
-                Config.nested("B")(Config.boolean("b").to[B]))
-                .transform(
-                  _.merge,
-                  (_: Sum) match {
-                    case a: A => Left(a)
-                    case b: B => Right(b)
-                  }
-                )
-            }
-          }
+          .listOf(
+            "sum",
+            ((Config.string("a").to[A].nested("A")) orElseEither
+              (Config.boolean("b").to[B].nested("B")))
+              .map(_.merge)
+          )
           .to[Child]
 
-      val result   =
-        YamlConfig.fromString(
+      val provider =
+        ConfigProvider.fromYamlString(
           """|sum:
-             |- A:
-             |    a: "str"
-             |- B:
-             |    b: false""".stripMargin,
-          descriptor
+             |  - A:
+             |      a: "str"
+             |  - B:
+             |      b: false""".stripMargin
         )
+
+      val zio = provider.load(config)
+
       val expected = Child(List(A("str"), B(false)))
 
-      assertZIO(ZIO.scoped(result.build.map(_.get).exit))(succeeds(equalTo(expected)))
+      assertZIO(zio.exit)(succeeds(equalTo(expected)))
     }
   )
 }

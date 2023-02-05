@@ -4,13 +4,16 @@ import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import zio.config._
 
-import java.io.{File, FileInputStream, Reader}
+import java.io.{BufferedReader, ByteArrayInputStream, File, FileInputStream, InputStreamReader, Reader}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
 import java.nio.file.Path
 import java.{util => ju}
 import scala.jdk.CollectionConverters._
 import zio.ConfigProvider
 import zio.Chunk
+import zio.config.syntax.ConfigProvider0
+
+import java.nio.charset.Charset
 
 @silent("Unused import")
 object YamlConfigSource {
@@ -81,7 +84,7 @@ object YamlConfigSource {
    */
   def fromYamlReader(
     reader: Reader
-  ): ConfigProvider =
+  ): ConfigProvider0 =
     convertYaml(loadYaml(reader))
 
   /**
@@ -102,11 +105,13 @@ object YamlConfigSource {
    */
   def fromYamlString(
     yamlString: String
-  ): ConfigProvider =
-    convertYaml(loadYaml(yamlString))
+  ): ConfigProvider0 = {
+    val configStream = new ByteArrayInputStream(yamlString.getBytes(Charset.forName("UTF-8")))
+    fromYamlReader(new BufferedReader(new InputStreamReader(configStream)))
+  }
 
   // Use zio-config-parser for xml, yaml, hcl and json
-  private[yaml] def convertYaml(data: AnyRef): ConfigProvider = {
+  private[yaml] def convertYaml(data: AnyRef): ConfigProvider0 = {
     def flattened(data: AnyRef, chunk: Chunk[syntax.KeyComponent]): Map[Chunk[syntax.KeyComponent], String] =
       data match {
         case null        => Map.empty
@@ -148,6 +153,8 @@ object YamlConfigSource {
           )
       }
 
+    println(flattened(data, Chunk.empty))
+
     ConfigProvider.fromIndexedFlat(syntax.IndexedFlat.from(flattened(data, Chunk.empty)))
 
   }
@@ -158,9 +165,6 @@ object YamlConfigSource {
 
   private def loadYaml(yamlReader: Reader): AnyRef =
     snakeYamlLoader().loadFromReader(yamlReader)
-
-  private def loadYaml(yamlString: String): AnyRef =
-    snakeYamlLoader().loadAllFromString(yamlString)
 
   private def snakeYamlLoader(): Load =
     new Load(
