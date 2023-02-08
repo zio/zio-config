@@ -13,6 +13,7 @@ import zio.ConfigProvider
 import zio.Chunk
 
 import java.nio.charset.Charset
+import zio.config.syntax.IndexedConfigProvider
 
 @silent("Unused import")
 object YamlConfigSource {
@@ -33,8 +34,8 @@ object YamlConfigSource {
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromYamlFile(file: File): ConfigProvider =
-    convertYaml(loadYaml(file))
+  def fromYamlFile(file: File): IndexedConfigProvider =
+    getIndexedConfigProvider(loadYaml(file))
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -50,7 +51,7 @@ object YamlConfigSource {
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromYamlPath(path: Path): ConfigProvider =
+  def fromYamlPath(path: Path): IndexedConfigProvider =
     fromYamlFile(path.toFile)
 
   /**
@@ -83,8 +84,8 @@ object YamlConfigSource {
    */
   def fromYamlReader(
     reader: Reader
-  ): ConfigProvider =
-    convertYaml(loadYaml(reader))
+  ): IndexedConfigProvider =
+    getIndexedConfigProvider(loadYaml(reader))
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -104,13 +105,13 @@ object YamlConfigSource {
    */
   def fromYamlString(
     yamlString: String
-  ): ConfigProvider = {
+  ): IndexedConfigProvider = {
     val configStream = new ByteArrayInputStream(yamlString.getBytes(Charset.forName("UTF-8")))
     fromYamlReader(new BufferedReader(new InputStreamReader(configStream)))
   }
 
   // Use zio-config-parser for xml, yaml, hcl and json
-  private[yaml] def convertYaml(data: AnyRef): ConfigProvider = {
+  private[yaml] def getIndexedConfigProvider(data: AnyRef): IndexedConfigProvider = {
     def flattened(data: AnyRef, chunk: Chunk[syntax.KeyComponent]): Map[Chunk[syntax.KeyComponent], String] =
       data match {
         case null        => Map.empty

@@ -14,8 +14,7 @@ sealed trait KeyComponent {
 }
 
 object KeyComponent {
-  final case class Index(index: Int) extends KeyComponent
-
+  final case class Index(index: Int)     extends KeyComponent
   final case class KeyName(name: String) extends KeyComponent
 
   def pretty(keyComponents: Chunk[KeyComponent]): String =
