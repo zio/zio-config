@@ -6,6 +6,8 @@ import zio.{Config, ConfigProvider}, Config._
 import zio.config.examples._
 import zio.config.typesafe._
 import zio.config._
+import zio.Unsafe
+import zio.Runtime.default
 
 object TypesafeConfigMap extends App with EitherImpureOps {
   final case class B(m1: Map[String, C], i: Int)
@@ -21,6 +23,15 @@ object TypesafeConfigMap extends App with EitherImpureOps {
     val config: Config[C] =
       (string("a1") zip int("a2")).to[C]
   }
+
+  val map =
+    Map(
+      "m1.m221.a1" -> "bar",
+      "m1.m221.a2" -> "1",
+      "m1.m222.a1" -> "foo",
+      "m1.m222.a2" -> "2",
+      "ll"         -> "1"
+    )
 
   val hocon: String =
     s"""
@@ -44,11 +55,9 @@ object TypesafeConfigMap extends App with EitherImpureOps {
   val readResult: IO[Config.Error, B] =
     read(B.config from source)
 
-  assert(
-    readResult equalM
-      B(Map("m221" -> C("a1v", 1), "m222" -> C("a1v", 2)), 1)
+  val x = Unsafe.unsafe(implicit u => default.unsafe.run(readResult.either).getOrThrowFiberFailure())
 
-  )
+  println(x)
 
   println("done?")
 

@@ -86,7 +86,7 @@ object IndexedFlat {
         ZIO.succeed {
           val keyPaths = Chunk.fromIterable(map.keys)
 
-          keyPaths.filter(_.startsWith(path)).map(_.drop(path.length)).toSet
+          keyPaths.filter(_.startsWith(path)).map(_.drop(path.length).take(1)).toSet
         }
     }
 

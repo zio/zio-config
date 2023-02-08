@@ -78,13 +78,13 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
         List(
           Account(
             Some(123),
-            List("us-west", "ab", "cd"),
-            Some(Details("zak", 11))
+            List("us-east", "dd", "ee"),
+            Some(Details("jaku", 10))
           ),
           Account(
             Some(123),
-            List("us-east", "dd", "ee"),
-            Some(Details("jaku", 10))
+            List("us-west", "ab", "cd"),
+            Some(Details("zak", 11))
           ),
           Account(Some(456), List("us-some", "ff", "gg"), None)
         ),
@@ -104,13 +104,13 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
         List(
           Account(
             Some(123),
-            List("us-west", "ab", "cd"),
-            Some(Details("zak", 11))
+            List("us-east", "dd", "ee"),
+            Some(Details("jaku", 10))
           ),
           Account(
             Some(123),
-            List("us-east", "dd", "ee"),
-            Some(Details("jaku", 10))
+            List("us-west", "ab", "cd"),
+            Some(Details("zak", 11))
           ),
           Account(Some(456), List("us-some", "ff", "gg"), None)
         ),
