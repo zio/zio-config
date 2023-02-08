@@ -150,14 +150,7 @@ object TypesafeConfigList extends App with EitherImpureOps {
   final case class B(c: List[C], table: String, columns: List[String])
   final case class A(b: List[B], x: X, w: W)
 
-  // Since we already have a string with us, we don't need Config Service (or ZIO)
-  val source: ConfigProvider =
-    ConfigProvider.fromHoconString(configString)
-
-  val zioConfigResult: IO[Config.Error, A] =
-    read(deriveConfig[A] from source)
-
-  val anoth: A =
+  val expectedResult: A =
     A(
       List(
         B(
@@ -165,22 +158,30 @@ object TypesafeConfigList extends App with EitherImpureOps {
             C(
               List(
                 // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
-                D(List(1, 1), List("a", "b", "c")),
-                D(List(12, 12), List("d"))
+                D(List(14, 14), List("e")),
+                D(List(12, 12), List("d")),
+                D(List(1, 1, 1), List("a", "b", "c")),
+                D(List(15, 15), List("f", "g"))
               )
             )
           ),
           "some_name",
           List("aa")
-        )
-      ),
-      X(Y("k")),
-      W(X(Y("k")))
-    )
-
-  val expectedResult: A =
-    A(
-      List(
+        ),
+        B(
+          List(
+            C(
+              List(
+                D(List(21, 21), List("af")),
+                D(List(24, 24, 24), List("l")),
+                D(List(22, 22), List("sa", "l")),
+                D(List(23, 23, 23), List("af", "l"))
+              )
+            )
+          ),
+          "some_name",
+          List("a", "b", "c", "d", "e")
+        ),
         B(
           List(
             C(
@@ -195,35 +196,6 @@ object TypesafeConfigList extends App with EitherImpureOps {
           ),
           "some_name",
           List("a")
-        ),
-        B(
-          List(
-            C(
-              List(
-                D(List(23, 23, 23), List("af", "l")),
-                D(List(24, 24, 24), List("l")),
-                D(List(22, 22), List("sa", "l")),
-                D(List(21, 21), List("af"))
-              )
-            )
-          ),
-          "some_name",
-          List("a", "b", "c", "d", "e")
-        ),
-        B(
-          List(
-            C(
-              List(
-                // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
-                D(List(14, 14), List("e")),
-                D(List(15, 15), List("f", "g")),
-                D(List(12, 12), List("d")),
-                D(List(1, 1, 1), List("a", "b", "c"))
-              )
-            )
-          ),
-          "some_name",
-          List("aa")
         )
       ),
       X(Y("k")),
@@ -232,11 +204,12 @@ object TypesafeConfigList extends App with EitherImpureOps {
 
   import zio.config.typesafe._
 
-  val readWritten: IO[Config.Error, A] = read(
-    deriveConfig[A] from ConfigProvider.fromHoconString(configString)
-  )
+  // Since we already have a string with us, we don't need Config Service (or ZIO)
+  val source: ConfigProvider =
+    ConfigProvider.fromHoconString(configString)
 
-  assert(readWritten.unsafeRun == zioConfigResult.unsafeRun)
+  val zioConfigResult: IO[Config.Error, A] =
+    read(deriveConfig[A] from source)
 
   assert(zioConfigResult equalM expectedResult)
 

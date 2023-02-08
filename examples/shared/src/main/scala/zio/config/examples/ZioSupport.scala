@@ -9,8 +9,15 @@ trait ZioSupport {
       Unsafe.unsafe(implicit u => default.unsafe.run(self).getOrThrowFiberFailure())
 
     def equalM(a: A): Boolean = {
-      println(unsafeRun)
-      unsafeRun == a
+      val result = unsafeRun == a
+      if (!result) {
+        println("Expected")
+        println(a)
+        println("Actual")
+        println(unsafeRun)
+      }
+
+      result
     }
   }
 }
