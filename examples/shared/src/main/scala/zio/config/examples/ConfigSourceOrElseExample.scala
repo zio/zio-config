@@ -42,7 +42,7 @@ object ConfigSourceOrElseExample extends App {
             deriveConfig[ApplicationConfig] from
               ConfigProvider
                 .fromHoconString(applicationDevHocon)
-                .orElse_(ConfigProvider.fromHoconString(applicationHocon))
+                .orElse(ConfigProvider.fromHoconString(applicationHocon))
           )
         )
         .getOrThrowFiberFailure()

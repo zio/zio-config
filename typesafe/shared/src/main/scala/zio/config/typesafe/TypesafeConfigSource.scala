@@ -32,16 +32,14 @@ import com.typesafe.config.ConfigValueType.OBJECT
 import com.typesafe.config.ConfigValueType.BOOLEAN
 import com.typesafe.config.ConfigValueType.NULL
 import zio.config.syntax.KeyComponent
+import zio.config.syntax.IndexedConfigProvider
 
 @silent("Unused import")
 object TypesafeConfigSource {
   import VersionSpecificSupport._
 
-  //FIXME: None of the sources are in ZIO now.
-  // Zio-config 3.x had ConfigSource existing as pure values, yet describing the fact
-  // the load will be under the effect of ZIO
   /**
-   * Retrieve a `ConfigSource` from `typesafe-config` from a given file in resource classpath.
+   * Retrieve a `ConfigProvider` from `typesafe-config` from a given file in resource classpath.
    *
    * A complete example usage:
    *
@@ -50,38 +48,32 @@ object TypesafeConfigSource {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: IO[Config.Error, MyConfig] =
-   *     read(descriptor[MyConfig] from TypesafeConfigSource.fromResourcePath))
+   *    TypesafeConfigSource.fromResourcePath.load(deriveConfig[MyConfig])
    * }}}
    */
-  def fromResourcePath: ConfigProvider =
+  def fromResourcePath: IndexedConfigProvider =
     fromTypesafeConfig(ConfigFactory.load.resolve)
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` from a given config file
    */
-  def fromHoconFile[A](file: File): ConfigProvider =
+  def fromHoconFile[A](file: File): IndexedConfigProvider =
     fromTypesafeConfig(ConfigFactory.parseFile(file).resolve)
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` from a path to a config file
    */
-  def fromHoconFilePath[A](filePath: String): ConfigProvider =
+  def fromHoconFilePath[A](filePath: String): IndexedConfigProvider =
     fromHoconFile(new File(filePath))
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` HOCON string.
    */
 
-  def fromHoconString(input: String): syntax.ConfigProvider0 =
+  def fromHoconString(input: String): IndexedConfigProvider =
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
 
-  /**
-   * Retrieve a `ConfigSource` from `typesafe-config` data type.
-   *
-   * With zio.config 3.x, https://github.com/lightbend/config/issues/30 was resolved within zio-config.
-   * However this feature is removed with zio.Config 4.0.0
-   */
-  def fromTypesafeConfig(config: com.typesafe.config.Config): syntax.ConfigProvider0 = {
+  def fromTypesafeConfig(config: com.typesafe.config.Config): IndexedConfigProvider = {
     def loop(config: com.typesafe.config.Config): Map[Chunk[syntax.KeyComponent], String] = {
       val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue())).toMap
 
@@ -114,9 +106,9 @@ object TypesafeConfigSource {
           case NUMBER  =>
             Map(kIterated -> config.getNumber(k).toString())
           case STRING  => Map(kIterated -> config.getString(k))
-          case OBJECT  => throw new Exception("It shouldn't happen")      //FIXME: Move to IO
+          case OBJECT  => throw new Exception("Invalid hocon format") //FIXME: Move to IO
           case BOOLEAN => Map(kIterated -> config.getBoolean(k).toString())
-          case NULL    => throw new Exception("Well I can't do anything") // FIXME: Move to IO
+          case NULL    => throw new Exception("Invalid hocon format") // FIXME: Move to IO
         }
       })
     }

@@ -11,8 +11,8 @@ object SealedTraitManualDerivation extends App {
 
   case class Bar(b: String) extends FooBar
 
-  val config =
-    Config.enumeration[FooBar](Config.int("a").to[Foo], Config.string("b").to[Bar])
+  val config: Config[FooBar] =
+    Config.int("a").to[Foo].orElse(Config.string("b").to[Bar])
 
   private val source =
     ConfigProvider.fromMap(

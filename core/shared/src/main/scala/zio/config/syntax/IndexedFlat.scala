@@ -30,7 +30,7 @@ trait IndexedFlat { self =>
         } yield result
     }
 
-  final def nested_(name: Chunk[KeyComponent]): IndexedFlat =
+  final def nested(name: Chunk[KeyComponent]): IndexedFlat =
     new IndexedFlat {
       def load[A](path: Chunk[KeyComponent], config: Config.Primitive[A])(implicit
         trace: Trace

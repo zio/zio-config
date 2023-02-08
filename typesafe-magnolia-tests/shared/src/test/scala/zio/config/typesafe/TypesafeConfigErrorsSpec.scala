@@ -140,7 +140,7 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
       final case class Details(clustersize: Int, name: String)
       final case class DatabaseDetails(datacenterwest: Details, datacentereast: Details)
 
-      val configWithHoconSubstitution = descriptor[DatabaseDetails]
+      val configWithHoconSubstitution = deriveConfig[DatabaseDetails]
 
       val substitutionResult =
         read(configWithHoconSubstitution from TypesafeConfigSource.fromHoconString(hoconStringWithSubstitution))

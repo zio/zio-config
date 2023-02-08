@@ -11,7 +11,6 @@ import java.{util => ju}
 import scala.jdk.CollectionConverters._
 import zio.ConfigProvider
 import zio.Chunk
-import zio.config.syntax.ConfigProvider0
 
 import java.nio.charset.Charset
 
@@ -84,7 +83,7 @@ object YamlConfigSource {
    */
   def fromYamlReader(
     reader: Reader
-  ): ConfigProvider0 =
+  ): ConfigProvider =
     convertYaml(loadYaml(reader))
 
   /**
@@ -105,13 +104,13 @@ object YamlConfigSource {
    */
   def fromYamlString(
     yamlString: String
-  ): ConfigProvider0 = {
+  ): ConfigProvider = {
     val configStream = new ByteArrayInputStream(yamlString.getBytes(Charset.forName("UTF-8")))
     fromYamlReader(new BufferedReader(new InputStreamReader(configStream)))
   }
 
   // Use zio-config-parser for xml, yaml, hcl and json
-  private[yaml] def convertYaml(data: AnyRef): ConfigProvider0 = {
+  private[yaml] def convertYaml(data: AnyRef): ConfigProvider = {
     def flattened(data: AnyRef, chunk: Chunk[syntax.KeyComponent]): Map[Chunk[syntax.KeyComponent], String] =
       data match {
         case null        => Map.empty

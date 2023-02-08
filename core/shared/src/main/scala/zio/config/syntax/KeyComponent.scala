@@ -19,7 +19,7 @@ object KeyComponent {
   final case class KeyName(name: String) extends KeyComponent
 
   def pretty(keyComponents: Chunk[KeyComponent]): String =
-    keyComponents.map(_.value).mkString
+    keyComponents.map(_.value).mkString(".")
 
   private val pattern: Regex = """([a-zA-Z0-9 -@\-^-~]*)(\[([0-9])*\])?""".r.anchored
 
