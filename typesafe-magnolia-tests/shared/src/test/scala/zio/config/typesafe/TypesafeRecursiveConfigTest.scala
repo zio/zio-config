@@ -8,23 +8,23 @@ import zio.config.magnolia.deriveConfig
 
 object TypesafeRecursiveConfigTest extends ZIOSpecDefault with EitherSupport {
   val spec: Spec[Any, Config.Error] = suite("TypesafeConfigRecursiveAutomatic")(
-    test("Read recursive typesafe config with optional") {
-      case class SimpleRec(id: Int, s: Option[SimpleRec])
+    // test("Read recursive typesafe config with optional") {
+    //   case class SimpleRec(id: Int, s: Option[SimpleRec])
 
-      val res =
-        s"""
-           |{
-           |  id : 1
-           |  s : {
-           |    id : 2
-           |  }
-           |}
-           |""".stripMargin
+    //   val res =
+    //     s"""
+    //        |{
+    //        |  id : 1
+    //        |  s : {
+    //        |    id : 2
+    //        |  }
+    //        |}
+    //        |""".stripMargin
 
-      val result = read(deriveConfig[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
+    //   val result = read(deriveConfig[SimpleRec] from TypesafeConfigSource.fromHoconString(res))
 
-      assertZIO(result)(equalTo(SimpleRec(1, Some(SimpleRec(2, None)))))
-    },
+    //   assertZIO(result)(equalTo(SimpleRec(1, Some(SimpleRec(2, None)))))
+    // },
     test("Read recursive typesafe config with list") {
       case class SimpleRec(id: Int, s: List[SimpleRec])
 

@@ -14,6 +14,9 @@ import zio.Config.Error.Or
 import zio.Config.Error.SourceUnavailable
 import zio.Config.Error.Unsupported
 import zio.IO
+import scala.util.Try
+import scala.util.control.NonFatal
+import java.util.UUID
 
 // Backward compatible approach to minimise the client changes
 final case class Read[A](config: Config[A], configProvider: ConfigProvider)
@@ -225,6 +228,36 @@ trait ConfigSyntax {
 
   // To be moved to ZIO
   implicit class FromConfigTypesafe(c: Config.type) {
+
+    def byte: Config[Byte] =
+      Config.string.mapOrFail(text =>
+        try Right(text.toByte)
+        catch {
+          case NonFatal(e) =>
+            Left(Config.Error.InvalidData(Chunk.empty, s"Expected an byte, but found ${text}"))
+        }
+      )
+
+    def short: Config[Short] =
+      Config.string.mapOrFail(text =>
+        try Right(text.toShort)
+        catch {
+          case NonFatal(e) =>
+            Left(Config.Error.InvalidData(Chunk.empty, s"Expected a short, but found ${text}"))
+        }
+      )
+
+    def uuid: Config[UUID] =
+      Config.string.mapOrFail(text =>
+        try Right(UUID.fromString(text))
+        catch {
+          case NonFatal(e) =>
+            Left(Config.Error.InvalidData(Chunk.empty, s"Expected a uuid, but found ${text}"))
+        }
+      )
+
+    def long: Config[Long] =
+      Config.bigInt.map(_.toLong)
 
     def constant(value: String) =
       Config.string.mapOrFail(parsed =>

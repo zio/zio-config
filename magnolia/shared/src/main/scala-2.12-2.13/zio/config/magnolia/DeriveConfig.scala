@@ -47,9 +47,16 @@ object DeriveConfig {
   implicit val implicitLocalDateDesc: DeriveConfig[LocalDate]         = DeriveConfig(localDate)
   implicit val implicitLocalTimeDesc: DeriveConfig[LocalTime]         = DeriveConfig(localTime)
   implicit val implicitLocalDateTimeDesc: DeriveConfig[LocalDateTime] = DeriveConfig(localDateTime)
+  implicit val implicitByteDesc: DeriveConfig[Byte]                   = DeriveConfig(Config.byte)
+  implicit val implicitShortDesc: DeriveConfig[Short]                 = DeriveConfig(Config.short)
+  implicit val implicitUUIDDesc: DeriveConfig[UUID]                   = DeriveConfig(Config.uuid)
+  implicit val implicitLongDesc: DeriveConfig[Long]                   = DeriveConfig(Config.long)
 
   implicit def implicitOptionDesc[A: DeriveConfig]: DeriveConfig[Option[A]] =
     DeriveConfig(DeriveConfig[A].desc.optional)
+
+  implicit def implicitEitherDesc[A: DeriveConfig, B: DeriveConfig]: DeriveConfig[Either[A, B]] =
+    DeriveConfig(DeriveConfig[A].desc.left.orElse(DeriveConfig[B].desc.right))
 
   implicit def implicitListDesc[A: DeriveConfig]: DeriveConfig[List[A]] =
     DeriveConfig(Config.listOf(implicitly[DeriveConfig[A]].desc))

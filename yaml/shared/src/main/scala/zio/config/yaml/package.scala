@@ -27,7 +27,7 @@ package object yaml {
     def fromYamlRepr[A](repr: A)(
       loadYaml: A => AnyRef
     ): ConfigProvider =
-      YamlConfigSource.convertYaml(loadYaml(repr))
+      YamlConfigSource.getIndexedConfigProvider(loadYaml(repr))
   }
 
 }
