@@ -396,7 +396,7 @@ trait ConfigSyntax {
         self =>
         import Config._
 
-        override def flatten_ : IndexedFlat = flat
+        override def indexedFlat: IndexedFlat = flat
 
         def extend[A, B](
           leftDef: Int => A,
@@ -415,7 +415,7 @@ trait ConfigSyntax {
           (leftExtension, rightExtension)
         }
 
-        def loop[A](prefix: Chunk[KeyComponent], config: Config[A])(implicit
+        private def loop[A](prefix: Chunk[KeyComponent], config: Config[A])(implicit
           trace: Trace
         ): IO[Config.Error, Chunk[A]] =
           config match {
@@ -537,7 +537,9 @@ trait ConfigSyntax {
               path.map { str =>
                 // FIXME: Hack since zio.Config works non indexed flat as of now
                 if (str.startsWith("[") && str.endsWith("]")) {
-                  KeyComponent.Index(str.dropRight(1).drop(1).toInt)
+                  scala.util
+                    .Try(KeyComponent.Index(str.dropRight(1).drop(1).toInt))
+                    .getOrElse(KeyComponent.KeyName(str))
                 } else {
                   KeyComponent.KeyName(str)
                 }
@@ -548,7 +550,9 @@ trait ConfigSyntax {
             override def enumerateChildren(path: Chunk[String])(implicit trace: zio.Trace): IO[Error, Set[String]] = {
               val result = flat.enumerateChildren(path.map { str =>
                 if (str.startsWith("[") && str.endsWith("]")) {
-                  KeyComponent.Index(str.dropRight(1).drop(1).toInt)
+                  scala.util
+                    .Try(KeyComponent.Index(str.dropRight(1).drop(1).toInt))
+                    .getOrElse(KeyComponent.KeyName(str))
                 } else {
                   KeyComponent.KeyName(str)
                 }

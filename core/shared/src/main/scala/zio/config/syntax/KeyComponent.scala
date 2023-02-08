@@ -18,21 +18,8 @@ object KeyComponent {
 
   final case class KeyName(name: String) extends KeyComponent
 
-  def pretty(keyComponents: Chunk[KeyComponent]): String = {
-    def loop(keyComponents: List[KeyComponent]): List[String] =
-      keyComponents match {
-        case head0 :: head1 :: next =>
-          (head0, head1) match {
-            case (KeyComponent.KeyName(name), KeyComponent.Index(index)) => s"${name}[${index}]" :: loop(next)
-            case (a, b)                                                  => s"${a.value}.${b.value}" :: loop(next)
-
-          }
-        case head :: next           => head.value :: loop(next)
-        case Nil                    => Nil
-      }
-
-    loop(keyComponents.toList).mkString(".")
-  }
+  def pretty(keyComponents: Chunk[KeyComponent]): String =
+    keyComponents.map(_.value).mkString
 
   private val pattern: Regex = """([a-zA-Z0-9 -@\-^-~]*)(\[([0-9])*\])?""".r.anchored
 

@@ -6,14 +6,13 @@ import zio.{Config}
 import zio.{IO, Trace}
 
 // ConfigProvider that works with IndexedFlat
-// TODO; Move to Zio
 trait ConfigProvider0 extends ConfigProvider { self =>
 
   /**
    * Flattens this config provider into a simplified config provider that knows
    * only how to deal with flat (key/value) properties.
    */
-  def flatten_ : IndexedFlat
+  def indexedFlat: IndexedFlat
 
   /**
    * Returns a new config provider that will automatically nest all
@@ -22,10 +21,10 @@ trait ConfigProvider0 extends ConfigProvider { self =>
    * single configuration value.
    */
   final def nested_(name: String): ConfigProvider =
-    ConfigProvider.fromIndexedFlat(self.flatten_.nested(KeyComponent.KeyName(name)))
+    ConfigProvider.fromIndexedFlat(self.indexedFlat.nested(KeyComponent.KeyName(name)))
 
   final def at(path: Chunk[KeyComponent]): ConfigProvider0 =
-    ConfigProvider.fromIndexedFlat(self.flatten_.nested_(path))
+    ConfigProvider.fromIndexedFlat(self.indexedFlat.nested_(path))
 
   /**
    * Returns a new config provider that preferentially loads configuration data
@@ -33,6 +32,6 @@ trait ConfigProvider0 extends ConfigProvider { self =>
    * if there are any issues loading the configuration from this provider.
    */
   final def orElse_(that: ConfigProvider0): ConfigProvider =
-    ConfigProvider.fromIndexedFlat(self.flatten_.orElse(that.flatten_))
+    ConfigProvider.fromIndexedFlat(self.indexedFlat.orElse(that.indexedFlat))
 
 }

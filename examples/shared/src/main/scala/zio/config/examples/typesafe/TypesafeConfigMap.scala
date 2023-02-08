@@ -55,12 +55,6 @@ object TypesafeConfigMap extends App with EitherImpureOps {
   val readResult: IO[Config.Error, B] =
     read(B.config from source)
 
-  val x = Unsafe.unsafe(implicit u => default.unsafe.run(readResult.either).getOrThrowFiberFailure())
-
-  println(x)
-
-  println("done?")
-
   val invalidHocon: String =
     s"""
        | m1: {
