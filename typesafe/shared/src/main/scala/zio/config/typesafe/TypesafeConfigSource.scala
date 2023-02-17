@@ -2,36 +2,22 @@ package zio.config.typesafe
 
 import com.github.ghik.silencer.silent
 import com.typesafe.config._
-import zio.ZIO
 import zio.config._
 
 import java.io.File
-import java.lang.{Boolean => JBoolean}
-import scala.collection.immutable.Nil
 import scala.jdk.CollectionConverters._
-import scala.util.{Failure, Success, Try}
+import scala.util.{Failure, Success}
 import zio.ConfigProvider
-import com.github.ghik.silencer.silent
-import com.typesafe.config._
-import zio.ZIO
-import zio.config._
-
-import java.io.File
-import java.lang.{Boolean => JBoolean}
-import scala.collection.immutable.Nil
-import scala.jdk.CollectionConverters._
-import scala.util.{Failure, Success, Try}
-import zio.ConfigProvider, ConfigProvider._
 import zio.Chunk
-import scala.util.Try
 
+import scala.util.Try
 import com.typesafe.config.ConfigValueType.LIST
 import com.typesafe.config.ConfigValueType.NUMBER
 import com.typesafe.config.ConfigValueType.STRING
 import com.typesafe.config.ConfigValueType.OBJECT
 import com.typesafe.config.ConfigValueType.BOOLEAN
 import com.typesafe.config.ConfigValueType.NULL
-import zio.config.syntax.KeyComponent
+import zio.config.syntax.{IndexKey}
 
 @silent("Unused import")
 object TypesafeConfigSource {
@@ -50,34 +36,34 @@ object TypesafeConfigSource {
    *    TypesafeConfigSource.fromResourcePath.load(deriveConfig[MyConfig])
    * }}}
    */
-  def fromResourcePath: IndexedConfigProvider =
+  def fromResourcePath: ConfigProvider =
     fromTypesafeConfig(ConfigFactory.load.resolve)
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` from a given config file
    */
-  def fromHoconFile[A](file: File): IndexedConfigProvider =
+  def fromHoconFile[A](file: File): ConfigProvider =
     fromTypesafeConfig(ConfigFactory.parseFile(file).resolve)
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` from a path to a config file
    */
-  def fromHoconFilePath[A](filePath: String): IndexedConfigProvider =
+  def fromHoconFilePath[A](filePath: String): ConfigProvider =
     fromHoconFile(new File(filePath))
 
   /**
    * Retrieve a `ConfigSource` from `typesafe-config` HOCON string.
    */
 
-  def fromHoconString(input: String): IndexedConfigProvider =
+  def fromHoconString(input: String): ConfigProvider =
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
 
-  def fromTypesafeConfig(config: com.typesafe.config.Config): IndexedConfigProvider = {
-    def loop(config: com.typesafe.config.Config): Map[Chunk[syntax.KeyComponent], String] = {
+  def fromTypesafeConfig(config: com.typesafe.config.Config): ConfigProvider = {
+    def loop(config: com.typesafe.config.Config): Map[Chunk[String], String] = {
       val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue())).toMap
 
       initLevel.flatMap({ case (k, possibleConfigValue) =>
-        val kIterated = Chunk.fromIterable(k.split('.')).map(KeyComponent.KeyName(_))
+        val kIterated = Chunk.fromIterable(k.split('.'))
 
         possibleConfigValue.valueType() match {
           case LIST    =>
@@ -87,19 +73,19 @@ object TypesafeConfigSource {
                 val result = config.getList(k).unwrapped().asScala.toList
 
                 Map(
-                  kIterated ++ Chunk(KeyComponent.Index(0)) -> result.map(_.toString).mkString(",")
+                  kIterated.mapLast(str => str + IndexKey(0)) -> result.map(_.toString).mkString(",")
                 )
 
               // Only possibility is a sequence of nested Configs
               case Success(value) =>
                 value.asScala.toList.zipWithIndex.map { case (config: com.typesafe.config.Config, index: Int) =>
-                  val oldKeyWithIndex: Chunk[KeyComponent] = kIterated ++ Chunk(KeyComponent.Index(index))
+                  val oldKeyWithIndex: Chunk[String] = kIterated.mapLast(str => str + IndexKey(index))
 
                   loop(config).map { case (newKey, v) =>
                     oldKeyWithIndex ++ newKey -> v
                   }
 
-                }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[KeyComponent], String])
+                }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[String], String])
 
             }
           case NUMBER  =>
@@ -112,7 +98,7 @@ object TypesafeConfigSource {
       })
     }
 
-    ConfigProvider.fromIndexedFlat(syntax.IndexedFlat.from(loop(config)))
+    ConfigProvider.fromMap(loop(config).map({case (k, v) => (k.mkString("."), v)}))
   }
 
 }

@@ -256,7 +256,7 @@ trait ConfigSyntax {
   implicit class ChunkOps[A](chunk: Chunk[A]) {
     def mapLast(f: A => A): Chunk[A] =
       chunk.lastOption match {
-        case Some(value) => chunk.drop(1) :+ f(value)
+        case Some(value) => chunk.dropRight(1) :+ f(value)
         case None => chunk
       }
   }

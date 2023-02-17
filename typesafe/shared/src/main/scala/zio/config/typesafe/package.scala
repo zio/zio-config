@@ -7,21 +7,21 @@ import java.io.File
 package object typesafe {
 
   implicit class FromConfigSourceTypesafe(configProvider: ConfigProvider.type) {
-    def fromResourcePath: IndexedConfigProvider =
+    def fromResourcePath: ConfigProvider =
       TypesafeConfigSource.fromResourcePath
 
-    def fromHoconFile[A](file: File): IndexedConfigProvider =
+    def fromHoconFile[A](file: File): ConfigProvider =
       TypesafeConfigSource.fromHoconFile(file)
 
-    def fromHoconFilePath[A](filePath: String): IndexedConfigProvider =
+    def fromHoconFilePath[A](filePath: String): ConfigProvider =
       TypesafeConfigSource.fromHoconFilePath(filePath)
 
-    def fromHoconString(input: String): IndexedConfigProvider =
+    def fromHoconString(input: String): ConfigProvider =
       TypesafeConfigSource.fromHoconString(input)
 
     def fromTypesafeConfig(
       rawConfig: com.typesafe.config.Config
-    ): IndexedConfigProvider =
+    ): ConfigProvider =
       TypesafeConfigSource.fromTypesafeConfig(rawConfig)
   }
 
