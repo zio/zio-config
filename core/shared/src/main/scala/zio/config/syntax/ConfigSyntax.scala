@@ -4,9 +4,6 @@ import zio.config.TupleConversion, TupleConversion._
 import zio.Config
 import zio.ConfigProvider
 import zio.Chunk
-import zio.Trace
-import zio.ZIO
-import zio.IO
 import zio.Config.Error.And
 import zio.Config.Error.InvalidData
 import zio.Config.Error.MissingData
@@ -14,7 +11,6 @@ import zio.Config.Error.Or
 import zio.Config.Error.SourceUnavailable
 import zio.Config.Error.Unsupported
 import zio.IO
-import scala.util.Try
 import scala.util.control.NonFatal
 import java.util.UUID
 
@@ -43,11 +39,10 @@ trait ConfigSyntax {
       final case class Parallel(all: List[Sequential]) extends Step
       final case class Failure(lines: List[String])    extends Step
 
-      def renderSteps(steps: List[KeyComponent]): String =
+      def renderSteps(steps: List[String]): String =
         steps
           .foldLeft(new StringBuilder()) {
-            case (r, KeyComponent.KeyName(k)) => r.append(keyDelimiter).append(k.toString)
-            case (r, KeyComponent.Index(i))   => r.append('[').append(i).append(']')
+            case (r, k) => r.append(keyDelimiter).append(k)
           }
           .delete(0, 1)
           .toString()
@@ -77,7 +72,7 @@ trait ConfigSyntax {
 
       def renderMissingValue(err: Config.Error.MissingData): Sequential = {
         val strings =
-          "MissingValue" :: s"path: ${renderSteps(err.path.map(str => KeyComponent.KeyName(str)).toList)}" :: Nil
+          "MissingValue" :: s"path: ${renderSteps(err.path.toList)}" :: s"${err.message}" :: Nil
 
         Sequential(
           List(Failure(strings))
@@ -86,7 +81,7 @@ trait ConfigSyntax {
 
       def renderFormatError(err: Config.Error.InvalidData): Sequential = {
         val strings =
-          "FormatError" :: s"cause: ${err.message}" :: s"path: ${renderSteps(err.path.map(str => KeyComponent.KeyName(str)).toList)}" :: Nil
+          "FormatError" :: s"cause: ${err.message}" :: s"path: ${renderSteps(err.path.toList)}" :: Nil
 
         Sequential(
           List(Failure(strings))
@@ -97,7 +92,7 @@ trait ConfigSyntax {
         Sequential(
           List(
             Failure(
-              "ConversionError" :: s"cause: ${err.message}" :: s"path: ${renderSteps(err.path.map(str => KeyComponent.KeyName(str)).toList)}" :: Nil
+              "ConversionError" :: s"cause: ${err.message}" :: s"path: ${renderSteps(err.path.toList)}" :: Nil
             )
           )
         )
@@ -155,11 +150,8 @@ trait ConfigSyntax {
   implicit class ConfigOps[A](config: zio.Config[A]) {
     self =>
 
-    def left  = config.map(Left(_))
-    def right = config.map(Right(_))
-
     def orElseEither[B](that: Config[B]): Config[Either[A, B]] =
-      config.left.orElse(that.right)
+      config.map(Left(_)).orElse(that.map(Right(_)))
 
     // Important for usecases such as `SystemEnv.load(deriveConfig[A].mapKey(_.toUpperCase)` or `JsonSource.load(deriveConfig[A])`
     // where annotations can't be of any help
@@ -182,6 +174,7 @@ trait ConfigSyntax {
       loop(config)
     }
 
+
     def toKebabCase: Config[A] =
       mapKey(zio.config.toKebabCase)
 
@@ -203,27 +196,6 @@ trait ConfigSyntax {
     // Example: read(config from ConfigProvider.fromMap(""))
     def from(configProvider: ConfigProvider): Read[A] =
       Read(config, configProvider)
-
-    private[config] def strict: Config[A] = {
-
-      def loop[B](config: Config[B]): Config[B] =
-        config match {
-          case Nested(name, config)                  => Nested(name, loop(config))
-          case Sequence(config)                      => Sequence(loop(config))
-          case Config.Optional(config)               => Config.Optional(loop(config))
-          case Config.FallbackWith(first, second, f) => Config.FallbackWith(loop(first), loop(second), f)
-          case Table(valueConfig)                    => Table(loop(valueConfig))
-          case a: Fallback[B]                        => loop(a.first).orElse(loop(a.second))
-          case MapOrFail(original, mapOrFail)        => MapOrFail(loop(original), a => mapOrFail(a))
-          case Zipped(left, right, zippable)         => Zipped(loop(left), loop(right), zippable)
-          case Described(config, description)        => Described(loop(config), description)
-          case Lazy(thunk)                           => thunk().strict
-          case config: Config.Primitive[B]           => config
-        }
-
-      loop(config)
-    }
-
   }
 
   // To be moved to ZIO
@@ -237,6 +209,30 @@ trait ConfigSyntax {
             Left(Config.Error.InvalidData(Chunk.empty, s"Expected an byte, but found ${text}"))
         }
       )
+
+    def collectAll[A](head: => Config[A], tail: Config[A]*): Config[List[A]] =
+      tail.reverse
+        .map(Config.defer(_))
+        .foldLeft[Config[(A, List[A])]](
+          Config
+            .defer(head)
+            .map((a: A) => (a, Nil))
+        )((b: Config[(A, List[A])], a: Config[A]) =>
+          (b.zip[A](a)
+            .map({ case (first, tail, a) =>
+              (first, a :: tail)
+            }))
+        )
+        .map { case (a, t) => a :: t }
+
+    def constant(value: String): Config[String] =
+      Config.string.mapOrFail(parsed =>
+        if (parsed == value) Right(value)
+        else Left(Config.Error.InvalidData(message = s"value should be a constant: ${value}"))
+      ) ?? s"The value should be ${value}"
+
+    def long: Config[Long] =
+      Config.bigInt.map(_.toLong)
 
     def short: Config[Short] =
       Config.string.mapOrFail(text =>
@@ -255,225 +251,14 @@ trait ConfigSyntax {
             Left(Config.Error.InvalidData(Chunk.empty, s"Expected a uuid, but found ${text}"))
         }
       )
-
-    def long: Config[Long] =
-      Config.bigInt.map(_.toLong)
-
-    def constant(value: String) =
-      Config.string.mapOrFail(parsed =>
-        if (parsed == value) Right(value)
-        else Left(Config.Error.InvalidData(message = s"value should be a constant: ${value}"))
-      ) ?? s"The value should be ${value}"
-
-    def collectAll[A](head: => Config[A], tail: Config[A]*): Config[List[A]] =
-      tail.reverse
-        .map(Config.defer(_))
-        .foldLeft[Config[(A, List[A])]](
-          Config
-            .defer(head)
-            .map((a: A) => (a, Nil))
-        )((b: Config[(A, List[A])], a: Config[A]) =>
-          (b.zip[A](a)
-            .map({ case (first, tail, a) =>
-              (first, a :: tail)
-            }))
-        )
-        .map { case (a, t) => a :: t }
   }
 
-  // To be moved to ZIO
-  implicit class FromConfigProvider(c: ConfigProvider.type) {
-
-    /**
-     * Constructs a new ConfigProvider from a key/value (flat) provider, where
-     * nesting is embedded into the string keys.
-     */
-    def fromIndexedFlat(flat: IndexedFlat): IndexedConfigProvider =
-      new IndexedConfigProvider {
-        self =>
-        import Config._
-
-        override def indexedFlat = flat
-
-        def extend[A, B](
-          leftDef: Int => A,
-          rightDef: Int => B
-        )(left: Chunk[A], right: Chunk[B]): (Chunk[A], Chunk[B]) = {
-          val leftPad  = Chunk.unfold(left.length) { index =>
-            if (index >= right.length) None else Some(leftDef(index) -> (index + 1))
-          }
-          val rightPad = Chunk.unfold(right.length) { index =>
-            if (index >= left.length) None else Some(rightDef(index) -> (index + 1))
-          }
-
-          val leftExtension  = left ++ leftPad
-          val rightExtension = right ++ rightPad
-
-          (leftExtension, rightExtension)
-        }
-
-        private def loop[A](prefix: Chunk[KeyComponent], config: Config[A])(implicit
-          trace: Trace
-        ): IO[Config.Error, Chunk[A]] =
-          config match {
-            case fallback: Fallback[A] =>
-              loop(prefix, fallback.first).catchAll(e1 =>
-                if (fallback.condition(e1)) loop(prefix, fallback.second).catchAll(e2 => ZIO.fail(e1 || e2))
-                else ZIO.fail(e1)
-              )
-
-            case Described(config, _) => loop(prefix, config)
-
-            case Lazy(thunk) => loop(prefix, thunk())
-
-            case MapOrFail(original, f) =>
-              loop(prefix, original).flatMap { as =>
-                ZIO.foreach(as)(a => ZIO.fromEither(f(a)).mapError(_.prefixed(prefix.map(_.toString))))
-              }
-
-            case Sequence(config) =>
-              for {
-                keys <- flat
-                          .enumerateChildren(prefix)
-                          .map(set =>
-                            set.toList.flatMap { chunk =>
-                              chunk.headOption.toList
-                            }
-                          )
-
-                values <-
-                  ZIO
-                    .foreach(Chunk.fromIterable(keys.toSet)) { key =>
-                      loop(prefix ++ Chunk(key), config)
-                    }
-                    .map(_.flatten)
-              } yield
-                if (values.isEmpty) Chunk(Chunk.empty)
-                else Chunk(values)
-
-            case Nested(name, config) =>
-              loop(prefix ++ Chunk(KeyComponent.KeyName(name)), config)
-
-            case table: Table[valueType] =>
-              import table.valueConfig
-              for {
-                keys   <- flat.enumerateChildren(prefix)
-                values <- ZIO.foreach(Chunk.fromIterable(keys))(key => loop(prefix ++ key, valueConfig))
-              } yield
-                if (values.isEmpty) Chunk(Map.empty[String, valueType])
-                else
-                  values.transpose.map { values =>
-                    keys.map(comp => KeyComponent.pretty(comp)).zip(values).toMap
-                  }
-
-            case zipped: Zipped[leftType, rightType, c] =>
-              import zipped.{left, right, zippable}
-              for {
-                l      <- loop(prefix, left).either
-                r      <- loop(prefix, right).either
-                result <- (l, r) match {
-                            case (Left(e1), Left(e2)) => ZIO.fail(e1 && e2)
-                            case (Left(e1), Right(_)) => ZIO.fail(e1)
-                            case (Right(_), Left(e2)) => ZIO.fail(e2)
-                            case (Right(l), Right(r)) =>
-                              val path = prefix.mkString(".")
-
-                              def lfail(index: Int): Either[Config.Error, leftType] =
-                                Left(
-                                  Config.Error.MissingData(
-                                    prefix.map(_.toString),
-                                    s"The element at index ${index} in a sequence at ${path} was missing"
-                                  )
-                                )
-
-                              def rfail(index: Int): Either[Config.Error, rightType] =
-                                Left(
-                                  Config.Error.MissingData(
-                                    prefix.map(_.toString),
-                                    s"The element at index ${index} in a sequence at ${path} was missing"
-                                  )
-                                )
-
-                              val (ls, rs) = extend(lfail, rfail)(l.map(Right(_)), r.map(Right(_)))
-
-                              ZIO.foreach(ls.zip(rs)) { case (l, r) =>
-                                ZIO.fromEither(l).zipWith(ZIO.fromEither(r))(zippable.zip(_, _))
-                              }
-                          }
-              } yield result
-
-            case Constant(value) =>
-              ZIO.succeed(Chunk(value))
-
-            case Fail(message) =>
-              ZIO.fail(Config.Error.MissingData(prefix.map(_.toString), message))
-
-            case primitive: Primitive[A] =>
-              for {
-                vs     <- flat.load(prefix, primitive)
-                result <- if (vs.isEmpty)
-                            ZIO.fail(primitive.missingError(prefix.map(_.toString).lastOption.getOrElse("<n/a>")))
-                          else ZIO.succeed(vs)
-              } yield result
-          }
-
-        def load[A](config: Config[A])(implicit trace: Trace): IO[Config.Error, A] =
-          loop(Chunk.empty, config).flatMap { chunk =>
-            chunk.headOption match {
-              case Some(a) => ZIO.succeed(a)
-              case _       =>
-                ZIO.fail(Config.Error.MissingData(Chunk.empty, s"Expected a single value having structure ${config}"))
-            }
-          }
-
-        override def flatten: zio.ConfigProvider.Flat =
-          new zio.ConfigProvider.Flat {
-            override def load[A](path: Chunk[String], config: Primitive[A])(implicit
-              trace: zio.Trace
-            ): IO[Error, Chunk[A]] = loop(
-              path.map { str =>
-                // FIXME: Hack since zio.Config works non indexed flat as of now
-                if (str.startsWith("[") && str.endsWith("]")) {
-                  scala.util
-                    .Try(KeyComponent.Index(str.dropRight(1).drop(1).toInt))
-                    .getOrElse(KeyComponent.KeyName(str))
-                } else {
-                  KeyComponent.KeyName(str)
-                }
-              },
-              config
-            )
-
-            override def enumerateChildren(path: Chunk[String])(implicit trace: zio.Trace): IO[Error, Set[String]] = {
-              val result = flat.enumerateChildren(path.map { str =>
-                if (str.startsWith("[") && str.endsWith("]")) {
-                  scala.util
-                    .Try(KeyComponent.Index(str.dropRight(1).drop(1).toInt))
-                    .getOrElse(KeyComponent.KeyName(str))
-                } else {
-                  KeyComponent.KeyName(str)
-                }
-              })
-              result.map(_.map(_.mkString(".")))
-            }
-          }
+  implicit class ChunkOps[A](chunk: Chunk[A]) {
+    def mapLast(f: A => A): Chunk[A] =
+      chunk.lastOption match {
+        case Some(value) => chunk.drop(1) :+ f(value)
+        case None => chunk
       }
-
-    def collectAll[A](head: => Config[A], tail: Config[A]*): Config[List[A]] =
-      tail.reverse
-        .map(Config.defer(_))
-        .foldLeft[Config[(A, List[A])]](
-          Config
-            .defer(head)
-            .map((a: A) => (a, Nil))
-        )((b: Config[(A, List[A])], a: Config[A]) =>
-          (b.zip[A](a)
-            .map({ case (first, tail, a) =>
-              (first, a :: tail)
-            }))
-        )
-        .map { case (a, t) => a :: t }
-
   }
 
 }

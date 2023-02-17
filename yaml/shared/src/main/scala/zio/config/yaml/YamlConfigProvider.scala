@@ -11,12 +11,12 @@ import java.{util => ju}
 import scala.jdk.CollectionConverters._
 import zio.ConfigProvider
 import zio.Chunk
+import zio.config.syntax.IndexKey
 
 import java.nio.charset.Charset
-import zio.config.syntax.IndexedConfigProvider
 
 @silent("Unused import")
-object YamlConfigSource {
+object YamlConfigProvider {
   import scala.collection.compat._
   import VersionSpecificSupport._
 
@@ -34,7 +34,7 @@ object YamlConfigSource {
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromYamlFile(file: File): IndexedConfigProvider =
+  def fromYamlFile(file: File): ConfigProvider =
     getIndexedConfigProvider(loadYaml(file))
 
   /**
@@ -51,7 +51,7 @@ object YamlConfigSource {
    *       .flatMap(source => read(descriptor[MyConfig] from source)))
    * }}}
    */
-  def fromYamlPath(path: Path): IndexedConfigProvider =
+  def fromYamlPath(path: Path): ConfigProvider =
     fromYamlFile(path.toFile)
 
   /**
@@ -84,7 +84,7 @@ object YamlConfigSource {
    */
   def fromYamlReader(
     reader: Reader
-  ): IndexedConfigProvider =
+  ): ConfigProvider =
     getIndexedConfigProvider(loadYaml(reader))
 
   /**
@@ -105,14 +105,14 @@ object YamlConfigSource {
    */
   def fromYamlString(
     yamlString: String
-  ): IndexedConfigProvider = {
+  ): ConfigProvider = {
     val configStream = new ByteArrayInputStream(yamlString.getBytes(Charset.forName("UTF-8")))
     fromYamlReader(new BufferedReader(new InputStreamReader(configStream)))
   }
 
   // Use zio-config-parser for xml, yaml, hcl and json
-  private[yaml] def getIndexedConfigProvider(data: AnyRef): IndexedConfigProvider = {
-    def flattened(data: AnyRef, chunk: Chunk[syntax.KeyComponent]): Map[Chunk[syntax.KeyComponent], String] =
+  private[yaml] def getIndexedConfigProvider(data: AnyRef): ConfigProvider = {
+    def flattened(data: AnyRef, chunk: Chunk[String]): Map[Chunk[String], String] =
       data match {
         case null        => Map.empty
         case t: JInteger => Map(chunk -> t.toString())
@@ -127,8 +127,7 @@ object YamlConfigSource {
 
           list.zipWithIndex
             .map({ case (anyRef, index) =>
-              val keyComponentIndex = syntax.KeyComponent.Index(index)
-              flattened(anyRef, chunk ++ Chunk(keyComponentIndex))
+              flattened(anyRef, chunk.mapLast(last => last + IndexKey(index)))
             })
             .reduceOption(_ ++ _)
             .getOrElse(Map.empty)
@@ -138,7 +137,7 @@ object YamlConfigSource {
 
           map
             .map({ case (k, v) =>
-              flattened(v, chunk ++ Chunk(syntax.KeyComponent.KeyName(k)))
+              flattened(v, chunk :+ k)
             })
             .reduceOption(_ ++ _)
             .getOrElse(Map.empty)
@@ -153,9 +152,8 @@ object YamlConfigSource {
           )
       }
 
-    println(flattened(data, Chunk.empty))
 
-    ConfigProvider.fromIndexedFlat(syntax.IndexedFlat.from(flattened(data, Chunk.empty)))
+    ConfigProvider.fromMap(flattened(data, Chunk.empty).map({case (k, v) => (k.mkString("."), v)}))
 
   }
 

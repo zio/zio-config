@@ -3,7 +3,6 @@ package zio.config
 import zio._
 
 import java.io.File
-import zio.config.syntax.IndexedConfigProvider
 
 package object typesafe {
 

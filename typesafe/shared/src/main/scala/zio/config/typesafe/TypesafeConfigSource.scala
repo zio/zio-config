@@ -32,7 +32,6 @@ import com.typesafe.config.ConfigValueType.OBJECT
 import com.typesafe.config.ConfigValueType.BOOLEAN
 import com.typesafe.config.ConfigValueType.NULL
 import zio.config.syntax.KeyComponent
-import zio.config.syntax.IndexedConfigProvider
 
 @silent("Unused import")
 object TypesafeConfigSource {

@@ -1,6 +1,6 @@
 package zio
 
-import zio.config.syntax.{ConfigSyntax, KeyComponent}
+import zio.config.syntax.{ConfigSyntax}
 
 package object config
     extends KeyConversionFunctions
@@ -9,7 +9,7 @@ package object config
     with ConfigDocsModule {
 
   implicit class Interpolator(private val sc: StringContext) extends AnyVal {
-    def path(str: String*): Chunk[KeyComponent] =
-      Chunk.fromIterable(sc.s(str: _*).split('.')).flatMap(str => KeyComponent.from(str))
+    def path(str: String*): Chunk[String] =
+      Chunk.fromIterable(sc.s(str: _*).split('.'))
   }
 }

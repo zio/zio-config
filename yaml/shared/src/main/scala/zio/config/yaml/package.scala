@@ -9,25 +9,25 @@ import java.nio.file.Path
 package object yaml {
   implicit class FromConfigSourceYaml(c: ConfigProvider.type) {
     def fromYamlFile(file: File): ConfigProvider =
-      YamlConfigSource.fromYamlFile(file)
+      YamlConfigProvider.fromYamlFile(file)
 
     def fromYamlPath(path: Path): ConfigProvider =
-      YamlConfigSource.fromYamlPath(path)
+      YamlConfigProvider.fromYamlPath(path)
 
     def fromYamlReader(
       reader: Reader
     ): ConfigProvider =
-      YamlConfigSource.fromYamlReader(reader)
+      YamlConfigProvider.fromYamlReader(reader)
 
     def fromYamlString(
       yamlString: String
     ): ConfigProvider =
-      YamlConfigSource.fromYamlString(yamlString)
+      YamlConfigProvider.fromYamlString(yamlString)
 
     def fromYamlRepr[A](repr: A)(
       loadYaml: A => AnyRef
     ): ConfigProvider =
-      YamlConfigSource.getIndexedConfigProvider(loadYaml(repr))
+      YamlConfigProvider.getIndexedConfigProvider(loadYaml(repr))
   }
 
 }
