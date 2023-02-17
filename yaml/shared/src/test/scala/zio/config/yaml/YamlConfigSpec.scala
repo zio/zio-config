@@ -1,7 +1,6 @@
 package zio.config.yaml
 
-import zio.Runtime.default
-import zio.{Config, ConfigProvider, Unsafe, ZIO}
+import zio.{Config, ConfigProvider}
 import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
