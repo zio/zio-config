@@ -165,7 +165,7 @@ object TypesafeConfigListTest extends ZIOSpecDefault {
                   List(
                     Details3("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3))),
                     Details3("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
-                    Details3("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), Some(Nil)), //FIXME: It should be None
+                    Details3("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), Some(Nil)) //FIXME: It should be None
                   )
                 ),
                 Details2("di", "ci", Nil),
@@ -175,11 +175,11 @@ object TypesafeConfigListTest extends ZIOSpecDefault {
                   List(
                     Details3("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
                     Details3("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3))),
-                    Details3("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), Some(Nil)), //FIXME: It should be None
+                    Details3("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), Some(Nil)) //FIXME: It should be None
                   )
                 )
               )
-            ),
+            )
           ),
           Database(Port("ba"))
         )

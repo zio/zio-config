@@ -170,8 +170,8 @@ object TypesafeConfigTestSupport extends EitherSupport {
 
   val complexHoconSource: ConfigProvider = TypesafeConfigSource.fromHoconString(hocon)
 
-  val complexDescription: Config[A] = deriveConfig[A]
-  val readComplexSource: IO[Config.Error, A]  = read(complexDescription from complexHoconSource)
+  val complexDescription: Config[A]          = deriveConfig[A]
+  val readComplexSource: IO[Config.Error, A] = read(complexDescription from complexHoconSource)
 
   val expectedResult: A =
     A(
