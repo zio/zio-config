@@ -68,9 +68,9 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
       val expectedResult =
         AwsDetails(
           List(
-            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
+            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None),
             Account(Some(Left(123)), List("us-west", "ab", "cd"), Some(Details("zak", 11))),
-            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
           ),
           Database(Some(100), "postgres"),
           List(1, 2, 3)
@@ -87,9 +87,9 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
       val expectedResult =
         AwsDetails(
           List(
-            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
+            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None),
             Account(Some(Left(123)), List("us-west", "ab", "cd"), Some(Details("zak", 11))),
-            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
           ),
           Database(Some(100), "postgres"),
           List(1, 2, 3)
