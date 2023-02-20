@@ -17,7 +17,7 @@ import com.typesafe.config.ConfigValueType.STRING
 import com.typesafe.config.ConfigValueType.OBJECT
 import com.typesafe.config.ConfigValueType.BOOLEAN
 import com.typesafe.config.ConfigValueType.NULL
-import zio.config.syntax.{IndexKey}
+import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
 
 @silent("Unused import")
 object TypesafeConfigSource {
@@ -59,11 +59,11 @@ object TypesafeConfigSource {
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
 
   def fromTypesafeConfig(config: com.typesafe.config.Config): ConfigProvider = {
-    def loop(config: com.typesafe.config.Config): Map[Chunk[String], String] = {
+    def loop(config: com.typesafe.config.Config): Map[Chunk[KeyComponent], String] = {
       val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue())).toMap
 
       initLevel.flatMap({ case (k, possibleConfigValue) =>
-        val kIterated = Chunk.fromIterable(k.split('.'))
+        val kIterated = Chunk.fromIterable(k.split('.')).map(KeyComponent.KeyName(_))
 
         possibleConfigValue.valueType() match {
           case LIST    =>
@@ -73,19 +73,19 @@ object TypesafeConfigSource {
                 val result = config.getList(k).unwrapped().asScala.toList
 
                 Map(
-                  kIterated.mapLast(str => str + IndexKey(0)) -> result.map(_.toString).mkString(",")
+                  kIterated ++ Chunk(KeyComponent.Index(0)) -> result.map(_.toString).mkString(",")
                 )
 
               // Only possibility is a sequence of nested Configs
               case Success(value) =>
                 value.asScala.toList.zipWithIndex.map { case (config: com.typesafe.config.Config, index: Int) =>
-                  val oldKeyWithIndex: Chunk[String] = kIterated.mapLast(str => str + IndexKey(index))
+                  val oldKeyWithIndex: Chunk[KeyComponent] = kIterated ++ Chunk(KeyComponent.Index(index))
 
                   loop(config).map { case (newKey, v) =>
                     oldKeyWithIndex ++ newKey -> v
                   }
 
-                }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[String], String])
+                }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[KeyComponent], String])
 
             }
           case NUMBER  =>
@@ -98,7 +98,7 @@ object TypesafeConfigSource {
       })
     }
 
-    ConfigProvider.fromMap(loop(config).map({case (k, v) => (k.mkString("."), v)}))
+    ConfigProvider.fromIndexedMap(loop(config).map({case (key, value) => ConfigPath.toPath(key).mkString(".") -> value}))
   }
 
 }

@@ -56,7 +56,7 @@ object DeriveConfig {
     DeriveConfig(DeriveConfig[A].desc.optional)
 
   implicit def implicitEitherDesc[A: DeriveConfig, B: DeriveConfig]: DeriveConfig[Either[A, B]] =
-    DeriveConfig(DeriveConfig[A].desc.left.orElse(DeriveConfig[B].desc.right))
+    DeriveConfig(DeriveConfig[A].desc.orElseEither(DeriveConfig[B].desc))
 
   implicit def implicitListDesc[A: DeriveConfig]: DeriveConfig[List[A]] =
     DeriveConfig(Config.listOf(implicitly[DeriveConfig[A]].desc))

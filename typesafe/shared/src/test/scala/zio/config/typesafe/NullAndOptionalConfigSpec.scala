@@ -68,10 +68,10 @@ object NullAndOptionalConfig extends ZIOSpecDefault {
       val expectedResult =
         EmployeeDetails(
           List(
-            Employee("jon", Some(Right("CA")), Left(Left(1.278))),
             Employee("chris", Some(Left(151)), Right("High")),
-            Employee("martha", None, Right("Medium")),
             Employee("susan", None, Right("f")),
+            Employee("jon", Some(Right("CA")), Left(Left(1.278))),
+            Employee("martha", None, Right("Medium")),
           ),
           1000
         )
