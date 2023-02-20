@@ -3,7 +3,7 @@ package zio.config.examples.autoderivation
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.deriveConfig
-import zio.config.typesafe.TypesafeConfigSource
+import zio.config.typesafe.TypesafeConfigProvider
 
 import examples._
 import RandomSealedTrait1._
@@ -56,7 +56,7 @@ object AwsConfig extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(deriveConfig[AppConfig] from TypesafeConfigSource.fromHoconString(s1)) equalM
+    read(deriveConfig[AppConfig] from TypesafeConfigProvider.fromHoconString(s1)) equalM
       AppConfig(AwsConfig(Trait1SubClass1("b", RandomCaseClass("hi"))), "l")
   )
 
@@ -65,14 +65,14 @@ object AwsConfig extends App with EitherImpureOps {
       |field = SubObject1
       |""".stripMargin
 
-  assert(read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s2)) equalM AwsConfig(SubObject1))
+  assert(read(deriveConfig[AwsConfig] from TypesafeConfigProvider.fromHoconString(s2)) equalM AwsConfig(SubObject1))
 
   val s3: String =
     """
       |field = SubObject2
       |""".stripMargin
 
-  assert(read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s3)) equalM AwsConfig(SubObject2))
+  assert(read(deriveConfig[AwsConfig] from TypesafeConfigProvider.fromHoconString(s3)) equalM AwsConfig(SubObject2))
 
   val s4: String =
     """
@@ -88,7 +88,7 @@ object AwsConfig extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s4)) equalM AwsConfig(
+    read(deriveConfig[AwsConfig] from TypesafeConfigProvider.fromHoconString(s4)) equalM AwsConfig(
       Trait1SubClass2(Trait2SubClass("1"))
     )
   )
@@ -104,7 +104,7 @@ object AwsConfig extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s5)) equalM AwsConfig(
+    read(deriveConfig[AwsConfig] from TypesafeConfigProvider.fromHoconString(s5)) equalM AwsConfig(
       Trait1SubClass3("1", 2)
     )
   )
@@ -124,7 +124,7 @@ object AwsConfig extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s6)) equalM
+    read(deriveConfig[AwsConfig] from TypesafeConfigProvider.fromHoconString(s6)) equalM
       AwsConfig(Trait1SubClass4("1", None, Trait2SubClass("2")))
   )
 
@@ -144,7 +144,7 @@ object AwsConfig extends App with EitherImpureOps {
       |""".stripMargin
 
   assert(
-    read(deriveConfig[AwsConfig] from TypesafeConfigSource.fromHoconString(s7)) equalM
+    read(deriveConfig[AwsConfig] from TypesafeConfigProvider.fromHoconString(s7)) equalM
       AwsConfig(Trait1SubClass4("1", Some(2), Trait2SubClass("2")))
   )
 

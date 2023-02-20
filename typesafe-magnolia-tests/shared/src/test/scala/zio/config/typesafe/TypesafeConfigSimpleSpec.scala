@@ -1,7 +1,7 @@
 package zio.config.typesafe
 
 import zio.config._
-import zio.config.typesafe.TypesafeConfigSource.fromHoconString
+import zio.config.typesafe.TypesafeConfigProvider.fromHoconString
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 import zio.Config

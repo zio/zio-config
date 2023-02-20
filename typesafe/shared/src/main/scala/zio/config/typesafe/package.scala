@@ -8,21 +8,21 @@ package object typesafe {
 
   implicit class FromConfigSourceTypesafe(configProvider: ConfigProvider.type) {
     def fromResourcePath: ConfigProvider =
-      TypesafeConfigSource.fromResourcePath
+      TypesafeConfigProvider.fromResourcePath
 
     def fromHoconFile[A](file: File): ConfigProvider =
-      TypesafeConfigSource.fromHoconFile(file)
+      TypesafeConfigProvider.fromHoconFile(file)
 
     def fromHoconFilePath[A](filePath: String): ConfigProvider =
-      TypesafeConfigSource.fromHoconFilePath(filePath)
+      TypesafeConfigProvider.fromHoconFilePath(filePath)
 
     def fromHoconString(input: String): ConfigProvider =
-      TypesafeConfigSource.fromHoconString(input)
+      TypesafeConfigProvider.fromHoconString(input)
 
     def fromTypesafeConfig(
       rawConfig: com.typesafe.config.Config
     ): ConfigProvider =
-      TypesafeConfigSource.fromTypesafeConfig(rawConfig)
+      TypesafeConfigProvider.fromTypesafeConfig(rawConfig)
   }
 
 }

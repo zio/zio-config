@@ -1,7 +1,7 @@
 package zio.config.examples.typesafe
 
 import zio.config.magnolia._
-import zio.config.typesafe.TypesafeConfigSource
+import zio.config.typesafe.TypesafeConfigProvider
 import zio._
 import zio.Console._
 import zio.config.examples.ZioOps
@@ -50,8 +50,8 @@ object HoconSimple extends ZIOAppDefault {
 
   def run =
     for {
-      customer        <- TypesafeConfigSource.fromHoconString(customer).load(deriveConfig[Customer])
-      invalidCustomer <- TypesafeConfigSource.fromHoconString(invalidCustomer).load(deriveConfig[Customer]).either
+      customer        <- TypesafeConfigProvider.fromHoconString(customer).load(deriveConfig[Customer])
+      invalidCustomer <- TypesafeConfigProvider.fromHoconString(invalidCustomer).load(deriveConfig[Customer]).either
       _               <- printLine(customer)
       _               <- printLine(invalidCustomer)
     } yield ()

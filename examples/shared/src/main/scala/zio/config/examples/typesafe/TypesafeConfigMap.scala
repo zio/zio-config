@@ -50,7 +50,7 @@ object TypesafeConfigMap extends App with EitherImpureOps {
        |""".stripMargin
 
   val source: ConfigProvider =
-    TypesafeConfigSource.fromHoconString(hocon)
+    TypesafeConfigProvider.fromHoconString(hocon)
 
   val readResult: IO[Config.Error, B] =
     read(B.config from source)

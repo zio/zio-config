@@ -20,7 +20,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
 
     },
     test("read nested typesafe config map using map") {
-      val source = TypesafeConfigSource.fromHoconString(hocon2)
+      val source = TypesafeConfigProvider.fromHoconString(hocon2)
       val result = read(
         (table(sssDescription).nested("result")).to[TypesafeConfigMapSpecUtils.Nested] from source
       )
@@ -48,7 +48,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
 
       val desc = ((table("s", string("y")).nested("k")) zip string("y")).to[Cfg]
 
-      val result = read(desc from TypesafeConfigSource.fromHoconString(hocon3))
+      val result = read(desc from TypesafeConfigProvider.fromHoconString(hocon3))
 
       assertZIO(result)(equalTo(Cfg(Map("dynamicKey" -> "z"), "z")))
     },
@@ -69,7 +69,7 @@ object TypesafeConfigMapSpec extends BaseSpec {
 
       val xx2 = (table(string("y")).nested("k"))
 
-      assertZIO(read(xx2 from TypesafeConfigSource.fromHoconString(hocon4)))(
+      assertZIO(read(xx2 from TypesafeConfigProvider.fromHoconString(hocon4)))(
         equalTo(Map("dynamicKey" -> "z", "dynamicKey2" -> "z2"))
       )
     }
@@ -93,7 +93,7 @@ object TypesafeConfigMapSpecUtils {
        |  }
        |""".stripMargin
 
-  val source: ConfigProvider = TypesafeConfigSource.fromHoconString(hocon)
+  val source: ConfigProvider = TypesafeConfigProvider.fromHoconString(hocon)
 
   final case class sss(s: Map[String, List[Int]], l: List[Int], l2: List[Int], value: Map[String, String])
 

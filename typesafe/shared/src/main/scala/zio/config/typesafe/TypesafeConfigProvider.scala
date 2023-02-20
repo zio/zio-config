@@ -20,7 +20,7 @@ import com.typesafe.config.ConfigValueType.NULL
 import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
 
 @silent("Unused import")
-object TypesafeConfigSource {
+object TypesafeConfigProvider {
   import VersionSpecificSupport._
 
   /**

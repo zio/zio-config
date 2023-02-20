@@ -140,7 +140,7 @@ object TypesafeConfigListTest extends ZIOSpecDefault {
 
       val zioConfigWithKeysInKebabResult =
         read(
-          deriveConfig[ExportDetails].mapKey(toKebabCase) from TypesafeConfigSource
+          deriveConfig[ExportDetails].mapKey(toKebabCase) from TypesafeConfigProvider
             .fromHoconString(kebabCaseConfig)
         )
 

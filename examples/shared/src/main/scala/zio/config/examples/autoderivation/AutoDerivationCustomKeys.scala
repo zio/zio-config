@@ -6,7 +6,7 @@ import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.deriveConfig
 import zio.Config
-import zio.config.typesafe.TypesafeConfigSource
+import zio.config.typesafe.TypesafeConfigProvider
 
 import examples._
 
@@ -27,7 +27,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
   // Default behaviour, and hence no mapKey
   val camelCaseResult: IO[Config.Error, MyConfig] =
     read(
-      deriveConfig[MyConfig] from (TypesafeConfigSource.fromHoconString(camelCaseConfig))
+      deriveConfig[MyConfig] from (TypesafeConfigProvider.fromHoconString(camelCaseConfig))
     )
 
   assert(camelCaseResult equalM MyConfig("abcd", "us-east"))
@@ -42,7 +42,7 @@ object AutoDerivationCustomKeys extends App with EitherImpureOps {
 
   val kebabCaseResult: IO[Config.Error, MyConfig] =
     read(
-      deriveConfig[MyConfig].mapKey(toKebabCase) from (TypesafeConfigSource.fromHoconString(kebabCaseConfig))
+      deriveConfig[MyConfig].mapKey(toKebabCase) from (TypesafeConfigProvider.fromHoconString(kebabCaseConfig))
     )
 
   assert(kebabCaseResult equalM MyConfig("abcd", "us-east"))
