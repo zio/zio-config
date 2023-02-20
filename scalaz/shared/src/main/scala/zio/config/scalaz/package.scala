@@ -1,9 +1,10 @@
 package zio.config
 
 import _root_.scalaz.{==>>, IList, ISet, Maybe, Order}
+import zio.Config
 import zio.config._
 
-import zio.Config, Config._
+import Config._
 
 package object scalaz {
   def iList[A](config: Config[A]): Config[IList[A]] =

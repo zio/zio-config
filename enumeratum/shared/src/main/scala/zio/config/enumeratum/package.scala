@@ -2,10 +2,11 @@ package zio.config
 
 import _root_.enumeratum._
 import _root_.enumeratum.values._
+import zio.Config
 
 import scala.reflect.ClassTag
 
-import zio.Config, Config._
+import Config._
 
 package object enumeratum {
   def nonEmptyString: Config[String] =

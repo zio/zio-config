@@ -1,13 +1,12 @@
 package zio.config.examples.autoderivation
 
 import zio.config._
+import zio.config.derivation.{name, nameWithLabel}
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider
 
 import examples._
-import zio.config.derivation.name
-import zio.config.derivation.nameWithLabel
 
 /**
  * An example on how to configure Config classes

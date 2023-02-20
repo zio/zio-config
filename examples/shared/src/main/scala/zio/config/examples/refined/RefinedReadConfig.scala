@@ -3,12 +3,13 @@ package zio.config.examples.refined
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.{NonEmpty, Size}
 import eu.timepit.refined.numeric.{Greater, GreaterEqual}
-import zio.config._, magnolia._
-import zio.config.refined._
+import zio.config._
 import zio.config.examples.ZioOps
+import zio.config.refined._
+import zio.{Config, ConfigProvider}
 
-import zio.Config, Config._
-import zio.ConfigProvider
+import magnolia._
+import Config._
 
 object RefinedReadConfig extends App {
   case class RefinedProd(

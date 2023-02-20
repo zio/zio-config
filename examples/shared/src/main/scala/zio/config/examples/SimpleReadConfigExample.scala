@@ -1,10 +1,7 @@
 package zio.config.examples
 
-import zio.{Console, _}
-
-import zio.Config
-import zio.ConfigProvider
 import zio.config._
+import zio.{Config, ConfigProvider, Console, _}
 
 final case class Prod(ldap: String, port: Int, dburl: Option[String])
 
@@ -18,7 +15,7 @@ object Prod {
 
 object ReadConfig extends ZIOAppDefault {
 
-  val configProvider = ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"))
+  val configProvider: ConfigProvider = ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"))
 
   def run: URIO[Any, ExitCode] =
     read(Prod.prodConfig from ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd")))

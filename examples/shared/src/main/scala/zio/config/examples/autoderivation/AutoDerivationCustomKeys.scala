@@ -1,12 +1,11 @@
 package zio.config.examples.autoderivation
 
 import com.github.ghik.silencer.silent
-import zio.IO
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.deriveConfig
-import zio.Config
 import zio.config.typesafe.TypesafeConfigProvider
+import zio.{Config, IO}
 
 import examples._
 

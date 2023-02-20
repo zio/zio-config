@@ -1,10 +1,10 @@
 package zio.config.examples
 
-import zio.IO
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
-import zio.{Config, ConfigProvider}, Config._
-import zio.ConfigProvider
+import zio.{Config, ConfigProvider, IO}
+
+import Config._
 
 object DocsComplexExample extends App with EitherImpureOps {
 

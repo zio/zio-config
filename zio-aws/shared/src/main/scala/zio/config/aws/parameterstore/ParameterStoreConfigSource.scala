@@ -3,9 +3,7 @@ package zio.config.aws.parameterstore
 import zio.aws.ssm.Ssm
 import zio.aws.ssm.model.primitives.PSParameterName
 import zio.aws.ssm.model.{GetParametersByPathRequest, Parameter}
-import zio.{Chunk, ZIO}
-import zio.ConfigProvider
-import zio.Config
+import zio.{Chunk, Config, ConfigProvider, ZIO}
 
 object ParameterStoreConfigSource {
   def from(

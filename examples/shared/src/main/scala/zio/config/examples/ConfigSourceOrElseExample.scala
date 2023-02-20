@@ -1,11 +1,10 @@
 package zio.config.examples
 
-import zio._
 import zio.config._
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe._
 import zio.config.yaml._
-import zio.ConfigProvider
+import zio.{ConfigProvider, _}
 
 import java.io.InputStreamReader
 

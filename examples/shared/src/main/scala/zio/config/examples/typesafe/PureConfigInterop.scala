@@ -1,12 +1,11 @@
 package zio.config.examples.typesafe
 
+import zio.ConfigProvider
 import zio.config._
-import zio.config.magnolia._
+import zio.config.derivation.nameWithLabel
+import zio.config.magnolia.{DeriveConfig, _}
 
 import typesafe._
-import zio.ConfigProvider
-import zio.config.magnolia.DeriveConfig
-import zio.config.derivation.nameWithLabel
 
 object PureConfigInterop extends App with EitherImpureOps {
 

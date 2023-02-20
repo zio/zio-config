@@ -27,7 +27,7 @@ object RefinedSpec extends BaseSpec {
         check(Key.gen) { key =>
           val cfg = refineType[NonEmptyString](key.underlying)
 
-          val result   =
+          val result =
             read(cfg from ConfigProvider.fromMap(Map(key.underlying -> "")))
 
           assertZIO(result.either)(isLeft)

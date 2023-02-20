@@ -3,10 +3,11 @@ package zio.config
 import _root_.cats.data._
 import _root_.cats.implicits._
 import _root_.cats.kernel.Order
+import zio.Config
 
 import scala.collection.immutable.SortedMap
 
-import zio.Config, Config._
+import Config._
 
 package object cats {
   def chain[A](aDesc: Config[A]): Config[Chain[A]] =

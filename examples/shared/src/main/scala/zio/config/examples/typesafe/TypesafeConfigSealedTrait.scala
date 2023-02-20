@@ -1,11 +1,11 @@
 package zio.config.examples.typesafe
 
+import zio._
 import zio.config._
+import zio.config.examples.ZioOps
 
 import typesafe._
 import magnolia._
-import zio._
-import zio.config.examples.ZioOps
 
 object TypesafeConfigSealedTrait extends App with EitherImpureOps {
   sealed trait X

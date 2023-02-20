@@ -1,13 +1,13 @@
 package zio.config.examples.typesafe
 
 import com.typesafe.config.ConfigRenderOptions
-import zio.IO
-import zio.{Config, ConfigProvider}, Config._
+import zio.Runtime.default
+import zio.config._
 import zio.config.examples._
 import zio.config.typesafe._
-import zio.config._
-import zio.Unsafe
-import zio.Runtime.default
+import zio.{Config, ConfigProvider, IO, Unsafe}
+
+import Config._
 
 object TypesafeConfigMap extends App with EitherImpureOps {
   final case class B(m1: Map[String, C], i: Int)
@@ -24,7 +24,7 @@ object TypesafeConfigMap extends App with EitherImpureOps {
       (string("a1") zip int("a2")).to[C]
   }
 
-  val map =
+  val map: Map[String,String] =
     Map(
       "m1.m221.a1" -> "bar",
       "m1.m221.a2" -> "1",

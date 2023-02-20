@@ -1,12 +1,12 @@
 package zio.config.examples.typesafe
 
-import zio.IO
 import zio.config._
+import zio.config.examples.ZioOps
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe._
-import zio.config.examples.ZioOps
-import zio.Config, Config._
-import zio.ConfigProvider
+import zio.{Config, ConfigProvider, IO}
+
+import Config._
 
 object TypesafeConfigErrors extends App {
   // A nested example with type safe config, and usage of magnolia

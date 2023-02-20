@@ -1,10 +1,9 @@
 package zio.config.cats
 
+import _root_.cats.kernel.Semigroup
 import cats._
 import zio.config._
-import zio.Config
-import zio.ConfigProvider
-import _root_.cats.kernel.Semigroup
+import zio.{Config, ConfigProvider}
 
 package object instances {
   implicit val cfgDescInvariantSemiGroupal: Functor[Config] =

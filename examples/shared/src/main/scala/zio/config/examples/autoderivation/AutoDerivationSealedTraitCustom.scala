@@ -1,12 +1,12 @@
 package zio.config.examples.autoderivation
 
 import zio.config._
+import zio.config.derivation.name
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider
 
 import examples._
-import zio.config.derivation.name
 
 object AutoDerivationSealedTraitCustom extends App with EitherImpureOps {
 

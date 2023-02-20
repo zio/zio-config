@@ -1,17 +1,17 @@
 package zio.config.examples.typesafe
 
+import zio.Console._
+import zio._
+import zio.config.examples.ZioOps
 import zio.config.magnolia._
 import zio.config.typesafe.TypesafeConfigProvider
-import zio._
-import zio.Console._
-import zio.config.examples.ZioOps
 
 object HoconSimple extends ZIOAppDefault {
 
   final case class Customer(name: String, orderIds: List[Int], address: List[Address])
   final case class Address(unit: Int, street: String, pin: Option[Int])
 
-  val customer =
+  val customer: String =
     s"""
      {
         name: Jon
@@ -30,7 +30,7 @@ object HoconSimple extends ZIOAppDefault {
      }
     """
 
-  val invalidCustomer =
+  val invalidCustomer: String =
     s"""
      {
         name: Jon
@@ -48,7 +48,7 @@ object HoconSimple extends ZIOAppDefault {
      }
     """
 
-  def run =
+  def run: ZIO[Environment with ZIOAppArgs with Scope,Any,Any] =
     for {
       customer        <- TypesafeConfigProvider.fromHoconString(customer).load(deriveConfig[Customer])
       invalidCustomer <- TypesafeConfigProvider.fromHoconString(invalidCustomer).load(deriveConfig[Customer]).either

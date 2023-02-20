@@ -1,10 +1,10 @@
 package zio.config.examples.typesafe
 
+import zio.ConfigProvider
 import zio.config._
 
 import typesafe._
 import magnolia._
-import zio.ConfigProvider
 
 object SubConfigExample extends App {
   final case class ShortConfig(x: Int, y: Int)

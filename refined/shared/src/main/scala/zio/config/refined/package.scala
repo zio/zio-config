@@ -2,8 +2,8 @@ package zio.config
 
 import com.github.ghik.silencer.silent
 import eu.timepit.refined.api.{RefType, Refined, Validate}
-import zio.config.magnolia.DeriveConfig
 import zio.Config
+import zio.config.magnolia.DeriveConfig
 
 package object refined {
 

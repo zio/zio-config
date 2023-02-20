@@ -1,9 +1,9 @@
 package zio.config.examples
 
 import zio.config._
+import zio.{Config, ConfigProvider}
 
-import zio.Config, Config._
-import zio.ConfigProvider
+import Config._
 
 object TupleExample extends App {
   val config: Config[(String, Int)] =

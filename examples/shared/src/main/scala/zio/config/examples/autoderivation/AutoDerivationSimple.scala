@@ -1,10 +1,11 @@
 package zio.config.examples.autoderivation
 
-import zio.config._, magnolia._
+import zio.ConfigProvider
+import zio.config._
+import zio.config.examples.ZioOps
 import zio.config.examples.autoderivation.MyConfig._
 
-import zio.ConfigProvider
-import zio.config.examples.ZioOps
+import magnolia._
 
 final case class MyConfig(
   aws: Aws,
