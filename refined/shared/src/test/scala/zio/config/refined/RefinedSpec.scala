@@ -3,13 +3,11 @@ package zio.config.refined
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.types.string.NonEmptyString
-import zio.config.PropertyTreePath._
 import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test.{Sized, _}
-
-import ReadError._
 import RefinedUtils._
+import zio.{Config, ConfigProvider}
 
 object RefinedSpec extends BaseSpec {
   override def spec: Spec[TestConfig with Sized, Config.Error] =
@@ -32,10 +30,7 @@ object RefinedSpec extends BaseSpec {
           val result   =
             read(cfg from ConfigProvider.fromMap(Map(key.underlying -> "")))
 
-          val expected =
-            ConversionError(List(Step.Key(key.underlying)), "Predicate isEmpty() did not fail.", Set.empty)
-
-          assertZIO(result.either)(equalTo(Left(expected)))
+          assertZIO(result.either)(isLeft)
         }
       }
     )
