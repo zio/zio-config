@@ -2,7 +2,6 @@ package zio.config.magnolia
 
 import zio.ZIO
 import zio.config._
-import zio.config.helpers._
 import zio.random.Random
 import zio.test.Assertion._
 import zio.test._
