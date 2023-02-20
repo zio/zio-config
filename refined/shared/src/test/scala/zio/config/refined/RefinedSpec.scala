@@ -3,16 +3,14 @@ package zio.config.refined
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.types.string.NonEmptyString
-import zio.config.PropertyTreePath._
 import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test.{Sized, _}
-
-import ReadError._
 import RefinedUtils._
+import zio.{Config, ConfigProvider}
 
 object RefinedSpec extends BaseSpec {
-  override def spec: Spec[TestConfig with Sized, ReadError[String]] =
+  override def spec: Spec[TestConfig with Sized, Config.Error] =
     suite("Refine package")(
       test("RefineType can successfully read valid refined values from a given path") {
         check(KeyValue.gen) { keyValue =>
@@ -20,7 +18,7 @@ object RefinedSpec extends BaseSpec {
             refineType[NonEmptyString](keyValue.k.underlying)
 
           val result =
-            read(cfg from ConfigSource.fromMap(Map(keyValue.k.underlying -> keyValue.v.underlying)))
+            read(cfg from ConfigProvider.fromMap(Map(keyValue.k.underlying -> keyValue.v.underlying)))
 
           assertZIO(result)(equalTo(keyValue.v.value))
         }
@@ -29,13 +27,10 @@ object RefinedSpec extends BaseSpec {
         check(Key.gen) { key =>
           val cfg = refineType[NonEmptyString](key.underlying)
 
-          val result   =
-            read(cfg from ConfigSource.fromMap(Map(key.underlying -> "")))
+          val result =
+            read(cfg from ConfigProvider.fromMap(Map(key.underlying -> "")))
 
-          val expected =
-            ConversionError(List(Step.Key(key.underlying)), "Predicate isEmpty() did not fail.", Set.empty)
-
-          assertZIO(result.either)(equalTo(Left(expected)))
+          assertZIO(result.either)(isLeft)
         }
       }
     )

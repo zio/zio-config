@@ -1,18 +1,14 @@
 ---
-id: automatic-derivation-of-config-descriptor
-title:  "Automatic Derivation of ConfigDescriptor"
+id: automatic-derivation-of-config
+title:  "Automatic Derivation of Config"
 ---
 
-By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config. With a single import, `ConfigDescriptor` is automatically derived.
+By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config. With a single import, `Config` is automatically derived.
 
 Also, we will get to see the Hocon config for coproducts is devoid of any extra tagging to satisfy the library. This is much easier/intuitive unlike many existing implementations.
 
 Take a look at the magnolia examples in `zio-config`. One of them is provided here for quick access.
 
-Note:  `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects. It will be deprecated once we find users have moved on from scala 2.11. 
-
-Also, there are a few differences when it comes to scala-3 for auto-matic derivation.
-Refer scala-3 section in this page for specific differences. Most of them, is an intentional reduction in the number of moving parts in the entire mechanism of auto-derivation, plus, a few subtle limitations.
 
 ### Example
 
@@ -44,8 +40,10 @@ case class MyConfig(x: X)
 ```scala
 // Setting up imports
 
-import zio.config._, zio.config.typesafe._
-  import zio.config.magnolia._
+import zio._
+import zio.config._, 
+import zio.config.typesafe._
+import zio.config.magnolia._
 
   import X._
 ```
@@ -54,25 +52,25 @@ import zio.config._, zio.config.typesafe._
 // Defining different possibility of HOCON source
 
 val aHoconSource =
-  ConfigSource
+  ConfigProvider
     .fromHoconString("x = A")
 ```
 
 ```scala
 val bHoconSource =
-  ConfigSource
+  ConfigProvider
     .fromHoconString("x = B")
 ```
 
 ```scala
 val cHoconSource =
-  ConfigSource
+  ConfigProvider
     .fromHoconString("x = C")
 ```
 
 ```scala
 val dHoconSource =
-  ConfigSource
+  ConfigProvider
     .fromHoconString(
       s"""
          | x {
@@ -94,20 +92,19 @@ val dHoconSource =
 ```scala
 // Let's try automatic derivation
 
-read(descriptor[MyConfig] from aHoconSource)
+aHoconSource.load(deriveConfig[MyConfig])
 // res0: Right(MyConfig(A))
 
-read(descriptor[MyConfig] from bHoconSource)
+bHoconSource.load(deriveConfig[MyConfig])
 // res0: Right(MyConfig(B))
 
-read(descriptor[MyConfig] from cHoconSource)
+cHoconSource.load(deriveConfig[MyConfig])
 // res0: Right(MyConfig(C))
 
-read(descriptor[MyConfig] from dHoconSource)
+dHoconSource.load(deriveConfig[MyConfig])
 // res0: Right(MyConfig(DetailsWrapped(Detail("ff", "ll", Region("strath", "syd")))))
 ```
 
-To know more about various semantics of `descriptor`, please refer to the [api docs](https://javadoc.io/static/dev.zio/zio-config-magnolia_2.13/1.0.0-RC31-1/zio/config/magnolia/index.html#descriptor[A](implicitconfig:zio.config.magnolia.package.Descriptor[A]):zio.config.ConfigDescriptor[A]).
 
 **NOTE**
 
@@ -150,7 +147,7 @@ case class DbUrl(value: String)
 This will be equivalent to the manual configuration of:
 
 ```scala
-(string("region") zip string("dburl").transform(DbUrl, _.value)).to[Aws] ?? "This config is about aws"
+string("region").zip(string("dburl").to[DbUrl]).to[Aws] ?? "This config is about aws"
 ```
 
 You could provide `describe` annotation at field level
@@ -184,7 +181,7 @@ import java.time.ZonedDateTime
 case class Execution(time: AwsRegion, id: Int)
 ```
 
-In this case, `descriptor[Execution]` will give us the following descriptive compile error.
+In this case, `deriveConfig[Execution]` will give us the following descriptive compile error.
 
 ```
 magnolia: could not find Descriptor.Typeclass for type <outside.library.package>.AwsRegion
@@ -199,7 +196,7 @@ In order to provide implicit instances, following choices are there
 import zio.config.magnolia.{Descriptor, descriptor}
 
 implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
-  Descriptor[String].transform(string => AwsRegion.from(string), _.toString)
+  Descriptor[String].map(string => AwsRegion.from(string))
 
 ```
 
@@ -217,70 +214,24 @@ final case class AwsRegion(value: String) extends AnyVal {
 
 object AwsRegion {
   implicit val descriptor: Descriptor[AwsRegion] = 
-    Descriptor[String].transform(AwsRegion(_), _.value)
+    Descriptor[String].map(AwsRegion(_))
 }
 ```
 
-### Is that the only way for custom derivation ?
 
-What if our custom type is complex enough that, parsing from a string would actually fail? The answer is, zio-config provides with all the functions that you need to handle errors.
-
-```
-mport zio.config.magnolia.{Descriptor, descriptor}
-
-implicit val descriptorO: Descriptor[ZonedDateTime] =
-  Descriptor[String].transformOrFailLeft(x => Try (ZonedDateTime.parse(x)).toEither.swap.map(_.getMessage).swap)(_.toString)
-```
-
-What is transformOrFailLeft ? Parsing a String to ZonedDateTime can fail, but converting it back to a string
-won't fail. Logically, these are respectively the first 2 functions that we passed to transformEitherLeft. 
-
-PS: We recommend not to use `throwable.getMessage`. Provide more descriptive error message.
-
-You can also rely on `transformOrfail` if both `to` and `fro` can fail. 
-
-### Please give descriptions wherever possible for a better experience
-
-Giving descriptions is going to be helpful. While all the built-in types have documentations, it is better we give
-some description to custom types as well. For example:
-
-```
-mport zio.config.magnolia.{Descriptor, descriptor}
-
-
-implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
-  Descriptor[String].transform(string => AwsRegion.from(string), _.toString) ?? "value of type AWS.Region"
-```
-
-This way, when there is an error due to MissingValue, we get an error message (don't forget to use prettyPrint)
-that describes about the config parameter. For example, see the `Details` corresponding to the first `MissingValue` in a sample error message below.
-
-```scala
- ReadError:
- ╥
- ╠─MissingValue
- ║ path: aws.region
- ║ Details: value of type AWS.Region
- ║
- ╠─FormatError
- ║ cause: Provided value is 3dollars, expecting the type double
- ║ path: cost
- ▼
-```
 
 ### Where to place these implicits ?
 
 If the types are owned by us, then the best place to keep implicit instance is the companion object of that type.
 
 ```scala
-final case clas MyAwsRegion(value: AwsRegion)
+final case class MyAwsRegion(value: AwsRegion)
 
 object MyAwsRegion {
-  implicit val awsRegionDescriptor: Descriptor[MyAwsRegion] =
-    Descriptor[String]
-      .transform(
-        string => MyAwsRegion(AwsRegion.from(string)), 
-        _.value.toString
+  implicit val awsRegionDescriptor: DeriveConfig[MyAwsRegion] =
+    DeriveConfig[String]
+      .map(
+        string => MyAwsRegion(AwsRegion.from(string))
       ) ?? "value of type AWS.Region"
 }
 ```
@@ -297,38 +248,6 @@ Please find the examples in ChangeKeys.scala in magnolia module to find how to m
 ## Scala3 Autoderivation
 Works just like scala-2.12 and scala-2.13.
 If possible, we will make this behaviour consistent in scala-2.12 and scala-2.13 in future versions of zio-config.
-
-### No support for `AnyVal` 
-
-You may encounter the following error, if you have `AnyVal` in your config.
-
-```scala
-no implicit argument of type zio.config.magnolia.Descriptor
-```
-
-If looking for new-types, use better strategies than AnyVal (https://afsal-taj06.medium.com/newtype-is-new-now-63f1b632429d), and add custom `Descriptor` explicitly in its companion objects.
-
-We will consider adding `AnyVal` support, for supporting legacy applications in future versions of zio-config.
-
-In the meantime, if you are migrating from Scala 2 where you had custom descriptors defined for value classes you need to slightly change your code to compile it with Scala 3
- - remove `AnyVal` trait
- - modify definition of custom descriptor
- - add import to include `ConfigDescriptor` combinators
-
-```scala
-import zio.config.ConfigDescriptor._
-import zio.config.magnolia.{descriptor, Descriptor}
-
-final case class AwsRegion(value: String) {
-  override def toString: String = value
-}
-
-object AwsRegion {
-  given Descriptor[AwsRegion] =
-    Descriptor.from(string.to[AwsRegion])
-}
-```
-this way there is no need for you to update the configuration files.
 
 #### Example:
 
@@ -374,7 +293,7 @@ case class C(y: String) extends A
 case class Config(a: A) 
 ```
 
-With the above config, `descriptor[A]` can read following source.
+With the above config, `deriveConfig[A]` can read following source.
 
 ```scala
 {
@@ -428,31 +347,22 @@ Please refer to examples in magnolia package (not in the main examples module)
 With zio-config-3.x, the only way to change keys is as follows:
 
 ```scala
-// mapKey is just a function in `ConfigDescriptor` that pre-existed
+// mapKey is just a function in `Config` that pre-existed
 
-val config = descriptor[Config].mapKey(_.toUpperCase)
-```
-
-instead of 
-
-```scala
-// No longer supported
-val customDerivation = new DeriveConfigDescriptor {
-  override def mapFieldName(key: String) = key.toUpperCase
- }
-
-import customDerivation._
-
-val config = descriptor[Config]
+val config = deriveConfig[Config].mapKey(_.toUpperCase)
 ```
 
 ## Inbuilt support for pure-config
 
-Many users make use of the label `type` in HOCON files to annotate the type of the coproduct. Now on, zio-config has inbuilt support for reading such a file/string using `descriptorForPureConfig`.
+Many users make use of the label `type` in HOCON files to annotate the type of the coproduct. 
+Just put `@nameWithLabel()` in sealed trait name. By default the `label` name is `type`, but you can provide
+any custom name `@nameWithLabel("foo")`
+
 
 ```scala
-mport zio.config._, typesafe._, magnolia._
+import zio.config._, typesafe._, magnolia._
 
+@nameWithLabel("type")
 sealed trait X
 case class A(name: String) extends X
 case class B(age: Int) extends X
@@ -468,82 +378,4 @@ val str =
   """
 
 read(descriptorForPureConfig[AppConfig] from ConfigSource.fromHoconString(str))
-```
-
-## Allow concise config source strings
-
-With this release we have `descriptorWithoutClassNames` along with `descriptor` that just completely discards the name of the sealed-trait and sub-class (case-class) names, allowing your source less verbose. Note that unlike `pure-config` example above, we don't need to have an extra label `type : A`.
-
-```scala
-sealed trait Y
-
-object Y {
-  case class A(age: Int)     extends Y
-  case class B(name: String) extends Y
-}
-
-case class AppConfig(x: Y)
-
-val str =
-       s"""
-           x : {
-             age : 10
-           }
-          """
-
-read(descriptorWithoutClassNames[AppConfig] from ConfigSource.fromHoconString(str))
-```
-
-PS: If you are using `descriptor` instead of `descriptorWithoutClassNames`, then the source has to be:
-
-```scala
-x : {
-  A : { 
-      age : 10
-  }
-}
-```
-
-
-## Your ConfigSource is exactly your product and coproduct
-
-Some users prefer to encode the config-source exactly the same as that of Scala class files. The implication is, the source will know the name of the `sealed trait` and the name of all of its `subclasses`. There are several advantages to such an approach, while it can be questionable in certain situations. Regardless, zio-config now has inbuilt support to have this pattern.
-
-### Example: 
-
-Say, the config ADT is as below:
-
-```scala
-sealed trait Y
-
-object Y {
-  case class A(age: Int)     extends Y
-  case class B(name: String) extends Y
-}
-
-case class AppConfig(x: X)
-```
-
-Then the corresponding config-source should be as follows. Keep a note that under `x`, the name of sealed trait `Y` also exist.
-
-
-```scala
-val str =
-  s"""
-     x : {
-           Y : {
-              A : {
-                age : 10
-              }
-         }
-     }
-    """
-```
-
-
-To read such a string (or any config-source encoded in such a hierarchy), use `descriptorWithClassNames` instead of `descriptor`. In short, `descriptorWithClassNames` considers the name of sealed-trait.
-
-
-```scala
-read(descriptorWithClassNames[AppConfig] from ConfigSource.fromHoconString(str))
 ```

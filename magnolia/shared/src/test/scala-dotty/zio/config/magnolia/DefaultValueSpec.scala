@@ -1,7 +1,7 @@
 package zio.config.magnolia
 
 import zio.config.BaseSpec
-import zio.random.Random
+import zio.Random
 import zio.test.Assertion.equalTo
 import zio.test._
 import DefaultValueSpecUtils._

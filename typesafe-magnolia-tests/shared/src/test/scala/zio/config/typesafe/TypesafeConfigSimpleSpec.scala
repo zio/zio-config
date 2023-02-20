@@ -1,12 +1,13 @@
 package zio.config.typesafe
 
+import zio.Config
 import zio.config._
-import zio.config.typesafe.TypesafeConfigSource.fromHoconString
+import zio.config.magnolia.deriveConfig
+import zio.config.typesafe.TypesafeConfigProvider.fromHoconString
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
-import magnolia._
-import ConfigDescriptor._
+import Config._
 
 object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
   final case class Details(name: String, age: Int)
@@ -48,18 +49,18 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
       |  url: postgres
       |}""".stripMargin
 
-  val spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig")(
+  val spec: Spec[Any, Config.Error] = suite("TypesafeConfig")(
     test("A nested example with typesafe HOCON config") {
 
       val details       = (string("name") zip int("age")).to[Details]
       val accountConfig =
-        (int("accountId").orElseEither(string("accountId")).optional zip list("regions")(string) zip nested("details")(
-          details
+        (int("accountId").orElseEither(string("accountId")).optional zip listOf("regions", string) zip (
+          details.nested("details")
         ).optional).to[Account]
 
       val databaseConfig   = (int("port").optional zip string("url")).to[Database]
       val awsDetailsConfig =
-        (nested("accounts")(list(accountConfig)) zip nested("database")(databaseConfig) zip list("users")(int))
+        ((listOf("accounts", accountConfig)) zip (databaseConfig.nested("database")) zip listOf("users", int))
           .to[AwsDetails]
 
       val listResult =
@@ -68,9 +69,9 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
       val expectedResult =
         AwsDetails(
           List(
-            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
+            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None),
             Account(Some(Left(123)), List("us-west", "ab", "cd"), Some(Details("zak", 11))),
-            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10)))
           ),
           Database(Some(100), "postgres"),
           List(1, 2, 3)
@@ -79,7 +80,7 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
       assertZIO(listResult)(equalTo(expectedResult))
     },
     test("A nested example with typesafe HOCON config and Magnlia") {
-      val automaticAwsDetailsConfig = descriptor[AwsDetails]
+      val automaticAwsDetailsConfig = deriveConfig[AwsDetails]
 
       val automaticResult =
         read(automaticAwsDetailsConfig from fromHoconString(validHocon))
@@ -87,9 +88,9 @@ object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
       val expectedResult =
         AwsDetails(
           List(
-            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10))),
+            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None),
             Account(Some(Left(123)), List("us-west", "ab", "cd"), Some(Details("zak", 11))),
-            Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+            Account(Some(Right("jon")), List("us-east", "dd", "ee"), Some(Details("jaku", 10)))
           ),
           Database(Some(100), "postgres"),
           List(1, 2, 3)

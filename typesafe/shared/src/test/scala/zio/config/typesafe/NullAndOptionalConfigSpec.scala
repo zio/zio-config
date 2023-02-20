@@ -1,11 +1,10 @@
 package zio.config.typesafe
 
-import zio.config.typesafe.EmployeeDetails._
-import zio.config.{ConfigDescriptor, read, _}
+import zio.Config._
+import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
-
-import ConfigDescriptor._
+import zio.{Config, ConfigProvider}
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
@@ -17,7 +16,7 @@ final case class Employee(
 
 object EmployeeDetails {
 
-  val employee: ConfigDescriptor[Employee] =
+  val employee: Config[Employee] =
     (string("name") zip
       int("state").orElseEither(string("state")).optional zip
       double("confidence")
@@ -28,17 +27,16 @@ object EmployeeDetails {
             .orElse(string("confs"))
         )).to[Employee]
 
-  val employeeDetails: zio.config.ConfigDescriptor[EmployeeDetails] =
-    nested("details") {
-      (nested("employees")(list(employee)) zip int("accountId")).to[EmployeeDetails]
-    }
+  val employeeDetails: zio.Config[EmployeeDetails] =
+    ((listOf(employee).nested("employees")).zip(int("accountId"))).to[EmployeeDetails].nested("details")
+
 }
 
 object NullAndOptionalConfig extends ZIOSpecDefault {
-  def spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig Null and Optional")(
+  def spec: Spec[Any, Config.Error] = suite("TypesafeConfig Null and Optional")(
     test("A config case which keys maybe null or optional") {
       val hoconSource =
-        ConfigSource.fromHoconString(
+        ConfigProvider.fromHoconString(
           """details {
             |  employees = [{
             |    name: jon
@@ -64,15 +62,15 @@ object NullAndOptionalConfig extends ZIOSpecDefault {
             |}""".stripMargin
         )
 
-      val result = read(employeeDetails from hoconSource)
+      val result = read(EmployeeDetails.employeeDetails from hoconSource)
 
       val expectedResult =
         EmployeeDetails(
           List(
-            Employee("jon", Some(Right("CA")), Left(Left(1.278))),
             Employee("chris", Some(Left(151)), Right("High")),
-            Employee("martha", None, Right("Medium")),
-            Employee("susan", None, Right("f"))
+            Employee("susan", None, Right("f")),
+            Employee("jon", Some(Right("CA")), Left(Left(1.278))),
+            Employee("martha", None, Right("Medium"))
           ),
           1000
         )

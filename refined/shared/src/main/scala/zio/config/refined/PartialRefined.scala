@@ -1,13 +1,12 @@
 package zio.config.refined
 
 import eu.timepit.refined.api.{RefType, Refined, Validate}
-import zio.config._
+import zio.Config
 
 private[refined] class PartialRefined[P] {
-  def apply[A](desc: ConfigDescriptor[A])(implicit validate: Validate[A, P]): ConfigDescriptor[Refined[A, P]] =
+  def apply[A](desc: Config[A])(implicit validate: Validate[A, P]): Config[Refined[A, P]] =
     desc
-      .transformOrFail[Refined[A, P]](
-        RefType.applyRef[Refined[A, P]](_),
-        rf => Right(rf.value)
+      .mapOrFail[Refined[A, P]](v =>
+        RefType.applyRef[Refined[A, P]](v).swap.map(str => Config.Error.InvalidData(message = str)).swap
       )
 }

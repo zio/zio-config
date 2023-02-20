@@ -1,5 +1,6 @@
 package zio.config.examples.typesafe
 
+import zio.ConfigProvider
 import zio.config._
 
 import typesafe._
@@ -30,7 +31,7 @@ object SubConfigExample extends App {
 
   assert(
     read(
-      descriptor[ShortConfig] from ConfigSource.fromHoconString(hoconStr).at(path"a.b.c[0]")
+      deriveConfig[ShortConfig] from ConfigProvider.fromHoconString(hoconStr).nested("a.b.c[0]")
     ) equalM (ShortConfig(1, 2))
   )
 }

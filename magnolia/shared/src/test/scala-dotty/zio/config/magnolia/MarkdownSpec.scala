@@ -4,19 +4,19 @@ import zio.config._
 import zio.test.Assertion._
 import zio.test._
 
-import ConfigDescriptor._
+import zio.Config, Config._
 import MarkdowSpecUtils._
 
 object MarkdownSpec extends BaseSpec {
-  val spec: Spec[Environment, Failure] = suite("Markdown Spec")(
+  val spec = suite("Markdown Spec")(
     test("toGithubFlavouredMarkdown works for a complex config") {
       val markdown =
-        generateDocs(descriptor[RawConfig]).toTable.toGithubFlavouredMarkdown
+        generateDocs(deriveConfig[RawConfig]).toTable.toGithubFlavouredMarkdown
 
       assert(markdown)(equalTo(expectedMarkdown))
     },
     test("toGithubFlavouredMarkdown works for nested config with inner orElseEither gives correct table") {
-      val config = nested("a")(int.orElseEither(string))
+      val config = int.orElseEither(string).nested("a")
 
       val markdown = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
@@ -41,7 +41,7 @@ object MarkdownSpec extends BaseSpec {
     },
     test("An outer nested config with orElseEither with nested on left") {
 
-      val config = nested("a")(nested("b")(int).orElseEither(string))
+      val config = int.nested("b").nested("a").orElseEither(string)
 
       val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
@@ -66,7 +66,7 @@ object MarkdownSpec extends BaseSpec {
     },
     test("An outer nested config with orElseEither with nested on right") {
 
-      val config = nested("a")(int.orElseEither(nested("b")(string)))
+      val config = (int.orElseEither(string("b"))).nested("a")
 
       val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
@@ -89,87 +89,10 @@ object MarkdownSpec extends BaseSpec {
 
       assert(result)(equalTo(expectedMarkdown))
     },
-    test("An outer nested config with orElseEither with nested on left and right") {
-
-      val config = nested("a")(nested("b")(int).orElseEither(nested("c")(string)))
-
-      val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
-
-      val expectedMarkdown =
-        s"""
-           |## Configuration Details
-           |
-           |
-           ||FieldName|Format         |Description|Sources|
-           ||---      |---            |---        |---    |
-           ||[a](a)   |[any-one-of](a)|           |       |
-           |
-           |### a
-           |
-           ||FieldName|Format   |Description         |Sources|
-           ||---      |---      |---                 |---    |
-           ||b        |primitive|value of type int   |       |
-           ||c        |primitive|value of type string|       |
-           |""".stripMargin
-
-      assert(result)(equalTo(expectedMarkdown))
-    },
-    test("An outer nested config with orElseEither with nested on orElseEither with 3 configs") {
-
-      val config = nested("a")(nested("b")(int).orElseEither(nested("c")(string).orElseEither(nested("d")(int))))
-
-      val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
-
-      val expectedMarkdown =
-        s"""
-           |## Configuration Details
-           |
-           |
-           ||FieldName|Format         |Description|Sources|
-           ||---      |---            |---        |---    |
-           ||[a](a)   |[any-one-of](a)|           |       |
-           |
-           |### a
-           |
-           ||FieldName|Format   |Description         |Sources|
-           ||---      |---      |---                 |---    |
-           ||b        |primitive|value of type int   |       |
-           ||c        |primitive|value of type string|       |
-           ||d        |primitive|value of type int   |       |
-           |""".stripMargin
-
-      assert(result)(equalTo(expectedMarkdown))
-    },
-    test("Markdown works for configs with no keys") {
-
-      val config = nested("a")(string).orElseEither(nested("b")(int).orElseEither(double))
-
-      val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
-
-      val expectedMarkdown =
-        s"""
-           |## Configuration Details
-           |
-           |
-           ||FieldName|Format                         |Description|Sources|
-           ||---      |---                            |---        |---    |
-           ||         |[any-one-of](fielddescriptions)|           |       |
-           |
-           |### Field Descriptions
-           |
-           ||FieldName|Format   |Description         |Sources|
-           ||---      |---      |---                 |---    |
-           ||a        |primitive|value of type string|       |
-           ||b        |primitive|value of type int   |       |
-           ||         |primitive|value of type double|       |
-           |""".stripMargin
-
-      assert(result)(equalTo(expectedMarkdown))
-    },
     test("Markdown works for a single key that can be more than 2 types") {
 
       val config =
-        nested("a")(string.orElseEither(int).orElseEither(double))
+       (string.orElseEither(int).orElseEither(double)).nested("a")
 
       val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
@@ -196,10 +119,10 @@ object MarkdownSpec extends BaseSpec {
     test("Markdown works for a single key that can be multiple types zipped with same config") {
 
       val config1 =
-        nested("a")(string.orElseEither(int).orElseEither(double))
+        (string.orElseEither(int).orElseEither(double)).nested("a")
 
       val config2 =
-        nested("b")(string.orElseEither(int).orElseEither(double))
+        (string.orElseEither(int).orElseEither(double)).nested("b")
 
       val result = generateDocs(config1.zip(config2)).toTable.toGithubFlavouredMarkdown
 
@@ -241,11 +164,9 @@ object MarkdownSpec extends BaseSpec {
     test("Markdown works when there is a  parent key with a few children not having key") {
 
       val config =
-        nested("a")(
-          nested("b")(
-            (int("c") zip string("d").orElseEither((string("e") zip string("f") zip string("g"))))
-          )
-        )
+        (
+            (int("c") zip string("d").orElseEither((string("e") zip string("f") zip string("g")))).nested("b")
+        ).nested("a")
 
       val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 

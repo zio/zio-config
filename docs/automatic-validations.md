@@ -25,11 +25,11 @@ A few examples are given below.
 
  case class Jdbc(username: NonEmptyString, password: NonEmptyString)
 
- val jdbc: ConfigDescriptor[Jdbc] =
+ val jdbc: Config[Jdbc] =
    (refineType[NonEmptyString]("username") zip
      refineType[NonEmptyString]("password")).to[Jdbc]
 
- read(jdbc from ConfigSource.fromMap(Map("username" -> "", "password" -> "")))
+ ConfigProvider.fromMap(Map("username" -> "", "password" -> "")).load(jdbc)
 ```
 
 ## Direct Interaction with Refined Predicates
@@ -42,20 +42,20 @@ If you need to directly interact with `Predicate`s (ex: `NonEmpty`), then
  
  type NonEmptyString = String Refined NonEmpty
  
- val refinedConfig: ConfigDescriptor[NonEmptyString] = 
+ val refinedConfig: Config[NonEmptyString] = 
    refineType[NonEmptyString]("USERNAME")
   
  // Another way of doing it is
- val urlConfig: ConfigDescriptor[Refined[String, Url]] =
+ val urlConfig: Config[Refined[String, Url]] =
    refine[String, Url]("URL")
    
  // refineType takes a fully formed type (String Refined NonEmpty) where as refine allows you to play with the predicate directly (NonEmpty)  
 ```
 
-## Derive from existing ConfigDescriptor
+## Derive from existing Config
 
 Of various methods available in `zio.config.refined` package, 
-the most interesting one is being able to get a refined type out of an already derived ConfigDescriptor.
+the most interesting one is being able to get a refined type out of an already derived Config.
 This shows the composable nature of zio-config. 
 
 Take a look at the below example
@@ -64,15 +64,15 @@ Take a look at the below example
  import zio.config.magnolia.descriptor
 
  import eu.timepit.refined._, api._, numeric._, collection._
- import ConfigDescriptor.list
+ import Config.list
 
  case class MyConfig(url: String, port: Int)
 
- val configs: ConfigDescriptor[List[MyConfig]] =
-   list("databases")(descriptor[MyConfig])
+ val configs: Config[List[MyConfig]] =
+   listOf("databases")(descriptor[MyConfig])
 
  // A list of database configs, such that size should be greater than 2.
- val databaseList: ConfigDescriptor[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
+ val databaseList: Config[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
    refine[Size[Greater[W.`2`.T]]](configs)
 ```
 
@@ -91,20 +91,20 @@ object RefinedReadConfig extends App {
     ldap: Refined[String, NonEmpty],
     port: Refined[Int, GreaterEqual[W.`1024`.T]],
     dbUrl: Option[Refined[String, NonEmpty]],
-    longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
+    long: Refined[Long, GreaterEqual[W.`1024`.T]]
   )
 
-  val configMultiMap =
+  val configMap =
     Map(
-      "LDAP"     -> ::("ldap", Nil),
-      "PORT"     -> ::("1999", Nil),
-      "DBURL"   -> ::("ddd", Nil),
-      "LONGS" -> ::("1234", List("2345", "3456"))
+      "LDAP"     -> "ldap",
+      "PORT"     -> "1999",
+      "DBURL"   -> "ddd",
+      "LONG" -> "1234"
     )
 
   val result =
-    read(descriptor[RefinedProd].mapKey(_.toUpperCase) from ConfigSource.fromMultiMap(configMultiMap))
+    ConfigProvider.from(configMap).load(deriveConfig[RefinedProd].mapKey(_.toUpperCase)))
 
-  // Right(RefinedProd(ldap,1999,Some(ddd),List(1234, 2345, 3456)))
+  // RefinedProd(ldap,1999,Some(ddd),1234)
 }
 ```

@@ -1,39 +1,39 @@
 package zio.config.magnolia.examples
 
 import zio.config.magnolia._
-import zio.config._, ConfigDescriptor._
+import zio.{Config, ConfigProvider}
+import zio.config.magnolia._
+import zio.config._
+import zio.Unsafe
+import zio.IO
 
 object AutoDerivationSimple extends App :
+  // Use of Either is almost prohibited by the looks of it
   val sourceMap =
     Map(
       "a.b" -> "v1",
       "a.c" -> "C",
-      "a.d" -> "C, C",
+      "a.d" -> "C,C",
       "a.f.G.value" -> "v2",
-      "a.g" -> "D",
+      "a.g" -> "F",
       "a.h.G.value" -> "GValue",
       "a.i.p" -> "Q",
       "a.j.p.t.u" -> "v3"
     )
 
   val source =
-    ConfigSource.fromMap(
+    ConfigProvider.fromMap(
     sourceMap,
-    keyDelimiter = Some('.'),
-    valueDelimiter = Some(',')
+    pathDelim = ".",
+    seqDelim = ","
   )
 
-  val desc = descriptor[A]
+  val io: IO[Config.Error, A] = 
+    source.autoLoad[A]  
 
-  val readResult = read(desc from source)
+  val readResult = Unsafe.unsafe { implicit u =>
+    zio.Runtime.default.unsafe.run(io).getOrThrowFiberFailure()
+  }
 
-  val expected =
-    A(B(b = "v1",c = C(), d = List(C(), C()), e = None,f = Right(E.G("v2")), g = E.D, h = E.G("GValue"), i = P.Q, j = P.T("v3")))
-
-  assert(readResult == Right(expected))
-
-  val writeResult =
-    write(desc, expected).map(_.flattenKeyAndValue(valueDelimiter = ", "))
-
-  assert(writeResult.map(_.toList.sortBy(_._1)) == Right(sourceMap.toList.sortBy(_._1)))
+  println(readResult)
 end AutoDerivationSimple

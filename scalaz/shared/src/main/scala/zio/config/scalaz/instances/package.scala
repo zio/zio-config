@@ -1,12 +1,17 @@
 package zio.config.scalaz
 
+import _root_.scalaz.Applicative
 import scalaz.InvariantFunctor
+import zio.Config
 import zio.config._
 
 package object instances {
-  implicit val invariantConfigDescriptor: InvariantFunctor[ConfigDescriptor] =
-    new InvariantFunctor[ConfigDescriptor] {
-      def xmap[A, B](ma: ConfigDescriptor[A], f: A => B, g: B => A): ConfigDescriptor[B] =
-        ma.transform(f, g)
+  implicit val invariantConfig: Applicative[Config] =
+    new Applicative[Config] {
+      override def point[A](a: => A): Config[A] =
+        Config.succeed(a)
+
+      override def ap[A, B](fa: => Config[A])(f: => Config[A => B]): Config[B] =
+        fa.zip(f).map({ case (a, f) => f(a) })
     }
 }

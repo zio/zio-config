@@ -3,8 +3,8 @@ package zio.config.derivation
 import scala.annotation.implicitNotFound
 
 @implicitNotFound(
-  "Can't derive ConfigDescriptor for `List[T]`, `Option[T]` or `Either[A, B]` directly." +
-    " Wrap it with a `case class Config(list: List[T])` or use `list(descriptor[T])` manually."
+  "Can't derive Config for `List[T]`, `Option[T]` or `Either[A, B]` directly." +
+    " Wrap it with a `case class Config(list: List[T])` or use `listOf(descriptor[T])` manually."
 )
 sealed trait NeedsDerive[+T]
 

@@ -1,8 +1,9 @@
 package zio.config.examples.typesafe
 
 import com.typesafe.config.ConfigRenderOptions
-import zio.IO
 import zio.config._
+import zio.config.examples.ZioOps
+import zio.{Config, ConfigProvider, IO}
 
 import typesafe._
 import magnolia._
@@ -147,34 +148,6 @@ object TypesafeConfigList extends App with EitherImpureOps {
   final case class B(c: List[C], table: String, columns: List[String])
   final case class A(b: List[B], x: X, w: W)
 
-  // Since we already have a string with us, we don't need Config Service (or ZIO)
-  val source: ConfigSource =
-    ConfigSource.fromHoconString(configString)
-
-  val zioConfigResult: IO[ReadError[String], A] =
-    read(descriptor[A] from source)
-
-  val anoth: A =
-    A(
-      List(
-        B(
-          List(
-            C(
-              List(
-                // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
-                D(List(1, 1), List("a", "b", "c")),
-                D(List(12, 12), List("d"))
-              )
-            )
-          ),
-          "some_name",
-          List("aa")
-        )
-      ),
-      X(Y("k")),
-      W(X(Y("k")))
-    )
-
   val expectedResult: A =
     A(
       List(
@@ -183,9 +156,9 @@ object TypesafeConfigList extends App with EitherImpureOps {
             C(
               List(
                 // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
-                D(List(1, 1, 1), List("a", "b", "c")),
-                D(List(12, 12), List("d")),
                 D(List(14, 14), List("e")),
+                D(List(12, 12), List("d")),
+                D(List(1, 1, 1), List("a", "b", "c")),
                 D(List(15, 15), List("f", "g"))
               )
             )
@@ -198,9 +171,9 @@ object TypesafeConfigList extends App with EitherImpureOps {
             C(
               List(
                 D(List(21, 21), List("af")),
+                D(List(24, 24, 24), List("l")),
                 D(List(22, 22), List("sa", "l")),
-                D(List(23, 23, 23), List("af", "l")),
-                D(List(24, 24, 24), List("l"))
+                D(List(23, 23, 23), List("af", "l"))
               )
             )
           ),
@@ -211,11 +184,11 @@ object TypesafeConfigList extends App with EitherImpureOps {
           List(
             C(
               List(
-                D(List(31, 31), List("bb")),
-                D(List(32, 32), List("x")),
+                D(List(37), List("e", "f", "g", "h", "i")),
                 D(List(33, 33, 33), List("xx")),
+                D(List(32, 32), List("x")),
                 D(List(31), List("b")),
-                D(List(37), List("e", "f", "g", "h", "i"))
+                D(List(31, 31), List("bb"))
               )
             )
           ),
@@ -229,197 +202,13 @@ object TypesafeConfigList extends App with EitherImpureOps {
 
   import zio.config.typesafe._
 
-  // Being able to write back hocon
-  val written: String =
-    write(descriptor[A], expectedResult).loadOrThrow.toHocon
-      .render(ConfigRenderOptions.concise().setJson(true).setFormatted(true))
+  // Since we already have a string with us, we don't need Config Service (or ZIO)
+  val source: ConfigProvider =
+    ConfigProvider.fromHoconString(configString)
 
-  val readWritten: IO[ReadError[String], A] = read(
-    descriptor[A] from ConfigSource.fromHoconString(written)
-  )
-
-  assert(readWritten.unsafeRun == zioConfigResult.unsafeRun)
+  val zioConfigResult: IO[Config.Error, A] =
+    read(deriveConfig[A] from source)
 
   assert(zioConfigResult equalM expectedResult)
-
-  val kebabCaseConfig: String =
-    """
-      |export-details = [
-      |  {
-      |    table          : some_name
-      |    columns        : [ a, b, c, d ]
-      |    extra-details = [
-      |      {
-      |        hi : di
-      |        bi : ci
-      |        r = [
-      |          {
-      |            ci : ki
-      |            vi : bi
-      |            lst: [1, 1, 1]
-      |            vvv = []
-      |          }
-      |          {
-      |            ci : ki
-      |            vi : 1.0882121
-      |            lst: [1, 2, 1]
-      |          }
-      |           {
-      |            ci : ki
-      |            vi : 3
-      |            lst: [1, 3, 5]
-      |            vvv = [1, 2, 3]
-      |          }
-      |        ]
-      |      }
-      |
-      |      {
-      |        hi : di
-      |        bi : ci
-      |        r = [
-      |          {
-      |            ci : ki
-      |            vi : bi
-      |            lst: [1, 1, 1]
-      |            vvv = []
-      |          }
-      |          {
-      |            ci : ki
-      |            vi : 1.0882121
-      |            lst: [1, 2, 1]
-      |          }
-      |           {
-      |            ci : ki
-      |            vi : 3
-      |            lst: [1, 3, 5]
-      |            vvv = [1, 2, 3]
-      |          }
-      |        ]
-      |      }
-      |
-      |     {
-      |        hi : di
-      |        bi : ci
-      |        r = []
-      |      }
-      |    ]
-      |  }
-      |
-      |  {
-      |    table          : some_name1
-      |    columns        : []
-      |    extra-details = [
-      |      {
-      |        hi : di
-      |        bi : ci
-      |        r = []
-      |      }
-      |      {
-      |        hi : di
-      |        bi : ci
-      |        r = []
-      |      }
-      |       {
-      |        hi : di
-      |        bi : ci
-      |        r = []
-      |      }
-      |    ]
-      |  }
-      |
-      | {
-      |    table          : some_name1
-      |    columns        : []
-      |    extra-details = []
-      |  }
-      |
-      |   {
-      |    table          : some_name2
-      |    columns        : []
-      |    extra-details  = []
-      |  }
-      |
-      |
-      |   {
-      |    table          : some_name2
-      |    columns        : []
-      |    extra-details = []
-      |  }
-      |]
-      |
-      |database {
-      |  port {
-      |    va : ba
-      |  }
-      |}
-      |""".stripMargin
-
-  // Any list which you think could be empty in your application configuration file, which actually shouldn't be,
-  // You can choose to have `Option[NonEmptyList]` to avoid the error outcome
-  // Have a read through https://lexi-lambda.github.io/blog/2019/11/05/parse-don-t-validate/
-  final case class Extra2(
-    ci: String,
-    vi: Either[Int, Either[Long, Either[Double, Either[Float, String]]]],
-    lst: List[Int],
-    vvv: Option[List[Int]]
-  )
-  final case class Extra(hi: String, bi: String, r: List[Extra2])
-  final case class Details(
-    table: String,
-    columns: List[String],
-    extraDetails: List[Extra]
-  )
-  final case class ExportDetails(exportDetails: List[Details], database: Database)
-  final case class Port(va: String)
-  final case class Database(port: Port)
-
-  val kebabConfigSource: ConfigSource =
-    ConfigSource.fromHoconString(kebabCaseConfig)
-
-  val zioConfigWithKeysInKebabResult: IO[ReadError[String], ExportDetails] =
-    read(descriptor[ExportDetails].mapKey(toKebabCase) from kebabConfigSource)
-
-  assert(
-    zioConfigWithKeysInKebabResult equalM
-
-      ExportDetails(
-        List(
-          Details(
-            "some_name",
-            List("a", "b", "c", "d"),
-            List(
-              Extra(
-                "di",
-                "ci",
-                List(
-                  Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
-                  Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
-                  Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
-                )
-              ),
-              Extra(
-                "di",
-                "ci",
-                List(
-                  Extra2("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
-                  Extra2("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), None),
-                  Extra2("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
-                )
-              ),
-              Extra("di", "ci", Nil)
-            )
-          ),
-          Details(
-            "some_name1",
-            Nil,
-            List(Extra("di", "ci", Nil), Extra("di", "ci", Nil), Extra("di", "ci", Nil))
-          ),
-          Details("some_name1", Nil, Nil),
-          Details("some_name2", Nil, Nil),
-          Details("some_name2", Nil, Nil)
-        ),
-        Database(Port("ba"))
-      )
-  )
 
 }

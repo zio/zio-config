@@ -2,42 +2,32 @@ package zio.config
 
 import zio._
 
-import java.io.{File, Reader}
+import java.io.{BufferedReader, ByteArrayInputStream, File, InputStreamReader, Reader}
+import java.nio.charset.Charset
 import java.nio.file.Path
 
 package object yaml {
-  implicit class FromConfigYaml(c: ZConfig.type) {
-    def fromPath[A: Tag](path: Path, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
-      YamlConfig.fromFile(path.toFile, descriptor)
+  implicit class FromConfigSourceYaml(c: ConfigProvider.type) {
+    def fromYamlFile(file: File): ConfigProvider =
+      YamlConfigProvider.fromYamlFile(file)
 
-    def fromFile[A: Tag](file: File, descriptor: ConfigDescriptor[A]): Layer[ReadError[String], A] =
-      YamlConfig.fromFile(file, descriptor)
-  }
-
-  implicit class FromConfigSourceYaml(c: ConfigSource.type) {
-    def fromYamlFile(file: File): ConfigSource =
-      YamlConfigSource.fromYamlFile(file)
-
-    def fromYamlPath(path: Path): ConfigSource =
-      YamlConfigSource.fromYamlPath(path)
+    def fromYamlPath(path: Path): ConfigProvider =
+      YamlConfigProvider.fromYamlPath(path)
 
     def fromYamlReader(
-      reader: Reader,
-      sourceName: String = "yaml"
-    ): ConfigSource =
-      YamlConfigSource.fromYamlReader(reader, sourceName)
+      reader: Reader
+    ): ConfigProvider =
+      YamlConfigProvider.fromYamlReader(reader)
 
     def fromYamlString(
-      yamlString: String,
-      sourceName: String = "yaml"
-    ): ConfigSource =
-      YamlConfigSource.fromYamlString(yamlString, sourceName)
+      yamlString: String
+    ): ConfigProvider =
+      YamlConfigProvider.fromYamlString(yamlString)
 
     def fromYamlRepr[A](repr: A)(
-      loadYaml: A => ZIO[Any, ReadError[String], AnyRef],
-      sourceName: String = "yaml"
-    ): ConfigSource =
-      YamlConfigSource.fromYamlRepr(repr)(loadYaml, sourceName)
+      loadYaml: A => AnyRef
+    ): ConfigProvider =
+      YamlConfigProvider.getIndexedConfigProvider(loadYaml(repr))
   }
 
 }

@@ -1,18 +1,19 @@
 package zio.config.typesafe
 
+import zio.Config
 import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
 import magnolia._
-import ConfigDescriptor._
+import Config._
 
 final case class Account(region: String, accountId: String)
 final case class Database(port: Int, url: String)
 final case class AwsConfig(account: Account, database: Option[Either[Database, String]])
 
 object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
-  val configNestedAutomatic: ConfigDescriptor[AwsConfig] = descriptor[AwsConfig]
+  val configNestedAutomatic: Config[AwsConfig] = deriveConfig[AwsConfig]
 
   val hocconStringWithStringDb: String =
     s"""
@@ -58,21 +59,21 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
     }
     """
 
-  def spec: Spec[Any, ReadError[String]] = suite("TypesafeConfig Error")(
+  def spec: Spec[Any, Config.Error] = suite("TypesafeConfig Error")(
     test("A variant error case with typesafe HOCON config and a magnolia description") {
       val nestedConfigAutomaticResult1 =
-        read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))
+        read(configNestedAutomatic from TypesafeConfigProvider.fromHoconString(hocconStringWithStringDb))
 
       val nestedConfigAutomaticExpect1 = AwsConfig(Account("us-east", "jon"), Some(Right("hi")))
 
       val nestedConfigAutomaticResult2 =
-        read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithDb))
+        read(configNestedAutomatic from TypesafeConfigProvider.fromHoconString(hocconStringWithDb))
 
       val nestedConfigAutomaticExpect2 =
         AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres"))))
 
       val nestedConfigAutomaticResult3 =
-        read(configNestedAutomatic from TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
+        read(configNestedAutomatic from TypesafeConfigProvider.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
       val nestedConfigAutomaticExpect3 = AwsConfig(Account("us-east", "jon"), None)
 
@@ -101,23 +102,23 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
         val databaseConfig =
           (int("port") zip string("url")).to[Database]
 
-        (nested("account")(accountConfig) zip
-          (nested("database")(databaseConfig).orElseEither(string("database"))).optional).to[AwsConfig]
+        ((accountConfig.nested("account")) zip
+          ((databaseConfig.nested("database")).orElseEither(string("database"))).optional).to[AwsConfig]
       }
       val nestedConfigManualResult1 =
-        read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithDb))
+        read(configNestedManual from TypesafeConfigProvider.fromHoconString(hocconStringWithDb))
 
       val nestedConfigManualExpect1 =
         AwsConfig(Account("us-east", "jon"), Some(Left(Database(1200, "postgres"))))
 
       val nestedConfigManualResult2 =
-        read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithStringDb))
+        read(configNestedManual from TypesafeConfigProvider.fromHoconString(hocconStringWithStringDb))
 
       val nestedConfigManualExpect2 =
         AwsConfig(Account("us-east", "jon"), Some(Right("hi")))
 
       val nestedConfigManualResult3 =
-        read(configNestedManual from TypesafeConfigSource.fromHoconString(hocconStringWithNoDatabaseAtAll))
+        read(configNestedManual from TypesafeConfigProvider.fromHoconString(hocconStringWithNoDatabaseAtAll))
 
       val nestedConfigManualExpect3 = AwsConfig(Account("us-east", "jon"), None)
 
@@ -140,10 +141,10 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
       final case class Details(clustersize: Int, name: String)
       final case class DatabaseDetails(datacenterwest: Details, datacentereast: Details)
 
-      val configWithHoconSubstitution = descriptor[DatabaseDetails]
+      val configWithHoconSubstitution = deriveConfig[DatabaseDetails]
 
       val substitutionResult =
-        read(configWithHoconSubstitution from TypesafeConfigSource.fromHoconString(hoconStringWithSubstitution))
+        read(configWithHoconSubstitution from TypesafeConfigProvider.fromHoconString(hoconStringWithSubstitution))
 
       val expect = DatabaseDetails(Details(8, "west"), Details(6, "east"))
 

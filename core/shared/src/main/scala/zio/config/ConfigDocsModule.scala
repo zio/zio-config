@@ -1,12 +1,10 @@
 package zio.config
 
-trait ConfigDocsModule extends WriteModule {
-  import ConfigDescriptorAdt._
+trait ConfigDocsModule {
   import Table._
-  import ConfigSource._
 
   /**
-   * `ConfigDocs` holds the descriptions and details of a `ConfigDescriptor`
+   * `ConfigDocs` holds the descriptions and details of a `Config`
    * which can be used to produce documentation.
    */
   sealed trait ConfigDocs { self =>
@@ -106,7 +104,8 @@ trait ConfigDocsModule extends WriteModule {
           }
 
         docs match {
-          case ConfigDocs.Leaf(sources, descriptions, _) =>
+
+          case ConfigDocs.Leaf(descriptions, _) =>
             val desc = filterDescriptions(descriptionsUsedAlready, descriptions)
 
             TableRow(
@@ -114,15 +113,7 @@ trait ConfigDocsModule extends WriteModule {
               Some(Table.Format.Primitive),
               desc,
               None,
-              sources.map(_.name)
-            ).asTable
-          case ConfigDocs.Recursion(sources)             =>
-            TableRow(
-              previousPaths,
-              Some(Table.Format.Recursion),
-              List.empty,
-              None,
-              sources.map(_.name)
+              Set.empty
             ).asTable
 
           case c @ ConfigDocs.Nested(path, docs, descriptions) =>
@@ -196,7 +187,7 @@ trait ConfigDocsModule extends WriteModule {
   }
 
   private[config] object ConfigDocs {
-    sealed case class Description(path: Option[K], description: String)
+    sealed case class Description(path: Option[String], description: String)
 
     def findByPath(description: List[Description], path: FieldName): List[Description] =
       description
@@ -208,15 +199,15 @@ trait ConfigDocsModule extends WriteModule {
           }
         )
 
-    sealed case class Leaf(sources: Set[ConfigSourceName], descriptions: List[Description], value: Option[V] = None)
-        extends ConfigDocs
-    sealed case class Recursion(sources: Set[ConfigSourceName])                                  extends ConfigDocs
-    sealed case class Nested(path: K, docs: ConfigDocs, descriptions: List[Description])         extends ConfigDocs
+    sealed case class Leaf(descriptions: List[Description], value: Option[String] = None)        extends ConfigDocs
+    sealed case class Nested(path: String, docs: ConfigDocs, descriptions: List[Description])    extends ConfigDocs
     sealed case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
     sealed case class OrElse(leftDocs: ConfigDocs, rightDocs: ConfigDocs)                        extends ConfigDocs
     sealed case class Sequence(schemaDocs: ConfigDocs, valueDocs: List[ConfigDocs] = List.empty) extends ConfigDocs
-    sealed case class DynamicMap(schemaDocs: ConfigDocs, valueDocs: Map[K, ConfigDocs] = Map.empty[K, ConfigDocs])
-        extends ConfigDocs
+    sealed case class DynamicMap(
+      schemaDocs: ConfigDocs,
+      valueDocs: Map[String, ConfigDocs] = Map.empty[String, ConfigDocs]
+    )                                                                                            extends ConfigDocs
 
   }
 
@@ -241,19 +232,19 @@ trait ConfigDocsModule extends WriteModule {
      */
     def toConfluenceMarkdown(
       baseUrl: Option[String]
-    )(implicit S: K <:< String): String =
+    ): String =
       toMarkdown(Table.confluenceFlavoured(baseUrl))
 
     /**
      * Create a Github flavored markdown string from Table.
      * This can be used to render markdowns in Github, Gitlab etc
      */
-    def toGithubFlavouredMarkdown(implicit S: K <:< String): String =
+    def toGithubFlavouredMarkdown: String =
       toMarkdown(Table.githubFlavoured)
 
     def toMarkdown(
       getLink: (Heading, Int, Either[FieldName, Format]) => Link
-    )(implicit S: K <:< String): String = {
+    ): String = {
       val headingColumns =
         List("FieldName", "Format", "Description", "Sources")
 
@@ -438,9 +429,7 @@ trait ConfigDocsModule extends WriteModule {
      * given a path `x.y` and `k.y`, the heading `y` can appear twice in the markdown file with indices as 0 and 1. Depending on the flavour of markdown (Example: Github, Confluence)
      * we have different ways to produce links towards those headings. In this case, we employ the strategy used by Github.
      */
-    def githubFlavoured(implicit
-      S: K <:< String
-    ): (Heading, Int, Either[FieldName, Format]) => Link =
+    def githubFlavoured: (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, index, fieldNameOrFormat) => {
         val headingStr =
           heading.path
@@ -460,9 +449,7 @@ trait ConfigDocsModule extends WriteModule {
       }
 
     // Confluence markdown
-    def confluenceFlavoured(baseLink: Option[String])(implicit
-      S: K <:< String
-    ): (Heading, Int, Either[FieldName, Format]) => Link =
+    def confluenceFlavoured(baseLink: Option[String]): (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, _, fieldName) => {
         val headingStr =
           heading.path
@@ -546,24 +533,24 @@ trait ConfigDocsModule extends WriteModule {
     }
 
     sealed trait FieldName {
-      def asString(forBlank: Option[String])(implicit S: K <:< String): String =
+      def asString(forBlank: Option[String]): String =
         this match {
-          case FieldName.Key(k) => S.apply(k)
+          case FieldName.Key(k) => k
           case FieldName.Blank  => forBlank.getOrElse("")
         }
     }
 
     object FieldName {
-      case class Key(k: K) extends FieldName
-      case object Blank    extends FieldName
+      case class Key(k: String) extends FieldName
+      case object Blank         extends FieldName
     }
   }
 
   import ConfigDocs.{DynamicMap => DocsMap, Leaf => DocsLeaf}
 
   /**
-   * Generate documentation based on the `ConfigDescriptor`, where a
-   * `ConfigDescriptor` is a structure representing the logic to fetch the application config
+   * Generate documentation based on the `Config`, where a
+   * `Config` is a structure representing the logic to fetch the application config
    * from various sources.
    *
    * Once we generate the docs, this can be converted to a light weight `Table` structure which is much more easier to be converted
@@ -571,60 +558,43 @@ trait ConfigDocsModule extends WriteModule {
    *
    * Example :
    * {{{
-   *   val configDescriptor: ConfigDescriptor[MyAppConfig] = ???
+   *   val configDescriptor: Config[MyAppConfig] = ???
    *
    *   generatedDocs(configDescriptor).toTable.toGithubFlavouredMarkdown
    * }}}
    */
-  final def generateDocs[A](config: ConfigDescriptor[A]): ConfigDocs = {
-    def loopTo[B](
-      sources: Set[ConfigSourceName],
-      descriptions: List[ConfigDocs.Description],
-      config: ConfigDescriptor[B],
-      latestPath: Option[K],
-      alreadySeen: Set[ConfigDescriptor[_]]
-    ): ConfigDocs =
-      if (alreadySeen.contains(config)) {
-        ConfigDocs.Recursion(sources)
-      } else {
-        loop(sources, descriptions, config, latestPath, alreadySeen + config)
-      }
-
+  import zio.Config
+  import zio.{Config, ConfigProvider}, Config._
+  final def generateDocs[A](config: zio.Config[A]): ConfigDocs = {
     def loop[B](
-      sources: Set[ConfigSourceName],
       descriptions: List[ConfigDocs.Description],
-      config: ConfigDescriptor[B],
-      latestPath: Option[K],
-      alreadySeen: Set[ConfigDescriptor[_]]
+      config: Config[B],
+      latestPath: Option[String],
+      alreadySeen: Set[Config[_]]
     ): ConfigDocs =
       config match {
-        case Lazy(thunk) =>
-          loopTo(sources, descriptions, thunk(), latestPath, alreadySeen)
+        case Config.Lazy(thunk) =>
+          loop(descriptions, thunk(), latestPath, alreadySeen + thunk())
 
-        case Source(source, _) =>
-          DocsLeaf((source.sourceNames ++ sources), descriptions, None)
+        case cp: Config.Primitive[_] =>
+          ConfigDocs.Leaf(descriptions, None)
 
-        case Default(c, _) =>
-          loopTo(sources, descriptions, c, None, alreadySeen)
-
-        case cd: DynamicMap[_] =>
+        case cd: Config.Table[_] =>
           ConfigDocs.DynamicMap(
-            loopTo(
-              sources,
+            loop(
               descriptions,
-              cd.config,
+              cd.valueConfig,
               None,
-              alreadySeen
+              alreadySeen + config
             )
           )
 
-        case Optional(c) =>
-          loopTo(sources, descriptions, c, None, alreadySeen)
+        case Config.Optional(c) =>
+          loop(descriptions, c, None, alreadySeen)
 
-        case Sequence(c) =>
+        case Config.Sequence(c) =>
           ConfigDocs.Sequence(
-            loopTo(
-              sources,
+            loop(
               descriptions,
               c,
               None,
@@ -632,23 +602,21 @@ trait ConfigDocsModule extends WriteModule {
             )
           )
 
-        case Describe(c, desc) =>
+        case Config.Described(c, desc) =>
           val descri: ConfigDocs.Description =
             ConfigDocs.Description(latestPath, desc)
 
-          loopTo(
-            sources,
+          loop(
             descri :: descriptions,
             c,
             latestPath,
             alreadySeen
           )
 
-        case Nested(path, c, _) =>
+        case Config.Nested(path, c) =>
           ConfigDocs.Nested(
             path,
-            loopTo(
-              sources,
+            loop(
               List.empty,
               c,
               Some(path),
@@ -657,91 +625,30 @@ trait ConfigDocsModule extends WriteModule {
             descriptions
           )
 
-        case TransformOrFail(c, _, _) =>
-          loopTo(sources, descriptions, c, None, alreadySeen)
+        case Config.MapOrFail(c, _) =>
+          loop(descriptions, c, None, alreadySeen)
 
-        case Zip(left, right) =>
+        case Config.Zipped(left, right, zippable) =>
           ConfigDocs.Zip(
-            loopTo(sources, descriptions, left, None, alreadySeen),
-            loopTo(sources, descriptions, right, None, alreadySeen)
+            loop(descriptions, left, None, alreadySeen),
+            loop(descriptions, right, None, alreadySeen)
           )
 
-        case OrElseEither(left, right) =>
+        case Config.Fallback(left, right) =>
           ConfigDocs.OrElse(
-            loopTo(sources, descriptions, left, None, alreadySeen),
-            loopTo(sources, descriptions, right, None, alreadySeen)
+            loop(descriptions, left, None, alreadySeen),
+            loop(descriptions, right, None, alreadySeen)
           )
 
-        case ConfigDescriptorAdt.OrElse(left, right) =>
+        case Config.FallbackWith(left, right, _) =>
           ConfigDocs.OrElse(
-            loopTo(sources, descriptions, left, None, alreadySeen),
-            loopTo(sources, descriptions, right, None, alreadySeen)
+            loop(descriptions, left, None, alreadySeen),
+            loop(descriptions, right, None, alreadySeen)
           )
+
       }
 
-    loopTo(Set.empty, Nil, config, None, Set.empty)
+    loop(Nil, config, None, Set.empty)
   }
 
-  /**
-   * Generate a report based on the `ConfigDescriptor` and an `A`, where a
-   * `ConfigDescriptor` represents the logic to fetch the application config
-   * from various sources, and `A` represents the actual config value that was retrieved.
-   */
-  def generateReport[A](config: ConfigDescriptor[A], value: A): Either[String, ConfigDocs] =
-    write[A](config, value).map { tree =>
-      def loop(tree: PropertyTree[K, V], schemaDocs: ConfigDocs, keys: List[K]): ConfigDocs =
-        schemaDocs match {
-          case DocsLeaf(sources, descriptions, None) =>
-            // Feed value when it hits leaf
-            tree.getPath(keys) match {
-              case PropertyTree.Leaf(value, _) =>
-                DocsLeaf(sources, descriptions, Some(value))
-              case _                           => DocsLeaf(sources, descriptions, None)
-            }
-
-          case a: DocsLeaf => a
-
-          case a: ConfigDocs.Recursion => a
-
-          case ConfigDocs.Nested(path, docs, descriptions) =>
-            ConfigDocs
-              .Nested(path, loop(tree, docs, keys :+ path), descriptions)
-
-          case ConfigDocs.Zip(left, right) =>
-            ConfigDocs.Zip(loop(tree, left, keys), loop(tree, right, keys))
-
-          case ConfigDocs.OrElse(left, right) =>
-            ConfigDocs.OrElse(loop(tree, left, keys), loop(tree, right, keys))
-
-          case cd: DocsMap =>
-            tree.getPath(keys) match {
-              case rec: PropertyTree.Record[K, V] =>
-                DocsMap(
-                  cd.schemaDocs,
-                  rec.value.toList.map { keyTree =>
-                    keyTree._1 -> loop(keyTree._2, cd.schemaDocs, List.empty)
-                  }.toMap
-                )
-              case v                              =>
-                DocsMap(
-                  loop(v, cd.schemaDocs, keys),
-                  Map.empty[K, ConfigDocs]
-                )
-            }
-
-          case ConfigDocs.Sequence(schema, values) =>
-            tree.getPath(keys) match {
-              case PropertyTree.Sequence(value) if value.nonEmpty =>
-                ConfigDocs.Sequence(
-                  schema,
-                  value.map(t => loop(t, schema, List.empty))
-                )
-              case _                                              =>
-                ConfigDocs
-                  .Sequence(schema, loop(tree, schema, keys) :: values)
-            }
-        }
-
-      loop(tree, generateDocs(config), List.empty)
-    }
 }

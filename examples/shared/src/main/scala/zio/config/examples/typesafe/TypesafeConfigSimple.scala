@@ -1,18 +1,18 @@
 package zio.config.examples.typesafe
 
-import zio.IO
 import zio.config._
+import zio.config.examples.ZioOps
+import zio.{Config, ConfigProvider, IO}
 
 import typesafe._
 import magnolia._
-import examples._
-import ConfigDescriptor._
+import Config._
 
 object TypesafeConfigSimple extends App with EitherImpureOps {
   // A nested example with type safe config, and usage of magnolia
   final case class Details(name: String, age: Int)
 
-  final case class Account(accountId: Option[Either[Int, String]], regions: List[String], details: Option[Details])
+  final case class Account(accountId: Option[Int], regions: List[String], details: Option[Details])
 
   final case class Database(port: Option[Int], url: String)
 
@@ -22,7 +22,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     """
     accounts = [
       {
-          accountId: jon
+          accountId: 123
           regions : [us-east, dd, ee]
           details {
             name : jaku
@@ -38,7 +38,7 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
           }
       }
       {
-         accountId: bb
+         accountId: 456
          regions : [us-some, ff, gg]
 
 
@@ -54,65 +54,64 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
 
     """
 
-  val details: ConfigDescriptor[Details] = (string("name") zip int("age")).to[Details]
+  val details: Config[Details] = (string("name") zip int("age")).to[Details]
 
-  val accountConfig: ConfigDescriptor[Account] =
-    (int("accountId").orElseEither(string("accountId")).optional zip list(
-      "regions"
-    )(string) zip nested("details")(details).optional).to[Account]
+  val accountConfig: Config[Account] =
+    (int("accountId").optional zip listOf("regions", string) zip (details.nested("details")).optional)
+      .to[Account]
 
-  val databaseConfig: ConfigDescriptor[Database] =
+  val databaseConfig: Config[Database] =
     (int("port").optional zip string("url")).to[Database]
 
-  val awsDetailsConfig: ConfigDescriptor[AwsDetails] =
-    (nested("accounts")(list(accountConfig)) zip nested("database")(
-      databaseConfig
-    ) zip list("users")(int)).to[AwsDetails]
+  val awsDetailsConfig: Config[AwsDetails] =
+    (listOf(accountConfig).nested("accounts") zip (
+      databaseConfig.nested("database")
+    ) zip listOf("users", int)).to[AwsDetails]
 
-  val listResult: IO[ReadError[String], AwsDetails] =
-    read(awsDetailsConfig from ConfigSource.fromHoconString(validHocon))
+  val listResult: IO[Config.Error, AwsDetails] =
+    read(awsDetailsConfig from ConfigProvider.fromHoconString(validHocon))
 
   assert(
     listResult equalM
       AwsDetails(
         List(
           Account(
-            Some(Right("jon")),
+            Some(123),
             List("us-east", "dd", "ee"),
             Some(Details("jaku", 10))
           ),
           Account(
-            Some(Left(123)),
+            Some(123),
             List("us-west", "ab", "cd"),
             Some(Details("zak", 11))
           ),
-          Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+          Account(Some(456), List("us-some", "ff", "gg"), None)
         ),
         Database(Some(100), "postgres"),
         List(1, 2, 3)
       )
   )
 
-  val automaticAwsDetailsConfig: ConfigDescriptor[AwsDetails] = descriptor[AwsDetails]
+  val automaticAwsDetailsConfig: Config[AwsDetails] = deriveConfig[AwsDetails]
 
-  val automaticResult: IO[ReadError[String], AwsDetails] =
-    read(automaticAwsDetailsConfig from ConfigSource.fromHoconString(validHocon))
+  val automaticResult: IO[Config.Error, AwsDetails] =
+    read(automaticAwsDetailsConfig from ConfigProvider.fromHoconString(validHocon))
 
   assert(
-    automaticResult equalM
+    listResult equalM
       AwsDetails(
         List(
           Account(
-            Some(Right("jon")),
+            Some(123),
             List("us-east", "dd", "ee"),
             Some(Details("jaku", 10))
           ),
           Account(
-            Some(Left(123)),
+            Some(123),
             List("us-west", "ab", "cd"),
             Some(Details("zak", 11))
           ),
-          Account(Some(Right("bb")), List("us-some", "ff", "gg"), None)
+          Account(Some(456), List("us-some", "ff", "gg"), None)
         ),
         Database(Some(100), "postgres"),
         List(1, 2, 3)
@@ -125,11 +124,11 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     """
     accounts = [
       {
-          accountId: jon
+          accountId: 122
       }
       {
           region : us-west
-          accountId: chris
+          accountId: 221
       }
       {
 
@@ -139,14 +138,16 @@ object TypesafeConfigSimple extends App with EitherImpureOps {
     users = [1, 2, 3]
 
     database {
-        port : 1abcd
+        port : 1111
         url  : postgres
     }
 
     """
 
   println(
-    read(descriptor[AwsDetails] from ConfigSource.fromHoconString(invalidHocon)).either.unsafeRun
+    read(deriveConfig[AwsDetails] from ConfigProvider.fromHoconString(invalidHocon)).either
+      .map(_.swap.map(_.prettyPrint()).swap)
+      .unsafeRun
   )
   /*
     ╥
