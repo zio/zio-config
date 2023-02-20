@@ -29,7 +29,7 @@ A few examples are given below.
    (refineType[NonEmptyString]("username") zip
      refineType[NonEmptyString]("password")).to[Jdbc]
 
- read(jdbc from ConfigProvider.fromMap(Map("username" -> "", "password" -> "")))
+ ConfigProvider.fromMap(Map("username" -> "", "password" -> "")).load(jdbc)
 ```
 
 ## Direct Interaction with Refined Predicates
@@ -91,20 +91,20 @@ object RefinedReadConfig extends App {
     ldap: Refined[String, NonEmpty],
     port: Refined[Int, GreaterEqual[W.`1024`.T]],
     dbUrl: Option[Refined[String, NonEmpty]],
-    longs: Refined[List[Long], Size[Greater[W.`2`.T]]]
+    long: Refined[Long, GreaterEqual[W.`1024`.T]]
   )
 
-  val configMultiMap =
+  val configMap =
     Map(
-      "LDAP"     -> ::("ldap", Nil),
-      "PORT"     -> ::("1999", Nil),
-      "DBURL"   -> ::("ddd", Nil),
-      "LONGS" -> ::("1234", List("2345", "3456"))
+      "LDAP"     -> "ldap",
+      "PORT"     -> "1999",
+      "DBURL"   -> "ddd",
+      "LONG" -> "1234"
     )
 
   val result =
-    read(descriptor[RefinedProd].mapKey(_.toUpperCase) from ConfigSource.fromMultiMap(configMultiMap))
+    ConfigProvider.from(configMap).load(deriveConfig[RefinedProd].mapKey(_.toUpperCase)))
 
-  // Right(RefinedProd(ldap,1999,Some(ddd),List(1234, 2345, 3456)))
+  // RefinedProd(ldap,1999,Some(ddd),1234)
 }
 ```
