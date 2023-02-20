@@ -1,7 +1,7 @@
 package zio.config.examples
 
 import zio.Config
-import zio.config.syntax._
+import zio.config._
 
 object DefaultValueExample extends App {
   final case class PgmConfig(a: String, b: String)

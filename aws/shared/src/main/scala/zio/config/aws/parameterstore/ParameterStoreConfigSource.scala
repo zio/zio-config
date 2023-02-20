@@ -13,6 +13,7 @@ import scala.jdk.CollectionConverters._
 
 import zio.ConfigProvider
 import zio.Config
+import zio.config._
 
 object ParameterStoreConfigProvider {
   def from(
@@ -50,7 +51,7 @@ object ParameterStoreConfigProvider {
         .runCollect
         .map { result =>
           ConfigProvider
-            .fromMap(
+            .fromIndexedMap(
               convertParameterListToMap(result.flatten.toList, basePath),
               pathDelim = "/"
             )
