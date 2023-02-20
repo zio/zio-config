@@ -2,15 +2,13 @@ package zio.config.magnolia
 
 import magnolia._
 import zio.config._
-import zio.{Duration, NonEmptyChunk}
+import zio.config.derivation._
+import zio.{Config, Duration, NonEmptyChunk}
 
 import java.io.File
 import java.net.{URI, URL}
 import java.time.{LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
-import zio.config.derivation._
-
-import zio.Config
 import scala.collection.immutable
 
 final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {

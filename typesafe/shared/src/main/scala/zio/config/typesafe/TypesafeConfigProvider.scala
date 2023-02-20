@@ -1,23 +1,15 @@
 package zio.config.typesafe
 
 import com.github.ghik.silencer.silent
+import com.typesafe.config.ConfigValueType.{BOOLEAN, LIST, NULL, NUMBER, OBJECT, STRING}
 import com.typesafe.config._
+import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
 import zio.config._
+import zio.{Chunk, ConfigProvider}
 
 import java.io.File
 import scala.jdk.CollectionConverters._
-import scala.util.{Failure, Success}
-import zio.ConfigProvider
-import zio.Chunk
-
-import scala.util.Try
-import com.typesafe.config.ConfigValueType.LIST
-import com.typesafe.config.ConfigValueType.NUMBER
-import com.typesafe.config.ConfigValueType.STRING
-import com.typesafe.config.ConfigValueType.OBJECT
-import com.typesafe.config.ConfigValueType.BOOLEAN
-import com.typesafe.config.ConfigValueType.NULL
-import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
+import scala.util.{Failure, Success, Try}
 
 @silent("Unused import")
 object TypesafeConfigProvider {
@@ -98,7 +90,9 @@ object TypesafeConfigProvider {
       })
     }
 
-    ConfigProvider.fromIndexedMap(loop(config).map({case (key, value) => ConfigPath.toPath(key).mkString(".") -> value}))
+    ConfigProvider.fromIndexedMap(loop(config).map({ case (key, value) =>
+      ConfigPath.toPath(key).mkString(".") -> value
+    }))
   }
 
 }

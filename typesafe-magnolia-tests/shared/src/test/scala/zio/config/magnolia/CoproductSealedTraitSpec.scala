@@ -1,11 +1,11 @@
 package zio.config.magnolia
 
+import zio.ConfigProvider
 import zio.config._
+import zio.config.derivation.name
+import zio.config.magnolia._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
-import zio.config.magnolia._
-import zio.ConfigProvider
-import zio.config.derivation.name
 
 object CoproductSealedTraitSpec extends ZIOSpecDefault {
 

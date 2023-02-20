@@ -1,11 +1,10 @@
 package zio.config.typesafe
 
-import zio.{Config, ConfigProvider}
-import zio.config._
-import zio.Config
 import zio.Config._
+import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
+import zio.{Config, ConfigProvider}
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int)
 
@@ -71,7 +70,7 @@ object NullAndOptionalConfig extends ZIOSpecDefault {
             Employee("chris", Some(Left(151)), Right("High")),
             Employee("susan", None, Right("f")),
             Employee("jon", Some(Right("CA")), Left(Left(1.278))),
-            Employee("martha", None, Right("Medium")),
+            Employee("martha", None, Right("Medium"))
           ),
           1000
         )

@@ -1,9 +1,10 @@
 package zio.config.typesafe
 
+import zio.Config
 import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
-import zio.Config
+
 import magnolia._
 import Config._
 

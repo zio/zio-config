@@ -1,12 +1,13 @@
 package zio.config.typesafe
 
+import zio.Config
 import zio.config._
+import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider.fromHoconString
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
-import zio.Config
+
 import Config._
-import zio.config.magnolia.deriveConfig
 
 object TypesafeConfigSimpleSpec extends ZIOSpecDefault {
   final case class Details(name: String, age: Int)
