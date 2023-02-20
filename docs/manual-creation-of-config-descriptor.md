@@ -338,51 +338,6 @@ We can also use `<>` combinator.
 string("TOKEN") <> string("token") <> string("TOKEN_INFO")
 ```
 
-## Composing multiple configurations
-
-This is more of a real life scenario, where you can different micro configurations for readability and maintainability.
-
-```scala mdoc:silent
-case class Database(url: String, port: Int)
-case class AwsConfig(c1: Database, c3: String)
-
-val databaseConfig =
-  (string("connection") zip int("port")).to[Database]
-
-(databaseConfig zip string("c3")).to[AwsConfig]
-```
-
-## Nesting
-
-In addition to the primitive types, zio-config provides a combinator for nesting a configuration within another.
-
-This might not feel intuitive at first, however, zio-config is designed to easily adapt to
-any other configuration parsing libraries that deal with file formats such as HOCON that natively support nested
-configurations.
-
-```scala mdoc:silent
-case class AwsConfigExtended(c1: Database, c2: Database, c3: String)
-
-val appConfig =
-  (nested("south") { databaseConfig } zip
-    nested("east") { databaseConfig } zip
-    string("appName")).to[AwsConfigExtended]
-
-// Let's say, a nested configuration as a flattened map is just "." delimited keys in a flat map.
-val constantMap =
-  Map(
-    "south.connection" -> "abc.com",
-    "east.connection"  -> "xyz.com",
-    "east.port"        -> "8888",
-    "south.port"       -> "8111",
-    "appName"          -> "myApp"
-  )
-
-ZConfig.fromMap(constantMap, appConfig)
-```
-
-Note that, you can write this back as well. This is discussed in write section
-
 ## CollectAll (Sequence)
 
 ```scala mdoc:silent

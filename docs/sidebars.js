@@ -12,7 +12,6 @@ const sidebars = {
         "read-from-various-sources",
         "config-descriptor-usage",
         "automatic-validations",
-        "design-principles",
         "resources"
       ]
     }

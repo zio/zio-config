@@ -51,7 +51,7 @@ object DeriveConfig {
   lazy given DeriveConfig[LocalTime] = DeriveConfig.from(localTime)
   lazy given DeriveConfig[LocalDateTime] = DeriveConfig.from(localDateTime)
   lazy given DeriveConfig[Byte] = DeriveConfig(Config.byte)
-  lazy given DeriveConfig[Short = DeriveConfig(Config.short)
+  lazy given DeriveConfig[Short] = DeriveConfig(Config.short)
   lazy given DeriveConfig[UUID] = DeriveConfig(Config.uuid)
   lazy given DeriveConfig[Long] = DeriveConfig(Config.long)
 
