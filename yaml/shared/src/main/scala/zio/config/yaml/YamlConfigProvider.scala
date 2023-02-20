@@ -3,17 +3,15 @@ package zio.config.yaml
 import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import zio.config._
+import zio.config.syntax.IndexKey
+import zio.{Chunk, ConfigProvider}
 
 import java.io.{BufferedReader, ByteArrayInputStream, File, FileInputStream, InputStreamReader, Reader}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
+import java.nio.charset.Charset
 import java.nio.file.Path
 import java.{util => ju}
 import scala.jdk.CollectionConverters._
-import zio.ConfigProvider
-import zio.Chunk
-import zio.config.syntax.IndexKey
-
-import java.nio.charset.Charset
 
 @silent("Unused import")
 object YamlConfigProvider {
@@ -152,8 +150,7 @@ object YamlConfigProvider {
           )
       }
 
-
-    ConfigProvider.fromMap(flattened(data, Chunk.empty).map({case (k, v) => (k.mkString("."), v)}))
+    ConfigProvider.fromMap(flattened(data, Chunk.empty).map({ case (k, v) => (k.mkString("."), v) }))
 
   }
 

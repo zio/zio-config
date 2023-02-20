@@ -1,9 +1,9 @@
 package zio.config.yaml
 
-import zio.{Config, ConfigProvider}
 import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
+import zio.{Config, ConfigProvider}
 
 object YamlConfigSpec extends ZIOSpecDefault {
   def spec: Spec[Any, Config.Error] = suite("YamlConfig")(
