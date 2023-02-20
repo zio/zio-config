@@ -1,6 +1,6 @@
 package zio.config.magnolia
 
-import zio.{&, Config, ConfigProvider, Random, ZIO}
+import zio.{ConfigProvider}
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
@@ -9,9 +9,9 @@ import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
 import AutomaticConfigTestUtils._
 
-object AutomaticConfigTest extends BaseSpec {
+object AutomaticConfigTest extends ZIOSpecDefault  {
 
-  val spec: zio.test.Spec[zio.test.TestEnvironment & zio.Scope, Any] =
+  def spec =
     suite("magnolia spec")(
       test("automatic derivation spec") {
         check(genEnvironment) { environment =>
@@ -60,8 +60,8 @@ object AutomaticConfigTestUtils {
                            )
 
   private val genPriceDescription = Gen.const(Description("some description"))
-  private val genCurrency: Gen[Random, Currency] = Gen.double(10.0, 20.0).map(Currency.apply)
-  private val genPrice: Gen[Random, Price] = Gen.oneOf(genPriceDescription, genCurrency)
+  private val genCurrency: Gen[Any, Currency] = Gen.double(10.0, 20.0).map(Currency.apply)
+  private val genPrice: Gen[Any, Price] = Gen.oneOf(genPriceDescription, genCurrency)
 
   private val genToken = Gen.const(Token("someToken"))
   private val genPassword = Gen.const(Password("some passeword"))
@@ -116,21 +116,21 @@ object AutomaticConfigTestUtils {
       case (None, None) => partialMyConfig
     }
 
-  def genAlpha: Gen[Random, String] =
+  def genAlpha: Gen[Any, String] =
     for {
       n <- Gen.int(1, 10) // zio-config supports only cons hence starting with 1
       s <- Gen.listOfN(n)(Gen.char(65, 122))
     } yield s.mkString
 
-  val genInstant: Gen[Random, Instant] =
+  val genInstant: Gen[Any, Instant] =
     Gen.long.map(Instant.ofEpochMilli)
 
-  val genLocalDateString: Gen[Random with Sized, String] =
+  val genLocalDateString: Gen[Any, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDate.toString)
 
-  val genLocalDateTimeString: Gen[Random with Sized, String] =
+  val genLocalDateTimeString: Gen[Any, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalDateTime.toString)
 
-  val genLocalTimeString: Gen[Random with Sized, String] =
+  val genLocalTimeString: Gen[Any, String] =
     genInstant.map(_.atZone(ZoneOffset.UTC).toLocalTime.toString)
 }
