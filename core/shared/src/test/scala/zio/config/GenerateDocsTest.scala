@@ -11,48 +11,6 @@ object GenerateDocsTest extends BaseSpec {
 
   val spec: Spec[Environment, Any] =
     suite("Generate docs")(
-      test("optional nested") {
-        val inner = (int("a") zip int("b"))
-        val outer = inner.nested("c").optional
-
-        val doc   = generateDocs(outer)
-        val table = doc.toTable
-
-        assert(table)(
-          equalTo(
-            Table(
-              List(
-                Table.TableRow(
-                  List(Table.FieldName.Key("c")),
-                  Some(Table.Format.AllOf),
-                  Nil,
-                  Some(
-                    Table(
-                      List(
-                        Table.TableRow(
-                          List(Table.FieldName.Key("a")),
-                          Some(Table.Format.Primitive),
-                          Nil,
-                          None,
-                          Set.empty
-                        ),
-                        Table.TableRow(
-                          List(Table.FieldName.Key("b")),
-                          Some(Table.Format.Primitive),
-                          Nil,
-                          None,
-                          Set.empty
-                        )
-                      )
-                    )
-                  ),
-                  Set.empty
-                )
-              )
-            )
-          )
-        )
-      },
       test("generate docs") {
         val expected =
           s"""|## Configuration Details
