@@ -5,7 +5,6 @@ import com.amazonaws.services.simplesystemsmanagement.{
   AWSSimpleSystemsManagement,
   AWSSimpleSystemsManagementClientBuilder
 }
-import zio.ConfigProvider
 import zio.stream.ZStream
 import zio.{Chunk, Task, ZIO}
 
@@ -13,7 +12,6 @@ import scala.jdk.CollectionConverters._
 
 import zio.ConfigProvider
 import zio.Config
-import zio.config._
 
 object ParameterStoreConfigProvider {
   def from(
@@ -51,7 +49,7 @@ object ParameterStoreConfigProvider {
         .runCollect
         .map { result =>
           ConfigProvider
-            .fromIndexedMap(
+            .fromMap(
               convertParameterListToMap(result.flatten.toList, basePath),
               pathDelim = "/"
             )

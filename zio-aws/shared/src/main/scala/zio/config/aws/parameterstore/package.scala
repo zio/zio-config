@@ -11,6 +11,6 @@ package object parameterstore {
       basePath: String,
       ssm: Ssm
     ): ZIO[Any, Config.Error, ConfigProvider] =
-      ParameterStoreConfigSource.from(basePath, ssm)
+      ParameterStoreConfigProvider.from(basePath, ssm)
   }
 }

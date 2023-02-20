@@ -5,7 +5,7 @@ import zio.aws.ssm.model.primitives.PSParameterName
 import zio.aws.ssm.model.{GetParametersByPathRequest, Parameter}
 import zio.{Chunk, Config, ConfigProvider, ZIO}
 
-object ParameterStoreConfigSource {
+object ParameterStoreConfigProvider {
   def from(
     basePath: String,
     ssm: Ssm
