@@ -8,22 +8,24 @@ trait IndexedFlat extends ConfigProvider.Flat {
   def enumerateChildrenIndexed(path: ConfigPath)(implicit trace: Trace): IO[Config.Error, Set[ConfigPath]]
 
   def loadIndexed[A](path: ConfigPath, config: Config.Primitive[A], split: Boolean)(implicit
-                                                                                    trace: Trace
+    trace: Trace
   ): IO[Config.Error, Chunk[A]]
 
   final def enumerateChildren(path: Chunk[String])(implicit trace: Trace): IO[Config.Error, Set[String]] =
     enumerateChildrenIndexed(ConfigPath.fromPath(path)).map(_.map(_.last.value))
 
   final def load[A](path: Chunk[String], config: Config.Primitive[A])(implicit
-                                                                      trace: Trace
+    trace: Trace
   ): IO[Config.Error, Chunk[A]] =
     load(path, config, true)
 
- final override def load[A](path: Chunk[String], config: Config.Primitive[A], split: Boolean)(implicit trace: Trace): IO[Config.Error, Chunk[A]] =
+  final override def load[A](path: Chunk[String], config: Config.Primitive[A], split: Boolean)(implicit
+    trace: Trace
+  ): IO[Config.Error, Chunk[A]] =
     loadIndexed(ConfigPath.fromPath(path), config, split)
 
   final def loadIndexed[A](path: ConfigPath, config: Config.Primitive[A])(implicit
-                                                                          trace: Trace
+    trace: Trace
   ): IO[Config.Error, Chunk[A]] =
     loadIndexed(path, config, true)
 }
@@ -43,9 +45,9 @@ object IndexedFlat {
         configPath match {
           case KeyComponent.KeyName(value) :: KeyComponent.Index(index) :: tail =>
             loop(tail, s"$value[$index]" :: path)
-          case KeyComponent.KeyName(value) :: tail =>
+          case KeyComponent.KeyName(value) :: tail                              =>
             loop(tail, value :: path)
-          case Nil =>
+          case Nil                                                              =>
             Chunk.fromIterable(path.reverse)
         }
 

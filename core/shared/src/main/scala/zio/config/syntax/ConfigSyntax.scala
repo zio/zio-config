@@ -1,17 +1,13 @@
 package zio.config.syntax
 
+import zio.Config.Error.{And, InvalidData, MissingData, Or, SourceUnavailable, Unsupported}
 import zio.config.{IndexedFlat, TupleConversion}
-import TupleConversion._
 import zio.{Chunk, Config, ConfigProvider, IO, Trace, ZIO}
-import zio.Config.Error.And
-import zio.Config.Error.InvalidData
-import zio.Config.Error.MissingData
-import zio.Config.Error.Or
-import zio.Config.Error.SourceUnavailable
-import zio.Config.Error.Unsupported
 
-import scala.util.control.NonFatal
 import java.util.UUID
+import scala.util.control.NonFatal
+
+import TupleConversion._
 
 // Backward compatible approach to minimise the client changes
 final case class Read[A](config: Config[A], configProvider: ConfigProvider)
@@ -40,8 +36,8 @@ trait ConfigSyntax {
 
       def renderSteps(steps: List[String]): String =
         steps
-          .foldLeft(new StringBuilder()) {
-            case (r, k) => r.append(keyDelimiter).append(k)
+          .foldLeft(new StringBuilder()) { case (r, k) =>
+            r.append(keyDelimiter).append(k)
           }
           .delete(0, 1)
           .toString()
@@ -173,7 +169,6 @@ trait ConfigSyntax {
       loop(config)
     }
 
-
     def toKebabCase: Config[A] =
       mapKey(zio.config.toKebabCase)
 
@@ -205,8 +200,11 @@ trait ConfigSyntax {
         import Config._
         import IndexedFlat._
 
-        def extend[A, B](leftDef: Int => A, rightDef: Int => B)(left: Chunk[A], right: Chunk[B]): (Chunk[A], Chunk[B]) = {
-          val leftPad = Chunk.unfold(left.length) { index =>
+        def extend[A, B](
+          leftDef: Int => A,
+          rightDef: Int => B
+        )(left: Chunk[A], right: Chunk[B]): (Chunk[A], Chunk[B]) = {
+          val leftPad  = Chunk.unfold(left.length) { index =>
             if (index >= right.length) None else Some(leftDef(index) -> (index + 1))
           }
           val rightPad = Chunk.unfold(right.length) { index =>
@@ -220,7 +218,7 @@ trait ConfigSyntax {
         }
 
         def loop[A](prefix: IndexedFlat.ConfigPath, config: Config[A], split: Boolean)(implicit
-                                                                                       trace: Trace
+          trace: Trace
         ): IO[Config.Error, Chunk[A]] =
           config match {
             case fallback: Fallback[A] =>
@@ -241,12 +239,12 @@ trait ConfigSyntax {
             case Sequence(config) =>
               for {
                 keys <- indexedFlat
-                  .enumerateChildrenIndexed(prefix)
-                  .map(set =>
-                    set.toList.flatMap { chunk =>
-                      chunk.headOption.toList
-                    }
-                  )
+                          .enumerateChildrenIndexed(prefix)
+                          .map(set =>
+                            set.toList.flatMap { chunk =>
+                              chunk.headOption.toList
+                            }
+                          )
 
                 values <-
                   ZIO
@@ -272,37 +270,37 @@ trait ConfigSyntax {
             case zipped: Zipped[leftType, rightType, c] =>
               import zipped.{left, right, zippable}
               for {
-                l <- loop(prefix, left, split).either
-                r <- loop(prefix, right, split).either
+                l      <- loop(prefix, left, split).either
+                r      <- loop(prefix, right, split).either
                 result <- (l, r) match {
-                  case (Left(e1), Left(e2)) => ZIO.fail(e1 && e2)
-                  case (Left(e1), Right(_)) => ZIO.fail(e1)
-                  case (Right(_), Left(e2)) => ZIO.fail(e2)
-                  case (Right(l), Right(r)) =>
-                    val path = prefix.mkString(".")
+                            case (Left(e1), Left(e2)) => ZIO.fail(e1 && e2)
+                            case (Left(e1), Right(_)) => ZIO.fail(e1)
+                            case (Right(_), Left(e2)) => ZIO.fail(e2)
+                            case (Right(l), Right(r)) =>
+                              val path = prefix.mkString(".")
 
-                    def lfail(index: Int): Either[Config.Error, leftType] =
-                      Left(
-                        Config.Error.MissingData(
-                          prefix.map(_.value),
-                          s"The element at index ${index} in a sequence at ${path} was missing"
-                        )
-                      )
+                              def lfail(index: Int): Either[Config.Error, leftType] =
+                                Left(
+                                  Config.Error.MissingData(
+                                    prefix.map(_.value),
+                                    s"The element at index ${index} in a sequence at ${path} was missing"
+                                  )
+                                )
 
-                    def rfail(index: Int): Either[Config.Error, rightType] =
-                      Left(
-                        Config.Error.MissingData(
-                          prefix.map(_.value),
-                          s"The element at index ${index} in a sequence at ${path} was missing"
-                        )
-                      )
+                              def rfail(index: Int): Either[Config.Error, rightType] =
+                                Left(
+                                  Config.Error.MissingData(
+                                    prefix.map(_.value),
+                                    s"The element at index ${index} in a sequence at ${path} was missing"
+                                  )
+                                )
 
-                    val (ls, rs) = extend(lfail, rfail)(l.map(Right(_)), r.map(Right(_)))
+                              val (ls, rs) = extend(lfail, rfail)(l.map(Right(_)), r.map(Right(_)))
 
-                    ZIO.foreach(ls.zip(rs)) { case (l, r) =>
-                      ZIO.fromEither(l).zipWith(ZIO.fromEither(r))(zippable.zip(_, _))
-                    }
-                }
+                              ZIO.foreach(ls.zip(rs)) { case (l, r) =>
+                                ZIO.fromEither(l).zipWith(ZIO.fromEither(r))(zippable.zip(_, _))
+                              }
+                          }
               } yield result
 
             case Constant(value) =>
@@ -326,7 +324,7 @@ trait ConfigSyntax {
           loop(Chunk.empty, config, false).flatMap { chunk =>
             chunk.headOption match {
               case Some(a) => ZIO.succeed(a)
-              case _ =>
+              case _       =>
                 ZIO.fail(Config.Error.MissingData(Chunk.empty, s"Expected a single value having structure ${config}"))
             }
           }
@@ -347,7 +345,8 @@ trait ConfigSyntax {
 
         def unmakePathString(pathString: String): Chunk[String] = Chunk.fromArray(pathString.split(escapedPathDelim))
 
-        def loadIndexed[A](path: IndexedFlat.ConfigPath, primitive: Config.Primitive[A], split: Boolean)(implicit trace: Trace
+        def loadIndexed[A](path: IndexedFlat.ConfigPath, primitive: Config.Primitive[A], split: Boolean)(implicit
+          trace: Trace
         ): IO[Config.Error, Chunk[A]] = {
           val pathString  = makePathString(IndexedFlat.ConfigPath.toPath(path))
           val name        = path.lastOption.getOrElse(IndexedFlat.KeyComponent.KeyName("<unnamed>"))
@@ -355,17 +354,18 @@ trait ConfigSyntax {
           val valueOpt    = map.get(pathString)
 
           for {
-            value <- ZIO
-              .fromOption(valueOpt)
-              .mapError(_ =>
-                Config.Error.MissingData(path.map(_.value), s"Expected ${pathString} to be set in properties")
-              )
+            value   <- ZIO
+                         .fromOption(valueOpt)
+                         .mapError(_ =>
+                           Config.Error.MissingData(path.map(_.value), s"Expected ${pathString} to be set in properties")
+                         )
             results <- ConfigProvider.Flat.util
-              .parsePrimitive(value, path.map(_.value), name.value, primitive, escapedSeqDelim, split)
+                         .parsePrimitive(value, path.map(_.value), name.value, primitive, escapedSeqDelim, split)
           } yield results
         }
 
-        def enumerateChildrenIndexed(path: IndexedFlat.ConfigPath)(implicit trace: Trace
+        def enumerateChildrenIndexed(path: IndexedFlat.ConfigPath)(implicit
+          trace: Trace
         ): IO[Config.Error, Set[IndexedFlat.ConfigPath]] =
           ZIO.succeed {
             val keyPaths: Chunk[IndexedFlat.ConfigPath] = Chunk
@@ -377,7 +377,6 @@ trait ConfigSyntax {
           }
 
       })
-
 
   }
 
@@ -408,7 +407,7 @@ trait ConfigSyntax {
         )
         .map { case (a, t) => a :: t }
 
-    def constant(value: String): Config[String] =
+    def constant(value: String): Config[String]                              =
       Config.string.mapOrFail(parsed =>
         if (parsed == value) Right(value)
         else Left(Config.Error.InvalidData(message = s"value should be a constant: ${value}"))
@@ -440,7 +439,7 @@ trait ConfigSyntax {
     def mapLast(f: A => A): Chunk[A] =
       chunk.lastOption match {
         case Some(value) => chunk.dropRight(1) :+ f(value)
-        case None => chunk
+        case None        => chunk
       }
   }
 

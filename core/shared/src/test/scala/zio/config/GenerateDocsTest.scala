@@ -1,9 +1,11 @@
 package zio.config
 
-import zio.{Config, ConfigProvider}, Config._
 import zio.test.Assertion._
 import zio.test.TestAspect.ignore
 import zio.test._
+import zio.{Config, ConfigProvider}
+
+import Config._
 
 object GenerateDocsTest extends BaseSpec {
 

@@ -1,6 +1,6 @@
 package zio
 
-import zio.config.syntax.{ConfigSyntax}
+import zio.config.syntax.ConfigSyntax
 
 package object config
     extends KeyConversionFunctions

@@ -1,8 +1,8 @@
 package zio.config
 
 import zio._
-import zio.test._
 import zio.test.Assertion._
+import zio.test._
 
 object IndexedFlatSpec extends ZIOSpecDefault {
 
@@ -42,8 +42,8 @@ object IndexedFlatSpec extends ZIOSpecDefault {
             "employees[1].id"  -> "4"
           )
         )
-        val product = Config.int("age").zip(Config.int("id"))
-        val config  = Config.listOf("employees", product)
+        val product        = Config.int("age").zip(Config.int("id"))
+        val config         = Config.listOf("employees", product)
 
         for {
           result <- configProvider.load(config)
@@ -53,8 +53,8 @@ object IndexedFlatSpec extends ZIOSpecDefault {
         val configProvider = ConfigProvider.fromIndexedMap(
           Map("employees[0].age" -> "1", "employees[0].id" -> "2", "employees[1].age" -> "3", "employees[1]" -> "4")
         )
-        val product = Config.int("age").zip(Config.int("id"))
-        val config  = Config.listOf("employees", product)
+        val product        = Config.int("age").zip(Config.int("id"))
+        val config         = Config.listOf("employees", product)
 
         for {
           exit <- configProvider.load(config).exit
@@ -65,8 +65,8 @@ object IndexedFlatSpec extends ZIOSpecDefault {
           ConfigProvider.fromIndexedMap(
             Map("employees[0].age" -> "1", "employees[0].id" -> "2", "employees[1].id" -> "4")
           )
-        val product = Config.int("age").optional.zip(Config.int("id"))
-        val config  = Config.listOf("employees", product)
+        val product        = Config.int("age").optional.zip(Config.int("id"))
+        val config         = Config.listOf("employees", product)
 
         for {
           result <- configProvider.load(config)
@@ -85,8 +85,8 @@ object IndexedFlatSpec extends ZIOSpecDefault {
             "students[1].age"  -> "3"
           )
         )
-        val idAndAge = Config.int("id").zip(Config.int("age"))
-        val config   = Config.listOf("employees", idAndAge).zip(Config.listOf("students", idAndAge))
+        val idAndAge       = Config.int("id").zip(Config.int("age"))
+        val config         = Config.listOf("employees", idAndAge).zip(Config.listOf("students", idAndAge))
 
         for {
           result           <- configProvider.load(config)
