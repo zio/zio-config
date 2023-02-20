@@ -57,7 +57,6 @@ val refinedVersion    = "0.10.1"
 val pureconfigVersion = "0.16.0"
 val shapelessVersion  = "2.4.0-M1"
 
-
 lazy val magnoliaDependencies =
   libraryDependencies ++= {
     if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy

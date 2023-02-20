@@ -48,7 +48,7 @@ object HoconSimple extends ZIOAppDefault {
      }
     """
 
-  def run: ZIO[Environment with ZIOAppArgs with Scope,Any,Any] =
+  def run: ZIO[Environment with ZIOAppArgs with Scope, Any, Any] =
     for {
       customer        <- TypesafeConfigProvider.fromHoconString(customer).load(deriveConfig[Customer])
       invalidCustomer <- TypesafeConfigProvider.fromHoconString(invalidCustomer).load(deriveConfig[Customer]).either

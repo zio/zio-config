@@ -24,7 +24,7 @@ object TypesafeConfigMap extends App with EitherImpureOps {
       (string("a1") zip int("a2")).to[C]
   }
 
-  val map: Map[String,String] =
+  val map: Map[String, String] =
     Map(
       "m1.m221.a1" -> "bar",
       "m1.m221.a2" -> "1",
