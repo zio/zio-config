@@ -639,7 +639,7 @@ trait ConfigDocsModule {
             loop(descriptions, a.first, None, alreadySeen),
             loop(descriptions, a.second, None, alreadySeen)
           )
-          
+
       }
 
     loop(Nil, config, None, Set.empty)
