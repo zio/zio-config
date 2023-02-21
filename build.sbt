@@ -51,7 +51,7 @@ addCommandAlias(
 
 val awsVersion        = "1.12.360"
 val zioAwsVersion     = "5.19.8.1"
-val zioVersion        = "2.0.9+6-e9ca719a-SNAPSHOT"
+val zioVersion        = "2.0.9"
 val magnoliaVersion   = "0.17.0"
 val refinedVersion    = "0.10.1"
 val pureconfigVersion = "0.16.0"
