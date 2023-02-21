@@ -15,8 +15,6 @@ final case class Read[A](config: Config[A], configProvider: ConfigProvider)
 trait ConfigSyntax {
 
   // Backward compatible approach to minimise the client changes
-
-  @deprecated("Use configProvider.load(config)", since = "4.0.0")
   final def read[A](reader: Read[A]): IO[Config.Error, A] =
     reader.configProvider.load(reader.config)
 
