@@ -54,45 +54,51 @@ object TypesafeConfigProvider {
     def loop(config: com.typesafe.config.Config): Chunk[(Chunk[KeyComponent], String)] = {
       val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue()))
 
-      Chunk.fromIterable(initLevel).flatMap({ case (k, possibleConfigValue) =>
-        val kIterated = Chunk.fromIterable(k.split('.')).map(KeyComponent.KeyName(_))
+      Chunk
+        .fromIterable(initLevel)
+        .flatMap({ case (k, possibleConfigValue) =>
+          val kIterated = Chunk.fromIterable(k.split('.')).map(KeyComponent.KeyName(_))
 
-        possibleConfigValue.valueType() match {
-          case LIST    =>
-            Try(config.getConfigList(k)) match {
-              case Failure(_)     =>
-                // Only possibility is a sequence of primitives
-                val result = config.getList(k).unwrapped().asScala.toList
+          possibleConfigValue.valueType() match {
+            case LIST    =>
+              Try(config.getConfigList(k)) match {
+                case Failure(_)     =>
+                  // Only possibility is a sequence of primitives
+                  val result = config.getList(k).unwrapped().asScala.toList
 
-                Map(
-                  kIterated ++ Chunk(KeyComponent.Index(0)) -> result.map(_.toString).mkString(",")
-                )
+                  Map(
+                    kIterated ++ Chunk(KeyComponent.Index(0)) -> result.map(_.toString).mkString(",")
+                  )
 
-              // Only possibility is a sequence of nested Configs
-              case Success(value) =>
-                value.asScala.toList.zipWithIndex.map { case (config: com.typesafe.config.Config, index: Int) =>
-                  val oldKeyWithIndex: Chunk[KeyComponent] = kIterated ++ Chunk(KeyComponent.Index(index))
+                // Only possibility is a sequence of nested Configs
+                case Success(value) =>
+                  value.asScala.toList.zipWithIndex.map { case (config: com.typesafe.config.Config, index: Int) =>
+                    val oldKeyWithIndex: Chunk[KeyComponent] = kIterated ++ Chunk(KeyComponent.Index(index))
 
-                  loop(config).map { case (newKey, v) =>
-                    oldKeyWithIndex ++ newKey -> v
-                  }
+                    loop(config).map { case (newKey, v) =>
+                      oldKeyWithIndex ++ newKey -> v
+                    }
 
-                }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[KeyComponent], String])
+                  }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[KeyComponent], String])
 
-            }
-          case NUMBER  =>
-            Map(kIterated -> config.getNumber(k).toString())
-          case STRING  => Map(kIterated -> config.getString(k))
-          case OBJECT  => throw new Exception("Invalid hocon format") //FIXME: Move to IO
-          case BOOLEAN => Map(kIterated -> config.getBoolean(k).toString())
-          case NULL    => throw new Exception("Invalid hocon format") // FIXME: Move to IO
-        }
-      })
+              }
+            case NUMBER  =>
+              Map(kIterated -> config.getNumber(k).toString())
+            case STRING  => Map(kIterated -> config.getString(k))
+            case OBJECT  => throw new Exception("Invalid hocon format") //FIXME: Move to IO
+            case BOOLEAN => Map(kIterated -> config.getBoolean(k).toString())
+            case NULL    => throw new Exception("Invalid hocon format") // FIXME: Move to IO
+          }
+        })
     }
 
-    ConfigProvider.fromIndexedMap(loop(config).map({ case (key, value) =>
-      ConfigPath.toPath(key).mkString(".") -> value
-    }).toMap)
+    ConfigProvider.fromIndexedMap(
+      loop(config)
+        .map({ case (key, value) =>
+          ConfigPath.toPath(key).mkString(".") -> value
+        })
+        .toMap
+    )
   }
 
 }
