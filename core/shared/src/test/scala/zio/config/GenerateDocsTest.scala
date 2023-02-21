@@ -1,9 +1,8 @@
 package zio.config
 
 import zio.test.Assertion._
-import zio.test.TestAspect.ignore
 import zio.test._
-import zio.{Config, ConfigProvider}
+import zio.{Config}
 
 import Config._
 
