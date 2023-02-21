@@ -377,5 +377,5 @@ val str =
    }
   """
 
-read(descriptorForPureConfig[AppConfig] from ConfigSource.fromHoconString(str))
+read(deriveConfig[AppConfig] from ConfigProvider.fromHoconString(str))
 ```

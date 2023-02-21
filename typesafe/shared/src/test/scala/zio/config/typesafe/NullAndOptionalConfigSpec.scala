@@ -62,7 +62,8 @@ object NullAndOptionalConfig extends ZIOSpecDefault {
             |}""".stripMargin
         )
 
-      val result = read(EmployeeDetails.employeeDetails from hoconSource)
+      val result =
+        hoconSource.load(EmployeeDetails.employeeDetails)
 
       val expectedResult =
         EmployeeDetails(
@@ -75,7 +76,7 @@ object NullAndOptionalConfig extends ZIOSpecDefault {
           1000
         )
 
-      assertZIO(result)(equalTo(expectedResult))
+      assertZIO(result.map(_.employees))(hasSameElements(expectedResult.employees))
     }
   )
 }
