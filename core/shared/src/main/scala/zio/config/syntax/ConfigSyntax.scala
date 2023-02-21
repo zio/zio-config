@@ -7,8 +7,6 @@ import zio.{Chunk, Config, ConfigProvider, IO, Trace, ZIO}
 import java.util.UUID
 import scala.util.control.NonFatal
 
-import TupleConversion._
-
 // Backward compatible approach to minimise the client changes
 final case class Read[A](config: Config[A], configProvider: ConfigProvider)
 
@@ -21,8 +19,6 @@ trait ConfigSyntax {
   @deprecated("Use configProvider.load(config)", since = "4.0.0")
   final def read[A](reader: Read[A]): IO[Config.Error, A] =
     reader.configProvider.load(reader.config)
-
-  import zio.config.VersionSpecificSupport._
 
   implicit class ConfigErrorOps(error: Config.Error) {
     self =>
@@ -352,7 +348,6 @@ trait ConfigSyntax {
         ): IO[Config.Error, Chunk[A]] = {
           val pathString  = makePathString(IndexedFlat.ConfigPath.toPath(path))
           val name        = path.lastOption.getOrElse(IndexedFlat.KeyComponent.KeyName("<unnamed>"))
-          val description = primitive.description
           val valueOpt    = map.get(pathString)
 
           for {

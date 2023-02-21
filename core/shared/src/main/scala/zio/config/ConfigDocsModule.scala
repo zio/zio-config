@@ -546,8 +546,6 @@ trait ConfigDocsModule {
     }
   }
 
-  import ConfigDocs.{DynamicMap => DocsMap, Leaf => DocsLeaf}
-
   /**
    * Generate documentation based on the `Config`, where a
    * `Config` is a structure representing the logic to fetch the application config
@@ -564,7 +562,7 @@ trait ConfigDocsModule {
    * }}}
    */
   import zio.Config
-  import zio.{Config, ConfigProvider}, Config._
+
   final def generateDocs[A](config: zio.Config[A]): ConfigDocs = {
     def loop[B](
       descriptions: List[ConfigDocs.Description],
