@@ -1,7 +1,7 @@
 package zio.config.typesafe
 
 import com.github.ghik.silencer.silent
-import com.typesafe.config.ConfigValueType.{BOOLEAN, LIST, NULL, NUMBER, OBJECT, STRING}
+import com.typesafe.config.ConfigValueType._
 import com.typesafe.config._
 import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
 import zio.config._
@@ -51,10 +51,10 @@ object TypesafeConfigProvider {
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
 
   def fromTypesafeConfig(config: com.typesafe.config.Config): ConfigProvider = {
-    def loop(config: com.typesafe.config.Config): Map[Chunk[KeyComponent], String] = {
-      val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue())).toMap
+    def loop(config: com.typesafe.config.Config): Chunk[(Chunk[KeyComponent], String)] = {
+      val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue()))
 
-      initLevel.flatMap({ case (k, possibleConfigValue) =>
+      Chunk.fromIterable(initLevel).flatMap({ case (k, possibleConfigValue) =>
         val kIterated = Chunk.fromIterable(k.split('.')).map(KeyComponent.KeyName(_))
 
         possibleConfigValue.valueType() match {
@@ -92,7 +92,7 @@ object TypesafeConfigProvider {
 
     ConfigProvider.fromIndexedMap(loop(config).map({ case (key, value) =>
       ConfigPath.toPath(key).mkString(".") -> value
-    }))
+    }).toMap)
   }
 
 }
