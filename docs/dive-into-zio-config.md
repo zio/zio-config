@@ -282,35 +282,3 @@ val str =
 
 read(descriptorForPureConfig[AppConfig] from ConfigSource.fromHoconString(str))
 ```
-
-### Readers from configdescriptor
-
-As mentioned before, you can use config descriptor to read from various sources.
-
-```scala mdoc:silent
-val anotherResult =
-  read(myConfig from source)
-```
-
-Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the previous section.
-
-More details in [here](manual-creation-of-config-descriptor.md).
-
-### Documentations using Config
-
-```scala mdoc:silent
-generateDocs(myConfig)
-//Creates documentation (automatic)
-
-val betterConfig =
-  (string("LDAP") ?? "Related to auth" zip int("PORT") ?? "Database port" zip
-    string("DB_URL") ?? "url of database"
-   ).to[MyConfig]
-
-generateDocs(betterConfig).toTable.toGithubFlavouredMarkdown
-// Custom documentation along with auto generated docs
-```
-
-More details in [here](manual-creation-of-config-descriptor.md).
-
-```
