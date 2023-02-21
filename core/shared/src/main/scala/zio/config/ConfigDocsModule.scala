@@ -628,10 +628,16 @@ trait ConfigDocsModule {
         case Config.MapOrFail(c, _) =>
           loop(descriptions, c, None, alreadySeen)
 
-        case Config.Zipped(left, right, zippable) =>
+        case Config.Zipped(left, right, _) =>
           ConfigDocs.Zip(
             loop(descriptions, left, None, alreadySeen),
             loop(descriptions, right, None, alreadySeen)
+          )
+
+        case a: Config.Fallback[_] =>
+          ConfigDocs.OrElse(
+            loop(descriptions, a.first, None, alreadySeen),
+            loop(descriptions, a.second, None, alreadySeen)
           )
 
         case Config.Fallback(left, right) =>
