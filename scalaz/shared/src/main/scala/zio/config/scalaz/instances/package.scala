@@ -1,9 +1,7 @@
 package zio.config.scalaz
 
 import _root_.scalaz.Applicative
-import scalaz.InvariantFunctor
 import zio.Config
-import zio.config._
 
 package object instances {
   implicit val invariantConfig: Applicative[Config] =
