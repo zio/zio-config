@@ -91,7 +91,7 @@ val anotherResult =
 
 Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the previous section.
 
-More details in [here](manual-creation-of-config-descriptor.md).
+More details in [here](manual-creation-of-config.md).
 
 ### Documentations using Config
 
@@ -108,7 +108,7 @@ generateDocs(betterConfig).toTable.toGithubFlavouredMarkdown
 // Custom documentation along with auto generated docs
 ```
 
-More details in [here](manual-creation-of-config-descriptor.md).
+More details in [here](manual-creation-of-config.md).
 
 ### Accumulating all errors
 

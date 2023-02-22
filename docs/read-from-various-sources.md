@@ -28,7 +28,7 @@ val myConfig =
  // val automatedConfig = deriveConfig[MyConfig]; using zio-config-magnolia
 ```
 
-More details about defining config descriptor is in [here](manual-creation-of-config-descriptor.md).
+More details about defining config descriptor is in [here](manual-creation-of-config.md).
 
 ## Constant Map
 

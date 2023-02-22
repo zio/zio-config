@@ -1,5 +1,5 @@
 ---
-id: manual-creation-of-config-descriptor
+id: manual-creation-of-config
 title:  "Manual creation of Config"
 ---
 
