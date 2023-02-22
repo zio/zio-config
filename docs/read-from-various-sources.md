@@ -120,6 +120,7 @@ val anotherHoconSource =
 hoconSource.load(deriveConfig[SimpleConfig])
 
 // yielding SimpleConfig(123,bla,Some(useast))
+```
 
 ## HOCON File
 
