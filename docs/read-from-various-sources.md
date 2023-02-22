@@ -119,4 +119,23 @@ ConfigProvider.fromHoconString(jsonString)
 
 ## Yaml FIle
 
-Similar to Hocon source, the only difference is `ConfigProvider.fromYamlString`
+Similar to Hocon source, we have `ConfigProvider.fromYamlString`
+
+```scala
+import zio.config.yaml._
+
+ConfigProvider.fromYamlString
+
+```
+
+## Xml String
+
+zio-config can read XML strings. Note that it's experimental with a dead simple native xml parser, 
+Currently it cannot XML comments, which will be fixed in the near future.
+
+```scala
+import zio.config.xml._
+
+ConfigProvider.fromXmlString
+
+```
