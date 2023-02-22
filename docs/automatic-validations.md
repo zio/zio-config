@@ -12,6 +12,7 @@ There are various ways that zio-config can interact with refined library.
 Take a look at `zio.config.refined` package.
 
 ```scala mdoc:silent
+ import zio.Config
  import zio.config._, refined._
 
 ```
@@ -84,27 +85,25 @@ You can also use auto derivations with refined.
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.{ NonEmpty, Size }
-import zio.config.magnolia.descriptor
+import zio.config.magnolia.deriveConfig
 
 object RefinedReadConfig extends App {
   case class RefinedProd(
     ldap: Refined[String, NonEmpty],
     port: Refined[Int, GreaterEqual[W.`1024`.T]],
-    dbUrl: Option[Refined[String, NonEmpty]],
-    long: Refined[Long, GreaterEqual[W.`1024`.T]]
+    dbUrl: Option[Refined[String, NonEmpty]]
   )
 
   val configMap =
     Map(
       "LDAP"     -> "ldap",
       "PORT"     -> "1999",
-      "DBURL"   -> "ddd",
-      "LONG" -> "1234"
+      "DBURL"   -> "ddd"
     )
 
   val result =
     ConfigProvider.from(configMap).load(deriveConfig[RefinedProd].mapKey(_.toUpperCase))
 
-  // RefinedProd(ldap,1999,Some(ddd),1234)
+  // RefinedProd(ldap,1999,Some(ddd))
 }
 ```
