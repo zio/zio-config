@@ -547,7 +547,7 @@ trait ConfigDocsModule {
       case object Blank         extends FieldName
     }
   }
-  
+
   /**
    * Generate documentation based on the `Config`, where a
    * `Config` is a structure representing the logic to fetch the application config

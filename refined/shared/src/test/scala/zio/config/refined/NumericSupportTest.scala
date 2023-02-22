@@ -6,8 +6,7 @@ import eu.timepit.refined.numeric.{Divisible, Greater, GreaterEqual, Less, LessE
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
-import zio.{Config, ConfigProvider, ZIO}
-import zio.Scope
+import zio.{Config, ConfigProvider, Scope, ZIO}
 
 object NumericSupportTest extends ZIOSpecDefault {
 

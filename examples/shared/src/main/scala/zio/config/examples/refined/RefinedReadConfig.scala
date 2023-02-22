@@ -1,15 +1,11 @@
 package zio.config.examples.refined
 
 import eu.timepit.refined.api.Refined
-import eu.timepit.refined.collection.{NonEmpty, Size}
-import eu.timepit.refined.numeric.{Greater, GreaterEqual}
+import eu.timepit.refined.collection.{NonEmpty}
 import zio.config._
 import zio.config.examples.ZioOps
 import zio.config.refined._
-import zio.{Config, ConfigProvider}
-
-import magnolia._
-import Config._
+import zio.{ConfigProvider}
 
 object RefinedReadConfig extends App {
   case class RefinedProd(

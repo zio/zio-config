@@ -3,7 +3,7 @@ package zio.config.examples.typesafe
 import zio.ConfigProvider
 import zio.config._
 import zio.config.derivation.nameWithLabel
-import zio.config.magnolia.{DeriveConfig, _}
+import zio.config.magnolia._
 
 import typesafe._
 

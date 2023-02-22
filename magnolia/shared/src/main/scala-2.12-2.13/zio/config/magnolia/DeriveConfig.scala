@@ -1,12 +1,11 @@
 package zio.config.magnolia
 
 import magnolia._
+import zio.Config
 import zio.config._
 import zio.config.derivation._
-import zio.{Config, Duration, NonEmptyChunk}
 
-import java.io.File
-import java.net.{URI, URL}
+import java.net.URI
 import java.time.{LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
 import scala.collection.immutable

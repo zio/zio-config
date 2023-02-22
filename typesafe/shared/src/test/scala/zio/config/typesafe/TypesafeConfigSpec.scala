@@ -32,7 +32,7 @@ object EmployeeDetails {
 
 }
 
-object NullAndOptionalConfig extends ZIOSpecDefault {
+object TypesafeConfigSpec extends ZIOSpecDefault {
   def spec: Spec[Any, Config.Error] = suite("TypesafeConfig Null and Optional")(
     test("A config case which keys maybe null or optional") {
       val hoconSource =

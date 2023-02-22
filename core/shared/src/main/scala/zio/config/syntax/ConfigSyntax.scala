@@ -343,9 +343,9 @@ trait ConfigSyntax {
         def loadIndexed[A](path: IndexedFlat.ConfigPath, primitive: Config.Primitive[A], split: Boolean)(implicit
           trace: Trace
         ): IO[Config.Error, Chunk[A]] = {
-          val pathString  = makePathString(IndexedFlat.ConfigPath.toPath(path))
-          val name        = path.lastOption.getOrElse(IndexedFlat.KeyComponent.KeyName("<unnamed>"))
-          val valueOpt    = map.get(pathString)
+          val pathString = makePathString(IndexedFlat.ConfigPath.toPath(path))
+          val name       = path.lastOption.getOrElse(IndexedFlat.KeyComponent.KeyName("<unnamed>"))
+          val valueOpt   = map.get(pathString)
 
           for {
             value   <- ZIO

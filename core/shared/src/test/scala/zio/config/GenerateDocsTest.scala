@@ -1,8 +1,8 @@
 package zio.config
 
+import zio.Config
 import zio.test.Assertion._
 import zio.test._
-import zio.{Config}
 
 import Config._
 
