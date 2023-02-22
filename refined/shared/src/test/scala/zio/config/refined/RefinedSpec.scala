@@ -6,8 +6,9 @@ import eu.timepit.refined.types.string.NonEmptyString
 import zio.config.{BaseSpec, _}
 import zio.test.Assertion._
 import zio.test.{Sized, _}
-import RefinedUtils._
 import zio.{Config, ConfigProvider}
+
+import RefinedUtils._
 
 object RefinedSpec extends BaseSpec {
   override def spec: Spec[TestConfig with Sized, Config.Error] =

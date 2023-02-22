@@ -6,12 +6,9 @@ import com.amazonaws.services.simplesystemsmanagement.{
   AWSSimpleSystemsManagementClientBuilder
 }
 import zio.stream.ZStream
-import zio.{Chunk, Task, ZIO}
+import zio.{Chunk, Config, ConfigProvider, Task, ZIO}
 
 import scala.jdk.CollectionConverters._
-
-import zio.ConfigProvider
-import zio.Config
 
 object ParameterStoreConfigProvider {
   def from(

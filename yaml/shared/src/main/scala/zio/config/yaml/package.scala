@@ -2,8 +2,7 @@ package zio.config
 
 import zio._
 
-import java.io.{BufferedReader, ByteArrayInputStream, File, InputStreamReader, Reader}
-import java.nio.charset.Charset
+import java.io.{File, Reader}
 import java.nio.file.Path
 
 package object yaml {

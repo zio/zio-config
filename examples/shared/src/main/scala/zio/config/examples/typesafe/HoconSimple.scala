@@ -2,7 +2,6 @@ package zio.config.examples.typesafe
 
 import zio.Console._
 import zio._
-import zio.config.examples.ZioOps
 import zio.config.magnolia._
 import zio.config.typesafe.TypesafeConfigProvider
 

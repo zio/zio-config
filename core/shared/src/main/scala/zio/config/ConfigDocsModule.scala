@@ -1,5 +1,7 @@
 package zio.config
 
+import zio.Config
+
 trait ConfigDocsModule {
   import Table._
 
@@ -546,8 +548,6 @@ trait ConfigDocsModule {
     }
   }
 
-  import ConfigDocs.{DynamicMap => DocsMap, Leaf => DocsLeaf}
-
   /**
    * Generate documentation based on the `Config`, where a
    * `Config` is a structure representing the logic to fetch the application config
@@ -563,8 +563,6 @@ trait ConfigDocsModule {
    *   generatedDocs(configDescriptor).toTable.toGithubFlavouredMarkdown
    * }}}
    */
-  import zio.Config
-  import zio.{Config, ConfigProvider}, Config._
   final def generateDocs[A](config: zio.Config[A]): ConfigDocs = {
     def loop[B](
       descriptions: List[ConfigDocs.Description],
@@ -638,18 +636,6 @@ trait ConfigDocsModule {
           ConfigDocs.OrElse(
             loop(descriptions, a.first, None, alreadySeen),
             loop(descriptions, a.second, None, alreadySeen)
-          )
-
-        case Config.Fallback(left, right) =>
-          ConfigDocs.OrElse(
-            loop(descriptions, left, None, alreadySeen),
-            loop(descriptions, right, None, alreadySeen)
-          )
-
-        case Config.FallbackWith(left, right, _) =>
-          ConfigDocs.OrElse(
-            loop(descriptions, left, None, alreadySeen),
-            loop(descriptions, right, None, alreadySeen)
           )
 
       }

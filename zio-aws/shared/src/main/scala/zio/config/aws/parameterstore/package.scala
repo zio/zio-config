@@ -1,7 +1,6 @@
 package zio.config.aws
 
 import zio.aws.ssm.Ssm
-import zio.config._
 import zio.{Config, ConfigProvider, ZIO}
 
 package object parameterstore {
