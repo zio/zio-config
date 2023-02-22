@@ -5,6 +5,7 @@ import zio.config.derivation.name
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider
+
 import examples._
 
 object AutoDerivationSealedTraitCustom extends App with EitherImpureOps {

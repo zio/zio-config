@@ -72,7 +72,7 @@ object DeriveConfig {
   ): Config[T] = {
     val f = (name: String) => desc.nested(name)
     labels.toList match {
-      case head :: next  => f(head)
+      case head :: _     => f(head)
       case immutable.Nil => desc
       case multiple      =>
         multiple.tail.foldLeft(f(multiple.head)) { case (acc, n) =>
