@@ -81,6 +81,7 @@ Take a look at the below example
 You can also use auto derivations with refined.
 
 ```scala mdoc:silent
+import zio.ConfigProvider
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.{ NonEmpty, Size }
