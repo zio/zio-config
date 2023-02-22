@@ -47,7 +47,7 @@ object IndexedFlat {
             loop(tail, s"$value[$index]" :: path)
           case KeyComponent.KeyName(value) :: tail                              =>
             loop(tail, value :: path)
-          case _                                                              =>
+          case _                                                                =>
             Chunk.fromIterable(path.reverse)
         }
 

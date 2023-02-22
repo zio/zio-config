@@ -122,7 +122,7 @@ case class  DetailsWrapped(detail: Detail) extends X
 ```scala
 import zio.config._
 
-descriptor[MyConfig].mapKey(toKebabCase)
+deriveConfig[MyConfig].mapKey(toKebabCase)
 ```
 
 With the above change`firstName` and `lastName` in the above HOCON example can be `first-name` and `last-name` 
@@ -193,28 +193,28 @@ This is because zio-config-magnolia failed to derive an instance of Descriptor f
 In order to provide implicit instances, following choices are there
 
 ```
-import zio.config.magnolia.{Descriptor, descriptor}
+import zio.config.magnolia._
 
-implicit val awsRegionDescriptor: Descriptor[Aws.Region] =
-  Descriptor[String].map(string => AwsRegion.from(string))
+implicit val awsRegionDescriptor: DeriveConfig[Aws.Region] =
+  DeriveConfig[String].map(string => AwsRegion.from(string))
 
 ```
 
-Now `descriptor[Execution]` compiles.
+Now `deriveConfig[Execution]` compiles.
 
 Custom descriptors are also needed in case you use value classes to describe your configuration. You can use them
 together with automatic derivation and those implicit custom descriptors will be taken automatically into account
 
 ```scala
-import zio.config.magnolia.{descriptor, Descriptor}
+import zio.config.magnolia._
 
 final case class AwsRegion(value: String) extends AnyVal {
   override def toString: String = value
 }
 
 object AwsRegion {
-  implicit val descriptor: Descriptor[AwsRegion] = 
-    Descriptor[String].map(AwsRegion(_))
+  implicit val descriptor: DeriveConfig[AwsRegion] = 
+    DeriveConfig[String].map(AwsRegion(_))
 }
 ```
 
@@ -266,7 +266,7 @@ case class C(y: String) extends A
 case class Config(a: A) 
 ```
 
-With the above config, `descriptor[A]` can read following source.
+With the above config, `deriveConfig[A]` can read following source.
 
 ```scala
 {
@@ -377,5 +377,5 @@ val str =
    }
   """
 
-read(descriptorForPureConfig[AppConfig] from ConfigSource.fromHoconString(str))
+read(deriveConfig[AppConfig] from ConfigProvider.fromHoconString(str))
 ```

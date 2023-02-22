@@ -1,17 +1,17 @@
 package zio.config.magnolia
 
-import zio.{ConfigProvider}
-import zio.config._
 import zio.test.Assertion._
 import zio.test._
+import zio.{ConfigProvider, Scope}
 
 import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
+
 import AutomaticConfigTestUtils._
 
 object AutomaticConfigTest extends ZIOSpecDefault {
 
-  def spec =
+  def spec: Spec[Environment with TestEnvironment with Scope, Any] =
     suite("magnolia spec")(
       test("automatic derivation spec") {
         check(genEnvironment) { environment =>

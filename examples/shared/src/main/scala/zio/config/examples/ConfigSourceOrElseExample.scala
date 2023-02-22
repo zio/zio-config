@@ -6,8 +6,6 @@ import zio.config.typesafe._
 import zio.config.yaml._
 import zio.{ConfigProvider, _}
 
-import java.io.InputStreamReader
-
 object ConfigSourceOrElseExample extends App {
 
   val applicationHocon: String =

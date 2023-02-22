@@ -15,8 +15,6 @@ final case class Read[A](config: Config[A], configProvider: ConfigProvider)
 trait ConfigSyntax {
 
   // Backward compatible approach to minimise the client changes
-
-  @deprecated("Use configProvider.load(config)", since = "4.0.0")
   final def read[A](reader: Read[A]): IO[Config.Error, A] =
     reader.configProvider.load(reader.config)
 
@@ -345,9 +343,9 @@ trait ConfigSyntax {
         def loadIndexed[A](path: IndexedFlat.ConfigPath, primitive: Config.Primitive[A], split: Boolean)(implicit
           trace: Trace
         ): IO[Config.Error, Chunk[A]] = {
-          val pathString  = makePathString(IndexedFlat.ConfigPath.toPath(path))
-          val name        = path.lastOption.getOrElse(IndexedFlat.KeyComponent.KeyName("<unnamed>"))
-          val valueOpt    = map.get(pathString)
+          val pathString = makePathString(IndexedFlat.ConfigPath.toPath(path))
+          val name       = path.lastOption.getOrElse(IndexedFlat.KeyComponent.KeyName("<unnamed>"))
+          val valueOpt   = map.get(pathString)
 
           for {
             value   <- ZIO

@@ -5,7 +5,6 @@ import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
-import Config._
 import magnolia._
 
 object TypesafeConfigListTest extends ZIOSpecDefault {

@@ -4,7 +4,7 @@ import scala.annotation.implicitNotFound
 
 @implicitNotFound(
   "Can't derive Config for `List[T]`, `Option[T]` or `Either[A, B]` directly." +
-    " Wrap it with a `case class Config(list: List[T])` or use `listOf(descriptor[T])` manually."
+    " Wrap it with a `case class Config(list: List[T])` or use `listOf(deriveConfig[T])` manually."
 )
 sealed trait NeedsDerive[+T]
 

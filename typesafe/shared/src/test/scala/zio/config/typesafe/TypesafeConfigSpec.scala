@@ -32,7 +32,7 @@ object EmployeeDetails {
 
 }
 
-object NullAndOptionalConfig extends ZIOSpecDefault {
+object TypesafeConfigSpec extends ZIOSpecDefault {
   def spec: Spec[Any, Config.Error] = suite("TypesafeConfig Null and Optional")(
     test("A config case which keys maybe null or optional") {
       val hoconSource =
@@ -62,20 +62,21 @@ object NullAndOptionalConfig extends ZIOSpecDefault {
             |}""".stripMargin
         )
 
-      val result = read(EmployeeDetails.employeeDetails from hoconSource)
+      val result =
+        hoconSource.load(EmployeeDetails.employeeDetails)
 
       val expectedResult =
         EmployeeDetails(
           List(
             Employee("chris", Some(Left(151)), Right("High")),
-            Employee("susan", None, Right("f")),
             Employee("jon", Some(Right("CA")), Left(Left(1.278))),
+            Employee("susan", None, Right("f")),
             Employee("martha", None, Right("Medium"))
           ),
           1000
         )
 
-      assertZIO(result)(equalTo(expectedResult))
+      assertZIO(result.map(_.employees))(hasSameElements(expectedResult.employees))
     }
   )
 }

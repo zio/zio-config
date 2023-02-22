@@ -1,11 +1,9 @@
 package zio.config.examples.typesafe
 
-import com.typesafe.config.ConfigRenderOptions
 import zio.config._
 import zio.config.examples.ZioOps
 import zio.{Config, ConfigProvider, IO}
 
-import typesafe._
 import magnolia._
 
 object TypesafeConfigList extends App with EitherImpureOps {

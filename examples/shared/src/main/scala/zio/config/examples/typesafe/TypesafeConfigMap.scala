@@ -1,11 +1,8 @@
 package zio.config.examples.typesafe
 
-import com.typesafe.config.ConfigRenderOptions
-import zio.Runtime.default
 import zio.config._
-import zio.config.examples._
 import zio.config.typesafe._
-import zio.{Config, ConfigProvider, IO, Unsafe}
+import zio.{Config, ConfigProvider, IO}
 
 import Config._
 

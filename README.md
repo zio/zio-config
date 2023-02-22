@@ -82,8 +82,7 @@ import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.NonEmpty
 import eu.timepit.refined.numeric.GreaterEqual
 import zio._
-import zio.config.magnolia.{describe, descriptor}
-import zio.config.typesafe.TypesafeConfigSource
+import zio.config._, typesafe._, magnolia._
 
 sealed trait DataSource
 
@@ -116,8 +115,8 @@ object ZIOConfigExample extends ZIOAppDefault {
   def run =
     for {
       _ <- ZIO.unit
-      source = TypesafeConfigSource.fromHoconString(json)
-      desc = descriptor[DataSource] from source
+      source = ConfigProvider.fromHoconString(json)
+      desc = deriveConfig[DataSource] from source
       dataSource <- read(desc)
       // Printing Auto Generated Documentation of Application Config
       _ <- Console.printLine(

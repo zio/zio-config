@@ -11,3 +11,5 @@ sidebar_label: "Resources"
     - Part 2: [Maximise the use of Scala types (Option & Either in zio-config)](https://www.youtube.com/watch?v=SusCbrSK5eA&t=0s)
     - Part 3: [Intro to ADT, and scalable configuration management!](https://www.youtube.com/watch?v=LGo_g1GK6_k&t=0s)
     - Part 4: [Auto generate sample configurations of your application in Scala](https://www.youtube.com/watch?v=--mcs4HztJY&t=0s)
+
+PS: Note that the videos use older version of zio-config. However, if you are new to Scala, you can still learn a lot from these videos.

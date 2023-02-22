@@ -12,6 +12,8 @@ There are various ways that zio-config can interact with refined library.
 Take a look at `zio.config.refined` package.
 
 ```scala mdoc:silent
+ import zio.Config
+ import zio.ConfigProvider
  import zio.config._, refined._
 
 ```
@@ -61,15 +63,13 @@ This shows the composable nature of zio-config.
 Take a look at the below example
 
 ```scala mdoc:silent
- import zio.config.magnolia.descriptor
-
  import eu.timepit.refined._, api._, numeric._, collection._
- import Config.list
+ import zio.config.magnolia.deriveConfig
 
  case class MyConfig(url: String, port: Int)
 
  val configs: Config[List[MyConfig]] =
-   listOf("databases")(descriptor[MyConfig])
+   Config.listOf("databases", deriveConfig[MyConfig])
 
  // A list of database configs, such that size should be greater than 2.
  val databaseList: Config[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
@@ -81,30 +81,29 @@ Take a look at the below example
 You can also use auto derivations with refined.
 
 ```scala mdoc:silent
+import zio.ConfigProvider
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.{ NonEmpty, Size }
-import zio.config.magnolia.descriptor
+import zio.config.magnolia.deriveConfig
 
 object RefinedReadConfig extends App {
   case class RefinedProd(
     ldap: Refined[String, NonEmpty],
     port: Refined[Int, GreaterEqual[W.`1024`.T]],
-    dbUrl: Option[Refined[String, NonEmpty]],
-    long: Refined[Long, GreaterEqual[W.`1024`.T]]
+    dbUrl: Option[Refined[String, NonEmpty]]
   )
 
   val configMap =
     Map(
       "LDAP"     -> "ldap",
       "PORT"     -> "1999",
-      "DBURL"   -> "ddd",
-      "LONG" -> "1234"
+      "DBURL"   -> "ddd"
     )
 
   val result =
-    ConfigProvider.from(configMap).load(deriveConfig[RefinedProd].mapKey(_.toUpperCase)))
+    ConfigProvider.fromMap(configMap).load(deriveConfig[RefinedProd].mapKey(_.toUpperCase))
 
-  // RefinedProd(ldap,1999,Some(ddd),1234)
+  // RefinedProd(ldap,1999,Some(ddd))
 }
 ```

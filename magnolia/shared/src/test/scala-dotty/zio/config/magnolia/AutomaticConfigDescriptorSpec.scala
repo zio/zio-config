@@ -44,20 +44,20 @@ object AutomaticConfigTestUtils {
   final case class DbUrl(value: String)
 
   final case class MyConfig(
-                             aws: Aws,
-                             cost: Price,
-                             dburl: DbUrl,
-                             port: Int,
-                             amount: Option[Long],
-                             quantity: Either[Long, String],
-                             default: Int = 1,
-                             anotherDefault: Boolean = true,
-                             descriptions: List[String],
-                             created: LocalDate,
-                             updated: LocalTime,
-                             lastVisited: LocalDateTime,
-                             id: UUID
-                           )
+    aws: Aws,
+    cost: Price,
+    dburl: DbUrl,
+    port: Int,
+    amount: Option[Long],
+    quantity: Either[Long, String],
+    default: Int = 1,
+    anotherDefault: Boolean = true,
+    descriptions: List[String],
+    created: LocalDate,
+    updated: LocalTime,
+    lastVisited: LocalDateTime,
+    id: UUID
+  )
 
   private val genPriceDescription = Gen.const(Description("some description"))
   private val genCurrency: Gen[Any, Currency] = Gen.double(10.0, 20.0).map(Currency.apply)

@@ -1,24 +1,32 @@
 package zio.config.pureconfig
 
-import zio.{Scope, ZIO}
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
+import zio.{ConfigProvider, Scope, ZIO}
 
 object PureconfigTest extends BaseSpec {
   override val spec: Spec[TestEnvironment with Scope, Any] =
     suite("Pureconfig support")(
-      test("vector roundtrip") {
-        check(Gen.vectorOf(Gen.string)) { v =>
-          val cfg = fromPureconfig[Vector[String]]
-          val v2  =
-            for {
-              written <- ZIO.fromEither(write(cfg, v))
-              reread  <- read(cfg from ConfigSource.fromPropertyTree(written, "tree"))
-            } yield reread
+      test("empty vector") {
+        val pureConfig = fromPureconfig[Vector[String]]
+        val v2         =
+          for {
+            provider         <- ZIO.succeed(ConfigProvider.fromMap(Map("k" -> "[]")))
+            pureConfigResult <- provider.load(pureConfig.nested("k"))
+          } yield pureConfigResult
 
-          assertZIO(v2)(equalTo(v))
-        }
+        assertZIO(v2)(equalTo(Vector.empty))
+      },
+      test("nonEmpty vector") {
+        val pureConfig = fromPureconfig[Vector[String]]
+        val v2         =
+          for {
+            provider         <- ZIO.succeed(ConfigProvider.fromMap(Map("k" -> "[a, b, c]")))
+            pureConfigResult <- provider.load(pureConfig.nested("k"))
+          } yield pureConfigResult
+
+        assertZIO(v2)(equalTo(Vector("a", "b", "c")))
       }
     )
 }

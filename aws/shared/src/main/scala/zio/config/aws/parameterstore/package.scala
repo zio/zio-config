@@ -5,7 +5,6 @@ import com.amazonaws.services.simplesystemsmanagement.{
   AWSSimpleSystemsManagementClientBuilder
 }
 import zio._
-import zio.config._
 
 package object parameterstore {
 

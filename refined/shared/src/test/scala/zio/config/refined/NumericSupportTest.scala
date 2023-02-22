@@ -3,14 +3,14 @@ package zio.config.refined
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.numeric.{Divisible, Greater, GreaterEqual, Less, LessEqual, NonDivisible}
-import zio.{Config, ConfigProvider, ZIO}
+import zio.config._
 import zio.test.Assertion._
 import zio.test._
-import zio.config._
+import zio.{Config, ConfigProvider, Scope, ZIO}
 
 object NumericSupportTest extends ZIOSpecDefault {
 
-  override val spec =
+  override val spec: Spec[Environment with TestEnvironment with Scope, Any] =
     suite("Refined Numeric support")(
       test("Refined config Less invalid") {
         check(Gen.int(10, 100)) { p =>
