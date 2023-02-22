@@ -2,7 +2,6 @@ package zio.config.cats
 
 import _root_.cats.kernel.Semigroup
 import cats._
-import zio.config._
 import zio.{Config, ConfigProvider}
 
 package object instances {
