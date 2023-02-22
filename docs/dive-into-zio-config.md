@@ -50,7 +50,7 @@ It will be deprecated once we find users have moved on from scala 2.11.
 
 ```scala mdoc:silent
 import zio.config._
-import zio.config.magnolia.{Descriptor, descriptor}
+import zio.config.magnolia._
 
 val myConfigAutomatic = deriveConfig[MyConfig]
 ```
@@ -133,7 +133,7 @@ It will be deprecated once we find users have moved on from scala 2.11.
 
 ```scala mdoc:silent
 import zio.config._
-import zio.config.magnolia.{Descriptor, descriptor}
+import zio.config.magnolia._
 
 val myConfigAutomatic = deriveConfig[MyConfig]
 ```

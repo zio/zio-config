@@ -206,7 +206,7 @@ Custom descriptors are also needed in case you use value classes to describe you
 together with automatic derivation and those implicit custom descriptors will be taken automatically into account
 
 ```scala
-import zio.config.magnolia.{descriptor, Descriptor}
+import zio.config.magnolia._
 
 final case class AwsRegion(value: String) extends AnyVal {
   override def toString: String = value
