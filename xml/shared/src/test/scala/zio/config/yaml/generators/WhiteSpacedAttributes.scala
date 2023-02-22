@@ -1,9 +1,8 @@
 package zio.config.yaml.generators
 import zio.Chunk
 import zio.config.xml.XmlObject
-import zio.test.Gen
 import zio.config.yaml.generators.WhiteSpacedAttributes.RandomAttribute
-
+import zio.test.Gen
 
 final case class WhiteSpacedAttributes private (value: Chunk[(RandomAttribute, Space)]) {
 
@@ -39,7 +38,7 @@ object WhiteSpacedAttributes {
 
   object RandomAttribute {
 
-    def gen =
+    def gen: Gen[Any, RandomAttribute] =
       for {
         start                     <- Space.gen(0)
         stop                      <- Space.gen(0)

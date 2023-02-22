@@ -1,9 +1,9 @@
 package zio.config.xml
 
 import zio.Chunk
-import zio.parser.Parser
 import zio.config.xml.Parsers._
 import zio.config.xml.XmlObject.TagElement
+import zio.parser.Parser
 
 object XmlParser {
 
@@ -36,7 +36,7 @@ object XmlParser {
             TagElement(
               name,
               attributes,
-              Chunk.fromIterable(xmlObject).flatten
+              Chunk.fromIterable(xmlObject.toList).flatten
             )
           )
         } else {

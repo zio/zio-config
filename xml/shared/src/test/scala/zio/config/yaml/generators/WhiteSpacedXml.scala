@@ -62,7 +62,7 @@ object WhiteSpacedXml {
 
   final case class Children(value: Either[WhiteSpacedText, Chunk[WhiteSpacedXml]])
 
-  def gen(minAttributes: Int, maxAttributes: Int) =
+  def gen(minAttributes: Int, maxAttributes: Int): Gen[Any, WhiteSpacedXml] =
     for {
       open     <- WhiteSpacedOpenTag.gen(minAttributes, maxAttributes)
       children <- Gen.option(WhiteSpacedText.gen.map(value => Children(Left(value))))

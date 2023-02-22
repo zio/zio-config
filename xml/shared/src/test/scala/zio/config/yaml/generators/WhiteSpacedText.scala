@@ -18,9 +18,9 @@ object WhiteSpacedText {
   def gen(minPreSpace: Int, minPostSpace: Int): Gen[Any, WhiteSpacedText] =
     for {
       start <- Space.gen(minPreSpace)
-      stop <- Space.gen(minPostSpace)
+      stop  <- Space.gen(minPostSpace)
       chars <- Gen.chunkOfN(30)(Gen.char)
-      text = chars.filterNot(InvalidTextCharacters.list.contains).mkString.trim
+      text   = chars.filterNot(InvalidTextCharacters.list.contains).mkString.trim
     } yield WhiteSpacedText(start, text, stop)
 
 }

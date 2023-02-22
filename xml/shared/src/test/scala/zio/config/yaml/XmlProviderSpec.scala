@@ -1,11 +1,11 @@
 package zio.config.yaml
 
-import zio.{Config, ConfigProvider}
-import zio.test._
-import zio.test.Assertion._
-import zio.config.xml._
 import zio.config._
+import zio.config.xml._
 import zio.config.yaml.XmlProviderSpec.Configuration.{Aws, Database}
+import zio.test.Assertion._
+import zio.test._
+import zio.{Config, ConfigProvider}
 
 object XmlProviderSpec extends ZIOSpecDefault {
 
@@ -27,7 +27,7 @@ object XmlProviderSpec extends ZIOSpecDefault {
     }
   }
 
-  def spec =
+  def spec: Spec[Any, Config.Error] =
     suite("Xml config provider spec")(
       test("load simple xml") {
 

@@ -2,7 +2,7 @@ package zio.config.yaml.generators
 
 object InvalidTextCharacters {
 
-  val list =
+  val list: List[Char] =
     List('<', '>')
 
 }

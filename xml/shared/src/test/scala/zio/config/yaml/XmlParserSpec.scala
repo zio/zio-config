@@ -1,13 +1,14 @@
 package zio.config.yaml
 
+import zio.Scope
 import zio.config.xml.XmlParser
 import zio.config.yaml.generators.{Space, WhiteSpacedXml}
-import zio.test._
 import zio.test.Assertion._
+import zio.test._
 
 object XmlParserSpec extends ZIOSpecDefault {
 
-  def spec =
+  def spec: Spec[Environment with TestEnvironment with Scope, Any] =
     suite("Xml parser spec")(
       test("test xml with zero children and with zero attributes") {
         check(
@@ -44,7 +45,7 @@ object XmlParserSpec extends ZIOSpecDefault {
           val config =
             anyXml.printWith(space)
 
-          val parsed = XmlParser.parse(config)
+          val parsed   = XmlParser.parse(config)
           val expected = anyXml.toXmlObject
 
           assert(parsed)(equalTo(Right(expected)))

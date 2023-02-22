@@ -8,7 +8,7 @@ sealed trait Space {
 
   def print: String =
     this match {
-      case Space.WhiteSpace(char) =>
+      case Space.WhiteSpace(char)       =>
         Printer.print(char.toString)
       case Space.Multiple(total, space) =>
         Printer.print(List.fill(total)(space.print): _*)
@@ -31,7 +31,7 @@ object Space {
   def gen(minSpace: Int): Gen[Any, Space] =
     for {
       totalSpaces <- Gen.int(minSpace, 10)
-      charSpace <- Gen.oneOf(UnicodeEmptyCharacters.map(Gen.const(_)): _*)
+      charSpace   <- Gen.oneOf(UnicodeEmptyCharacters.map(Gen.const(_)): _*)
     } yield Multiple(totalSpaces, WhiteSpace(charSpace))
 
   final case class WhiteSpace(char: Char) extends Space

@@ -1,9 +1,9 @@
 package zio.config.xml
 
 import com.github.ghik.silencer.silent
+import zio.ConfigProvider
 import zio.config.IndexedFlat.ConfigPath
 import zio.config._
-import zio.ConfigProvider
 
 @silent("Unused import")
 object XmlConfigProvider {
