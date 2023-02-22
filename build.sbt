@@ -350,6 +350,23 @@ lazy val zioConfigYaml    = crossProject(JVMPlatform)
 lazy val zioConfigYamlJVM = zioConfigYaml.jvm
   .settings(dottySettings)
 
+lazy val zioConfigXml    = crossProject(JVMPlatform)
+  .in(file("xml"))
+  .settings(stdSettings("zio-config-xml"))
+  .settings(crossProjectSettings)
+  .settings(
+    libraryDependencies ++= Seq(
+      "dev.zio" %% "zio-parser"   % "0.1.8",
+      "dev.zio" %% "zio-test"     % zioVersion % Test,
+      "dev.zio" %% "zio-test-sbt" % zioVersion % Test
+    ),
+    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+  )
+  .dependsOn(zioConfig % "compile->compile;test->test")
+
+lazy val zioConfigXmlJVM = zioConfigXml.jvm
+  .settings(dottySettings)
+
 lazy val zioConfigScalaz    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("scalaz"))
   .settings(stdSettings("zio-config-scalaz"))
