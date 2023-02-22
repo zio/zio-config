@@ -10,10 +10,8 @@ to handle more complex sources will be provided soon.
 Forming a source gets into a standard pattern, and is easy for you to add another one.
 
 ```scala mdoc:silent
-import zio.IO
-import zio.Config
-import zio.config._, Config._, ConfigProvider._
-import zio.config.magnolia._
+import zio._, Config._, ConfigProvider._
+import zio.config._, magnolia._
 ```
 
 ```scala mdoc:silent
