@@ -80,100 +80,13 @@ source.load(myConfig)
 
 ```
 
-You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application.
-
-## How to use config desc---
-id: dive-into-zio-config
-title: "Dive Into ZIO Config"
----
-
-__Note that this documentation is for 1.x series. For newer versions, please refer to [docs](https://github.com/zio/zio-config/tree/master/docs) section in GitHub.__
-
-## Describe the config by hand
-
-We must fetch the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
-
-```scala mdoc:silent
-import zio.IO
-
-import zio.config._
-import zio.Config, Config._
-
-```
-
-```scala mdoc:silent
-case class MyConfig(ldap: String, port: Int, dburl: String)
-```
-To perform any action using zio-config, we need a configuration description.
-Let's define a simple one.
-
-
-```scala mdoc:silent
-val myConfig: Config[MyConfig] =
-  (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
-
- // Config[MyConfig]
-```
-
-To get a tuple,
-
-```scala mdoc:silent
-val myConfigTupled: Config[(String, Int, String)] =
-  (string("LDAP") zip int("PORT") zip string("DB_URL"))
-```
-
-## Fully automated Config Description
-
-If you don't like describing your configuration manually, and rely on the names of the parameter in the case class (or sealed trait),
-there is a separate module called `zio-config-magnolia`.
-
-Note:  `zio-config-shapeless` is an alternative to `zio-config-magnolia` to support scala 2.11 projects.
-It will be deprecated once we find users have moved on from scala 2.11.
-
-
-```scala mdoc:silent
-import zio.config._
-import zio.config.magnolia._
-
-val myConfigAutomatic = deriveConfig[MyConfig]
-```
-
-`myConfig` and `myConfigAutomatic` are same description, and is of the same type.
-
-Refer to API docs for more explanations on [descriptor](https://javadoc.io/static/dev.zio/zio-config-magnolia_2.13/1.0.0-RC31-1/zio/config/magnolia/index.html#descriptor[A](implicitconfig:zio.config.magnolia.package.Descriptor[A]):zio.Config[A])
-More examples on automatic derivation is in examples module of [zio-config](https://github.com/zio/zio-config)
-
-## Read config from various sources
-
-There are more information on various sources in [here](read-from-various-sources.md).
-
-Below given is a simple example.
-
-```scala mdoc:silent
-val map =
-  Map(
-    "LDAP" -> "xyz",
-    "PORT" -> "8888",
-    "DB_URL" -> "postgres"
-  )
-
-val source = ConfigProvider.fromMap(map)
-
-source.load(myConfig)
-
-```
-
-You can run this to [completion](https://zio.dev/docs/getting_started.html#main) as in any zio application.
-
-## How to use config descriptor
-
 ### Readers from configdescriptor
 
 As mentioned before, you can use config descriptor to read from various sources.
 
 ```scala mdoc:silent
 val anotherResult =
-  read(myConfig from source)
+  source.load(myConfig)
 ```
 
 Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the previous section.
@@ -281,5 +194,6 @@ val str =
    }
   """
 
-read(descriptorForPureConfig[AppConfig] from ConfigSource.fromHoconString(str))
+ConfigProvider.fromHoconString(str).load(deriveConfig[AppConfig])
+
 ```
