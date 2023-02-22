@@ -103,7 +103,7 @@ object RefinedReadConfig extends App {
     )
 
   val result =
-    ConfigProvider.from(configMap).load(deriveConfig[RefinedProd].mapKey(_.toUpperCase)))
+    ConfigProvider.from(configMap).load(deriveConfig[RefinedProd].mapKey(_.toUpperCase))
 
   // RefinedProd(ldap,1999,Some(ddd),1234)
 }
