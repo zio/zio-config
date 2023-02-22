@@ -69,9 +69,9 @@ addCommandAlias(
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test"
 )
 
-val awsVersion        = "1.12.360"
+val awsVersion        = "1.12.395"
 val zioAwsVersion     = "5.19.8.1"
-val zioVersion        = "2.0.5"
+val zioVersion        = "2.0.9"
 val magnoliaVersion   = "0.17.0"
 val refinedVersion    = "0.10.1"
 val pureconfigVersion = "0.16.0"
@@ -410,7 +410,7 @@ lazy val zioConfigScalaz    = crossProject(JSPlatform, JVMPlatform, NativePlatfo
   .settings(
     crossScalaVersions --= Seq(Scala211, Scala212),
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-core"  % "7.4.0-M12",
+      "org.scalaz" %% "scalaz-core"  % "7.4.0-M13",
       "dev.zio"    %% "zio-test"     % zioVersion % Test,
       "dev.zio"    %% "zio-test-sbt" % zioVersion % Test
     ),
