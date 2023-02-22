@@ -62,15 +62,14 @@ This shows the composable nature of zio-config.
 Take a look at the below example
 
 ```scala mdoc:silent
- import zio.config.magnolia.descriptor
-
  import eu.timepit.refined._, api._, numeric._, collection._
- import Config.list
+ import zio.Config
+ import zio.config.magnolia.deriveConfig
 
  case class MyConfig(url: String, port: Int)
 
  val configs: Config[List[MyConfig]] =
-   listOf("databases")(descriptor[MyConfig])
+   Config.listOf("databases", deriveConfig[MyConfig])
 
  // A list of database configs, such that size should be greater than 2.
  val databaseList: Config[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
@@ -82,6 +81,7 @@ Take a look at the below example
 You can also use auto derivations with refined.
 
 ```scala mdoc:silent
+import zio.ConfigProvider
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.{ NonEmpty, Size }
