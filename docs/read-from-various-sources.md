@@ -11,7 +11,8 @@ Forming a source gets into a standard pattern, and is easy for you to add anothe
 
 ```scala mdoc:silent
 import zio.IO
-import zio.config._, Config._, ConfigSource._
+import zio.Config
+import zio.config._, Config._, ConfigProvider._
 import zio.config.magnolia._
 ```
 
@@ -49,34 +50,6 @@ val io = mapSource.load(myConfig)
 
 ```
 
-Alternatively you can follow below snippet, yielding Config[MyConfig], which you can use as ZIO environment.
-
-```scala mdoc:silent
-ZConfig.fromMap(Map(), myConfig)
-// yielding Config[MyConfig], which is a service of config that you can use as ZIO environments.
-```
-
-## Multi Map Source
-
-This support a list of values for a key.
-
-```scala mdoc:silent
-case class ListConfig(ldap: String, port: List[Int], dburl: String)
-
-val listConfig = (string("LDAP") zip listOf("PORT")(int) zip string("DB_URL")).to[ListConfig]
-
-val multiMapSource =
-  ConfigSource.fromMultiMap(
-    Map(
-      "LDAP" -> ::("xyz",  Nil),
-      "PORT" -> ::("1222" , "2221" :: Nil),
-      "DB_URL" -> ::("postgres",  Nil)
-    )
-  )
-
-read(myConfig from multiMapSource)
-// Running this to completion yields ListConfig(xyz, List(1222, 2221), postgres)
-```
 
 ## HOCON String
 
@@ -148,4 +121,4 @@ ConfigProvider.fromHoconString(jsonString)
 
 ## Yaml FIle
 
-Similar to Hocon source, the only difference is `ConfigSource.fromYamlString`
+Similar to Hocon source, the only difference is `ConfigProvider.fromYamlString`
