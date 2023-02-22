@@ -52,7 +52,7 @@ package object refined {
    *   final case class MyConfig(url: String, port: Int)
    *
    *   val configs: Config[List[MyConfig]] =
-   *     listOf("databases")(descriptor[MyConfig])
+   *     listOf("databases", deriveConfig[MyConfig])
    *
    *   val configDescriptor: Config[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
    *     refined[Size[Greater[W.`2`.T]]](configs)

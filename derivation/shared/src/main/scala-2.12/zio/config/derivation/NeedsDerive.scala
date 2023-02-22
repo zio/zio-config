@@ -13,7 +13,7 @@ object NeedsDerive extends NeedsDerive[Nothing] {
 
   @implicitAmbiguous(
     "Can't derive ConfigDescriptor for `List[T]` directly." +
-      " Wrap it with a `case class Config(list: List[T])` or use `listOf(descriptor[T])` manually."
+      " Wrap it with a `case class Config(list: List[T])` or use `Config.listOf(deriveConfig[T])` manually."
   )
   implicit def needsDeriveAmbiguousList1: NeedsDerive[List[Nothing]] = NeedsDerive
   implicit def needsDeriveAmbiguousList2: NeedsDerive[List[Nothing]] = NeedsDerive

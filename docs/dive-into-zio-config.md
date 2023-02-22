@@ -13,6 +13,7 @@ We must fetch the configuration from the environment to a case class (product) i
 import zio.IO
 
 import zio.config._
+import zio.ConfigProvider
 import zio.Config, Config._
 
 ```

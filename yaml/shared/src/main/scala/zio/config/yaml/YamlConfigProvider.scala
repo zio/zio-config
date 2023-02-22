@@ -28,8 +28,8 @@ object YamlConfigProvider {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Either[Config.Error, MyConfig] =
-   *     YamlConfigSource.fromYamlFile(new File("/path/to/file.yaml"))
-   *       .flatMap(source => read(descriptor[MyConfig] from source)))
+   *     ConfigProvider.fromYamlFile(new File("/path/to/file.yaml"))
+   *       .flatMap(source => read(deriveConfig[MyConfig] from source)))
    * }}}
    */
   def fromYamlFile(file: File): ConfigProvider =
@@ -45,8 +45,8 @@ object YamlConfigProvider {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Either[Config.Error, MyConfig] =
-   *     YamlConfigSource.fromYamlPath(Path.of("/path/to/file.yaml"))
-   *       .flatMap(source => read(descriptor[MyConfig] from source)))
+   *     ConfigProvider.fromYamlPath(Path.of("/path/to/file.yaml"))
+   *       .flatMap(source => read(deriveConfig[MyConfig] from source)))
    * }}}
    */
   def fromYamlPath(path: Path): ConfigProvider =
@@ -72,8 +72,8 @@ object YamlConfigProvider {
    *   val myConfig: InputStreamReader => IO[Config.Error, MyConfig] = reader =>
    *     IO.fromEither(
    *        for {
-   *          source <- YamlConfigSource.fromYamlReader(reader)
-   *          myConfig <- read(descriptor[MyConfig] from source)
+   *          source <- ConfigProvider.fromYamlReader(reader)
+   *          myConfig <- read(deriveConfig[MyConfig] from source)
    *        } yield myConfig
    *     )
    *
@@ -97,8 +97,8 @@ object YamlConfigProvider {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: Either[Config.Error, MyConfig] =
-   *     YamlConfigSource.fromYamlString(yamlString))
-   *       .flatMap(source => read(descriptor[MyConfig] from source)))
+   *     ConfigProvider.fromYamlString(yamlString))
+   *       .flatMap(source => read(deriveConfig[MyConfig] from source)))
    * }}}
    */
   def fromYamlString(

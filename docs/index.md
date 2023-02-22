@@ -9,6 +9,9 @@ sidebar_label: "Getting Started"
 _ZIO Config_ acts an extension to ZIO's `Config` with documentation support, with more complex data-sources, backed by an `IndexedFlat`
 Most of the configuration sources are relying on `IndexedFlat`.
 
+More documentation around `IndexedFlat` (an extension of  ZIO's  `ConfigProvider.Flat`)
+to handle more complex sources will be provided soon.
+
 @PROJECT_BADGES@
 
 ## Introduction

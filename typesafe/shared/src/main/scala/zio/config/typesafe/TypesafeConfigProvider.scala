@@ -25,26 +25,26 @@ object TypesafeConfigProvider {
    *   case class MyConfig(port: Int, url: String)
    *
    *   val result: IO[Config.Error, MyConfig] =
-   *    TypesafeConfigSource.fromResourcePath.load(deriveConfig[MyConfig])
+   *    ConfigProvider.fromResourcePath.load(deriveConfig[MyConfig])
    * }}}
    */
   def fromResourcePath: ConfigProvider =
     fromTypesafeConfig(ConfigFactory.load.resolve)
 
   /**
-   * Retrieve a `ConfigSource` from `typesafe-config` from a given config file
+   * Retrieve a `ConfigProvider` from `typesafe-config` from a given config file
    */
   def fromHoconFile[A](file: File): ConfigProvider =
     fromTypesafeConfig(ConfigFactory.parseFile(file).resolve)
 
   /**
-   * Retrieve a `ConfigSource` from `typesafe-config` from a path to a config file
+   * Retrieve a `ConfigProvider` from `typesafe-config` from a path to a config file
    */
   def fromHoconFilePath[A](filePath: String): ConfigProvider =
     fromHoconFile(new File(filePath))
 
   /**
-   * Retrieve a `ConfigSource` from `typesafe-config` HOCON string.
+   * Retrieve a `ConfigProvider` from `typesafe-config` HOCON string.
    */
 
   def fromHoconString(input: String): ConfigProvider =
