@@ -9,7 +9,7 @@ import zio.config._
 object XmlConfigProvider {
 
   /**
-   * Retrieve a `ConfigProvider` from yaml string.
+   * Retrieve a `ConfigProvider` from xml string.
    */
   def fromXmlString(string: String): ConfigProvider =
     XmlParser.parse(string) match {
