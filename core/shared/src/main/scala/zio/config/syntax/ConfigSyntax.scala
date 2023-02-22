@@ -161,7 +161,6 @@ trait ConfigSyntax {
           case Zipped(left, right, zippable)  => Zipped(loop(left), loop(right), zippable)
           case Lazy(thunk)                    => Lazy(() => loop(thunk()))
           case primitive: Config.Primitive[B] => primitive
-          case Fail(message)                  => Fail(message)
         }
 
       loop(config)
