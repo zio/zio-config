@@ -4,7 +4,7 @@
 
 # ZIO Config
 
-[ZIO Config](zio.dev/zio-config) is a ZIO-based library for loading and parsing configuration sources.
+[ZIO Config](https://zio.dev/zio-config/) is a ZIO-based library for loading and parsing configuration sources.
 
 _ZIO Config_ offloads all parsing and file formats to other libraries, and just focuses on being the _interface_ to configuration data throughout an application.
 
