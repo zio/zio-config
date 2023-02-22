@@ -13,6 +13,7 @@ Take a look at `zio.config.refined` package.
 
 ```scala mdoc:silent
  import zio.Config
+ import zio.ConfigProvider
  import zio.config._, refined._
 
 ```
@@ -63,7 +64,6 @@ Take a look at the below example
 
 ```scala mdoc:silent
  import eu.timepit.refined._, api._, numeric._, collection._
- import zio.Config
  import zio.config.magnolia.deriveConfig
 
  case class MyConfig(url: String, port: Int)
@@ -81,7 +81,6 @@ Take a look at the below example
 You can also use auto derivations with refined.
 
 ```scala mdoc:silent
-import zio.ConfigProvider
 import eu.timepit.refined.W
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.{ NonEmpty, Size }
