@@ -2,7 +2,7 @@ package zio.config.examples.typesafe
 
 import zio.config._
 import zio.config.typesafe._
-import zio.{Config, ConfigProvider, IO, Unsafe}
+import zio.{Config, ConfigProvider, IO}
 
 import Config._
 

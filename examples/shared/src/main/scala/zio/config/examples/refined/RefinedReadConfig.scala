@@ -1,11 +1,11 @@
 package zio.config.examples.refined
 
 import eu.timepit.refined.api.Refined
-import eu.timepit.refined.collection.{NonEmpty}
+import eu.timepit.refined.collection.NonEmpty
+import zio.ConfigProvider
 import zio.config._
 import zio.config.examples.ZioOps
 import zio.config.refined._
-import zio.{ConfigProvider}
 
 object RefinedReadConfig extends App {
   case class RefinedProd(

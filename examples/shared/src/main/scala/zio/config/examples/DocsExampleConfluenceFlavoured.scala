@@ -3,8 +3,6 @@ package zio.config.examples
 import zio.Config
 import zio.config._
 
-import Config._
-
 object DocsExample extends App {
 
   final case class Database(port: Int, url: Option[String])
