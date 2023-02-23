@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
       - name: Setup Scala and Java
         uses: olafurpg/setup-scala@v14
       - name: Cache scala dependencies
@@ -37,7 +37,7 @@ jobs:
         platform: ['JS', 'JVM', 'Native']
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
         with:
           fetch-depth: 0
       - name: Setup Scala and Java
@@ -73,7 +73,7 @@ jobs:
     if: github.event_name != 'pull_request'
     steps:
       - name: Checkout current branch
-        uses: actions/checkout@v3.2.0
+        uses: actions/checkout@v3.3.0
         with:
           fetch-depth: 0
       - name: Setup Scala and Java
