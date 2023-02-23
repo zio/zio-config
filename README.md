@@ -4,35 +4,20 @@
 
 # ZIO Config
 
-[ZIO Config](https://zio.dev/zio-config/) is a ZIO-based library for loading and parsing configuration sources.
+[ZIO Config](https://zio.dev/zio-config/) is a ZIO-based library and act as an extension to core library ZIO's `Config` language.
 
-_ZIO Config_ offloads all parsing and file formats to other libraries, and just focuses on being the _interface_ to configuration data throughout an application.
 
 [![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)](https://github.com/zio/zio/wiki/Project-Stages) ![CI Badge](https://github.com/zio/zio-config/workflows/CI/badge.svg) [![Sonatype Releases](https://img.shields.io/nexus/r/https/oss.sonatype.org/dev.zio/zio-config_2.13.svg?label=Sonatype%20Release)](https://oss.sonatype.org/content/repositories/releases/dev/zio/zio-config_2.13/) [![Sonatype Snapshots](https://img.shields.io/nexus/s/https/oss.sonatype.org/dev.zio/zio-config_2.13.svg?label=Sonatype%20Snapshot)](https://oss.sonatype.org/content/repositories/snapshots/dev/zio/zio-config_2.13/) [![javadoc](https://javadoc.io/badge2/dev.zio/zio-config-docs_2.13/javadoc.svg)](https://javadoc.io/doc/dev.zio/zio-config-docs_2.13) [![ZIO Config](https://img.shields.io/github/stars/zio/zio-config?style=social)](https://github.com/zio/zio-config)
 
-## Introduction
-
-In the real world, config retrieval is the first to develop applications. We mostly have some application config that should be loaded and parsed through our application. Doing such things manually is always boring and error-prone and also has lots of boilerplates.
-
-The library aims to have a powerful & purely functional, yet a thin interface to access configuration information inside an application. 
-
-The ZIO Config has a lot of features, and it is more than just a config parsing library. Let's enumerate some key features of this library:
+Let's enumerate some key features of this library:
 
 - **Support for Various Sources** — It can read/write flat or nested configurations from/to various formats and sources.
-- **Composable sources** — ZIO Config can compose sources of configuration, so we can have, e.g. environmental or command-line overrides.
 - **Automatic Document Generation** — It can auto-generate documentation of configurations. So developers or DevOps engineers know how to configure the application.
-- **Report generation** — It has a report generation that shows where each piece of configuration data came from.
 - **Automatic Derivation** — It has built-in support for automatic derivation of readers and writers for case classes and sealed traits.
 - **Type-level Constraints and Automatic Validation** — because it supports _Refined_ types, we can write type-level predicates which constrain the set of values described for data types.
 - **Descriptive Errors** — It accumulates all errors and reports all of them to the user rather than failing fast.
+- **Integrations** — Integrations with a variety of libraries
 
-Using a single definition of configuration requirements, which can be derived automatically from your data types, _ZIO Config_ offers a bundle of features for free:
-
-* Read flat or nested config data from any format, with descriptive errors
-* Write flat or nested config data into any format
-* Compose sources of configuration, so you can have, e.g., environmental or command-line overrides
-* Automatically generate documentation so devs / devops know how to configure the application
-* Generate a report that shows where each piece of configuration data came from
 
 If you are only interested in automatic derivation of configuration, find the details [here](http://zio.dev/zio-config/automatic-derivation-of-config-descriptor).
 
@@ -41,26 +26,7 @@ If you are only interested in automatic derivation of configuration, find the de
 In order to use this library, we need to add the following line in our `build.sbt` file:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config" % "3.0.7" 
-```
-
-There are also some optional dependencies:
-
-```scala
-// Optional Dependency with magnolia module (Auto derivation)
-libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "3.0.7"
-
-// Optional Dependency with refined module (Integration with refined library)
-libraryDependencies += "dev.zio" %% "zio-config-refined" % "3.0.7"
-
-// Optional Dependency with typesafe module (HOCON/Json source)
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "3.0.7"
-
-// Optional Dependency with yaml module (Yaml source)
-libraryDependencies += "dev.zio" %% "zio-config-yaml" % "3.0.7"
-
-// Optional Dependency for a random generation of a config
-libraryDependencies += "dev.zio" %% "zio-config-gen" % "3.0.7"
+libraryDependencies += "dev.zio" %% "zio-config" % "4.0.0-RC8" 
 ```
 
 ## Example
@@ -68,10 +34,10 @@ libraryDependencies += "dev.zio" %% "zio-config-gen" % "3.0.7"
 Let's add these four lines to our `build.sbt` file as we are using these modules in our example:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config"          % "3.0.7"
-libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "3.0.7"
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "3.0.7"
-libraryDependencies += "dev.zio" %% "zio-config-refined"  % "3.0.7"
+libraryDependencies += "dev.zio" %% "zio-config"          % "4.0.0-RC8"
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "4.0.0-RC8"
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "4.0.0-RC8"
+libraryDependencies += "dev.zio" %% "zio-config-refined"  % "4.0.0-RC8"
 ```
 
 In this example we are reading from HOCON config format using type derivation:
@@ -116,11 +82,11 @@ object ZIOConfigExample extends ZIOAppDefault {
     for {
       _ <- ZIO.unit
       source = ConfigProvider.fromHoconString(json)
-      desc = deriveConfig[DataSource] from source
-      dataSource <- read(desc)
+      config = deriveConfig[DataSource]
+      dataSource <- source.load(config)
       // Printing Auto Generated Documentation of Application Config
       _ <- Console.printLine(
-        generateDocs(desc).toTable.toGithubFlavouredMarkdown
+        generateDocs(config).toTable.toGithubFlavouredMarkdown
       )
       _ <- dataSource match {
         case Database(host, port) =>
@@ -135,7 +101,6 @@ object ZIOConfigExample extends ZIOAppDefault {
 
 There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples) straight away as well.
 
-Try out _ZIO Config_ quickly in [Scastie](https://scastie.scala-lang.org/WMlkdQeZQvm4yDyZ0pigJA), which comes pre-loaded with an example in scala-3. We try to make sure the scastie-buildsettings are updated with latest version of _ZIO Config_.
 
 ## Documentation
 
