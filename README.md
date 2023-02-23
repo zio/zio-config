@@ -29,7 +29,7 @@ In order to use this library, we need to add the following line in our `build.sb
 libraryDependencies += "dev.zio" %% "zio-config" % "4.0.0-RC9" 
 ```
 
-## Quick Start
+# Quick Start
 
 Let's add these four lines to our `build.sbt` file as we are using these modules in our examples:
 
@@ -110,7 +110,7 @@ generatedDocs(deriveConfig[AppConfig]).toTable.toGithubFlavouredMarkdown
 
 `zio-config` is also integrated with `enumeratum`, `cats`, and `scalaz`
 
-### Enumeratum basic example
+#### Enumeratum
 
 Many applications rely on this beautiful library https://github.com/lloydmeta/enumeratum.
 Zio-config can directly load it from enumeratum's `enum` without relying any auto-derivation.
@@ -150,7 +150,7 @@ Zio-config can directly load it from enumeratum's `enum` without relying any aut
 
 ```
 
-### Here is one with the the Scalaz (similar to cats)!
+#### Scalaz/Cats
 
 Highly polymorphic code end up relying on
 on typeclasses, and zio-config provides instances for `Config`.
