@@ -110,7 +110,52 @@ generatedDocs(deriveConfig[AppConfig]).toTable.toGithubFlavouredMarkdown
 
 `zio-config` is also integrated with `enumeratum`, `cats`, and `scalaz`
 
-Here is one with the the Scalaz!
+### Enumeratum basic example
+
+Many applications rely on this beautiful library https://github.com/lloydmeta/enumeratum.
+Zio-config can directly load it from enumeratum's `enum` without relying any auto-derivation.
+
+```scala
+
+ sealed trait Greeting extends EnumEntry
+
+  object Greeting extends Enum[Greeting] {
+
+    val values = findValues
+
+    case object Hello extends Greeting
+    case object GoodBye extends Greeting
+    case object Hi extends Greeting
+    case object Bye extends Greeting
+
+  }
+
+
+  // Load using zio-config
+  import zio.config.enumeratum._
+
+  val mapProvider =
+    ConfigProvider.fromMap(Map(
+      "greeting" -> "Hello"
+    ))
+
+  val config =
+    `enum`(Greeting).nested("greeting")
+
+  val pgm: IO[Error, Greeting] =
+    mapProvider.load(config)
+    
+  // Returns Hello  
+    
+
+```
+
+### Here is one with the the Scalaz (similar to cats)!
+
+Highly polymorphic code end up relying on
+on typeclasses, and zio-config provides instances for `Config`.
+
+This is a simple example to showcase the capability
 
 ```scala
 
@@ -128,6 +173,18 @@ Here is one with the the Scalaz!
  ConfigProvider.fromMap(Map("marks1" -> "10", "marks2" -> "20")).load(configResult) // returns 30
  
 
+```
+
+In addition to it, it can also load cats/scalaz specific datatypes
+
+```scala
+
+  import zio.config.scalaz._
+  import _root_.scalaz.Maybe
+
+  
+  val config: Config[Maybe[Int]] = maybe(Config.int("age"))
+  
 ```
 
 ## Documentation
