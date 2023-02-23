@@ -47,12 +47,12 @@ trait ConfigSyntax {
 
       def parallelSegments(readError: Config.Error): List[Sequential] =
         readError match {
-          case And(left, right)                        => parallelSegments(left) ++ parallelSegments(right)
-          case InvalidData(path, message)              => List(readErrorToSequential(readError))
-          case MissingData(path, message)              => List(readErrorToSequential(readError))
-          case Or(left, right)                         => List(readErrorToSequential(readError))
-          case SourceUnavailable(path, message, cause) => List(readErrorToSequential(readError))
-          case Unsupported(path, message)              => List(readErrorToSequential(readError))
+          case And(left, right)           => parallelSegments(left) ++ parallelSegments(right)
+          case InvalidData(_, _)          => List(readErrorToSequential(readError))
+          case MissingData(_, _)          => List(readErrorToSequential(readError))
+          case Or(_, _)                   => List(readErrorToSequential(readError))
+          case SourceUnavailable(_, _, _) => List(readErrorToSequential(readError))
+          case Unsupported(_, _)          => List(readErrorToSequential(readError))
         }
 
       def linearSegments(readError: Config.Error): List[Step] =
@@ -381,7 +381,7 @@ trait ConfigSyntax {
       Config.string.mapOrFail(text =>
         try Right(text.toByte)
         catch {
-          case NonFatal(e) =>
+          case NonFatal(_) =>
             Left(Config.Error.InvalidData(Chunk.empty, s"Expected an byte, but found ${text}"))
         }
       )
@@ -414,7 +414,7 @@ trait ConfigSyntax {
       Config.string.mapOrFail(text =>
         try Right(text.toShort)
         catch {
-          case NonFatal(e) =>
+          case NonFatal(_) =>
             Left(Config.Error.InvalidData(Chunk.empty, s"Expected a short, but found ${text}"))
         }
       )
@@ -423,7 +423,7 @@ trait ConfigSyntax {
       Config.string.mapOrFail(text =>
         try Right(UUID.fromString(text))
         catch {
-          case NonFatal(e) =>
+          case NonFatal(_) =>
             Left(Config.Error.InvalidData(Chunk.empty, s"Expected a uuid, but found ${text}"))
         }
       )

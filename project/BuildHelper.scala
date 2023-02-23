@@ -34,13 +34,8 @@ object BuildHelper {
     "UTF-8",
     "-feature",
     "-unchecked"
-  ) ++ {
-    if (sys.env.contains("CI")) {
-      Seq("-Xfatal-warnings")
-    } else {
-      Nil // to enable Scalafix locally
-    }
-  }
+  ) ++
+    Seq("-Xfatal-warnings")
 
   private val std2xOptions = Seq(
     "-language:higherKinds",
