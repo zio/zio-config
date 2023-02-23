@@ -22,7 +22,6 @@ object BuildHelper {
 
     (prefix: String) => map.find(_._1.startsWith(prefix)).map(_._2).get
   }
-  val Scala211: String   = versions("2.11")
   val Scala212: String   = versions("2.12")
   val Scala213: String   = versions("2.13")
   val ScalaDotty: String = versions("3")
