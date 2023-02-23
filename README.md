@@ -56,7 +56,57 @@ val config: Config[AppConfig] = deriveConfig[AppConfig]
 
 ```
 
-## Configuration Sources
+## The `to` method for easy manual configurations
+
+```scala
+import zio.config._
+import zio.Config
+
+final case class AppConfig(port: Int, url: String)
+
+val config = Config.int("PORT").zip(Config.string("URL")).to[AppConfig]
+
+```
+
+## A few handy methods
+
+### CollectAll
+
+```scala
+import zio.config._
+
+  final case class Variables(variable1: Int, variable2: Option[Int])
+
+  val listOfConfig: List[Config[Variables]] =
+    List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
+      .map(group => (Config.int(s"${group}_VARIABLE1") zip Config.int(s"${group}_VARIABLE2").optional).to[Variables])
+
+  val configOfList: Config[List[Variables]] =
+    Config.collectAll(listOfConfig.head, listOfConfig.tail: _*)
+
+```
+
+### orElseEither && Constant
+
+```scala
+import zio.config._ 
+
+sealed trait Greeting
+
+case object Hello extends Greeting
+case object Bye extends Greeting
+
+val configSource = 
+  ConfigProvider.fromMap(Map("greeting" -> "Hello"))
+
+val config: Config[Greeting] = 
+  Config.constant("Hello").orElseEither(Config.constant("Bye")).map(_.merge)
+
+
+```
+
+
+## Different Configuration Sources
 
 More documentations on various sources are in website. Here is an example with `typesafe-HOCON`. 
 
@@ -75,6 +125,36 @@ val string =
 ConfigProvider.fromHoconString(string).load(deriveConfig[AppConfig])
 
 ```
+
+`Yaml`, and `XML` are supported as well, with various others on pipeline.
+`Indexed Map` is another Configuration source that zio-config supports.
+
+### ConfigProvider.fromIndexedMap
+
+
+```scala
+
+import zio.config._, magnolia._
+
+final case class Employee(age: Int, name: String)
+
+ val map = 
+   Map(
+     "department.employees[0].age" -> "10",
+     "department.employees[0].name" -> "foo",
+     "department.employees[1].age" -> "11",
+     "department.employees[1].name" -> "bar",
+     "department.employees[2].age" -> "12",
+     "department.employees[2].name" -> "baz",
+   )
+
+
+val provider = ConfigProvider.fromIndexedMap(map)
+val config = Config.listOf("employees", deriveConfig[Employee]).nested("department")
+val result = provider.load(config)
+
+```
+
 
 ## Markdown documentation
 
