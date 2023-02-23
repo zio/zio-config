@@ -11,7 +11,7 @@
 
 Let's enumerate some key features of this library:
 
-- **Support for Various Sources** — It can read/write flat or nested configurations. Thanks to `IndexedFlat`.
+- **Support for Various Sources** — It can read flat or nested configurations. Thanks to `IndexedFlat`.
 - **Automatic Document Generation** — It can auto-generate documentation of configurations.
 - **Automatic Derivation** — It has built-in support for automatic derivation of readers and writers for case classes and sealed traits.
 - **Type-level Constraints and Automatic Validation** — because it supports _Refined_ types, we can write type-level predicates which constrain the set of values described for data types.
