@@ -29,9 +29,9 @@ In order to use this library, we need to add the following line in our `build.sb
 libraryDependencies += "dev.zio" %% "zio-config" % "4.0.0-RC8" 
 ```
 
-## Example
+## Examples
 
-Let's add these four lines to our `build.sbt` file as we are using these modules in our example:
+Let's add these four lines to our `build.sbt` file as we are using these modules in our examples:
 
 ```scala
 libraryDependencies += "dev.zio" %% "zio-config"          % "4.0.0-RC8"
@@ -40,68 +40,9 @@ libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "4.0.0-RC8"
 libraryDependencies += "dev.zio" %% "zio-config-refined"  % "4.0.0-RC8"
 ```
 
-In this example we are reading from HOCON config format using type derivation:
-
-```scala
-import eu.timepit.refined.W
-import eu.timepit.refined.api.Refined
-import eu.timepit.refined.collection.NonEmpty
-import eu.timepit.refined.numeric.GreaterEqual
-import zio._
-import zio.config._, typesafe._, magnolia._
-
-sealed trait DataSource
-
-final case class Database(
-    @describe("Database Host Name")
-    host: Refined[String, NonEmpty],
-    @describe("Database Port")
-    port: Refined[Int, GreaterEqual[W.`1024`.T]]
-) extends DataSource
-
-final case class Kafka(
-    @describe("Kafka Topics")
-    topicName: String,
-    @describe("Kafka Brokers")
-    brokers: List[String]
-) extends DataSource
-
-object ZIOConfigExample extends ZIOAppDefault {
-  import zio.config._
-  import zio.config.refined._
-
-  val json =
-    s"""
-       |"Database" : {
-       |  "port" : "1024",
-       |  "host" : "localhost"
-       |}
-       |""".stripMargin
-
-  def run =
-    for {
-      _ <- ZIO.unit
-      source = ConfigProvider.fromHoconString(json)
-      config = deriveConfig[DataSource]
-      dataSource <- source.load(config)
-      // Printing Auto Generated Documentation of Application Config
-      _ <- Console.printLine(
-        generateDocs(config).toTable.toGithubFlavouredMarkdown
-      )
-      _ <- dataSource match {
-        case Database(host, port) =>
-          ZIO.debug(s"Start connecting to the database: $host:$port")
-        case Kafka(_, brokers) =>
-          ZIO.debug(s"Start connecting to the kafka brokers: $brokers")
-      }
-    } yield ()
-
-}
-```
-
 There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples) straight away as well.
 
-## Automatic Derivation Example
+## Automatic Derivation
 
 More documentations are in website. Here is a simple auto-derivation for a basic configuration class.
 
@@ -115,9 +56,9 @@ val config: Config[AppConfig] = deriveConfig[AppConfig]
 
 ```
 
-## Configuration Sources Example
+## Configuration Sources
 
-More documentations are in website. Here is an example with `typesafe-HOCON`. 
+More documentations on various sources are in website. Here is an example with `typesafe-HOCON`. 
 
 ```scala
 import zio.config.typesafe._
@@ -135,11 +76,41 @@ ConfigProvider.fromHoconString(string).load(deriveConfig[AppConfig])
 
 ```
 
-## Integration Example
+## Markdown documentation
 
-There are various integrations, and more documentations will be provided later.
+```scala
 
-Here is one with the famous Scalaz!
+generatedDocs(deriveConfig[AppConfig]).toTable.toGithubFlavouredMarkdown
+
+```
+
+## Auto Validation (integration with refined)
+
+```scala
+
+ import zio.config._, refined._
+ import eu.timepit.refined.collection.Size
+ import eu.timepit.refined.predicates.all.Greater
+ import eu.timepit.refined.`W`
+ import eu.timepit.refined.types.string.NonEmptyString
+
+ final case class Jdbc(username: NonEmptyString, password: NonEmptyString)
+
+ val jdbc: Config[Jdbc] =
+   (refineType[NonEmptyString]("username") zip refineType[NonEmptyString]("password")).to[Jdbc]
+   
+ // Even better!
+ 
+ val databases = Config.listOf("databases", jdbc)
+ val refinedList = refine[Size[Greater[W.`2`.T]]](databases)
+
+```
+
+## Integration with other libraries
+
+`zio-config` is also integrated with `enumeratum`, `cats`, and `scalaz`
+
+Here is one with the the Scalaz!
 
 ```scala
 
@@ -161,7 +132,7 @@ Here is one with the famous Scalaz!
 
 ## Documentation
 
-Learn more on the [ZIO Config homepage](https://zio.dev/zio-config/)!
+Learn more at [ZIO Config homepage](https://zio.dev/zio-config/)!
 
 ## Contributing
 
