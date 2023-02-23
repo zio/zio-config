@@ -11,8 +11,8 @@
 
 Let's enumerate some key features of this library:
 
-- **Support for Various Sources** — It can read/write flat or nested configurations from/to various formats and sources.
-- **Automatic Document Generation** — It can auto-generate documentation of configurations. So developers or DevOps engineers know how to configure the application.
+- **Support for Various Sources** — It can read/write flat or nested configurations. Thanks to `IndexedFlat`.
+- **Automatic Document Generation** — It can auto-generate documentation of configurations.
 - **Automatic Derivation** — It has built-in support for automatic derivation of readers and writers for case classes and sealed traits.
 - **Type-level Constraints and Automatic Validation** — because it supports _Refined_ types, we can write type-level predicates which constrain the set of values described for data types.
 - **Descriptive Errors** — It accumulates all errors and reports all of them to the user rather than failing fast.
