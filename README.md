@@ -26,18 +26,18 @@ If you are only interested in automatic derivation of configuration, find the de
 In order to use this library, we need to add the following line in our `build.sbt` file:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config" % "4.0.0-RC8" 
+libraryDependencies += "dev.zio" %% "zio-config" % "4.0.0-RC9" 
 ```
 
-## Examples
+## Quick Start
 
 Let's add these four lines to our `build.sbt` file as we are using these modules in our examples:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config"          % "4.0.0-RC8"
-libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "4.0.0-RC8"
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "4.0.0-RC8"
-libraryDependencies += "dev.zio" %% "zio-config-refined"  % "4.0.0-RC8"
+libraryDependencies += "dev.zio" %% "zio-config"          % "4.0.0-RC9"
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "4.0.0-RC9"
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "4.0.0-RC9"
+libraryDependencies += "dev.zio" %% "zio-config-refined"  % "4.0.0-RC9"
 ```
 
 There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples) straight away as well.
@@ -121,8 +121,8 @@ Here is one with the the Scalaz!
  def add[F[_]: Applicative, A: Monoid](primary: F[A], secondary: F[A]): F[A] =
     primary.<*>(Applicative[F].map(secondary)(secondary => (primary: A) => primary.mappend(secondary)))
     
- // Now even `Config` can take part in this addition confirming the values returned by the source is always Monoid
- // instead of using native `zip` and addition directly on `Int`
+ // Now even `Config` can take part in this addition given the values of config parameters should be Monoid,
+ // instead of using native `zip` and separately implementing addition for various types
  val configResult = add(Config.int("marks1"), Config.int("marks2")))
  
  ConfigProvider.fromMap(Map("marks1" -> "10", "marks2" -> "20")).load(configResult) // returns 30
