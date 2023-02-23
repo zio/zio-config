@@ -101,6 +101,63 @@ object ZIOConfigExample extends ZIOAppDefault {
 
 There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples) straight away as well.
 
+## Automatic Derivation Example
+
+More documentations are in website. Here is a simple auto-derivation for a basic configuration class.
+
+
+```scala
+import zio.config.magnolia._
+
+case class AppConfig(name: String, age: Int)
+
+val config: Config[AppConfig] = deriveConfig[AppConfig]
+
+```
+
+## Configuration Sources Example
+
+More documentations are in website. Here is an example with `typesafe-HOCON`. 
+
+```scala
+import zio.config.typesafe._
+
+val string = 
+  s"""
+   {
+     age : 10
+     name : foo
+   }
+  
+  """
+  
+ConfigProvider.fromHoconString(string).load(deriveConfig[AppConfig])
+
+```
+
+## Integration Example
+
+There are various integrations, and more documentations will be provided later.
+
+Here is one with the famous Scalaz!
+
+```scala
+
+  import _root_.scalaz._, Scalaz._
+  import zio.config.scalaz.instances._
+
+ // Across the application, there can be various effect types, but there is only one addition!
+ def add[F[_]: Applicative, A: Monoid](primary: F[A], secondary: F[A]): F[A] =
+    primary.<*>(Applicative[F].map(secondary)(secondary => (primary: A) => primary.mappend(secondary)))
+    
+ // Now even `Config` can take part in this addition confirming the values returned by the source is always Monoid
+ // instead of using native `zip` and addition directly on `Int`
+ val configResult = add(Config.int("marks1"), Config.int("marks2")))
+ 
+ ConfigProvider.fromMap(Map("marks1" -> "10", "marks2" -> "20")).load(configResult) // returns 30
+ 
+
+```
 
 ## Documentation
 
