@@ -113,7 +113,7 @@ generatedDocs(deriveConfig[AppConfig]).toTable.toGithubFlavouredMarkdown
 #### Enumeratum
 
 Many applications rely on this beautiful library https://github.com/lloydmeta/enumeratum.
-Zio-config can directly load it from enumeratum's `enum` without relying any auto-derivation.
+Zio-config can directly load it from enumeratum's `enum` without relying on auto-derivation (and rely on Enumeratum's macro indirectly witha additional features).
 
 ```scala
 
@@ -153,9 +153,9 @@ Zio-config can directly load it from enumeratum's `enum` without relying any aut
 #### Scalaz/Cats
 
 Highly polymorphic code end up relying on
-on typeclasses, and zio-config provides instances for `Config`.
+typeclasses, and zio-config provides instances for `Config`.
 
-This is a simple example to showcase the capability
+This is a simple example to showcase the capability.
 
 ```scala
 
