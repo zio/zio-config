@@ -313,6 +313,7 @@ lazy val zioConfigTypesafe    = crossProject(JVMPlatform)
   .settings(
     crossScalaVersions --= Seq("2.11"),
     libraryDependencies ++= Seq(
+      "dev.zio" %% "zio-parser"   % "0.1.8",
       "com.typesafe" % "config"       % "1.4.2",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
