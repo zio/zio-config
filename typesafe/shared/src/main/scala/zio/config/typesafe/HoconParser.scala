@@ -31,7 +31,7 @@ object HoconParser {
   lazy private[config] val hoconParser: Parser[String, Char, HoconObject] =
     ws.zip(openBracket)
       .zip(ws)
-      .zip(keyValueParser.repeatWithSep0(Parser.charIn('\n').unit))
+      .zip(keyValueParser.repeatWithSep0(Parser.charIn('\n').zip(ws).unit))
       .map { case (k) => HoconObject.Record(k.toMap) }
       .zip(ws)
       .zip(closedBracket)
@@ -46,11 +46,11 @@ object SampleTest extends App {
        |   a  : {
        |     b : c
        |     d : e
-       |     f : {
+       |     f = {
        |       h : { a : [b, c, d] }
        |       i : [
        |         {
-       |           a : b
+       |           a = b
        |         },
        |         {
        |           c : d
