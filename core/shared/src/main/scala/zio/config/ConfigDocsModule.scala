@@ -575,7 +575,7 @@ trait ConfigDocsModule {
           loop(descriptions, thunk(), latestPath, alreadySeen + thunk())
 
         case cp: Config.Primitive[_] =>
-          ConfigDocs.Leaf(descriptions, None)
+          ConfigDocs.Leaf(ConfigDocs.Description(latestPath, cp.description) :: descriptions, None)
 
         case cd: Config.Table[_] =>
           ConfigDocs.DynamicMap(

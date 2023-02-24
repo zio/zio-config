@@ -21,25 +21,25 @@ object GenerateDocsTest extends BaseSpec {
               |
               |### Field Descriptions
               |
-              ||FieldName                 |Format               |Description       |Sources|
-              ||---                       |---                  |---               |---    |
-              ||SECRET                    |primitive            |Application secret|       |
-              ||[CREDENTIALS](credentials)|[all-of](credentials)|Credentials       |       |
-              ||[DATABASE](database)      |[all-of](database)   |Database          |       |
+              ||FieldName                 |Format               |Description                        |Sources|
+              ||---                       |---                  |---                                |---    |
+              ||SECRET                    |primitive            |a text property, Application secret|       |
+              ||[CREDENTIALS](credentials)|[all-of](credentials)|Credentials                        |       |
+              ||[DATABASE](database)      |[all-of](database)   |Database                           |       |
               |
               |### CREDENTIALS
               |
-              ||FieldName|Format   |Description     |Sources|
-              ||---      |---      |---             |---    |
-              ||USERNAME |primitive|Example: ZioUser|       |
-              ||PASSWORD |primitive|Example: ZioPass|       |
+              ||FieldName|Format   |Description                      |Sources|
+              ||---      |---      |---                              |---    |
+              ||USERNAME |primitive|a text property, Example: ZioUser|       |
+              ||PASSWORD |primitive|a text property, Example: ZioPass|       |
               |
               |### DATABASE
               |
-              ||FieldName|Format   |Description     |Sources|
-              ||---      |---      |---             |---    |
-              ||PORT     |primitive|Example: 8088   |       |
-              ||URL      |primitive|Example: abc.com|       |""".stripMargin
+              ||FieldName|Format   |Description                       |Sources|
+              ||---      |---      |---                               |---    |
+              ||PORT     |primitive|an integer property, Example: 8088|       |
+              ||URL      |primitive|a text property, Example: abc.com |       |""".stripMargin
 
         assert(generateDocs(GenerateDocsTestUtils.descriptor).toTable.toGithubFlavouredMarkdown.trim)(
           equalTo(expected.trim)
