@@ -17,8 +17,10 @@ sealed trait HoconObject { self =>
           }
 
         case HoconObject.Sequence(chunk) =>
-          chunk
-            .map(go(_, path))
+          chunk.zipWithIndex
+            .map({ case (hocon, index) =>
+              go(hocon, path :+ KeyComponent.Index(index))
+            })
             .reduceOption(_ ++ _)
             .getOrElse(Map.empty)
       }

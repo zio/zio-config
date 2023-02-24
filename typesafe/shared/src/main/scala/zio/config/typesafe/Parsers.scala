@@ -15,6 +15,12 @@ object Parsers {
   lazy private[config] val openBracket: Parser[String, Char, Unit] =
     Parser.charIn('{').unit
 
+  lazy private[config] val openSquareBracket: Parser[String, Char, Unit] =
+    Parser.charIn('[').unit
+
+  lazy private[config] val closedSquareBracket: Parser[String, Char, Unit] =
+    Parser.charIn(']').unit
+
   lazy private[config] val closedBracket: Parser[String, Char, Unit] =
     Parser.charIn('}').unit
 
@@ -33,7 +39,7 @@ object Parsers {
 
   lazy private[config] val textParserHocon: Parser[String, Char, String] = {
     val invalid =
-      Chunk('{', '}', '=', ':', '\n')
+      Chunk('{', '}', '[', ']', '=', ':', '\n', ',')
 
     Parser.charNotIn(invalid: _*).repeat.map(s => s.mkString.trim)
   }
