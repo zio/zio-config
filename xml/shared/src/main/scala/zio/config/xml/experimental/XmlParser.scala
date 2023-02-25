@@ -1,8 +1,8 @@
-package zio.config.xml
+package zio.config.xml.experimental
 
 import zio.Chunk
-import zio.config.xml.Parsers._
-import zio.config.xml.XmlObject.TagElement
+import Parsers._
+import XmlObject.TagElement
 import zio.parser.Parser
 
 object XmlParser {

@@ -1,4 +1,4 @@
-package zio.config.xml
+package zio.config.xml.experimental
 
 import com.github.ghik.silencer.silent
 import zio.ConfigProvider

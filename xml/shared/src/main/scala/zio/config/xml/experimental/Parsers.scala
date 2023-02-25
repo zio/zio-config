@@ -1,7 +1,7 @@
-package zio.config.xml
+package zio.config.xml.experimental
 
 import zio.Chunk
-import zio.config.xml.XmlObject.Text
+import zio.config.xml.experimental.XmlObject.Text
 import zio.parser.Parser
 
 object Parsers {
