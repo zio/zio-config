@@ -1,7 +1,7 @@
 package zio.config.yaml
 
 import zio.config._
-import zio.config.xml._
+import zio.config.xml.experimental._
 import zio.config.yaml.XmlProviderSpec.Configuration.{Aws, Database}
 import zio.test.Assertion._
 import zio.test._

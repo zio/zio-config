@@ -1,7 +1,7 @@
 package zio.config.yaml
 
 import zio.Scope
-import zio.config.xml.XmlParser
+import zio.config.xml.experimental.XmlParser
 import zio.config.yaml.generators.{Space, WhiteSpacedXml}
 import zio.test.Assertion._
 import zio.test._

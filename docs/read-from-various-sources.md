@@ -131,11 +131,39 @@ ConfigProvider.fromYamlString
 ## Xml String
 
 zio-config can read XML strings. Note that it's experimental with a dead simple native xml parser, 
-Currently it cannot XML comments, which will be fixed in the near future.
+Currently it cannot XML comments, and has not been tested with complex data types, which will be fixed in the near future.
 
 ```scala
-import zio.config.xml._
+import zio.config.xml.experimental._
+import zio.Config
 
-ConfigProvider.fromXmlString
+final case class Configuration(aws: Aws, database: Database)
+
+object Configuration {
+  val config: Config[Configuration] =
+    Aws.config.nested("aws").zip(Database.config.nested("database")).to[Configuration].nested("config")
+
+  final case class Aws(region: String, account: String)
+
+  object Aws {
+    val config: Config[Aws] = Config.string("region").zip(Config.string("account")).to[Aws]
+  }
+  final case class Database(port: Int, url: String)
+
+  object Database {
+    val config: Config[Database] = Config.int("port").zip(Config.string("url")).to[Database]
+  }
+}
+
+val config =
+  s"""
+     |<config>
+     |  <aws region="us-east" account="personal"></aws>
+     |  <database port="123" url="some url"></database>
+     |</config>
+     |
+     |""".stripMargin
+
+val parsed = ConfigProvider.fromYamlString(config).load(Configuration.config)
 
 ```

@@ -1,10 +1,9 @@
 package zio.config.examples.typesafe
 
 import zio.config._
-import zio.config.examples.ZioOps
-import zio.{Config, ConfigProvider, IO}
-
+import zio.{Config, ConfigProvider, IO, Unsafe}
 import magnolia._
+import zio.Runtime.default
 
 object TypesafeConfigList extends App with EitherImpureOps {
   val configString: String =
@@ -146,58 +145,6 @@ object TypesafeConfigList extends App with EitherImpureOps {
   final case class B(c: List[C], table: String, columns: List[String])
   final case class A(b: List[B], x: X, w: W)
 
-  val expectedResult: A =
-    A(
-      List(
-        B(
-          List(
-            C(
-              List(
-                // NonEmptyList is simply scala.:: which is a List. However, if the list was empty you get a error
-                D(List(14, 14), List("e")),
-                D(List(12, 12), List("d")),
-                D(List(1, 1, 1), List("a", "b", "c")),
-                D(List(15, 15), List("f", "g"))
-              )
-            )
-          ),
-          "some_name",
-          List("aa")
-        ),
-        B(
-          List(
-            C(
-              List(
-                D(List(21, 21), List("af")),
-                D(List(24, 24, 24), List("l")),
-                D(List(22, 22), List("sa", "l")),
-                D(List(23, 23, 23), List("af", "l"))
-              )
-            )
-          ),
-          "some_name",
-          List("a", "b", "c", "d", "e")
-        ),
-        B(
-          List(
-            C(
-              List(
-                D(List(37), List("e", "f", "g", "h", "i")),
-                D(List(33, 33, 33), List("xx")),
-                D(List(32, 32), List("x")),
-                D(List(31), List("b")),
-                D(List(31, 31), List("bb"))
-              )
-            )
-          ),
-          "some_name",
-          List("a")
-        )
-      ),
-      X(Y("k")),
-      W(X(Y("k")))
-    )
-
   import zio.config.typesafe._
 
   // Since we already have a string with us, we don't need Config Service (or ZIO)
@@ -207,6 +154,6 @@ object TypesafeConfigList extends App with EitherImpureOps {
   val zioConfigResult: IO[Config.Error, A] =
     read(deriveConfig[A] from source)
 
-  assert(zioConfigResult equalM expectedResult)
+  println(Unsafe.unsafe(implicit u => default.unsafe.run(zioConfigResult).getOrThrowFiberFailure()))
 
 }

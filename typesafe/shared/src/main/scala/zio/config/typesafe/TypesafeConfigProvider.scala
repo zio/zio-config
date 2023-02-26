@@ -13,6 +13,7 @@ import scala.util.{Failure, Success, Try}
 
 @silent("Unused import")
 object TypesafeConfigProvider {
+
   import VersionSpecificSupport._
 
   /**
@@ -66,9 +67,11 @@ object TypesafeConfigProvider {
                   // Only possibility is a sequence of primitives
                   val result = config.getList(k).unwrapped().asScala.toList
 
-                  Map(
-                    kIterated ++ Chunk(KeyComponent.Index(0)) -> result.map(_.toString).mkString(",")
-                  )
+                  result.zipWithIndex
+                    .map({ case (result, index) =>
+                      (kIterated :+ KeyComponent.Index(index)) -> result.toString
+                    })
+                    .toMap
 
                 // Only possibility is a sequence of nested Configs
                 case Success(value) =>

@@ -1,6 +1,6 @@
 package zio.config.yaml.generators
 import zio.Chunk
-import zio.config.xml.XmlObject
+import zio.config.xml.experimental.XmlObject
 import zio.config.yaml.generators.WhiteSpacedAttributes.RandomAttribute
 import zio.test.Gen
 

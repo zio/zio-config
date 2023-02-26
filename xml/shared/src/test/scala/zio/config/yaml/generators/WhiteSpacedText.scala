@@ -1,6 +1,6 @@
 package zio.config.yaml.generators
 
-import zio.config.xml.XmlObject
+import zio.config.xml.experimental.XmlObject
 import zio.test.Gen
 
 final case class WhiteSpacedText(preSpace: Space, value: String, postSpace: Space) {
