@@ -240,7 +240,7 @@ trait ConfigSyntax {
                               configPath.headOption match {
                                 case Some(value) =>
                                   value match {
-                                    case index @ KeyComponent.Index(_) => ZIO.succeed(index)
+                                    case index @ KeyComponent.Index(_) => ZIO.succeed(List(index))
                                     case KeyComponent.KeyName(_)       =>
                                       ZIO.fail(
                                         Config.Error.InvalidData(
@@ -250,16 +250,11 @@ trait ConfigSyntax {
                                       )
                                   }
                                 case None        =>
-                                  ZIO.fail(
-                                    Config.Error.InvalidData(
-                                      prefix.map(_.value),
-                                      s"Zero indices to consider ${prefix} as a list. Example: The key `employees` is a list only if there is exists `employees[0]`, `employees[1]` etc as keys"
-                                    )
-                                  )
+                                  ZIO.succeed(Nil)
                               }
                             }
                           }
-                          .map(_.sortBy(_.index))
+                          .map(_.flatten.sortBy(_.index))
 
                 values <-
                   ZIO
