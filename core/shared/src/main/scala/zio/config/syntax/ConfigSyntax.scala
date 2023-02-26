@@ -235,11 +235,19 @@ trait ConfigSyntax {
               for {
                 keys <- indexedFlat
                           .enumerateChildrenIndexed(prefix)
-                          .map(set =>
-                            set.toList.flatMap { chunk =>
-                              chunk.headOption.toList
-                            }
-                          )
+                          .flatMap(set => {
+                            ZIO.foreach(set.toList){
+                              configPath =>
+                                configPath.headOption match {
+                                  case Some(value) =>
+                                    value match {
+                                      case index @ KeyComponent.Index(_) => ZIO.succeed(index)
+                                      case KeyComponent.KeyName(_) =>ZIO.fail(Config.Error.InvalidData(prefix.map(_.value), "A list key should be always followed by an index which is an integer to consider the values as a list. Example: The key `employees` is a list only if there is exists `employees[0]`, `employees[1]` etc as keys"))
+                                    }
+                                  case None =>ZIO.fail(Config.Error.InvalidData(prefix.map(_.value), s"Zero indices to consider ${prefix} as a list. Example: The key `employees` is a list only if there is exists `employees[0]`, `employees[1]` etc as keys"))
+                                }
+                            }}
+                          ).map(_.sortBy(_.index))
 
                 values <-
                   ZIO
