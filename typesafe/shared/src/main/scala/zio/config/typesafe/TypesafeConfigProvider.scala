@@ -61,15 +61,17 @@ object TypesafeConfigProvider {
           val kIterated = Chunk.fromIterable(k.split('.')).map(KeyComponent.KeyName(_))
 
           possibleConfigValue.valueType() match {
-            case LIST =>
+            case LIST    =>
               Try(config.getConfigList(k)) match {
-                case Failure(_) =>
+                case Failure(_)     =>
                   // Only possibility is a sequence of primitives
                   val result = config.getList(k).unwrapped().asScala.toList
 
-                  result.zipWithIndex.map({
-                    case (result, index) => (kIterated :+ KeyComponent.Index(index)) -> result.toString
-                  }).toMap
+                  result.zipWithIndex
+                    .map({ case (result, index) =>
+                      (kIterated :+ KeyComponent.Index(index)) -> result.toString
+                    })
+                    .toMap
 
                 // Only possibility is a sequence of nested Configs
                 case Success(value) =>
@@ -83,12 +85,12 @@ object TypesafeConfigProvider {
                   }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[KeyComponent], String])
 
               }
-            case NUMBER =>
+            case NUMBER  =>
               Map(kIterated -> config.getNumber(k).toString())
-            case STRING => Map(kIterated -> config.getString(k))
-            case OBJECT => throw new Exception("Invalid hocon format") //FIXME: Move to IO
+            case STRING  => Map(kIterated -> config.getString(k))
+            case OBJECT  => throw new Exception("Invalid hocon format") //FIXME: Move to IO
             case BOOLEAN => Map(kIterated -> config.getBoolean(k).toString())
-            case NULL => throw new Exception("Invalid hocon format") // FIXME: Move to IO
+            case NULL    => throw new Exception("Invalid hocon format") // FIXME: Move to IO
           }
         })
     }
