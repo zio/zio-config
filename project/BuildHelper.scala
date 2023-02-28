@@ -22,13 +22,13 @@ object BuildHelper {
 
     (prefix: String) => map.find(_._1.startsWith(prefix)).map(_._2).get
   }
-  val Scala212: String   = versions("2.12")
-  val Scala213: String   = versions("2.13")
-  val ScalaDotty: String = versions("3")
+  val Scala212_ : String = versions("2.12")
+  val Scala213_ : String = versions("2.13")
+  val ScalaDotty_ : String = versions("3")
 
-  val SilencerVersion = "1.7.12"
+  val SilencerVersion_ = "1.7.12"
 
-  private val stdOptions = Seq(
+  private val stdOptions_ = Seq(
     "-deprecation",
     "-encoding",
     "UTF-8",
@@ -37,7 +37,7 @@ object BuildHelper {
   ) ++
     Seq("-Xfatal-warnings")
 
-  private val std2xOptions = Seq(
+  private val std2xOptions_ = Seq(
     "-language:higherKinds",
     "-language:existentials",
     "-explaintypes",
@@ -47,7 +47,7 @@ object BuildHelper {
     "-Ywarn-value-discard"
   )
 
-  private def optimizerOptions(optimize: Boolean) =
+  private def optimizerOptions_(optimize: Boolean) =
     if (optimize)
       Seq(
         "-opt:l:inline",
@@ -55,23 +55,23 @@ object BuildHelper {
       )
     else Nil
 
-  def buildInfoSettings(packageName: String) =
+  def buildInfoSettings_(packageName: String) =
     Seq(
       buildInfoKeys := Seq[BuildInfoKey](organization, moduleName, name, version, scalaVersion, sbtVersion, isSnapshot),
       buildInfoPackage := packageName
     )
 
-  val dottySettings = Seq(
-    crossScalaVersions += ScalaDotty,
+  val dottySettings_ = Seq(
+    crossScalaVersions += ScalaDotty_,
     scalacOptions --= {
-      if (scalaVersion.value == ScalaDotty)
+      if (scalaVersion.value == ScalaDotty_)
         Seq("-Xfatal-warnings")
       else
         Seq("-Xprint:typer")
     },
     Compile / doc / sources := {
       val old = (Compile / doc / sources).value
-      if (scalaVersion.value == ScalaDotty) {
+      if (scalaVersion.value == ScalaDotty_) {
         Nil
       } else {
         old
@@ -79,7 +79,7 @@ object BuildHelper {
     },
     Test / parallelExecution := {
       val old = (Test / parallelExecution).value
-      if (scalaVersion.value == ScalaDotty) {
+      if (scalaVersion.value == ScalaDotty_) {
         false
       } else {
         old
@@ -87,12 +87,12 @@ object BuildHelper {
     }
   )
 
-  val scalaReflectSettings = Seq(
+  val scalaReflectSettings_ = Seq(
     libraryDependencies ++= Seq("dev.zio" %%% "izumi-reflect" % "1.0.0-M10")
   )
 
   // Keep this consistent with the version in .core-tests/shared/src/test/scala/REPLSpec.scala
-  val replSettings = makeReplSettings {
+  val replSettings_ = makeReplSettings_ {
     """|import zio._
        |import zio.console._
        |import zio.duration._
@@ -102,7 +102,7 @@ object BuildHelper {
   }
 
   // Keep this consistent with the version in .streams-tests/shared/src/test/scala/StreamREPLSpec.scala
-  val streamReplSettings = makeReplSettings {
+  val streamReplSettings_ = makeReplSettings_ {
     """|import zio._
        |import zio.console._
        |import zio.duration._
@@ -112,7 +112,7 @@ object BuildHelper {
     """.stripMargin
   }
 
-  def makeReplSettings(initialCommandsStr: String) = Seq(
+  def makeReplSettings_(initialCommandsStr: String) = Seq(
     // In the repl most warnings are useless or worse.
     // This is intentionally := as it's more direct to enumerate the few
     // options we do want than to try to subtract off the ones we don't.
@@ -130,7 +130,7 @@ object BuildHelper {
     Compile / console / initialCommands := initialCommandsStr
   )
 
-  def extraOptions(scalaVersion: String, optimize: Boolean) =
+  def extraOptions_(scalaVersion: String, optimize: Boolean) =
     CrossVersion.partialVersion(scalaVersion) match {
       case Some((3, _))  =>
         Seq(
@@ -140,7 +140,7 @@ object BuildHelper {
       case Some((2, 13)) =>
         Seq(
           "-Ywarn-unused:params,-implicits"
-        ) ++ std2xOptions ++ optimizerOptions(optimize)
+        ) ++ std2xOptions_ ++ optimizerOptions_(optimize)
       case Some((2, 12)) =>
         Seq(
           "-opt-warnings",
@@ -158,7 +158,7 @@ object BuildHelper {
           "-Xsource:2.13",
           "-Xmax-classfile-name",
           "242"
-        ) ++ std2xOptions ++ optimizerOptions(optimize)
+        ) ++ std2xOptions_ ++ optimizerOptions_(optimize)
       case Some((2, 11)) =>
         Seq(
           "-Ypartial-unification",
@@ -173,18 +173,18 @@ object BuildHelper {
           "-Xsource:2.13",
           "-Xmax-classfile-name",
           "242"
-        ) ++ std2xOptions
+        ) ++ std2xOptions_
       case _             => Seq.empty
     }
 
-  def platformSpecificSources(platform: String, conf: String, baseDirectory: File)(versions: String*) = for {
+  def platformSpecificSources_(platform: String, conf: String, baseDirectory: File)(versions: String*) = for {
     platform <- List("shared", platform)
     version  <- "scala" :: versions.toList.map("scala-" + _)
     result    = baseDirectory.getParentFile / platform.toLowerCase / "src" / conf / version
     if result.exists
   } yield result
 
-  def crossPlatformSources(scalaVer: String, platform: String, conf: String, baseDir: File) = {
+  def crossPlatformSources_(scalaVer: String, platform: String, conf: String, baseDir: File) = {
     val versions = CrossVersion.partialVersion(scalaVer) match {
       case Some((2, 11)) =>
         List("2.11", "2.11+", "2.11-2.12", "2.x")
@@ -197,14 +197,14 @@ object BuildHelper {
       case _             =>
         List()
     }
-    platformSpecificSources(platform, conf, baseDir)(versions: _*)
+    platformSpecificSources_(platform, conf, baseDir)(versions: _*)
   }
 
-  lazy val crossProjectSettings = Seq(
+  lazy val crossProjectSettings_ = Seq(
     resolvers +=
       "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     Compile / unmanagedSourceDirectories ++= {
-      crossPlatformSources(
+      crossPlatformSources_(
         scalaVersion.value,
         crossProjectPlatform.value.identifier,
         "main",
@@ -212,7 +212,7 @@ object BuildHelper {
       )
     },
     Test / unmanagedSourceDirectories ++= {
-      crossPlatformSources(
+      crossPlatformSources_(
         scalaVersion.value,
         crossProjectPlatform.value.identifier,
         "test",
@@ -221,26 +221,26 @@ object BuildHelper {
     }
   )
 
-  def stdSettings(prjName: String) = Seq(
+  def stdSettings_(prjName: String) = Seq(
     resolvers +=
       "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     name := s"$prjName",
-    crossScalaVersions := Seq(Scala212, Scala213),
-    ThisBuild / scalaVersion := Scala213,
-    scalacOptions := stdOptions ++ extraOptions(scalaVersion.value, optimize = !isSnapshot.value),
+    crossScalaVersions := Seq(Scala212_, Scala213_),
+    ThisBuild / scalaVersion := Scala213_,
+    scalacOptions := stdOptions_ ++ extraOptions_(scalaVersion.value, optimize = !isSnapshot.value),
     libraryDependencies ++= {
-      if (scalaVersion.value == ScalaDotty)
+      if (scalaVersion.value == ScalaDotty_)
         Seq(
-          "com.github.ghik" % s"silencer-lib_$Scala213" % SilencerVersion % Provided
+          "com.github.ghik" % s"silencer-lib_$Scala213_" % SilencerVersion_ % Provided
         )
       else
         Seq(
-          "com.github.ghik" % "silencer-lib"            % SilencerVersion % Provided cross CrossVersion.full,
-          compilerPlugin("com.github.ghik" % "silencer-plugin" % SilencerVersion cross CrossVersion.full),
+          "com.github.ghik" % "silencer-lib"            % SilencerVersion_ % Provided cross CrossVersion.full,
+          compilerPlugin("com.github.ghik" % "silencer-plugin" % SilencerVersion_ cross CrossVersion.full),
           compilerPlugin("org.typelevel"  %% "kind-projector"  % "0.13.2" cross CrossVersion.full)
         )
     },
-    semanticdbEnabled := scalaVersion.value != ScalaDotty, // enable SemanticDB
+    semanticdbEnabled := scalaVersion.value != ScalaDotty_, // enable SemanticDB
     semanticdbOptions += "-P:semanticdb:synthetics:on",
     semanticdbVersion := scalafixSemanticdb.revision, // use Scalafix compatible version
     ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value),
@@ -254,7 +254,7 @@ object BuildHelper {
     unusedCompileDependenciesFilter -= moduleFilter("org.scala-js", "scalajs-library")
   )
 
-  def macroExpansionSettings = Seq(
+  def macroExpansionSettings_ = Seq(
     scalacOptions ++= {
       CrossVersion.partialVersion(scalaVersion.value) match {
         case Some((2, 13)) => Seq("-Ymacro-annotations")
@@ -270,10 +270,10 @@ object BuildHelper {
     }
   )
 
-  def macroDefinitionSettings = Seq(
+  def macroDefinitionSettings_ = Seq(
     scalacOptions += "-language:experimental.macros",
     libraryDependencies ++= {
-      if (scalaVersion.value == ScalaDotty) Seq()
+      if (scalaVersion.value == ScalaDotty_) Seq()
       else
         Seq(
           "org.scala-lang" % "scala-reflect"  % scalaVersion.value % "provided",
@@ -282,27 +282,27 @@ object BuildHelper {
     }
   )
 
-  def jsSettings = Seq(
+  def jsSettings_ = Seq(
     libraryDependencies += "io.github.cquiroz" %%% "scala-java-time"      % "2.2.2",
     libraryDependencies += "io.github.cquiroz" %%% "scala-java-time-tzdb" % "2.2.2"
   )
 
-  def nativeSettings = Seq(
+  def nativeSettings_ = Seq(
     Test / skip := true,
     doc / skip := true,
     Compile / doc / sources := Seq.empty
   )
 
-  val scalaReflectTestSettings: List[Setting[_]] = List(
+  val scalaReflectTestSettings_ : List[Setting[_]] = List(
     libraryDependencies ++= {
-      if (scalaVersion.value == ScalaDotty)
-        Seq("org.scala-lang" % "scala-reflect" % Scala213           % Test)
+      if (scalaVersion.value == ScalaDotty_)
+        Seq("org.scala-lang" % "scala-reflect" % Scala213_           % Test)
       else
         Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value % Test)
     }
   )
 
-  def welcomeMessage = onLoadMessage := {
+  def welcomeMessage_ = onLoadMessage := {
     import scala.Console
 
     def header(text: String): String = s"${Console.RED}$text${Console.RESET}"
@@ -331,6 +331,6 @@ object BuildHelper {
   }
 
   implicit class ModuleHelper(p: Project) {
-    def module: Project = p.in(file(p.id)).settings(stdSettings(p.id))
+    def module: Project = p.in(file(p.id)).settings(stdSettings_(p.id))
   }
 }
