@@ -161,8 +161,7 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     stdSettings(
       name = "zio-config",
       packageName = Some("zio.config"),
-      enableCrossProject = true,
-      turnCompilerWarningIntoErrors = false
+      enableCrossProject = true
     )
   )
   .settings(macroDefinitionSettings)
