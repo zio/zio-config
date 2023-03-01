@@ -1,5 +1,3 @@
-import BuildHelper._
-
 enablePlugins(ZioSbtCiPlugin)
 
 inThisBuild(
@@ -55,7 +53,7 @@ val shapelessVersion  = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty_) Seq.empty // Just to make IntelliJ happy
+    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == scala3.value) Seq.empty // Just to make IntelliJ happy
     else {
       Seq(
         "com.propensive" %% "magnolia"      % magnoliaVersion,
@@ -72,7 +70,7 @@ lazy val refinedDependencies =
 
 lazy val pureconfigDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == ScalaDotty_) Seq.empty // Just to make IntelliJ happy
+    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == scala3.value) Seq.empty // Just to make IntelliJ happy
     else Seq("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
   }
 
@@ -178,8 +176,7 @@ lazy val zioConfigZioAws    = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
-lazy val zioConfigZioAwsJVM = zioConfigZioAws.jvm
-  .settings(dottySettings_)
+lazy val zioConfigZioAwsJVM = zioConfigZioAws.jvm.settings(scala3Settings)
 
 lazy val zioConfigRefined    = crossProject(JVMPlatform)
   .in(file("refined"))
@@ -303,7 +300,7 @@ lazy val zioConfigScalaz    = crossProject(JSPlatform, JVMPlatform, NativePlatfo
   .settings(stdSettings(name = "zio-config-scalaz", enableCrossProject = true))
   .settings(enableZIO())
   .settings(
-    crossScalaVersions --= Seq(Scala212_),
+    crossScalaVersions --= Seq(scala212.value),
     libraryDependencies ++= Seq( "org.scalaz" %% "scalaz-core"  % "7.4.0-M13")
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
