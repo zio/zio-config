@@ -1,9 +1,12 @@
 enablePlugins(ZioSbtCiPlugin)
 
+//crossScalaVersions := Seq.empty
+//
 inThisBuild(
   List(
     name := "ZIO Config",
-//    crossScalaVersions -= scala211.value,
+    //    crossScalaVersions -= scala211.value,
+    ciEnabledBranches := Seq("series/4.x"),
     developers := List(
       Developer(
         "afsalthaj",
@@ -17,8 +20,25 @@ inThisBuild(
         "john@degoes.net",
         url("http://degoes.net")
       )
+    ),
+      supportedScalaVersions := Map(
+        (zioConfigJS / thisProject).value.id -> (zioConfigJS / crossScalaVersions).value,
+        (zioConfigJVM / thisProject).value.id -> (zioConfigJVM / crossScalaVersions).value,
+        (zioConfigNative / thisProject).value.id -> (zioConfigNative / crossScalaVersions).value,
+        (zioConfigAwsJVM / thisProject).value.id -> (zioConfigAwsJVM / crossScalaVersions).value,
+        (zioConfigCatsJVM / thisProject).value.id -> (zioConfigCatsJVM / crossScalaVersions).value,
+        (zioConfigDerivationJVM / thisProject).value.id -> (zioConfigDerivationJVM / crossScalaVersions).value,
+        (zioConfigEnumeratumJVM / thisProject).value.id -> (zioConfigEnumeratumJVM / crossScalaVersions).value,
+        (zioConfigMagnoliaJVM / thisProject).value.id -> (zioConfigMagnoliaJVM / crossScalaVersions).value,
+        (zioConfigPureconfigJVM / thisProject).value.id -> (zioConfigPureconfigJVM / crossScalaVersions).value,
+        (zioConfigRefinedJVM / thisProject).value.id -> (zioConfigRefinedJVM / crossScalaVersions).value,
+        (zioConfigScalazJVM / thisProject).value.id -> (zioConfigScalazJVM / crossScalaVersions).value,
+        (zioConfigTypesafeJVM / thisProject).value.id -> (zioConfigTypesafeJVM / crossScalaVersions).value,
+        (zioConfigTypesafeMagnoliaTestsJVM / thisProject).value.id -> (zioConfigTypesafeMagnoliaTestsJVM / crossScalaVersions).value,
+        (zioConfigYamlJVM / thisProject).value.id -> (zioConfigYamlJVM / crossScalaVersions).value,
+        (zioConfigXmlJVM / thisProject).value.id -> (zioConfigXmlJVM / crossScalaVersions).value,
+      )
     )
-  )
 )
 
 addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
