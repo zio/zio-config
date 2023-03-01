@@ -137,7 +137,14 @@ lazy val `root3` =
 
 lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("core"))
-  .settings(stdSettings("zio-config", packageName = Some("zio.config"), enableCrossProject = true))
+  .settings(
+    stdSettings(
+      name = "zio-config",
+      packageName = Some("zio.config"),
+      enableCrossProject = true,
+      turnCompilerWarningIntoErrors = false
+    )
+  )
   .settings(macroDefinitionSettings)
   .settings(enableZIO())
   .settings(
