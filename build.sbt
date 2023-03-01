@@ -185,18 +185,13 @@ lazy val zioConfigZioAwsJVM = zioConfigZioAws.jvm
 
 lazy val zioConfigRefined    = crossProject(JVMPlatform)
   .in(file("refined"))
-  .settings(stdSettings_("zio-config-refined"))
-  .settings(crossProjectSettings_)
-  .settings(dottySettings_)
+  .settings(stdSettings(name = "zio-config-refined", enableCrossProject = true))
+  .settings(enableZIO())
+  .settings(scala3Settings)
   .settings(
     crossScalaVersions --= Seq("2.11"),
     refinedDependencies,
     libraryDependencies ++=
-      Seq(
-        "dev.zio" %% "zio-test"     % zioVersion % Test,
-        "dev.zio" %% "zio-test-sbt" % zioVersion % Test
-      ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
   .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
 
@@ -204,17 +199,11 @@ lazy val zioConfigRefinedJVM = zioConfigRefined.jvm
 
 lazy val zioConfigPureconfig    = crossProject(JVMPlatform)
   .in(file("pureconfig"))
-  .settings(stdSettings_("zio-config-pureconfig"))
-  .settings(crossProjectSettings_)
+  .settings(stdSettings(name = "zio-config-pureconfig", enableCrossProject = true))
+  .settings(enableZIO())
   .settings(
     crossScalaVersions --= Seq("2.11"),
     pureconfigDependencies,
-    libraryDependencies ++=
-      Seq(
-        "dev.zio" %% "zio-test"     % zioVersion % Test,
-        "dev.zio" %% "zio-test-sbt" % zioVersion % Test
-      ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
   .dependsOn(zioConfig % "test->test", zioConfigTypesafe)
 
