@@ -48,16 +48,16 @@ jobs:
         uses: coursier/cache-action@v6
       - name: Run JS tests
         if: ${{ matrix.platform == 'JS' && !startsWith(matrix.scala, '3.') }}
-        run: sbt ++${{ matrix.scala }}! testJS
+        run: sbt ++${{ matrix.scala }} testJS
       - name: Run 2.12 JVM tests
         if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '2.12') }}
-        run: sbt ++${{ matrix.scala }}! testJVM212
+        run: sbt ++${{ matrix.scala }} testJVM212
       - name: Run 2.13 JVM tests
         if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '2.13') }}
-        run: sbt ++${{ matrix.scala }}! testJVM213
+        run: sbt ++${{ matrix.scala }} testJVM213
       - name: Run 3.x JVM tests
         if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '3.') }}
-        run: sbt ++${{ matrix.scala }}! testJVM3x
+        run: sbt ++${{ matrix.scala }} testJVM3x
 
   ci:
     runs-on: ubuntu-20.04
