@@ -169,18 +169,14 @@ lazy val zioConfigAwsJVM = zioConfigAws.jvm.settings(scala3Settings)
 
 lazy val zioConfigZioAws    = crossProject(JVMPlatform)
   .in(file("zio-aws"))
-  .settings(stdSettings_("zio-config-zio-aws"))
-  .settings(crossProjectSettings_)
-  .settings(dottySettings_)
+  .settings(stdSettings(name = "zio-config-zio-aws", enableCrossProject = true))
+  .settings(enableZIO(enableStreaming = true))
+  .settings(scala3Settings)
   .settings(
     crossScalaVersions --= Seq("2.11"),
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-aws-ssm"  % zioAwsVersion,
-      "dev.zio" %% "zio-streams"  % zioVersion,
-      "dev.zio" %% "zio-test"     % zioVersion % Test,
-      "dev.zio" %% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
