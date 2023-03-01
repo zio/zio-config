@@ -5,7 +5,7 @@ enablePlugins(ZioSbtCiPlugin)
 inThisBuild(
   List(
     name := "ZIO Config",
-    //    crossScalaVersions -= scala211.value,
+    crossScalaVersions -= scala211.value,
     ciEnabledBranches := Seq("series/4.x"),
     developers := List(
       Developer(
