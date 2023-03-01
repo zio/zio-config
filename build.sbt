@@ -149,15 +149,8 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
 
 lazy val zioConfigJS     = zioConfig.js
-  .settings(crossScalaVersions --= Seq("2.11"))
-  .settings(libraryDependencies += "dev.zio" %%% "zio-test-sbt" % zioVersion % Test)
-
-lazy val zioConfigJVM    = zioConfig.jvm
-  .settings(dottySettings_)
-  .settings(libraryDependencies += "dev.zio" %%% "zio-test-sbt" % zioVersion % Test)
-
-lazy val zioConfigNative = zioConfig.native
-  .settings(nativeSettings_)
+lazy val zioConfigJVM    = zioConfig.jvm.settings(scala3Settings)
+lazy val zioConfigNative = zioConfig.native.settings(nativeSettings)
 
 lazy val zioConfigAws    = crossProject(JVMPlatform)
   .in(file("aws"))
