@@ -165,8 +165,7 @@ lazy val zioConfigAws    = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
-lazy val zioConfigAwsJVM = zioConfigAws.jvm
-  .settings(dottySettings_)
+lazy val zioConfigAwsJVM = zioConfigAws.jvm.settings(scala3Settings)
 
 lazy val zioConfigZioAws    = crossProject(JVMPlatform)
   .in(file("zio-aws"))
