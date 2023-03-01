@@ -3,7 +3,7 @@ enablePlugins(ZioSbtCiPlugin)
 inThisBuild(
   List(
     name := "ZIO Config",
-    crossScalaVersions -= scala211.value,
+//    crossScalaVersions -= scala211.value,
     developers := List(
       Developer(
         "afsalthaj",
@@ -53,7 +53,7 @@ val shapelessVersion  = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == scala3.value) Seq.empty // Just to make IntelliJ happy
+    if (scalaVersion.value == scala211.value || scalaVersion.value == scala3.value) Seq.empty // Just to make IntelliJ happy
     else {
       Seq(
         "com.propensive" %% "magnolia"      % magnoliaVersion,
@@ -64,13 +64,13 @@ lazy val magnoliaDependencies =
 
 lazy val refinedDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11") Seq.empty // Just to make IntelliJ happy
+    if (scalaVersion.value == scala211.value) Seq.empty // Just to make IntelliJ happy
     else Seq("eu.timepit" %% "refined" % refinedVersion)
   }
 
 lazy val pureconfigDependencies =
   libraryDependencies ++= {
-    if (scalaBinaryVersion.value == "2.11" || scalaVersion.value == scala3.value) Seq.empty // Just to make IntelliJ happy
+    if (scalaVersion.value == scala211.value || scalaVersion.value == scala3.value) Seq.empty // Just to make IntelliJ happy
     else Seq("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
   }
 
