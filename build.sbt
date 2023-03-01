@@ -146,7 +146,7 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
     )
   )
 
-lazy val zioConfigJS     = zioConfig.js
+lazy val zioConfigJS     = zioConfig.js.settings(crossScalaVersions -= scala211.value)
 lazy val zioConfigJVM    = zioConfig.jvm.settings(scala3Settings)
 lazy val zioConfigNative = zioConfig.native.settings(nativeSettings)
 
