@@ -1,5 +1,7 @@
 import BuildHelper._
 
+enablePlugins(ZioSbtCiPlugin)
+
 inThisBuild(
   List(
     name := "ZIO Config",
@@ -136,19 +138,14 @@ lazy val `root3` =
 
 lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("core"))
-  .settings(stdSettings_("zio-config"))
-  .settings(crossProjectSettings_)
-  .enablePlugins(BuildInfoPlugin)
-  .settings(buildInfoSettings_("zio.config"))
-  .settings(macroDefinitionSettings_)
+  .settings(stdSettings("zio-config", packageName = Some("zio.config"), enableCrossProject = true))
+  .settings(macroDefinitionSettings)
+  .settings(enableZIO())
   .settings(
     crossScalaVersions --= Seq("2.11"),
     libraryDependencies ++= Seq(
-      "dev.zio"                %% "zio"                     % zioVersion,
       "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
-      "dev.zio"                %% "zio-test"                % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
 
 lazy val zioConfigJS     = zioConfig.js
