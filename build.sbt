@@ -309,52 +309,40 @@ lazy val zioConfigXmlJVM = zioConfigXml.jvm.settings(scala3Settings)
 
 lazy val zioConfigScalaz    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("scalaz"))
-  .settings(stdSettings_("zio-config-scalaz"))
-  .settings(crossProjectSettings_)
+  .settings(stdSettings(name = "zio-config-scalaz", enableCrossProject = true))
+  .settings(enableZIO())
   .settings(
     crossScalaVersions --= Seq("2.11", Scala212_),
-    libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-core"  % "7.4.0-M13",
-      "dev.zio"    %% "zio-test"     % zioVersion % Test,
-      "dev.zio"    %% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    libraryDependencies ++= Seq( "org.scalaz" %% "scalaz-core"  % "7.4.0-M13")
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigScalazJVM = zioConfigScalaz.jvm
-  .settings(dottySettings_)
+  .settings(scala3Settings)
 
 lazy val zioConfigCats    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("cats"))
-  .settings(stdSettings_("zio-config-cats"))
-  .settings(crossProjectSettings_)
+  .settings(stdSettings(name = "zio-config-cats", enableCrossProject = true))
+  .settings(enableZIO())
   .settings(
     crossScalaVersions --= Seq("2.11"),
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core"    % "2.8.0",
-      "dev.zio"       %% "zio-test"     % zioVersion % Test,
-      "dev.zio"       %% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
-lazy val zioConfigCatsJVM = zioConfigCats.jvm
-  .settings(dottySettings_)
+lazy val zioConfigCatsJVM = zioConfigCats.jvm.settings(scala3Settings)
 
 lazy val zioConfigEnumeratum    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("enumeratum"))
-  .settings(stdSettings_("zio-config-enumeratum"))
-  .settings(crossProjectSettings_)
+  .settings(stdSettings(name = "zio-config-enumeratum", enableCrossProject = true))
+  .settings(enableZIO())
   .settings(
     crossScalaVersions --= Seq("2.11"),
     libraryDependencies ++= Seq(
       "com.beachape" %% "enumeratum"   % "1.7.0",
-      "dev.zio"      %% "zio-test"     % zioVersion % Test,
-      "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
@@ -362,19 +350,17 @@ lazy val zioConfigEnumeratumJVM = zioConfigEnumeratum.jvm
 
 lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .in(file("typesafe-magnolia-tests"))
-  .settings(stdSettings_("zio-config-typesafe-magnolia-tests"))
-  .settings(crossProjectSettings_)
+  .settings(stdSettings(name = "zio-config-typesafe-magnolia-tests", enableCrossProject = true))
+  .settings(enableZIO())
   .settings(
     crossScalaVersions --= Seq("2.11"),
     publish / skip := true,
     libraryDependencies ++= Seq(
       "com.typesafe" % "config"       % "1.4.2",
-      "dev.zio"     %% "zio-test"     % zioVersion % Test,
-      "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia)
+  
 lazy val zioConfigTypesafeMagnoliaTestsJVM = zioConfigTypesafeMagnoliaTests.jvm
 
 lazy val docs = project
@@ -399,7 +385,7 @@ lazy val docs = project
         zioConfigMagnoliaJVM
       )
   )
-  .settings(macroDefinitionSettings_)
+  .settings(macroDefinitionSettings)
   .dependsOn(
     zioConfigJVM,
     zioConfigTypesafeJVM,
