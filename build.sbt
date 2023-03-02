@@ -269,7 +269,7 @@ lazy val zioConfigMagnolia    = crossProject(JVMPlatform)
   .in(file("magnolia"))
   .settings(stdSettings(name = "zio-config-magnolia", enableCrossProject = true))
   .settings(enableZIO())
-  .settings(scala3Settings)
+  .settings(scalacOptions := scalacOptions.value.filterNot(_ == "-noindent"))
   .settings(
     magnoliaDependencies,
     scalacOptions ++= {
