@@ -1,7 +1,7 @@
 enablePlugins(ZioSbtCiPlugin)
 
-//crossScalaVersions := Seq.empty
-//
+crossScalaVersions := Seq.empty
+
 inThisBuild(
   List(
     name := "ZIO Config",
