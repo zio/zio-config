@@ -3,6 +3,6 @@ val zioSbtVersion = "0.3.10+47-bda1be86-SNAPSHOT"
 addSbtPlugin("dev.zio"      % "zio-sbt-ecosystem" % zioSbtVersion)
 addSbtPlugin("dev.zio"      % "zio-sbt-website"   % zioSbtVersion)
 addSbtPlugin("dev.zio"      % "zio-sbt-ci"        % zioSbtVersion)
-addSbtPlugin("com.typesafe"                      % "sbt-mima-plugin"               % "1.1.0")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin"   % "1.1.0")
 
 resolvers ++= Resolver.sonatypeOssRepos("public")

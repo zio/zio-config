@@ -91,10 +91,10 @@ object DeriveConfig {
   final def prepareClassName(annotations: Seq[Any], defaultClassName: String): String =
     annotations.collectFirst { case d: name => d.name }.getOrElse(defaultClassName)
 
-  final def prepareSealedTraitName(annotations: Seq[Any]): Option[String]             =
+  final def prepareSealedTraitName(annotations: Seq[Any]): Option[String] =
     annotations.collectFirst { case d: name => d.name }
 
-  final def prepareFieldName(annotations: Seq[Any], name: String): String             =
+  final def prepareFieldName(annotations: Seq[Any], name: String): String =
     annotations.collectFirst { case d: name => d.name }.getOrElse(name)
 
   final def combine[T](caseClass: CaseClass[DeriveConfig, T]): DeriveConfig[T] = {
@@ -176,7 +176,7 @@ object DeriveConfig {
               Config
                 .string(pureConfigKeyName)
                 .zip(typeclass.desc)
-                .mapOrFail({ case (specifiedName, subClass) =>
+                .mapOrFail { case (specifiedName, subClass) =>
                   if (specifiedName == subClassName) Right(subClass)
                   else
                     Left(
@@ -185,7 +185,7 @@ object DeriveConfig {
                           s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match the expected name ${subClassName}"
                         )
                     )
-                })
+                }
           }
       }.reduce(_.orElse(_))
 

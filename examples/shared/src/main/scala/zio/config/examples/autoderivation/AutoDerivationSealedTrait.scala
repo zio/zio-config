@@ -10,8 +10,8 @@ import RandomSealedTrait1._
 import RandomSealedTrait2._
 
 /**
- * An example that describes automatic derivation with zero customisation
- * for coproducts (sealed traits) with objects and case classes as terms
+ * An example that describes automatic derivation with zero customisation for coproducts (sealed traits) with objects
+ * and case classes as terms
  */
 final case class AppConfig(awsConfig: AwsConfig, appName: String)
 final case class AwsConfig(field: RandomSealedTrait1)

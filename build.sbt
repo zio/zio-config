@@ -4,10 +4,10 @@ crossScalaVersions := Seq.empty
 
 inThisBuild(
   List(
-    name := "ZIO Config",
+    name                   := "ZIO Config",
     crossScalaVersions -= scala211.value,
-    ciEnabledBranches := Seq("series/4.x"),
-    developers := List(
+    ciEnabledBranches      := Seq("series/4.x"),
+    developers             := List(
       Developer(
         "afsalthaj",
         "Afsal Thaj",
@@ -21,24 +21,24 @@ inThisBuild(
         url("http://degoes.net")
       )
     ),
-      supportedScalaVersions := Map(
-        (zioConfigJS / thisProject).value.id -> (zioConfigJS / crossScalaVersions).value,
-        (zioConfigJVM / thisProject).value.id -> (zioConfigJVM / crossScalaVersions).value,
-        (zioConfigNative / thisProject).value.id -> (zioConfigNative / crossScalaVersions).value,
-        (zioConfigAwsJVM / thisProject).value.id -> (zioConfigAwsJVM / crossScalaVersions).value,
-        (zioConfigCatsJVM / thisProject).value.id -> (zioConfigCatsJVM / crossScalaVersions).value,
-        (zioConfigDerivationJVM / thisProject).value.id -> (zioConfigDerivationJVM / crossScalaVersions).value,
-        (zioConfigEnumeratumJVM / thisProject).value.id -> (zioConfigEnumeratumJVM / crossScalaVersions).value,
-        (zioConfigMagnoliaJVM / thisProject).value.id -> (zioConfigMagnoliaJVM / crossScalaVersions).value,
-        (zioConfigPureconfigJVM / thisProject).value.id -> (zioConfigPureconfigJVM / crossScalaVersions).value,
-        (zioConfigRefinedJVM / thisProject).value.id -> (zioConfigRefinedJVM / crossScalaVersions).value,
-        (zioConfigScalazJVM / thisProject).value.id -> (zioConfigScalazJVM / crossScalaVersions).value,
-        (zioConfigTypesafeJVM / thisProject).value.id -> (zioConfigTypesafeJVM / crossScalaVersions).value,
-        (zioConfigTypesafeMagnoliaTestsJVM / thisProject).value.id -> (zioConfigTypesafeMagnoliaTestsJVM / crossScalaVersions).value,
-        (zioConfigYamlJVM / thisProject).value.id -> (zioConfigYamlJVM / crossScalaVersions).value,
-        (zioConfigXmlJVM / thisProject).value.id -> (zioConfigXmlJVM / crossScalaVersions).value,
-      )
+    supportedScalaVersions := Map(
+      (zioConfigJS / thisProject).value.id                       -> (zioConfigJS / crossScalaVersions).value,
+      (zioConfigJVM / thisProject).value.id                      -> (zioConfigJVM / crossScalaVersions).value,
+      (zioConfigNative / thisProject).value.id                   -> (zioConfigNative / crossScalaVersions).value,
+      (zioConfigAwsJVM / thisProject).value.id                   -> (zioConfigAwsJVM / crossScalaVersions).value,
+      (zioConfigCatsJVM / thisProject).value.id                  -> (zioConfigCatsJVM / crossScalaVersions).value,
+      (zioConfigDerivationJVM / thisProject).value.id            -> (zioConfigDerivationJVM / crossScalaVersions).value,
+      (zioConfigEnumeratumJVM / thisProject).value.id            -> (zioConfigEnumeratumJVM / crossScalaVersions).value,
+      (zioConfigMagnoliaJVM / thisProject).value.id              -> (zioConfigMagnoliaJVM / crossScalaVersions).value,
+      (zioConfigPureconfigJVM / thisProject).value.id            -> (zioConfigPureconfigJVM / crossScalaVersions).value,
+      (zioConfigRefinedJVM / thisProject).value.id               -> (zioConfigRefinedJVM / crossScalaVersions).value,
+      (zioConfigScalazJVM / thisProject).value.id                -> (zioConfigScalazJVM / crossScalaVersions).value,
+      (zioConfigTypesafeJVM / thisProject).value.id              -> (zioConfigTypesafeJVM / crossScalaVersions).value,
+      (zioConfigTypesafeMagnoliaTestsJVM / thisProject).value.id -> (zioConfigTypesafeMagnoliaTestsJVM / crossScalaVersions).value,
+      (zioConfigYamlJVM / thisProject).value.id                  -> (zioConfigYamlJVM / crossScalaVersions).value,
+      (zioConfigXmlJVM / thisProject).value.id                   -> (zioConfigXmlJVM / crossScalaVersions).value
     )
+  )
 )
 
 addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
@@ -73,7 +73,8 @@ val shapelessVersion  = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
   libraryDependencies ++= {
-    if (scalaVersion.value == scala211.value || scalaVersion.value == scala3.value) Seq.empty // Just to make IntelliJ happy
+    if (scalaVersion.value == scala211.value || scalaVersion.value == scala3.value)
+      Seq.empty // Just to make IntelliJ happy
     else {
       Seq(
         "com.propensive" %% "magnolia"      % magnoliaVersion,
@@ -90,7 +91,8 @@ lazy val refinedDependencies =
 
 lazy val pureconfigDependencies =
   libraryDependencies ++= {
-    if (scalaVersion.value == scala211.value || scalaVersion.value == scala3.value) Seq.empty // Just to make IntelliJ happy
+    if (scalaVersion.value == scala211.value || scalaVersion.value == scala3.value)
+      Seq.empty // Just to make IntelliJ happy
     else Seq("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
   }
 
@@ -168,7 +170,7 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(enableZIO())
   .settings(
     libraryDependencies ++= Seq(
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1"
     )
   )
 
@@ -176,7 +178,7 @@ lazy val zioConfigJS     = zioConfig.js.settings(crossScalaVersions -= scala211.
 lazy val zioConfigJVM    = zioConfig.jvm.settings(scala3Settings)
 lazy val zioConfigNative = zioConfig.native.settings(nativeSettings)
 
-lazy val zioConfigAws    = crossProject(JVMPlatform)
+lazy val zioConfigAws = crossProject(JVMPlatform)
   .in(file("aws"))
   .settings(stdSettings("zio-config-aws", enableCrossProject = true))
   .settings(enableZIO(enableStreaming = true))
@@ -190,21 +192,21 @@ lazy val zioConfigAws    = crossProject(JVMPlatform)
 
 lazy val zioConfigAwsJVM = zioConfigAws.jvm.settings(scala3Settings)
 
-lazy val zioConfigZioAws    = crossProject(JVMPlatform)
+lazy val zioConfigZioAws = crossProject(JVMPlatform)
   .in(file("zio-aws"))
   .settings(stdSettings(name = "zio-config-zio-aws", enableCrossProject = true))
   .settings(enableZIO(enableStreaming = true))
   .settings(scala3Settings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-aws-ssm"  % zioAwsVersion,
+      "dev.zio" %% "zio-aws-ssm" % zioAwsVersion
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigZioAwsJVM = zioConfigZioAws.jvm.settings(scala3Settings)
 
-lazy val zioConfigRefined    = crossProject(JVMPlatform)
+lazy val zioConfigRefined = crossProject(JVMPlatform)
   .in(file("refined"))
   .settings(stdSettings(name = "zio-config-refined", enableCrossProject = true))
   .settings(enableZIO())
@@ -216,12 +218,12 @@ lazy val zioConfigRefined    = crossProject(JVMPlatform)
 
 lazy val zioConfigRefinedJVM = zioConfigRefined.jvm
 
-lazy val zioConfigPureconfig    = crossProject(JVMPlatform)
+lazy val zioConfigPureconfig = crossProject(JVMPlatform)
   .in(file("pureconfig"))
   .settings(stdSettings(name = "zio-config-pureconfig", enableCrossProject = true))
   .settings(enableZIO())
   .settings(
-    pureconfigDependencies,
+    pureconfigDependencies
   )
   .dependsOn(zioConfig % "test->test", zioConfigTypesafe)
 
@@ -234,7 +236,7 @@ lazy val examples = crossProject(JVMPlatform)
   .settings(stdSettings(name = "zio-config-examples", enableCrossProject = true))
   .settings(
     publish / skip := true,
-    fork := true,
+    fork           := true,
     magnoliaDependencies,
     refinedDependencies,
     runAllExamples :=
@@ -265,7 +267,7 @@ lazy val zioConfigDerivation = crossProject(JVMPlatform)
 
 lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm.settings(scala3Settings)
 
-lazy val zioConfigMagnolia    = crossProject(JVMPlatform)
+lazy val zioConfigMagnolia = crossProject(JVMPlatform)
   .in(file("magnolia"))
   .settings(stdSettings(name = "zio-config-magnolia", enableCrossProject = true))
   .settings(enableZIO())
@@ -284,111 +286,111 @@ lazy val zioConfigMagnolia    = crossProject(JVMPlatform)
 
 lazy val zioConfigMagnoliaJVM = zioConfigMagnolia.jvm
 
-lazy val zioConfigTypesafe    = crossProject(JVMPlatform)
+lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .in(file("typesafe"))
   .settings(stdSettings(name = "zio-config-typesafe", enableCrossProject = true))
   .settings(enableZIO())
   .settings(scala3Settings)
   .settings(
-    libraryDependencies ++= Seq( "com.typesafe" % "config"       % "1.4.2")
+    libraryDependencies ++= Seq("com.typesafe" % "config" % "1.4.2")
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigTypesafeJVM = zioConfigTypesafe.jvm
   .settings(scala3Settings)
 
-lazy val zioConfigYaml    = crossProject(JVMPlatform)
+lazy val zioConfigYaml = crossProject(JVMPlatform)
   .in(file("yaml"))
   .settings(stdSettings(name = "zio-config-yaml", enableCrossProject = true))
   .settings(enableZIO())
   .settings(
     libraryDependencies ++= Seq(
-      "org.snakeyaml" % "snakeyaml-engine" % "2.6",
+      "org.snakeyaml" % "snakeyaml-engine" % "2.6"
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigYamlJVM = zioConfigYaml.jvm.settings(scala3Settings)
 
-lazy val zioConfigXml    = crossProject(JVMPlatform)
+lazy val zioConfigXml = crossProject(JVMPlatform)
   .in(file("xml"))
   .settings(stdSettings(name = "zio-config-xml", enableCrossProject = true))
   .settings(enableZIO())
   .settings(
-    libraryDependencies ++= Seq( "dev.zio" %% "zio-parser"   % "0.1.8" )
+    libraryDependencies ++= Seq("dev.zio" %% "zio-parser" % "0.1.8")
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigXmlJVM = zioConfigXml.jvm.settings(scala3Settings)
 
-lazy val zioConfigScalaz    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val zioConfigScalaz = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("scalaz"))
   .settings(stdSettings(name = "zio-config-scalaz", enableCrossProject = true))
   .settings(enableZIO())
   .settings(
     crossScalaVersions --= Seq(scala212.value),
-    libraryDependencies ++= Seq( "org.scalaz" %% "scalaz-core"  % "7.4.0-M13")
+    libraryDependencies ++= Seq("org.scalaz" %% "scalaz-core" % "7.4.0-M13")
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigScalazJVM = zioConfigScalaz.jvm
   .settings(scala3Settings)
 
-lazy val zioConfigCats    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val zioConfigCats = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("cats"))
   .settings(stdSettings(name = "zio-config-cats", enableCrossProject = true))
   .settings(enableZIO())
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core"    % "2.8.0",
+      "org.typelevel" %% "cats-core" % "2.8.0"
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigCatsJVM = zioConfigCats.jvm.settings(scala3Settings)
 
-lazy val zioConfigEnumeratum    = crossProject(JSPlatform, JVMPlatform, NativePlatform)
+lazy val zioConfigEnumeratum = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .in(file("enumeratum"))
   .settings(stdSettings(name = "zio-config-enumeratum", enableCrossProject = true))
   .settings(enableZIO())
   .settings(
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum"   % "1.7.2",
+      "com.beachape" %% "enumeratum" % "1.7.2"
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigEnumeratumJVM = zioConfigEnumeratum.jvm
 
-lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
+lazy val zioConfigTypesafeMagnoliaTests = crossProject(JVMPlatform)
   .in(file("typesafe-magnolia-tests"))
   .settings(stdSettings(name = "zio-config-typesafe-magnolia-tests", enableCrossProject = true))
   .settings(enableZIO())
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config"       % "1.4.2",
+      "com.typesafe" % "config" % "1.4.2"
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia)
-  
-lazy val zioConfigTypesafeMagnoliaTestsJVM = 
+
+lazy val zioConfigTypesafeMagnoliaTestsJVM =
   zioConfigTypesafeMagnoliaTests.jvm.settings(
-    crossScalaVersions -= scala3.value 
+    crossScalaVersions -= scala3.value
   )
 
 lazy val docs = project
   .in(file("zio-config-docs"))
   .settings(
-    moduleName := "zio-config-docs",
+    moduleName                                 := "zio-config-docs",
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
     magnoliaDependencies,
     refinedDependencies,
-    crossScalaVersions := (zioConfigJVM / crossScalaVersions).value,
-    projectName := "ZIO Config",
-    mainModuleName := (zioConfigJVM / moduleName).value,
-    projectStage := ProjectStage.ProductionReady,
+    crossScalaVersions                         := (zioConfigJVM / crossScalaVersions).value,
+    projectName                                := "ZIO Config",
+    mainModuleName                             := (zioConfigJVM / moduleName).value,
+    projectStage                               := ProjectStage.ProductionReady,
     ScalaUnidoc / unidoc / unidocProjectFilter :=
       inProjects(
         zioConfigJVM,
