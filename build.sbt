@@ -4,7 +4,6 @@ crossScalaVersions := Seq.empty
 
 inThisBuild(
   List(
-    scalafixScalaBinaryVersion := "",
     name                       := "ZIO Config",
     crossScalaVersions -= scala211.value,
     ciEnabledBranches          := Seq("series/4.x"),
@@ -38,31 +37,13 @@ inThisBuild(
       (zioConfigTypesafeMagnoliaTestsJVM / thisProject).value.id -> (zioConfigTypesafeMagnoliaTestsJVM / crossScalaVersions).value,
       (zioConfigYamlJVM / thisProject).value.id                  -> (zioConfigYamlJVM / crossScalaVersions).value,
       (zioConfigXmlJVM / thisProject).value.id                   -> (zioConfigXmlJVM / crossScalaVersions).value
-    )
+    ),
+    scalafixScalaBinaryVersion := ""
   )
 )
 
-//addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
-//addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt scalafmtAll")
 addCommandAlias("compileAll", "; ++2.12.16; root2-12/compile; ++2.13.8!; root2-13/compile")
 addCommandAlias("testAll", "; ++2.12.16; root2-12/test; ++2.13.8!; root2-13/test")
-addCommandAlias(
-  "testJS",
-  ";zioConfigJS/test"
-)
-
-addCommandAlias(
-  "testJVM212",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;examplesJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test"
-)
-addCommandAlias(
-  "testJVM213",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test"
-)
-addCommandAlias(
-  "testJVM3x",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test"
-)
 
 val awsVersion        = "1.12.360"
 val zioAwsVersion     = "5.19.8.4"
