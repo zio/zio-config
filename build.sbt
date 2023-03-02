@@ -225,10 +225,7 @@ lazy val zioConfigPureconfig    = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfig % "test->test", zioConfigTypesafe)
 
-lazy val zioConfigPureconfigJVM =
-  zioConfigPureconfig.jvm.settings(
-    crossScalaVersions -= scala3.value
-  )
+lazy val zioConfigPureconfigJVM = zioConfigPureconfig.jvm
 
 lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module")
 
