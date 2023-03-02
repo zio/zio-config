@@ -1,13 +1,14 @@
-enablePlugins(ZioSbtCiPlugin)
+enablePlugins(ZioSbtCiPlugin, ScalafixPlugin)
 
 crossScalaVersions := Seq.empty
 
 inThisBuild(
   List(
-    name                   := "ZIO Config",
+    scalafixScalaBinaryVersion := "",
+    name                       := "ZIO Config",
     crossScalaVersions -= scala211.value,
-    ciEnabledBranches      := Seq("series/4.x"),
-    developers             := List(
+    ciEnabledBranches          := Seq("series/4.x"),
+    developers                 := List(
       Developer(
         "afsalthaj",
         "Afsal Thaj",
@@ -21,7 +22,7 @@ inThisBuild(
         url("http://degoes.net")
       )
     ),
-    supportedScalaVersions := Map(
+    supportedScalaVersions     := Map(
       (zioConfigJS / thisProject).value.id                       -> (zioConfigJS / crossScalaVersions).value,
       (zioConfigJVM / thisProject).value.id                      -> (zioConfigJVM / crossScalaVersions).value,
       (zioConfigNative / thisProject).value.id                   -> (zioConfigNative / crossScalaVersions).value,
@@ -41,8 +42,8 @@ inThisBuild(
   )
 )
 
-addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
-addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt scalafmtAll")
+//addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
+//addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt scalafmtAll")
 addCommandAlias("compileAll", "; ++2.12.16; root2-12/compile; ++2.13.8!; root2-13/compile")
 addCommandAlias("testAll", "; ++2.12.16; root2-12/test; ++2.13.8!; root2-13/test")
 addCommandAlias(
