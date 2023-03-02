@@ -375,7 +375,10 @@ lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia)
   
-lazy val zioConfigTypesafeMagnoliaTestsJVM = zioConfigTypesafeMagnoliaTests.jvm
+lazy val zioConfigTypesafeMagnoliaTestsJVM = 
+  zioConfigTypesafeMagnoliaTests.jvm.settings(
+    crossScalaVersions -= scala3.value 
+  )
 
 lazy val docs = project
   .in(file("zio-config-docs"))
