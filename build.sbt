@@ -198,7 +198,11 @@ lazy val zioConfigRefined = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
 
-lazy val zioConfigRefinedJVM = zioConfigRefined.jvm
+lazy val zioConfigRefinedJVM =
+  zioConfigRefined.jvm
+    .settings(
+      crossScalaVersions -= scala3.value // TODO: add support for scala3
+    )
 
 lazy val zioConfigPureconfig = crossProject(JVMPlatform)
   .in(file("pureconfig"))
@@ -209,7 +213,10 @@ lazy val zioConfigPureconfig = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfig % "test->test", zioConfigTypesafe)
 
-lazy val zioConfigPureconfigJVM = zioConfigPureconfig.jvm
+lazy val zioConfigPureconfigJVM =
+  zioConfigPureconfig.jvm.settings(
+    crossScalaVersions -= scala3.value // TODO: add support for scala3
+  )
 
 lazy val runAllExamples = taskKey[Unit]("Run all main classes in examples module")
 
@@ -266,7 +273,10 @@ lazy val zioConfigMagnolia = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
 
-lazy val zioConfigMagnoliaJVM = zioConfigMagnolia.jvm
+lazy val zioConfigMagnoliaJVM =
+  zioConfigMagnolia.jvm.settings(
+    crossScalaVersions -= scala3.value // TODO: add support for scala3
+  )
 
 lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .in(file("typesafe"))
