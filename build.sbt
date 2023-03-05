@@ -45,7 +45,7 @@ addCommandAlias(
 )
 
 val awsVersion        = "1.12.360"
-val zioAwsVersion     = "5.19.8.1"
+val zioAwsVersion     = "5.19.8.4"
 val zioVersion        = "2.0.9"
 val magnoliaVersion   = "0.17.0"
 val refinedVersion    = "0.10.1"
@@ -367,7 +367,7 @@ lazy val zioConfigScalaz    = crossProject(JSPlatform, JVMPlatform, NativePlatfo
   .settings(
     crossScalaVersions --= Seq("2.11", Scala212),
     libraryDependencies ++= Seq(
-      "org.scalaz" %% "scalaz-core"  % "7.4.0-M12",
+      "org.scalaz" %% "scalaz-core"  % "7.4.0-M13",
       "dev.zio"    %% "zio-test"     % zioVersion % Test,
       "dev.zio"    %% "zio-test-sbt" % zioVersion % Test
     ),
