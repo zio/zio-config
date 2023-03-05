@@ -95,7 +95,7 @@ object TypesafeConfigProvider {
         })
     }
 
-    ConfigProvider.fromIndexedMap(
+    ConfigProvider.fromMap(
       loop(config)
         .map({ case (key, value) =>
           ConfigPath.toPath(key).mkString(".") -> value

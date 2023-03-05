@@ -189,7 +189,7 @@ trait ConfigSyntax {
 
   implicit class FromConfigProviderOps(c: ConfigProvider.type) {
 
-    def fromIndexedFlat(indexedFlat: IndexedFlat): ConfigProvider =
+    private def fromIndexedFlat(indexedFlat: IndexedFlat): ConfigProvider =
       new ConfigProvider {
 
         import Config._
@@ -346,7 +346,7 @@ trait ConfigSyntax {
      * Constructs a ConfigProvider using a map and the specified delimiter string,
      * which determines how to split the keys in the map into path segments.
      */
-    def fromIndexedMap(map: Map[String, String], pathDelim: String = "."): ConfigProvider =
+    private def fromIndexedMap(map: Map[String, String], pathDelim: String = "."): ConfigProvider =
       fromIndexedFlat(new IndexedFlat {
         val escapedPathDelim = java.util.regex.Pattern.quote(pathDelim)
 
