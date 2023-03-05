@@ -19,10 +19,11 @@ object TestApp2 extends zio.ZIOAppDefault {
     Runtime.setConfigProvider(
       TypesafeConfigProvider
         .fromHoconString(config)
+        .kebabCase
     )
 
   def run = ZIO
-    .config(CombinedArrayValue.config.mapKey(toKebabCase))
+    .config(CombinedArrayValue.config)
     .debug("result")
     .exitCode
 }
