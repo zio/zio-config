@@ -3,7 +3,6 @@ package zio.config.xml.experimental
 import com.github.ghik.silencer.silent
 import zio.ConfigProvider
 import zio.config.IndexedFlat.ConfigPath
-import zio.config._
 
 @silent("Unused import")
 object XmlConfigProvider {

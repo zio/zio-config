@@ -345,11 +345,6 @@ trait ConfigSyntax {
 
 
     //Disabled until next version of ZIO: https://github.com/zio/zio-config/blob/avoid_custom_index_until_3/README.md#indexed-map-array-datatype-and-a-some-implementation-notes
-
-    ///**
-    // * Constructs a ConfigProvider using a map and the specified delimiter string,
-    // * which determines how to split the keys in the map into path segments.
-    // */
     //    private def fromIndexedMap(map: Map[String, String], pathDelim: String = "."): ConfigProvider =
     //      fromIndexedFlat(new IndexedFlat {
     //        val escapedPathDelim = java.util.regex.Pattern.quote(pathDelim)
