@@ -84,3 +84,18 @@ object ConfigSourceOrElseExample extends App {
   assert(result1 == result2)
 
 }
+
+object Hi extends App {
+  val runner =
+    ConfigProvider
+      .fromMap(Map("afsal.thaj" -> "damn", "afsal.thaj.hi" -> "sd", "afsal.thaj.bi" -> "sd2"))
+      .load(Config.table("afsal.thaj", Config.string))
+
+  println(Unsafe.unsafe { implicit u =>
+    zio.Runtime.default.unsafe
+      .run(
+        runner
+      )
+      .getOrThrowFiberFailure()
+  })
+}

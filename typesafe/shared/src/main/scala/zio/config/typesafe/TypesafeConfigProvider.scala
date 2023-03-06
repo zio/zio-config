@@ -1,12 +1,11 @@
 package zio.config.typesafe
 
 import com.github.ghik.silencer.silent
-import com.typesafe.config.ConfigValueType._
 import com.typesafe.config._
 import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
 import zio.config._
 import zio.{Chunk, ConfigProvider}
-
+import java.lang.{Boolean => JBoolean}
 import java.io.File
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
@@ -51,67 +50,64 @@ object TypesafeConfigProvider {
   def fromHoconString(input: String): ConfigProvider =
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
 
-  def fromTypesafeConfig(config: com.typesafe.config.Config): ConfigProvider = {
-    def loop(config: com.typesafe.config.Config): Chunk[(Chunk[KeyComponent], String)] = {
-      val initLevel = config.entrySet.asScala.map(entry => (entry.getKey(), entry.getValue()))
+  private[config] def getIndexedMap(
+    input: com.typesafe.config.Config
+  ): Map[Chunk[KeyComponent], String] = {
+    def loopBoolean(path: Chunk[KeyComponent], value: Boolean)         = Map(path -> value.toString)
+    def loopNumber(path: Chunk[KeyComponent], value: Number)           = Map(path -> value.toString)
+    val loopNull                                                       = Map.empty[Chunk[KeyComponent], String]
+    def loopString(path: Chunk[KeyComponent], value: String)           = Map(path -> value)
+    def loopList(path: Chunk[KeyComponent], values: List[ConfigValue]) =
+      if (values.isEmpty) {
+        Map(path -> "<nil>")
+      } else {
+        values.zipWithIndex.map { case (value, i) =>
+          loopAny(path :+ KeyComponent.Index(i), value)
+        }.reduceOption(_ ++ _).getOrElse(Map.empty)
 
-      Chunk
-        .fromIterable(initLevel)
-        .flatMap({ case (k, possibleConfigValue) =>
-          val kIterated = Chunk.fromIterable(k.split('.')).map(KeyComponent.KeyName(_))
+      }
 
-          possibleConfigValue.valueType() match {
-            case LIST    =>
-              Try(config.getConfigList(k)) match {
-                case Failure(_)     =>
-                  // Only possibility is a sequence of primitives
-                  val result = config.getList(k).unwrapped().asScala.toList
+    def loopConfig(path: Chunk[KeyComponent], config: ConfigObject): Map[Chunk[KeyComponent], String] =
+      config.asScala.toVector.toMap.flatMap { case (key, value) =>
+        loopAny(path :+ KeyComponent.KeyName(key), value)
+      }
 
-                  if (result.isEmpty) {
-                    Map(kIterated -> "<nil>")
-                  } else {
-                    result.zipWithIndex
-                      .map({ case (result, index) =>
-                        (kIterated :+ KeyComponent.Index(index)) -> result.toString
-                      })
-                      .toMap
-                  }
+    def loopAny(path: Chunk[KeyComponent], value: ConfigValue): Map[Chunk[KeyComponent], String] =
+      value.valueType() match {
+        case ConfigValueType.OBJECT  =>
+          loopConfig(path, value.asInstanceOf[ConfigObject])
+        case ConfigValueType.LIST    =>
+          loopList(path, value.asInstanceOf[ConfigList].asScala.toList)
+        case ConfigValueType.BOOLEAN =>
+          loopBoolean(path, value.unwrapped().asInstanceOf[JBoolean])
+        case ConfigValueType.NUMBER  =>
+          loopNumber(path, value.unwrapped().asInstanceOf[Number])
+        case ConfigValueType.NULL    => loopNull
+        case ConfigValueType.STRING  =>
+          loopString(path, value.unwrapped().asInstanceOf[String])
+      }
 
-                // Only possibility is a sequence of nested Configs
-                case Success(value) =>
-
-                  val result = value.asScala.toList
-
-                  if (result.isEmpty) {
-                    Map(kIterated -> "<nil>")
-                  } else {
-                    value.asScala.toList.zipWithIndex.map { case (config: com.typesafe.config.Config, index: Int) =>
-                      val oldKeyWithIndex: Chunk[KeyComponent] = kIterated ++ Chunk(KeyComponent.Index(index))
-
-                      loop(config).map { case (newKey, v) =>
-                        oldKeyWithIndex ++ newKey -> v
-                      }
-
-                    }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[KeyComponent], String])
-                  }
-
-              }
-            case NUMBER  =>
-              Map(kIterated -> config.getNumber(k).toString())
-            case STRING  => Map(kIterated -> config.getString(k))
-            case OBJECT  => throw new Exception("Invalid hocon format") //FIXME: Move to IO
-            case BOOLEAN => Map(kIterated -> config.getBoolean(k).toString())
-            case NULL    => throw new Exception("Invalid hocon format") // FIXME: Move to IO
-          }
-        })
+    Try(loopConfig(Chunk.empty, input.root())) match {
+      case Failure(t)     =>
+        throw new RuntimeException(
+          "Unable to form the zio.config.PropertyTree from Hocon string." +
+            " This may be due to the presence of explicit usage of nulls in hocon string. " +
+            t.getMessage
+        )
+      case Success(value) => value
     }
+  }
+
+  def fromTypesafeConfig(config: com.typesafe.config.Config): ConfigProvider = {
+
+    val configMap =
+      getIndexedMap(config)
 
     ConfigProvider.fromMap(
-      loop(config)
-        .map({ case (key, value) =>
-          ConfigPath.toPath(key).mkString(".") -> value
-        })
-        .toMap
+      configMap.map { case (key, value) =>
+        ConfigPath.toPath(key).mkString("\u0020") -> value
+      },
+      pathDelim = "\u0020"
     )
   }
 
