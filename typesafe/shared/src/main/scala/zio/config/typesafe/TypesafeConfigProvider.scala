@@ -67,22 +67,33 @@ object TypesafeConfigProvider {
                   // Only possibility is a sequence of primitives
                   val result = config.getList(k).unwrapped().asScala.toList
 
-                  result.zipWithIndex
-                    .map({ case (result, index) =>
-                      (kIterated :+ KeyComponent.Index(index)) -> result.toString
-                    })
-                    .toMap
+                  if (result.isEmpty) {
+                    Map(kIterated -> "<nil>")
+                  } else {
+                    result.zipWithIndex
+                      .map({ case (result, index) =>
+                        (kIterated :+ KeyComponent.Index(index)) -> result.toString
+                      })
+                      .toMap
+                  }
 
                 // Only possibility is a sequence of nested Configs
                 case Success(value) =>
-                  value.asScala.toList.zipWithIndex.map { case (config: com.typesafe.config.Config, index: Int) =>
-                    val oldKeyWithIndex: Chunk[KeyComponent] = kIterated ++ Chunk(KeyComponent.Index(index))
 
-                    loop(config).map { case (newKey, v) =>
-                      oldKeyWithIndex ++ newKey -> v
-                    }
+                  val result = value.asScala.toList
 
-                  }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[KeyComponent], String])
+                  if (result.isEmpty) {
+                    Map(kIterated -> "<nil>")
+                  } else {
+                    value.asScala.toList.zipWithIndex.map { case (config: com.typesafe.config.Config, index: Int) =>
+                      val oldKeyWithIndex: Chunk[KeyComponent] = kIterated ++ Chunk(KeyComponent.Index(index))
+
+                      loop(config).map { case (newKey, v) =>
+                        oldKeyWithIndex ++ newKey -> v
+                      }
+
+                    }.reduceOption(_ ++ _).getOrElse(Map.empty[Chunk[KeyComponent], String])
+                  }
 
               }
             case NUMBER  =>
@@ -95,7 +106,7 @@ object TypesafeConfigProvider {
         })
     }
 
-    ConfigProvider.fromIndexedMap(
+    ConfigProvider.fromMap(
       loop(config)
         .map({ case (key, value) =>
           ConfigPath.toPath(key).mkString(".") -> value

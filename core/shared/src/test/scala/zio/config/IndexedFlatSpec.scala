@@ -8,7 +8,7 @@ object IndexedFlatSpec extends ZIOSpecDefault {
 
   def spec = suite("IndexedFlatSpec") {
     test("indexed sequence simple") {
-      val configProvider = ConfigProvider.fromIndexedMap(Map("id[0]" -> "1", "id[1]" -> "2", "id[2]" -> "3"))
+      val configProvider = ConfigProvider.fromMap(Map("id[0]" -> "1", "id[1]" -> "2", "id[2]" -> "3"))
       val config         = Config.listOf("id", Config.int)
 
       for {
@@ -16,7 +16,7 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } yield assertTrue(result == List(1, 2, 3))
     } +
       test("indexed sequence of one product") {
-        val configProvider = ConfigProvider.fromIndexedMap(Map("employees[0].age" -> "1", "employees[0].id" -> "1"))
+        val configProvider = ConfigProvider.fromMap(Map("employees[0].age" -> "1", "employees[0].id" -> "1"))
         val product        = Config.int("age").zip(Config.int("id"))
         val config         = Config.listOf("employees", product)
 
@@ -25,7 +25,7 @@ object IndexedFlatSpec extends ZIOSpecDefault {
         } yield assertTrue(result == List((1, 1)))
       } +
       test("indexed sequence of one product with missing field") {
-        val configProvider = ConfigProvider.fromIndexedMap(Map("employees[0].age" -> "1"))
+        val configProvider = ConfigProvider.fromMap(Map("employees[0].age" -> "1"))
         val product        = Config.int("age").zip(Config.int("id"))
         val config         = Config.listOf("employees", product)
 
@@ -34,7 +34,7 @@ object IndexedFlatSpec extends ZIOSpecDefault {
         } yield assert(exit)(failsWithA[Config.Error])
       } +
       test("indexed sequence of multiple products") {
-        val configProvider = ConfigProvider.fromIndexedMap(
+        val configProvider = ConfigProvider.fromMap(
           Map(
             "employees[0].age" -> "1",
             "employees[0].id"  -> "2",
@@ -50,7 +50,7 @@ object IndexedFlatSpec extends ZIOSpecDefault {
         } yield assertTrue(result == List((1, 2), (3, 4)))
       } +
       test("indexed sequence of multiple products with missing fields") {
-        val configProvider = ConfigProvider.fromIndexedMap(
+        val configProvider = ConfigProvider.fromMap(
           Map("employees[0].age" -> "1", "employees[0].id" -> "2", "employees[1].age" -> "3", "employees[1]" -> "4")
         )
         val product        = Config.int("age").zip(Config.int("id"))
@@ -62,7 +62,7 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("indexed sequence of multiple products with optional fields") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map("employees[0].age" -> "1", "employees[0].id" -> "2", "employees[1].id" -> "4")
           )
         val product        = Config.int("age").optional.zip(Config.int("id"))
@@ -73,7 +73,7 @@ object IndexedFlatSpec extends ZIOSpecDefault {
         } yield assertTrue(result == List((Some(1), 2), (None, 4)))
       } +
       test("product of indexed sequences with reusable config") {
-        val configProvider = ConfigProvider.fromIndexedMap(
+        val configProvider = ConfigProvider.fromMap(
           Map(
             "employees[0].id"  -> "0",
             "employees[1].id"  -> "1",
@@ -96,7 +96,7 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("map of indexed sequence") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map(
               "departments.department1.employees[0].age" -> "10",
               "departments.department1.employees[0].id"  -> "0",
@@ -120,7 +120,7 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("indexed sequence of map") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map(
               "employees[0].details.age" -> "10",
               "employees[0].details.id"  -> "0",
@@ -139,7 +139,7 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("indexed sequence of indexed sequence") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map(
               "departments[0].employees[0].age" -> "10",
               "departments[0].employees[0].id"  -> "0",
@@ -166,9 +166,9 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("empty list") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map(
-              "departments" -> ""
+              "departments" -> "<nil>"
             )
           )
 
@@ -180,9 +180,9 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("empty list optional") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map(
-              "departments" -> ""
+              "departments" -> "<nil>"
             )
           )
 
@@ -194,9 +194,9 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("empty list with description") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map(
-              "departments" -> ""
+              "departments" -> "<nil>"
             )
           )
 
@@ -208,9 +208,9 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("empty list with product") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map(
-              "departments" -> ""
+              "departments" -> "<nil>"
             )
           )
 
@@ -224,9 +224,9 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("empty list with product optional") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map(
-              "departments" -> ""
+              "departments" -> "<nil>"
             )
           )
 
@@ -240,9 +240,9 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("empty list with product with description") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map(
-              "departments" -> ""
+              "departments" -> "<nil>"
             )
           )
 
@@ -256,9 +256,9 @@ object IndexedFlatSpec extends ZIOSpecDefault {
       } +
       test("empty list within indexed list") {
         val configProvider =
-          ConfigProvider.fromIndexedMap(
+          ConfigProvider.fromMap(
             Map(
-              "departments[0].ids"    -> "",
+              "departments[0].ids"    -> "<nil>",
               "departments[1].ids[0]" -> "1",
               "departments[2].ids[0]" -> "1",
               "departments[2].ids[1]" -> "2"
