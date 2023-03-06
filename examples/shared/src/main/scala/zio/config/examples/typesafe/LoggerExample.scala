@@ -13,7 +13,7 @@ object LoggerExample extends App {
     val config: Config[LoggingConfig] =
       Config
         .string("pattern")
-        .zip(Config.string("path"))
+        .zip(Config.string("log path"))
         .zip(FilterConfig.config.nested("filter"))
         .to[LoggingConfig]
         .nested("logger")
@@ -35,7 +35,7 @@ object LoggerExample extends App {
        |logger {
        |
        |  pattern = "%timestamp{yyyy-MM-dd'T'HH:mm:ssZ} %level [%fiberId] %name:%line %message %cause"
-       |  path = "file:///tmp/console_app.log"
+       |  "log path" = "file:///tmp/console_app.log"
        |
        |  filter {
        |    rootLevel = "DEBUG"
