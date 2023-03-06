@@ -41,6 +41,7 @@ object DeriveConfig {
   implicit val implicitDoubleDesc: DeriveConfig[Double]               = DeriveConfig(double)
   implicit val implicitBigDecimalDesc: DeriveConfig[BigDecimal]       = DeriveConfig(bigDecimal)
   implicit val implicitUriDesc: DeriveConfig[URI]                     = DeriveConfig(uri)
+  implicit val implicitDurationDesc: DeriveConfig[zio.Duration]       = DeriveConfig(duration)
   implicit val implicitLocalDateDesc: DeriveConfig[LocalDate]         = DeriveConfig(localDate)
   implicit val implicitLocalTimeDesc: DeriveConfig[LocalTime]         = DeriveConfig(localTime)
   implicit val implicitLocalDateTimeDesc: DeriveConfig[LocalDateTime] = DeriveConfig(localDateTime)
