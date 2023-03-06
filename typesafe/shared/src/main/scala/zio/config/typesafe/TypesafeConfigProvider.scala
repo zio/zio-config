@@ -50,10 +50,22 @@ object TypesafeConfigProvider {
   def fromHoconString(input: String): ConfigProvider =
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
 
+  def fromTypesafeConfig(config: com.typesafe.config.Config): ConfigProvider = {
+
+    val configMap =
+      getIndexedMap(config)
+
+    ConfigProvider.fromMap(
+      configMap.map { case (key, value) =>
+        ConfigPath.toPath(key).mkString("\u0020") -> value
+      },
+      pathDelim = "\u0020"
+    )
+  }
+
   private[config] def getIndexedMap(
     input: com.typesafe.config.Config
   ): Map[Chunk[KeyComponent], String] = {
-    def loopBoolean(path: Chunk[KeyComponent], value: Boolean)         = Map(path -> value.toString)
     def loopNumber(path: Chunk[KeyComponent], value: Number)           = Map(path -> value.toString)
     val loopNull                                                       = Map.empty[Chunk[KeyComponent], String]
     def loopString(path: Chunk[KeyComponent], value: String)           = Map(path -> value)
@@ -64,7 +76,6 @@ object TypesafeConfigProvider {
         values.zipWithIndex.map { case (value, i) =>
           loopAny(path :+ KeyComponent.Index(i), value)
         }.reduceOption(_ ++ _).getOrElse(Map.empty)
-
       }
 
     def loopConfig(path: Chunk[KeyComponent], config: ConfigObject): Map[Chunk[KeyComponent], String] =
@@ -79,10 +90,11 @@ object TypesafeConfigProvider {
         case ConfigValueType.LIST    =>
           loopList(path, value.asInstanceOf[ConfigList].asScala.toList)
         case ConfigValueType.BOOLEAN =>
-          loopBoolean(path, value.unwrapped().asInstanceOf[JBoolean])
+          Map(path -> value.toString)
         case ConfigValueType.NUMBER  =>
           loopNumber(path, value.unwrapped().asInstanceOf[Number])
-        case ConfigValueType.NULL    => loopNull
+        case ConfigValueType.NULL    =>
+          loopNull
         case ConfigValueType.STRING  =>
           loopString(path, value.unwrapped().asInstanceOf[String])
       }
@@ -96,19 +108,6 @@ object TypesafeConfigProvider {
         )
       case Success(value) => value
     }
-  }
-
-  def fromTypesafeConfig(config: com.typesafe.config.Config): ConfigProvider = {
-
-    val configMap =
-      getIndexedMap(config)
-
-    ConfigProvider.fromMap(
-      configMap.map { case (key, value) =>
-        ConfigPath.toPath(key).mkString("\u0020") -> value
-      },
-      pathDelim = "\u0020"
-    )
   }
 
 }
