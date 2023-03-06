@@ -150,7 +150,7 @@ object YamlConfigProvider {
           )
       }
 
-    ConfigProvider.fromIndexedMap(flattened(data, Chunk.empty).map({ case (k, v) => (k.mkString("."), v) }))
+    ConfigProvider.fromMap(flattened(data, Chunk.empty).map({ case (k, v) => (k.mkString("."), v) }))
 
   }
 
