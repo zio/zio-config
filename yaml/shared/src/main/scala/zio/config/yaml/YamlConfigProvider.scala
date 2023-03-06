@@ -15,6 +15,7 @@ import scala.jdk.CollectionConverters._
 
 @silent("Unused import")
 object YamlConfigProvider {
+
   import scala.collection.compat._
   import VersionSpecificSupport._
 
@@ -81,9 +82,10 @@ object YamlConfigProvider {
    * }}}
    */
   def fromYamlReader(
-    reader: Reader
-  ): ConfigProvider =
+     reader: Reader
+   ): ConfigProvider = {
     getIndexedConfigProvider(loadYaml(reader))
+  }
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -108,27 +110,30 @@ object YamlConfigProvider {
     fromYamlReader(new BufferedReader(new InputStreamReader(configStream)))
   }
 
-  // Use zio-config-parser for xml, yaml, hcl and json
   private[yaml] def getIndexedConfigProvider(data: AnyRef): ConfigProvider = {
     def flattened(data: AnyRef, chunk: Chunk[String]): Map[Chunk[String], String] =
       data match {
-        case null        => Map.empty
+        case null => Map.empty
         case t: JInteger => Map(chunk -> t.toString())
-        case t: JLong    => Map(chunk -> t.toString())
-        case t: JFloat   => Map(chunk -> t.toString())
-        case t: JDouble  => Map(chunk -> t.toString())
-        case t: String   => Map(chunk -> t.toString())
+        case t: JLong => Map(chunk -> t.toString())
+        case t: JFloat => Map(chunk -> t.toString())
+        case t: JDouble => Map(chunk -> t.toString())
+        case t: String => Map(chunk -> t.toString())
         case t: JBoolean => Map(chunk -> t.toString())
 
         case t: java.lang.Iterable[_] =>
           val list = t.asInstanceOf[java.lang.Iterable[AnyRef]].asScala.toList
 
-          list.zipWithIndex
-            .map({ case (anyRef, index) =>
-              flattened(anyRef, chunk.mapLast(last => last + IndexKey(index)))
-            })
-            .reduceOption(_ ++ _)
-            .getOrElse(Map.empty)
+          if (list.isEmpty) {
+            Map(chunk -> "<nil>")
+          } else {
+            list.zipWithIndex
+              .map({ case (anyRef, index) =>
+                flattened(anyRef, chunk.mapLast(last => last + IndexKey(index)))
+              })
+              .reduceOption(_ ++ _)
+              .getOrElse(Map.empty)
+          }
 
         case t: ju.Map[_, _] =>
           val map = t.asInstanceOf[ju.Map[String, AnyRef]].asScala.toMap
@@ -140,17 +145,15 @@ object YamlConfigProvider {
             .reduceOption(_ ++ _)
             .getOrElse(Map.empty)
 
-        // It is definitely comparitively less user friendly to return IO[ConfigProvider].
-        // This is not the case in pure-config or zio-config-3.x although it had the same behaviour of doing a flatMap
-        // Example: provider.flatMap(_.load(config)) or provider1ZIO.zip(provider2ZIO).map{(case (provider1, provider2) => provider1.orElse(provider2))}
-        //
-        case a               =>
+        case a =>
           throw new RuntimeException(
             s"Invalid yaml. ${a}"
           )
       }
 
-    ConfigProvider.fromMap(flattened(data, Chunk.empty).map({ case (k, v) => (k.mkString("."), v) }))
+    lazy val hiddenDelim = "\uFEFF"
+
+    ConfigProvider.fromMap(flattened(data, Chunk.empty).map({ case (k, v) => (k.mkString(hiddenDelim), v) }), pathDelim = hiddenDelim)
 
   }
 
