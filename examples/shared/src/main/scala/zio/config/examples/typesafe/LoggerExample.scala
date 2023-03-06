@@ -2,17 +2,13 @@ package zio.config.examples.typesafe
 
 import zio.{ Config, ConfigProvider, Unsafe}
 import zio.config.typesafe._
-import zio.config.magnolia._
 
 object LoggerExample extends App {
 
-  val hocon =
-    s"""
-       | duration = "10.seconds"
-       |""".stripMargin
+  val configString = "duration = 5m"
+  val config       = Config.duration("duration")
 
-  final case class 
-  val pgm2 = ConfigProvider.fromHoconString(hocon).load(deriveConfig[])
+  val pgm2 = ConfigProvider.fromHoconString(configString).load(config)
 
   println(Unsafe.unsafe { implicit u =>
     zio.Runtime.default.unsafe
