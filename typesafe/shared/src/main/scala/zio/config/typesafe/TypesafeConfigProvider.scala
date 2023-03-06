@@ -50,15 +50,16 @@ object TypesafeConfigProvider {
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
 
   def fromTypesafeConfig(config: com.typesafe.config.Config): ConfigProvider = {
+    lazy val hiddenDelim = "\uFEFF"
 
-    val configMap =
-      getIndexedMap(config)
+    val indexedMapWithHiddenDelimiter =
+      getIndexedMap(config).map { case (key, value) =>
+        ConfigPath.toPath(key).mkString(hiddenDelim) -> value
+      }
 
     ConfigProvider.fromMap(
-      configMap.map { case (key, value) =>
-        ConfigPath.toPath(key).mkString("\u0020") -> value
-      },
-      pathDelim = "\u0020"
+      indexedMapWithHiddenDelimiter,
+      pathDelim = hiddenDelim
     )
   }
 
