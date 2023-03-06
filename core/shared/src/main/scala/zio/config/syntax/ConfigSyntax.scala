@@ -235,11 +235,26 @@ trait ConfigSyntax {
               for {
                 keys <- indexedFlat
                           .enumerateChildrenIndexed(prefix)
-                          .map(set =>
-                            set.toList.flatMap { chunk =>
-                              chunk.headOption.toList
+                          .flatMap { set =>
+                            ZIO.foreach(set.toList) { configPath =>
+                              configPath.headOption match {
+                                case Some(value) =>
+                                  value match {
+                                    case index @ KeyComponent.Index(_) => ZIO.succeed(List(index))
+                                    case KeyComponent.KeyName(_)       =>
+                                      ZIO.fail(
+                                        Config.Error.InvalidData(
+                                          prefix.map(_.value),
+                                          "A list key should be always followed by an index which is an integer to consider the values as a list. Example: The key `employees` is a list only if there is exists `employees[0]`, `employees[1]` etc as keys"
+                                        )
+                                      )
+                                  }
+                                case None        =>
+                                  ZIO.succeed(Nil)
+                              }
                             }
-                          )
+                          }
+                          .map(_.flatten.sortBy(_.index))
 
                 values <-
                   ZIO
@@ -331,9 +346,8 @@ trait ConfigSyntax {
      * Constructs a ConfigProvider using a map and the specified delimiter string,
      * which determines how to split the keys in the map into path segments.
      */
-    def fromIndexedMap(map: Map[String, String], pathDelim: String = ".", seqDelim: String = ","): ConfigProvider =
+    def fromIndexedMap(map: Map[String, String], pathDelim: String = "."): ConfigProvider =
       fromIndexedFlat(new IndexedFlat {
-        val escapedSeqDelim  = java.util.regex.Pattern.quote(seqDelim)
         val escapedPathDelim = java.util.regex.Pattern.quote(pathDelim)
 
         def makePathString(path: Chunk[String]): String = path.mkString(pathDelim)
@@ -344,7 +358,6 @@ trait ConfigSyntax {
           trace: Trace
         ): IO[Config.Error, Chunk[A]] = {
           val pathString = makePathString(IndexedFlat.ConfigPath.toPath(path))
-          val name       = path.lastOption.getOrElse(IndexedFlat.KeyComponent.KeyName("<unnamed>"))
           val valueOpt   = map.get(pathString)
 
           for {
@@ -353,8 +366,11 @@ trait ConfigSyntax {
                          .mapError(_ =>
                            Config.Error.MissingData(path.map(_.value), s"Expected ${pathString} to be set in properties")
                          )
-            results <- ConfigProvider.Flat.util
-                         .parsePrimitive(value, path.map(_.value), name.value, primitive, escapedSeqDelim, split)
+            results <-
+              ZIO
+                .fromEither(primitive.parse(value))
+                .map(Chunk(_))
+                .mapError(_.prefixed(path.map(_.value)))
           } yield results
         }
 

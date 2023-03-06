@@ -55,7 +55,7 @@ package object refined {
    *     listOf("databases", deriveConfig[MyConfig])
    *
    *   val configDescriptor: Config[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
-   *     refined[Size[Greater[W.`2`.T]]](configs)
+   *     refine[Size[Greater[W.`2`.T]]](configs)
    * }}}
    *
    * If you don't care predicates specifically, and need to pass a fully formed Refined type

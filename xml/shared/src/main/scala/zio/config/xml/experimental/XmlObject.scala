@@ -1,4 +1,4 @@
-package zio.config.xml
+package zio.config.xml.experimental
 
 import zio.Chunk
 import zio.config.IndexedFlat.KeyComponent

@@ -2,7 +2,6 @@ package zio.config
 
 import _root_.scalaz.{==>>, IList, ISet, Maybe, Order}
 import zio.Config
-import zio.config._
 
 import Config._
 
