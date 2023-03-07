@@ -42,9 +42,6 @@ inThisBuild(
   )
 )
 
-addCommandAlias("compileAll", "; ++2.12.16; root2-12/compile; ++2.13.8!; root2-13/compile")
-addCommandAlias("testAll", "; ++2.12.16; root2-12/test; ++2.13.8!; root2-13/test")
-
 val awsVersion        = "1.12.360"
 val zioAwsVersion     = "5.19.8.4"
 val zioVersion        = "2.0.10"
