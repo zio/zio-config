@@ -26,7 +26,7 @@ If you are only interested in automatic derivation of configuration, find the de
 In order to use this library, we need to add the following line in our `build.sbt` file:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config" % "4.0.0-RC9" 
+libraryDependencies += "dev.zio" %% "zio-config" % "4.0.0-RC11" 
 ```
 
 # Quick Start
