@@ -53,7 +53,7 @@ jobs:
         java-version: '17'
         check-latest: true
     - name: Lint
-      run: sbt lint
+      run: sbt  lint
   test:
     name: Test
     runs-on: ubuntu-latest
@@ -118,7 +118,18 @@ jobs:
       with:
         fetch-depth: '0'
     - name: Test
-      run: sbt ${{ matrix.scala-project }}/test
+      run: sbt  ${{ matrix.scala-project }}/test
+  ci:
+    name: ci
+    runs-on: ubuntu-latest
+    continue-on-error: false
+    needs:
+    - lint
+    - test
+    - build
+    steps:
+    - name: Report Successful CI
+      run: echo "ci passed"
   release:
     name: Release
     runs-on: ubuntu-latest
@@ -140,7 +151,7 @@ jobs:
         java-version: '17'
         check-latest: true
     - name: Release
-      run: sbt ci-release
+      run: sbt  ci-release
       env:
         PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
         PGP_SECRET: ${{ secrets.PGP_SECRET }}
