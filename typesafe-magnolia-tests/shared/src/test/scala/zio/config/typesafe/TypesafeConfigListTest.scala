@@ -124,17 +124,17 @@ object TypesafeConfigListTest extends ZIOSpecDefault {
           |""".stripMargin
 
       final case class Details3(
-        ci: String,
-        vi: Either[Int, Either[Long, Either[Double, Either[Float, String]]]],
-        lst: List[Int],
-        vvv: Option[List[Int]]
-      )
+                                 ci: String,
+                                 vi: Either[Int, Either[Long, Either[Double, Either[Float, String]]]],
+                                 lst: List[Int],
+                                 vvv: Option[List[Int]]
+                               )
       final case class Details2(hi: String, bi: String, r: List[Details3])
       final case class Details1(
-        table: String,
-        columns: List[String],
-        extraDetails: List[Details2]
-      )
+                                 table: String,
+                                 columns: List[String],
+                                 extraDetails: List[Details2]
+                               )
       final case class ExportDetails(exportDetails: List[Details1], database: Database)
       final case class Port(va: String)
       final case class Database(port: Port)
@@ -147,43 +147,84 @@ object TypesafeConfigListTest extends ZIOSpecDefault {
 
       val expectedResult =
         ExportDetails(
-          List(
-            Details1("some_name2", Nil, Nil),
-            Details1("some_name1", Nil, Nil),
-            Details1(
-              "some_name1",
-              Nil,
-              List(Details2("di", "ci", Nil), Details2("di", "ci", Nil), Details2("di", "ci", Nil))
-            ),
-            Details1("some_name2", Nil, Nil),
-            Details1(
-              "some_name",
-              List("a", "b", "c", "d"),
-              List(
-                Details2(
-                  "di",
-                  "ci",
-                  List(
-                    Details3("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
-                    Details3("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), Some(Nil)), //FIXME: It should be None
-                    Details3("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
-                  )
-                ),
-                Details2(
-                  "di",
-                  "ci",
-                  List(
-                    Details3("ki", Right(Right(Right(Right("bi")))), List(1, 1, 1), Some(Nil)),
-                    Details3("ki", Right(Right(Left(1.0882121))), List(1, 2, 1), Some(Nil)), //FIXME: It should be None,
-                    Details3("ki", Left(3), List(1, 3, 5), Some(List(1, 2, 3)))
-                  )
-                ),
-                Details2("di", "ci", Nil)
-              )
-            )
-          ),
-          Database(Port("ba"))
+          exportDetails = List(Details1(
+            table = "some_name",
+            columns = List("a", "b", "c", "d"),
+            extraDetails = List(Details2(
+              hi = "di",
+              bi = "ci",
+              r = List(Details3(
+                ci = "ki",
+                vi = Right(value = Right(value = Right(value = Right(value = "bi")))),
+                lst = List(1, 1, 1),
+                vvv = Some(Nil)
+              ), Details3(
+                ci = "ki",
+                vi = Right(value = Right(value = Left(value = 1.0882121))),
+                lst = List(1, 2, 1),
+                vvv = None
+              ), Details3(
+                ci = "ki",
+                vi = Left(value = 3),
+                lst = List(1, 3, 5),
+                vvv = Some(List(1, 2, 3))
+              ))
+            ), Details2(
+              hi = "di",
+              bi = "ci",
+              r = List(Details3(
+                ci = "ki",
+                vi = Right(value = Right(value = Right(value = Right(value = "bi")))),
+                lst = List(1, 1, 1),
+                vvv = Some(Nil)
+              ), Details3(
+                ci = "ki",
+                vi = Right(value = Right(value = Left(value = 1.0882121))),
+                lst = List(1, 2, 1),
+                vvv = None
+              ), Details3(
+                ci = "ki",
+                vi = Left(value = 3),
+                lst = List(1, 3, 5),
+                vvv = Some(List(1, 2, 3))
+              ))
+            ), Details2(
+              hi = "di",
+              bi = "ci",
+              r = Nil
+            ))
+          ), Details1(
+            table = "some_name1",
+            columns = Nil,
+            extraDetails = List(Details2(
+              hi = "di",
+              bi = "ci",
+              r = Nil
+            ), Details2(
+              hi = "di",
+              bi = "ci",
+              r = Nil
+            ), Details2(
+              hi = "di",
+              bi = "ci",
+              r = Nil
+            ))
+          ), Details1(
+            table = "some_name1",
+            columns = Nil,
+            extraDetails = Nil
+          ), Details1(
+            table = "some_name2",
+            columns = Nil,
+            extraDetails = Nil
+          ), Details1(
+            table = "some_name2",
+            columns = Nil,
+            extraDetails = Nil
+          )),
+          database = Database(port = Port(va = "ba"))
         )
+
 
       assertZIO(zioConfigWithKeysInKebabResult)(equalTo(expectedResult))
     }

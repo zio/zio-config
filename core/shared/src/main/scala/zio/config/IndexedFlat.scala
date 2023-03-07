@@ -95,5 +95,6 @@ object IndexedFlat {
   object KeyComponent {
     final case class Index(index: Int)     extends KeyComponent
     final case class KeyName(name: String) extends KeyComponent
+
   }
 }

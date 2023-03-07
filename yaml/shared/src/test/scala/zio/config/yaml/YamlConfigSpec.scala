@@ -11,15 +11,17 @@ object YamlConfigSpec extends ZIOSpecDefault {
       case class Child(sum: List[Sum])
 
       sealed trait Sum         extends Product with Serializable
-      case class A(a: String)  extends Sum
-      case class B(b: Boolean) extends Sum
+      case class A(a: String, h: List[Int])  extends Sum
+      case class B(b: Boolean, e: List[C], f: Map[String, Int]) extends Sum
+
+      final case class C(d: Int) extends Sum
 
       val config =
         Config
           .listOf(
             "sum",
-            ((Config.string("a").to[A].nested("A")) orElseEither
-              (Config.boolean("b").to[B].nested("B")))
+            ((Config.string("a").zip(Config.listOf("h", Config.int)).to[A].nested("A")) orElseEither
+              (Config.boolean("b").zip(Config.listOf("e", Config.int.to[C]).nested("d")).zip(Config.table("f", Config.int)).to[B].nested("B")))
               .map(_.merge)
           )
           .to[Child]
@@ -29,13 +31,23 @@ object YamlConfigSpec extends ZIOSpecDefault {
           """|sum:
              |  - A:
              |      a: "str"
+             |      h: []
              |  - B:
-             |      b: false""".stripMargin
+             |      b: false
+             |      d:
+             |        e:
+             |          - 1
+             |          - 2
+             |      f:
+             |        hi: 1
+             |        bi: 2
+             |
+             |      """.stripMargin
         )
 
       val zio = provider.load(config)
 
-      val expected = Child(List(A("str"), B(false)))
+      val expected = Child(List(A("str", Nil), B(false, List(C(1), C(2)), Map("hi" -> 1, "bi" -> 2))))
 
       assertZIO(zio.exit)(succeeds(equalTo(expected)))
     }

@@ -46,9 +46,9 @@ addCommandAlias(
 
 val awsVersion        = "1.12.360"
 val zioAwsVersion     = "5.19.8.4"
-val zioVersion        = "2.0.9"
+val zioVersion        = "2.0.10"
 val magnoliaVersion   = "0.17.0"
-val refinedVersion    = "0.10.1"
+val refinedVersion    = "0.10.2"
 val pureconfigVersion = "0.16.0"
 val shapelessVersion  = "2.4.0-M1"
 
@@ -154,10 +154,13 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   )
 
 lazy val zioConfigJS     = zioConfig.js
+  .settings(crossScalaVersions --= Seq("2.11"))
   .settings(libraryDependencies += "dev.zio" %%% "zio-test-sbt" % zioVersion % Test)
+
 lazy val zioConfigJVM    = zioConfig.jvm
   .settings(dottySettings)
   .settings(libraryDependencies += "dev.zio" %%% "zio-test-sbt" % zioVersion % Test)
+
 lazy val zioConfigNative = zioConfig.native
   .settings(nativeSettings)
 
