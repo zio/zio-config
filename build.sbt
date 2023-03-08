@@ -7,6 +7,8 @@ inThisBuild(
     name                       := "ZIO Config",
     crossScalaVersions -= scala211.value,
     ciEnabledBranches          := Seq("master", "series/4.x"),
+    ciGroupSimilarTests        := false,
+    ciMatrixMaxParallel        := Some(4),
     sbtBuildOptions            := List("-J-XX:+UseG1GC", "-J-Xmx6g", "-J-Xms4g", "-J-Xss16m"),
     developers                 := List(
       Developer(
