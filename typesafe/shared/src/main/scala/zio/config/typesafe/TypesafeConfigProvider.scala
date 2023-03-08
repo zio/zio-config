@@ -68,7 +68,7 @@ object TypesafeConfigProvider {
     input: com.typesafe.config.Config
   ): Map[Chunk[KeyComponent], String] = {
     def loopNumber(path: Chunk[KeyComponent], value: Number)           = Map(path -> value.toString)
-    def loopBoolean(path: Chunk[KeyComponent], value: Boolean)           = Map(path -> value.toString)
+    def loopBoolean(path: Chunk[KeyComponent], value: Boolean)         = Map(path -> value.toString)
     val loopNull                                                       = Map.empty[Chunk[KeyComponent], String]
     def loopString(path: Chunk[KeyComponent], value: String)           = Map(path -> value)
     def loopList(path: Chunk[KeyComponent], values: List[ConfigValue]) =

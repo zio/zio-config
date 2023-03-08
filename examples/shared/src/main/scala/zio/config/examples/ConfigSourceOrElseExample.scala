@@ -87,7 +87,7 @@ object ConfigSourceOrElseExample extends App {
 }
 
 object Hi extends App {
-  val runner: IO[Config.Error,Map[String,String]] =
+  val runner: IO[Config.Error, Map[String, String]] =
     ConfigProvider
       .fromMap(Map("afsal.thaj" -> "damn", "afsal.thaj.hi" -> "sd", "afsal.thaj.bi" -> "sd2"))
       .load(Config.table("afsal.thaj", Config.string))

@@ -3,7 +3,7 @@ package zio.config.examples
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider
 import zio.{Config, Runtime, ZIO, ZLayer}
-import zio.{ ExitCode, URIO }
+import zio.{ExitCode, URIO}
 
 object StandardPattern extends zio.ZIOAppDefault {
 
@@ -22,7 +22,7 @@ object StandardPattern extends zio.ZIOAppDefault {
         .kebabCase
     )
 
-  def run: URIO[Any,ExitCode] = ZIO
+  def run: URIO[Any, ExitCode] = ZIO
     .config(CombinedArrayValue.config)
     .debug("result")
     .exitCode
