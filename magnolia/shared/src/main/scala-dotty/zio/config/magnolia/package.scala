@@ -15,6 +15,6 @@ package object magnolia {
 
   implicit class ConfigProviderOps[A](configProvider: ConfigProvider) {
     def autoLoad[A: DeriveConfig]: IO[Config.Error, A] =
-      configProvider.load(DeriveConfig[A])
+      configProvider.load(DeriveConfig[A].desc)
   }
 }
