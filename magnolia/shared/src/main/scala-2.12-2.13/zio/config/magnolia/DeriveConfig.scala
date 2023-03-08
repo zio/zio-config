@@ -12,7 +12,7 @@ import scala.collection.immutable
 
 final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
 
-  final def ??(description: String): DeriveConfig[T] =
+  def ??(description: String): DeriveConfig[T] =
     describe(description)
 
   def describe(description: String): DeriveConfig[T] =
@@ -30,7 +30,6 @@ final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
 }
 
 object DeriveConfig {
-  // The default behaviour of zio-config is to discard the name of a sealed trait
   def apply[A](implicit ev: DeriveConfig[A]): DeriveConfig[A] =
     ev
 
@@ -70,9 +69,6 @@ object DeriveConfig {
 
   implicit def implicitMapDesc[A: DeriveConfig]: DeriveConfig[Map[String, A]] =
     DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc))
-
-  implicit def implicitMutableMapDesc[A: DeriveConfig]: DeriveConfig[scala.collection.mutable.Map[String, A]] =
-    DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc).map(map => scala.collection.mutable.Map.from(map)))
 
   type Typeclass[T] = DeriveConfig[T]
 
