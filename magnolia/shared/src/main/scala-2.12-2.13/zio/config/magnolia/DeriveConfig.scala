@@ -21,6 +21,9 @@ final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
   def map[B](f: T => B): DeriveConfig[B] =
     DeriveConfig(desc.map(f))
 
+  def mapAttempt[B](f: T => B): DeriveConfig[B] =
+    DeriveConfig(desc.mapAttempt(f))
+
   def mapOrFail[B](f: T => Either[Config.Error, B]): DeriveConfig[B] =
     DeriveConfig(desc.mapOrFail(f))
 
@@ -59,11 +62,17 @@ object DeriveConfig {
   implicit def implicitListDesc[A: DeriveConfig]: DeriveConfig[List[A]] =
     DeriveConfig(Config.listOf(implicitly[DeriveConfig[A]].desc))
 
+  implicit def implicitListSeq[A: DeriveConfig]: DeriveConfig[Seq[A]] =
+    DeriveConfig(Config.listOf(implicitly[DeriveConfig[A]].desc).map(_.toSeq))
+
   implicit def implicitSetDesc[A: DeriveConfig]: DeriveConfig[Set[A]] =
     DeriveConfig(Config.setOf(implicitly[DeriveConfig[A]].desc))
 
-  implicit def implicitMapDesc[K, A: DeriveConfig]: DeriveConfig[Map[String, A]] =
+  implicit def implicitMapDesc[A: DeriveConfig]: DeriveConfig[Map[String, A]] =
     DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc))
+
+  implicit def implicitMutableMapDesc[A: DeriveConfig]: DeriveConfig[scala.collection.mutable.Map[String, A]] =
+    DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc).map(map => scala.collection.mutable.Map.from(map)))
 
   type Typeclass[T] = DeriveConfig[T]
 

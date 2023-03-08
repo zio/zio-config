@@ -16,12 +16,27 @@ import DeriveConfig._
 import zio.{Config, ConfigProvider}, Config._
 import zio.config.syntax._
 
-final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None)
+final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None) {
+  def ??(description: String): DeriveConfig[T] =
+    describe(description)
+
+  def describe(description: String): DeriveConfig[T] =
+    DeriveConfig(desc.??(description))
+
+  def map[B](f: T => B): DeriveConfig[B] =
+    DeriveConfig(desc.map(f))
+
+  def mapAttempt[B](f: T => B): DeriveConfig[B] =
+    DeriveConfig(desc.mapAttempt(f))
+
+  def mapOrFail[B](f: T => Either[Config.Error, B]): DeriveConfig[B] =
+    DeriveConfig(desc.mapOrFail(f))
+}
 
 object DeriveConfig {
 
   def apply[A](implicit ev: DeriveConfig[A]): Config[A] =
-    ev.desc
+    ev
 
   def from[A](desc: Config[A]) =
     DeriveConfig(desc, None)
@@ -60,6 +75,9 @@ object DeriveConfig {
 
   given listDesc[A](using ev: DeriveConfig[A]): DeriveConfig[List[A]] =
     DeriveConfig.from(listOf(ev.desc))
+
+  given seqDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Seq[A]] =
+    DeriveConfig.from(listOf(ev.desc).map(_.toSeq))
 
   given mapDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Map[String, A]] =
     DeriveConfig.from(table(ev.desc))
