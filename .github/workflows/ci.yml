@@ -13,6 +13,7 @@ env:
     - published
   push:
     branches:
+    - master
     - series/4.x
   pull_request: {}
 jobs:

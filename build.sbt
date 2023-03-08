@@ -6,7 +6,7 @@ inThisBuild(
   List(
     name                       := "ZIO Config",
     crossScalaVersions -= scala211.value,
-    ciEnabledBranches          := Seq("series/4.x"),
+    ciEnabledBranches          := Seq("master", "series/4.x"),
     developers                 := List(
       Developer(
         "afsalthaj",
