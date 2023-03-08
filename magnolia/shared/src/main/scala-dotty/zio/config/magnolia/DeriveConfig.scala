@@ -17,10 +17,10 @@ import zio.{Config, ConfigProvider}, Config._
 import zio.config.syntax._
 
 final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None) {
-  def ??(description: String): DeriveConfig[T] =
+  def ??(description: String): DeriveConfig[A] =
     describe(description)
 
-  def describe(description: String): DeriveConfig[T] =
+  def describe(description: String): DeriveConfig[A] =
     DeriveConfig(desc.??(description))
 
   def map[B](f: T => B): DeriveConfig[B] =
