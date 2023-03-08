@@ -35,7 +35,7 @@ final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.
 
 object DeriveConfig {
 
-  def apply[A](implicit ev: DeriveConfig[A]): Config[A] =
+  def apply[A](implicit ev: DeriveConfig[A]): DeriveConfig[A] =
     ev
 
   def from[A](desc: Config[A]) =
