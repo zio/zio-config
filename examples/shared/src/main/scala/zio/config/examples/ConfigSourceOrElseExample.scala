@@ -5,6 +5,7 @@ import zio.config.magnolia.deriveConfig
 import zio.config.typesafe._
 import zio.config.yaml._
 import zio.{ConfigProvider, _}
+import zio.IO
 
 object ConfigSourceOrElseExample extends App {
 
@@ -86,7 +87,7 @@ object ConfigSourceOrElseExample extends App {
 }
 
 object Hi extends App {
-  val runner =
+  val runner: IO[Config.Error,Map[String,String]] =
     ConfigProvider
       .fromMap(Map("afsal.thaj" -> "damn", "afsal.thaj.hi" -> "sd", "afsal.thaj.bi" -> "sd2"))
       .load(Config.table("afsal.thaj", Config.string))
