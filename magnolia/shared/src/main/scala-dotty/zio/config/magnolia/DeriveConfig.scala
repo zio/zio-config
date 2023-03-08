@@ -23,13 +23,13 @@ final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.
   def describe(description: String): DeriveConfig[A] =
     DeriveConfig(desc.??(description))
 
-  def map[B](f: T => B): DeriveConfig[B] =
+  def map[B](f: A => B): DeriveConfig[B] =
     DeriveConfig(desc.map(f))
 
-  def mapAttempt[B](f: T => B): DeriveConfig[B] =
+  def mapAttempt[B](f: A => B): DeriveConfig[B] =
     DeriveConfig(desc.mapAttempt(f))
 
-  def mapOrFail[B](f: T => Either[Config.Error, B]): DeriveConfig[B] =
+  def mapOrFail[B](f: A => Either[Config.Error, B]): DeriveConfig[B] =
     DeriveConfig(desc.mapOrFail(f))
 }
 
