@@ -4,8 +4,7 @@ import zio.config._
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe._
 import zio.config.yaml._
-import zio.{ConfigProvider, _}
-import zio.IO
+import zio.{ConfigProvider, IO, _}
 
 object ConfigSourceOrElseExample extends App {
 

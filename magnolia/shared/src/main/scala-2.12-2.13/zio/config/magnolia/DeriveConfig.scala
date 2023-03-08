@@ -3,7 +3,7 @@ package zio.config.magnolia
 import magnolia._
 import zio.Config
 import zio.config._
-import zio.config.derivation.{name => _, describe => _, _}
+import zio.config.derivation.{describe => _, name => _, _}
 
 import java.net.URI
 import java.time.{LocalDate, LocalDateTime, LocalTime}

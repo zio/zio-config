@@ -2,8 +2,7 @@ package zio.config.examples
 
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider
-import zio.{Config, Runtime, ZIO, ZLayer}
-import zio.{ExitCode, URIO}
+import zio.{Config, ExitCode, Runtime, URIO, ZIO, ZLayer}
 
 object StandardPattern extends zio.ZIOAppDefault {
 
