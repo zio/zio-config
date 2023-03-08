@@ -41,5 +41,3 @@ libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "4.0.0-RC11"
 libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "4.0.0-RC11"
 libraryDependencies += "dev.zio" %% "zio-config-refined"  % "4.0.0-RC11"
 ```
-
-There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples) straight away as well.
