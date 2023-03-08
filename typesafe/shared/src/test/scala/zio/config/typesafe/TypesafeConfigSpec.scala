@@ -6,7 +6,7 @@ import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 import zio.{Config, ConfigProvider}
 
-final case class EmployeeDetails(employees: List[Employee], accountId: Int)
+final case class EmployeeDetails(employees: List[Employee], accountId: Int, boolean: Boolean, optional: Option[String])
 
 final case class Employee(
   name: String,
@@ -28,7 +28,7 @@ object EmployeeDetails {
         )).to[Employee]
 
   val employeeDetails: zio.Config[EmployeeDetails] =
-    ((listOf(employee).nested("employees")).zip(int("accountId"))).to[EmployeeDetails].nested("details")
+    ((listOf(employee).nested("employees")).zip(int("accountId")).zip(Config.boolean("boolean")).zip(Config.string("optional").optional)).to[EmployeeDetails].nested("details")
 
 }
 
@@ -58,7 +58,9 @@ object TypesafeConfigSpec extends ZIOSpecDefault {
             |    }
             |  ]
             |
+            |  boolean = true
             |  accountId = 1000
+            |  optional = null
             |}""".stripMargin
         )
 
@@ -73,7 +75,9 @@ object TypesafeConfigSpec extends ZIOSpecDefault {
             Employee("susan", None, Right("f")),
             Employee("martha", None, Right("Medium"))
           ),
-          1000
+          1000,
+          true,
+          None
         )
 
       assertZIO(result.map(_.employees))(hasSameElements(expectedResult.employees))

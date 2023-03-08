@@ -80,19 +80,6 @@ source.load(myConfig)
 
 ```
 
-### Readers from configdescriptor
-
-As mentioned before, you can use config descriptor to read from various sources.
-
-```scala mdoc:silent
-val anotherResult =
-  source.load(myConfig)
-```
-
-Note that, this is almost similar to `Config.fromMap(map, myConfig)` in the previous section.
-
-More details in [here](manual-creation-of-config.md).
-
 ### Documentations using Config
 
 ```scala mdoc:silent
@@ -107,8 +94,6 @@ val betterConfig =
 generateDocs(betterConfig).toTable.toGithubFlavouredMarkdown
 // Custom documentation along with auto generated docs
 ```
-
-More details in [here](manual-creation-of-config.md).
 
 ### Accumulating all errors
 
@@ -155,11 +140,6 @@ Here is a complete example:
    ▼
 ```
 
-It says, fix `FormatError` related to path "var1" in the source. For the next error, either provide var2 or var3
-to fix `MissingValue` error.
-
-**Note**: Use prettyPrint method to avoid having to avoid seeing highly nested ReadErrors, that can be difficult to read.
-
 ### Example of mapping keys
 
 Now on, the only way to change keys is as follows:
@@ -197,3 +177,54 @@ val str =
 ConfigProvider.fromHoconString(str).load(deriveConfig[AppConfig])
 
 ```
+
+
+## The `to` method for easy manual configurations
+
+```scala
+import zio.config._
+import zio.Config
+
+final case class AppConfig(port: Int, url: String)
+
+val config = Config.int("PORT").zip(Config.string("URL")).to[AppConfig]
+
+```
+
+## A few handy methods
+
+### CollectAll
+
+```scala
+import zio.config._
+
+  final case class Variables(variable1: Int, variable2: Option[Int])
+
+  val listOfConfig: List[Config[Variables]] =
+    List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
+      .map(group => (Config.int(s"${group}_VARIABLE1") zip Config.int(s"${group}_VARIABLE2").optional).to[Variables])
+
+  val configOfList: Config[List[Variables]] =
+    Config.collectAll(listOfConfig.head, listOfConfig.tail: _*)
+
+```
+
+### orElseEither && Constant
+
+```scala
+import zio.config._ 
+
+sealed trait Greeting
+
+case object Hello extends Greeting
+case object Bye extends Greeting
+
+val configSource = 
+  ConfigProvider.fromMap(Map("greeting" -> "Hello"))
+
+val config: Config[Greeting] = 
+  Config.constant("Hello").orElseEither(Config.constant("Bye")).map(_.merge)
+
+
+```
+

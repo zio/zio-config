@@ -12,7 +12,7 @@ import scala.collection.immutable
 
 final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
 
-  final def ??(description: String): DeriveConfig[T] =
+  def ??(description: String): DeriveConfig[T] =
     describe(description)
 
   def describe(description: String): DeriveConfig[T] =
@@ -21,13 +21,15 @@ final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
   def map[B](f: T => B): DeriveConfig[B] =
     DeriveConfig(desc.map(f))
 
+  def mapAttempt[B](f: T => B): DeriveConfig[B] =
+    DeriveConfig(desc.mapAttempt(f))
+
   def mapOrFail[B](f: T => Either[Config.Error, B]): DeriveConfig[B] =
     DeriveConfig(desc.mapOrFail(f))
 
 }
 
 object DeriveConfig {
-  // The default behaviour of zio-config is to discard the name of a sealed trait
   def apply[A](implicit ev: DeriveConfig[A]): DeriveConfig[A] =
     ev
 
@@ -59,10 +61,13 @@ object DeriveConfig {
   implicit def implicitListDesc[A: DeriveConfig]: DeriveConfig[List[A]] =
     DeriveConfig(Config.listOf(implicitly[DeriveConfig[A]].desc))
 
+  implicit def implicitListSeq[A: DeriveConfig]: DeriveConfig[Seq[A]] =
+    DeriveConfig(Config.listOf(implicitly[DeriveConfig[A]].desc).map(_.toSeq))
+
   implicit def implicitSetDesc[A: DeriveConfig]: DeriveConfig[Set[A]] =
     DeriveConfig(Config.setOf(implicitly[DeriveConfig[A]].desc))
 
-  implicit def implicitMapDesc[K, A: DeriveConfig]: DeriveConfig[Map[String, A]] =
+  implicit def implicitMapDesc[A: DeriveConfig]: DeriveConfig[Map[String, A]] =
     DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc))
 
   type Typeclass[T] = DeriveConfig[T]
