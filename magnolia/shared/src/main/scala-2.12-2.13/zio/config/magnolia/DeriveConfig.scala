@@ -21,9 +21,6 @@ final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
   def map[B](f: T => B): DeriveConfig[B] =
     DeriveConfig(desc.map(f))
 
-  def mapKey(f: String => String): DeriveConfig[T] =
-    DeriveConfig(desc.mapKey(f))
-
   def mapAttempt[B](f: T => B): DeriveConfig[B] =
     DeriveConfig(desc.mapAttempt(f))
 

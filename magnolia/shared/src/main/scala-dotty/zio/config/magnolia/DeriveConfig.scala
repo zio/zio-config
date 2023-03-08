@@ -28,10 +28,7 @@ final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.
 
   def mapAttempt[B](f: T => B): DeriveConfig[B] =
     DeriveConfig(desc.mapAttempt(f))
-
-  def mapKey(f: String => String): DeriveConfig[A] =
-    DeriveConfig(desc.mapKey(f))
-
+  
   def mapOrFail[B](f: T => Either[Config.Error, B]): DeriveConfig[B] =
     DeriveConfig(desc.mapOrFail(f))
 }
