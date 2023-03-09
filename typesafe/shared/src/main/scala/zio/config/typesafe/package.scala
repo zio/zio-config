@@ -7,22 +7,23 @@ import java.io.File
 package object typesafe {
 
   implicit class FromConfigSourceTypesafe(configProvider: ConfigProvider.type) {
-    def fromResourcePath: ConfigProvider =
-      TypesafeConfigProvider.fromResourcePath
+    def fromResourcePath(enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+      TypesafeConfigProvider.fromResourcePath(enableCommaSeparatedValueAsList)
 
-    def fromHoconFile[A](file: File): ConfigProvider =
-      TypesafeConfigProvider.fromHoconFile(file)
+    def fromHoconFile[A](file: File, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+      TypesafeConfigProvider.fromHoconFile(file, enableCommaSeparatedValueAsList)
 
-    def fromHoconFilePath[A](filePath: String): ConfigProvider =
-      TypesafeConfigProvider.fromHoconFilePath(filePath)
+    def fromHoconFilePath[A](filePath: String, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+      TypesafeConfigProvider.fromHoconFilePath(filePath, enableCommaSeparatedValueAsList)
 
-    def fromHoconString(input: String): ConfigProvider =
-      TypesafeConfigProvider.fromHoconString(input)
+    def fromHoconString(input: String, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+      TypesafeConfigProvider.fromHoconString(input, enableCommaSeparatedValueAsList)
 
     def fromTypesafeConfig(
-      rawConfig: com.typesafe.config.Config
+      rawConfig: com.typesafe.config.Config,
+      enableCommaSeparatedValueAsList: Boolean = false
     ): ConfigProvider =
-      TypesafeConfigProvider.fromTypesafeConfig(rawConfig)
+      TypesafeConfigProvider.fromTypesafeConfig(rawConfig, enableCommaSeparatedValueAsList)
   }
 
 }
