@@ -7,26 +7,29 @@ import java.nio.file.Path
 
 package object yaml {
   implicit class FromConfigSourceYaml(c: ConfigProvider.type) {
-    def fromYamlFile(file: File): ConfigProvider =
-      YamlConfigProvider.fromYamlFile(file)
+    def fromYamlFile(file: File, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+      YamlConfigProvider.fromYamlFile(file, enableCommaSeparatedValueAsList)
 
-    def fromYamlPath(path: Path): ConfigProvider =
-      YamlConfigProvider.fromYamlPath(path)
+    def fromYamlPath(path: Path, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+      YamlConfigProvider.fromYamlPath(path, enableCommaSeparatedValueAsList)
 
     def fromYamlReader(
-      reader: Reader
+      reader: Reader,
+      enableCommaSeparatedValueAsList: Boolean = false
     ): ConfigProvider =
-      YamlConfigProvider.fromYamlReader(reader)
+      YamlConfigProvider.fromYamlReader(reader, enableCommaSeparatedValueAsList)
 
     def fromYamlString(
-      yamlString: String
+      yamlString: String,
+      enableCommaSeparatedValueAsList: Boolean = false
     ): ConfigProvider =
-      YamlConfigProvider.fromYamlString(yamlString)
+      YamlConfigProvider.fromYamlString(yamlString, enableCommaSeparatedValueAsList)
 
     def fromYamlRepr[A](repr: A)(
-      loadYaml: A => AnyRef
+      loadYaml: A => AnyRef,
+      enableCommaSeparatedValueAsList: Boolean = false
     ): ConfigProvider =
-      YamlConfigProvider.getIndexedConfigProvider(loadYaml(repr))
+      YamlConfigProvider.getIndexedConfigProvider(loadYaml(repr), enableCommaSeparatedValueAsList)
   }
 
 }

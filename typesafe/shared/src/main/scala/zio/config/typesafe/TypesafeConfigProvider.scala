@@ -27,29 +27,28 @@ object TypesafeConfigProvider {
    *    ConfigProvider.fromResourcePath.load(deriveConfig[MyConfig])
    * }}}
    */
-  def fromResourcePath: ConfigProvider =
-    fromTypesafeConfig(ConfigFactory.load.resolve)
+  def fromResourcePath(enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+    fromTypesafeConfig(ConfigFactory.load.resolve, enableCommaSeparatedValueAsList)
 
   /**
    * Retrieve a `ConfigProvider` from `typesafe-config` from a given config file
    */
-  def fromHoconFile[A](file: File): ConfigProvider =
-    fromTypesafeConfig(ConfigFactory.parseFile(file).resolve)
+  def fromHoconFile[A](file: File, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+    fromTypesafeConfig(ConfigFactory.parseFile(file).resolve, enableCommaSeparatedValueAsList)
 
   /**
    * Retrieve a `ConfigProvider` from `typesafe-config` from a path to a config file
    */
-  def fromHoconFilePath[A](filePath: String): ConfigProvider =
-    fromHoconFile(new File(filePath))
+  def fromHoconFilePath[A](filePath: String, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+    fromHoconFile(new File(filePath), enableCommaSeparatedValueAsList)
 
   /**
    * Retrieve a `ConfigProvider` from `typesafe-config` HOCON string.
    */
+  def fromHoconString(input: String, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+    fromTypesafeConfig(ConfigFactory.parseString(input).resolve, enableCommaSeparatedValueAsList)
 
-  def fromHoconString(input: String): ConfigProvider =
-    fromTypesafeConfig(ConfigFactory.parseString(input).resolve)
-
-  def fromTypesafeConfig(config: com.typesafe.config.Config): ConfigProvider = {
+  def fromTypesafeConfig(config: com.typesafe.config.Config, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider = {
     lazy val hiddenDelim = "\uFEFF"
 
     val indexedMapWithHiddenDelimiter =
@@ -59,7 +58,8 @@ object TypesafeConfigProvider {
 
     ConfigProvider.fromMap(
       indexedMapWithHiddenDelimiter,
-      pathDelim = hiddenDelim
+      pathDelim = hiddenDelim,
+      seqDelim = if(enableCommaSeparatedValueAsList) "," else hiddenDelim
     )
   }
 

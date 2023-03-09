@@ -33,8 +33,8 @@ object YamlConfigProvider {
    *       .flatMap(source => read(deriveConfig[MyConfig] from source)))
    * }}}
    */
-  def fromYamlFile(file: File): ConfigProvider =
-    getIndexedConfigProvider(loadYaml(file))
+  def fromYamlFile(file: File, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+    getIndexedConfigProvider(loadYaml(file), enableCommaSeparatedValueAsList)
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -50,8 +50,8 @@ object YamlConfigProvider {
    *       .flatMap(source => read(deriveConfig[MyConfig] from source)))
    * }}}
    */
-  def fromYamlPath(path: Path): ConfigProvider =
-    fromYamlFile(path.toFile)
+  def fromYamlPath(path: Path, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
+    fromYamlFile(path.toFile, enableCommaSeparatedValueAsList)
 
   /**
    * Retrieve a `ConfigSource` from yaml reader.
@@ -82,9 +82,10 @@ object YamlConfigProvider {
    * }}}
    */
   def fromYamlReader(
-     reader: Reader
+     reader: Reader,
+     enableCommaSeparatedValueAsList: Boolean = false
    ): ConfigProvider = {
-    getIndexedConfigProvider(loadYaml(reader))
+    getIndexedConfigProvider(loadYaml(reader), enableCommaSeparatedValueAsList)
   }
 
   /**
@@ -104,13 +105,14 @@ object YamlConfigProvider {
    * }}}
    */
   def fromYamlString(
-    yamlString: String
+    yamlString: String,
+    enableCommaSeparatedValueAsList: Boolean = false
   ): ConfigProvider = {
     val configStream = new ByteArrayInputStream(yamlString.getBytes(Charset.forName("UTF-8")))
-    fromYamlReader(new BufferedReader(new InputStreamReader(configStream)))
+    fromYamlReader(new BufferedReader(new InputStreamReader(configStream)), enableCommaSeparatedValueAsList)
   }
 
-  private[yaml] def getIndexedConfigProvider(data: AnyRef): ConfigProvider = {
+  private[yaml] def getIndexedConfigProvider(data: AnyRef, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider = {
     def flattened(data: AnyRef, chunk: Chunk[String]): Map[Chunk[String], String] =
       data match {
         case null => Map.empty
@@ -153,7 +155,11 @@ object YamlConfigProvider {
 
     lazy val hiddenDelim = "\uFEFF"
 
-    ConfigProvider.fromMap(flattened(data, Chunk.empty).map({ case (k, v) => (k.mkString(hiddenDelim), v) }), pathDelim = hiddenDelim)
+    ConfigProvider.fromMap(
+      flattened(data, Chunk.empty).map({ case (k, v) => (k.mkString(hiddenDelim), v) }),
+      pathDelim = hiddenDelim,
+      seqDelim = if (enableCommaSeparatedValueAsList) "," else hiddenDelim
+    )
 
   }
 
