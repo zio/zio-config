@@ -5,11 +5,6 @@ title:  "Automatic Derivation of Config"
 
 By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config. With a single import, `Config` is automatically derived.
 
-Also, we will get to see the Hocon config for coproducts is devoid of any extra tagging to satisfy the library. This is much easier/intuitive unlike many existing implementations.
-
-Take a look at the magnolia examples in `zio-config`. One of them is provided here for quick access.
-
-
 ### Example
 
 #### Config
@@ -26,12 +21,6 @@ object X {
   case class Region(suburb: String, city: String)
 }
 
-/**
- * We use automatic derivation here.
- * As an example, In order to specify, {{{ x = a }}} in the source where `a`
- * represents X.A object, we need a case class that wraps
- * the sealed trait, and we use the field name of this case class as the key
- */
 case class MyConfig(x: X)
 ```
 
@@ -108,7 +97,7 @@ dHoconSource.load(deriveConfig[MyConfig])
 
 **NOTE**
 
-The fieldNames and classnames remain the same as that of case-classes and sealed-traits.
+The fieldNames and class-names remain the same as that of case-classes and sealed-traits.
 
 If you want custom names for your fields, use `name` annotation.
 
@@ -166,11 +155,11 @@ This will be equivalent to the manual configuration of:
 ```
 
 
-### Custom ConfigDescription
+### Custom Config
 
-Every field in a case class should have an instance of `Descriptor` in order for the automatic derivation to work.
+Every field in a case class should have an instance of `DeriveConfig` (and not `Config`) in order for the automatic derivation to work.
 This doesn't mean the entire design of zio-config is typeclass based. For the same reason, the typeclass
-`Descriptor` exists only in zio-config-magnolia (or zio-config-shapeless) package.
+`DeriveConfig` exists only in zio-config-magnolia.
 
 As an example, given below is a case class where automatic derivation won't work, and result in a compile time error:
 Assume that, `AwsRegion` is a type that comes from AWS SDK.
@@ -195,7 +184,7 @@ In order to provide implicit instances, following choices are there
 ```
 import zio.config.magnolia._
 
-implicit val awsRegionDescriptor: DeriveConfig[Aws.Region] =
+implicit val awsRegionConfig: DeriveConfig[Aws.Region] =
   DeriveConfig[String].map(string => AwsRegion.from(string))
 
 ```

@@ -4,10 +4,6 @@ title:  "Read from various Sources"
 ---
 
 zio-config supports various sources.
-More documentation around `IndexedFlat` (an extension of  ZIO's  `ConfigProvider.Flat`)
-to handle more complex sources will be provided soon.
-
-Forming a source gets into a standard pattern, and is easy for you to add another one.
 
 ```scala mdoc:silent
 import zio._, Config._, ConfigProvider._
@@ -18,34 +14,11 @@ import zio.config._, magnolia._
 case class MyConfig(ldap: String, port: Int, dburl: String)
 ```
 
-To perform any action using zio-config, we need a configuration description.
-Let's define a simple one.
-
 ```scala mdoc:silent
 val myConfig =
   (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
 
  // val automatedConfig = deriveConfig[MyConfig]; using zio-config-magnolia
-```
-
-More details about defining config descriptor is in [here](manual-creation-of-config.md).
-
-## Constant Map
-
-```scala mdoc:silent
-
-val mapSource =
-  ConfigProvider.fromMap(
-    Map(
-      "LDAP" -> "xyz",
-      "PORT" -> "1222",
-      "DB_URL" -> "postgres"
-    )
-  )
-
-val io = mapSource.load(myConfig)
-// Running io (which is a zio) to completion yields  MyConfig(xyz, 1222, postgres)
-
 ```
 
 
@@ -165,5 +138,79 @@ val config =
      |""".stripMargin
 
 val parsed = ConfigProvider.fromYamlString(config).load(Configuration.config)
+
+```
+
+
+### Indexed Map, Array datatype, and a some implementation notes
+
+`zio-config` comes up with the idea of `IndexedFlat` allowing you to define indexed configs (see examples below).
+However, the constructors of `IndexedFlat` is not exposed to the user for the time being, since it can conflate with some ideas in `zio.core` `Flat`,
+and resulted in failures whenever `IndexedFlat` was converted to a `Flat` internally. Example: https://github.com/zio/zio-config/issues/1095
+
+Therefore, some of these ideas around `Indexing` is  pushed back to `ZIO` and incorporated within the `Flat` structure.
+
+See https://github.com/zio/zio/pull/7823 and https://github.com/zio/zio/pull/7891
+
+These changes are to keep the backward compatibility of ZIO library itself.
+
+#### What does it mean to users?
+It implies, for sequence (or list) datatypes, you can use either `<nil>` or `""` to represent empty list in a flat structure.
+See the below example where it tries to mix indexing into flat structure.
+We recommend using `<nil>` over `""` whenever you are trying  to represent a real indexed format
+
+Example:
+
+```scala
+import zio.config._, magnolia._
+
+final case class Department(name: String, block: Int)
+
+final case class Employee(departments: List[Department], name: String)
+final case class Config(employees: List[Employee])
+
+val map =
+  Map(
+    "employees[0].name" -> "jon",
+    "employees[0].departments[0].name" -> "science",
+    "employees[0].departments[0].block" -> "10",
+    "employees[0].departments[1].name" -> "maths",
+    "employees[0].departments[2].block" -> "11",
+    "employees[1].name" -> "foo",
+    "employees[1].departments" -> "<nil>",
+  )
+  
+
+ConfigProvider.fromMap(map).load(derivedConfig[Config])
+
+
+```
+
+Although we support indexing within Flat, formats such as Json/HOCON/XML is far better to work with indexing,
+and zio-config supports these formats making use of the above idea.
+
+
+#### Another simple example of an indexed format
+
+```scala
+
+import zio.config._, magnolia._
+
+final case class Employee(age: Int, name: String)
+
+ val map = 
+   Map(
+     "department.employees[0].age" -> "10",
+     "department.employees[0].name" -> "foo",
+     "department.employees[1].age" -> "11",
+     "department.employees[1].name" -> "bar",
+     "department.employees[2].age" -> "12",
+     "department.employees[2].name" -> "baz",
+   )
+
+
+val provider = ConfigProvider.fromMap(map)
+val config = Config.listOf("employees", deriveConfig[Employee]).nested("department")
+val result = provider.load(config)
 
 ```

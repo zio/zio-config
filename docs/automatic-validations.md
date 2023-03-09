@@ -4,7 +4,7 @@ title: "Automatic Validations"
 ---
 
 By bringing in `zio-config-refined` module, you get validations for your config parameters almost for free. 
-`zio-config` elegantly integrates with `Refined` library for you to achieve this with same ergnomics.
+`zio-config` elegantly integrates with `Refined` library for you to achieve this with same ergonomics.
 
 If you are not familiar with `refined` library, refer https://github.com/fthomas/refined.
 
