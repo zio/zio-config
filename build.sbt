@@ -32,9 +32,11 @@ inThisBuild(
       (zioConfigCatsJVM / thisProject).value.id                  -> (zioConfigCatsJVM / crossScalaVersions).value,
       (zioConfigDerivationJVM / thisProject).value.id            -> (zioConfigDerivationJVM / crossScalaVersions).value,
       (zioConfigEnumeratumJVM / thisProject).value.id            -> (zioConfigEnumeratumJVM / crossScalaVersions).value,
-      (zioConfigMagnoliaJVM / thisProject).value.id              -> (zioConfigMagnoliaJVM / crossScalaVersions).value,
+      (zioConfigMagnoliaJVM / thisProject).value.id              -> (zioConfigMagnoliaJVM / crossScalaVersions).value
+        .filterNot(_ == scala3.value),
       (zioConfigPureconfigJVM / thisProject).value.id            -> (zioConfigPureconfigJVM / crossScalaVersions).value,
-      (zioConfigRefinedJVM / thisProject).value.id               -> (zioConfigRefinedJVM / crossScalaVersions).value,
+      (zioConfigRefinedJVM / thisProject).value.id               -> (zioConfigRefinedJVM / crossScalaVersions).value
+        .filterNot(_ == scala3.value),
       (zioConfigScalazJVM / thisProject).value.id                -> (zioConfigScalazJVM / crossScalaVersions).value,
       (zioConfigTypesafeJVM / thisProject).value.id              -> (zioConfigTypesafeJVM / crossScalaVersions).value,
       (zioConfigTypesafeMagnoliaTestsJVM / thisProject).value.id -> (zioConfigTypesafeMagnoliaTestsJVM / crossScalaVersions).value,
@@ -198,11 +200,7 @@ lazy val zioConfigRefined = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
 
-lazy val zioConfigRefinedJVM =
-  zioConfigRefined.jvm
-    .settings(
-      crossScalaVersions -= scala3.value // TODO: add support for scala3
-    )
+lazy val zioConfigRefinedJVM = zioConfigRefined.jvm
 
 lazy val zioConfigPureconfig = crossProject(JVMPlatform)
   .in(file("pureconfig"))
@@ -273,10 +271,7 @@ lazy val zioConfigMagnolia = crossProject(JVMPlatform)
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
 
-lazy val zioConfigMagnoliaJVM =
-  zioConfigMagnolia.jvm.settings(
-    crossScalaVersions -= scala3.value // TODO: add support for scala3
-  )
+lazy val zioConfigMagnoliaJVM = zioConfigMagnolia.jvm
 
 lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .in(file("typesafe"))
