@@ -109,7 +109,7 @@ object YamlConfigProvider {
     enableCommaSeparatedValueAsList: Boolean = false
   ): ConfigProvider = {
     val configStream = new ByteArrayInputStream(yamlString.getBytes(Charset.forName("UTF-8")))
-    fromYamlReader(new BufferedReader(new InputStreamReader(configStream)))
+    fromYamlReader(new BufferedReader(new InputStreamReader(configStream)), enableCommaSeparatedValueAsList)
   }
 
   private[yaml] def getIndexedConfigProvider(data: AnyRef, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider = {
