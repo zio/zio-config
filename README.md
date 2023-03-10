@@ -19,7 +19,7 @@ Let's enumerate some key features of this library:
 - **Integrations** — Integrations with a variety of libraries
 
 
-If you are only interested in automatic derivation of configuration, find the details [here](http://zio.dev/zio-config/automatic-derivation-of-config-descriptor).
+If you are only interested in automatic derivation of configuration, find the details [here](https://zio.dev/zio-config/automatic-derivation-of-config).
 
 ## Installation
 
