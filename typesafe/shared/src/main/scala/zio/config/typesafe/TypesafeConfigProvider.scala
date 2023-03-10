@@ -49,7 +49,10 @@ object TypesafeConfigProvider {
   def fromHoconString(input: String, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve, enableCommaSeparatedValueAsList)
 
-  def fromTypesafeConfig(config: com.typesafe.config.Config, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider = {
+  def fromTypesafeConfig(
+    config: com.typesafe.config.Config,
+    enableCommaSeparatedValueAsList: Boolean = false
+  ): ConfigProvider = {
     lazy val hiddenDelim = "\uFEFF"
 
     val indexedMapWithHiddenDelimiter =
@@ -60,7 +63,7 @@ object TypesafeConfigProvider {
     ConfigProvider.fromMap(
       indexedMapWithHiddenDelimiter,
       pathDelim = hiddenDelim,
-      seqDelim = if(enableCommaSeparatedValueAsList) "," else hiddenDelim
+      seqDelim = if (enableCommaSeparatedValueAsList) "," else hiddenDelim
     )
   }
 
