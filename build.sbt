@@ -56,29 +56,16 @@ val pureconfigVersion = "0.16.0"
 val shapelessVersion  = "2.4.0-M1"
 
 lazy val magnoliaDependencies =
-  libraryDependencies ++= {
-    if (scalaVersion.value == scala211.value || scalaVersion.value == scala3.value)
-      Seq.empty // Just to make IntelliJ happy
-    else {
-      Seq(
-        "com.propensive" %% "magnolia"      % magnoliaVersion,
-        "org.scala-lang"  % "scala-reflect" % scalaVersion.value
-      )
-    }
-  }
+  addDependenciesFor("2.12", "2.13")(
+    "com.propensive" %% "magnolia"      % magnoliaVersion,
+    "org.scala-lang"  % "scala-reflect" % scalaVersion.value
+  )
 
 lazy val refinedDependencies =
-  libraryDependencies ++= {
-    if (scalaVersion.value == scala211.value) Seq.empty // Just to make IntelliJ happy
-    else Seq("eu.timepit" %% "refined" % refinedVersion)
-  }
+  addDependenciesFor("2.12", "2.13", "3")("eu.timepit" %% "refined" % refinedVersion)
 
 lazy val pureconfigDependencies =
-  libraryDependencies ++= {
-    if (scalaVersion.value == scala211.value || scalaVersion.value == scala3.value)
-      Seq.empty // Just to make IntelliJ happy
-    else Seq("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
-  }
+  addDependenciesFor("2.12", "2.13")("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
 
 lazy val scala212projects = Seq[ProjectReference](
   zioConfigJS,
@@ -259,16 +246,8 @@ lazy val zioConfigMagnolia = crossProject(JVMPlatform)
   .settings(stdSettings(name = "zio-config-magnolia", enableCrossProject = true))
   .settings(enableZIO())
   .settings(scalacOptions := scalacOptions.value.filterNot(_ == "-noindent"))
-  .settings(
-    magnoliaDependencies,
-    scalacOptions ++= {
-      if (scalaVersion.value == scala3.value) {
-        Seq.empty
-      } else {
-        Seq("-language:experimental.macros")
-      }
-    }
-  )
+  .settings(magnoliaDependencies)
+  .settings(addScalacOptionsExceptFor("3")("-language:experimental.macros"))
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
 
 lazy val zioConfigMagnoliaJVM = zioConfigMagnolia.jvm
@@ -278,9 +257,7 @@ lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .settings(stdSettings(name = "zio-config-typesafe", enableCrossProject = true))
   .settings(enableZIO())
   .settings(scala3Settings)
-  .settings(
-    libraryDependencies ++= Seq("com.typesafe" % "config" % "1.4.2")
-  )
+  .settings(libraryDependencies ++= Seq("com.typesafe" % "config" % "1.4.2"))
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigTypesafeJVM = zioConfigTypesafe.jvm
@@ -398,3 +375,23 @@ lazy val docs = project
     zioConfigMagnoliaJVM
   )
   .enablePlugins(WebsitePlugin)
+
+def addDependenciesFor(scalaBinaryVersions: String*)(dependencies: ModuleID*) =
+  libraryDependencies ++= {
+    if (scalaBinaryVersions.contains(scalaBinaryVersion.value)) dependencies else Seq.empty
+  }
+
+def addDependenciesExceptFor(scalaBinaryVersions: String*)(dependencies: ModuleID*) =
+  libraryDependencies ++= {
+    if (scalaBinaryVersions.contains(scalaBinaryVersion.value)) Seq.empty else dependencies
+  }
+
+def addScalacOptionsFor(scalaBinaryVersions: String*)(options: String*) =
+  scalacOptions ++= {
+    if (scalaBinaryVersions.contains(scalaBinaryVersion.value)) options else Seq.empty
+  }
+
+def addScalacOptionsExceptFor(scalaBinaryVersions: String*)(options: String*) =
+  scalacOptions ++= {
+    if (scalaBinaryVersions.contains(scalaBinaryVersion.value)) Seq.empty else options
+  }
