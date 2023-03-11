@@ -32,10 +32,12 @@ jobs:
       uses: actions/setup-java@v3.10.0
       with:
         distribution: temurin
-        java-version: '17'
+        java-version: '8'
         check-latest: true
     - name: Check if the site workflow is up to date
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms4g -J-Xss16m checkGithubWorkflow
+    - name: Check all code compiles
+      run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms4g -J-Xss16m +Test/compile
     - name: Check artifacts build process
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms4g -J-Xss16m +publishLocal
     - name: Check website build process
@@ -55,7 +57,7 @@ jobs:
       uses: actions/setup-java@v3.10.0
       with:
         distribution: temurin
-        java-version: '17'
+        java-version: '8'
         check-latest: true
     - name: Lint
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms4g -J-Xss16m lint
@@ -158,7 +160,7 @@ jobs:
       uses: actions/setup-java@v3.10.0
       with:
         distribution: temurin
-        java-version: '17'
+        java-version: '8'
         check-latest: true
     - name: Release
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms4g -J-Xss16m ci-release
@@ -185,7 +187,7 @@ jobs:
       uses: actions/setup-java@v3.10.0
       with:
         distribution: temurin
-        java-version: '17'
+        java-version: '8'
         check-latest: true
     - name: Setup NodeJs
       uses: actions/setup-node@v3
@@ -215,7 +217,7 @@ jobs:
       uses: actions/setup-java@v3.10.0
       with:
         distribution: temurin
-        java-version: '17'
+        java-version: '8'
         check-latest: true
     - name: Generate Readme
       run: sbt -J-XX:+UseG1GC -J-Xmx6g -J-Xms4g -J-Xss16m docs/generateReadme
