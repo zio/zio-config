@@ -70,10 +70,10 @@ lazy val magnoliaDependencies: Def.Setting[Seq[ModuleID]] =
   }
 
 lazy val refinedDependencies: Def.Setting[Seq[ModuleID]] =
-  addDependenciesFor("2.12", "2.13")("eu.timepit" %% "refined" % refinedVersion)
+  addDependenciesOn("2.12", "2.13")("eu.timepit" %% "refined" % refinedVersion)
 
 lazy val pureconfigDependencies: Def.Setting[Seq[ModuleID]] =
-  addDependenciesFor("2.12", "2.13")("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
+  addDependenciesOn("2.12", "2.13")("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
 
 lazy val scala212projects = Seq[ProjectReference](
   zioConfigJS,
@@ -250,11 +250,11 @@ lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm.settings(scala3Setting
 lazy val zioConfigMagnolia = crossProject(JVMPlatform)
   .in(file("magnolia"))
   .settings(stdSettings(name = "zio-config-magnolia", enableCrossProject = true))
-  .settings(addScalacOptionsFor("3")("-Xmax-inlines", "64"))
+  .settings(addOptionsOn("3")("-Xmax-inlines", "64"))
   .settings(enableZIO())
   .settings(scalacOptions := scalacOptions.value.filterNot(_ == "-noindent"))
   .settings(magnoliaDependencies)
-  .settings(addScalacOptionsExceptFor("3")("-language:experimental.macros"))
+  .settings(addOptionsOnExcept("3")("-language:experimental.macros"))
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
 
 lazy val zioConfigMagnoliaJVM = zioConfigMagnolia.jvm
@@ -382,23 +382,3 @@ lazy val docs = project
     zioConfigMagnoliaJVM
   )
   .enablePlugins(WebsitePlugin)
-
-def addDependenciesFor(scalaBinaryVersions: String*)(dependencies: ModuleID*) =
-  libraryDependencies ++= {
-    if (scalaBinaryVersions.contains(scalaBinaryVersion.value)) dependencies else Seq.empty
-  }
-
-def addDependenciesExceptFor(scalaBinaryVersions: String*)(dependencies: ModuleID*) =
-  libraryDependencies ++= {
-    if (scalaBinaryVersions.contains(scalaBinaryVersion.value)) Seq.empty else dependencies
-  }
-
-def addScalacOptionsFor(scalaBinaryVersions: String*)(options: String*) =
-  scalacOptions ++= {
-    if (scalaBinaryVersions.contains(scalaBinaryVersion.value)) options else Seq.empty
-  }
-
-def addScalacOptionsExceptFor(scalaBinaryVersions: String*)(options: String*) =
-  scalacOptions ++= {
-    if (scalaBinaryVersions.contains(scalaBinaryVersion.value)) Seq.empty else options
-  }
