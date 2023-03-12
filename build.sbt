@@ -244,6 +244,7 @@ lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm.settings(scala3Setting
 lazy val zioConfigMagnolia = crossProject(JVMPlatform)
   .in(file("magnolia"))
   .settings(stdSettings(name = "zio-config-magnolia", enableCrossProject = true))
+  .settings(addScalacOptionsFor("3")("-Xmax-inlines", "64"))
   .settings(enableZIO())
   .settings(scalacOptions := scalacOptions.value.filterNot(_ == "-noindent"))
   .settings(magnoliaDependencies)
