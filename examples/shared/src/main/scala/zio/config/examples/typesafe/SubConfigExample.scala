@@ -1,6 +1,7 @@
 package zio.config.examples.typesafe
 
 import zio.ConfigProvider
+import zio.config.examples.ZioOps
 import zio.config._
 
 import typesafe._
