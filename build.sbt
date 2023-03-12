@@ -1,3 +1,5 @@
+import sbt.Def
+
 enablePlugins(ZioSbtCiPlugin, ScalafixPlugin)
 
 crossScalaVersions := Seq.empty
@@ -55,16 +57,22 @@ val refinedVersion    = "0.10.2"
 val pureconfigVersion = "0.16.0"
 val shapelessVersion  = "2.4.0-M1"
 
-lazy val magnoliaDependencies =
-  addDependenciesFor("2.12", "2.13")(
-    "com.propensive" %% "magnolia"      % magnoliaVersion,
-    "org.scala-lang"  % "scala-reflect" % scalaVersion.value
-  )
+lazy val magnoliaDependencies: Def.Setting[Seq[ModuleID]] =
+  libraryDependencies ++= {
+    if (scalaVersion.value == scala211.value || scalaVersion.value == scala3.value)
+      Seq.empty // Just to make IntelliJ happy
+    else {
+      Seq(
+        "com.propensive" %% "magnolia"      % magnoliaVersion,
+        "org.scala-lang"  % "scala-reflect" % scalaVersion.value
+      )
+    }
+  }
 
-lazy val refinedDependencies =
+lazy val refinedDependencies: Def.Setting[Seq[ModuleID]] =
   addDependenciesFor("2.12", "2.13", "3")("eu.timepit" %% "refined" % refinedVersion)
 
-lazy val pureconfigDependencies =
+lazy val pureconfigDependencies: Def.Setting[Seq[ModuleID]] =
   addDependenciesFor("2.12", "2.13")("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
 
 lazy val scala212projects = Seq[ProjectReference](
@@ -182,9 +190,7 @@ lazy val zioConfigRefined = crossProject(JVMPlatform)
   .settings(stdSettings(name = "zio-config-refined", enableCrossProject = true))
   .settings(enableZIO())
   .settings(scala3Settings)
-  .settings(
-    refinedDependencies
-  )
+  .settings(refinedDependencies)
   .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
 
 lazy val zioConfigRefinedJVM = zioConfigRefined.jvm
