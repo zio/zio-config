@@ -353,7 +353,7 @@ lazy val docs = project
     magnoliaDependencies,
     refinedDependencies,
     crossScalaVersions                         := (zioConfigJVM / crossScalaVersions).value,
-    projectName                                := "ZIO Config",
+    projectName                                := (ThisBuild / name).value,
     mainModuleName                             := (zioConfigJVM / moduleName).value,
     projectStage                               := ProjectStage.ProductionReady,
     ScalaUnidoc / unidoc / unidocProjectFilter :=
