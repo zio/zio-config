@@ -1,8 +1,8 @@
 package zio.config.examples.typesafe
 
-import zio.config.examples.ZioOps
 import zio.config._
 import zio.config.derivation.nameWithLabel
+import zio.config.examples.ZioOps
 import zio.{Config, ConfigProvider, IO}
 
 import typesafe._

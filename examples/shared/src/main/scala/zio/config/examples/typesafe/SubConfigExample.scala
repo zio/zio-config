@@ -1,8 +1,8 @@
 package zio.config.examples.typesafe
 
 import zio.ConfigProvider
-import zio.config.examples.ZioOps
 import zio.config._
+import zio.config.examples.ZioOps
 
 import typesafe._
 import magnolia._
