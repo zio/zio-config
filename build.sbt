@@ -71,7 +71,7 @@ lazy val magnoliaDependencies: Def.Setting[Seq[ModuleID]] =
   }
 
 lazy val refinedDependencies: Def.Setting[Seq[ModuleID]] =
-  addDependenciesOn("2.12", "2.13")("eu.timepit" %% "refined" % refinedVersion)
+  addDependenciesOn("2.12", "2.13", "3")("eu.timepit" %% "refined" % refinedVersion)
 
 lazy val pureconfigDependencies: Def.Setting[Seq[ModuleID]] =
   addDependenciesOn("2.12", "2.13")("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
