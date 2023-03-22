@@ -15,6 +15,7 @@ import scala.util.Try
 import DeriveConfig._
 import zio.{Config, ConfigProvider}, Config._
 import zio.config.syntax._
+import zio.config.derivation._
 
 final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None) {
   def ??(description: String): DeriveConfig[A] =

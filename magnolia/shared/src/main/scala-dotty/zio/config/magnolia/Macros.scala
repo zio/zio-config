@@ -1,12 +1,13 @@
 package zio.config.magnolia
 
 import scala.quoted.*
+import zio.config.derivation._
 
 object Macros:
-  inline def nameOf[T]: List[name] = ${anns[T, name]("zio.config.magnolia.name")}
-  inline def documentationOf[T]: List[describe] = ${anns[T, describe]("zio.config.magnolia.describe")}
-  inline def fieldNameOf[T]: List[(String, List[name])] = ${fieldAnns[T, name]("zio.config.magnolia.name")}
-  inline def fieldDocumentationOf[T]: List[(String, List[describe])] = ${fieldAnns[T, describe]("zio.config.magnolia.describe")}
+  inline def nameOf[T]: List[name] = ${anns[T, name]("zio.config.derivation.name")}
+  inline def documentationOf[T]: List[describe] = ${anns[T, describe]("zio.config.derivation.describe")}
+  inline def fieldNameOf[T]: List[(String, List[name])] = ${fieldAnns[T, name]("zio.config.derivation.name")}
+  inline def fieldDocumentationOf[T]: List[(String, List[describe])] = ${fieldAnns[T, describe]("zio.config.derivation.describe")}
   inline def defaultValuesOf[T]: List[(String, Any)] = ${defaultValues[T]}
 
   def defaultValues[T : Type](using Quotes): Expr[List[(String, Any)]] =
