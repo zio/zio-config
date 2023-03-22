@@ -103,11 +103,10 @@ object DeriveConfig {
       case _ : ( t *: ts) => constValue[t].toString :: labelsOf[ts]
 
   inline def customNamesOf[T]: List[String] =
-    Macros.nameOf[T].map(_.name) ++ Macros.namesOf[T].flatMap(_.names)
+    Macros.nameOf[T].map(_.name)
 
-  inline def customFieldNamesOf[T]: Map[String, names] =
-    (Macros.fieldNameOf[T].map({ case(str, nmes) => (str, names.fromListOfName(nmes)) })
-      ++ Macros.fieldNamesOf[T].map({ case(str, nmes) => (str, names.fromListOfNames(nmes)) })).toMap
+  inline def customFieldNamesOf[T]: Map[String, name] =
+    Macros.fieldNameOf[T].flatMap({ case(str, nmes) => nmes.map(name => (str, name)) }).toMap
 
   inline given derived[T](using m: Mirror.Of[T]): DeriveConfig[T] =
     inline m match
@@ -149,7 +148,7 @@ object DeriveConfig {
 
         lazy val fieldNames =
           originalFieldNamesList.foldRight(Nil: List[FieldName])((str, list) => {
-            val alternativeNames = customFieldNameMap.get(str).map(_.names).getOrElse(Nil)
+            val alternativeNames = customFieldNameMap.get(str).map(v => List(v.name)).getOrElse(Nil)
             val descriptions = documentations.get(str).map(_.map(_.describe)).getOrElse(Nil)
             FieldName(str, alternativeNames.toList, descriptions) :: list
           })

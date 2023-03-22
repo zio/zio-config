@@ -6,14 +6,55 @@ final case class describe(describe: String) extends StaticAnnotation
 
 final case class name(name: String) extends StaticAnnotation
 
-final case class names(names: String*) extends StaticAnnotation
-
-object names {
-  def fromListOfName(list: List[name]): names =
-    names(list.map(_.name):_*)
-
-  def fromListOfNames(list: List[names]): names =
-    names(list.flatMap(names => names.names.toList):_*)
-}
-
-final case class label(fieldName: String = "type") extends StaticAnnotation
+/**
+ * nameWithLabel can be used for class names, such that the name of the class
+ * should be part of the product with keyName as `keyName`.
+ *
+ * Example:
+ *      {{{
+ *       @nameWithLabel("type")
+ *       sealed trait FooBar
+ *       case class Bar(x: Int) extends FooBar
+ *       case class Foo(y: String) extends FooBar
+ *       case object Fooz extends FooBar
+ *
+ *       case class AppConfig(config :  FooBar)
+ *      }}}
+ *
+ * corresponds to
+ *
+ *  {{{
+ *    config : {
+ *      type : Bar
+ *      x : Int
+ *     }
+ *  }}}
+ *
+ * or
+ *
+ *  {{{
+ *
+ *    config : {
+ *      type: Foo
+ *      x: Int
+ *     }
+ *
+ *  }}}
+ *
+ * or
+ *
+ * {{{
+ *
+ *   config : Fooz
+ *
+ * }}}
+ *
+ * If annotation is `name` instead of `nameWithLabel`, then name of the case class becomes a parent node
+ *
+ *  {{{
+ *    Foo : {
+ *     x : Int
+ *    }
+ *  }}}
+ */
+final case class nameWithLabel(keyName: String = "type") extends StaticAnnotation
