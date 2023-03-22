@@ -155,14 +155,14 @@ object DeriveConfig {
             FieldName(str, alternativeNames.toList, descriptions) :: list
           })
 
-        lazy val descriptors =
+        lazy val fieldConfigs =
           summonDeriveConfigAll[m.MirroredElemTypes].asInstanceOf[List[DeriveConfig[Any]]]
 
-        lazy val descriptorsWithDefaultValues =
-          addDefaultValues(fieldAndDefaultValues, originalFieldNamesList, descriptors)
+        lazy val fieldConfigsWithDefaultValues =
+          addDefaultValues(fieldAndDefaultValues, originalFieldNamesList, fieldConfigs)
 
         mergeAllFields(
-          descriptorsWithDefaultValues,
+          fieldConfigsWithDefaultValues,
           productName,
           fieldNames,
           lst => m.fromProduct(Tuple.fromArray(lst.toArray[Any])),
@@ -178,7 +178,7 @@ object DeriveConfig {
         .map(desc =>
           desc.metadata match {
             case Some(Metadata.Product(productName, fields)) if (fields.nonEmpty) =>
-              tryAllkeys(desc.desc, Some(productName.originalName), productName.alternativeNames)
+              tryAllkeys(desc.desc, Some(productName.originalName), productName.alternativeNames, None)
 
             case Some(_) => desc.desc
             case None => desc.desc
@@ -206,7 +206,7 @@ object DeriveConfig {
     f: List[Any] => T,
     g: T => List[Any],
    ): DeriveConfig[T] =
-       if fieldNames.isEmpty then
+       if fieldNames.isEmpty then // if there are no fields in the product then the value is the name of the product itself
          val tryAllPaths =
            (productName.originalName :: productName.alternativeNames)
              .map(n => zio.Config.constant(n)).reduce(_ orElse _)
@@ -215,14 +215,14 @@ object DeriveConfig {
            tryAllPaths.map[T](
              _ => f(List.empty[Any])
            ),
-           Some(Metadata.Object(productName))
+           Some(Metadata.Object(productName)) // We propogate the info that product was actually an object
          )
 
        else
          val listOfDesc =
            fieldNames.zip(allDescs).map({ case (fieldName, desc) => {
              val fieldDesc =
-               tryAllkeys(castTo[Config[Any]](desc.desc), Some(fieldName.originalName), fieldName.alternativeNames)
+               tryAllkeys(castTo[Config[Any]](desc.desc), Some(fieldName.originalName), fieldName.alternativeNames, None)
 
              fieldName.descriptions.foldRight(fieldDesc)((doc, desc) => desc ?? doc)
            }})
@@ -237,11 +237,41 @@ object DeriveConfig {
     originalKey: Option[String],
     alternativeKeys: List[String],
     typeDescriminator: Option[String]
-  ): Config[A] =
-    if alternativeKeys.nonEmpty then
-      alternativeKeys.map(key => desc.nested(key)).reduce(_ orElse _)
-    else
-      originalKey.fold(desc)(key => desc.nested(key))
+  ): Config[A] = {
+    typeDescriminator match {
+      case Some(pureConfigKeyName) =>
+        Config
+          .string(pureConfigKeyName)
+          .zip(desc)
+          .mapOrFail({ case (specifiedName, subClass) =>
+            if(alternativeKeys.nonEmpty) {
+              if (alternativeKeys.contains(specifiedName)) Right(subClass)
+              else
+                Left(
+                  Config.Error
+                    .InvalidData(message =
+                      s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match ${alternativeKeys.mkString(",")}"
+                    )
+                )
+            } else {
+              if (originalKey.contains(specifiedName)) Right(subClass)
+              else
+                Left(
+                  Config.Error
+                    .InvalidData(message =
+                      s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match ${originalKey.toList.mkString}"
+                    )
+                )
+            }
+          })
+
+      case None =>
+        if alternativeKeys.nonEmpty then
+          alternativeKeys.map(key => desc.nested(key)).reduce(_ orElse _)
+        else
+          originalKey.fold(desc)(key => desc.nested(key))
+    }
+  }
 
   def castTo[T](a: Any): T =
     a.asInstanceOf[T]

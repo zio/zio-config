@@ -177,14 +177,14 @@ object DeriveConfig {
                 .string(pureConfigKeyName)
                 .zip(typeclass.desc)
                 .mapOrFail({ case (specifiedName, subClass) =>
-                  if (specifiedName == subClassName) Right(subClass)
-                  else
-                    Left(
-                      Config.Error
-                        .InvalidData(message =
-                          s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match the expected name ${subClassName}"
-                        )
-                    )
+                    if (specifiedName == subClassName) Right(subClass)
+                    else
+                      Left(
+                        Config.Error
+                          .InvalidData(message =
+                            s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match the expected name ${subClassName}"
+                          )
+                      )
                 })
           }
       }.reduce(_.orElse(_))
