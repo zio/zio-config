@@ -52,7 +52,7 @@ object DeriveConfig {
 
   final case class FieldName(originalName: String, alternativeNames: List[String], descriptions: List[String])
   final case class ProductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
-  final case class CoproductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
+  final case class CoproductName(originalName: String, alternativeNames: List[String], descriptions: List[String], typeDescriminator: Option[String])
 
   lazy given DeriveConfig[String] = DeriveConfig.from(string)
   lazy given DeriveConfig[Boolean] = DeriveConfig.from(boolean)
@@ -116,7 +116,8 @@ object DeriveConfig {
           CoproductName(
             originalName = constValue[m.MirroredLabel],
             alternativeNames = customNamesOf[T],
-            descriptions = Macros.documentationOf[T].map(_.describe)
+            descriptions = Macros.documentationOf[T].map(_.describe),
+            typeDescriminator = Macros.nameWithLabel[T].headOption.map(_.keyName)
           )
 
         lazy val subClassDescriptions =
@@ -125,7 +126,7 @@ object DeriveConfig {
         lazy val desc =
           mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]))
 
-        DeriveConfig.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames))
+        DeriveConfig.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames, coproductName.typeDescriminator))
 
       case m: Mirror.ProductOf[T] =>
         val productName =
@@ -171,6 +172,7 @@ object DeriveConfig {
   def mergeAllProducts[T](
     allDescs: => List[DeriveConfig[T]],
   ): DeriveConfig[T] =
+
     val desc =
       allDescs
         .map(desc =>
@@ -233,7 +235,8 @@ object DeriveConfig {
   def tryAllkeys[A](
     desc: Config[A],
     originalKey: Option[String],
-    alternativeKeys: List[String]
+    alternativeKeys: List[String],
+    typeDescriminator: Option[String]
   ): Config[A] =
     if alternativeKeys.nonEmpty then
       alternativeKeys.map(key => desc.nested(key)).reduce(_ orElse _)

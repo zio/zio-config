@@ -18,7 +18,9 @@ object AutoDerivationSimple extends App :
       "a.g" -> "F",
       "a.h.G.value" -> "GValue",
       "a.i.p" -> "Q",
-      "a.j.p.t.u" -> "v3"
+      "a.j.p.t.u" -> "v3",
+      "a.z.type" ->  "Abc",
+      "a.z.name" -> "hello"
     )
 
   val source =
