@@ -124,9 +124,9 @@ object DeriveConfig {
           summonDeriveConfigForCoProduct[m.MirroredElemTypes]
 
         lazy val desc =
-          mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]))
+          mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]), coproductName.typeDescriminator)
 
-        DeriveConfig.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames, coproductName.typeDescriminator))
+        DeriveConfig.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames, None))
 
       case m: Mirror.ProductOf[T] =>
         val productName =
@@ -171,6 +171,7 @@ object DeriveConfig {
 
   def mergeAllProducts[T](
     allDescs: => List[DeriveConfig[T]],
+    typeDescriminator: Option[String]
   ): DeriveConfig[T] =
 
     val desc =
@@ -178,7 +179,7 @@ object DeriveConfig {
         .map(desc =>
           desc.metadata match {
             case Some(Metadata.Product(productName, fields)) if (fields.nonEmpty) =>
-              tryAllkeys(desc.desc, Some(productName.originalName), productName.alternativeNames, None)
+              tryAllkeys(desc.desc, Some(productName.originalName), productName.alternativeNames, typeDescriminator)
 
             case Some(_) => desc.desc
             case None => desc.desc
@@ -254,6 +255,7 @@ object DeriveConfig {
                     )
                 )
             } else {
+              println(s"here?. ${originalKey} and ${specifiedName}")
               if (originalKey.contains(specifiedName)) Right(subClass)
               else
                 Left(
