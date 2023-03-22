@@ -13,7 +13,8 @@ final case class B(
   g: E,
   h: E,
   i: P,
-  j: P
+  j: P,
+  z: PureConfigType
 )
 
 final case class C()
@@ -36,4 +37,11 @@ object P {
   case class S(@name("zz") @describe("it is z") z: String) extends P
   @name("t")
   case class T(u: String)                                  extends P
+}
+
+@nameWithLabel("type")
+sealed trait PureConfigType
+
+object PureConfigType {
+  case class Abc(name: String) extends PureConfigType
 }

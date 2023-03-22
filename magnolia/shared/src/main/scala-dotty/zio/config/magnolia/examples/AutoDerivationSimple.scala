@@ -18,7 +18,9 @@ object AutoDerivationSimple extends App :
       "a.g" -> "F",
       "a.h.G.value" -> "GValue",
       "a.i.p" -> "Q",
-      "a.j.p.t.u" -> "v3"
+      "a.j.p.t.u" -> "v3",
+      "a.z.type" ->  "Abc",
+      "a.z.name" -> "hello"
     )
 
   val source =
@@ -36,4 +38,5 @@ object AutoDerivationSimple extends App :
   }
 
   println(readResult)
+ // A(B(v1,C(),List(C(), C()),None,G(v2),F,G(GValue),Q,T(v3),Abc(hello)))
 end AutoDerivationSimple
