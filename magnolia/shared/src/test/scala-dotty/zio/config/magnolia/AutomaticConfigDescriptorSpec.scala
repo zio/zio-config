@@ -1,6 +1,6 @@
 package zio.config.magnolia
 
-import zio.{ConfigProvider}
+import zio.ConfigProvider
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
@@ -9,7 +9,7 @@ import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
 import AutomaticConfigTestUtils._
 
-object AutomaticConfigTest extends ZIOSpecDefault  {
+object AutomaticConfigTest extends ZIOSpecDefault {
 
   def spec =
     suite("magnolia spec")(
@@ -59,61 +59,61 @@ object AutomaticConfigTestUtils {
     id: UUID
   )
 
-  private val genPriceDescription = Gen.const(Description("some description"))
+  private val genPriceDescription             = Gen.const(Description("some description"))
   private val genCurrency: Gen[Any, Currency] = Gen.double(10.0, 20.0).map(Currency.apply)
-  private val genPrice: Gen[Any, Price] = Gen.oneOf(genPriceDescription, genCurrency)
+  private val genPrice: Gen[Any, Price]       = Gen.oneOf(genPriceDescription, genCurrency)
 
-  private val genToken = Gen.const(Token("someToken"))
-  private val genPassword = Gen.const(Password("some passeword"))
+  private val genToken       = Gen.const(Token("someToken"))
+  private val genPassword    = Gen.const(Password("some passeword"))
   private val genCredentials = Gen.oneOf(genToken, genPassword)
 
   private val genDbUrl = Gen.const(DbUrl("dburl"))
 
   private val genAws =
     for {
-      region <- Gen.const("region")
+      region      <- Gen.const("region")
       credentials <- genCredentials
     } yield Aws(region, credentials)
 
   private[magnolia] val genEnvironment =
     for {
-      aws <- genAws
-      price <- genPrice
-      dbUrl <- genDbUrl
-      port <- Gen.int
-      amount <- Gen.option(Gen.long(1, 100))
-      quantity <- Gen.either(Gen.long(5, 10), genAlpha)
-      default <- Gen.option(Gen.int)
+      aws            <- genAws
+      price          <- genPrice
+      dbUrl          <- genDbUrl
+      port           <- Gen.int
+      amount         <- Gen.option(Gen.long(1, 100))
+      quantity       <- Gen.either(Gen.long(5, 10), genAlpha)
+      default        <- Gen.option(Gen.int)
       anotherDefault <- Gen.option(Gen.boolean)
-      descriptions <- Gen.const("description")
-      created <- genLocalDateString
-      updated <- genLocalTimeString
-      lastVisited <- genLocalDateTimeString
-      id <- Gen.uuid
+      descriptions   <- Gen.const("description")
+      created        <- genLocalDateString
+      updated        <- genLocalTimeString
+      lastVisited    <- genLocalDateTimeString
+      id             <- Gen.uuid
       partialMyConfig = Map(
-        "aws.region" -> aws.region,
-        aws.security match {
-          case Password(password) => "aws.security.Password.value" -> password
-          case Token(token) => "aws.security.Token.value" -> token
-        },
-        price match {
-          case Description(description) => "cost.Description.value" -> description
-          case Currency(dollars) => "cost.Currency.value" -> dollars.toString
-        },
-        "dburl.value" -> dbUrl.value,
-        "port" -> port.toString,
-        "quantity" -> quantity.fold(d => d.toString, s => s),
-        "descriptions" -> descriptions.mkString(","),
-        "created" -> created,
-        "updated" -> updated,
-        "lastVisited" -> lastVisited,
-        "id" -> id.toString
-      ) ++ amount.map(double => ("amount", double.toString)).toList
+                          "aws.region"   -> aws.region,
+                          aws.security match {
+                            case Password(password) => "aws.security.Password.value" -> password
+                            case Token(token)       => "aws.security.Token.value"    -> token
+                          },
+                          price match {
+                            case Description(description) => "cost.Description.value" -> description
+                            case Currency(dollars)        => "cost.Currency.value"    -> dollars.toString
+                          },
+                          "dburl.value"  -> dbUrl.value,
+                          "port"         -> port.toString,
+                          "quantity"     -> quantity.fold(d => d.toString, s => s),
+                          "descriptions" -> descriptions.mkString(","),
+                          "created"      -> created,
+                          "updated"      -> updated,
+                          "lastVisited"  -> lastVisited,
+                          "id"           -> id.toString
+                        ) ++ amount.map(double => ("amount", double.toString)).toList
     } yield (default, anotherDefault) match {
       case (Some(v1), Some(v2)) => partialMyConfig ++ List(("default", v1.toString), ("anotherDefault", v2.toString))
-      case (Some(v1), None) => partialMyConfig + (("default", v1.toString))
-      case (None, Some(v2)) => partialMyConfig + (("anotherDefault", v2.toString))
-      case (None, None) => partialMyConfig
+      case (Some(v1), None)     => partialMyConfig + (("default", v1.toString))
+      case (None, Some(v2))     => partialMyConfig + (("anotherDefault", v2.toString))
+      case (None, None)         => partialMyConfig
     }
 
   def genAlpha: Gen[Any, String] =

@@ -5,8 +5,8 @@ import zio.config.magnolia._
 final case class A(a: B)
 
 final case class B(
-  b: String,
-  c: C,
+  bC: String,
+  cD: C,
   d: List[C],
   e: Option[C],
   f: E,
@@ -14,7 +14,8 @@ final case class B(
   h: E,
   i: P,
   j: P,
-  z: PureConfigType
+  z: PureConfigType,
+  y: PureConfigType
 )
 
 final case class C()
@@ -32,16 +33,17 @@ object E {
 sealed trait P
 
 object P {
-  case object Q                                            extends P
-  case object R                                            extends P
-  case class S(@name("zz") @describe("it is z") z: String) extends P
-  @name("t")
-  case class T(u: String)                                  extends P
+  case object Q           extends P
+  case object R           extends P
+  case class S(z: String) extends P
+  case class T(u: String) extends P
 }
 
 @nameWithLabel("type")
 sealed trait PureConfigType
 
 object PureConfigType {
-  case class Abc(name: String) extends PureConfigType
+  case class AbcDef(name: String) extends PureConfigType
+
+  case object HmmAbc extends PureConfigType
 }
