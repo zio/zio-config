@@ -16,18 +16,15 @@ object DefaultValueSpec extends BaseSpec {
       test("default value for nested types") {
         assert(Macros.defaultValuesOf[B])(equalTo(List(("y", A("nonDefaultValue")))))
       },
-
       test("default value for sealed trait types") {
         assert(Macros.defaultValuesOf[C])(equalTo(List(("z", X()))))
       },
-
       test("default value for case object") {
         assert(Macros.defaultValuesOf[D])(equalTo(List(("z", Z))))
       },
-
       test("default value for multiple values") {
         assert(Macros.defaultValuesOf[Mul])(equalTo(List(("a", A("x")), ("b", B(A("y"))), ("c", X()), ("d", Z))))
-      },
+      }
     )
 }
 
@@ -39,7 +36,7 @@ object DefaultValueSpecUtils {
 
   case class X() extends S
   case class Y() extends S
-  case object Z extends S
+  case object Z  extends S
 
   final case class C(z: S = X())
 

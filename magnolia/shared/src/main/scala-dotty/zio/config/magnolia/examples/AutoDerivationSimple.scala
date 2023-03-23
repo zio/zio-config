@@ -6,21 +6,23 @@ import zio.config.magnolia._
 import zio.config._
 import zio.Unsafe
 import zio.IO
+import zio.config.syntax._
 
 object AutoDerivationSimple extends App :
   // Use of Either is almost prohibited by the looks of it
   val sourceMap =
     Map(
-      "a.b" -> "v1",
-      "a.c" -> "C",
+      "a.b-c" -> "v1",
+      "a.c-d" -> "C",
       "a.d" -> "C,C",
-      "a.f.G.value" -> "v2",
+      "a.f.g.value" -> "v2",
       "a.g" -> "F",
-      "a.h.G.value" -> "GValue",
+      "a.h.g.value" -> "GValue",
       "a.i.p" -> "Q",
       "a.j.p.t.u" -> "v3",
-      "a.z.type" ->  "Abc",
-      "a.z.name" -> "hello"
+      "a.z.type" ->  "AbcDef",
+      "a.z.name" -> "hello",
+      "a.y" -> "HmmAbc"
     )
 
   val source =
@@ -30,8 +32,8 @@ object AutoDerivationSimple extends App :
     seqDelim = ","
   )
 
-  val io: IO[Config.Error, A] = 
-    source.autoLoad[A]  
+  val io: IO[String, A] =
+    source.load(deriveConfig[A].toKebabCase).mapError(_.prettyPrint())
 
   val readResult = Unsafe.unsafe { implicit u =>
     zio.Runtime.default.unsafe.run(io).getOrThrowFiberFailure()

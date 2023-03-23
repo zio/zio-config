@@ -92,7 +92,7 @@ object MarkdownSpec extends BaseSpec {
     test("Markdown works for a single key that can be more than 2 types") {
 
       val config =
-       (string.orElseEither(int).orElseEither(double)).nested("a")
+        (string.orElseEither(int).orElseEither(double)).nested("a")
 
       val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
 
@@ -165,7 +165,7 @@ object MarkdownSpec extends BaseSpec {
 
       val config =
         (
-            (int("c") zip string("d").orElseEither((string("e") zip string("f") zip string("g")))).nested("b")
+          (int("c") zip string("d").orElseEither((string("e") zip string("f") zip string("g")))).nested("b")
         ).nested("a")
 
       val result = generateDocs(config).toTable.toGithubFlavouredMarkdown
