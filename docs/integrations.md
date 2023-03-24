@@ -6,7 +6,8 @@ title: "Integrations"
 
 ## Integration with other libraries
 
-`zio-config` is also integrated with `enumeratum`, `cats`, `scalaz` etc apart from `refined` which is used for automatic validations.
+`zio-config` is also integrated with `enumeratum`, `cats`, `scalaz`, `aws-sdk`, `zio-aws`, `refined` etc.
+Note that only a few of them is documented here. `refined` is already discussed under `automatic-validations`.
 
 #### Enumeratum
 
@@ -84,3 +85,5 @@ In addition to it, it can also load cats/scalaz specific datatypes
   val config: Config[Maybe[Int]] = maybe(Config.int("age"))
   
 ```
+
+Have a look at modules of zio-config to know about other integrations such as `aws`, `zio-aws` etc
