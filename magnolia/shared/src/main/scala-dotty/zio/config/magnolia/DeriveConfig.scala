@@ -255,7 +255,6 @@ object DeriveConfig {
                     )
                 )
             } else {
-              println(s"here?. ${originalKey} and ${specifiedName}")
               if (originalKey.contains(specifiedName)) Right(subClass)
               else
                 Left(
