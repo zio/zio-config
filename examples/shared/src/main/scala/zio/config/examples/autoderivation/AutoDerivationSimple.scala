@@ -53,7 +53,7 @@ object AutomaticConfig extends App {
 
   private val config = source.load(automaticConfig)
 
-  //TODO; Not working for option
+  // TODO; Not working for option
   assert(
     config equalM
       MyConfig(Aws("us-east", Token("token")), Inr(1000), DbUrl("some url"), 10, 3.14, 30.0, 12, 14)

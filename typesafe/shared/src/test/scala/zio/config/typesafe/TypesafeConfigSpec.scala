@@ -28,7 +28,13 @@ object EmployeeDetails {
         )).to[Employee]
 
   val employeeDetails: zio.Config[EmployeeDetails] =
-    ((listOf(employee).nested("employees")).zip(int("accountId")).zip(Config.boolean("boolean")).zip(Config.string("optional").optional)).to[EmployeeDetails].nested("details")
+    ((listOf(employee)
+      .nested("employees"))
+      .zip(int("accountId"))
+      .zip(Config.boolean("boolean"))
+      .zip(Config.string("optional").optional))
+      .to[EmployeeDetails]
+      .nested("details")
 
 }
 
