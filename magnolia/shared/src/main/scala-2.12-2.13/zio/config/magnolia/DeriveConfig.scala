@@ -133,10 +133,14 @@ object DeriveConfig {
             .map[T](l => caseClass.rawConstruct(l))
       }
 
+    val constValue =
+      if (caseClass.isObject) Some(caseClass.rawConstruct(Seq.empty))
+      else None
+
     DeriveConfig(
       descriptions.foldLeft(res)(_ ?? _),
       caseClass.isObject || caseClass.parameters.isEmpty,
-      Option.when(caseClass.isObject)(caseClass.rawConstruct(Nil))
+      constValue
     )
   }
 
