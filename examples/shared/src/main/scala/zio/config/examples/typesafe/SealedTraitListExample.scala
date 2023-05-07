@@ -1,12 +1,12 @@
 package zio.config.examples.typesafe
 
 import zio.ConfigProvider
-import zio.config.derivation.nameWithLabel
+import zio.config.derivation.discriminator
 import zio.config._, typesafe._, magnolia._
 
 object SealedTraitListExample extends App {
 
-  @nameWithLabel
+  @discriminator
   sealed trait DataTransformation
 
   case class CastColumns(dataTypeMapper: Map[String, String]) extends DataTransformation

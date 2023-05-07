@@ -28,7 +28,7 @@ object AutomaticConfigSpec extends ZIOSpecDefault {
 
 object AutomaticConfigTestUtils {
 
-  @nameWithLabel("type")
+  @discriminator("type")
   sealed trait Credentials
 
   case class Password(value: String) extends Credentials

@@ -1,7 +1,7 @@
 package zio.config.examples.autoderivation
 
 import zio.config._
-import zio.config.derivation.{name, nameWithLabel}
+import zio.config.derivation.{name, discriminator}
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider
@@ -20,7 +20,7 @@ import examples._
  * }
  * }}}
  *
- * Note that all sealed traits should be annotated with @nameWithLabel
+ * Note that all sealed traits should be annotated with @discriminator
  */
 object AutoDerivationSealedTraitPureConfig extends App with EitherImpureOps {
 
@@ -31,7 +31,7 @@ object AutoDerivationSealedTraitPureConfig extends App with EitherImpureOps {
   final case class AppConfig(awsConfig: AwsConfig, appName: String)
   final case class AwsConfig(field: RandomSealedTrait1)
 
-  @nameWithLabel("type")
+  @discriminator("type")
   sealed trait RandomSealedTrait1
 
   object RandomSealedTrait1 {
@@ -48,7 +48,7 @@ object AutoDerivationSealedTraitPureConfig extends App with EitherImpureOps {
 
   }
 
-  @nameWithLabel("type")
+  @discriminator("type")
   sealed trait RandomSealedTrait2
 
   object RandomSealedTrait2 {

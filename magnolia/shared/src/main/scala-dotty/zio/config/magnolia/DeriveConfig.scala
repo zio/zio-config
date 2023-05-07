@@ -64,7 +64,7 @@ object DeriveConfig {
 
   final case class FieldName(originalName: String, alternativeNames: List[String], descriptions: List[String])
   final case class ProductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
-  final case class CoproductName(originalName: String, alternativeNames: List[String], descriptions: List[String], typeDescriminator: Option[String])
+  final case class CoproductName(originalName: String, alternativeNames: List[String], descriptions: List[String], typeDiscriminator: Option[String])
 
   lazy given DeriveConfig[String] = DeriveConfig.from(string)
   lazy given DeriveConfig[Boolean] = DeriveConfig.from(boolean)
@@ -132,14 +132,14 @@ object DeriveConfig {
             originalName = constValue[m.MirroredLabel],
             alternativeNames = customNamesOf[T],
             descriptions = Macros.documentationOf[T].map(_.describe),
-            typeDescriminator = Macros.nameWithLabel[T].headOption.map(_.keyName)
+            typeDiscriminator = Macros.discriminator[T].headOption.map(_.keyName)
           )
 
         lazy val subClassDescriptions =
           summonDeriveConfigForCoProduct[m.MirroredElemTypes]
 
         lazy val desc =
-          mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]), coproductName.typeDescriminator)
+          mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]), coproductName.typeDiscriminator)
 
         DeriveConfig.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames, None))
 
@@ -186,11 +186,11 @@ object DeriveConfig {
 
   def mergeAllProducts[T](
     allDescs: => List[DeriveConfig[T]],
-    typeDescriminator: Option[String]
+    typeDiscriminator: Option[String]
   ): DeriveConfig[T] =
 
     val desc =
-      typeDescriminator match {
+      typeDiscriminator match {
         case None =>
           allDescs
             .map(desc =>
@@ -276,9 +276,9 @@ object DeriveConfig {
     desc: Config[A],
     originalKey: Option[String],
     alternativeKeys: List[String],
-    typeDescriminator: Option[String]
+    typeDiscriminator: Option[String]
   ): Config[A] = {
-    typeDescriminator match {
+    typeDiscriminator match {
       case Some(pureConfigKeyName) =>
         Config
           .string(pureConfigKeyName)

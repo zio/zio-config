@@ -6,12 +6,12 @@ final case class describe(describe: String) extends StaticAnnotation
 final case class name(name: String)         extends StaticAnnotation
 
 /**
- * nameWithLabel can be used for class names, such that the name of the class
+ * discriminator can be used for class names, such that the name of the class
  * should be part of the product with keyName as `keyName`.
  *
  * Example:
  *      {{{
- *       @nameWithLabel("type")
+ *       @discriminator("type")
  *       sealed trait FooBar
  *       case class Bar(x: Int) extends FooBar
  *       case class Foo(y: String) extends FooBar
@@ -48,7 +48,7 @@ final case class name(name: String)         extends StaticAnnotation
  *
  * }}}
  *
- * If annotation is `name` instead of `nameWithLabel`, then name of the case class becomes a parent node
+ * If annotation is `name` instead of `discriminator`, then name of the case class becomes a parent node
  *
  *  {{{
  *    Foo : {
@@ -56,4 +56,4 @@ final case class name(name: String)         extends StaticAnnotation
  *    }
  *  }}}
  */
-final case class nameWithLabel(keyName: String = "type") extends StaticAnnotation
+final case class discriminator(keyName: String = "type") extends StaticAnnotation
