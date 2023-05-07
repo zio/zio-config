@@ -282,7 +282,7 @@ lazy val zioConfigMagnolia = crossProject(JVMPlatform)
     magnoliaDependencies,
     scalacOptions ++= {
       if (scalaVersion.value == ScalaDotty) {
-        Seq.empty
+        Seq("-Xmax-inlines", "64")
       } else {
         Seq("-language:experimental.macros")
       }
