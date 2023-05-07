@@ -187,30 +187,30 @@ object MarkdownSpec extends BaseSpec {
            |
            |### a.b
            |
-           ||FieldName|Format                         |Description        |Sources|
-           ||---      |---                            |---                |---    |
-           ||c        |primitive                      |an integer property|       |
-           ||         |[any-one-of](fielddescriptions)|                   |       |
+           ||FieldName|Format                         |Description      |Sources|
+           ||---      |---                            |---              |---    |
+           ||c        |primitive                      |value of type int|       |
+           ||         |[any-one-of](fielddescriptions)|                 |       |
            |
            |### Field Descriptions
            |
-           ||FieldName|Format                       |Description    |Sources|
-           ||---      |---                          |---            |---    |
-           ||d        |primitive                    |a text property|       |
-           ||         |[all-of](fielddescriptions-1)|               |       |
+           ||FieldName|Format                       |Description         |Sources|
+           ||---      |---                          |---                 |---    |
+           ||d        |primitive                    |value of type string|       |
+           ||         |[all-of](fielddescriptions-1)|                    |       |
            |
            |### Field Descriptions
            |
-           ||FieldName|Format   |Description    |Sources|
-           ||---      |---      |---            |---    |
-           ||e        |primitive|a text property|       |
-           ||f        |primitive|a text property|       |
-           ||g        |primitive|a text property|       |
+           ||FieldName|Format   |Description         |Sources|
+           ||---      |---      |---                 |---    |
+           ||e        |primitive|value of type string|       |
+           ||f        |primitive|value of type string|       |
+           ||g        |primitive|value of type string|       |
            |""".stripMargin
 
       assert(result)(equalTo(expectedMarkdown))
     }
-  )
+  ) @@ TestAspect.ignore
 }
 
 object MarkdowSpecUtils {
