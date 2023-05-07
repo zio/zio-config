@@ -141,7 +141,7 @@ object DeriveConfig {
         lazy val desc =
           mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]), coproductName.typeDiscriminator)
 
-        DeriveConfig.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames, None))
+        DeriveConfig.from(tryAllKeys(desc.desc, None, coproductName.alternativeNames))
 
       case m: Mirror.ProductOf[T] =>
         val productName =
@@ -196,10 +196,7 @@ object DeriveConfig {
             .map(desc =>
               desc.metadata match {
                 case Some(Metadata.Product(productName, fields)) if (fields.nonEmpty) =>
-                  productName.alternativeNames match {
-                    case Nil => desc.desc.nested(productName.originalName)
-                    case names => names.view.map(key => desc.desc.nested(key)).reduce(_ orElse _)
-                  }
+                  tryAllKeys(desc.desc, Some(productName.originalName), productName.alternativeNames)
                 case Some(_) => desc.desc
                 case None => desc.desc
               }
@@ -258,12 +255,7 @@ object DeriveConfig {
        else
          val listOfDesc =
            fieldNames.zip(allDescs).map({ case (fieldName, desc) => {
-             val fieldDesc =
-               fieldName.alternativeNames match {
-                 case Nil => desc.desc.nested(fieldName.originalName)
-                 case names => names.view.map(desc.desc.nested(_)).reduce(_ orElse _)
-               }
-
+             val fieldDesc = tryAllKeys(desc.desc, Some(fieldName.originalName), fieldName.alternativeNames)
              fieldName.descriptions.foldRight(fieldDesc)((doc, desc) => desc ?? doc)
            }})
 
@@ -272,52 +264,16 @@ object DeriveConfig {
 
          DeriveConfig(descOfList.map(f), Some(Metadata.Product(productName, fieldNames)))
 
-  def tryAllkeys[A](
+  def tryAllKeys[A](
     desc: Config[A],
     originalKey: Option[String],
     alternativeKeys: List[String],
-    typeDiscriminator: Option[String]
-  ): Config[A] = {
-    typeDiscriminator match {
-      case Some(pureConfigKeyName) =>
-        Config
-          .string(pureConfigKeyName)
-          .zip(desc)
-          .mapOrFail({ case (specifiedName, subClass) =>
-            if(alternativeKeys.nonEmpty) {
-              if (alternativeKeys.contains(specifiedName)) Right(subClass)
-              else
-                Left(
-                  Config.Error
-                    .InvalidData(message =
-                      s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match ${alternativeKeys.mkString(",")}"
-                    )
-                )
-            } else {
-              if (originalKey.contains(specifiedName)) Right(subClass)
-              else
-                Left(
-                  Config.Error
-                    .InvalidData(message =
-                      s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match ${originalKey.toList.mkString}"
-                    )
-                )
-            }
-          })
-
-      case None =>
-        if alternativeKeys.nonEmpty then
-          alternativeKeys.map(desc.nested(_)).reduce(_ orElse _)
-        else
-          originalKey.fold(desc)(key => desc.nested(key))
+  ): Config[A] =
+    alternativeKeys match {
+      case Nil => originalKey.fold(desc)(desc.nested(_))
+      case keys => keys.view.map(desc.nested(_)).reduce(_ orElse _)
     }
-  }
 
   def castTo[T](a: Any): T =
     a.asInstanceOf[T]
-
-  extension[E, A](e: Either[E, A]) {
-    def mapError(f: E => String) =
-      e.swap.map(f).swap
-  }
 }
