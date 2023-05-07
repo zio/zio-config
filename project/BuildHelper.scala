@@ -22,9 +22,9 @@ object BuildHelper {
 
     (prefix: String) => map.find(_._1.startsWith(prefix)).map(_._2).get
   }
-  val Scala212: String   = versions("2.12")
-  val Scala213: String   = versions("2.13")
-  val ScalaDotty: String = versions("3")
+  val Scala212: String                   = versions("2.12")
+  val Scala213: String                   = versions("2.13")
+  val ScalaDotty: String                 = versions("3")
 
   val SilencerVersion = "1.7.12"
 
@@ -57,7 +57,7 @@ object BuildHelper {
 
   def buildInfoSettings(packageName: String) =
     Seq(
-      buildInfoKeys := Seq[BuildInfoKey](organization, moduleName, name, version, scalaVersion, sbtVersion, isSnapshot),
+      buildInfoKeys    := Seq[BuildInfoKey](organization, moduleName, name, version, scalaVersion, sbtVersion, isSnapshot),
       buildInfoPackage := packageName
     )
 
@@ -69,7 +69,7 @@ object BuildHelper {
       else
         Seq("-Xprint:typer")
     },
-    Compile / doc / sources := {
+    Compile / doc / sources  := {
       val old = (Compile / doc / sources).value
       if (scalaVersion.value == ScalaDotty) {
         Nil
@@ -119,7 +119,7 @@ object BuildHelper {
     // One of -Ydelambdafy:inline or -Yrepl-class-based must be given to
     // avoid deadlocking on parallel operations, see
     //   https://issues.scala-lang.org/browse/SI-9076
-    Compile / console / scalacOptions := Seq(
+    Compile / console / scalacOptions   := Seq(
       "-Ypartial-unification",
       "-language:higherKinds",
       "-language:existentials",
@@ -159,21 +159,6 @@ object BuildHelper {
           "-Xmax-classfile-name",
           "242"
         ) ++ std2xOptions ++ optimizerOptions(optimize)
-      case Some((2, 11)) =>
-        Seq(
-          "-Ypartial-unification",
-          "-Yno-adapted-args",
-          "-Ywarn-inaccessible",
-          "-Ywarn-infer-any",
-          "-Ywarn-nullary-override",
-          "-Ywarn-nullary-unit",
-          "-Xexperimental",
-          "-Ywarn-unused-import",
-          "-Xfuture",
-          "-Xsource:2.13",
-          "-Xmax-classfile-name",
-          "242"
-        ) ++ std2xOptions
       case _             => Seq.empty
     }
 
@@ -186,14 +171,12 @@ object BuildHelper {
 
   def crossPlatformSources(scalaVer: String, platform: String, conf: String, baseDir: File) = {
     val versions = CrossVersion.partialVersion(scalaVer) match {
-      case Some((2, 11)) =>
-        List("2.11", "2.11+", "2.11-2.12", "2.x")
       case Some((2, 12)) =>
-        List("2.12", "2.11+", "2.12+", "2.11-2.12", "2.12-2.13", "2.x")
+        List("2.12", "2.12+", "2.12-2.13", "2.x")
       case Some((2, 13)) =>
-        List("2.13", "2.11+", "2.12+", "2.13+", "2.12-2.13", "2.x")
+        List("2.13", "2.12+", "2.13+", "2.12-2.13", "2.x")
       case Some((3, _))  =>
-        List("dotty", "2.11+", "2.12+", "2.13+", "3.x")
+        List("dotty", "2.12+", "2.13+", "3.x")
       case _             =>
         List()
     }
@@ -224,10 +207,10 @@ object BuildHelper {
   def stdSettings(prjName: String) = Seq(
     resolvers +=
       "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-    name := s"$prjName",
-    crossScalaVersions := Seq(Scala212, Scala213),
-    ThisBuild / scalaVersion := Scala213,
-    scalacOptions := stdOptions ++ extraOptions(scalaVersion.value, optimize = !isSnapshot.value),
+    name                                   := s"$prjName",
+    crossScalaVersions                     := Seq(Scala212, Scala213),
+    ThisBuild / scalaVersion               := Scala213,
+    scalacOptions                          := stdOptions ++ extraOptions(scalaVersion.value, optimize = !isSnapshot.value),
     libraryDependencies ++= {
       if (scalaVersion.value == ScalaDotty)
         Seq(
@@ -240,17 +223,17 @@ object BuildHelper {
           compilerPlugin("org.typelevel"  %% "kind-projector"  % "0.13.2" cross CrossVersion.full)
         )
     },
-    semanticdbEnabled := scalaVersion.value != ScalaDotty, // enable SemanticDB
+    semanticdbEnabled                      := scalaVersion.value != ScalaDotty, // enable SemanticDB
     semanticdbOptions += "-P:semanticdb:synthetics:on",
-    semanticdbVersion := scalafixSemanticdb.revision, // use Scalafix compatible version
+    semanticdbVersion                      := scalafixSemanticdb.revision,      // use Scalafix compatible version
     ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value),
     ThisBuild / scalafixDependencies ++= List(
       "com.github.liancheng" %% "organize-imports" % "0.5.0",
       "com.github.vovapolu"  %% "scaluzzi"         % "0.1.18"
     ),
-    Test / parallelExecution := true,
+    Test / parallelExecution               := true,
     incOptions ~= (_.withLogRecompileOnMacro(false)),
-    autoAPIMappings := true,
+    autoAPIMappings                        := true,
     unusedCompileDependenciesFilter -= moduleFilter("org.scala-js", "scalajs-library")
   )
 
@@ -288,8 +271,8 @@ object BuildHelper {
   )
 
   def nativeSettings = Seq(
-    Test / skip := true,
-    doc / skip := true,
+    Test / skip             := true,
+    doc / skip              := true,
     Compile / doc / sources := Seq.empty
   )
 
