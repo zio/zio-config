@@ -9,7 +9,7 @@ import java.time.{Instant, LocalDate, LocalDateTime, LocalTime, ZoneOffset}
 import java.util.UUID
 import AutomaticConfigTestUtils._
 
-object AutomaticConfigTest extends ZIOSpecDefault {
+object AutomaticConfigSpec extends ZIOSpecDefault {
 
   def spec =
     suite("magnolia spec")(
@@ -27,11 +27,15 @@ object AutomaticConfigTest extends ZIOSpecDefault {
 }
 
 object AutomaticConfigTestUtils {
+
+  @nameWithLabel("type")
   sealed trait Credentials
 
   case class Password(value: String) extends Credentials
 
   case class Token(value: String) extends Credentials
+
+  case object InstanceProfile extends Credentials
 
   sealed trait Price
 
@@ -65,7 +69,8 @@ object AutomaticConfigTestUtils {
 
   private val genToken       = Gen.const(Token("someToken"))
   private val genPassword    = Gen.const(Password("some passeword"))
-  private val genCredentials = Gen.oneOf(genToken, genPassword)
+  private val genInstanceProfile = Gen.const(InstanceProfile)
+  private val genCredentials = Gen.oneOf(genToken, genPassword, genInstanceProfile)
 
   private val genDbUrl = Gen.const(DbUrl("dburl"))
 
@@ -92,10 +97,6 @@ object AutomaticConfigTestUtils {
       id             <- Gen.uuid
       partialMyConfig = Map(
                           "aws.region"   -> aws.region,
-                          aws.security match {
-                            case Password(password) => "aws.security.Password.value" -> password
-                            case Token(token)       => "aws.security.Token.value"    -> token
-                          },
                           price match {
                             case Description(description) => "cost.Description.value" -> description
                             case Currency(dollars)        => "cost.Currency.value"    -> dollars.toString
@@ -108,7 +109,14 @@ object AutomaticConfigTestUtils {
                           "updated"      -> updated,
                           "lastVisited"  -> lastVisited,
                           "id"           -> id.toString
-                        ) ++ amount.map(double => ("amount", double.toString)).toList
+                        ) ++ (aws.security match {
+                          case Password(password) =>
+                            Map("aws.security.type" -> "Password", "aws.security.value" -> password)
+                          case Token(token) =>
+                            Map("aws.security.type" -> "Token", "aws.security.value" -> token)
+                          case InstanceProfile =>
+                            Map("aws.security.type" -> "InstanceProfile")
+                        }) ++ amount.map(double => ("amount", double.toString)).toList
     } yield (default, anotherDefault) match {
       case (Some(v1), Some(v2)) => partialMyConfig ++ List(("default", v1.toString), ("anotherDefault", v2.toString))
       case (Some(v1), None)     => partialMyConfig + (("default", v1.toString))

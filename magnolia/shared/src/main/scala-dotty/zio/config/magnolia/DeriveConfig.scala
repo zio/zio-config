@@ -42,10 +42,22 @@ object DeriveConfig {
   def from[A](desc: Config[A]) =
     DeriveConfig(desc, None)
 
-  sealed trait Metadata
+  sealed trait Metadata {
+    def originalName: String = this match {
+      case Metadata.Object(name, _) => name.originalName
+      case Metadata.Product(name, _) => name.originalName
+      case Metadata.Coproduct(name, _) => name.originalName
+    }
+
+    def alternativeNames: List[String] = this match {
+      case Metadata.Object(_, _) => Nil
+      case Metadata.Product(name, _) => name.alternativeNames
+      case Metadata.Coproduct(name, _) => name.alternativeNames
+    }
+  }
 
   object Metadata {
-    final case class Object(name: ProductName) extends Metadata
+    final case class Object[T](name: ProductName, constValue: T) extends Metadata
     final case class Product(name: ProductName, fields: List[FieldName]) extends Metadata
     final case class Coproduct(name: CoproductName, metadata: List[Metadata]) extends Metadata
   }
@@ -73,6 +85,9 @@ object DeriveConfig {
 
   given optDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Option[A]] =
     DeriveConfig.from(ev.desc.optional)
+
+  given eitherConfig[A, B](using evA: DeriveConfig[A], evB: DeriveConfig[B]): DeriveConfig[Either[A, B]] =
+    DeriveConfig.from(evA.desc.orElseEither(evB.desc))
 
   given listDesc[A](using ev: DeriveConfig[A]): DeriveConfig[List[A]] =
     DeriveConfig.from(listOf(ev.desc))
@@ -175,16 +190,37 @@ object DeriveConfig {
   ): DeriveConfig[T] =
 
     val desc =
-      allDescs
-        .map(desc =>
-          desc.metadata match {
-            case Some(Metadata.Product(productName, fields)) if (fields.nonEmpty) =>
-              tryAllkeys(desc.desc, Some(productName.originalName), productName.alternativeNames, typeDescriminator)
+      typeDescriminator match {
+        case None =>
+          allDescs
+            .map(desc =>
+              desc.metadata match {
+                case Some(Metadata.Product(productName, fields)) if (fields.nonEmpty) =>
+                  productName.alternativeNames match {
+                    case Nil => desc.desc.nested(productName.originalName)
+                    case names => names.view.map(key => desc.desc.nested(key)).reduce(_ orElse _)
+                  }
+                case Some(_) => desc.desc
+                case None => desc.desc
+              }
+            ).reduce(_ orElse _)
 
-            case Some(_) => desc.desc
-            case None => desc.desc
-          }
-        ).reduce(_ orElse _)
+        case Some(keyName) =>
+          Config.string(keyName)
+            .switch(
+              allDescs.flatMap { desc =>
+                desc.metadata match {
+                  case Some(Metadata.Object(name, value)) =>
+                    List(name.originalName -> Config.Constant(value.asInstanceOf[T]))
+
+                  case Some(m) =>
+                    (m.originalName :: m.alternativeNames).map(_ -> desc.desc)
+
+                  case None => Nil
+                }
+              }: _*
+            )
+      }
 
     DeriveConfig.from(desc)
 
@@ -214,16 +250,19 @@ object DeriveConfig {
 
          DeriveConfig(
            tryAllPaths.map[T](
-             _ => f(List.empty[Any])
+             _ => f(Nil)
            ),
-           Some(Metadata.Object(productName)) // We propogate the info that product was actually an object
+           Some(Metadata.Object[T](productName, f(Nil))) // We propogate the info that product was actually an object
          )
 
        else
          val listOfDesc =
            fieldNames.zip(allDescs).map({ case (fieldName, desc) => {
              val fieldDesc =
-               tryAllkeys(castTo[Config[Any]](desc.desc), Some(fieldName.originalName), fieldName.alternativeNames, None)
+               fieldName.alternativeNames match {
+                 case Nil => desc.desc.nested(fieldName.originalName)
+                 case names => names.view.map(desc.desc.nested(_)).reduce(_ orElse _)
+               }
 
              fieldName.descriptions.foldRight(fieldDesc)((doc, desc) => desc ?? doc)
            }})
@@ -268,7 +307,7 @@ object DeriveConfig {
 
       case None =>
         if alternativeKeys.nonEmpty then
-          alternativeKeys.map(key => desc.nested(key)).reduce(_ orElse _)
+          alternativeKeys.map(desc.nested(_)).reduce(_ orElse _)
         else
           originalKey.fold(desc)(key => desc.nested(key))
     }
