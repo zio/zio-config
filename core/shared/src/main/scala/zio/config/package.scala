@@ -12,4 +12,12 @@ package object config
     def path(str: String*): Chunk[String] =
       Chunk.fromIterable(sc.s(str: _*).split('.'))
   }
+
+  implicit final class ReloadableSyntax[Any, E, ROut](private val layer: ZLayer[Any, E, ROut]) extends AnyVal {
+    def reloadable(implicit
+      tag: Tag[ROut],
+      serviceProxy: ServiceProxy[ROut]
+    ): ZLayer[ServiceReloader, ServiceReloader.Error, ROut] =
+      ZLayer.fromZIO(ServiceReloader.register(self))
+  }
 }
