@@ -6,18 +6,17 @@ trait ConfigDocsModule {
   import Table._
 
   /**
-   * `ConfigDocs` holds the descriptions and details of a `Config`
-   * which can be used to produce documentation.
+   * `ConfigDocs` holds the descriptions and details of a `Config` which can be used to produce documentation.
    */
   sealed trait ConfigDocs { self =>
     private def is[A](f: PartialFunction[ConfigDocs, A])(orElse: A): A =
       f.applyOrElse(self, (_: ConfigDocs) => orElse)
 
     /**
-     * Convert a {{{ ConfigDocs }}} to a {{{ Table }}}.
+     * Convert a {{{ConfigDocs}}} to a {{{Table}}}.
      *
-     * A Table is a recursive structure that is more easier to be interpreted as Json or Markdown than trying
-     * to convert `ConfigDocs` to a readable format.
+     * A Table is a recursive structure that is more easier to be interpreted as Json or Markdown than trying to convert
+     * `ConfigDocs` to a readable format.
      */
     def toTable: Table = {
       def filterDescriptions(
@@ -27,11 +26,11 @@ trait ConfigDocsModule {
         val desc =
           descriptionsUsedAlready match {
             case Some(value) =>
-              descriptions.filter({
+              descriptions.filter {
                 case ConfigDocs.Description(path, _) if path.map(FieldName.Key.apply) == Some(value) =>
                   false
                 case ConfigDocs.Description(_, _)                                                    => true
-              })
+              }
             case None        => descriptions
           }
         desc
@@ -209,28 +208,29 @@ trait ConfigDocsModule {
     sealed case class DynamicMap(
       schemaDocs: ConfigDocs,
       valueDocs: Map[String, ConfigDocs] = Map.empty[String, ConfigDocs]
-    )                                                                                            extends ConfigDocs
+    ) extends ConfigDocs
 
   }
 
   /**
-   * A Table is a recursive structure that is more easier to be interpreted as Json or Markdown than trying
-   * to convert `ConfigDocs` to a readable format.
+   * A Table is a recursive structure that is more easier to be interpreted as Json or Markdown than trying to convert
+   * `ConfigDocs` to a readable format.
    *
-   * @param rows: A table consist of multiple `TableRow`s where each `TableRow` holds the information about
-   *            the config path.
+   * @param rows:
+   *   A table consist of multiple `TableRow`s where each `TableRow` holds the information about the config path.
    */
   sealed case class Table(rows: List[TableRow]) { self =>
     def ++(that: Table): Table =
       Table(rows ++ that.rows)
 
     /**
-     * Create a Confluence flavored markdown string from Table.
-     * This can be used if you are planning to render this markdown in Atlassian's Confluence pages.
+     * Create a Confluence flavored markdown string from Table. This can be used if you are planning to render this
+     * markdown in Atlassian's Confluence pages.
      *
-     * @param baseUrl: Every heading in a markdown rendered through Atlassian's Confluence page needs to have a baseUrl.
-     *               This can be the baseUrl of the confluence page in which markdown is rendered.
-     *               The heading in markdown will be the keys of your application config.
+     * @param baseUrl:
+     *   Every heading in a markdown rendered through Atlassian's Confluence page needs to have a baseUrl. This can be
+     *   the baseUrl of the confluence page in which markdown is rendered. The heading in markdown will be the keys of
+     *   your application config.
      */
     def toConfluenceMarkdown(
       baseUrl: Option[String]
@@ -238,8 +238,7 @@ trait ConfigDocsModule {
       toMarkdown(Table.confluenceFlavoured(baseUrl))
 
     /**
-     * Create a Github flavored markdown string from Table.
-     * This can be used to render markdowns in Github, Gitlab etc
+     * Create a Github flavored markdown string from Table. This can be used to render markdowns in Github, Gitlab etc
      */
     def toGithubFlavouredMarkdown: String =
       toMarkdown(Table.githubFlavoured)
@@ -302,7 +301,7 @@ trait ConfigDocsModule {
 
                   nameWithLink -> getLinkFn(Right(formatOrNotApplicable))
 
-                case None    =>
+                case None =>
                   Link.rawString(lastFieldName.asString(None)) -> Link
                     .rawString(formatOrNotApplicable.asString)
               }
@@ -375,19 +374,17 @@ trait ConfigDocsModule {
       input: List[List[String]]
     ): Map[Index, Size] = {
       def mergeMapWithMaxSize(accumulated: Map[Index, Size], current: Map[Index, Size]): Map[Index, Size] =
-        current.foldLeft(Map.empty: Map[Index, Size])({ case (k, v) =>
+        current.foldLeft(Map.empty: Map[Index, Size]) { case (k, v) =>
           accumulated.get(v._1) match {
             case Some(size) => k.updated(v._1, Math.max(v._2, size))
             case None       => k.+((v._1, v._2))
           }
-        })
+        }
 
       input.foldLeft(Map.empty: Map[Index, Size])((map, row) =>
         mergeMapWithMaxSize(
           map,
-          row.zipWithIndex
-            .map({ case (string, index) => (index, string.length) })
-            .toMap
+          row.zipWithIndex.map { case (string, index) => (index, string.length) }.toMap
         )
       )
     }
@@ -410,10 +407,10 @@ trait ConfigDocsModule {
 
       def blank: Link = new Link("") {}
 
-      def rawString(s: String): Link                       =
+      def rawString(s: String): Link =
         new Link(s) {}
 
-      def githubLink(name: String, link: String): Link     =
+      def githubLink(name: String, link: String): Link =
         new Link(s"[${name}](${link})") {}
 
       def confluenceLink(name: String, link: String): Link =
@@ -422,14 +419,16 @@ trait ConfigDocsModule {
     }
 
     /**
-     * Internal function that represents the creation of a github flavoured markdown. The implementation can be used as reference for users
-     * who would like to produce a different style markdown rendering by specifying
-     * how to create `Link` given a `Heading`, `Int` representing the index of the key (or paths) and `Either[FieldName, Format]`.
+     * Internal function that represents the creation of a github flavoured markdown. The implementation can be used as
+     * reference for users who would like to produce a different style markdown rendering by specifying how to create
+     * `Link` given a `Heading`, `Int` representing the index of the key (or paths) and `Either[FieldName, Format]`.
      *
-     * The index exists because it represents the index of a heading (which is the individual key of paths) in markdown. This is usually zero for all headings unless
-     * there are duplicate headings in the markdown. There is a possibility of duplicate headings in the markdown, if for instance,
-     * given a path `x.y` and `k.y`, the heading `y` can appear twice in the markdown file with indices as 0 and 1. Depending on the flavour of markdown (Example: Github, Confluence)
-     * we have different ways to produce links towards those headings. In this case, we employ the strategy used by Github.
+     * The index exists because it represents the index of a heading (which is the individual key of paths) in markdown.
+     * This is usually zero for all headings unless there are duplicate headings in the markdown. There is a possibility
+     * of duplicate headings in the markdown, if for instance, given a path `x.y` and `k.y`, the heading `y` can appear
+     * twice in the markdown file with indices as 0 and 1. Depending on the flavour of markdown (Example: Github,
+     * Confluence) we have different ways to produce links towards those headings. In this case, we employ the strategy
+     * used by Github.
      */
     def githubFlavoured: (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, index, fieldNameOrFormat) => {
@@ -472,15 +471,23 @@ trait ConfigDocsModule {
       Table(List(tableRow))
 
     /**
-     * A `TableRow` represents each row in a `Table` which is an intermediate light-weight structure produced from `ConfigDocs`.
-     * `Table` is more easier to be converted to formats such as Json, markdown or any custom format fo your choice.
+     * A `TableRow` represents each row in a `Table` which is an intermediate light-weight structure produced from
+     * `ConfigDocs`. `Table` is more easier to be converted to formats such as Json, markdown or any custom format fo
+     * your choice.
      *
-     * @param paths : Each config key is basically a list of paths representing its hierarchy. Example: "aws.ec2.instance.type" where list of paths is
-     *              List("aws", "ec2", "instance", "type")
-     * @param format : The format of value of key (paths). Example: it can be a Primitive type (String, Int etc), or it can be complex structures as such as List or Map.
-     * @param description : Description (zio-config in-built or user-provided) of the key (paths).
-     * @param nested : A `TableRow` can be pointed to a nested table that has the details of all the child paths that are under `paths`. Hence `TableRow` is a recursive structure.
-     * @param sources: All the sources from which `paths` can be retrieved.
+     * @param paths
+     *   : Each config key is basically a list of paths representing its hierarchy. Example: "aws.ec2.instance.type"
+     *   where list of paths is List("aws", "ec2", "instance", "type")
+     * @param format
+     *   : The format of value of key (paths). Example: it can be a Primitive type (String, Int etc), or it can be
+     *   complex structures as such as List or Map.
+     * @param description
+     *   : Description (zio-config in-built or user-provided) of the key (paths).
+     * @param nested
+     *   : A `TableRow` can be pointed to a nested table that has the details of all the child paths that are under
+     *   `paths`. Hence `TableRow` is a recursive structure.
+     * @param sources:
+     *   All the sources from which `paths` can be retrieved.
      */
     case class TableRow(
       paths: List[FieldName],
@@ -495,17 +502,18 @@ trait ConfigDocsModule {
     }
 
     /**
-     * Format is further used in `Table` which is used for config documentation. Format helps the readers of the documentation understand the details of the format
-     * of each paths that forms their application config.
+     * Format is further used in `Table` which is used for config documentation. Format helps the readers of the
+     * documentation understand the details of the format of each paths that forms their application config.
      *
-     *  Example: A format can be `List`, `Map`, `Primitive`, or it can even be even more complex such as `AllOf` or `AnyOneOf`.
-     *  If `Format` of paths `K` is `AllOf`, it implies that there are more distinct paths under the paths `K`, and user need to satisfy (i.e, provide them in the source)
-     *  all of the paths under `K`.
+     * Example: A format can be `List`, `Map`, `Primitive`, or it can even be even more complex such as `AllOf` or
+     * `AnyOneOf`. If `Format` of paths `K` is `AllOf`, it implies that there are more distinct paths under the paths
+     * `K`, and user need to satisfy (i.e, provide them in the source) all of the paths under `K`.
      *
-     *  If `Format` of paths `K` is `AnyOneOf`, it implies there are more distinct paths under the paths `K`, then user need to satisfy (i.e, provide them in the source)
-     *  any one of the paths under `K`.
+     * If `Format` of paths `K` is `AnyOneOf`, it implies there are more distinct paths under the paths `K`, then user
+     * need to satisfy (i.e, provide them in the source) any one of the paths under `K`.
      *
-     * If `Format` of oaths `K` is `Recursion` then that means there is a repetition of same path structure under the paths `K`
+     * If `Format` of oaths `K` is `Recursion` then that means there is a repetition of same path structure under the
+     * paths `K`
      */
     sealed trait Format { self =>
       def asString: String =
@@ -549,12 +557,11 @@ trait ConfigDocsModule {
   }
 
   /**
-   * Generate documentation based on the `Config`, where a
-   * `Config` is a structure representing the logic to fetch the application config
-   * from various sources.
+   * Generate documentation based on the `Config`, where a `Config` is a structure representing the logic to fetch the
+   * application config from various sources.
    *
-   * Once we generate the docs, this can be converted to a light weight `Table` structure which is much more easier to be converted
-   * to markdown or json formats.
+   * Once we generate the docs, this can be converted to a light weight `Table` structure which is much more easier to
+   * be converted to markdown or json formats.
    *
    * Example :
    * {{{

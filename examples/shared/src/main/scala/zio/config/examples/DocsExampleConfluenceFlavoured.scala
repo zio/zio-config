@@ -20,14 +20,14 @@ object DocsExample extends App {
   println(confluenceMarkdown)
 
   /**
-   *  ## Configuration Details
-   *  |FieldName          |Format           |Description     |Sources|
-   *  |---                |---              |---             |---    |
-   *  |[database|database]|[all-of|database]|Database related|       |
-   *  ### database
-   *  |FieldName|Format   |Description     |Sources|
-   *  |---      |---      |---             |---    |
-   *  |PORT     |primitive|Example: 8088   |       |
-   *  |URL      |primitive|Example: abc.com|       |
+   * ## Configuration Details
+   * | FieldName | Format    | Description | Sources   |                  |  |
+   * |:----------|:----------|:------------|:----------|:-----------------|:-|
+   * | [database | database] | [all-of     | database] | Database related |  |
+   * ### database
+   * | FieldName | Format    | Description      | Sources |
+   * |:----------|:----------|:-----------------|:--------|
+   * | PORT      | primitive | Example: 8088    |         |
+   * | URL       | primitive | Example: abc.com |         |
    */
 }

@@ -10,8 +10,8 @@ object YamlConfigSpec extends ZIOSpecDefault {
     test("Read a complex structure into a sealed trait") {
       case class Child(sum: List[Sum])
 
-      sealed trait Sum         extends Product with Serializable
-      case class A(a: String, h: List[Int])  extends Sum
+      sealed trait Sum                                          extends Product with Serializable
+      case class A(a: String, h: List[Int])                     extends Sum
       case class B(b: Boolean, e: List[C], f: Map[String, Int]) extends Sum
 
       final case class C(d: Int) extends Sum
@@ -21,7 +21,12 @@ object YamlConfigSpec extends ZIOSpecDefault {
           .listOf(
             "sum",
             ((Config.string("a").zip(Config.listOf("h", Config.int)).to[A].nested("A")) orElseEither
-              (Config.boolean("b").zip(Config.listOf("e", Config.int.to[C]).nested("d")).zip(Config.table("f", Config.int)).to[B].nested("B")))
+              (Config
+                .boolean("b")
+                .zip(Config.listOf("e", Config.int.to[C]).nested("d"))
+                .zip(Config.table("f", Config.int))
+                .to[B]
+                .nested("B")))
               .map(_.merge)
           )
           .to[Child]

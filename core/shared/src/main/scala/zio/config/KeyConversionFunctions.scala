@@ -5,8 +5,7 @@ import scala.annotation.tailrec
 private[config] trait KeyConversionFunctions {
 
   /**
-   * Convert camelCase to any delimited string.
-   * Example:
+   * Convert camelCase to any delimited string. Example:
    *
    * {{{
    *   camelToDelimiter("abcDef", "-") === abc-def
@@ -36,9 +35,7 @@ private[config] trait KeyConversionFunctions {
   }
 
   /**
-   * Convert a camelCase key to kebab-case
-   * val s = abcDef
-   * toKebabCase(s) === abc-def
+   * Convert a camelCase key to kebab-case val s = abcDef toKebabCase(s) === abc-def
    */
   val toKebabCase: String => String =
     camelToDelimiter(_, "-")

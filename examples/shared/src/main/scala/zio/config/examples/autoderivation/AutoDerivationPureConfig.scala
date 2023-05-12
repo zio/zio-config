@@ -9,8 +9,8 @@ import zio.config.typesafe.TypesafeConfigProvider
 import examples._
 
 /**
- * An example on how to configure Config classes
- * to work with the below pattern (often followed in many libraries such as pure-config)
+ * An example on how to configure Config classes to work with the below pattern (often followed in many libraries such
+ * as pure-config)
  *
  * {{{
  * {
@@ -25,8 +25,8 @@ import examples._
 object AutoDerivationSealedTraitPureConfig extends App with EitherImpureOps {
 
   /**
-   * An example that describes automatic derivation with a few name customisations (done using annotations)
-   * for coproducts (sealed traits) with objects and case classes as terms
+   * An example that describes automatic derivation with a few name customisations (done using annotations) for
+   * coproducts (sealed traits) with objects and case classes as terms
    */
   final case class AppConfig(awsConfig: AwsConfig, appName: String)
   final case class AwsConfig(field: RandomSealedTrait1)
