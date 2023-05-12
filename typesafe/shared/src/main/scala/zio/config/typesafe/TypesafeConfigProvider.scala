@@ -5,6 +5,7 @@ import com.typesafe.config._
 import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
 import zio.config._
 import zio.{Chunk, ConfigProvider}
+
 import java.io.File
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
@@ -48,7 +49,10 @@ object TypesafeConfigProvider {
   def fromHoconString(input: String, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
     fromTypesafeConfig(ConfigFactory.parseString(input).resolve, enableCommaSeparatedValueAsList)
 
-  def fromTypesafeConfig(config: com.typesafe.config.Config, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider = {
+  def fromTypesafeConfig(
+    config: com.typesafe.config.Config,
+    enableCommaSeparatedValueAsList: Boolean = false
+  ): ConfigProvider = {
     lazy val hiddenDelim = "\uFEFF"
 
     val indexedMapWithHiddenDelimiter =
@@ -59,7 +63,7 @@ object TypesafeConfigProvider {
     ConfigProvider.fromMap(
       indexedMapWithHiddenDelimiter,
       pathDelim = hiddenDelim,
-      seqDelim = if(enableCommaSeparatedValueAsList) "," else hiddenDelim
+      seqDelim = if (enableCommaSeparatedValueAsList) "," else hiddenDelim
     )
   }
 
@@ -67,7 +71,7 @@ object TypesafeConfigProvider {
     input: com.typesafe.config.Config
   ): Map[Chunk[KeyComponent], String] = {
     def loopNumber(path: Chunk[KeyComponent], value: Number)           = Map(path -> value.toString)
-    def loopBoolean(path: Chunk[KeyComponent], value: Boolean)           = Map(path -> value.toString)
+    def loopBoolean(path: Chunk[KeyComponent], value: Boolean)         = Map(path -> value.toString)
     val loopNull                                                       = Map.empty[Chunk[KeyComponent], String]
     def loopString(path: Chunk[KeyComponent], value: String)           = Map(path -> value)
     def loopList(path: Chunk[KeyComponent], values: List[ConfigValue]) =
@@ -81,7 +85,10 @@ object TypesafeConfigProvider {
 
     def loopConfig(path: Chunk[KeyComponent], config: ConfigObject): Map[Chunk[KeyComponent], String] =
       config.asScala.toVector.toMap.flatMap { case (key, value) =>
-        loopAny(path :+ KeyComponent.KeyName(key), value)
+        val newPath = path :+ KeyComponent.KeyName(key)
+        val result  = loopAny(newPath, value)
+        // Usage of null to represent emptiness to satisfy Flat
+        if (result.isEmpty) Map(newPath -> "") else result
       }
 
     def loopAny(path: Chunk[KeyComponent], value: ConfigValue): Map[Chunk[KeyComponent], String] =
