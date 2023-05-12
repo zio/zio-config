@@ -43,7 +43,7 @@ final case class WhiteSpacedXml(
     val attributes: Chunk[XmlObject.Attribute] =
       openTag.attributes.value.map { case (randomAttributeWithSpace, _) => randomAttributeWithSpace.toAttribute }
 
-    val children                               =
+    val children =
       body match {
         case Some(value) =>
           value.value match {
