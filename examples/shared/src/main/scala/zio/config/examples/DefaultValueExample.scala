@@ -17,20 +17,20 @@ object DefaultValueExample extends App {
   println(zio.config.generateDocs(conf).toTable.toGithubFlavouredMarkdown)
 
   /**
-   *  ## Configuration Details
-   *  |FieldName|Format                     |Description|Sources|
-   *  |---      |---                        |---        |---    |
-   *  |         |[all-of](fielddescriptions)|           |       |
-   *  ### Field Descriptions
-   *  |FieldName|Format                           |Description|Sources|
-   *  |---      |---                              |---        |---    |
-   *  |         |[any-one-of](fielddescriptions-1)|           |       |
-   *  |SOMETHING|recursion                        |           |       |
-   *  ### Field Descriptions
-   *  |FieldName|Format   |Description|Sources|
-   *  |---      |---      |---        |---    |
-   *  |HELLO    |recursion|           |       |
-   *  |         |recursion|           |       |
+   * ## Configuration Details
+   * | FieldName | Format                      | Description | Sources |
+   * |:----------|:----------------------------|:------------|:--------|
+   * |           | [all-of](fielddescriptions) |             |         |
+   * ### Field Descriptions
+   * | FieldName | Format                            | Description | Sources |
+   * |:----------|:----------------------------------|:------------|:--------|
+   * |           | [any-one-of](fielddescriptions-1) |             |         |
+   * | SOMETHING | recursion                         |             |         |
+   * ### Field Descriptions
+   * | FieldName | Format    | Description | Sources |
+   * |:----------|:----------|:------------|:--------|
+   * | HELLO     | recursion |             |         |
+   * |           | recursion |             |         |
    */
 
 }

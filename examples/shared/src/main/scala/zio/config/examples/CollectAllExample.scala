@@ -4,11 +4,11 @@ import zio.config._
 import zio.{Config, ConfigProvider, IO}
 
 /**
- * This is only an example of a working pattern that reads the environment variables to form a `List[A]`,
- * to show how the combinator `Config.collectAll` (Sequence)  can be helpful.
+ * This is only an example of a working pattern that reads the environment variables to form a `List[A]`, to show how
+ * the combinator `Config.collectAll` (Sequence) can be helpful.
  *
- * This is not showing a standard pattern that user has to follow. It is up to the user to design the pattern
- * of key value pairs, and use the right combinators in the library to retrieve it purely and safely integrated with ZIO.
+ * This is not showing a standard pattern that user has to follow. It is up to the user to design the pattern of key
+ * value pairs, and use the right combinators in the library to retrieve it purely and safely integrated with ZIO.
  */
 final case class Variables(variable1: Int, variable2: Option[Int])
 

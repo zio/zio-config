@@ -26,9 +26,9 @@ trait ConfigSyntax {
       sealed trait Segment
       sealed trait Step extends Segment
 
-      final case class Sequential(all: List[Step]) extends Segment
+      final case class Sequential(all: List[Step])     extends Segment
       final case class Parallel(all: List[Sequential]) extends Step
-      final case class Failure(lines: List[String]) extends Step
+      final case class Failure(lines: List[String])    extends Step
 
       def renderSteps(steps: List[String]): String =
         steps
@@ -40,25 +40,25 @@ trait ConfigSyntax {
 
       def prefixBlock(values: List[String], p1: String, p2: String): List[String] =
         values match {
-          case Nil => Nil
+          case Nil          => Nil
           case head :: tail =>
             (p1 + head) :: tail.map(p2 + _)
         }
 
       def parallelSegments(readError: Config.Error): List[Sequential] =
         readError match {
-          case And(left, right) => parallelSegments(left) ++ parallelSegments(right)
-          case InvalidData(_, _) => List(readErrorToSequential(readError))
-          case MissingData(_, _) => List(readErrorToSequential(readError))
-          case Or(_, _) => List(readErrorToSequential(readError))
+          case And(left, right)           => parallelSegments(left) ++ parallelSegments(right)
+          case InvalidData(_, _)          => List(readErrorToSequential(readError))
+          case MissingData(_, _)          => List(readErrorToSequential(readError))
+          case Or(_, _)                   => List(readErrorToSequential(readError))
           case SourceUnavailable(_, _, _) => List(readErrorToSequential(readError))
-          case Unsupported(_, _) => List(readErrorToSequential(readError))
+          case Unsupported(_, _)          => List(readErrorToSequential(readError))
         }
 
       def linearSegments(readError: Config.Error): List[Step] =
         readError match {
           case Config.Error.Or(left, right) => linearSegments(left) ++ linearSegments(right)
-          case _ => readErrorToSequential(readError).all
+          case _                            => readErrorToSequential(readError).all
         }
 
       def renderMissingValue(err: Config.Error.MissingData): Sequential = {
@@ -97,19 +97,19 @@ trait ConfigSyntax {
 
       def readErrorToSequential(readError: Config.Error): Sequential =
         readError match {
-          case r: MissingData => renderMissingValue(r)
+          case r: MissingData       => renderMissingValue(r)
           case r: SourceUnavailable => renderSourceError(r)
-          case r: Unsupported => renderConversionError(r)
-          case t: Or => Sequential(linearSegments(t))
-          case b: And => Sequential(List(Parallel(parallelSegments(b))))
-          case f: InvalidData => renderFormatError(f)
+          case r: Unsupported       => renderConversionError(r)
+          case t: Or                => Sequential(linearSegments(t))
+          case b: And               => Sequential(List(Parallel(parallelSegments(b))))
+          case f: InvalidData       => renderFormatError(f)
         }
 
       def format(segment: Segment): List[String] =
         segment match {
-          case Failure(lines) =>
+          case Failure(lines)  =>
             prefixBlock(lines, "─", " ")
-          case Parallel(all) =>
+          case Parallel(all)   =>
             List(("══╦" * (all.size - 1)) + "══╗") ++
               all.foldRight[List[String]](Nil) { case (current, acc) =>
                 prefixBlock(acc, "  ║", "  ║") ++
@@ -150,14 +150,14 @@ trait ConfigSyntax {
       def loop[B](config: Config[B]): Config[B] =
         config match {
           case Described(config, description) => Described(loop(config), description)
-          case config: FallbackWith[B] => FallbackWith(loop(config.first), loop(config.second), config.f)
-          case config: Fallback[B] => Fallback(loop(config.first), loop(config.second))
-          case Sequence(config) => Sequence(loop(config))
-          case Nested(name, config) => Nested(f(name), loop(config))
+          case config: FallbackWith[B]        => FallbackWith(loop(config.first), loop(config.second), config.f)
+          case config: Fallback[B]            => Fallback(loop(config.first), loop(config.second))
+          case Sequence(config)               => Sequence(loop(config))
+          case Nested(name, config)           => Nested(f(name), loop(config))
           case MapOrFail(original, mapOrFail) => MapOrFail(loop(original), mapOrFail)
-          case Table(valueConfig) => Table(loop(valueConfig))
-          case Zipped(left, right, zippable) => Zipped(loop(left), loop(right), zippable)
-          case Lazy(thunk) => Lazy(() => loop(thunk()))
+          case Table(valueConfig)             => Table(loop(valueConfig))
+          case Zipped(left, right, zippable)  => Zipped(loop(left), loop(right), zippable)
+          case Lazy(thunk)                    => Lazy(() => loop(thunk()))
           case primitive: Config.Primitive[B] => primitive
         }
 
@@ -343,8 +343,7 @@ trait ConfigSyntax {
     //        override def flatten: IndexedFlat = indexedFlat
     //      }
 
-
-    //Disabled until next version of ZIO: https://github.com/zio/zio-config/blob/avoid_custom_index_until_3/README.md#indexed-map-array-datatype-and-a-some-implementation-notes
+    // Disabled until next version of ZIO: https://github.com/zio/zio-config/blob/avoid_custom_index_until_3/README.md#indexed-map-array-datatype-and-a-some-implementation-notes
     //    private def fromIndexedMap(map: Map[String, String], pathDelim: String = "."): ConfigProvider =
     //      fromIndexedFlat(new IndexedFlat {
     //        val escapedPathDelim = java.util.regex.Pattern.quote(pathDelim)
@@ -409,10 +408,9 @@ trait ConfigSyntax {
             .defer(head)
             .map((a: A) => (a, Nil))
         )((b: Config[(A, List[A])], a: Config[A]) =>
-          (b.zip[A](a)
-            .map({ case (first, tail, a) =>
-              (first, a :: tail)
-            }))
+          (b.zip[A](a).map { case (first, tail, a) =>
+            (first, a :: tail)
+          })
         )
         .map { case (a, t) => a :: t }
 
@@ -448,7 +446,7 @@ trait ConfigSyntax {
     def mapLast(f: A => A): Chunk[A] =
       chunk.lastOption match {
         case Some(value) => chunk.dropRight(1) :+ f(value)
-        case None => chunk
+        case None        => chunk
       }
   }
 

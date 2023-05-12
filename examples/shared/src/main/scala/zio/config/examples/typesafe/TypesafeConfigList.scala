@@ -1,9 +1,10 @@
 package zio.config.examples.typesafe
 
+import zio.Runtime.default
 import zio.config._
 import zio.{Config, ConfigProvider, IO, Unsafe}
+
 import magnolia._
-import zio.Runtime.default
 
 object TypesafeConfigList extends App with EitherImpureOps {
   val configString: String =

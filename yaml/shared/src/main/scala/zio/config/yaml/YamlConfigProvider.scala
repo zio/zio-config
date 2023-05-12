@@ -82,11 +82,10 @@ object YamlConfigProvider {
    * }}}
    */
   def fromYamlReader(
-     reader: Reader,
-     enableCommaSeparatedValueAsList: Boolean = false
-   ): ConfigProvider = {
+    reader: Reader,
+    enableCommaSeparatedValueAsList: Boolean = false
+  ): ConfigProvider =
     getIndexedConfigProvider(loadYaml(reader), enableCommaSeparatedValueAsList)
-  }
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -112,15 +111,18 @@ object YamlConfigProvider {
     fromYamlReader(new BufferedReader(new InputStreamReader(configStream)), enableCommaSeparatedValueAsList)
   }
 
-  private[yaml] def getIndexedConfigProvider(data: AnyRef, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider = {
+  private[yaml] def getIndexedConfigProvider(
+    data: AnyRef,
+    enableCommaSeparatedValueAsList: Boolean = false
+  ): ConfigProvider = {
     def flattened(data: AnyRef, chunk: Chunk[String]): Map[Chunk[String], String] =
       data match {
-        case null => Map.empty
+        case null        => Map.empty
         case t: JInteger => Map(chunk -> t.toString())
-        case t: JLong => Map(chunk -> t.toString())
-        case t: JFloat => Map(chunk -> t.toString())
-        case t: JDouble => Map(chunk -> t.toString())
-        case t: String => Map(chunk -> t.toString())
+        case t: JLong    => Map(chunk -> t.toString())
+        case t: JFloat   => Map(chunk -> t.toString())
+        case t: JDouble  => Map(chunk -> t.toString())
+        case t: String   => Map(chunk -> t.toString())
         case t: JBoolean => Map(chunk -> t.toString())
 
         case t: java.lang.Iterable[_] =>
@@ -129,10 +131,9 @@ object YamlConfigProvider {
           if (list.isEmpty) {
             Map(chunk -> "<nil>")
           } else {
-            list.zipWithIndex
-              .map({ case (anyRef, index) =>
-                flattened(anyRef, chunk.mapLast(last => last + IndexKey(index)))
-              })
+            list.zipWithIndex.map { case (anyRef, index) =>
+              flattened(anyRef, chunk.mapLast(last => last + IndexKey(index)))
+            }
               .reduceOption(_ ++ _)
               .getOrElse(Map.empty)
           }
@@ -140,10 +141,9 @@ object YamlConfigProvider {
         case t: ju.Map[_, _] =>
           val map = t.asInstanceOf[ju.Map[String, AnyRef]].asScala.toMap
 
-          map
-            .map({ case (k, v) =>
-              flattened(v, chunk :+ k)
-            })
+          map.map { case (k, v) =>
+            flattened(v, chunk :+ k)
+          }
             .reduceOption(_ ++ _)
             .getOrElse(Map.empty)
 
@@ -156,7 +156,7 @@ object YamlConfigProvider {
     lazy val hiddenDelim = "\uFEFF"
 
     ConfigProvider.fromMap(
-      flattened(data, Chunk.empty).map({ case (k, v) => (k.mkString(hiddenDelim), v) }),
+      flattened(data, Chunk.empty).map { case (k, v) => (k.mkString(hiddenDelim), v) },
       pathDelim = hiddenDelim,
       seqDelim = if (enableCommaSeparatedValueAsList) "," else hiddenDelim
     )

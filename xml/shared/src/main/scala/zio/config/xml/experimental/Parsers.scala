@@ -21,7 +21,7 @@ object Parsers {
       .zip(Parser.charIn('"'))
       .map { case (_, b, _) => b.mkString }
 
-  lazy private[config] val nonWS: Parser[String, Char, Chunk[Char]]    =
+  lazy private[config] val nonWS: Parser[String, Char, Chunk[Char]] =
     Parser.charNotIn(UnicodeEmptyCharacters: _*).repeat
 
   lazy private[config] val ws: Parser[String, Char, Unit] =

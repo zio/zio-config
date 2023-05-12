@@ -8,9 +8,9 @@ package object instances {
   implicit val cfgDescInvariantSemiGroupal: Functor[Config] =
     new Applicative[Config] {
       override def ap[A, B](ff: Config[A => B])(fa: Config[A]): Config[B] =
-        ff.zip(fa).map({ case (f, a) => f(a) })
+        ff.zip(fa).map { case (f, a) => f(a) }
 
-      override def pure[A](x: A): Config[A]                               =
+      override def pure[A](x: A): Config[A] =
         Config.succeed(x)
     }
 

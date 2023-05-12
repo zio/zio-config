@@ -18,7 +18,7 @@ object ReadConfig extends ZIOAppDefault {
   val configProvider: ConfigProvider =
     ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"))
 
-  def run: URIO[Any, ExitCode]       =
+  def run: URIO[Any, ExitCode] =
     read(Prod.prodConfig from ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd")))
       .foldZIO(
         failure => Console.printLine(failure.toString),

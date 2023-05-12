@@ -21,7 +21,7 @@ object SealedTraitManualDerivation extends App {
       )
     )
 
-  //TODO; Not working for option
+  // TODO; Not working for option
   assert(source.load(config) equalM Foo(1))
 
 }

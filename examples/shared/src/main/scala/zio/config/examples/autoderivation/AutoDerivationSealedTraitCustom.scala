@@ -11,8 +11,8 @@ import examples._
 object AutoDerivationSealedTraitCustom extends App with EitherImpureOps {
 
   /**
-   * An example that describes automatic derivation with a few name customisations (done using annotations)
-   * for coproducts (sealed traits) with objects and case classes as terms
+   * An example that describes automatic derivation with a few name customisations (done using annotations) for
+   * coproducts (sealed traits) with objects and case classes as terms
    */
   final case class AppConfig(awsConfig: AwsConfig, appName: String)
   final case class AwsConfig(field: RandomSealedTrait1)

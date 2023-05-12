@@ -6,7 +6,7 @@ import zio.test._
 
 object IndexedFlatSpec extends ZIOSpecDefault {
 
-  def spec = suite("IndexedFlatSpec") {
+  def spec: Spec[Any, Config.Error] = suite("IndexedFlatSpec") {
     test("indexed sequence simple") {
       val configProvider = ConfigProvider.fromMap(Map("id[0]" -> "1", "id[1]" -> "2", "id[2]" -> "3"))
       val config         = Config.listOf("id", Config.int)

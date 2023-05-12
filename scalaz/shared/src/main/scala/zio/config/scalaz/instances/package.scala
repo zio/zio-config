@@ -10,6 +10,6 @@ package object instances {
         Config.succeed(a)
 
       override def ap[A, B](fa: => Config[A])(f: => Config[A => B]): Config[B] =
-        fa.zip(f).map({ case (a, f) => f(a) })
+        fa.zip(f).map { case (a, f) => f(a) }
     }
 }
