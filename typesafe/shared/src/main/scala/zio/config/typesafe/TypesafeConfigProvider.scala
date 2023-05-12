@@ -88,7 +88,7 @@ object TypesafeConfigProvider {
         val newPath = path :+ KeyComponent.KeyName(key)
         val result  = loopAny(newPath, value)
         // Usage of null to represent emptiness to satisfy Flat
-        if (result.isEmpty) Map(newPath -> null) else result
+        if (result.isEmpty) Map(newPath -> "") else result
       }
 
     def loopAny(path: Chunk[KeyComponent], value: ConfigValue): Map[Chunk[KeyComponent], String] =

@@ -45,7 +45,7 @@ object TypesafeConfigSpec extends ZIOSpecDefault {
         s"""
            | {
            |   keys : {
-           |     key : {}
+           |     key : [{}]
            |   }
            | }
            |
@@ -54,9 +54,15 @@ object TypesafeConfigSpec extends ZIOSpecDefault {
       val intBoolean: zio.Config[(Int, Boolean)] =
         int("foo").withDefault(1).zip(boolean("bar").withDefault(false))
 
-      val mapConfig = Config.table("keys", intBoolean)
+      val mapConfig = Config.table("keys", Config.listOf(intBoolean))
 
-      assertZIO(ConfigProvider.fromHoconString(hoconSource).load(mapConfig))(equalTo(Map("key" -> (1, false))))
+      val io =
+        ConfigProvider.fromHoconString(hoconSource).load(mapConfig)
+
+      val expected =
+        Map("key" -> List((1, false)))
+
+      assertZIO(io)(equalTo(expected))
 
     },
     test("A config case which keys maybe null or optional") {
