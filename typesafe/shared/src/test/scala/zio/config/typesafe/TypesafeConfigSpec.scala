@@ -28,12 +28,37 @@ object EmployeeDetails {
         )).to[Employee]
 
   val employeeDetails: zio.Config[EmployeeDetails] =
-    ((listOf(employee).nested("employees")).zip(int("accountId")).zip(Config.boolean("boolean")).zip(Config.string("optional").optional)).to[EmployeeDetails].nested("details")
+    ((listOf(employee)
+      .nested("employees"))
+      .zip(int("accountId"))
+      .zip(Config.boolean("boolean"))
+      .zip(Config.string("optional").optional))
+      .to[EmployeeDetails]
+      .nested("details")
 
 }
 
 object TypesafeConfigSpec extends ZIOSpecDefault {
-  def spec: Spec[Any, Config.Error] = suite("TypesafeConfig Null and Optional")(
+  def spec: Spec[Any, Config.Error] = suite("TypesafeConfigSpec")(
+    test("Retrieves default values inside an empty map") {
+      val hoconSource =
+        s"""
+           | {
+           |   keys : {
+           |     key : {}
+           |   }
+           | }
+           |
+           |""".stripMargin
+
+      val intBoolean: zio.Config[(Int, Boolean)] =
+        int("foo").withDefault(1).zip(boolean("bar").withDefault(false))
+
+      val mapConfig = Config.table("keys", intBoolean)
+
+      assertZIO(ConfigProvider.fromHoconString(hoconSource).load(mapConfig))(equalTo(Map("key" -> (1, false))))
+
+    },
     test("A config case which keys maybe null or optional") {
       val hoconSource =
         ConfigProvider.fromHoconString(
