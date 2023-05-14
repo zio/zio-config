@@ -48,25 +48,25 @@ object DocsComplexExample extends App with EitherImpureOps {
   println(generateDocs(appConfig).toTable.toGithubFlavouredMarkdown)
 
   /**
-   *  |FieldName|Format                     |Description|Sources|
-   *  |---      |---                        |---        |---    |
-   *  |         |[all-of](fielddescriptions)|           |       |
-   *  ### Field Descriptions
-   *  |FieldName     |Format         |Description  |Sources|
-   *  |---           |---            |---          |---    |
-   *  |[south](south)|[all-of](south)|South details|       |
-   *  |[east](east)  |[all-of](east) |East details |       |
-   *  |appName       |primitive      |             |       |
-   *  ### south
-   *  |FieldName |Format   |Description|Sources|
-   *  |---       |---      |---        |---    |
-   *  |connection|primitive|           |       |
-   *  |port      |primitive|           |       |
-   *  ### east
-   *  |FieldName |Format   |Description|Sources|
-   *  |---       |---      |---        |---    |
-   *  |connection|primitive|           |       |
-   *  |port      |primitive|           |       |
+   * | FieldName | Format                      | Description | Sources |
+   * |:----------|:----------------------------|:------------|:--------|
+   * |           | [all-of](fielddescriptions) |             |         |
+   * ### Field Descriptions
+   * | FieldName      | Format          | Description   | Sources |
+   * |:---------------|:----------------|:--------------|:--------|
+   * | [south](south) | [all-of](south) | South details |         |
+   * | [east](east)   | [all-of](east)  | East details  |         |
+   * | appName        | primitive       |               |         |
+   * ### south
+   * | FieldName  | Format    | Description | Sources |
+   * |:-----------|:----------|:------------|:--------|
+   * | connection | primitive |             |         |
+   * | port       | primitive |             |         |
+   * ### east
+   * | FieldName  | Format    | Description | Sources |
+   * |:-----------|:----------|:------------|:--------|
+   * | connection | primitive |             |         |
+   * | port       | primitive |             |         |
    */
 
 }

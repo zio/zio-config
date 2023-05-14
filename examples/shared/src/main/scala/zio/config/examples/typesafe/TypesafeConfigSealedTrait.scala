@@ -21,10 +21,9 @@ object TypesafeConfigSealedTrait extends App with EitherImpureOps {
   }
 
   /**
-   * We use automatic derivation here.
-   * As an example, In order to specify, {{{ x = a }}} in the source where `a`
-   * represents X.A object, we need a case class that wraps
-   * the sealed trait, and we use the field name of this case class as the key
+   * We use automatic derivation here. As an example, In order to specify, {{{x = a}}} in the source where `a`
+   * represents X.A object, we need a case class that wraps the sealed trait, and we use the field name of this case
+   * class as the key
    */
   final case class Config(x: X)
 
