@@ -12,7 +12,7 @@ package object magnolia {
   type name = derivation.name
   val name: derivation.name.type = derivation.name
 
-  type nameWithLabel = derivation.nameWithLabel
-  val nameWithLabel: derivation.nameWithLabel.type = derivation.nameWithLabel
+  type discriminator = derivation.discriminator
+  val discriminator: derivation.discriminator.type = derivation.discriminator
 
 }

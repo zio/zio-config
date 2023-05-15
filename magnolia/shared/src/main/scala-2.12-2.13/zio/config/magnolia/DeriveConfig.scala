@@ -9,7 +9,7 @@ import java.time.{LocalDate, LocalDateTime, LocalTime}
 import java.util.UUID
 import scala.collection.immutable
 
-final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false) {
+final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false, constValue: Option[T] = None) {
 
   def ??(description: String): DeriveConfig[T] =
     describe(description)
@@ -90,10 +90,10 @@ object DeriveConfig {
   final def prepareClassName(annotations: Seq[Any], defaultClassName: String): String =
     annotations.collectFirst { case d: name => d.name }.getOrElse(defaultClassName)
 
-  final def prepareSealedTraitName(annotations: Seq[Any]): Option[String]             =
+  final def prepareSealedTraitName(annotations: Seq[Any]): Option[String] =
     annotations.collectFirst { case d: name => d.name }
 
-  final def prepareFieldName(annotations: Seq[Any], name: String): String             =
+  final def prepareFieldName(annotations: Seq[Any], name: String): String =
     annotations.collectFirst { case d: name => d.name }.getOrElse(name)
 
   final def combine[T](caseClass: CaseClass[DeriveConfig, T]): DeriveConfig[T] = {
@@ -133,9 +133,14 @@ object DeriveConfig {
             .map[T](l => caseClass.rawConstruct(l))
       }
 
+    val constValue =
+      if (caseClass.isObject) Some(caseClass.rawConstruct(Seq.empty))
+      else None
+
     DeriveConfig(
       descriptions.foldLeft(res)(_ ?? _),
-      caseClass.isObject || caseClass.parameters.isEmpty
+      caseClass.isObject || caseClass.parameters.isEmpty,
+      constValue
     )
   }
 
@@ -153,40 +158,37 @@ object DeriveConfig {
         .toMap
 
     val keyNameIfPureConfig: Option[String] =
-      sealedTrait.annotations.collectFirst { case nameWithLabel: nameWithLabel =>
-        Some(nameWithLabel.keyName)
-      }.getOrElse(None)
+      sealedTrait.annotations.collectFirst { case discriminator: discriminator => discriminator.keyName }
 
     val desc =
-      sealedTrait.subtypes.map { subtype =>
-        val typeclass: DeriveConfig[subtype.SType] = subtype.typeclass
+      keyNameIfPureConfig match {
+        case None =>
+          sealedTrait.subtypes.map { subtype =>
+            val typeclass: DeriveConfig[subtype.SType] = subtype.typeclass
 
-        val subClassName =
-          nameToLabel(subtype.typeName.full)
+            val subClassName =
+              nameToLabel(subtype.typeName.full)
 
-        if (typeclass.isObject) {
-          typeclass.desc
-        } else
-          keyNameIfPureConfig match {
-            case None =>
+            if (typeclass.isObject)
+              typeclass.desc
+            else
               typeclass.desc.nested(subClassName)
+          }.reduce(_.orElse(_))
 
-            case Some(pureConfigKeyName) =>
-              Config
-                .string(pureConfigKeyName)
-                .zip(typeclass.desc)
-                .mapOrFail({ case (specifiedName, subClass) =>
-                    if (specifiedName == subClassName) Right(subClass)
-                    else
-                      Left(
-                        Config.Error
-                          .InvalidData(message =
-                            s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match the expected name ${subClassName}"
-                          )
-                      )
-                })
-          }
-      }.reduce(_.orElse(_))
+        case Some(pureConfigKeyName) =>
+          Config
+            .string(pureConfigKeyName)
+            .switch(
+              sealedTrait.subtypes.map { subtype =>
+                val desc =
+                  subtype.typeclass.constValue match {
+                    case Some(v) => Config.Constant(v)
+                    case None    => subtype.typeclass.desc
+                  }
+                nameToLabel(subtype.typeName.full) -> desc
+              }: _*
+            )
+      }
 
     DeriveConfig(
       prepareSealedTraitName(sealedTrait.annotations).fold(desc)(name => wrapSealedTrait(List(name), desc))

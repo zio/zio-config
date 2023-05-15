@@ -607,6 +607,14 @@ trait ConfigDocsModule {
             )
           )
 
+        case Config.Switch(c, map) =>
+          ConfigDocs.DynamicMap(
+            loop(descriptions, c, latestPath, alreadySeen),
+            map.map { case (k, v) =>
+              k.toString -> loop(descriptions, v, latestPath, alreadySeen)
+            }
+          )
+
         case Config.Described(c, desc) =>
           val descri: ConfigDocs.Description =
             ConfigDocs.Description(latestPath, desc)

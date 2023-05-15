@@ -159,21 +159,6 @@ object BuildHelper {
           "-Xmax-classfile-name",
           "242"
         ) ++ std2xOptions ++ optimizerOptions(optimize)
-      case Some((2, 11)) =>
-        Seq(
-          "-Ypartial-unification",
-          "-Yno-adapted-args",
-          "-Ywarn-inaccessible",
-          "-Ywarn-infer-any",
-          "-Ywarn-nullary-override",
-          "-Ywarn-nullary-unit",
-          "-Xexperimental",
-          "-Ywarn-unused-import",
-          "-Xfuture",
-          "-Xsource:2.13",
-          "-Xmax-classfile-name",
-          "242"
-        ) ++ std2xOptions
       case _             => Seq.empty
     }
 
@@ -186,14 +171,12 @@ object BuildHelper {
 
   def crossPlatformSources(scalaVer: String, platform: String, conf: String, baseDir: File) = {
     val versions = CrossVersion.partialVersion(scalaVer) match {
-      case Some((2, 11)) =>
-        List("2.11", "2.11+", "2.11-2.12", "2.x")
       case Some((2, 12)) =>
-        List("2.12", "2.11+", "2.12+", "2.11-2.12", "2.12-2.13", "2.x")
+        List("2.12", "2.12+", "2.12-2.13", "2.x")
       case Some((2, 13)) =>
-        List("2.13", "2.11+", "2.12+", "2.13+", "2.12-2.13", "2.x")
+        List("2.13", "2.12+", "2.13+", "2.12-2.13", "2.x")
       case Some((3, _))  =>
-        List("dotty", "2.11+", "2.12+", "2.13+", "3.x")
+        List("dotty", "2.12+", "2.13+", "3.x")
       case _             =>
         List()
     }

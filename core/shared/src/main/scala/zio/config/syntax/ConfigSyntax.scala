@@ -153,6 +153,7 @@ trait ConfigSyntax {
           case config: FallbackWith[B]        => FallbackWith(loop(config.first), loop(config.second), config.f)
           case config: Fallback[B]            => Fallback(loop(config.first), loop(config.second))
           case Sequence(config)               => Sequence(loop(config))
+          case Switch(config, map)            => Switch(config, map.map { case (k, v) => k -> loop(v) })
           case Nested(name, config)           => Nested(f(name), loop(config))
           case MapOrFail(original, mapOrFail) => MapOrFail(loop(original), mapOrFail)
           case Table(valueConfig)             => Table(loop(valueConfig))
