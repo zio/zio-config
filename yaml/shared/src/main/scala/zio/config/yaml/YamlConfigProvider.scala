@@ -1,6 +1,5 @@
 package zio.config.yaml
 
-import com.github.ghik.silencer.silent
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import zio.config._
 import zio.config.syntax.IndexKey
@@ -11,9 +10,10 @@ import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integ
 import java.nio.charset.Charset
 import java.nio.file.Path
 import java.{util => ju}
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
-@silent("Unused import")
+@nowarn("cat=unused-imports")
 object YamlConfigProvider {
 
   import scala.collection.compat._

@@ -1,15 +1,12 @@
 package zio.config.examples.autoderivation
 
-import com.github.ghik.silencer.silent
 import zio.config._
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider
 import zio.{Config, IO}
-
 import examples._
 
-@silent("deprecated")
 object AutoDerivationCustomKeys extends App with EitherImpureOps {
   final case class MyConfig(accountId: String, awsRegion: String)
 
