@@ -95,7 +95,7 @@ object TypesafeConfigErrorsSpec extends ZIOSpecDefault {
     //   assert(notWellFormedConfigResult.isLeft)(Assertion.isTrue)
     // },
     test("A variant error case with typesafe HOCON config and a manual description") {
-      val configNestedManual = {
+      val configNestedManual        = {
         val accountConfig =
           (string("region") zip string("accountId")).to[Account]
 
