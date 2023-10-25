@@ -1,11 +1,11 @@
 package zio.config.magnolia
 
 import magnolia._
-import zio.Config
+import zio.{Config, LogLevel, Chunk}
 import zio.config._
 
 import java.net.URI
-import java.time.{LocalDate, LocalDateTime, LocalTime}
+import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetDateTime}
 import java.util.UUID
 import scala.collection.immutable
 
@@ -34,22 +34,25 @@ object DeriveConfig {
 
   import Config._
 
-  implicit val implicitStringDesc: DeriveConfig[String]               = DeriveConfig(string)
-  implicit val implicitBooleanDesc: DeriveConfig[Boolean]             = DeriveConfig(boolean)
-  implicit val implicitIntDesc: DeriveConfig[Int]                     = DeriveConfig(int)
-  implicit val implicitBigIntDesc: DeriveConfig[BigInt]               = DeriveConfig(bigInt)
-  implicit val implicitFloatDesc: DeriveConfig[Float]                 = DeriveConfig(float)
-  implicit val implicitDoubleDesc: DeriveConfig[Double]               = DeriveConfig(double)
-  implicit val implicitBigDecimalDesc: DeriveConfig[BigDecimal]       = DeriveConfig(bigDecimal)
-  implicit val implicitUriDesc: DeriveConfig[URI]                     = DeriveConfig(uri)
-  implicit val implicitDurationDesc: DeriveConfig[zio.Duration]       = DeriveConfig(duration)
-  implicit val implicitLocalDateDesc: DeriveConfig[LocalDate]         = DeriveConfig(localDate)
-  implicit val implicitLocalTimeDesc: DeriveConfig[LocalTime]         = DeriveConfig(localTime)
-  implicit val implicitLocalDateTimeDesc: DeriveConfig[LocalDateTime] = DeriveConfig(localDateTime)
-  implicit val implicitByteDesc: DeriveConfig[Byte]                   = DeriveConfig(Config.byte)
-  implicit val implicitShortDesc: DeriveConfig[Short]                 = DeriveConfig(Config.short)
-  implicit val implicitUUIDDesc: DeriveConfig[UUID]                   = DeriveConfig(Config.uuid)
-  implicit val implicitLongDesc: DeriveConfig[Long]                   = DeriveConfig(Config.long)
+  implicit val implicitSecretDesc: DeriveConfig[Secret]                 = DeriveConfig(secret)
+  implicit val implicitOffsetDateTimeDesc: DeriveConfig[OffsetDateTime] = DeriveConfig(offsetDateTime)
+  implicit val implicitLogLevelDesc: DeriveConfig[LogLevel]             = DeriveConfig(logLevel)
+  implicit val implicitStringDesc: DeriveConfig[String]                 = DeriveConfig(string)
+  implicit val implicitBooleanDesc: DeriveConfig[Boolean]               = DeriveConfig(boolean)
+  implicit val implicitIntDesc: DeriveConfig[Int]                       = DeriveConfig(int)
+  implicit val implicitBigIntDesc: DeriveConfig[BigInt]                 = DeriveConfig(bigInt)
+  implicit val implicitFloatDesc: DeriveConfig[Float]                   = DeriveConfig(float)
+  implicit val implicitDoubleDesc: DeriveConfig[Double]                 = DeriveConfig(double)
+  implicit val implicitBigDecimalDesc: DeriveConfig[BigDecimal]         = DeriveConfig(bigDecimal)
+  implicit val implicitUriDesc: DeriveConfig[URI]                       = DeriveConfig(uri)
+  implicit val implicitDurationDesc: DeriveConfig[zio.Duration]         = DeriveConfig(duration)
+  implicit val implicitLocalDateDesc: DeriveConfig[LocalDate]           = DeriveConfig(localDate)
+  implicit val implicitLocalTimeDesc: DeriveConfig[LocalTime]           = DeriveConfig(localTime)
+  implicit val implicitLocalDateTimeDesc: DeriveConfig[LocalDateTime]   = DeriveConfig(localDateTime)
+  implicit val implicitByteDesc: DeriveConfig[Byte]                     = DeriveConfig(Config.byte)
+  implicit val implicitShortDesc: DeriveConfig[Short]                   = DeriveConfig(Config.short)
+  implicit val implicitUUIDDesc: DeriveConfig[UUID]                     = DeriveConfig(Config.uuid)
+  implicit val implicitLongDesc: DeriveConfig[Long]                     = DeriveConfig(Config.long)
 
   implicit def implicitOptionDesc[A: DeriveConfig]: DeriveConfig[Option[A]] =
     DeriveConfig(DeriveConfig[A].desc.optional)
@@ -65,6 +68,12 @@ object DeriveConfig {
 
   implicit def implicitSetDesc[A: DeriveConfig]: DeriveConfig[Set[A]] =
     DeriveConfig(Config.setOf(implicitly[DeriveConfig[A]].desc))
+
+  implicit def implicitVectorDesc[A: DeriveConfig]: DeriveConfig[Vector[A]] =
+    DeriveConfig(Config.vectorOf(DeriveConfig[A].desc))
+
+  implicit def implicitChunkDesc[A: DeriveConfig]: DeriveConfig[Chunk[A]] =
+    DeriveConfig(Config.chunkOf(DeriveConfig[A].desc))
 
   implicit def implicitMapDesc[A: DeriveConfig]: DeriveConfig[Map[String, A]] =
     DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc))
