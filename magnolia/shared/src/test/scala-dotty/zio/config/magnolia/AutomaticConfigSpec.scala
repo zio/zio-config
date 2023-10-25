@@ -67,10 +67,10 @@ object AutomaticConfigTestUtils {
   private val genCurrency: Gen[Any, Currency] = Gen.double(10.0, 20.0).map(Currency.apply)
   private val genPrice: Gen[Any, Price]       = Gen.oneOf(genPriceDescription, genCurrency)
 
-  private val genToken       = Gen.const(Token("someToken"))
-  private val genPassword    = Gen.const(Password("some passeword"))
+  private val genToken           = Gen.const(Token("someToken"))
+  private val genPassword        = Gen.const(Password("some passeword"))
   private val genInstanceProfile = Gen.const(InstanceProfile)
-  private val genCredentials = Gen.oneOf(genToken, genPassword, genInstanceProfile)
+  private val genCredentials     = Gen.oneOf(genToken, genPassword, genInstanceProfile)
 
   private val genDbUrl = Gen.const(DbUrl("dburl"))
 
@@ -112,9 +112,9 @@ object AutomaticConfigTestUtils {
                         ) ++ (aws.security match {
                           case Password(password) =>
                             Map("aws.security.type" -> "Password", "aws.security.value" -> password)
-                          case Token(token) =>
+                          case Token(token)       =>
                             Map("aws.security.type" -> "Token", "aws.security.value" -> token)
-                          case InstanceProfile =>
+                          case InstanceProfile    =>
                             Map("aws.security.type" -> "InstanceProfile")
                         }) ++ amount.map(double => ("amount", double.toString)).toList
     } yield (default, anotherDefault) match {
