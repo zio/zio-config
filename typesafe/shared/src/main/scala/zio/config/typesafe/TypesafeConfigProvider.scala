@@ -1,16 +1,16 @@
 package zio.config.typesafe
 
-import com.github.ghik.silencer.silent
 import com.typesafe.config._
 import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
 import zio.config._
 import zio.{Chunk, ConfigProvider}
 
 import java.io.File
+import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
-@silent("Unused import")
+@nowarn("cat=unused-imports")
 object TypesafeConfigProvider {
 
   import VersionSpecificSupport._

@@ -2,8 +2,7 @@ package zio.config.magnolia
 
 import zio.ConfigProvider
 import zio.config._
-import zio.config.derivation.name
-import zio.config.magnolia._
+import zio.config.derivation.{ name => derivedName }
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
@@ -13,7 +12,7 @@ object CoproductSealedTraitSpec extends ZIOSpecDefault {
 
   case object A                extends X
   case object B                extends X
-  @name("c")
+  @derivedName("c")
   case object C                extends X
   case class D(detail: Detail) extends X
   case class E(detail: Detail) extends X
