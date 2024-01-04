@@ -24,8 +24,8 @@ inThisBuild(
 
 addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
 addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt scalafmtAll")
-addCommandAlias("compileAll", "; ++2.12.16; root2-12/compile; ++2.13.8!; root2-13/compile")
-addCommandAlias("testAll", "; ++2.12.16; root2-12/test; ++2.13.8!; root2-13/test")
+addCommandAlias("compileAll", "; ++2.12.18; root2-12/compile; ++2.13.12!; root2-13/compile")
+addCommandAlias("testAll", "; ++2.12.18; root2-12/test; ++2.13.12!; root2-13/test")
 addCommandAlias(
   "testJS",
   ";zioConfigJS/test"
@@ -176,7 +176,6 @@ lazy val zioConfigAws = crossProject(JVMPlatform)
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigAwsJVM = zioConfigAws.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigZioAws = crossProject(JVMPlatform)
   .in(file("zio-aws"))
@@ -195,7 +194,6 @@ lazy val zioConfigZioAws = crossProject(JVMPlatform)
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigZioAwsJVM = zioConfigZioAws.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigRefined = crossProject(JVMPlatform)
   .in(file("refined"))
@@ -271,7 +269,6 @@ lazy val zioConfigDerivation = crossProject(JVMPlatform)
   .dependsOn(zioConfig)
 
 lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigMagnolia = crossProject(JVMPlatform)
   .in(file("magnolia"))
@@ -313,7 +310,6 @@ lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigTypesafeJVM = zioConfigTypesafe.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigYaml = crossProject(JVMPlatform)
   .in(file("yaml"))

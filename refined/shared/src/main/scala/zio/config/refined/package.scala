@@ -1,6 +1,5 @@
 package zio.config
 
-import com.github.ghik.silencer.silent
 import eu.timepit.refined.api.{RefType, Refined, Validate}
 import zio.Config
 import zio.config.magnolia.DeriveConfig
@@ -10,7 +9,6 @@ package object refined {
   /**
    * FIXME Automatically derive instances of Descriptor for any refined types
    */
-  @silent("deprecated")
   implicit def deriveRefinedDescriptor[A, P](implicit
     desc: DeriveConfig[A],
     validate: Validate[A, P]
@@ -29,7 +27,6 @@ package object refined {
    *     refined[String, Uuid]("ID")
    * }}}
    */
-  @silent("deprecated")
   def refine[A, P](path: String)(implicit
     desc: DeriveConfig[A],
     validate: Validate[A, P]

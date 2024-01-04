@@ -20,7 +20,7 @@ object ReadConfig extends ZIOAppDefault {
 
   def run: URIO[Any, ExitCode] =
     read(Prod.prodConfig from ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd")))
-      .foldZIO(
+      .foldZIO[Any, Throwable, Any](
         failure => Console.printLine(failure.toString),
         value => Console.printLine(value.toString)
       )

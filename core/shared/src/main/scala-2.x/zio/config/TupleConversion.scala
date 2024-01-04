@@ -14,6 +14,11 @@ object TupleConversion        {
     c: whitebox.Context
   ): c.Expr[TupleConversion[P, T]] = {
     import c.universe._
+    implicitly[c.WeakTypeTag[T]]
+    // silence unused parameter warning.
+    // we can't use a @nowarn annotation because the WeakTypeTag is needed
+    // on scala 2.12 and we would therefore get a
+    // "@nowarn annotation does not suppress any warnings" error on that version
     val prodTpe    = c.weakTypeOf[P]
     if (
       !prodTpe.typeSymbol.isClass ||
