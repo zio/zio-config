@@ -26,8 +26,6 @@ object BuildHelper {
   val Scala213: String                   = versions("2.13")
   val ScalaDotty: String                 = versions("3")
 
-  val SilencerVersion = "1.7.12"
-
   private val stdOptions = Seq(
     "-deprecation",
     "-encoding",
@@ -213,13 +211,9 @@ object BuildHelper {
     scalacOptions                          := stdOptions ++ extraOptions(scalaVersion.value, optimize = !isSnapshot.value),
     libraryDependencies ++= {
       if (scalaVersion.value == ScalaDotty)
-        Seq(
-          "com.github.ghik" % s"silencer-lib_$Scala213" % SilencerVersion % Provided
-        )
+        Seq.empty
       else
         Seq(
-          "com.github.ghik" % "silencer-lib"            % SilencerVersion % Provided cross CrossVersion.full,
-          compilerPlugin("com.github.ghik" % "silencer-plugin" % SilencerVersion cross CrossVersion.full),
           compilerPlugin("org.typelevel"  %% "kind-projector"  % "0.13.2" cross CrossVersion.full)
         )
     },
