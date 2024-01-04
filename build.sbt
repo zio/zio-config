@@ -176,7 +176,6 @@ lazy val zioConfigAws = crossProject(JVMPlatform)
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigAwsJVM = zioConfigAws.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigZioAws = crossProject(JVMPlatform)
   .in(file("zio-aws"))
@@ -195,7 +194,6 @@ lazy val zioConfigZioAws = crossProject(JVMPlatform)
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigZioAwsJVM = zioConfigZioAws.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigRefined = crossProject(JVMPlatform)
   .in(file("refined"))
@@ -271,7 +269,6 @@ lazy val zioConfigDerivation = crossProject(JVMPlatform)
   .dependsOn(zioConfig)
 
 lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigMagnolia = crossProject(JVMPlatform)
   .in(file("magnolia"))
@@ -313,7 +310,6 @@ lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigTypesafeJVM = zioConfigTypesafe.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigYaml = crossProject(JVMPlatform)
   .in(file("yaml"))
