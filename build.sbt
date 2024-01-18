@@ -301,6 +301,7 @@ lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .settings(dottySettings)
   .settings(
     libraryDependencies ++= Seq(
+      "dev.zio" %% "zio-parser"   % "0.1.8",
       "com.typesafe" % "config"       % "1.4.2",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
