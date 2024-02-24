@@ -214,7 +214,7 @@ object BuildHelper {
         Seq.empty
       else
         Seq(
-          compilerPlugin("org.typelevel"  %% "kind-projector"  % "0.13.2" cross CrossVersion.full)
+          compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full)
         )
     },
     semanticdbEnabled                      := scalaVersion.value != ScalaDotty, // enable SemanticDB
