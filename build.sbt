@@ -334,7 +334,7 @@ lazy val zioConfigXml = crossProject(JVMPlatform)
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-parser"   % "0.1.9",
+      "dev.zio" %% "zio-parser"   % "0.1.10",
       "dev.zio" %% "zio-test"     % zioVersion % Test,
       "dev.zio" %% "zio-test-sbt" % zioVersion % Test
     ),
