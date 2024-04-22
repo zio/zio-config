@@ -57,3 +57,7 @@ final case class name(name: String)         extends StaticAnnotation
  * }}}
  */
 final case class discriminator(keyName: String = "type") extends StaticAnnotation
+final case class kebabCase()                             extends StaticAnnotation
+final case class snakeCase()                             extends StaticAnnotation
+final case class prefix(prefix: String)                  extends StaticAnnotation
+final case class postfix(postfix: String)                extends StaticAnnotation
