@@ -10,10 +10,8 @@ import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integ
 import java.nio.charset.Charset
 import java.nio.file.Path
 import java.{util => ju}
-import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 
-@nowarn("cat=unused-imports")
 object YamlConfigProvider {
 
   /**
