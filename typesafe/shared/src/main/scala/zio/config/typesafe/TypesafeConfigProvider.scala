@@ -9,7 +9,6 @@ import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
-@nowarn("cat=unused-imports")
 object TypesafeConfigProvider {
 
   /**
