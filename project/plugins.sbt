@@ -1,6 +1,6 @@
 addSbtPlugin("ch.epfl.scala"                     % "sbt-bloop"                     % "1.5.17")
 addSbtPlugin("ch.epfl.scala"                     % "sbt-scalafix"                  % "0.11.1")
-addSbtPlugin("com.eed3si9n"                      % "sbt-buildinfo"                 % "0.11.0")
+addSbtPlugin("com.eed3si9n"                      % "sbt-buildinfo"                 % "0.12.0")
 addSbtPlugin("com.eed3si9n"                      % "sbt-unidoc"                    % "0.4.3")
 addSbtPlugin("com.github.sbt"                    % "sbt-ci-release"                % "1.5.10")
 addSbtPlugin("com.github.cb372"                  % "sbt-explicit-dependencies"     % "0.2.16")
