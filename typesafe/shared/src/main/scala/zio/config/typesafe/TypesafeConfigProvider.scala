@@ -5,7 +5,6 @@ import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
 import zio.{Chunk, ConfigProvider, Task, ZIO}
 
 import java.io.File
-import scala.annotation.nowarn
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
