@@ -302,7 +302,7 @@ lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .settings(dottySettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config"       % "1.4.2",
+      "com.typesafe" % "config"       % "1.4.3",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
     ),
@@ -404,7 +404,7 @@ lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config"       % "1.4.2",
+      "com.typesafe" % "config"       % "1.4.3",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
     ),
