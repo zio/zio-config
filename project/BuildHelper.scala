@@ -137,7 +137,7 @@ object BuildHelper {
         )
       case Some((2, 13)) =>
         Seq(
-          "-Ywarn-unused:params,-implicits"
+          "-Wunused:params,-implicits,-nowarn"
         ) ++ std2xOptions ++ optimizerOptions(optimize)
       case Some((2, 12)) =>
         Seq(
@@ -214,7 +214,7 @@ object BuildHelper {
         Seq.empty
       else
         Seq(
-          compilerPlugin("org.typelevel"  %% "kind-projector"  % "0.13.2" cross CrossVersion.full)
+          compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full)
         )
     },
     semanticdbEnabled                      := scalaVersion.value != ScalaDotty, // enable SemanticDB
@@ -222,8 +222,8 @@ object BuildHelper {
     semanticdbVersion                      := scalafixSemanticdb.revision,      // use Scalafix compatible version
     ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value),
     ThisBuild / scalafixDependencies ++= List(
-      "com.github.liancheng" %% "organize-imports" % "0.5.0",
-      "com.github.vovapolu"  %% "scaluzzi"         % "0.1.18"
+      "com.github.liancheng" %% "organize-imports" % "0.6.0",
+      "com.github.vovapolu"  %% "scaluzzi"         % "0.1.23"
     ),
     Test / parallelExecution               := true,
     incOptions ~= (_.withLogRecompileOnMacro(false)),
@@ -294,15 +294,13 @@ object BuildHelper {
         |${header(s"/____|___\\___/   ${version.value}")}
         |
         |Useful sbt tasks:
-        |${item("build")} - Prepares sources, compiles and runs tests.
-        |${item("prepare")} - Prepares sources by applying both scalafix and scalafmt
+        |${item("compileAll")} - Prepares sources & compiles.
+        |${item("testAll")} - Prepares sources & runs all tests.
         |${item("fix")} - Fixes sources files using scalafix
         |${item("fmt")} - Formats source files using scalafmt
-        |${item("~compileJVM")} - Compiles all JVM modules (file-watch enabled)
         |${item("testJVM")} - Runs all JVM tests
         |${item("testJS")} - Runs all ScalaJS tests
         |${item("testOnly *.YourSpec -- -t \"YourLabel\"")} - Only runs tests with matching term e.g.
-        |${subItem("coreTestsJVM/testOnly *.ZIOSpec -- -t \"happy-path\"")}
         |${item("docs/docusaurusCreateSite")} - Generates the ZIO microsite
       """.stripMargin
   }

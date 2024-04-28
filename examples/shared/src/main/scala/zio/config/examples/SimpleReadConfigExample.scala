@@ -15,11 +15,11 @@ object Prod {
 
 object ReadConfig extends ZIOAppDefault {
 
-  val configProvider: ConfigProvider =
+  private val configProvider: ConfigProvider =
     ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"))
 
   def run: URIO[Any, ExitCode] =
-    read(Prod.prodConfig from ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd")))
+    read(Prod.prodConfig from configProvider)
       .foldZIO[Any, Throwable, Any](
         failure => Console.printLine(failure.toString),
         value => Console.printLine(value.toString)

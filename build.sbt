@@ -1,5 +1,7 @@
 import BuildHelper._
 
+welcomeMessage
+
 inThisBuild(
   List(
     organization := "dev.zio",
@@ -24,13 +26,12 @@ inThisBuild(
 
 addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
 addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt scalafmtAll")
-addCommandAlias("compileAll", "; ++2.12.18; root2-12/compile; ++2.13.12!; root2-13/compile")
-addCommandAlias("testAll", "; ++2.12.18; root2-12/test; ++2.13.12!; root2-13/test")
+addCommandAlias("compileAll", "; ++2.12.18; root2-12/compile; ++2.13.12!; root2-13/compile; ++3.2.2!; root3/compile;")
+addCommandAlias("testAll", "; ++2.12.18; root2-12/test; ++2.13.12!; root2-13/test; ++3.2.2!; root3/test;")
 addCommandAlias(
   "testJS",
   ";zioConfigJS/test"
 )
-
 addCommandAlias(
   "testJVM212",
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;examplesJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test"
@@ -42,6 +43,10 @@ addCommandAlias(
 addCommandAlias(
   "testJVM3x",
   ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigMagnoliaJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test"
+)
+addCommandAlias(
+  "testJVM",
+  ";testJVM212;testJVM213;testJVM3x;"
 )
 
 val awsVersion        = "1.12.709"
@@ -370,7 +375,7 @@ lazy val zioConfigCats = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core"    % "2.8.0",
+      "org.typelevel" %% "cats-core"    % "2.9.0",
       "dev.zio"       %% "zio-test"     % zioVersion % Test,
       "dev.zio"       %% "zio-test-sbt" % zioVersion % Test
     ),
@@ -387,7 +392,7 @@ lazy val zioConfigEnumeratum = crossProject(JSPlatform, JVMPlatform, NativePlatf
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum"   % "1.7.0",
+      "com.beachape" %% "enumeratum"   % "1.7.2",
       "dev.zio"      %% "zio-test"     % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
     ),

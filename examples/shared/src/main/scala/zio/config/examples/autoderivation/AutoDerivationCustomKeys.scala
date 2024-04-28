@@ -5,7 +5,6 @@ import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider
 import zio.{Config, IO}
-
 import examples._
 
 object AutoDerivationCustomKeys extends App with EitherImpureOps {
