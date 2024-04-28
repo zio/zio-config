@@ -1,8 +1,8 @@
 package zio.config.magnolia
 
 import magnolia._
-import zio.{Config, LogLevel, Chunk}
 import zio.config._
+import zio.{Chunk, Config, LogLevel}
 
 import java.net.URI
 import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetDateTime}
@@ -80,6 +80,26 @@ object DeriveConfig {
 
   type Typeclass[T] = DeriveConfig[T]
 
+  sealed trait KeyModifier
+  sealed trait CaseModifier extends KeyModifier
+
+  object KeyModifier {
+    case object KebabCase               extends CaseModifier
+    case object SnakeCase               extends CaseModifier
+    case object NoneModifier            extends CaseModifier
+    case class Prefix(prefix: String)   extends KeyModifier
+    case class Postfix(postfix: String) extends KeyModifier
+
+    def getModifierFunction(keyModifier: KeyModifier): String => String =
+      keyModifier match {
+        case KebabCase        => toKebabCase
+        case SnakeCase        => toSnakeCase
+        case Prefix(prefix)   => addPrefixToKey(prefix)
+        case Postfix(postfix) => addPostFixToKey(postfix)
+        case NoneModifier     => identity
+      }
+  }
+
   final def wrapSealedTrait[T](
     labels: Seq[String],
     desc: Config[T]
@@ -102,12 +122,38 @@ object DeriveConfig {
   final def prepareSealedTraitName(annotations: Seq[Any]): Option[String] =
     annotations.collectFirst { case d: name => d.name }
 
-  final def prepareFieldName(annotations: Seq[Any], name: String): String =
-    annotations.collectFirst { case d: name => d.name }.getOrElse(name)
+  final def prepareFieldName(
+    annotations: Seq[Any],
+    name: String,
+    keyModifiers: List[KeyModifier],
+    caseModifier: CaseModifier
+  ): String =
+    annotations.collectFirst { case d: name => d.name }.getOrElse {
+      val modifyKey = keyModifiers
+        .foldLeft(identity[String] _) { case (allModifications, keyModifier) =>
+          allModifications.andThen(KeyModifier.getModifierFunction(keyModifier))
+        }
+        .andThen(KeyModifier.getModifierFunction(caseModifier))
+      modifyKey(name)
+    }
+
+  final def checkKeyModifier(annotations: Seq[Any]): (List[KeyModifier], CaseModifier) = {
+    val modifiers = annotations.collect {
+      case p: prefix  => KeyModifier.Prefix(p.prefix)
+      case p: postfix => KeyModifier.Postfix(p.postfix)
+    }.toList
+
+    val caseModifier = annotations.collectFirst {
+      case _: kebabCase => KeyModifier.KebabCase
+      case _: snakeCase => KeyModifier.SnakeCase
+    }.getOrElse(KeyModifier.NoneModifier)
+    modifiers -> caseModifier
+  }
 
   final def combine[T](caseClass: CaseClass[DeriveConfig, T]): DeriveConfig[T] = {
-    val descriptions = caseClass.annotations.collect { case d: describe => d.describe }
-    val ccName       = prepareClassName(caseClass.annotations, caseClass.typeName.short)
+    val descriptions                 = caseClass.annotations.collect { case d: describe => d.describe }
+    val ccName                       = prepareClassName(caseClass.annotations, caseClass.typeName.short)
+    val (keyModifiers, caseModifier) = checkKeyModifier(caseClass.annotations)
 
     val res =
       caseClass.parameters.toList match {
@@ -128,7 +174,7 @@ object DeriveConfig {
                 .map(_.asInstanceOf[describe].describe)
 
             val raw         = param.typeclass.desc
-            val withNesting = nest(prepareFieldName(param.annotations, param.label))(raw)
+            val withNesting = nest(prepareFieldName(param.annotations, param.label, keyModifiers, caseModifier))(raw)
 
             val described = descriptions.foldLeft(withNesting)(_ ?? _)
             param.default.fold(described)(described.withDefault(_))
