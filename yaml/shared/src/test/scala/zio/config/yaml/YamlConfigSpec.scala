@@ -55,6 +55,15 @@ object YamlConfigSpec extends ZIOSpecDefault {
       val expected = Child(List(A("str", Nil), B(false, List(C(1), C(2)), Map("hi" -> 1, "bi" -> 2))))
 
       assertZIO(zio.exit)(succeeds(equalTo(expected)))
+    },
+    test("save read yaml config") {
+      final case class DataBaseConfig(url: String)
+      val configDataBaseConfig: Config[DataBaseConfig] = Config.string("url").to[DataBaseConfig]
+
+      val yamlConfig: String = s"""url: "some_url""""
+      val result  = read(configDataBaseConfig from ConfigProvider.fromYamlStringZIO(yamlConfig))
+      val expected = DataBaseConfig("some_url")
+      assertZIO(result)(equalTo(expected))
     }
   )
 }

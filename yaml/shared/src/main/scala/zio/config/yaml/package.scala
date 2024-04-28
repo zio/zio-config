@@ -30,6 +30,24 @@ package object yaml {
       enableCommaSeparatedValueAsList: Boolean = false
     ): ConfigProvider =
       YamlConfigProvider.getIndexedConfigProvider(loadYaml(repr), enableCommaSeparatedValueAsList)
+
+    def fromYamlFileZIO(file: File, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+      YamlConfigProvider.fromYamlFileZIO(file, enableCommaSeparatedValueAsList)
+
+    def fromYamlPathZIO(path: Path, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+      YamlConfigProvider.fromYamlPathZIO(path, enableCommaSeparatedValueAsList)
+
+    def fromYamlReaderZIO(
+      reader: Reader,
+      enableCommaSeparatedValueAsList: Boolean = false
+    ): Task[ConfigProvider] =
+      YamlConfigProvider.fromYamlReaderZIO(reader, enableCommaSeparatedValueAsList)
+
+    def fromYamlStringZIO(
+      yamlString: String,
+      enableCommaSeparatedValueAsList: Boolean = false
+    ): Task[ConfigProvider] =
+      YamlConfigProvider.fromYamlStringZIO(yamlString, enableCommaSeparatedValueAsList)
   }
 
 }

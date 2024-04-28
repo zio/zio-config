@@ -85,6 +85,7 @@ lazy val scala212projects = Seq[ProjectReference](
   zioConfigCatsJVM,
   zioConfigRefinedJVM,
   zioConfigMagnoliaJVM,
+  zioConfigTypesafeMagnoliaTestsJVM,
   zioConfigZioAwsJVM,
   zioConfigXmlJVM,
   examplesJVM
@@ -409,7 +410,7 @@ lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-  .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia)
+  .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia, zioConfigDerivation)
 lazy val zioConfigTypesafeMagnoliaTestsJVM = zioConfigTypesafeMagnoliaTests.jvm
 
 lazy val docs = project
