@@ -1,11 +1,11 @@
 package zio.config.magnolia
 
 import magnolia._
-import zio.Config
 import zio.config._
+import zio.{Chunk, Config, LogLevel}
 
 import java.net.URI
-import java.time.{LocalDate, LocalDateTime, LocalTime}
+import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetDateTime}
 import java.util.UUID
 import scala.collection.immutable
 
@@ -34,22 +34,25 @@ object DeriveConfig {
 
   import Config._
 
-  implicit val implicitStringDesc: DeriveConfig[String]               = DeriveConfig(string)
-  implicit val implicitBooleanDesc: DeriveConfig[Boolean]             = DeriveConfig(boolean)
-  implicit val implicitIntDesc: DeriveConfig[Int]                     = DeriveConfig(int)
-  implicit val implicitBigIntDesc: DeriveConfig[BigInt]               = DeriveConfig(bigInt)
-  implicit val implicitFloatDesc: DeriveConfig[Float]                 = DeriveConfig(float)
-  implicit val implicitDoubleDesc: DeriveConfig[Double]               = DeriveConfig(double)
-  implicit val implicitBigDecimalDesc: DeriveConfig[BigDecimal]       = DeriveConfig(bigDecimal)
-  implicit val implicitUriDesc: DeriveConfig[URI]                     = DeriveConfig(uri)
-  implicit val implicitDurationDesc: DeriveConfig[zio.Duration]       = DeriveConfig(duration)
-  implicit val implicitLocalDateDesc: DeriveConfig[LocalDate]         = DeriveConfig(localDate)
-  implicit val implicitLocalTimeDesc: DeriveConfig[LocalTime]         = DeriveConfig(localTime)
-  implicit val implicitLocalDateTimeDesc: DeriveConfig[LocalDateTime] = DeriveConfig(localDateTime)
-  implicit val implicitByteDesc: DeriveConfig[Byte]                   = DeriveConfig(Config.byte)
-  implicit val implicitShortDesc: DeriveConfig[Short]                 = DeriveConfig(Config.short)
-  implicit val implicitUUIDDesc: DeriveConfig[UUID]                   = DeriveConfig(Config.uuid)
-  implicit val implicitLongDesc: DeriveConfig[Long]                   = DeriveConfig(Config.long)
+  implicit val implicitSecretDesc: DeriveConfig[Secret]                 = DeriveConfig(secret)
+  implicit val implicitOffsetDateTimeDesc: DeriveConfig[OffsetDateTime] = DeriveConfig(offsetDateTime)
+  implicit val implicitLogLevelDesc: DeriveConfig[LogLevel]             = DeriveConfig(logLevel)
+  implicit val implicitStringDesc: DeriveConfig[String]                 = DeriveConfig(string)
+  implicit val implicitBooleanDesc: DeriveConfig[Boolean]               = DeriveConfig(boolean)
+  implicit val implicitIntDesc: DeriveConfig[Int]                       = DeriveConfig(int)
+  implicit val implicitBigIntDesc: DeriveConfig[BigInt]                 = DeriveConfig(bigInt)
+  implicit val implicitFloatDesc: DeriveConfig[Float]                   = DeriveConfig(float)
+  implicit val implicitDoubleDesc: DeriveConfig[Double]                 = DeriveConfig(double)
+  implicit val implicitBigDecimalDesc: DeriveConfig[BigDecimal]         = DeriveConfig(bigDecimal)
+  implicit val implicitUriDesc: DeriveConfig[URI]                       = DeriveConfig(uri)
+  implicit val implicitDurationDesc: DeriveConfig[zio.Duration]         = DeriveConfig(duration)
+  implicit val implicitLocalDateDesc: DeriveConfig[LocalDate]           = DeriveConfig(localDate)
+  implicit val implicitLocalTimeDesc: DeriveConfig[LocalTime]           = DeriveConfig(localTime)
+  implicit val implicitLocalDateTimeDesc: DeriveConfig[LocalDateTime]   = DeriveConfig(localDateTime)
+  implicit val implicitByteDesc: DeriveConfig[Byte]                     = DeriveConfig(Config.byte)
+  implicit val implicitShortDesc: DeriveConfig[Short]                   = DeriveConfig(Config.short)
+  implicit val implicitUUIDDesc: DeriveConfig[UUID]                     = DeriveConfig(Config.uuid)
+  implicit val implicitLongDesc: DeriveConfig[Long]                     = DeriveConfig(Config.long)
 
   implicit def implicitOptionDesc[A: DeriveConfig]: DeriveConfig[Option[A]] =
     DeriveConfig(DeriveConfig[A].desc.optional)
@@ -66,10 +69,36 @@ object DeriveConfig {
   implicit def implicitSetDesc[A: DeriveConfig]: DeriveConfig[Set[A]] =
     DeriveConfig(Config.setOf(implicitly[DeriveConfig[A]].desc))
 
+  implicit def implicitVectorDesc[A: DeriveConfig]: DeriveConfig[Vector[A]] =
+    DeriveConfig(Config.vectorOf(DeriveConfig[A].desc))
+
+  implicit def implicitChunkDesc[A: DeriveConfig]: DeriveConfig[Chunk[A]] =
+    DeriveConfig(Config.chunkOf(DeriveConfig[A].desc))
+
   implicit def implicitMapDesc[A: DeriveConfig]: DeriveConfig[Map[String, A]] =
     DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc))
 
   type Typeclass[T] = DeriveConfig[T]
+
+  sealed trait KeyModifier
+  sealed trait CaseModifier extends KeyModifier
+
+  object KeyModifier {
+    case object KebabCase               extends CaseModifier
+    case object SnakeCase               extends CaseModifier
+    case object NoneModifier            extends CaseModifier
+    case class Prefix(prefix: String)   extends KeyModifier
+    case class Postfix(postfix: String) extends KeyModifier
+
+    def getModifierFunction(keyModifier: KeyModifier): String => String =
+      keyModifier match {
+        case KebabCase        => toKebabCase
+        case SnakeCase        => toSnakeCase
+        case Prefix(prefix)   => addPrefixToKey(prefix)
+        case Postfix(postfix) => addPostFixToKey(postfix)
+        case NoneModifier     => identity
+      }
+  }
 
   final def wrapSealedTrait[T](
     labels: Seq[String],
@@ -93,12 +122,38 @@ object DeriveConfig {
   final def prepareSealedTraitName(annotations: Seq[Any]): Option[String] =
     annotations.collectFirst { case d: name => d.name }
 
-  final def prepareFieldName(annotations: Seq[Any], name: String): String =
-    annotations.collectFirst { case d: name => d.name }.getOrElse(name)
+  final def prepareFieldName(
+    annotations: Seq[Any],
+    name: String,
+    keyModifiers: List[KeyModifier],
+    caseModifier: CaseModifier
+  ): String =
+    annotations.collectFirst { case d: name => d.name }.getOrElse {
+      val modifyKey = keyModifiers
+        .foldLeft(identity[String] _) { case (allModifications, keyModifier) =>
+          allModifications.andThen(KeyModifier.getModifierFunction(keyModifier))
+        }
+        .andThen(KeyModifier.getModifierFunction(caseModifier))
+      modifyKey(name)
+    }
+
+  final def checkKeyModifier(annotations: Seq[Any]): (List[KeyModifier], CaseModifier) = {
+    val modifiers = annotations.collect {
+      case p: prefix  => KeyModifier.Prefix(p.prefix)
+      case p: postfix => KeyModifier.Postfix(p.postfix)
+    }.toList
+
+    val caseModifier = annotations.collectFirst {
+      case _: kebabCase => KeyModifier.KebabCase
+      case _: snakeCase => KeyModifier.SnakeCase
+    }.getOrElse(KeyModifier.NoneModifier)
+    modifiers -> caseModifier
+  }
 
   final def combine[T](caseClass: CaseClass[DeriveConfig, T]): DeriveConfig[T] = {
-    val descriptions = caseClass.annotations.collect { case d: describe => d.describe }
-    val ccName       = prepareClassName(caseClass.annotations, caseClass.typeName.short)
+    val descriptions                 = caseClass.annotations.collect { case d: describe => d.describe }
+    val ccName                       = prepareClassName(caseClass.annotations, caseClass.typeName.short)
+    val (keyModifiers, caseModifier) = checkKeyModifier(caseClass.annotations)
 
     val res =
       caseClass.parameters.toList match {
@@ -119,7 +174,7 @@ object DeriveConfig {
                 .map(_.asInstanceOf[describe].describe)
 
             val raw         = param.typeclass.desc
-            val withNesting = nest(prepareFieldName(param.annotations, param.label))(raw)
+            val withNesting = nest(prepareFieldName(param.annotations, param.label, keyModifiers, caseModifier))(raw)
 
             val described = descriptions.foldLeft(withNesting)(_ ?? _)
             param.default.fold(described)(described.withDefault(_))

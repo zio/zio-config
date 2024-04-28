@@ -26,8 +26,8 @@ inThisBuild(
 
 addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
 addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt scalafmtAll")
-addCommandAlias("compileAll", "; ++2.12.16; root2-12/compile; ++2.13.8!; root2-13/compile; ++3.2.2!; root3/compile;")
-addCommandAlias("testAll", "; ++2.12.16; root2-12/test; ++2.13.8!; root2-13/test; ++3.2.2!; root3/test;")
+addCommandAlias("compileAll", "; ++2.12.18; root2-12/compile; ++2.13.12!; root2-13/compile; ++3.2.2!; root3/compile;")
+addCommandAlias("testAll", "; ++2.12.18; root2-12/test; ++2.13.12!; root2-13/test; ++3.2.2!; root3/test;")
 addCommandAlias(
   "testJS",
   ";zioConfigJS/test"
@@ -49,11 +49,11 @@ addCommandAlias(
   ";testJVM212;testJVM213;testJVM3x;"
 )
 
-val awsVersion        = "1.12.360"
+val awsVersion        = "1.12.709"
 val zioAwsVersion     = "5.19.33.2"
 val zioVersion        = "2.0.13"
 val magnoliaVersion   = "0.17.0"
-val refinedVersion    = "0.10.3"
+val refinedVersion    = "0.11.1"
 val pureconfigVersion = "0.16.0"
 val shapelessVersion  = "2.4.0-M1"
 
@@ -90,6 +90,7 @@ lazy val scala212projects = Seq[ProjectReference](
   zioConfigCatsJVM,
   zioConfigRefinedJVM,
   zioConfigMagnoliaJVM,
+  zioConfigTypesafeMagnoliaTestsJVM,
   zioConfigZioAwsJVM,
   zioConfigXmlJVM,
   examplesJVM
@@ -148,7 +149,7 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio"                %% "zio"                     % zioVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.8.1",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.12.0",
       "dev.zio"                %% "zio-test"                % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
@@ -181,7 +182,6 @@ lazy val zioConfigAws = crossProject(JVMPlatform)
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigAwsJVM = zioConfigAws.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigZioAws = crossProject(JVMPlatform)
   .in(file("zio-aws"))
@@ -200,7 +200,6 @@ lazy val zioConfigZioAws = crossProject(JVMPlatform)
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigZioAwsJVM = zioConfigZioAws.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigRefined = crossProject(JVMPlatform)
   .in(file("refined"))
@@ -276,7 +275,6 @@ lazy val zioConfigDerivation = crossProject(JVMPlatform)
   .dependsOn(zioConfig)
 
 lazy val zioConfigDerivationJVM = zioConfigDerivation.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigMagnolia = crossProject(JVMPlatform)
   .in(file("magnolia"))
@@ -309,7 +307,7 @@ lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .settings(dottySettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config"       % "1.4.2",
+      "com.typesafe" % "config"       % "1.4.3",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
     ),
@@ -318,7 +316,6 @@ lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .dependsOn(zioConfig % "compile->compile;test->test")
 
 lazy val zioConfigTypesafeJVM = zioConfigTypesafe.jvm
-  .settings(dottySettings)
 
 lazy val zioConfigYaml = crossProject(JVMPlatform)
   .in(file("yaml"))
@@ -412,13 +409,13 @@ lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config"       % "1.4.2",
+      "com.typesafe" % "config"       % "1.4.3",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-  .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia)
+  .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia, zioConfigDerivation)
 lazy val zioConfigTypesafeMagnoliaTestsJVM = zioConfigTypesafeMagnoliaTests.jvm
 
 lazy val docs = project

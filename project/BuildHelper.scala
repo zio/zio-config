@@ -26,8 +26,6 @@ object BuildHelper {
   val Scala213: String                   = versions("2.13")
   val ScalaDotty: String                 = versions("3")
 
-  val SilencerVersion = "1.7.12"
-
   private val stdOptions = Seq(
     "-deprecation",
     "-encoding",
@@ -213,7 +211,7 @@ object BuildHelper {
     scalacOptions                          := stdOptions ++ extraOptions(scalaVersion.value, optimize = !isSnapshot.value),
     libraryDependencies ++= {
       if (scalaVersion.value == ScalaDotty)
-        Seq()
+        Seq.empty
       else
         Seq(
           compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full)

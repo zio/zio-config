@@ -24,6 +24,24 @@ package object typesafe {
       enableCommaSeparatedValueAsList: Boolean = false
     ): ConfigProvider =
       TypesafeConfigProvider.fromTypesafeConfig(rawConfig, enableCommaSeparatedValueAsList)
+
+    def fromResourcePathZIO(enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+      TypesafeConfigProvider.fromResourcePathZIO(enableCommaSeparatedValueAsList)
+
+    def fromHoconFileZIO(file: File, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+      TypesafeConfigProvider.fromHoconFileZIO(file, enableCommaSeparatedValueAsList)
+
+    def fromHoconFilePathZIO(filePath: String, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+      TypesafeConfigProvider.fromHoconFilePathZIO(filePath, enableCommaSeparatedValueAsList)
+
+    def fromHoconStringZIO(input: String, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+      TypesafeConfigProvider.fromHoconStringZIO(input, enableCommaSeparatedValueAsList)
+
+    def fromTypesafeConfigZIO(
+      rawConfig: com.typesafe.config.Config,
+      enableCommaSeparatedValueAsList: Boolean = false
+    ): Task[ConfigProvider] =
+      TypesafeConfigProvider.fromTypesafeConfigZIO(rawConfig, enableCommaSeparatedValueAsList)
   }
 
 }

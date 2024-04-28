@@ -2,8 +2,7 @@ package zio.config.typesafe
 
 import com.typesafe.config._
 import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
-import zio.config._
-import zio.{Chunk, ConfigProvider}
+import zio.{Chunk, ConfigProvider, Task, ZIO}
 
 import java.io.File
 import scala.annotation.nowarn
@@ -12,8 +11,6 @@ import scala.util.{Failure, Success, Try}
 
 @nowarn("cat=unused-imports")
 object TypesafeConfigProvider {
-
-  import VersionSpecificSupport._
 
   /**
    * Retrieve a `ConfigProvider` from `typesafe-config` from a given file in resource classpath.
@@ -66,6 +63,24 @@ object TypesafeConfigProvider {
       seqDelim = if (enableCommaSeparatedValueAsList) "," else hiddenDelim
     )
   }
+
+  def fromResourcePathZIO(enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+    ZIO.attempt(fromResourcePath(enableCommaSeparatedValueAsList))
+
+  def fromHoconFileZIO(file: File, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+    ZIO.attempt(fromHoconFile(file, enableCommaSeparatedValueAsList))
+
+  def fromHoconFilePathZIO(filePath: String, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+    ZIO.attempt(fromHoconFilePath(filePath, enableCommaSeparatedValueAsList))
+
+  def fromHoconStringZIO(input: String, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+    ZIO.attempt(fromHoconString(input, enableCommaSeparatedValueAsList))
+
+  def fromTypesafeConfigZIO(
+    config: com.typesafe.config.Config,
+    enableCommaSeparatedValueAsList: Boolean = false
+  ): Task[ConfigProvider] =
+    ZIO.attempt(fromTypesafeConfig(config, enableCommaSeparatedValueAsList))
 
   private[config] def getIndexedMap(
     input: com.typesafe.config.Config

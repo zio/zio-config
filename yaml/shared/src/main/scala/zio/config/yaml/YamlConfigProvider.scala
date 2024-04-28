@@ -3,7 +3,7 @@ package zio.config.yaml
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import zio.config._
 import zio.config.syntax.IndexKey
-import zio.{Chunk, ConfigProvider}
+import zio.{Chunk, ConfigProvider, Task, ZIO}
 
 import java.io.{BufferedReader, ByteArrayInputStream, File, FileInputStream, InputStreamReader, Reader}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
@@ -15,9 +15,6 @@ import scala.jdk.CollectionConverters._
 
 @nowarn("cat=unused-imports")
 object YamlConfigProvider {
-
-  import scala.collection.compat._
-  import VersionSpecificSupport._
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -110,6 +107,24 @@ object YamlConfigProvider {
     val configStream = new ByteArrayInputStream(yamlString.getBytes(Charset.forName("UTF-8")))
     fromYamlReader(new BufferedReader(new InputStreamReader(configStream)), enableCommaSeparatedValueAsList)
   }
+
+  def fromYamlFileZIO(file: File, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+    ZIO.attempt(fromYamlFile(file, enableCommaSeparatedValueAsList))
+
+  def fromYamlPathZIO(path: Path, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+    ZIO.attempt(fromYamlPath(path, enableCommaSeparatedValueAsList))
+
+  def fromYamlReaderZIO(
+    reader: Reader,
+    enableCommaSeparatedValueAsList: Boolean = false
+  ): Task[ConfigProvider] =
+    ZIO.attempt(fromYamlReader(reader, enableCommaSeparatedValueAsList))
+
+  def fromYamlStringZIO(
+    yamlString: String,
+    enableCommaSeparatedValueAsList: Boolean = false
+  ): Task[ConfigProvider] =
+    ZIO.attempt(fromYamlString(yamlString, enableCommaSeparatedValueAsList))
 
   private[yaml] def getIndexedConfigProvider(
     data: AnyRef,

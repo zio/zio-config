@@ -23,7 +23,7 @@ object ReadConfig extends ZIOAppDefault {
   @nowarn("cat=lint-infer-any")
   def run: URIO[Any, ExitCode] =
     read(Prod.prodConfig from configProvider)
-      .foldZIO(
+      .foldZIO[Any, Throwable, Any](
         failure => Console.printLine(failure.toString),
         value => Console.printLine(value.toString)
       )

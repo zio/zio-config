@@ -5,7 +5,7 @@ import zio.NonEmptyChunk
 
 import java.io.File
 import java.net.{URI, URL}
-import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime}
+import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime}
 import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
 import scala.deriving._
@@ -13,7 +13,7 @@ import scala.compiletime.{erasedValue, summonInline, constValue, summonFrom, con
 import scala.quoted
 import scala.util.Try
 import DeriveConfig._
-import zio.{Config, ConfigProvider}, Config._
+import zio.{Config, ConfigProvider, LogLevel, Chunk}, Config._
 import zio.config.syntax._
 import zio.config.derivation._
 
@@ -66,6 +66,9 @@ object DeriveConfig {
   final case class ProductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
   final case class CoproductName(originalName: String, alternativeNames: List[String], descriptions: List[String], typeDiscriminator: Option[String])
 
+  lazy given DeriveConfig[Secret] = DeriveConfig.from(secret)
+  lazy given DeriveConfig[OffsetDateTime] = DeriveConfig.from(offsetDateTime)
+  lazy given DeriveConfig[LogLevel] = DeriveConfig.from(logLevel)
   lazy given DeriveConfig[String] = DeriveConfig.from(string)
   lazy given DeriveConfig[Boolean] = DeriveConfig.from(boolean)
   lazy given DeriveConfig[Int] = DeriveConfig.from(int)
@@ -94,6 +97,15 @@ object DeriveConfig {
 
   given seqDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Seq[A]] =
     DeriveConfig.from(listOf(ev.desc).map(_.toSeq))
+
+  given setDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Set[A]] =
+    DeriveConfig.from(setOf(ev.desc))
+
+  given vectorDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Vector[A]] =
+    DeriveConfig.from(vectorOf(ev.desc))
+
+  given chunkDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Chunk[A]] =
+    DeriveConfig.from(chunkOf(ev.desc))
 
   given mapDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Map[String, A]] =
     DeriveConfig.from(table(ev.desc))
