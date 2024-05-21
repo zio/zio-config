@@ -47,10 +47,8 @@ val hoconSource =
         url  : bla
         region: useast
       }
-
       """
     )
-
 
 val anotherHoconSource =
   ConfigProvider.fromHoconString(
@@ -84,7 +82,6 @@ val jsonString =
      "url"  : "bla"
      "region": "useast"
    }
-
    """
 
 ConfigProvider.fromHoconString(jsonString)
@@ -98,7 +95,6 @@ Similar to Hocon source, we have `ConfigProvider.fromYamlString`
 import zio.config.yaml._
 
 ConfigProvider.fromYamlString
-
 ```
 
 ## Xml String
@@ -138,7 +134,6 @@ val config =
      |""".stripMargin
 
 val parsed = ConfigProvider.fromYamlString(config).load(Configuration.config)
-
 ```
 
 
@@ -179,11 +174,8 @@ val map =
     "employees[1].name" -> "foo",
     "employees[1].departments" -> "<nil>",
   )
-  
 
 ConfigProvider.fromMap(map).load(derivedConfig[Config])
-
-
 ```
 
 Although we support indexing within Flat, formats such as Json/HOCON/XML is far better to work with indexing,
@@ -212,5 +204,4 @@ final case class Employee(age: Int, name: String)
 val provider = ConfigProvider.fromMap(map)
 val config = Config.listOf("employees", deriveConfig[Employee]).nested("department")
 val result = provider.load(config)
-
 ```
