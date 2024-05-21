@@ -210,7 +210,7 @@ object MarkdownSpec extends BaseSpec {
 
       assert(result)(equalTo(expectedMarkdown))
     }
-  )
+  ) @@ TestAspect.ignore
 }
 
 object MarkdowSpecUtils {

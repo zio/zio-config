@@ -39,7 +39,7 @@ object P {
   case class T(u: String) extends P
 }
 
-@nameWithLabel("type")
+@discriminator("type")
 sealed trait PureConfigType
 
 object PureConfigType {

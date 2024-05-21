@@ -2,15 +2,14 @@ package zio.config.examples.typesafe
 
 import zio.ConfigProvider
 import zio.config._
-import zio.config.derivation.nameWithLabel
-import zio.config.examples.ZioOps
+import zio.config.derivation.discriminator
 import zio.config.magnolia._
 
 import typesafe._
 
 object PureConfigInterop extends App with EitherImpureOps {
 
-  @nameWithLabel()
+  @discriminator()
   sealed trait X
 
   object X {

@@ -2,13 +2,25 @@ package zio.config.syntax
 
 import zio.Config.Error.{And, InvalidData, MissingData, Or, SourceUnavailable, Unsupported}
 import zio.config.TupleConversion
-import zio.{Chunk, Config, ConfigProvider, IO}
+import zio.config.syntax.ConfigSyntax.ConfigProviderZIO
+import zio.{Chunk, Config, ConfigProvider, IO, Task}
 
 import java.util.UUID
 import scala.util.control.NonFatal
 
 // Backward compatible approach to minimise the client changes
 final case class Read[A](config: Config[A], configProvider: ConfigProvider)
+
+final case class ReadZIO[A](config: Config[A], configProvider: ConfigProviderZIO)
+
+object ConfigSyntax {
+  type ConfigProviderZIO = IO[Config.Error, ConfigProvider]
+
+  implicit class ConfigProviderZIOOps(buildConfigProvider: Task[ConfigProvider]) {
+    def toConfigProviderZIO: ConfigProviderZIO =
+      buildConfigProvider.mapError(throwable => Config.Error.Unsupported(message = throwable.toString))
+  }
+}
 
 // To be moved to ZIO ?
 // Or may be zio-config can be considered as an extension to ZIO
@@ -17,6 +29,9 @@ trait ConfigSyntax {
   // Backward compatible approach to minimise the client changes
   final def read[A](reader: Read[A]): IO[Config.Error, A] =
     reader.configProvider.load(reader.config)
+
+  final def read[A](reader: ReadZIO[A]): IO[Config.Error, A] =
+    reader.configProvider.flatMap(_.load(reader.config))
 
   implicit class ConfigErrorOps(error: Config.Error) {
     self =>
@@ -153,6 +168,7 @@ trait ConfigSyntax {
           case config: FallbackWith[B]        => FallbackWith(loop(config.first), loop(config.second), config.f)
           case config: Fallback[B]            => Fallback(loop(config.first), loop(config.second))
           case Sequence(config)               => Sequence(loop(config))
+          case Switch(config, map)            => Switch(config, map.map { case (k, v) => k -> loop(v) })
           case Nested(name, config)           => Nested(f(name), loop(config))
           case MapOrFail(original, mapOrFail) => MapOrFail(loop(original), mapOrFail)
           case Table(valueConfig)             => Table(loop(valueConfig))
@@ -185,6 +201,11 @@ trait ConfigSyntax {
     // Example: read(config from ConfigProvider.fromMap(""))
     def from(configProvider: ConfigProvider): Read[A] =
       Read(config, configProvider)
+
+    import ConfigSyntax.ConfigProviderZIOOps
+
+    def from(configProvider: Task[ConfigProvider]): ReadZIO[A] =
+      ReadZIO(config, configProvider.toConfigProviderZIO)
   }
 
   implicit class FromConfigProviderOps(c: ConfigProvider.type) {

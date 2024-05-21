@@ -1,19 +1,14 @@
 package zio.config.typesafe
 
-import com.github.ghik.silencer.silent
 import com.typesafe.config._
 import zio.config.IndexedFlat.{ConfigPath, KeyComponent}
-import zio.config._
-import zio.{Chunk, ConfigProvider}
+import zio.{Chunk, ConfigProvider, Task, ZIO}
 
 import java.io.File
 import scala.jdk.CollectionConverters._
 import scala.util.{Failure, Success, Try}
 
-@silent("Unused import")
 object TypesafeConfigProvider {
-
-  import VersionSpecificSupport._
 
   /**
    * Retrieve a `ConfigProvider` from `typesafe-config` from a given file in resource classpath.
@@ -67,6 +62,24 @@ object TypesafeConfigProvider {
     )
   }
 
+  def fromResourcePathZIO(enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+    ZIO.attempt(fromResourcePath(enableCommaSeparatedValueAsList))
+
+  def fromHoconFileZIO(file: File, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+    ZIO.attempt(fromHoconFile(file, enableCommaSeparatedValueAsList))
+
+  def fromHoconFilePathZIO(filePath: String, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+    ZIO.attempt(fromHoconFilePath(filePath, enableCommaSeparatedValueAsList))
+
+  def fromHoconStringZIO(input: String, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
+    ZIO.attempt(fromHoconString(input, enableCommaSeparatedValueAsList))
+
+  def fromTypesafeConfigZIO(
+    config: com.typesafe.config.Config,
+    enableCommaSeparatedValueAsList: Boolean = false
+  ): Task[ConfigProvider] =
+    ZIO.attempt(fromTypesafeConfig(config, enableCommaSeparatedValueAsList))
+
   private[config] def getIndexedMap(
     input: com.typesafe.config.Config
   ): Map[Chunk[KeyComponent], String] = {
@@ -85,7 +98,10 @@ object TypesafeConfigProvider {
 
     def loopConfig(path: Chunk[KeyComponent], config: ConfigObject): Map[Chunk[KeyComponent], String] =
       config.asScala.toVector.toMap.flatMap { case (key, value) =>
-        loopAny(path :+ KeyComponent.KeyName(key), value)
+        val newPath = path :+ KeyComponent.KeyName(key)
+        val result  = loopAny(newPath, value)
+        // Usage of null to represent emptiness to satisfy Flat
+        if (result.isEmpty) Map(newPath -> "") else result
       }
 
     def loopAny(path: Chunk[KeyComponent], value: ConfigValue): Map[Chunk[KeyComponent], String] =

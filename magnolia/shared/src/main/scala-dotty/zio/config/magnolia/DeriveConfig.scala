@@ -5,7 +5,7 @@ import zio.NonEmptyChunk
 
 import java.io.File
 import java.net.{URI, URL}
-import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime}
+import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime}
 import java.util.UUID
 import scala.concurrent.duration.{Duration => ScalaDuration}
 import scala.deriving._
@@ -13,7 +13,7 @@ import scala.compiletime.{erasedValue, summonInline, constValue, summonFrom, con
 import scala.quoted
 import scala.util.Try
 import DeriveConfig._
-import zio.{Config, ConfigProvider}, Config._
+import zio.{Config, ConfigProvider, LogLevel, Chunk}, Config._
 import zio.config.syntax._
 import zio.config.derivation._
 
@@ -42,18 +42,33 @@ object DeriveConfig {
   def from[A](desc: Config[A]) =
     DeriveConfig(desc, None)
 
-  sealed trait Metadata
+  sealed trait Metadata {
+    def originalName: String = this match {
+      case Metadata.Object(name, _) => name.originalName
+      case Metadata.Product(name, _) => name.originalName
+      case Metadata.Coproduct(name, _) => name.originalName
+    }
+
+    def alternativeNames: List[String] = this match {
+      case Metadata.Object(_, _) => Nil
+      case Metadata.Product(name, _) => name.alternativeNames
+      case Metadata.Coproduct(name, _) => name.alternativeNames
+    }
+  }
 
   object Metadata {
-    final case class Object(name: ProductName) extends Metadata
+    final case class Object[T](name: ProductName, constValue: T) extends Metadata
     final case class Product(name: ProductName, fields: List[FieldName]) extends Metadata
     final case class Coproduct(name: CoproductName, metadata: List[Metadata]) extends Metadata
   }
 
   final case class FieldName(originalName: String, alternativeNames: List[String], descriptions: List[String])
   final case class ProductName(originalName: String, alternativeNames: List[String], descriptions: List[String])
-  final case class CoproductName(originalName: String, alternativeNames: List[String], descriptions: List[String], typeDescriminator: Option[String])
+  final case class CoproductName(originalName: String, alternativeNames: List[String], descriptions: List[String], typeDiscriminator: Option[String])
 
+  lazy given DeriveConfig[Secret] = DeriveConfig.from(secret)
+  lazy given DeriveConfig[OffsetDateTime] = DeriveConfig.from(offsetDateTime)
+  lazy given DeriveConfig[LogLevel] = DeriveConfig.from(logLevel)
   lazy given DeriveConfig[String] = DeriveConfig.from(string)
   lazy given DeriveConfig[Boolean] = DeriveConfig.from(boolean)
   lazy given DeriveConfig[Int] = DeriveConfig.from(int)
@@ -74,11 +89,23 @@ object DeriveConfig {
   given optDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Option[A]] =
     DeriveConfig.from(ev.desc.optional)
 
+  given eitherConfig[A, B](using evA: DeriveConfig[A], evB: DeriveConfig[B]): DeriveConfig[Either[A, B]] =
+    DeriveConfig.from(evA.desc.orElseEither(evB.desc))
+
   given listDesc[A](using ev: DeriveConfig[A]): DeriveConfig[List[A]] =
     DeriveConfig.from(listOf(ev.desc))
 
   given seqDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Seq[A]] =
     DeriveConfig.from(listOf(ev.desc).map(_.toSeq))
+
+  given setDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Set[A]] =
+    DeriveConfig.from(setOf(ev.desc))
+
+  given vectorDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Vector[A]] =
+    DeriveConfig.from(vectorOf(ev.desc))
+
+  given chunkDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Chunk[A]] =
+    DeriveConfig.from(chunkOf(ev.desc))
 
   given mapDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Map[String, A]] =
     DeriveConfig.from(table(ev.desc))
@@ -117,16 +144,16 @@ object DeriveConfig {
             originalName = constValue[m.MirroredLabel],
             alternativeNames = customNamesOf[T],
             descriptions = Macros.documentationOf[T].map(_.describe),
-            typeDescriminator = Macros.nameWithLabel[T].headOption.map(_.keyName)
+            typeDiscriminator = Macros.discriminator[T].headOption.map(_.keyName)
           )
 
         lazy val subClassDescriptions =
           summonDeriveConfigForCoProduct[m.MirroredElemTypes]
 
         lazy val desc =
-          mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]), coproductName.typeDescriminator)
+          mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]), coproductName.typeDiscriminator)
 
-        DeriveConfig.from(tryAllkeys(desc.desc, None, coproductName.alternativeNames, None))
+        DeriveConfig.from(tryAllKeys(desc.desc, None, coproductName.alternativeNames))
 
       case m: Mirror.ProductOf[T] =>
         val productName =
@@ -171,20 +198,38 @@ object DeriveConfig {
 
   def mergeAllProducts[T](
     allDescs: => List[DeriveConfig[T]],
-    typeDescriminator: Option[String]
+    typeDiscriminator: Option[String]
   ): DeriveConfig[T] =
 
     val desc =
-      allDescs
-        .map(desc =>
-          desc.metadata match {
-            case Some(Metadata.Product(productName, fields)) if (fields.nonEmpty) =>
-              tryAllkeys(desc.desc, Some(productName.originalName), productName.alternativeNames, typeDescriminator)
+      typeDiscriminator match {
+        case None =>
+          allDescs
+            .map(desc =>
+              desc.metadata match {
+                case Some(Metadata.Product(productName, fields)) if (fields.nonEmpty) =>
+                  tryAllKeys(desc.desc, Some(productName.originalName), productName.alternativeNames)
+                case Some(_) => desc.desc
+                case None => desc.desc
+              }
+            ).reduce(_ orElse _)
 
-            case Some(_) => desc.desc
-            case None => desc.desc
-          }
-        ).reduce(_ orElse _)
+        case Some(keyName) =>
+          Config.string(keyName)
+            .switch(
+              allDescs.flatMap { desc =>
+                desc.metadata match {
+                  case Some(Metadata.Object(name, value)) =>
+                    List(name.originalName -> Config.Constant(value.asInstanceOf[T]))
+
+                  case Some(m) =>
+                    (m.originalName :: m.alternativeNames).map(_ -> desc.desc)
+
+                  case None => Nil
+                }
+              }: _*
+            )
+      }
 
     DeriveConfig.from(desc)
 
@@ -214,17 +259,15 @@ object DeriveConfig {
 
          DeriveConfig(
            tryAllPaths.map[T](
-             _ => f(List.empty[Any])
+             _ => f(Nil)
            ),
-           Some(Metadata.Object(productName)) // We propogate the info that product was actually an object
+           Some(Metadata.Object[T](productName, f(Nil))) // We propogate the info that product was actually an object
          )
 
        else
          val listOfDesc =
            fieldNames.zip(allDescs).map({ case (fieldName, desc) => {
-             val fieldDesc =
-               tryAllkeys(castTo[Config[Any]](desc.desc), Some(fieldName.originalName), fieldName.alternativeNames, None)
-
+             val fieldDesc = tryAllKeys(desc.desc, Some(fieldName.originalName), fieldName.alternativeNames)
              fieldName.descriptions.foldRight(fieldDesc)((doc, desc) => desc ?? doc)
            }})
 
@@ -233,53 +276,16 @@ object DeriveConfig {
 
          DeriveConfig(descOfList.map(f), Some(Metadata.Product(productName, fieldNames)))
 
-  def tryAllkeys[A](
+  def tryAllKeys[A](
     desc: Config[A],
     originalKey: Option[String],
     alternativeKeys: List[String],
-    typeDescriminator: Option[String]
-  ): Config[A] = {
-    typeDescriminator match {
-      case Some(pureConfigKeyName) =>
-        Config
-          .string(pureConfigKeyName)
-          .zip(desc)
-          .mapOrFail({ case (specifiedName, subClass) =>
-            if(alternativeKeys.nonEmpty) {
-              if (alternativeKeys.contains(specifiedName)) Right(subClass)
-              else
-                Left(
-                  Config.Error
-                    .InvalidData(message =
-                      s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match ${alternativeKeys.mkString(",")}"
-                    )
-                )
-            } else {
-              println(s"here?. ${originalKey} and ${specifiedName}")
-              if (originalKey.contains(specifiedName)) Right(subClass)
-              else
-                Left(
-                  Config.Error
-                    .InvalidData(message =
-                      s"Value of ${pureConfigKeyName} is ${specifiedName} and don't match ${originalKey.toList.mkString}"
-                    )
-                )
-            }
-          })
-
-      case None =>
-        if alternativeKeys.nonEmpty then
-          alternativeKeys.map(key => desc.nested(key)).reduce(_ orElse _)
-        else
-          originalKey.fold(desc)(key => desc.nested(key))
+  ): Config[A] =
+    alternativeKeys match {
+      case Nil => originalKey.fold(desc)(desc.nested(_))
+      case keys => keys.view.map(desc.nested(_)).reduce(_ orElse _)
     }
-  }
 
   def castTo[T](a: Any): T =
     a.asInstanceOf[T]
-
-  extension[E, A](e: Either[E, A]) {
-    def mapError(f: E => String) =
-      e.swap.map(f).swap
-  }
 }
