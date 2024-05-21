@@ -17,7 +17,6 @@ Let's enumerate some key features of this library:
 - **Descriptive Errors** — It accumulates all errors and reports all of them to the user rather than failing fast.
 - **Integrations** — Integrations with a variety of libraries
 
-
 If you are only interested in automatic derivation of configuration, find the details [here](https://zio.dev/zio-config/automatic-derivation-of-config)
 
 ## Installation
@@ -25,18 +24,38 @@ If you are only interested in automatic derivation of configuration, find the de
 In order to use this library, we need to add the following line in our `build.sbt` file:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config" % "<version>" 
+libraryDependencies += "dev.zio" %% "zio-config" % "@VERSION@" 
 ```
 
-# Quick Start
+ZIO config has several modules that can be used based on the requirement. Here is the list of modules:
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-config-magnolia"   % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-typesafe"   % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-yaml"       % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-xml"        % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-pureconfig" % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-aws"        % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-enumeratum" % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-refined"    % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-derivation" % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-cats"       % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-scalaz"     % "@VERSION@"
+```
+
+We will discuss these modules in detail in the following sections.
+
+## Example
 
 Let's add these four lines to our `build.sbt` file as we are using these modules in our examples:
 
 ```scala
 libraryDependencies += "dev.zio" %% "zio-config"          % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-refined"  % "<version>"
+libraryDependencies += "dev.zio" %% "zio-config-yaml"     % "<version>" // for reading yaml configuration files
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "<version>" // for deriving configuration descriptions
 ```
 
-There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples)
+```scala mdoc:passthrough
+import utils._
+printSource("examples/shared/src/main/scala/zio/config/examples/YamlConfigReaderExample.scala")
+```
