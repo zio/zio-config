@@ -2,7 +2,7 @@ package zio.config.examples
 
 import zio._
 import zio.config.magnolia.deriveConfig
-import zio.config.yaml.YamlConfigProvider
+import zio.config.yaml._
 
 import scala.io.Source
 
@@ -21,7 +21,7 @@ object YamlConfigReaderExample extends ZIOAppDefault {
 
   override val bootstrap =
     Runtime.setConfigProvider(
-      YamlConfigProvider.fromYamlReader(Source.fromResource("application.yml").reader())
+      ConfigProvider.fromYamlReader(Source.fromResource("application.yml").reader())
     )
 
   def run = for {
