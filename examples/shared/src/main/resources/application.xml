@@ -1,0 +1,4 @@
+<config>
+    <aws region="us-east" account="personal"></aws>
+    <database port="123" url="some url"></database>
+</config>

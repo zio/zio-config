@@ -57,5 +57,5 @@ libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "<version>" // for d
 
 ```scala mdoc:passthrough
 import utils._
-printSource("examples/shared/src/main/scala/zio/config/examples/YamlConfigReaderExample.scala")
+printSource("examples/shared/src/main/scala/zio/config/examples/configsources/YamlConfigReaderExample.scala")
 ```
