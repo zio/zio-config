@@ -84,7 +84,7 @@ printSource("examples/shared/src/main/scala/zio/config/examples/documentation/Ge
 
 Here is the output:
 
-```scala
+```md
 auto-generated documentation of MyConfig:
 
 ## Configuration Details
@@ -104,6 +104,48 @@ auto-generated documentation of MyConfig:
 ```
 
 Currently, ZIO Config supports generating the documentation in two flavors: GitHub and Confluence markdown.
+
+Here is another example, which includes nested configuration values:
+
+```scala mdoc:silent
+import utils._
+printSource("examples/shared/src/main/scala/zio/config/examples/documentation/NestedConfigDocumentation.scala")
+```
+
+Let's see how the documentation looks like:
+
+```md
+Auto-generated documentation of AppConfig:
+
+## Configuration Details
+
+
+|FieldName|Format                     |Description|Sources|
+|---      |---                        |---        |---    |
+|         |[all-of](fielddescriptions)|           |       |
+
+### Field Descriptions
+
+|FieldName                 |Format               |Description                        |Sources|
+|---                       |---                  |---                                |---    |
+|SECRET                    |primitive            |a text property, Application secret|       |
+|[CREDENTIALS](credentials)|[all-of](credentials)|Credentials                        |       |
+|[DATABASE](database)      |[all-of](database)   |Database                           |       |
+
+### CREDENTIALS
+
+|FieldName|Format   |Description                      |Sources|
+|---      |---      |---                              |---    |
+|USERNAME |primitive|a text property, Example: ZioUser|       |
+|PASSWORD |primitive|a text property, Example: ZioPass|       |
+
+### DATABASE
+
+|FieldName|Format   |Description                       |Sources|
+|---      |---      |---                               |---    |
+|PORT     |primitive|an integer property, Example: 8088|       |
+|URL      |primitive|a text property, Example: abc.com |       |
+```
 
 ## Accumulating all errors
 
