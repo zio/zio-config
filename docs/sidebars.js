@@ -8,6 +8,7 @@ const sidebars = {
       items: [
         "index",
         "dive-into-zio-config",
+        "defining-config-descriptors"
         "auto-generation-of-config-documentation",
         "integrations",
         "automatic-derivation-of-config",
