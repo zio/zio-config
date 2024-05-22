@@ -79,7 +79,7 @@ source.load(MyConfig.config)
 ```scala mdoc:silent
 import utils._
 
-printSource("examples/shared/src/main/scala/zio/config/examples/documentation/DocsGeneration.scala")
+printSource("examples/shared/src/main/scala/zio/config/examples/documentation/GeneratingConfigDocumentation.scala")
 ```
 
 Here is the output:
