@@ -5,13 +5,15 @@ title: "Defining Config Descriptors"
 
 ZIO Config uses the `Config[A]` to describe the configuration of type `A`, which is part of ZIO core library. So before diving into ZIO Config, we need to understand the `Config[A]` data type. There is a [dedicated section](https://zio.dev/reference/configuration/) in the ZIO documentation that explains what are config descriptors and how we can create them.
 
+## Defining Config Descriptors
+
 There are two ways to create ZIO config descriptors:
-1. **Describing Configuration Descriptors Manually** — We can manually create a configuration descriptor using the `Config` data type and its compositional operators.
+1. **Manual Definition of Configuration Descriptors** — We can manually create a configuration descriptor using the `Config` data type and its compositional operators.
 2. **Auto-derivation of Configuration Descriptors** — We can derive a configuration descriptor for a case class or sealed trait using the `zio-config-magnolia` module.
 
 Let's talk about both of these methods in detail.
 
-## Describing Configuration Descriptors Manually
+### Manual Definition of Config Descriptors
 
 We must fetch the configuration from the environment to a case class (product) in scala. Let it be `MyConfig`
 
@@ -34,7 +36,7 @@ object MyConfig {
 
 There are several other combinators which can be used to describe the configuration. To learn more please refer to the ZIO core reference section for [configuration](https://zio.dev/reference/configuration/).
 
-## Auto-derivation of Config Descriptors
+### Auto-derivation of Config Descriptors
 
 If we don't like describing our configuration manually, we can use the `zio-config-magnolia` module to derive the configuration descriptor for a case class or a sealed trait. Let's add this module to our `build.sbt` file:
 
@@ -55,21 +57,95 @@ object MyConfig {
 }
 ```
 
-## Read config from various sources
+## Accumulating all errors
 
-There are more information on various sources in [here](read-from-various-sources.md).
+For any misconfiguration, the `ReadError` collects all of them with proper semantics: `AndErrors` and `OrErrors`.
+Instead of directly printing misconfigurations, the `ReadError.prettyPrint` shows the path, detail of collected misconfigurations.
 
-Below given is a simple example.
+1. All misconfigurations of `AndErrors` are put in parallel lines.
 
-```scala mdoc:silent
-val map =
-  Map(
-    "LDAP" -> "xyz",
-    "PORT" -> "8888",
-    "DB_URL" -> "postgres"
-  )
+```text
+╥
+╠══╗ 
+║  ║ FormatError
+║ MissingValue
+``` 
 
-val source = ConfigProvider.fromMap(map)
+2. `OrErrors` are in the same line which indicates a sequential misconfiguration
 
-source.load(MyConfig.config)
+```text
+╥
+╠MissingValue
+║
+╠FormatError
+```
+
+Here is a complete example:
+
+```text
+   ReadError:
+   ╥
+   ╠══╦══╗
+   ║  ║  ║
+   ║  ║  ╠─MissingValue
+   ║  ║  ║ path: var2
+   ║  ║  ║ Details: value of type string
+   ║  ║  ║ 
+   ║  ║  ╠─MissingValue path: envvar3
+   ║  ║  ║ path: var3
+   ║  ║  ║ Details: value of type string
+   ║  ║  ║ 
+   ║  ║  ▼
+   ║  ║
+   ║  ╠─FormatError
+   ║  ║ cause: Provided value is wrong, expecting the type int
+   ║  ║ path: var1
+   ║  ▼
+   ▼
+```
+
+## Operations
+
+### Mapping keys
+
+Now on, the only way to change keys is as follows:
+
+```scala
+  // mapKey is just a function in `Config` that pre-existed
+
+  val config = deriveConfig[Config].mapKey(_.toUpperCase)
+```
+
+### CollectAll
+
+```scala mdoc:compile-only
+import zio._
+import zio.config._
+
+  final case class Variables(variable1: Int, variable2: Option[Int])
+
+  val listOfConfig: List[Config[Variables]] =
+    List("GROUP1", "GROUP2", "GROUP3", "GROUP4")
+      .map(group => (Config.int(s"${group}_VARIABLE1") zip Config.int(s"${group}_VARIABLE2").optional).to[Variables])
+
+  val configOfList: Config[List[Variables]] =
+    Config.collectAll(listOfConfig.head, listOfConfig.tail: _*)
+```
+
+### orElseEither && Constant
+
+```scala mdoc:compile-only
+import zio._
+import zio.config._ 
+
+sealed trait Greeting
+
+case object Hello extends Greeting
+case object Bye extends Greeting
+
+val configSource = 
+  ConfigProvider.fromMap(Map("greeting" -> "Hello"))
+
+val config: Config[String] = 
+  Config.constant("Hello").orElseEither(Config.constant("Bye")).map(_.merge)
 ```
