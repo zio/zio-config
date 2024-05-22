@@ -3,146 +3,134 @@ id: read-from-various-sources
 title:  "Read from various Sources"
 ---
 
-zio-config supports various sources.
+ZIO Config supports various sources for reading configurations. In this guide, we will see how to read configurations from different sources such as in-memory maps, HOCON strings, files, YAML, and XML.
 
-```scala mdoc:silent
-import zio._, Config._, ConfigProvider._
-import zio.config._, magnolia._
+## In-memory Map Source
+
+To load configs from an in-memory map, you can use `ConfigProvider.fromMap` method:
+
+```scala mdoc:passthrough
+import utils._
+printSource("examples/shared/src/main/scala/zio/config/examples/configsources/InmemoryMapSourceExample.scala")
 ```
 
-```scala mdoc:silent
-case class MyConfig(ldap: String, port: Int, dburl: String)
-```
+## Typesafe (HOCON) Config Source
 
-```scala mdoc:silent
-val myConfig =
-  (string("LDAP") zip int("PORT") zip string("DB_URL")).to[MyConfig]
-
- // val automatedConfig = deriveConfig[MyConfig]; using zio-config-magnolia
-```
-
-
-## HOCON String
-
-To enable HOCON source, you have to bring in `zio-config-typesafe` module.
-There are many examples in examples module in zio-config.
-
-Here is an quick example
-
-```scala mdoc:silent
-import zio.config.typesafe._
-import zio.config.magnolia._
-```
-
-```scala mdoc:silent
-case class SimpleConfig(port: Int, url: String, region: Option[String])
-
-val automaticDescription = deriveConfig[SimpleConfig]
-
-val hoconSource =
-  ConfigProvider.fromHoconString(
-      """
-      {
-        port : 123
-        url  : bla
-        region: useast
-      }
-
-      """
-    )
-
-
-val anotherHoconSource =
-  ConfigProvider.fromHoconString(
-      """
-        port=123
-        url=bla
-        region=useast
-      """
-  )
-
-hoconSource.load(deriveConfig[SimpleConfig])
-
-// yielding SimpleConfig(123,bla,Some(useast))
-```
-
-## HOCON File
-
-```scala mdoc:silent
-ConfigProvider.fromHoconFile(new java.io.File("fileapth"))
-```
-
-## Json
-
-You can use `zio-config-typesafe` module to fetch json as well
-
-```scala mdoc:silent
-val jsonString =
-   """
-   {
-     "port" : "123"
-     "url"  : "bla"
-     "region": "useast"
-   }
-
-   """
-
-ConfigProvider.fromHoconString(jsonString)
-```
-
-## Yaml FIle
-
-Similar to Hocon source, we have `ConfigProvider.fromYamlString`
+To enable HOCON source, we have to add the `zio-config-typesafe` module to our dependencies in `build.sbt` file:
 
 ```scala
-import zio.config.yaml._
-
-ConfigProvider.fromYamlString
-
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "@VERSION@"
 ```
 
-## Xml String
+By importing the `zio.config.typesafe._` module, we can read configs from HOCON sources.
 
-zio-config can read XML strings. Note that it's experimental with a dead simple native xml parser, 
+### HOCON String
+
+We can use `ConfigProvider.fromHoconString` to load configs from a HOCON string:
+
+```scala mdoc:passthrough
+import utils._
+printSource("examples/shared/src/main/scala/zio/config/examples/configsources/TypesafeHoconStringSourceExample.scala")
+```
+
+### HOCON File
+
+Similar to the above example, we can read configs from a HOCON file, using `ConfigProvider.fromHoconFile`. 
+
+Assume we have a HOCON file `application.simple.conf` in the `resources` directory:
+
+```scala mdoc:passthrough
+import utils._
+printSource("examples/shared/src/main/resources/application.simple.conf")
+```
+
+We can read the configuration file as follows:
+
+```scala mdoc:passthrough
+import utils._
+printSource("examples/shared/src/main/scala/zio/config/examples/configsources/TypesafeHoconFileSourceExample.scala")
+```
+
+### JSON File
+
+We can use `zio-config-typesafe` module to fetch json as well. So let's add it to our `build.sbt` file:
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "@VERSION@"
+```
+
+Assume we have a JSON file `application.json` in the `resources` directory:
+
+```scala mdoc:passthrough
+import utils._
+printSource("examples/shared/src/main/resources/application.json")
+```
+
+We can read the configuration file as follows:
+
+```scala mdoc:passthrough
+import utils._
+printSource("examples/shared/src/main/scala/zio/config/examples/configsources/TypesafeJsonFileSourceExample.scala")
+```
+
+## YAML Source
+
+Let's add these four lines to our `build.sbt` file as we are using these modules in our examples:
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-config"          % "<version>"
+libraryDependencies += "dev.zio" %% "zio-config-yaml"     % "<version>" // for reading yaml configuration files
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "<version>" // for deriving configuration descriptions
+```
+
+Assume we have the following configuration file:
+
+```scala
+import utils._
+printSource("examples/shared/src/main/resources/application.yml")
+```
+
+We can read the configuration file as follows:
+
+```scala mdoc:passthrough
+import utils._
+printSource("examples/shared/src/main/scala/zio/config/examples/configsources/YamlConfigReaderExample.scala")
+```
+
+Here is the output:
+
+```
+bootstrapServers: List(localhost:9092, locathost:9094)
+region: US
+port: 100
+```
+
+## XML
+
+ZIO Config can read XML strings using the `zio-config-yaml` module, so we have to add the following line to our `build.sbt` file:
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-config-yaml" % "@VERSION@"
+```
+
+Note that it's experimental with a dead simple native xml parser, 
 Currently it cannot XML comments, and has not been tested with complex data types, which will be fixed in the near future.
 
-```scala
-import zio.config.xml.experimental._
-import zio.Config
+Assume we have the `application.xml` file in the `resources` directory:
 
-final case class Configuration(aws: Aws, database: Database)
-
-object Configuration {
-  val config: Config[Configuration] =
-    Aws.config.nested("aws").zip(Database.config.nested("database")).to[Configuration].nested("config")
-
-  final case class Aws(region: String, account: String)
-
-  object Aws {
-    val config: Config[Aws] = Config.string("region").zip(Config.string("account")).to[Aws]
-  }
-  final case class Database(port: Int, url: String)
-
-  object Database {
-    val config: Config[Database] = Config.int("port").zip(Config.string("url")).to[Database]
-  }
-}
-
-val config =
-  s"""
-     |<config>
-     |  <aws region="us-east" account="personal"></aws>
-     |  <database port="123" url="some url"></database>
-     |</config>
-     |
-     |""".stripMargin
-
-val parsed = ConfigProvider.fromYamlString(config).load(Configuration.config)
-
+```scala mdoc:passthrough
+import utils._
+printSource("examples/shared/src/main/resources/application.xml")
 ```
 
+We can load the configuration file as follows:
 
-### Indexed Map, Array datatype, and a some implementation notes
+```scala mdoc:passthrough
+import utils._
+printSource("examples/shared/src/main/scala/zio/config/examples/configsources/YamlConfigReaderExample.scala")
+```
+
+## Indexed Map, Array datatype, and a some implementation notes
 
 `zio-config` comes up with the idea of `IndexedFlat` allowing you to define indexed configs (see examples below).
 However, the constructors of `IndexedFlat` is not exposed to the user for the time being, since it can conflate with some ideas in `zio.core` `Flat`,
@@ -154,14 +142,15 @@ See https://github.com/zio/zio/pull/7823 and https://github.com/zio/zio/pull/789
 
 These changes are to keep the backward compatibility of ZIO library itself.
 
-#### What does it mean to users?
+### What does it mean to users?
 It implies, for sequence (or list) datatypes, you can use either `<nil>` or `""` to represent empty list in a flat structure.
 See the below example where it tries to mix indexing into flat structure.
 We recommend using `<nil>` over `""` whenever you are trying  to represent a real indexed format
 
 Example:
 
-```scala
+```scala mdoc:compile-only
+import zio._
 import zio.config._, magnolia._
 
 final case class Department(name: String, block: Int)
@@ -179,21 +168,18 @@ val map =
     "employees[1].name" -> "foo",
     "employees[1].departments" -> "<nil>",
   )
-  
 
-ConfigProvider.fromMap(map).load(derivedConfig[Config])
-
-
+ConfigProvider.fromMap(map).load(deriveConfig[Config])
 ```
 
 Although we support indexing within Flat, formats such as Json/HOCON/XML is far better to work with indexing,
 and zio-config supports these formats making use of the above idea.
 
 
-#### Another simple example of an indexed format
+### Another simple example of an indexed format
 
-```scala
-
+```scala mdoc:compile-only
+import zio._
 import zio.config._, magnolia._
 
 final case class Employee(age: Int, name: String)
@@ -212,5 +198,4 @@ final case class Employee(age: Int, name: String)
 val provider = ConfigProvider.fromMap(map)
 val config = Config.listOf("employees", deriveConfig[Employee]).nested("department")
 val result = provider.load(config)
-
 ```
