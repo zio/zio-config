@@ -77,17 +77,33 @@ source.load(MyConfig.config)
 ## Generating Config Documentation
 
 ```scala mdoc:silent
-generateDocs(MyConfig.config)
-//Creates documentation (automatic)
+import utils._
 
-val betterConfig =
-  (string("LDAP") ?? "Related to auth" zip int("PORT") ?? "Database port" zip
-    string("DB_URL") ?? "url of database"
-   ).to[MyConfig]
-
-generateDocs(betterConfig).toTable.toGithubFlavouredMarkdown
-// Custom documentation along with auto generated docs
+printSource("examples/shared/src/main/scala/zio/config/examples/documentation/DocsGeneration.scala")
 ```
+
+Here is the output:
+
+```scala
+auto-generated documentation of MyConfig:
+
+## Configuration Details
+
+
+|FieldName|Format                     |Description|Sources|
+|---      |---                        |---        |---    |
+|         |[all-of](fielddescriptions)|           |       |
+
+### Field Descriptions
+
+|FieldName|Format   |Description                       |Sources|
+|---      |---      |---                               |---    |
+|LDAP     |primitive|a text property, Related to auth  |       |
+|PORT     |primitive|an integer property, Database port|       | 
+|DB_URL   |primitive|a text property, URL of database  |       |
+```
+
+Currently, ZIO Config supports generating the documentation in two flavors: GitHub and Confluence markdown.
 
 ## Accumulating all errors
 
