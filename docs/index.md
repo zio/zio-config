@@ -2,6 +2,7 @@
 id: index
 title: "Getting Started with ZIO Config"
 sidebar_label: "Getting Started"
+pagination_next: "dive-into-zio-config"
 ---
 
 [ZIO Config](https://zio.dev/zio-config/) is a ZIO-based library and act as an extension to core library ZIO's `Config` language.
