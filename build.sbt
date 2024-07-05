@@ -49,7 +49,7 @@ addCommandAlias(
   ";testJVM212;testJVM213;testJVM3x;"
 )
 
-val awsVersion        = "1.12.721"
+val awsVersion        = "1.12.756"
 val zioAwsVersion     = "5.19.33.2"
 val zioVersion        = "2.0.13"
 val magnoliaVersion   = "0.17.0"
