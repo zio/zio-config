@@ -107,7 +107,7 @@ object TypesafeConfigSpec extends ZIOSpecDefault {
             Employee("martha", None, Right("Medium"))
           ),
           1000,
-          true,
+          boolean = true,
           None
         )
 
