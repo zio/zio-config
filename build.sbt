@@ -26,8 +26,8 @@ inThisBuild(
 
 addCommandAlias("fmt", "; scalafmtSbt; scalafmt; test:scalafmt")
 addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt scalafmtAll")
-addCommandAlias("compileAll", "; ++2.12.18; root2-12/compile; ++2.13.12!; root2-13/compile; ++3.2.2!; root3/compile;")
-addCommandAlias("testAll", "; ++2.12.18; root2-12/test; ++2.13.12!; root2-13/test; ++3.2.2!; root3/test;")
+addCommandAlias("compileAll", "; ++2.12.19; root2-12/compile; ++2.13.13!; root2-13/compile; ++3.3.3!; root3/compile;")
+addCommandAlias("testAll", "; ++2.12.19; root2-12/test; ++2.13.13!; root2-13/test; ++3.3.3!; root3/test;")
 addCommandAlias(
   "testJS",
   ";zioConfigJS/test"
