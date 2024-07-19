@@ -52,7 +52,7 @@ object YamlConfigSpec extends ZIOSpecDefault {
 
       val zio = provider.load(config)
 
-      val expected = Child(List(A("str", Nil), B(false, List(C(1), C(2)), Map("hi" -> 1, "bi" -> 2))))
+      val expected = Child(List(A("str", Nil), B(b = false, List(C(1), C(2)), Map("hi" -> 1, "bi" -> 2))))
 
       assertZIO(zio.exit)(succeeds(equalTo(expected)))
     },
