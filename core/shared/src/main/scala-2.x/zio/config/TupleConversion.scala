@@ -1,5 +1,6 @@
 package zio.config
 
+import scala.annotation.nowarn
 import scala.reflect.macros.whitebox
 
 trait TupleConversion[A, B] {
@@ -10,6 +11,7 @@ trait TupleConversion[A, B] {
 object TupleConversion        {
   def apply[P, T]: TupleConversion[P, T] = macro genTupleConversion[P, T]
 
+  @nowarn("msg=evidence parameter")
   def genTupleConversion[P: c.WeakTypeTag, T: c.WeakTypeTag](
     c: whitebox.Context
   ): c.Expr[TupleConversion[P, T]] = {
