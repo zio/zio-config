@@ -2,7 +2,7 @@ package zio.config.magnolia
 
 import zio.ConfigProvider
 import zio.config._
-import zio.config.derivation.{ name => derivedName }
+import zio.config.derivation.{name => derivedName}
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 
