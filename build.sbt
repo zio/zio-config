@@ -323,7 +323,7 @@ lazy val zioConfigYaml = crossProject(JVMPlatform)
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.snakeyaml" % "snakeyaml-engine" % "2.6",
+      "org.snakeyaml" % "snakeyaml-engine" % "2.8",
       "dev.zio"      %% "zio-test"         % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
     ),
