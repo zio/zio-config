@@ -8,30 +8,20 @@ import scalafix.sbt.ScalafixPlugin.autoImport._
 import sbtprojectmatrix.ProjectMatrixKeys.virtualAxes
 
 object BuildHelper {
-  private val versions: String => String = {
-    import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
+  val Scala212: String = "2.12.20"
+  val Scala213: String = "2.13.15"
+  val Scala3: String   = "3.4.3"
 
-    import java.util.{List => JList, Map => JMap}
-    import scala.jdk.CollectionConverters._
-
-    val doc  = new Load(LoadSettings.builder().build())
-      .loadFromReader(scala.io.Source.fromFile(".github/workflows/ci.yml").bufferedReader())
-    val yaml = doc.asInstanceOf[JMap[String, JMap[String, JMap[String, JMap[String, JMap[String, JList[String]]]]]]]
-    val list = yaml.get("jobs").get("test").get("strategy").get("matrix").get("scala").asScala
-    val map  = list.map(v => (v.split('.').take(2).mkString("."), v)).toMap
-
-    (prefix: String) => map.find(_._1.startsWith(prefix)).map(_._2).get
-  }
-  val Scala212: String                   = versions("2.12")
-  val Scala213: String                   = versions("2.13")
-  val Scala3: String                     = versions("3.4")
+  val JdkReleaseVersion: String = "11"
 
   private val stdOptions = Seq(
     "-deprecation",
     "-encoding",
     "UTF-8",
     "-feature",
-    "-unchecked"
+    "-unchecked",
+    "-release",
+    JdkReleaseVersion
   ) ++
     Seq("-Xfatal-warnings")
 
@@ -248,6 +238,7 @@ object BuildHelper {
         |${item("fmt")} - Formats source files using scalafmt
         |${item("testJVM")} - Runs all JVM tests
         |${item("testJS")} - Runs all ScalaJS tests
+        |${item("testNative")} - Runs all Scala Native tests
         |${item("testOnly *.YourSpec -- -t \"YourLabel\"")} - Only runs tests with matching term e.g.
         |${item("docs/docusaurusCreateSite")} - Generates the ZIO microsite
       """.stripMargin

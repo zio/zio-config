@@ -37,7 +37,7 @@ jobs:
       fail-fast: false
       matrix:
         java: ['17']
-        scala: ['2.12.20', '2.13.15', '3.4.3']
+        scala: ['2.12.x', '2.13.x', '3.x']
         platform: ['JS', 'JVM', 'Native']
     steps:
       - name: Checkout current branch
