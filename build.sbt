@@ -439,12 +439,8 @@ lazy val docs = projectMatrix
     projectStage                               := ProjectStage.ProductionReady,
     ScalaUnidoc / unidoc / unidocProjectFilter :=
       inProjects(
-        zioConfig.jvm(Scala3),
-        zioConfigTypesafe.jvm(Scala3),
-        zioConfigDerivation.jvm(Scala3),
-        zioConfigYaml.jvm(Scala3),
-        zioConfigRefined.jvm(Scala3),
-        zioConfigMagnolia.jvm(Scala3)
+        Seq(zioConfig, zioConfigTypesafe, zioConfigDerivation, zioConfigYaml, zioConfigRefined, zioConfigMagnolia)
+          .flatMap(_.filterProjects(Seq(VirtualAxis.jvm))).map(_.project): _*
       )
   )
   .settings(macroDefinitionSettings)
