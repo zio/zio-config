@@ -55,15 +55,7 @@ jobs:
         uses: coursier/cache-action@v6
       - name: Run ${{ matrix.scala }} ${{ matrix.platform }} tests
         run: |
-          SCALA_SUFFIX=""
-          if [[ ${{ matrix.scala }} == 2.12* ]]; then
-            SCALA_SUFFIX="212"
-          elif [[ ${{ matrix.scala }} == 2.13* ]]; then
-            SCALA_SUFFIX="213"
-          elif [[ ${{ matrix.scala }} == 3.* ]]; then
-            SCALA_SUFFIX="3"
-          fi
-          sbt test${{ matrix.platform }}${SCALA_SUFFIX}
+          sbt test${{ matrix.platform }}${{ startsWith(matrix.scala, '2.12') && '212' || (startsWith(matrix.scala, '2.13') && '213' || (startsWith(matrix.scala, '3') && '3' || '')) }}
 
   ci:
     runs-on: ubuntu-22.04
