@@ -121,13 +121,6 @@ object BuildHelper {
       case _             => Seq.empty
     }
 
-  def platformSpecificSources(platform: String, conf: String, baseDirectory: File)(versions: String*) = for {
-    platform <- List("shared", platform)
-    version  <- "scala" :: versions.toList.map("scala-" + _)
-    result    = baseDirectory.getParentFile / platform.toLowerCase / "src" / conf / version
-    if result.exists
-  } yield result
-
   lazy val crossProjectSettings = Seq(
     resolvers +=
       "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
@@ -142,7 +135,7 @@ object BuildHelper {
   def stdSettings(prjName: String) = Seq(
     resolvers +=
       "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-    name                                   := s"$prjName",
+    name                     := s"$prjName",
     scalacOptions ++= stdOptions ++ extraOptions(scalaVersion.value, optimize = !isSnapshot.value),
     libraryDependencies ++= {
       if (scalaVersion.value == Scala3)
@@ -152,17 +145,16 @@ object BuildHelper {
           compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full)
         )
     },
-    semanticdbEnabled                      := scalaVersion.value != Scala3, // enable SemanticDB
+    semanticdbEnabled        := scalaVersion.value != Scala3, // enable SemanticDB
     semanticdbOptions += "-P:semanticdb:synthetics:on",
-    semanticdbVersion                      := scalafixSemanticdb.revision,  // use Scalafix compatible version
-    ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value),
+    semanticdbVersion        := scalafixSemanticdb.revision,  // use Scalafix compatible version
     ThisBuild / scalafixDependencies ++= List(
       "com.github.liancheng" %% "organize-imports" % "0.6.0",
       "com.github.vovapolu"  %% "scaluzzi"         % "0.1.23"
     ),
-    Test / parallelExecution               := true,
+    Test / parallelExecution := true,
     incOptions ~= (_.withLogRecompileOnMacro(false)),
-    autoAPIMappings                        := true,
+    autoAPIMappings          := true,
     unusedCompileDependenciesFilter -= moduleFilter("org.scala-js", "scalajs-library")
   )
 
@@ -194,25 +186,10 @@ object BuildHelper {
     }
   )
 
-  def jsSettings = Seq(
-    libraryDependencies += "io.github.cquiroz" %%% "scala-java-time"      % "2.6.0",
-    libraryDependencies += "io.github.cquiroz" %%% "scala-java-time-tzdb" % "2.6.0"
-  )
-
   def nativeSettings = Seq(
-    Test / skip             := (if (virtualAxes.value.contains(VirtualAxis.native)) true else false),
-    doc / skip              := (if (virtualAxes.value.contains(VirtualAxis.native)) true else false),
-    Compile / doc / sources := (if (virtualAxes.value.contains(VirtualAxis.native)) Seq.empty
-                                else (Compile / doc / sources).value)
-  )
-
-  val scalaReflectTestSettings: List[Setting[_]] = List(
-    libraryDependencies ++= {
-      if (scalaVersion.value == Scala3)
-        Seq()
-      else
-        Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value % Test)
-    }
+    // Test / skip             := true,
+    doc / skip              := true,
+    Compile / doc / sources := Seq.empty
   )
 
   def welcomeMessage = onLoadMessage := {

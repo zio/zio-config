@@ -32,51 +32,51 @@ addCommandAlias("compileAll", "; root2-12/compile; root2-13/compile; root3/compi
 addCommandAlias("testAll", "; root2-12/test; root2-13/test; root3/test;")
 addCommandAlias(
   "testJS",
-  ";" + jsProjects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(VirtualAxis.js).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testJS212",
-  ";" + scala212JSprojects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala212, VirtualAxis.js).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testJS213",
-  ";" + scala213JSprojects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala213, VirtualAxis.js).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testJS3",
-  ";" + scala3JSprojects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala3, VirtualAxis.js).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testJVM",
-  ";" + jvmProjects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(VirtualAxis.jvm).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testJVM212",
-  ";" + scala212JVMprojects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala212, VirtualAxis.jvm).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testJVM213",
-  ";" + scala213JVMprojects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala213, VirtualAxis.jvm).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testJVM3",
-  ";" + scala3JVMprojects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala3, VirtualAxis.jvm).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testNative",
-  ";" + nativeProjects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(VirtualAxis.native).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testNative212",
-  ";" + scala212NativeProjects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala212, VirtualAxis.native).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testNative213",
-  ";" + scala213NativeProjects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala213, VirtualAxis.native).map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testNative3",
-  ";" + scala3NativeProjects.map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala3, VirtualAxis.native).map(_.id).mkString("/test;") + "/test"
 )
 
 val awsVersion        = "1.12.773"
@@ -123,33 +123,14 @@ lazy val allProjects = Seq[sbt.internal.ProjectMatrix](
   docs
 )
 
-lazy val jvmProjects    = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.jvm)))
-lazy val jsProjects     = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.js)))
-lazy val nativeProjects = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.native)))
+def selectProjects(scalaVersion: String) = 
+  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.scalaVersionAxis(scalaVersion, ""))))
 
-lazy val scala212projects       = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.scalaVersionAxis(Scala212, ""))))
-lazy val scala212JVMprojects    =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.jvm, VirtualAxis.scalaVersionAxis(Scala212, ""))))
-lazy val scala212JSprojects     =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.js, VirtualAxis.scalaVersionAxis(Scala212, ""))))
-lazy val scala212NativeProjects =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.native, VirtualAxis.scalaVersionAxis(Scala212, ""))))
+def selectProjects(platform: VirtualAxis.PlatformAxis) = 
+  allProjects.flatMap(_.filterProjects(Seq(platform)))
 
-lazy val scala213projects       = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.scalaVersionAxis(Scala213, ""))))
-lazy val scala213JVMprojects    =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.jvm, VirtualAxis.scalaVersionAxis(Scala213, ""))))
-lazy val scala213JSprojects     =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.js, VirtualAxis.scalaVersionAxis(Scala213, ""))))
-lazy val scala213NativeProjects =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.native, VirtualAxis.scalaVersionAxis(Scala213, ""))))
-
-lazy val scala3projects       = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.scalaVersionAxis(Scala3, ""))))
-lazy val scala3JVMprojects    =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.jvm, VirtualAxis.scalaVersionAxis(Scala3, ""))))
-lazy val scala3JSprojects     =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.js, VirtualAxis.scalaVersionAxis(Scala3, ""))))
-lazy val scala3NativeProjects =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.native, VirtualAxis.scalaVersionAxis(Scala3, ""))))
+def selectProjects(scalaVersion: String, platform: VirtualAxis.PlatformAxis) = 
+  allProjects.flatMap(_.filterProjects(Seq(platform, VirtualAxis.scalaVersionAxis(scalaVersion, ""))))
 
 lazy val root =
   project
@@ -161,19 +142,19 @@ lazy val `root2-12` =
   project
     .in(file("2-12"))
     .settings(publish / skip := true)
-    .aggregate(scala212projects.map(_.project): _*)
+    .aggregate(selectProjects(Scala212).map(_.project): _*)
 
 lazy val `root2-13` =
   project
     .in(file("2-13"))
     .settings(publish / skip := true)
-    .aggregate(scala213projects.map(_.project): _*)
+    .aggregate(selectProjects(Scala213).map(_.project): _*)
 
 lazy val `root3` =
   project
     .in(file("3"))
     .settings(publish / skip := true)
-    .aggregate(scala3projects.map(_.project): _*)
+    .aggregate(selectProjects(Scala3).map(_.project): _*)
 
 lazy val zioConfig = projectMatrix
   .in(file("core"))
@@ -192,8 +173,7 @@ lazy val zioConfig = projectMatrix
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
   .jsPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
-  .nativePlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
-  .settings(nativeSettings)
+  .nativePlatform(scalaVersions = Seq(Scala212, Scala213, Scala3), settings = nativeSettings)
 
 lazy val zioConfigAws = projectMatrix
   .in(file("aws"))
@@ -373,7 +353,6 @@ lazy val zioConfigScalaz = projectMatrix
   .jvmPlatform(scalaVersions = Seq(Scala213, Scala3))
   .jsPlatform(scalaVersions = Seq(Scala213, Scala3))
   .nativePlatform(scalaVersions = Seq(Scala213, Scala3))
-  .settings(nativeSettings)
 
 lazy val zioConfigCats = projectMatrix
   .in(file("cats"))
@@ -390,7 +369,6 @@ lazy val zioConfigCats = projectMatrix
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
   .jsPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
   .nativePlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
-  .settings(nativeSettings)
 
 lazy val zioConfigEnumeratum = projectMatrix
   .in(file("enumeratum"))
@@ -407,7 +385,6 @@ lazy val zioConfigEnumeratum = projectMatrix
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
   .jsPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
   .nativePlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
-  .settings(nativeSettings)
 
 lazy val zioConfigEnumeratumJVM = zioConfigEnumeratum.jvm
 
