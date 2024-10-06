@@ -2,6 +2,8 @@ import BuildHelper._
 
 welcomeMessage
 
+ThisBuild / scalaVersion := Scala213
+
 inThisBuild(
   List(
     organization := "dev.zio",
@@ -440,7 +442,8 @@ lazy val docs = projectMatrix
     ScalaUnidoc / unidoc / unidocProjectFilter :=
       inProjects(
         Seq(zioConfig, zioConfigTypesafe, zioConfigDerivation, zioConfigYaml, zioConfigRefined, zioConfigMagnolia)
-          .flatMap(_.filterProjects(Seq(VirtualAxis.jvm))).map(_.project): _*
+          .flatMap(_.filterProjects(Seq(VirtualAxis.jvm, VirtualAxis.scalaVersionAxis(Scala213, ""))))
+          .map(_.project): _*
       )
   )
   .settings(macroDefinitionSettings)
