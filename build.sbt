@@ -33,6 +33,22 @@ addCommandAlias(
   ";" + jsProjects.map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
+  "testJS212",
+  ";" + scala212JSprojects.map(_.id).mkString("/test;") + "/test"
+)
+addCommandAlias(
+  "testJS213",
+  ";" + scala213JSprojects.map(_.id).mkString("/test;") + "/test"
+)
+addCommandAlias(
+  "testJS3",
+  ";" + scala3JSprojects.map(_.id).mkString("/test;") + "/test"
+)
+addCommandAlias(
+  "testJVM",
+  ";" + jvmProjects.map(_.id).mkString("/test;") + "/test"
+)
+addCommandAlias(
   "testJVM212",
   ";" + scala212JVMprojects.map(_.id).mkString("/test;") + "/test"
 )
@@ -41,16 +57,24 @@ addCommandAlias(
   ";" + scala213JVMprojects.map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
-  "testJVM3x",
+  "testJVM3",
   ";" + scala3JVMprojects.map(_.id).mkString("/test;") + "/test"
-)
-addCommandAlias(
-  "testJVM",
-  ";" + jvmProjects.map(_.id).mkString("/test;") + "/test"
 )
 addCommandAlias(
   "testNative",
   ";" + nativeProjects.map(_.id).mkString("/test;") + "/test"
+)
+addCommandAlias(
+  "testNative212",
+  ";" + scala212NativeProjects.map(_.id).mkString("/test;") + "/test"
+)
+addCommandAlias(
+  "testNative213",
+  ";" + scala213NativeProjects.map(_.id).mkString("/test;") + "/test"
+)
+addCommandAlias(
+  "testNative3",
+  ";" + scala3NativeProjects.map(_.id).mkString("/test;") + "/test"
 )
 
 val awsVersion        = "1.12.773"
@@ -101,17 +125,29 @@ lazy val jvmProjects    = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.j
 lazy val jsProjects     = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.js)))
 lazy val nativeProjects = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.native)))
 
-lazy val scala212projects    = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.scalaVersionAxis("2.12.20", ""))))
-lazy val scala212JVMprojects =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.jvm, VirtualAxis.scalaVersionAxis("2.12.20", ""))))
+lazy val scala212projects       = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.scalaVersionAxis(Scala212, ""))))
+lazy val scala212JVMprojects    =
+  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.jvm, VirtualAxis.scalaVersionAxis(Scala212, ""))))
+lazy val scala212JSprojects     =
+  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.js, VirtualAxis.scalaVersionAxis(Scala212, ""))))
+lazy val scala212NativeProjects =
+  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.native, VirtualAxis.scalaVersionAxis(Scala212, ""))))
 
-lazy val scala213projects    = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.scalaVersionAxis("2.13.15", ""))))
-lazy val scala213JVMprojects =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.jvm, VirtualAxis.scalaVersionAxis("2.13.15", ""))))
+lazy val scala213projects       = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.scalaVersionAxis(Scala213, ""))))
+lazy val scala213JVMprojects    =
+  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.jvm, VirtualAxis.scalaVersionAxis(Scala213, ""))))
+lazy val scala213JSprojects     =
+  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.js, VirtualAxis.scalaVersionAxis(Scala213, ""))))
+lazy val scala213NativeProjects =
+  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.native, VirtualAxis.scalaVersionAxis(Scala213, ""))))
 
-lazy val scala3projects    = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.scalaVersionAxis("3.4.3", ""))))
-lazy val scala3JVMprojects =
-  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.jvm, VirtualAxis.scalaVersionAxis("3.4.3", ""))))
+lazy val scala3projects       = allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.scalaVersionAxis(Scala3, ""))))
+lazy val scala3JVMprojects    =
+  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.jvm, VirtualAxis.scalaVersionAxis(Scala3, ""))))
+lazy val scala3JSprojects     =
+  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.js, VirtualAxis.scalaVersionAxis(Scala3, ""))))
+lazy val scala3NativeProjects =
+  allProjects.flatMap(_.filterProjects(Seq(VirtualAxis.native, VirtualAxis.scalaVersionAxis(Scala3, ""))))
 
 lazy val root =
   project
