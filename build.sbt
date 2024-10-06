@@ -186,8 +186,7 @@ lazy val zioConfig = projectMatrix
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.12.0",
       "dev.zio"                %%% "zio-test"                % zioVersion % Test,
       "dev.zio"                %%% "zio-test-sbt"            % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
   .jsPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -204,8 +203,7 @@ lazy val zioConfigAws = projectMatrix
       "dev.zio"      %% "zio-streams"      % zioVersion,
       "dev.zio"      %% "zio-test"         % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -220,8 +218,7 @@ lazy val zioConfigZioAws = projectMatrix
       "dev.zio" %% "zio-streams"  % zioVersion,
       "dev.zio" %% "zio-test"     % zioVersion % Test,
       "dev.zio" %% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -238,8 +235,7 @@ lazy val zioConfigRefined = projectMatrix
       Seq(
         "dev.zio" %% "zio-test"     % zioVersion % Test,
         "dev.zio" %% "zio-test-sbt" % zioVersion % Test
-      ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+      )
   )
   .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -255,8 +251,7 @@ lazy val zioConfigPureconfig = projectMatrix
       Seq(
         "dev.zio" %% "zio-test"     % zioVersion % Test,
         "dev.zio" %% "zio-test-sbt" % zioVersion % Test
-      ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+      )
   )
   .dependsOn(zioConfig % "test->test", zioConfigTypesafe)
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -314,8 +309,7 @@ lazy val zioConfigMagnolia = projectMatrix
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-test"     % zioVersion % Test,
       "dev.zio" %% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -329,8 +323,7 @@ lazy val zioConfigTypesafe = projectMatrix
       "com.typesafe" % "config"       % "1.4.3",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -344,8 +337,7 @@ lazy val zioConfigYaml = projectMatrix
       "org.snakeyaml" % "snakeyaml-engine" % "2.8",
       "dev.zio"      %% "zio-test"         % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -359,8 +351,7 @@ lazy val zioConfigXml = projectMatrix
       "dev.zio" %% "zio-parser"   % "0.1.10",
       "dev.zio" %% "zio-test"     % zioVersion % Test,
       "dev.zio" %% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -374,8 +365,7 @@ lazy val zioConfigScalaz = projectMatrix
       "org.scalaz" %%% "scalaz-core"  % "7.4.0-M15",
       "dev.zio"    %%% "zio-test"     % zioVersion % Test,
       "dev.zio"    %%% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala213, Scala3))
@@ -392,8 +382,7 @@ lazy val zioConfigCats = projectMatrix
       "org.typelevel" %%% "cats-core"    % "2.12.0",
       "dev.zio"       %%% "zio-test"     % zioVersion % Test,
       "dev.zio"       %%% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -410,8 +399,7 @@ lazy val zioConfigEnumeratum = projectMatrix
       "com.beachape" %%% "enumeratum"   % "1.7.5",
       "dev.zio"      %%% "zio-test"     % zioVersion % Test,
       "dev.zio"      %%% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3))
@@ -431,8 +419,7 @@ lazy val zioConfigTypesafeMagnoliaTests = projectMatrix
       "com.typesafe" % "config"       % "1.4.3",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
-    ),
-    testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
+    )
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia, zioConfigDerivation)
   .jvmPlatform(scalaVersions =
@@ -448,7 +435,7 @@ lazy val docs = projectMatrix
     magnoliaDependencies,
     refinedDependencies,
     projectName                                := "ZIO Config",
-    mainModuleName                             := (zioConfig.jvm(Scala3) / moduleName).value,
+    mainModuleName                             := (zioConfig.jvm(Scala213) / moduleName).value,
     projectStage                               := ProjectStage.ProductionReady,
     ScalaUnidoc / unidoc / unidocProjectFilter :=
       inProjects(
