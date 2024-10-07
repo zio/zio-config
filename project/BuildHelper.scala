@@ -186,8 +186,11 @@ object BuildHelper {
     }
   )
 
-  def nativeSettings = Seq(
-    // Test / skip             := true,
+  lazy val jsSettings = Seq()
+
+  lazy val jvmSettings = Seq()
+
+  lazy val nativeSettings = Seq(
     doc / skip              := true,
     Compile / doc / sources := Seq.empty
   )
