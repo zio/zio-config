@@ -32,51 +32,51 @@ addCommandAlias("compileAll", "; root2-12/compile; root2-13/compile; root3/compi
 addCommandAlias("testAll", "; root2-12/test; root2-13/test; root3/test;")
 addCommandAlias(
   "testJS",
-  ";" + selectProjects(VirtualAxis.js).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(VirtualAxis.js).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testJS212",
-  ";" + selectProjects(Scala212, VirtualAxis.js).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala212, VirtualAxis.js).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testJS213",
-  ";" + selectProjects(Scala213, VirtualAxis.js).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala213, VirtualAxis.js).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testJS3",
-  ";" + selectProjects(Scala3, VirtualAxis.js).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala3, VirtualAxis.js).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testJVM",
-  ";" + selectProjects(VirtualAxis.jvm).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(VirtualAxis.jvm).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testJVM212",
-  ";" + selectProjects(Scala212, VirtualAxis.jvm).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala212, VirtualAxis.jvm).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testJVM213",
-  ";" + selectProjects(Scala213, VirtualAxis.jvm).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala213, VirtualAxis.jvm).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testJVM3",
-  ";" + selectProjects(Scala3, VirtualAxis.jvm).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala3, VirtualAxis.jvm).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testNative",
-  ";" + selectProjects(VirtualAxis.native).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(VirtualAxis.native).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testNative212",
-  ";" + selectProjects(Scala212, VirtualAxis.native).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala212, VirtualAxis.native).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testNative213",
-  ";" + selectProjects(Scala213, VirtualAxis.native).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala213, VirtualAxis.native).map(_.id + "/test;").mkString
 )
 addCommandAlias(
   "testNative3",
-  ";" + selectProjects(Scala3, VirtualAxis.native).map(_.id).mkString("/test;") + "/test"
+  ";" + selectProjects(Scala3, VirtualAxis.native).map(_.id + "/test;").mkString
 )
 
 val awsVersion        = "1.12.773"
