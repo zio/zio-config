@@ -78,19 +78,19 @@ object AutoDerivationSealedTraitPureConfig extends App with EitherImpureOps {
       AppConfig(AwsConfig(Trait1SubClass1("b", RandomCaseClass("hi"))), "l")
   )
 
-  // val s2: String =
-  //   """
-  //     |field = SubObject1
-  //     |""".stripMargin
+  val s2: String =
+    """
+      |field = SubObject1
+      |""".stripMargin
 
-  // assert(read(deriveConfig[AwsConfig] from TypesafeConfigProvider.fromHoconString(s2)) equalM AwsConfig(SubObject1))
+  assert(read(deriveConfig[AwsConfig] from TypesafeConfigProvider.fromHoconString(s2)) equalM AwsConfig(SubObject1))
 
-  // val s3: String =
-  //   """
-  //     |field = randomcustomname
-  //     |""".stripMargin
+  val s3: String =
+    """
+      |field = randomcustomname
+      |""".stripMargin
 
-  // assert(read(deriveConfig[AwsConfig] from TypesafeConfigProvider.fromHoconString(s3)) equalM AwsConfig(SubObject2))
+  assert(read(deriveConfig[AwsConfig] from TypesafeConfigProvider.fromHoconString(s3)) equalM AwsConfig(SubObject2))
 
   val s4: String =
     """
