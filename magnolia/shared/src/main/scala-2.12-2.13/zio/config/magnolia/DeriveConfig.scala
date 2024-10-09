@@ -213,7 +213,7 @@ object DeriveConfig {
         .toMap
 
     val keyNameIfPureConfig: Option[String] =
-      sealedTrait.annotations.collectFirst { case discriminator: discriminator => discriminator.keyName }
+      sealedTrait.annotations.collectFirst { case discriminator1: discriminator => discriminator1.keyName }
 
     val desc =
       keyNameIfPureConfig match {

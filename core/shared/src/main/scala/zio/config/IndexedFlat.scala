@@ -17,7 +17,7 @@ trait IndexedFlat extends ConfigProvider.Flat {
   final def load[A](path: Chunk[String], config: Config.Primitive[A])(implicit
     trace: Trace
   ): IO[Config.Error, Chunk[A]] =
-    load(path, config, true)
+    load(path, config, split = true)
 
   final override def load[A](path: Chunk[String], config: Config.Primitive[A], split: Boolean)(implicit
     trace: Trace
@@ -27,7 +27,7 @@ trait IndexedFlat extends ConfigProvider.Flat {
   final def loadIndexed[A](path: ConfigPath, config: Config.Primitive[A])(implicit
     trace: Trace
   ): IO[Config.Error, Chunk[A]] =
-    loadIndexed(path, config, true)
+    loadIndexed(path, config, split = true)
 }
 
 object IndexedFlat {
