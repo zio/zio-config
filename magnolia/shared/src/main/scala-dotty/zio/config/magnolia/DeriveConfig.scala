@@ -107,6 +107,9 @@ object DeriveConfig {
   given chunkDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Chunk[A]] =
     DeriveConfig.from(chunkOf(ev.desc))
 
+  given nonEmptyChunkDesc[A](using ev: DeriveConfig[A]): DeriveConfig[NonEmptyChunk[A]] =
+    DeriveConfig.from(nonEmptyChunkOf(ev.desc))
+
   given mapDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Map[String, A]] =
     DeriveConfig.from(table(ev.desc))
 
