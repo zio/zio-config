@@ -34,15 +34,15 @@ addCommandAlias(
 )
 addCommandAlias(
   "testJVM212",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;examplesJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;examplesJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test;zioConfigPureconfigJVM/test"
 )
 addCommandAlias(
   "testJVM213",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigRefinedJVM/test;zioConfigMagnoliaJVM/test;examplesJVM/test;zioConfigTypesafeMagnoliaTestsJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test;zioConfigPureconfigJVM/test"
 )
 addCommandAlias(
   "testJVM3x",
-  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigMagnoliaJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test"
+  ";zioConfigJVM/test;zioConfigTypesafeJVM/test;zioConfigDerivationJVM/test;zioConfigYamlJVM/test;zioConfigMagnoliaJVM/test;zioConfigAwsJVM/test;zioConfigZioAwsJVM/test;zioConfigXmlJVM/test;zioConfigPureconfigJVM/test"
 )
 addCommandAlias(
   "testJVM",
@@ -72,10 +72,8 @@ lazy val refinedDependencies =
   libraryDependencies ++= Seq("eu.timepit" %% "refined" % refinedVersion)
 
 lazy val pureconfigDependencies =
-  libraryDependencies ++= {
-    if (scalaVersion.value == ScalaDotty) Seq.empty // Just to make IntelliJ happy
-    else Seq("com.github.pureconfig" %% "pureconfig" % pureconfigVersion)
-  }
+  libraryDependencies ++=
+    Seq("com.github.pureconfig" %% "pureconfig-core" % pureconfigVersion)
 
 lazy val scala212projects = Seq[ProjectReference](
   zioConfigJS,
@@ -93,6 +91,7 @@ lazy val scala212projects = Seq[ProjectReference](
   zioConfigTypesafeMagnoliaTestsJVM,
   zioConfigZioAwsJVM,
   zioConfigXmlJVM,
+  zioConfigPureconfigJVM,
   examplesJVM
 )
 
@@ -112,6 +111,7 @@ lazy val scala3projects =
     zioConfigTypesafeJVM,
     zioConfigYamlJVM,
     zioConfigXmlJVM,
+    zioConfigPureconfigJVM,
     docs
   )
 
@@ -223,6 +223,7 @@ lazy val zioConfigPureconfig = crossProject(JVMPlatform)
   .in(file("pureconfig"))
   .settings(stdSettings("zio-config-pureconfig"))
   .settings(crossProjectSettings)
+  .settings(dottySettings)
   .settings(
     pureconfigDependencies,
     libraryDependencies ++=
@@ -232,7 +233,7 @@ lazy val zioConfigPureconfig = crossProject(JVMPlatform)
       ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
-  .dependsOn(zioConfig % "test->test", zioConfigTypesafe)
+  .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe)
 
 lazy val zioConfigPureconfigJVM = zioConfigPureconfig.jvm
 
