@@ -20,8 +20,7 @@ object BuildHelper {
     "UTF-8",
     "-feature",
     "-unchecked",
-    "-release",
-    JdkReleaseVersion
+    s"-release:$JdkReleaseVersion",
   ) ++
     Seq("-Xfatal-warnings")
 
