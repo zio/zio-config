@@ -31,6 +31,6 @@ that all assertions in the example holds true even after your change.
 
 ```
 cd zio-config
-./sbt docs/buildWebsite
+sbt docs/buildWebsite
 
 ```
