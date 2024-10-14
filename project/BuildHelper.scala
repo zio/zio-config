@@ -8,11 +8,6 @@ import scalafix.sbt.ScalafixPlugin.autoImport._
 import sbtprojectmatrix.ProjectMatrixKeys.virtualAxes
 
 object BuildHelper {
-  val Scala212: String = "2.12.20"
-  val Scala213: String = "2.13.15"
-  val Scala3: String   = "3.4.3"
-
-  val JdkReleaseVersion: String = "11"
 
   private val stdOptions = Seq(
     "-deprecation",
@@ -20,7 +15,7 @@ object BuildHelper {
     "UTF-8",
     "-feature",
     "-unchecked",
-    s"-release:$JdkReleaseVersion",
+    s"-release:${Versions.JdkReleaseVersion}"
   ) ++
     Seq("-Xfatal-warnings")
 
@@ -124,7 +119,7 @@ object BuildHelper {
     resolvers +=
       "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
     scalacOptions --= {
-      if (scalaVersion.value == Scala3)
+      if (scalaVersion.value == Versions.Scala3)
         Seq("-Xfatal-warnings")
       else
         Seq("-Xprint:typer")
@@ -137,16 +132,16 @@ object BuildHelper {
     name                     := s"$prjName",
     scalacOptions ++= stdOptions ++ extraOptions(scalaVersion.value, optimize = !isSnapshot.value),
     libraryDependencies ++= {
-      if (scalaVersion.value == Scala3)
+      if (scalaVersion.value == Versions.Scala3)
         Seq.empty
       else
         Seq(
           compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full)
         )
     },
-    semanticdbEnabled        := scalaVersion.value != Scala3, // enable SemanticDB
+    semanticdbEnabled        := scalaVersion.value != Versions.Scala3, // enable SemanticDB
     semanticdbOptions += "-P:semanticdb:synthetics:on",
-    semanticdbVersion        := scalafixSemanticdb.revision,  // use Scalafix compatible version
+    semanticdbVersion        := scalafixSemanticdb.revision,           // use Scalafix compatible version
     ThisBuild / scalafixDependencies ++= List(
       "com.github.liancheng" %% "organize-imports" % "0.6.0",
       "com.github.vovapolu"  %% "scaluzzi"         % "0.1.23"
@@ -176,7 +171,7 @@ object BuildHelper {
   def macroDefinitionSettings = Seq(
     scalacOptions += "-language:experimental.macros",
     libraryDependencies ++= {
-      if (scalaVersion.value == Scala3) Seq()
+      if (scalaVersion.value == Versions.Scala3) Seq()
       else
         Seq(
           "org.scala-lang" % "scala-reflect"  % scalaVersion.value % "provided",

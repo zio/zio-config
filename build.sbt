@@ -1,8 +1,9 @@
 import BuildHelper._
+import Versions.{Scala212, Scala213, Scala3}
 
 welcomeMessage
 
-ThisBuild / scalaVersion := Scala213
+ThisBuild / scalaVersion := Versions.Scala213
 
 inThisBuild(
   List(
@@ -79,31 +80,6 @@ addCommandAlias(
   ";" + selectProjects(Scala3, VirtualAxis.native).map(_.id + "/test;").mkString
 )
 
-val awsVersion        = "1.12.773"
-val zioAwsVersion     = "7.21.15.15"
-val zioVersion        = "2.1.9"
-val magnoliaVersion   = "0.17.0"
-val refinedVersion    = "0.11.2"
-val pureconfigVersion = "0.17.7"
-
-lazy val magnoliaDependencies =
-  libraryDependencies ++= {
-    if (scalaVersion.value == Scala3) Seq.empty // Just to make IntelliJ happy
-    else {
-      Seq(
-        "com.propensive" %%% "magnolia"      % magnoliaVersion,
-        "org.scala-lang"   % "scala-reflect" % scalaVersion.value
-      )
-    }
-  }
-
-lazy val refinedDependencies =
-  libraryDependencies ++= Seq("eu.timepit" %%% "refined" % refinedVersion)
-
-lazy val pureconfigDependencies =
-  libraryDependencies ++=
-    Seq("com.github.pureconfig" %% "pureconfig-core" % pureconfigVersion)
-
 lazy val allProjects = Seq[sbt.internal.ProjectMatrix](
   zioConfig,
   zioConfigAws,
@@ -165,10 +141,10 @@ lazy val zioConfig = projectMatrix
   .settings(macroDefinitionSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio"                %%% "zio"                     % zioVersion,
+      "dev.zio"                %%% "zio"                     % Versions.zio,
       "org.scala-lang.modules" %%% "scala-collection-compat" % "2.12.0",
-      "dev.zio"                %%% "zio-test"                % zioVersion % Test,
-      "dev.zio"                %%% "zio-test-sbt"            % zioVersion % Test
+      "dev.zio"                %%% "zio-test"                % Versions.zio % Test,
+      "dev.zio"                %%% "zio-test-sbt"            % Versions.zio % Test
     )
   )
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3), settings = jvmSettings)
@@ -181,10 +157,10 @@ lazy val zioConfigAws = projectMatrix
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.amazonaws" % "aws-java-sdk-ssm" % awsVersion,
-      "dev.zio"      %% "zio-streams"      % zioVersion,
-      "dev.zio"      %% "zio-test"         % zioVersion % Test,
-      "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
+      "com.amazonaws" % "aws-java-sdk-ssm" % Versions.aws,
+      "dev.zio"      %% "zio-streams"      % Versions.zio,
+      "dev.zio"      %% "zio-test"         % Versions.zio % Test,
+      "dev.zio"      %% "zio-test-sbt"     % Versions.zio % Test
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
@@ -196,27 +172,25 @@ lazy val zioConfigZioAws = projectMatrix
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-aws-ssm"  % zioAwsVersion,
-      "dev.zio" %% "zio-streams"  % zioVersion,
-      "dev.zio" %% "zio-test"     % zioVersion % Test,
-      "dev.zio" %% "zio-test-sbt" % zioVersion % Test
+      "dev.zio" %% "zio-aws-ssm"  % Versions.zioAws,
+      "dev.zio" %% "zio-streams"  % Versions.zio,
+      "dev.zio" %% "zio-test"     % Versions.zio % Test,
+      "dev.zio" %% "zio-test-sbt" % Versions.zio % Test
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3), settings = jvmSettings)
-
-lazy val zioConfigZioAwsJVM = zioConfigZioAws.jvm
 
 lazy val zioConfigRefined = projectMatrix
   .in(file("refined"))
   .settings(stdSettings("zio-config-refined"))
   .settings(crossProjectSettings)
   .settings(
-    refinedDependencies,
+    Dependencies.refined,
     libraryDependencies ++=
       Seq(
-        "dev.zio" %%% "zio-test"     % zioVersion % Test,
-        "dev.zio" %%% "zio-test-sbt" % zioVersion % Test
+        "dev.zio" %%% "zio-test"     % Versions.zio % Test,
+        "dev.zio" %%% "zio-test-sbt" % Versions.zio % Test
       )
   )
   .dependsOn(zioConfigMagnolia % "compile->compile;test->test")
@@ -229,11 +203,11 @@ lazy val zioConfigPureconfig = projectMatrix
   .settings(stdSettings("zio-config-pureconfig"))
   .settings(crossProjectSettings)
   .settings(
-    pureconfigDependencies,
+    Dependencies.pureconfig,
     libraryDependencies ++=
       Seq(
-        "dev.zio" %% "zio-test"     % zioVersion % Test,
-        "dev.zio" %% "zio-test-sbt" % zioVersion % Test
+        "dev.zio" %% "zio-test"     % Versions.zio % Test,
+        "dev.zio" %% "zio-test-sbt" % Versions.zio % Test
       )
   )
   .dependsOn(zioConfig % "test->test", zioConfigTypesafe)
@@ -248,8 +222,8 @@ lazy val examples = projectMatrix
   .settings(
     publish / skip := true,
     fork           := true,
-    magnoliaDependencies,
-    refinedDependencies,
+    Dependencies.magnolia,
+    Dependencies.refined,
     runAllExamples :=
       Def
         .taskDyn({
@@ -284,7 +258,7 @@ lazy val zioConfigMagnolia = projectMatrix
   .settings(stdSettings("zio-config-magnolia"))
   .settings(crossProjectSettings)
   .settings(
-    magnoliaDependencies,
+    Dependencies.magnolia,
     scalacOptions ++= {
       if (scalaVersion.value == Scala3)
         Seq.empty
@@ -292,8 +266,8 @@ lazy val zioConfigMagnolia = projectMatrix
         Seq("-language:experimental.macros")
     },
     libraryDependencies ++= Seq(
-      "dev.zio" %%% "zio-test"     % zioVersion % Test,
-      "dev.zio" %%% "zio-test-sbt" % zioVersion % Test
+      "dev.zio" %%% "zio-test"     % Versions.zio % Test,
+      "dev.zio" %%% "zio-test-sbt" % Versions.zio % Test
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigDerivation)
@@ -308,8 +282,8 @@ lazy val zioConfigTypesafe = projectMatrix
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe" % "config"       % "1.4.3",
-      "dev.zio"     %% "zio-test"     % zioVersion % Test,
-      "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
+      "dev.zio"     %% "zio-test"     % Versions.zio % Test,
+      "dev.zio"     %% "zio-test-sbt" % Versions.zio % Test
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
@@ -322,8 +296,8 @@ lazy val zioConfigYaml = projectMatrix
   .settings(
     libraryDependencies ++= Seq(
       "org.snakeyaml" % "snakeyaml-engine" % "2.8",
-      "dev.zio"      %% "zio-test"         % zioVersion % Test,
-      "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
+      "dev.zio"      %% "zio-test"         % Versions.zio % Test,
+      "dev.zio"      %% "zio-test-sbt"     % Versions.zio % Test
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
@@ -336,8 +310,8 @@ lazy val zioConfigXml = projectMatrix
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio" %%% "zio-parser"   % "0.1.10",
-      "dev.zio" %%% "zio-test"     % zioVersion % Test,
-      "dev.zio" %%% "zio-test-sbt" % zioVersion % Test
+      "dev.zio" %%% "zio-test"     % Versions.zio % Test,
+      "dev.zio" %%% "zio-test-sbt" % Versions.zio % Test
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
@@ -352,8 +326,8 @@ lazy val zioConfigScalaz = projectMatrix
   .settings(
     libraryDependencies ++= Seq(
       "org.scalaz" %%% "scalaz-core"  % "7.4.0-M15",
-      "dev.zio"    %%% "zio-test"     % zioVersion % Test,
-      "dev.zio"    %%% "zio-test-sbt" % zioVersion % Test
+      "dev.zio"    %%% "zio-test"     % Versions.zio % Test,
+      "dev.zio"    %%% "zio-test-sbt" % Versions.zio % Test
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
@@ -368,8 +342,8 @@ lazy val zioConfigCats = projectMatrix
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %%% "cats-core"    % "2.12.0",
-      "dev.zio"       %%% "zio-test"     % zioVersion % Test,
-      "dev.zio"       %%% "zio-test-sbt" % zioVersion % Test
+      "dev.zio"       %%% "zio-test"     % Versions.zio % Test,
+      "dev.zio"       %%% "zio-test-sbt" % Versions.zio % Test
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
@@ -384,16 +358,14 @@ lazy val zioConfigEnumeratum = projectMatrix
   .settings(
     libraryDependencies ++= Seq(
       "com.beachape" %%% "enumeratum"   % "1.7.5",
-      "dev.zio"      %%% "zio-test"     % zioVersion % Test,
-      "dev.zio"      %%% "zio-test-sbt" % zioVersion % Test
+      "dev.zio"      %%% "zio-test"     % Versions.zio % Test,
+      "dev.zio"      %%% "zio-test-sbt" % Versions.zio % Test
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test")
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3), settings = jvmSettings)
   .jsPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3), settings = jsSettings)
   .nativePlatform(scalaVersions = Seq(Scala212, Scala213, Scala3), settings = nativeSettings)
-
-lazy val zioConfigEnumeratumJVM = zioConfigEnumeratum.jvm
 
 lazy val zioConfigTypesafeMagnoliaTests = projectMatrix
   .in(file("typesafe-magnolia-tests"))
@@ -403,8 +375,8 @@ lazy val zioConfigTypesafeMagnoliaTests = projectMatrix
     publish / skip := true,
     libraryDependencies ++= Seq(
       "com.typesafe" % "config"       % "1.4.3",
-      "dev.zio"     %% "zio-test"     % zioVersion % Test,
-      "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
+      "dev.zio"     %% "zio-test"     % Versions.zio % Test,
+      "dev.zio"     %% "zio-test-sbt" % Versions.zio % Test
     )
   )
   .dependsOn(zioConfig % "compile->compile;test->test", zioConfigTypesafe, zioConfigMagnolia, zioConfigDerivation)
@@ -418,8 +390,8 @@ lazy val docs = projectMatrix
     moduleName                                 := "zio-config-docs",
     scalacOptions -= "-Yno-imports",
     scalacOptions -= "-Xfatal-warnings",
-    magnoliaDependencies,
-    refinedDependencies,
+    Dependencies.magnolia,
+    Dependencies.refined,
     projectName                                := "ZIO Config",
     mainModuleName                             := (zioConfig.jvm(Scala213) / moduleName).value,
     projectStage                               := ProjectStage.ProductionReady,
