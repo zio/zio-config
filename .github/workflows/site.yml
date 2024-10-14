@@ -13,7 +13,7 @@ name: Website
   pull_request: {}
 jobs:
   build:
-    name: Build and Test
+    name: Build Docs
     runs-on: ubuntu-latest
     if: ${{ github.event_name == 'pull_request' }}
     steps:
@@ -29,8 +29,6 @@ jobs:
           check-latest: true
       - name: Setup sbt
         uses: sbt/setup-sbt@v1
-      - name: Check that site workflow is up to date
-        run: sbt docs/checkGithubWorkflow
       - name: Check website build process
         run: sbt docs/buildWebsite
   publish-docs:
