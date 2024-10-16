@@ -55,6 +55,12 @@ private[config] trait KeyConversionFunctions {
   /**
    * Add a post fix to an existing key
    */
-  def addPostFixToKey(string: String): String => String =
-    s => s"${s}${string.capitalize}"
+  def addPostFixToKey(postfix: String): String => String =
+    s => s"${s}${postfix.capitalize}"
+
+  /**
+   * Add a suffix to an existing key
+   */
+  def addSuffixToKey(suffix: String): String => String =
+    s => s"${s}${suffix.capitalize}"
 }
