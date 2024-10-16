@@ -27,8 +27,13 @@ val snakeCase: derivation.snakeCase.type = derivation.snakeCase
 type prefix = derivation.prefix
 val prefix: derivation.prefix.type = derivation.prefix
 
+@deprecated("Use `suffix` instead", "4.0.3")
 type postfix = derivation.postfix
+@deprecated("Use `suffix` instead", "4.0.3")
 val postfix: derivation.postfix.type = derivation.postfix
+
+type suffix = derivation.suffix
+val suffix: derivation.suffix.type = derivation.suffix
 
 // If you happen to define a Config directly as an implicit, then automatically DeriveConfig will be available
 given deriveConfigFromConfig[A](using ev: Config[A]): DeriveConfig[A] =

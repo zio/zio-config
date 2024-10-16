@@ -80,26 +80,6 @@ object DeriveConfig {
 
   type Typeclass[T] = DeriveConfig[T]
 
-  sealed trait KeyModifier
-  sealed trait CaseModifier extends KeyModifier
-
-  object KeyModifier {
-    case object KebabCase               extends CaseModifier
-    case object SnakeCase               extends CaseModifier
-    case object NoneModifier            extends CaseModifier
-    case class Prefix(prefix: String)   extends KeyModifier
-    case class Postfix(postfix: String) extends KeyModifier
-
-    def getModifierFunction(keyModifier: KeyModifier): String => String =
-      keyModifier match {
-        case KebabCase        => toKebabCase
-        case SnakeCase        => toSnakeCase
-        case Prefix(prefix)   => addPrefixToKey(prefix)
-        case Postfix(postfix) => addPostFixToKey(postfix)
-        case NoneModifier     => identity
-      }
-  }
-
   final def wrapSealedTrait[T](
     labels: Seq[String],
     desc: Config[T]
@@ -141,6 +121,7 @@ object DeriveConfig {
     val modifiers = annotations.collect {
       case p: prefix  => KeyModifier.Prefix(p.prefix)
       case p: postfix => KeyModifier.Postfix(p.postfix)
+      case p: suffix  => KeyModifier.Suffix(p.suffix)
     }.toList
 
     val caseModifier = annotations.collectFirst {

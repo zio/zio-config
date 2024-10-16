@@ -5,25 +5,27 @@ import zio.Random
 import zio.test.Assertion.equalTo
 import zio.test._
 import DefaultValueSpecUtils._
-import zio.config.magnolia.Macros
+import zio.config.magnolia.DefaultValueMacros
 
 object DefaultValueSpec extends BaseSpec {
   val spec: Spec[TestConfig, Any] =
     suite("magnolia spec")(
       test("default value for primitives") {
-        assert(Macros.defaultValuesOf[A])(equalTo(List(("x", "defaultValue"))))
+        assert(DefaultValueMacros.defaultValuesOf[A])(equalTo(List(("x", "defaultValue"))))
       },
       test("default value for nested types") {
-        assert(Macros.defaultValuesOf[B])(equalTo(List(("y", A("nonDefaultValue")))))
+        assert(DefaultValueMacros.defaultValuesOf[B])(equalTo(List(("y", A("nonDefaultValue")))))
       },
       test("default value for sealed trait types") {
-        assert(Macros.defaultValuesOf[C])(equalTo(List(("z", X()))))
+        assert(DefaultValueMacros.defaultValuesOf[C])(equalTo(List(("z", X()))))
       },
       test("default value for case object") {
-        assert(Macros.defaultValuesOf[D])(equalTo(List(("z", Z))))
+        assert(DefaultValueMacros.defaultValuesOf[D])(equalTo(List(("z", Z))))
       },
       test("default value for multiple values") {
-        assert(Macros.defaultValuesOf[Mul])(equalTo(List(("a", A("x")), ("b", B(A("y"))), ("c", X()), ("d", Z))))
+        assert(DefaultValueMacros.defaultValuesOf[Mul])(
+          equalTo(List(("a", A("x")), ("b", B(A("y"))), ("c", X()), ("d", Z)))
+        )
       }
     )
 }
