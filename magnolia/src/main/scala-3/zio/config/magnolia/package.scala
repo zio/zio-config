@@ -27,9 +27,9 @@ val snakeCase: derivation.snakeCase.type = derivation.snakeCase
 type prefix = derivation.prefix
 val prefix: derivation.prefix.type = derivation.prefix
 
-@deprecated("Use `suffix` instead", "4.0.3")
+// @deprecated("Use `suffix` instead", "4.0.3")
 type postfix = derivation.postfix
-@deprecated("Use `suffix` instead", "4.0.3")
+// @deprecated("Use `suffix` instead", "4.0.3")
 val postfix: derivation.postfix.type = derivation.postfix
 
 type suffix = derivation.suffix

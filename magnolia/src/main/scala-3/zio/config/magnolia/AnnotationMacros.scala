@@ -24,19 +24,12 @@ private[magnolia] object AnnotationMacros:
 
     val annotationTpe = TypeRepr.of[A]
 
-    def subTypeOf(tpe: TypeRepr, parent: TypeRepr): Boolean =
-      tpe.simplified.dealias match
-        case o: OrType =>
-          subTypeOf(o.left, parent) || subTypeOf(o.right, parent)
-        case o         =>
-          tpe <:< parent
-
     val annotations = TypeRepr
       .of[T]
       .typeSymbol
       .annotations
       .collect:
-        case term if subTypeOf(term.tpe, annotationTpe) => term
+        case term if term.tpe <:< annotationTpe => term
 
     Expr.ofList(annotations.reverse.map(_.asExprOf[A]))
   }
@@ -60,7 +53,7 @@ private[magnolia] object AnnotationMacros:
           .map:
             case (name, terms) =>
               name -> terms.collect:
-                case term if term.tpe =:= annotationTpe => term
+                case term if term.tpe <:< annotationTpe => term
           .map:
             case (name, terms) => Expr(name) -> terms.reverse.map(_.asExprOf[A])
           .map((name, annotations) => Expr.ofTuple((name, Expr.ofList(annotations))))

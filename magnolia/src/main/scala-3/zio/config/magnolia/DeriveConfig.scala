@@ -128,7 +128,7 @@ object DeriveConfig {
           desc.metadata
         ) :: summonDeriveConfigForCoProduct[ts]
 
-  inline def summonDeriveConfigAll[T <: Tuple]: List[DeriveConfig[_]] =
+  inline def summonDeriveConfigAll[T <: Tuple]: List[DeriveConfig[?]] =
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
       case _: (t *: ts)  =>
@@ -248,7 +248,7 @@ object DeriveConfig {
 
                   case None => Nil
                 }
-              }: _*
+              }*
             )
       }
 
@@ -258,7 +258,7 @@ object DeriveConfig {
     defaultValues: Map[String, Any],
     fieldNames: List[String],
     descriptors: List[DeriveConfig[Any]]
-  ): List[DeriveConfig[_]] =
+  ): List[DeriveConfig[?]] =
     descriptors.zip(fieldNames).map { case (desc, fieldName) =>
       defaultValues.get(fieldName) match {
         case Some(any) => DeriveConfig(desc.desc.withDefault(any), desc.metadata)
@@ -267,7 +267,7 @@ object DeriveConfig {
     }
 
   def mergeAllFields[T](
-    allDescs: => List[DeriveConfig[_]],
+    allDescs: => List[DeriveConfig[?]],
     productName: ProductName,
     fieldNames: => List[FieldName],
     keyModifiers: List[KeyModifier],
@@ -292,7 +292,7 @@ object DeriveConfig {
         }
 
       val descOfList =
-        Config.collectAll(listOfDesc.head, listOfDesc.tail: _*)
+        Config.collectAll(listOfDesc.head, listOfDesc.tail*)
 
       DeriveConfig(descOfList.map(f), Some(Metadata.Product(productName, fieldNames, keyModifiers)))
 
