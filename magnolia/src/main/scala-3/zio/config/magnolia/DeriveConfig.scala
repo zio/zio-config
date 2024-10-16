@@ -147,11 +147,6 @@ object DeriveConfig {
 
   inline given derived[T](using m: Mirror.Of[T]): DeriveConfig[T] =
     lazy val keyModifiers =
-      // (AnnotationMacros.kebabCaseOf[T].take(1) ++
-      //   AnnotationMacros.snakeCaseOf[T].take(1) ++
-      //   AnnotationMacros.prefixOf[T].take(1) ++
-      //   AnnotationMacros.postfixOf[T].take(1) ++
-      //   AnnotationMacros.suffixOf[T].take(1))
       (AnnotationMacros.keyModifiers[T] ++ AnnotationMacros.caseModifier[T])
         .map:
           case p: prefix          => KeyModifier.Prefix(p.prefix)
