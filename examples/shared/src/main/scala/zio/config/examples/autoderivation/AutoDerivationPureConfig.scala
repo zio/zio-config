@@ -1,7 +1,7 @@
 package zio.config.examples.autoderivation
 
 import zio.config._
-import zio.config.derivation.{name, discriminator}
+import zio.config.derivation.{discriminator, name}
 import zio.config.examples.typesafe.EitherImpureOps
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider

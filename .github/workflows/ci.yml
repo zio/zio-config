@@ -26,14 +26,39 @@ jobs:
       - name: Check Document Generation
         run: ./sbt docs/compileDocs
 
+  lint:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        java: [ 'adopt@1.11', 'adopt@1.21' ]
+        scala: [ '2.12.20', '2.13.15', '3.3.4' ]
+        platform: [ 'JS', 'JVM', 'Native' ]
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v3.3.0
+        with:
+          fetch-depth: 0
+      - name: Setup Scala and Java
+        uses: olafurpg/setup-scala@v14
+        with:
+          java-version: 'adopt@1.11'
+      - name: Cache scala dependencies
+        uses: coursier/cache-action@v6
+      - name: Check formatting
+        run: sbt fmt
+      - name: Check binary compatibility
+        run: sbt "++2.12; checkMima; ++2.13; checkMima; ++3.3; checkMima"
+
   test:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
       matrix:
-        java: ['adopt@1.8', 'adopt@1.11']
-        scala: ['2.12.18', '2.13.12', '3.4.1']
+        java: ['adopt@1.11', 'adopt@1.21']
+        scala: ['2.12.20', '2.13.15', '3.3.4']
         platform: ['JS', 'JVM', 'Native']
     steps:
       - name: Checkout current branch
@@ -78,6 +103,8 @@ jobs:
           fetch-depth: 0
       - name: Setup Scala and Java
         uses: olafurpg/setup-scala@v14
+        with:
+          java-version: 'adopt@1.11'
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Release artifacts
