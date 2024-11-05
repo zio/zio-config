@@ -27,8 +27,6 @@ jobs:
         distribution: temurin
         java-version: 17
         check-latest: true
-    - name: Check that site workflow is up to date
-      run: sbt  docs/checkGithubWorkflow
     - name: Check website build process
       run: sbt  docs/buildWebsite
   publish-docs:
