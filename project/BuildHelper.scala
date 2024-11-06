@@ -1,18 +1,18 @@
-import explicitdeps.ExplicitDepsPlugin.autoImport._
-import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport._
-import sbt.Keys._
-import sbt._
-import sbtbuildinfo.BuildInfoKeys._
-import sbtbuildinfo._
-import sbtcrossproject.CrossPlugin.autoImport._
-import scalafix.sbt.ScalafixPlugin.autoImport._
+import explicitdeps.ExplicitDepsPlugin.autoImport.*
+import org.portablescala.sbtplatformdeps.PlatformDepsPlugin.autoImport.*
+import sbt.*
+import sbt.Keys.*
+import sbtbuildinfo.*
+import sbtbuildinfo.BuildInfoKeys.*
+import sbtcrossproject.CrossPlugin.autoImport.*
+import scalafix.sbt.ScalafixPlugin.autoImport.*
 
 object BuildHelper {
   private val versions: String => String = {
     import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 
-    import java.util.{List => JList, Map => JMap}
-    import scala.jdk.CollectionConverters._
+    import java.util.{List as JList, Map as JMap}
+    import scala.jdk.CollectionConverters.*
 
     val doc  = new Load(LoadSettings.builder().build())
       .loadFromReader(scala.io.Source.fromFile(".github/workflows/ci.yml").bufferedReader())
@@ -205,29 +205,28 @@ object BuildHelper {
   def stdSettings(prjName: String) = Seq(
     resolvers +=
       "Sonatype OSS Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots",
-    name                                   := s"$prjName",
-    crossScalaVersions                     := Seq(Scala212, Scala213),
-    ThisBuild / scalaVersion               := Scala213,
-    scalacOptions                          := stdOptions ++ extraOptions(scalaVersion.value, optimize = !isSnapshot.value),
+    name                     := s"$prjName",
+    crossScalaVersions       := Seq(Scala212, Scala213),
+    ThisBuild / scalaVersion := Scala213,
+    scalacOptions            := stdOptions ++ extraOptions(scalaVersion.value, optimize = !isSnapshot.value),
     libraryDependencies ++= {
       if (scalaVersion.value == ScalaDotty)
         Seq.empty
       else
         Seq(
-          compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.2" cross CrossVersion.full)
+          compilerPlugin("org.typelevel" %% "kind-projector" % "0.13.3" cross CrossVersion.full)
         )
     },
-    semanticdbEnabled                      := scalaVersion.value != ScalaDotty, // enable SemanticDB
+    semanticdbEnabled        := scalaVersion.value != ScalaDotty, // enable SemanticDB
     semanticdbOptions += "-P:semanticdb:synthetics:on",
-    semanticdbVersion                      := scalafixSemanticdb.revision,      // use Scalafix compatible version
-    ThisBuild / scalafixScalaBinaryVersion := CrossVersion.binaryScalaVersion(scalaVersion.value),
+    semanticdbVersion        := scalafixSemanticdb.revision,      // use Scalafix compatible version
     ThisBuild / scalafixDependencies ++= List(
       "com.github.liancheng" %% "organize-imports" % "0.6.0",
       "com.github.vovapolu"  %% "scaluzzi"         % "0.1.23"
     ),
-    Test / parallelExecution               := true,
+    Test / parallelExecution := true,
     incOptions ~= (_.withLogRecompileOnMacro(false)),
-    autoAPIMappings                        := true,
+    autoAPIMappings          := true,
     unusedCompileDependenciesFilter -= moduleFilter("org.scala-js", "scalajs-library")
   )
 
