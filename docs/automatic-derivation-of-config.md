@@ -322,6 +322,25 @@ In this case, the config should be
 }
 ```
 
+### Config derivation via `derives` keyword
+
+Scala 3 has introduced `derives` keyword to derive typeclasses without the need of explicitely declaring the implicit / given.
+This syntax can be enabled for `zio.Config` by importing `zio.config.magnolia.*` and then using the `derives` keyword on the type that needs to be derived:
+
+```scala 3
+import zio.config.magnolia.*
+import zio.{Config, ZIO}
+
+sealed trait A
+case class B(x: String) extends A
+case class C(y: String) extends A
+
+case class MyConfig(a: A) derives Config
+
+// And then simply summon the `Config[MyConfig]` instance as you would normally:
+val cfg = ZIO.config[MyConfig]
+```
+
 ### No guaranteed behavior for scala-3 enum yet
 With the current release, there is no guaranteed support of scala-3 enum. 
 Use `sealed trait` and `case class` pattern.
