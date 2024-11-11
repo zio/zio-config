@@ -111,29 +111,28 @@ object DeriveConfig {
   given mapDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Map[String, A]] =
     DeriveConfig.from(table(ev.desc))
 
-  inline def summonDeriveConfigForCoProduct[T <: Tuple](
-    inline acc: List[DeriveConfig[Any]] = Nil
-  ): List[DeriveConfig[Any]] =
-    inline erasedValue[T] match
-      case _: EmptyTuple => acc
+  inline def summonDeriveConfigForCoProduct[T <: Tuple]: List[DeriveConfig[Any]] =
+    inline erasedValue[T] match {
+      case _: EmptyTuple => Nil
       case _: (t *: ts)  =>
-        summonDeriveConfigForCoProduct[ts] {
-          val desc = summonInline[DeriveConfig[t]]
-          DeriveConfig[Any](
-            desc.desc,
-            desc.metadata
-          ) :: acc
-        }
+        val desc = summonInline[DeriveConfig[t]]
+        DeriveConfig[Any](
+          desc.desc,
+          desc.metadata
+        ) :: summonDeriveConfigForCoProduct[ts]
+    }
 
-  inline def summonDeriveConfigAll[T <: Tuple](inline acc: List[DeriveConfig[_]] = Nil): List[DeriveConfig[_]] =
-    inline erasedValue[T] match
-      case _: EmptyTuple => acc
-      case _: (t *: ts)  => summonDeriveConfigAll[ts](summonInline[DeriveConfig[t]] :: acc)
+  inline def summonDeriveConfigAll[T <: Tuple]: List[DeriveConfig[_]] =
+    inline erasedValue[T] match {
+      case _: EmptyTuple => Nil
+      case _: (t *: ts)  => summonInline[DeriveConfig[t]] :: summonDeriveConfigAll[ts]
+    }
 
-  inline def labelsOf[T <: Tuple](inline acc: List[String] = Nil): List[String] =
-    inline erasedValue[T] match
-      case _: EmptyTuple => acc
-      case _: (t *: ts)  => labelsOf[ts](constValue[t].toString :: acc)
+  inline def labelsOf[T <: Tuple]: List[String] =
+    inline erasedValue[T] match {
+      case _: EmptyTuple => Nil
+      case _: (t *: ts)  => constValue[t].toString :: labelsOf[ts]
+    }
 
   inline def customNamesOf[T]: List[String] =
     inline Macros.nameOf[T] match {
@@ -158,7 +157,7 @@ object DeriveConfig {
             typeDiscriminator = Macros.discriminator[T].headOption.map(_.keyName)
           )
 
-        val subClassDescriptions = summonDeriveConfigForCoProduct[m.MirroredElemTypes]()
+        val subClassDescriptions = summonDeriveConfigForCoProduct[m.MirroredElemTypes]
         val desc                 = mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]), coproductName.typeDiscriminator)
 
         DeriveConfig.from(tryAllKeys(desc.desc, None, coproductName.alternativeNames))
@@ -171,7 +170,7 @@ object DeriveConfig {
             descriptions = Macros.documentationOf[T].map(_.describe)
           )
 
-        val originalFieldNamesList = labelsOf[m.MirroredElemLabels]()
+        val originalFieldNamesList = labelsOf[m.MirroredElemLabels]
         val customFieldNameMap     = customFieldNamesOf[T]
         val documentations         = Macros.fieldDocumentationOf[T].toMap
         val fieldNames             = mapOriginalNames(originalFieldNamesList, documentations, customFieldNameMap)
@@ -261,14 +260,13 @@ object DeriveConfig {
   ): DeriveConfig[T] =
     mergeAllFields[T](allDescs, productName, fieldNames, f)
 
-  @targetName("mergeAllFieldsV2")
   def mergeAllFields[T](
     allDescs: => List[DeriveConfig[_]],
     productName: ProductName,
     fieldNames: List[FieldName],
     f: List[Any] => T
   ): DeriveConfig[T] =
-    if fieldNames.isEmpty then // if there are no fields in the product then the value is the name of the product itself
+    if fieldNames.isEmpty then { // if there are no fields in the product then the value is the name of the product itself
       val tryAllPaths =
         (productName.originalName :: productName.alternativeNames)
           .map(n => zio.Config.constant(n))
@@ -278,7 +276,7 @@ object DeriveConfig {
         tryAllPaths.map[T](_ => f(Nil)),
         Some(Metadata.Object[T](productName, f(Nil))) // We propogate the info that product was actually an object
       )
-    else
+    } else {
       val listOfDesc =
         fieldNames.zip(allDescs).map { case (fieldName, desc) =>
           val fieldDesc = tryAllKeys(desc.desc, Some(fieldName.originalName), fieldName.alternativeNames)
@@ -289,6 +287,7 @@ object DeriveConfig {
         Config.collectAll(listOfDesc.head, listOfDesc.tail*)
 
       DeriveConfig(descOfList.map(f), Some(Metadata.Product(productName, fieldNames)))
+    }
 
   def tryAllKeys[A](
     desc: Config[A],
