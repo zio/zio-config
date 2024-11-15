@@ -18,8 +18,25 @@ package object magnolia {
   type discriminator = derivation.discriminator
   val discriminator: derivation.discriminator.type = derivation.discriminator
 
+  type kebabCase = derivation.kebabCase
+  val kebabCase: derivation.kebabCase.type = derivation.kebabCase
+
+  type snakeCase = derivation.snakeCase
+  val snakeCase: derivation.snakeCase.type = derivation.snakeCase
+
+  type prefix = derivation.prefix
+  val prefix: derivation.prefix.type = derivation.prefix
+
+  // @deprecated("Use `suffix` instead", "4.0.3")
+  type postfix = derivation.postfix
+  // @deprecated("Use `suffix` instead", "4.0.3")
+  val postfix: derivation.postfix.type = derivation.postfix
+
+  type suffix = derivation.suffix
+  val suffix: derivation.suffix.type = derivation.suffix
+
   // If you happen to define a Config directly as an implicit, then automatically DeriveConfig will be available
-  implicit def deriveConfigFromConfig[A](implicit ev: Config[A]): DeriveConfig[A] =
+  given deriveConfigFromConfig[A](using ev: Config[A]): DeriveConfig[A] =
     DeriveConfig(ev, None)
 
   implicit class ConfigProviderOps[A](configProvider: ConfigProvider) {
