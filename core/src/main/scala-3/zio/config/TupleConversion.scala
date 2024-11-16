@@ -1,6 +1,6 @@
 package zio.config
 
-import scala.deriving._
+import scala.deriving.*
 
 trait TupleConversion[A, B] {
   def to(a: A): B

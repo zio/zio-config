@@ -1,8 +1,8 @@
 package zio.config.yaml.generators
 
 import zio.Chunk
-import zio.config.xml.experimental.XmlObject.TagElement
 import zio.config.xml.experimental.XmlObject
+import zio.config.xml.experimental.XmlObject.TagElement
 import zio.config.yaml.generators.WhiteSpacedXml.Children
 import zio.test.Gen
 

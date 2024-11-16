@@ -1,4 +1,4 @@
-val zioSbtVersion = "0.0.0+524-5fdf568b-SNAPSHOT"
+val zioSbtVersion = "0.0.0+526-a72bd851-SNAPSHOT"
 
 addSbtPlugin("ch.epfl.scala"                     % "sbt-bloop"                 % "2.0.5")
 addSbtPlugin("ch.epfl.scala"                     % "sbt-scalafix"              % "0.13.0")

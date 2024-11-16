@@ -1,6 +1,6 @@
 package zio.config.magnolia.examples
 
-import zio.config.magnolia._
+import zio.config.magnolia.*
 
 final case class A(a: B)
 

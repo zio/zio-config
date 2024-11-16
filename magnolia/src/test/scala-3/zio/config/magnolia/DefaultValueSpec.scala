@@ -1,11 +1,10 @@
 package zio.config.magnolia
 
 import zio.config.BaseSpec
-import zio.Random
 import zio.test.Assertion.equalTo
-import zio.test._
-import DefaultValueSpecUtils._
-import zio.config.magnolia.Macros
+import zio.test.{Macros as _, *}
+
+import DefaultValueSpecUtils.*
 
 object DefaultValueSpec extends BaseSpec {
   val spec: Spec[TestConfig, Any] =

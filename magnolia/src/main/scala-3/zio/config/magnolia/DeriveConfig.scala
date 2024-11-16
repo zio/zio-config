@@ -1,21 +1,17 @@
 package zio.config.magnolia
 
-import zio.config._
-import zio.NonEmptyChunk
+import zio.config.*
+import zio.config.derivation.*
+import zio.{Chunk, Config, LogLevel}
 
-import java.io.File
-import java.net.{URI, URL}
-import java.time.{Duration, Instant, LocalDate, LocalDateTime, LocalTime, OffsetDateTime}
+import java.net.URI
+import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetDateTime}
 import java.util.UUID
-import scala.concurrent.duration.{Duration => ScalaDuration}
-import scala.deriving._
 import scala.compiletime.{constValue, constValueTuple, erasedValue, summonFrom, summonInline}
-import scala.quoted
-import scala.util.Try
-import DeriveConfig._
-import zio.{Chunk, Config, ConfigProvider, LogLevel}, Config._
-import zio.config.syntax._
-import zio.config.derivation._
+import scala.deriving.*
+
+import DeriveConfig.*
+import Config.*
 
 final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None) {
   def ??(description: String): DeriveConfig[A] =
@@ -39,7 +35,7 @@ object DeriveConfig {
   def apply[A](implicit ev: DeriveConfig[A]): DeriveConfig[A] =
     ev
 
-  def from[A](desc: Config[A]) =
+  def from[A](desc: Config[A]): DeriveConfig[A] =
     DeriveConfig(desc, None)
 
   sealed trait Metadata {

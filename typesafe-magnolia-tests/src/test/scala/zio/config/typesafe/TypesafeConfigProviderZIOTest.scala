@@ -4,7 +4,7 @@ package typesafe
 import zio.Config
 import zio.config.magnolia.deriveConfig
 import zio.test.Assertion.equalTo
-import zio.test.{assertZIO, Spec, ZIOSpecDefault}
+import zio.test.{Spec, ZIOSpecDefault, assertZIO}
 
 object TypesafeConfigProviderZIOTest extends ZIOSpecDefault {
 

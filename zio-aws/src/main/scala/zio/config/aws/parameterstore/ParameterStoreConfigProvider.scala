@@ -34,7 +34,7 @@ object ParameterStoreConfigProvider {
         parameter.value.map { value =>
           name.replaceFirst(str, "") -> value
         }
-      }.toOption
+      }.toChunk
     }.toMap
   }
 }

@@ -1,16 +1,12 @@
 package zio.config.magnolia.examples
 
-import zio.config.magnolia._
-import zio.{Config, ConfigProvider}
-import zio.config.magnolia._
-import zio.config._
-import zio.Unsafe
-import zio.IO
-import zio.config.syntax._
+import zio.config.*
+import zio.config.magnolia.*
+import zio.{ConfigProvider, IO, Unsafe}
 
 object AutoDerivationSimple extends App:
   // Use of Either is almost prohibited by the looks of it
-  val sourceMap =
+  val sourceMap: Map[String, String] =
     Map(
       "a.b-c"       -> "v1",
       "a.c-d"       -> "C",
@@ -25,7 +21,7 @@ object AutoDerivationSimple extends App:
       "a.y"         -> "HmmAbc"
     )
 
-  val source =
+  val source: ConfigProvider =
     ConfigProvider.fromMap(
       sourceMap,
       pathDelim = ".",
@@ -35,7 +31,7 @@ object AutoDerivationSimple extends App:
   val io: IO[String, A] =
     source.load(deriveConfig[A].toKebabCase).mapError(_.prettyPrint())
 
-  val readResult = Unsafe.unsafe { implicit u =>
+  val readResult: A = Unsafe.unsafe { implicit u =>
     zio.Runtime.default.unsafe.run(io).getOrThrowFiberFailure()
   }
 

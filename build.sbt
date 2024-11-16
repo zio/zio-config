@@ -56,7 +56,7 @@ lazy val zioConfig = projectMatrix
   .enablePlugins(BuildInfoPlugin)
   .settings(buildInfoSettings("zio.config"))
   .settings(macroDefinitionSettings)
-  .settings(enableMimaSettings)
+  .settings(enableMimaSettings())
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio"                %%% "zio"                     % Versions.zio,
@@ -73,7 +73,7 @@ lazy val zioConfigAws = projectMatrix
   .in(file("aws"))
   .settings(stdSettings(Some("zio-config-aws")))
   .settings(crossProjectSettings)
-  .settings(enableMimaSettings)
+  .settings(enableMimaSettings())
   .settings(
     libraryDependencies ++= Seq(
       "com.amazonaws" % "aws-java-sdk-ssm" % Versions.aws,
@@ -89,7 +89,7 @@ lazy val zioConfigZioAws = projectMatrix
   .in(file("zio-aws"))
   .settings(stdSettings(Some("zio-config-zio-aws")))
   .settings(crossProjectSettings)
-  .settings(enableMimaSettings)
+  .settings(enableMimaSettings())
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio" %% "zio-aws-ssm"  % Versions.zioAws,
@@ -123,7 +123,7 @@ lazy val zioConfigPureconfig = projectMatrix
   .settings(stdSettings(Some("zio-config-pureconfig")))
   .settings(crossProjectSettings)
   .settings(
-    enableMimaSettings ++ Seq(
+    enableMimaSettings() ++ Seq(
       checkMima / skip := true
     )
   )
@@ -172,7 +172,7 @@ lazy val zioConfigDerivation = projectMatrix
   .in(file("derivation"))
   .settings(stdSettings(Some("zio-config-derivation")))
   .settings(crossProjectSettings)
-  .settings(enableMimaSettings)
+  .settings(enableMimaSettings())
   .dependsOn(zioConfig)
   .jvmPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3), settings = jvmSettings)
   .jsPlatform(scalaVersions = Seq(Scala212, Scala213, Scala3), settings = jsSettings)
@@ -182,7 +182,7 @@ lazy val zioConfigMagnolia = projectMatrix
   .in(file("magnolia"))
   .settings(stdSettings(Some("zio-config-magnolia")))
   .settings(crossProjectSettings)
-  .settings(enableMimaSettings)
+  .settings(enableMimaSettings())
   .settings(
     Dependencies.magnolia,
     scalacOptions ++= {
@@ -205,7 +205,7 @@ lazy val zioConfigTypesafe = projectMatrix
   .in(file("typesafe"))
   .settings(stdSettings(Some("zio-config-typesafe")))
   .settings(crossProjectSettings)
-  .settings(enableMimaSettings)
+  .settings(enableMimaSettings())
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe" % "config"       % "1.4.3",
@@ -220,7 +220,7 @@ lazy val zioConfigYaml = projectMatrix
   .in(file("yaml"))
   .settings(stdSettings(Some("zio-config-yaml")))
   .settings(crossProjectSettings)
-  .settings(enableMimaSettings)
+  .settings(enableMimaSettings())
   .settings(
     libraryDependencies ++= Seq(
       "org.snakeyaml" % "snakeyaml-engine" % "2.8",
@@ -235,7 +235,7 @@ lazy val zioConfigXml = projectMatrix
   .in(file("xml"))
   .settings(stdSettings(Some("zio-config-xml")))
   .settings(crossProjectSettings)
-  .settings(enableMimaSettings)
+  .settings(enableMimaSettings())
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio" %%% "zio-parser"   % "0.1.10",
@@ -342,13 +342,3 @@ lazy val docs = projectMatrix
     zioConfigMagnolia
   )
   .enablePlugins(WebsitePlugin)
-
-val checkMima = taskKey[Unit]("Check mima")
-
-lazy val enableMimaSettings =
-  Def.settings(
-    checkMima              := { if (isScalaJVM.value && !(checkMima / skip).value) mimaReportBinaryIssues.value else () },
-    mimaFailOnProblem      := true,
-    mimaPreviousArtifacts  := previousStableVersion.value.map(organization.value %% moduleName.value % _).toSet,
-    mimaBinaryIssueFilters := Seq()
-  )

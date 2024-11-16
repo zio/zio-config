@@ -2,10 +2,10 @@ package zio.config.examples.refined
 
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.collection.NonEmpty
-import zio.ConfigProvider
 import zio.config._
 import zio.config.examples.ZioOps
 import zio.config.refined._
+import zio.{Config, ConfigProvider, IO}
 
 object RefinedReadConfig extends App {
   case class RefinedProd(
@@ -13,7 +13,7 @@ object RefinedReadConfig extends App {
     dbUrl: Option[Refined[String, NonEmpty]]
   )
 
-  def prodConfig =
+  def prodConfig: Config[RefinedProd] =
     (
       refine[String, NonEmpty]("LDAP") zip
         refine[String, NonEmpty]("DB_URL").optional
@@ -31,7 +31,7 @@ object RefinedReadConfig extends App {
 
   import zio.config.magnolia.deriveConfig
 
-  val prodConfigAutomatic =
+  val prodConfigAutomatic: IO[Config.Error, RefinedProd] =
     read(
       deriveConfig[RefinedProd].mapKey(toSnakeCase).mapKey(_.toUpperCase) from ConfigProvider.fromMap(
         configMap

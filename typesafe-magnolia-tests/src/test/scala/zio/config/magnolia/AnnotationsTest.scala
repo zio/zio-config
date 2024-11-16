@@ -3,7 +3,7 @@ package magnolia
 
 import zio.config.typesafe.TypesafeConfigProvider
 import zio.test.Assertion.equalTo
-import zio.test.{assertZIO, Spec, ZIOSpecDefault}
+import zio.test.{Spec, ZIOSpecDefault, assertZIO}
 import zio.{Config, IO}
 
 object AnnotationsTest extends ZIOSpecDefault {

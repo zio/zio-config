@@ -1,14 +1,15 @@
 package zio.config.magnolia
 
-import zio.config._
-import zio.test.Assertion._
-import zio.test._
+import zio.config.*
+import zio.test.*
+import zio.test.Assertion.*
+import zio.{Config, Scope}
 
-import zio.Config, Config._
-import MarkdowSpecUtils._
+import Config.*
+import MarkdowSpecUtils.*
 
 object MarkdownSpec extends BaseSpec {
-  val spec = suite("Markdown Spec")(
+  val spec: Spec[Environment & (TestEnvironment & Scope), Any] = suite("Markdown Spec")(
     test("toGithubFlavouredMarkdown works for a complex config") {
       val markdown =
         generateDocs(deriveConfig[RawConfig]).toTable.toGithubFlavouredMarkdown

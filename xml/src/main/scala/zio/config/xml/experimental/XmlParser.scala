@@ -1,10 +1,10 @@
 package zio.config.xml.experimental
 
 import zio.Chunk
+import zio.parser.{Parser, StringParserError}
+
 import Parsers._
 import XmlObject.TagElement
-import zio.parser.Parser
-import zio.parser.StringParserError
 
 object XmlParser {
 

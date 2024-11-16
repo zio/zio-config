@@ -1,7 +1,6 @@
 package zio.config
 
-import zio.{Config, ConfigProvider}
-import zio.IO
+import zio.{Config, ConfigProvider, IO}
 
 import scala.deriving.Mirror
 

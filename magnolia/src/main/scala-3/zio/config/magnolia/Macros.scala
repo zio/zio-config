@@ -1,7 +1,8 @@
 package zio.config.magnolia
 
+import zio.config.derivation.*
+
 import scala.quoted.*
-import zio.config.derivation._
 
 object Macros:
   inline def nameOf[T]: List[name]                                   = ${ anns[T, name]("zio.config.derivation.name") }
