@@ -49,6 +49,29 @@ inThisBuild(
   )
 )
 
+lazy val root =
+  project
+    .in(file("."))
+    .settings(publish / skip := true)
+    .aggregate(
+      zioConfig.projectRefs ++
+        zioConfigAws.projectRefs ++
+        zioConfigZioAws.projectRefs ++
+        zioConfigRefined.projectRefs ++
+        zioConfigPureconfig.projectRefs ++
+        examples.projectRefs ++
+        zioConfigDerivation.projectRefs ++
+        zioConfigMagnolia.projectRefs ++
+        zioConfigTypesafe.projectRefs ++
+        zioConfigYaml.projectRefs ++
+        zioConfigXml.projectRefs ++
+        zioConfigScalaz.projectRefs ++
+        zioConfigCats.projectRefs ++
+        zioConfigEnumeratum.projectRefs ++
+        zioConfigTypesafeMagnoliaTests.projectRefs ++
+        docs.projectRefs: _*
+    )
+
 lazy val zioConfig = projectMatrix
   .in(file("core"))
   .settings(stdSettings(Some("zio-config")))
