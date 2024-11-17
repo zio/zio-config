@@ -68,7 +68,7 @@ jobs:
         run: sbt ciCheckGithubWorkflow
       - name: Lint
         run: sbt lint
-      - name: Check mima
+      - name: Check binary compatibility
         run: sbt checkMima
   test:
     name: Test

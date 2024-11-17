@@ -36,16 +36,7 @@ inThisBuild(
     javaPlatform              := Versions.JdkReleaseVersion,
     ciEnabledBranches         := Seq("master", "series/4.x"),
     ciDefaultJavaDistribution := "temurin",
-    ciLintJobs                := ciLintJobs.value.map(job =>
-      job.copy(steps =
-        job.steps ++ Seq(
-          zio.sbt.githubactionsnative.Step.SingleStep(
-            name = "Check mima",
-            run = Some("sbt checkMima")
-          )
-        )
-      )
-    )
+    ciCheckMima               := true
   )
 )
 
