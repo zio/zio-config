@@ -36,7 +36,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          check-latest: 'true'
+          check-latest: true
       - name: Cache Dependencies
         uses: coursier/cache-action@v6
       - name: Check all code compiles
@@ -61,7 +61,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          check-latest: 'true'
+          check-latest: true
       - name: Cache Dependencies
         uses: coursier/cache-action@v6
       - name: Check if the site workflow is up to date
@@ -97,7 +97,7 @@ jobs:
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
-          check-latest: 'true'
+          check-latest: true
       - name: Cache Dependencies
         uses: coursier/cache-action@v6
       - name: Git Checkout
@@ -123,7 +123,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          check-latest: 'true'
+          check-latest: true
       - name: Cache Dependencies
         uses: coursier/cache-action@v6
       - name: Generate Readme
@@ -153,7 +153,7 @@ jobs:
           branch: zio-sbt-website/update-readme
           commit-message: Update README.md
           token: ${{ steps.generate-token.outputs.token }}
-          delete-branch: 'true'
+          delete-branch: true
           title: Update README.md
       - name: Approve PR
         if: ${{ steps.cpr.outputs.pull-request-number }}
@@ -197,7 +197,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          check-latest: 'true'
+          check-latest: true
       - name: Cache Dependencies
         uses: coursier/cache-action@v6
       - name: Release
@@ -228,7 +228,7 @@ jobs:
         with:
           distribution: temurin
           java-version: '17'
-          check-latest: 'true'
+          check-latest: true
       - name: Cache Dependencies
         uses: coursier/cache-action@v6
       - name: Setup NodeJs

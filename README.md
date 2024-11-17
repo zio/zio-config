@@ -25,7 +25,7 @@ If you are only interested in automatic derivation of configuration, find the de
 In order to use this library, we need to add the following line in our `build.sbt` file:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config" % "<version>" 
+libraryDependencies += "dev.zio" %% "zio-config" % "4.0.2" 
 ```
 
 # Quick Start
@@ -33,10 +33,10 @@ libraryDependencies += "dev.zio" %% "zio-config" % "<version>"
 Let's add these four lines to our `build.sbt` file as we are using these modules in our examples:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config"          % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-refined"  % "<version>"
+libraryDependencies += "dev.zio" %% "zio-config"          % "4.0.2"
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "4.0.2"
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "4.0.2"
+libraryDependencies += "dev.zio" %% "zio-config-refined"  % "4.0.2"
 ```
 
 There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples)
