@@ -1,0 +1,7 @@
+-XX:+PrintCommandLineFlags
+-Xms6G
+-Xmx6G
+-Xss2M
+-XX:+UseG1GC
+-XX:ReservedCodeCacheSize=512M
+-XX:NonProfiledCodeHeapSize=256M

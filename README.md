@@ -4,10 +4,7 @@
 
 # ZIO Config
 
-# ZIO Config
-
 [ZIO Config](https://zio.dev/zio-config/) is a ZIO-based library and act as an extension to core library ZIO's `Config` language.
-
 
 [![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)](https://github.com/zio/zio/wiki/Project-Stages) ![CI Badge](https://github.com/zio/zio-config/workflows/CI/badge.svg) [![Sonatype Releases](https://img.shields.io/nexus/r/https/oss.sonatype.org/dev.zio/zio-config_2.13.svg?label=Sonatype%20Release)](https://oss.sonatype.org/content/repositories/releases/dev/zio/zio-config_2.13/) [![Sonatype Snapshots](https://img.shields.io/nexus/s/https/oss.sonatype.org/dev.zio/zio-config_2.13.svg?label=Sonatype%20Snapshot)](https://oss.sonatype.org/content/repositories/snapshots/dev/zio/zio-config_2.13/) [![javadoc](https://javadoc.io/badge2/dev.zio/zio-config-docs_2.13/javadoc.svg)](https://javadoc.io/doc/dev.zio/zio-config-docs_2.13) [![ZIO Config](https://img.shields.io/github/stars/zio/zio-config?style=social)](https://github.com/zio/zio-config)
 
@@ -28,7 +25,7 @@ If you are only interested in automatic derivation of configuration, find the de
 In order to use this library, we need to add the following line in our `build.sbt` file:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config" % "<version>" 
+libraryDependencies += "dev.zio" %% "zio-config" % "4.0.2" 
 ```
 
 # Quick Start
@@ -36,10 +33,10 @@ libraryDependencies += "dev.zio" %% "zio-config" % "<version>"
 Let's add these four lines to our `build.sbt` file as we are using these modules in our examples:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config"          % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-refined"  % "<version>"
+libraryDependencies += "dev.zio" %% "zio-config"          % "4.0.2"
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "4.0.2"
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "4.0.2"
+libraryDependencies += "dev.zio" %% "zio-config-refined"  % "4.0.2"
 ```
 
 There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples)
@@ -50,11 +47,11 @@ Learn more on the [ZIO Config homepage](https://zio.dev/zio-config/)!
 
 ## Contributing
 
-For the general guidelines, see ZIO [contributor's guide](https://zio.dev/about/contributing).
+For the general guidelines, see ZIO [contributor's guide](https://zio.dev/contributor-guidelines).
 
 ## Code of Conduct
 
-See the [Code of Conduct](https://zio.dev/about/code-of-conduct)
+See the [Code of Conduct](https://zio.dev/code-of-conduct)
 
 ## Support
 
