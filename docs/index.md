@@ -6,7 +6,7 @@ sidebar_label: "Getting Started"
 
 [ZIO Config](https://zio.dev/zio-config/) is a ZIO-based library and act as an extension to core library ZIO's `Config` language.
 
-[![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)](https://github.com/zio/zio/wiki/Project-Stages) ![CI Badge](https://github.com/zio/zio-config/workflows/CI/badge.svg) [![Sonatype Releases](https://img.shields.io/nexus/r/https/oss.sonatype.org/dev.zio/zio-config_2.13.svg?label=Sonatype%20Release)](https://oss.sonatype.org/content/repositories/releases/dev/zio/zio-config_2.13/) [![Sonatype Snapshots](https://img.shields.io/nexus/s/https/oss.sonatype.org/dev.zio/zio-config_2.13.svg?label=Sonatype%20Snapshot)](https://oss.sonatype.org/content/repositories/snapshots/dev/zio/zio-config_2.13/) [![javadoc](https://javadoc.io/badge2/dev.zio/zio-config-docs_2.13/javadoc.svg)](https://javadoc.io/doc/dev.zio/zio-config-docs_2.13) [![ZIO Config](https://img.shields.io/github/stars/zio/zio-config?style=social)](https://github.com/zio/zio-config)
+@PROJECT_BADGES@
 
 Let's enumerate some key features of this library:
 
@@ -25,7 +25,7 @@ If you are only interested in automatic derivation of configuration, find the de
 In order to use this library, we need to add the following line in our `build.sbt` file:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config" % "<version>" 
+libraryDependencies += "dev.zio" %% "zio-config" % "@VERSION@" 
 ```
 
 # Quick Start
@@ -33,10 +33,10 @@ libraryDependencies += "dev.zio" %% "zio-config" % "<version>"
 Let's add these four lines to our `build.sbt` file as we are using these modules in our examples:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config"          % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-refined"  % "<version>"
+libraryDependencies += "dev.zio" %% "zio-config"          % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-refined"  % "@VERSION@"
 ```
 
 There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples)
