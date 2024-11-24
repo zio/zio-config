@@ -63,7 +63,7 @@ val zioAwsVersion     = "7.28.29.4"
 val zioVersion        = "2.1.12"
 val magnoliaVersion   = "0.17.0"
 val refinedVersion    = "0.11.2"
-val pureconfigVersion = "0.17.7"
+val pureconfigVersion = "0.17.8"
 
 lazy val magnoliaDependencies =
   libraryDependencies ++= {
