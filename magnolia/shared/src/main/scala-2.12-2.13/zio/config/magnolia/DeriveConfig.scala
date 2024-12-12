@@ -92,6 +92,7 @@ object DeriveConfig {
     case object NoneModifier            extends CaseModifier
     case class Prefix(prefix: String)   extends KeyModifier
     case class Postfix(postfix: String) extends KeyModifier
+    case class Suffix(suffix: String)   extends KeyModifier
 
     def getModifierFunction(keyModifier: KeyModifier): String => String =
       keyModifier match {
@@ -99,6 +100,7 @@ object DeriveConfig {
         case SnakeCase        => toSnakeCase
         case Prefix(prefix)   => addPrefixToKey(prefix)
         case Postfix(postfix) => addPostFixToKey(postfix)
+        case Suffix(suffix)   => addSuffixToKey(suffix)
         case NoneModifier     => identity
       }
   }
@@ -144,6 +146,7 @@ object DeriveConfig {
     val modifiers = annotations.collect {
       case p: prefix  => KeyModifier.Prefix(p.prefix)
       case p: postfix => KeyModifier.Postfix(p.postfix)
+      case p: suffix  => KeyModifier.Suffix(p.suffix)
     }.toList
 
     val caseModifier = annotations.collectFirst {

@@ -60,4 +60,6 @@ final case class discriminator(keyName: String = "type") extends StaticAnnotatio
 final case class kebabCase()                             extends StaticAnnotation
 final case class snakeCase()                             extends StaticAnnotation
 final case class prefix(prefix: String)                  extends StaticAnnotation
+// @deprecated("Use `suffix` instead", "4.0.3")
 final case class postfix(postfix: String)                extends StaticAnnotation
+final case class suffix(suffix: String)                  extends StaticAnnotation

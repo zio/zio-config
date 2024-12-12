@@ -16,6 +16,7 @@ import DeriveConfig._
 import zio.{Chunk, Config, ConfigProvider, LogLevel}, Config._
 import zio.config.syntax._
 import zio.config.derivation._
+import scala.annotation.nowarn
 
 final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None) {
   def ??(description: String): DeriveConfig[A] =
@@ -36,7 +37,29 @@ final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.
 
 object DeriveConfig {
 
-  def apply[A](implicit ev: DeriveConfig[A]): DeriveConfig[A] =
+  sealed trait KeyModifier
+  sealed trait CaseModifier extends KeyModifier
+
+  object KeyModifier {
+    case object KebabCase               extends CaseModifier
+    case object SnakeCase               extends CaseModifier
+    case object NoneModifier            extends CaseModifier
+    case class Prefix(prefix: String)   extends KeyModifier
+    case class Postfix(postfix: String) extends KeyModifier
+    case class Suffix(suffix: String)   extends KeyModifier
+
+    def getModifierFunction(keyModifier: KeyModifier): String => String =
+      keyModifier match {
+        case KebabCase        => toKebabCase
+        case SnakeCase        => toSnakeCase
+        case Prefix(prefix)   => addPrefixToKey(prefix)
+        case Postfix(postfix) => addPostFixToKey(postfix)
+        case Suffix(suffix)   => addSuffixToKey(suffix)
+        case NoneModifier     => identity
+      }
+  }
+
+  def apply[A](using ev: DeriveConfig[A]): DeriveConfig[A] =
     ev
 
   def from[A](desc: Config[A]) =
@@ -44,22 +67,24 @@ object DeriveConfig {
 
   sealed trait Metadata {
     def originalName: String = this match {
-      case Metadata.Object(name, _)    => name.originalName
-      case Metadata.Product(name, _)   => name.originalName
-      case Metadata.Coproduct(name, _) => name.originalName
+      case Metadata.Object(name, _)       => name.originalName
+      case Metadata.Product(name, _, _)   => name.originalName
+      case Metadata.Coproduct(name, _, _) => name.originalName
     }
 
     def alternativeNames: List[String] = this match {
-      case Metadata.Object(_, _)       => Nil
-      case Metadata.Product(name, _)   => name.alternativeNames
-      case Metadata.Coproduct(name, _) => name.alternativeNames
+      case Metadata.Object(_, _)          => Nil
+      case Metadata.Product(name, _, _)   => name.alternativeNames
+      case Metadata.Coproduct(name, _, _) => name.alternativeNames
     }
   }
 
   object Metadata {
-    final case class Object[T](name: ProductName, constValue: T)              extends Metadata
-    final case class Product(name: ProductName, fields: List[FieldName])      extends Metadata
-    final case class Coproduct(name: CoproductName, metadata: List[Metadata]) extends Metadata
+    final case class Object[T](name: ProductName, constValue: T) extends Metadata
+    final case class Product(name: ProductName, fields: List[FieldName], keyModifiers: List[KeyModifier])
+        extends Metadata
+    final case class Coproduct(name: CoproductName, metadata: List[Metadata], keyModifiers: List[KeyModifier])
+        extends Metadata
   }
 
   final case class FieldName(originalName: String, alternativeNames: List[String], descriptions: List[String])
@@ -128,7 +153,7 @@ object DeriveConfig {
           desc.metadata
         ) :: summonDeriveConfigForCoProduct[ts]
 
-  inline def summonDeriveConfigAll[T <: Tuple]: List[DeriveConfig[_]] =
+  inline def summonDeriveConfigAll[T <: Tuple]: List[DeriveConfig[?]] =
     inline erasedValue[T] match
       case _: EmptyTuple => Nil
       case _: (t *: ts)  =>
@@ -140,20 +165,29 @@ object DeriveConfig {
       case _: (t *: ts)  => constValue[t].toString :: labelsOf[ts]
 
   inline def customNamesOf[T]: List[String] =
-    Macros.nameOf[T].map(_.name)
+    AnnotationMacros.nameOf[T].map(_.name)
 
   inline def customFieldNamesOf[T]: Map[String, name] =
-    Macros.fieldNameOf[T].flatMap { case (str, nmes) => nmes.map(name => (str, name)) }.toMap
+    AnnotationMacros.fieldNamesOf[T].flatMap { case (str, nmes) => nmes.map(name => (str, name)) }.toMap
 
   inline given derived[T](using m: Mirror.Of[T]): DeriveConfig[T] =
+    lazy val keyModifiers =
+      (AnnotationMacros.keyModifiers[T] ++ AnnotationMacros.caseModifier[T])
+        .map:
+          case p: prefix          => KeyModifier.Prefix(p.prefix)
+          case p: postfix @nowarn => KeyModifier.Postfix(p.postfix)
+          case p: suffix          => KeyModifier.Suffix(p.suffix)
+          case _: kebabCase       => KeyModifier.KebabCase
+          case _: snakeCase       => KeyModifier.SnakeCase
+
     inline m match
       case s: Mirror.SumOf[T] =>
         val coproductName: CoproductName =
           CoproductName(
             originalName = constValue[m.MirroredLabel],
             alternativeNames = customNamesOf[T],
-            descriptions = Macros.documentationOf[T].map(_.describe),
-            typeDiscriminator = Macros.discriminator[T].headOption.map(_.keyName)
+            descriptions = AnnotationMacros.descriptionOf[T].map(_.describe),
+            typeDiscriminator = AnnotationMacros.discriminatorOf[T].headOption.map(_.keyName)
           )
 
         lazy val subClassDescriptions =
@@ -162,14 +196,14 @@ object DeriveConfig {
         lazy val desc =
           mergeAllProducts(subClassDescriptions.map(castTo[DeriveConfig[T]]), coproductName.typeDiscriminator)
 
-        DeriveConfig.from(tryAllKeys(desc.desc, None, coproductName.alternativeNames))
+        DeriveConfig.from(tryAllKeys(desc.desc, None, coproductName.alternativeNames, keyModifiers))
 
       case m: Mirror.ProductOf[T] =>
         val productName =
           ProductName(
             originalName = constValue[m.MirroredLabel],
             alternativeNames = customNamesOf[T],
-            descriptions = Macros.documentationOf[T].map(_.describe)
+            descriptions = AnnotationMacros.descriptionOf[T].map(_.describe)
           )
 
         lazy val originalFieldNamesList =
@@ -179,10 +213,10 @@ object DeriveConfig {
           customFieldNamesOf[T]
 
         lazy val documentations =
-          Macros.fieldDocumentationOf[T].toMap
+          AnnotationMacros.fieldDescriptionsOf[T].toMap
 
         lazy val fieldAndDefaultValues: Map[String, Any] =
-          Macros.defaultValuesOf[T].toMap
+          DefaultValueMacros.defaultValuesOf[T].toMap
 
         lazy val fieldNames =
           originalFieldNamesList.foldRight(Nil: List[FieldName]) { (str, list) =>
@@ -201,6 +235,7 @@ object DeriveConfig {
           fieldConfigsWithDefaultValues,
           productName,
           fieldNames,
+          keyModifiers,
           lst => m.fromProduct(Tuple.fromArray(lst.toArray[Any])),
           castTo[Product](_).productIterator.toList
         )
@@ -216,10 +251,10 @@ object DeriveConfig {
           allDescs
             .map(desc =>
               desc.metadata match {
-                case Some(Metadata.Product(productName, fields)) if (fields.nonEmpty) =>
-                  tryAllKeys(desc.desc, Some(productName.originalName), productName.alternativeNames)
-                case Some(_)                                                          => desc.desc
-                case None                                                             => desc.desc
+                case Some(Metadata.Product(productName, fields, keyModifiers)) if (fields.nonEmpty) =>
+                  tryAllKeys(desc.desc, Some(productName.originalName), productName.alternativeNames, keyModifiers)
+                case Some(_)                                                                        => desc.desc
+                case None                                                                           => desc.desc
               }
             )
             .reduce(_ orElse _)
@@ -238,7 +273,7 @@ object DeriveConfig {
 
                   case None => Nil
                 }
-              }: _*
+              }*
             )
       }
 
@@ -248,7 +283,7 @@ object DeriveConfig {
     defaultValues: Map[String, Any],
     fieldNames: List[String],
     descriptors: List[DeriveConfig[Any]]
-  ): List[DeriveConfig[_]] =
+  ): List[DeriveConfig[?]] =
     descriptors.zip(fieldNames).map { case (desc, fieldName) =>
       defaultValues.get(fieldName) match {
         case Some(any) => DeriveConfig(desc.desc.withDefault(any), desc.metadata)
@@ -257,9 +292,10 @@ object DeriveConfig {
     }
 
   def mergeAllFields[T](
-    allDescs: => List[DeriveConfig[_]],
+    allDescs: => List[DeriveConfig[?]],
     productName: ProductName,
     fieldNames: => List[FieldName],
+    keyModifiers: List[KeyModifier],
     f: List[Any] => T,
     g: T => List[Any]
   ): DeriveConfig[T] =
@@ -276,23 +312,37 @@ object DeriveConfig {
     else
       val listOfDesc =
         fieldNames.zip(allDescs).map { case (fieldName, desc) =>
-          val fieldDesc = tryAllKeys(desc.desc, Some(fieldName.originalName), fieldName.alternativeNames)
+          val fieldDesc = tryAllKeys(desc.desc, Some(fieldName.originalName), fieldName.alternativeNames, keyModifiers)
           fieldName.descriptions.foldRight(fieldDesc)((doc, desc) => desc ?? doc)
         }
 
       val descOfList =
-        Config.collectAll(listOfDesc.head, listOfDesc.tail: _*)
+        Config.collectAll(listOfDesc.head, listOfDesc.tail*)
 
-      DeriveConfig(descOfList.map(f), Some(Metadata.Product(productName, fieldNames)))
+      DeriveConfig(descOfList.map(f), Some(Metadata.Product(productName, fieldNames, keyModifiers)))
 
   def tryAllKeys[A](
     desc: Config[A],
     originalKey: Option[String],
-    alternativeKeys: List[String]
+    alternativeKeys: List[String],
+    keyModifiers: List[KeyModifier]
   ): Config[A] =
+
+    val sortedKeyModifiers = keyModifiers.sortWith {
+      case (a: CaseModifier, b: CaseModifier) => false
+      case (a: CaseModifier, _)               => false
+      case (_, b: CaseModifier)               => true
+      case _                                  => false
+    }
+
+    val modifyKey: String => String =
+      sortedKeyModifiers.map(KeyModifier.getModifierFunction).foldLeft(_)((key, modifier) => modifier(key))
+
     alternativeKeys match {
-      case Nil  => originalKey.fold(desc)(desc.nested(_))
-      case keys => keys.view.map(desc.nested(_)).reduce(_ orElse _)
+      case Nil  =>
+        originalKey.fold(desc)(k => desc.nested(modifyKey(k)))
+      // case keys => keys.view.map(k => desc.nested(modifyKey(k))).reduce(_ orElse _) // Looks like the Scala 3 implementation modifies alternative names while the Scala 2 implementations treats them as is.
+      case keys => keys.view.map(k => desc.nested(k)).reduce(_ orElse _)
     }
 
   def castTo[T](a: Any): T =
