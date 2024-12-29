@@ -2,7 +2,7 @@ package zio.config.magnolia
 
 import magnolia._
 import zio.config._
-import zio.{Chunk, Config, LogLevel}
+import zio.{Chunk, NonEmptyChunk, Config, LogLevel}
 
 import java.net.URI
 import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetDateTime}
@@ -74,6 +74,9 @@ object DeriveConfig {
 
   implicit def implicitChunkDesc[A: DeriveConfig]: DeriveConfig[Chunk[A]] =
     DeriveConfig(Config.chunkOf(DeriveConfig[A].desc))
+
+  implicit def implicitNonEmptyChunkDesc[A: DeriveConfig]: DeriveConfig[NonEmptyChunk[A]] =
+    DeriveConfig(Config.nonEmptyChunkOf(DeriveConfig[A].desc))
 
   implicit def implicitMapDesc[A: DeriveConfig]: DeriveConfig[Map[String, A]] =
     DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc))
