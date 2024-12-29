@@ -10,7 +10,7 @@ trait TupleConversion[A, B] {
 object TupleConversion extends ImplicitTupleConversion
 
 trait ImplicitTupleConversion {
-  inline given autoTupleConversion[Prod <: Product](using
+  given autoTupleConversion[Prod <: Product](using
     m: Mirror.ProductOf[Prod]
   ): TupleConversion[Prod, m.MirroredElemTypes] =
     new TupleConversion[Prod, m.MirroredElemTypes] {
@@ -20,12 +20,11 @@ trait ImplicitTupleConversion {
 
   inline given autoTupleConversion1[Prod <: Product, A](using
     c: TupleConversion[Prod, Tuple1[A]]
-  ): TupleConversion[Prod, A] =
-    new TupleConversion[Prod, A] {
-      def to(a: Prod): A   = {
-        val Tuple1(v) = c.to(a)
-        v
-      }
-      def from(b: A): Prod = c.from(Tuple1(b))
+  ): TupleConversion[Prod, A] with {
+    def to(a: Prod): A   = {
+      val Tuple1(v) = c.to(a)
+      v
     }
+    def from(b: A): Prod = c.from(Tuple1(b))
+  }
 }
