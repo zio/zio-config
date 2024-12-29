@@ -28,7 +28,7 @@ jobs:
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Check Document Generation
-        run: ./sbt docs/compileDocs
+        run: sbt docs/compileDocs
 
   lint:
     runs-on: ubuntu-22.04
