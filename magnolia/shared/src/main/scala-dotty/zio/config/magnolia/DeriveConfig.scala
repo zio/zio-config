@@ -4,7 +4,7 @@ import zio.Config.*
 import zio.config.*
 import zio.config.derivation.*
 import zio.config.magnolia.DeriveConfig.*
-import zio.{Chunk, Config, LogLevel}
+import zio.{Chunk, Config, LogLevel, NonEmptyChunk}
 
 import java.net.URI
 import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetDateTime, *}
