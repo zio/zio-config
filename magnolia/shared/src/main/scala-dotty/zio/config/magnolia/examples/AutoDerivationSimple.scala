@@ -8,29 +8,29 @@ import zio.Unsafe
 import zio.IO
 import zio.config.syntax._
 
-object AutoDerivationSimple extends App :
+object AutoDerivationSimple extends App:
   // Use of Either is almost prohibited by the looks of it
   val sourceMap =
     Map(
-      "a.b-c" -> "v1",
-      "a.c-d" -> "C",
-      "a.d" -> "C,C",
+      "a.b-c"       -> "v1",
+      "a.c-d"       -> "C",
+      "a.d"         -> "C,C",
       "a.f.g.value" -> "v2",
-      "a.g" -> "F",
+      "a.g"         -> "F",
       "a.h.g.value" -> "GValue",
-      "a.i.p" -> "Q",
-      "a.j.p.t.u" -> "v3",
-      "a.z.type" ->  "AbcDef",
-      "a.z.name" -> "hello",
-      "a.y" -> "HmmAbc"
+      "a.i.p"       -> "Q",
+      "a.j.p.t.u"   -> "v3",
+      "a.z.type"    -> "AbcDef",
+      "a.z.name"    -> "hello",
+      "a.y"         -> "HmmAbc"
     )
 
   val source =
     ConfigProvider.fromMap(
-    sourceMap,
-    pathDelim = ".",
-    seqDelim = ","
-  )
+      sourceMap,
+      pathDelim = ".",
+      seqDelim = ","
+    )
 
   val io: IO[String, A] =
     source.load(deriveConfig[A].toKebabCase).mapError(_.prettyPrint())
@@ -40,5 +40,5 @@ object AutoDerivationSimple extends App :
   }
 
   println(readResult)
- // A(B(v1,C(),List(C(), C()),None,G(v2),F,G(GValue),Q,T(v3),Abc(hello)))
+// A(B(v1,C(),List(C(), C()),None,G(v2),F,G(GValue),Q,T(v3),Abc(hello)))
 end AutoDerivationSimple

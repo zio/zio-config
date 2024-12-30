@@ -1,6 +1,6 @@
 package zio.config.magnolia
 
-import zio.ConfigProvider
+import zio.{Config, ConfigProvider}
 import zio.config._
 import zio.test.Assertion._
 import zio.test._
@@ -19,6 +19,14 @@ object AutomaticConfigSpec extends ZIOSpecDefault {
 
           val source =
             ConfigProvider.fromMap(environment)
+
+          assertZIO(source.load(configDesc).either)(isRight)
+        }
+      },
+      test("derives syntax spec") {
+        check(genEnvironment) { environment =>
+          val configDesc = summon[Config[MyConfigDerived]]
+          val source     = ConfigProvider.fromMap(environment)
 
           assertZIO(source.load(configDesc).either)(isRight)
         }
@@ -62,6 +70,22 @@ object AutomaticConfigTestUtils {
     lastVisited: LocalDateTime,
     id: UUID
   )
+
+  final case class MyConfigDerived(
+    aws: Aws,
+    cost: Price,
+    dburl: DbUrl,
+    port: Int,
+    amount: Option[Long],
+    quantity: Either[Long, String],
+    default: Int = 1,
+    anotherDefault: Boolean = true,
+    descriptions: List[String],
+    created: LocalDate,
+    updated: LocalTime,
+    lastVisited: LocalDateTime,
+    id: UUID
+  ) derives Config
 
   private val genPriceDescription             = Gen.const(Description("some description"))
   private val genCurrency: Gen[Any, Currency] = Gen.double(10.0, 20.0).map(Currency.apply)

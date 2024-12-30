@@ -1,9 +1,9 @@
 package zio.config
 
-import zio.ConfigProvider
-
-import zio.Config
+import zio.{Config, ConfigProvider}
 import zio.IO
+
+import scala.deriving.Mirror
 
 package object magnolia {
   def deriveConfig[A](implicit ev: DeriveConfig[A]) =
@@ -26,4 +26,12 @@ package object magnolia {
     def autoLoad[A: DeriveConfig]: IO[Config.Error, A] =
       configProvider.load(DeriveConfig[A].desc)
   }
+
+  /**
+   * Enables derivation of Config via the `derives Config` syntax
+   */
+  extension (? : Config.type) {
+    inline def derived[A](using Mirror.Of[A]): Config[A] = DeriveConfig.derived[A].desc
+  }
+
 }
