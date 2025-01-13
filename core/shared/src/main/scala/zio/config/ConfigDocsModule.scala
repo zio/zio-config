@@ -217,7 +217,7 @@ trait ConfigDocsModule {
    * `ConfigDocs` to a readable format.
    *
    * @param rows:
-   *   A table consist of multiple `TableRow`s where each `TableRow` holds the information about the config path.
+   *   A table consist of multiple `TableRow` s where each `TableRow` holds the information about the config path.
    */
   sealed case class Table(rows: List[TableRow]) { self =>
     def ++(that: Table): Table =

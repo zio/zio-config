@@ -257,20 +257,18 @@ lazy val examples = crossProject(JVMPlatform)
     magnoliaDependencies,
     refinedDependencies,
     runAllExamples :=
-      Def
-        .taskDyn({
-          val classes = (Compile / discoveredMainClasses).value
-          val runs    = (Compile / runMain)
+      Def.taskDyn {
+        val classes = (Compile / discoveredMainClasses).value
+        val runs    = (Compile / runMain)
 
-          val runTasks = classes.map { cc =>
-            Def.task {
-              runs.toTask(s" $cc").value
-            }
+        val runTasks = classes.map { cc =>
+          Def.task {
+            runs.toTask(s" $cc").value
           }
+        }
 
-          Def.sequential(runTasks)
-        })
-        .value
+        Def.sequential(runTasks)
+      }.value
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigYaml)
 
