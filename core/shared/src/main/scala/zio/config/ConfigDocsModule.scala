@@ -432,13 +432,14 @@ trait ConfigDocsModule {
      */
     def githubFlavoured: (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, index, fieldNameOrFormat) => {
-        val headingStr =
-          heading.path
+        val headingStr = {
+          "#" + heading.path
             .map(_.asString(Some("Field Descriptions")))
             .mkString
             .toLowerCase
             .replace(".", "")
-            .replace(" ", "")
+            .replace(" ", "-")
+        }
 
         val name = fieldNameOrFormat.fold(
           _.asString(Some("Field Descriptions")),

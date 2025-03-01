@@ -15,17 +15,17 @@ object GenerateDocsTest extends BaseSpec {
           s"""|## Configuration Details
               |
               |
-              ||FieldName|Format                     |Description|Sources|
-              ||---      |---                        |---        |---    |
-              ||         |[all-of](fielddescriptions)|           |       |
+              ||FieldName|Format                       |Description|Sources|
+              ||---      |---                          |---        |---    |
+              ||         |[all-of](#field-descriptions)|           |       |
               |
               |### Field Descriptions
               |
-              ||FieldName                 |Format               |Description                        |Sources|
-              ||---                       |---                  |---                                |---    |
-              ||SECRET                    |primitive            |a text property, Application secret|       |
-              ||[CREDENTIALS](credentials)|[all-of](credentials)|Credentials                        |       |
-              ||[DATABASE](database)      |[all-of](database)   |Database                           |       |
+              ||FieldName                  |Format                |Description                        |Sources|
+              ||---                        |---                   |---                                |---    |
+              ||SECRET                     |primitive             |a text property, Application secret|       |
+              ||[CREDENTIALS](#credentials)|[all-of](#credentials)|Credentials                        |       |
+              ||[DATABASE](#database)      |[all-of](#database)   |Database                           |       |
               |
               |### CREDENTIALS
               |
