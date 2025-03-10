@@ -1,5 +1,7 @@
 import BuildHelper.*
 
+import scala.scalanative.build.Mode
+
 welcomeMessage
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
@@ -35,6 +37,10 @@ addCommandAlias("testAll", "; ++2.12; root2-12/test; ++2.13!; root2-13/test; ++3
 addCommandAlias(
   "testJS",
   ";zioConfigJS/test"
+)
+addCommandAlias(
+  "testNative",
+  ";zioConfigNative/test"
 )
 addCommandAlias(
   "testJVM212",
@@ -86,8 +92,8 @@ lazy val pureconfigDependencies =
 lazy val scala212projects = Seq[ProjectReference](
   zioConfigJS,
   zioConfigJVM,
-  zioConfigAwsJVM,
   zioConfigNative,
+  zioConfigAwsJVM,
   zioConfigTypesafeJVM,
   zioConfigDerivationJVM,
   zioConfigYamlJVM,
@@ -109,6 +115,7 @@ lazy val scala3projects =
   Seq[ProjectReference](
     zioConfigJS,
     zioConfigJVM,
+    zioConfigNative,
     zioConfigAwsJVM,
     zioConfigZioAwsJVM,
     zioConfigCatsJVM,
@@ -155,24 +162,24 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .enablePlugins(BuildInfoPlugin)
   .settings(buildInfoSettings("zio.config"))
   .settings(macroDefinitionSettings)
-  .settings(enableMimaSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio"                %% "zio"                     % zioVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.12.0",
-      "dev.zio"                %% "zio-test"                % zioVersion % Test
+      "dev.zio"                %%% "zio"                     % zioVersion,
+      "org.scala-lang.modules" %%% "scala-collection-compat" % "2.12.0",
+      "dev.zio"                %%% "zio-test"                % zioVersion % Test,
+      "dev.zio"                %%% "zio-test-sbt"            % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
   )
+  .jvmSettings(enableMimaSettings)
+  .jsSettings(jsSettings)
+  .nativeSettings(nativeSettings)
 
 lazy val zioConfigJS = zioConfig.js
-  .settings(libraryDependencies += "dev.zio" %%% "zio-test-sbt" % zioVersion % Test)
 
 lazy val zioConfigJVM = zioConfig.jvm
-  .settings(libraryDependencies += "dev.zio" %%% "zio-test-sbt" % zioVersion % Test)
 
 lazy val zioConfigNative = zioConfig.native
-  .settings(nativeSettings)
 
 lazy val zioConfigAws = crossProject(JVMPlatform)
   .in(file("aws"))

@@ -74,7 +74,7 @@ jobs:
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
       - name: Run JS tests
-        if: ${{ matrix.platform == 'JS' && !startsWith(matrix.scala, '3.') }}
+        if: ${{ matrix.platform == 'JS'}}
         run: sbt ++${{ matrix.scala }}! testJS
       - name: Run 2.12 JVM tests
         if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '2.12') }}
@@ -85,6 +85,9 @@ jobs:
       - name: Run 3.x JVM tests
         if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '3.') }}
         run: sbt ++${{ matrix.scala }}! testJVM3x
+      - name: Run Native tests
+        if: ${{ matrix.platform == 'Native'}}
+        run: sbt ++${{ matrix.scala }}! testNative
 
   ci:
     runs-on: ubuntu-22.04

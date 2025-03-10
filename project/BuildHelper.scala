@@ -7,6 +7,9 @@ import sbtbuildinfo.BuildInfoKeys.*
 import sbtcrossproject.CrossPlugin.autoImport.*
 import scalafix.sbt.ScalafixPlugin.autoImport.*
 
+import scala.scalanative.build.Mode
+import scala.scalanative.sbtplugin.ScalaNativePlugin.autoImport.*
+
 object BuildHelper {
   private val versions: String => String = {
     import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
@@ -233,14 +236,19 @@ object BuildHelper {
   )
 
   def jsSettings = Seq(
-    libraryDependencies += "io.github.cquiroz" %%% "scala-java-time"      % "2.2.2",
-    libraryDependencies += "io.github.cquiroz" %%% "scala-java-time-tzdb" % "2.2.2"
+    scalacOptions ++= {
+      if (scalaBinaryVersion.value == "3") Seq("-scalajs")
+      else Seq.empty
+    }
   )
 
   def nativeSettings = Seq(
-    Test / skip             := true,
-    doc / skip              := true,
-    Compile / doc / sources := Seq.empty
+    nativeConfig ~= { cfg =>
+      val os = System.getProperty("os.name").toLowerCase
+      // See https://github.com/zio/zio/releases/tag/v2.1.8
+      if (os.contains("mac")) cfg.withMode(Mode.releaseFast)
+      else cfg
+    }
   )
 
   val scalaReflectTestSettings: List[Setting[_]] = List(
