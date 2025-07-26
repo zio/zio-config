@@ -6,6 +6,7 @@ addSbtPlugin("com.github.cb372"                  % "sbt-explicit-dependencies"  
 addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings"              % "3.0.2")
 addSbtPlugin("com.typesafe"                      % "sbt-mima-plugin"               % "1.1.5")
 addSbtPlugin("com.github.sbt"                    % "sbt-header"                    % "5.11.0")
+addSbtPlugin("org.jetbrains.scala"               % "sbt-ide-settings"              % "1.1.3")
 addSbtPlugin("org.portable-scala"                % "sbt-scala-native-crossproject" % "1.3.2")
 addSbtPlugin("org.portable-scala"                % "sbt-scalajs-crossproject"      % "1.3.2")
 addSbtPlugin("org.scala-js"                      % "sbt-scalajs"                   % "1.20.2")
