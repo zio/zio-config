@@ -2,7 +2,7 @@ package zio.config.magnolia
 
 import magnolia._
 import zio.config._
-import zio.{Chunk, NonEmptyChunk, Config, LogLevel}
+import zio.{Chunk, Config, LogLevel, NonEmptyChunk}
 
 import java.net.URI
 import java.time.{LocalDate, LocalDateTime, LocalTime, OffsetDateTime}
