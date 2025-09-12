@@ -1,6 +1,6 @@
 package zio.config.examples
 
-import zio.{Config, Runtime, ZIO, ZLayer}
+import zio.{Config, Runtime, Scope, ZIO, ZIOAppArgs, ZLayer}
 import zio.config.magnolia.deriveConfig
 import zio.config.typesafe.TypesafeConfigProvider
 
@@ -21,8 +21,9 @@ object StandardPattern extends zio.ZIOAppDefault {
         .kebabCase
     )
 
-  def run = ZIO
-    .config(CombinedArrayValue.config)
-    .debug("result")
-    .exitCode
+  override def run: ZIO[Environment with ZIOAppArgs with Scope, Any, Any] =
+    ZIO
+      .config(CombinedArrayValue.config)
+      .debug("result")
+
 }

@@ -18,11 +18,10 @@ object ReadConfig extends ZIOAppDefault {
   private val configProvider: ConfigProvider =
     ConfigProvider.fromMap(Map("LDAP" -> "ldap", "PORT" -> "1999", "DB_URL" -> "ddd"))
 
-  def run: URIO[Any, ExitCode] =
+  override def run: ZIO[Environment with ZIOAppArgs with Scope, Any, Any] =
     read(Prod.prodConfig from configProvider)
       .foldZIO[Any, Throwable, Any](
         failure => Console.printLine(failure.toString),
         value => Console.printLine(value.toString)
       )
-      .exitCode
 }
