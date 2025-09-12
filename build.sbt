@@ -58,7 +58,7 @@ addCommandAlias(
   "all zioConfigJVM/mimaReportBinaryIssues zioConfigTypesafeJVM/mimaReportBinaryIssues zioConfigDerivationJVM/mimaReportBinaryIssues zioConfigYamlJVM/mimaReportBinaryIssues zioConfigMagnoliaJVM/mimaReportBinaryIssues zioConfigAwsJVM/mimaReportBinaryIssues zioConfigZioAwsJVM/mimaReportBinaryIssues zioConfigXmlJVM/mimaReportBinaryIssues"
 )
 
-val awsVersion        = "1.12.780"
+val awsVersion        = "1.12.791"
 val zioAwsVersion     = "7.28.29.11"
 val zioVersion        = "2.1.14"
 val magnoliaVersion   = "0.17.0"
@@ -159,7 +159,7 @@ lazy val zioConfig = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(
     libraryDependencies ++= Seq(
       "dev.zio"                %% "zio"                     % zioVersion,
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.12.0",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.13.0",
       "dev.zio"                %% "zio-test"                % zioVersion % Test
     ),
     testFrameworks := Seq(new TestFramework("zio.test.sbt.ZTestFramework"))
@@ -257,20 +257,18 @@ lazy val examples = crossProject(JVMPlatform)
     magnoliaDependencies,
     refinedDependencies,
     runAllExamples :=
-      Def
-        .taskDyn({
-          val classes = (Compile / discoveredMainClasses).value
-          val runs    = (Compile / runMain)
+      Def.taskDyn {
+        val classes = (Compile / discoveredMainClasses).value
+        val runs    = (Compile / runMain)
 
-          val runTasks = classes.map { cc =>
-            Def.task {
-              runs.toTask(s" $cc").value
-            }
+        val runTasks = classes.map { cc =>
+          Def.task {
+            runs.toTask(s" $cc").value
           }
+        }
 
-          Def.sequential(runTasks)
-        })
-        .value
+        Def.sequential(runTasks)
+      }.value
   )
   .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigYaml)
 
@@ -316,7 +314,7 @@ lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .settings(enableMimaSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config"       % "1.4.3",
+      "com.typesafe" % "config"       % "1.4.5",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
     ),
@@ -333,7 +331,7 @@ lazy val zioConfigYaml = crossProject(JVMPlatform)
   .settings(enableMimaSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.snakeyaml" % "snakeyaml-engine" % "2.7",
+      "org.snakeyaml" % "snakeyaml-engine" % "2.10",
       "dev.zio"      %% "zio-test"         % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
     ),
@@ -383,7 +381,7 @@ lazy val zioConfigCats = crossProject(JSPlatform, JVMPlatform, NativePlatform)
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core"    % "2.12.0",
+      "org.typelevel" %% "cats-core"    % "2.13.0",
       "dev.zio"       %% "zio-test"     % zioVersion % Test,
       "dev.zio"       %% "zio-test-sbt" % zioVersion % Test
     ),
@@ -399,7 +397,7 @@ lazy val zioConfigEnumeratum = crossProject(JSPlatform, JVMPlatform, NativePlatf
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum"   % "1.7.5",
+      "com.beachape" %% "enumeratum"   % "1.7.6",
       "dev.zio"      %% "zio-test"     % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
     ),
@@ -416,7 +414,7 @@ lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config"       % "1.4.3",
+      "com.typesafe" % "config"       % "1.4.5",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
     ),

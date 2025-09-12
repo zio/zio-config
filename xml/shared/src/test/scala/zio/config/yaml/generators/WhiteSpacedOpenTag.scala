@@ -24,6 +24,6 @@ object WhiteSpacedOpenTag {
                       minPreSpace = 0,
                       minPostSpace = if (attributes.value.isEmpty) 0 else 1
                     ) // a text should be suffixed by atleast 1 space if there is attribute key-value pair otherwise 0
-      stop       <- WhiteSpacedBracket.closed
+      stop <- WhiteSpacedBracket.closed
     } yield WhiteSpacedOpenTag(start, text, attributes, stop)
 }

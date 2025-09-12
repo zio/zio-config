@@ -5,9 +5,9 @@ on:
 
 jobs:
   auto-approve:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: hmarr/auto-approve-action@v3.2.1
-        if: github.actor == 'scala-steward' || github.actor == 'renovate[bot]'
+        if: github.actor == 'zio-scala-steward[bot]'
         with:
           GIT_DEPLOY_KEY: "${{ secrets.GIT_DEPLOY_KEY }}"
