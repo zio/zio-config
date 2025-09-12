@@ -58,7 +58,7 @@ addCommandAlias(
   "all zioConfigJVM/mimaReportBinaryIssues zioConfigTypesafeJVM/mimaReportBinaryIssues zioConfigDerivationJVM/mimaReportBinaryIssues zioConfigYamlJVM/mimaReportBinaryIssues zioConfigMagnoliaJVM/mimaReportBinaryIssues zioConfigAwsJVM/mimaReportBinaryIssues zioConfigZioAwsJVM/mimaReportBinaryIssues zioConfigXmlJVM/mimaReportBinaryIssues"
 )
 
-val awsVersion        = "1.12.780"
+val awsVersion        = "1.12.791"
 val zioAwsVersion     = "7.28.29.11"
 val zioVersion        = "2.1.14"
 val magnoliaVersion   = "0.17.0"
@@ -316,7 +316,7 @@ lazy val zioConfigTypesafe = crossProject(JVMPlatform)
   .settings(enableMimaSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config"       % "1.4.3",
+      "com.typesafe" % "config"       % "1.4.5",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
     ),
@@ -333,7 +333,7 @@ lazy val zioConfigYaml = crossProject(JVMPlatform)
   .settings(enableMimaSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.snakeyaml" % "snakeyaml-engine" % "2.7",
+      "org.snakeyaml" % "snakeyaml-engine" % "2.10",
       "dev.zio"      %% "zio-test"         % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
     ),
@@ -399,7 +399,7 @@ lazy val zioConfigEnumeratum = crossProject(JSPlatform, JVMPlatform, NativePlatf
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum"   % "1.7.5",
+      "com.beachape" %% "enumeratum"   % "1.7.6",
       "dev.zio"      %% "zio-test"     % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
     ),
@@ -416,7 +416,7 @@ lazy val zioConfigTypesafeMagnoliaTests    = crossProject(JVMPlatform)
   .settings(
     publish / skip := true,
     libraryDependencies ++= Seq(
-      "com.typesafe" % "config"       % "1.4.3",
+      "com.typesafe" % "config"       % "1.4.5",
       "dev.zio"     %% "zio-test"     % zioVersion % Test,
       "dev.zio"     %% "zio-test-sbt" % zioVersion % Test
     ),
