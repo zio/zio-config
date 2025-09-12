@@ -59,7 +59,7 @@ addCommandAlias(
 )
 
 val awsVersion        = "1.12.791"
-val zioAwsVersion     = "7.28.29.11"
+val zioAwsVersion     = "7.28.29.19"
 val zioVersion        = "2.1.21"
 val magnoliaVersion   = "0.17.0"
 val refinedVersion    = "0.11.3"
@@ -348,7 +348,7 @@ lazy val zioConfigXml = crossProject(JVMPlatform)
   .settings(enableMimaSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "dev.zio" %% "zio-parser"   % "0.1.9",
+      "dev.zio" %% "zio-parser"   % "0.1.11",
       "dev.zio" %% "zio-test"     % zioVersion % Test,
       "dev.zio" %% "zio-test-sbt" % zioVersion % Test
     ),
