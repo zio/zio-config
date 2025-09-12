@@ -3,7 +3,7 @@ package zio.config.xml.experimental
 import zio.Chunk
 import Parsers._
 import XmlObject.TagElement
-import zio.parser.Parser
+import zio.parser.{Parser, StringParserError}
 
 object XmlParser {
 
@@ -44,7 +44,7 @@ object XmlParser {
         }
       }
 
-  private[config] def parse(string: String): Either[Parser.ParserError[String], XmlObject] =
+  private[config] def parse(string: String): Either[StringParserError[String], XmlObject] =
     xmlParser.parseString(string)
 
 }
