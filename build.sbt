@@ -58,7 +58,7 @@ addCommandAlias(
   "all zioConfigJVM/mimaReportBinaryIssues zioConfigTypesafeJVM/mimaReportBinaryIssues zioConfigDerivationJVM/mimaReportBinaryIssues zioConfigYamlJVM/mimaReportBinaryIssues zioConfigMagnoliaJVM/mimaReportBinaryIssues zioConfigAwsJVM/mimaReportBinaryIssues zioConfigZioAwsJVM/mimaReportBinaryIssues zioConfigXmlJVM/mimaReportBinaryIssues"
 )
 
-val awsVersion        = "1.12.791"
+val awsVersion        = "1.12.792"
 val zioAwsVersion     = "7.28.29.19"
 val zioVersion        = "2.1.21"
 val magnoliaVersion   = "0.17.0"
