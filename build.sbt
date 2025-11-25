@@ -58,9 +58,9 @@ addCommandAlias(
   "all zioConfigJVM/mimaReportBinaryIssues zioConfigTypesafeJVM/mimaReportBinaryIssues zioConfigDerivationJVM/mimaReportBinaryIssues zioConfigYamlJVM/mimaReportBinaryIssues zioConfigMagnoliaJVM/mimaReportBinaryIssues zioConfigAwsJVM/mimaReportBinaryIssues zioConfigZioAwsJVM/mimaReportBinaryIssues zioConfigXmlJVM/mimaReportBinaryIssues"
 )
 
-val awsVersion        = "1.12.792"
+val awsVersion        = "1.12.794"
 val zioAwsVersion     = "7.28.29.19"
-val zioVersion        = "2.1.21"
+val zioVersion        = "2.1.22"
 val magnoliaVersion   = "0.17.0"
 val refinedVersion    = "0.11.3"
 val pureconfigVersion = "0.17.8"
@@ -331,7 +331,7 @@ lazy val zioConfigYaml = crossProject(JVMPlatform)
   .settings(enableMimaSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.snakeyaml" % "snakeyaml-engine" % "2.10",
+      "org.snakeyaml" % "snakeyaml-engine" % "3.0.1",
       "dev.zio"      %% "zio-test"         % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
     ),
@@ -397,7 +397,7 @@ lazy val zioConfigEnumeratum = crossProject(JSPlatform, JVMPlatform, NativePlatf
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum"   % "1.9.0",
+      "com.beachape" %% "enumeratum"   % "1.9.1",
       "dev.zio"      %% "zio-test"     % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
     ),
