@@ -15,7 +15,6 @@ Take a look at `zio.config.refined` package.
  import zio.Config
  import zio.ConfigProvider
  import zio.config._, refined._
-
 ```
 
 A few examples are given below.

@@ -270,7 +270,16 @@ lazy val examples = crossProject(JVMPlatform)
         Def.sequential(runTasks)
       }.value
   )
-  .dependsOn(zioConfig, zioConfigMagnolia, zioConfigRefined, zioConfigTypesafe, zioConfigYaml)
+  .dependsOn(
+    zioConfig,
+    zioConfigMagnolia,
+    zioConfigRefined,
+    zioConfigTypesafe,
+    zioConfigYaml,
+    zioConfigEnumeratum,
+    zioConfigScalaz,
+    zioConfigCats
+  )
 
 lazy val examplesJVM = examples.jvm
 
@@ -441,8 +450,7 @@ lazy val docs = project
         zioConfigTypesafeJVM,
         zioConfigDerivationJVM,
         zioConfigYamlJVM,
-        zioConfigRefinedJVM,
-        zioConfigMagnoliaJVM
+        zioConfigRefinedJVM
       )
   )
   .settings(macroDefinitionSettings)
@@ -452,7 +460,10 @@ lazy val docs = project
     zioConfigDerivationJVM,
     zioConfigYamlJVM,
     zioConfigRefinedJVM,
-    zioConfigMagnoliaJVM
+    zioConfigMagnoliaJVM,
+    zioConfigEnumeratumJVM,
+    zioConfigScalazJVM,
+    zioConfigCatsJVM
   )
   .enablePlugins(WebsitePlugin)
 
