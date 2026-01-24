@@ -18,6 +18,9 @@ package object magnolia {
   type kebabCase = derivation.kebabCase
   val kebabCase: derivation.kebabCase.type = derivation.kebabCase
 
+  type kebabCaseLegacy = derivation.kebabCaseLegacy
+  val kebabCaseLegacy: derivation.kebabCaseLegacy.type = derivation.kebabCaseLegacy
+
   type snakeCase = derivation.snakeCase
   val snakeCase: derivation.snakeCase.type = derivation.snakeCase
 

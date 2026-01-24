@@ -88,6 +88,7 @@ object DeriveConfig {
 
   object KeyModifier {
     case object KebabCase               extends CaseModifier
+    case object KebabCaseLegacy         extends CaseModifier
     case object SnakeCase               extends CaseModifier
     case object NoneModifier            extends CaseModifier
     case class Prefix(prefix: String)   extends KeyModifier
@@ -96,6 +97,7 @@ object DeriveConfig {
     def getModifierFunction(keyModifier: KeyModifier): String => String =
       keyModifier match {
         case KebabCase        => toKebabCase
+        case KebabCaseLegacy  => toKebabCaseLegacy
         case SnakeCase        => toSnakeCase
         case Prefix(prefix)   => addPrefixToKey(prefix)
         case Postfix(postfix) => addPostFixToKey(postfix)
@@ -147,8 +149,9 @@ object DeriveConfig {
     }.toList
 
     val caseModifier = annotations.collectFirst {
-      case _: kebabCase => KeyModifier.KebabCase
-      case _: snakeCase => KeyModifier.SnakeCase
+      case _: kebabCase       => KeyModifier.KebabCase
+      case _: kebabCaseLegacy => KeyModifier.KebabCaseLegacy
+      case _: snakeCase       => KeyModifier.SnakeCase
     }.getOrElse(KeyModifier.NoneModifier)
     modifiers -> caseModifier
   }

@@ -21,6 +21,15 @@ object AnnotationsTest extends ZIOSpecDefault {
     val myConfigAutomatic: Config[MyConfig] = deriveConfig[MyConfig]
   }
 
+  object KebabCaseLegacyTest {
+    @kebabCaseLegacy
+    case class InstantId(instantIdQAndA: String)
+    @kebabCaseLegacy
+    case class MyConfig(instantId: InstantId)
+
+    val myConfigAutomatic: Config[MyConfig] = deriveConfig[MyConfig]
+  }
+
   object SnakeTest {
     @snakeCase
     case class Foo(fooFoo: String)
@@ -73,6 +82,21 @@ object AnnotationsTest extends ZIOSpecDefault {
         val result: IO[Config.Error, MyConfig] =
           read(myConfigAutomatic from TypesafeConfigProvider.fromHoconString(hocconConfig))
         val expected                           = MyConfig(Foo("value1"), AnotherFoo("value2"), Bar("value3"))
+        assertZIO(result)(equalTo(expected))
+      },
+      test("kebab case legacy - backward compatible with pre-4.0.5 configs") {
+        import KebabCaseLegacyTest._
+        // Legacy behavior: consecutive capitals are not separated
+        // instantIdQAndA -> instant-id-qand-a (NOT instant-id-q-and-a)
+        val hocconConfig                       =
+          s"""
+             |instant-id {
+             |  instant-id-qand-a = "value1"
+             |}
+             |""".stripMargin
+        val result: IO[Config.Error, MyConfig] =
+          read(myConfigAutomatic from TypesafeConfigProvider.fromHoconString(hocconConfig))
+        val expected                           = MyConfig(InstantId("value1"))
         assertZIO(result)(equalTo(expected))
       },
       test("snake case") {
