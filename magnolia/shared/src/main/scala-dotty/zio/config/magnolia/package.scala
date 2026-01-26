@@ -15,6 +15,9 @@ package object magnolia {
   type name = derivation.name
   val name: derivation.name.type = derivation.name
 
+  type kebabCaseLegacy = derivation.kebabCaseLegacy
+  val kebabCaseLegacy: derivation.kebabCaseLegacy.type = derivation.kebabCaseLegacy
+
   type discriminator = derivation.discriminator
   val discriminator: derivation.discriminator.type = derivation.discriminator
 

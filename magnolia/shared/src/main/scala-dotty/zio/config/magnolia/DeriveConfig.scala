@@ -13,7 +13,7 @@ import scala.annotation.{targetName, threadUnsafe}
 import scala.compiletime.*
 import scala.deriving.*
 
-final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None) {
+  final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None) {
   def ??(description: String): DeriveConfig[A] =
     describe(description)
 
@@ -30,7 +30,7 @@ final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.
     DeriveConfig(desc.mapOrFail(f))
 }
 
-object DeriveConfig {
+  object DeriveConfig {
 
   def apply[A](implicit ev: DeriveConfig[A]): DeriveConfig[A] =
     ev
@@ -114,6 +114,27 @@ object DeriveConfig {
   given mapDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Map[String, A]] =
     DeriveConfig.from(table(ev.desc))
 
+  sealed trait KeyModifier
+  sealed trait CaseModifier extends KeyModifier
+
+  object KeyModifier {
+    case object KebabCase       extends CaseModifier
+    case object KebabCaseLegacy extends CaseModifier
+    case object SnakeCase       extends CaseModifier
+    case object NoneModifier    extends CaseModifier
+    final case class Prefix(prefix: String)   extends KeyModifier
+    final case class Postfix(postfix: String) extends KeyModifier
+
+    def modifierFunction(keyModifier: KeyModifier): String => String =
+      keyModifier match
+        case KebabCase       => toKebabCase
+        case KebabCaseLegacy => toKebabCaseLegacy
+        case SnakeCase       => toSnakeCase
+        case Prefix(prefix)  => addPrefixToKey(prefix)
+        case Postfix(postfix) => addPostFixToKey(postfix)
+        case NoneModifier    => identity
+  }
+
   inline def summonDeriveConfigForCoProduct[T <: Tuple]: List[DeriveConfig[Any]] =
     inline erasedValue[T] match {
       case _: EmptyTuple => Nil
@@ -149,6 +170,26 @@ object DeriveConfig {
       case names => names.flatMap { case (str, nmes) => nmes.map(name => (str, name)) }.toMap
     }
 
+  inline def keyModifiersOf[T]: (List[KeyModifier], KeyModifier.CaseModifier) =
+    val modifiers =
+      Macros.anns[T, prefix]("zio.config.derivation.prefix").map(p => KeyModifier.Prefix(p.prefix)) :::
+        Macros.anns[T, postfix]("zio.config.derivation.postfix").map(p => KeyModifier.Postfix(p.postfix))
+
+    val caseModifier =
+      Macros
+        .anns[T, kebabCase]("zio.config.derivation.kebabCase")
+        .headOption
+        .map(_ => KeyModifier.KebabCase)
+        .orElse(
+          Macros.anns[T, kebabCaseLegacy]("zio.config.derivation.kebabCaseLegacy").headOption.map(_ =>
+            KeyModifier.KebabCaseLegacy
+          )
+        )
+        .orElse(Macros.anns[T, snakeCase]("zio.config.derivation.snakeCase").headOption.map(_ => KeyModifier.SnakeCase))
+        .getOrElse(KeyModifier.NoneModifier)
+
+    (modifiers, caseModifier)
+
   inline given derived[T](using m: Mirror.Of[T]): DeriveConfig[T] =
     inline m match
       case _: Mirror.SumOf[T] =>
@@ -173,10 +214,12 @@ object DeriveConfig {
             descriptions = Macros.documentationOf[T].map(_.describe)
           )
 
-        val originalFieldNamesList = labelsOf[m.MirroredElemLabels]
-        val customFieldNameMap     = customFieldNamesOf[T]
-        val documentations         = Macros.fieldDocumentationOf[T].toMap
-        val fieldNames             = mapOriginalNames(originalFieldNamesList, documentations, customFieldNameMap)
+        val originalFieldNamesList      = labelsOf[m.MirroredElemLabels]
+        val customFieldNameMap          = customFieldNamesOf[T]
+        val documentations              = Macros.fieldDocumentationOf[T].toMap
+        val (keyModifiers, caseModifier) = keyModifiersOf[T]
+        val fieldNames                  =
+          mapOriginalNames(originalFieldNamesList, documentations, customFieldNameMap, keyModifiers, caseModifier)
 
         @threadUnsafe lazy val fieldConfigsWithDefaultValues = {
           val fieldConfigs          = summonDeriveConfigAll[m.MirroredElemTypes].asInstanceOf[List[DeriveConfig[Any]]]
@@ -194,12 +237,21 @@ object DeriveConfig {
   private def mapOriginalNames(
     names: List[String],
     docs: Map[String, List[describe]],
-    customFieldNames: Map[String, name]
+    customFieldNames: Map[String, name],
+    keyModifiers: List[KeyModifier],
+    caseModifier: KeyModifier.CaseModifier
   ): List[FieldName] =
     names.foldRight(List.empty[FieldName]) { (str, list) =>
       val alternativeNames = customFieldNames.get(str).map(v => List(v.name)).getOrElse(Nil)
       val descriptions     = docs.get(str).map(_.map(_.describe)).getOrElse(Nil)
-      FieldName(str, alternativeNames, descriptions) :: list
+      val modifyKey        = keyModifiers
+        .foldLeft(identity[String] _) { case (all, modifier) =>
+          all.andThen(KeyModifier.modifierFunction(modifier))
+        }
+        .andThen(KeyModifier.modifierFunction(caseModifier))
+      val targetName       = customFieldNames.get(str).map(_.name).getOrElse(modifyKey(str))
+
+      FieldName(targetName, alternativeNames, descriptions) :: list
     }
 
   def mergeAllProducts[T](
