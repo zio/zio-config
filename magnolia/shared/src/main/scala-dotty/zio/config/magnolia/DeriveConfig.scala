@@ -341,25 +341,27 @@ import scala.quoted.*
   def castTo[T](a: Any): T =
     a.asInstanceOf[T]
 
-  private def keyModifiersOfImpl[T: Type](using Quotes): Expr[(List[KeyModifier], CaseModifier)] = {
-    val prefixes = Macros.anns[T, prefix]("zio.config.derivation.prefix").valueOrAbort
-    val postfixes = Macros.anns[T, postfix]("zio.config.derivation.postfix").valueOrAbort
-    val kebabs = Macros.anns[T, kebabCase]("zio.config.derivation.kebabCase").valueOrAbort
-    val kebabsLegacy = Macros.anns[T, kebabCaseLegacy]("zio.config.derivation.kebabCaseLegacy").valueOrAbort
-    val snakes = Macros.anns[T, snakeCase]("zio.config.derivation.snakeCase").valueOrAbort
+  private def keyModifiersOfImpl[T: Type](using Quotes): Expr[(List[KeyModifier], CaseModifier)] =
+    val prefixesExpr     = Macros.anns[T, prefix]("zio.config.derivation.prefix")
+    val postfixesExpr    = Macros.anns[T, postfix]("zio.config.derivation.postfix")
+    val kebabsExpr       = Macros.anns[T, kebabCase]("zio.config.derivation.kebabCase")
+    val kebabsLegacyExpr = Macros.anns[T, kebabCaseLegacy]("zio.config.derivation.kebabCaseLegacy")
+    val snakesExpr       = Macros.anns[T, snakeCase]("zio.config.derivation.snakeCase")
 
-    val modifierExprs: List[Expr[KeyModifier]] =
-      prefixes.map(p => Expr(KeyModifier.Prefix(p.prefix))) :::
-        postfixes.map(p => Expr(KeyModifier.Postfix(p.postfix)))
+    val modifiersExpr: Expr[List[KeyModifier]] = '{
+      $prefixesExpr.map(p => KeyModifier.Prefix(p.prefix)) :::
+        $postfixesExpr.map(p => KeyModifier.Postfix(p.postfix))
+    }
 
-    val caseModifier: CaseModifier =
+    val caseModifierExpr: Expr[CaseModifier] = '{
+      val kebabs       = $kebabsExpr
+      val kebabsLegacy = $kebabsLegacyExpr
+      val snakes       = $snakesExpr
       if (kebabs.nonEmpty) KeyModifier.KebabCase
       else if (kebabsLegacy.nonEmpty) KeyModifier.KebabCaseLegacy
       else if (snakes.nonEmpty) KeyModifier.SnakeCase
       else KeyModifier.NoneModifier
+    }
 
-    val listExpr = Expr.ofList(modifierExprs)
-    val caseExpr = Expr(caseModifier)
-    '{ ($listExpr, $caseExpr) }
-  }
+    '{ ($modifiersExpr, $caseModifierExpr) }
 }
