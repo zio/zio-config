@@ -12,6 +12,7 @@ import java.util.UUID
 import scala.annotation.{targetName, threadUnsafe}
 import scala.compiletime.*
 import scala.deriving.*
+import scala.quoted.*
 
   final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None) {
   def ??(description: String): DeriveConfig[A] =
@@ -170,32 +171,8 @@ import scala.deriving.*
       case names => names.flatMap { case (str, nmes) => nmes.map(name => (str, name)) }.toMap
     }
 
-  inline def keyModifiersOf[T]: (List[KeyModifier], CaseModifier) = {
-    val modifiers =
-      Macros.anns[T, prefix]("zio.config.derivation.prefix").map(p => KeyModifier.Prefix(p.prefix)) :::
-        Macros.anns[T, postfix]("zio.config.derivation.postfix").map(p => KeyModifier.Postfix(p.postfix))
-
-    val caseModifier =
-      Macros
-        .anns[T, kebabCase]("zio.config.derivation.kebabCase")
-        .headOption
-        .map(_ => KeyModifier.KebabCase)
-        .orElse(
-          Macros
-            .anns[T, kebabCaseLegacy]("zio.config.derivation.kebabCaseLegacy")
-            .headOption
-            .map(_ => KeyModifier.KebabCaseLegacy)
-        )
-        .orElse(
-          Macros
-            .anns[T, snakeCase]("zio.config.derivation.snakeCase")
-            .headOption
-            .map(_ => KeyModifier.SnakeCase)
-        )
-        .getOrElse(KeyModifier.NoneModifier)
-
-    (modifiers, caseModifier)
-  }
+  inline def keyModifiersOf[T]: (List[KeyModifier], CaseModifier) =
+    ${ keyModifiersOfImpl[T] }
 
   inline given derived[T](using m: Mirror.Of[T]): DeriveConfig[T] =
     inline m match
@@ -363,4 +340,26 @@ import scala.deriving.*
 
   def castTo[T](a: Any): T =
     a.asInstanceOf[T]
+
+  private def keyModifiersOfImpl[T: Type](using Quotes): Expr[(List[KeyModifier], CaseModifier)] = {
+    val prefixes = Macros.anns[T, prefix]("zio.config.derivation.prefix").valueOrAbort
+    val postfixes = Macros.anns[T, postfix]("zio.config.derivation.postfix").valueOrAbort
+    val kebabs = Macros.anns[T, kebabCase]("zio.config.derivation.kebabCase").valueOrAbort
+    val kebabsLegacy = Macros.anns[T, kebabCaseLegacy]("zio.config.derivation.kebabCaseLegacy").valueOrAbort
+    val snakes = Macros.anns[T, snakeCase]("zio.config.derivation.snakeCase").valueOrAbort
+
+    val modifierExprs: List[Expr[KeyModifier]] =
+      prefixes.map(p => Expr(KeyModifier.Prefix(p.prefix))) :::
+        postfixes.map(p => Expr(KeyModifier.Postfix(p.postfix)))
+
+    val caseModifier: CaseModifier =
+      if (kebabs.nonEmpty) KeyModifier.KebabCase
+      else if (kebabsLegacy.nonEmpty) KeyModifier.KebabCaseLegacy
+      else if (snakes.nonEmpty) KeyModifier.SnakeCase
+      else KeyModifier.NoneModifier
+
+    val listExpr = Expr.ofList(modifierExprs)
+    val caseExpr = Expr(caseModifier)
+    '{ ($listExpr, $caseExpr) }
+  }
 }
