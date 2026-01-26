@@ -170,28 +170,32 @@ import scala.deriving.*
       case names => names.flatMap { case (str, nmes) => nmes.map(name => (str, name)) }.toMap
     }
 
-  inline def keyModifiersOf[T]: (List[KeyModifier], CaseModifier) =
+  inline def keyModifiersOf[T]: (List[KeyModifier], CaseModifier) = {
     val modifiers =
-      ${ Macros.anns[T, prefix]("zio.config.derivation.prefix") }.map(p => KeyModifier.Prefix(p.prefix)) :::
-        ${ Macros.anns[T, postfix]("zio.config.derivation.postfix") }.map(p => KeyModifier.Postfix(p.postfix))
+      Macros.anns[T, prefix]("zio.config.derivation.prefix").map(p => KeyModifier.Prefix(p.prefix)) :::
+        Macros.anns[T, postfix]("zio.config.derivation.postfix").map(p => KeyModifier.Postfix(p.postfix))
 
     val caseModifier =
-      ${ Macros.anns[T, kebabCase]("zio.config.derivation.kebabCase") }
+      Macros
+        .anns[T, kebabCase]("zio.config.derivation.kebabCase")
         .headOption
         .map(_ => KeyModifier.KebabCase)
         .orElse(
-          ${ Macros.anns[T, kebabCaseLegacy]("zio.config.derivation.kebabCaseLegacy") }
+          Macros
+            .anns[T, kebabCaseLegacy]("zio.config.derivation.kebabCaseLegacy")
             .headOption
             .map(_ => KeyModifier.KebabCaseLegacy)
         )
         .orElse(
-          ${ Macros.anns[T, snakeCase]("zio.config.derivation.snakeCase") }
+          Macros
+            .anns[T, snakeCase]("zio.config.derivation.snakeCase")
             .headOption
             .map(_ => KeyModifier.SnakeCase)
         )
         .getOrElse(KeyModifier.NoneModifier)
 
     (modifiers, caseModifier)
+  }
 
   inline given derived[T](using m: Mirror.Of[T]): DeriveConfig[T] =
     inline m match
