@@ -181,7 +181,7 @@ val map =
   )
   
 
-ConfigProvider.fromMap(map).load(derivedConfig[Config])
+ConfigProvider.fromMap(map).load(deriveConfig[Config])
 
 
 ```
