@@ -60,7 +60,7 @@ addCommandAlias(
 
 val awsVersion        = "1.12.797"
 val zioAwsVersion     = "7.28.29.19"
-val zioVersion        = "2.1.23"
+val zioVersion        = "2.1.24"
 val magnoliaVersion   = "0.17.0"
 val refinedVersion    = "0.11.3"
 val pureconfigVersion = "0.17.8"
@@ -397,7 +397,7 @@ lazy val zioConfigEnumeratum = crossProject(JSPlatform, JVMPlatform, NativePlatf
   .settings(crossProjectSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "com.beachape" %% "enumeratum"   % "1.9.2",
+      "com.beachape" %% "enumeratum"   % "1.9.4",
       "dev.zio"      %% "zio-test"     % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt" % zioVersion % Test
     ),
