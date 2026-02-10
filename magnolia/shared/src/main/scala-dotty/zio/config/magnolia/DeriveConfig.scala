@@ -31,7 +31,7 @@ final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.
     DeriveConfig(desc.mapOrFail(f))
 }
 
-  object DeriveConfig {
+object DeriveConfig {
 
   def apply[A](implicit ev: DeriveConfig[A]): DeriveConfig[A] =
     ev
@@ -114,12 +114,11 @@ final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.
 
   given mapDesc[K, V](using evKey: ConfigKeyDecoder[K], evValue: DeriveConfig[V]): DeriveConfig[Map[K, V]] =
     DeriveConfig.from(table(evValue.desc)).mapOrFail { stringMap =>
-      stringMap.foldLeft[Either[Config.Error, Map[K, V]]](Right(Map.empty)) {
-        case (acc, (keyStr, value)) =>
-          for {
-            map <- acc
-            key <- evKey.decode(keyStr)
-          } yield map + (key -> value)
+      stringMap.foldLeft[Either[Config.Error, Map[K, V]]](Right(Map.empty)) { case (acc, (keyStr, value)) =>
+        for {
+          map <- acc
+          key <- evKey.decode(keyStr)
+        } yield map + (key -> value)
       }
     }
 
@@ -127,21 +126,21 @@ final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.
   sealed trait CaseModifier extends KeyModifier
 
   object KeyModifier {
-    case object KebabCase       extends CaseModifier
-    case object KebabCaseLegacy extends CaseModifier
-    case object SnakeCase       extends CaseModifier
-    case object NoneModifier    extends CaseModifier
+    case object KebabCase                     extends CaseModifier
+    case object KebabCaseLegacy               extends CaseModifier
+    case object SnakeCase                     extends CaseModifier
+    case object NoneModifier                  extends CaseModifier
     final case class Prefix(prefix: String)   extends KeyModifier
     final case class Postfix(postfix: String) extends KeyModifier
 
     def modifierFunction(keyModifier: KeyModifier): String => String =
       keyModifier match
-        case KebabCase       => toKebabCase
-        case KebabCaseLegacy => toKebabCaseLegacy
-        case SnakeCase       => toSnakeCase
-        case Prefix(prefix)  => addPrefixToKey(prefix)
+        case KebabCase        => toKebabCase
+        case KebabCaseLegacy  => toKebabCaseLegacy
+        case SnakeCase        => toSnakeCase
+        case Prefix(prefix)   => addPrefixToKey(prefix)
         case Postfix(postfix) => addPostFixToKey(postfix)
-        case NoneModifier    => identity
+        case NoneModifier     => identity
   }
 
   inline def summonDeriveConfigForCoProduct[T <: Tuple]: List[DeriveConfig[Any]] =
@@ -206,11 +205,11 @@ final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.
             descriptions = Macros.documentationOf[T].map(_.describe)
           )
 
-        val originalFieldNamesList      = labelsOf[m.MirroredElemLabels]
-        val customFieldNameMap          = customFieldNamesOf[T]
-        val documentations              = Macros.fieldDocumentationOf[T].toMap
+        val originalFieldNamesList       = labelsOf[m.MirroredElemLabels]
+        val customFieldNameMap           = customFieldNamesOf[T]
+        val documentations               = Macros.fieldDocumentationOf[T].toMap
         val (keyModifiers, caseModifier) = keyModifiersOf[T]
-        val fieldNames                  =
+        val fieldNames                   =
           mapOriginalNames(originalFieldNamesList, documentations, customFieldNameMap, keyModifiers, caseModifier)
 
         @threadUnsafe lazy val fieldConfigsWithDefaultValues = {

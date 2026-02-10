@@ -38,19 +38,19 @@ private[config] trait KeyConversionFunctions {
    * Convert a camelCase key to kebab-case val s = abcDef toKebabCase(s) === abc-def
    *
    * This version handles numeric boundaries properly:
-   * - "myValue123" -> "my-value-123"
-   * - "QAndA" -> "q-and-a"
+   *   - "myValue123" -> "my-value-123"
+   *   - "QAndA" -> "q-and-a"
    */
   val toKebabCase: String => String =
     camelToDelimiter(_, "-")
 
   /**
-   * Legacy kebab-case conversion that only handles lowercase-uppercase boundaries.
-   * Use this for backward compatibility with configs created before zio-config 4.0.5.
+   * Legacy kebab-case conversion that only handles lowercase-uppercase boundaries. Use this for backward compatibility
+   * with configs created before zio-config 4.0.5.
    *
    * Example:
-   * - "myValue123" -> "my-value123" (numbers not separated)
-   * - "QAndA" -> "qand-a" (consecutive capitals not separated)
+   *   - "myValue123" -> "my-value123" (numbers not separated)
+   *   - "QAndA" -> "qand-a" (consecutive capitals not separated)
    */
   val toKebabCaseLegacy: String => String =
     input => input.replaceAll("([a-z])([A-Z])", "$1-$2").toLowerCase

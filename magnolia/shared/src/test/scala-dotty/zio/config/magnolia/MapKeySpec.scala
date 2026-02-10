@@ -12,11 +12,10 @@ object MapKeySpec extends ZIOSpecDefault {
 
   final case class WithUuidMap(entries: Map[UUID, Inner])
 
-
   def spec =
     suite("Map key decoding")(
       test("Map[String, Int] — backwards compatible") {
-        val map = Map(
+        val map    = Map(
           "entries.a" -> "1",
           "entries.b" -> "2"
         )
@@ -27,7 +26,7 @@ object MapKeySpec extends ZIOSpecDefault {
       },
       test("Map[UUID, String] — UUID keys parsed from config") {
         check(Gen.uuid, Gen.uuid) { case (uuid1, uuid2) =>
-          val map = Map(
+          val map    = Map(
             s"entries.${uuid1}" -> "alpha",
             s"entries.${uuid2}" -> "beta"
           )
@@ -38,7 +37,7 @@ object MapKeySpec extends ZIOSpecDefault {
         }
       },
       test("Map[Int, String] — Int keys parsed from config") {
-        val map = Map(
+        val map    = Map(
           "entries.1" -> "one",
           "entries.2" -> "two"
         )
@@ -48,7 +47,7 @@ object MapKeySpec extends ZIOSpecDefault {
         )
       },
       test("Invalid UUID key — error message propagation") {
-        val map = Map(
+        val map    = Map(
           "entries.not-a-uuid" -> "value"
         )
         val config = deriveConfig[Map[UUID, String]]
@@ -58,7 +57,7 @@ object MapKeySpec extends ZIOSpecDefault {
       },
       test("Case class containing Map[UUID, CaseClass] — automatic derivation") {
         check(Gen.uuid, Gen.uuid) { case (uuid1, uuid2) =>
-          val map = Map(
+          val map    = Map(
             s"entries.${uuid1}.x" -> "10",
             s"entries.${uuid1}.y" -> "hello",
             s"entries.${uuid2}.x" -> "20",
@@ -66,10 +65,14 @@ object MapKeySpec extends ZIOSpecDefault {
           )
           val config = deriveConfig[WithUuidMap]
           assertZIO(ConfigProvider.fromMap(map).load(config))(
-            equalTo(WithUuidMap(Map(
-              uuid1 -> Inner(10, "hello"),
-              uuid2 -> Inner(20, "world")
-            )))
+            equalTo(
+              WithUuidMap(
+                Map(
+                  uuid1 -> Inner(10, "hello"),
+                  uuid2 -> Inner(20, "world")
+                )
+              )
+            )
           )
         }
       }

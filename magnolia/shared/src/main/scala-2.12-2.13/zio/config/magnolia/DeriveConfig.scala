@@ -78,14 +78,16 @@ object DeriveConfig {
   implicit def implicitNonEmptyChunkDesc[A: DeriveConfig]: DeriveConfig[NonEmptyChunk[A]] =
     DeriveConfig(Config.nonEmptyChunkOf(DeriveConfig[A].desc))
 
-  implicit def implicitMapDesc[K, V](implicit evKey: ConfigKeyDecoder[K], evValue: DeriveConfig[V]): DeriveConfig[Map[K, V]] =
+  implicit def implicitMapDesc[K, V](implicit
+    evKey: ConfigKeyDecoder[K],
+    evValue: DeriveConfig[V]
+  ): DeriveConfig[Map[K, V]] =
     DeriveConfig(Config.table(evValue.desc)).mapOrFail { stringMap =>
-      stringMap.foldLeft[Either[Config.Error, Map[K, V]]](Right(Map.empty)) {
-        case (acc, (keyStr, value)) =>
-          for {
-            map <- acc
-            key <- evKey.decode(keyStr)
-          } yield map + (key -> value)
+      stringMap.foldLeft[Either[Config.Error, Map[K, V]]](Right(Map.empty)) { case (acc, (keyStr, value)) =>
+        for {
+          map <- acc
+          key <- evKey.decode(keyStr)
+        } yield map + (key -> value)
       }
     }
 
