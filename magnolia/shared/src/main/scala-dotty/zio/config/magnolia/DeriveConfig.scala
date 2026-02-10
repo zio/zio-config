@@ -112,7 +112,13 @@ object DeriveConfig {
   given nonEmptyChunkDesc[A](using ev: DeriveConfig[A]): DeriveConfig[NonEmptyChunk[A]] =
     DeriveConfig.from(nonEmptyChunkOf(ev.desc))
 
-  given mapDesc[K, V](using evKey: ConfigKeyDecoder[K], evValue: DeriveConfig[V]): DeriveConfig[Map[K, V]] =
+  given mapDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Map[String, A]] =
+    DeriveConfig.from(table(ev.desc))
+
+  given mapDescWithKeyDecoder[K, V](using
+    evKey: ConfigKeyDecoder[K],
+    evValue: DeriveConfig[V]
+  ): DeriveConfig[Map[K, V]] =
     DeriveConfig.from(table(evValue.desc)).mapOrFail { stringMap =>
       stringMap.foldLeft[Either[Config.Error, Map[K, V]]](Right(Map.empty)) { case (acc, (keyStr, value)) =>
         for {

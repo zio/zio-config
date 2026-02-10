@@ -78,7 +78,10 @@ object DeriveConfig {
   implicit def implicitNonEmptyChunkDesc[A: DeriveConfig]: DeriveConfig[NonEmptyChunk[A]] =
     DeriveConfig(Config.nonEmptyChunkOf(DeriveConfig[A].desc))
 
-  implicit def implicitMapDesc[K, V](implicit
+  implicit def implicitMapDesc[A: DeriveConfig]: DeriveConfig[Map[String, A]] =
+    DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc))
+
+  implicit def implicitMapDescWithKeyDecoder[K, V](implicit
     evKey: ConfigKeyDecoder[K],
     evValue: DeriveConfig[V]
   ): DeriveConfig[Map[K, V]] =
