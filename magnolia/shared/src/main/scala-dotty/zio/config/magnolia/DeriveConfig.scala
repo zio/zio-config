@@ -14,7 +14,7 @@ import scala.compiletime.*
 import scala.deriving.*
 import scala.quoted.*
 
-  final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None) {
+final case class DeriveConfig[A](desc: Config[A], metadata: Option[DeriveConfig.Metadata] = None) {
   def ??(description: String): DeriveConfig[A] =
     describe(description)
 
@@ -112,8 +112,16 @@ import scala.quoted.*
   given nonEmptyChunkDesc[A](using ev: DeriveConfig[A]): DeriveConfig[NonEmptyChunk[A]] =
     DeriveConfig.from(nonEmptyChunkOf(ev.desc))
 
-  given mapDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Map[String, A]] =
-    DeriveConfig.from(table(ev.desc))
+  given mapDesc[K, V](using evKey: ConfigKeyDecoder[K], evValue: DeriveConfig[V]): DeriveConfig[Map[K, V]] =
+    DeriveConfig.from(table(evValue.desc)).mapOrFail { stringMap =>
+      stringMap.foldLeft[Either[Config.Error, Map[K, V]]](Right(Map.empty)) {
+        case (acc, (keyStr, value)) =>
+          for {
+            map <- acc
+            key <- evKey.decode(keyStr)
+          } yield map + (key -> value)
+      }
+    }
 
   sealed trait KeyModifier
   sealed trait CaseModifier extends KeyModifier
