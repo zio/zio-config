@@ -23,7 +23,7 @@ jobs:
         uses: actions/setup-java@v4.5.0
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
           check-latest: true
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
@@ -42,7 +42,7 @@ jobs:
         uses: actions/setup-java@v4.5.0
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
           check-latest: true
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
@@ -57,7 +57,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: ['11', '21']
+        java: ['17', '21', '25']
         scala: ['2.12.21', '2.13.18', '3.3.8']
         platform: ['JS', 'JVM', 'Native']
     steps:
@@ -107,7 +107,7 @@ jobs:
         uses: actions/setup-java@v4.5.0
         with:
           distribution: temurin
-          java-version: 11
+          java-version: 17
           check-latest: true
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
