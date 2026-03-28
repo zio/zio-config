@@ -6,6 +6,8 @@ import sbtbuildinfo.*
 import sbtbuildinfo.BuildInfoKeys.*
 import sbtcrossproject.CrossPlugin.autoImport.*
 import scalafix.sbt.ScalafixPlugin.autoImport.*
+import scalajscrossproject.ScalaJSCrossPlugin.autoImport.*
+import scalanative.sbtplugin.ScalaNativePlugin.autoImport.*
 
 object BuildHelper {
   private val versions: String => String = {
@@ -171,7 +173,14 @@ object BuildHelper {
         crossProjectPlatform.value.identifier,
         "test",
         baseDirectory.value
-      )
+      ),
+    scalacOptions ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((3, _)) if crossProjectPlatform.value == JSPlatform =>
+          Seq("-scalajs")
+        case _                                                        => Seq.empty
+      }
+    }
   )
 
   def stdSettings(prjName: String) = Seq(
@@ -236,9 +245,11 @@ object BuildHelper {
   )
 
   def nativeSettings = Seq(
-    Test / skip             := true,
     doc / skip              := true,
-    Compile / doc / sources := Seq.empty
+    Compile / doc / sources := Seq.empty,
+    Test / nativeConfig ~= { c =>
+      c.withOptimize(false).withMode(scalanative.build.Mode.releaseFast)
+    }
   )
 
   val scalaReflectTestSettings: List[Setting[_]] = List(
@@ -271,6 +282,7 @@ object BuildHelper {
         |${item("fmt")} - Formats source files using scalafmt
         |${item("testJVM")} - Runs all JVM tests
         |${item("testJS")} - Runs all ScalaJS tests
+        |${item("testNative")} - Runs all Scala Native tests
         |${item("testOnly *.YourSpec -- -t \"YourLabel\"")} - Only runs tests with matching term e.g.
         |${item("docs/docusaurusCreateSite")} - Generates the ZIO microsite
       """.stripMargin

@@ -1,8 +1,7 @@
 name: CI
 
 env:
-  JDK_JAVA_OPTIONS: '-XX:+PrintCommandLineFlags -Xmx4G'  # JDK_JAVA_OPTIONS is _the_ env. variable to use for modern Java
-  JVM_OPTS: '-XX:+PrintCommandLineFlags -Xmx4G' # for Java 8 only (sadly, it is not modern enough for JDK_JAVA_OPTIONS)
+  SBT_OPTS: '-XX:+PrintCommandLineFlags -XX:MaxHeapSize=4G'
 
 on:
   pull_request:
@@ -59,7 +58,15 @@ jobs:
       matrix:
         java: ['11', '21']
         scala: ['2.12.21', '2.13.18', '3.3.7']
-        platform: ['JS', 'JVM', 'Native']
+        platform: ['JS', 'JVM', 'Native'] # as in sbt project name suffixes
+        # For each tested Scala version we add their aggregate sbt project to the matrix
+        include:
+          - scala: '2.12.21'
+            agg_project: 'root2-12'
+          - scala: '2.13.18'
+            agg_project: 'root2-13'
+          - scala: '3.3.7'
+            agg_project: 'root3'
     steps:
       - name: Checkout current branch
         uses: actions/checkout@v3.3.0
@@ -73,18 +80,8 @@ jobs:
           check-latest: true
       - name: Cache scala dependencies
         uses: coursier/cache-action@v6
-      - name: Run JS tests
-        if: ${{ matrix.platform == 'JS' && !startsWith(matrix.scala, '3.') }}
-        run: sbt ++${{ matrix.scala }}! testJS
-      - name: Run 2.12 JVM tests
-        if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '2.12') }}
-        run: sbt ++${{ matrix.scala }}! testJVM212
-      - name: Run 2.13 JVM tests
-        if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '2.13') }}
-        run: sbt ++${{ matrix.scala }}! testJVM213
-      - name: Run 3.x JVM tests
-        if: ${{ matrix.platform == 'JVM' && startsWith(matrix.scala, '3.') }}
-        run: sbt ++${{ matrix.scala }}! testJVM3x
+      - name: Run version and platform specific tests
+        run: sbt ++${{ matrix.scala }}! ${{ matrix.agg_project }}${{ matrix.platform }}/test
 
   ci:
     runs-on: ubuntu-22.04
