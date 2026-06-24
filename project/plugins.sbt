@@ -4,17 +4,17 @@ addSbtPlugin("com.github.sbt"                    % "sbt-unidoc"                 
 addSbtPlugin("com.github.sbt"                    % "sbt-ci-release"                % "1.11.2")
 addSbtPlugin("com.github.cb372"                  % "sbt-explicit-dependencies"     % "0.3.1")
 addSbtPlugin("com.thoughtworks.sbt-api-mappings" % "sbt-api-mappings"              % "3.0.3")
-addSbtPlugin("com.typesafe"                      % "sbt-mima-plugin"               % "1.1.5")
+addSbtPlugin("com.typesafe"                      % "sbt-mima-plugin"               % "1.1.6")
 addSbtPlugin("com.github.sbt"                    % "sbt-header"                    % "5.11.0")
 addSbtPlugin("org.portable-scala"                % "sbt-scala-native-crossproject" % "1.3.2")
 addSbtPlugin("org.portable-scala"                % "sbt-scalajs-crossproject"      % "1.3.2")
-addSbtPlugin("org.scala-js"                      % "sbt-scalajs"                   % "1.21.0")
+addSbtPlugin("org.scala-js"                      % "sbt-scalajs"                   % "1.22.0")
 addSbtPlugin("org.scala-native"                  % "sbt-scala-native"              % "0.5.12")
 addSbtPlugin("org.scalameta"                     % "sbt-mdoc"                      % "2.9.0")
 addSbtPlugin("org.scalameta"                     % "sbt-scalafmt"                  % "2.6.1")
 addSbtPlugin("pl.project13.scala"                % "sbt-jcstress"                  % "0.2.0")
 addSbtPlugin("pl.project13.scala"                % "sbt-jmh"                       % "0.4.8")
-addSbtPlugin("dev.zio"                           % "zio-sbt-website"               % "0.5.3")
+addSbtPlugin("dev.zio"                           % "zio-sbt-website"               % "0.6.0")
 addDependencyTreePlugin
 
 libraryDependencies += "org.snakeyaml" % "snakeyaml-engine" % "3.0.1"
