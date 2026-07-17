@@ -101,6 +101,29 @@ ConfigProvider.fromYamlString
 
 ```
 
+## Toml
+
+To enable TOML source, bring in the `zio-config-toml` module.
+
+```scala
+import zio.config.toml._
+
+ConfigProvider.fromTomlString(
+  """
+  port = 123
+  url = "bla"
+  region = "useast"
+  """
+)
+```
+
+You can also load from a file or path:
+
+```scala
+ConfigProvider.fromTomlFile(new java.io.File("application.toml"))
+ConfigProvider.fromTomlPath(java.nio.file.Path.of("application.toml"))
+```
+
 ## Xml String
 
 zio-config can read XML strings. Note that it's experimental with a dead simple native xml parser, 
