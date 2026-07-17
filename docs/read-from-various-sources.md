@@ -3,7 +3,14 @@ id: read-from-various-sources
 title:  "Read from various Sources"
 ---
 
-zio-config supports various sources.
+zio-config supports various sources. Format-specific modules:
+
+| Source | Module | Import |
+| --- | --- | --- |
+| HOCON / JSON | `zio-config-typesafe` | `zio.config.typesafe._` |
+| YAML | `zio-config-yaml` | `zio.config.yaml._` |
+| TOML | `zio-config-toml` | `zio.config.toml._` |
+| XML (experimental) | `zio-config-xml` | `zio.config.xml.experimental._` |
 
 ```scala mdoc:silent
 import zio._, Config._, ConfigProvider._
@@ -90,15 +97,43 @@ val jsonString =
 ConfigProvider.fromHoconString(jsonString)
 ```
 
-## Yaml FIle
+## Yaml
 
-Similar to Hocon source, we have `ConfigProvider.fromYamlString`
+To enable YAML source, bring in the `zio-config-yaml` module.
 
 ```scala
 import zio.config.yaml._
 
-ConfigProvider.fromYamlString
+ConfigProvider.fromYamlString(
+  """
+  port: 123
+  url: bla
+  region: useast
+  """
+)
+```
 
+## Toml
+
+To enable TOML source, bring in the `zio-config-toml` module.
+
+```scala
+import zio.config.toml._
+
+ConfigProvider.fromTomlString(
+  """
+  port = 123
+  url = "bla"
+  region = "useast"
+  """
+)
+```
+
+You can also load from a file or path:
+
+```scala
+ConfigProvider.fromTomlFile(new java.io.File("application.toml"))
+ConfigProvider.fromTomlPath(java.nio.file.Path.of("application.toml"))
 ```
 
 ## Xml String
