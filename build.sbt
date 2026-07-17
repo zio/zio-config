@@ -55,7 +55,7 @@ addCommandAlias(
 
 addCommandAlias(
   "checkMima",
-  "all zioConfigJVM/mimaReportBinaryIssues zioConfigTypesafeJVM/mimaReportBinaryIssues zioConfigDerivationJVM/mimaReportBinaryIssues zioConfigYamlJVM/mimaReportBinaryIssues zioConfigTomlJVM/mimaReportBinaryIssues zioConfigMagnoliaJVM/mimaReportBinaryIssues zioConfigAwsJVM/mimaReportBinaryIssues zioConfigZioAwsJVM/mimaReportBinaryIssues zioConfigXmlJVM/mimaReportBinaryIssues"
+  "all zioConfigJVM/mimaReportBinaryIssues zioConfigTypesafeJVM/mimaReportBinaryIssues zioConfigDerivationJVM/mimaReportBinaryIssues zioConfigYamlJVM/mimaReportBinaryIssues zioConfigMagnoliaJVM/mimaReportBinaryIssues zioConfigAwsJVM/mimaReportBinaryIssues zioConfigZioAwsJVM/mimaReportBinaryIssues zioConfigXmlJVM/mimaReportBinaryIssues"
 )
 
 val awsVersion        = "1.12.797"
@@ -347,7 +347,7 @@ lazy val zioConfigToml = crossProject(JVMPlatform)
   .in(file("toml"))
   .settings(stdSettings("zio-config-toml"))
   .settings(crossProjectSettings)
-  .settings(enableMimaSettings)
+  // MiMa after the first published release of zio-config-toml
   .settings(
     libraryDependencies ++= Seq(
       "org.tomlj" % "tomlj"        % "1.1.1",
