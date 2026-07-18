@@ -94,24 +94,29 @@ object TomlConfigProvider {
       }
 
     def loopTable(path: Chunk[KeyComponent], table: TomlTable): Map[Chunk[KeyComponent], String] =
-      table.entrySet().asScala.toVector.flatMap { entry =>
-        val newPath = path :+ KeyComponent.KeyName(entry.getKey)
-        val result  = loopAny(newPath, entry.getValue)
-        if (result.isEmpty) Map(newPath -> "") else result
-      }.toMap
+      table
+        .entrySet()
+        .asScala
+        .toVector
+        .flatMap { entry =>
+          val newPath = path :+ KeyComponent.KeyName(entry.getKey)
+          val result  = loopAny(newPath, entry.getValue)
+          if (result.isEmpty) Map(newPath -> "") else result
+        }
+        .toMap
 
     def loopAny(path: Chunk[KeyComponent], value: AnyRef): Map[Chunk[KeyComponent], String] =
       value match {
-        case table: TomlTable               => loopTable(path, table)
-        case array: TomlArray               => loopArray(path, array)
-        case string: String                 => loopString(path, string)
-        case boolean: java.lang.Boolean     => loopBoolean(path, boolean.booleanValue())
-        case number: Number                 => loopNumber(path, number)
-        case dateTime: OffsetDateTime       => loopString(path, dateTime.toString)
-        case dateTime: LocalDateTime        => loopString(path, dateTime.toString)
-        case date: LocalDate                => loopString(path, date.toString)
-        case time: LocalTime                => loopString(path, time.toString)
-        case other                          =>
+        case table: TomlTable           => loopTable(path, table)
+        case array: TomlArray           => loopArray(path, array)
+        case string: String             => loopString(path, string)
+        case boolean: java.lang.Boolean => loopBoolean(path, boolean.booleanValue())
+        case number: Number             => loopNumber(path, number)
+        case dateTime: OffsetDateTime   => loopString(path, dateTime.toString)
+        case dateTime: LocalDateTime    => loopString(path, dateTime.toString)
+        case date: LocalDate            => loopString(path, date.toString)
+        case time: LocalTime            => loopString(path, time.toString)
+        case other                      =>
           throw new RuntimeException(s"Unsupported TOML value at path ${ConfigPath.toPath(path).mkString(".")}: $other")
       }
 
