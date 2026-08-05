@@ -17,6 +17,6 @@ addSbtPlugin("pl.project13.scala"                % "sbt-jmh"                    
 addSbtPlugin("dev.zio"                           % "zio-sbt-website"               % "0.6.1")
 addDependencyTreePlugin
 
-libraryDependencies += "org.snakeyaml" % "snakeyaml-engine" % "3.0.1"
+libraryDependencies += "org.snakeyaml" % "snakeyaml-engine" % "3.1"
 
 resolvers ++= Resolver.sonatypeOssRepos("public")
