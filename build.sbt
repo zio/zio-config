@@ -333,7 +333,7 @@ lazy val zioConfigYaml = crossProject(JVMPlatform)
   .settings(enableMimaSettings)
   .settings(
     libraryDependencies ++= Seq(
-      "org.snakeyaml" % "snakeyaml-engine" % "3.1",
+      "org.snakeyaml" % "snakeyaml-engine" % "3.1.1",
       "dev.zio"      %% "zio-test"         % zioVersion % Test,
       "dev.zio"      %% "zio-test-sbt"     % zioVersion % Test
     ),
