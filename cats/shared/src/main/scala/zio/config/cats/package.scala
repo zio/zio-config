@@ -40,14 +40,19 @@ package object cats {
   def nonEmptyList[A](path: String)(aDesc: Config[A]): Config[NonEmptyList[A]] =
     nonEmptyList(aDesc).nested(path)
 
-  def nonEmptyMap[A](aDesc: Config[A]): Config[NonEmptyMap[String, A]] =
+  def nonEmptyMap[A](aDesc: Config[A]): Config[NonEmptyMap[String, A]] = {
+    // Kept in implicit scope rather than applied positionally: Scala 3 fills the
+    // implicit itself and then reads the argument list as a key lookup on the map.
+    implicit val ordering: Ordering[String] = Order[String].toOrdering
+
     table(aDesc).mapOrFail(x =>
       NonEmptyMap
-        .fromMap(SortedMap(x.toSeq: _*)(Order[String].toOrdering))
+        .fromMap(SortedMap.empty[String, A] ++ x)
         .fold[Either[Config.Error, NonEmptyMap[String, A]]](Left(Config.Error.InvalidData(message = "map is empty")))(
           v => Right(v)
         )
     )
+  }
 
   def nonEmptyMap[A](path: String)(aDesc: Config[A]): Config[NonEmptyMap[String, A]] =
     nonEmptyMap(aDesc).nested(path)
