@@ -27,11 +27,19 @@ inThisBuild(
   )
 )
 
-addCommandAlias("lint", "; ++2.13; scalafmtSbtCheck; scalafmtCheck; ++3.3; scalafmtCheck")
-addCommandAlias("fmt", "; ++2.13; scalafmtSbt; scalafmtAll; ++3.3; scalafmtAll")
+// The Scala versions come from the CI matrix (see BuildHelper.versions), so these aliases must
+// not hardcode them: a matrix bump would leave `++3.3` with nothing to select.
+addCommandAlias("lint", s"; ++$Scala213; scalafmtSbtCheck; scalafmtCheck; ++$ScalaDotty; scalafmtCheck")
+addCommandAlias("fmt", s"; ++$Scala213; scalafmtSbt; scalafmtAll; ++$ScalaDotty; scalafmtAll")
 addCommandAlias("fix", "; all compile:scalafix test:scalafix; all scalafmtSbt scalafmtAll")
-addCommandAlias("compileAll", "; ++2.12; root2-12/compile; ++2.13!; root2-13/compile; ++3.3!; root3/compile;")
-addCommandAlias("testAll", "; ++2.12; root2-12/test; ++2.13!; root2-13/test; ++3.3!; root3/test;")
+addCommandAlias(
+  "compileAll",
+  s"; ++$Scala212; root2-12/compile; ++$Scala213!; root2-13/compile; ++$ScalaDotty!; root3/compile;"
+)
+addCommandAlias(
+  "testAll",
+  s"; ++$Scala212; root2-12/test; ++$Scala213!; root2-13/test; ++$ScalaDotty!; root3/test;"
+)
 addCommandAlias(
   "testJS",
   ";zioConfigJS/test"
@@ -56,6 +64,11 @@ addCommandAlias(
 addCommandAlias(
   "checkMima",
   "all zioConfigJVM/mimaReportBinaryIssues zioConfigTypesafeJVM/mimaReportBinaryIssues zioConfigDerivationJVM/mimaReportBinaryIssues zioConfigYamlJVM/mimaReportBinaryIssues zioConfigMagnoliaJVM/mimaReportBinaryIssues zioConfigAwsJVM/mimaReportBinaryIssues zioConfigZioAwsJVM/mimaReportBinaryIssues zioConfigXmlJVM/mimaReportBinaryIssues"
+)
+
+addCommandAlias(
+  "checkMimaAll",
+  s"; ++$Scala212; checkMima; ++$Scala213; checkMima; ++$ScalaDotty; checkMima"
 )
 
 val awsVersion        = "1.12.797"
