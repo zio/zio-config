@@ -8,23 +8,9 @@ import sbtcrossproject.CrossPlugin.autoImport.*
 import scalafix.sbt.ScalafixPlugin.autoImport.*
 
 object BuildHelper {
-  private val versions: String => String = {
-    import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
-
-    import java.util.{List as JList, Map as JMap}
-    import scala.jdk.CollectionConverters.*
-
-    val doc  = new Load(LoadSettings.builder().build())
-      .loadFromReader(scala.io.Source.fromFile(".github/workflows/ci.yml").bufferedReader())
-    val yaml = doc.asInstanceOf[JMap[String, JMap[String, JMap[String, JMap[String, JMap[String, JList[String]]]]]]]
-    val list = yaml.get("jobs").get("test").get("strategy").get("matrix").get("scala").asScala
-    val map  = list.map(v => (v.split('.').take(2).mkString("."), v)).toMap
-
-    (prefix: String) => map.find(_._1.startsWith(prefix)).map(_._2).get
-  }
-  val Scala212: String                   = versions("2.12")
-  val Scala213: String                   = versions("2.13")
-  val ScalaDotty: String                 = versions("3")
+  val Scala212: String   = "2.12.21"
+  val Scala213: String   = "2.13.18"
+  val ScalaDotty: String = "3.9.0"
 
   private val stdOptions = Seq(
     "-deprecation",
