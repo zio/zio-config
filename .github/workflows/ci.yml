@@ -49,7 +49,7 @@ jobs:
       - name: Check formatting
         run: sbt fmt
       - name: Check binary compatibility
-        run: sbt "++2.12; checkMima; ++2.13; checkMima; ++3.3; checkMima"
+        run: sbt checkMimaAll
 
   test:
     runs-on: ubuntu-22.04
@@ -58,7 +58,7 @@ jobs:
       fail-fast: false
       matrix:
         java: ['17', '21', '25']
-        scala: ['2.12.21', '2.13.18', '3.3.8']
+        scala: ['2.12.21', '2.13.18', '3.9.0']
         platform: ['JS', 'JVM', 'Native']
     steps:
       - name: Checkout current branch
