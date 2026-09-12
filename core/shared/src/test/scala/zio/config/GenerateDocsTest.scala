@@ -44,6 +44,10 @@ object GenerateDocsTest extends BaseSpec {
         assert(generateDocs(GenerateDocsTestUtils.descriptor).toTable.toGithubFlavouredMarkdown.trim)(
           equalTo(expected.trim)
         )
+      },
+      test("generate docs for recursive config") {
+        val markdown = generateDocs(GenerateDocsTestUtils.recursiveDescriptor).toTable.toGithubFlavouredMarkdown
+        assert(markdown)(containsString("recursion"))
       }
     )
 }
@@ -68,4 +72,12 @@ object GenerateDocsTestUtils {
       .zip(database.nested("DATABASE"))
       .to[AppConfig]
   }
+
+  final case class RecursiveNode(name: String, child: Option[RecursiveNode])
+
+  lazy val recursiveDescriptor: Config[RecursiveNode] =
+    Config.defer {
+      (string("name") zip Config.defer(recursiveDescriptor).optional.nested("child"))
+        .to[RecursiveNode]
+    }
 }
