@@ -81,6 +81,19 @@ object DeriveConfig {
   implicit def implicitMapDesc[A: DeriveConfig]: DeriveConfig[Map[String, A]] =
     DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc))
 
+  implicit def implicitMapDescWithKeyDecoder[K, V](implicit
+    evKey: ConfigKeyDecoder[K],
+    evValue: DeriveConfig[V]
+  ): DeriveConfig[Map[K, V]] =
+    DeriveConfig(Config.table(evValue.desc)).mapOrFail { stringMap =>
+      stringMap.foldLeft[Either[Config.Error, Map[K, V]]](Right(Map.empty)) { case (acc, (keyStr, value)) =>
+        for {
+          map <- acc
+          key <- evKey.decode(keyStr)
+        } yield map + (key -> value)
+      }
+    }
+
   type Typeclass[T] = DeriveConfig[T]
 
   sealed trait KeyModifier
