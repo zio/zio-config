@@ -363,7 +363,7 @@ lazy val zioConfigToml = crossProject(JVMPlatform)
   // MiMa after the first published release of zio-config-toml
   .settings(
     libraryDependencies ++= Seq(
-      "org.tomlj" % "tomlj"        % "1.1.1",
+      "org.tomlj" % "tomlj"        % "1.2.0",
       "dev.zio"  %% "zio-test"     % zioVersion % Test,
       "dev.zio"  %% "zio-test-sbt" % zioVersion % Test
     ),
