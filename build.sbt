@@ -1,4 +1,6 @@
 import BuildHelper.*
+import zio.sbt.ZioSbtCiPlugin.{CacheDependencies, Checkout, Lint, SetupJava, SetupLibuv, SetupSBT}
+import zio.sbt.githubactions.{Condition, Job, Step, Strategy}
 
 welcomeMessage
 
@@ -24,6 +26,91 @@ inThisBuild(
       )
     ),
     versionScheme := Some("early-semver")
+  )
+)
+
+ThisBuild / ciEnabledBranches := Seq("series/4.x")
+
+// Preserves the exact test matrix the handwritten workflow ran: 3 JDKs x 3 Scala versions x 3
+// platforms, dispatching to the existing testJS/testJVM212/213/3x aliases. zio-sbt-ci's built-in
+// per-module Scala-version matrix has no platform axis, so it can't express this build's
+// JVM/JS/Native cross-project layout on its own.
+ThisBuild / ciTestJobs := Seq(
+  Job(
+    id = "test",
+    name = "Test",
+    jobTimeout = Some(30),
+    strategy = Some(
+      Strategy(
+        matrix = Map(
+          "java"     -> List("17", "21", "25"),
+          "scala"    -> List("2.12.x", "2.13.x", "3.x"),
+          "platform" -> List("JS", "JVM", "Native")
+        ),
+        failFast = false
+      )
+    ),
+    steps = Seq(
+      Checkout.value,
+      SetupJava("${{ matrix.java }}"),
+      SetupSBT,
+      CacheDependencies,
+      Step.SingleStep(
+        name = "Run JS tests",
+        condition = Some(Condition.Expression("matrix.platform == 'JS' && !startsWith(matrix.scala, '3.')")),
+        run = Some("sbt ++${{ matrix.scala }} testJS")
+      ),
+      Step.SingleStep(
+        name = "Run 2.12 JVM tests",
+        condition = Some(Condition.Expression("matrix.platform == 'JVM' && startsWith(matrix.scala, '2.12')")),
+        run = Some("sbt ++${{ matrix.scala }} testJVM212")
+      ),
+      Step.SingleStep(
+        name = "Run 2.13 JVM tests",
+        condition = Some(Condition.Expression("matrix.platform == 'JVM' && startsWith(matrix.scala, '2.13')")),
+        run = Some("sbt ++${{ matrix.scala }} testJVM213")
+      ),
+      Step.SingleStep(
+        name = "Run 3.x JVM tests",
+        condition = Some(Condition.Expression("matrix.platform == 'JVM' && startsWith(matrix.scala, '3.')")),
+        run = Some("sbt ++${{ matrix.scala }} testJVM3x")
+      )
+    )
+  )
+)
+
+// The plugin defaults to `+Test/compile` / `+publishLocal` (cross-building every module across
+// root's full crossScalaVersions in one sweep). That sweep force-compiles modules like examplesJVM
+// and zioConfigTypesafeMagnoliaTestsJVM under Scala 3 even though they're deliberately excluded
+// from scala3projects/testJVM3x (they use APIs, e.g. an extension method needing an import that
+// only resolves on 2.x, that aren't Scala-3 compatible yet). The per-module `test` job above
+// already exercises every supported module/version/platform combination via the curated
+// testJS/testJVM2xx/testJVM3x aliases, so `build` only needs a single-version smoke compile/publish.
+ThisBuild / ciCheckArtifactsCompilationSteps := Seq(
+  Step.SingleStep(
+    name = "Check all code compiles",
+    run = Some("sbt --no-colors Test/compile")
+  )
+)
+ThisBuild / ciCheckArtifactsBuildSteps       := Seq(
+  Step.SingleStep(
+    name = "Check artifacts build process",
+    run = Some("sbt --no-colors publishLocal")
+  )
+)
+
+// The old handwritten "lint" job also ran `sbt checkMimaAll` after formatting; append it here so
+// binary-compatibility checking isn't lost by switching to the plugin's generated lint job.
+ThisBuild / ciLintJobs := Seq(
+  Job(
+    id = "lint",
+    name = "Lint",
+    steps = Seq(Checkout.value, SetupLibuv, SetupJava(ciDefaultJavaVersion.value), SetupSBT, CacheDependencies) ++
+      ciCheckGithubWorkflowSteps.value ++
+      Seq(
+        Lint.value,
+        Step.SingleStep(name = "Check binary compatibility", run = Some("sbt --no-colors checkMimaAll"))
+      )
   )
 )
 
@@ -144,6 +231,7 @@ lazy val root =
     .in(file("."))
     .settings(publish / skip := true)
     .aggregate(scala213projects *)
+    .enablePlugins(ZioSbtCiPlugin)
 
 lazy val `root2-12` =
   project

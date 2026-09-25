@@ -15,6 +15,7 @@ addSbtPlugin("org.scalameta"                     % "sbt-scalafmt"               
 addSbtPlugin("pl.project13.scala"                % "sbt-jcstress"                  % "0.2.0")
 addSbtPlugin("pl.project13.scala"                % "sbt-jmh"                       % "0.4.8")
 addSbtPlugin("dev.zio"                           % "zio-sbt-website"               % "0.8.0")
+addSbtPlugin("dev.zio"                           % "zio-sbt-ci"                    % "0.8.0")
 addDependencyTreePlugin
 
 resolvers ++= Resolver.sonatypeOssRepos("public")
