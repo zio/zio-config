@@ -209,6 +209,41 @@ object AwsRegion {
 
 
 
+### Maps with non-String keys
+
+By default, `Map[String, V]` is supported out of the box. For maps with non-String key types like `UUID`, `Int`, or custom wrapper types, you need a `ConfigKeyDecoder` instance for the key type.
+
+Built-in `ConfigKeyDecoder` instances are provided for `String`, `UUID`, `Int`, and `Long`:
+
+```scala
+import zio.config.magnolia._
+
+case class MyConfig(entries: Map[UUID, String])
+
+// Works out of the box — UUID has a built-in ConfigKeyDecoder
+deriveConfig[MyConfig]
+```
+
+For custom key types, provide a `ConfigKeyDecoder` instance:
+
+```scala
+import zio.config.magnolia._
+
+case class EntryId(value: String)
+
+object EntryId {
+  implicit val keyDecoder: ConfigKeyDecoder[EntryId] =
+    (key: String) => Right(EntryId(key))
+
+  implicit val deriveConfig: DeriveConfig[EntryId] =
+    DeriveConfig[String].map(EntryId(_))
+}
+
+case class MyConfig(entries: Map[EntryId, String])
+
+deriveConfig[MyConfig]
+```
+
 ### Where to place these implicits ?
 
 If the types are owned by us, then the best place to keep implicit instance is the companion object of that type.
