@@ -1,10 +1,13 @@
 package zio.config.typesafe
 
+import com.typesafe.config.ConfigFactory
 import zio.Config._
 import zio.config._
 import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 import zio.{Config, ConfigProvider}
+
+import java.util.Properties
 
 final case class EmployeeDetails(employees: List[Employee], accountId: Int, boolean: Boolean, optional: Option[String])
 
@@ -112,6 +115,40 @@ object TypesafeConfigSpec extends ZIOSpecDefault {
         )
 
       assertZIO(result.map(_.employees))(hasSameElements(expectedResult.employees))
+    },
+    test("Loads list of objects and primitives from numeric-indexed properties (issue #1575)") {
+      final case class RedisNodeConfig(host: String, port: Int)
+      final case class RedisClusterConfig(nodes: List[RedisNodeConfig], tags: List[String])
+
+      val nodeConfig: Config[RedisNodeConfig] =
+        (string("host") zip int("port")).to[RedisNodeConfig]
+
+      val clusterConfig: Config[RedisClusterConfig] =
+        (listOf("nodes", nodeConfig) zip listOf("tags", string)).to[RedisClusterConfig].nested("redis-cluster")
+
+      val props = new Properties()
+      props.setProperty("redis-cluster.nodes.0.host", "some-server")
+      props.setProperty("redis-cluster.nodes.0.port", "6379")
+      props.setProperty("redis-cluster.nodes.1.host", "another-server")
+      props.setProperty("redis-cluster.nodes.1.port", "6380")
+      props.setProperty("redis-cluster.tags.0", "primary")
+      props.setProperty("redis-cluster.tags.1", "replica")
+
+      val provider = TypesafeConfigProvider.fromTypesafeConfig(
+        ConfigFactory.parseProperties(props)
+      )
+
+      val result = provider.load(clusterConfig)
+
+      val expected = RedisClusterConfig(
+        List(
+          RedisNodeConfig("some-server", 6379),
+          RedisNodeConfig("another-server", 6380)
+        ),
+        List("primary", "replica")
+      )
+
+      assertZIO(result)(equalTo(expected))
     }
   )
 }

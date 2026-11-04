@@ -96,13 +96,23 @@ object TypesafeConfigProvider {
         }.reduceOption(_ ++ _).getOrElse(Map.empty)
       }
 
-    def loopConfig(path: Chunk[KeyComponent], config: ConfigObject): Map[Chunk[KeyComponent], String] =
-      config.asScala.toVector.toMap.flatMap { case (key, value) =>
-        val newPath = path :+ KeyComponent.KeyName(key)
-        val result  = loopAny(newPath, value)
-        // Usage of null to represent emptiness to satisfy Flat
-        if (result.isEmpty) Map(newPath -> "") else result
+    def loopConfig(path: Chunk[KeyComponent], config: ConfigObject): Map[Chunk[KeyComponent], String] = {
+      val map = config.asScala.toVector.toMap
+      if (
+        path.nonEmpty && map.nonEmpty && map.keys
+          .forall(k => Try(k.toInt).toOption.exists(i => i >= 0 && i.toString == k))
+      ) {
+        val sortedValues = map.toList.sortBy { case (k, _) => k.toInt }.map(_._2)
+        loopList(path, sortedValues)
+      } else {
+        map.flatMap { case (key, value) =>
+          val newPath = path :+ KeyComponent.KeyName(key)
+          val result  = loopAny(newPath, value)
+          // Usage of null to represent emptiness to satisfy Flat
+          if (result.isEmpty) Map(newPath -> "") else result
+        }
       }
+    }
 
     def loopAny(path: Chunk[KeyComponent], value: ConfigValue): Map[Chunk[KeyComponent], String] =
       value.valueType() match {
