@@ -3,7 +3,7 @@ package zio.config.yaml
 import org.snakeyaml.engine.v2.api.{Load, LoadSettings}
 import zio.config._
 import zio.config.syntax.IndexKey
-import zio.{Chunk, ConfigProvider, Task, ZIO}
+import zio.{Cause, Chunk, Config, ConfigProvider, IO, Task, Trace, ZIO}
 
 import java.io.{BufferedReader, ByteArrayInputStream, File, FileInputStream, InputStreamReader, Reader}
 import java.lang.{Boolean => JBoolean, Double => JDouble, Float => JFloat, Integer => JInteger, Long => JLong}
@@ -29,7 +29,7 @@ object YamlConfigProvider {
    * }}}
    */
   def fromYamlFile(file: File, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
-    getIndexedConfigProvider(loadYaml(file), enableCommaSeparatedValueAsList)
+    fromLazyProvider(getIndexedConfigProvider(loadYaml(file), enableCommaSeparatedValueAsList))
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -80,7 +80,7 @@ object YamlConfigProvider {
     reader: Reader,
     enableCommaSeparatedValueAsList: Boolean = false
   ): ConfigProvider =
-    getIndexedConfigProvider(loadYaml(reader), enableCommaSeparatedValueAsList)
+    fromLazyProvider(getIndexedConfigProvider(loadYaml(reader), enableCommaSeparatedValueAsList))
 
   /**
    * Retrieve a `ConfigSource` from yaml path.
@@ -101,10 +101,14 @@ object YamlConfigProvider {
   def fromYamlString(
     yamlString: String,
     enableCommaSeparatedValueAsList: Boolean = false
-  ): ConfigProvider = {
-    val configStream = new ByteArrayInputStream(yamlString.getBytes(Charset.forName("UTF-8")))
-    fromYamlReader(new BufferedReader(new InputStreamReader(configStream)), enableCommaSeparatedValueAsList)
-  }
+  ): ConfigProvider =
+    fromLazyProvider {
+      val configStream = new ByteArrayInputStream(yamlString.getBytes(Charset.forName("UTF-8")))
+      getIndexedConfigProvider(
+        loadYaml(new BufferedReader(new InputStreamReader(configStream))),
+        enableCommaSeparatedValueAsList
+      )
+    }
 
   def fromYamlFileZIO(file: File, enableCommaSeparatedValueAsList: Boolean = false): Task[ConfigProvider] =
     ZIO.attempt(fromYamlFile(file, enableCommaSeparatedValueAsList))
@@ -123,6 +127,35 @@ object YamlConfigProvider {
     enableCommaSeparatedValueAsList: Boolean = false
   ): Task[ConfigProvider] =
     ZIO.attempt(fromYamlString(yamlString, enableCommaSeparatedValueAsList))
+
+  private def fromLazyProvider(makeProvider: => ConfigProvider): ConfigProvider =
+    ConfigProvider.fromFlat(new ConfigProvider.Flat {
+      lazy val underlying: IO[Config.Error, ConfigProvider.Flat] =
+        ZIO
+          .attempt(makeProvider.flatten)
+          .mapError(throwable =>
+            Config.Error.SourceUnavailable(
+              Chunk.empty,
+              Option(throwable.getMessage).getOrElse(throwable.toString),
+              Cause.fail(throwable)
+            )
+          )
+
+      def load[A](path: Chunk[String], config: Config.Primitive[A])(implicit
+        trace: Trace
+      ): IO[Config.Error, Chunk[A]] =
+        underlying.flatMap(_.load(path, config))
+
+      override def load[A](path: Chunk[String], config: Config.Primitive[A], split: Boolean)(implicit
+        trace: Trace
+      ): IO[Config.Error, Chunk[A]] =
+        underlying.flatMap(_.load(path, config, split))
+
+      def enumerateChildren(path: Chunk[String])(implicit
+        trace: Trace
+      ): IO[Config.Error, Set[String]] =
+        underlying.flatMap(_.enumerateChildren(path))
+    })
 
   private[yaml] def getIndexedConfigProvider(
     data: AnyRef,
@@ -177,8 +210,11 @@ object YamlConfigProvider {
   }
 
   // It's hard to define a ConfigProvider on its on without effectful ConfigSource (similar to ZIO-Config 3.x)
-  private def loadYaml(yamlFile: File): AnyRef =
-    snakeYamlLoader().loadFromInputStream(new FileInputStream(yamlFile))
+  private def loadYaml(yamlFile: File): AnyRef = {
+    val stream = new FileInputStream(yamlFile)
+    try snakeYamlLoader().loadFromInputStream(stream)
+    finally stream.close()
+  }
 
   private def loadYaml(yamlReader: Reader): AnyRef =
     snakeYamlLoader().loadFromReader(yamlReader)

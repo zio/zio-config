@@ -5,6 +5,8 @@ import zio.test.Assertion._
 import zio.test.{ZIOSpecDefault, _}
 import zio.{Config, ConfigProvider}
 
+import java.io.File
+
 object YamlConfigSpec extends ZIOSpecDefault {
   def spec: Spec[Any, Config.Error] = suite("YamlConfig")(
     test("Read a complex structure into a sealed trait") {
@@ -63,6 +65,18 @@ object YamlConfigSpec extends ZIOSpecDefault {
       val yamlConfig: String = s"""url: "some_url""""
       val result             = read(configDataBaseConfig from ConfigProvider.fromYamlStringZIO(yamlConfig))
       val expected           = DataBaseConfig("some_url")
+      assertZIO(result)(equalTo(expected))
+    },
+    test("fromYamlFile is lazy and supports fallback via orElse when file does not exist (issue #1217)") {
+      final case class DataBaseConfig(url: String)
+      val configDataBaseConfig: Config[DataBaseConfig] = Config.string("url").to[DataBaseConfig]
+
+      val missingProvider  = ConfigProvider.fromYamlFile(new File("non-existent-file-1217.yaml"))
+      val fallbackProvider = ConfigProvider.fromYamlString("""url: "fallback_url"""")
+
+      val result   = missingProvider.orElse(fallbackProvider).load(configDataBaseConfig)
+      val expected = DataBaseConfig("fallback_url")
+
       assertZIO(result)(equalTo(expected))
     }
   )
