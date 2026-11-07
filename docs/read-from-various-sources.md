@@ -117,7 +117,7 @@ ConfigProvider.fromYamlString(
 
 To enable TOML source, bring in the `zio-config-toml` module.
 
-```scala
+```scala mdoc:compile-only
 import zio.config.toml._
 
 ConfigProvider.fromTomlString(
@@ -131,36 +131,72 @@ ConfigProvider.fromTomlString(
 
 You can also load from a file or path:
 
-```scala
+```scala mdoc:compile-only
+import zio.config.toml._
+
 ConfigProvider.fromTomlFile(new java.io.File("application.toml"))
 ConfigProvider.fromTomlPath(java.nio.file.Path.of("application.toml"))
 ```
 
+TOML tables become nested keys, so the keys under a `[server]` table are read with `Config#nested`. TOML arrays become indexed keys, which `Config.listOf` reads as a list. To describe both, define a `Config` for a table that contains an array:
+
+```scala mdoc:silent
+final case class TomlServer(host: String, ports: List[Int])
+
+val serverConfig: Config[TomlServer] =
+  (Config.string("host") zip Config.listOf("ports", Config.int))
+    .nested("server")
+    .map(pair => TomlServer(pair._1, pair._2))
+```
+
+Next, parse a TOML string that contains that table and load the config from it:
+
+```scala mdoc:compile-only
+import zio.config.toml._
+
+val serverToml: ConfigProvider =
+  ConfigProvider.fromTomlString(
+    """
+    [server]
+    host = "localhost"
+    ports = [8080, 8443]
+    """
+  )
+
+val server: IO[Config.Error, TomlServer] = serverToml.load(serverConfig)
+```
+
+By default, commas inside a string value are not treated as list separators. Pass `enableCommaSeparatedValueAsList = true` to `fromTomlString`, `fromTomlFile`, or `fromTomlPath` to split such values on commas when they are read as lists.
+
 ## Xml String
 
-zio-config can read XML strings. Note that it's experimental with a dead simple native xml parser, 
-Currently it cannot XML comments, and has not been tested with complex data types, which will be fixed in the near future.
+zio-config can read XML strings through the experimental `zio-config-xml` module. The parser is small and native. It does not support XML comments, and it has not been tested with complex data types.
 
-```scala
+Each attribute and each element's text becomes a key. The key path starts at the root tag, so `<config><aws region="us-east"/></config>` produces the key `config.aws.region`. An attribute and an element's text map to the same path, so `<database port="123">` and `<database><port>123</port></database>` both produce the key `config.database.port`. Repeated sibling elements with the same name produce the same key, so the last one wins. XML lists are not supported.
+
+To read the XML below, define a `Config` for each element and nest them under the root tag:
+
+```scala mdoc:compile-only
 import zio.config.xml.experimental._
 import zio.Config
+
+final case class Aws(region: String, account: String)
+
+object Aws {
+  val config: Config[Aws] = Config.string("region").zip(Config.string("account")).to[Aws]
+}
+
+final case class Database(port: Int, url: String)
+
+object Database {
+  val config: Config[Database] = Config.int("port").zip(Config.string("url")).to[Database]
+}
 
 final case class Configuration(aws: Aws, database: Database)
 
 object Configuration {
   val config: Config[Configuration] =
     Aws.config.nested("aws").zip(Database.config.nested("database")).to[Configuration].nested("config")
-
-  final case class Aws(region: String, account: String)
-
-  object Aws {
-    val config: Config[Aws] = Config.string("region").zip(Config.string("account")).to[Aws]
-  }
-  final case class Database(port: Int, url: String)
-
-  object Database {
-    val config: Config[Database] = Config.int("port").zip(Config.string("url")).to[Database]
-  }
 }
 
 val config =
