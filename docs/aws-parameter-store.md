@@ -25,7 +25,7 @@ libraryDependencies += "dev.zio" %% "zio-config-aws" % "@VERSION@"
 
 ## Reading a Base Path
 
-`ConfigProvider.fromParameterStore` loads all parameters under the base path in one call, including parameters in nested paths. The base path prefix is removed from each name, and the remaining path segments become config keys separated by `/`. A parameter named `/myapp/prod/db/url` is therefore read as the key `db/url`.
+`ConfigProvider.fromParameterStore` loads all parameters under the base path in one call, including parameters in nested paths. The base path prefix is removed from each name, and the remaining path segments become config keys separated by `/`. A parameter named `/myapp/prod/db/url` is therefore read as the key `db/url`. Pass the base path without a trailing slash, because the prefix removal expects exactly one `/` after the base path.
 
 To read the `url` and `port` values under `/myapp/prod/db`:
 
