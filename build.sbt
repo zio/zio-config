@@ -572,7 +572,10 @@ lazy val docs = project
     zioConfigDerivationJVM,
     zioConfigYamlJVM,
     zioConfigRefinedJVM,
-    zioConfigMagnoliaJVM
+    zioConfigMagnoliaJVM,
+    zioConfigTomlJVM,
+    zioConfigXmlJVM,
+    zioConfigAwsJVM
   )
   .enablePlugins(WebsitePlugin)
 
