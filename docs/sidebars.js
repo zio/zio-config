@@ -10,6 +10,7 @@ const sidebars = {
         "integrations",
         "automatic-derivation-of-config",
         "read-from-various-sources",
+        "aws-parameter-store",
         "automatic-validations",
         "resources"
       ]
