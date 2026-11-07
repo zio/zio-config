@@ -6,6 +6,7 @@ const sidebars = {
       collapsed: false,
       link: { type: "doc", id: "index" },
       items: [
+        "whats-new-since-4-0-6",
         "dive-into-zio-config",
         "integrations",
         "automatic-derivation-of-config",
