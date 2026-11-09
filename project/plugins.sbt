@@ -1,4 +1,4 @@
-addSbtPlugin("ch.epfl.scala"                     % "sbt-scalafix"                  % "0.14.9")
+addSbtPlugin("ch.epfl.scala"                     % "sbt-scalafix"                  % "0.14.10")
 addSbtPlugin("com.eed3si9n"                      % "sbt-buildinfo"                 % "0.13.2")
 addSbtPlugin("com.github.sbt"                    % "sbt-unidoc"                    % "0.6.1")
 addSbtPlugin("com.github.sbt"                    % "sbt-ci-release"                % "1.12.1")
@@ -14,8 +14,8 @@ addSbtPlugin("org.scalameta"                     % "sbt-mdoc"                   
 addSbtPlugin("org.scalameta"                     % "sbt-scalafmt"                  % "2.6.2")
 addSbtPlugin("pl.project13.scala"                % "sbt-jcstress"                  % "0.2.0")
 addSbtPlugin("pl.project13.scala"                % "sbt-jmh"                       % "0.4.8")
-addSbtPlugin("dev.zio"                           % "zio-sbt-website"               % "0.8.6")
-addSbtPlugin("dev.zio"                           % "zio-sbt-ci"                    % "0.8.6")
+addSbtPlugin("dev.zio"                           % "zio-sbt-website"               % "0.8.8")
+addSbtPlugin("dev.zio"                           % "zio-sbt-ci"                    % "0.8.8")
 addDependencyTreePlugin
 
 resolvers ++= Resolver.sonatypeOssRepos("public")
