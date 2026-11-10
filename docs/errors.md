@@ -47,7 +47,7 @@ The tree uses these symbols:
 - Lines that split into several branches are **and**-errors: all of these problems must be fixed.
 - Lines that run one after another are **or**-errors: the first alternative failed and the next one was tried.
 
-For example, a missing `port` that has no default is reported like this:
+For example, a missing `port` that has no default is shown with a tree of this shape. The exact labels can differ between versions:
 
 ```text
    ReadError:
