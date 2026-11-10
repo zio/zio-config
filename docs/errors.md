@@ -37,7 +37,7 @@ Call `prettyPrint` on the error to get a readable tree. It shows every problem, 
 
 ```scala mdoc:compile-only
 val reported: UIO[Unit] =
-  load.catchAll(error => ZIO.succeed(println(error.prettyPrint())))
+  load.catchAll(error => ZIO.succeed(println(error.prettyPrint()))).unit
 ```
 
 `prettyPrint` takes an optional `keyDelimiter` (default `.`). Use it when your keys use another separator.
