@@ -18,7 +18,7 @@ import zio.config.magnolia.deriveConfig
 ## Two ways to write a refined setting
 
 - **`refineType[T]("KEY")`** reads a key and checks it against a full refined type, such as `String Refined NonEmpty`.
-- **`refine[P]("KEY")`** reads a key and checks it against a predicate `P`. Use it when you already have the predicate.
+- **`refine[P](description)`** takes an existing `Config` and checks its value against a predicate `P`. Use it when you already have the predicate, or when the value comes from a derived or hand-written description.
 
 ## Basic example
 
@@ -40,13 +40,13 @@ val failing: IO[Config.Error, Jdbc] =
 
 ## Predicates directly
 
-Use `refine` when you want to write the predicate yourself, for example a URL:
+Use `refineType` with a full refined type, or `refine` with a predicate applied to an existing description, when you want to write the predicate yourself. For example, a URL:
 
 ```scala mdoc:silent
 import eu.timepit.refined.api.Refined
 import eu.timepit.refined.string.Url
 
-val urlConfig: Config[Refined[String, Url]] = refine[Url]("URL")
+val urlConfig: Config[String Refined Url] = refineType[String Refined Url]("URL")
 ```
 
 `refine` and `refineType` return a `Config`, so they combine with `zip`, `optional` and the other functions in [Config descriptors](./config-descriptors.md).
