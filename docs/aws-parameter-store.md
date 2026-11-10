@@ -20,7 +20,7 @@ Both modules define classes in the same package, `zio.config.aws.parameterstore`
 To add the SDK-based module to an sbt build:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config-aws" % "@VERSION@"
+libraryDependencies += "dev.zio" %% "zio-config-aws" % "<version>"
 ```
 
 ## Reading a Base Path
