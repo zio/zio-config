@@ -54,7 +54,7 @@ def settingsFor(env: String): Either[String, String] =
 
 Put the process environment first, so a single variable can override the file. The file is the second source:
 
-```scala mdoc:compile-only
+```scala mdoc:silent
 def providerFor(env: String): IO[String, ConfigProvider] =
   ZIO.fromEither(settingsFor(env)).map { hocon =>
     ConfigProvider.envProvider.orElse(ConfigProvider.fromHoconString(hocon))
