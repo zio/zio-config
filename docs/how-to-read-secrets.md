@@ -61,10 +61,10 @@ def openConnection(user: String, password: String): Task[Unit] = ZIO.unit
 val connect: IO[Config.Error, Task[Unit]] =
   ConfigProvider.envProvider
     .load(credentials)
-    .map(c => openConnection(c.user, c.password.value))
+    .map(c => openConnection(c.user, c.password.value.mkString))
 ```
 
-`Config.Secret` is designed not to show its value when it is printed, so logging a `Credentials` value does not leak the password. The value is only available through `.value`.
+`Config.Secret` is designed not to show its value when it is printed, so logging a `Credentials` value does not leak the password. The value is only available through `.value`, which returns a `Chunk[Char]`. Use `.mkString` where a `String` is needed, and do not keep the result in a log line.
 
 ## Checks
 
