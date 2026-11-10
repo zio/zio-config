@@ -53,7 +53,7 @@ val loaded: IO[Config.Error, AppConfig] =
 
 A sealed trait is read by the name of its case class. Each case object or case class is a key:
 
-```scala mdoc:silent
+```scala
 sealed trait Greeting
 
 object Greeting {
@@ -69,9 +69,7 @@ val pageConfig: Config[Page] = deriveConfig[Page]
 
 With this description, `greeting = Hello` in HOCON reads `Page(Hello)`. The `Custom` case class has a field, so its value is a nested object:
 
-```scala mdoc:compile-only
-import zio.config.typesafe._
-
+```scala
 val custom: IO[Config.Error, Page] =
   ConfigProvider
     .fromHoconString(
@@ -165,7 +163,7 @@ By default, a sealed trait is read by the name of the case class. Two annotation
 
 `@discriminator(keyName)` reads the case class name from a key, and the case class fields sit next to it. The default key name is `type`:
 
-```scala mdoc:silent
+```scala
 import zio.config.magnolia.discriminator
 
 @discriminator("type")
@@ -183,9 +181,7 @@ val notifyConfig: Config[NotifyConfig] = deriveConfig[NotifyConfig]
 
 With this description, the HOCON below reads `NotifyConfig(Sms("123"))`:
 
-```scala mdoc:compile-only
-import zio.config.typesafe._
-
+```scala
 val sms: IO[Config.Error, NotifyConfig] =
   ConfigProvider
     .fromHoconString(
@@ -208,7 +204,7 @@ Derivation needs an instance of `DeriveConfig` for every field type. Built-in ty
 ```scala mdoc:silent
 import zio.config.magnolia._
 
-final case class AwsRegion(value: String) extends AnyVal
+final case class AwsRegion(value: String)
 
 object AwsRegion {
   implicit val deriveAwsRegion: DeriveConfig[AwsRegion] =
