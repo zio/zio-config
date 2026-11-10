@@ -1,389 +1,248 @@
 ---
 id: automatic-derivation-of-config
-title:  "Automatic Derivation of Config"
+title: "Derivation"
+sidebar_label: "Derivation"
 ---
 
-By bringing in `zio-config-magnolia` we  avoid all the boilerplate required to define the config. With a single import, `Config` is automatically derived.
+Derivation writes a config description for you. You add `zio-config-magnolia`, call `deriveConfig[A]`, and get a `Config[A]` built from the field names and types of your case class or sealed trait. You can then rename keys, add descriptions and change how sealed traits are read, with annotations or with functions on the description.
 
-### Example
+The result of `deriveConfig[A]` is the same kind of value you would build by hand with `Config.string(...)`, so every function in [Config descriptors](./config-descriptors.md) still works on it.
 
-#### Config
-```scala
-sealed trait X
+## A first example
 
-object X {
-  case object A extends X
-  case object B extends X
-  case object C extends X
-  case class  DetailsWrapped(detail: Detail) extends X
-  
-  case class Detail(firstName: String, lastName: String, region: Region)
-  case class Region(suburb: String, city: String)
-}
-
-case class MyConfig(x: X)
-```
-
-#### AutoDerivation
-
-```scala
-// Setting up imports
-
+```scala mdoc:silent
 import zio._
-import zio.config._, 
+import zio.config._
+import zio.config.magnolia.deriveConfig
+
+final case class Database(url: String, poolSize: Int)
+
+val databaseConfig: Config[Database] = deriveConfig[Database]
+```
+
+`databaseConfig` reads the keys `url` and `poolSize`. A field of a case class that is nested inside another case class reads its keys under the field name. The example below uses this with `Database` inside `AppConfig`.
+
+```scala mdoc:silent
+final case class AppConfig(name: String, database: Database)
+
+val appConfig: Config[AppConfig] = deriveConfig[AppConfig]
+```
+
+This reads the keys `name`, `database.url` and `database.poolSize`.
+
+Load a derived description the same way as any other:
+
+```scala mdoc:compile-only
 import zio.config.typesafe._
-import zio.config.magnolia._
 
-  import X._
-```
-
-```scala
-// Defining different possibility of HOCON source
-
-val aHoconSource =
-  ConfigProvider
-    .fromHoconString("x = A")
-```
-
-```scala
-val bHoconSource =
-  ConfigProvider
-    .fromHoconString("x = B")
-```
-
-```scala
-val cHoconSource =
-  ConfigProvider
-    .fromHoconString("x = C")
-```
-
-```scala
-val dHoconSource =
+val loaded: IO[Config.Error, AppConfig] =
   ConfigProvider
     .fromHoconString(
-      s"""
-         | x {
-         |   DetailsWrapped {
-         |    detail  {
-         |      firstName : ff
-         |      lastName  : ll
-         |      region {
-         |        city   : syd
-         |        suburb : strath
-         |     }
-         |   }
-         |  }
-         |}
-         |""".stripMargin
+      """
+      name = "orders"
+      database {
+        url = "postgres://localhost/orders"
+        poolSize = 10
+      }
+      """
     )
+    .load(appConfig)
 ```
 
-```scala
-// Let's try automatic derivation
+## Sealed traits
 
-aHoconSource.load(deriveConfig[MyConfig])
-// res0: Right(MyConfig(A))
+A sealed trait is read by the name of its case class. Each case object or case class is a key:
 
-bHoconSource.load(deriveConfig[MyConfig])
-// res0: Right(MyConfig(B))
+```scala mdoc:silent
+sealed trait Greeting
 
-cHoconSource.load(deriveConfig[MyConfig])
-// res0: Right(MyConfig(C))
+object Greeting {
+  case object Hello extends Greeting
+  case object Bye   extends Greeting
+  final case class Custom(text: String) extends Greeting
+}
 
-dHoconSource.load(deriveConfig[MyConfig])
-// res0: Right(MyConfig(DetailsWrapped(Detail("ff", "ll", Region("strath", "syd")))))
+final case class Page(greeting: Greeting)
+
+val pageConfig: Config[Page] = deriveConfig[Page]
 ```
 
+With this description, `greeting = Hello` in HOCON reads `Page(Hello)`. The `Custom` case class has a field, so its value is a nested object:
 
-**NOTE**
+```scala mdoc:compile-only
+import zio.config.typesafe._
 
-The fieldNames and class-names remain the same as that of case-classes and sealed-traits.
-
-If you want custom names for your fields, use `name` annotation.
-
+val custom: IO[Config.Error, Page] =
+  ConfigProvider
+    .fromHoconString(
+      """
+      greeting {
+        Custom {
+          text = "hi there"
+        }
+      }
+      """
+    )
+    .load(pageConfig)
 ```
-import zio.config.derivation.name
 
-@name("detailsWrapped")
-case class  DetailsWrapped(detail: Detail) extends X
+Use `@discriminator` to read the case class name from a field instead of a nested key. See [Changing the shape of a sealed trait](#changing-the-shape-of-a-sealed-trait).
+
+## Annotations
+
+Annotations change the keys and descriptions that derivation produces. Each one is applied to a case class, a sealed trait, or a field.
+
+| Annotation | Import | Effect |
+| --- | --- | --- |
+| `@name("key")` | `zio.config.magnolia.name` | Use `key` instead of the Scala name |
+| `@describe("text")` | `zio.config.magnolia.describe` | Add a description, shown by [documentation generation](./documentation-and-reporting.md) |
+| `@discriminator("type")` | `zio.config.magnolia.discriminator` | Read the case class name from a key named `type` |
+| `@kebabCaseLegacy` | `zio.config.magnolia.kebabCaseLegacy` | Use the older kebab-case rules, described below |
+| `@kebabCase` | `zio.config.derivation.kebabCase` | Convert the keys to kebab-case |
+| `@snakeCase` | `zio.config.derivation.snakeCase` | Convert the keys to snake_case |
+
+### Renaming a key
+
+```scala mdoc:silent
+import zio.config.magnolia.name
+
+final case class Service(
+  @name("listen-port") port: Int,
+  host: String
+)
+
+val serviceConfig: Config[Service] = deriveConfig[Service]
 ```
 
-```scala
-import zio.config._
+`serviceConfig` reads `listen-port` and `host`. The Scala name `port` is not used as a key.
 
-deriveConfig[MyConfig].mapKey(toKebabCase)
-```
+### Adding descriptions
 
-With the above change`firstName` and `lastName` in the above HOCON example can be `first-name` and `last-name` 
-respectively.
-
-There are various ways in which you can customise the derivation of sealed traits. 
-This is a bit involving, and more documentations will be provided soon.
-
-### Documentation while automatic derivation
-
-With `describe` annotation you can still document your config while automatically generating the config
+`@describe` on a case class describes the whole product. On a field, it describes that key:
 
 ```scala mdoc:silent
 import zio.config.magnolia.describe
 
-@describe("This config is about aws")
-case class Aws(region: String, dburl: DbUrl)
-case class DbUrl(value: String)
+@describe("Settings for the HTTP server")
+final case class HttpSettings(
+  @describe("Port the server listens on") port: Int,
+  host: String
+)
+
+val httpConfig: Config[HttpSettings] = deriveConfig[HttpSettings]
 ```
 
+The descriptions appear in the output of `generateDocs`. The reading behavior does not change. Equivalent hand-written code is `(Config.int("port") ?? "Port the server listens on" zip Config.string("host")).to[HttpSettings] ?? "Settings for the HTTP server"`.
 
-This will be equivalent to the manual configuration of:
+### Key case
 
-```scala
-string("region").zip(string("dburl").to[DbUrl]).to[Aws] ?? "This config is about aws"
+Use `@kebabCase` or `@snakeCase` on a case class to change how its field names become keys. A field called `firstName` reads `first-name` with `@kebabCase`, and `first_name` with `@snakeCase`:
+
+```scala mdoc:silent
+import zio.config.derivation.{kebabCase, snakeCase}
+
+@kebabCase
+final case class KebabPerson(firstName: String, lastName: String)
+
+@snakeCase
+final case class SnakePerson(firstName: String, lastName: String)
+
+val kebabPerson: Config[KebabPerson] = deriveConfig[KebabPerson]
+val snakePerson: Config[SnakePerson] = deriveConfig[SnakePerson]
 ```
 
-You could provide `describe` annotation at field level
+`@kebabCaseLegacy` gives the old kebab-case rules, which split a key only where a lowercase letter is followed by an uppercase one. Under these rules `myValue123` becomes `my-value123`, and `QAndA` becomes `qand-a`. Use it to keep key names that were written with the 4.0.6 rules. It was added in 4.0.7; see [What's New](./whats-new-since-4-0-6.md).
 
-Example:
+For any other key change, call `mapKey` on the derived description:
 
-```scala
-case class Aws(@describe("AWS region") region: String, dburl: DbUrl)
+```scala mdoc:silent
+val upperKeys: Config[AppConfig] = deriveConfig[AppConfig].mapKey(_.toUpperCase)
 ```
 
-This will be equivalent to the manual configuration of:
+## Changing the shape of a sealed trait
 
+By default, a sealed trait is read by the name of the case class. Two annotations change this.
 
-```scala
-(string("region") ?? "AWS region" zip string("dburl").to[DbUrl]).to[Aws] ?? "This config is about aws"
-```
+`@discriminator(keyName)` reads the case class name from a key, and the case class fields sit next to it. The default key name is `type`:
 
+```scala mdoc:silent
+import zio.config.magnolia.discriminator
 
-### Custom Config
+@discriminator("type")
+sealed trait Notifier
 
-Every field in a case class should have an instance of `DeriveConfig` (and not `Config`) in order for the automatic derivation to work.
-This doesn't mean the entire design of zio-config is typeclass based. For the same reason, the typeclass
-`DeriveConfig` exists only in zio-config-magnolia.
-
-As an example, given below is a case class where automatic derivation won't work, and result in a compile time error:
-Assume that, `AwsRegion` is a type that comes from AWS SDK.
-
-```
-import java.time.ZonedDateTime
-
-case class Execution(time: AwsRegion, id: Int)
-```
-
-In this case, `deriveConfig[Execution]` will give us the following descriptive compile error.
-
-```
-magnolia: could not find Descriptor.Typeclass for type <outside.library.package>.AwsRegion
-  in parameter 'time' of product type <your.packagename>.Execution
-```
-
-This is because zio-config-magnolia failed to derive an instance of Descriptor for AwsRegion.
-
-In order to provide implicit instances, following choices are there
-
-```
-import zio.config.magnolia._
-
-implicit val awsRegionConfig: DeriveConfig[Aws.Region] =
-  DeriveConfig[String].map(string => AwsRegion.from(string))
-
-```
-
-Now `deriveConfig[Execution]` compiles.
-
-Custom descriptors are also needed in case you use value classes to describe your configuration. You can use them
-together with automatic derivation and those implicit custom descriptors will be taken automatically into account
-
-```scala
-import zio.config.magnolia._
-
-final case class AwsRegion(value: String) extends AnyVal {
-  override def toString: String = value
+object Notifier {
+  final case class Email(address: String) extends Notifier
+  final case class Sms(number: String)    extends Notifier
 }
+
+final case class NotifyConfig(notifier: Notifier)
+
+val notifyConfig: Config[NotifyConfig] = deriveConfig[NotifyConfig]
+```
+
+With this description, the HOCON below reads `NotifyConfig(Sms("123"))`:
+
+```scala mdoc:compile-only
+import zio.config.typesafe._
+
+val sms: IO[Config.Error, NotifyConfig] =
+  ConfigProvider
+    .fromHoconString(
+      """
+      notifier {
+        type = Sms
+        number = "123"
+      }
+      """
+    )
+    .load(notifyConfig)
+```
+
+`@name` on the sealed trait itself makes its name a key, so the source must include the trait name too. This is rarely needed.
+
+## Custom types and implicit instances
+
+Derivation needs an instance of `DeriveConfig` for every field type. Built-in types such as `String`, `Int` and `List` have one. For a type from another library, or a value class, write an instance yourself:
+
+```scala mdoc:silent
+import zio.config.magnolia._
+
+final case class AwsRegion(value: String) extends AnyVal
 
 object AwsRegion {
-  implicit val descriptor: DeriveConfig[AwsRegion] = 
+  implicit val deriveAwsRegion: DeriveConfig[AwsRegion] =
     DeriveConfig[String].map(AwsRegion(_))
 }
+
+final case class Deployment(region: AwsRegion, replicas: Int)
+
+val deployment: Config[Deployment] = deriveConfig[Deployment]
 ```
 
+Put the instance in the companion object of a type you own. For a type from another library, put it in the scope where you call `deriveConfig`.
 
+## Scala 3
 
-### Where to place these implicits ?
-
-If the types are owned by us, then the best place to keep implicit instance is the companion object of that type.
+On Scala 3, derivation works the same way, and you can also use `derives` on a case class:
 
 ```scala
-final case class MyAwsRegion(value: AwsRegion)
-
-object MyAwsRegion {
-  implicit val awsRegionDescriptor: DeriveConfig[MyAwsRegion] =
-    DeriveConfig[String]
-      .map(
-        string => MyAwsRegion(AwsRegion.from(string))
-      ) ?? "value of type AWS.Region"
-}
-```
-
-However, sometimes, the types are owned by an external library.
-
-In these situations, better off place the implicit closer to where we call the automatic derivation.
-Please find the example in `magnolia` package in examples module.
-
-### Change Keys (CamelCase, kebab-case etc)
-
-Please find the examples in ChangeKeys.scala in magnolia module to find how to manipulate keys in an automatic derivation such as being able to specify keys as camelCase, kebabCase or snakeCase in the source config.
-
-## Scala3 Autoderivation
-Works just like scala-2.12 and scala-2.13.
-If possible, we will make this behaviour consistent in scala-2.12 and scala-2.13 in future versions of zio-config.
-
-#### Example:
-
-The name of the sealed trait itself is skipped completely by default.
-However, if you put a `name` annotation on top of the sealed-trait itself,
-then it becomes part of the config. 
-
-The name of the case-class should be available in config-source, 
-and by default it should the same name as that of the case-class.
-
-```scala
-sealed trait A
-case class B(x: String) extends A
-case class C(y: String) extends A
-
-case class Config(a: A) 
-```
-
-With the above config, `deriveConfig[A]` can read following source.
-
-```scala
-{
-  "a" : {
-   "B" : {
-      "x" : "abc"
-     }
-   }
-  }
-}
-
-// or a.B.x="abc", if your source is just property file
-```
-
-However, if you give `name` annotation for A, the name of the sealed trait
-should be part of the config too. This is rarely used.
-
-```scala
-@name("aaaaa")
-sealed trait A
-case class B(x: String) extends A
-case class C(y: String) extends A
-
-case class Config(a: A) 
-```
-
-With the above config, `deriveConfig[A]` can read following source.
-
-```scala
-{
-  "a" : {
-    "aaaaa" : 
-      "B" : {
-        "x" : "abc"
-     }
-   }
-  }
-}
-```
-Similar to scala-2.x, you can give name annotations to any case-class as well (similar to scala 2.x)
-
-#### Example:
-
-```scala
-sealed trait A
-
-@name("b")
-case class B(x: String) extends A
-case class C(y: String) extends A
-
-case class Config(a: A) 
-```
-
-In this case, the config should be
-
-```scala
-{
-  "a" : {
-   "b" : {
-      "x" : "abc"
-     }
-   }
-  }
-}
-```
-
-### Config derivation via `derives` keyword
-
-Scala 3 has introduced `derives` keyword to derive typeclasses without the need of explicitely declaring the implicit / given.
-This syntax can be enabled for `zio.Config` by importing `zio.config.magnolia.*` and then using the `derives` keyword on the type that needs to be derived:
-
-```scala 3
 import zio.config.magnolia.*
-import zio.{Config, ZIO}
+import zio.Config
 
-sealed trait A
-case class B(x: String) extends A
-case class C(y: String) extends A
-
-case class MyConfig(a: A) derives Config
-
-// And then simply summon the `Config[MyConfig]` instance as you would normally:
-val cfg = ZIO.config[MyConfig]
+final case class MyConfig(a: String, b: Int) derives Config
 ```
 
-### No guaranteed behavior for scala-3 enum yet
-With the current release, there is no guaranteed support of scala-3 enum. 
-Use `sealed trait` and `case class` pattern.
+The `derives Config` clause uses the same rules as `deriveConfig`. Derivation does not support Scala 3 `enum` values reliably yet. Use `sealed trait` with `case class` or `case object` instead. Recursive types are not supported by automatic derivation.
 
-### No support for recursive config in auto-derivation, but we can make it work
+## Limits
 
-There is no support for auto-deriving recursive config with scala-3.
-Please refer to examples in magnolia package (not in the main examples module)
+- Every field needs a `DeriveConfig` instance, or derivation fails at compile time with a message naming the field and its type.
+- Derivation does not generate a config for recursive types.
+- Scala 3 `enum` is not supported with a guarantee.
 
-### Custom Keys
+## Next steps
 
-With zio-config-3.x, the only way to change keys is as follows:
-
-```scala
-// mapKey is just a function in `Config` that pre-existed
-
-val config = deriveConfig[Config].mapKey(_.toUpperCase)
-```
-
-## Inbuilt support for pure-config
-
-Many users make use of the label `type` in HOCON files to annotate the type of the coproduct. 
-Just put `@nameWithLabel()` in sealed trait name. By default the `label` name is `type`, but you can provide
-any custom name `@nameWithLabel("foo")`
-
-
-```scala
-import zio.config._, typesafe._, magnolia._
-
-@nameWithLabel("type")
-sealed trait X
-case class A(name: String) extends X
-case class B(age: Int) extends X
-
-case class AppConfig(x: X)
-
-val str =
-  s"""
-   x : {
-     type = A
-     name = jon
-   }
-  """
-
-read(deriveConfig[AppConfig] from ConfigProvider.fromHoconString(str))
-```
+- [Config descriptors](./config-descriptors.md) shows how to write descriptions by hand.
+- [Validation](./automatic-validations.md) adds refined-type predicates to derived fields.
+- [How to override settings per environment](./how-to-override-per-environment.md) combines derived descriptions with several providers.
