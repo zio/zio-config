@@ -14,6 +14,7 @@ Each primitive reads one key:
 
 ```scala mdoc:silent
 import zio._
+import zio.config._
 
 val host: Config[String] = Config.string("HOST")
 val port: Config[Int]    = Config.int("PORT")
@@ -51,7 +52,7 @@ val positivePort: Config[Int] =
 
 `optional` makes a key optional. The result is an `Option`, and a missing key gives `None`:
 
-```scala mdoc:silent
+```scala mdoc:compile-only
 val region: Config[Option[String]] = Config.string("REGION").optional
 ```
 
