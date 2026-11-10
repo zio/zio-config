@@ -78,7 +78,7 @@ val defaults: ConfigProvider = ConfigProvider.fromHoconString(defaultsHocon)
 
 ZIO provides a provider that reads the process environment. Use it for values that change per machine:
 
-```scala mdoc:compile-only
+```scala mdoc:silent
 val environment: ConfigProvider = ConfigProvider.envProvider
 ```
 
@@ -86,7 +86,7 @@ val environment: ConfigProvider = ConfigProvider.envProvider
 
 `orElse` tries the first provider for each key, and falls back to the second one when a key is missing. Put the environment first, so its values win, and the defaults second:
 
-```scala mdoc:compile-only
+```scala mdoc:silent
 val layered: ConfigProvider = environment.orElse(defaults)
 ```
 
