@@ -34,7 +34,7 @@
     },
     "Round12.dc.html": {
       "h": 3920,
-      "title": "Final brand sheet",
+      "title": "Overview (one-page summary)",
       "w": 1440,
       "x": 0,
       "y": 0,
@@ -95,6 +95,70 @@
       "w": 1440,
       "x": 0,
       "y": 10820
+    },
+    "Brand1Logo.dc.html": {
+      "x": 0,
+      "y": 4040,
+      "w": 1480,
+      "h": 2454,
+      "title": "1 \u00b7 Logo",
+      "page": "page-1b076f29e50b"
+    },
+    "Brand2Icons.dc.html": {
+      "x": 0,
+      "y": 6614,
+      "w": 1480,
+      "h": 2739,
+      "title": "2 \u00b7 Icon and favicon",
+      "page": "page-1b076f29e50b"
+    },
+    "Brand3Colour.dc.html": {
+      "x": 0,
+      "y": 9473,
+      "w": 1480,
+      "h": 3099,
+      "title": "3 \u00b7 Colour",
+      "page": "page-1b076f29e50b"
+    },
+    "Brand4Type.dc.html": {
+      "x": 0,
+      "y": 12692,
+      "w": 1480,
+      "h": 2214,
+      "title": "4 \u00b7 Typography",
+      "page": "page-1b076f29e50b"
+    },
+    "Brand5Voice.dc.html": {
+      "x": 0,
+      "y": 15026,
+      "w": 1480,
+      "h": 2250,
+      "title": "5 \u00b7 Voice and tone",
+      "page": "page-1b076f29e50b"
+    },
+    "Brand6Imagery.dc.html": {
+      "x": 0,
+      "y": 17396,
+      "w": 1480,
+      "h": 2814,
+      "title": "6 \u00b7 Visual and imagery style",
+      "page": "page-1b076f29e50b"
+    },
+    "Brand7Hero.dc.html": {
+      "x": 0,
+      "y": 20330,
+      "w": 1480,
+      "h": 1911,
+      "title": "7 \u00b7 Hero banner",
+      "page": "page-1b076f29e50b"
+    },
+    "Brand8Social.dc.html": {
+      "x": 0,
+      "y": 22361,
+      "w": 1480,
+      "h": 2451,
+      "title": "8 \u00b7 Social cards",
+      "page": "page-1b076f29e50b"
     }
   },
   "createdOnFiles": {
@@ -119,7 +183,15 @@
     "Round9.dc.html",
     "Round10.dc.html",
     "Round11.dc.html",
-    "Artboard-vpum.dc.html"
+    "Artboard-vpum.dc.html",
+    "Brand1Logo.dc.html",
+    "Brand2Icons.dc.html",
+    "Brand3Colour.dc.html",
+    "Brand4Type.dc.html",
+    "Brand5Voice.dc.html",
+    "Brand6Imagery.dc.html",
+    "Brand7Hero.dc.html",
+    "Brand8Social.dc.html"
   ],
   "pages": [
     {
