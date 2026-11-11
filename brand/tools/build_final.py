@@ -16,7 +16,7 @@ NIGHT = "#101521"
 def mark(small=False, uid="m"):
     h = 14.5 if small else 14
     gap = (62 - 4 * h) / 3
-    rows = [(3, 61, "R", "ink"), (30, 61, "R", "acc"), (3, 34, "L", "acc"), (3, 61, "L", "ink")]
+    rows = [(3, 61, "R", "ink"), (22, 61, "R", "acc"), (3, 42, "L", "acc"), (3, 61, "L", "ink")]
     bars, holes = [], []
     for i, (a, b, side, c) in enumerate(rows):
         y = 1 + i * (h + gap)
@@ -56,27 +56,23 @@ def wordmark(ink, size, x, baseline):
     return f'<path d="{d1}" fill="{ink}"/><path d="{d2}" fill="{ink}"/>', x2
 
 # --- logo: the Z of ZIO is the stair (chosen design, round 10 version 1) ---
-# Z letter: 4 bars as thick as the Sora Bold I stem, 78% length, steep step, nearly square ends,
-# and a round knob (real hole) at one end of every bar, same as the symbol.
+# Z letter = the symbol at cap height ("1 Square Z", round 9): the same four bars and knobs, full width,
+# bar thickness equals the Sora Bold I stem (6.77 vs 6.74 units at cap 30).
 _zid = [0]
 def z_letter(x, top, cap, cols):
-    s_ = cap / 62.0; xs = 0.78; ink, acc = cols; _zid[0] += 1; uid = f"z{_zid[0]}"
-    rows = [(3, 61, "R", ink), (30, 61, "R", acc), (3, 34, "L", acc), (3, 61, "L", ink)]
-    bars = holes = ""
-    for i, (a, b, side, c) in enumerate(rows):
-        a2, b2 = 3 + (a - 3) * xs, 3 + (b - 3) * xs
-        X0 = x + (a2 - 3) * s_; W = (b2 - a2) * s_; Y = top + i * 16 * s_; H = 14 * s_
-        bars += f'<rect x="{X0:.2f}" y="{Y:.2f}" width="{W:.2f}" height="{H:.2f}" rx="{H * 0.22:.2f}" fill="{c}"/>'
-        kx = X0 + W - H * 0.5 - H * 0.04 if side == "R" else X0 + H * 0.5 + H * 0.04
-        holes += f'<circle cx="{kx:.2f}" cy="{Y + H / 2:.2f}" r="{H * 0.5 - H * 0.12:.2f}" fill="#000"/>'
-    w = (61 - 3) * xs * s_
-    return (f'<mask id="{uid}"><rect x="-5000" y="-5000" width="10000" height="10000" fill="#fff"/>{holes}</mask>'
-            f'<g mask="url(#{uid})">{bars}</g>'), w
+    s_ = cap / 62.0; ink, acc = cols; _zid[0] += 1; uid = f"z{_zid[0]}"
+    bars, holes = mark(False)
+    body = ""
+    for (bx, by, bw, bh, c) in bars:
+        body += f'<rect x="{x + (bx - 3) * s_:.2f}" y="{top + (by - 1) * s_:.2f}" width="{bw * s_:.2f}" height="{bh * s_:.2f}" rx="{bh * s_ / 2:.2f}" fill="{ink if c == "ink" else acc}"/>'
+    hs = "".join(f'<circle cx="{x + (hx - 3) * s_:.2f}" cy="{top + (hy - 1) * s_:.2f}" r="{hr * s_:.2f}" fill="#000"/>' for hx, hy, hr in holes)
+    return (f'<mask id="{uid}"><rect x="-5000" y="-5000" width="10000" height="10000" fill="#fff"/>{hs}</mask>'
+            f'<g mask="url(#{uid})">{body}</g>'), 58 * s_
 def logo_body(cols, cap, x, baseline):
     """returns svg body and right edge. Z + IO (bold) + Config (regular), outlined."""
     size = cap / capH
     zb, zw = z_letter(x, baseline - cap, cap, cols)
-    d1, x1 = text_path(bold, "IO", size, x + zw + size * 0.09, baseline, size * 0.01)
+    d1, x1 = text_path(bold, "IO", size, x + zw + size * 0.10, baseline, size * 0.01)
     d2, x2 = text_path(reg, "Config", size, x1 + size * 0.26, baseline, size * 0.005)
     return zb + f'<path d="{d1}" fill="{cols[0]}"/><path d="{d2}" fill="{cols[0]}"/>', x2
 
@@ -96,7 +92,7 @@ files["favicon-square.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((
 sc2 = 'transform="translate(2.2 2.2) scale(0.931)"'
 files["favicon-tiny.svg"] = svg(64, 64, "0 0 64 64", tile(10) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc2}"))
 # 16 px pixel-grid favicon: bars 3 px, gap 1 px, 1 px knob dot at one end of each bar (tile colour)
-px = [(1,15,"R",INK_D),(8,15,"R",ACC_D),(1,8,"L",ACC_D),(1,15,"L",INK_D)]
+px = [(1,15,"R",INK_D),(5,15,"R",ACC_D),(1,11,"L",ACC_D),(1,15,"L",INK_D)]
 bars16 = "".join(f'<rect x="{a}" y="{4*i}" width="{b-a}" height="3" rx="1" fill="{c}"/><rect x="{(b-2) if side=="R" else (a+1)}" y="{4*i+1}" width="1" height="1" fill="{NIGHT}"/>' for i,(a,b,side,c) in enumerate(px))
 files["favicon-16px.svg"] = svg(16, 16, "0 0 16 16", f'<rect width="16" height="16" rx="3" fill="{NIGHT}"/>' + bars16)
 # maskable icon: mark inside the central 80% safe circle (radius 0.4 of the side)

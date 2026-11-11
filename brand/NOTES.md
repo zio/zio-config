@@ -100,3 +100,10 @@ Milad accepted round-10 version 1 (steep stair, square ends, no knobs) and asked
 ## Round 12: knobs on every shape (Milad: discrepancies, all logo shapes must have circles)
 Wordmark Z now has a round knob (mask hole) at one end of each bar, same sides as the symbol (rows 1-2 right, rows 3-4 left; ring = 12% of bar height, same ratio as symbol). 16 px favicon rebuilt: 3 px bars, 1 px gaps, 1 px dot per bar. Social cards and brand sheet regenerated.
 Render: knobs clear from about 48 px logo height; at 32 px still visible; at 24 px and below muddy. Min logo size raised from 20 to 32 px high (symbol below that). Earlier finding stands: knobs are small at letter size, accepted trade-off.
+
+## Round 13: Final brand sheet, "1 Square Z" only
+Milad asked for a new page "Final brand sheet" using only "1 Square Z" as the logo. His quoted name matches round 9 card "1 Square Z" (full-width stair with knobs, same as the symbol), NOT the round-10 narrow steep Z I had used in rounds 11-12 (that explains his "discrepancies"). Rebuilt everything on it:
+- Z letter = the symbol at cap height (shallow steps 22/42, full width 58 units, round ends, knobs). Same geometry as mark-*.svg, favicon, icons, so one shape everywhere. Bar thickness still matches the Sora Bold I stem (6.77 vs 6.74).
+- 16 px favicon rows back to shallow steps (5..15, 1..11). Logo/social cards/sheet regenerated. brand/final/ overwritten (old narrow-Z version is in git history, commits 87989e0 and e914eaf).
+- New board Round12 "Final brand sheet" (only this logo). Older boards (including Round11 with the narrow Z) left as history.
+- Render-checked logo at 130/64/48/32 px, 16 px favicon at 6x, full sheet. Min logo 32 px high kept. Tagline and URL still placeholders. No PR.
