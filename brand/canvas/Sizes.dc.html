@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Round 1 size test and palette</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.lt{--page:#FFFFFF;--panel:#F7F3F8;--text:#1D1423;--text2:#5E5266;--brand:#4E0A4A;--accent:#587000}
+.dk{--page:#15101A;--panel:#1F1826;--text:#F1EBF4;--text2:#AFA3B8;--brand:#BD66B1;--accent:#C4F03A}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="A" viewBox="0 0 24 24"><rect x="0" y="5" width="24" height="14" rx="7" fill="var(--brand)"/><circle cx="16.5" cy="12" r="4.5" fill="var(--accent)"/></symbol>
+<symbol id="As" viewBox="0 0 16 16"><rect x="0" y="3" width="16" height="10" rx="5" fill="var(--brand)"/><circle cx="11" cy="8" r="3" fill="var(--accent)"/></symbol>
+<symbol id="B" viewBox="0 0 24 24"><circle cx="6" cy="12" r="6" fill="var(--accent)"/><rect x="14" y="5" width="10" height="6" fill="var(--brand)"/><rect x="14" y="13" width="10" height="6" fill="var(--brand)"/></symbol>
+<symbol id="Bs" viewBox="0 0 16 16"><circle cx="4" cy="8" r="4" fill="var(--accent)"/><rect x="9" y="3.5" width="7" height="4" fill="var(--brand)"/><rect x="9" y="8.5" width="7" height="4" fill="var(--brand)"/></symbol>
+<symbol id="C" viewBox="0 0 24 24"><polygon points="0,8 2.5,8 2.5,21.5 16,21.5 16,24 0,24" fill="var(--brand)"/><polygon points="4,4 6.5,4 6.5,17.5 20,17.5 20,20 4,20" fill="var(--brand)"/><rect x="8" y="0" width="16" height="16" fill="var(--accent)"/></symbol>
+<symbol id="Cs" viewBox="0 0 16 16"><polygon points="0,6 2,6 2,14 10,14 10,16 0,16" fill="var(--brand)"/><polygon points="3,3 5,3 5,11 13,11 13,13 3,13" fill="var(--brand)"/><rect x="6" y="0" width="10" height="10" fill="var(--accent)"/></symbol>
+<symbol id="D" viewBox="0 0 24 24"><g stroke="var(--brand)" stroke-width="2.6" fill="none"><path d="M12 5 L3.5 19"/><path d="M12 5 V19"/><path d="M12 5 L20.5 19"/></g><circle cx="12" cy="5" r="4" fill="var(--brand)"/><circle cx="3.5" cy="19" r="3.5" fill="var(--brand)"/><circle cx="12" cy="19" r="3.5" fill="var(--brand)"/><circle cx="20.5" cy="19" r="3.5" fill="var(--accent)"/></symbol>
+<symbol id="Ds" viewBox="0 0 16 16"><g stroke="var(--brand)" stroke-width="2.4" fill="none"><path d="M8 3.5 L2.5 12.5"/><path d="M8 3.5 V12.5"/><path d="M8 3.5 L13.5 12.5"/></g><circle cx="8" cy="3.5" r="3.2" fill="var(--brand)"/><circle cx="2.5" cy="12.5" r="2.5" fill="var(--brand)"/><circle cx="8" cy="12.5" r="2.5" fill="var(--brand)"/><circle cx="13.5" cy="12.5" r="2.5" fill="var(--accent)"/></symbol>
+<symbol id="E" viewBox="0 0 24 24"><polygon points="6,0 24,0 24,6 12,18 24,18 18,24 0,24 0,18 12,6 0,6" fill="var(--brand)"/><polygon points="12,6 24,6 12,18 0,18" fill="var(--accent)"/></symbol>
+<symbol id="Es" viewBox="0 0 16 16"><polygon points="4,0 16,0 16,4 8,12 16,12 12,16 0,16 0,12 8,4 0,4" fill="var(--brand)"/><polygon points="8,4 16,4 8,12 0,12" fill="var(--accent)"/></symbol>
+</svg>
+<div class="lt" style="width: 1440px; height: 1080px; box-sizing: border-box; padding: 40px 32px; background: var(--page); color: var(--text); font-family: 'Sora', system-ui, sans-serif; display: flex; flex-wrap: wrap; gap: 40px; align-content: flex-start">
+
+  <div style="width: 860px; display: flex; flex-direction: column; gap: 14px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2)">Size test</div>
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600">16, 24, 32 and 96 px, light and dark</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)">The 16 px column uses the small cut (16-unit grid). The others use the master (24-unit grid).</p>
+    </div>
+    <div style="display: grid; grid-template-columns: 110px 330px 330px; gap: 12px 20px; align-items: center">
+      <div></div>
+      <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; color: var(--text2)">LIGHT</div>
+      <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; color: var(--text2)">DARK</div>
+
+      <div style="font-size: 16px; font-weight: 600">A Switch</div>
+      <div class="lt" style="background: var(--page); border: 1px solid #E4DBE7; padding: 16px; display: flex; align-items: flex-end; gap: 28px; height: 96px"><svg width="16" height="16"><use href="#As" width="16" height="16"/></svg><svg width="24" height="24"><use href="#A" width="24" height="24"/></svg><svg width="32" height="32"><use href="#A" width="32" height="32"/></svg><svg width="96" height="96"><use href="#A" width="96" height="96"/></svg></div>
+      <div class="dk" style="background: var(--page); padding: 17px; display: flex; align-items: flex-end; gap: 28px; height: 96px"><svg width="16" height="16"><use href="#As" width="16" height="16"/></svg><svg width="24" height="24"><use href="#A" width="24" height="24"/></svg><svg width="32" height="32"><use href="#A" width="32" height="32"/></svg><svg width="96" height="96"><use href="#A" width="96" height="96"/></svg></div>
+
+      <div style="font-size: 16px; font-weight: 600">B Key = value</div>
+      <div class="lt" style="background: var(--page); border: 1px solid #E4DBE7; padding: 16px; display: flex; align-items: flex-end; gap: 28px; height: 96px"><svg width="16" height="16"><use href="#Bs" width="16" height="16"/></svg><svg width="24" height="24"><use href="#B" width="24" height="24"/></svg><svg width="32" height="32"><use href="#B" width="32" height="32"/></svg><svg width="96" height="96"><use href="#B" width="96" height="96"/></svg></div>
+      <div class="dk" style="background: var(--page); padding: 17px; display: flex; align-items: flex-end; gap: 28px; height: 96px"><svg width="16" height="16"><use href="#Bs" width="16" height="16"/></svg><svg width="24" height="24"><use href="#B" width="24" height="24"/></svg><svg width="32" height="32"><use href="#B" width="32" height="32"/></svg><svg width="96" height="96"><use href="#B" width="96" height="96"/></svg></div>
+
+      <div style="font-size: 16px; font-weight: 600">C Cascade</div>
+      <div class="lt" style="background: var(--page); border: 1px solid #E4DBE7; padding: 16px; display: flex; align-items: flex-end; gap: 28px; height: 96px"><svg width="16" height="16"><use href="#Cs" width="16" height="16"/></svg><svg width="24" height="24"><use href="#C" width="24" height="24"/></svg><svg width="32" height="32"><use href="#C" width="32" height="32"/></svg><svg width="96" height="96"><use href="#C" width="96" height="96"/></svg></div>
+      <div class="dk" style="background: var(--page); padding: 17px; display: flex; align-items: flex-end; gap: 28px; height: 96px"><svg width="16" height="16"><use href="#Cs" width="16" height="16"/></svg><svg width="24" height="24"><use href="#C" width="24" height="24"/></svg><svg width="32" height="32"><use href="#C" width="32" height="32"/></svg><svg width="96" height="96"><use href="#C" width="96" height="96"/></svg></div>
+
+      <div style="font-size: 16px; font-weight: 600">D Branch</div>
+      <div class="lt" style="background: var(--page); border: 1px solid #E4DBE7; padding: 16px; display: flex; align-items: flex-end; gap: 28px; height: 96px"><svg width="16" height="16"><use href="#Ds" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D" width="32" height="32"/></svg><svg width="96" height="96"><use href="#D" width="96" height="96"/></svg></div>
+      <div class="dk" style="background: var(--page); padding: 17px; display: flex; align-items: flex-end; gap: 28px; height: 96px"><svg width="16" height="16"><use href="#Ds" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D" width="32" height="32"/></svg><svg width="96" height="96"><use href="#D" width="96" height="96"/></svg></div>
+
+      <div style="font-size: 16px; font-weight: 600">E Fold Z</div>
+      <div class="lt" style="background: var(--page); border: 1px solid #E4DBE7; padding: 16px; display: flex; align-items: flex-end; gap: 28px; height: 96px"><svg width="16" height="16"><use href="#Es" width="16" height="16"/></svg><svg width="24" height="24"><use href="#E" width="24" height="24"/></svg><svg width="32" height="32"><use href="#E" width="32" height="32"/></svg><svg width="96" height="96"><use href="#E" width="96" height="96"/></svg></div>
+      <div class="dk" style="background: var(--page); padding: 17px; display: flex; align-items: flex-end; gap: 28px; height: 96px"><svg width="16" height="16"><use href="#Es" width="16" height="16"/></svg><svg width="24" height="24"><use href="#E" width="24" height="24"/></svg><svg width="32" height="32"><use href="#E" width="32" height="32"/></svg><svg width="96" height="96"><use href="#E" width="96" height="96"/></svg></div>
+    </div>
+    <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2); max-width: 72ch">Reading the test: A and E hold at 16 px. B holds but is small. C merges into a block and D thins out, so both would need a redrawn small cut before they could be chosen.</p>
+  </div>
+
+  <div style="width: 480px; display: flex; flex-direction: column; gap: 22px">
+    <div style="display: flex; flex-direction: column; gap: 6px">
+      <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2)">Palette draft</div>
+      <h2 style="margin: 0; font-size: 24px; font-weight: 600">Plum and lime</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)">Brand colour (plum) carries the mark. Accent (lime) is the one highlight. Sora for headings and the wordmark, DM Mono for code and labels.</p>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0; border: 1px solid #E4DBE7">
+      <div style="background: #FFFFFF; height: 64px"></div><div style="background: #F7F3F8; height: 64px"></div><div style="background: #1D1423; height: 64px"></div><div style="background: #5E5266; height: 64px"></div><div style="background: #4E0A4A; height: 64px"></div><div style="background: #587000; height: 64px"></div>
+      <div style="grid-column: span 6; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); padding: 8px 10px; border-top: 1px solid #E4DBE7">Light: page #FFFFFF, panel #F7F3F8, text #1D1423, secondary #5E5266, brand #4E0A4A, accent #587000</div>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0">
+      <div style="background: #15101A; height: 64px"></div><div style="background: #1F1826; height: 64px"></div><div style="background: #F1EBF4; height: 64px"></div><div style="background: #AFA3B8; height: 64px"></div><div style="background: #BD66B1; height: 64px"></div><div style="background: #C4F03A; height: 64px"></div>
+      <div style="grid-column: span 6; font-family: 'DM Mono', monospace; font-size: 12px; color: var(--text2); padding: 8px 10px; background: var(--panel)">Dark: page #15101A, panel #1F1826, text #F1EBF4, secondary #AFA3B8, brand #BD66B1, accent #C4F03A</div>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <h3 style="margin: 0; font-size: 16px; font-weight: 600">Contrast (WCAG 2.x, computed)</h3>
+      <div style="font-family: 'DM Mono', monospace; font-size: 12px; line-height: 1.7; color: var(--text)">
+        <div style="color: var(--text2)">LIGHT, need 4.5 for text</div>
+        <div>text on page 17.85 · on panel 16.26</div>
+        <div>secondary on page 7.31 · on panel 6.65</div>
+        <div>brand on page 14.32 · on panel 13.05</div>
+        <div>accent on page 5.63 · on panel 5.13</div>
+        <div>white on brand 14.32 · white on accent 5.63</div>
+        <div style="color: var(--text2); margin-top: 6px">DARK, need 4.5 for text</div>
+        <div>text on page 16.00 · on panel 14.73</div>
+        <div>secondary on page 7.81 · on panel 7.19</div>
+        <div>brand on page 5.08 · on panel 4.68</div>
+        <div>accent on page 14.16 · on panel 13.04</div>
+        <div>page on brand 5.08 · page on accent 14.16</div>
+      </div>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Does not meet 3:1:</b> accent against brand inside the mark, 2.55 light and 2.79 dark. Both are mid tones, so the two pieces separate by hue. Flagged as a deviation.</p>
+    </div>
+  </div>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1080}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

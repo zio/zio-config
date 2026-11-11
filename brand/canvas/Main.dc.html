@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Round 1 concepts</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&family=DM+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.lt{--page:#FFFFFF;--panel:#F7F3F8;--text:#1D1423;--text2:#5E5266;--brand:#4E0A4A;--accent:#587000}
+.dk{--page:#15101A;--panel:#1F1826;--text:#F1EBF4;--text2:#AFA3B8;--brand:#BD66B1;--accent:#C4F03A}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="A" viewBox="0 0 24 24"><rect x="0" y="5" width="24" height="14" rx="7" fill="var(--brand)"/><circle cx="16.5" cy="12" r="4.5" fill="var(--accent)"/></symbol>
+<symbol id="B" viewBox="0 0 24 24"><circle cx="6" cy="12" r="6" fill="var(--accent)"/><rect x="14" y="5" width="10" height="6" fill="var(--brand)"/><rect x="14" y="13" width="10" height="6" fill="var(--brand)"/></symbol>
+<symbol id="C" viewBox="0 0 24 24"><polygon points="0,8 2.5,8 2.5,21.5 16,21.5 16,24 0,24" fill="var(--brand)"/><polygon points="4,4 6.5,4 6.5,17.5 20,17.5 20,20 4,20" fill="var(--brand)"/><rect x="8" y="0" width="16" height="16" fill="var(--accent)"/></symbol>
+<symbol id="D" viewBox="0 0 24 24"><g stroke="var(--brand)" stroke-width="2.6" fill="none"><path d="M12 5 L3.5 19"/><path d="M12 5 V19"/><path d="M12 5 L20.5 19"/></g><circle cx="12" cy="5" r="4" fill="var(--brand)"/><circle cx="3.5" cy="19" r="3.5" fill="var(--brand)"/><circle cx="12" cy="19" r="3.5" fill="var(--brand)"/><circle cx="20.5" cy="19" r="3.5" fill="var(--accent)"/></symbol>
+<symbol id="E" viewBox="0 0 24 24"><polygon points="6,0 24,0 24,6 12,18 24,18 18,24 0,24 0,18 12,6 0,6" fill="var(--brand)"/><polygon points="12,6 24,6 12,18 0,18" fill="var(--accent)"/></symbol>
+</svg>
+<div class="lt" style="width: 1440px; height: 900px; box-sizing: border-box; padding: 48px 32px 40px; background: var(--page); color: var(--text); font-family: 'Sora', system-ui, sans-serif; display: flex; flex-direction: column; gap: 32px">
+  <div style="display: flex; flex-direction: column; gap: 10px; padding: 0 8px">
+    <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2)">ZIO Config logo, round 1 of 3 or so</div>
+    <h1 style="margin: 0; font-size: 44px; font-weight: 600; letter-spacing: -0.02em; line-height: 1.1">Five ways to draw a setting</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.55; color: var(--text2); max-width: 68ch">Each concept is one solid glyph with one accent element, shown on light and dark. Colour is a new family hue (plum with a lime accent), not terracotta, mint, ultramarine or amber. Type is Sora with DM Mono.</p>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 24px">
+
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #E4DBE7">
+        <div class="lt" style="background: var(--page); height: 132px; display: flex; align-items: center; justify-content: center"><svg width="72" height="72"><use href="#A" width="72" height="72"/></svg></div>
+        <div class="dk" style="background: var(--page); height: 132px; display: flex; align-items: center; justify-content: center"><svg width="72" height="72"><use href="#A" width="72" height="72"/></svg></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; color: var(--text2)">A</div>
+        <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: 0">Switch</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55">A setting turned on. Plum track, lime knob.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Accent:</b> the knob.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Risk:</b> reads as a stock UI toggle. The pill is only 10 px tall at 16 px.</p>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #E4DBE7">
+        <div class="lt" style="background: var(--page); height: 132px; display: flex; align-items: center; justify-content: center"><svg width="72" height="72"><use href="#B" width="72" height="72"/></svg></div>
+        <div class="dk" style="background: var(--page); height: 132px; display: flex; align-items: center; justify-content: center"><svg width="72" height="72"><use href="#B" width="72" height="72"/></svg></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; color: var(--text2)">B</div>
+        <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: 0">Key = value</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55">A dot for the key, two bars for the value, like <span style="font-family: 'DM Mono', monospace; font-size: 13px">port = 8080</span>.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Accent:</b> the key dot.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Risk:</b> the two bars echo ZIO Logging's lines. Short and wide, so it has the least presence.</p>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #E4DBE7">
+        <div class="lt" style="background: var(--page); height: 132px; display: flex; align-items: center; justify-content: center"><svg width="72" height="72"><use href="#C" width="72" height="72"/></svg></div>
+        <div class="dk" style="background: var(--page); height: 132px; display: flex; align-items: center; justify-content: center"><svg width="72" height="72"><use href="#C" width="72" height="72"/></svg></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; color: var(--text2)">C</div>
+        <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: 0">Cascade</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55">Default, environment, override. The front layer wins.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Accent:</b> the front layer.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Risk:</b> the back layers blur into one block under 24 px. Nearest rival is ZIO Blocks.</p>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #E4DBE7">
+        <div class="lt" style="background: var(--page); height: 132px; display: flex; align-items: center; justify-content: center"><svg width="72" height="72"><use href="#D" width="72" height="72"/></svg></div>
+        <div class="dk" style="background: var(--page); height: 132px; display: flex; align-items: center; justify-content: center"><svg width="72" height="72"><use href="#D" width="72" height="72"/></svg></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; color: var(--text2)">D</div>
+        <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: 0">Branch</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55">A root key with three child keys: the shape of a config tree.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Accent:</b> one leaf, the overridden value.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Risk:</b> thin strokes at 16 px, and it can read as a molecule.</p>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 14px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; border: 1px solid #E4DBE7">
+        <div class="lt" style="background: var(--page); height: 132px; display: flex; align-items: center; justify-content: center"><svg width="72" height="72"><use href="#E" width="72" height="72"/></svg></div>
+        <div class="dk" style="background: var(--page); height: 132px; display: flex; align-items: center; justify-content: center"><svg width="72" height="72"><use href="#E" width="72" height="72"/></svg></div>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 8px">
+        <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; color: var(--text2)">E</div>
+        <h2 style="margin: 0; font-size: 24px; font-weight: 600; letter-spacing: 0">Fold Z</h2>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55">A Z ribbon with slanted ends. The diagonal is the override path.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Accent:</b> the diagonal.</p>
+        <p style="margin: 0; font-size: 14px; line-height: 1.55; color: var(--text2)"><b style="color: var(--text); font-weight: 600">Risk:</b> nearest to Prelude (Z with accent) and Blocks. The only Z, so the only one that sits inline in the lockup.</p>
+      </div>
+    </div>
+
+  </div>
+  <div style="background: var(--panel); padding: 20px 24px; display: flex; flex-direction: column; gap: 6px; margin: 0 8px">
+    <div style="font-family: 'DM Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text2)">Recommendation</div>
+    <p style="margin: 0; font-size: 16px; line-height: 1.55; max-width: 90ch"><b style="font-weight: 600">A, Switch.</b> It is the only concept that says "configuration" with no explanation, it is distinct from all four existing marks, and its clear space and small cut are simple. E is the fallback if you want a Z. Next round: narrow to two, build lockups, small cuts and the favicon.</p>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

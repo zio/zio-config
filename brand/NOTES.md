@@ -21,3 +21,6 @@ Size test: `round-1/sizes.png` (16, 24, 32, 96 px; light and dark; small cut und
 Maskable arithmetic: safe circle 80% of 512 = 409.6 diameter. Square mark max side = 409.6 / sqrt(2) = 289.6 (56.6%). Pill A (24 x 14 units): half-diagonal 13.89 units, scale 204.8 / 13.89 = 14.74, width 353.8 = 69.1% of 512.
 
 Regenerate: `python3 tools/render.py round-1` then chromium headless screenshot of `round-1/sizes.html`.
+
+Artifact (private, Design canvas): https://claude.ai/artifact/PAj3a7pVj4Hx21ABgVTBE1 . Sources in `canvas/`.
+Note: the artifact draws C with polygon layers; `round-1/` PNG draws it with masks. Same idea, not pixel-identical, and the artifact was not rendered by me (the type forbids verifying).
