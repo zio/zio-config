@@ -56,19 +56,26 @@ def wordmark(ink, size, x, baseline):
     return f'<path d="{d1}" fill="{ink}"/><path d="{d2}" fill="{ink}"/>', x2
 
 # --- logo: the Z of ZIO is the stair (chosen design, round 10 version 1) ---
-# Z letter: 4 bars as thick as the Sora Bold I stem, 78% length, steep step, no knobs, nearly square ends
-def z_letter(x, top, cap, cols, uid):
-    s_ = cap / 62.0; xs = 0.78; ink, acc = cols
-    rows = [(3, 61, ink), (30, 61, acc), (3, 34, acc), (3, 61, ink)]
-    bars = ""
-    for i, (a, b, c) in enumerate(rows):
+# Z letter: 4 bars as thick as the Sora Bold I stem, 78% length, steep step, nearly square ends,
+# and a round knob (real hole) at one end of every bar, same as the symbol.
+_zid = [0]
+def z_letter(x, top, cap, cols):
+    s_ = cap / 62.0; xs = 0.78; ink, acc = cols; _zid[0] += 1; uid = f"z{_zid[0]}"
+    rows = [(3, 61, "R", ink), (30, 61, "R", acc), (3, 34, "L", acc), (3, 61, "L", ink)]
+    bars = holes = ""
+    for i, (a, b, side, c) in enumerate(rows):
         a2, b2 = 3 + (a - 3) * xs, 3 + (b - 3) * xs
-        bars += f'<rect x="{x + (a2 - 3) * s_:.2f}" y="{top + i * 16 * s_:.2f}" width="{(b2 - a2) * s_:.2f}" height="{14 * s_:.2f}" rx="{14 * 0.22 * s_:.2f}" fill="{c}"/>'
-    return bars, (61 - 3) * xs * s_
+        X0 = x + (a2 - 3) * s_; W = (b2 - a2) * s_; Y = top + i * 16 * s_; H = 14 * s_
+        bars += f'<rect x="{X0:.2f}" y="{Y:.2f}" width="{W:.2f}" height="{H:.2f}" rx="{H * 0.22:.2f}" fill="{c}"/>'
+        kx = X0 + W - H * 0.5 - H * 0.04 if side == "R" else X0 + H * 0.5 + H * 0.04
+        holes += f'<circle cx="{kx:.2f}" cy="{Y + H / 2:.2f}" r="{H * 0.5 - H * 0.12:.2f}" fill="#000"/>'
+    w = (61 - 3) * xs * s_
+    return (f'<mask id="{uid}"><rect x="-5000" y="-5000" width="10000" height="10000" fill="#fff"/>{holes}</mask>'
+            f'<g mask="url(#{uid})">{bars}</g>'), w
 def logo_body(cols, cap, x, baseline):
     """returns svg body and right edge. Z + IO (bold) + Config (regular), outlined."""
     size = cap / capH
-    zb, zw = z_letter(x, baseline - cap, cap, cols, "z")
+    zb, zw = z_letter(x, baseline - cap, cap, cols)
     d1, x1 = text_path(bold, "IO", size, x + zw + size * 0.09, baseline, size * 0.01)
     d2, x2 = text_path(reg, "Config", size, x1 + size * 0.26, baseline, size * 0.005)
     return zb + f'<path d="{d1}" fill="{cols[0]}"/><path d="{d2}" fill="{cols[0]}"/>', x2
@@ -88,9 +95,10 @@ files["favicon-square.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((
 # tiny favicon (16/32 px): tile with small radius, mark fills more of it
 sc2 = 'transform="translate(2.2 2.2) scale(0.931)"'
 files["favicon-tiny.svg"] = svg(64, 64, "0 0 64 64", tile(10) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc2}"))
-# 16 px pixel-grid favicon: bars 2 px, gap 1 px, no knobs (they do not survive 16 px)
-px = [(1,15,INK_D),(8,15,ACC_D),(1,8,ACC_D),(1,15,INK_D)]
-files["favicon-16px.svg"] = svg(16, 16, "0 0 16 16", f'<rect width="16" height="16" rx="3" fill="{NIGHT}"/>' + "".join(f'<rect x="{a}" y="{2+3*i}" width="{b-a}" height="2" rx="1" fill="{c}"/>' for i,(a,b,c) in enumerate(px)))
+# 16 px pixel-grid favicon: bars 3 px, gap 1 px, 1 px knob dot at one end of each bar (tile colour)
+px = [(1,15,"R",INK_D),(8,15,"R",ACC_D),(1,8,"L",ACC_D),(1,15,"L",INK_D)]
+bars16 = "".join(f'<rect x="{a}" y="{4*i}" width="{b-a}" height="3" rx="1" fill="{c}"/><rect x="{(b-2) if side=="R" else (a+1)}" y="{4*i+1}" width="1" height="1" fill="{NIGHT}"/>' for i,(a,b,side,c) in enumerate(px))
+files["favicon-16px.svg"] = svg(16, 16, "0 0 16 16", f'<rect width="16" height="16" rx="3" fill="{NIGHT}"/>' + bars16)
 # maskable icon: mark inside the central 80% safe circle (radius 0.4 of the side)
 files["icon-maskable.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=' transform="translate(13.4 13.4) scale(0.58)"'))
 # social cards

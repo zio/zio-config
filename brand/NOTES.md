@@ -96,3 +96,7 @@ Milad accepted round-10 version 1 (steep stair, square ends, no knobs) and asked
 - Clear space = one bar height (about 1/4 cap height). Min logo 20 px high (checked in render at 48/32/24/20); symbol from 16 px.
 - Contrast table unchanged: accent on white 3.53 (graphic only), ink on accent 5.16.
 - Open: tagline and URL still placeholders; no PR.
+
+## Round 12: knobs on every shape (Milad: discrepancies, all logo shapes must have circles)
+Wordmark Z now has a round knob (mask hole) at one end of each bar, same sides as the symbol (rows 1-2 right, rows 3-4 left; ring = 12% of bar height, same ratio as symbol). 16 px favicon rebuilt: 3 px bars, 1 px gaps, 1 px dot per bar. Social cards and brand sheet regenerated.
+Render: knobs clear from about 48 px logo height; at 32 px still visible; at 24 px and below muddy. Min logo size raised from 20 to 32 px high (symbol below that). Earlier finding stands: knobs are small at letter size, accepted trade-off.
