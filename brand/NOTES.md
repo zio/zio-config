@@ -24,3 +24,7 @@ Regenerate: `python3 tools/render.py round-1` then chromium headless screenshot 
 
 Artifact (private, Design canvas): https://claude.ai/artifact/PAj3a7pVj4Hx21ABgVTBE1 . Sources in `canvas/`.
 Note: the artifact draws C with polygon layers; `round-1/` PNG draws it with masks. Same idea, not pixel-identical, and the artifact was not rendered by me (the type forbids verifying).
+
+## Round 1b: colour (Milad: "the colouring is awful")
+
+Plum and lime rejected. Four replacement palettes on the `Palettes` board (see `canvas/Palettes.dc.html`): 1 violet + sky, 2 raspberry + ink, 3 graphite + cyan, 4 petrol + pink. Text contrast of brand and accent on page passes 4.5:1 in all (5.77 to 17.85 light, 7.64 to 16.36 dark values in the board). Accent vs brand inside the mark is under 3:1 in all four (hue separation only). Awaiting pick.
