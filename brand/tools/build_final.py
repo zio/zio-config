@@ -102,7 +102,8 @@ def card(W, H, cols, bg, sub, name):
     cap = 96
     lb, lw = logo_body(cols, cap, 120, H / 2 - 5)
     t1, _ = text_path(reg, "Configuration for ZIO applications", 36, 120, H / 2 - 5 + 72)
-    t2, _ = text_path(reg, "zio.dev/zio-config", 24, 120, H - 70)
+    _, t2w = text_path(reg, "zio.dev/zio-config", 24, 0, 0)
+    t2, _ = text_path(reg, "zio.dev/zio-config", 24, W - 96 - t2w, H - 70)   # address sits at the right edge
     files[name] = svg(W, H, f"0 0 {W} {H}", lb + f'<path d="{t1}" fill="{sub}"/><path d="{t2}" fill="{sub}"/>', bg)
 card(1200, 630, (INK, ACC), "#FFFFFF", "#566074", "social-card-light.svg")
 card(1200, 630, (INK_D, ACC_D), NIGHT, "#A7AEBD", "social-card-dark.svg")

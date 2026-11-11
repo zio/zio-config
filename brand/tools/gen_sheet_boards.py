@@ -313,7 +313,7 @@ def social_card(dark_, w, h, scale):
     bg=NIGHT if dark_ else PAPER; fg=SNOW if dark_ else INK; sub=MIST if dark_ else SLATE; acc=ACCD if dark_ else ACC; bd=LINED if dark_ else LINE
     inner=(f'<div style="width:{w}px;height:{h}px;background:{bg};border:1px solid {bd};box-sizing:border-box;padding:0 96px;display:flex;flex-direction:column;justify-content:center;gap:28px;position:relative;overflow:hidden;color:{fg}">'
                       f'<div style="position:relative">{lg(150,fg,acc)}</div><div style="font-size:40px;color:{sub};position:relative">{TAGL}</div>'
-           f'<div style="position:absolute;left:96px;bottom:52px;{MONO};font-size:26px;color:{sub}">zio.dev/zio-config</div></div>')
+           f'<div style="position:absolute;right:96px;bottom:52px;{MONO};font-size:26px;color:{sub}">zio.dev/zio-config</div></div>')
     ow=640; oh=round(h*ow/w)
     return f'<div style="width:{ow}px;height:{oh}px;overflow:hidden;position:relative;flex:none;border-radius:8px"><div style="width:{w}px;height:{h}px;transform:scale({ow/w:.4f});transform-origin:0 0">{inner}</div></div>'
 plat=[('Open Graph','Link previews in chat, forums and most sites',1200,630),('X','Large summary card',1200,600),('LinkedIn','Shared link image',1200,627),('GitHub','Repository social preview',1280,640)]
