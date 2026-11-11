@@ -18,6 +18,6 @@ Version 4.0.8 adds the `zio-config-toml` module, which reads TOML files and stri
 
 Version 4.0.7 adds the `@kebabCaseLegacy` annotation for derived configs. It applies the older kebab-case rules, which split a key only at a lowercase-to-uppercase boundary. Under these rules `myValue123` becomes `my-value123`, and `QAndA` becomes `qand-a`. Use it to keep the key names of configs written before the default kebab-case rules changed.
 
-## After 4.1.0
+## 4.1.1 and 4.1.2
 
-The `series/4.x` branch has dependency updates after the 4.1.0 release, including typesafe config 1.4.10 and snakeyaml-engine 3.2. These updates change the libraries that zio-config uses internally. They do not change the zio-config API.
+Versions 4.1.1 and 4.1.2 contain dependency updates only. They update tomlj to 2.1.1, typesafe config to 1.4.10 and snakeyaml-engine to 3.2, and they update the build tooling. The zio-config API does not change in these versions.

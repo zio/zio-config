@@ -4,62 +4,33 @@
 
 # ZIO Config
 
-[ZIO Config](https://zio.dev/zio-config/) is a ZIO-based library and act as an extension to core library ZIO's `Config` language.
+[ZIO Config](https://zio.dev/zio-config/) is a ZIO library for reading application configuration. It extends the core `Config` type from ZIO. You describe the settings your program needs once, as a value of type `Config[A]`, and then load that description from any source: HOCON, YAML, TOML, XML, environment variables, maps or AWS Parameter Store.
 
 [![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)](https://github.com/zio/zio/wiki/Project-Stages) ![CI Badge](https://github.com/zio/zio-config/workflows/CI/badge.svg) [![Sonatype Releases](https://img.shields.io/nexus/r/https/oss.sonatype.org/dev.zio/zio-config_2.13.svg?label=Sonatype%20Release)](https://oss.sonatype.org/content/repositories/releases/dev/zio/zio-config_2.13/) [![Sonatype Snapshots](https://img.shields.io/nexus/s/https/oss.sonatype.org/dev.zio/zio-config_2.13.svg?label=Sonatype%20Snapshot)](https://oss.sonatype.org/content/repositories/snapshots/dev/zio/zio-config_2.13/) [![javadoc](https://javadoc.io/badge2/dev.zio/zio-config-docs_2.13/javadoc.svg)](https://javadoc.io/doc/dev.zio/zio-config-docs_2.13) [![ZIO Config](https://img.shields.io/github/stars/zio/zio-config?style=social)](https://github.com/zio/zio-config)
 
-Let's enumerate some key features of this library:
+## Key features
 
-- **Support for Various Sources** — It can read flat or nested configurations from HOCON, JSON, YAML, TOML, XML, maps, and more. Thanks to `IndexedFlat`.
-- **Automatic Document Generation** — It can auto-generate documentation of configurations.
-- **Automatic Derivation** — It has built-in support for automatic derivation of readers and writers for case classes and sealed traits.
-- **Type-level Constraints and Automatic Validation** — because it supports _Refined_ types, we can write type-level predicates which constrain the set of values described for data types.
-- **Descriptive Errors** — It accumulates all errors and reports all of them to the user rather than failing fast.
-- **Integrations** — Integrations with a variety of libraries
+- **Many sources.** Read flat or nested settings from HOCON, JSON, YAML, TOML, XML, maps and more. See [Config providers](docs/./read-from-various-sources.md).
+- **Automatic derivation.** Build a config description from a case class or sealed trait with one call. See [Derivation](docs/./automatic-derivation-of-config.md).
+- **Validation with refined types.** Put predicates such as "non-empty" or "at least 1024" in the type. See [Validation](docs/./automatic-validations.md).
+- **Documentation generation.** Produce a table of every setting, its format and its description. See [Documentation and reporting](docs/./documentation-and-reporting.md).
+- **Error accumulation.** Report every problem in one go, not only the first. See [Errors](docs/./errors.md).
+- **Integrations.** Works with enumeratum, cats, scalaz, pureconfig migration and AWS. See [Integrations](docs/./integrations.md).
 
+## Where to start
 
-If you are only interested in automatic derivation of configuration, find the details [here](https://zio.dev/zio-config/automatic-derivation-of-config)
+1. [Getting Started](docs/./getting-started.md) adds the dependencies and loads a first config.
+2. [Config descriptors](docs/./config-descriptors.md) explains the building blocks.
+3. The [Tutorial](docs/./tutorial-hocon-and-env.md) builds a realistic app configuration.
+4. The [How-to Guides](docs/./how-to-read-secrets.md) show how to solve specific tasks.
 
-## Installation
+## What's new
 
-In order to use this library, we need to add the following line in our `build.sbt` file:
+If you upgrade from 4.0.6 or earlier, read [What's New Since 4.0.6](docs/./whats-new-since-4-0-6.md) first.
 
-```scala
-libraryDependencies += "dev.zio" %% "zio-config" % "<version>" 
-```
+## Examples
 
-### Sources
-
-Add the modules you need for your config sources:
-
-```scala
-// HOCON / JSON
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "<version>"
-
-// YAML
-libraryDependencies += "dev.zio" %% "zio-config-yaml" % "<version>"
-
-// TOML
-libraryDependencies += "dev.zio" %% "zio-config-toml" % "<version>"
-
-// XML (experimental)
-libraryDependencies += "dev.zio" %% "zio-config-xml" % "<version>"
-```
-
-See [Read from various Sources](https://zio.dev/zio-config/read-from-various-sources) for examples of each.
-
-# Quick Start
-
-Let's add these four lines to our `build.sbt` file as we are using these modules in our examples:
-
-```scala
-libraryDependencies += "dev.zio" %% "zio-config"          % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "<version>"
-libraryDependencies += "dev.zio" %% "zio-config-refined"  % "<version>"
-```
-
-There are many examples in [here](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples)
+Many complete examples are in the [examples module](https://github.com/zio/zio-config/tree/master/examples/shared/src/main/scala/zio/config/examples) of the repository.
 
 ## Documentation
 
