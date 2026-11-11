@@ -83,3 +83,7 @@ Added to brand/final/: social-card-light/dark (1200x630, svg+png), github-social
 Contrast (brand/tools/wcag.py): ink on white 18.24; accent #F2501F on white 3.53 (graphic only, fails text); white on accent 3.53 FAIL for text; ink on accent 5.16; snow on night 16.73; dark accent on night 6.45; grey #566074 on white 6.32; grey #A7AEBD on night 8.19. Rule: never set text in the accent on white.
 Placeholders needing Milad: tagline "Configuration for ZIO applications" and URL zio.dev/zio-config.
 Verified by rendering the standalone sheet and cards (not the artifact page). Still open: sheet is a draft, no PR.
+
+## Fresh start, round 9: Z of ZIO as the stair (TEMPORARY, not accepted)
+Milad asked to embed the Z shape in ZIO as a temporary design; if accepted, switch to it. Files in brand/embed/ (brand/tools/build_embed.py), board Round9. brand/final/ is untouched.
+V1 square stair as Z, V2 narrow (78% bar length, letter width), V3 one colour. Rendered at 200/80/32/24 px high. Finding: reads as ZIO Config in context, but stair is lighter than bold I/O stems and the Z identity depends on the word; V2 best. Safer fallback = current lockup (mark beside wordmark).
