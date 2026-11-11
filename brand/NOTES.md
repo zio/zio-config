@@ -61,3 +61,7 @@ Artifact page not rendered (design canvas rule). Asked Milad for one dislike to 
 ## Fresh start, round 4: Toggles drawn as a Z
 Milad picked round-3 concept 2 (Toggles) and asked for a Z shape. Top and bottom switches are the Z bars, a diagonal joins them, knobs at both turns plus middle. Three colourings (Z1 ink pills + colour diagonal, Z2 all ink + colour knobs, Z3 colour pills + ink diagonal).
 Render (brand/fresh-r4/sizes.png, 16-96 px): all three read as Z at every size; Z2 (colour knobs) cleanest at 16 px; Z1 diagonal knob fiddly at 16 px.
+
+## Fresh start, round 5: toggles, all horizontal
+Milad: no diagonal line, every line horizontal, must still feel like toggles. Three options: 1 Stair (4 switches, two short ones step right to left), 2 Three switches (short coloured middle, knobs trace diagonal), 3 Fine stair (5 switches). Round white knobs on every pill; ends ink, middles colour.
+Render (brand/fresh-r5/sizes.png): all read as toggles at 32+; stair gives the best Z; Three switches is plainest, Z weak at 16 px; Fine stair busy at 24 px and below.
