@@ -28,3 +28,10 @@ Note: the artifact draws C with polygon layers; `round-1/` PNG draws it with mas
 ## Round 1b: colour (Milad: "the colouring is awful")
 
 Plum and lime rejected. Four replacement palettes on the `Palettes` board (see `canvas/Palettes.dc.html`): 1 violet + sky, 2 raspberry + ink, 3 graphite + cyan, 4 petrol + pink. Text contrast of brand and accent on page passes 4.5:1 in all (5.77 to 17.85 light, 7.64 to 16.36 dark values in the board). Accent vs brand inside the mark is under 3:1 in all four (hue separation only). Awaiting pick.
+
+## Round 2 (Milad: shapes too generic, too cold, want a Z; colour: bright and playful)
+
+Rejected: plum/lime and the four round-1b palettes; round-1 shapes (switch, key=value, cascade, branch, fold Z).
+New: four Z concepts, soft and chunky: 1 Bubble Z (single stroke, no accent), 2 Two-tone Z (top brand, bottom accent), 3 Node Z (path through four dots, accent last node), 4 Chunky Z (solid, softened corners, no accent). Three bright palettes: Bubblegum (pink #E6177F / #FF5BA8, cyan accent), Grape (violet #6D2FEA / #A98BFF, pink accent), Cyan pop (cyan #0098CC / #3DD6FA, violet accent). Mark colours are graphics (3:1 on page, all pass: 3.30 to 10.96); link/button text uses a deeper step (pink #B3125F 6.63, violet #5B21C9 8.38, cyan #00718F 5.59 on white). Accent vs brand 1.24 to 1.70 (hue only).
+Size test: `round-2/sizes.png` (16, 24, 32, 96; the 96 px Node and Chunky columns are squeezed by the test row's flex layout, a test artefact). Findings: Bubble and Chunky hold at 16 px; Two-tone holds, both colours visible; Node is cluttered below 32 px.
+Artifact board `Round2.dc.html`.
