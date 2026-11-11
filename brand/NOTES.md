@@ -65,3 +65,7 @@ Render (brand/fresh-r4/sizes.png, 16-96 px): all three read as Z at every size; 
 ## Fresh start, round 5: toggles, all horizontal
 Milad: no diagonal line, every line horizontal, must still feel like toggles. Three options: 1 Stair (4 switches, two short ones step right to left), 2 Three switches (short coloured middle, knobs trace diagonal), 3 Fine stair (5 switches). Round white knobs on every pill; ends ink, middles colour.
 Render (brand/fresh-r5/sizes.png): all read as toggles at 32+; stair gives the best Z; Three switches is plainest, Z weak at 16 px; Fine stair busy at 24 px and below.
+
+## Fresh start, round 6: the Stair, bolder and simpler
+Milad chose Stair from round 5; message cut off at "make the bars", read as "thicker". Three versions: S1 bold stair (4 knobs), S2 knobs on end bars only, S3 one colour with cut-out knobs. Bars h14, gap 2 (small cut 14.5).
+Render (brand/fresh-r6/sizes.png): all read as Z + toggles at 24+; S3 simplest/most favicon-ready; S2 fewer parts but middle bars stop looking like switches.
