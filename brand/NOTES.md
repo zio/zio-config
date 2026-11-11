@@ -57,3 +57,7 @@ Render check (`fresh-r2/sizes.png`, 16/24/32/64, ink, colour, light, dark): Merg
 Five concrete "settings you can point at" concepts, rounder and chunkier, no gear: DIP switch, Toggles, Nested keys, Equals (key = value), Validated rows (checks plus one rejected value, covers validation). Same ink + orange-red colourways.
 Render check (brand/fresh-r3/sizes.png, 16/24/32/64/96): Equals and Validated read best; Toggles at 16 px collapse to stacked bars (Z lost); DIP slots tiny at 16 px; Nested reads as plain bars.
 Artifact page not rendered (design canvas rule). Asked Milad for one dislike to aim next round.
+
+## Fresh start, round 4: Toggles drawn as a Z
+Milad picked round-3 concept 2 (Toggles) and asked for a Z shape. Top and bottom switches are the Z bars, a diagonal joins them, knobs at both turns plus middle. Three colourings (Z1 ink pills + colour diagonal, Z2 all ink + colour knobs, Z3 colour pills + ink diagonal).
+Render (brand/fresh-r4/sizes.png, 16-96 px): all three read as Z at every size; Z2 (colour knobs) cleanest at 16 px; Z1 diagonal knob fiddly at 16 px.
