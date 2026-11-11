@@ -8,7 +8,7 @@ sidebar_label: "Introduction"
 
 [![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)](https://github.com/zio/zio/wiki/Project-Stages)
 ![CI Badge](https://github.com/zio/zio-config/workflows/CI/badge.svg)
-[![Maven Central](https://maven-badges.sml.io/sonatype-central/dev.zio/zio-config_3/badge.svg)](https://maven-badges.sml.io/sonatype-central/dev.zio/zio-config_3)
+[![Sonatype Releases](https://img.shields.io/maven-central/v/dev.zio/zio-config_2.13.svg?label=Sonatype%20Release)](https://central.sonatype.com/artifact/dev.zio/zio-config_2.13) [![Sonatype Snapshots](https://img.shields.io/maven-metadata/v?metadataUrl=https%3A%2F%2Fcentral.sonatype.com%2Frepository%2Fmaven-snapshots%2Fdev%2Fzio%2Fzio-config_2.13%2Fmaven-metadata.xml&label=Sonatype%20Snapshot)](https://central.sonatype.com/repository/maven-snapshots/dev/zio/zio-config_2.13/)
 [![javadoc](https://javadoc.io/badge2/dev.zio/zio-config-docs_3/javadoc.svg)](https://javadoc.io/doc/dev.zio/zio-config-docs_3)
 [![ZIO Config](https://img.shields.io/github/stars/zio/zio-config?style=social)](https://github.com/zio/zio-config)
 
