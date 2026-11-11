@@ -47,3 +47,8 @@ Size render: `round-3/sizes.png` (16, 24, 32, 64). Plug and Italic hold at 16 px
 
 Dropped: the family brand rules, the Logging precedent, the palette and font choices of rounds 1 to 3. New artifact (private): https://claude.ai/artifact/1SUC4aKVttnyZUbGLeTfvm , sources in `canvas-fresh/`.
 Five directions from what the library does (describes config as values, reads many sources, merges them): 1 Dial, 2 Braces (Z between curly braces), 3 Layers, 4 z. (lowercase z with a full stop, from zio.config), 5 Switch board (5x5 dots, the set ones draw a Z). Neutral colour only to judge shape: ink #101521 and orange-red #F2501F (3.53:1 on white) / #FF6B3D (6.45:1 on ink). Not rendered by me before publishing (design canvas type forbids it).
+
+## Fresh start, round 2 (request relayed from Milad: concepts much closer to settings and configuration)
+
+Board `canvas-fresh/Round2.dc.html` in https://claude.ai/artifact/1SUC4aKVttnyZUbGLeTfvm . Five concepts, each tied to what ZIO Config does: 1 Merge (three sources join into one value), 2 Override (hollow default ring, solid overriding knob), 3 Slider Z (two sliders form a Z), 4 Gear Z (settings gear with a Z cut out), 5 Config file (page of key = value rows). Validation is not shown yet.
+Render check (`fresh-r2/sizes.png`, 16/24/32/64, ink, colour, light, dark): Merge, Gear Z and Config file read at 16 px; Override reads but the track is faint; Slider Z is messy at 16 px.

@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Settings and configuration</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.i1{--bg:#FFFFFF;--fg:#101521;--ink:#101521}
+.i2{--bg:#101521;--fg:#F4F5F8;--ink:#F4F5F8}
+.c1{--bg:#FFFFFF;--fg:#F2501F;--ink:#101521}
+.c2{--bg:#101521;--fg:#FF6B3D;--ink:#F4F5F8}
+.tile{background:var(--bg);height:124px;display:flex;align-items:center;justify-content:center}
+.strip{background:var(--bg);height:44px;display:flex;align-items:center;justify-content:center;gap:20px}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="M1" viewBox="0 0 64 64"><g fill="none" stroke="var(--ink)" stroke-width="5.5" stroke-linecap="round" stroke-linejoin="round"><path d="M6 12 H16 L36 32"/><path d="M6 32 H36"/><path d="M6 52 H16 L36 32"/></g><path d="M36 32 H52" fill="none" stroke="var(--fg)" stroke-width="8" stroke-linecap="round"/><circle cx="53" cy="32" r="8" fill="var(--fg)"/></symbol>
+<symbol id="M1s" viewBox="0 0 64 64"><g fill="none" stroke="var(--ink)" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10 H17 L35 32"/><path d="M7 32 H35"/><path d="M7 54 H17 L35 32"/></g><path d="M35 32 H50" fill="none" stroke="var(--fg)" stroke-width="12" stroke-linecap="round"/><circle cx="52" cy="32" r="10" fill="var(--fg)"/></symbol>
+<symbol id="M2" viewBox="0 0 64 64"><rect x="4" y="24" width="56" height="16" rx="8" fill="var(--ink)" fill-opacity="0.2"/><circle cx="16" cy="32" r="8.5" fill="var(--bg)" stroke="var(--ink)" stroke-width="4"/><circle cx="46" cy="32" r="12" fill="var(--fg)"/></symbol>
+<symbol id="M3" viewBox="0 0 64 64"><g fill="none" stroke="var(--ink)" stroke-linecap="round"><path d="M7 12 H57" stroke-width="9"/><path d="M7 52 H57" stroke-width="9"/><path d="M50 12 L14 52" stroke-width="7"/></g><circle cx="50" cy="12" r="9" fill="var(--fg)" stroke="var(--bg)" stroke-width="3"/><circle cx="14" cy="52" r="9" fill="var(--fg)" stroke="var(--bg)" stroke-width="3"/></symbol>
+<symbol id="M4" viewBox="0 0 64 64"><g fill="var(--fg)"><circle cx="32" cy="32" r="21"/><rect x="27" y="3" width="10" height="12" rx="2.5"/><rect x="27" y="3" width="10" height="12" rx="2.5" transform="rotate(45 32 32)"/><rect x="27" y="3" width="10" height="12" rx="2.5" transform="rotate(90 32 32)"/><rect x="27" y="3" width="10" height="12" rx="2.5" transform="rotate(135 32 32)"/><rect x="27" y="3" width="10" height="12" rx="2.5" transform="rotate(180 32 32)"/><rect x="27" y="3" width="10" height="12" rx="2.5" transform="rotate(225 32 32)"/><rect x="27" y="3" width="10" height="12" rx="2.5" transform="rotate(270 32 32)"/><rect x="27" y="3" width="10" height="12" rx="2.5" transform="rotate(315 32 32)"/></g><path d="M24 24 H40 L24 40 H40" fill="none" stroke="var(--bg)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="M5" viewBox="0 0 64 64"><polygon points="12,4 40,4 54,18 54,60 12,60" fill="var(--fg)"/><polygon points="40,4 54,18 40,18" fill="var(--ink)" fill-opacity="0.35"/><g fill="var(--bg)"><circle cx="23" cy="31" r="4"/><rect x="31" y="27" width="16" height="8" rx="4"/><circle cx="23" cy="47" r="4"/><rect x="31" y="43" width="11" height="8" rx="4"/></g></symbol>
+</svg>
+<div style="width: 1440px; height: 1000px; box-sizing: border-box; padding: 40px 32px; background: #FFFFFF; color: #101521; font-family: 'Sora', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #566074">ZIO Config logo, fresh start, round 2</div>
+    <h1 style="margin: 0; font-size: 38px; font-weight: 600; letter-spacing: -0.02em">Five ways to say configuration</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #566074; max-width: 80ch">Each concept is built on something ZIO Config does: read values from several sources, merge them, fall back to defaults, take overrides, keep settings as keys and values. Same neutral ink and one orange-red, so the shapes carry the idea.</p>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px">
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="i1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#M1" width="84" height="84"/></svg></div>
+        <div class="i2 tile"><svg width="84" height="84"><use href="#M1" width="84" height="84"/></svg></div>
+        <div class="c1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#M1" width="84" height="84"/></svg></div>
+        <div class="c2 tile"><svg width="84" height="84"><use href="#M1" width="84" height="84"/></svg></div>
+        <div class="c1 strip" style="border: 1px solid #E3E6EC"><svg width="16" height="16"><use href="#M1s" width="16" height="16"/></svg><svg width="24" height="24"><use href="#M1s" width="24" height="24"/></svg><svg width="32" height="32"><use href="#M1" width="32" height="32"/></svg></div>
+        <div class="c2 strip"><svg width="16" height="16"><use href="#M1s" width="16" height="16"/></svg><svg width="24" height="24"><use href="#M1s" width="24" height="24"/></svg><svg width="32" height="32"><use href="#M1" width="32" height="32"/></svg></div>
+      </div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">1 Merge</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55"><b style="font-weight: 600">Says configuration:</b> three sources, such as a file, the environment and the command line, join into one resulting value.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074"><b style="color: #101521; font-weight: 600">Risk:</b> abstract, and can read as a git branch merge or a network diagram.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="i1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#M2" width="84" height="84"/></svg></div>
+        <div class="i2 tile"><svg width="84" height="84"><use href="#M2" width="84" height="84"/></svg></div>
+        <div class="c1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#M2" width="84" height="84"/></svg></div>
+        <div class="c2 tile"><svg width="84" height="84"><use href="#M2" width="84" height="84"/></svg></div>
+        <div class="c1 strip" style="border: 1px solid #E3E6EC"><svg width="16" height="16"><use href="#M2" width="16" height="16"/></svg><svg width="24" height="24"><use href="#M2" width="24" height="24"/></svg><svg width="32" height="32"><use href="#M2" width="32" height="32"/></svg></div>
+        <div class="c2 strip"><svg width="16" height="16"><use href="#M2" width="16" height="16"/></svg><svg width="24" height="24"><use href="#M2" width="24" height="24"/></svg><svg width="32" height="32"><use href="#M2" width="32" height="32"/></svg></div>
+      </div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">2 Override</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55"><b style="font-weight: 600">Says configuration:</b> a hollow ring marks the default, a solid knob marks the value that overrides it.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074"><b style="color: #101521; font-weight: 600">Risk:</b> looks like a plain slider or progress bar, and the ring is faint at 16 px.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="i1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#M3" width="84" height="84"/></svg></div>
+        <div class="i2 tile"><svg width="84" height="84"><use href="#M3" width="84" height="84"/></svg></div>
+        <div class="c1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#M3" width="84" height="84"/></svg></div>
+        <div class="c2 tile"><svg width="84" height="84"><use href="#M3" width="84" height="84"/></svg></div>
+        <div class="c1 strip" style="border: 1px solid #E3E6EC"><svg width="16" height="16"><use href="#M3" width="16" height="16"/></svg><svg width="24" height="24"><use href="#M3" width="24" height="24"/></svg><svg width="32" height="32"><use href="#M3" width="32" height="32"/></svg></div>
+        <div class="c2 strip"><svg width="16" height="16"><use href="#M3" width="16" height="16"/></svg><svg width="24" height="24"><use href="#M3" width="24" height="24"/></svg><svg width="32" height="32"><use href="#M3" width="32" height="32"/></svg></div>
+      </div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">3 Slider Z</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55"><b style="font-weight: 600">Says configuration:</b> two settings sliders whose knobs sit at opposite ends, joined into a Z.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074"><b style="color: #101521; font-weight: 600">Risk:</b> the knobs crowd the bars at 16 px, so it may read as a plain Z.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="i1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#M4" width="84" height="84"/></svg></div>
+        <div class="i2 tile"><svg width="84" height="84"><use href="#M4" width="84" height="84"/></svg></div>
+        <div class="c1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#M4" width="84" height="84"/></svg></div>
+        <div class="c2 tile"><svg width="84" height="84"><use href="#M4" width="84" height="84"/></svg></div>
+        <div class="c1 strip" style="border: 1px solid #E3E6EC"><svg width="16" height="16"><use href="#M4" width="16" height="16"/></svg><svg width="24" height="24"><use href="#M4" width="24" height="24"/></svg><svg width="32" height="32"><use href="#M4" width="32" height="32"/></svg></div>
+        <div class="c2 strip"><svg width="16" height="16"><use href="#M4" width="16" height="16"/></svg><svg width="24" height="24"><use href="#M4" width="24" height="24"/></svg><svg width="32" height="32"><use href="#M4" width="32" height="32"/></svg></div>
+      </div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">4 Gear Z</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55"><b style="font-weight: 600">Says configuration:</b> the gear is the universal settings sign, with a Z cut out of it for ZIO.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074"><b style="color: #101521; font-weight: 600">Risk:</b> the most obvious of the five and a cliché; the Z hole is small at 16 px.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="i1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#M5" width="84" height="84"/></svg></div>
+        <div class="i2 tile"><svg width="84" height="84"><use href="#M5" width="84" height="84"/></svg></div>
+        <div class="c1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#M5" width="84" height="84"/></svg></div>
+        <div class="c2 tile"><svg width="84" height="84"><use href="#M5" width="84" height="84"/></svg></div>
+        <div class="c1 strip" style="border: 1px solid #E3E6EC"><svg width="16" height="16"><use href="#M5" width="16" height="16"/></svg><svg width="24" height="24"><use href="#M5" width="24" height="24"/></svg><svg width="32" height="32"><use href="#M5" width="32" height="32"/></svg></div>
+        <div class="c2 strip"><svg width="16" height="16"><use href="#M5" width="16" height="16"/></svg><svg width="24" height="24"><use href="#M5" width="24" height="24"/></svg><svg width="32" height="32"><use href="#M5" width="32" height="32"/></svg></div>
+      </div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">5 Config file</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55"><b style="font-weight: 600">Says configuration:</b> a page of key = value rows: a dot for the key, a bar for the value.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074"><b style="color: #101521; font-weight: 600">Risk:</b> looks like a generic document icon, and has no Z.</p>
+    </div>
+
+  </div>
+  <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074; max-width: 100ch">Not covered by any of these yet: validation (a typed value being accepted or rejected). I can fold a check or a typed-value cue into the one you pick.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
