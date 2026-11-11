@@ -1,0 +1,119 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fresh start</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Sora:wght@400;600;800&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+body{margin:0}
+.i1{--bg:#FFFFFF;--fg:#101521;--ink:#101521}
+.i2{--bg:#101521;--fg:#F4F5F8;--ink:#F4F5F8}
+.c1{--bg:#FFFFFF;--fg:#F2501F;--ink:#101521}
+.c2{--bg:#101521;--fg:#FF6B3D;--ink:#F4F5F8}
+.tile{background:var(--bg);height:124px;display:flex;align-items:center;justify-content:center}
+.strip{background:var(--bg);height:44px;display:flex;align-items:center;justify-content:center;gap:20px}
+</style>
+</helmet>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+<symbol id="D1" viewBox="0 0 64 64"><circle cx="32" cy="32" r="20" fill="var(--fg)"/><path d="M44 20 L36.95 27.05" stroke="var(--bg)" stroke-width="4.5" stroke-linecap="round" fill="none"/><g stroke="var(--ink)" stroke-width="3" stroke-linecap="round" fill="none"><path d="M14.7 49.3 L11.8 52.2"/><path d="M7.5 32 L3.5 32"/><path d="M14.7 14.7 L11.8 11.8"/><path d="M32 7.5 L32 3.5"/><path d="M49.3 14.7 L52.2 11.8"/><path d="M56.5 32 L60.5 32"/><path d="M49.3 49.3 L52.2 52.2"/></g></symbol>
+<symbol id="D1s" viewBox="0 0 64 64"><circle cx="32" cy="32" r="29" fill="var(--fg)"/><path d="M49 15 L39.07 24.93" stroke="var(--bg)" stroke-width="7" stroke-linecap="round" fill="none"/></symbol>
+<symbol id="D2" viewBox="0 0 64 64"><path d="M20 8 C14 8 13 11 13 16 V25 C13 29 11 32 6 32 C11 32 13 35 13 39 V48 C13 53 14 56 20 56" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M44 8 C50 8 51 11 51 16 V25 C51 29 53 32 58 32 C53 32 51 35 51 39 V48 C51 53 50 56 44 56" fill="none" stroke="var(--ink)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/><path d="M25 21 H39 L25 43 H39" fill="none" stroke="var(--fg)" stroke-width="6.5" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+<symbol id="D3" viewBox="0 0 64 64"><rect x="2" y="28" width="34" height="34" rx="7" fill="var(--fg)" fill-opacity="0.25"/><rect x="15" y="15" width="34" height="34" rx="7" fill="var(--fg)" fill-opacity="0.55"/><rect x="28" y="2" width="34" height="34" rx="7" fill="var(--fg)"/></symbol>
+<symbol id="D4" viewBox="0 0 64 64"><text x="6" y="50" font-family="Sora, system-ui, sans-serif" font-weight="800" font-size="62" fill="var(--ink)">z</text><circle cx="53" cy="46" r="6.5" fill="var(--fg)"/></symbol>
+<symbol id="D5" viewBox="0 0 64 64"><g fill="var(--ink)" fill-opacity="0.16"><circle cx="8" cy="20" r="4.6"/><circle cx="20" cy="20" r="4.6"/><circle cx="32" cy="20" r="4.6"/><circle cx="56" cy="20" r="4.6"/><circle cx="8" cy="32" r="4.6"/><circle cx="20" cy="32" r="4.6"/><circle cx="44" cy="32" r="4.6"/><circle cx="56" cy="32" r="4.6"/><circle cx="8" cy="44" r="4.6"/><circle cx="32" cy="44" r="4.6"/><circle cx="44" cy="44" r="4.6"/><circle cx="56" cy="44" r="4.6"/></g><g fill="var(--fg)"><circle cx="8" cy="8" r="4.6"/><circle cx="20" cy="8" r="4.6"/><circle cx="32" cy="8" r="4.6"/><circle cx="44" cy="8" r="4.6"/><circle cx="56" cy="8" r="4.6"/><circle cx="44" cy="20" r="4.6"/><circle cx="32" cy="32" r="4.6"/><circle cx="20" cy="44" r="4.6"/><circle cx="8" cy="56" r="4.6"/><circle cx="20" cy="56" r="4.6"/><circle cx="32" cy="56" r="4.6"/><circle cx="44" cy="56" r="4.6"/><circle cx="56" cy="56" r="4.6"/></g><g fill="var(--ink)" fill-opacity="0.16"><circle cx="8" cy="20" r="0"/></g></symbol>
+</svg>
+<div style="width: 1440px; height: 960px; box-sizing: border-box; padding: 40px 32px; background: #FFFFFF; color: #101521; font-family: 'Sora', system-ui, sans-serif; display: flex; flex-direction: column; gap: 28px">
+  <div style="display: flex; flex-direction: column; gap: 8px">
+    <div style="font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: #566074">ZIO Config logo, fresh start</div>
+    <h1 style="margin: 0; font-size: 38px; font-weight: 600; letter-spacing: -0.02em">Five directions, drawn from scratch</h1>
+    <p style="margin: 0; font-size: 16px; line-height: 1.55; color: #566074; max-width: 76ch">No brand rules and none of the earlier rounds. I looked at what the library does: it describes configuration as values, reads it from many sources, and merges them. Colour is a plain ink and one orange-red, only so you can judge the shapes. Each concept is shown in ink and in colour, light and dark, with 16, 24 and 32 px below.</p>
+  </div>
+  <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 20px">
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="i1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#D1" width="84" height="84"/></svg></div>
+        <div class="i2 tile"><svg width="84" height="84"><use href="#D1" width="84" height="84"/></svg></div>
+        <div class="c1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#D1" width="84" height="84"/></svg></div>
+        <div class="c2 tile"><svg width="84" height="84"><use href="#D1" width="84" height="84"/></svg></div>
+        <div class="c1 strip" style="border: 1px solid #E3E6EC"><svg width="16" height="16"><use href="#D1s" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D1s" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D1" width="32" height="32"/></svg></div>
+        <div class="c2 strip"><svg width="16" height="16"><use href="#D1s" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D1s" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D1" width="32" height="32"/></svg></div>
+      </div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">1 Dial</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55">A knob with a pointer and ticks: a value being tuned. Below 32 px the ticks drop and only the knob and pointer remain.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074"><b style="color: #101521; font-weight: 600">Risk:</b> reads as a volume knob, a familiar settings image.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="i1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#D2" width="84" height="84"/></svg></div>
+        <div class="i2 tile"><svg width="84" height="84"><use href="#D2" width="84" height="84"/></svg></div>
+        <div class="c1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#D2" width="84" height="84"/></svg></div>
+        <div class="c2 tile"><svg width="84" height="84"><use href="#D2" width="84" height="84"/></svg></div>
+        <div class="c1 strip" style="border: 1px solid #E3E6EC"><svg width="16" height="16"><use href="#D2" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D2" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D2" width="32" height="32"/></svg></div>
+        <div class="c2 strip"><svg width="16" height="16"><use href="#D2" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D2" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D2" width="32" height="32"/></svg></div>
+      </div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">2 Braces</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55">A heavy Z held between two curly braces: the config file and the library in one glyph.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074"><b style="color: #101521; font-weight: 600">Risk:</b> three strokes compete at 16 px, and braces are a common developer symbol.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="i1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#D3" width="84" height="84"/></svg></div>
+        <div class="i2 tile"><svg width="84" height="84"><use href="#D3" width="84" height="84"/></svg></div>
+        <div class="c1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#D3" width="84" height="84"/></svg></div>
+        <div class="c2 tile"><svg width="84" height="84"><use href="#D3" width="84" height="84"/></svg></div>
+        <div class="c1 strip" style="border: 1px solid #E3E6EC"><svg width="16" height="16"><use href="#D3" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D3" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D3" width="32" height="32"/></svg></div>
+        <div class="c2 strip"><svg width="16" height="16"><use href="#D3" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D3" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D3" width="32" height="32"/></svg></div>
+      </div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">3 Layers</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55">Three see-through sheets. Where they overlap the colour deepens: sources merged, the front one wins.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074"><b style="color: #101521; font-weight: 600">Risk:</b> generic as a shape, and it relies on transparency, so one-colour print needs a flat version.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="i1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#D4" width="84" height="84"/></svg></div>
+        <div class="i2 tile"><svg width="84" height="84"><use href="#D4" width="84" height="84"/></svg></div>
+        <div class="c1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#D4" width="84" height="84"/></svg></div>
+        <div class="c2 tile"><svg width="84" height="84"><use href="#D4" width="84" height="84"/></svg></div>
+        <div class="c1 strip" style="border: 1px solid #E3E6EC"><svg width="16" height="16"><use href="#D4" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D4" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D4" width="32" height="32"/></svg></div>
+        <div class="c2 strip"><svg width="16" height="16"><use href="#D4" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D4" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D4" width="32" height="32"/></svg></div>
+      </div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">4 z.</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55">A lowercase z with a coloured full stop, from the package path <span style="font-family: 'JetBrains Mono', monospace; font-size: 13px">zio.config</span>. Shown in a stock font; it would be redrawn.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074"><b style="color: #101521; font-weight: 600">Risk:</b> the simplest and most wordmark-like, but says little about configuration.</p>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 12px; min-width: 0">
+      <div style="display: grid; grid-template-columns: 1fr 1fr">
+        <div class="i1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#D5" width="84" height="84"/></svg></div>
+        <div class="i2 tile"><svg width="84" height="84"><use href="#D5" width="84" height="84"/></svg></div>
+        <div class="c1 tile" style="border: 1px solid #E3E6EC"><svg width="84" height="84"><use href="#D5" width="84" height="84"/></svg></div>
+        <div class="c2 tile"><svg width="84" height="84"><use href="#D5" width="84" height="84"/></svg></div>
+        <div class="c1 strip" style="border: 1px solid #E3E6EC"><svg width="16" height="16"><use href="#D5" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D5" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D5" width="32" height="32"/></svg></div>
+        <div class="c2 strip"><svg width="16" height="16"><use href="#D5" width="16" height="16"/></svg><svg width="24" height="24"><use href="#D5" width="24" height="24"/></svg><svg width="32" height="32"><use href="#D5" width="32" height="32"/></svg></div>
+      </div>
+      <h2 style="margin: 0; font-size: 20px; font-weight: 600">5 Switch board</h2>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55">A 5 by 5 grid of dots. The ones switched on draw a Z; the rest stay faint: flags and settings, on and off.</p>
+      <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074"><b style="color: #101521; font-weight: 600">Risk:</b> the dots are 2 px at 16 px, and it looks like a bitmap font.</p>
+    </div>
+
+  </div>
+  <p style="margin: 0; font-size: 14px; line-height: 1.55; color: #566074; max-width: 100ch">Colour check. Orange-red #F2501F is 3.53:1 on white and #FF6B3D is 6.45:1 on the dark ground #101521, so the marks pass the 3:1 graphics bar. For orange-red text on white a darker step would be needed.</p>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":960}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -42,3 +42,8 @@ Read as: a fresh board with none of the earlier concepts. Board `Round3.dc.html`
 Concepts (all Z): 1 Plug Z (cable ending in a plug, accent plug), 2 Barred Z (crossbar accent), 3 Stitch Z (stitched diagonal, accent middle stitch), 4 Italic Z (single colour). An earlier Swash Z was dropped after my render showed it reads as a "2".
 Palettes: Poppy (red #E5242F / #FF6070, accent ink #1A1523 / #F3EFF8; link text #B3141F) and Orchid (fuchsia #C026D3 / #E879F9, accent teal #00606A / #2DD4E0; link text #9A1AAB). Mark vs page: 4.54, 6.43, 4.71, 7.67. Accent vs brand: Poppy 3.93 / 2.59, Orchid 1.55 / 1.36.
 Size render: `round-3/sizes.png` (16, 24, 32, 64). Plug and Italic hold at 16 px; Barred and Stitch blur their accent at 16 px.
+
+## Fresh start (Milad: earlier context "was not good", all designs awful; "start from zero without any predefined context")
+
+Dropped: the family brand rules, the Logging precedent, the palette and font choices of rounds 1 to 3. New artifact (private): https://claude.ai/artifact/1SUC4aKVttnyZUbGLeTfvm , sources in `canvas-fresh/`.
+Five directions from what the library does (describes config as values, reads many sources, merges them): 1 Dial, 2 Braces (Z between curly braces), 3 Layers, 4 z. (lowercase z with a full stop, from zio.config), 5 Switch board (5x5 dots, the set ones draw a Z). Neutral colour only to judge shape: ink #101521 and orange-red #F2501F (3.53:1 on white) / #FF6B3D (6.45:1 on ink). Not rendered by me before publishing (design canvas type forbids it).
