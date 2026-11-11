@@ -98,13 +98,28 @@ files["favicon-16px.svg"] = svg(16, 16, "0 0 16 16", f'<rect width="16" height="
 # maskable icon: mark inside the central 80% safe circle (radius 0.4 of the side)
 files["icon-maskable.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=' transform="translate(13.4 13.4) scale(0.58)"'))
 # social cards
+semi = instance(600)
+CARD_L1 = "Type-safe configuration for ZIO applications"
+CARD_L2 = "Automatic derivation, validation and generated docs"
+CARD_CAP = "Reads configuration from many sources"
+CARD_LIST = "HOCON  \u00b7  JSON  \u00b7  YAML  \u00b7  TOML  \u00b7  XML  \u00b7  Maps"
+CARD_URL = "zio.dev/zio-config"
 def card(W, H, cols, bg, sub, name):
-    cap = 96
-    lb, lw = logo_body(cols, cap, 120, H / 2 - 5)
-    t1, _ = text_path(reg, "Configuration for ZIO applications", 36, 120, H / 2 - 5 + 72)
-    _, t2w = text_path(reg, "zio.dev/zio-config", 24, 0, 0)
-    t2, _ = text_path(reg, "zio.dev/zio-config", 24, W - 96 - t2w, H - 70)   # address sits at the right edge
-    files[name] = svg(W, H, f"0 0 {W} {H}", lb + f'<path d="{t1}" fill="{sub}"/><path d="{t2}" fill="{sub}"/>', bg)
+    """Social card modelled on the zio-blocks one: logo, bright tagline, supporting line, source list, address at the right."""
+    ink = cols[0]; acc = cols[1]; dim = sub
+    B = round(H * 0.455)                                  # logo baseline
+    lb, lw = logo_body(cols, 90, 96, B)
+    l1, _ = text_path(semi, CARD_L1, 38, 96, B + 68)
+    l2, _ = text_path(reg, CARD_L2, 29, 96, B + 114)
+    cp, _ = text_path(reg, CARD_CAP, 25, 96, H - 150)
+    ls, _ = text_path(reg, CARD_LIST, 25, 96, H - 84)
+    _, uw = text_path(reg, CARD_URL, 25, 0, 0)
+    ur, _ = text_path(reg, CARD_URL, 25, W - 96 - uw, H - 84)
+    ghost = f'<g opacity="{0.14 if bg == NIGHT else 0.09}">' + mark_svg_body(cols, uid="g", tx=f' transform="translate({W - 340} {(H - 460) / 2:.1f}) scale({460 / 64:.4f})"') + '</g>'
+    body = (ghost + lb + f'<path d="{l1}" fill="{ink}"/><path d="{l2}" fill="{dim}"/><path d="{cp}" fill="{dim}"/>'
+            f'<rect x="96" y="{H - 128}" width="64" height="3" rx="1.5" fill="{acc}"/>'
+            f'<path d="{ls}" fill="{dim}"/><path d="{ur}" fill="{dim}"/>')
+    files[name] = svg(W, H, f"0 0 {W} {H}", body, bg)
 card(1200, 630, (INK, ACC), "#FFFFFF", "#566074", "social-card-light.svg")
 card(1200, 630, (INK_D, ACC_D), NIGHT, "#A7AEBD", "social-card-dark.svg")
 card(1280, 640, (INK_D, ACC_D), NIGHT, "#A7AEBD", "github-social-preview.svg")

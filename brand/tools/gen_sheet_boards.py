@@ -311,9 +311,18 @@ boards['Brand7Hero']=('7 · Hero banner','Hero banner',b)
 # ===== 8 Social =====
 def social_card(dark_, w, h, scale):
     bg=NIGHT if dark_ else PAPER; fg=SNOW if dark_ else INK; sub=MIST if dark_ else SLATE; acc=ACCD if dark_ else ACC; bd=LINED if dark_ else LINE
-    inner=(f'<div style="width:{w}px;height:{h}px;background:{bg};border:1px solid {bd};box-sizing:border-box;padding:0 96px;display:flex;flex-direction:column;justify-content:center;gap:28px;position:relative;overflow:hidden;color:{fg}">'
-                      f'<div style="position:relative">{lg(150,fg,acc)}</div><div style="font-size:40px;color:{sub};position:relative">{TAGL}</div>'
-           f'<div style="position:absolute;right:96px;bottom:52px;{MONO};font-size:26px;color:{sub}">zio.dev/zio-config</div></div>')
+    B=round(h*0.455); lh=126
+    def line(txt,top,size,weight,col,extra=''):
+        return f'<div style="position:absolute;left:96px;top:{top}px;font-size:{size}px;line-height:1;font-weight:{weight};color:{col};white-space:nowrap;{extra}">{txt}</div>'
+    inner=(f'<div style="width:{w}px;height:{h}px;background:{bg};border:1px solid {bd};box-sizing:border-box;position:relative;overflow:hidden;color:{fg}">'
+           f'<div style="position:absolute;right:-120px;top:{(h-460)//2}px;opacity:{0.14 if dark_ else 0.09}">{mk(460,fg,acc)}</div>'
+           f'<div style="position:absolute;left:96px;top:{B-93}px">{lg(lh,fg,acc)}</div>'
+           +line('Type-safe configuration for ZIO applications',B+68-30,38,600,fg)
+           +line('Automatic derivation, validation and generated docs',B+114-23,29,400,sub)
+           +line('Reads configuration from many sources',h-150-20,25,400,sub)
+           +f'<div style="position:absolute;left:96px;top:{h-128}px;width:64px;height:3px;border-radius:2px;background:{acc}"></div>'
+           +line('HOCON &nbsp;·&nbsp; JSON &nbsp;·&nbsp; YAML &nbsp;·&nbsp; TOML &nbsp;·&nbsp; XML &nbsp;·&nbsp; Maps',h-84-20,25,400,sub)
+           +f'<div style="position:absolute;right:96px;top:{h-84-20}px;font-size:25px;line-height:1;color:{sub};white-space:nowrap">zio.dev/zio-config</div></div>')
     ow=640; oh=round(h*ow/w)
     return f'<div style="width:{ow}px;height:{oh}px;overflow:hidden;position:relative;flex:none;border-radius:8px"><div style="width:{w}px;height:{h}px;transform:scale({ow/w:.4f});transform-origin:0 0">{inner}</div></div>'
 plat=[('Open Graph','Link previews in chat, forums and most sites',1200,630),('X','Large summary card',1200,600),('LinkedIn','Shared link image',1200,627),('GitHub','Repository social preview',1280,640)]
@@ -321,7 +330,7 @@ b=[]
 b.append(header('08','Social cards','One card, four platforms',
   'One template, resized per platform, in light and dark. Previews are drawn at 640 px wide. Platforms crop and round corners differently, so the logo and tagline sit well inside every edge.'))
 for i,(n,d,w,h) in enumerate(plat):
-    b.append(sec(f'8.{i+1}',f'{n} · {w} × {h}',grid(2,[f'<div style="display:flex;flex-direction:column;gap:12px">{kicker("Light mode")}{social_card(False,w,h,1)}</div>',f'<div style="display:flex;flex-direction:column;gap:12px">{kicker("Dark mode")}{social_card(True,w,h,1)}</div>'],32),d+'. Tagline and address are placeholders until the maintainers confirm them.'))
+    b.append(sec(f'8.{i+1}',f'{n} · {w} × {h}',grid(2,[f'<div style="display:flex;flex-direction:column;gap:12px">{kicker("Light mode")}{social_card(False,w,h,1)}</div>',f'<div style="display:flex;flex-direction:column;gap:12px">{kicker("Dark mode")}{social_card(True,w,h,1)}</div>'],32),d+'. Each card carries the logo, a tagline, a supporting line, the sources the library reads and the address at the right. Source formats and features come from the project README; the exact wording and address are for the maintainers to confirm.'))
 boards['Brand8Social']=('8 · Social cards','Social cards',b)
 
 # ---------- emit ----------
