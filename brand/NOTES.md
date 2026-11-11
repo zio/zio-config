@@ -87,3 +87,12 @@ Verified by rendering the standalone sheet and cards (not the artifact page). St
 ## Fresh start, round 9: Z of ZIO as the stair (TEMPORARY, not accepted)
 Milad asked to embed the Z shape in ZIO as a temporary design; if accepted, switch to it. Files in brand/embed/ (brand/tools/build_embed.py), board Round9. brand/final/ is untouched.
 V1 square stair as Z, V2 narrow (78% bar length, letter width), V3 one colour. Rendered at 200/80/32/24 px high. Finding: reads as ZIO Config in context, but stair is lighter than bold I/O stems and the Z identity depends on the word; V2 best. Safer fallback = current lockup (mark beside wordmark).
+
+## Fresh start, round 11: rebuild around the stair Z (accepted by Milad)
+Milad accepted round-10 version 1 (steep stair, square ends, no knobs) and asked to rebuild everything.
+- Logo: logo-light/dark.svg, Z = 4 bars (thickness = Sora Bold I stem), IO bold, Config regular, outlined. Replaces lockup-horizontal/stacked (removed; stacked dropped because two stairs would repeat). Tight viewBox, cap 30.
+- Symbol (icons): same steep stair, 4 pills with knobs (mark-*.svg, favicon set, maskable). Mark geometry changed from shallow (22/42) to steep (30/34) to match the wordmark. 16 px favicon rows updated to match.
+- Social cards + GitHub preview rebuilt with the logo (cap 96). Brand sheet rebuilt (Round11 board, brand/final/brand-sheet.html/.png). brand/embed temp files removed.
+- Clear space = one bar height (about 1/4 cap height). Min logo 20 px high (checked in render at 48/32/24/20); symbol from 16 px.
+- Contrast table unchanged: accent on white 3.53 (graphic only), ink on accent 5.16.
+- Open: tagline and URL still placeholders; no PR.

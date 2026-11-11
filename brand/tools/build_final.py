@@ -16,7 +16,7 @@ NIGHT = "#101521"
 def mark(small=False, uid="m"):
     h = 14.5 if small else 14
     gap = (62 - 4 * h) / 3
-    rows = [(3, 61, "R", "ink"), (22, 61, "R", "acc"), (3, 42, "L", "acc"), (3, 61, "L", "ink")]
+    rows = [(3, 61, "R", "ink"), (30, 61, "R", "acc"), (3, 34, "L", "acc"), (3, 61, "L", "ink")]
     bars, holes = [], []
     for i, (a, b, side, c) in enumerate(rows):
         y = 1 + i * (h + gap)
@@ -55,21 +55,31 @@ def wordmark(ink, size, x, baseline):
     d2, x2 = text_path(reg, "Config", size, x1 + size * 0.26, baseline, tracking=size * 0.005)
     return f'<path d="{d1}" fill="{ink}"/><path d="{d2}" fill="{ink}"/>', x2
 
+# --- logo: the Z of ZIO is the stair (chosen design, round 10 version 1) ---
+# Z letter: 4 bars as thick as the Sora Bold I stem, 78% length, steep step, no knobs, nearly square ends
+def z_letter(x, top, cap, cols, uid):
+    s_ = cap / 62.0; xs = 0.78; ink, acc = cols
+    rows = [(3, 61, ink), (30, 61, acc), (3, 34, acc), (3, 61, ink)]
+    bars = ""
+    for i, (a, b, c) in enumerate(rows):
+        a2, b2 = 3 + (a - 3) * xs, 3 + (b - 3) * xs
+        bars += f'<rect x="{x + (a2 - 3) * s_:.2f}" y="{top + i * 16 * s_:.2f}" width="{(b2 - a2) * s_:.2f}" height="{14 * s_:.2f}" rx="{14 * 0.22 * s_:.2f}" fill="{c}"/>'
+    return bars, (61 - 3) * xs * s_
+def logo_body(cols, cap, x, baseline):
+    """returns svg body and right edge. Z + IO (bold) + Config (regular), outlined."""
+    size = cap / capH
+    zb, zw = z_letter(x, baseline - cap, cap, cols, "z")
+    d1, x1 = text_path(bold, "IO", size, x + zw + size * 0.09, baseline, size * 0.01)
+    d2, x2 = text_path(reg, "Config", size, x1 + size * 0.26, baseline, size * 0.005)
+    return zb + f'<path d="{d1}" fill="{cols[0]}"/><path d="{d2}" fill="{cols[0]}"/>', x2
+
 files = {}
 for name, cols, bg in [("light", (INK, ACC), None), ("dark", (INK_D, ACC_D), None)]:
     files[f"mark-{name}.svg"] = svg(256, 256, "0 0 64 64", mark_svg_body(cols, uid="a"))
     files[f"mark-small-{name}.svg"] = svg(64, 64, "0 0 64 64", mark_svg_body(cols, True, uid="a"))
-    # horizontal lockup: mark 64 high, cap height 30, vertically centred
-    size = 30 / capH; base = 32 + 15
-    wm, xe = wordmark(cols[0], size, 64 + 20, base)
-    files[f"lockup-horizontal-{name}.svg"] = svg(round(xe) , 64, f"0 0 {xe:.1f} 64", mark_svg_body(cols, uid="a") + wm)
-    # stacked lockup: mark centred above wordmark
-    size2 = 26 / capH
-    d1, x1 = text_path(bold, "ZIO", size2, 0, 0, size2 * 0.01)
-    _, x2 = wordmark(cols[0], size2, 0, 0)
-    W = max(x2, 64); ox = (W - x2) / 2; mx = (W - 64) / 2
-    wm2, _ = wordmark(cols[0], size2, ox, 64 + 20 + 26)
-    files[f"lockup-stacked-{name}.svg"] = svg(round(W), 122, f"0 0 {W:.1f} 122", mark_svg_body(cols, uid="a", tx=f' transform="translate({mx:.2f} 0)"') + wm2)
+    # logo: cap height 30, tight viewBox (cap top 17 to descender 58)
+    lb, lw = logo_body(cols, 30, 0, 47)
+    files[f"logo-{name}.svg"] = svg(round(lw * 2), 82, f"0 16 {lw:.1f} 42", lb)
 # favicon: dark rounded tile, light ink + dark accent (works on any browser chrome)
 tile = lambda rx: f'<rect width="64" height="64" rx="{rx}" fill="{NIGHT}"/>'
 sc = 'transform="translate(6.4 6.4) scale(0.8)"'
@@ -79,21 +89,17 @@ files["favicon-square.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((
 sc2 = 'transform="translate(2.2 2.2) scale(0.931)"'
 files["favicon-tiny.svg"] = svg(64, 64, "0 0 64 64", tile(10) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc2}"))
 # 16 px pixel-grid favicon: bars 2 px, gap 1 px, no knobs (they do not survive 16 px)
-px = [(1,15,INK_D),(5,15,ACC_D),(1,11,ACC_D),(1,15,INK_D)]
+px = [(1,15,INK_D),(8,15,ACC_D),(1,8,ACC_D),(1,15,INK_D)]
 files["favicon-16px.svg"] = svg(16, 16, "0 0 16 16", f'<rect width="16" height="16" rx="3" fill="{NIGHT}"/>' + "".join(f'<rect x="{a}" y="{2+3*i}" width="{b-a}" height="2" rx="1" fill="{c}"/>' for i,(a,b,c) in enumerate(px)))
 # maskable icon: mark inside the central 80% safe circle (radius 0.4 of the side)
 files["icon-maskable.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=' transform="translate(13.4 13.4) scale(0.58)"'))
 # social cards
 def card(W, H, cols, bg, sub, name):
-    ink = cols[0]
-    s_mark = 200 / 64; mx, my = 120, (H - 200) / 2 - 10
-    size = 80 / capH
-    wm, xe = wordmark(ink, size, 380, my + 100 + 40)
-    t1, _ = text_path(reg, "Configuration for ZIO applications", 36, 380, my + 100 + 40 + 62)
+    cap = 96
+    lb, lw = logo_body(cols, cap, 120, H / 2 - 5)
+    t1, _ = text_path(reg, "Configuration for ZIO applications", 36, 120, H / 2 - 5 + 72)
     t2, _ = text_path(reg, "zio.dev/zio-config", 24, 120, H - 70)
-    body = (mark_svg_body(cols, uid="a", tx=f' transform="translate({mx} {my}) scale({s_mark:.4f})"') + wm
-            + f'<path d="{t1}" fill="{sub}"/><path d="{t2}" fill="{sub}"/>')
-    files[name] = svg(W, H, f"0 0 {W} {H}", body, bg)
+    files[name] = svg(W, H, f"0 0 {W} {H}", lb + f'<path d="{t1}" fill="{sub}"/><path d="{t2}" fill="{sub}"/>', bg)
 card(1200, 630, (INK, ACC), "#FFFFFF", "#566074", "social-card-light.svg")
 card(1200, 630, (INK_D, ACC_D), NIGHT, "#A7AEBD", "social-card-dark.svg")
 card(1280, 640, (INK_D, ACC_D), NIGHT, "#A7AEBD", "github-social-preview.svg")
