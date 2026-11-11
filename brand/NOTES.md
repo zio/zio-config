@@ -107,3 +107,5 @@ Milad asked for a new page "Final brand sheet" using only "1 Square Z" as the lo
 - 16 px favicon rows back to shallow steps (5..15, 1..11). Logo/social cards/sheet regenerated. brand/final/ overwritten (old narrow-Z version is in git history, commits 87989e0 and e914eaf).
 - New board Round12 "Final brand sheet" (only this logo). Older boards (including Round11 with the narrow Z) left as history.
 - Render-checked logo at 130/64/48/32 px, 16 px favicon at 6x, full sheet. Min logo 32 px high kept. Tagline and URL still placeholders. No PR.
+
+Board order change: Final brand sheet (Round12) moved to the top-left of the canvas (y=0), all other boards shifted down 4080 px and keep their order below it. Reason: at y=16820 Milad could not find it.
