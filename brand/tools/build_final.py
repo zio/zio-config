@@ -81,6 +81,22 @@ files["favicon-tiny.svg"] = svg(64, 64, "0 0 64 64", tile(10) + mark_svg_body((I
 # 16 px pixel-grid favicon: bars 2 px, gap 1 px, no knobs (they do not survive 16 px)
 px = [(1,15,INK_D),(5,15,ACC_D),(1,11,ACC_D),(1,15,INK_D)]
 files["favicon-16px.svg"] = svg(16, 16, "0 0 16 16", f'<rect width="16" height="16" rx="3" fill="{NIGHT}"/>' + "".join(f'<rect x="{a}" y="{2+3*i}" width="{b-a}" height="2" rx="1" fill="{c}"/>' for i,(a,b,c) in enumerate(px)))
+# maskable icon: mark inside the central 80% safe circle (radius 0.4 of the side)
+files["icon-maskable.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=' transform="translate(13.4 13.4) scale(0.58)"'))
+# social cards
+def card(W, H, cols, bg, sub, name):
+    ink = cols[0]
+    s_mark = 200 / 64; mx, my = 120, (H - 200) / 2 - 10
+    size = 80 / capH
+    wm, xe = wordmark(ink, size, 380, my + 100 + 40)
+    t1, _ = text_path(reg, "Configuration for ZIO applications", 36, 380, my + 100 + 40 + 62)
+    t2, _ = text_path(reg, "zio.dev/zio-config", 24, 120, H - 70)
+    body = (mark_svg_body(cols, uid="a", tx=f' transform="translate({mx} {my}) scale({s_mark:.4f})"') + wm
+            + f'<path d="{t1}" fill="{sub}"/><path d="{t2}" fill="{sub}"/>')
+    files[name] = svg(W, H, f"0 0 {W} {H}", body, bg)
+card(1200, 630, (INK, ACC), "#FFFFFF", "#566074", "social-card-light.svg")
+card(1200, 630, (INK_D, ACC_D), NIGHT, "#A7AEBD", "social-card-dark.svg")
+card(1280, 640, (INK_D, ACC_D), NIGHT, "#A7AEBD", "github-social-preview.svg")
 for n, s in files.items():
     open(os.path.join(OUT, n), "w").write(s)
 print(len(files), "files", round(capH, 3))

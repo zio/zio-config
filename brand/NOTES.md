@@ -77,3 +77,9 @@ Milad chose Bold stair (round 6 version 1). Built in brand/final/ by brand/tools
 - Clear space: one bar height (14/64 of the mark). Min: mark 16 px, horizontal lockup 24 px high.
 - Favicon: dark tile; favicon.svg (tile r14, mark scale .8), favicon-square.svg (full bleed for apple-touch 180, 192, 512). 16 px is a hand pixel-grid version without knobs (bars 2 px, gap 1 px) because the knobs and 4 bars blur at 16 px with plain scaling. ICO = 16/32/48 PNGs.
 - Not done yet: social cards, brand sheet, maskable safe-zone check, final contrast review of dark tile accent.
+
+## Fresh start, round 8: social cards, maskable icon, brand sheet
+Added to brand/final/: social-card-light/dark (1200x630, svg+png), github-social-preview (1280x640, dark), icon-maskable (mark scaled .58 inside the 80% safe circle). Brand sheet: brand/final/brand-sheet.html + .png, also board Round8 in the artifact (brand/tools/gen_brand_sheet.py).
+Contrast (brand/tools/wcag.py): ink on white 18.24; accent #F2501F on white 3.53 (graphic only, fails text); white on accent 3.53 FAIL for text; ink on accent 5.16; snow on night 16.73; dark accent on night 6.45; grey #566074 on white 6.32; grey #A7AEBD on night 8.19. Rule: never set text in the accent on white.
+Placeholders needing Milad: tagline "Configuration for ZIO applications" and URL zio.dev/zio-config.
+Verified by rendering the standalone sheet and cards (not the artifact page). Still open: sheet is a draft, no PR.
