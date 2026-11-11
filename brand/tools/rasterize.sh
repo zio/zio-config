@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+# rasterize favicon SVGs to PNG + ICO with headless chromium. usage: rasterize.sh <brand/final dir> <tmp dir>
+D=$(cd "$1" && pwd); T=$2; mkdir -p "$T"
+while read -r src size out; do
+  echo "<body style='margin:0;background:transparent'><img src='$D/$src' width=$size height=$size style='display:block'>" > "$T/p.html"
+  chromium --headless --no-sandbox --disable-gpu --hide-scrollbars --default-background-color=00000000 --window-size=$size,$size --screenshot="$D/$out" "file://$T/p.html" >/dev/null 2>&1
+done <<LIST
+favicon-16px.svg 16 favicon-16.png
+favicon-tiny.svg 32 favicon-32.png
+favicon.svg 48 favicon-48.png
+favicon-square.svg 180 apple-touch-icon.png
+favicon-square.svg 192 icon-192.png
+favicon-square.svg 512 icon-512.png
+LIST
+python3 - "$D" <<'PY'
+import struct,sys
+d=sys.argv[1]
+png=[open(f'{d}/favicon-{n}.png','rb').read() for n in (16,32,48)]
+off=6+16*3; ents=b''; data=b''
+for n,p in zip((16,32,48),png):
+    ents+=struct.pack('<BBBBHHII',n,n,0,0,1,32,len(p),off+len(data)); data+=p
+open(f'{d}/favicon.ico','wb').write(struct.pack('<HHH',0,1,3)+ents+data)
+PY

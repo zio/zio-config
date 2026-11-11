@@ -1,0 +1,86 @@
+"""Build final ZIO Config mark, lockups, favicon SVGs from the chosen Stair (round 6, version 1).
+Run with a python that has fontTools: python build_final.py <Sora variable ttf> <outdir>"""
+import sys, os
+from fontTools.ttLib import TTFont
+from fontTools.varLib.instancer import instantiateVariableFont
+from fontTools.pens.svgPathPen import SVGPathPen
+from fontTools.pens.transformPen import TransformPen
+
+SORA, OUT = sys.argv[1], sys.argv[2]
+os.makedirs(OUT, exist_ok=True)
+INK, ACC = "#101521", "#F2501F"          # light
+INK_D, ACC_D = "#F4F5F8", "#FF6B3D"      # dark
+NIGHT = "#101521"
+
+# --- mark: 64-unit box, four bars + knobs (knobs are real holes via mask) ---
+def mark(small=False, uid="m"):
+    h = 14.5 if small else 14
+    gap = (62 - 4 * h) / 3
+    rows = [(3, 61, "R", "ink"), (22, 61, "R", "acc"), (3, 42, "L", "acc"), (3, 61, "L", "ink")]
+    bars, holes = [], []
+    for i, (a, b, side, c) in enumerate(rows):
+        y = 1 + i * (h + gap)
+        bars.append((a, y, b - a, h, c))
+        kx = b - h / 2 if side == "R" else a + h / 2
+        holes.append((kx, y + h / 2, h / 2 - 1.8))
+    return bars, holes
+
+def mark_svg_body(cols, small=False, uid="m", tx="", ):
+    ink, acc = cols
+    bars, holes = mark(small)
+    m = "".join(f'<circle cx="{x:.2f}" cy="{y:.2f}" r="{r:.2f}" fill="#000"/>' for x, y, r in holes)
+    b = "".join(f'<rect x="{x}" y="{y:.2f}" width="{w}" height="{h}" rx="{h/2}" fill="{ink if c=="ink" else acc}"/>' for x, y, w, h, c in bars)
+    return f'<mask id="{uid}"><rect width="64" height="64" fill="#fff"/>{m}</mask><g mask="url(#{uid})"{tx}>{b}</g>'
+
+def svg(w, h, vb, body, bg=None):
+    r = f'<rect width="100%" height="100%" fill="{bg}"/>' if bg else ""
+    return f'<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="{vb}">{r}{body}</svg>\n'
+
+# --- text outlines ---
+def instance(w):
+    f = TTFont(SORA); return instantiateVariableFont(f, {"wght": w})
+def text_path(font, s, size, x, y, tracking=0):
+    gs = font.getGlyphSet(); cmap = font.getBestCmap(); upm = font["head"].unitsPerEm
+    sc = size / upm; pen = SVGPathPen(gs); cx = x
+    for ch in s:
+        g = cmap[ord(ch)]
+        gs[g].draw(TransformPen(pen, (sc, 0, 0, -sc, cx, y)))
+        cx += gs[g].width * sc + tracking
+    return pen.getCommands(), cx
+bold, reg = instance(700), instance(400)
+capH = bold["OS/2"].sCapHeight / bold["head"].unitsPerEm
+
+def wordmark(ink, size, x, baseline):
+    d1, x1 = text_path(bold, "ZIO", size, x, baseline, tracking=size * 0.01)
+    d2, x2 = text_path(reg, "Config", size, x1 + size * 0.26, baseline, tracking=size * 0.005)
+    return f'<path d="{d1}" fill="{ink}"/><path d="{d2}" fill="{ink}"/>', x2
+
+files = {}
+for name, cols, bg in [("light", (INK, ACC), None), ("dark", (INK_D, ACC_D), None)]:
+    files[f"mark-{name}.svg"] = svg(256, 256, "0 0 64 64", mark_svg_body(cols, uid="a"))
+    files[f"mark-small-{name}.svg"] = svg(64, 64, "0 0 64 64", mark_svg_body(cols, True, uid="a"))
+    # horizontal lockup: mark 64 high, cap height 30, vertically centred
+    size = 30 / capH; base = 32 + 15
+    wm, xe = wordmark(cols[0], size, 64 + 20, base)
+    files[f"lockup-horizontal-{name}.svg"] = svg(round(xe) , 64, f"0 0 {xe:.1f} 64", mark_svg_body(cols, uid="a") + wm)
+    # stacked lockup: mark centred above wordmark
+    size2 = 26 / capH
+    d1, x1 = text_path(bold, "ZIO", size2, 0, 0, size2 * 0.01)
+    _, x2 = wordmark(cols[0], size2, 0, 0)
+    W = max(x2, 64); ox = (W - x2) / 2; mx = (W - 64) / 2
+    wm2, _ = wordmark(cols[0], size2, ox, 64 + 20 + 26)
+    files[f"lockup-stacked-{name}.svg"] = svg(round(W), 122, f"0 0 {W:.1f} 122", mark_svg_body(cols, uid="a", tx=f' transform="translate({mx:.2f} 0)"') + wm2)
+# favicon: dark rounded tile, light ink + dark accent (works on any browser chrome)
+tile = lambda rx: f'<rect width="64" height="64" rx="{rx}" fill="{NIGHT}"/>'
+sc = 'transform="translate(6.4 6.4) scale(0.8)"'
+files["favicon.svg"] = svg(64, 64, "0 0 64 64", tile(14) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc}"))
+files["favicon-square.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc}"))  # apple-touch / maskable
+# tiny favicon (16/32 px): tile with small radius, mark fills more of it
+sc2 = 'transform="translate(2.2 2.2) scale(0.931)"'
+files["favicon-tiny.svg"] = svg(64, 64, "0 0 64 64", tile(10) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc2}"))
+# 16 px pixel-grid favicon: bars 2 px, gap 1 px, no knobs (they do not survive 16 px)
+px = [(1,15,INK_D),(5,15,ACC_D),(1,11,ACC_D),(1,15,INK_D)]
+files["favicon-16px.svg"] = svg(16, 16, "0 0 16 16", f'<rect width="16" height="16" rx="3" fill="{NIGHT}"/>' + "".join(f'<rect x="{a}" y="{2+3*i}" width="{b-a}" height="2" rx="1" fill="{c}"/>' for i,(a,b,c) in enumerate(px)))
+for n, s in files.items():
+    open(os.path.join(OUT, n), "w").write(s)
+print(len(files), "files", round(capH, 3))

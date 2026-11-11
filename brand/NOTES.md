@@ -69,3 +69,11 @@ Render (brand/fresh-r5/sizes.png): all read as toggles at 32+; stair gives the b
 ## Fresh start, round 6: the Stair, bolder and simpler
 Milad chose Stair from round 5; message cut off at "make the bars", read as "thicker". Three versions: S1 bold stair (4 knobs), S2 knobs on end bars only, S3 one colour with cut-out knobs. Bars h14, gap 2 (small cut 14.5).
 Render (brand/fresh-r6/sizes.png): all read as Z + toggles at 24+; S3 simplest/most favicon-ready; S2 fewer parts but middle bars stop looking like switches.
+
+## Fresh start, round 7: chosen mark, lockup, favicon
+Milad chose Bold stair (round 6 version 1). Built in brand/final/ by brand/tools/build_final.py (needs fontTools + Sora variable TTF) and brand/tools/rasterize.sh (chromium).
+- Mark: 4 pills h14 gap 2 in a 64 box, knobs are real mask holes (work on any background). Light: ink #101521 + #F2501F. Dark: #F4F5F8 + #FF6B3D. Small cut (16-23 px): bars h14.5.
+- Wordmark: Sora, ZIO 700 + Config 400, outlined. Horizontal lockup: mark 64, cap height 30, gap 20. Stacked: centred.
+- Clear space: one bar height (14/64 of the mark). Min: mark 16 px, horizontal lockup 24 px high.
+- Favicon: dark tile; favicon.svg (tile r14, mark scale .8), favicon-square.svg (full bleed for apple-touch 180, 192, 512). 16 px is a hand pixel-grid version without knobs (bars 2 px, gap 1 px) because the knobs and 4 bars blur at 16 px with plain scaling. ICO = 16/32/48 PNGs.
+- Not done yet: social cards, brand sheet, maskable safe-zone check, final contrast review of dark tile accent.
