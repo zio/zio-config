@@ -14,24 +14,25 @@ def tp(font, s, size, x, y, tr=0):
     for ch in s:
         g = cm[ord(ch)]; gs[g].draw(TransformPen(pen, (sc, 0, 0, -sc, cx, y))); cx += gs[g].width * sc + tr
     return pen.getCommands(), cx
-def z_stair(x, top, cap, cols, xs, uid, mono_knob=True):
+def z_stair(x, top, cap, cols, xs, uid, knobs="all", rxf=0.5, steep=False):
     """stair sized to cap height. mark bbox is 58 x 62 units; xs squeezes the bar lengths."""
     s = cap / 62.0; ink, acc = cols
-    rows = [(3, 61, "R", ink), (22, 61, "R", acc), (3, 42, "L", acc), (3, 61, "L", ink)]
+    rows = [(3, 61, "R", ink), (30 if steep else 22, 61, "R", acc), (3, 34 if steep else 42, "L", acc), (3, 61, "L", ink)]
     bars = holes = ""
     for i, (a, b, side, c) in enumerate(rows):
         a2, b2 = 3 + (a - 3) * xs, 3 + (b - 3) * xs
         y = 1 + i * 16
         X = lambda v: x + (v - 3) * s; Y = lambda v: top + (v - 1) * s
-        bars += f'<rect x="{X(a2):.2f}" y="{Y(y):.2f}" width="{(b2-a2)*s:.2f}" height="{14*s:.2f}" rx="{7*s:.2f}" fill="{c}"/>'
+        bars += f'<rect x="{X(a2):.2f}" y="{Y(y):.2f}" width="{(b2-a2)*s:.2f}" height="{14*s:.2f}" rx="{14*rxf*s:.2f}" fill="{c}"/>'
         kx = b2 - 7 if side == "R" else a2 + 7
-        holes += f'<circle cx="{X(kx):.2f}" cy="{Y(y+7):.2f}" r="{5.2*s:.2f}" fill="#000"/>'
+        if knobs == "all" or (knobs == "ends" and i in (0, 3)):
+          holes += f'<circle cx="{X(kx):.2f}" cy="{Y(y+7):.2f}" r="{5.2*s:.2f}" fill="#000"/>'
     w = (61 - 3) * xs * s
     return (f'<mask id="{uid}" maskUnits="userSpaceOnUse" x="-50" y="-50" width="2000" height="400"><rect x="-50" y="-50" width="2000" height="400" fill="#fff"/>{holes}</mask>'
             f'<g mask="url(#{uid})">{bars}</g>'), w
-def lockup(cols, xs, uid):
+def lockup(cols, xs, uid, knobs="all", rxf=0.5, steep=False):
     size = 30 / capH; base = 47; top = base - 30
-    zb, zw = z_stair(0, top, 30, cols, xs, uid)
+    zb, zw = z_stair(0, top, 30, cols, xs, uid, knobs, rxf, steep)
     gap = size * 0.09
     d1, x1 = tp(bold, "IO", size, zw + gap, base, size * 0.01)
     d2, x2 = tp(reg, "Config", size, x1 + size * 0.26, base, size * 0.005)
@@ -45,4 +46,14 @@ for n, xs in V.items():
     open(f"{OUT}/lockup-{n}-dark.svg", "w").write(lockup(D, xs, "a"))
 open(f"{OUT}/lockup-v3-mono-light.svg", "w").write(lockup(LM, 0.78, "a"))
 open(f"{OUT}/lockup-v3-mono-dark.svg", "w").write(lockup(DM, 0.78, "a"))
+W = {"w1-no-knobs": ("none", 0.5), "w2-end-knobs": ("ends", 0.5), "w3-square-ends": ("none", 0.22)}
+for n, (k, r) in W.items():
+    open(f"{OUT}/lockup-{n}-light.svg", "w").write(lockup(L, 0.78, "a", k, r))
+    open(f"{OUT}/lockup-{n}-dark.svg", "w").write(lockup(D, 0.78, "a", k, r))
+for n, (k, r, st) in {"w4-steep-square": ("none", 0.22, True), "w5-steep-round": ("none", 0.5, True), "w6-steep-knobs": ("ends", 0.5, True)}.items():
+    open(f"{OUT}/lockup-{n}-light.svg", "w").write(lockup(L, 0.78, "a", k, r, st))
+    open(f"{OUT}/lockup-{n}-dark.svg", "w").write(lockup(D, 0.78, "a", k, r, st))
+g = bold.getGlyphSet(); from fontTools.pens.boundsPen import BoundsPen
+bp = BoundsPen(g); g[bold.getBestCmap()[ord("I")]].draw(bp); sz = 30 / capH
+print("I stem in cap-30 lockup units:", round((bp.bounds[2]-bp.bounds[0]) * sz / bold["head"].unitsPerEm, 2), "bar height:", round(14*30/62, 2))
 print("ok")
