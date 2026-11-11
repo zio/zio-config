@@ -52,3 +52,8 @@ Five directions from what the library does (describes config as values, reads ma
 
 Board `canvas-fresh/Round2.dc.html` in https://claude.ai/artifact/1SUC4aKVttnyZUbGLeTfvm . Five concepts, each tied to what ZIO Config does: 1 Merge (three sources join into one value), 2 Override (hollow default ring, solid overriding knob), 3 Slider Z (two sliders form a Z), 4 Gear Z (settings gear with a Z cut out), 5 Config file (page of key = value rows). Validation is not shown yet.
 Render check (`fresh-r2/sizes.png`, 16/24/32/64, ink, colour, light, dark): Merge, Gear Z and Config file read at 16 px; Override reads but the track is faint; Slider Z is messy at 16 px.
+
+## Fresh start, round 3 (all of round 2 rejected, no reason given)
+Five concrete "settings you can point at" concepts, rounder and chunkier, no gear: DIP switch, Toggles, Nested keys, Equals (key = value), Validated rows (checks plus one rejected value, covers validation). Same ink + orange-red colourways.
+Render check (brand/fresh-r3/sizes.png, 16/24/32/64/96): Equals and Validated read best; Toggles at 16 px collapse to stacked bars (Z lost); DIP slots tiny at 16 px; Nested reads as plain bars.
+Artifact page not rendered (design canvas rule). Asked Milad for one dislike to aim next round.
