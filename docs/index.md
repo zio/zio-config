@@ -6,7 +6,11 @@ sidebar_label: "Introduction"
 
 [ZIO Config](https://zio.dev/zio-config/) is a ZIO library for reading application configuration. It extends the core `Config` type from ZIO. You describe the settings your program needs once, as a value of type `Config[A]`, and then load that description from any source: HOCON, YAML, TOML, XML, environment variables, maps or AWS Parameter Store.
 
-[![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)](https://github.com/zio/zio/wiki/Project-Stages) ![CI Badge](https://github.com/zio/zio-config/workflows/CI/badge.svg) [![Sonatype Releases](https://img.shields.io/nexus/r/https/oss.sonatype.org/dev.zio/zio-config_2.13.svg?label=Sonatype%20Release)](https://oss.sonatype.org/content/repositories/releases/dev/zio/zio-config_2.13/) [![Sonatype Snapshots](https://img.shields.io/nexus/s/https/oss.sonatype.org/dev.zio/zio-config_2.13.svg?label=Sonatype%20Snapshot)](https://oss.sonatype.org/content/repositories/snapshots/dev/zio/zio-config_2.13/) [![javadoc](https://javadoc.io/badge2/dev.zio/zio-config-docs_2.13/javadoc.svg)](https://javadoc.io/doc/dev.zio/zio-config-docs_2.13) [![ZIO Config](https://img.shields.io/github/stars/zio/zio-config?style=social)](https://github.com/zio/zio-config)
+[![Production Ready](https://img.shields.io/badge/Project%20Stage-Production%20Ready-brightgreen.svg)](https://github.com/zio/zio/wiki/Project-Stages)
+![CI Badge](https://github.com/zio/zio-config/workflows/CI/badge.svg)
+[![Maven Central](https://maven-badges.sml.io/sonatype-central/dev.zio/zio-config_3/badge.svg)](https://maven-badges.sml.io/sonatype-central/dev.zio/zio-config_3)
+[![javadoc](https://javadoc.io/badge2/dev.zio/zio-config-docs_3/javadoc.svg)](https://javadoc.io/doc/dev.zio/zio-config-docs_3)
+[![ZIO Config](https://img.shields.io/github/stars/zio/zio-config?style=social)](https://github.com/zio/zio-config)
 
 ## Key features
 
