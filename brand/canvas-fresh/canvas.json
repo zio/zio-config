@@ -1,1 +1,139 @@
-{"v":3,"createdOnFiles":{"v":1,"at":"2026-11-11T10:20:00Z"},"title":"ZIO Config Logo Fresh Start","launch":{"view":"canvas"},"pages":[],"boards":{"Main.dc.html":{"x":0,"y":4080,"w":1440,"h":960,"title":"Fresh start: five directions"},"Round2.dc.html":{"x":0,"y":5160,"w":1440,"h":1000,"title":"Round 2: five ways to say configuration"},"Round3.dc.html":{"x":0,"y":6280,"w":1440,"h":1040,"title":"Round 3: five settings you can point at"},"Round4.dc.html":{"x":0,"y":7440,"w":1440,"h":640,"title":"Round 4: toggles drawn as a Z"},"Round5.dc.html":{"x":0,"y":8200,"w":1440,"h":640,"title":"Round 5: toggles, all horizontal"},"Round6.dc.html":{"x":0,"y":8960,"w":1440,"h":640,"title":"Round 6: the Stair, bolder and simpler"},"Round7.dc.html":{"x":0,"y":9720,"w":1440,"h":1180,"title":"Round 7: lockup and favicon"},"Round8.dc.html":{"x":0,"y":11020,"w":1440,"h":3760,"title":"Round 8: social cards and brand sheet"},"Round9.dc.html":{"x":0,"y":14900,"w":1440,"h":860,"title":"Round 9: the Z of ZIO as the stair (temporary)"},"Round10.dc.html":{"x":0,"y":15880,"w":1440,"h":860,"title":"Round 10: Z of ZIO, simpler and steeper (temporary)"},"Round11.dc.html":{"x":0,"y":16860,"w":1440,"h":3920,"title":"Round 11: final logo, icons, social cards, brand sheet"},"Round12.dc.html":{"x":0,"y":0,"w":1440,"h":3920,"title":"Final brand sheet"}},"order":["Round12.dc.html","Main.dc.html","Round2.dc.html","Round3.dc.html","Round4.dc.html","Round5.dc.html","Round6.dc.html","Round7.dc.html","Round8.dc.html","Round9.dc.html","Round10.dc.html","Round11.dc.html"],"notes":{},"designSystems":[]}
+{
+  "v": 3,
+  "attachments": {},
+  "boards": {
+    "Artboard-vpum.dc.html": {
+      "h": 600,
+      "handmade": true,
+      "page": "page-32ozgn",
+      "title": "Artboard 1",
+      "w": 800,
+      "x": 0,
+      "y": 0
+    },
+    "Main.dc.html": {
+      "h": 960,
+      "title": "Fresh start: five directions",
+      "w": 1440,
+      "x": 0,
+      "y": 0
+    },
+    "Round10.dc.html": {
+      "h": 860,
+      "title": "Round 10: Z of ZIO, simpler and steeper (temporary)",
+      "w": 1440,
+      "x": 0,
+      "y": 11800
+    },
+    "Round11.dc.html": {
+      "h": 3920,
+      "title": "Round 11: final logo, icons, social cards, brand sheet",
+      "w": 1440,
+      "x": 0,
+      "y": 12780
+    },
+    "Round12.dc.html": {
+      "h": 3920,
+      "title": "Final brand sheet",
+      "w": 1440,
+      "x": 0,
+      "y": 0,
+      "page": "page-1b076f29e50b"
+    },
+    "Round2.dc.html": {
+      "h": 1000,
+      "title": "Round 2: five ways to say configuration",
+      "w": 1440,
+      "x": 0,
+      "y": 1080
+    },
+    "Round3.dc.html": {
+      "h": 1040,
+      "title": "Round 3: five settings you can point at",
+      "w": 1440,
+      "x": 0,
+      "y": 2200
+    },
+    "Round4.dc.html": {
+      "h": 640,
+      "title": "Round 4: toggles drawn as a Z",
+      "w": 1440,
+      "x": 0,
+      "y": 3360
+    },
+    "Round5.dc.html": {
+      "h": 640,
+      "title": "Round 5: toggles, all horizontal",
+      "w": 1440,
+      "x": 0,
+      "y": 4120
+    },
+    "Round6.dc.html": {
+      "h": 640,
+      "title": "Round 6: the Stair, bolder and simpler",
+      "w": 1440,
+      "x": 0,
+      "y": 4880
+    },
+    "Round7.dc.html": {
+      "h": 1180,
+      "title": "Round 7: lockup and favicon",
+      "w": 1440,
+      "x": 0,
+      "y": 5640
+    },
+    "Round8.dc.html": {
+      "h": 3760,
+      "title": "Round 8: social cards and brand sheet",
+      "w": 1440,
+      "x": 0,
+      "y": 6940
+    },
+    "Round9.dc.html": {
+      "h": 860,
+      "title": "Round 9: the Z of ZIO as the stair (temporary)",
+      "w": 1440,
+      "x": 0,
+      "y": 10820
+    }
+  },
+  "createdOnFiles": {
+    "at": "2026-11-11T10:20:00Z",
+    "v": 1
+  },
+  "designSystems": [],
+  "launch": {
+    "view": "canvas"
+  },
+  "notes": {},
+  "order": [
+    "Round12.dc.html",
+    "Main.dc.html",
+    "Round2.dc.html",
+    "Round3.dc.html",
+    "Round4.dc.html",
+    "Round5.dc.html",
+    "Round6.dc.html",
+    "Round7.dc.html",
+    "Round8.dc.html",
+    "Round9.dc.html",
+    "Round10.dc.html",
+    "Round11.dc.html",
+    "Artboard-vpum.dc.html"
+  ],
+  "pages": [
+    {
+      "id": "page-1",
+      "name": "Page 1"
+    },
+    {
+      "id": "page-32ozgn",
+      "name": "Final Brand Sheet"
+    },
+    {
+      "id": "page-1b076f29e50b",
+      "name": "Final brand sheet"
+    }
+  ],
+  "title": "ZIO Config Logo Fresh Start"
+}

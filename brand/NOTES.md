@@ -109,3 +109,5 @@ Milad asked for a new page "Final brand sheet" using only "1 Square Z" as the lo
 - Render-checked logo at 130/64/48/32 px, 16 px favicon at 6x, full sheet. Min logo 32 px high kept. Tagline and URL still placeholders. No PR.
 
 Board order change: Final brand sheet (Round12) moved to the top-left of the canvas (y=0), all other boards shifted down 4080 px and keep their order below it. Reason: at y=16820 Milad could not find it.
+
+Pages: Milad added pages in the canvas UI (page-1, page-32ozgn "Final Brand Sheet" with an empty handmade Artboard-vpum). He then asked for the final sheet on page-1b076f29e50b, an id not in the saved file, so I added that page and set Round12 "page" to it; other boards back to their original y (undid my 4080 shift), kept his Artboard-vpum entry and pages untouched.
