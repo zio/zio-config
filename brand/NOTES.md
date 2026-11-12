@@ -126,3 +126,8 @@ Social cards v2 (modelled on zio-blocks-social-github.svg: logo, bright tagline,
 - `favicon.svg` is now tab-only: no tile, 3 pill bars (4 px thick, 2 px gaps) filling the 16 px box, 2 px round knob holes (R, L, R), ink/orange-red on light tabs and snow/light orange-red on dark tabs via `prefers-color-scheme` inside the SVG. Safari ignores SVG favicons and uses apple-touch-icon / ICO.
 - Old tile version renamed `favicon-tile.svg` (feeds favicon-48.png). ICO, apple-touch-icon and maskable keep the tile.
 - Headless Chromium does not honour a forced dark scheme for `<img>` SVGs, so dark colours were checked with a copy having the dark values substituted, not through the media query.
+
+## Round 13: bar count comparison
+- `tools/gen_compare.py` -> board Round13 (page-1b076f29e50b, right of the overview): A four bars (current), B three bars centred middle, C three bars middle hangs from right. Symbol large, 16-64 px, lockup at 36 and 20 px, light and dark.
+- Per Milad: the knob of the middle bar sits at the centre of the bar in B and C.
+- No decision yet; logo, icons, favicon and sheet are unchanged.
