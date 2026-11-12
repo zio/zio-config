@@ -2,7 +2,10 @@
 [//]: # (So please do not edit it manually. Instead, change "docs/index.md" file or sbt setting keys)
 [//]: # (e.g. "readmeDocumentation" and "readmeSupport".)
 
-# ZIO Config
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/zio/zio-config/series/4.x/brand/logo-dark.svg">
+  <img alt="ZIO Config" src="https://raw.githubusercontent.com/zio/zio-config/series/4.x/brand/logo-light.svg" width="520">
+</picture>
 
 [ZIO Config](https://zio.dev/zio-config/) is a ZIO library for reading application configuration. It extends the core `Config` type from ZIO. You describe the settings your program needs once, as a value of type `Config[A]`, and then load that description from any source: HOCON, YAML, TOML, XML, environment variables, maps or AWS Parameter Store.
 
