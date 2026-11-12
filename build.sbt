@@ -567,7 +567,9 @@ lazy val docs = project
     // The banner logo already carries the name, so the plugin's "# ZIO Config" heading under it
     // would show the name twice. Run the plugin's generator, then drop that one heading; the
     // image's alt text gives the page its accessible name.
-    generateReadme                             := {
+    // TODO: remove this override once zio-sbt skips the heading when a banner is set
+    // (https://github.com/zio/zio-sbt/issues/868) and the plugin is bumped.
+    generateReadme                            := {
       generateReadme.value
       val readme  = (ThisBuild / baseDirectory).value / "README.md"
       val heading = s"\n# ${projectName.value}\n"
