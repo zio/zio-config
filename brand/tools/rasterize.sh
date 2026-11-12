@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# rasterize favicon SVGs to PNG + ICO with headless chromium. usage: rasterize.sh <brand/final dir> <tmp dir>
+# rasterize favicon SVGs to PNG + ICO with headless chromium. usage: rasterize.sh <brand dir> <tmp dir>
 D=$(cd "$1" && pwd); T=$2; mkdir -p "$T"
 while read -r src size out; do
   echo "<body style='margin:0;background:transparent'><img src='$D/$src' width=$size height=$size style='display:block'>" > "$T/p.html"

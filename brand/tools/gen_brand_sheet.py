@@ -1,4 +1,4 @@
-"""Brand sheet. usage: gen_brand_sheet.py <brand/final dir> <Round dc template> <out board .dc.html> <out standalone .html>"""
+"""Brand sheet. usage: gen_brand_sheet.py <brand dir> <Round dc template> <out board .dc.html> <out standalone .html>"""
 import base64, sys
 sys.path.insert(0, __file__.rsplit('/', 1)[0])
 from wcag import ratio
