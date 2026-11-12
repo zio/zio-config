@@ -106,6 +106,17 @@ trait ConfigDocsModule {
 
         docs match {
 
+          case ConfigDocs.Recursion(descriptions) =>
+            val desc = filterDescriptions(descriptionsUsedAlready, descriptions)
+
+            TableRow(
+              previousPaths,
+              Some(Table.Format.Recursion),
+              desc,
+              None,
+              Set.empty
+            ).asTable
+
           case ConfigDocs.Leaf(descriptions, _) =>
             val desc = filterDescriptions(descriptionsUsedAlready, descriptions)
 
@@ -200,6 +211,7 @@ trait ConfigDocsModule {
           }
         )
 
+    sealed case class Recursion(descriptions: List[Description])                                 extends ConfigDocs
     sealed case class Leaf(descriptions: List[Description], value: Option[String] = None)        extends ConfigDocs
     sealed case class Nested(path: String, docs: ConfigDocs, descriptions: List[Description])    extends ConfigDocs
     sealed case class Zip(left: ConfigDocs, right: ConfigDocs)                                   extends ConfigDocs
@@ -571,15 +583,28 @@ trait ConfigDocsModule {
    * }}}
    */
   final def generateDocs[A](config: zio.Config[A]): ConfigDocs = {
+    type Seen = Set[AnyRef]
+
+    def seen(config: Config[_]): AnyRef =
+      config.asInstanceOf[AnyRef]
+
     def loop[B](
       descriptions: List[ConfigDocs.Description],
       config: Config[B],
       latestPath: Option[String],
-      alreadySeen: Set[Config[_]]
-    ): ConfigDocs =
+      seenConfigs: Seen
+    ): ConfigDocs = {
+      def recursion: ConfigDocs =
+        ConfigDocs.Recursion(descriptions)
+
+      def wasSeen(config: Config[_]): Boolean =
+        seenConfigs.contains(seen(config))
+
       config match {
         case Config.Lazy(thunk) =>
-          loop(descriptions, thunk(), latestPath, alreadySeen + thunk())
+          val c = thunk()
+          if (wasSeen(c)) recursion
+          else loop(descriptions, c, latestPath, seenConfigs + seen(c))
 
         case cp: Config.Primitive[_] =>
           ConfigDocs.Leaf(ConfigDocs.Description(latestPath, cp.description) :: descriptions, None)
@@ -590,12 +615,12 @@ trait ConfigDocsModule {
               descriptions,
               cd.valueConfig,
               None,
-              alreadySeen + config
+              seenConfigs + seen(config)
             )
           )
 
         case Config.Optional(c) =>
-          loop(descriptions, c, None, alreadySeen)
+          loop(descriptions, c, None, seenConfigs)
 
         case Config.Sequence(c) =>
           ConfigDocs.Sequence(
@@ -603,15 +628,15 @@ trait ConfigDocsModule {
               descriptions,
               c,
               None,
-              alreadySeen
+              seenConfigs
             )
           )
 
         case Config.Switch(c, map) =>
           ConfigDocs.DynamicMap(
-            loop(descriptions, c, latestPath, alreadySeen),
+            loop(descriptions, c, latestPath, seenConfigs),
             map.map { case (k, v) =>
-              k.toString -> loop(descriptions, v, latestPath, alreadySeen)
+              k.toString -> loop(descriptions, v, latestPath, seenConfigs)
             }
           )
 
@@ -623,7 +648,7 @@ trait ConfigDocsModule {
             descri :: descriptions,
             c,
             latestPath,
-            alreadySeen
+            seenConfigs
           )
 
         case Config.Nested(path, c) =>
@@ -633,27 +658,28 @@ trait ConfigDocsModule {
               List.empty,
               c,
               Some(path),
-              alreadySeen
+              seenConfigs
             ),
             descriptions
           )
 
         case Config.MapOrFail(c, _) =>
-          loop(descriptions, c, None, alreadySeen)
+          loop(descriptions, c, None, seenConfigs)
 
         case Config.Zipped(left, right, _) =>
           ConfigDocs.Zip(
-            loop(descriptions, left, None, alreadySeen),
-            loop(descriptions, right, None, alreadySeen)
+            loop(descriptions, left, None, seenConfigs),
+            loop(descriptions, right, None, seenConfigs)
           )
 
         case a: Config.Fallback[_] =>
           ConfigDocs.OrElse(
-            loop(descriptions, a.first, None, alreadySeen),
-            loop(descriptions, a.second, None, alreadySeen)
+            loop(descriptions, a.first, None, seenConfigs),
+            loop(descriptions, a.second, None, seenConfigs)
           )
 
       }
+    }
 
     loop(Nil, config, None, Set.empty)
   }
