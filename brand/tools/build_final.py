@@ -86,11 +86,17 @@ for name, cols, bg in [("light", (INK, ACC), None), ("dark", (INK_D, ACC_D), Non
 # favicon: dark rounded tile, light ink + dark accent (works on any browser chrome)
 tile = lambda rx: f'<rect width="64" height="64" rx="{rx}" fill="{NIGHT}"/>'
 sc = 'transform="translate(6.4 6.4) scale(0.8)"'
-files["favicon.svg"] = svg(64, 64, "0 0 64 64", tile(14) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc}"))
+files["favicon-tile.svg"] = svg(64, 64, "0 0 64 64", tile(14) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc}"))
 files["favicon-square.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc}"))  # apple-touch / maskable
 # tiny favicon (16/32 px): tile with small radius, mark fills more of it
 sc2 = 'transform="translate(2.2 2.2) scale(0.931)"'
 files["favicon-tiny.svg"] = svg(64, 64, "0 0 64 64", tile(10) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc2}"))
+# tab favicon: no tile, 3 pill bars fill the 16 px box, 2x2 knob holes, colours switch with the tab theme
+_tb = [(0,16,0,"i",13,1),(2,14,6,"a",4,7),(0,16,12,"i",1,13)]
+tbars = "".join(f'<rect x="{a}" y="{y}" width="{b-a}" height="4" rx="2" class="{c}"/>' for a,b,y,c,kx,ky in _tb)
+tholes = "".join(f'<rect x="{kx}" y="{ky}" width="2" height="2" rx="1" fill="#000"/>' for a,b,y,c,kx,ky in _tb)
+tab_css = f'<style>.i{{fill:{INK}}}.a{{fill:{ACC}}}@media (prefers-color-scheme:dark){{.i{{fill:{INK_D}}}.a{{fill:{ACC_D}}}}}</style>'
+files["favicon.svg"] = svg(16, 16, "0 0 16 16", f'{tab_css}<mask id="t"><rect width="16" height="16" fill="#fff"/>{tholes}</mask><g mask="url(#t)">{tbars}</g>')
 # 16 px pixel-grid favicon: bars 3 px, gap 1 px, 1 px knob dot at one end of each bar (tile colour)
 px = [(1,15,"R",INK_D),(5,15,"R",ACC_D),(1,11,"L",ACC_D),(1,15,"L",INK_D)]
 bars16 = "".join(f'<rect x="{a}" y="{4*i}" width="{b-a}" height="3" rx="1" fill="{c}"/><rect x="{(b-2) if side=="R" else (a+1)}" y="{4*i+1}" width="1" height="1" fill="{NIGHT}"/>' for i,(a,b,side,c) in enumerate(px))

@@ -55,7 +55,8 @@ LOGO=f'<symbol id="zl" viewBox="0 16 {LW:.1f} 42"><mask id="zlk"><rect x="-50" y
 # 16 px pixel-grid favicon (tile + 3 px bars + 1 px knob dots), colours fixed for the dark tile
 px=[(1,15,'R',SNOW),(5,15,'R',ACCD),(1,11,'L',ACCD),(1,15,'L',SNOW)]
 F16='<symbol id="zf" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="'+NIGHT+'"/>'+''.join(f'<rect x="{a}" y="{4*i}" width="{b-a}" height="3" rx="1" fill="{c}"/><rect x="{(b-2) if sd=="R" else (a+1)}" y="{4*i+1}" width="1" height="1" fill="{NIGHT}"/>' for i,(a,b,sd,c) in enumerate(px))+'</symbol>'
-DEFS='<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+mark_symbol('zm')+mark_symbol('zs',14.5)+mark_symbol('zn',14.0,False)+LOGO+F16+'</defs></svg>'
+ZT='<symbol id="zt" viewBox="0 0 16 16"><mask id="ztm"><rect width="16" height="16" fill="#fff"/><rect x="13" y="1" width="2" height="2" rx="1"/><rect x="4" y="7" width="2" height="2" rx="1"/><rect x="1" y="13" width="2" height="2" rx="1"/></mask><g mask="url(#ztm)"><rect width="16" height="4" rx="2" fill="var(--ti)"/><rect x="2" y="6" width="12" height="4" rx="2" fill="var(--ta)"/><rect y="12" width="16" height="4" rx="2" fill="var(--ti)"/></g></symbol>'
+DEFS='<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+mark_symbol('zm')+mark_symbol('zs',14.5)+mark_symbol('zn',14.0,False)+LOGO+F16+ZT+'</defs></svg>'
 
 def mk(size, ink, acc, sym='zm', extra=''):
     return f'<svg width="{size}" height="{size}" viewBox="0 0 64 64" role="img" aria-label="ZIO Config symbol" style="--ink:{ink};--acc:{acc};{extra}"><use href="#{sym}"/></svg>'
@@ -123,21 +124,22 @@ boards['Brand1Logo']=('1 · Logo','Logo',b)
 # ===== 2 Icon and favicon =====
 b=[]
 b.append(header('02','Icon and favicon','One mark, every small place',
-  'The icon is the symbol on a rounded tile. The tile is what lets one file work on a light tab, a dark tab, a phone home screen and a GitHub avatar. At 16 px the symbol is redrawn on a pixel grid.'))
+  'The icon is the symbol on a rounded tile. The tile is what lets one file work on a light tab, a dark tab, a phone home screen and a GitHub avatar. The browser tab is the exception: it uses the bars alone, with no tile, redrawn on a 16 px grid and switching colour with the tab theme.'))
 b.append(sec('2.1','App icon',
   grid(2,[light(tile_icon(240,True),380),dark(tile_icon(240,False),380)])+
   grid(4,[light(tile_icon(s,True),200) for s in (160,120,76,40)],24)+
   cap('Dark tile is the default. The light tile is for dark backgrounds that would swallow the dark one. Corner radius is 22.5% of the side; platforms that apply their own mask (iOS, Android adaptive) use the full-bleed square, with the symbol inside the central 80% safe circle.')))
 b.append(sec('2.2','Favicon',
-  grid(2,[light(f'<div style="display:flex;align-items:flex-end;gap:40px"><div style="display:flex;flex-direction:column;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><use href="#zf" width="16" height="16"/></svg><div style="{MONO};font-size:12px;color:{SLATE}">16 px</div></div><div style="display:flex;flex-direction:column;align-items:center;gap:10px">{tile_icon(32,True,0.2)}<div style="{MONO};font-size:12px;color:{SLATE}">32 px</div></div><div style="display:flex;flex-direction:column;align-items:center;gap:10px">{tile_icon(48,True,0.2)}<div style="{MONO};font-size:12px;color:{SLATE}">48 px</div></div></div>',260),
-          light(f'<svg width="256" height="256" viewBox="0 0 16 16" shape-rendering="crispEdges" role="img" aria-label="16 pixel favicon enlarged"><use href="#zf" width="16" height="16"/></svg>',260)])+
-  grid(2,[cap('The favicon keeps the dark tile so it is legible on light and dark browser chrome. The ICO holds 16, 32 and 48 px.'),
-          cap('The 16 px version is drawn by hand on the pixel grid: 3 px bars, 1 px gaps and a single dot for each knob. Plain scaling blurs the bars together, so it is not scaled down from the larger file.')])))
-def tab(bg,fg,bar,title,sub):
-    return (f'<div style="background:{bar};border-radius:16px;padding:14px 14px 0;box-sizing:border-box;height:200px;overflow:hidden"><div style="display:flex;align-items:center;gap:10px;background:{bg};color:{fg};border-radius:10px 10px 0 0;padding:10px 16px;width:300px;font-size:14px"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><use href="#zf" width="16" height="16"/></svg><span>{title}</span></div>'
+  grid(2,[light(f'<div style="display:flex;align-items:flex-end;gap:40px"><div style="display:flex;flex-direction:column;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 16 16" style="--ti:{INK};--ta:{ACC}" aria-hidden="true"><use href="#zt" width="16" height="16"/></svg><div style="{MONO};font-size:12px;color:{SLATE}">16 px tab</div></div><div style="display:flex;flex-direction:column;align-items:center;gap:10px">{tile_icon(32,True,0.2)}<div style="{MONO};font-size:12px;color:{SLATE}">32 px</div></div><div style="display:flex;flex-direction:column;align-items:center;gap:10px">{tile_icon(48,True,0.2)}<div style="{MONO};font-size:12px;color:{SLATE}">48 px</div></div></div>',260),
+          light(f'<div style="display:flex;gap:24px"><div style="background:{PAPER};padding:12px;border:1px solid #DCDFE6"><svg width="112" height="112" viewBox="0 0 16 16" shape-rendering="crispEdges" style="--ti:{INK};--ta:{ACC}" role="img" aria-label="Tab favicon on a light tab"><use href="#zt" width="16" height="16"/></svg></div><div style="background:{NIGHT};padding:12px"><svg width="112" height="112" viewBox="0 0 16 16" shape-rendering="crispEdges" style="--ti:{SNOW};--ta:{ACCD}" role="img" aria-label="Tab favicon on a dark tab"><use href="#zt" width="16" height="16"/></svg></div></div>',260)])+
+  grid(2,[cap('<b style="color:'+INK+'">favicon.svg</b> is the tab icon: three bars, no tile, ink and orange-red on a light tab, snow and light orange-red on a dark tab (it follows the browser theme). The dark tile is kept for the ICO fallback, apple-touch-icon and app icons.'),
+          cap('The tab icon is drawn by hand on the 16 px grid: three 4 px bars, 2 px gaps and a 2 px round knob cut out of each bar. Four bars with 1 px gaps blurred together and the dark tile vanished on dark tabs, so both were dropped for the tab.')])))
+def tab(bg,fg,bar,title,sub,ac=None):
+    ac=ac or ACC
+    return (f'<div style="background:{bar};border-radius:16px;padding:14px 14px 0;box-sizing:border-box;height:200px;overflow:hidden"><div style="display:flex;align-items:center;gap:10px;background:{bg};color:{fg};border-radius:10px 10px 0 0;padding:10px 16px;width:300px;font-size:14px"><svg width="16" height="16" viewBox="0 0 16 16" style="--ti:{fg};--ta:{ac}" aria-hidden="true"><use href="#zt" width="16" height="16"/></svg><span>{title}</span></div>'
             f'<div style="background:{bg};height:140px;border-radius:0 8px 0 0;padding:20px;color:{fg};font-size:14px;{MONO}">{sub}</div></div>')
 b.append(sec('2.3','In a browser tab',
-  grid(2,[tab(PAPER,INK,'#DCDFE6','ZIO Config','zio.dev/zio-config'),tab(NIGHT,SNOW,'#0B0F18','ZIO Config','zio.dev/zio-config')])))
+  grid(2,[tab(PAPER,INK,'#DCDFE6','ZIO Config','zio.dev/zio-config'),tab(NIGHT,SNOW,'#0B0F18','ZIO Config','zio.dev/zio-config',ACCD)])))
 b.append(sec('2.4','Profile avatar',
   grid(4,[light(f'<div style="width:200px;height:200px;border-radius:50%;overflow:hidden">{tile_icon(200,True,0)}</div>',260),
           light(tile_icon(200,True),260),

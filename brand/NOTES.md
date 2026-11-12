@@ -120,3 +120,9 @@ Content notes: palette ink #101521, orange-red #F2501F / light #FF6B3D, paper, s
 Social cards: project URL moved to the bottom-right (right edge 96 px, same margin as the logo on the left). Changed in the Brand8Social board, brand/final social-card-*.svg/png and github-social-preview (build_final.py), and the overview board Round12 that embeds them.
 
 Social cards v2 (modelled on zio-blocks-social-github.svg: logo, bright tagline, supporting line, caption + short accent rule + source list, address bottom-right, big faint cropped symbol at the right). Lines grounded in the repo README: "Type-safe configuration for ZIO applications" (tagline, still a placeholder wording), "Automatic derivation, validation and generated docs" (README key features), "Reads configuration from many sources" + "HOCON · JSON · YAML · TOML · XML · Maps" (README source list), zio.dev/zio-config (README link). Text outlined in the SVGs (Sora SemiBold/Regular). Updated build_final.py card(), gen_sheet_boards.py social_card, Brand8Social board (h 2619), overview board Round12 (embeds PNGs). Ghost symbol overlaps the end of the tagline slightly at 6-9% opacity, as in the reference.
+
+## Tab favicon redo
+- Problem: dark tile vanished on dark tabs, 4 bars with 1 px gaps and 1 px knob dots read as noise at 16 px.
+- `favicon.svg` is now tab-only: no tile, 3 pill bars (4 px thick, 2 px gaps) filling the 16 px box, 2 px round knob holes (R, L, R), ink/orange-red on light tabs and snow/light orange-red on dark tabs via `prefers-color-scheme` inside the SVG. Safari ignores SVG favicons and uses apple-touch-icon / ICO.
+- Old tile version renamed `favicon-tile.svg` (feeds favicon-48.png). ICO, apple-touch-icon and maskable keep the tile.
+- Headless Chromium does not honour a forced dark scheme for `<img>` SVGs, so dark colours were checked with a copy having the dark values substituted, not through the media query.

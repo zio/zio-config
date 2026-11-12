@@ -7,7 +7,7 @@ while read -r src size out; do
 done <<LIST
 favicon-16px.svg 16 favicon-16.png
 favicon-tiny.svg 32 favicon-32.png
-favicon.svg 48 favicon-48.png
+favicon-tile.svg 48 favicon-48.png
 favicon-square.svg 180 apple-touch-icon.png
 favicon-square.svg 192 icon-192.png
 favicon-square.svg 512 icon-512.png
