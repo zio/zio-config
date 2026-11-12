@@ -569,7 +569,7 @@ lazy val docs = project
     // image's alt text gives the page its accessible name.
     // TODO: remove this override once zio-sbt skips the heading when a banner is set
     // (https://github.com/zio/zio-sbt/issues/868) and the plugin is bumped.
-    generateReadme                            := {
+    generateReadme                             := {
       generateReadme.value
       val readme  = (ThisBuild / baseDirectory).value / "README.md"
       val heading = s"\n# ${projectName.value}\n"
