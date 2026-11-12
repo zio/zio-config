@@ -2,7 +2,10 @@
 [//]: # (So please do not edit it manually. Instead, change "docs/index.md" file or sbt setting keys)
 [//]: # (e.g. "readmeDocumentation" and "readmeSupport".)
 
-# ZIO Config
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/zio/zio-config/series/4.x/brand/logo-dark.svg">
+  <img alt="ZIO Config" src="https://raw.githubusercontent.com/zio/zio-config/series/4.x/brand/logo-light.svg" width="520">
+</picture>
 
 [ZIO Config](https://zio.dev/zio-config/) is a ZIO-based library and act as an extension to core library ZIO's `Config` language.
 

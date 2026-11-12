@@ -553,6 +553,28 @@ lazy val docs = project
     refinedDependencies,
     crossScalaVersions                         := (zioConfigJVM / crossScalaVersions).value,
     projectName                                := "ZIO Config",
+    readmeBanner                               := {
+      val logoBase = "https://raw.githubusercontent.com/zio/zio-config/series/4.x/brand"
+      // <picture> lets GitHub swap the lockup per theme: the light logo's near-black ink would be
+      // invisible on GitHub's dark canvas without the dark variant.
+      s"""|
+          |<picture>
+          |  <source media="(prefers-color-scheme: dark)" srcset="$logoBase/logo-dark.svg">
+          |  <img alt="ZIO Config" src="$logoBase/logo-light.svg" width="520">
+          |</picture>
+          |""".stripMargin
+    },
+    // The banner logo already carries the name, so the plugin's "# ZIO Config" heading under it
+    // would show the name twice. Run the plugin's generator, then drop that one heading; the
+    // image's alt text gives the page its accessible name.
+    generateReadme                             := {
+      generateReadme.value
+      val readme  = (ThisBuild / baseDirectory).value / "README.md"
+      val heading = s"\n# ${projectName.value}\n"
+      val text    = IO.read(readme)
+      val at      = text.indexOf(heading)
+      if (at >= 0) IO.write(readme, text.substring(0, at) + text.substring(at + heading.length))
+    },
     mainModuleName                             := (zioConfigJVM / moduleName).value,
     projectStage                               := ProjectStage.ProductionReady,
     ScalaUnidoc / unidoc / unidocProjectFilter :=
