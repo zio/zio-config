@@ -14,15 +14,16 @@ NIGHT = "#101521"
 
 # --- mark: 64-unit box, four bars + knobs (knobs are real holes via mask) ---
 def mark(small=False, uid="m"):
-    h = 14.5 if small else 14
-    gap = (62 - 4 * h) / 3
-    rows = [(3, 61, "R", "ink"), (22, 61, "R", "acc"), (3, 42, "L", "acc"), (3, 61, "L", "ink")]
+    """Three pill bars (B): ink top, accent middle (centred knob), ink bottom."""
+    h = 18.5 if small else 18
+    gap = (62 - 3 * h) / 2
+    rows = [(3, 61, "R", "ink"), (13, 51, "C", "acc"), (3, 61, "L", "ink")]
     bars, holes = [], []
     for i, (a, b, side, c) in enumerate(rows):
         y = 1 + i * (h + gap)
         bars.append((a, y, b - a, h, c))
-        kx = b - h / 2 if side == "R" else a + h / 2
-        holes.append((kx, y + h / 2, h / 2 - 1.8))
+        kx = (a + b) / 2 if side == "C" else (b - h / 2 if side == "R" else a + h / 2)
+        holes.append((kx, y + h / 2, h / 2 - 0.129 * h))
     return bars, holes
 
 def mark_svg_body(cols, small=False, uid="m", tx="", ):
@@ -91,15 +92,15 @@ files["favicon-square.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((
 # tiny favicon (16/32 px): tile with small radius, mark fills more of it
 sc2 = 'transform="translate(2.2 2.2) scale(0.931)"'
 files["favicon-tiny.svg"] = svg(64, 64, "0 0 64 64", tile(10) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=f" {sc2}"))
-# tab favicon: no tile, 3 pill bars fill the 16 px box, 2x2 knob holes, colours switch with the tab theme
-_tb = [(0,16,0,"i",13,1),(2,14,6,"a",4,7),(0,16,12,"i",1,13)]
+# tab favicon: no tile, 3 pill bars fill the 16 px box, 2x2 knob holes (middle one centred), colours switch with the tab theme
+_tb = [(0,16,0,"i",13,1),(2,14,6,"a",7,7),(0,16,12,"i",1,13)]
 tbars = "".join(f'<rect x="{a}" y="{y}" width="{b-a}" height="4" rx="2" class="{c}"/>' for a,b,y,c,kx,ky in _tb)
 tholes = "".join(f'<rect x="{kx}" y="{ky}" width="2" height="2" rx="1" fill="#000"/>' for a,b,y,c,kx,ky in _tb)
 tab_css = f'<style>.i{{fill:{INK}}}.a{{fill:{ACC}}}@media (prefers-color-scheme:dark){{.i{{fill:{INK_D}}}.a{{fill:{ACC_D}}}}}</style>'
 files["favicon.svg"] = svg(16, 16, "0 0 16 16", f'{tab_css}<mask id="t"><rect width="16" height="16" fill="#fff"/>{tholes}</mask><g mask="url(#t)">{tbars}</g>')
-# 16 px pixel-grid favicon: bars 3 px, gap 1 px, 1 px knob dot at one end of each bar (tile colour)
-px = [(1,15,"R",INK_D),(5,15,"R",ACC_D),(1,11,"L",ACC_D),(1,15,"L",INK_D)]
-bars16 = "".join(f'<rect x="{a}" y="{4*i}" width="{b-a}" height="3" rx="1" fill="{c}"/><rect x="{(b-2) if side=="R" else (a+1)}" y="{4*i+1}" width="1" height="1" fill="{NIGHT}"/>' for i,(a,b,side,c) in enumerate(px))
+# 16 px pixel-grid tile favicon (ICO): 4 px bars, 1 px gaps, 2x2 knobs in tile colour
+px = [(1,15,1,12,"i"),(3,13,6,7,"a"),(1,15,11,2,"i")]   # x0, x1, y, knob x, colour
+bars16 = "".join(f'<rect x="{a}" y="{y}" width="{b-a}" height="4" rx="2" fill="{INK_D if c=="i" else ACC_D}"/><rect x="{kx}" y="{y+1}" width="2" height="2" rx="1" fill="{NIGHT}"/>' for a,b,y,kx,c in px)
 files["favicon-16px.svg"] = svg(16, 16, "0 0 16 16", f'<rect width="16" height="16" rx="3" fill="{NIGHT}"/>' + bars16)
 # maskable icon: mark inside the central 80% safe circle (radius 0.4 of the side)
 files["icon-maskable.svg"] = svg(64, 64, "0 0 64 64", tile(0) + mark_svg_body((INK_D, ACC_D), True, uid="f", tx=' transform="translate(13.4 13.4) scale(0.58)"'))

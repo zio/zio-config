@@ -131,3 +131,9 @@ Social cards v2 (modelled on zio-blocks-social-github.svg: logo, bright tagline,
 - `tools/gen_compare.py` -> board Round13 (page-1b076f29e50b, right of the overview): A four bars (current), B three bars centred middle, C three bars middle hangs from right. Symbol large, 16-64 px, lockup at 36 and 20 px, light and dark.
 - Per Milad: the knob of the middle bar sits at the centre of the bar in B and C.
 - No decision yet; logo, icons, favicon and sheet are unchanged.
+
+## Round 14: three-bar symbol (option B) everywhere
+- Decision: option B from Round 13. Symbol = 3 pill bars (h 18, gap 4 in a 64 box; small cut h 18.5): ink top (knob R), orange-red middle x13-51 with knob at the bar centre, ink bottom (knob L).
+- Rebuilt: logo (Z at cap height, bars 8.7 vs I stem 6.7 units), mark, tile/maskable icons, tab favicon (middle bar 2-14, knob centred), 16 px ICO tile (4 px bars, 1 px gaps, 2x2 knobs), social cards, 8 boards, overview.
+- Round13 compare board is kept as history; its "A current" column is now the retired four-bar version.
+- Copy changed from "stair of four switches" to "stack of three switches", single accent bar.

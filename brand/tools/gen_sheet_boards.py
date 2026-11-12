@@ -31,14 +31,14 @@ def tp(font, s, size, x, y, tr=0):
     for ch in s:
         g=cm[ord(ch)]; gs[g].draw(TransformPen(pen,(sc,0,0,-sc,cx,y))); cx+=gs[g].width*sc+tr
     return pen.getCommands(), cx
-def mark_parts(h=14.0):
-    gap=(62-4*h)/3; rows=[(3,61,'R','i'),(22,61,'R','a'),(3,42,'L','a'),(3,61,'L','i')]; out=[]
+def mark_parts(h=18.0):
+    gap=(62-3*h)/2; rows=[(3,61,'R','i'),(13,51,'C','a'),(3,61,'L','i')]; out=[]
     for i,(a,b,side,c) in enumerate(rows):
-        y=1+i*(h+gap); kx=b-h/2 if side=='R' else a+h/2
+        y=1+i*(h+gap); kx=(a+b)/2 if side=='C' else (b-h/2 if side=='R' else a+h/2)
         out.append((a,y,b-a,h,c,kx,y+h/2,h/2-0.129*h))
     return out
 def fillv(c): return 'var(--ink)' if c=='i' else 'var(--acc)'
-def mark_symbol(sid, h=14.0, knobs=True):
+def mark_symbol(sid, h=18.0, knobs=True):
     parts=mark_parts(h); mid=sid+'k'
     bars=''.join(f'<rect x="{a}" y="{y:.2f}" width="{w}" height="{hh}" rx="{hh/2}" fill="{fillv(c)}"/>' for a,y,w,hh,c,kx,ky,r in parts)
     holes=''.join(f'<circle cx="{kx:.2f}" cy="{ky:.2f}" r="{r:.2f}" fill="#000"/>' for a,y,w,hh,c,kx,ky,r in parts)
@@ -46,17 +46,17 @@ def mark_symbol(sid, h=14.0, knobs=True):
         return f'<symbol id="{sid}" viewBox="0 0 64 64"><mask id="{mid}"><rect width="64" height="64" fill="#fff"/>{holes}</mask><g mask="url(#{mid})">{bars}</g></symbol>'
     return f'<symbol id="{sid}" viewBox="0 0 64 64">{bars}</symbol>'
 # logo: cap 30, baseline 47, Z = mark at cap height
-s_=30/62.0; parts=mark_parts(14.0); size=30/capH
+s_=30/62.0; parts=mark_parts(18.0); size=30/capH
 zb=''.join(f'<rect x="{(a-3)*s_:.2f}" y="{17+(y-1)*s_:.2f}" width="{w*s_:.2f}" height="{hh*s_:.2f}" rx="{hh*s_/2:.2f}" fill="{fillv(c)}"/>' for a,y,w,hh,c,kx,ky,r in parts)
 zh=''.join(f'<circle cx="{(kx-3)*s_:.2f}" cy="{17+(ky-1)*s_:.2f}" r="{r*s_:.2f}" fill="#000"/>' for a,y,w,hh,c,kx,ky,r in parts)
 zw=58*s_
 d1,x1=tp(bold,"IO",size,zw+size*0.10,47,size*0.01); d2,LW=tp(reg,"Config",size,x1+size*0.26,47,size*0.005)
 LOGO=f'<symbol id="zl" viewBox="0 16 {LW:.1f} 42"><mask id="zlk"><rect x="-50" y="-50" width="{LW+100:.0f}" height="200" fill="#fff"/>{zh}</mask><g mask="url(#zlk)">{zb}</g><path d="{d1}" fill="var(--ink)"/><path d="{d2}" fill="var(--ink)"/></symbol>'
-# 16 px pixel-grid favicon (tile + 3 px bars + 1 px knob dots), colours fixed for the dark tile
-px=[(1,15,'R',SNOW),(5,15,'R',ACCD),(1,11,'L',ACCD),(1,15,'L',SNOW)]
-F16='<symbol id="zf" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="'+NIGHT+'"/>'+''.join(f'<rect x="{a}" y="{4*i}" width="{b-a}" height="3" rx="1" fill="{c}"/><rect x="{(b-2) if sd=="R" else (a+1)}" y="{4*i+1}" width="1" height="1" fill="{NIGHT}"/>' for i,(a,b,sd,c) in enumerate(px))+'</symbol>'
-ZT='<symbol id="zt" viewBox="0 0 16 16"><mask id="ztm"><rect width="16" height="16" fill="#fff"/><rect x="13" y="1" width="2" height="2" rx="1"/><rect x="4" y="7" width="2" height="2" rx="1"/><rect x="1" y="13" width="2" height="2" rx="1"/></mask><g mask="url(#ztm)"><rect width="16" height="4" rx="2" fill="var(--ti)"/><rect x="2" y="6" width="12" height="4" rx="2" fill="var(--ta)"/><rect y="12" width="16" height="4" rx="2" fill="var(--ti)"/></g></symbol>'
-DEFS='<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+mark_symbol('zm')+mark_symbol('zs',14.5)+mark_symbol('zn',14.0,False)+LOGO+F16+ZT+'</defs></svg>'
+# 16 px pixel-grid tile favicon (ICO): tile + 4 px bars + 2x2 knobs in tile colour
+px=[(1,15,1,12,SNOW),(3,13,6,7,ACCD),(1,15,11,2,SNOW)]
+F16='<symbol id="zf" viewBox="0 0 16 16"><rect width="16" height="16" rx="3" fill="'+NIGHT+'"/>'+''.join(f'<rect x="{a}" y="{y}" width="{b-a}" height="4" rx="2" fill="{c}"/><rect x="{kx}" y="{y+1}" width="2" height="2" rx="1" fill="{NIGHT}"/>' for a,b,y,kx,c in px)+'</symbol>'
+ZT='<symbol id="zt" viewBox="0 0 16 16"><mask id="ztm"><rect width="16" height="16" fill="#fff"/><rect x="13" y="1" width="2" height="2" rx="1"/><rect x="7" y="7" width="2" height="2" rx="1"/><rect x="1" y="13" width="2" height="2" rx="1"/></mask><g mask="url(#ztm)"><rect width="16" height="4" rx="2" fill="var(--ti)"/><rect x="2" y="6" width="12" height="4" rx="2" fill="var(--ta)"/><rect y="12" width="16" height="4" rx="2" fill="var(--ti)"/></g></symbol>'
+DEFS='<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>'+mark_symbol('zm')+mark_symbol('zs',18.5)+mark_symbol('zn',18.0,False)+LOGO+F16+ZT+'</defs></svg>'
 
 def mk(size, ink, acc, sym='zm', extra=''):
     return f'<svg width="{size}" height="{size}" viewBox="0 0 64 64" role="img" aria-label="ZIO Config symbol" style="--ink:{ink};--acc:{acc};{extra}"><use href="#{sym}"/></svg>'
@@ -96,12 +96,12 @@ LN=lambda: (INK,ACC); DK=lambda: (SNOW,ACCD)
 
 # ===== 1 Logo =====
 b=[]
-b.append(header('01','Logo','The Z is a stair of switches',
-  'Four horizontal switches step across to draw a Z, each with a round knob. Ink on the top and bottom, orange-red in the middle. The Z of “ZIO” is the symbol, so the symbol and the logo are one shape.'))
+b.append(header('01','Logo','The Z is a stack of switches',
+  'Three horizontal switches stack to draw a Z, each with a round knob: top, middle and bottom. Ink on the top and bottom, orange-red in the middle. The Z of “ZIO” is the symbol, so the symbol and the logo are one shape.'))
 b.append(sec('1.1','Symbol',
   grid(2,[light(mk(220,*LN()),380),dark(mk(220,*DK()),380)])+
-  grid(2,[cap(f'Light mode. Bars in ink {code(INK)}, middle bars in orange-red {code(ACC)}. Knobs are real holes, so the colour behind shows through.'),
-          cap(f'Dark mode. Bars in snow {code(SNOW)}, middle bars in light orange-red {code(ACCD)}.')])))
+  grid(2,[cap(f'Light mode. Bars in ink {code(INK)}, middle bar in orange-red {code(ACC)}. Knobs are real holes, so the colour behind shows through.'),
+          cap(f'Dark mode. Bars in snow {code(SNOW)}, middle bar in light orange-red {code(ACCD)}.')])))
 b.append(sec('1.2','Logo with the full name',
   grid(2,[light(lg(96,*LN()),240),dark(lg(96,*DK()),240),light(lg(56,*LN()),150),dark(lg(56,*DK()),150)])+
   cap('Wherever the full name appears, the Z of “ZIO” is the symbol. It stands at cap height on the baseline, then “IO” in Sora Bold and “Config” in Sora Regular, on one line. The symbol never sits beside a full “ZIO Config”, because that would say Z twice. For square spaces use the symbol alone or the icon tile.')))
@@ -111,7 +111,7 @@ b.append(sec('1.3','Clear space and minimum size',
     f'<div style="height:420px;background:{TILE};border-radius:16px;padding:32px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:center;gap:40px">'
     f'<div style="display:flex;align-items:flex-end;gap:36px">'+''.join(f'<div style="display:flex;flex-direction:column;align-items:center;gap:10px">{mk(s,INK,ACC,"zs" if s<32 else "zm")}<div style="{MONO};font-size:12px;color:{SLATE}">{s}px</div></div>' for s in (16,24,32,48))+'</div>'
     f'<div style="display:flex;align-items:flex-end;gap:44px">'+''.join(f'<div style="display:flex;flex-direction:column;align-items:flex-start;gap:10px">{lg(h,INK,ACC)}<div style="{MONO};font-size:12px;color:{SLATE}">{h}px high</div></div>' for h in (32,48))+'</div></div>']) +
-  grid(2,[cap('Keep one bar height (the dashed margin, 14 of 64 units of the symbol) free on every side of the symbol. Around the full logo keep the same distance, measured from the Z. No text, edges or other logos enter it.'),
+  grid(2,[cap('Keep one bar height (the dashed margin, 18 of 64 units of the symbol) free on every side of the symbol. Around the full logo keep the same distance, measured from the Z. No text, edges or other logos enter it.'),
           cap('The symbol alone goes down to 16 px, and uses the small cut (slightly thicker bars) below 32 px. The full logo goes down to 32 px high, so the knobs stay visible. Below that, use the symbol alone.')])))
 mis=[card(mk(90,INK,ACC,extra='transform:scaleX(1.5)'),'Don’t stretch or squash.'),
      card(mk(90,INK,ACC,extra='transform:rotate(-14deg)'),'Don’t rotate or tilt.'),
@@ -132,8 +132,8 @@ b.append(sec('2.1','App icon',
 b.append(sec('2.2','Favicon',
   grid(2,[light(f'<div style="display:flex;align-items:flex-end;gap:40px"><div style="display:flex;flex-direction:column;align-items:center;gap:10px"><svg width="16" height="16" viewBox="0 0 16 16" style="--ti:{INK};--ta:{ACC}" aria-hidden="true"><use href="#zt" width="16" height="16"/></svg><div style="{MONO};font-size:12px;color:{SLATE}">16 px tab</div></div><div style="display:flex;flex-direction:column;align-items:center;gap:10px">{tile_icon(32,True,0.2)}<div style="{MONO};font-size:12px;color:{SLATE}">32 px</div></div><div style="display:flex;flex-direction:column;align-items:center;gap:10px">{tile_icon(48,True,0.2)}<div style="{MONO};font-size:12px;color:{SLATE}">48 px</div></div></div>',260),
           light(f'<div style="display:flex;gap:24px"><div style="background:{PAPER};padding:12px;border:1px solid #DCDFE6"><svg width="112" height="112" viewBox="0 0 16 16" shape-rendering="crispEdges" style="--ti:{INK};--ta:{ACC}" role="img" aria-label="Tab favicon on a light tab"><use href="#zt" width="16" height="16"/></svg></div><div style="background:{NIGHT};padding:12px"><svg width="112" height="112" viewBox="0 0 16 16" shape-rendering="crispEdges" style="--ti:{SNOW};--ta:{ACCD}" role="img" aria-label="Tab favicon on a dark tab"><use href="#zt" width="16" height="16"/></svg></div></div>',260)])+
-  grid(2,[cap('<b style="color:'+INK+'">favicon.svg</b> is the tab icon: three bars, no tile, ink and orange-red on a light tab, snow and light orange-red on a dark tab (it follows the browser theme). The dark tile is kept for the ICO fallback, apple-touch-icon and app icons.'),
-          cap('The tab icon is drawn by hand on the 16 px grid: three 4 px bars, 2 px gaps and a 2 px round knob cut out of each bar. Four bars with 1 px gaps blurred together and the dark tile vanished on dark tabs, so both were dropped for the tab.')])))
+  grid(2,[cap('<b style="color:'+INK+'">favicon.svg</b> is the tab icon: the same three bars, no tile, ink and orange-red on a light tab, snow and light orange-red on a dark tab (it follows the browser theme). The dark tile is kept for the ICO fallback, apple-touch-icon and app icons.'),
+          cap('The tab icon is drawn by hand on the 16 px grid: three 4 px bars, 2 px gaps and a 2 px round knob cut out of each bar. The dark tile vanished on dark tabs, so the tab icon drops it.')])))
 def tab(bg,fg,bar,title,sub,ac=None):
     ac=ac or ACC
     return (f'<div style="background:{bar};border-radius:16px;padding:14px 14px 0;box-sizing:border-box;height:200px;overflow:hidden"><div style="display:flex;align-items:center;gap:10px;background:{bg};color:{fg};border-radius:10px 10px 0 0;padding:10px 16px;width:300px;font-size:14px"><svg width="16" height="16" viewBox="0 0 16 16" style="--ti:{fg};--ta:{ac}" aria-hidden="true"><use href="#zt" width="16" height="16"/></svg><span>{title}</span></div>'
@@ -154,12 +154,12 @@ boards['Brand2Icons']=('2 · Icon and favicon','Icon and favicon',b)
 # ===== 3 Colour =====
 b=[]
 b.append(header('03','Colour','Ink and one orange-red',
-  'Almost everything is ink and paper. Orange-red appears once per layout, on the two middle bars of the Z, where the stair turns. Everything else stays cool and neutral, never warm grey.'))
+  'Almost everything is ink and paper. Orange-red appears once per layout, on the middle bar of the Z, where the stack turns. Everything else stays cool and neutral, never warm grey.'))
 def sw(name,hexv,role,w=1):
     fg=best_text(hexv); bd=f'border:1px solid {LINE};' if hexv.upper() in (PAPER,SNOW) else ''
     return (f'<div style="display:flex;flex-direction:column;border-radius:16px;overflow:hidden;{bd}"><div style="background:{hexv};height:150px;padding:16px;box-sizing:border-box;display:flex;align-items:flex-end;color:{fg};{MONO};font-size:14px">{hexv}</div>'
             f'<div style="padding:14px 16px;background:#fff;border-top:1px solid {LINE}"><div style="font-size:18px;font-weight:700">{name}</div><div style="font-size:14px;color:{SLATE};line-height:1.4;margin-top:4px">{role}</div></div></div>')
-core=[('Ink',INK,'Symbol, text and dark surfaces'),('Orange-red',ACC,'Middle bars on light'),('Light orange-red',ACCD,'Middle bars on dark'),('Paper',PAPER,'Light background'),('Snow',SNOW,'Text on dark, panels on light'),('Slate',SLATE,'Secondary text on light'),('Mist',MIST,'Secondary text on dark'),('Orange-red 700',ACC700,'Orange-red text on light')]
+core=[('Ink',INK,'Symbol, text and dark surfaces'),('Orange-red',ACC,'Middle bar on light'),('Light orange-red',ACCD,'Middle bar on dark'),('Paper',PAPER,'Light background'),('Snow',SNOW,'Text on dark, panels on light'),('Slate',SLATE,'Secondary text on light'),('Mist',MIST,'Secondary text on dark'),('Orange-red 700',ACC700,'Orange-red text on light')]
 b.append(sec('3.1','Core palette',grid(4,[sw(*c) for c in core],24)))
 def scale(name,core_hex,steps):
     cells=''
@@ -188,11 +188,11 @@ for n,f,bg,need in pairs:
            f'<div style="width:36px;height:36px;border-radius:8px;background:{bg};border:1px solid {LINE};display:flex;align-items:center;justify-content:center;color:{f};font-weight:700">Aa</div>'
            f'<div style="font-weight:600">{n}</div><div style="{MONO};font-size:14px;color:{SLATE}">{f} on {bg}</div><div>{r:.2f}:1</div><div style="color:{SLATE}">needs {need}:1</div><div style="color:{col};font-weight:700">{ok}</div></div>')
 b.append(sec('3.4','Contrast pairs',f'<div style="display:flex;flex-direction:column">{rows}</div>',
-  f'Ratios are computed from the hex values (WCAG 2.x). Orange-red on white is {ratio(ACC,PAPER):.2f}:1, under the 4.5:1 text bar: use it for the middle bars of the symbol, rules and large graphics, and use step 700 for any orange-red text on light. White text on orange-red also fails, so labels on orange-red are ink.'))
+  f'Ratios are computed from the hex values (WCAG 2.x). Orange-red on white is {ratio(ACC,PAPER):.2f}:1, under the 4.5:1 text bar: use it for the middle bar of the symbol, rules and large graphics, and use step 700 for any orange-red text on light. White text on orange-red also fails, so labels on orange-red are ink.'))
 def seg(pct,col,lab,tc):
     return f'<div style="flex:{pct};background:{col};color:{tc};padding:14px;{MONO};font-size:13px;display:flex;align-items:flex-end;min-height:120px">{lab}</div>'
 b.append(sec('3.5','Proportion',f'<div style="display:flex;border-radius:16px;overflow:hidden;border:1px solid {LINE}">{seg(70,PAPER,"Paper and snow 70%",INK)}{seg(25,INK,"Ink 25%",SNOW)}{seg(5,ACC,"5%",INK)}</div>',
-  'Mostly paper and ink. Orange-red is about 5%: the two middle bars of the symbol, one rule, one link. If it fills a section it has stopped being the turn in the stair and become the background.'))
+  'Mostly paper and ink. Orange-red is about 5%: the middle bar of the symbol, one rule, one link. If it fills a section it has stopped being the turn in the Z and become the background.'))
 boards['Brand3Colour']=('3 · Colour','Colour',b)
 
 # ===== 4 Typography =====
@@ -250,7 +250,7 @@ def bars_big(h):  # large cropped stair
 gl=[light(f'<div style="position:absolute;right:-50px;bottom:-60px">{mk(380,INK,ACC)}</div>',340),
     light(f'<svg width="260" height="100" viewBox="0 0 52 20" role="img" aria-label="Single switch" style="--ink:{INK};--acc:{ACC}"><rect x="2" y="2" width="48" height="16" rx="8" fill="{INK}"/><circle cx="42" cy="10" r="5.4" fill="{TILE}"/><circle cx="42" cy="10" r="5.4" fill="{TILE}"/></svg>',340),
     light('<div style="display:flex;flex-direction:column;gap:10px;align-items:flex-start">'+''.join(f'<div style="width:{w}px;height:30px;border-radius:15px;background:{c}"></div>' for w,c in ((220,INK),(160,ACC),(260,INK),(120,INK),(190,ACC)))+'</div>',340)]
-b.append(sec('6.1','Graphic language',grid(3,gl,24)+grid(3,[cap('<b style="color:'+INK+'">Stair.</b> The symbol, large and cropped by the edge of the layout.'),cap('<b style="color:'+INK+'">Switch.</b> One pill with a knob, on its own, as a divider or a button shape.'),cap('<b style="color:'+INK+'">Rows.</b> Pills of different lengths, like a settings list. Orange-red on one or two rows only.')],24),
+b.append(sec('6.1','Graphic language',grid(3,gl,24)+grid(3,[cap('<b style="color:'+INK+'">Stack.</b> The symbol, large and cropped by the edge of the layout.'),cap('<b style="color:'+INK+'">Switch.</b> One pill with a knob, on its own, as a divider or a button shape.'),cap('<b style="color:'+INK+'">Rows.</b> Pills of different lengths, like a settings list. Orange-red on one or two rows only.')],24),
   'Three constructions taken from the symbol. Use one per layout, big and cropped, with the orange-red on the first element only. Never tile them across a page.'))
 def pill(x,y,w,t,fill,fc,stroke=''):
     return f'<rect x="{x}" y="{y}" width="{w}" height="44" rx="22" fill="{fill}" {stroke}/><text x="{x+w/2}" y="{y+28}" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="16" fill="{fc}">{t}</text>'
@@ -275,7 +275,7 @@ icons=[icon(f'<rect x="5" y="15" width="38" height="18" rx="9" stroke="{INK}" {I
        icon(f'<circle cx="24" cy="24" r="17" stroke="{INK}" {IC}/><path d="M16 25 L22 31 L33 18" stroke="{ACC}" {IC}/>','Valid'),
        icon(f'<circle cx="16" cy="24" r="8" stroke="{INK}" {IC}/><path d="M24 24 H42 M36 24 V31" stroke="{ACC}" {IC}/>','Key')]
 b.append(sec('6.4','Icons',f'<div style="display:grid;grid-template-columns:repeat(6,1fr);gap:24px">{"".join(icons)}</div>','Line icons on a 48 px grid, a 3 px stroke with round caps. Ink strokes with one orange-red stroke per icon, on the part that changes or arrives.'))
-b.append(sec('6.5','Rules',grid(3,[cap('<b style="color:'+INK+'">One accent per picture.</b> Orange-red marks one thing: the turn of the stair, the arriving value, the key part of an icon.'),cap('<b style="color:'+INK+'">Round ends.</b> Strokes and bars end in a full radius, like the pills in the symbol. Square ends only in code and tables.'),cap('<b style="color:'+INK+'">Real content.</b> Show real setting names and values, not lorem ipsum, and keep example values obviously fake (port 8080, localhost).')],32)))
+b.append(sec('6.5','Rules',grid(3,[cap('<b style="color:'+INK+'">One accent per picture.</b> Orange-red marks one thing: the middle bar of the Z, the arriving value, the key part of an icon.'),cap('<b style="color:'+INK+'">Round ends.</b> Strokes and bars end in a full radius, like the pills in the symbol. Square ends only in code and tables.'),cap('<b style="color:'+INK+'">Real content.</b> Show real setting names and values, not lorem ipsum, and keep example values obviously fake (port 8080, localhost).')],32)))
 boards['Brand6Imagery']=('6 · Visual and imagery style','Visual and imagery style',b)
 
 # ===== 7 Hero =====
@@ -301,7 +301,7 @@ def readme(dark_):
     return f'<div style="width:660px;height:165px;overflow:hidden;position:relative;flex:none"><div style="width:1200px;height:300px;transform:scale(0.55);transform-origin:0 0">{inner}</div></div>'
 b=[]
 b.append(header('07','Hero banner','The first thing on the page',
-  'The hero leads with the logo and the tagline and keeps orange-red to the two middle bars of the symbol. The symbol appears twice: once large and cropped as a ghost, once as the sharp focal point on a tile.'))
+  'The hero leads with the logo and the tagline and keeps orange-red to the middle bar of the symbol. The symbol appears twice: once large and cropped as a ghost, once as the sharp focal point on a tile.'))
 b.append(sec('7.1','Website hero · 1352 × 440',
   f'<div style="display:flex;flex-direction:column;gap:32px">{kicker("Light mode")}{hero(False)}{kicker("Dark mode")}{hero(True)}</div>',
   'Light and dark share one layout. The primary button flips between ink and snow, so the label always has full contrast. Orange-red never fills a button. Headline and subline are placeholder copy.'))
