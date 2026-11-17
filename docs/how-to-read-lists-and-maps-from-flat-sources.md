@@ -31,7 +31,7 @@ def load[A](config: Config[A], provider: ConfigProvider): Either[Config.Error, A
   }
 ```
 
-`Config#mapKey` turns the field names into upper snake case: `allowedOrigins` is read from `ALLOWED_ORIGINS`. Each step below uses `ConfigProvider.fromMap` with the same delimiters as `ConfigProvider.envProvider` (`_` between path segments), so that the example runs anywhere. With the real environment, use `ConfigProvider.envProvider` with the same variables.
+`Config#mapKey` turns the field names into upper snake case: `allowedOrigins` is read from `ALLOWED_ORIGINS`. Each step below uses `ConfigProvider.fromMap` with the same delimiters as `ConfigProvider.envProvider` (`_` between path segments), so that the example runs anywhere. With the real environment, use `ConfigProvider.envProvider` with the same variables; it upper-cases the keys it looks up, so the upper-case description is not strictly needed there.
 
 ## Step 1: Read a List of Strings From One Variable
 
@@ -87,7 +87,7 @@ Every variable under `LIMITS` becomes a map entry:
 load(Config.table("LIMITS", Config.int), limits)
 ```
 
-The map keys keep their case. Because `_` separates path segments, a map key can't contain `_`.
+A map provider keeps the case of the map keys. The environment provider upper-cases every name it reads, so with real environment variables the keys arrive as `FREE` and `PRO`. Because `_` separates path segments, a map key can't contain `_`.
 
 ## Step 4: Put It Together
 
@@ -114,6 +114,6 @@ load(gateway, environment)
 
 ## Notes
 
-- A comma inside a single value always splits it with the default `seqDelim`. If a value can contain commas, choose another delimiter.
+- A comma inside a value splits it only when the key is read as a list. If a list value can contain commas, choose another delimiter with `seqDelim`.
 - Structured formats such as HOCON, YAML and TOML have real lists and don't need these conventions. Their providers don't split on commas unless you pass `enableCommaSeparatedValueAsList = true`. See [Config providers](./read-from-various-sources.md#lists-and-comma-separated-values).
 - [ZIO core providers](./zio-core-providers.md) describes the environment provider and its delimiters.

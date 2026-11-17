@@ -96,6 +96,6 @@ The environment variable wins because it is the first source. Other keys still c
 
 ## Notes
 
-- The environment provider reads the key names as they are, so the key `PORT` matches the variable `PORT`. It joins the segments of a nested key with `_`: a description with `Config#nested("db")` reads `db_url`, not `DB_URL`. For nested keys, use `ConfigProvider.envProvider.upperCase` together with upper- or snake-case keys; see [ZIO core providers](./zio-core-providers.md#environment-variables).
+- The environment provider joins the segments of a key with `_` and upper-cases the result, so the key `PORT` matches the variable `PORT`, and a description with `Config#nested("db")` reads `DB_URL`. See [ZIO core providers](./zio-core-providers.md#environment-variables).
 - Keep the files free of secrets. See [How to read secrets](./how-to-read-secrets.md).
 - For the layering rules, see [Config providers](./read-from-various-sources.md).

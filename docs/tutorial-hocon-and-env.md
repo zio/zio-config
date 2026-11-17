@@ -1,10 +1,11 @@
 ---
 id: tutorial-hocon-and-env
 title: "Tutorial: Configure an App from HOCON and Environment Variables"
+description: "Learn to layer a HOCON defaults file under environment variables and to test the result without the environment."
 sidebar_label: "Tutorial"
 ---
 
-In this tutorial you build the configuration for a small web service. Its defaults live in a HOCON file in the repository. Anything set in an environment variable overrides the file. This is the pattern most services use: defaults in version control, and per-machine values from the environment.
+Welcome! This tutorial is for Scala developers who have loaded a first configuration with ZIO Config, for example by following [Getting Started](./getting-started.md). We build the configuration for a small web service. Its defaults live in a HOCON file in the repository, and anything set in an environment variable overrides the file. This is the pattern most services use: defaults in version control, and per-machine values from the environment.
 
 You need Scala 2.13 or Scala 3, sbt, and these dependencies:
 
@@ -15,6 +16,14 @@ libraryDependencies ++= Seq(
   "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
 )
 ```
+
+## Learning Objectives
+
+By the end of this tutorial, you will understand:
+
+- How to derive a configuration description from a case class and adjust its key names
+- How to layer a HOCON defaults file under environment variables
+- How to replace the environment in tests
 
 ## Step 1: Describe the Settings
 
@@ -73,13 +82,13 @@ val environment: ConfigProvider = ConfigProvider.envProvider
 
 ## Step 5: Layer the Two Sources
 
-`orElse` tries the first provider for each key, and falls back to the second one when a key is missing. Put the environment first, so its values win, and the defaults second:
+`ConfigProvider#orElse` tries the first provider for each key, and falls back to the second one when the first can't supply the key. Put the environment first, so its values win, and the defaults second:
 
 ```scala mdoc:silent
 val layered: ConfigProvider = environment.orElse(defaults)
 ```
 
-With `layered`, a key set in the environment is read from there. Any other key comes from the HOCON defaults. You can see this with the `PORT` key in the last step.
+With `layered`, a key set in the environment is read from there. Any other key comes from the HOCON defaults. You can see this with the `PORT` key in Step 6.
 
 ## Step 6: Load and Run
 
@@ -132,14 +141,14 @@ val testLoaded: IO[Config.Error, Service] = testSource.load(serviceDescription)
 
 `testLoaded` reads `PORT` as 9999 and everything else from the defaults. See [How to test config](./how-to-test-config.md) for a full test setup.
 
-## What You Built
+## What You've Learned
 
 - A case class that states the settings.
 - One description derived from it, with the key names adjusted.
 - A defaults file and an environment provider, layered so the environment wins.
-- A program that loads the layered config and reports a clear error when a value is wrong.
+- A program that loads the layered config and fails with a `Config.Error` when a required value is missing or invalid.
 
-## Next Steps
+## Where to Go Next
 
 - [How to read secrets](./how-to-read-secrets.md) covers values that must not appear in a file.
 - [How to override settings per environment](./how-to-override-per-environment.md) shows how to use one file per deployment.

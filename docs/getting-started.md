@@ -4,7 +4,7 @@ title: "Getting Started"
 sidebar_label: "Getting Started"
 ---
 
-This page takes you from an empty sbt project to a running program that reads its settings from a HOCON file. You will add three dependencies, describe a configuration with a case class, load it, and run it.
+This page takes you from an empty sbt project to a running program that reads its settings from a HOCON file. You add three dependencies, describe a configuration with a case class, load it, and run it.
 
 ## Terms Used on This Page
 
@@ -65,7 +65,7 @@ val provider: ConfigProvider = ConfigProvider.fromHoconString(settings)
 val loaded: IO[Config.Error, AppConfig] = provider.load(appConfigDescription)
 ```
 
-`provider.load(...)` returns a `ZIO`. Nothing is read until that effect runs. If a key is missing or has the wrong type, the effect fails with a `Config.Error`. See [Errors](./errors.md).
+`ConfigProvider#load` returns a `ZIO`. Nothing is read until that effect runs. If a key is missing or has the wrong type, the effect fails with a `Config.Error`. See [Errors](./errors.md).
 
 ## 4. Run It
 
@@ -101,5 +101,5 @@ Running `Main` prints `Starting on localhost:8080`.
 - [Config descriptors](./config-descriptors.md) explains the building blocks: `string`, `int`, `zip`, `nested`, `optional`, `withDefault`.
 - [Derivation](./automatic-derivation-of-config.md) explains how names are mapped to keys and how to rename them.
 - [Config providers](./read-from-various-sources.md) lists every source.
-- [Tutorial: Configure an app from HOCON and environment variables](./tutorial-hocon-and-env.md) builds a realistic setup step by step.
+- [Tutorial: Configure an App from HOCON and Environment Variables](./tutorial-hocon-and-env.md) builds a realistic setup step by step.
 - [ZIO core providers](./zio-core-providers.md) shows how to set the provider once and read config anywhere with `ZIO.config`.

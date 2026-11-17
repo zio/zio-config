@@ -29,16 +29,16 @@ object HttpConfig {
 
 ## Step 2: Build the Provider in `bootstrap`
 
-`Runtime.setConfigProvider` returns a layer that replaces the runtime's provider. Put it in the `bootstrap` of your `ZIOAppDefault`, so it is in place before `run` starts. Layer the sources with `ConfigProvider#orElse`, the one that wins first:
+`Runtime.setConfigProvider` returns a layer that replaces the runtime's provider. Put it in the `bootstrap` of your `ZIOAppDefault`, so it is in place before `run` starts. Layer the sources with `ConfigProvider#orElse`; the provider listed first wins:
 
 ```scala mdoc:silent
 object Providers {
   val application: ConfigProvider =
-    ConfigProvider.envProvider.upperCase.orElse(ConfigProvider.fromResourcePath())
+    ConfigProvider.envProvider.orElse(ConfigProvider.fromResourcePath())
 }
 ```
 
-`ConfigProvider#upperCase` makes the environment provider look up `HTTP_PORT` for the key `http.port`, so an exported `HTTP_PORT` overrides the file. The app sets it in `bootstrap` and reads with `ZIO.config`:
+The environment provider joins the path with `_` and upper-cases it, so it looks up `HTTP_PORT` for the key `http.port`, and an exported `HTTP_PORT` overrides the file. The app sets it in `bootstrap` and reads with `ZIO.config`:
 
 ```scala mdoc:compile-only
 object Main extends ZIOAppDefault {

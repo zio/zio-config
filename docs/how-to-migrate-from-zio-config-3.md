@@ -162,10 +162,8 @@ Errors are now `zio.Config.Error`. `ReadError.MissingValue` becomes `MissingData
 
 ## Check
 
-- The project compiles with no references to `ConfigDescriptor`, `ConfigSource`, `ReadError` or `ZConfig`.
-- A test loads each production file with the new descriptions and gets the same values as before.
+Check that the project compiles with no references to `ConfigDescriptor`, `ConfigSource`, `ReadError` or `ZConfig`, and that a test loading each production file with the new descriptions gets the same values as before.
 
 ## Related
 
-- [Config descriptors](./config-descriptors.md) lists every building block in 4.x.
-- [What's new since 4.0.6](./whats-new-since-4-0-6.md) lists changes within the 4.x series.
+See [Config descriptors](./config-descriptors.md) for every building block in 4.x, and [What's new since 4.0.6](./whats-new-since-4-0-6.md) for changes within the 4.x series.

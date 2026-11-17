@@ -53,7 +53,7 @@ val loadedFromFile: Task[Credentials] =
 
 ## Step 4: Use the Value at the Point of Need
 
-Call `Config.Secret.value` only where the password is passed to a client. Do not store it in a log message or a string:
+Call `Config.Secret#stringValue` only where the password is passed to a client. Do not store it in a log message or a string:
 
 ```scala mdoc:compile-only
 def openConnection(user: String, password: String): Task[Unit] = ZIO.unit
@@ -64,14 +64,12 @@ val connect: IO[Config.Error, Task[Unit]] =
     .map(c => openConnection(c.user, c.password.stringValue))
 ```
 
-`Config.Secret` is designed not to show its value when it is printed, so logging a `Credentials` value does not leak the password. The value is available through `Config.Secret#stringValue`, which returns a `String`, and `Config.Secret#value`, which returns a `Chunk[Char]`. Call them only where the value is passed on, and do not keep the result in a log line.
+The value is available through `Config.Secret#stringValue`, which returns a `String`, and `Config.Secret#value`, which returns a `Chunk[Char]`.
 
 ## Checks
 
-- The file containing the secret is not committed. Check `.gitignore` for it.
-- Errors from a missing secret name the key, not the value. See [Errors](./errors.md).
+Check that the file containing the secret is not committed (look in `.gitignore`), and that errors from a missing secret name the key, not the value; see [Errors](./errors.md).
 
 ## Related
 
-- [Config providers](./read-from-various-sources.md) lists each source.
-- [Tutorial: Configure an app from HOCON and environment variables](./tutorial-hocon-and-env.md) layers secrets and defaults.
+See [Config providers](./read-from-various-sources.md) for each source, and [Tutorial: Configure an App from HOCON and Environment Variables](./tutorial-hocon-and-env.md) for layering secrets and defaults.

@@ -31,6 +31,8 @@ val serviceDescription: Config[Service] =
 
 ## Step 2: Check the Happy Path
 
+Load a complete map and compare the result with the expected value:
+
 ```scala mdoc:compile-only
 val complete: ConfigProvider =
   ConfigProvider.fromMap(Map("HOST" -> "localhost", "PORT" -> "8080", "TIMEOUT" -> "5"))
@@ -41,6 +43,8 @@ val loadedComplete: IO[Config.Error, Service] = complete.load(serviceDescription
 
 ## Step 3: Check the Default
 
+Leave `TIMEOUT` out, and the description falls back to its default:
+
 ```scala mdoc:compile-only
 val withoutTimeout: ConfigProvider =
   ConfigProvider.fromMap(Map("HOST" -> "localhost", "PORT" -> "8080"))
@@ -50,6 +54,8 @@ val loadedDefault: IO[Config.Error, Service] = withoutTimeout.load(serviceDescri
 ```
 
 ## Step 4: Check the Failure
+
+Give `PORT` a value that is not a number, and the load fails:
 
 ```scala mdoc:compile-only
 val badPort: ConfigProvider =
@@ -69,5 +75,4 @@ In a ZIO Test spec, use `assertZIO(provider.load(desc))(...)` or `.exit` with an
 
 ## Related
 
-- [Config providers](./read-from-various-sources.md) lists the providers you can build from a map or a string.
-- [Errors](./errors.md) explains the error values to match on.
+See [Config providers](./read-from-various-sources.md) for the providers you can build from a map or a string, and [Errors](./errors.md) for the error values to match on.

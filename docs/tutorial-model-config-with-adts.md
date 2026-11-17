@@ -103,10 +103,7 @@ Not every setting must be in the file. ZIO Config gives us two ways to say so, b
 final case class Smtp2(host: String, port: Int = 25, username: Option[String])
 ```
 
-The code above changes our mail settings in two ways:
-
-- `port: Int = 25` gives the port a default value.
-- `username: Option[String]` makes the user name optional.
+The code above changes our mail settings in two ways: `port: Int = 25` gives the port a default value, and `username: Option[String]` makes the user name optional.
 
 Now a document with only the host is enough:
 
@@ -124,10 +121,7 @@ Some settings repeat. A field of type `List[A]` reads a HOCON array, and a field
 final case class Routing(admins: List[String], quietHours: Map[String, Int])
 ```
 
-The code above models two kinds of repetition:
-
-- `admins` is a list of addresses that receive every alert.
-- `quietHours` maps a team name to the hour when its quiet time starts.
+The code above models two kinds of repetition: `admins` is a list of addresses that receive every alert, and `quietHours` maps a team name to the hour when its quiet time starts.
 
 The document uses an array and an object:
 
@@ -156,10 +150,7 @@ object Channel {
 final case class Alerts(channel: Channel)
 ```
 
-The code above defines three alternatives:
-
-- `Email` and `Slack` each carry their own settings.
-- `Disabled` carries no settings at all.
+The code above defines three alternatives: `Email` and `Slack` each carry their own settings, and `Disabled` carries no settings at all.
 
 By default, the file selects an alternative by its name. A case class alternative is an object named after the class, and a case object is just its name:
 

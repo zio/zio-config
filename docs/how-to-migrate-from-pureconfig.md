@@ -145,10 +145,8 @@ The main pureconfig concepts map to these ZIO Config ones:
 
 ## Check
 
-- Load the same file with both libraries in a test and compare the results before you remove pureconfig.
-- Remove the pureconfig dependency only after those tests pass.
+Load the same file with both libraries in a test and compare the results, and remove the pureconfig dependency only after those tests pass.
 
 ## Related
 
-- [Derivation](./automatic-derivation-of-config.md) covers annotations and sealed traits.
-- [HOCON and JSON](./hocon-provider.md) lists every HOCON constructor.
+See [Derivation](./automatic-derivation-of-config.md) for annotations and sealed traits, and [HOCON and JSON](./hocon-provider.md) for every HOCON constructor.

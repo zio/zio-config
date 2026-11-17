@@ -97,7 +97,7 @@ object GreetingApp extends ZIOAppDefault {
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.setConfigProvider(
-      ConfigProvider.envProvider.upperCase.orElse(ConfigProvider.fromHoconString(settings))
+      ConfigProvider.envProvider.orElse(ConfigProvider.fromHoconString(settings))
     )
 
   def run =
@@ -108,8 +108,8 @@ object GreetingApp extends ZIOAppDefault {
 The code above sets the source for the whole program:
 
 - `bootstrap` runs before `run`, so the provider is in place when `readServer` runs.
-- `ConfigProvider.envProvider.upperCase` reads `SERVER_PORT` for the key `server.port`.
-- `orElse` falls back to the HOCON text for every key the environment doesn't set.
+- `ConfigProvider.envProvider` joins the path with `_` and upper-cases it, so it reads `SERVER_PORT` for the key `server.port`.
+- `ConfigProvider#orElse` falls back to the HOCON text for every key the environment doesn't supply.
 
 Running the app prints `Listening on 0.0.0.0:8080`; running it with `SERVER_PORT=9090` prints port 9090. In a real project, the HOCON text lives in `application.conf`, and `ConfigProvider.fromResourcePath()` reads it.
 
@@ -186,7 +186,7 @@ object GreetingService extends ZIOAppDefault {
 
   override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
     Runtime.setConfigProvider(
-      ConfigProvider.envProvider.upperCase.orElse(ConfigProvider.fromResourcePath())
+      ConfigProvider.envProvider.orElse(ConfigProvider.fromResourcePath())
     )
 
   def run =
