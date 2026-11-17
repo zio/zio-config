@@ -41,7 +41,7 @@ const sidebars = {
     {
       type: "category",
       label: "Tutorials",
-      collapsed: false,
+      collapsed: true,
       items: [
         "tutorial-model-config-with-adts",
         "tutorial-config-in-a-zio-app",
@@ -51,7 +51,7 @@ const sidebars = {
     {
       type: "category",
       label: "How-to Guides",
-      collapsed: false,
+      collapsed: true,
       items: [
         "how-to-set-the-config-provider",
         "how-to-override-per-environment",
