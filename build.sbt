@@ -586,7 +586,14 @@ lazy val docs = project
     zioConfigMagnoliaJVM,
     zioConfigTomlJVM,
     zioConfigXmlJVM,
-    zioConfigAwsJVM
+    zioConfigAwsJVM,
+    // Integration modules, so the examples on the Integrations page compile with mdoc.
+    // zioConfigZioAwsJVM is left out on purpose: it defines the same package and object
+    // names as zioConfigAwsJVM, so the two cannot share one classpath.
+    zioConfigCatsJVM,
+    zioConfigScalazJVM,
+    zioConfigEnumeratumJVM,
+    zioConfigPureconfigJVM
   )
   .enablePlugins(WebsitePlugin)
 
