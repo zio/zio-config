@@ -35,7 +35,6 @@ const sidebars = {
         "automatic-validations",
         "documentation-and-reporting",
         "errors",
-        "whats-new-since-4-0-6",
         "resources"
       ]
     },
@@ -66,7 +65,8 @@ const sidebars = {
         "how-to-migrate-from-pureconfig",
         "how-to-migrate-from-zio-config-3"
       ]
-    }
+    },
+    "whats-new-since-4-0-6"
   ]
 };
 
