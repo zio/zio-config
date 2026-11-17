@@ -24,7 +24,7 @@ libraryDependencies += "dev.zio" %% "zio-config-yaml" % "@VERSION@"
 | `ConfigProvider.fromYamlReader(reader)`             | A `java.io.Reader`, for example a classpath resource                  |
 | `ConfigProvider.fromYamlRepr(repr)(loadYaml)`       | Any value, turned into parsed YAML by your `loadYaml` function        |
 
-Each constructor parses its input when it is called, and throws if the input is missing or malformed. `fromYamlString`, `fromYamlFile`, `fromYamlPath` and `fromYamlReader` have `...ZIO` variants, such as `ConfigProvider.fromYamlFileZIO`, that return a `Task[ConfigProvider]` and fail the task instead. Every constructor also takes `enableCommaSeparatedValueAsList` (default `false`), which splits string values on commas when they are read as lists.
+Each constructor parses its input when it is called, and throws if the input is missing or malformed. `fromYamlString`, `fromYamlFile`, `fromYamlPath` and `fromYamlReader` have `...ZIO` variants, such as `ConfigProvider.fromYamlFileZIO`, that return a `Task[ConfigProvider]` and fail the task instead. `ConfigProvider.fromYamlReader` reads from any `java.io.Reader`, for example one opened on a classpath resource; close the reader yourself when the provider is built. Every constructor also takes `enableCommaSeparatedValueAsList` (default `false`), which splits string values on commas when they are read as lists.
 
 The examples on this page share these definitions and a helper, `fromYaml`, which loads a description from a YAML string:
 
@@ -122,19 +122,6 @@ Running the task fails, and the error message is the text after `?`:
 Unsafe.unsafe { implicit unsafe =>
   Runtime.default.unsafe.run(needsPassword.either.map(_.left.map(_.getMessage))).getOrThrow()
 }
-```
-
-## Reading From the Classpath
-
-`ConfigProvider.fromYamlReader` reads any `java.io.Reader`. To read a resource, open it as a reader and close it afterwards, for example with `ZIO.acquireReleaseWith`:
-
-```scala mdoc:compile-only
-import java.io.{InputStreamReader, Reader}
-
-val fromResource: Task[ConfigProvider] =
-  ZIO.acquireReleaseWith(
-    ZIO.attempt(new InputStreamReader(getClass.getResourceAsStream("/application.yaml")): Reader)
-  )(reader => ZIO.succeed(reader.close()))(reader => ConfigProvider.fromYamlReaderZIO(reader))
 ```
 
 ## Bringing Your Own Parser

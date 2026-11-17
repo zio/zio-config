@@ -8,46 +8,14 @@ ZIO itself ships the `ConfigProvider` type and several providers: environment va
 
 ## Reading Config With ZIO.config
 
-`ZIO.config(description)` loads a description from the provider that the ZIO runtime holds. By default that provider is `ConfigProvider.defaultProvider`, which reads environment variables first and system properties second. To use another source for the whole program, set it once with `Runtime.setConfigProvider` in the `bootstrap` layer of your `ZIOAppDefault`:
+`ZIO.config(description)` returns a `ZIO[Any, Config.Error, A]` that loads the description from the provider the ZIO runtime holds. When the description is available as an implicit `Config[A]`, the short form `ZIO.config[A]` finds it. Two functions change which provider that is:
 
-```scala mdoc:compile-only
-import zio._
-import zio.config._
-import zio.config.magnolia.deriveConfig
-import zio.config.typesafe._
+| Function                                     | Effect                                                                                  |
+| -------------------------------------------- | --------------------------------------------------------------------------------------- |
+| `Runtime.setConfigProvider(provider)`        | A `ZLayer` that replaces the runtime's provider; put it in `ZIOAppDefault#bootstrap`    |
+| `ZIO.withConfigProvider(provider)(effect)`   | Runs one effect with another provider                                                   |
 
-final case class AppConfig(host: String, port: Int)
-
-object Main extends ZIOAppDefault {
-
-  override val bootstrap: ZLayer[ZIOAppArgs, Any, Any] =
-    Runtime.setConfigProvider(ConfigProvider.fromResourcePath())
-
-  def run =
-    for {
-      config <- ZIO.config(deriveConfig[AppConfig])
-      _      <- Console.printLine(s"Starting on ${config.host}:${config.port}")
-    } yield ()
-}
-```
-
-`ZIO.config` returns a `ZIO[Any, Config.Error, A]`. When the description is available as an implicit `Config[A]`, the short form `ZIO.config[AppConfig]` finds it.
-
-A common pattern turns a description into a layer, so that services receive their settings through the environment:
-
-```scala mdoc:compile-only
-import zio._
-import zio.config.magnolia.deriveConfig
-
-final case class DatabaseConfig(url: String, poolSize: Int)
-
-object DatabaseConfig {
-  val layer: ZLayer[Any, Config.Error, DatabaseConfig] =
-    ZLayer.fromZIO(ZIO.config(deriveConfig[DatabaseConfig].nested("database")))
-}
-```
-
-To run one effect with another provider, for example in a test, use `ZIO.withConfigProvider`:
+Without either, the provider is `ConfigProvider.defaultProvider`, which reads environment variables first and system properties second. To run one effect with a map as its source:
 
 ```scala mdoc:compile-only
 import zio._
@@ -56,7 +24,7 @@ val port: IO[Config.Error, Int] =
   ZIO.withConfigProvider(ConfigProvider.fromMap(Map("port" -> "9999")))(ZIO.config(Config.int("port")))
 ```
 
-`ConfigProvider#load` and `ZIO.config` read the same description the same way. Use `ConfigProvider#load` when you hold the provider yourself, and `ZIO.config` when the provider is set for the whole program.
+`ConfigProvider#load` and `ZIO.config` read a description the same way. Use `ConfigProvider#load` when you hold the provider yourself, and `ZIO.config` when the provider is set for the whole program. [How to set the config provider for a whole application](./how-to-set-the-config-provider.md) shows the full setup, with `bootstrap`, layers and tests.
 
 ## Built-in Providers
 

@@ -252,36 +252,9 @@ For any other key change, call `Config#mapKey` on the derived description, for e
 
 ## Custom Types
 
-Derivation needs a `DeriveConfig` instance for every field type. Built-in types such as `String`, `Int`, `Duration` and `List` have one; the [DeriveConfig reference](./derive-config.md) lists them all. For any other type, write an instance from an existing one:
+Derivation needs a `DeriveConfig` instance for every field type. Built-in types such as `String`, `Int`, `Duration` and `List` have one. For any other type, put an instance in the type's companion object, built from an existing instance with `DeriveConfig#map` or `DeriveConfig#mapOrFail`. On Scala 2, a value class such as `final case class Port(value: Int) extends AnyVal` needs no instance; on Scala 3 it does.
 
-```scala mdoc:silent
-import zio.config.magnolia.DeriveConfig
-
-final case class AwsRegion(value: String)
-
-object AwsRegion {
-  implicit val deriveAwsRegion: DeriveConfig[AwsRegion] =
-    DeriveConfig[String].mapOrFail { text =>
-      if (text.matches("[a-z]{2}-[a-z]+-\\d")) Right(AwsRegion(text))
-      else Left(Config.Error.InvalidData(message = s"not an AWS region: $text"))
-    }
-}
-
-final case class Deployment(region: AwsRegion, replicas: Int)
-```
-
-With the instance in the companion object, `region` is read as a plain string and checked:
-
-```scala mdoc
-fromHocon(deriveConfig[Deployment], """
-  region = "eu-west-1"
-  replicas = 3
-""")
-```
-
-Put the instance in the companion object of a type you own. For a type from another library, put it where `deriveConfig` is called, or in an object you import there.
-
-On Scala 2, a value class such as `final case class Port(value: Int) extends AnyVal` needs no instance: derivation reads it as its single field, directly under the parent key. On Scala 3, write an instance for it as above.
+The [DeriveConfig reference](./derive-config.md) lists the built-in instances and the methods for [writing an instance](./derive-config.md#writing-an-instance). [How to read a custom type](./how-to-read-a-custom-type.md) walks through a complete example.
 
 ## Scala 3
 

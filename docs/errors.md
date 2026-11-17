@@ -98,23 +98,9 @@ report(Config.int("TIMEOUT").withDefault(30), "TIMEOUT" -> "thirty")
 
 `Config.Error#isMissingDataOnly` is the check behind this rule. It is `true` when every problem inside the error is a `MissingData`.
 
-## Handling an Error
+## Matching on an Error
 
-`Config.Error` is an ordinary ZIO error. Handle it at startup with `ZIO#catchAll`, `ZIO#mapError` or `ZIO#tapError`, for example to log the pretty-printed report and exit:
-
-```scala mdoc:compile-only
-final case class Settings(host: String, port: Int)
-
-val settings: Config[Settings] = (Config.string("host") zip Config.int("port")).to[Settings]
-
-val load: IO[Config.Error, Settings] =
-  ConfigProvider.fromMap(Map("host" -> "localhost")).load(settings)
-
-val startup: Task[Settings] =
-  load.tapError(error => ZIO.logError(error.prettyPrint())).mapError(error => new RuntimeException(error.getMessage))
-```
-
-To branch on the kind of problem, match on the cases or use `Config.Error#fold`, which takes one function per case:
+`Config.Error` is an ordinary ZIO error, so `ZIO#catchAll`, `ZIO#mapError` and `ZIO#tapError` handle it. To branch on the kind of problem, match on the cases or use `Config.Error#fold`, which takes one function per case:
 
 ```scala mdoc:compile-only
 def describe(error: Config.Error): String =
@@ -134,3 +120,4 @@ def describe(error: Config.Error): String =
 - [Config descriptors](./config-descriptors.md) explains `Config#orElse`, `Config#withDefault` and `Config#validate`, which shape the errors.
 - [Validation](./automatic-validations.md) explains how a failed refined predicate appears.
 - [How to test config](./how-to-test-config.md) shows how to assert on an error in a test.
+- [Tutorial: Load Configuration in a ZIO Application](./tutorial-config-in-a-zio-app.md#4-failing-fast-with-a-clear-message) logs the pretty-printed error at startup.
