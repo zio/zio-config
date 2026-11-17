@@ -13,7 +13,7 @@ You need `DeriveConfig` directly in two cases: to give derivation an instance fo
 `DeriveConfig` is a case class that wraps a description. On Scala 2 it also records whether the type is a case object:
 
 ```scala
-final case class DeriveConfig[A](desc: Config[A], isObject: Boolean = false, constValue: Option[A] = None)
+final case class DeriveConfig[T](desc: Config[T], isObject: Boolean = false, constValue: Option[T] = None)
 ```
 
 On Scala 3 it carries metadata about names instead:
@@ -76,7 +76,7 @@ Derivation follows fixed rules for case classes and sealed traits:
 
 | Scala shape                               | Description produced                                                                      |
 | ----------------------------------------- | ----------------------------------------------------------------------------------------- |
-| Case class with fields                    | Every field read with `Config#nested(fieldName)` and combined; all fields are required     |
+| Case class with fields                    | Every field read with `Config#nested(fieldName)` and combined; a field is required unless its type is `Option` or it has a default value |
 | Field with a default value                | That field's description with `Config#withDefault(default)`                                |
 | Case object, or case class without fields | `Config.constant(name)`: the value at the current path must equal the name                |
 | Sealed trait                              | One alternative per subtype, joined with `Config#orElse`; subtypes with fields sit under `Config#nested(subtypeName)` |
@@ -154,20 +154,21 @@ Derivation uses Magnolia on Scala 2 and Scala 3 mirrors on Scala 3. The results 
 | Behaviour                                         | Scala 2                         | Scala 3                                             |
 | ------------------------------------------------- | ------------------------------- | --------------------------------------------------- |
 | Value class (`extends AnyVal`)                    | Derived and unwrapped           | Needs an instance                                   |
-| `@describe` on a case class or sealed trait       | Added to each field's description | Ignored; `@describe` on a field works             |
+| `@describe` on a case class                       | Added to each field's description | Ignored; `@describe` on a field works             |
 | Annotations re-exported from `zio.config.magnolia` | All                            | `describe`, `name`, `discriminator`, `kebabCaseLegacy` only; import the others from `zio.config.derivation` |
 | `derives Config` on a case class                  | Not available                   | Available                                           |
 | `ConfigProvider#autoLoad[A]`                      | Not available                   | Loads `A` with its derived description              |
 | A given `Config[A]` used as `DeriveConfig[A]`     | No                              | Yes                                                 |
 | Building an instance from a `Config[A]`           | `DeriveConfig(config)`          | `DeriveConfig.from(config)` or `DeriveConfig(config)` |
 
+`@describe` on a sealed trait is ignored on both versions.
+
 ## Limits
 
 - Recursive types are not supported.
 - Scala 3 `enum` types are not covered by tests; use a `sealed trait`.
-- Two subtypes with the same short name in one sealed trait are read as `Name_0` and `Name_1`.
+- On Scala 2, two subtypes with the same short name in one sealed trait are read as `Name_0` and `Name_1`; Scala 3 does not rename them. Rename one with `@name`.
 
 ## Next Steps
 
-- [Derivation](./automatic-derivation-of-config.md) shows derivation step by step, with the annotations.
-- [Config descriptors](./config-descriptors.md) lists the functions every derived description supports.
+[Derivation](./automatic-derivation-of-config.md) shows derivation step by step, with the annotations. The functions every derived description supports are listed in [Config descriptors](./config-descriptors.md).

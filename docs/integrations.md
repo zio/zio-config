@@ -80,7 +80,7 @@ The module has one function per kind of enumeratum enum:
 | `charEnum(e)`              | A `CharEnum[A]` entry by its value        |
 | `nonEmptyString`           | A `String`, failing when it is empty      |
 
-`enum` is a soft keyword in Scala 3, so write it with backticks.
+`enum` is a keyword in Scala 3, so write it with backticks.
 
 ## cats
 
@@ -221,5 +221,4 @@ To move a whole project from pureconfig, see [How to migrate from pureconfig](./
 
 ## Next Steps
 
-- [Validation](./automatic-validations.md) covers the refined integration.
-- [AWS Parameter Store](./aws-parameter-store.md) covers the AWS integration.
+[Validation](./automatic-validations.md) covers the refined integration, and [AWS Parameter Store](./aws-parameter-store.md) covers the AWS integration.

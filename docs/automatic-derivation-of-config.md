@@ -116,7 +116,7 @@ fromHocon(pageConfig, """greeting { Custom { text = "hi there" } }""")
 
 ### Reading the Subtype From a Field
 
-`@discriminator(keyName)` on the sealed trait reads the subtype's name from a key, and the case class fields sit next to it. The default key name is `type`. The value is the exact name of the subtype, such as `Sms`; pureconfig uses a similar layout but writes the names in kebab-case by default:
+`@discriminator(keyName)` on the sealed trait reads the subtype's name from a key, and the case class fields sit next to it. The default key name is `type`. The value is the exact name of the subtype, such as `Sms`:
 
 ```scala mdoc:silent
 import zio.config.derivation.discriminator
@@ -226,9 +226,9 @@ fromHocon(deriveConfig[KebabPerson], """
 """)
 ```
 
-`@kebabCaseLegacy` gives the kebab-case rules from before ZIO Config 4.0.5. The two rules give the same keys for most names: `firstName`, `myValue123` and `instantIdQAndA` become `first-name`, `my-value123` and `instant-id-qand-a` under both. They differ only where a digit is followed by an uppercase letter: `version2Name` becomes `version2-name` with `@kebabCase` and `version2name` with `@kebabCaseLegacy`. Use the legacy rule to keep keys such as `version2name` that were written for the older rules. It was added in 4.0.7.
+`@kebabCaseLegacy` gives the kebab-case rules from before ZIO Config 4.0.5. The two rules give the same keys for most names: `firstName`, `myValue123` and `instantIdQAndA` become `first-name`, `my-value123` and `instant-id-qand-a` under both. They differ only where a digit is followed by an uppercase letter: `version2Name` becomes `version2-name` with `@kebabCase` and `version2name` with `@kebabCaseLegacy`. Use the legacy rule to keep keys such as `version2name` that were written for the older rules. It is available since 4.0.7.
 
-`@prefix` and `@postfix` on a case class add text before or after each field name, and capitalize the field name to keep camelCase. They are applied before the key-case annotation, so `@prefix("db") @kebabCase` turns `poolSize` into `db-pool-size`:
+`@prefix` and `@postfix` on a case class add text before or after each field name. To keep camelCase, `@prefix` capitalizes the field name and `@postfix` capitalizes the added text. They are applied before the key-case annotation, so `@prefix("db") @kebabCase` turns `poolSize` into `db-pool-size`:
 
 ```scala mdoc:silent
 import zio.config.derivation.prefix
@@ -305,7 +305,7 @@ Scala 3 `enum` types are not covered by tests. Use a `sealed trait` with `case c
 
 - Every field needs a `DeriveConfig` instance, or derivation fails at compile time.
 - Recursive types are not supported. Write a recursive description by hand with `Config.defer`; see [Config descriptors](./config-descriptors.md).
-- Two subtypes with the same short name in one sealed trait are read as `Name_0` and `Name_1`. Rename one with `@name`.
+- On Scala 2, two subtypes with the same short name in one sealed trait are read as `Name_0` and `Name_1`. Scala 3 does not rename them. Rename one with `@name`.
 
 ## Next Steps
 

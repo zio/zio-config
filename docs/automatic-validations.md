@@ -137,5 +137,4 @@ Combine it with `Config#mapKey` if the keys need a different case, as in `derive
 
 ## Next Steps
 
-- [Errors](./errors.md) explains how a failed predicate is reported and pretty-printed.
-- [Derivation](./automatic-derivation-of-config.md) explains how fields are derived.
+[Errors](./errors.md) explains how a failed predicate is reported and pretty-printed. [Derivation](./automatic-derivation-of-config.md) explains how fields are derived.
