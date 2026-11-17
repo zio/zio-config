@@ -8,7 +8,7 @@ sidebar_label: "Introduction"
 
 @PROJECT_BADGES@
 
-## Key features
+## Key Features
 
 - **Many sources.** Read flat or nested settings from HOCON, JSON, YAML, TOML, XML, maps and more. See [Config providers](./read-from-various-sources.md).
 - **Automatic derivation.** Build a config description from a case class or sealed trait with one call. See [Derivation](./automatic-derivation-of-config.md).
@@ -17,14 +17,14 @@ sidebar_label: "Introduction"
 - **Error accumulation.** Report every problem in one go, not only the first. See [Errors](./errors.md).
 - **Integrations.** Works with enumeratum, cats, scalaz, pureconfig migration and AWS. See [Integrations](./integrations.md).
 
-## Where to start
+## Where to Start
 
 1. [Getting Started](./getting-started.md) adds the dependencies and loads a first config.
 2. [Config descriptors](./config-descriptors.md) explains the building blocks.
 3. The [Tutorial](./tutorial-hocon-and-env.md) builds a realistic app configuration.
 4. The [How-to Guides](./how-to-read-secrets.md) show how to solve specific tasks.
 
-## What's new
+## What's New
 
 If you upgrade from 4.0.6 or earlier, read [What's New Since 4.0.6](./whats-new-since-4-0-6.md) first.
 
