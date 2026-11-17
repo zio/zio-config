@@ -152,17 +152,7 @@ leafKeys(generateDocs(handWritten).toTable).foreach(println)
 
 ## Writing the Document to a File
 
-Write the rendered string to a file with any file API. A common setup is a small program, run in CI, that writes `docs/config.md` from the description and fails the build when the file changes:
-
-```scala mdoc:compile-only
-import java.nio.file.{Files, Paths}
-
-val write: Task[Unit] =
-  ZIO.attempt {
-    Files.writeString(Paths.get("config.md"), generateDocs(handWritten).toTable.toGithubFlavouredMarkdown)
-    ()
-  }
-```
+The rendered table is a plain `String`, so any file API can write it. To keep a committed copy up to date and check it in CI, follow [How to keep a configuration reference in sync with CI](./how-to-generate-config-docs-in-ci.md).
 
 ## Limits
 
@@ -172,3 +162,4 @@ val write: Task[Unit] =
 
 - [Derivation](./automatic-derivation-of-config.md) explains the `@describe` annotation.
 - [Config descriptors](./config-descriptors.md) explains `Config#??` and the other combinators.
+- [How to keep a configuration reference in sync with CI](./how-to-generate-config-docs-in-ci.md) writes the table to a file and checks it on every build.
