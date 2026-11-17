@@ -4,90 +4,186 @@ title: "Integrations"
 sidebar_label: "Integrations"
 ---
 
-zio-config works with several libraries you may already use. Each integration is a separate module, so you add only the ones you need. This page lists them and shows the most useful entry points.
+ZIO Config works with several libraries you may already use. Each integration is a separate module, so you add only the ones you need:
 
-| Library | Module | What it adds |
-| --- | --- | --- |
-| enumeratum | `zio-config-enumeratum` | Load enum values directly, without derivation |
-| cats | `zio-config-cats` | `Config` instances, and cats data types such as `Chain` and `NonEmptyList` |
-| scalaz | `zio-config-scalaz` | `Config` instances, and scalaz data types such as `IList` and `Maybe` |
-| pureconfig | `zio-config-pureconfig` | Use an existing pureconfig `ConfigReader` as a zio-config description |
-| refined | `zio-config-refined` | Refined-type validation. See [Validation](./automatic-validations.md). |
-| AWS | `zio-config-aws`, `zio-config-zio-aws` | Read AWS Parameter Store. See [AWS Parameter Store](./aws-parameter-store.md). |
+| Library                                              | Module                  | What it adds                                                                    |
+| ---------------------------------------------------- | ----------------------- | ------------------------------------------------------------------------------- |
+| [enumeratum](https://github.com/lloydmeta/enumeratum) | `zio-config-enumeratum` | Descriptions that read enumeratum enums by name or value                        |
+| [cats](https://typelevel.org/cats/)                  | `zio-config-cats`       | Descriptions for cats data types, and type class instances for `Config`         |
+| [scalaz](https://github.com/scalaz/scalaz)           | `zio-config-scalaz`     | Descriptions for scalaz data types, and an `Applicative[Config]`                |
+| [pureconfig](https://pureconfig.github.io)           | `zio-config-pureconfig` | Reuse a pureconfig `ConfigReader` for one value                                 |
+| [refined](https://github.com/fthomas/refined)        | `zio-config-refined`    | Refined-type validation. See [Validation](./automatic-validations.md).         |
+| AWS                                                  | `zio-config-aws`, `zio-config-zio-aws` | Read AWS Parameter Store. See [AWS Parameter Store](./aws-parameter-store.md). |
+
+Add the modules you need, with the same version as `zio-config`:
+
+```scala
+libraryDependencies ++= Seq(
+  "dev.zio" %% "zio-config-enumeratum" % "@VERSION@",
+  "dev.zio" %% "zio-config-cats"       % "@VERSION@",
+  "dev.zio" %% "zio-config-scalaz"     % "@VERSION@",
+  "dev.zio" %% "zio-config-pureconfig" % "@VERSION@"
+)
+```
+
+`import zio.config._` brings the packages `zio.config.cats`, `zio.config.scalaz`, `zio.config.enumeratum` and `zio.config.pureconfig` into scope, and they hide the libraries' own top-level packages of the same name. After that import, write the library imports with `_root_`, as in `import _root_.cats.data.NonEmptyList`, or put them in a file that does not import `zio.config._`.
+
+The examples on this page share these imports and a helper, `show`, which loads a description from a map:
+
+```scala mdoc:silent:reset-object
+import zio._
+import zio.config._
+
+def show[A](config: Config[A], entries: (String, String)*): Either[Config.Error, A] =
+  Unsafe.unsafe { implicit unsafe =>
+    Runtime.default.unsafe.run(ConfigProvider.fromMap(entries.toMap).load(config).either).getOrThrow()
+  }
+```
 
 ## enumeratum
 
-[enumeratum](https://github.com/lloydmeta/enumeratum) defines enums as sealed traits with a companion `Enum`. `zio.config.enumeratum.enum` reads one of its values by name, without deriving a description:
+enumeratum defines enums as sealed traits with a companion `Enum`. `zio.config.enumeratum.enum` reads one of its entries by name, without derivation:
 
-```scala
-import enumeratum.{Enum, EnumEntry}
-import zio._
-import zio.config._
+```scala mdoc:silent
+import _root_.enumeratum.{Enum, EnumEntry}
 import zio.config.enumeratum._
-import zio.config.typesafe._
 
-sealed trait Greeting extends EnumEntry
+sealed trait Color extends EnumEntry
 
-object Greeting extends Enum[Greeting] {
+object Color extends Enum[Color] {
   val values = findValues
 
-  case object Hello extends Greeting
-  case object Bye   extends Greeting
+  case object Red   extends Color
+  case object Green extends Color
 }
 
-val greeting: Config[Greeting] = `enum`(Greeting).nested("greeting")
-
-val loaded: IO[Config.Error, Greeting] =
-  ConfigProvider.fromMap(Map("greeting" -> "Hello")).load(greeting)
+val color: Config[Color] = `enum`(Color).nested("color")
 ```
 
-`loaded` succeeds with `Hello`. The module also has `intEnum`, `stringEnum`, `longEnum`, `shortEnum`, `byteEnum` and `charEnum` for the matching enumeratum types, and `nonEmptyString`.
+The name must match an entry; anything else fails with enumeratum's message:
+
+```scala mdoc
+show(color, "color" -> "Green")
+show(color, "color" -> "Blue")
+```
+
+The module has one function per kind of enumeratum enum:
+
+| Function                   | Reads                                     |
+| -------------------------- | ----------------------------------------- |
+| `` `enum`(e) ``            | An `Enum[A]` entry by its name            |
+| `stringEnum(e)`            | A `StringEnum[A]` entry by its value      |
+| `intEnum(e)`               | An `IntEnum[A]` entry by its value        |
+| `longEnum(e)`              | A `LongEnum[A]` entry by its value        |
+| `shortEnum(e)`             | A `ShortEnum[A]` entry by its value       |
+| `byteEnum(e)`              | A `ByteEnum[A]` entry by its value        |
+| `charEnum(e)`              | A `CharEnum[A]` entry by its value        |
+| `nonEmptyString`           | A `String`, failing when it is empty      |
+
+`enum` is a soft keyword in Scala 3, so write it with backticks.
 
 ## cats
 
-With `zio-config-cats`, `Config` gets an `Applicative` instance. Use it to combine descriptions with `Applicative` syntax:
+`zio-config-cats` reads cats data types. Each function takes a description for the element type, with or without the name of the key that holds the collection:
 
-```scala
-import cats.syntax.all._
-import zio.config._
-import zio.config.cats.instances._
+| Function            | Result type                     | Fails when             |
+| ------------------- | ------------------------------- | ---------------------- |
+| `chain`             | `Chain[A]`                      | Never; may be empty    |
+| `nonEmptyChain`     | `NonEmptyChain[A]`              | The list is empty      |
+| `nonEmptyList`      | `NonEmptyList[A]`               | The list is empty      |
+| `nonEmptyMap`       | `NonEmptyMap[String, A]`        | The table is empty     |
 
-val sum: Config[Int] =
-  (Config.int("MARKS_1"), Config.int("MARKS_2")).mapN(_ + _)
-```
+To read a non-empty list of servers from indexed keys:
 
-The module also reads cats data types. `chain`, `nonEmptyChain`, `nonEmptyList` and `nonEmptyMap` each take a description for the element type:
-
-```scala
-import cats.data.NonEmptyList
+```scala mdoc:silent
+import _root_.cats.data.NonEmptyList
 import zio.config.cats._
 
-val servers: Config[NonEmptyList[String]] =
-  nonEmptyList("servers")(Config.string)
+val servers: Config[NonEmptyList[String]] = nonEmptyList("servers")(Config.string)
 ```
 
-The prefix argument is the key that holds the list, as with `Config.listOf`.
+At least one element is required:
+
+```scala mdoc
+show(servers, "servers[0]" -> "a.internal", "servers[1]" -> "b.internal")
+```
+
+`zio.config.cats.instances._` adds type class instances:
+
+| Instance                    | Gives you                                                            |
+| --------------------------- | -------------------------------------------------------------------- |
+| `Functor[Config]`           | `map` through cats syntax and `Functor` APIs                         |
+| `SemigroupK[Config]`        | `<+>`, which is `Config#orElse`                                      |
+| `Semigroup[ConfigProvider]` | `\|+\|`, which is `ConfigProvider#orElse`                            |
+| `Eq[Config.Error]`          | `===` on errors                                                      |
+
+To fall back to a second key with `<+>`:
+
+```scala mdoc:silent
+import _root_.cats.syntax.all._
+import zio.config.cats.instances._
+
+val url: Config[String] = Config.string("DATABASE_URL") <+> Config.string("DB_URL")
+```
+
+When only the second key is set, its value is used:
+
+```scala mdoc
+show(url, "DB_URL" -> "postgres://localhost/app")
+```
+
+:::note
+The instance behind `Functor[Config]` is an `Applicative`, but it is declared with the type `Functor`, so cats can't find an `Applicative` or `Semigroupal` for `Config`, and syntax such as `mapN` or `tupled` doesn't compile. Combine descriptions with `Config#zip` instead.
+:::
 
 ## scalaz
 
-`zio-config-scalaz` provides the same kind of instances for scalaz. It also reads scalaz types:
+`zio-config-scalaz` reads scalaz data types:
 
-```scala
-import scalaz.Maybe
-import zio.config._
+| Function       | Takes                                    | Result type     |
+| -------------- | ---------------------------------------- | --------------- |
+| `maybe`        | A `Config[A]`                            | `Maybe[A]`, `Empty` when the key is missing |
+| `iList`        | A `Config[A]` for one element            | `IList[A]`      |
+| `iSet`         | A `Config[A]` for one element, with an `Order[A]` | `ISet[A]` |
+| `mapz`         | A `Config[Map[A, B]]`, with an `Order[A]` | `A ==>> B`     |
+
+`iList` and `iSet` read a list like `Config.listOf` without a key, so add the key with `Config#nested`. `mapz` converts an existing map description, such as one from `Config.table`:
+
+```scala mdoc:silent
+import _root_.scalaz.{IList, Maybe}
 import zio.config.scalaz._
 
-val age: Config[Maybe[Int]] = maybe(Config.int("AGE"))
+val tags: Config[IList[String]] = iList(Config.string).nested("tags")
 ```
 
-`maybe` reads an optional value into `scalaz.Maybe`, and `iList`, `iSet` and `mapz` read `IList`, `ISet` and `==>>` values.
+`maybe(Config.int("AGE"))` gives `Empty` when `AGE` is missing, and the tags are read from indexed keys:
+
+```scala mdoc
+show(maybe(Config.int("AGE")): Config[Maybe[Int]])
+show(tags, "tags[0]" -> "blue", "tags[1]" -> "green")
+```
+
+`zio.config.scalaz.instances._` adds an `Applicative[Config]`, so the scalaz `Apply` functions combine descriptions:
+
+```scala mdoc:silent
+import _root_.scalaz.Applicative
+import zio.config.scalaz.instances._
+
+val total: Config[Int] = Applicative[Config].apply2(Config.int("A"), Config.int("B"))(_ + _)
+```
+
+Both keys are read and combined:
+
+```scala mdoc
+show(total, "A" -> "1", "B" -> "2")
+```
 
 ## pureconfig
 
-If your application already uses [pureconfig](https://github.com/pureconfig/pureconfig), you can reuse its `ConfigReader` instances while you move to zio-config. `fromPureconfig` turns a reader into a zio-config description:
+`fromPureconfig[A]` turns a pureconfig `ConfigReader[A]` into a `Config[A]`. It reads **one string value** at the current path, parses it as HOCON, and gives the result to the reader. It does not read a group of keys from the provider. Use it to reuse readers for single values while you move to ZIO Config:
 
-```scala
-import pureconfig.ConfigReader
+```scala mdoc:silent
+import _root_.pureconfig.ConfigReader
 import zio.config.pureconfig._
 
 final case class Port(value: Int)
@@ -96,22 +192,34 @@ object Port {
   implicit val reader: ConfigReader[Port] = ConfigReader[Int].map(Port(_))
 }
 
-val port = fromPureconfig[Port]
+val port: Config[Port] = fromPureconfig[Port].nested("port")
 ```
 
-The step-by-step migration is in [How to migrate from pureconfig](./how-to-migrate-from-pureconfig.md).
+The value `8080` is parsed and passed to the reader:
 
-## Modules to add
-
-The examples above use these artifacts. Add the ones you need, with the same version as `zio-config`:
-
-```scala
-libraryDependencies ++= Seq(
-  "dev.zio" %% "zio-config-enumeratum" % "<version>",
-  "dev.zio" %% "zio-config-cats"       % "<version>",
-  "dev.zio" %% "zio-config-scalaz"     % "<version>",
-  "dev.zio" %% "zio-config-pureconfig" % "<version>"
-)
+```scala mdoc
+show(port, "port" -> "8080")
 ```
 
-The examples on this page are not compiled by the documentation build. Their imports and signatures match the source, and a compile check is a follow-up item.
+A reader for a case class works only when the whole object is one string value, for example an environment variable that holds a HOCON object:
+
+```scala mdoc:silent
+final case class Endpoint(host: String, port: Int)
+
+object Endpoint {
+  implicit val reader: ConfigReader[Endpoint] = ConfigReader.forProduct2("host", "port")(Endpoint(_, _))
+}
+```
+
+The value of `ENDPOINT` is a HOCON object in one string:
+
+```scala mdoc
+show(fromPureconfig[Endpoint].nested("ENDPOINT"), "ENDPOINT" -> "{ host = localhost, port = 8080 }")
+```
+
+To move a whole project from pureconfig, see [How to migrate from pureconfig](./how-to-migrate-from-pureconfig.md).
+
+## Next Steps
+
+- [Validation](./automatic-validations.md) covers the refined integration.
+- [AWS Parameter Store](./aws-parameter-store.md) covers the AWS integration.
