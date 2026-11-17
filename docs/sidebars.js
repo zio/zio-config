@@ -34,8 +34,7 @@ const sidebars = {
         "derive-config",
         "automatic-validations",
         "documentation-and-reporting",
-        "errors",
-        "resources"
+        "errors"
       ]
     },
     "integrations",
@@ -66,7 +65,8 @@ const sidebars = {
         "how-to-migrate-from-zio-config-3"
       ]
     },
-    "whats-new-since-4-0-6"
+    "whats-new-since-4-0-6",
+    "resources"
   ]
 };
 
