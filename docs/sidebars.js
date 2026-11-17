@@ -12,6 +12,36 @@ const sidebars = {
     },
     {
       type: "category",
+      label: "Reference",
+      collapsed: false,
+      items: [
+        "config-descriptors",
+        {
+          type: "category",
+          label: "Config Providers",
+          link: { type: "doc", id: "read-from-various-sources" },
+          collapsed: false,
+          items: [
+            "zio-core-providers",
+            "hocon-provider",
+            "yaml-provider",
+            "toml-provider",
+            "xml-provider",
+            "aws-parameter-store"
+          ]
+        },
+        "automatic-derivation-of-config",
+        "derive-config",
+        "automatic-validations",
+        "documentation-and-reporting",
+        "errors",
+        "whats-new-since-4-0-6",
+        "resources"
+      ]
+    },
+    "integrations",
+    {
+      type: "category",
       label: "Tutorials",
       collapsed: false,
       items: [
@@ -35,36 +65,6 @@ const sidebars = {
         "how-to-generate-config-docs-in-ci",
         "how-to-migrate-from-pureconfig",
         "how-to-migrate-from-zio-config-3"
-      ]
-    },
-    {
-      type: "category",
-      label: "Reference",
-      collapsed: false,
-      items: [
-        "config-descriptors",
-        {
-          type: "category",
-          label: "Config Providers",
-          link: { type: "doc", id: "read-from-various-sources" },
-          collapsed: true,
-          items: [
-            "zio-core-providers",
-            "hocon-provider",
-            "yaml-provider",
-            "toml-provider",
-            "xml-provider",
-            "aws-parameter-store"
-          ]
-        },
-        "automatic-derivation-of-config",
-        "derive-config",
-        "automatic-validations",
-        "documentation-and-reporting",
-        "errors",
-        "integrations",
-        "whats-new-since-4-0-6",
-        "resources"
       ]
     }
   ]
