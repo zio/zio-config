@@ -34,7 +34,7 @@ val fromEnvironment: IO[Config.Error, Credentials] =
 
 Set `DB_USER` and `DB_PASSWORD` in the environment of the process. The value never appears in the source tree.
 
-## Step 3: Read it from a Mounted File
+## Step 3: Read It from a Mounted File
 
 Some platforms put each secret in a file, for example `/run/secrets/db_password`. Read the file's content into a map and load from it. The file's content is read as the value, so strip the trailing newline:
 
