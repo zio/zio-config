@@ -89,7 +89,7 @@ ZIO core has these providers. The path delimiter joins the segments of a nested 
 | `ConfigProvider.fromAppArgs(args, pathDelim, seqDelim)` | Command-line arguments  | `.`            | none               |
 | `ConfigProvider.defaultProvider`                 | `envProvider`, then `propsProvider` | —        | —                  |
 
-Every one of them splits values on commas by default. The providers from the ZIO Config modules don't; see [Config providers](./read-from-various-sources.md).
+All of them except `ConfigProvider.fromAppArgs` split values on commas by default, when a key is read as a list. The providers from the ZIO Config modules don't; see [Config providers](./read-from-various-sources.md).
 
 ### Maps
 
@@ -107,7 +107,7 @@ show(ConfigProvider.fromMap(Map("ports" -> "8080,8443")), Config.listOf("ports",
 
 ### Environment Variables
 
-`ConfigProvider.envProvider` joins the segments of a path with `_` and looks the result up as is, so the key names are case-sensitive. The description above reads `db_url` and `db_poolSize`. Environment variables are usually written in upper case, so combine the provider with `ConfigProvider#upperCase` and, for camelCase field names, `ConfigProvider#snakeCase`. The environment can't be changed inside these docs, so the next example uses `ConfigProvider.fromMap` with the same delimiter:
+`ConfigProvider.envProvider` joins the segments of a path with `_`, turns `-` into `_`, and upper-cases the result before it looks it up, so the description above reads `DB_URL` and `DB_POOLSIZE`. The field name `poolSize` has no word boundary in that name; to read `DB_POOL_SIZE`, add `ConfigProvider#snakeCase`. The environment can't be changed inside these docs, so the next example uses `ConfigProvider.fromMap` with the same delimiter, plus `ConfigProvider#upperCase`, because a map provider doesn't upper-case keys:
 
 ```scala mdoc:silent
 val envLike: ConfigProvider =
@@ -120,7 +120,7 @@ With `ConfigProvider#snakeCase` and `ConfigProvider#upperCase`, the key `db.pool
 show(envLike.snakeCase.upperCase, database)
 ```
 
-With the real environment, the same provider is `ConfigProvider.envProvider.snakeCase.upperCase`.
+With the real environment, `ConfigProvider.envProvider.snakeCase` is enough, because the environment provider already upper-cases every key. The names it lists, for example the keys of a `Config.table`, come back upper-cased too.
 
 ### Command-Line Arguments
 

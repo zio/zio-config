@@ -24,7 +24,7 @@ libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "@VERSION@"
 | `ConfigProvider.fromResourcePath()`              | `application.conf` and `reference.conf` on the classpath, with system-property overrides (`ConfigFactory.load`) |
 | `ConfigProvider.fromTypesafeConfig(config)`      | A `com.typesafe.config.Config` you have already built                        |
 
-Each constructor reads and parses its input when it is called, and throws if the input is missing or malformed. Each one has a `...ZIO` variant, such as `ConfigProvider.fromHoconFileZIO`, that returns a `Task[ConfigProvider]` and fails the task instead. Every constructor also takes `enableCommaSeparatedValueAsList`, described below.
+Each constructor reads and parses its input when it is called, and throws if the input is malformed. A missing file is not an error: `ConfigProvider.fromHoconFile` and `ConfigProvider.fromHoconFilePath` read it as an empty configuration. Each one has a `...ZIO` variant, such as `ConfigProvider.fromHoconFileZIO`, that returns a `Task[ConfigProvider]` and fails the task instead. Every constructor also takes `enableCommaSeparatedValueAsList`, described below.
 
 The examples on this page share these definitions and a helper, `fromHocon`, which loads a description from a HOCON string:
 
@@ -85,7 +85,7 @@ fromHocon(Config.listOf("databases", deriveConfig[Database]), "databases = []")
 
 ## Substitutions and Environment Variables
 
-The provider resolves HOCON substitutions before reading. `${path}` refers to another key, and `${?NAME}` refers to an environment variable or system property when it is set. A common pattern keeps a default in the file and lets the environment override it:
+The provider resolves HOCON substitutions before reading. `${path}` refers to another key, and `${?NAME}` refers to an environment variable when it is set. A common pattern keeps a default in the file and lets the environment override it:
 
 ```scala mdoc
 final case class Http(host: String, port: Int)

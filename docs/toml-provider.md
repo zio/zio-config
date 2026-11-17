@@ -24,7 +24,7 @@ libraryDependencies += "dev.zio" %% "zio-config-toml" % "@VERSION@"
 | `ConfigProvider.fromTomlReader(reader)`           | A `java.io.Reader`                                 |
 | `TomlConfigProvider.fromToml(result)`             | A `TomlParseResult` that you parsed with tomlj     |
 
-Each constructor parses its input when it is called. If the file is missing, or the TOML has a syntax error, it throws; the message starts with `Unable to parse TOML:` and lists tomlj's errors. Each one has a `...ZIO` variant, such as `ConfigProvider.fromTomlFileZIO` or `TomlConfigProvider.fromTomlZIO`, that returns a `Task[ConfigProvider]` and fails the task instead. Every constructor also takes `enableCommaSeparatedValueAsList` (default `false`).
+Each constructor parses its input when it is called. If the file is missing, it throws the `java.io.IOException` from tomlj. If the TOML has a syntax error, it throws a `RuntimeException` whose message starts with `Unable to parse TOML:` and lists tomlj's errors. Each one has a `...ZIO` variant, such as `ConfigProvider.fromTomlFileZIO` or `TomlConfigProvider.fromTomlZIO`, that returns a `Task[ConfigProvider]` and fails the task instead. Every constructor also takes `enableCommaSeparatedValueAsList` (default `false`).
 
 The examples on this page share these definitions and a helper, `fromToml`, which loads a description from a TOML string:
 

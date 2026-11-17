@@ -30,7 +30,7 @@ val docs: ConfigDocs = generateDocs(serverConfig)
 println(docs.toTable.toGithubFlavouredMarkdown)
 ```
 
-The output has a fixed shape. It starts with a `## Configuration Details` heading. A case class becomes an `all-of` row that links to a nested table, here `Field Descriptions`, because every field is required. Each leaf key has the format `primitive`, and its description starts with a short text from ZIO, such as `a text property` or `an integer property`. The `Sources` column is always empty in ZIO Config 4.
+The output has a fixed shape. It starts with a `## Configuration Details` heading. A case class becomes an `all-of` row that links to a nested table, here `Field Descriptions`, because its fields are combined with `Config#zip`. Each leaf key has the format `primitive`, and its description starts with a short text from ZIO, such as `a text property` or `an integer property`. The `Sources` column is always empty in ZIO Config 4.
 
 ## Adding Descriptions
 
@@ -77,7 +77,7 @@ The `Format` column tells the reader what shape of value a key expects. These ar
 | ---------------- | ------------------- | ----------------------------------------------------------------- |
 | `Primitive`      | `primitive`         | A single value such as `Config.string` or `Config.int`            |
 | `Nested`         | `nested`            | A prefix that directly contains another prefix, such as `nested("app", "db")` |
-| `AllOf`          | `all-of`            | `Config#zip`: every key in the nested table is required           |
+| `AllOf`          | `all-of`            | `Config#zip`: the keys in the nested table are read together, including optional ones |
 | `AnyOneOf`       | `any-one-of`        | `Config#orElse`, a sealed trait, or a key with a default: one of the alternatives is enough |
 | `List`           | `list`              | `Config.listOf` and the other sequence descriptions               |
 | `Map`            | `map`               | `Config.table`, or `Config#switch`                                |
@@ -105,7 +105,7 @@ println(generateDocs(database.nested("db")).toTable.toGithubFlavouredMarkdown)
 | Function                                  | Output                                                                                                       |
 | ----------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
 | `Table#toGithubFlavouredMarkdown`         | Markdown with GitHub-style heading anchors; it also renders on GitLab                                        |
-| `Table#toConfluenceMarkdown(baseUrl)`     | Confluence wiki markup; `baseUrl: Option[String]` is the URL of the Confluence page, used to build the links |
+| `Table#toConfluenceMarkdown(baseUrl)`     | Confluence-flavoured Markdown; `baseUrl: Option[String]` is the URL of the Confluence page, used to build the links |
 | `Table#toMarkdown(getLink)`               | Markdown with links built by your own function                                                               |
 
 To render for a Confluence page:
@@ -148,7 +148,7 @@ leafKeys(generateDocs(handWritten).toTable).foreach(println)
 
 `Table#++` joins two tables. `Table#withFormat` and `Table#mapFormat` change the format column of every row, for example to hide it with `Table.Format.NotApplicable`.
 
-`ConfigDocs` is the tree that `generateDocs` builds before it becomes a table. Its cases follow the shape of the description: `Leaf` for a primitive, `Nested` for a prefix, `Zip` for `Config#zip`, `OrElse` for `Config#orElse`, `Sequence` for a list, and `DynamicMap` for a table or a switch. Most programs only call `ConfigDocs#toTable`, but you can match on the tree to build another output format.
+`ConfigDocs` is the tree that `generateDocs` builds before it becomes a table. Its cases follow the shape of the description: `Leaf` for a primitive, `Nested` for a prefix, `Zip` for `Config#zip`, `OrElse` for `Config#orElse`, `Sequence` for a list, and `DynamicMap` for a table or a switch. The case classes are private to `zio.config`, so call `ConfigDocs#toTable` and work with the `Table` instead.
 
 ## Writing the Document to a File
 

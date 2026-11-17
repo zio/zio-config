@@ -21,7 +21,7 @@ Each row links to the page with the details:
 | [XML (experimental)](./xml-provider.md)        | `zio-config-xml`                        | `zio.config.xml.experimental._`     | `XmlConfigProvider.fromXmlString`                                               |
 | [AWS Parameter Store](./aws-parameter-store.md) | `zio-config-aws` or `zio-config-zio-aws` | `zio.config.aws.parameterstore._`  | `fromParameterStore`                                                            |
 
-The constructors for files and strings in the ZIO Config modules read their input when you call them, and throw if it is missing or malformed. Most of them have a `...ZIO` variant, such as `ConfigProvider.fromHoconFileZIO`, that returns a `Task[ConfigProvider]` and fails the task instead; use it whenever the input comes from outside the program. `fromYamlRepr` and `XmlConfigProvider.fromXmlString` have no such variant.
+The constructors for files and strings in the ZIO Config modules read their input when you call them, and throw if it is malformed or, for YAML and TOML, missing (a missing HOCON file reads as an empty configuration). Most of them have a `...ZIO` variant, such as `ConfigProvider.fromHoconFileZIO`, that returns a `Task[ConfigProvider]` and fails the task instead; use it whenever the input comes from outside the program. `ConfigProvider.fromYamlRepr` and `XmlConfigProvider.fromXmlString` have no such variant.
 
 ## A First Example
 

@@ -21,7 +21,7 @@ A failed load returns a `Config.Error`. The error says what went wrong and where
 | `And`               | `left`, `right`                | Both sides of a `Config#zip` failed; both problems need fixing                                                              |
 | `Or`                | `left`, `right`                | Both sides of a `Config#orElse` failed; either side could be fixed                                                          |
 
-A provider built from a file is different. `ConfigProvider.fromHoconFile`, `fromYamlFile` and the other file-based constructors read the file when you call them, and they throw if it is missing or malformed. Their `...ZIO` variants, such as `ConfigProvider.fromHoconFileZIO`, return a `Task[ConfigProvider]` that fails with the exception. Neither of them produces a `Config.Error`.
+A provider built from a file is different. `ConfigProvider.fromHoconFile`, `ConfigProvider.fromYamlFile` and the other file-based constructors read the file when you call them, and they throw if it is malformed (YAML and TOML also throw for a missing file; a missing HOCON file reads as empty). Their `...ZIO` variants, such as `ConfigProvider.fromHoconFileZIO`, return a `Task[ConfigProvider]` that fails with the exception. Neither of them produces a `Config.Error`.
 
 The examples below share these imports and a helper, `report`, that loads a description from a map and prints the pretty-printed error:
 

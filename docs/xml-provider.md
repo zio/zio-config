@@ -4,7 +4,7 @@ title: "XML (Experimental)"
 sidebar_label: "XML (Experimental)"
 ---
 
-The `zio-config-xml` module reads a small subset of XML into a `ConfigProvider`. It is experimental: it has its own small parser, it does not support XML comments, and it can't read lists. Prefer HOCON, YAML or TOML for new projects.
+The `zio-config-xml` module reads a small subset of XML into a `ConfigProvider`. It is experimental: it has its own small parser, it does not support XML comments, self-closing tags or an XML declaration, and it can't read lists. Prefer HOCON, YAML or TOML for new projects.
 
 To add the module:
 
@@ -38,7 +38,7 @@ final case class Database(port: Int, url: String)
 final case class Configuration(aws: Aws, database: Database)
 ```
 
-The key path starts at the root element. Each attribute is a key under its element, so `<config><aws region="us-east"/></config>` produces the key `config.aws.region`. The text of an element is the value of the element's own path, so `<port>123</port>` inside `<database>` produces `config.database.port`. Both styles can be mixed:
+The key path starts at the root element. Each attribute is a key under its element, so `<config><aws region="us-east"></aws></config>` produces the key `config.aws.region`. The text of an element is the value of the element's own path, so `<port>123</port>` inside `<database>` produces `config.database.port`. Both styles can be mixed:
 
 ```scala mdoc
 fromXml(deriveConfig[Configuration].nested("config"), """

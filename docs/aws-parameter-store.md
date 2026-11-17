@@ -4,11 +4,11 @@ title: "AWS Parameter Store"
 sidebar_label: "AWS Parameter Store"
 ---
 
-AWS Systems Manager Parameter Store keeps configuration values under hierarchical names such as `/myapp/prod/db/url`. zio-config can read every parameter under one base path and expose them as a `ConfigProvider`, so the same `Config` descriptions you use for files and strings work with Parameter Store too.
+AWS Systems Manager Parameter Store keeps configuration values under hierarchical names such as `/myapp/prod/db/url`. ZIO Config can read every parameter under one base path and expose them as a `ConfigProvider`, so the same `Config` descriptions you use for files and strings work with Parameter Store too.
 
 ## Choosing a Module
 
-zio-config offers two modules for Parameter Store. They expose the same entry point, `ConfigProvider.fromParameterStore`, and differ only in the AWS client library underneath:
+ZIO Config offers two modules for Parameter Store. They expose the same entry point, `ConfigProvider.fromParameterStore`, and differ only in the AWS client library underneath:
 
 | Module               | AWS client library             |
 | -------------------- | ------------------------------ |
@@ -56,7 +56,7 @@ The base path is used as a regular expression when the prefix is removed from ea
 
 ## Credentials and Region
 
-When you call `ConfigProvider.fromParameterStore` with only a base path, zio-config creates the client with `AWSSimpleSystemsManagementClientBuilder.defaultClient()`. That client follows the AWS default credential chain for credentials and region, so environment variables, a shared profile, and an instance role all work without code changes.
+When you call `ConfigProvider.fromParameterStore` with only a base path, ZIO Config creates the client with `AWSSimpleSystemsManagementClientBuilder.defaultClient()`. That client follows the AWS default credential chain for credentials and region, so environment variables, a shared profile, and an instance role all work without code changes.
 
 To control the client yourself, pass a `Task` that builds an `AWSSimpleSystemsManagement` client as the second argument:
 
