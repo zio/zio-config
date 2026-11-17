@@ -17,6 +17,33 @@ sidebar_label: "Introduction"
 - **Error accumulation.** Report every problem in one go, not only the first. See [Errors](./errors.md).
 - **Integrations.** Works with enumeratum, cats, scalaz, pureconfig and AWS. See [Integrations](./integrations.md).
 
+## Installation
+
+Add the core module to `build.sbt`:
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-config" % "@VERSION@"
+```
+
+Add the other modules you need, with the same version:
+
+| Module                  | Adds                                                                 |
+| ----------------------- | -------------------------------------------------------------------- |
+| `zio-config-magnolia`   | Automatic derivation of descriptions from case classes and sealed traits |
+| `zio-config-typesafe`   | HOCON and JSON sources                                               |
+| `zio-config-yaml`       | YAML sources                                                         |
+| `zio-config-toml`       | TOML sources                                                         |
+| `zio-config-xml`        | XML sources (experimental)                                           |
+| `zio-config-aws`        | AWS Parameter Store, through the AWS SDK for Java                    |
+| `zio-config-zio-aws`    | AWS Parameter Store, through ZIO AWS                                 |
+| `zio-config-refined`    | Validation with refined types                                        |
+| `zio-config-cats`       | cats data types and instances                                        |
+| `zio-config-scalaz`     | scalaz data types and instances                                      |
+| `zio-config-enumeratum` | enumeratum enums                                                     |
+| `zio-config-pureconfig` | Reuse of pureconfig readers                                          |
+
+`zio-config`, `zio-config-cats`, `zio-config-scalaz` and `zio-config-enumeratum` are also published for Scala.js and Scala Native; use `%%%` instead of `%%` there. The other modules are JVM only.
+
 ## Where to Start
 
 1. [Getting Started](./getting-started.md) adds the dependencies and loads a first config.
