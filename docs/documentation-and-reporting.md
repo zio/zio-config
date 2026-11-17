@@ -78,7 +78,7 @@ The `Format` column tells the reader what shape of value a key expects. These ar
 | `Primitive`      | `primitive`         | A single value such as `Config.string` or `Config.int`            |
 | `Nested`         | `nested`            | A prefix that directly contains another prefix, such as `nested("app", "db")` |
 | `AllOf`          | `all-of`            | `Config#zip`: every key in the nested table is required           |
-| `AnyOneOf`       | `any-one-of`        | `Config#orElse`, or a sealed trait: one of the alternatives is enough |
+| `AnyOneOf`       | `any-one-of`        | `Config#orElse`, a sealed trait, or a key with a default: one of the alternatives is enough |
 | `List`           | `list`              | `Config.listOf` and the other sequence descriptions               |
 | `Map`            | `map`               | `Config.table`, or `Config#switch`                                |
 | `Recursion`      | `recursion`         | Defined for recursive structures; `generateDocs` does not produce it in ZIO Config 4 |
