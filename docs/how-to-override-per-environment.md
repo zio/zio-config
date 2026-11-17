@@ -10,7 +10,7 @@ Most services run in several environments, such as development, staging and prod
 
 Select the settings for an environment with one variable, `APP_ENV`, and let any single value be overridden from the process environment.
 
-## Step 1: Keep one file per environment
+## Step 1: Keep One File per Environment
 
 Store each environment's settings as a HOCON string or file. In a project, these would be `config/dev.conf` and `config/prod.conf`. This guide uses strings:
 
@@ -37,7 +37,7 @@ val prodSettings: String =
   """
 ```
 
-## Step 2: Choose the file from `APP_ENV`
+## Step 2: Choose the File from `APP_ENV`
 
 Read `APP_ENV` from the environment and pick the matching settings. Fail with a clear message for an unknown name:
 
@@ -50,7 +50,7 @@ def settingsFor(env: String): Either[String, String] =
   }
 ```
 
-## Step 3: Layer the environment over the file
+## Step 3: Layer the Environment Over the File
 
 Put the process environment first, so a single variable can override the file. The file is the second source:
 
@@ -60,7 +60,16 @@ def providerFor(env: String): IO[String, ConfigProvider] =
     ConfigProvider.envProvider.orElse(ConfigProvider.fromHoconString(hocon))
   }
 
-val serviceDescription: Config[Service] = deriveConfig[Service]
+val serviceDescription: Config[Service] =
+  deriveConfig[Service].mapKey(key => toSnakeCase(key).toUpperCase)
+```
+
+`Config#mapKey` turns the field names into the keys used in the files and the environment: `databaseUrl` becomes `DATABASE_URL`. To check that the description matches a file, load the file on its own:
+
+```scala mdoc
+Unsafe.unsafe { implicit unsafe =>
+  Runtime.default.unsafe.run(ConfigProvider.fromHoconString(prodSettings).load(serviceDescription)).getOrThrow()
+}
 ```
 
 Load the service with the provider for the selected environment:
@@ -74,7 +83,7 @@ val load: IO[Any, Service] =
   } yield service
 ```
 
-## Step 4: Override one value
+## Step 4: Override One Value
 
 Run the program with the file's values, then with one value changed:
 
@@ -87,6 +96,6 @@ The environment variable wins because it is the first source. Other keys still c
 
 ## Notes
 
-- The environment provider reads the key names as they are. The key `PORT` matches the variable `PORT`.
+- The environment provider joins the segments of a key with `_` and upper-cases the result, so the key `PORT` matches the variable `PORT`, and a description with `Config#nested("db")` reads `DB_URL`. See [ZIO core providers](./zio-core-providers.md#environment-variables).
 - Keep the files free of secrets. See [How to read secrets](./how-to-read-secrets.md).
 - For the layering rules, see [Config providers](./read-from-various-sources.md).

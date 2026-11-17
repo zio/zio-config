@@ -6,21 +6,46 @@ sidebar_label: "Validation"
 
 `zio-config-refined` checks settings against predicates when they are loaded. A value that breaks a predicate fails with a `Config.Error`, the same way a missing key does. You write the rule once, in the type, and the library enforces it everywhere the type is used.
 
-The module is built on the [refined](https://github.com/fthomas/refined) library. If you are new to refined, read its introduction first. The examples below use refined types such as `NonEmptyString` and `Refined[Int, GreaterEqual[...]]`.
+The module is built on the [refined](https://github.com/fthomas/refined) library. If you are new to refined, read its introduction first. For a check that doesn't need a refined type, `Config#validate` from ZIO is enough; see [Config descriptors](./config-descriptors.md).
+
+To add the module:
+
+```scala
+libraryDependencies += "dev.zio" %% "zio-config-refined" % "@VERSION@"
+```
+
+The examples on this page share these imports and a helper, `show`, which loads a description from a map:
 
 ```scala mdoc:silent
 import zio._
 import zio.config._
 import zio.config.refined._
 import zio.config.magnolia.deriveConfig
+
+import eu.timepit.refined.api.Refined
+import eu.timepit.refined.W
+
+def show[A](config: Config[A], entries: (String, String)*): Either[Config.Error, A] =
+  Unsafe.unsafe { implicit unsafe =>
+    Runtime.default.unsafe.run(ConfigProvider.fromMap(entries.toMap).load(config).either).getOrThrow()
+  }
 ```
 
-## Two ways to write a refined setting
+## Three Ways to Write a Refined Setting
 
-- **`refineType[T]("KEY")`** reads a key and checks it against a full refined type, such as `String Refined NonEmpty`.
-- **`refine[P](description)`** takes an existing `Config` and checks its value against a predicate `P`. Use it when you already have the predicate, or when the value comes from a derived or hand-written description.
+`zio.config.refined._` has three functions. Pick the one that matches what you already have:
 
-## Basic example
+| Function                          | Takes                                       | Use it when                                                      |
+| --------------------------------- | ------------------------------------------- | ---------------------------------------------------------------- |
+| `refineType[R](key)`              | A full refined type `R`, such as `NonEmptyString` | You have a type alias for the refined type                   |
+| `refine[A, P](key)`               | The value type `A` and the predicate `P`    | You want to name the predicate and the type separately           |
+| `refine[P](description)`          | A predicate `P` and an existing `Config[A]` | The value already has a description, derived or hand-written     |
+
+The first two read the key with the `DeriveConfig` instance of the value type, so they work for every type listed in the [DeriveConfig reference](./derive-config.md). All three return a `Config`, so they combine with `Config#zip`, `Config#optional` and the other functions.
+
+### A Full Refined Type
+
+`refineType` takes the refined type as a whole:
 
 ```scala mdoc:silent
 import eu.timepit.refined.types.string.NonEmptyString
@@ -31,35 +56,48 @@ val jdbc: Config[Jdbc] =
   (refineType[NonEmptyString]("username") zip refineType[NonEmptyString]("password")).to[Jdbc]
 ```
 
-Loading an empty `username` fails. The error names the key:
+An empty `username` fails with an `InvalidData` error that carries refined's message for the predicate:
 
-```scala mdoc:compile-only
-val failing: IO[Config.Error, Jdbc] =
-  ConfigProvider.fromMap(Map("username" -> "", "password" -> "secret")).load(jdbc)
+```scala mdoc
+show(jdbc, "username" -> "", "password" -> "secret")
 ```
 
-## Predicates directly
+:::note
+The errors from `refineType` and `refine[A, P](key)` currently have an empty `path`, so a report doesn't say which key failed. A refined field in a derived case class, shown below, keeps the path. To keep the path with a hand-written description, refine the value first and add the key afterwards: `refine[NonEmpty](Config.string).nested("username")`.
+:::
 
-Use `refineType` with a full refined type, or `refine` with a predicate applied to an existing description, when you want to write the predicate yourself. For example, a URL:
+With the key added after the predicate, the error names `username`:
 
-```scala mdoc:silent
-import eu.timepit.refined.api.Refined
-import eu.timepit.refined.string.Url
+```scala mdoc
+import eu.timepit.refined.collection.NonEmpty
 
-val urlConfig: Config[String Refined Url] = refineType[String Refined Url]("URL")
+show(refine[NonEmpty](Config.string).nested("username"), "username" -> "")
 ```
 
-`refine` and `refineType` return a `Config`, so they combine with `zip`, `optional` and the other functions in [Config descriptors](./config-descriptors.md).
+### A Value Type and a Predicate
 
-## Validating a whole list
-
-Refine a derived description. For example, require a list with more than two entries:
+`refine[A, P](key)` reads `key` as an `A` and checks it against `P`:
 
 ```scala mdoc:silent
-import eu.timepit.refined.W
+import eu.timepit.refined.numeric.GreaterEqual
+
+val port: Config[Refined[Int, GreaterEqual[W.`1024`.T]]] =
+  refine[Int, GreaterEqual[W.`1024`.T]]("PORT")
+```
+
+A port below 1024 fails in the same way:
+
+```scala mdoc
+show(port, "PORT" -> "80")
+```
+
+### A Predicate on an Existing Description
+
+`refine[P](description)` adds a predicate to any description. For example, to require a list with more than two entries:
+
+```scala mdoc:silent
 import eu.timepit.refined.collection.Size
 import eu.timepit.refined.numeric.Greater
-import zio.config.magnolia.deriveConfig
 
 final case class Replica(url: String, port: Int)
 
@@ -70,14 +108,17 @@ val atLeastThree: Config[Refined[List[Replica], Size[Greater[W.`2`.T]]]] =
   refine[Size[Greater[W.`2`.T]]](replicas)
 ```
 
-## Validated fields in derived configs
+With only one replica, the size check fails:
 
-A derived case class can have refined fields. Derivation uses the refined type's own instance:
+```scala mdoc
+show(atLeastThree, "replicas[0].url" -> "a", "replicas[0].port" -> "1")
+```
+
+## Refined Fields in Derived Configs
+
+With `zio.config.refined._` in scope, derivation has an instance for `Refined[A, P]` whenever `A` has one, so a case class can have refined fields:
 
 ```scala mdoc:silent
-import eu.timepit.refined.collection.NonEmpty
-import eu.timepit.refined.numeric.GreaterEqual
-
 final case class Listener(
   host: Refined[String, NonEmpty],
   port: Refined[Int, GreaterEqual[W.`1024`.T]]
@@ -86,9 +127,14 @@ final case class Listener(
 val listener: Config[Listener] = deriveConfig[Listener]
 ```
 
-With this description, a `port` below 1024 fails to load. Combine it with `mapKey` if the keys need a different case, as in `deriveConfig[Listener].mapKey(_.toUpperCase)`.
+A `port` below 1024 fails to load. Here the error also carries the path of the field:
 
-## Next steps
+```scala mdoc
+show(listener, "host" -> "0.0.0.0", "port" -> "80")
+```
 
-- [Errors](./errors.md) explains how a failed predicate is reported.
-- [Derivation](./automatic-derivation-of-config.md) explains how refined fields are derived.
+Combine it with `Config#mapKey` if the keys need a different case, as in `deriveConfig[Listener].mapKey(_.toUpperCase)`.
+
+## Next Steps
+
+[Errors](./errors.md) explains how a failed predicate is reported and pretty-printed. [Derivation](./automatic-derivation-of-config.md) explains how fields are derived.

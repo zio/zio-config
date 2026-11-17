@@ -4,23 +4,23 @@ title: "Getting Started"
 sidebar_label: "Getting Started"
 ---
 
-This page takes you from an empty sbt project to a running program that reads its settings from a HOCON file. You will add three dependencies, describe a configuration with a case class, load it, and run it.
+This page takes you from an empty sbt project to a running program that reads its settings from a HOCON file. You add three dependencies, describe a configuration with a case class, load it, and run it.
 
-## Terms used on this page
+## Terms Used on This Page
 
 - **Config description**: a value of type `Config[A]` that says which keys to read and how to turn them into an `A`. It does not read anything by itself.
 - **Config provider**: a value of type `ConfigProvider` that holds the raw key-value data. It is built from a source such as a HOCON string, a YAML file or a map. You give a config description to a provider to load it.
 - **Derivation**: generating a config description from a case class automatically, instead of writing it by hand.
 
-## 1. Add the dependencies
+## 1. Add the Dependencies
 
-Add these lines to `build.sbt`. Replace `<version>` with the latest release.
+Add these lines to `build.sbt`:
 
 ```scala
 libraryDependencies ++= Seq(
-  "dev.zio" %% "zio-config"          % "<version>",
-  "dev.zio" %% "zio-config-typesafe" % "<version>", // HOCON and JSON sources
-  "dev.zio" %% "zio-config-magnolia" % "<version>"  // automatic derivation
+  "dev.zio" %% "zio-config"          % "@VERSION@",
+  "dev.zio" %% "zio-config-typesafe" % "@VERSION@", // HOCON and JSON sources
+  "dev.zio" %% "zio-config-magnolia" % "@VERSION@"  // automatic derivation
 )
 ```
 
@@ -30,7 +30,9 @@ libraryDependencies ++= Seq(
 
 Other sources (YAML, TOML, XML, AWS Parameter Store) use their own modules. See [Config providers](./read-from-various-sources.md).
 
-## 2. Describe the configuration
+Some functions used on these pages, such as `Config#to` and `Config#mapKey`, come from `import zio.config._`. `Config` and `ConfigProvider` themselves are part of ZIO.
+
+## 2. Describe the Configuration
 
 Define a case class for the settings you need, and derive its config description:
 
@@ -44,7 +46,7 @@ val appConfigDescription = deriveConfig[AppConfig]
 
 `deriveConfig` looks at the field names (`host`, `port`) and their types. It uses them as the keys to read, so the source must contain `host` and `port`.
 
-## 3. Load it from a source
+## 3. Load It from a Source
 
 Put the settings in a HOCON string, build a provider from it, and load the description:
 
@@ -63,9 +65,9 @@ val provider: ConfigProvider = ConfigProvider.fromHoconString(settings)
 val loaded: IO[Config.Error, AppConfig] = provider.load(appConfigDescription)
 ```
 
-`provider.load(...)` returns a `ZIO`. Nothing is read until that effect runs. If a key is missing or has the wrong type, the effect fails with a `Config.Error`. See [Errors](./errors.md).
+`ConfigProvider#load` returns a `ZIO`. Nothing is read until that effect runs. If a key is missing or has the wrong type, the effect fails with a `Config.Error`. See [Errors](./errors.md).
 
-## 4. Run it
+## 4. Run It
 
 Wrap the load in a `ZIOAppDefault`, print the result, and run the program:
 
@@ -94,9 +96,10 @@ object Main extends ZIOAppDefault {
 
 Running `Main` prints `Starting on localhost:8080`.
 
-## Where to go next
+## Where to Go Next
 
 - [Config descriptors](./config-descriptors.md) explains the building blocks: `string`, `int`, `zip`, `nested`, `optional`, `withDefault`.
 - [Derivation](./automatic-derivation-of-config.md) explains how names are mapped to keys and how to rename them.
 - [Config providers](./read-from-various-sources.md) lists every source.
-- [Tutorial: Configure an app from HOCON and environment variables](./tutorial-hocon-and-env.md) builds a realistic setup step by step.
+- [Tutorial: Configure an App from HOCON and Environment Variables](./tutorial-hocon-and-env.md) builds a realistic setup step by step.
+- [ZIO core providers](./zio-core-providers.md) shows how to set the provider once and read config anywhere with `ZIO.config`.

@@ -4,11 +4,11 @@ title: "AWS Parameter Store"
 sidebar_label: "AWS Parameter Store"
 ---
 
-AWS Systems Manager Parameter Store keeps configuration values under hierarchical names such as `/myapp/prod/db/url`. zio-config can read every parameter under one base path and expose them as a `ConfigProvider`, so the same `Config` descriptions you use for files and strings work with Parameter Store too.
+AWS Systems Manager Parameter Store keeps configuration values under hierarchical names such as `/myapp/prod/db/url`. ZIO Config can read every parameter under one base path and expose them as a `ConfigProvider`, so the same `Config` descriptions you use for files and strings work with Parameter Store too.
 
 ## Choosing a Module
 
-zio-config offers two modules for Parameter Store. They expose the same entry point, `ConfigProvider.fromParameterStore`, and differ only in the AWS client library underneath:
+ZIO Config offers two modules for Parameter Store. They expose the same entry point, `ConfigProvider.fromParameterStore`, and differ only in the AWS client library underneath:
 
 | Module               | AWS client library             |
 | -------------------- | ------------------------------ |
@@ -20,7 +20,7 @@ Both modules define classes in the same package, `zio.config.aws.parameterstore`
 To add the SDK-based module to an sbt build:
 
 ```scala
-libraryDependencies += "dev.zio" %% "zio-config-aws" % "<version>"
+libraryDependencies += "dev.zio" %% "zio-config-aws" % "@VERSION@"
 ```
 
 ## Reading a Base Path
@@ -50,11 +50,13 @@ val loadDatabase: ZIO[Any, Config.Error, Database] =
   } yield database
 ```
 
-The provider reads the parameters once, when `ConfigProvider.fromParameterStore` runs. Later changes in Parameter Store are not seen until you build a new provider.
+The provider reads the parameters once, when `ConfigProvider.fromParameterStore` runs. It follows the pagination of `GetParametersByPath`, so it reads every parameter under the path, however many there are. Later changes in Parameter Store are not seen until you build a new provider.
+
+The base path is used as a regular expression when the prefix is removed from each name. Paths made of letters, digits, `/`, `-` and `_` behave as expected; avoid characters such as `.`, `+` or `(` in the base path.
 
 ## Credentials and Region
 
-When you call `ConfigProvider.fromParameterStore` with only a base path, zio-config creates the client with `AWSSimpleSystemsManagementClientBuilder.defaultClient()`. That client follows the AWS default credential chain for credentials and region, so environment variables, a shared profile, and an instance role all work without code changes.
+When you call `ConfigProvider.fromParameterStore` with only a base path, ZIO Config creates the client with `AWSSimpleSystemsManagementClientBuilder.defaultClient()`. That client follows the AWS default credential chain for credentials and region, so environment variables, a shared profile, and an instance role all work without code changes.
 
 To control the client yourself, pass a `Task` that builds an `AWSSimpleSystemsManagement` client as the second argument:
 
@@ -68,7 +70,7 @@ val withCustomClient: ZIO[Any, Config.Error, ConfigProvider] =
   )
 ```
 
-With the `zio-config-zio-aws` module, the caller provides an `Ssm` service instead. The following sketch builds the `Ssm` layer from the ZIO-native client and loads the same `databaseConfig`:
+With the `zio-config-zio-aws` module, the caller provides an `Ssm` service instead. The following sketch builds the `Ssm` layer from the ZIO-native client and loads the same `databaseConfig`. It is not compiled with the rest of this page, because the two modules can't be on one classpath:
 
 ```scala
 import zio._
@@ -92,4 +94,4 @@ The identity that runs the application needs `ssm:GetParametersByPath` on the ba
 
 ## Errors
 
-If an AWS call fails, `ConfigProvider.fromParameterStore` returns a `Config.Error` whose message contains the text of the original exception. Handle it like any other `Config.Error`, for example with `catchAll` or by logging it at startup.
+If building the client or an AWS call fails, `ConfigProvider.fromParameterStore` fails with a `Config.Error.Unsupported` whose message contains the text of the original exception. Handle it like any other `Config.Error`, for example with `ZIO#catchAll` or by logging `Config.Error#prettyPrint` at startup. A parameter that is missing under the base path is reported later, by `ConfigProvider#load`, as `MissingData`.

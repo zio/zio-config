@@ -14,7 +14,7 @@ Check, without touching the machine's environment or files, that:
 2. a missing key falls back to the default,
 3. a wrong value fails with a `Config.Error`.
 
-## Step 1: Use a map as the source
+## Step 1: Use a Map as the Source
 
 `ConfigProvider.fromMap` reads a `Map[String, String]`. It is the same type a real provider produces, so the code under test does not change:
 
@@ -29,7 +29,9 @@ val serviceDescription: Config[Service] =
   (Config.string("HOST") zip Config.int("PORT") zip Config.int("TIMEOUT").withDefault(30)).to[Service]
 ```
 
-## Step 2: Check the happy path
+## Step 2: Check the Happy Path
+
+Load a complete map and compare the result with the expected value:
 
 ```scala mdoc:compile-only
 val complete: ConfigProvider =
@@ -39,7 +41,9 @@ val loadedComplete: IO[Config.Error, Service] = complete.load(serviceDescription
 // Expected: Service("localhost", 8080, 5)
 ```
 
-## Step 3: Check the default
+## Step 3: Check the Default
+
+Leave `TIMEOUT` out, and the description falls back to its default:
 
 ```scala mdoc:compile-only
 val withoutTimeout: ConfigProvider =
@@ -49,7 +53,9 @@ val loadedDefault: IO[Config.Error, Service] = withoutTimeout.load(serviceDescri
 // Expected: Service("localhost", 8080, 30)
 ```
 
-## Step 4: Check the failure
+## Step 4: Check the Failure
+
+Give `PORT` a value that is not a number, and the load fails:
 
 ```scala mdoc:compile-only
 val badPort: ConfigProvider =
@@ -64,9 +70,9 @@ In a ZIO Test spec, use `assertZIO(provider.load(desc))(...)` or `.exit` with an
 ## Notes
 
 - Do not use `ConfigProvider.envProvider` in unit tests. A test that depends on the developer's environment is not repeatable.
+- Code that reads its settings with `ZIO.config` takes the provider from the runtime. In a test, run it inside `ZIO.withConfigProvider(ConfigProvider.fromMap(...))`, or provide `Runtime.setConfigProvider(...)` as a layer, to swap in a map. See [ZIO core providers](./zio-core-providers.md).
 - For a test that reads a real HOCON file, use `ConfigProvider.fromHoconString` with the file's content as a string.
 
 ## Related
 
-- [Config providers](./read-from-various-sources.md) lists the providers you can build from a map or a string.
-- [Errors](./errors.md) explains the error values to match on.
+See [Config providers](./read-from-various-sources.md) for the providers you can build from a map or a string, and [Errors](./errors.md) for the error values to match on.
