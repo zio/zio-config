@@ -1,6 +1,6 @@
 ---
 id: index
-title: "Introduction"
+title: "Introduction to ZIO Config"
 sidebar_label: "Introduction"
 ---
 
