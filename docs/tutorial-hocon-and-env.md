@@ -6,34 +6,19 @@ sidebar_label: "Tutorial"
 
 In this tutorial you build the configuration for a small web service. Its defaults live in a HOCON file in the repository. Anything set in an environment variable overrides the file. This is the pattern most services use: defaults in version control, and per-machine values from the environment.
 
-You need Scala 2.13 or Scala 3, sbt, and the dependencies from [Getting Started](./getting-started.md). Add the module for HOCON as well:
+You need Scala 2.13 or Scala 3, sbt, and these dependencies:
 
 ```scala
 libraryDependencies ++= Seq(
-  "dev.zio" %% "zio-config"          % "<version>",
-  "dev.zio" %% "zio-config-typesafe" % "<version>",
-  "dev.zio" %% "zio-config-magnolia" % "<version>"
+  "dev.zio" %% "zio-config"          % "@VERSION@",
+  "dev.zio" %% "zio-config-typesafe" % "@VERSION@",
+  "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
 )
 ```
 
-## Step 1: Describe the settings
+## Step 1: Describe the Settings
 
 Start with the settings the service needs. Each field is one value the program must have. Write the case class first, so the rest of the tutorial has a fixed target:
-
-```scala mdoc:silent
-final case class ServiceConfig(
-  host: String,
-  port: Int,
-  databaseUrl: String,
-  logLevel: String
-)
-```
-
-The field names are the keys the library will look for. For this tutorial, the keys are written in uppercase, as environment variables usually are: `HOST`, `PORT`, `DATABASE_URL` and `LOG_LEVEL`.
-
-## Step 2: Write the description
-
-Turn the case class into a `Config`. Use `deriveConfig` with `mapKey` to make the keys uppercase, and with an explicit name for `databaseUrl`:
 
 ```scala mdoc:silent
 import zio._
@@ -47,18 +32,22 @@ final case class Service(
   databaseUrl: String,
   logLevel: String
 )
-
-val serviceDescription: Config[Service] =
-  deriveConfig[Service].mapKey {
-    case "databaseUrl" => "DATABASE_URL"
-    case "logLevel"    => "LOG_LEVEL"
-    case other         => other.toUpperCase
-  }
 ```
 
-`mapKey` changes every key in the description. Here `host` becomes `HOST`, `port` becomes `PORT`, and so on. The two explicit cases handle the camelCase names.
+The field names are the keys the library looks for. For this tutorial, the keys are written in upper snake case, as environment variables usually are: `HOST`, `PORT`, `DATABASE_URL` and `LOG_LEVEL`.
 
-## Step 3: Write the defaults file
+## Step 2: Write the Description
+
+Turn the case class into a `Config` with `deriveConfig`. Then change every key with `Config#mapKey`: `toSnakeCase` turns `databaseUrl` into `database_url`, and `toUpperCase` makes it `DATABASE_URL`:
+
+```scala mdoc:silent
+val serviceDescription: Config[Service] =
+  deriveConfig[Service].mapKey(key => toSnakeCase(key).toUpperCase)
+```
+
+`Config#mapKey` changes every key in the description: `host` becomes `HOST`, `port` becomes `PORT`, and the two camelCase names get an underscore.
+
+## Step 3: Write the Defaults File
 
 The defaults go into a HOCON string. In a real project, put this text in `src/main/resources/application.conf` and load it with `ConfigProvider.fromResourcePath()`. This tutorial keeps it in a string so the code is self-contained:
 
@@ -74,7 +63,7 @@ val defaultsHocon: String =
 val defaults: ConfigProvider = ConfigProvider.fromHoconString(defaultsHocon)
 ```
 
-## Step 4: Read the environment
+## Step 4: Read the Environment
 
 ZIO provides a provider that reads the process environment. Use it for values that change per machine:
 
@@ -82,7 +71,7 @@ ZIO provides a provider that reads the process environment. Use it for values th
 val environment: ConfigProvider = ConfigProvider.envProvider
 ```
 
-## Step 5: Layer the two sources
+## Step 5: Layer the Two Sources
 
 `orElse` tries the first provider for each key, and falls back to the second one when a key is missing. Put the environment first, so its values win, and the defaults second:
 
@@ -92,7 +81,7 @@ val layered: ConfigProvider = environment.orElse(defaults)
 
 With `layered`, a key set in the environment is read from there. Any other key comes from the HOCON defaults. You can see this with the `PORT` key in the last step.
 
-## Step 6: Load and run
+## Step 6: Load and Run
 
 Put the pieces into a program. The program loads the config, prints it and fails if a required key is missing:
 
@@ -128,7 +117,7 @@ listening on 0.0.0.0:9090, logging at debug
 
 The environment supplied `PORT` and `LOG_LEVEL`, and the HOCON file supplied `HOST` and `DATABASE_URL`.
 
-## Step 7: Test it without the environment
+## Step 7: Test It Without the Environment
 
 Tests should not depend on what is set on the machine. Replace the environment with a map that holds the values under test. The rest of the description is unchanged:
 
@@ -143,14 +132,14 @@ val testLoaded: IO[Config.Error, Service] = testSource.load(serviceDescription)
 
 `testLoaded` reads `PORT` as 9999 and everything else from the defaults. See [How to test config](./how-to-test-config.md) for a full test setup.
 
-## What you built
+## What You Built
 
 - A case class that states the settings.
 - One description derived from it, with the key names adjusted.
 - A defaults file and an environment provider, layered so the environment wins.
 - A program that loads the layered config and reports a clear error when a value is wrong.
 
-## Next steps
+## Next Steps
 
 - [How to read secrets](./how-to-read-secrets.md) covers values that must not appear in a file.
 - [How to override settings per environment](./how-to-override-per-environment.md) shows how to use one file per deployment.
