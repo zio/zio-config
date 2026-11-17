@@ -2,7 +2,7 @@
 id: tutorial-hocon-and-env
 title: "Tutorial: Configure an App from HOCON and Environment Variables"
 description: "Learn to layer a HOCON defaults file under environment variables and to test the result without the environment."
-sidebar_label: "Tutorial"
+sidebar_label: "HOCON and Environment Variables"
 ---
 
 Welcome! This tutorial is for Scala developers who have loaded a first configuration with ZIO Config, for example by following [Getting Started](./getting-started.md). We build the configuration for a small web service. Its defaults live in a HOCON file in the repository, and anything set in an environment variable overrides the file. This is the pattern most services use: defaults in version control, and per-machine values from the environment.
