@@ -22,6 +22,7 @@ sidebar_label: "Introduction"
 Add the core module to `build.sbt`:
 
 ```scala
+// ZIO Config core: config descriptors and readers (JVM)
 libraryDependencies += "dev.zio" %% "zio-config" % "@VERSION@"
 ```
 

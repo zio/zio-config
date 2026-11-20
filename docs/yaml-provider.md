@@ -9,6 +9,7 @@ The `zio-config-yaml` module reads YAML with [snakeyaml-engine](https://bitbucke
 To add the module:
 
 ```scala
+// YAML source (JVM)
 libraryDependencies += "dev.zio" %% "zio-config-yaml" % "@VERSION@"
 ```
 

@@ -15,10 +15,11 @@ Write one `application.yaml` that has defaults for development, takes overrides 
 Add the YAML provider and derivation:
 
 ```scala
-libraryDependencies ++= Seq(
-  "dev.zio" %% "zio-config-yaml"     % "@VERSION@",
-  "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
-)
+// YAML source (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-yaml"     % "@VERSION@"
+
+// Automatic derivation of config descriptors (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
 ```
 
 ## Step 2: Write the File With Substitutions

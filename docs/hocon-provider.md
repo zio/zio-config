@@ -9,6 +9,7 @@ The `zio-config-typesafe` module reads HOCON, the format of the [Typesafe Config
 To add the module:
 
 ```scala
+// HOCON and JSON sources, built on Typesafe Config (JVM)
 libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "@VERSION@"
 ```
 

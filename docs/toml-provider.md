@@ -9,6 +9,7 @@ The `zio-config-toml` module reads [TOML](https://toml.io) with the [tomlj](http
 To add the module:
 
 ```scala
+// TOML source (JVM)
 libraryDependencies += "dev.zio" %% "zio-config-toml" % "@VERSION@"
 ```
 

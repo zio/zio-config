@@ -11,6 +11,7 @@ The module is built on the [refined](https://github.com/fthomas/refined) library
 To add the module:
 
 ```scala
+// Validation with refined types (JVM)
 libraryDependencies += "dev.zio" %% "zio-config-refined" % "@VERSION@"
 ```
 

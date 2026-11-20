@@ -17,11 +17,14 @@ This page takes you from an empty sbt project to a running program that reads it
 Add these lines to `build.sbt`:
 
 ```scala
-libraryDependencies ++= Seq(
-  "dev.zio" %% "zio-config"          % "@VERSION@",
-  "dev.zio" %% "zio-config-typesafe" % "@VERSION@", // HOCON and JSON sources
-  "dev.zio" %% "zio-config-magnolia" % "@VERSION@"  // automatic derivation
-)
+// ZIO Config core: config descriptors and readers (JVM)
+libraryDependencies += "dev.zio" %% "zio-config"          % "@VERSION@"
+
+// HOCON and JSON sources
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "@VERSION@"
+
+// automatic derivation
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
 ```
 
 - `zio-config` holds the core API.

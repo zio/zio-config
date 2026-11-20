@@ -11,6 +11,7 @@ The result of `deriveConfig[A]` is the same kind of value you would build by han
 To use derivation, add the module next to the core one:
 
 ```scala
+// Automatic derivation of config descriptors (JVM)
 libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
 ```
 
