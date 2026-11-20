@@ -9,6 +9,7 @@ The `zio-config-xml` module reads a small subset of XML into a `ConfigProvider`.
 To add the module:
 
 ```scala
+// XML source (JVM)
 libraryDependencies += "dev.zio" %% "zio-config-xml" % "@VERSION@"
 ```
 

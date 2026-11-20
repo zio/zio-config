@@ -18,12 +18,17 @@ ZIO Config works with several libraries you may already use. Each integration is
 Add the modules you need, with the same version as `zio-config`:
 
 ```scala
-libraryDependencies ++= Seq(
-  "dev.zio" %% "zio-config-enumeratum" % "@VERSION@",
-  "dev.zio" %% "zio-config-cats"       % "@VERSION@",
-  "dev.zio" %% "zio-config-scalaz"     % "@VERSION@",
-  "dev.zio" %% "zio-config-pureconfig" % "@VERSION@"
-)
+// Enumeratum integration (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-enumeratum" % "@VERSION@"
+
+// Cats integration (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-cats"       % "@VERSION@"
+
+// Scalaz integration (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-scalaz"     % "@VERSION@"
+
+// PureConfig integration (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-pureconfig" % "@VERSION@"
 ```
 
 `import zio.config._` brings the packages `zio.config.cats`, `zio.config.scalaz`, `zio.config.enumeratum` and `zio.config.pureconfig` into scope, and they hide the libraries' own top-level packages of the same name. After that import, write the library imports with `_root_`, as in `import _root_.cats.data.NonEmptyList`, or put them in a file that does not import `zio.config._`.

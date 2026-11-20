@@ -10,11 +10,14 @@ Welcome! This tutorial is for Scala developers who have loaded a first configura
 We need Scala 2.13 or Scala 3, sbt, and these dependencies:
 
 ```scala
-libraryDependencies ++= Seq(
-  "dev.zio" %% "zio-config"          % "@VERSION@",
-  "dev.zio" %% "zio-config-typesafe" % "@VERSION@",
-  "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
-)
+// ZIO Config core: config descriptors and readers (JVM)
+libraryDependencies += "dev.zio" %% "zio-config"          % "@VERSION@"
+
+// HOCON and JSON sources, built on Typesafe Config (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "@VERSION@"
+
+// Automatic derivation of config descriptors (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
 ```
 
 ## Learning Objectives

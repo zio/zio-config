@@ -15,11 +15,14 @@ Compile and run a ZIO Config 3 application on ZIO Config 4 with the same configu
 All modules move to the same 4.x version. The module names are unchanged:
 
 ```scala
-libraryDependencies ++= Seq(
-  "dev.zio" %% "zio-config"          % "@VERSION@",
-  "dev.zio" %% "zio-config-typesafe" % "@VERSION@",
-  "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
-)
+// ZIO Config core: config descriptors and readers (JVM)
+libraryDependencies += "dev.zio" %% "zio-config"          % "@VERSION@"
+
+// HOCON and JSON sources, built on Typesafe Config (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "@VERSION@"
+
+// Automatic derivation of config descriptors (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
 ```
 
 ZIO Config 4 needs ZIO 2.

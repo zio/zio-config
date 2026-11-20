@@ -15,11 +15,14 @@ Replace pureconfig with ZIO Config, keeping the same HOCON files, keys and case 
 Add the core module, the HOCON provider and derivation:
 
 ```scala
-libraryDependencies ++= Seq(
-  "dev.zio" %% "zio-config"          % "@VERSION@",
-  "dev.zio" %% "zio-config-typesafe" % "@VERSION@",
-  "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
-)
+// ZIO Config core: config descriptors and readers (JVM)
+libraryDependencies += "dev.zio" %% "zio-config"          % "@VERSION@"
+
+// HOCON and JSON sources, built on Typesafe Config (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-typesafe" % "@VERSION@"
+
+// Automatic derivation of config descriptors (JVM)
+libraryDependencies += "dev.zio" %% "zio-config-magnolia" % "@VERSION@"
 ```
 
 Both libraries read HOCON through Typesafe Config, so they can run side by side while you migrate.
