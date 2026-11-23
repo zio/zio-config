@@ -23,7 +23,7 @@ final case class ReadZIO[A](config: Config[A], configProvider: ConfigProviderZIO
 
 /**
  * Holds the `ConfigProviderZIO` alias and the `toConfigProviderZIO` syntax. The `zio.config` package object doesn't
- * export them: import `zio.config.syntax.ConfigSyntax._` to use them.
+ * include them: import `zio.config.syntax.ConfigSyntax._` to use them.
  */
 object ConfigSyntax {
 
@@ -706,7 +706,7 @@ trait ConfigSyntax {
 
     /**
      * A config that reads a `Short`, from `-32768` to `32767`. Text that `String#toShort` rejects, such as `40000` or
-     * text with a leading space, fails with a `Config.Error.InvalidData`.
+     * `1.5`, fails with a `Config.Error.InvalidData`.
      */
     def short: Config[Short] =
       Config.string.mapOrFail(text =>
