@@ -736,6 +736,8 @@ trait ConfigDocsModule {
    * `an integer property`), the descriptions added with `??`, and how the keys combine. Convert the result with
    * `toTable` and render that as Markdown.
    *
+   * `generateDocs` does not support recursive configs built with `Config.defer`.
+   *
    * {{{
    * import zio._
    * import zio.config._
