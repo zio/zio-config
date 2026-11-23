@@ -18,12 +18,13 @@ object XmlConfigProvider {
    * `config.database.port`.
    *
    * When an attribute and a child element have the same name, the child element's value is kept. Sibling elements with
-   * the same name give the same keys, and for each key the last value is kept, so this provider can't read a list. Text
-   * is trimmed of leading and trailing whitespace, and character entities are kept as written, not decoded.
+   * the same name give the same keys, and for each key the last value is kept, so repeated elements don't form a list.
+   * Text with commas, such as `<hosts>a,b</hosts>`, reads as a list with `Config.listOf`. Text is trimmed of leading
+   * and trailing whitespace, and character entities are kept as written, not decoded.
    *
    * The parser reads elements, attributes in double quotes, and text. It throws a `java.lang.Exception` whose message
-   * starts with `Failed to parse xml string.` for input it can't read, such as an XML declaration, a comment, a
-   * self-closing tag, an attribute in single quotes, or text next to child elements.
+   * starts with `Failed to parse xml string.` for input it can't read, such as an XML declaration, a comment, a CDATA
+   * section, a self-closing tag, an attribute in single quotes, text that contains `=`, or text next to child elements.
    *
    * {{{
    * import zio._
