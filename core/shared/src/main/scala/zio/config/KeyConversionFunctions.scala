@@ -57,10 +57,12 @@ private[config] trait KeyConversionFunctions {
 
   /**
    * Converts a camelCase key to kebab-case with the older rule: it inserts `-` only where a lowercase letter `a` to `z`
-   * is followed by an uppercase letter `A` to `Z`, then lower-cases the whole key. It differs from `toKebabCase` where
-   * a digit is followed by an uppercase letter: `version2Name` becomes `version2name` here and `version2-name` there.
-   * Both turn `myValue123` into `my-value123` and `QAndA` into `qand-a`. Use it to keep keys written for the older
-   * rule.
+   * is followed by an uppercase letter `A` to `Z`, then lower-cases the whole key. `toKebabCase` splits there too, and
+   * in more places: before an uppercase letter that follows a digit, `_` or `-` in a word that already has a lowercase
+   * letter, and between a lowercase and an uppercase letter when either is not ASCII. So `version2Name` becomes
+   * `version2name` here and `version2-name` there, `max_Pool` becomes `max_pool` here and `max_-pool` there, and
+   * `fooÉtat` becomes `fooétat` here and `foo-état` there. Both turn `myValue123` into `my-value123` and `QAndA` into
+   * `qand-a`. Use it to keep keys written for the older rule.
    */
   val toKebabCaseLegacy: String => String =
     input => input.replaceAll("([a-z])([A-Z])", "$1-$2").toLowerCase
