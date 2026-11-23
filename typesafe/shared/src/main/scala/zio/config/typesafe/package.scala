@@ -15,7 +15,8 @@ package object typesafe {
 
     /**
      * Builds a `ConfigProvider` from `ConfigFactory.load()`, the standard Typesafe Config lookup: it reads
-     * `application.conf` from the classpath, and JVM system properties such as `-Dapp.port=7000` override its keys.
+     * `application.conf`, `application.properties` and `reference.conf` from the classpath, and JVM system properties
+     * such as `-Dapp.port=7000` override their keys.
      */
     def fromResourcePath(enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
       TypesafeConfigProvider.fromResourcePath(enableCommaSeparatedValueAsList)

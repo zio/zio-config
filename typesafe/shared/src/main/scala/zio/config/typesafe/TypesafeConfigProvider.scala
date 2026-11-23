@@ -15,15 +15,17 @@ import scala.util.{Failure, Success, Try}
  *
  * The constructors that take a string or a file parse it when they are called, and throw when it is not valid HOCON.
  * Each constructor has a `...ZIO` variant that returns a `Task[ConfigProvider]` and fails the task instead. A HOCON
- * object becomes nested keys, an array becomes a list, and an empty array is an empty list. An explicit `null` reads as
- * an empty string, so `Config.string("region").optional` gives `Some("")` for `region = null`, and
- * `Config.int("port").optional` fails for `port = null`. An array placed directly inside another array keeps only its
- * last element: `a = [ [1, 2], [3, 4] ]` read with `Config.listOf("a", Config.listOf(Config.int))` gives
- * `List(List(2), List(4))`.
+ * object becomes nested keys, an array becomes a list, and an empty array is an empty list. An explicit `null` as the
+ * value of a key reads as an empty string, so `Config.string("region").optional` gives `Some("")` for `region = null`,
+ * and `Config.int("port").optional` fails for `port = null`. A `null` element of an array is left out:
+ * `a = [1, null, 3]` read with `Config.listOf("a", Config.int)` gives `List(1, 3)`. An array placed directly inside
+ * another array keeps only its last element: `a = [ [1, 2], [3, 4] ]` read with
+ * `Config.listOf("a", Config.listOf(Config.int))` gives `List(List(2), List(4))`.
  *
- * By default a string value is never split. With `enableCommaSeparatedValueAsList = true`, a string value read as a
- * list is split at each `,`, so `ports = "8080,8443"` read with `Config.listOf("ports", Config.int)` gives
- * `List(8080, 8443)`. HOCON arrays are lists with or without the flag.
+ * By default a string value is not split at `,`. With `enableCommaSeparatedValueAsList = true`, a string value read as
+ * a list is split at each `,`, so `ports = "8080,8443"` read with `Config.listOf("ports", Config.int)` gives
+ * `List(8080, 8443)`, and each string element of an array is split as well, so `a = ["x,y", "z"]` gives
+ * `List(x, y, z)`. HOCON arrays are lists with or without the flag.
  *
  * {{{
  * import zio._
@@ -49,7 +51,8 @@ object TypesafeConfigProvider {
 
   /**
    * Builds a `ConfigProvider` from `ConfigFactory.load()`, the standard Typesafe Config lookup: it reads
-   * `application.conf` from the classpath, and JVM system properties such as `-Dapp.port=7000` override its keys.
+   * `application.conf`, `application.properties` and `reference.conf` from the classpath, and JVM system properties
+   * such as `-Dapp.port=7000` override their keys.
    *
    * With this `application.conf` on the classpath:
    *
