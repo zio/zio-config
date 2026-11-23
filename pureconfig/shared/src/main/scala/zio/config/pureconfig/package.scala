@@ -14,8 +14,8 @@ package object pureconfig {
    * fails, as a single value (such as `8080` or `[a, b]`), and the result goes to the reader. It reads one value, not a
    * group of keys: for a case class, the whole object has to be in that one string.
    *
-   * A parse error or a reader failure becomes a `Config.Error.InvalidData`. Because the text is HOCON, a string such as
-   * `http://example.com` or `a=b` fails unless it is wrapped in double quotes.
+   * A parse error or a reader failure becomes a `Config.Error.InvalidData`. Because the text is HOCON, reading a
+   * `String` such as `http://example.com` or `a=b` fails unless the text is wrapped in double quotes.
    *
    * @see
    *   [[https://zio.dev/zio-config/integrations/ Integrations]]
