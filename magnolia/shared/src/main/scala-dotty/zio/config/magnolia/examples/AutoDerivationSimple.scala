@@ -44,7 +44,7 @@ object AutoDerivationSimple extends App:
   }
 
   println(readResult)
-// This fails with "MissingValue path: a.y.type", because `y` has a type with
+// This fails with a MissingValue error, "Expected a.y.type to be set in properties", because `y` has a type with
 // `@discriminator("type")` and the map sets `a.y` instead of `a.y.type`. With "a.y.type" -> "HmmAbc" it prints
 // A(B(v1,C(),List(C(), C()),None,G(v2),F,G(GValue),Q,T(v3),AbcDef(hello),HmmAbc))
 end AutoDerivationSimple
