@@ -14,10 +14,12 @@ import scala.jdk.CollectionConverters._
 
 /**
  * Builds a `ConfigProvider` from YAML, parsed with snakeyaml-engine. A mapping becomes nested keys and a sequence
- * becomes a list, so a case class reads from a mapping and `Config.listOf` reads from a sequence. A key with no value
- * or with `null` is read as missing, and an empty sequence `[]` as an empty list. A value written as `\${NAME}`,
- * `\${NAME:-default}` or `\${NAME:?message}` is replaced with the environment variable `NAME` while the YAML is parsed,
- * as [[EnvConfigImpl]] describes.
+ * becomes a list, so a case class reads from a mapping and `Config.listOf` reads from a sequence. A mapping key that
+ * YAML reads as a number or a boolean, such as `8080:` or `true:`, makes every load from the provider die with a
+ * `java.lang.ClassCastException`. A key with no value or with `null` is read as missing, and an empty sequence `[]` as
+ * an empty list. A value written as `\${NAME}`, `\${NAME:-default}` or `\${NAME:?message}` is replaced with the
+ * environment variable `NAME` while the YAML is parsed, as [[EnvConfigImpl]] describes. This applies when the
+ * expression is the whole value, unquoted, and the default or message contains only letters, digits and `_`.
  *
  * Each constructor parses its input when it is called, and throws when the input can't be read or parsed; the `...ZIO`
  * variants return a `Task` that fails instead. An integer outside the `Long` range, such as `12345678901234567890`,

@@ -55,7 +55,7 @@ package object yaml {
 
     /**
      * Parses a YAML string into a `ConfigProvider`; the same as `YamlConfigProvider.fromYamlString`. Throws when the
-     * YAML is malformed or a `\${NAME:?message}` variable is not set.
+     * YAML is malformed or holds more than one document, or when a `\${NAME:?message}` variable is not set.
      *
      * {{{
      * import zio._
@@ -86,9 +86,10 @@ package object yaml {
 
     /**
      * Builds a `ConfigProvider` from YAML that another parser has already read. `loadYaml` turns `repr` into the values
-     * snakeyaml-engine produces: a `java.util.Map` with string keys, a `java.lang.Iterable`, a `String`, a boxed
-     * `Integer`, `Long`, `Float`, `Double` or `Boolean`, or `null`. Any other value makes it throw a
-     * `java.lang.RuntimeException` whose message starts with `Invalid yaml.`.
+     * snakeyaml-engine produces: a `java.util.Map`, a `java.lang.Iterable`, a `String`, a boxed `Integer`, `Long`,
+     * `Float`, `Double` or `Boolean`, or `null`. Any other value makes it throw a `java.lang.RuntimeException` whose
+     * message starts with `Invalid yaml.`. A map key that is not a `String` makes every load from the provider die with
+     * a `java.lang.ClassCastException`.
      *
      * {{{
      * import zio._
