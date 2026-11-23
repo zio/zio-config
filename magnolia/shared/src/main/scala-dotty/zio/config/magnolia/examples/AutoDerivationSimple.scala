@@ -14,6 +14,7 @@ import zio.config.syntax._
  */
 object AutoDerivationSimple extends App:
   // Use of Either is almost prohibited by the looks of it
+  /** The sample's input, with `.` between path segments and `,` between list elements. */
   val sourceMap =
     Map(
       "a.b-c"       -> "v1",
@@ -29,6 +30,7 @@ object AutoDerivationSimple extends App:
       "a.y"         -> "HmmAbc"
     )
 
+  /** A provider that reads `sourceMap`. */
   val source =
     ConfigProvider.fromMap(
       sourceMap,
@@ -36,9 +38,11 @@ object AutoDerivationSimple extends App:
       seqDelim = ","
     )
 
+  /** Loads `A` from `source`, with a failure turned into its `prettyPrint` text. */
   val io: IO[String, A] =
     source.load(deriveConfig[A].toKebabCase).mapError(_.prettyPrint())
 
+  /** The result of running `io`; it throws when loading fails. */
   val readResult = Unsafe.unsafe { implicit u =>
     zio.Runtime.default.unsafe.run(io).getOrThrowFiberFailure()
   }
