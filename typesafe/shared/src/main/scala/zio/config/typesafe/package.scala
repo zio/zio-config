@@ -37,7 +37,7 @@ package object typesafe {
 
     /**
      * Builds a `ConfigProvider` from a HOCON or JSON string. Substitutions are resolved first: `\${path}` refers to
-     * another key.
+     * another key, and `\${?NAME}` is looked up in the process environment as in Typesafe Config, and skipped when nothing is found.
      * Throws a `com.typesafe.config.ConfigException` when the string is not valid HOCON or a required substitution
      * can't be resolved.
      *
