@@ -17,10 +17,11 @@ import scala.collection.immutable
  * To read a type that derivation can't handle, transform an existing instance with `map`, `mapAttempt` or `mapOrFail`,
  * or wrap a hand-written description with `DeriveConfig(config)`, and put the result in implicit scope.
  *
- * Derivation also stores data that it uses to read sealed traits: on Scala 2, whether the type is a case object
- * (`isObject`, `constValue`); on Scala 3, its names (`metadata`). An instance built by hand, or returned by `map`,
- * `describe` or the other methods, has none of it. A subtype of a sealed trait with such an instance is read
- * differently on Scala 2 and Scala 3, and on Scala 3 `@discriminator` can't select it.
+ * Derivation also stores data that it uses to read sealed traits: on Scala 2, whether the type is a case object or a
+ * case class without fields (`isObject`) and a case object's value (`constValue`); on Scala 3, its names (`metadata`).
+ * An instance built by hand, or returned by `map`, `describe` or the other methods, has none of it. A subtype of a
+ * sealed trait with such an instance is read differently on Scala 2 and Scala 3, and on Scala 3 `@discriminator` can't
+ * select it.
  *
  * {{{
  * import java.nio.file.{Path, Paths}
@@ -161,10 +162,10 @@ object DeriveConfig {
   /** Reads a `BigInt` written in decimal, such as `123456789012345678901234567890`, with `Config.bigInt`. */
   implicit val implicitBigIntDesc: DeriveConfig[BigInt] = DeriveConfig(bigInt)
 
-  /** Reads a `Float` such as `1.5` or `1e3`, with `Config.float`. `NaN` fails. */
+  /** Reads a `Float` such as `1.5` or `1e3`, with `Config.float`. `NaN` and `Infinity` fail. */
   implicit val implicitFloatDesc: DeriveConfig[Float] = DeriveConfig(float)
 
-  /** Reads a `Double` such as `1.5`, with `Config.double`. `Infinity` fails. */
+  /** Reads a `Double` such as `1.5` or `1e3`, with `Config.double`. `NaN` and `Infinity` fail. */
   implicit val implicitDoubleDesc: DeriveConfig[Double] = DeriveConfig(double)
 
   /** Reads a `BigDecimal` such as `1.50` or `1e-3`, with `Config.bigDecimal`. */
@@ -245,7 +246,8 @@ object DeriveConfig {
     DeriveConfig(Config.nonEmptyChunkOf(DeriveConfig[A].desc))
 
   /**
-   * Reads every key under the field as a `Map[String, A]`, with `Config.table`. When no key is set, the map is empty.
+   * Reads the keys directly under the field as the keys of a `Map[String, A]`, with `Config.table`, and reads each
+   * value with the instance for `A`. When no key is set, the map is empty.
    */
   implicit def implicitMapDesc[A: DeriveConfig]: DeriveConfig[Map[String, A]] =
     DeriveConfig(Config.table(implicitly[DeriveConfig[A]].desc))
@@ -359,8 +361,9 @@ object DeriveConfig {
 
   /**
    * Magnolia's step for a case class. Each field is read under its key, with its `@describe` texts and its default
-   * value, and the class's `@describe` texts describe the whole. A case object or a case class without fields is read
-   * as its name, or its `@name`. A value class is read as its single field, without a key of its own.
+   * value. The class's `@describe` texts are added to the whole description, so `generateDocs` shows them on each
+   * field. A case object or a case class without fields is read as its `@name`, or as its name when it has none. A
+   * value class is read as its single field, without a key of its own.
    */
   final def combine[T](caseClass: CaseClass[DeriveConfig, T]): DeriveConfig[T] = {
     val descriptions                 = caseClass.annotations.collect { case d: describe => d.describe }

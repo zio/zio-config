@@ -22,10 +22,11 @@ import scala.quoted.*
  * To read a type that derivation can't handle, transform an existing instance with `map`, `mapAttempt` or `mapOrFail`,
  * or wrap a hand-written description with `DeriveConfig(config)`, and put the result in implicit scope.
  *
- * Derivation also stores data that it uses to read sealed traits: on Scala 2, whether the type is a case object
- * (`isObject`, `constValue`); on Scala 3, its names (`metadata`). An instance built by hand, or returned by `map`,
- * `describe` or the other methods, has none of it. A subtype of a sealed trait with such an instance is read
- * differently on Scala 2 and Scala 3, and on Scala 3 `@discriminator` can't select it.
+ * Derivation also stores data that it uses to read sealed traits: on Scala 2, whether the type is a case object or a
+ * case class without fields (`isObject`) and a case object's value (`constValue`); on Scala 3, its names (`metadata`).
+ * An instance built by hand, or returned by `map`, `describe` or the other methods, has none of it. A subtype of a
+ * sealed trait with such an instance is read differently on Scala 2 and Scala 3, and on Scala 3 `@discriminator` can't
+ * select it.
  *
  * {{{
  * import java.nio.file.{Path, Paths}
@@ -141,7 +142,7 @@ object DeriveConfig {
   /** What derivation records about a type to read sealed traits: its names, and for a case object its value. */
   sealed trait Metadata {
 
-    /** The name that derivation reads for the type. */
+    /** The Scala name of the type, without `@name`. */
     def originalName: String = this match {
       case Metadata.Object(name, _)    => name.originalName
       case Metadata.Product(name, _)   => name.originalName
@@ -218,10 +219,10 @@ object DeriveConfig {
   /** Reads a `BigInt` written in decimal, such as `123456789012345678901234567890`, with `Config.bigInt`. */
   given DeriveConfig[BigInt] = DeriveConfig.from(bigInt)
 
-  /** Reads a `Float` such as `1.5` or `1e3`, with `Config.float`. `NaN` fails. */
+  /** Reads a `Float` such as `1.5` or `1e3`, with `Config.float`. `NaN` and `Infinity` fail. */
   given DeriveConfig[Float] = DeriveConfig.from(float)
 
-  /** Reads a `Double` such as `1.5`, with `Config.double`. `Infinity` fails. */
+  /** Reads a `Double` such as `1.5` or `1e3`, with `Config.double`. `NaN` and `Infinity` fail. */
   given DeriveConfig[Double] = DeriveConfig.from(double)
 
   /** Reads a `BigDecimal` such as `1.50` or `1e-3`, with `Config.bigDecimal`. */
@@ -302,7 +303,8 @@ object DeriveConfig {
     DeriveConfig.from(nonEmptyChunkOf(ev.desc))
 
   /**
-   * Reads every key under the field as a `Map[String, A]`, with `Config.table`. When no key is set, the map is empty.
+   * Reads the keys directly under the field as the keys of a `Map[String, A]`, with `Config.table`, and reads each
+   * value with the instance for `A`. When no key is set, the map is empty.
    */
   given mapDesc[A](using ev: DeriveConfig[A]): DeriveConfig[Map[String, A]] =
     DeriveConfig.from(table(ev.desc))
@@ -459,8 +461,9 @@ object DeriveConfig {
 
   /**
    * Combines the instances of the subtypes of a sealed trait. Without `typeDiscriminator`, each subtype is tried in
-   * turn, a case class with fields under its name (or its `@name`). With `typeDiscriminator`, the subtype's name is
-   * read from that key; a subtype whose instance has no metadata is left out.
+   * turn, a case class with fields under its `@name` values, or under its name when it has none. With
+   * `typeDiscriminator`, the subtype's name is read from that key; a subtype whose instance has no metadata is left
+   * out.
    */
   def mergeAllProducts[T](
     allDescs: => List[DeriveConfig[T]],
