@@ -5,10 +5,16 @@ import scala.annotation.tailrec
 private[config] trait KeyConversionFunctions {
 
   /**
-   * Convert camelCase to any delimited string. Example:
+   * Splits a camelCase string into words, lower-cases each word and joins the words with `delimiter`. A new word starts
+   * at an uppercase letter, unless the current word so far holds only uppercase letters and non-letters. So
+   * `maxPoolSize` splits into `max`, `pool` and `size`, `version2Name` splits before `N`, and `HTTPServer` stays one
+   * word. Other characters, such as an existing `-` or `_`, are kept.
    *
    * {{{
-   *   camelToDelimiter("abcDef", "-") === abc-def
+   * import zio.config._
+   *
+   * val key: String = camelToDelimiter("maxPoolSize", ".")
+   * // max.pool.size
    * }}}
    */
   def camelToDelimiter(input: String, delimiter: String): String = {
@@ -35,40 +41,47 @@ private[config] trait KeyConversionFunctions {
   }
 
   /**
-   * Convert a camelCase key to kebab-case val s = abcDef toKebabCase(s) === abc-def
+   * Converts a camelCase key to kebab-case with `camelToDelimiter(_, "-")`. `maxPoolSize` becomes `max-pool-size` and
+   * `version2Name` becomes `version2-name`. Digits stay in the word before them, and a run of capitals at the start of
+   * a word stays in that word: `myValue123` becomes `my-value123`, and `QAndA` becomes `qand-a`.
    *
-   * This version handles numeric boundaries properly:
-   *   - "myValue123" -> "my-value-123"
-   *   - "QAndA" -> "q-and-a"
+   * {{{
+   * import zio.config._
+   *
+   * val key: String = toKebabCase("version2Name")
+   * // version2-name
+   * }}}
    */
   val toKebabCase: String => String =
     camelToDelimiter(_, "-")
 
   /**
-   * Legacy kebab-case conversion that only handles lowercase-uppercase boundaries. Use this for backward compatibility
-   * with configs created before zio-config 4.0.5.
-   *
-   * Example:
-   *   - "myValue123" -> "my-value123" (numbers not separated)
-   *   - "QAndA" -> "qand-a" (consecutive capitals not separated)
+   * Converts a camelCase key to kebab-case with the older rule: it inserts `-` only where a lowercase letter `a` to `z`
+   * is followed by an uppercase letter `A` to `Z`, then lower-cases the whole key. It differs from `toKebabCase` where
+   * a digit is followed by an uppercase letter: `version2Name` becomes `version2name` here and `version2-name` there.
+   * Both turn `myValue123` into `my-value123` and `QAndA` into `qand-a`. Use it to keep keys written for the older
+   * rule.
    */
   val toKebabCaseLegacy: String => String =
     input => input.replaceAll("([a-z])([A-Z])", "$1-$2").toLowerCase
 
   /**
-   * Convert a camelCase key to snake_case
+   * Converts a camelCase key to snake_case with `camelToDelimiter(_, "_")`, splitting words as `toKebabCase` does:
+   * `maxPoolSize` becomes `max_pool_size`.
    */
   val toSnakeCase: String => String =
     camelToDelimiter(_, "_")
 
   /**
-   * Add a prefix to an existing key
+   * Returns a function that puts `prefix` before a key and capitalizes the key's first letter, keeping camelCase:
+   * `addPrefixToKey("db")("poolSize")` is `dbPoolSize`.
    */
   def addPrefixToKey(prefix: String): String => String =
     s => s"${prefix}${s.capitalize}"
 
   /**
-   * Add a post fix to an existing key
+   * Returns a function that capitalizes the first letter of `string` and puts it after a key, keeping camelCase:
+   * `addPostFixToKey("timeout")("read")` is `readTimeout`.
    */
   def addPostFixToKey(string: String): String => String =
     s => s"${s}${string.capitalize}"
