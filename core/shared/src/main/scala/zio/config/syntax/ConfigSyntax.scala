@@ -284,10 +284,11 @@ trait ConfigSyntax {
       config.map(Left(_)).orElse(that.map(Right(_)))
 
     /**
-     * Returns a config that asks for each key of this config under the name `f(name)`. It changes every name given to
-     * `nested`, which includes the names passed to constructors such as `Config.int("port")` and `Config.listOf`. The
-     * keys that a `Config.table` finds in the source are not changed. Use it when the source names keys differently
-     * from the config, as with upper-case environment variables or a derived config.
+     * Returns a config that asks for each key of this config under the name `f(name)`. It changes the names given to
+     * `nested`, which includes the names passed to constructors such as `Config.int("port")` and `Config.listOf`. It
+     * doesn't change the keys of the config that `switch` reads to choose a branch (the branches are changed), or the
+     * keys that a `Config.table` finds in the source. Use it when the source names keys differently from the config, as
+     * with upper-case environment variables or a derived config.
      *
      * With an `optional` config inside, including an `Option` field of a derived config, an invalid value is read as
      * `None` after `mapKey`, instead of failing.
