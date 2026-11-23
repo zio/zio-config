@@ -3,9 +3,11 @@ package zio.config.derivation
 import scala.annotation.implicitAmbiguous
 
 /**
- * Compile-time evidence that `T` is not a `List`, `Option` or `Either`. An implicit `NeedsDerive[T]` resolves for a
- * type such as `Int`, while for `List[A]`, `Option[A]` and `Either[A, B]` implicit search fails with an ambiguity error
- * whose message suggests wrapping the value in a case class.
+ * Compile-time evidence that `T` is not a `List`, `Option` or `Either`, nor a supertype of one. An implicit
+ * `NeedsDerive[T]` resolves for a type such as `Int` or `Vector[Int]`, while for `List[A]`, `Option[A]` and
+ * `Either[A, B]` implicit search fails with an ambiguity error whose message suggests wrapping the value in a case
+ * class. Because `NeedsDerive` is covariant, the search also fails for a supertype of these, such as `Seq[Int]`,
+ * `Iterable[String]` or `Product`.
  *
  * ZIO Config's derivation (`deriveConfig`) does not ask for it, so `deriveConfig[List[Int]]` compiles. Some of the
  * messages suggest `descriptor[T]`, a function that ZIO Config 4.x doesn't have; use `deriveConfig[T]`.
@@ -15,7 +17,10 @@ sealed trait NeedsDerive[+T]
 /** The single `NeedsDerive` value, and the implicits that provide or refuse it. */
 object NeedsDerive extends NeedsDerive[Nothing] {
 
-  /** Provides `NeedsDerive[R]` for a type `R` that is not a `List`, `Option` or `Either`. */
+  /**
+   * Provides `NeedsDerive[R]` for a type `R` that is not a `List`, `Option` or `Either`, nor a supertype of one such as
+   * `Seq[Int]`.
+   */
   implicit def needsDerive[R]: NeedsDerive[R] = NeedsDerive
 
   /**
