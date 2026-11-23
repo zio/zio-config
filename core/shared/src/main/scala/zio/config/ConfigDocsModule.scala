@@ -262,8 +262,8 @@ trait ConfigDocsModule {
 
     /**
      * Renders this table as GitHub-flavoured Markdown: a `## Configuration Details` heading, then one Markdown table
-     * for this table and one under a `###` heading for each nested table. In a row with a nested table, the name and
-     * the format link to that table's heading.
+     * for this table and one under a `###` heading for each nested table. In a row with a nested table, the format, and
+     * the name when the row has a key, link to that table's heading.
      *
      * {{{
      * import zio._
@@ -604,7 +604,7 @@ trait ConfigDocsModule {
      * @param nested
      *   the table of the keys under this row, when it has any
      * @param sources
-     *   the names shown in the `Sources` column; `generateDocs` leaves it empty
+     *   the names shown in the `Sources` column; `toTable` leaves it empty
      */
     case class TableRow(
       paths: List[FieldName],
@@ -659,7 +659,7 @@ trait ConfigDocsModule {
       case object List extends Format
 
       /**
-       * A map from keys found in the source to values.
+       * A map from keys found in the source to values. A config built with `switch` also gets this format.
        */
       case object Map extends Format
 
@@ -735,7 +735,8 @@ trait ConfigDocsModule {
   /**
    * Builds the documentation of `config`: its keys, the built-in description of each value (such as
    * `an integer property`), the descriptions added with `??`, and how the keys combine. Convert the result with
-   * `toTable` and render that as Markdown.
+   * `toTable` and render that as Markdown. The table shows the key that a `switch` reads, with the format `map`, and
+   * leaves out its branches.
    *
    * `generateDocs` does not support recursive configs built with `Config.defer`.
    *
