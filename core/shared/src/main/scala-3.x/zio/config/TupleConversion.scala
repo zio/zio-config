@@ -3,9 +3,9 @@ package zio.config
 import scala.deriving._
 
 /**
- * Converts between a case class `A` and `B`, the tuple of its field types. `Config#to` uses it to turn a config of a
- * tuple into a config of a case class. `ImplicitTupleConversion` derives instances for case classes: on Scala 2 with a
- * macro, on Scala 3 from the case class's `Mirror`.
+ * Converts between a case class `A` and `B`, the tuple of its field types, or the field's type for a case class with
+ * one field. `Config#to` uses it to turn a config of a tuple into a config of a case class. `ImplicitTupleConversion`
+ * derives instances for case classes: on Scala 2 with a macro, on Scala 3 from the case class's `Mirror`.
  *
  * {{{
  * import zio.config._
@@ -37,8 +37,8 @@ trait TupleConversion[A, B] {
 object TupleConversion extends ImplicitTupleConversion
 
 /**
- * Provides the `TupleConversion` instances for case classes. The `zio.config` package object extends it, so
- * `import zio.config._` brings them into scope.
+ * Provides the `TupleConversion` instances for case classes. The compiler finds them without an import: the
+ * `zio.config` package object extends this trait, and on Scala 3 the `TupleConversion` companion extends it too.
  */
 trait ImplicitTupleConversion {
 

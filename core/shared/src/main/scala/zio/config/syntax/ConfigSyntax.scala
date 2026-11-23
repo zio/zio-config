@@ -373,9 +373,9 @@ trait ConfigSyntax {
 
     /**
      * Converts the value of this config into the case class `B`, using an implicit [[zio.config.TupleConversion]]. With
-     * the instances that `import zio.config._` derives, the value must be the tuple of the field types of `B` in field
-     * order, as `zip` builds it, or the field's type for a case class with one field. A tuple in another order, or a
-     * `B` that isn't a case class, doesn't compile.
+     * the instances that zio-config derives for case classes, the value must be the tuple of the field types of `B` in
+     * field order, as `zip` builds it, or the field's type for a case class with one field. A tuple in another order,
+     * or a `B` that isn't a case class, doesn't compile.
      *
      * {{{
      * import zio._
