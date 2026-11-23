@@ -287,9 +287,8 @@ trait ConfigSyntax {
      * keys that a `Config.table` finds in the source are not changed. Use it when the source names keys differently
      * from the config, as with upper-case environment variables or a derived config.
      *
-     * A known bug: an `optional` config inside, including an `Option` field of a derived config, loses its rule of
-     * falling back to `None` only when the value is missing. After `mapKey`, an invalid value reads as `None` instead
-     * of failing.
+     * With an `optional` config inside, including an `Option` field of a derived config, an invalid value is read as
+     * `None` after `mapKey`, instead of failing.
      *
      * {{{
      * import zio._
@@ -329,7 +328,8 @@ trait ConfigSyntax {
 
     /**
      * Returns a config that asks for each key in kebab-case, converted with `zio.config.toKebabCase`, so `maxPoolSize`
-     * reads the key `max-pool-size`. It changes the same keys as `mapKey`, and shares its known bug with `optional`.
+     * reads the key `max-pool-size`. It changes the same keys as `mapKey`, so an invalid value under `optional` is read
+     * as `None` here too.
      *
      * {{{
      * import zio._
@@ -348,21 +348,22 @@ trait ConfigSyntax {
 
     /**
      * Returns a config that asks for each key in snake_case, converted with `zio.config.toSnakeCase`, so `maxPoolSize`
-     * reads the key `max_pool_size`. It changes the same keys as `mapKey`, and shares its known bug with `optional`.
+     * reads the key `max_pool_size`. It changes the same keys as `mapKey`, so an invalid value under `optional` is read
+     * as `None` here too.
      */
     def toSnakeCase: Config[A] =
       mapKey(zio.config.toSnakeCase)
 
     /**
      * Returns a config that asks for each key in upper case, so `port` reads the key `PORT`. It changes the same keys
-     * as `mapKey`, and shares its known bug with `optional`.
+     * as `mapKey`, so an invalid value under `optional` is read as `None` here too.
      */
     def toUpperCase: Config[A] =
       mapKey(_.toUpperCase())
 
     /**
      * Returns a config that asks for each key in lower case, so `dbUrl` reads the key `dburl`. It changes the same keys
-     * as `mapKey`, and shares its known bug with `optional`.
+     * as `mapKey`, so an invalid value under `optional` is read as `None` here too.
      */
     def toLowerCase: Config[A] =
       mapKey(_.toLowerCase())
@@ -694,9 +695,8 @@ trait ConfigSyntax {
 
     /**
      * A config that reads a `Long` through `Config.bigInt`. ZIO's `Config` companion has its own `long` with the same
-     * definition, so `Config.long` calls ZIO's, and this one is reached as `FromConfigOps(Config).long`. A known bug,
-     * in both: a number outside the `Long` range wraps around, so `9223372036854775808` reads as
-     * `-9223372036854775808`.
+     * definition, so `Config.long` calls ZIO's, and this one is reached as `FromConfigOps(Config).long`. In both, a
+     * number outside the `Long` range wraps around, so `9223372036854775808` reads as `-9223372036854775808`.
      */
     def long: Config[Long] =
       Config.bigInt.map(_.toLong)

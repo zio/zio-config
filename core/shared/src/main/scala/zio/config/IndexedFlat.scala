@@ -96,9 +96,9 @@ object IndexedFlat {
      * Converts back to a `Chunk[String]` path, writing each index into the key name before it: `KeyName(employees)`,
      * `Index(0)`, `KeyName(age)` becomes `Chunk(employees[0], age)`.
      *
-     * A known bug: the conversion stops at an index that doesn't directly follow a key name, and drops that index and
-     * everything after it. So `KeyName(m)`, `Index(0)`, `Index(1)`, `KeyName(x)` becomes `Chunk(m[0])`, and a path that
-     * starts with an index becomes empty.
+     * The conversion stops at an index that doesn't directly follow a key name, and drops that index and everything
+     * after it. So `KeyName(m)`, `Index(0)`, `Index(1)`, `KeyName(x)` becomes `Chunk(m[0])`, and a path that starts
+     * with an index becomes empty.
      */
     def toPath(configPath: ConfigPath): Chunk[String] = {
 
