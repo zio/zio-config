@@ -2,14 +2,50 @@ package zio.config
 
 import scala.reflect.macros.whitebox
 
+/**
+ * Converts between a case class `A` and `B`, the tuple of its field types, or the field's type for a case class with
+ * one field. `Config#to` uses it to turn a config of a tuple into a config of a case class. `ImplicitTupleConversion`
+ * derives instances for case classes: on Scala 2 with a macro, on Scala 3 from the case class's `Mirror`.
+ *
+ * {{{
+ * import zio.config._
+ *
+ * final case class Endpoint(host: String, port: Int)
+ *
+ * val conversion = implicitly[TupleConversion[Endpoint, (String, Int)]]
+ *
+ * val fields: (String, Int) = conversion.to(Endpoint("api.example.com", 443))
+ * // (api.example.com,443)
+ * }}}
+ */
 trait TupleConversion[A, B] {
+
+  /**
+   * Returns the fields of `a` as a `B`.
+   */
   def to(a: A): B
+
+  /**
+   * Builds an `A` from the fields in `b`.
+   */
   def from(b: B): A
 }
 
-object TupleConversion        {
+/**
+ * Companion of [[TupleConversion]].
+ */
+object TupleConversion {
+
+  /**
+   * Derives the `TupleConversion` for the case class `P` with a macro. The macro picks the target type from the fields
+   * of `P`: the field's type for one field, a tuple for more. For a type that isn't a case class, compilation fails;
+   * for `class Plain(val a: Int)` the message is `Type class Plain is not a case class`.
+   */
   def apply[P, T]: TupleConversion[P, T] = macro genTupleConversion[P, T]
 
+  /**
+   * The macro implementation behind `apply` and `autoTupleConversion`. It isn't meant to be called directly.
+   */
   def genTupleConversion[P: c.WeakTypeTag, T: c.WeakTypeTag](
     c: whitebox.Context
   ): c.Expr[TupleConversion[P, T]] = {
@@ -67,7 +103,8 @@ object TupleConversion        {
             }
             """
       case Nil          =>
-        // Special case: zero parameter products
+        // No parameter list. A case class always has one, so this case is not reached: `case class Empty()` has
+        // `List(List())`, takes the `List(params)` case, and gets no instance.
         q"""new _root_.zio.config.TupleConversion[$prodTpe, Unit] {
                 override def to(a: $prodTpe): Unit = ()
                 override def from(b: Unit): $prodTpe =
@@ -84,10 +121,26 @@ object TupleConversion        {
     c.Expr(result)
   }
 }
+
+/**
+ * Provides the `TupleConversion` instances for case classes. The compiler finds them without an import: the
+ * `zio.config` package object extends this trait, and on Scala 3 the `TupleConversion` companion extends it too.
+ */
 trait ImplicitTupleConversion {
+
+  /**
+   * Derives a `TupleConversion` from a case class to the tuple of its field types. On Scala 2, a case class with one
+   * field converts to that field's type. On Scala 3, it converts to a `Tuple1`, and `autoTupleConversion1` gives the
+   * conversion to the field's type.
+   */
   implicit def autoTupleConversion[P <: Product, T]: TupleConversion[P, T] =
     macro TupleConversion.genTupleConversion[P, T]
 
+  /**
+   * On Scala 3, turns a conversion to `Tuple1[A]` into a conversion to `A`, so a case class with one field converts to
+   * that field's type. On Scala 2 it is not implicit and has no implementation: it exists so that code built for both
+   * versions can import it by name, and calling it throws `scala.NotImplementedError`.
+   */
   def autoTupleConversion1[P, A](implicit ev: TupleConversion[P, Tuple1[A]]): TupleConversion[P, A] =
     ??? // defined here so it can be used in explicit imports when cross-compiling
 }

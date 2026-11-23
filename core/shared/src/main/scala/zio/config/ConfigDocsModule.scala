@@ -2,21 +2,40 @@ package zio.config
 
 import zio.Config
 
+/**
+ * Generates documentation for a `Config`. `generateDocs` describes a config as `ConfigDocs`, `ConfigDocs#toTable` turns
+ * that into a `Table`, and the table renders as Markdown. The `zio.config` package object extends this trait, so
+ * `import zio.config._` brings `generateDocs` and `Table` into scope.
+ *
+ * {{{
+ * import zio._
+ * import zio.config._
+ *
+ * val database: Config[(String, Int)] =
+ *   (Config.string("host") ?? "Database host").zip(Config.int("port") ?? "Database port").nested("database")
+ *
+ * val markdown: String = generateDocs(database).toTable.toGithubFlavouredMarkdown
+ * }}}
+ *
+ * @see
+ *   [[https://zio.dev/zio-config/dive-into-zio-config/ Dive Into ZIO Config]]
+ */
 trait ConfigDocsModule {
   import Table._
 
   /**
-   * `ConfigDocs` holds the descriptions and details of a `Config` which can be used to produce documentation.
+   * The documentation of a `Config`, built by `generateDocs`: its keys, their descriptions, and how they combine
+   * (nested keys, `zip`, `orElse`, lists and maps). Its cases are not public; convert it with `toTable` to read or
+   * render it.
    */
   sealed trait ConfigDocs { self =>
     private def is[A](f: PartialFunction[ConfigDocs, A])(orElse: A): A =
       f.applyOrElse(self, (_: ConfigDocs) => orElse)
 
     /**
-     * Convert a {{{ConfigDocs}}} to a {{{Table}}}.
-     *
-     * A Table is a recursive structure that is more easier to be interpreted as Json or Markdown than trying to convert
-     * `ConfigDocs` to a readable format.
+     * Converts these docs into a `Table`. Each row holds a key with its format and descriptions, and a row whose key
+     * holds other keys points to a nested table. Render it with `Table#toGithubFlavouredMarkdown`,
+     * `Table#toConfluenceMarkdown` or `Table#toMarkdown`.
      */
     def toTable: Table = {
       def filterDescriptions(
@@ -213,24 +232,28 @@ trait ConfigDocsModule {
   }
 
   /**
-   * A Table is a recursive structure that is more easier to be interpreted as Json or Markdown than trying to convert
-   * `ConfigDocs` to a readable format.
+   * A table of config documentation, built by `ConfigDocs#toTable`. Each `Table.TableRow` describes a key, or a group
+   * of keys, and can point to a nested table for the keys under it. Render it with `toGithubFlavouredMarkdown`,
+   * `toConfluenceMarkdown` or `toMarkdown`, or read `rows` to produce another format.
    *
-   * @param rows:
-   *   A table consist of multiple `TableRow`s where each `TableRow` holds the information about the config path.
+   * @param rows
+   *   the rows of this table, in the order of the config
    */
   sealed case class Table(rows: List[TableRow]) { self =>
+
+    /**
+     * Returns a table with the rows of this table followed by the rows of `that`.
+     */
     def ++(that: Table): Table =
       Table(rows ++ that.rows)
 
     /**
-     * Create a Confluence flavored markdown string from Table. This can be used if you are planning to render this
-     * markdown in Atlassian's Confluence pages.
+     * Renders this table as Markdown for Atlassian Confluence, with `Table.confluenceFlavoured` links of the form
+     * `[name|target]`. With `Some(url)`, a link to the heading `database` targets `url-database`; with `None`, it
+     * targets `database`.
      *
-     * @param baseUrl:
-     *   Every heading in a markdown rendered through Atlassian's Confluence page needs to have a baseUrl. This can be
-     *   the baseUrl of the confluence page in which markdown is rendered. The heading in markdown will be the keys of
-     *   your application config.
+     * @param baseUrl
+     *   the URL of the Confluence page that shows the Markdown, or `None`
      */
     def toConfluenceMarkdown(
       baseUrl: Option[String]
@@ -238,11 +261,46 @@ trait ConfigDocsModule {
       toMarkdown(Table.confluenceFlavoured(baseUrl))
 
     /**
-     * Create a Github flavored markdown string from Table. This can be used to render markdowns in Github, Gitlab etc
+     * Renders this table as GitHub-flavoured Markdown: a `## Configuration Details` heading, then one Markdown table
+     * for this table and one under a `###` heading for each nested table. In a row with a nested table, the format, and
+     * the name when the row has a key, link to that table's heading.
+     *
+     * {{{
+     * import zio._
+     * import zio.config._
+     *
+     * val markdown: String =
+     *   generateDocs(Config.int("port") ?? "HTTP port").toTable.toGithubFlavouredMarkdown
+     * //
+     * // ## Configuration Details
+     * //
+     * //
+     * // |FieldName|Format   |Description                   |Sources|
+     * // |---      |---      |---                           |---    |
+     * // |port     |primitive|an integer property, HTTP port|       |
+     * }}}
      */
     def toGithubFlavouredMarkdown: String =
       toMarkdown(Table.githubFlavoured)
 
+    /**
+     * Renders this table as Markdown, building each link with `getLink`. For a row that has a nested table, `getLink`
+     * receives the heading of that table, the heading's index, and either the row's field name or its format. The index
+     * is `0` for the first use of a heading and goes up by one for each further use; rows are counted from the last row
+     * of a table to the first, and a nested table continues the count of the table that contains it. Rows without a
+     * nested table show plain text. `toGithubFlavouredMarkdown` and `toConfluenceMarkdown` call this method with
+     * `Table.githubFlavoured` and `Table.confluenceFlavoured`.
+     *
+     * {{{
+     * import zio._
+     * import zio.config._
+     *
+     * val table: Table = generateDocs(Config.int("port").zip(Config.string("host")).nested("server")).toTable
+     *
+     * val plain: String =
+     *   table.toMarkdown((_, _, nameOrFormat) => Table.Link.rawString(nameOrFormat.fold(_.asString(None), _.asString)))
+     * }}}
+     */
     def toMarkdown(
       getLink: (Heading, Int, Either[FieldName, Format]) => Link
     ): String = {
@@ -350,9 +408,16 @@ trait ConfigDocsModule {
       )
     }
 
+    /**
+     * Returns a table whose rows have their format replaced with `f` of the current format. Nested tables are not
+     * changed.
+     */
     def mapFormat(f: Option[Format] => Format): Table =
       Table(rows.map(row => row.copy(format = Some(f(row.format)))))
 
+    /**
+     * Returns a table whose rows all have the format `format`. Nested tables are not changed.
+     */
     def withFormat(format: Format): Table =
       mapFormat(_ => format)
 
@@ -367,7 +432,14 @@ trait ConfigDocsModule {
     private def mkStringAndWrapWith(input: List[String], str: String): String =
       wrapWith(input.mkString(str), str)
 
-    type Size  = Int
+    /**
+     * The width of a Markdown column, in characters.
+     */
+    type Size = Int
+
+    /**
+     * The position of a Markdown column, from `0`.
+     */
     type Index = Int
 
     private def getSizeOfIndices(
@@ -390,45 +462,73 @@ trait ConfigDocsModule {
     }
   }
 
+  /**
+   * The parts of a `Table` and its Markdown rendering: headings, links, rows, formats and field names.
+   */
   object Table {
 
+    /**
+     * The heading of a nested table in the Markdown, named by the path of keys that leads to it.
+     */
     abstract sealed case class Heading(path: List[FieldName])
 
+    /**
+     * Builds a `Heading`.
+     */
     object Heading {
+
+      /**
+       * Returns the heading for `list`. An empty path gives a heading of `FieldName.Blank`, which renders as
+       * `Field Descriptions`.
+       */
       def mk(list: List[FieldName]): Heading =
         if (list.isEmpty) new Heading(List(FieldName.Blank)) {}
         else
           new Heading(list)                                  {}
     }
 
+    /**
+     * The Markdown text of a table cell: plain text or a link.
+     */
     abstract sealed case class Link(value: String)
 
+    /**
+     * Builds a `Link`.
+     */
     object Link {
 
+      /**
+       * An empty cell.
+       */
       def blank: Link = new Link("") {}
 
+      /**
+       * The text `s`, unchanged.
+       */
       def rawString(s: String): Link =
         new Link(s) {}
 
+      /**
+       * A Markdown link, `[name](link)`.
+       */
       def githubLink(name: String, link: String): Link =
         new Link(s"[${name}](${link})") {}
 
+      /**
+       * A Confluence link, `[name|link]`.
+       */
       def confluenceLink(name: String, link: String): Link =
         new Link(s"[${name}|${link}]") {}
 
     }
 
     /**
-     * Internal function that represents the creation of a github flavoured markdown. The implementation can be used as
-     * reference for users who would like to produce a different style markdown rendering by specifying how to create
-     * `Link` given a `Heading`, `Int` representing the index of the key (or paths) and `Either[FieldName, Format]`.
-     *
-     * The index exists because it represents the index of a heading (which is the individual key of paths) in markdown.
-     * This is usually zero for all headings unless there are duplicate headings in the markdown. There is a possibility
-     * of duplicate headings in the markdown, if for instance, given a path `x.y` and `k.y`, the heading `y` can appear
-     * twice in the markdown file with indices as 0 and 1. Depending on the flavour of markdown (Example: Github,
-     * Confluence) we have different ways to produce links towards those headings. In this case, we employ the strategy
-     * used by Github.
+     * The link builder that `toGithubFlavouredMarkdown` passes to `toMarkdown`, and a model for writing your own. It
+     * links to the GitHub anchor of the heading: the heading's key names joined together, lower-cased, with dots
+     * removed and spaces turned into `-`. So the heading `x.y` gives `#xy`, and an empty path gives
+     * `#field-descriptions`. A non-zero index is added as `-1`, `-2` and so on, the suffix GitHub gives a repeated
+     * heading. `toMarkdown` numbers repeated headings from the last row up, so when both sides of an `orElse` use the
+     * key `db`, the first row links to `#db-1`, which GitHub gives to the second `### db` table.
      */
     def githubFlavoured: (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, index, fieldNameOrFormat) => {
@@ -450,6 +550,24 @@ trait ConfigDocsModule {
       }
 
     // Confluence markdown
+    /**
+     * The link builder that `toConfluenceMarkdown` passes to `toMarkdown`. It links to the heading's key names joined
+     * together, with dots and spaces removed and case kept, prefixed by `baseLink` and `-` when `baseLink` is given. It
+     * ignores the heading index.
+     *
+     * {{{
+     * import zio._
+     * import zio.config._
+     *
+     * val link: Table.Link =
+     *   Table.confluenceFlavoured(Some("https://wiki.example.com/display/OPS"))(
+     *     Table.Heading.mk(List(Table.FieldName.Key("database"))),
+     *     0,
+     *     Right(Table.Format.AllOf)
+     *   )
+     * // Link([all-of|https://wiki.example.com/display/OPS-database])
+     * }}}
+     */
     def confluenceFlavoured(baseLink: Option[String]): (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, _, fieldName) => {
         val headingStr =
@@ -467,27 +585,26 @@ trait ConfigDocsModule {
         )
       }
 
+    /**
+     * Returns a table with the single row `tableRow`.
+     */
     def singletonTable(tableRow: TableRow): Table =
       Table(List(tableRow))
 
     /**
-     * A `TableRow` represents each row in a `Table` which is an intermediate light-weight structure produced from
-     * `ConfigDocs`. `Table` is more easier to be converted to formats such as Json, markdown or any custom format fo
-     * your choice.
+     * One row of a `Table`, shown as one line of a Markdown table.
      *
      * @param paths
-     *   : Each config key is basically a list of paths representing its hierarchy. Example: "aws.ec2.instance.type"
-     *   where list of paths is List("aws", "ec2", "instance", "type")
+     *   the keys that lead to this row, such as `aws`, `ec2`, `type` for the key `aws.ec2.type`. In a nested table they
+     *   can start below the root, and they are empty for a row that groups keys without a key of its own.
      * @param format
-     *   : The format of value of key (paths). Example: it can be a Primitive type (String, Int etc), or it can be
-     *   complex structures as such as List or Map.
+     *   the shape of the value: a primitive, a list, a map, nested keys, or a group of keys (`AllOf`, `AnyOneOf`)
      * @param description
-     *   : Description (zio-config in-built or user-provided) of the key (paths).
+     *   the descriptions of the key: the built-in one, such as `an integer property`, and those added with `??`
      * @param nested
-     *   : A `TableRow` can be pointed to a nested table that has the details of all the child paths that are under
-     *   `paths`. Hence `TableRow` is a recursive structure.
-     * @param sources:
-     *   All the sources from which `paths` can be retrieved.
+     *   the table of the keys under this row, when it has any
+     * @param sources
+     *   the names shown in the `Sources` column; `toTable` leaves it empty
      */
     case class TableRow(
       paths: List[FieldName],
@@ -497,25 +614,26 @@ trait ConfigDocsModule {
       sources: Set[String]
     ) {
       // A single row can be turned to a table
+      /**
+       * Returns a table with this row only.
+       */
       def asTable: Table =
         singletonTable(this)
     }
 
     /**
-     * Format is further used in `Table` which is used for config documentation. Format helps the readers of the
-     * documentation understand the details of the format of each paths that forms their application config.
-     *
-     * Example: A format can be `List`, `Map`, `Primitive`, or it can even be even more complex such as `AllOf` or
-     * `AnyOneOf`. If `Format` of paths `K` is `AllOf`, it implies that there are more distinct paths under the paths
-     * `K`, and user need to satisfy (i.e, provide them in the source) all of the paths under `K`.
-     *
-     * If `Format` of paths `K` is `AnyOneOf`, it implies there are more distinct paths under the paths `K`, then user
-     * need to satisfy (i.e, provide them in the source) any one of the paths under `K`.
-     *
-     * If `Format` of oaths `K` is `Recursion` then that means there is a repetition of same path structure under the
-     * paths `K`
+     * The shape of the value at a row's key, shown in the `Format` column. `Primitive` is a single value; `List` and
+     * `Map` are collections; `Nested` is a key that holds other keys. `AllOf` means the keys under it must all be
+     * given, as built by `zip`, and `AnyOneOf` means one of the alternatives under it must be given, as built by
+     * `orElse`. `NotApplicable` renders as an empty cell. `Recursion` and `RecursionList` name recursive configs, but
+     * `toTable` doesn't produce them.
      */
     sealed trait Format { self =>
+
+      /**
+       * Returns the text of the `Format` column: `list`, `map`, `primitive`, `nested`, `any-one-of`, `all-of`,
+       * `recursion`, `list of recursion`, or an empty string for `NotApplicable`.
+       */
       def asString: String =
         self match {
           case Format.List          => "list"
@@ -530,19 +648,66 @@ trait ConfigDocsModule {
         }
     }
 
+    /**
+     * The cases of `Format`.
+     */
     object Format {
-      case object List          extends Format
-      case object Map           extends Format
-      case object Primitive     extends Format
-      case object Nested        extends Format
-      case object AnyOneOf      extends Format
-      case object AllOf         extends Format
+
+      /**
+       * A list of values.
+       */
+      case object List extends Format
+
+      /**
+       * A map from keys found in the source to values. A config built with `switch` also gets this format.
+       */
+      case object Map extends Format
+
+      /**
+       * A single value, such as a string or a number.
+       */
+      case object Primitive extends Format
+
+      /**
+       * A key that holds other keys.
+       */
+      case object Nested extends Format
+
+      /**
+       * Alternatives, one of which must be given.
+       */
+      case object AnyOneOf extends Format
+
+      /**
+       * Keys that must all be given.
+       */
+      case object AllOf extends Format
+
+      /**
+       * No format; renders as an empty cell.
+       */
       case object NotApplicable extends Format
-      case object Recursion     extends Format
+
+      /**
+       * A recursive config. `toTable` doesn't produce it.
+       */
+      case object Recursion extends Format
+
+      /**
+       * A list of a recursive config. `toTable` produces it only for a list whose element has the format `Recursion`,
+       * which `toTable` doesn't produce.
+       */
       case object RecursionList extends Format
     }
 
+    /**
+     * The text of a row's `FieldName` column: a key, or blank.
+     */
     sealed trait FieldName {
+
+      /**
+       * Returns the key, or for `Blank` the text in `forBlank` (an empty string when it is `None`).
+       */
       def asString(forBlank: Option[String]): String =
         this match {
           case FieldName.Key(k) => k
@@ -550,25 +715,45 @@ trait ConfigDocsModule {
         }
     }
 
+    /**
+     * The cases of `FieldName`.
+     */
     object FieldName {
+
+      /**
+       * A key name.
+       */
       case class Key(k: String) extends FieldName
-      case object Blank         extends FieldName
+
+      /**
+       * No key, for a row that groups keys without a key of its own.
+       */
+      case object Blank extends FieldName
     }
   }
 
   /**
-   * Generate documentation based on the `Config`, where a `Config` is a structure representing the logic to fetch the
-   * application config from various sources.
+   * Builds the documentation of `config`: its keys, the built-in description of each value (such as
+   * `an integer property`), the descriptions added with `??`, and how the keys combine. Convert the result with
+   * `toTable` and render that as Markdown. The table shows the key that a `switch` reads, with the format `map`, and
+   * leaves out its branches.
    *
-   * Once we generate the docs, this can be converted to a light weight `Table` structure which is much more easier to
-   * be converted to markdown or json formats.
+   * `generateDocs` does not support recursive configs built with `Config.defer`.
    *
-   * Example :
    * {{{
-   *   val configDescriptor: Config[MyAppConfig] = ???
+   * import zio._
+   * import zio.config._
    *
-   *   generatedDocs(configDescriptor).toTable.toGithubFlavouredMarkdown
+   * final case class Database(host: String, port: Int)
+   *
+   * val database: Config[Database] =
+   *   (Config.string("host") ?? "Database host").zip(Config.int("port") ?? "Database port").to[Database]
+   *
+   * val markdown: String = generateDocs(database.nested("database")).toTable.toGithubFlavouredMarkdown
    * }}}
+   *
+   * @see
+   *   [[https://zio.dev/zio-config/dive-into-zio-config/ Dive Into ZIO Config]]
    */
   final def generateDocs[A](config: zio.Config[A]): ConfigDocs = {
     def loop[B](
