@@ -18,7 +18,7 @@ import scala.util.{Failure, Success, Try}
  * object becomes nested keys, an array becomes a list, and an empty array is an empty list. An explicit `null` reads as
  * an empty string, so `Config.string("region").optional` gives `Some("")` for `region = null`, and
  * `Config.int("port").optional` fails for `port = null`. An array placed directly inside another array keeps only its
- * last element: `a = [[1, 2], [3, 4]]` read with `Config.listOf("a", Config.listOf(Config.int))` gives
+ * last element: `a = [ [1, 2], [3, 4] ]` read with `Config.listOf("a", Config.listOf(Config.int))` gives
  * `List(List(2), List(4))`.
  *
  * By default a string value is never split. With `enableCommaSeparatedValueAsList = true`, a string value read as a
