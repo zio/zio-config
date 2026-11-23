@@ -1,6 +1,6 @@
 package zio.config
 
 /**
- * Platform-specific additions for Scala Native. It is currently empty.
+ * An empty trait in the Scala Native build. Nothing in zio-config extends it.
  */
 trait PropertyTypePlatformSpecific {}
