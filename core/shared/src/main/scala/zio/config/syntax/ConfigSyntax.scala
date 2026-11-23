@@ -113,9 +113,11 @@ trait ConfigSyntax {
 
     /**
      * Renders this error as text for a person to read. The first line is `ReadError:`. A single error takes a few
-     * lines: its kind (`MissingValue`, `FormatError`, `ConversionError` or `SourceError`), its path and its message.
-     * Errors joined with `&&` (all of them happened, as when both sides of a `zip` fail) are drawn side by side in
-     * columns. Errors joined with `||` (each alternative of an `orElse` failed) are listed one below the other.
+     * lines: its kind (`MissingValue`, `FormatError` or `ConversionError`), its path and its message. A
+     * `SourceUnavailable` error takes one line, `SourceError:` followed by its message. Errors joined with `&&` (all of
+     * them happened, as when both sides of a `zip` fail) are drawn as branches that fork from one line (`══╦══╗`): the
+     * errors are printed one under another, the last one first and indented furthest. Errors joined with `||` (each
+     * alternative of an `orElse` failed) are listed one after the other, in order.
      *
      * {{{
      * import zio._
