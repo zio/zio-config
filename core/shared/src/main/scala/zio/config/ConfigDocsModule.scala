@@ -736,9 +736,6 @@ trait ConfigDocsModule {
    * `an integer property`), the descriptions added with `??`, and how the keys combine. Convert the result with
    * `toTable` and render that as Markdown.
    *
-   * A known bug: a recursive config, one that refers to itself through `Config.defer`, makes it throw a
-   * `StackOverflowError`.
-   *
    * {{{
    * import zio._
    * import zio.config._
