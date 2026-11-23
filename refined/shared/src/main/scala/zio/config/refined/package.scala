@@ -4,10 +4,40 @@ import eu.timepit.refined.api.{RefType, Refined, Validate}
 import zio.Config
 import zio.config.magnolia.DeriveConfig
 
+/**
+ * Reads refined types (from the refined library) with ZIO Config. A value that fails the predicate fails with
+ * `Config.Error.InvalidData`, whose message is refined's message, such as `Predicate failed: (0 > 0).`. When the
+ * refinement is applied to a description that is already nested under a key, as `refine[A, P](path)` and
+ * `refineType[R](path)` do, the error's path is empty and does not name the key.
+ *
+ * @see
+ *   [[https://zio.dev/zio-config/integrations/ Integrations]]
+ */
 package object refined {
 
   /**
-   * FIXME Automatically derive instances of Descriptor for any refined types
+   * Derives a `DeriveConfig` for `Refined[A, P]` from the `DeriveConfig[A]` of the underlying type and a
+   * `Validate[A, P]`, so `deriveConfig` reads case class fields of refined types after `import zio.config.refined._`. A
+   * field whose value fails the predicate fails with `Config.Error.InvalidData` at that field's key.
+   *
+   * {{{
+   * import zio._
+   * import zio.config.refined._
+   * import zio.config.magnolia.deriveConfig
+   * import eu.timepit.refined.api.Refined
+   * import eu.timepit.refined.numeric.Positive
+   * import eu.timepit.refined.types.string.NonEmptyString
+   *
+   * final case class Server(host: NonEmptyString, port: Int Refined Positive)
+   *
+   * val valid: IO[Config.Error, Server] =
+   *   ConfigProvider.fromMap(Map("host" -> "localhost", "port" -> "8080")).load(deriveConfig[Server])
+   * // succeeds with Server(localhost,8080)
+   *
+   * val invalid: IO[Config.Error, Server] =
+   *   ConfigProvider.fromMap(Map("host" -> "localhost", "port" -> "-1")).load(deriveConfig[Server])
+   * // fails with (Invalid data at port: Predicate failed: (-1 > 0).)
+   * }}}
    */
   implicit def deriveRefinedDescriptor[A, P](implicit
     desc: DeriveConfig[A],
@@ -16,15 +46,23 @@ package object refined {
     DeriveConfig(refine[P](desc.desc))
 
   /**
-   * `refine` allows us to retrieve a `refined` type from a given path.
-   *
-   * Example:
+   * Reads the value at the key `path` with the `DeriveConfig[A]` of the underlying type, and refines it with the
+   * predicate `P`. When the predicate fails, the error's path is empty; it does not name `path`.
    *
    * {{{
-   *   import eu.timepit.refined.string._
+   * import zio._
+   * import zio.config.refined._
+   * import eu.timepit.refined.api.Refined
+   * import eu.timepit.refined.string.Uuid
    *
-   *   val configDescriptor: Config[Refined[String, Uuid]] =
-   *     refined[String, Uuid]("ID")
+   * val id: Config[Refined[String, Uuid]] = refine[String, Uuid]("ID")
+   *
+   * val valid: IO[Config.Error, Refined[String, Uuid]] =
+   *   ConfigProvider.fromMap(Map("ID" -> "123e4567-e89b-12d3-a456-426614174000")).load(id)
+   * // succeeds with 123e4567-e89b-12d3-a456-426614174000
+   *
+   * val invalid: IO[Config.Error, Refined[String, Uuid]] = ConfigProvider.fromMap(Map("ID" -> "abc")).load(id)
+   * // fails with (Invalid data at : Uuid predicate failed: Invalid UUID string: abc)
    * }}}
    */
   def refine[A, P](path: String)(implicit
@@ -38,66 +76,55 @@ package object refined {
       )
 
   /**
-   * refine[Predicate] allows to retrieve a `refined` type given an existing `Config` and a predicate Predicate. Example
-   * of a Predicate is `NonEmpty`.
-   *
-   * Example:
+   * Refines an existing description with the predicate `Predicate`. `refine[P]` returns a value whose `apply` takes a
+   * `Config[A]`, where a `Validate[A, P]` exists, and gives a `Config[Refined[A, P]]`. Use it to build the raw
+   * description first, for example with `Config.listOf` or `deriveConfig`, and add the predicate afterwards.
    *
    * {{{
+   * import zio._
+   * import zio.config.refined._
+   * import zio.config.magnolia.deriveConfig
+   * import eu.timepit.refined.api.Refined
+   * import eu.timepit.refined.collection.NonEmpty
    *
-   *   final case class MyConfig(url: String, port: Int)
+   * final case class Database(url: String, port: Int)
    *
-   *   val configs: Config[List[MyConfig]] =
-   *     listOf("databases", deriveConfig[MyConfig])
+   * val databases: Config[List[Database]] = Config.listOf("databases", deriveConfig[Database])
    *
-   *   val configDescriptor: Config[Refined[List[MyConfig], Size[Greater[W.`2`.T]]]] =
-   *     refine[Size[Greater[W.`2`.T]]](configs)
+   * val atLeastOne: Config[Refined[List[Database], NonEmpty]] = refine[NonEmpty](databases)
+   *
+   * val loaded: IO[Config.Error, Refined[List[Database], NonEmpty]] =
+   *   ConfigProvider.fromMap(Map("databases[0].url" -> "jdbc:postgresql://db1/app", "databases[0].port" -> "5432")).load(atLeastOne)
+   * // succeeds with List(Database(jdbc:postgresql://db1/app,5432))
    * }}}
    *
-   * If you don't care predicates specifically, and need to pass a fully formed Refined type (Example: type
-   * NonEmptyString = String Refined NonEmpty), refer `refineType[RefinedType]`
+   * To read a ready-made refined type such as `NonEmptyString` from a key, use `refineType[R]` instead.
    */
   def refine[Predicate]: PartialRefined[Predicate] =
     new PartialRefined[Predicate]
 
   /**
-   * refineType[RefinedType] allows to retrieve a RefinedType (example: NonEmptyString) from a path.
+   * Reads a ready-made refined type `R`, such as `NonEmptyString` (`String Refined NonEmpty`), from a key.
+   * `refineType[R]` returns a [[PartialRefinedPath]], whose `apply(path)` reads the value at `path` with the
+   * `DeriveConfig` of the underlying type and refines it. `refineType[NonEmptyString]("USERNAME")` gives the same
+   * result as `refine[NonEmpty](Config.string("USERNAME"))`.
    *
-   * Unlike `refine[Predicate]` method, `refineType[RefinedType]` allows you to a pass a fully formed refined type and
-   * be careless about the `Config` of the underlying type.
-   *
-   * Example:
-   *
-   * {{{
-   *
-   *   type NonEmptyString = String Refined NonEmpty
-   *   refineType[NonEmptyString]("USERNAME")
-   *
-   *   // is same as
-   *
-   *   val userName: Config[String] = string("USERNAME")
-   *   refine[NonEmpty](userName)
-   *
-   * }}}
-   *
-   * While, `refineType[RefinedType]` is useful for simple application, `refine[Predicate]` can be more flexible in
-   * complex configurations where you need more orthogonality between raw config and refined configs.
-   *
-   * `refine[Predicate]` allows you to build entire Config without worrying about `Refined` modules, allowing you to
-   * then pass the `Config[RawConfig]` to `refine[Predicate]` and refine the types, which is more into an orthogonal
-   * design.
-   *
-   * A complete example of refineType:
+   * When the predicate fails, the error's path is empty; it does not name the key.
    *
    * {{{
+   * import zio._
+   * import zio.config._
+   * import zio.config.refined._
+   * import eu.timepit.refined.types.string.NonEmptyString
    *
-   *   import zio.config._
-   *   import eu.timepit.refined.types.string.NonEmptyString
+   * final case class Jdbc(username: NonEmptyString, password: NonEmptyString)
    *
-   *   final case class Jdbc(username: NonEmptyString, password: NonEmptyString)
+   * val jdbc: Config[Jdbc] =
+   *   refineType[NonEmptyString]("username").zip(refineType[NonEmptyString]("password")).to[Jdbc]
    *
-   *   val jdbc: Config[Jdbc] =
-   *     (refineType[NonEmptyString]("username") zip refineType[NonEmptyString]("password")).to[Jdbc]
+   * val invalid: IO[Config.Error, Jdbc] =
+   *   ConfigProvider.fromMap(Map("username" -> "app", "password" -> "")).load(jdbc)
+   * // fails with (Invalid data at : Predicate isEmpty() did not fail.)
    * }}}
    */
   def refineType[R]: PartialRefinedPath[R] =
