@@ -22,8 +22,8 @@ import scala.jdk.CollectionConverters._
  * Each constructor parses its input when it is called, and throws when the input can't be read or parsed; the `...ZIO`
  * variants return a `Task` that fails instead. An integer outside the `Long` range, such as `12345678901234567890`,
  * makes the constructor throw a `java.lang.RuntimeException` with the message `Invalid yaml. 12345678901234567890`. A
- * sequence nested directly in another sequence, such as `[[1, 2], [3]]`, can't be read back: loading it as a list of
- * lists fails with missing data.
+ * sequence nested directly in another sequence, written as `- - 1` in block style, can't be read back: loading it as a
+ * list of lists fails with missing data.
  *
  * `import zio.config.yaml._` adds the same constructors to `ConfigProvider`, such as `ConfigProvider.fromYamlString`.
  *
