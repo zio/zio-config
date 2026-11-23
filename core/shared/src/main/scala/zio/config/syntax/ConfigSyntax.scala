@@ -9,14 +9,48 @@ import java.util.UUID
 import scala.util.control.NonFatal
 
 // Backward compatible approach to minimise the client changes
+/**
+ * A `Config` paired with the `ConfigProvider` to load it from, as built by `config.from(provider)`. Pass it to `read`
+ * to load the value.
+ */
 final case class Read[A](config: Config[A], configProvider: ConfigProvider)
 
+/**
+ * A `Config` paired with an effect that builds the `ConfigProvider`, as built by `config.from(task)`. Pass it to `read`
+ * to build the provider and load the value.
+ */
 final case class ReadZIO[A](config: Config[A], configProvider: ConfigProviderZIO)
 
+/**
+ * Holds the `ConfigProviderZIO` alias and the `toConfigProviderZIO` syntax. The `zio.config` package object doesn't
+ * export them: import `zio.config.syntax.ConfigSyntax._` to use them.
+ */
 object ConfigSyntax {
+
+  /**
+   * An effect that builds a `ConfigProvider` and can fail with a `Config.Error`.
+   */
   type ConfigProviderZIO = IO[Config.Error, ConfigProvider]
 
+  /**
+   * Adds `toConfigProviderZIO` to a `Task[ConfigProvider]`.
+   */
   implicit class ConfigProviderZIOOps(buildConfigProvider: Task[ConfigProvider]) {
+
+    /**
+     * Turns a failure of this effect into a `Config.Error.Unsupported`, so the effect fits where a `Config.Error` is
+     * expected.
+     *
+     * {{{
+     * import zio._
+     * import zio.config.syntax.ConfigSyntax._
+     *
+     * val provider: Task[ConfigProvider] =
+     *   ZIO.attempt(ConfigProvider.fromMap(Map("port" -> "8080")))
+     *
+     * val typed: IO[Config.Error, ConfigProvider] = provider.toConfigProviderZIO
+     * }}}
+     */
     def toConfigProviderZIO: ConfigProviderZIO =
       buildConfigProvider.mapError(throwable => Config.Error.Unsupported(message = throwable.toString))
   }
@@ -24,18 +58,84 @@ object ConfigSyntax {
 
 // To be moved to ZIO ?
 // Or may be zio-config can be considered as an extension to ZIO
+/**
+ * The syntax that `import zio.config._` adds: `read`, `prettyPrint` on `Config.Error`, key mapping, `orElseEither`,
+ * `to` and `from` on `Config`, and more constructors on the `Config` companion. The `zio.config` package object extends
+ * this trait.
+ *
+ * @see
+ *   [[https://zio.dev/zio-config/dive-into-zio-config/ Dive Into ZIO Config]]
+ */
 trait ConfigSyntax {
 
   // Backward compatible approach to minimise the client changes
+  /**
+   * Loads `reader.config` from `reader.configProvider`. Build the `Read` with `config.from(provider)`.
+   *
+   * {{{
+   * import zio._
+   * import zio.config._
+   *
+   * val port: IO[Config.Error, Int] =
+   *   read(Config.int("port").from(ConfigProvider.fromMap(Map("port" -> "8080"))))
+   * // succeeds with 8080
+   * }}}
+   *
+   * @see
+   *   [[https://zio.dev/zio-config/dive-into-zio-config/ Dive Into ZIO Config]]
+   */
   final def read[A](reader: Read[A]): IO[Config.Error, A] =
     reader.configProvider.load(reader.config)
 
+  /**
+   * Runs `reader.configProvider` to build the provider, then loads `reader.config` from it. Build the `ReadZIO` with
+   * `config.from(task)`; a failure of the task becomes a `Config.Error.Unsupported`.
+   *
+   * {{{
+   * import zio._
+   * import zio.config._
+   *
+   * val provider: Task[ConfigProvider] =
+   *   ZIO.attempt(ConfigProvider.fromMap(Map("timeout" -> "30")))
+   *
+   * val timeout: IO[Config.Error, Int] = read(Config.int("timeout").from(provider))
+   * // succeeds with 30
+   * }}}
+   */
   final def read[A](reader: ReadZIO[A]): IO[Config.Error, A] =
     reader.configProvider.flatMap(_.load(reader.config))
 
+  /**
+   * Adds `prettyPrint` to `Config.Error`.
+   */
   implicit class ConfigErrorOps(error: Config.Error) {
     self =>
 
+    /**
+     * Renders this error as text for a person to read. The first line is `ReadError:`. A single error takes a few
+     * lines: its kind (`MissingValue`, `FormatError`, `ConversionError` or `SourceError`), its path and its message.
+     * Errors joined with `&&` (all of them happened, as when both sides of a `zip` fail) are drawn side by side in
+     * columns. Errors joined with `||` (each alternative of an `orElse` failed) are listed one below the other.
+     *
+     * {{{
+     * import zio._
+     * import zio.config._
+     *
+     * val error: Config.Error =
+     *   Config.Error.MissingData(Chunk("server", "port"), "Expected server.port to be set in properties")
+     *
+     * val text: String = error.prettyPrint()
+     * // ReadError:
+     * // MissingValue
+     * // path: server.port
+     * // Expected server.port to be set in properties
+     * }}}
+     *
+     * @param keyDelimiter
+     *   the character that joins the parts of each path on the `path:` lines; it doesn't change the messages
+     * @see
+     *   [[https://zio.dev/zio-config/dive-into-zio-config/ Dive Into ZIO Config]]
+     */
     final def prettyPrint(keyDelimiter: Char = '.'): String = {
 
       sealed trait Segment
@@ -153,14 +253,61 @@ trait ConfigSyntax {
 
   import zio.{Config, ConfigProvider}, Config._
 
+  /**
+   * Adds key mapping, `orElseEither`, `to` and `from` to a `Config`.
+   */
   implicit class ConfigOps[A](config: zio.Config[A]) {
     self =>
 
+    /**
+     * Reads this config and returns its value in a `Left`. If that fails, because the value is missing or invalid,
+     * reads `that` and returns its value in a `Right`. When both fail, the error holds both failures.
+     *
+     * {{{
+     * import zio._
+     * import zio.config._
+     *
+     * val portOrSocket: Config[Either[Int, String]] =
+     *   Config.int("port").orElseEither(Config.string("socket"))
+     *
+     * val result: IO[Config.Error, Either[Int, String]] =
+     *   ConfigProvider.fromMap(Map("socket" -> "/var/run/app.sock")).load(portOrSocket)
+     * // succeeds with Right(/var/run/app.sock)
+     * }}}
+     *
+     * @see
+     *   [[https://zio.dev/zio-config/dive-into-zio-config/ Dive Into ZIO Config]]
+     */
     def orElseEither[B](that: Config[B]): Config[Either[A, B]] =
       config.map(Left(_)).orElse(that.map(Right(_)))
 
-    // Important for usecases such as `SystemEnv.load(deriveConfig[A].mapKey(_.toUpperCase)` or `JsonSource.load(deriveConfig[A])`
-    // where annotations can't be of any help
+    /**
+     * Returns a config that asks for each key of this config under the name `f(name)`. It changes every name given to
+     * `nested`, which includes the names passed to constructors such as `Config.int("port")` and `Config.listOf`. The
+     * keys that a `Config.table` finds in the source are not changed. Use it when the source names keys differently
+     * from the config, as with upper-case environment variables or a derived config.
+     *
+     * A known bug: an `optional` config inside, including an `Option` field of a derived config, loses its rule of
+     * falling back to `None` only when the value is missing. After `mapKey`, an invalid value reads as `None` instead
+     * of failing.
+     *
+     * {{{
+     * import zio._
+     * import zio.config._
+     *
+     * val server: Config[(String, Int)] =
+     *   Config.string("host").zip(Config.int("port")).nested("server")
+     *
+     * val result: IO[Config.Error, (String, Int)] =
+     *   ConfigProvider
+     *     .fromMap(Map("SERVER.HOST" -> "localhost", "SERVER.PORT" -> "8080"))
+     *     .load(server.mapKey(_.toUpperCase))
+     * // succeeds with (localhost,8080)
+     * }}}
+     *
+     * @see
+     *   [[https://zio.dev/zio-config/dive-into-zio-config/ Dive Into ZIO Config]]
+     */
     def mapKey(f: String => String): Config[A] = {
       def loop[B](config: Config[B]): Config[B] =
         config match {
@@ -180,18 +327,65 @@ trait ConfigSyntax {
       loop(config)
     }
 
+    /**
+     * Returns a config that asks for each key in kebab-case, converted with `zio.config.toKebabCase`, so `maxPoolSize`
+     * reads the key `max-pool-size`. It changes the same keys as `mapKey`, and shares its known bug with `optional`.
+     *
+     * {{{
+     * import zio._
+     * import zio.config._
+     *
+     * val pool: Config[(Int, Int)] =
+     *   Config.int("maxPoolSize").zip(Config.int("minIdle")).nested("dbPool").toKebabCase
+     *
+     * val result: IO[Config.Error, (Int, Int)] =
+     *   ConfigProvider.fromMap(Map("db-pool.max-pool-size" -> "16", "db-pool.min-idle" -> "2")).load(pool)
+     * // succeeds with (16,2)
+     * }}}
+     */
     def toKebabCase: Config[A] =
       mapKey(zio.config.toKebabCase)
 
+    /**
+     * Returns a config that asks for each key in snake_case, converted with `zio.config.toSnakeCase`, so `maxPoolSize`
+     * reads the key `max_pool_size`. It changes the same keys as `mapKey`, and shares its known bug with `optional`.
+     */
     def toSnakeCase: Config[A] =
       mapKey(zio.config.toSnakeCase)
 
+    /**
+     * Returns a config that asks for each key in upper case, so `port` reads the key `PORT`. It changes the same keys
+     * as `mapKey`, and shares its known bug with `optional`.
+     */
     def toUpperCase: Config[A] =
       mapKey(_.toUpperCase())
 
+    /**
+     * Returns a config that asks for each key in lower case, so `dbUrl` reads the key `dburl`. It changes the same keys
+     * as `mapKey`, and shares its known bug with `optional`.
+     */
     def toLowerCase: Config[A] =
       mapKey(_.toLowerCase())
 
+    /**
+     * Converts the value of this config into the case class `B`, using an implicit [[zio.config.TupleConversion]]. With
+     * the instances that `import zio.config._` derives, the value must be the tuple of the field types of `B` in field
+     * order, as `zip` builds it, or the field's type for a case class with one field. A tuple in another order, or a
+     * `B` that isn't a case class, doesn't compile.
+     *
+     * {{{
+     * import zio._
+     * import zio.config._
+     *
+     * final case class Database(host: String, port: Int)
+     *
+     * val database: Config[Database] =
+     *   Config.string("host").zip(Config.int("port")).to[Database]
+     * }}}
+     *
+     * @see
+     *   [[https://zio.dev/zio-config/dive-into-zio-config/ Dive Into ZIO Config]]
+     */
     def to[B <: Product](implicit conv: TupleConversion[B, A]): Config[B] =
       config.map(
         conv.from
@@ -199,15 +393,25 @@ trait ConfigSyntax {
 
     // To reduce the number of changes in examples
     // Example: read(config from ConfigProvider.fromMap(""))
+    /**
+     * Pairs this config with `configProvider` into a [[zio.config.syntax.Read]], to pass to `read`.
+     */
     def from(configProvider: ConfigProvider): Read[A] =
       Read(config, configProvider)
 
     import ConfigSyntax.ConfigProviderZIOOps
 
+    /**
+     * Pairs this config with an effect that builds the provider into a [[zio.config.syntax.ReadZIO]], to pass to
+     * `read`. A failure of the effect becomes a `Config.Error.Unsupported`.
+     */
     def from(configProvider: Task[ConfigProvider]): ReadZIO[A] =
       ReadZIO(config, configProvider.toConfigProviderZIO)
   }
 
+  /**
+   * Syntax for the `ConfigProvider` companion. It currently adds no methods.
+   */
   implicit class FromConfigProviderOps(c: ConfigProvider.type) {
 
     // Disabled until next version of ZIO: https://github.com/zio/zio-config/blob/avoid_custom_index_until_3/README.md#indexed-map-array-datatype-and-a-some-implementation-notes
@@ -410,8 +614,15 @@ trait ConfigSyntax {
   }
 
   // To be moved to ZIO
+  /**
+   * Adds `byte`, `short`, `uuid`, `constant`, `collectAll` and `long` to the `Config` companion.
+   */
   implicit class FromConfigOps(c: Config.type) {
 
+    /**
+     * A config that reads a `Byte`, from `-128` to `127`. Text that `String#toByte` rejects, such as `300` or `abc`,
+     * fails with a `Config.Error.InvalidData`.
+     */
     def byte: Config[Byte] =
       Config.string.mapOrFail(text =>
         try Right(text.toByte)
@@ -421,6 +632,25 @@ trait ConfigSyntax {
         }
       )
 
+    /**
+     * Reads `head` and each config in `tail`, and returns their values in a list, in the same order. When several of
+     * them fail, the error holds each failure.
+     *
+     * {{{
+     * import zio._
+     * import zio.config._
+     *
+     * val ports: Config[List[Int]] =
+     *   Config.collectAll(Config.int("http"), Config.int("https"), Config.int("admin"))
+     *
+     * val result: IO[Config.Error, List[Int]] =
+     *   ConfigProvider.fromMap(Map("http" -> "80", "https" -> "443", "admin" -> "9000")).load(ports)
+     * // succeeds with List(80, 443, 9000)
+     * }}}
+     *
+     * @see
+     *   [[https://zio.dev/zio-config/dive-into-zio-config/ Dive Into ZIO Config]]
+     */
     def collectAll[A](head: => Config[A], tail: Config[A]*): Config[List[A]] =
       tail.reverse
         .map(Config.defer(_))
@@ -435,15 +665,46 @@ trait ConfigSyntax {
         )
         .map { case (a, t) => a :: t }
 
+    /**
+     * A config that reads text and succeeds with `value` when the text equals `value` exactly, case included. Other
+     * text fails with a `Config.Error.InvalidData` whose message is `value should be a constant: ` followed by `value`.
+     * The config is described as `The value should be ` followed by `value`. Combine it with `orElseEither` to accept
+     * one of several fixed words.
+     *
+     * {{{
+     * import zio._
+     * import zio.config._
+     *
+     * val role: Config[String] =
+     *   Config.constant("primary").orElseEither(Config.constant("replica")).map(_.merge).nested("role")
+     *
+     * val result: IO[Config.Error, String] =
+     *   ConfigProvider.fromMap(Map("role" -> "replica")).load(role)
+     * // succeeds with replica
+     * }}}
+     *
+     * @see
+     *   [[https://zio.dev/zio-config/dive-into-zio-config/ Dive Into ZIO Config]]
+     */
     def constant(value: String): Config[String] =
       Config.string.mapOrFail(parsed =>
         if (parsed == value) Right(value)
         else Left(Config.Error.InvalidData(message = s"value should be a constant: ${value}"))
       ) ?? s"The value should be ${value}"
 
+    /**
+     * A config that reads a `Long` through `Config.bigInt`. ZIO's `Config` companion has its own `long` with the same
+     * definition, so `Config.long` calls ZIO's, and this one is reached as `FromConfigOps(Config).long`. A known bug,
+     * in both: a number outside the `Long` range wraps around, so `9223372036854775808` reads as
+     * `-9223372036854775808`.
+     */
     def long: Config[Long] =
       Config.bigInt.map(_.toLong)
 
+    /**
+     * A config that reads a `Short`, from `-32768` to `32767`. Text that `String#toShort` rejects, such as `40000` or
+     * text with a leading space, fails with a `Config.Error.InvalidData`.
+     */
     def short: Config[Short] =
       Config.string.mapOrFail(text =>
         try Right(text.toShort)
@@ -453,6 +714,10 @@ trait ConfigSyntax {
         }
       )
 
+    /**
+     * A config that reads a `java.util.UUID` with `UUID.fromString`. Text that `UUID.fromString` rejects fails with a
+     * `Config.Error.InvalidData`.
+     */
     def uuid: Config[UUID] =
       Config.string.mapOrFail(text =>
         try Right(UUID.fromString(text))
@@ -463,7 +728,14 @@ trait ConfigSyntax {
       )
   }
 
+  /**
+   * Adds `mapLast` to a `Chunk`.
+   */
   implicit class ChunkOps[A](chunk: Chunk[A]) {
+
+    /**
+     * Returns this chunk with `f` applied to its last element, or the chunk unchanged when it is empty.
+     */
     def mapLast(f: A => A): Chunk[A] =
       chunk.lastOption match {
         case Some(value) => chunk.dropRight(1) :+ f(value)
