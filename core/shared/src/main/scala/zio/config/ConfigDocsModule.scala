@@ -285,10 +285,11 @@ trait ConfigDocsModule {
 
     /**
      * Renders this table as Markdown, building each link with `getLink`. For a row that has a nested table, `getLink`
-     * receives the heading of that table, the heading's index (`0` unless the same heading occurs more than once), and
-     * either the row's field name or its format. Rows without a nested table show plain text.
-     * `toGithubFlavouredMarkdown` and `toConfluenceMarkdown` call this method with `Table.githubFlavoured` and
-     * `Table.confluenceFlavoured`.
+     * receives the heading of that table, the heading's index, and either the row's field name or its format. The index
+     * is `0` for the first use of a heading and goes up by one for each further use; rows are counted from the last row
+     * of a table to the first, and a nested table continues the count of the table that contains it. Rows without a
+     * nested table show plain text. `toGithubFlavouredMarkdown` and `toConfluenceMarkdown` call this method with
+     * `Table.githubFlavoured` and `Table.confluenceFlavoured`.
      *
      * {{{
      * import zio._
@@ -525,9 +526,9 @@ trait ConfigDocsModule {
      * The link builder that `toGithubFlavouredMarkdown` passes to `toMarkdown`, and a model for writing your own. It
      * links to the GitHub anchor of the heading: the heading's key names joined together, lower-cased, with dots
      * removed and spaces turned into `-`. So the heading `x.y` gives `#xy`, and an empty path gives
-     * `#field-descriptions`. A non-zero index is added as `-1`, `-2` and so on, the way GitHub numbers repeated
-     * anchors. The index is non-zero only when the same heading occurs more than once in a table, as when both sides of
-     * an `orElse` use the same key.
+     * `#field-descriptions`. A non-zero index is added as `-1`, `-2` and so on, the suffix GitHub gives a repeated
+     * heading. `toMarkdown` numbers repeated headings from the last row up, so when both sides of an `orElse` use the
+     * key `db`, the first row links to `#db-1`, which GitHub gives to the second `### db` table.
      */
     def githubFlavoured: (Heading, Int, Either[FieldName, Format]) => Link =
       (heading, index, fieldNameOrFormat) => {
