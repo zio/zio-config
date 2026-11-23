@@ -161,7 +161,7 @@ package object enumeratum {
   /**
    * Reads an entry of the `StringEnum` by its value. Unlike the other functions in this package, it accepts an empty
    * value, which matches an entry whose value is the empty string. A value that matches no entry fails with
-   * enumeratum's message, such as `trace is not a member of ValueEnum (debug, info)`.
+   * enumeratum's message, such as `trace is not a member of ValueEnum (warn, info)`.
    *
    * {{{
    * import zio._
@@ -171,9 +171,9 @@ package object enumeratum {
    * sealed abstract class LogLevel(val value: String) extends StringEnumEntry
    *
    * object LogLevel extends StringEnum[LogLevel] {
-   *   val values: IndexedSeq[LogLevel] = IndexedSeq(Debug, Info)
+   *   val values: IndexedSeq[LogLevel] = IndexedSeq(Warn, Info)
    *
-   *   case object Debug extends LogLevel("debug")
+   *   case object Warn extends LogLevel("warn")
    *   case object Info  extends LogLevel("info")
    * }
    *
