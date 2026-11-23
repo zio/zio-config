@@ -8,6 +8,10 @@ import zio.Unsafe
 import zio.IO
 import zio.config.syntax._
 
+/**
+ * A sample program that loads `A` from a map with `deriveConfig[A].toKebabCase` and prints it. It fails when it starts,
+ * because the map lacks the key `a.y.type`.
+ */
 object AutoDerivationSimple extends App:
   // Use of Either is almost prohibited by the looks of it
   val sourceMap =
@@ -40,5 +44,7 @@ object AutoDerivationSimple extends App:
   }
 
   println(readResult)
-// A(B(v1,C(),List(C(), C()),None,G(v2),F,G(GValue),Q,T(v3),Abc(hello)))
+// This fails with "MissingValue path: a.y.type", because `y` has a type with
+// `@discriminator("type")` and the map sets `a.y` instead of `a.y.type`. With "a.y.type" -> "HmmAbc" it prints
+// A(B(v1,C(),List(C(), C()),None,G(v2),F,G(GValue),Q,T(v3),AbcDef(hello),HmmAbc))
 end AutoDerivationSimple
