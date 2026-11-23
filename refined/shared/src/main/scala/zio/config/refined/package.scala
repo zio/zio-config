@@ -8,7 +8,8 @@ import zio.config.magnolia.DeriveConfig
  * Reads refined types (from the refined library) with ZIO Config. A value that fails the predicate fails with
  * `Config.Error.InvalidData`, whose message is refined's message, such as `Predicate failed: (0 > 0).`. When the
  * refinement is applied to a description that is already nested under a key, as `refine[A, P](path)` and
- * `refineType[R](path)` do, the error's path is empty and does not name the key.
+ * `refineType[R](path)` do, the error's path leaves out that key, and is empty unless the description is nested
+ * further.
  *
  * @see
  *   [[https://zio.dev/zio-config/integrations/ Integrations]]
@@ -47,7 +48,8 @@ package object refined {
 
   /**
    * Reads the value at the key `path` with the `DeriveConfig[A]` of the underlying type, and refines it with the
-   * predicate `P`. When the predicate fails, the error's path is empty; it does not name `path`.
+   * predicate `P`. When the predicate fails, the error's path leaves out `path`: it is empty unless the description is
+   * nested further.
    *
    * {{{
    * import zio._
@@ -109,7 +111,8 @@ package object refined {
    * `DeriveConfig` of the underlying type and refines it. `refineType[NonEmptyString]("USERNAME")` gives the same
    * result as `refine[NonEmpty](Config.string("USERNAME"))`.
    *
-   * When the predicate fails, the error's path is empty; it does not name the key.
+   * When the predicate fails, the error's path leaves out the key: it is empty unless the description is nested
+   * further.
    *
    * {{{
    * import zio._

@@ -13,7 +13,8 @@ final case class PartialRefinedPath[FAP]() {
   /**
    * Reads the value at `path` with the `DeriveConfig[A]` of the underlying type, and refines it with the predicate `P`,
    * where `F[A, P]` is the refined type `FAP`. A value that fails the predicate fails with `Config.Error.InvalidData`,
-   * whose message is refined's message and whose path is empty.
+   * whose message is refined's message and whose path leaves out `path`: it is empty unless the description is nested
+   * further.
    *
    * {{{
    * import zio._
