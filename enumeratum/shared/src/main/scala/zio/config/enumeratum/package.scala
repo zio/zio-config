@@ -62,7 +62,7 @@ package object enumeratum {
    * Reads an entry of the `IntEnum` by its value, parsed as an `Int`. A number that matches no entry fails with
    * enumeratum's message, such as `3 is not a member of ValueEnum (1, 5)`. A value that is not a number, or is out of
    * range for `Int`, makes the load die with a `java.lang.NumberFormatException` instead of failing with a
-   * `Config.Error`.
+   * `Config.Error`. An empty value fails with the message `Empty string`.
    *
    * {{{
    * import zio._
@@ -95,7 +95,8 @@ package object enumeratum {
   /**
    * Reads an entry of the `LongEnum` by its value, parsed as a `Long`. A number that matches no entry fails with
    * enumeratum's message. A value that is not a number, or is out of range for `Long`, makes the load die with a
-   * `java.lang.NumberFormatException` instead of failing with a `Config.Error`.
+   * `java.lang.NumberFormatException` instead of failing with a `Config.Error`. An empty value fails with the message
+   * `Empty string`.
    *
    * {{{
    * import zio._
@@ -128,7 +129,8 @@ package object enumeratum {
   /**
    * Reads an entry of the `ShortEnum` by its value, parsed as a `Short`. A number that matches no entry fails with
    * enumeratum's message. A value that is not a number, or is out of range for `Short`, makes the load die with a
-   * `java.lang.NumberFormatException` instead of failing with a `Config.Error`.
+   * `java.lang.NumberFormatException` instead of failing with a `Config.Error`. An empty value fails with the message
+   * `Empty string`.
    *
    * {{{
    * import zio._
@@ -194,7 +196,8 @@ package object enumeratum {
   /**
    * Reads an entry of the `ByteEnum` by its value, parsed as a `Byte`. A number that matches no entry fails with
    * enumeratum's message. A value that is not a number, or is out of range for `Byte`, makes the load die with a
-   * `java.lang.NumberFormatException` instead of failing with a `Config.Error`. For example, `300` dies.
+   * `java.lang.NumberFormatException` instead of failing with a `Config.Error`. For example, `300` dies. An empty value
+   * fails with the message `Empty string`.
    *
    * {{{
    * import zio._
