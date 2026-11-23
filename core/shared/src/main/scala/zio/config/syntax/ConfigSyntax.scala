@@ -396,7 +396,7 @@ trait ConfigSyntax {
       )
 
     // To reduce the number of changes in examples
-    // Example: read(config from ConfigProvider.fromMap(""))
+    // Example: read(config from ConfigProvider.fromMap(Map("port" -> "8080")))
     /**
      * Pairs this config with `configProvider` into a [[zio.config.syntax.Read]], to pass to `read`.
      */
@@ -418,7 +418,8 @@ trait ConfigSyntax {
    */
   implicit class FromConfigProviderOps(c: ConfigProvider.type) {
 
-    // Disabled until next version of ZIO: https://github.com/zio/zio-config/blob/avoid_custom_index_until_3/README.md#indexed-map-array-datatype-and-a-some-implementation-notes
+    // Disabled until next version of ZIO. The notes it pointed to were in the README of the zio-config branch
+    // avoid_custom_index_until_3, which no longer exists.
     //    private def fromIndexedFlat(indexedFlat: IndexedFlat): ConfigProvider =
     //      new ConfigProvider {
     //
@@ -572,7 +573,8 @@ trait ConfigSyntax {
     //        override def flatten: IndexedFlat = indexedFlat
     //      }
 
-    // Disabled until next version of ZIO: https://github.com/zio/zio-config/blob/avoid_custom_index_until_3/README.md#indexed-map-array-datatype-and-a-some-implementation-notes
+    // Disabled until next version of ZIO. The notes it pointed to were in the README of the zio-config branch
+    // avoid_custom_index_until_3, which no longer exists.
     //    private def fromIndexedMap(map: Map[String, String], pathDelim: String = "."): ConfigProvider =
     //      fromIndexedFlat(new IndexedFlat {
     //        val escapedPathDelim = java.util.regex.Pattern.quote(pathDelim)

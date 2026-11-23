@@ -103,7 +103,8 @@ object TupleConversion {
             }
             """
       case Nil          =>
-        // Special case: zero parameter products
+        // No parameter list. A case class always has one, so this case is not reached: `case class Empty()` has
+        // `List(List())`, takes the `List(params)` case, and gets no instance.
         q"""new _root_.zio.config.TupleConversion[$prodTpe, Unit] {
                 override def to(a: $prodTpe): Unit = ()
                 override def from(b: Unit): $prodTpe =
