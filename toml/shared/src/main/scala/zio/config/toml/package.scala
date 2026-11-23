@@ -16,9 +16,9 @@ package object toml {
   implicit class FromConfigSourceToml(c: ConfigProvider.type) {
 
     /**
-     * Builds a `ConfigProvider` from a TOML file. Throws the `java.nio.file.NoSuchFileException` from tomlj when the
-     * file does not exist, and a `RuntimeException` whose message starts with `Unable to parse TOML:` when the file has
-     * syntax errors.
+     * Builds a `ConfigProvider` from a TOML file. Throws a `java.nio.file.NoSuchFileException` when the file does not
+     * exist, and a `RuntimeException` whose message starts with `Unable to parse TOML:` when the file has syntax
+     * errors.
      */
     def fromTomlFile(file: File, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
       TomlConfigProvider.fromTomlFile(file, enableCommaSeparatedValueAsList)

@@ -13,10 +13,10 @@ import scala.jdk.CollectionConverters._
  * Builds a `ConfigProvider` from TOML, parsed with the tomlj library. `import zio.config.toml._` adds the string, file,
  * path and reader constructors to `ConfigProvider` as well, as `ConfigProvider.fromTomlString` and so on.
  *
- * Each constructor parses its input when it is called. It throws the `java.nio.file.NoSuchFileException` from tomlj
- * when a file is missing, and a `RuntimeException` whose message starts with `Unable to parse TOML:` when the TOML has
- * syntax errors. Each constructor has a `...ZIO` variant that returns a `Task[ConfigProvider]` and fails the task
- * instead.
+ * The string, file, path and reader constructors parse their input when they are called. They throw a
+ * `java.nio.file.NoSuchFileException` when a file is missing, and a `RuntimeException` whose message starts with
+ * `Unable to parse TOML:` when the TOML has syntax errors. Each constructor has a `...ZIO` variant that returns a
+ * `Task[ConfigProvider]` and fails the task instead.
  *
  * A table, inline table or dotted key becomes nested keys, an array or array of tables becomes a list, and an empty
  * array is an empty list. Date and time values are passed on as the `toString` of their `java.time` value, such as
@@ -24,9 +24,10 @@ import scala.jdk.CollectionConverters._
  * array placed directly inside another array keeps only its last element: `a = [ [1, 2], [3, 4] ]` read with
  * `Config.listOf("a", Config.listOf(Config.int))` gives `List(List(2), List(4))`.
  *
- * By default a string value is never split. With `enableCommaSeparatedValueAsList = true`, a string value read as a
- * list is split at each `,`, so `ports = "8080,8443"` read with `Config.listOf("ports", Config.int)` gives
- * `List(8080, 8443)`. TOML arrays are lists with or without the flag.
+ * By default a string value is not split at `,`. With `enableCommaSeparatedValueAsList = true`, a string value read as
+ * a list is split at each `,`, so `ports = "8080,8443"` read with `Config.listOf("ports", Config.int)` gives
+ * `List(8080, 8443)`, and each string element of an array is split as well, so `a = ["x,y", "z"]` gives
+ * `List(x, y, z)`. TOML arrays are lists with or without the flag.
  *
  * {{{
  * import zio._
@@ -57,9 +58,8 @@ import scala.jdk.CollectionConverters._
 object TomlConfigProvider {
 
   /**
-   * Builds a `ConfigProvider` from a TOML file. Throws the `java.nio.file.NoSuchFileException` from tomlj when the file
-   * does not exist, and a `RuntimeException` whose message starts with `Unable to parse TOML:` when the file has syntax
-   * errors.
+   * Builds a `ConfigProvider` from a TOML file. Throws a `java.nio.file.NoSuchFileException` when the file does not
+   * exist, and a `RuntimeException` whose message starts with `Unable to parse TOML:` when the file has syntax errors.
    */
   def fromTomlFile(file: File, enableCommaSeparatedValueAsList: Boolean = false): ConfigProvider =
     fromTomlPath(file.toPath, enableCommaSeparatedValueAsList)
