@@ -4,6 +4,9 @@ import zio.Chunk
 import zio.config.xml.experimental.XmlObject.Text
 import zio.parser.Parser
 
+/**
+ * The character-level parsers that [[XmlParser]] is built from. Its members are internal to zio-config.
+ */
 object Parsers {
 
   lazy private[config] val UnicodeEmptyCharacters: Chunk[Char] =

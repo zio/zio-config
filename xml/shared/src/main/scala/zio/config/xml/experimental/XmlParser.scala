@@ -5,6 +5,10 @@ import Parsers._
 import XmlObject.TagElement
 import zio.parser.{Parser, StringParserError}
 
+/**
+ * The parser behind `XmlConfigProvider.fromXmlString`, which turns an XML string into an [[XmlObject]]. Its members are
+ * internal to zio-config.
+ */
 object XmlParser {
 
   lazy private[config] val tagContent: Parser[String, Char, Option[Chunk[XmlObject]]] =
